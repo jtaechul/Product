@@ -1,0 +1,1892 @@
+[
+  {
+    "type": "set",
+    "tmp_id": "L3-0001",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: I want to borrow this dinosaur book.\nM: Sure. Do you have your library card?\nW: Oh no, I left it at home.\nM: That's okay. Just tell me your name and class.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 이 공룡 책을 빌리고 싶어요.\n남: 네. 도서관 카드 있으세요?\n여: 아 어떡해, 집에 두고 왔어요.\n남: 괜찮아요. 이름이랑 반만 말해 주세요."
+    },
+    "questions": [
+      {
+        "stem": "Where are the speakers?",
+        "choices": [
+          "At a hospital",
+          "At a library",
+          "At a bakery",
+          "At a swimming pool"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "책을 빌리고 도서관 카드 이야기를 하니까 도서관이에요. 병원이나 빵집에서는 책을 빌리지 않아요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "Do you have your library card?",
+        "why_not": {
+          "0": "병원은 책을 빌리는 곳이 아니에요",
+          "2": "빵집에는 도서관 카드가 없어요",
+          "3": "수영장은 책 이야기와 맞지 않아요"
+        },
+        "key_expr": {
+          "en": "borrow a book",
+          "ko": "책을 빌리다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What is the woman's problem?",
+        "choices": [
+          "She lost her dinosaur book.",
+          "She is late for school.",
+          "She forgot her friend's name.",
+          "She left her library card at home."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "여자는 카드를 집에 두고 왔다고 말했어요. 책을 잃어버린 것이 아니라 카드를 안 가져온 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "Oh no, I left it at home.",
+        "why_not": {
+          "0": "책이 아니라 카드를 안 가져왔어요",
+          "1": "늦었다는 말은 나오지 않았어요",
+          "2": "이름은 말해 달라고 한 것뿐이에요"
+        },
+        "key_expr": {
+          "en": "leave it at home",
+          "ko": "집에 두고 오다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0002",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Are you coming to soccer practice on Saturday?\nM: I can't. I'm visiting my grandmother in Busan.\nW: Then can you play in the game on Sunday?\nM: Yes, I'll come back Saturday night.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 토요일 축구 연습에 올 거야?\n남: 못 가. 부산에 계신 할머니 뵈러 가거든.\n여: 그럼 일요일 경기에는 뛸 수 있어?\n남: 응, 토요일 밤에 돌아올 거야."
+    },
+    "questions": [
+      {
+        "stem": "Why can't the man go to soccer practice on Saturday?",
+        "choices": [
+          "He will visit his grandmother.",
+          "He is sick in bed.",
+          "He has too much homework.",
+          "He doesn't like soccer."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "남자는 토요일에 부산에 계신 할머니를 뵈러 간다고 했어요. 아파서 못 가는 것이 아니에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.leisure",
+          "LS.infer"
+        ],
+        "evidence": "I'm visiting my grandmother in Busan.",
+        "why_not": {
+          "1": "아프다는 말은 나오지 않았어요",
+          "2": "숙제 이야기는 나오지 않았어요",
+          "3": "축구를 싫어한다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "visit my grandmother",
+          "ko": "할머니를 뵈러 가다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "When will the man play in the soccer game?",
+        "choices": [
+          "On Friday",
+          "On Saturday",
+          "On Sunday",
+          "On Monday"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "남자는 토요일 밤에 돌아와서 일요일 경기에 나간다고 했어요. 토요일은 연습 날이라서 헷갈리기 쉬워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.leisure"
+        ],
+        "evidence": "Then can you play in the game on Sunday?",
+        "why_not": {
+          "0": "금요일 이야기는 나오지 않았어요",
+          "1": "토요일에는 할머니 댁에 가요",
+          "3": "월요일 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "come back at night",
+          "ko": "밤에 돌아오다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0003",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: How much are these apples?\nM: They're two thousand won for three.\nW: I'll take six, please. And one bottle of orange juice.\nM: Of course. That's five thousand won all together.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 이 사과들 얼마예요?\n남: 세 개에 이천 원이에요.\n여: 여섯 개 주세요. 그리고 오렌지 주스 한 병이요.\n남: 네. 모두 합해서 오천 원입니다."
+    },
+    "questions": [
+      {
+        "stem": "What is the woman doing?",
+        "choices": [
+          "Cooking dinner",
+          "Cleaning her room",
+          "Buying some food",
+          "Making orange juice"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "여자는 사과와 주스의 값을 물어보고 사고 있어요. 그러니까 음식을 사는 중이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.shopping",
+          "V.food"
+        ],
+        "evidence": "How much are these apples?",
+        "why_not": {
+          "0": "요리가 아니라 사는 중이에요",
+          "1": "청소 이야기는 나오지 않았어요",
+          "3": "만드는 게 아니라 한 병 사요"
+        },
+        "key_expr": {
+          "en": "How much are these?",
+          "ko": "이거 얼마예요?"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "How many apples does the woman want?",
+        "choices": [
+          "Two",
+          "Three",
+          "Five",
+          "Six"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "여자는 여섯 개를 달라고 했어요. '세 개에 2천 원'이라는 말과 헷갈리지 않게 조심해요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.shopping"
+        ],
+        "evidence": "I'll take six, please.",
+        "why_not": {
+          "0": "두 개가 아니라 여섯 개예요",
+          "1": "세 개는 2천 원짜리 묶음이에요",
+          "2": "5천은 개수가 아니라 값이에요"
+        },
+        "key_expr": {
+          "en": "I'll take six",
+          "ko": "여섯 개 주세요"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0004",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Your dog is so cute! What's his name?\nM: His name is Mango. He's three years old.\nW: Can I give him a snack?\nM: Sorry, he can only eat his special dog food.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 강아지가 정말 귀엽다! 이름이 뭐야?\n남: 이름은 망고야. 세 살이야.\n여: 내가 간식 줘도 돼?\n남: 미안, 얘는 전용 사료만 먹을 수 있어."
+    },
+    "questions": [
+      {
+        "stem": "What are the speakers talking about?",
+        "choices": [
+          "The man's dog",
+          "The woman's cat",
+          "A new snack",
+          "A pet store"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "두 사람은 남자의 강아지 망고에 대해 이야기하고 있어요. 고양이 이야기는 나오지 않았어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "Your dog is so cute!",
+        "why_not": {
+          "1": "고양이가 아니라 강아지예요",
+          "2": "간식은 잠깐 나온 이야기예요",
+          "3": "가게 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "What's his name?",
+          "ko": "이름이 뭐야?"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why can't the woman give the dog a snack?",
+        "choices": [
+          "The dog is sleeping now.",
+          "The dog eats only his special food.",
+          "The woman has no snacks.",
+          "The dog is not hungry."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "남자가 강아지는 특별한 사료만 먹을 수 있다고 했어요. 강아지가 자고 있어서가 아니에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "he can only eat his special dog food",
+        "why_not": {
+          "0": "자고 있다는 말은 없어요",
+          "2": "간식이 없다는 말은 없어요",
+          "3": "배가 안 고프다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "special dog food",
+          "ko": "전용 사료"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0005",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Excuse me, does this bus go to the science museum?\nM: No, you need the number seven bus.\nW: How often does it come?\nM: Every ten minutes. Look, it's coming now.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 실례합니다, 이 버스 과학관에 가나요?\n남: 아니요, 7번 버스를 타셔야 해요.\n여: 얼마나 자주 오나요?\n남: 10분마다요. 보세요, 지금 오네요."
+    },
+    "questions": [
+      {
+        "stem": "Where does the woman want to go?",
+        "choices": [
+          "To the bus station",
+          "To the art museum",
+          "To the city library",
+          "To the science museum"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "여자는 이 버스가 과학관에 가는지 물었어요. 미술관이 아니라 과학관이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.travel"
+        ],
+        "evidence": "does this bus go to the science museum?",
+        "why_not": {
+          "0": "정류장은 지금 서 있는 곳이에요",
+          "1": "미술관이 아니라 과학관이에요",
+          "2": "도서관 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "science museum",
+          "ko": "과학관"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will the woman probably do next?",
+        "choices": [
+          "Walk to the museum",
+          "Take the number seven bus",
+          "Ask a police officer",
+          "Go back home"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여자는 7번 버스를 타야 하는데, 마침 그 버스가 오고 있다고 했어요. 그래서 곧 7번 버스를 탈 거예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.travel"
+        ],
+        "evidence": "you need the number seven bus",
+        "why_not": {
+          "0": "걸어간다는 말은 없어요",
+          "2": "경찰에게 묻는 이야기는 없어요",
+          "3": "집에 간다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "the number seven bus",
+          "ko": "7번 버스"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0006",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Dad, what are you making? It smells great.\nM: Vegetable soup. Dinner will be ready at six.\nW: Can I help you with anything?\nM: Sure. Please put the spoons and bowls on the table.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 아빠, 뭐 만들고 계세요? 냄새 좋다.\n남: 야채수프란다. 저녁은 6시에 준비될 거야.\n여: 제가 도와드릴 거 있어요?\n남: 그럼. 숟가락이랑 그릇을 식탁에 놓아 주렴."
+    },
+    "questions": [
+      {
+        "stem": "What is the man doing?",
+        "choices": [
+          "Washing the dishes",
+          "Eating dinner",
+          "Cooking soup",
+          "Setting the table"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "아빠는 야채수프를 만들고 있어요. 식탁을 차리는 일은 딸에게 부탁한 일이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "V.food"
+        ],
+        "evidence": "Vegetable soup.",
+        "why_not": {
+          "0": "설거지 이야기는 나오지 않았어요",
+          "1": "아직 먹기 전이에요",
+          "3": "상 차리기는 딸이 할 일이에요"
+        },
+        "key_expr": {
+          "en": "vegetable soup",
+          "ko": "채소 수프"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What will the woman probably do next?",
+        "choices": [
+          "Set the table",
+          "Make the soup",
+          "Buy some vegetables",
+          "Wash her hands"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아빠가 숟가락과 그릇을 식탁에 놓아 달라고 했어요. 그것이 바로 식탁을 차리는 일이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.food",
+          "V.daily"
+        ],
+        "evidence": "Please put the spoons and bowls on the table.",
+        "why_not": {
+          "1": "수프는 아빠가 만들고 있어요",
+          "2": "장 보러 간다는 말은 없어요",
+          "3": "손 씻기 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "set the table",
+          "ko": "상을 차리다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0007",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Excuse me, where can I find the art supplies?\nM: They're on the second floor, next to the toy section.\nW: Thank you. Do you sell colored pencils there?\nM: Yes, we have many kinds. Take the escalator on your right.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 실례합니다, 미술 재료는 어디에 있나요?\n남: 2층에, 장난감 코너 옆에 있습니다.\n여: 감사합니다. 거기서 색연필도 파나요?\n남: 네, 여러 종류가 있어요. 오른쪽 에스컬레이터를 타세요."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "Where are the art supplies?",
+        "choices": [
+          "On the second floor",
+          "On the first floor",
+          "Next to the door",
+          "In the toy store"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "남자가 2층 장난감 코너 옆이라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.detail",
+          "V.shopping"
+        ],
+        "evidence": "They're on the second floor",
+        "why_not": {
+          "1": "1층이라는 말은 없었어요",
+          "2": "문 옆이라고 하지 않았어요",
+          "3": "장난감 코너 '옆'이라고 했어요"
+        },
+        "key_expr": {
+          "en": "on the second floor",
+          "ko": "2층에"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "How will the woman go up?",
+        "choices": [
+          "By stairs",
+          "By escalator",
+          "By elevator",
+          "She will not go up"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "오른쪽 에스컬레이터를 타라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "Take the escalator on your right.",
+        "why_not": {
+          "0": "계단 이야기는 없었어요",
+          "2": "엘리베이터 이야기는 없었어요",
+          "3": "2층으로 올라가야 해요"
+        },
+        "key_expr": {
+          "en": "take the escalator",
+          "ko": "에스컬레이터를 타다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0008",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: You look worried. Is something wrong?\nW: I lost my library card somewhere in the playground.\nM: Did you check the lost and found box in the office?\nW: Not yet. I'll go there right after lunch.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 걱정 있어 보이네. 무슨 일 있어?\n여: 운동장 어딘가에서 도서관 카드를 잃어버렸어.\n남: 교무실 분실물 상자는 확인해 봤어?\n여: 아직. 점심 먹고 바로 가 볼래."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What is the woman's problem?",
+        "choices": [
+          "She is late for class",
+          "She forgot her lunch",
+          "She lost her card",
+          "She hurt her leg"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "도서관 카드를 운동장에서 잃어버렸다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "I lost my library card",
+        "why_not": {
+          "0": "지각 이야기는 없었어요",
+          "1": "점심 이야기는 나중에 나와요",
+          "3": "다쳤다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "lost and found",
+          "ko": "분실물 보관소"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "When will the woman go to the office?",
+        "choices": [
+          "Before lunch",
+          "Right now",
+          "Tomorrow morning",
+          "After lunch"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "점심 먹고 바로 가겠다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "right after lunch",
+        "why_not": {
+          "0": "점심 '뒤'라고 했어요",
+          "1": "지금 바로는 아니에요",
+          "2": "내일 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "right after ~",
+          "ko": "~하고 바로"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "2": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0009",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Dad, can I go to Jimin's house this afternoon?\nM: Did you finish your math homework?\nW: Almost. I have two more problems left.\nM: Finish them first, then you can go until six.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 아빠, 오늘 오후에 지민이네 집에 가도 돼요?\n남: 수학 숙제는 다 했니?\n여: 거의요. 두 문제 남았어요.\n남: 그것부터 끝내렴. 그럼 6시까지 놀다 와도 돼."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What does the girl want to do?",
+        "choices": [
+          "Visit her friend",
+          "Do her homework",
+          "Go to the library",
+          "Buy a math book"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "지민이네 집에 가도 되냐고 물었어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist"
+        ],
+        "evidence": "can I go to Jimin's house",
+        "why_not": {
+          "1": "숙제는 아빠가 먼저 하라고 한 거예요",
+          "2": "도서관 이야기는 없었어요",
+          "3": "책 사는 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "Can I go to ~?",
+          "ko": "~에 가도 돼요?"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What must the girl do first?",
+        "choices": [
+          "Eat dinner",
+          "Finish her homework",
+          "Call Jimin",
+          "Clean her room"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "남은 숙제를 먼저 끝내라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "Finish them first",
+        "why_not": {
+          "0": "저녁 이야기는 없었어요",
+          "2": "전화하라는 말은 없었어요",
+          "3": "방 치우라는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "finish first",
+          "ko": "먼저 끝내다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What time must she come back?",
+        "choices": [
+          "At four",
+          "At five",
+          "At six",
+          "At seven"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "여섯 시까지 놀아도 된다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "you can go until six",
+        "why_not": {
+          "0": "네 시 이야기는 없었어요",
+          "1": "다섯 시 이야기는 없었어요",
+          "3": "일곱 시 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "until six",
+          "ko": "여섯 시까지"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "3": "M.number"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0010",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Welcome to Green Cafe. What would you like?\nW: One hot chocolate, please. Is it big or small?\nM: All our drinks come in one size. That's three thousand won.\nW: Here you are. Can I have it to go?",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 그린 카페에 오신 걸 환영합니다. 무엇을 드릴까요?\n여: 핫초코 한 잔 주세요. 큰 거예요, 작은 거예요?\n남: 저희 음료는 한 가지 크기예요. 삼천 원입니다.\n여: 여기 있습니다. 포장해 주시겠어요?"
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What does the woman order?",
+        "choices": [
+          "Coffee",
+          "Green tea",
+          "Orange juice",
+          "Hot chocolate"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "핫초코 한 잔을 달라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.detail",
+          "V.food"
+        ],
+        "evidence": "One hot chocolate, please.",
+        "why_not": {
+          "0": "커피 이야기는 없었어요",
+          "1": "녹차 이야기는 없었어요",
+          "2": "주스 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "to go",
+          "ko": "가져가기"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does the woman want at the end?",
+        "choices": [
+          "To take the drink out",
+          "To sit inside",
+          "To pay by card",
+          "To order one more"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "'to go'는 가져가겠다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.food"
+        ],
+        "evidence": "Can I have it to go?",
+        "why_not": {
+          "1": "안에서 마신다는 말은 없었어요",
+          "2": "카드 이야기는 없었어요",
+          "3": "더 시킨다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "Can I have it to go?",
+          "ko": "가져가도 될까요?"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0011",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Did you watch the school band concert last night?\nM: No, I had to take care of my little sister.\nW: That's too bad. The drummer was amazing.\nM: I heard they will play again at the fall festival.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 어젯밤 학교 밴드 공연 봤어?\n남: 아니, 여동생을 돌봐야 했어.\n여: 아쉽다. 드럼 치는 애가 정말 멋졌는데.\n남: 가을 축제 때 또 공연한대."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "Why didn't the man watch the concert?",
+        "choices": [
+          "He was sick",
+          "He was busy with his sister",
+          "He forgot the date",
+          "He doesn't like music"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여동생을 돌봐야 했다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "LS.infer"
+        ],
+        "evidence": "I had to take care of my little sister",
+        "why_not": {
+          "0": "아팠다는 말은 없었어요",
+          "2": "잊었다는 말은 없었어요",
+          "3": "음악을 싫어한다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "take care of ~",
+          "ko": "~을 돌보다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "When can the man see the band?",
+        "choices": [
+          "Tonight",
+          "Next summer",
+          "At the fall festival",
+          "Never again"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "가을 축제에서 또 공연한다고 들었다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "at the fall festival",
+        "why_not": {
+          "0": "오늘 밤 이야기는 없었어요",
+          "1": "여름 이야기는 없었어요",
+          "3": "다시 한다고 했어요"
+        },
+        "key_expr": {
+          "en": "fall festival",
+          "ko": "가을 축제"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0012",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Excuse me, is this the right train for Suwon?\nW: No, this one goes to Incheon. You need platform four.\nM: Oh no, my train leaves in five minutes!\nW: Don't worry, platform four is just down those stairs.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 실례합니다, 이 기차가 수원 가는 게 맞나요?\n여: 아니요, 이건 인천행이에요. 4번 승강장으로 가셔야 해요.\n남: 이런, 제 기차가 5분 뒤에 떠나요!\n여: 걱정 마세요, 4번 승강장은 저 계단만 내려가면 돼요."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "Where does the man want to go?",
+        "choices": [
+          "Incheon",
+          "Busan",
+          "Seoul",
+          "Suwon"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "수원 가는 기차가 맞냐고 물었어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.travel"
+        ],
+        "evidence": "is this the right train for Suwon",
+        "why_not": {
+          "0": "인천은 지금 이 기차가 가는 곳이에요",
+          "1": "부산 이야기는 없었어요",
+          "2": "서울 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "the right train for ~",
+          "ko": "~로 가는 맞는 기차"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where should the man go?",
+        "choices": [
+          "Platform four",
+          "Platform one",
+          "The ticket office",
+          "The waiting room"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "4번 승강장으로 가야 한다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.travel"
+        ],
+        "evidence": "You need platform four.",
+        "why_not": {
+          "1": "1번 승강장 이야기는 없었어요",
+          "2": "매표소 이야기는 없었어요",
+          "3": "대합실 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "platform four",
+          "ko": "4번 승강장"
+        },
+        "miss_type": {
+          "1": "M.number",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0013",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Your painting is really colorful. How long did it take?\nM: About three hours. I painted it during art club.\nW: Are you going to enter the school contest?\nM: I want to, but I need to finish the sky first.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 네 그림 정말 알록달록하다. 얼마나 걸렸어?\n남: 세 시간쯤. 미술부 활동 시간에 그렸어.\n여: 학교 대회에 낼 거야?\n남: 내고 싶은데, 하늘을 먼저 완성해야 해."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What are they talking about?",
+        "choices": [
+          "A photograph",
+          "A painting",
+          "A song",
+          "A book"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "그림이 알록달록하다며 이야기를 시작해요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Your painting is really colorful.",
+        "why_not": {
+          "0": "사진 이야기는 없었어요",
+          "2": "노래 이야기는 없었어요",
+          "3": "책 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "How long did it take?",
+          "ko": "얼마나 걸렸어?"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does the man still need to do?",
+        "choices": [
+          "Start a new painting",
+          "Join the art club",
+          "Finish the sky",
+          "Buy new paint"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "하늘 부분을 먼저 끝내야 한다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "I need to finish the sky first",
+        "why_not": {
+          "0": "새로 시작한다는 말은 없었어요",
+          "1": "이미 미술부에서 그렸어요",
+          "3": "물감 사는 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "finish the sky",
+          "ko": "하늘을 마저 칠하다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0014",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Mom, the bathroom light isn't working again.\nW: I know. I called the repair shop this morning.\nM: When are they coming?\nW: Tomorrow between two and four. Use the hallway light until then.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 엄마, 화장실 불이 또 안 켜져요.\n여: 알아. 오늘 아침에 수리점에 전화했어.\n남: 언제 오신대요?\n여: 내일 2시에서 4시 사이에. 그때까지는 복도 불을 쓰렴."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What is the problem?",
+        "choices": [
+          "The door is broken",
+          "The window is open",
+          "The water is cold",
+          "The light doesn't work"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "욕실 전등이 또 안 된다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "the bathroom light isn't working",
+        "why_not": {
+          "0": "문 이야기는 없었어요",
+          "1": "창문 이야기는 없었어요",
+          "2": "물 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "isn't working",
+          "ko": "작동이 안 된다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "When will the repair person come?",
+        "choices": [
+          "Tomorrow afternoon",
+          "Tonight",
+          "This morning",
+          "Next week"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "내일 두 시에서 네 시 사이에 온다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "Tomorrow between two and four.",
+        "why_not": {
+          "1": "오늘 밤 이야기는 없었어요",
+          "2": "오늘 아침엔 전화만 했어요",
+          "3": "다음 주 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "between two and four",
+          "ko": "두 시에서 네 시 사이"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Are you coming to the swimming class this afternoon?\nM: I'd love to, but I have to help my sister with her homework.\nW: That's too bad. Maybe next time.\nM: Yes, I'll be there on Thursday for sure.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 오늘 오후에 수영 수업에 올 거야?\n남: 가고 싶은데, 동생 숙제를 도와줘야 해.\n여: 아쉽다. 다음에 오면 되지.\n남: 응, 목요일에는 꼭 갈게."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What does the man mean when he says \"I'd love to\"?",
+        "choices": [
+          "He will teach the class",
+          "He cannot come today",
+          "He is already at the pool",
+          "He does not like swimming"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "가고 싶지만 동생 숙제를 도와줘야 해서 오늘은 못 가요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "I'd love to, but I have to help my sister with her homework.",
+        "why_not": {
+          "0": "가르친다는 말은 없었어요",
+          "2": "수영장에 있다는 말은 없었어요",
+          "3": "가고 싶다고 했어요"
+        },
+        "key_expr": {
+          "en": "I'd love to, but ~",
+          "ko": "그러고 싶지만 ~해요"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What will the man probably do on Thursday?",
+        "choices": [
+          "Stay at home",
+          "Do his own homework",
+          "Visit his sister's school",
+          "Go to the swimming class"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "목요일에는 꼭 간다고 했으니 수영 수업에 갈 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "I'll be there on Thursday for sure",
+        "why_not": {
+          "0": "집에 있겠다는 말은 없었어요",
+          "1": "동생 숙제를 도와주는 거예요",
+          "2": "학교에 간다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "for sure",
+          "ko": "꼭, 틀림없이"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0015"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Did you finish the science poster, Mina?\nW: Almost. I still need to draw the plant pictures.\nM: The teacher collects them at nine tomorrow morning.\nW: Nine? Then I should work on it tonight.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 미나야, 과학 포스터 다 했어?\n여: 거의 다 했어. 아직 식물 그림을 그려야 해.\n남: 선생님이 내일 아침 아홉 시에 걷으신대.\n여: 아홉 시? 그럼 오늘 밤에 해야겠다."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "Why does the woman say \"Nine?\"",
+        "choices": [
+          "She is surprised the time is so early",
+          "She wants to know the room number",
+          "She already gave the poster to the teacher",
+          "She likes drawing nine pictures"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아홉 시라는 말에 놀라서 오늘 밤에 하겠다고 해요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "Nine? Then I should work on it tonight.",
+        "why_not": {
+          "1": "교실 번호 이야기는 없었어요",
+          "2": "아직 그림이 남았다고 했어요",
+          "3": "들린 숫자에 낚였어요"
+        },
+        "key_expr": {
+          "en": "collect them at nine",
+          "ko": "아홉 시에 걷다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.opposite",
+          "3": "A.echo"
+        }
+      },
+      {
+        "stem": "What will the woman probably do tonight?",
+        "choices": [
+          "Print a new poster",
+          "Ask the teacher for more time",
+          "Draw the plant pictures",
+          "Clean the science room"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "식물 그림이 남았고 밤에 하겠다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "I still need to draw the plant pictures.",
+        "why_not": {
+          "0": "새로 뽑는다는 말은 없었어요",
+          "1": "더 달라고 하지 않았어요",
+          "3": "청소 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "work on it tonight",
+          "ko": "오늘 밤에 그걸 하다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0016"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Look at those dark clouds. Should we still walk to the park?\nM: Hmm, I left my umbrella at home.\nW: My brother can drive us there.\nM: That sounds much better. Let's ask him now.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 저 먹구름 좀 봐. 그래도 공원까지 걸어갈까?\n남: 음, 나 우산을 집에 두고 왔어.\n여: 우리 오빠가 태워다 줄 수 있어.\n남: 그게 훨씬 낫겠다. 지금 부탁하자."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What does the man mean when he says \"I left my umbrella at home\"?",
+        "choices": [
+          "He wants to buy a new umbrella",
+          "He is going back home to sleep",
+          "He thinks the sky is sunny",
+          "He is worried about the rain"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "먹구름을 보고 우산이 없다고 하니 비가 걱정된 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "Hmm, I left my umbrella at home.",
+        "why_not": {
+          "0": "우산을 산다는 말은 없었어요",
+          "1": "집에 간다는 말은 없었어요",
+          "2": "먹구름이 있다고 했어요"
+        },
+        "key_expr": {
+          "en": "leave ~ at home",
+          "ko": "~을 집에 두고 오다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.opposite"
+        }
+      },
+      {
+        "stem": "How will they probably go to the park?",
+        "choices": [
+          "On foot",
+          "By bus",
+          "By car",
+          "By bike"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "오빠가 태워다 준다고 했고 남자도 좋다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.travel"
+        ],
+        "evidence": "My brother can drive us there.",
+        "why_not": {
+          "0": "걷는 대신 차를 타기로 했어요",
+          "1": "버스 이야기는 없었어요",
+          "3": "자전거 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "drive us there",
+          "ko": "우리를 거기까지 태워 주다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0017"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Excuse me, I'd like to borrow these three books.\nM: Sure. But the art book is for reading in the library only.\nW: Oh, I see. Then I'll take the other two.\nM: No problem. They're due back next Friday.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 실례합니다, 이 책 세 권을 빌리고 싶어요.\n남: 네. 그런데 미술 책은 도서관 안에서만 읽을 수 있어요.\n여: 아, 그렇군요. 그럼 나머지 두 권만 빌릴게요.\n남: 알겠습니다. 다음 주 금요일까지 돌려주시면 돼요."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What does the woman mean when she says \"Oh, I see\"?",
+        "choices": [
+          "She understands the rule about the art book",
+          "She wants to buy all three books",
+          "She cannot find the library desk",
+          "She is returning books today"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "미술 책은 못 빌린다는 말을 알아듣고 나머지 두 권만 가져가요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "Oh, I see. Then I'll take the other two.",
+        "why_not": {
+          "1": "산다는 말은 나오지 않았어요",
+          "2": "길을 묻는 장면이 아니에요",
+          "3": "지금은 빌리러 온 거예요"
+        },
+        "key_expr": {
+          "en": "I'll take the other two",
+          "ko": "나머지 두 개를 가져갈게요"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What will the woman probably do with the art book?",
+        "choices": [
+          "Take it home tonight",
+          "Give it to a friend",
+          "Read it in the library",
+          "Keep it until next Friday"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "미술 책은 도서관 안에서만 읽을 수 있다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "the art book is for reading in the library only",
+        "why_not": {
+          "0": "집에 가져갈 수 없는 책이에요",
+          "1": "친구 이야기는 없었어요",
+          "3": "금요일은 빌린 두 권 이야기예요"
+        },
+        "key_expr": {
+          "en": "for reading in the library only",
+          "ko": "도서관에서만 읽을 수 있는"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L3-0018"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Would you like the chicken soup or the vegetable pasta?\nM: I had soup for lunch already.\nW: Then the pasta it is. It comes with warm bread.\nM: Great, and a glass of orange juice, please.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 치킨 수프와 채소 파스타 중에 무엇으로 하시겠어요?\n남: 점심에 이미 수프를 먹었어요.\n여: 그럼 파스타로 하시죠. 따뜻한 빵이 같이 나와요.\n남: 좋아요, 그리고 오렌지 주스 한 잔 주세요."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What does the man mean when he says \"I had soup for lunch already\"?",
+        "choices": [
+          "He is not hungry at all",
+          "He will choose the pasta",
+          "He wants the soup again",
+          "He cooked lunch himself"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "점심에 수프를 먹었다는 말은 이번엔 파스타를 고르겠다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.food"
+        ],
+        "evidence": "Then the pasta it is.",
+        "why_not": {
+          "0": "배가 안 고프다는 말은 없었어요",
+          "2": "수프는 이미 먹었다고 했어요",
+          "3": "요리했다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "Then the pasta it is.",
+          "ko": "그럼 파스타로 하죠."
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will the man drink?",
+        "choices": [
+          "Milk",
+          "Hot tea",
+          "Water",
+          "Orange juice"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "마지막에 오렌지 주스 한 잔을 달라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.infer",
+          "V.food"
+        ],
+        "evidence": "and a glass of orange juice, please",
+        "why_not": {
+          "0": "우유 이야기는 없었어요",
+          "1": "차 이야기는 없었어요",
+          "2": "물 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "a glass of orange juice",
+          "ko": "오렌지 주스 한 잔"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0019"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: The soccer game starts at four. Are you ready?\nW: My shoes are still wet from yesterday's rain.\nM: I have an extra pair in my bag.\nW: Really? You saved me!",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 축구 경기가 네 시에 시작해. 준비됐어?\n여: 내 신발이 어제 비 때문에 아직 젖어 있어.\n남: 내 가방에 여분 한 켤레가 있어.\n여: 정말? 네가 나를 살렸다!"
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What does the woman mean when she says \"My shoes are still wet\"?",
+        "choices": [
+          "She wants to play in the rain",
+          "She bought new shoes yesterday",
+          "She has a problem before the game",
+          "She is ready to start right now"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "신발이 젖어서 경기 전에 곤란하다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "My shoes are still wet from yesterday's rain.",
+        "why_not": {
+          "0": "비는 어제 왔어요",
+          "1": "새 신발 이야기는 없었어요",
+          "3": "준비가 안 된 상태예요"
+        },
+        "key_expr": {
+          "en": "still wet",
+          "ko": "아직 젖어 있는"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What will the woman probably do next?",
+        "choices": [
+          "Wear the man's extra shoes",
+          "Go home to dry her shoes",
+          "Watch the game from a seat",
+          "Start the game at five"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "남자 가방에 여분 신발이 있고 여자가 고마워했으니 그걸 신을 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "I have an extra pair in my bag.",
+        "why_not": {
+          "1": "집에 간다는 말은 없었어요",
+          "2": "구경만 한다는 말은 없었어요",
+          "3": "경기는 네 시에 시작해요"
+        },
+        "key_expr": {
+          "en": "an extra pair",
+          "ko": "여분 한 켤레"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.number"
+        }
+      }
+    ],
+    "tmp_id": "L3-0020"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Are you joining the art club this year?\nM: I only have time on Wednesdays.\nW: Perfect. The club meets every Wednesday at four.\nM: Then count me in!",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 올해 미술 동아리에 들어올 거예요?\n남: 저는 수요일에만 시간이 있어요.\n여: 딱 좋아요. 동아리는 매주 수요일 네 시에 모여요.\n남: 그럼 저도 넣어 주세요!"
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What does the man mean when he says \"I only have time on Wednesdays\"?",
+        "choices": [
+          "He does not want to join the club",
+          "He is busy every day of the week",
+          "He can join if the club meets on Wednesday",
+          "He wants to start a new art club"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "수요일에만 시간이 된다는 말은 그날 모이면 갈 수 있다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "I only have time on Wednesdays.",
+        "why_not": {
+          "0": "마지막에 넣어 달라고 했어요",
+          "1": "수요일은 시간이 된다고 했어요",
+          "3": "새 동아리 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "count me in",
+          "ko": "저도 낄게요"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "When does the art club meet?",
+        "choices": [
+          "Every Wednesday at four",
+          "Every Monday at four",
+          "Every Wednesday at five",
+          "Every weekend morning"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "여자가 매주 수요일 네 시에 모인다고 알려 줬어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "The club meets every Wednesday at four.",
+        "why_not": {
+          "1": "월요일 이야기는 없었어요",
+          "2": "네 시라고 했어요",
+          "3": "주말 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "meets every Wednesday",
+          "ko": "매주 수요일에 모여요"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.number",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0021"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Excuse me, do you have this jacket in a smaller size?\nM: Let me check. We only have the blue one in small.\nW: Blue is fine. How much is it?\nM: It's twenty dollars today, half the usual price.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 실례합니다, 이 재킷 더 작은 치수도 있나요?\n남: 확인해 볼게요. 작은 치수는 파란색만 있어요.\n여: 파란색도 괜찮아요. 얼마예요?\n남: 오늘은 20달러예요, 원래 가격의 반값이에요."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What does the woman mean when she says \"Blue is fine\"?",
+        "choices": [
+          "She does not like that color",
+          "She will take the blue jacket",
+          "She wants a bigger size",
+          "She is looking for blue shoes"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "파란색도 괜찮다는 말은 그걸로 사겠다는 뜻이에요. 바로 값을 물어봤어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.shopping"
+        ],
+        "evidence": "Blue is fine. How much is it?",
+        "why_not": {
+          "0": "괜찮다고 했어요",
+          "2": "더 작은 것을 찾고 있어요",
+          "3": "신발 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "Blue is fine.",
+          "ko": "파란색도 괜찮아요."
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "How much is the jacket today?",
+        "choices": [
+          "Ten dollars",
+          "Two dollars",
+          "Forty dollars",
+          "Twenty dollars"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "남자가 오늘은 20달러라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.shopping"
+        ],
+        "evidence": "It's twenty dollars today",
+        "why_not": {
+          "0": "10달러는 나오지 않았어요",
+          "1": "2달러는 나오지 않았어요",
+          "2": "40달러는 오늘 값이 아니에요"
+        },
+        "key_expr": {
+          "en": "half the usual price",
+          "ko": "원래 가격의 반값"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.number"
+        }
+      }
+    ],
+    "tmp_id": "L3-0022"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Should we have the picnic in the park tomorrow?\nW: The weather report says heavy rain all day.\nM: Then let's move it to Sunday.\nW: Good idea. I'll bring the sandwiches.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 내일 공원에서 소풍할까?\n여: 일기 예보에서 하루 종일 비가 많이 온대.\n남: 그럼 일요일로 옮기자.\n여: 좋은 생각이야. 내가 샌드위치를 가져올게."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What does the woman mean when she says \"The weather report says heavy rain all day\"?",
+        "choices": [
+          "She wants to go to the park anyway",
+          "She will bring an umbrella to the park",
+          "She checked the weather last Sunday",
+          "Tomorrow is not a good day for a picnic"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "비가 많이 온다는 말은 내일 소풍은 어렵다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "The weather report says heavy rain all day.",
+        "why_not": {
+          "0": "날짜를 옮기자고 했어요",
+          "1": "우산 이야기는 없었어요",
+          "2": "일요일은 옮길 날이에요"
+        },
+        "key_expr": {
+          "en": "heavy rain all day",
+          "ko": "하루 종일 많은 비"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      },
+      {
+        "stem": "What will the two people probably do?",
+        "choices": [
+          "Cancel the picnic completely",
+          "Have the picnic on Sunday",
+          "Go to the park tomorrow morning",
+          "Buy sandwiches at the park"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "일요일로 옮기자는 말에 여자가 좋은 생각이라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "Then let's move it to Sunday.",
+        "why_not": {
+          "0": "그만두는 게 아니라 날을 옮겼어요",
+          "2": "내일은 비가 많이 와요",
+          "3": "샌드위치는 여자가 가져와요"
+        },
+        "key_expr": {
+          "en": "move it to Sunday",
+          "ko": "일요일로 옮기다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L3-0023"
+  }
+]

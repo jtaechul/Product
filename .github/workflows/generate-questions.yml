@@ -1,0 +1,162 @@
+name: Generate questions (Jumplish)
+
+# 관리자 화면의 '문제 만들어줘' 주문을 받아 초안을 만든다.
+#
+# 왜 여기서 도는가: 앱 서버(Cloudflare Workers)에는 AI 열쇠를 두지 않는다 —
+# 운영 중 외부 호출 0회가 이 제품의 절대 규칙이다. 음원(generate-tts)·사진(generate-l1-images)이
+# 이미 같은 방식으로 돌고 있어, 문항 저작도 같은 자리에 둔다.
+#
+# 만든 초안은 **준비 중(draft)** 으로 들어간다. 규칙집(worker/authoring.mjs)을 통과하지 못한
+# 초안은 버린다. 사람이 관리자 화면에서 보고 '출제 시작'을 눌러야 아이에게 나간다.
+# 관리자 화면이 requests/ 에 주문서를 커밋하면 그 푸시로 실행된다.
+#
+# ⚠ workflow_dispatch(API 호출)로 부르지 않는 이유: GitHub 은 워크플로 파일이 **기본 브랜치**에
+# 있어야 그 이름을 인식하는데, 이 저장소의 점프리시 배치들은 전부 작업 브랜치에서만 산다.
+# 그래서 API 로 부르면 404 가 났다(2026-09-02 실제로 버튼이 안 눌린 원인).
+# 저장소가 이미 쓰고 있는 방식(주문서 푸시 → push 트리거)에 맞췄다 — 다른 배치 10개가 같은 방식이다.
+on:
+  push:
+    branches: ["claude/junior-toeic-master-planning-322l2t"]
+    paths: ["junior-toeic-master/requests/gen-*.json"]
+  workflow_dispatch:
+    inputs:
+      part:
+        description: "문제 종류 (L1~L4 듣기 / R1~R3 읽기)"
+        type: choice
+        options: [R1, R2, R3, L1, L2, L3, L4]
+        default: R3
+      count:
+        description: "몇 문항 (1~20)"
+        default: "5"
+      tag:
+        description: "개념 태그 (예: RS.infer) — 비우면 자동"
+        default: ""
+      difficulty:
+        description: "난이도 1~5 — 비우면 섞어서"
+        default: ""
+      note:
+        description: "추가 요청 (예: 학교 급식 소재로)"
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jumplish-genq
+  cancel-in-progress: false   # 주문을 연달아 넣으면 둘 다 만들어야 한다
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    outputs:
+      pushed: ${{ steps.commit.outputs.pushed }}
+    defaults:
+      run:
+        working-directory: junior-toeic-master
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      # 손대기 전 상태가 멀쩡한지 먼저 본다. 여기서 이미 깨져 있으면
+      # 새 초안이 문제인지 원래 문제인지 구분할 수 없다.
+      - name: Validate content (before)
+        run: node tools/import.mjs --check
+
+      # 열쇠는 둘 중 아무거나 있으면 된다 — 이미 음원 제작에 쓰는 Gemini 키가 있으면
+      # 새로 등록할 것 없이 그대로 쓰인다. 값은 절대 찍지 않고 '있다/없다'만 알린다.
+      - name: Generate drafts
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_JUMPLISH || secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_JUMPLISH || secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "AI 열쇠: ANTHROPIC_API_KEY 사용"
+          elif [ -n "$GEMINI_API_KEY" ]; then
+            echo "AI 열쇠: GEMINI_API_KEY 사용 (Anthropic 키가 없어 이쪽으로 갑니다)"
+          else
+            echo "::error::AI 열쇠를 하나도 찾지 못했습니다."
+            echo "::error::GitHub > Settings > Secrets and variables > Actions 의 'Repository secrets' 에"
+            echo "::error::ANTHROPIC_API_KEY 또는 GEMINI_API_KEY 중 하나를 등록해 주세요."
+            echo "::error::(Environment secrets 에 넣으면 이 작업에서 보이지 않습니다)"
+            exit 1
+          fi
+          shopt -s nullglob
+          REQS=(requests/gen-*.json)
+          if [ ${#REQS[@]} -gt 0 ]; then
+            echo "주문서 ${#REQS[@]}건을 처리합니다"
+            FAILED=0
+            for f in "${REQS[@]}"; do
+              echo "── $f"
+              cat "$f"
+              # 한 건이 실패해도 나머지는 만든다. 처리한 주문서는 성공·실패와 무관하게 지운다 —
+              # 남겨 두면 다음 푸시 때 같은 주문이 또 돌아 문항이 중복으로 쌓인다.
+              node tools/gen-questions.mjs --request "$f" || { echo "::warning::$f 처리 실패"; FAILED=$((FAILED+1)); }
+              rm -f "$f"
+            done
+            if [ "$FAILED" -gt 0 ]; then echo "::warning::주문 ${FAILED}건이 실패했습니다"; fi
+          else
+            echo "주문서가 없어 입력값으로 한 건 만듭니다"
+            node tools/gen-questions.mjs \
+              --part "${{ inputs.part }}" \
+              --count "${{ inputs.count }}" \
+              --tag "${{ inputs.tag }}" \
+              --difficulty "${{ inputs.difficulty }}" \
+              --note "${{ inputs.note }}"
+          fi
+
+      # 붙인 뒤에도 파일 전체가 규칙을 지키는지 다시 본다.
+      # 초안 하나하나는 통과해도 파일 단위 검사(중복 이름표 등)는 여기서만 걸린다.
+      - name: Validate content (after)
+        run: node tools/import.mjs --check
+
+      - name: Commit & push
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/questions content/.idmap.json requests
+          if git diff --cached --quiet; then
+            echo "통과한 초안이 없어 커밋할 것이 없습니다"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "junior-toeic-master: 문항 초안 생성 (관리자 주문)" \
+            -m "generate-questions.yml 에서 생성. 저작 규칙집을 통과한 초안만 준비 중(draft)으로 들어간다. 관리자 화면에서 확인하고 '출제 시작'을 눌러야 아이에게 나간다."
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            if git push origin HEAD:"${GITHUB_REF_NAME}"; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "다른 작업이 먼저 푸시했습니다 — 다시 얹어 재시도 ${i}/5"
+            sleep $((5 * i))
+          done
+          echo "::error::푸시를 5번 시도했지만 실패했습니다"
+          exit 1
+
+  # 듣기 문항이면 음원이 있어야 출제할 수 있다. 러너가 GITHUB_TOKEN 으로 한 푸시는
+  # 다른 워크플로를 깨우지 못하므로(깃허브 정책) 여기서 직접 불러 준다.
+  # 음원은 항상 한 번 돌린다. 주문이 여러 건이면 듣기·읽기가 섞여 들어오고,
+  # 소리가 필요 없으면 tts 배치가 "만들 것 없음"으로 금방 끝나므로 손해가 없다.
+  # (읽기만 만들어졌다면 tts 가 커밋 없이 끝나고, 아래 deploy 가 배포를 맡는다)
+  audio:
+    needs: generate
+    if: ${{ !cancelled() && needs.generate.outputs.pushed == 'true' }}
+    uses: ./.github/workflows/generate-tts.yml
+    secrets: inherit
+
+  # 음원 단계가 끝난 뒤 배포한다. 음원이 새로 생겼으면 그쪽에서 이미 배포하지만,
+  # 읽기만 만들어진 경우엔 여기서만 배포가 일어난다(중복 배포는 concurrency 로 합쳐진다).
+  deploy:
+    needs: [generate, audio]
+    if: ${{ !cancelled() && needs.generate.outputs.pushed == 'true' }}
+    uses: ./.github/workflows/deploy-jumplish.yml
+    secrets: inherit

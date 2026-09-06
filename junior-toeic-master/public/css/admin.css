@@ -1,0 +1,276 @@
+/* 점프리시 관리자 — 학생 앱과 달리 데스크톱에서 쓴다(원장·운영자가 PC로 계정을 만든다).
+   색·글꼴은 학생 앱과 같은 토큰을 쓰되, 레이아웃은 넓은 화면 기준이다. */
+
+@font-face {
+  font-family: "KoPubWorldDotum";
+  src: url("/fonts/KoPubWorldDotumLight.woff2") format("woff2");
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "KoPubWorldDotum";
+  src: url("/fonts/KoPubWorldDotumMedium.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "KoPubWorldDotum";
+  src: url("/fonts/KoPubWorldDotumBold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+
+:root {
+  --primary: #5b5bf5;
+  --primary-soft: #eceaff;
+  --grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
+  --ok: #12a06a;
+  --ok-soft: #dcf7ec;
+  --warn: #b07d12;
+  --warn-soft: #fdf3dd;
+  --bad: #e0455a;
+  --bad-soft: #ffe9ec;
+  --bg: #f2f3fb;
+  --surface: #ffffff;
+  --surface-2: #f0f1fa;
+  --text: #171a2b;
+  --muted: #6b7392;
+  --line: #e4e6f2;
+  --radius: 16px;
+  --shadow: 0 2px 18px -10px rgba(20, 22, 43, .3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "KoPubWorldDotum", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg); color: var(--text); font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+input, select, textarea { font: inherit; color: inherit; }
+
+/* ── 뼈대 ── */
+.top {
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  padding: 0 24px; height: 60px; display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 10;
+}
+.mark { width: 30px; height: 30px; border-radius: 9px; background: var(--grad); display: grid; place-items: center; }
+.mark svg { width: 18px; height: 13px; }
+.top h1 { font-size: 1.02rem; font-weight: 700; letter-spacing: -.03em; }
+.top .who { margin-left: auto; font-size: .84rem; color: var(--muted); font-weight: 700; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 22px 24px 60px; }
+
+/* ── 탭 ── */
+.tabs { display: flex; gap: 6px; margin-bottom: 18px; }
+.tabs button {
+  padding: 9px 16px; border-radius: 999px; font-size: .88rem; font-weight: 700;
+  color: var(--muted); background: var(--surface);
+  border: 1px solid var(--line);
+}
+.tabs button[aria-current] { background: var(--primary); color: #fff; border-color: var(--primary); }
+.tabs .badge {
+  display: inline-grid; place-items: center; min-width: 19px; height: 19px; padding: 0 5px;
+  margin-left: 6px; border-radius: 999px; background: var(--bad); color: #fff;
+  font-size: .68rem; font-weight: 800;
+}
+.tabs button[aria-current] .badge { background: rgba(255,255,255,.28); }
+
+/* ── 카드 ── */
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 18px; box-shadow: var(--shadow); margin-bottom: 14px;
+}
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.card-title { font-size: .98rem; font-weight: 700; letter-spacing: -.02em; }
+.card-note { font-size: .8rem; color: var(--muted); font-weight: 500; }
+.card-head .card-note { margin-left: auto; }
+
+/* ── 목록 ── */
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: flex; align-items: center; gap: 14px; padding: 11px 0;
+  border-bottom: 1px solid var(--line); text-align: left; width: 100%;
+}
+.row:last-child { border-bottom: 0; }
+button.row:hover { background: var(--surface-2); }
+.row-main { flex: 1; min-width: 0; }
+.row-t { display: block; font-size: .92rem; font-weight: 700; }
+.row-s { display: block; font-size: .78rem; color: var(--muted); margin-top: 2px; }
+.row-num { font-size: .82rem; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip {
+  font-size: .7rem; font-weight: 800; padding: 3px 8px; border-radius: 999px;
+  background: var(--primary-soft); color: var(--primary); white-space: nowrap;
+}
+.chip.k-audio { background: var(--warn-soft); color: var(--warn); }
+.chip.k-image { background: var(--primary-soft); color: var(--primary); }
+.chip.k-hard  { background: var(--surface-2); color: var(--muted); }
+.chip.k-answer{ background: var(--bad-soft); color: var(--bad); }
+.chip.k-etc   { background: var(--surface-2); color: var(--muted); }
+.chip.done    { background: var(--ok-soft); color: var(--ok); }
+
+/* ── 버튼 ── */
+.btn {
+  padding: 9px 15px; border-radius: 11px; font-size: .86rem; font-weight: 700;
+  background: var(--primary); color: #fff;
+}
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
+.btn.small { padding: 6px 11px; font-size: .8rem; border-radius: 9px; }
+
+/* ── 폼 ── */
+.form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field span { font-size: .76rem; font-weight: 700; color: var(--muted); }
+.field input, .field select, .field textarea {
+  padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--surface); min-width: 150px;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+.field textarea { min-width: 320px; resize: vertical; }
+.msg { font-size: .84rem; font-weight: 700; margin-top: 10px; }
+.msg.bad { color: var(--bad); }
+.msg.ok { color: var(--ok); }
+.empty { color: var(--muted); font-size: .86rem; padding: 14px 0; text-align: center; }
+
+/* ── 로그인 ── */
+.login { max-width: 380px; margin: 90px auto; }
+.login .field { width: 100%; }
+.login .field input { width: 100%; }
+.login .btn { width: 100%; margin-top: 4px; }
+
+/* ── 발급 결과 (PIN은 여기서 한 번만 보인다) ── */
+.back {
+  position: fixed; inset: 0; background: rgba(16, 18, 34, .5);
+  display: grid; place-items: center; padding: 20px; z-index: 50;
+}
+.modal {
+  background: var(--surface); border-radius: 18px; padding: 22px;
+  width: min(560px, 100%); max-height: 84vh; overflow: auto; box-shadow: 0 20px 60px -20px rgba(0,0,0,.4);
+}
+.modal h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
+.warn-box {
+  background: var(--warn-soft); color: var(--warn); border-radius: 11px;
+  padding: 10px 13px; font-size: .82rem; font-weight: 700; margin: 12px 0;
+}
+table.pins { width: 100%; border-collapse: collapse; margin-top: 6px; }
+table.pins th, table.pins td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: .88rem; }
+table.pins th { font-size: .74rem; color: var(--muted); font-weight: 700; }
+table.pins td.pin { font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: .06em; }
+.modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+.modal-actions .btn { flex: 1; }
+
+@media (max-width: 640px) {
+  .wrap { padding: 16px 14px 50px; }
+  .field textarea, .field input, .field select { min-width: 0; width: 100%; }
+  .form { flex-direction: column; align-items: stretch; }
+}
+
+/* ── 가족 상세: 아이별 카드 (2026-08-13) ──
+   아이가 여럿이면 학습률·학습 상황·능력을 아이 단위로 나눠 보여준다.
+   막대 눈금(.sbar 계열)은 학생·부모 화면과 같은 모양 — 세 화면이 같은 숫자를 같은 그림으로 말한다. */
+.kid-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .84rem; color: var(--muted); }
+.kid-stats b { color: var(--text); font-variant-numeric: tabular-nums; }
+.kid-axes { margin-top: 10px; }
+.sbar { display: flex; align-items: center; gap: 10px; margin-top: 7px; }
+.sbl { flex: none; width: 66px; font-size: .79rem; font-weight: 700; }
+.sbt { flex: 1; height: 8px; border-radius: 999px; background: var(--primary-soft); overflow: hidden; }
+.sbf { display: block; height: 100%; border-radius: 999px; background: var(--primary); }
+.sbn { flex: none; text-align: right; font-size: .79rem; font-weight: 800; color: var(--primary); }
+.sbn.dim { font-weight: 600; color: var(--muted); }
+
+/* ── 문항 탭 (2026-08-23) ── */
+/* 얇은 축은 빨간 막대로 — 이 화면에서 가장 먼저 눈에 들어와야 하는 정보다 */
+.sbf.low { background: var(--bad, #e0455a); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip.thin {
+  cursor: pointer; border: 1px solid var(--line, #e6e8f6);
+  background: var(--surface-2, #f0f1fa); font-weight: 700;
+}
+.chip.thin:hover { border-color: var(--primary, #5b5bf5); color: var(--primary, #5b5bf5); }
+.chip.s-draft   { background: #fdf3dd; color: #8a6412; }
+.chip.s-active  { background: #dcf7ec; color: #0f5f3f; }
+.chip.s-retired { background: #eceef5; color: #6b7193; }
+.chip.good      { background: #12a06a; color: #fff; }
+
+/* 문항 찾아보기 줄 */
+.qfilter { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.qfilter select, .qfilter input {
+  font: inherit; padding: 8px 10px; min-height: 38px;
+  border: 1px solid var(--line, #e6e8f6); border-radius: 9px; background: #fff;
+}
+.qfilter input { flex: 1; min-width: 140px; }
+
+/* 문항 하나 보기 — 아이 화면과 같은 순서로 읽히게 */
+.qpassage {
+  background: var(--surface-2, #f0f1fa); border-radius: 11px; padding: 11px 13px;
+  font-size: .88rem; line-height: 1.62; white-space: pre-wrap; margin-top: 9px;
+}
+.qcap { display: block; font-size: .72rem; font-weight: 800; color: var(--muted, #6b7193); margin-bottom: 4px; }
+.qstem { font-size: .95rem; font-weight: 700; margin-top: 12px; line-height: 1.5; }
+.qchoice {
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  padding: 9px 11px; border: 1.5px solid var(--line, #e6e8f6);
+  border-radius: 11px; margin-top: 7px; font-size: .89rem;
+}
+.qchoice.good, .qimg.good { border-color: #12a06a; background: #dcf7ec; }
+.qletter {
+  flex: none; width: 22px; height: 22px; border-radius: 999px;
+  background: var(--surface-2, #f0f1fa); color: var(--muted, #6b7193);
+  font-size: .72rem; font-weight: 800; display: grid; place-items: center;
+}
+.qtext { flex: 1; min-width: 0; }
+.qimgs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.qimg { position: relative; border: 2px solid var(--line, #e6e8f6); border-radius: 11px; overflow: hidden; }
+.qimg img { width: 100%; display: block; aspect-ratio: 4 / 3; object-fit: cover; }
+.qimg .qletter { position: absolute; top: 6px; left: 6px; background: rgba(255,255,255,.92); }
+.qimg .chip { position: absolute; left: 6px; bottom: 6px; }
+.qline { margin-top: 11px; }
+.qline p { font-size: .87rem; line-height: 1.58; }
+
+/* 만들기 폼 — 보기마다 정답 표시·오답 이유·실수 유형이 한 묶음 */
+.qform-choices { margin-top: 4px; }
+.qform-choice {
+  display: grid; gap: 6px; padding: 10px; margin-top: 8px;
+  border: 1px solid var(--line, #e6e8f6); border-radius: 11px;
+  grid-template-columns: auto 1fr; align-items: center;
+}
+.qform-choice input[data-c], .qform-choice input[data-w], .qform-choice select {
+  grid-column: 2; font: inherit; padding: 8px 10px; min-height: 38px;
+  border: 1px solid var(--line, #e6e8f6); border-radius: 9px; width: 100%;
+}
+.qform-ans { grid-row: 1 / span 3; display: grid; place-items: center; gap: 3px; padding-right: 8px; }
+.qform-ans input { width: 20px; height: 20px; }
+.qform-ans span { font-size: .72rem; font-weight: 800; color: var(--muted, #6b7193); }
+.qform-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.qform-row .field { flex: 1; min-width: 150px; }
+.qform-row input { flex: 1; min-width: 140px; }
+
+/* 저장 전 검사 결과 — 걸린 것을 사람 말로 */
+.qcheck { margin-top: 12px; }
+.qcheck-t { font-size: .8rem; font-weight: 800; color: #8a6412; }
+.qcheck ul { margin: 6px 0 0; padding-left: 18px; }
+.qcheck li { font-size: .82rem; line-height: 1.55; color: #8a6412; }
+
+/* 오늘 학습한 아이는 눈에 띄게, 아직인 아이는 흐리게 */
+.hot { color: var(--primary, #5b5bf5); }
+.kid-stats .dim { color: var(--muted, #6b7193); }
+
+/* ── 부족한 문제 채우기 — 이 화면의 주인공 버튼 ── */
+.fill-card { border-color: var(--primary, #5b5bf5); }
+.btn.big {
+  width: 100%; min-height: 52px; font-size: .98rem; font-weight: 800;
+  margin-top: 4px; border-radius: 14px;
+}
+.fill-draft {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line, #e6e8f6);
+  font-size: .86rem;
+}
+.fill-draft > span { flex: 1; min-width: 120px; }
+/* 문장 안에 섞이는 링크형 버튼 (직접 쓰기) */
+.linklike {
+  font: inherit; color: var(--primary, #5b5bf5); font-weight: 800;
+  text-decoration: underline; padding: 2px 1px; background: none; border: 0; cursor: pointer;
+}
+
+/* 축 막대 옆의 '준비 중' 몫 — 만들어 뒀지만 아직 출제 안 된 수 */
+.sbd { color: var(--primary, #5b5bf5); font-size: .78em; margin-left: 3px; }

@@ -1,0 +1,2162 @@
+[
+  {
+    "type": "single",
+    "tmp_id": "L2-0001",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's on the desk.",
+      "It's blue.",
+      "Yes, I do."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "색깔을 묻는 질문이라 'It's blue.'가 정답이에요. 'It's on the desk.'는 어디에 있는지 물을 때 하는 대답이라 안 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "What color is your backpack?",
+    "status": "active",
+    "evidence": "What color",
+    "why_not": {
+      "0": "어디 있는지 답했어요. 색을 물었어요",
+      "2": "예·아니오로 답할 질문이 아니에요"
+    },
+    "key_expr": {
+      "en": "What color ~?",
+      "ko": "무슨 색이야?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "네 책가방은 무슨 색이야?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0002",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "He's ten years old.",
+      "In his room.",
+      "Yes, he is."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'How old'는 나이를 묻는 말이라 열 살이라는 답이 정답이에요. 'Yes, he is.'는 나이를 말하지 않아서 오답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "How old is your brother?",
+    "status": "active",
+    "evidence": "How old",
+    "why_not": {
+      "1": "어디 있는지 답이에요",
+      "2": "나이를 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "How old ~?",
+      "ko": "몇 살이야?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "네 남동생(형)은 몇 살이야?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0003",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's by the door.",
+      "It's raining now.",
+      "Yes, it is."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'Where'는 장소를 묻는 말이라 문 옆에 있다는 답이 정답이에요. 'It's raining now.'는 우산과 관련 있어 보이지만 장소가 아니라서 오답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "Where is your umbrella?",
+    "status": "active",
+    "evidence": "Where",
+    "why_not": {
+      "1": "날씨 이야기예요. 장소를 물었어요",
+      "2": "장소를 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "Where is ~?",
+      "ko": "~는 어디 있어?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "네 우산 어디 있어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0004",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "They're yellow.",
+      "Three, please.",
+      "Yes, I love them."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'Do you...?'로 물으면 Yes나 No로 답해요. 'They're yellow.'는 바나나 색이라 관련 있어 보여도 좋아하는지 답하지 않았어요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Do you like bananas?",
+    "status": "active",
+    "evidence": "Do you like",
+    "why_not": {
+      "0": "색깔을 말했어요",
+      "1": "개수를 말했어요"
+    },
+    "key_expr": {
+      "en": "Do you like ~?",
+      "ko": "~ 좋아해?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "너 바나나 좋아해?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0005",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "At four thirty.",
+      "In the art room.",
+      "It was really fun."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'When'은 시간을 묻는 말이라 네 시 반이라는 답이 정답이에요. 'In the art room.'은 장소를 말해서 헷갈리기 쉬운 오답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "When does the art class begin?",
+    "status": "active",
+    "evidence": "When",
+    "why_not": {
+      "1": "장소 답이에요. 때를 물었어요",
+      "2": "어땠는지 말했어요"
+    },
+    "key_expr": {
+      "en": "When does it begin?",
+      "ko": "언제 시작해?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "미술 수업은 언제 시작해?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0006",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Last Sunday.",
+      "At the bakery.",
+      "My grandmother did."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'Who'는 누가 했는지 묻는 말이라 할머니가 만들었다는 답이 정답이에요. 'At the bakery.'는 장소라서 사람을 묻는 질문과 맞지 않아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "Who made this delicious cake?",
+    "status": "active",
+    "evidence": "Who made",
+    "why_not": {
+      "0": "언제인지 답했어요",
+      "1": "어디인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Who made ~?",
+      "ko": "누가 만들었어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "이 맛있는 케이크는 누가 만들었어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0007",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "At eight o'clock.",
+      "I take the bus.",
+      "It's near the park."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'How'는 방법을 묻는 말이라 버스를 탄다는 답이 정답이에요. 'At eight o'clock.'은 가는 시간이라 방법이 아니에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "How do you go to school?",
+    "status": "active",
+    "evidence": "How do you go",
+    "why_not": {
+      "0": "몇 시인지 답했어요",
+      "2": "어디인지 답했어요"
+    },
+    "key_expr": {
+      "en": "How do you go ~?",
+      "ko": "어떻게 가?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "너는 학교에 어떻게 가?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0008",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "They're size seven.",
+      "They're my sister's.",
+      "At the shoe store."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'Whose'는 누구의 것인지 묻는 말이에요. 'They're size seven.'은 신발 크기를 말해서 주인이 누구인지 답하지 않았어요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.shopping"
+    ],
+    "accent": "AU",
+    "tts_script": "Whose sneakers are these?",
+    "status": "active",
+    "evidence": "Whose",
+    "why_not": {
+      "0": "크기를 말했어요",
+      "2": "어디인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Whose ~ are these?",
+      "ko": "이거 누구 거야?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "이 운동화 누구 거야?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0009",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "No, thank you. I'm full.",
+      "It's on the stove.",
+      "I made it myself."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "수프를 더 먹겠냐고 권하는 말에는 받아들이거나 사양하는 답이 맞아요. 'It's on the stove.'는 수프가 있는 곳이라 어울리지 않아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Would you like some more soup?",
+    "status": "active",
+    "evidence": "Would you like",
+    "why_not": {
+      "1": "어디 있는지 답했어요",
+      "2": "누가 만들었는지 답했어요"
+    },
+    "key_expr": {
+      "en": "Would you like ~?",
+      "ko": "~ 좀 더 드릴까요?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "수프 좀 더 드실래요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0010",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Three stamps, please.",
+      "Tomorrow morning.",
+      "At the post office."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "우표를 어디서 사는지 물었으니 우체국이라는 장소가 정답이에요. 'Three stamps, please.'는 우표라는 말만 따라 한 함정이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Where can I buy stamps?",
+    "status": "active",
+    "evidence": "Where can I buy",
+    "why_not": {
+      "0": "살 때 하는 말이지 장소가 아니에요",
+      "1": "언제인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Where can I buy ~?",
+      "ko": "어디서 살 수 있어?"
+    },
+    "miss_type": {
+      "0": "M.swap",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "우표는 어디서 살 수 있어요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0011",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "In my bedroom.",
+      "Yes, I'm tired.",
+      "Around seven o'clock."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'What time'은 몇 시인지 묻는 말이라 일곱 시쯤이라는 답이 정답이에요. 'In my bedroom.'은 일어나는 장소라서 시간이 아니에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "What time do you usually get up?",
+    "status": "active",
+    "evidence": "What time",
+    "why_not": {
+      "0": "어디인지 답했어요",
+      "1": "시각을 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "What time ~?",
+      "ko": "몇 시에 ~해?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.yesno"
+    },
+    "translation_ko": "너는 보통 몇 시에 일어나?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0012",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I read two books.",
+      "No, it's closed.",
+      "On the second floor."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'Is...?'로 물으면 Yes나 No로 답해요. 'I read two books.'는 도서관과 관련 있어 보이지만 문을 여는지 답하지 않았어요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "Is the library open on Sundays?",
+    "status": "active",
+    "evidence": "Is the library open",
+    "why_not": {
+      "0": "무엇을 했는지 답했어요",
+      "2": "어디인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Is it open on ~?",
+      "ko": "~에 문 열어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "도서관은 일요일에 여나요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0013",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "At nine fifteen.",
+      "Yes, I was.",
+      "I missed the bus."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'Why'는 이유를 묻는 말이라 버스를 놓쳤다는 답이 정답이에요. 'Yes, I was.'는 이유를 말하지 않아서 오답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Why were you late this morning?",
+    "status": "active",
+    "evidence": "Why",
+    "why_not": {
+      "0": "몇 시인지 답했어요",
+      "1": "까닭을 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "Why were you late?",
+      "ko": "왜 늦었어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.yesno"
+    },
+    "translation_ko": "너 오늘 아침에 왜 늦었어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0014",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Two dollars a bag.",
+      "They're very sweet.",
+      "About five of them."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'How much'는 값을 묻는 말이라 '한 봉지에 2달러'가 정답이에요. 'About five'는 개수라서 함정이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.shopping"
+    ],
+    "accent": "UK",
+    "tts_script": "How much are these oranges?",
+    "status": "active",
+    "evidence": "How much",
+    "why_not": {
+      "1": "맛 이야기예요. 값을 물었어요",
+      "2": "개수를 말했어요"
+    },
+    "key_expr": {
+      "en": "How much ~?",
+      "ko": "얼마예요?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "이 오렌지들 얼마예요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0015",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "About two hours.",
+      "Every thirty minutes.",
+      "From platform three."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'How long'은 걸리는 시간을 묻는 말이에요. 'Every thirty minutes'는 얼마나 자주 오는지라서 달라요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.travel"
+    ],
+    "accent": "AU",
+    "tts_script": "How long does the train ride take?",
+    "status": "active",
+    "evidence": "How long",
+    "why_not": {
+      "1": "얼마나 자주 오는지 답했어요",
+      "2": "어디서 타는지 답했어요"
+    },
+    "key_expr": {
+      "en": "How long does it take?",
+      "ko": "얼마나 걸려?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "기차로 얼마나 걸려요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0016",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's a nice view.",
+      "Sure, no problem.",
+      "In the living room."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "창문을 닫아 달라는 부탁이라 알겠다고 하는 답이 정답이에요. 'It's a nice view.'는 창밖 이야기라 부탁에 대한 답이 아니에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "Could you close the window, please?",
+    "status": "active",
+    "evidence": "Could you",
+    "why_not": {
+      "0": "부탁에 대한 대답이 아니에요",
+      "2": "어디인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Could you ~, please?",
+      "ko": "~해 주시겠어요?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "창문 좀 닫아 주시겠어요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0017",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Let's ask the teacher for help.",
+      "Math class starts at nine.",
+      "I lost my eraser."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "숙제가 어렵다는 말에는 도움을 구하자는 답이 자연스러워요. 'Math class starts at nine.'은 수학이라는 말만 같고 내용은 어울리지 않아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "This math homework is really difficult.",
+    "status": "active",
+    "evidence": "really difficult",
+    "why_not": {
+      "1": "수업 시각 이야기로 새요",
+      "2": "갑자기 다른 이야기를 꺼냈어요"
+    },
+    "key_expr": {
+      "en": "ask ~ for help",
+      "ko": "~에게 도움을 청하다"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "이 수학 숙제 정말 어렵다."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0018",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I do.",
+      "It rains a lot.",
+      "Fall, because it's cool."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "둘 중 하나를 고르는 질문이라 가을이라고 고른 답이 정답이에요. 고르는 질문에는 'Yes, I do.'처럼 Yes/No로 답할 수 없어요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Which do you like better, spring or fall?",
+    "status": "active",
+    "evidence": "Which do you like better",
+    "why_not": {
+      "0": "둘 중 하나를 골라 말해야 해요",
+      "1": "날씨 이야기로 새요"
+    },
+    "key_expr": {
+      "en": "Which do you like better?",
+      "ko": "둘 중 뭐가 더 좋아?"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "봄이랑 가을 중에 어느 쪽이 더 좋아?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0019",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Every other day.",
+      "Jinho said he would.",
+      "They're growing well."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "누가 물을 줄 건지 물었으니 진호가 하기로 했다는 답이 정답이에요. 'Every other day.'는 얼마나 자주 하는지라 사람이 아니에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Who's going to water the plants this week?",
+    "status": "active",
+    "evidence": "Who's going to",
+    "why_not": {
+      "0": "얼마나 자주인지 답했어요",
+      "2": "잘 자란다는 이야기예요"
+    },
+    "key_expr": {
+      "en": "Who's going to ~?",
+      "ko": "누가 ~할 거야?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "이번 주에 누가 화분에 물 줄 거야?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0020",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Two glasses of water, please.",
+      "They're on the kitchen table.",
+      "I watched a movie."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "안경을 봤냐고 물었으니 '식탁 위에 있어'가 자연스러워요. 'Two glasses of water'는 같은 말만 따라 한 함정이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "Have you seen my glasses anywhere?",
+    "status": "active",
+    "evidence": "Have you seen my glasses",
+    "why_not": {
+      "0": "glasses를 물잔으로 잘못 들었어요",
+      "2": "무엇을 했는지 답했어요"
+    },
+    "key_expr": {
+      "en": "Have you seen ~?",
+      "ko": "~ 못 봤어?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "내 안경 어디서 못 봤어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0021",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "By bus, usually.",
+      "Five tickets, please.",
+      "I'd better hurry, then."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "버스가 곧 떠난다는 말에는 서둘러야겠다는 답이 자연스러워요. 'Five tickets, please.'는 five라는 숫자만 따라 한 함정이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "The school bus leaves in five minutes.",
+    "status": "active",
+    "evidence": "in five minutes",
+    "why_not": {
+      "0": "어떻게 가는지 답했어요",
+      "1": "five만 같고 뜻이 달라요"
+    },
+    "key_expr": {
+      "en": "leave in five minutes",
+      "ko": "5분 뒤에 떠나다"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.echo"
+    },
+    "translation_ko": "통학 버스가 5분 뒤에 출발해."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0022",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Good idea. The room is free then.",
+      "Because I was hungry.",
+      "No, I didn't practice."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'Why don't we~?'는 이유를 묻는 게 아니라 '같이 하자'는 제안이에요. 'Because~'는 이유로 착각하게 만드는 함정이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Why don't we practice after lunch instead?",
+    "status": "active",
+    "evidence": "Why don't we",
+    "why_not": {
+      "1": "까닭을 묻는 게 아니라 하자는 제안이에요",
+      "2": "지난 일이 아니라 앞으로 할 일이에요"
+    },
+    "key_expr": {
+      "en": "Why don't we ~?",
+      "ko": "우리 ~하는 게 어때?"
+    },
+    "miss_type": {
+      "1": "M.swap",
+      "2": "M.swap"
+    },
+    "translation_ko": "그러지 말고 점심 먹고 연습하는 게 어때?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0023",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "About forty minutes.",
+      "From the north dock.",
+      "Just twice a day."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'How often'은 얼마나 자주인지 묻는 말이에요. 'About forty minutes'는 걸리는 시간이라 달라요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.travel"
+    ],
+    "accent": "AU",
+    "tts_script": "How often does the ferry run in winter?",
+    "status": "active",
+    "evidence": "How often",
+    "why_not": {
+      "0": "걸리는 시간을 답했어요",
+      "1": "어디서 타는지 답했어요"
+    },
+    "key_expr": {
+      "en": "How often ~?",
+      "ko": "얼마나 자주?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "겨울에는 배가 얼마나 자주 다녀요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0024",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, tomatoes are red.",
+      "No, I asked for the salad.",
+      "I'll pay by card."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "시키지 않았으면 Didn't you~?에도 No라고 답해요. 'Yes, tomatoes are red'는 토마토라는 말만 따라 한 함정이에요.",
+    "difficulty_label": 5,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Didn't you order the tomato pasta?",
+    "status": "active",
+    "evidence": "Didn't you order",
+    "why_not": {
+      "0": "tomato만 같고 답이 아니에요",
+      "2": "계산 이야기로 새요"
+    },
+    "key_expr": {
+      "en": "Didn't you order ~?",
+      "ko": "~ 시키지 않았어?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "너 토마토 파스타 시키지 않았어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0025",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's Wednesday.",
+      "It's ten o'clock.",
+      "Yes, it is."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "무슨 요일이냐고 물었으니 요일로 답해야 해요. 'ten o'clock'은 몇 시인지 물을 때 답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "What day is it today?",
+    "status": "active",
+    "evidence": "What day",
+    "why_not": {
+      "1": "몇 시인지 답했어요. 요일을 물었어요",
+      "2": "예·아니오로 답할 질문이 아니에요"
+    },
+    "key_expr": {
+      "en": "What day is it?",
+      "ko": "오늘 무슨 요일이야?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "오늘 무슨 요일이야?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0026",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I'm eleven.",
+      "I live in Busan.",
+      "By bus."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "어디 사냐고 물었으니 사는 곳으로 답해요. 'I'm eleven'은 나이를 물을 때 답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Where do you live?",
+    "status": "active",
+    "evidence": "Where do you live",
+    "why_not": {
+      "0": "나이를 답했어요. 사는 곳을 물었어요",
+      "2": "어떻게 가는지 물을 때 답이에요"
+    },
+    "key_expr": {
+      "en": "Where do you live?",
+      "ko": "어디 살아?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "너 어디 살아?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0027",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "In the pool.",
+      "It's very deep.",
+      "Yes, a little."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'할 수 있니?'라고 물었으니 예·아니오로 답해요. 'a little'은 '조금'이라는 뜻이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Can you swim?",
+    "status": "active",
+    "evidence": "Can you swim",
+    "why_not": {
+      "0": "어디서 하는지 답했어요",
+      "1": "물이 깊다는 다른 이야기예요"
+    },
+    "key_expr": {
+      "en": "Yes, a little.",
+      "ko": "응, 조금."
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "M.notsaid"
+    },
+    "translation_ko": "너 수영할 줄 알아?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0028",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Three.",
+      "They're new.",
+      "In my pencil case."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "몇 자루냐고 물었으니 숫자로 답해요. 'In my pencil case'는 어디 있는지 물을 때 답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "How many pencils do you have?",
+    "status": "active",
+    "evidence": "How many pencils",
+    "why_not": {
+      "1": "새것이라는 다른 이야기예요",
+      "2": "어디 있는지 답했어요"
+    },
+    "key_expr": {
+      "en": "How many ~?",
+      "ko": "몇 개야?"
+    },
+    "miss_type": {
+      "1": "M.notsaid",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "너 연필 몇 자루 있어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0029",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I did my homework.",
+      "I'm reading a comic book.",
+      "Yes, I am."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "지금 뭐 하냐고 물었으니 지금 하는 일로 답해요. 'I did'는 이미 끝난 일이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "What are you doing now?",
+    "status": "active",
+    "evidence": "What are you doing now",
+    "why_not": {
+      "0": "이미 끝난 일을 답했어요",
+      "2": "예·아니오로 답할 질문이 아니에요"
+    },
+    "key_expr": {
+      "en": "What are you doing?",
+      "ko": "뭐 하고 있어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "너 지금 뭐 하고 있어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0030",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Every Monday.",
+      "In the classroom.",
+      "It's mine."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "누구 차례냐고 물었으니 사람으로 답해요. 'It's mine'은 '내 차례야'라는 뜻이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Whose turn is it to clean the board?",
+    "status": "active",
+    "evidence": "Whose turn",
+    "why_not": {
+      "0": "언제인지 답했어요",
+      "1": "어디인지 답했어요. 누구인지 물었어요"
+    },
+    "key_expr": {
+      "en": "It's my turn.",
+      "ko": "내 차례야."
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "이번엔 누가 칠판 닦을 차례야?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0031",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It was great, thanks.",
+      "Next Saturday.",
+      "I go to the park."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "주말이 어땠냐고 물었으니 느낌으로 답해요. 'Next Saturday'는 언제인지 답한 거예요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "How was your weekend?",
+    "status": "active",
+    "evidence": "How was your weekend",
+    "why_not": {
+      "1": "언제인지 답했어요. 어땠는지 물었어요",
+      "2": "늘 하는 일을 답했어요"
+    },
+    "key_expr": {
+      "en": "How was ~?",
+      "ko": "~ 어땠어?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "주말 어땠어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0032",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's red and white.",
+      "It's raining outside.",
+      "At the bus stop."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "왜 들고 있냐고 물었으니 까닭으로 답해요. 색을 말한 건 모양을 물을 때 답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Why are you carrying an umbrella?",
+    "status": "active",
+    "evidence": "Why are you carrying",
+    "why_not": {
+      "0": "색을 답했어요. 까닭을 물었어요",
+      "2": "장소를 답했어요"
+    },
+    "key_expr": {
+      "en": "Why are you ~ing?",
+      "ko": "왜 ~하고 있어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "너 왜 우산을 들고 다녀?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0033",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "At the bakery.",
+      "It's delicious.",
+      "Cheese, please."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "둘 중에 고르라고 했으니 하나를 골라 답해요. 'delicious'는 맛이 어떤지 말한 거예요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Which sandwich do you want, ham or cheese?",
+    "status": "active",
+    "evidence": "ham or cheese",
+    "why_not": {
+      "0": "장소를 답했어요",
+      "1": "맛을 답했어요. 고르라고 물었어요"
+    },
+    "key_expr": {
+      "en": "~ or ~?",
+      "ko": "~ 아니면 ~?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "햄이랑 치즈 중에 어떤 샌드위치 먹을래?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0034",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "He's a nurse.",
+      "He's fine, thank you.",
+      "He does his best."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "무슨 일을 하시냐고 물었으니 하는 일로 답해요. 'He's fine'은 안부를 물을 때 답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.work"
+    ],
+    "accent": "AU",
+    "tts_script": "What does your father do?",
+    "status": "active",
+    "evidence": "What does your father do",
+    "why_not": {
+      "1": "안부를 답했어요. 하는 일을 물었어요",
+      "2": "do만 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "What does ~ do?",
+      "ko": "~은 무슨 일 하셔?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.echo"
+    },
+    "translation_ko": "너희 아버지는 무슨 일 하셔?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0035",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's very old.",
+      "About ten minutes on foot.",
+      "At eight thirty."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "얼마나 머냐고 물었으니 거리나 걸리는 시간으로 답해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "How far is the school from here?",
+    "status": "active",
+    "evidence": "How far",
+    "why_not": {
+      "0": "학교가 오래됐다는 다른 이야기예요",
+      "2": "몇 시인지 답했어요"
+    },
+    "key_expr": {
+      "en": "How far is ~?",
+      "ko": "~까지 얼마나 멀어?"
+    },
+    "miss_type": {
+      "0": "M.notsaid",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "여기서 학교까지 얼마나 멀어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0036",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "He plays very well.",
+      "It's on the field.",
+      "I'd love to."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "같이 하겠냐고 물었으니 하겠다·말겠다로 답해요. 'I'd love to'는 '정말 좋지'라는 뜻이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Do you want to join our soccer team?",
+    "status": "active",
+    "evidence": "Do you want to join",
+    "why_not": {
+      "0": "다른 사람 이야기를 했어요",
+      "1": "장소를 답했어요"
+    },
+    "key_expr": {
+      "en": "I'd love to.",
+      "ko": "정말 좋지."
+    },
+    "miss_type": {
+      "0": "M.notsaid",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "우리 축구팀에 들어올래?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0037",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "On Thursday afternoon.",
+      "It's really fun.",
+      "With Ms. Kim."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "언제냐고 물었으니 때로 답해요. 'With Ms. Kim'은 누구와 하는지 물을 때 답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "When is your piano lesson?",
+    "status": "active",
+    "evidence": "When is your piano lesson",
+    "why_not": {
+      "1": "재미있다는 느낌을 답했어요",
+      "2": "누구와 하는지 답했어요"
+    },
+    "key_expr": {
+      "en": "When is ~?",
+      "ko": "~은 언제야?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "피아노 레슨은 언제야?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0038",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's a long trip.",
+      "No, go ahead.",
+      "I took the bus."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "자리가 비었냐고 물었어요. 'go ahead'는 '앉으세요'라는 뜻이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.travel"
+    ],
+    "accent": "US",
+    "tts_script": "Excuse me, is this seat taken?",
+    "status": "active",
+    "evidence": "is this seat taken",
+    "why_not": {
+      "0": "여행이 길다는 다른 이야기예요",
+      "2": "taken만 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "Is this seat taken?",
+      "ko": "여기 자리 있나요?"
+    },
+    "miss_type": {
+      "0": "M.notsaid",
+      "2": "A.echo"
+    },
+    "translation_ko": "실례합니다, 이 자리 자리 있나요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0039",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "In the shoe shop.",
+      "It's on sale.",
+      "A medium, please."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "어떤 크기가 필요하냐고 물었으니 크기로 답해요. 'medium'은 중간 크기예요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.shopping"
+    ],
+    "accent": "UK",
+    "tts_script": "What size do you need?",
+    "status": "active",
+    "evidence": "What size",
+    "why_not": {
+      "0": "장소를 답했어요",
+      "1": "할인 중이라는 다른 이야기예요"
+    },
+    "key_expr": {
+      "en": "What size ~?",
+      "ko": "어떤 크기요?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "M.notsaid"
+    },
+    "translation_ko": "어떤 사이즈가 필요하세요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0040",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Not yet, thanks.",
+      "It was delicious.",
+      "Twice a week."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "주문할 준비가 됐냐고 물었어요. 'Not yet'은 '아직요'라는 뜻이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Are you ready to order?",
+    "status": "active",
+    "evidence": "ready to order",
+    "why_not": {
+      "1": "다 먹은 뒤에 할 말이에요",
+      "2": "얼마나 자주인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Not yet.",
+      "ko": "아직요."
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "주문하시겠어요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0041",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I mind it a lot.",
+      "Not at all.",
+      "It's a big window."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'열어 주시겠어요?'라는 부탁이에요. 'Not at all'은 '그럼요'라며 들어주는 말이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "Would you mind opening the window?",
+    "status": "active",
+    "evidence": "Would you mind opening",
+    "why_not": {
+      "0": "mind만 듣고 어색하게 답했어요",
+      "2": "창문 크기는 묻지 않았어요"
+    },
+    "key_expr": {
+      "en": "Would you mind ~ing?",
+      "ko": "~해 주시겠어요?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "M.notsaid"
+    },
+    "translation_ko": "창문 좀 열어 주시겠어요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0042",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It costs five dollars.",
+      "Yes, I found it.",
+      "Did you check your bag?"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "못 찾겠다는 말에는 도와주는 말로 답해요. 'Did you check~?'는 찾아보라는 뜻이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "I can't find my student ID card.",
+    "status": "active",
+    "evidence": "can't find",
+    "why_not": {
+      "0": "값은 이야기하지 않았어요",
+      "1": "못 찾는다는데 찾았다고 답했어요"
+    },
+    "key_expr": {
+      "en": "Did you check ~?",
+      "ko": "~ 확인해 봤어?"
+    },
+    "miss_type": {
+      "0": "M.notsaid",
+      "1": "M.opposite"
+    },
+    "translation_ko": "내 학생증을 못 찾겠어."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0043",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "About once a month.",
+      "They live in Daegu.",
+      "Last summer."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "얼마나 자주냐고 물었으니 횟수로 답해요. 'Last summer'는 언제였는지 답한 거예요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "How often do you visit your grandparents?",
+    "status": "active",
+    "evidence": "How often",
+    "why_not": {
+      "1": "사는 곳을 답했어요. 자주냐고 물었어요",
+      "2": "한 번 있었던 때를 답했어요"
+    },
+    "key_expr": {
+      "en": "How often ~?",
+      "ko": "얼마나 자주?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "너는 할머니 할아버지를 얼마나 자주 뵈러 가?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0044",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, we shall.",
+      "The subway is faster.",
+      "It's over there."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "둘 중 뭘 탈지 물었으니 하나를 골라 답해요. 까닭까지 말해 주면 더 자연스러워요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.travel"
+    ],
+    "accent": "AU",
+    "tts_script": "Shall we take the subway or a taxi?",
+    "status": "active",
+    "evidence": "subway or a taxi",
+    "why_not": {
+      "0": "고르라고 했는데 예로 답했어요",
+      "2": "위치를 답했어요"
+    },
+    "key_expr": {
+      "en": "Shall we ~?",
+      "ko": "우리 ~할까?"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "지하철 탈까, 택시 탈까?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0045",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "You're welcome.",
+      "I'm looking for it.",
+      "I stayed up late last night."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "피곤해 보인다는 말에는 까닭을 말해요. 'stayed up late'는 늦게까지 안 잤다는 뜻이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "You look tired today.",
+    "status": "active",
+    "evidence": "You look tired",
+    "why_not": {
+      "0": "고맙다고 할 때 하는 답이에요",
+      "1": "look만 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "stay up late",
+      "ko": "늦게까지 안 자다"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.echo"
+    },
+    "translation_ko": "너 오늘 피곤해 보인다."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0046",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's down the hall on your left.",
+      "Yes, I could.",
+      "I'll rest for a while."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "화장실이 어디냐고 물었으니 길을 알려줘요. 'down the hall'은 복도를 따라가라는 뜻이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.travel"
+    ],
+    "accent": "UK",
+    "tts_script": "Could you tell me where the restroom is?",
+    "status": "active",
+    "evidence": "where the restroom is",
+    "why_not": {
+      "1": "길을 물었는데 예로만 답했어요",
+      "2": "restroom의 rest만 듣고 답했어요"
+    },
+    "key_expr": {
+      "en": "Could you tell me ~?",
+      "ko": "~ 알려 주시겠어요?"
+    },
+    "miss_type": {
+      "1": "A.yesno",
+      "2": "A.echo"
+    },
+    "translation_ko": "화장실이 어디인지 알려 주시겠어요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0047",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Because I was busy.",
+      "Sounds good. What time?",
+      "I came by bike."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'~하는 게 어때?'라는 제안이에요. 좋다고 답하고 시간을 물으면 자연스러워요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Why don't you come over after school?",
+    "status": "active",
+    "evidence": "Why don't you come over",
+    "why_not": {
+      "0": "Why만 듣고 까닭을 답했어요",
+      "2": "이미 지난 일을 답했어요"
+    },
+    "key_expr": {
+      "en": "Why don't you ~?",
+      "ko": "~하는 게 어때?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "학교 끝나고 우리 집에 오지 않을래?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0048",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's a funny movie.",
+      "Yes, I know.",
+      "At seven fifteen."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "몇 시에 시작하는지 알려 달라는 말이에요. 'Yes, I know'만 하면 대답이 안 돼요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "Do you know when the movie starts?",
+    "status": "active",
+    "evidence": "when the movie starts",
+    "why_not": {
+      "0": "영화가 어떤지 답했어요",
+      "1": "안다고만 하고 시간을 안 알려줬어요"
+    },
+    "key_expr": {
+      "en": "Do you know when ~?",
+      "ko": "언제 ~인지 알아?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.yesno"
+    },
+    "translation_ko": "그 영화 언제 시작하는지 알아?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0049",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "About five more minutes.",
+      "It's not very long.",
+      "We waited yesterday."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "얼마나 더 기다리냐고 물었으니 남은 시간으로 답해요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.travel"
+    ],
+    "accent": "UK",
+    "tts_script": "How much longer do we have to wait?",
+    "status": "active",
+    "evidence": "How much longer",
+    "why_not": {
+      "1": "얼마인지 말하지 않아 답이 안 돼요",
+      "2": "어제 일을 답했어요"
+    },
+    "key_expr": {
+      "en": "How much longer ~?",
+      "ko": "얼마나 더?"
+    },
+    "miss_type": {
+      "1": "M.notsaid",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "우리 얼마나 더 기다려야 해?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0050",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "They fit you well.",
+      "Do you have the receipt?",
+      "I like them too."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "돌려주고 싶다는 말에는 영수증이 있는지 물어요. receipt는 영수증이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.shopping"
+    ],
+    "accent": "AU",
+    "tts_script": "I'd like to return these shoes.",
+    "status": "active",
+    "evidence": "return these shoes",
+    "why_not": {
+      "0": "잘 맞는다면 돌려줄 일이 없어요",
+      "2": "like만 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "return ~",
+      "ko": "~을 돌려주다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "A.echo"
+    },
+    "translation_ko": "이 신발을 반품하고 싶어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0051",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's next to the door.",
+      "Yes, I added it.",
+      "No, that's all for now."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "더 할 말이 있냐고 물었어요. 'That's all'은 '그게 다예요'라는 뜻이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.work"
+    ],
+    "accent": "US",
+    "tts_script": "Is there anything else you'd like to add?",
+    "status": "active",
+    "evidence": "anything else",
+    "why_not": {
+      "0": "위치를 답했어요",
+      "1": "add만 듣고 이미 했다고 답했어요"
+    },
+    "key_expr": {
+      "en": "That's all.",
+      "ko": "그게 다예요."
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.echo"
+    },
+    "translation_ko": "더 넣고 싶은 거 있어요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0052",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Ms. Park is.",
+      "It's in October.",
+      "About two hundred students."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "누가 맡았냐고 물었으니 사람으로 답해요. 'in charge of'는 '~을 맡다'예요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "Who's in charge of the school festival?",
+    "status": "active",
+    "evidence": "Who's in charge",
+    "why_not": {
+      "1": "언제인지 답했어요. 누구인지 물었어요",
+      "2": "몇 명인지 답했어요"
+    },
+    "key_expr": {
+      "en": "in charge of ~",
+      "ko": "~을 맡은"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "학교 축제는 누가 맡고 있어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0053",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, it works well.",
+      "I'll call someone to fix it.",
+      "I printed ten copies."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "고장 났다는 말에는 어떻게 할지로 답해요. 'fix'는 고친다는 뜻이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.work"
+    ],
+    "accent": "AU",
+    "tts_script": "The printer isn't working again.",
+    "status": "active",
+    "evidence": "isn't working",
+    "why_not": {
+      "0": "고장 났다는데 잘 된다고 답했어요",
+      "2": "print만 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "isn't working",
+      "ko": "작동이 안 된다"
+    },
+    "miss_type": {
+      "0": "M.opposite",
+      "2": "A.echo"
+    },
+    "translation_ko": "프린터가 또 안 되네."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0054",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's about plants.",
+      "Yes, I haven't.",
+      "Almost. Just one more page."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "아직 안 끝냈냐고 물었어요. 'Almost'는 '거의 다 됐어'라는 뜻이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Haven't you finished your science project yet?",
+    "status": "active",
+    "evidence": "Haven't you finished",
+    "why_not": {
+      "0": "무엇에 대한 것인지 답했어요",
+      "1": "Yes와 haven't가 서로 어긋나요"
+    },
+    "key_expr": {
+      "en": "Almost.",
+      "ko": "거의 다 됐어."
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "G.pair"
+    },
+    "translation_ko": "너 과학 과제 아직 안 끝냈어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0055",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The window, if possible.",
+      "Yes, I would rather.",
+      "It's a long flight."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "창가와 복도 중 고르라고 했어요. 하나를 골라 답해야 해요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.travel"
+    ],
+    "accent": "UK",
+    "tts_script": "Would you rather sit by the window or the aisle?",
+    "status": "active",
+    "evidence": "the window or the aisle",
+    "why_not": {
+      "1": "고르라고 했는데 예로 답했어요",
+      "2": "비행이 길다는 다른 이야기예요"
+    },
+    "key_expr": {
+      "en": "Would you rather ~?",
+      "ko": "~ 중 어느 쪽이 좋아?"
+    },
+    "miss_type": {
+      "1": "A.yesno",
+      "2": "M.notsaid"
+    },
+    "translation_ko": "창가 자리랑 통로 자리 중에 어디가 좋아?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0056",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I thought so too, thanks.",
+      "It got moved to Monday.",
+      "I studied very hard."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "금요일인 줄 알았다는 말에는 바뀐 날을 알려줘요. 'got moved'는 옮겨졌다는 뜻이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "AU",
+    "tts_script": "I thought the test was going to be on Friday.",
+    "status": "active",
+    "evidence": "going to be on Friday",
+    "why_not": {
+      "0": "thought만 따라 하고 알려주지 않았어요",
+      "2": "열심히 했다는 다른 이야기예요"
+    },
+    "key_expr": {
+      "en": "It got moved to ~",
+      "ko": "~로 옮겨졌어"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "M.notsaid"
+    },
+    "translation_ko": "나는 시험이 금요일인 줄 알았는데."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0057",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I sat there yesterday.",
+      "Yes, I don't mind.",
+      "Please do."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'앉아도 될까요?'라는 말이에요. 'Please do'는 '그러세요'라며 허락하는 답이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "Do you mind if I sit here?",
+    "status": "active",
+    "evidence": "Do you mind if I sit",
+    "why_not": {
+      "0": "어제 일을 답했어요",
+      "1": "Yes와 don't가 서로 어긋나요"
+    },
+    "key_expr": {
+      "en": "Do you mind if ~?",
+      "ko": "~해도 될까요?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "G.pair"
+    },
+    "translation_ko": "여기 앉아도 될까요?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0058",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, twice actually.",
+      "No, I'm reading now.",
+      "It's on the top shelf."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "이미 읽었지? 하고 확인하는 말이에요. 'twice'는 두 번이라는 뜻이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "You've already read this book, haven't you?",
+    "status": "active",
+    "evidence": "already read this book",
+    "why_not": {
+      "1": "이미 읽었냐는 물음과 어긋나요",
+      "2": "책 위치를 답했어요"
+    },
+    "key_expr": {
+      "en": "~, haven't you?",
+      "ko": "~했지, 그렇지?"
+    },
+    "miss_type": {
+      "1": "M.opposite",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "너 이 책 벌써 읽었지, 그렇지?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0059",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "No, I wasn't supposed.",
+      "I did, but they lost it.",
+      "The form is two pages."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "어제 내야 하지 않았냐고 확인하는 말이에요. 냈지만 잃어버렸다고 답하는 게 자연스러워요.",
+    "difficulty_label": 5,
+    "tags": [
+      "LS.qr",
+      "V.work"
+    ],
+    "accent": "US",
+    "tts_script": "Weren't you supposed to hand in the form yesterday?",
+    "status": "active",
+    "evidence": "supposed to hand in the form",
+    "why_not": {
+      "0": "supposed만 따라 해 어색해요",
+      "2": "종이 수를 답했어요"
+    },
+    "key_expr": {
+      "en": "be supposed to ~",
+      "ko": "~하기로 되어 있다"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "너 어제 신청서 내야 하지 않았어?"
+  },
+  {
+    "type": "single",
+    "tmp_id": "L2-0060",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I ran to the stop.",
+      "Yes, I have an idea.",
+      "There's road work near the bridge."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "버스가 왜 늦는지 아냐고 물었어요. 까닭을 알려주는 답이 맞아요.",
+    "difficulty_label": 5,
+    "tags": [
+      "LS.qr",
+      "V.travel"
+    ],
+    "accent": "AU",
+    "tts_script": "Any idea why the bus is running so late today?",
+    "status": "active",
+    "evidence": "why the bus is running so late",
+    "why_not": {
+      "0": "running의 run만 듣고 답했어요",
+      "1": "안다고만 하고 까닭을 안 말했어요"
+    },
+    "key_expr": {
+      "en": "Any idea why ~?",
+      "ko": "왜 ~인지 알아?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "A.yesno"
+    },
+    "translation_ko": "오늘 버스가 왜 이렇게 늦는지 알아?"
+  }
+]

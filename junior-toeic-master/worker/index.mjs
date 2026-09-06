@@ -1,0 +1,1881 @@
+// 점프리시(Jumplish) API Worker — Hono
+// 절대 규칙: 문항을 내려주는 어떤 응답에도 answer_idx·explanation_ko를 포함하지 않는다.
+// 채점 엔드포인트만 정답에 접근한다. (docs/engine.md · PRD 6절)
+import { Hono } from 'hono';
+import {
+  verifyPin, hashPin, makeToken, requireAuth, requireRole, verifyToken,
+  loginLockedFor, noteLoginFail, clearLoginFails,
+  isStudentPin, isStaffSecret, STAFF_ROLES, SECRET_MIN, weakSecretReason,
+  requireParent, requireParentAccount, SUSPENDED_MSG,
+  hashSecret, verifySecret, makeAccountToken,
+} from './auth.mjs';
+import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions, audioRateFor, AUDIO_RATES, MISS_KO, SKILL_AXES, shiftISO } from './engine.mjs';
+import {
+  PARTS, PART_LIST, PART_KO, PART_FORM, CHOICES_BY_PART, STATUSES, ACCENTS,
+  makeUlid, validateItem,
+} from './authoring.mjs';
+import { GithubRepo } from './github.mjs';
+
+// 진단 답안 일괄 채점·기록 (Elo·SRS 미반영 — engine.md 4절)
+async function gradeDiagAnswers(db, user, sessionId, answers) {
+  const now = new Date().toISOString();
+  const stmts = [];
+  const graded = [];
+  for (const a of answers) {
+    const q = await db.prepare('SELECT id, part, section, answer_idx FROM questions WHERE id = ?1')
+      .bind(a.question_id).first();
+    if (!q) continue;
+    const correct = a.chosen_idx === q.answer_idx ? 1 : 0;
+    graded.push({ part: q.part, section: q.section, correct });
+    stmts.push(db.prepare(
+      `INSERT INTO answers (id, session_id, user_id, question_id, chosen_idx, is_correct, time_ms, answered_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
+    ).bind(crypto.randomUUID(), sessionId, user.id, q.id, a.chosen_idx | 0, correct, a.time_ms | 0, now));
+  }
+  if (stmts.length) await db.batch(stmts);
+  return graded;
+}
+
+// 채점 뒤에만 내려주는 "정답 근거" — 근거 부분(evidence)과 그것이 들어 있는 원문(text).
+// 화면은 text 안에서 evidence 자리를 형광펜으로 칠한다. 글 해설보다 먼저 눈에 들어온다.
+// 채점 전에는 절대 내려가지 않는다 (스크립트가 곧 답이 되는 LC 문항 보호).
+async function evidenceOf(db, q) {
+  // 지문 묶음이면 지문 쪽에, 단독 문항이면 문항 쪽에 원문·해석이 있다.
+  // 지문은 한 번만 읽어 근거와 해석에 같이 쓴다.
+  let text = q.script || q.stem || null;
+  let translation = q.translation_ko ?? null;
+  if (q.passage_id && (!translation || (q.evidence && !text?.includes(q.evidence)))) {
+    const p = await db.prepare(
+      'SELECT content, translation_ko FROM passages WHERE id = ?1').bind(q.passage_id).first();
+    if (p) {
+      translation = translation ?? p.translation_ko ?? null;
+      if (q.evidence && !text?.includes(q.evidence)) text = p.content ?? text;
+    }
+  }
+  // 해석은 '무슨 이야기였는지'를 알려주는 것이라 원문이 함께 있어야 쓸모가 있다.
+  const passage_text = text;
+  if (!q.evidence || !text?.includes(q.evidence)) {
+    return { evidence: null, evidence_text: null, passage_text, translation_ko: translation };
+  }
+  return { evidence: q.evidence, evidence_text: text, passage_text, translation_ko: translation };
+}
+
+const parseJson = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
+
+// 채점 결과에 붙는 "글이 아닌 해설" 묶음.
+//  why_not  : 아이가 고른 보기 하나의 이유만 (다른 오답까지 주면 읽지 않는다)
+//  key_expr : 이 문제에서 챙길 표현 카드
+//  concept  : 개념 그림을 고르는 열쇠 — 문법 태그 우선, 없으면 듣기 전략 태그
+async function feedbackOf(db, q, chosenIdx) {
+  const why = parseJson(q.why_not);
+  const miss = parseJson(q.miss_type);
+  const { results: tags } = await db.prepare(
+    'SELECT tag_id FROM question_tags WHERE question_id = ?1'
+  ).bind(q.id).all();
+  const codes = tags.map((t) => t.tag_id);
+  return {
+    ...(await evidenceOf(db, q)),
+    why_not: (why && chosenIdx !== q.answer_idx) ? (why[String(chosenIdx)] ?? null) : null,
+    miss_type: (miss && chosenIdx !== q.answer_idx) ? (miss[String(chosenIdx)] ?? null) : null,
+    key_expr: parseJson(q.key_expr),
+    concept: codes.find((t) => t.startsWith('G.')) || codes.find((t) => t === 'LS.qr') || null,
+  };
+}
+
+// 학년 그룹 — 주니어(초3~4)는 진단이 짧고(16문항) 듣기 속도 상한이 있다.
+// 학년을 직접 저장하기 전에는 반(classes.set_size)으로 갈랐는데, 학부모가 만든 아이는
+// 반이 없어 전원이 주니어로 떨어졌다. 이제 학년을 먼저 보고, 없을 때만 옛 방식으로 넘어간다.
+const JUNIOR_GRADES = new Set(['초3', '초4']);
+const groupOf = async (db, user) => {
+  if (user.grade) return JUNIOR_GRADES.has(user.grade) ? 'junior' : 'basic';
+  const size = (await db.prepare('SELECT set_size FROM classes WHERE id = ?1').bind(user.class_id).first())?.set_size ?? 12;
+  return size <= 12 ? 'junior' : 'basic';
+};
+
+// 이 아이의 듣기 재생 배속을 정하고, 바뀌었으면 남겨 둔다.
+// 규칙 자체는 engine.audioRateFor 한 곳에만 있다 — 여기서는 값을 물어다 주고 저장만 한다.
+async function audioRateOf(db, user) {
+  const sm = await computeSkillMap(db, user);
+  const listen = sm.axes.find((a) => a.key === 'listen');
+  const group = await groupOf(db, user);
+  const rate = audioRateFor(listen?.score ?? null, group, user.audio_rate ?? null);
+  if (rate !== user.audio_rate) {
+    await db.prepare('UPDATE users SET audio_rate = ?2 WHERE id = ?1').bind(user.id, rate).run();
+  }
+  return rate;
+}
+
+// 문항 id 목록 → 학생용 필드(정답·해설·스크립트 미포함) + 지문. 시험 순서(파트 오름차순) 정렬.
+async function hydrate(db, ids) {
+  if (!ids.length) return { questions: [], passages: {} };
+  const qm = ids.map((_, i) => `?${i + 1}`).join(',');
+  const { results: rows } = await db.prepare(
+    `SELECT id, passage_id, section, part, stem, choices, difficulty_label,
+            audio_url, image_url, accent, status
+       FROM questions WHERE id IN (${qm})`
+  ).bind(...ids).all();
+  rows.sort((a, b) => a.part.localeCompare(b.part) || a.id.localeCompare(b.id));
+  const pids = [...new Set(rows.map((q) => q.passage_id).filter(Boolean))];
+  const passages = {};
+  if (pids.length) {
+    const pm = pids.map((_, i) => `?${i + 1}`).join(',');
+    const { results } = await db.prepare(
+      `SELECT id, kind, content, image_url, audio_url, accent FROM passages WHERE id IN (${pm})`
+    ).bind(...pids).all();
+    for (const p of results) passages[p.id] = p;
+  }
+  return { questions: rows.map((q) => ({ ...q, choices: JSON.parse(q.choices) })), passages };
+}
+
+const app = new Hono();
+
+const PART_RE = /^(L[1-4]|R[1-3])$/;
+
+// ── 인증 (M2): 학원 발급 로그인ID + 6자리 PIN ──
+app.post('/api/auth/login', async (c) => {
+  const { login_id, pin } = await c.req.json().catch(() => ({}));
+  // 학생은 6자리 숫자, 관리자·강사는 8자 이상 비밀번호. 둘 다 여기로 들어온다.
+  // 로그인ID 길이도 여기서 막는다 — 실패는 아이디별로 기록하므로, 길이를 안 막으면
+  // 아무 문자열이나 던져 login_attempts 표를 무한히 부풀릴 수 있다.
+  if (typeof login_id !== 'string' || login_id.trim().length < 1 || login_id.trim().length > 32
+      || !(isStudentPin(pin) || isStaffSecret(pin))) {
+    return c.json({ error: '로그인ID와 비밀번호를 확인하세요' }, 400);
+  }
+  const id = login_id.trim().toUpperCase();
+
+  // 잠겨 있으면 PIN을 보지도 않는다 — 맞는지 틀리는지조차 알려주면 안 된다
+  const lockLeft = await loginLockedFor(c.env.DB, id);
+  if (lockLeft > 0) {
+    const m = Math.ceil(lockLeft / 60);
+    return c.json({ error: `여러 번 틀려서 잠겼어요. ${m}분 뒤에 다시 해주세요` }, 429);
+  }
+
+  const user = await c.env.DB.prepare(
+    'SELECT * FROM users WHERE login_id = ?1'
+  ).bind(id).first();
+  // 계정 존재 여부를 구분해 알려주지 않는다 (계정 추측 방지)
+  // — 없는 계정도 실패로 기록한다. 안 그러면 "잠기는 아이디 = 있는 아이디"가 되어 버린다.
+  if (!user || !(await verifyPin(String(pin), user.pin_hash))) {
+    const { lockedSeconds } = await noteLoginFail(c.env.DB, id);
+    return c.json({
+      error: lockedSeconds
+        ? `여러 번 틀려서 ${Math.ceil(lockedSeconds / 60)}분 동안 잠겼어요`
+        : '로그인ID 또는 비밀번호가 맞지 않아요',
+    }, lockedSeconds ? 429 : 401);
+  }
+  // 학생 계정에 긴 비밀번호로, 관리자 계정에 6자리로 들어오는 일은 없어야 한다
+  if (STAFF_ROLES.includes(user.role) && !isStaffSecret(pin)) {
+    await noteLoginFail(c.env.DB, id);
+    return c.json({ error: '로그인ID 또는 비밀번호가 맞지 않아요' }, 401);
+  }
+  await clearLoginFails(c.env.DB, id);
+  return c.json({
+    token: await makeToken(user),
+    user: { id: user.id, login_id: user.login_id, display_name: user.display_name, role: user.role },
+  });
+});
+
+app.get('/api/me', requireAuth, async (c) => {
+  const u = c.get('user');
+  const stats = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS answered, COALESCE(SUM(is_correct), 0) AS correct
+       FROM answers WHERE user_id = ?1`
+  ).bind(u.id).first();
+  const due = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM review_queue
+      WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2`
+  ).bind(u.id, kstDate()).first();
+  const climb = await computeClimb(c.env.DB, u);
+  const diag = await c.env.DB.prepare(
+    `SELECT summary FROM sessions WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NOT NULL LIMIT 1`
+  ).bind(u.id).first();
+  return c.json({
+    user: { id: u.id, login_id: u.login_id, display_name: u.display_name, role: u.role },
+    answered: stats.answered, correct: stats.correct, review_due: due.n, sealed: climb.breakdown.sealed,
+    climb,
+    diagnosed: !!diag, diag_report: diag ? JSON.parse(diag.summary) : null,
+    // 듣기 재생 배속. 앱이 이 값을 들고 있다가 음원을 틀 때 그대로 쓴다 —
+    // 문항마다 서버에 다시 묻지 않는다(오프라인·느린 망에서도 속도가 흔들리지 않게).
+    audio_rate: await audioRateOf(c.env.DB, u),
+  });
+});
+
+// ── 진단 테스트 (2단계 적응형) ──
+app.post('/api/diagnostic/start', requireAuth, async (c) => {
+  const u = c.get('user');
+  const done = await c.env.DB.prepare(
+    `SELECT id FROM sessions WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NOT NULL LIMIT 1`
+  ).bind(u.id).first();
+  if (done) return c.json({ done: true });
+
+  // 아직 안 끝났고 답도 하나 없는 옛 진단 세션은 지운다.
+  // 아이가 진단을 시작만 하고 나가는 일이 반복되면 빈 세션이 계속 쌓인다.
+  // (답이 하나라도 들어간 세션은 건드리지 않는다 — 기록이다)
+  await c.env.DB.prepare(
+    `DELETE FROM sessions
+      WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NULL
+        AND id NOT IN (SELECT DISTINCT session_id FROM answers WHERE user_id = ?1)`
+  ).bind(u.id).run();
+
+  const group = await groupOf(c.env.DB, u);
+  const label = DIAG.stage1Label[group];
+  const ids = [];
+  for (const [part, [n1]] of Object.entries(DIAG[group])) {
+    ids.push(...await pickDiagQuestions(c.env.DB, part, label, n1, ids));
+  }
+  const sessionId = crypto.randomUUID();
+  await c.env.DB.prepare(
+    `INSERT INTO sessions (id, user_id, type, question_ids, started_at) VALUES (?1, ?2, 'diagnostic', ?3, ?4)`
+  ).bind(sessionId, u.id, JSON.stringify(ids), new Date().toISOString()).run();
+  const { questions, passages } = await hydrate(c.env.DB, ids);
+  return c.json({ session_id: sessionId, stage: 1, group, count: questions.length, questions, passages });
+});
+
+// 1단계 답안 제출 → 섹션 정답률로 2단계 난이도 결정, 2단계 문항 반환
+app.post('/api/diagnostic/stage2', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { session_id, answers } = await c.req.json().catch(() => ({}));
+  const sess = await c.env.DB.prepare(
+    `SELECT id, question_ids FROM sessions WHERE id = ?1 AND user_id = ?2 AND type = 'diagnostic' AND finished_at IS NULL`
+  ).bind(String(session_id), u.id).first();
+  if (!sess || !Array.isArray(answers)) return c.json({ error: '진단 세션이 없습니다' }, 400);
+  const graded = await gradeDiagAnswers(c.env.DB, u, sess.id, answers);
+  const accOf = (sec) => {
+    const rows = graded.filter((g) => g.section === sec);
+    return rows.length ? rows.reduce((n, g) => n + g.correct, 0) / rows.length : 0.5;
+  };
+  const group = await groupOf(c.env.DB, u);
+  const labels = { LC: DIAG.stage2Label(group, accOf('LC')), RC: DIAG.stage2Label(group, accOf('RC')) };
+  const prev = JSON.parse(sess.question_ids);
+  const ids = [];
+  for (const [part, [, n2]] of Object.entries(DIAG[group])) {
+    const label = labels[part.startsWith('L') ? 'LC' : 'RC'];
+    ids.push(...await pickDiagQuestions(c.env.DB, part, label, n2, [...prev, ...ids]));
+  }
+  await c.env.DB.prepare('UPDATE sessions SET question_ids = ?1 WHERE id = ?2')
+    .bind(JSON.stringify([...prev, ...ids]), sess.id).run();
+  const { questions, passages } = await hydrate(c.env.DB, ids);
+  return c.json({ session_id: sess.id, stage: 2, count: questions.length, questions, passages });
+});
+
+// 2단계 답안 제출 → 파트별 대역 → 태그 초기 레이팅 기록, 결과 반환
+app.post('/api/diagnostic/finish', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { session_id, answers } = await c.req.json().catch(() => ({}));
+  const sess = await c.env.DB.prepare(
+    `SELECT id FROM sessions WHERE id = ?1 AND user_id = ?2 AND type = 'diagnostic' AND finished_at IS NULL`
+  ).bind(String(session_id), u.id).first();
+  if (!sess || !Array.isArray(answers)) return c.json({ error: '진단 세션이 없습니다' }, 400);
+  await gradeDiagAnswers(c.env.DB, u, sess.id, answers);
+
+  // 세션 전체(1+2단계) 답안으로 파트별 정확도 산출
+  const { results: all } = await c.env.DB.prepare(
+    `SELECT q.part, a.is_correct FROM answers a JOIN questions q ON q.id = a.question_id
+      WHERE a.session_id = ?1`
+  ).bind(sess.id).all();
+  const byPart = {};
+  for (const r of all) {
+    const p = (byPart[r.part] ||= { n: 0, c: 0 });
+    p.n += 1; p.c += r.is_correct;
+  }
+  const now = new Date().toISOString();
+  const stmts = [];
+  const report = [];
+  for (const [part, { n, c: cor }] of Object.entries(byPart)) {
+    const accPct = Math.round((cor / n) * 100);
+    const [, grade, rating] = diagBand(accPct);
+    report.push({ part, grade, acc: accPct, count: n });
+    // 그 파트에서 실제 풀린 문항들의 태그를 초기화 대상으로 삼는다
+    // (concept_tags.part는 어휘 등 공용 태그에서 NULL이라 직접 매핑이 샌다)
+    //
+    // ⚠ 시도 수는 태그별로 '그 태그가 붙은 문항 수'만 센다. 예전엔 파트 문항 수 n을
+    // 모든 태그에 통째로 복사했는데, 그러면 L3를 4문항 풀 때 그중 속뜻 문항이 0개여도
+    // 다른 태그들이 전부 attempts=4가 된다. 실력 지도가 그 부풀린 숫자로 "측정 완료"라
+    // 말하는 동안, 진단에 안 나온 속뜻만 0으로 남아 몇 날이고 '재는 중'에 갇혔다 —
+    // "30문제를 풀었는데 왜 속뜻만 평가가 안 되냐"는 말이 정확히 이 버그였다.
+    const { results: tags } = await c.env.DB.prepare(
+      `SELECT qt.tag_id AS id, COUNT(*) AS n, COALESCE(SUM(a.is_correct), 0) AS c
+         FROM answers a
+         JOIN question_tags qt ON qt.question_id = a.question_id
+         JOIN questions q ON q.id = a.question_id
+        WHERE a.session_id = ?1 AND q.part = ?2 GROUP BY qt.tag_id`
+    ).bind(sess.id, part).all();
+    for (const t of tags) {
+      stmts.push(c.env.DB.prepare(
+        `INSERT INTO user_tag_skills (user_id, tag_id, rating, attempts, correct, last_practiced_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+         ON CONFLICT(user_id, tag_id) DO UPDATE SET rating = ?3, attempts = ?4, correct = ?5, last_practiced_at = ?6`
+      ).bind(u.id, t.id, rating, t.n, t.c, now));
+    }
+  }
+  report.sort((a, b) => a.part.localeCompare(b.part));
+  stmts.push(c.env.DB.prepare('UPDATE sessions SET finished_at = ?1, summary = ?2 WHERE id = ?3')
+    .bind(now, JSON.stringify(report), sess.id));
+  await c.env.DB.batch(stmts);
+  return c.json({ report, group: await groupOf(c.env.DB, u) });
+});
+
+// ── 내 단어장 ──
+// 아이가 정답 화면에서 눌러 본 낱말. 저자가 고른 단어가 아니라 "이 아이가 몰라서 누른" 낱말이라
+// 그 자체가 가장 정직한 약점 신호다. 뜻은 누른 시점 것을 함께 저장한다 — 나중에 사전을
+// 고쳐도 아이가 그때 본 말이 남아야 "내가 봤던 그거"가 된다.
+app.post('/api/words', requireAuth, async (c) => {
+  const u = c.get('user');
+  const b = await c.req.json().catch(() => ({}));
+  const word = String(b.word ?? '').toLowerCase().replace(/[^a-z'-]/g, '').slice(0, 40);
+  const meaning = clean(b.meaning, 80);
+  if (!word || !meaning) return c.json({ error: '낱말과 뜻이 필요합니다' }, 400);
+  const now = nowISO();
+  await c.env.DB.prepare(
+    `INSERT INTO user_words (user_id, word, meaning, times, first_at, last_at)
+     VALUES (?1, ?2, ?3, 1, ?4, ?4)
+     ON CONFLICT(user_id, word) DO UPDATE SET times = times + 1, last_at = ?4, meaning = ?3`
+  ).bind(u.id, word, meaning, now).run();
+  return c.json({ ok: true });
+});
+
+app.get('/api/words', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { results } = await c.env.DB.prepare(
+    `SELECT word, meaning, times, last_at FROM user_words
+      WHERE user_id = ?1 ORDER BY last_at DESC LIMIT 200`
+  ).bind(u.id).all();
+  return c.json({ words: results });
+});
+
+// 개인 최고 기록 (M3-3 '어제의 나와 대결') — 비교 대상은 남이 아니라 과거의 나
+app.get('/api/records', requireAuth, async (c) => {
+  const u = c.get('user');
+  const [{ results: seq }, best, today, { results: parts }, { results: days }] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT is_correct FROM answers WHERE user_id = ?1 ORDER BY answered_at LIMIT 2000`
+    ).bind(u.id).all(),
+    c.env.DB.prepare(
+      `SELECT date(answered_at, '+9 hours') AS d, COUNT(*) AS n FROM answers
+        WHERE user_id = ?1 GROUP BY d ORDER BY n DESC, d LIMIT 1`
+    ).bind(u.id).first(),
+    c.env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM answers WHERE user_id = ?1 AND date(answered_at, '+9 hours') = ?2`
+    ).bind(u.id, kstDate()).first(),
+    // 파트별 기록 — 예전엔 이 기기(localStorage)에만 있었다. 학원 태블릿을 여러 명이
+    // 돌려 쓰면 기록이 섞이고, 기기를 바꾸면 통째로 사라진다. 그래서 서버에서 센다.
+    c.env.DB.prepare(
+      `SELECT q.part, COUNT(*) AS answered, COALESCE(SUM(a.is_correct), 0) AS correct
+         FROM answers a JOIN questions q ON q.id = a.question_id
+        WHERE a.user_id = ?1 GROUP BY q.part`
+    ).bind(u.id).all(),
+    // 공부한 날짜들 — '이어온 날'(연속)을 세려면 날짜 목록이 필요하다.
+    // climb.breakdown.days 는 '총 며칠'이라 연속이 끊겨도 계속 늘어난다 — 다른 숫자다.
+    c.env.DB.prepare(
+      `SELECT DISTINCT date(answered_at, '+9 hours') AS d FROM answers
+        WHERE user_id = ?1 ORDER BY d DESC LIMIT 400`
+    ).bind(u.id).all(),
+  ]);
+  // 최장 연속 정답 + 지금 이어지는 연속 (최근 답부터 뒤로)
+  let bestRun = 0, run = 0;
+  for (const r of seq) { run = r.is_correct ? run + 1 : 0; if (run > bestRun) bestRun = run; }
+  let currentRun = 0;
+  for (let i = seq.length - 1; i >= 0 && seq[i].is_correct; i--) currentRun++;
+  // 이어온 날(연속) — 오늘 아직 안 했으면 어제부터 센다. 오늘 안 풀었다고 어제까지의
+  // 연속이 0이 되면 아침에 앱을 열자마자 기록이 사라진 것처럼 보인다.
+  const dayset = new Set(days.map((r) => r.d));
+  let streak = 0;
+  const cur = new Date(`${kstDate()}T00:00:00Z`);
+  if (!dayset.has(kstDate())) cur.setUTCDate(cur.getUTCDate() - 1);
+  while (dayset.has(cur.toISOString().slice(0, 10))) { streak += 1; cur.setUTCDate(cur.getUTCDate() - 1); }
+
+  return c.json({
+    best_run: bestRun, current_run: currentRun,
+    best_day: best ? { date: best.d, n: best.n } : null,
+    today_n: today.n,
+    streak,
+    parts: Object.fromEntries(parts.map((p) => [p.part, { answered: p.answered, correct: p.correct }])),
+  });
+});
+
+// 로그인 학생의 오답 복습 목록 — 오늘까지 도래한 SRS 큐 (오래된 순)
+app.get('/api/review', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { results } = await c.env.DB.prepare(
+    `SELECT question_id, box, due_at FROM review_queue
+      WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2
+      ORDER BY due_at LIMIT 50`
+  ).bind(u.id, kstDate()).all();
+  const { questions, passages } = await hydrate(c.env.DB, results.map((r) => r.question_id));
+  const boxBy = Object.fromEntries(results.map((r) => [r.question_id, r.box]));
+  return c.json({
+    count: questions.length,
+    questions: questions.map((q) => ({ ...q, srs_box: boxBy[q.id] })),
+    passages,
+  });
+});
+
+// 로그인 학생의 채점 — 기록·실력 갱신·SRS까지 서버가 처리한다 (M1 /api/check의 상위 호환)
+app.post('/api/answers', requireAuth, async (c) => {
+  const u = c.get('user');
+  const body = await c.req.json().catch(() => ({}));
+  const { question_id, chosen_idx, time_ms } = body;
+  if (typeof question_id !== 'string' || !Number.isInteger(chosen_idx)) {
+    return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
+  }
+  const q = await c.env.DB.prepare(
+    'SELECT id, passage_id, stem, script, evidence, why_not, miss_type, key_expr, translation_ko, answer_idx, explanation_ko, rating FROM questions WHERE id = ?1'
+  ).bind(question_id).first();
+  if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
+
+  // 하루 한 세션(daily)에 묶는다 — question_ids 목록은 answers 테이블로 대신한다(M2-1 단순화)
+  const today = kstDate();
+  let session = await c.env.DB.prepare(
+    `SELECT id FROM sessions WHERE user_id = ?1 AND type = 'daily' AND started_at LIKE ?2 || '%'`
+  ).bind(u.id, today).first();
+  if (!session) {
+    session = { id: crypto.randomUUID() };
+    await c.env.DB.prepare(
+      `INSERT INTO sessions (id, user_id, type, question_ids, started_at) VALUES (?1, ?2, 'daily', '[]', ?3)`
+    ).bind(session.id, u.id, new Date().toISOString()).run();
+  }
+
+  const { correct, graduated } = await recordAnswer(c.env.DB, {
+    user: u, question: q, chosenIdx: chosen_idx, timeMs: time_ms | 0, sessionId: session.id,
+  });
+  return c.json({
+    correct, graduated, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko,
+    ...(await feedbackOf(c.env.DB, q, chosen_idx)),
+  });
+});
+
+// 실력 지도 — 레이더 5축 + 옆에 붙는 설욕률·빠르기.
+// 화면이 어떻게 생기든 숫자는 여기서 나온다.
+app.get('/api/skillmap', requireAuth, async (c) =>
+  c.json(await computeSkillMap(c.env.DB, c.get('user'))));
+
+// 화면에 뜰 이름 바꾸기.
+// 개인정보 최소화 원칙상 이름은 '별명'이다 — 실명을 받으면 우리가 안 받겠다고 한 정보를
+// 받는 셈이 된다. 그래서 실명처럼 보이는 걸 막지는 못해도, 화면에서 별명이라고 안내하고
+// 길이·문자·나쁜 말만 서버에서 막는다. 로그인ID(학원 발급)는 바뀌지 않는다.
+const NAME_MAX = 12;
+const NAME_BLOCK = ['씨발', '시발', '병신', '좆', '지랄', 'ㅅㅂ', 'ㅄ', 'fuck', 'shit', 'bitch'];
+app.post('/api/me/name', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { display_name } = await c.req.json().catch(() => ({}));
+  const name = typeof display_name === 'string' ? display_name.replace(/\s+/g, ' ').trim() : '';
+  if (!name) return c.json({ error: '이름을 적어주세요' }, 400);
+  if ([...name].length > NAME_MAX) return c.json({ error: `이름은 ${NAME_MAX}자까지예요` }, 400);
+  if (/[\u0000-\u001f<>]/.test(name)) return c.json({ error: '쓸 수 없는 글자가 있어요' }, 400);
+  const low = name.toLowerCase().replace(/\s/g, '');
+  if (NAME_BLOCK.some((w) => low.includes(w))) return c.json({ error: '다른 이름으로 정해볼까요?' }, 400);
+
+  await c.env.DB.prepare('UPDATE users SET display_name = ?1 WHERE id = ?2').bind(name, u.id).run();
+  return c.json({ ok: true, display_name: name });
+});
+
+// 아이가 막힌 자리 신고 — 로그인 없이도 받는다(테스터가 로그인 전에 막힐 수도 있다).
+// 답을 알려주지도, 아이를 탓하지도 않는다. 그냥 조용히 기록만 남긴다.
+const FEEDBACK_KINDS = ['audio', 'image', 'hard', 'answer', 'etc'];
+app.post('/api/feedback', async (c) => {
+  const { question_id, kind, note, screen } = await c.req.json().catch(() => ({}));
+  if (!FEEDBACK_KINDS.includes(kind)) return c.json({ error: '어떤 점이 불편한지 골라주세요' }, 400);
+  const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
+  const user = m ? await verifyToken(c.env.DB, m[1]) : null;
+  // 문항 id는 실제로 있는 것만 남긴다 (오타·장난 입력이 외래키로 터지지 않게)
+  const qid = typeof question_id === 'string'
+    ? (await c.env.DB.prepare('SELECT id FROM questions WHERE id = ?1').bind(question_id).first())?.id ?? null
+    : null;
+  await c.env.DB.prepare(
+    `INSERT INTO feedback (id, user_id, question_id, kind, note, screen, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
+  ).bind(crypto.randomUUID(), user?.id ?? null, qid, kind,
+    typeof note === 'string' ? note.slice(0, 300) : null,
+    typeof screen === 'string' ? screen.slice(0, 40) : null,
+    new Date().toISOString()).run();
+  return c.json({ ok: true });
+});
+
+// ══════════════════════════════════════════════════════════════════
+//  관리자 API — 전부 super 전용. 학원·반·학생 계정 발급과 신고 확인.
+//  지금까지는 계정을 늘리려면 손으로 SQL을 만들어 Cloudflare 콘솔에 붙여넣어야 했다.
+// ══════════════════════════════════════════════════════════════════
+const admin = [requireAuth, requireRole('super')];
+
+// ── 첫 관리자 만들기 (딱 한 번만 열리는 문) ──
+// 관리자 계정을 만드는 곳이 관리자 화면인데, 들어가려면 관리자 계정이 있어야 한다.
+// 그 닭과 달걀을 푸는 문이다. 대신 아래 조건이 아니면 절대 열리지 않는다:
+//   super 계정이 이 세상에 0개일 때만.
+// 하나라도 생기는 순간 이 문은 영구히 닫히고, 그 뒤로는 관리자 화면에서만 계정을 만든다.
+const superCount = async (db) =>
+  (await db.prepare(`SELECT COUNT(*) AS n FROM users WHERE role = 'super'`).first()).n;
+
+app.get('/api/setup/needed', async (c) => c.json({ needed: (await superCount(c.env.DB)) === 0 }));
+
+// ══════════════════════════════════════════════════════════════════
+//  학부모 API
+//
+//  들어오는 길이 두 개다.
+//   1) 직접 가입 (B2C 주 경로) — 이메일 + 비밀번호. 학부모가 결제자이자 아이 계정의 주인.
+//   2) 학원 발급 (유통 채널) — 자녀 아이디 + 학부모용 PIN. 기존 가정이 쓰던 방식 그대로.
+//
+//  어느 길로 들어오든 **읽기 전용**이다. 부모는 아이 대신 문제를 풀 수 없다.
+// ══════════════════════════════════════════════════════════════════
+
+// 아이에게 따로 아이디·비밀번호를 만들어 주지 않는다.
+// **아이는 부모가 가입할 때 쓴 이메일·비밀번호 그대로 로그인한다.**
+// 계정이 두 벌이면 부모가 여섯 자리 숫자를 아이에게 옮겨 적어 보내야 하고,
+// 그 한 단계에서 가입을 포기한다. 가족이 하나의 열쇠를 쓰고, 아이가 여럿이면
+// 로그인한 뒤 이름만 고른다.
+//
+// users.login_id 는 표에서 NOT NULL UNIQUE 라 값이 있어야 하므로 내부용으로만 만든다.
+// 화면에 보여주지 않고, 문의가 들어왔을 때 사람을 특정하는 용도로만 쓴다.
+const ID_ALPHA = 'ABCDEFGHJKLMNPQRTUVWXY2346789';
+function makeChildLoginId() {
+  const b = new Uint8Array(6);
+  crypto.getRandomValues(b);
+  return 'JP-' + [...b].map((n) => ID_ALPHA[n % ID_ALPHA.length]).join('');
+}
+
+// 동의서 버전. 문구가 바뀌면 올린다 — 누가 어느 버전에 동의했는지 남겨야
+// 나중에 재동의를 받아야 하는지 판단할 수 있다.
+const CONSENT_VER = '2026-08-11';
+const MAX_CHILDREN = 3;
+
+// 이메일은 형식만 가볍게 본다. 진짜 확인은 나중에 인증 메일로 한다.
+const isEmail = (s) => typeof s === 'string' && s.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+
+// 아이 비밀번호 검사 — 부모 것보다 훨씬 느슨하다.
+// 부모 비밀번호는 결제 정보를 지키는 열쇠라 8자 이상에 뻔한 것도 막지만,
+// 아이 비밀번호가 지키는 건 자기 학습 기록뿐이다. 아홉 살이 매일 칠 수 있어야 하므로
+// 네 글자 이상이면 통과시킨다. 어렵게 만들면 부모가 대신 외워주다가 결국 부모 것을 쓴다.
+// 학년 — 진단 길이(주니어 16 / 기본 24)와 듣기 속도 상한이 여기서 갈린다.
+// 목록에 없는 값이 들어오면 NULL 로 둔다(추측해서 저학년으로 몰면 잘하는 아이가 손해).
+const GRADES = ['초3', '초4', '초5', '초6', '중1', '중2', '중3'];
+const cleanGrade = (g) => (GRADES.includes(String(g ?? '').trim()) ? String(g).trim() : null);
+
+const CHILD_PW_MIN = 4;
+function childPwReason(pw) {
+  const s = String(pw ?? '');
+  if (s.length < CHILD_PW_MIN) return `아이 비밀번호는 ${CHILD_PW_MIN}자 이상으로 해주세요`;
+  if (s.length > 100) return '아이 비밀번호가 너무 깁니다';
+  if (/\s/.test(s)) return '아이 비밀번호에 공백은 쓸 수 없어요';
+  return null;
+}
+
+// 새 아이 계정 한 명을 만든다. 로그인ID가 겹치면 몇 번 다시 뽑는다.
+async function createChild(db, { parentId, name, password, grade }) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const loginId = makeChildLoginId();
+    const dup = await db.prepare('SELECT 1 FROM users WHERE login_id = ?1').bind(loginId).first();
+    if (dup) continue;
+    const id = crypto.randomUUID();
+    // 부모가 정해 준 아이 비밀번호가 여기 들어간다. 부모 것과 같은 이메일을 쓰되
+    // 비밀번호만 다르므로, 아이는 부모 비밀번호를 알 필요가 없다(결제 화면도 못 연다).
+    await db.prepare(
+      `INSERT INTO users (id, role, login_id, pin_hash, display_name, created_at, parent_id, grade)
+       VALUES (?1, 'student', ?2, ?3, ?4, ?5, ?6, ?7)`
+    ).bind(id, loginId, await hashPin(password), name, nowISO(), parentId, grade ?? null).run();
+    return { id, login_id: loginId, display_name: name, grade: grade ?? null };
+  }
+  return null;
+}
+
+// 이 가족의 아이 목록 (등록 순)
+const childrenOf = async (db, parentId) => (await db.prepare(
+  `SELECT id, display_name, created_at FROM users
+    WHERE parent_id = ?1 AND role = 'student' ORDER BY created_at`
+).bind(parentId).all()).results;
+
+app.post('/api/parent/signup', async (c) => {
+  const b = await c.req.json().catch(() => ({}));
+  const email = String(b.email ?? '').trim().toLowerCase();
+  const password = String(b.password ?? '');
+  const name = clean(b.name, 12);
+  const childName = clean(b.child_name, 12);
+  const childPw = String(b.child_password ?? '');
+
+  if (!isEmail(email)) return c.json({ error: '이메일 주소를 확인해주세요' }, 400);
+  const weak = weakSecretReason(password, email.split('@')[0]);
+  if (weak) return c.json({ error: weak }, 400);
+  if (!name) return c.json({ error: '보호자 이름을 입력해주세요' }, 400);
+  if (!childName) return c.json({ error: '아이 이름을 입력해주세요' }, 400);
+  const childBad = childPwReason(childPw);
+  if (childBad) return c.json({ error: childBad }, 400);
+  // 아이 비밀번호를 부모 것과 똑같이 두면 아이가 결제 화면까지 열 수 있다 — 그럴 거면
+  // 따로 정하는 의미가 없으므로 여기서 막는다.
+  if (childPw === password) return c.json({ error: '아이 비밀번호는 보호자 것과 다르게 정해주세요' }, 400);
+  // 만 14세 미만 아이의 계정을 만드는 절차라, 동의 없이는 한 걸음도 나갈 수 없다.
+  if (b.consent !== true) return c.json({ error: '보호자 동의가 필요합니다' }, 400);
+
+  const dup = await c.env.DB.prepare('SELECT 1 FROM parents WHERE email = ?1').bind(email).first();
+  if (dup) return c.json({ error: '이미 가입된 이메일이에요. 로그인해주세요' }, 409);
+
+  const parent = {
+    id: crypto.randomUUID(),
+    email,
+    password_hash: await hashSecret(password),
+    display_name: name,
+  };
+  const now = nowISO();
+  await c.env.DB.prepare(
+    `INSERT INTO parents (id, email, password_hash, display_name, consent_at, consent_ver, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?5)`
+  ).bind(parent.id, email, parent.password_hash, name, now, CONSENT_VER).run();
+
+  const child = await createChild(c.env.DB, {
+    parentId: parent.id, name: childName, password: childPw, grade: cleanGrade(b.child_grade) });
+  if (!child) return c.json({ error: '아이를 등록하지 못했어요. 다시 시도해주세요' }, 500);
+
+  return c.json({
+    token: await makeAccountToken(parent),
+    parent: { email, display_name: name },
+    child,
+  });
+});
+
+app.post('/api/parent/login-email', async (c) => {
+  const b = await c.req.json().catch(() => ({}));
+  const email = String(b.email ?? '').trim().toLowerCase();
+  const password = String(b.password ?? '');
+  if (!isEmail(email) || !password) return c.json({ error: '이메일과 비밀번호를 확인해주세요' }, 400);
+
+  // 잠금 열쇠는 이메일 기준. 아이 로그인·학원 발급 학부모 PIN과 서로 옮겨붙지 않게 접두어를 다르게 둔다.
+  const key = `PE:${email}`;
+  const lockLeft = await loginLockedFor(c.env.DB, key);
+  if (lockLeft > 0) {
+    return c.json({ error: `여러 번 틀려서 잠겼어요. ${Math.ceil(lockLeft / 60)}분 뒤에 다시 해주세요` }, 429);
+  }
+
+  const parent = await c.env.DB.prepare('SELECT * FROM parents WHERE email = ?1').bind(email).first();
+  // 가입 안 된 이메일과 비밀번호가 틀린 경우를 똑같이 답한다(어느 이메일이 가입돼 있는지 흘리지 않는다)
+  if (!parent || !(await verifySecret(password, parent.password_hash))) {
+    const { lockedSeconds } = await noteLoginFail(c.env.DB, key);
+    return c.json({
+      error: lockedSeconds
+        ? `여러 번 틀려서 ${Math.ceil(lockedSeconds / 60)}분 동안 잠겼어요`
+        : '이메일 또는 비밀번호가 맞지 않아요',
+    }, lockedSeconds ? 429 : 401);
+  }
+  await clearLoginFails(c.env.DB, key);
+  // 정지 안내는 비밀번호가 맞은 뒤에만 한다 — 먼저 말하면 아무나 이메일만 넣어
+  // '이 집이 정지됐는지'를 알아낼 수 있다.
+  if (parent.status === 'suspended') return c.json({ error: SUSPENDED_MSG }, 403);
+  return c.json({
+    token: await makeAccountToken(parent),
+    parent: { email: parent.email, display_name: parent.display_name },
+  });
+});
+
+// ── 아이 앱 로그인 ──
+// 이메일은 **부모 것 하나**를 온 가족이 같이 쓰고, **비밀번호만 사람마다 다르다.**
+// 부모가 가입할 때 아이 비밀번호까지 직접 정해 주므로 옮겨 적어 보낼 것이 없고,
+// 아이는 부모 비밀번호를 모른다(= 나중에 붙을 결제 화면을 열 수 없다).
+//
+// 비밀번호가 곧 '누구인지'라서 형제가 있어도 고르는 화면이 뜨지 않는다.
+// 다만 부모가 두 아이에게 같은 비밀번호를 준 경우만 누구인지 물어본다.
+app.post('/api/family/login', async (c) => {
+  const b = await c.req.json().catch(() => ({}));
+  const email = String(b.email ?? '').trim().toLowerCase();
+  const password = String(b.password ?? '');
+  if (!isEmail(email) || !password) return c.json({ error: '이메일과 비밀번호를 확인해주세요' }, 400);
+
+  // 잠금은 아이 앱 전용으로 따로 센다. 부모 로그인과 같은 열쇠로 세면
+  // 아이가 비밀번호를 여러 번 틀렸을 때 부모까지 못 들어간다.
+  const key = `FC:${email}`;
+  const lockLeft = await loginLockedFor(c.env.DB, key);
+  if (lockLeft > 0) {
+    return c.json({ error: `여러 번 틀려서 잠겼어요. ${Math.ceil(lockLeft / 60)}분 뒤에 다시 해주세요` }, 429);
+  }
+
+  const fail = async () => {
+    const { lockedSeconds } = await noteLoginFail(c.env.DB, key);
+    return c.json({
+      error: lockedSeconds
+        ? `여러 번 틀려서 ${Math.ceil(lockedSeconds / 60)}분 동안 잠겼어요`
+        : '이메일 또는 비밀번호가 맞지 않아요',
+    }, lockedSeconds ? 429 : 401);
+  };
+
+  const parent = await c.env.DB.prepare('SELECT id, status FROM parents WHERE email = ?1').bind(email).first();
+  if (!parent) return fail();
+
+  const { results: kids } = await c.env.DB.prepare(
+    `SELECT * FROM users WHERE parent_id = ?1 AND role = 'student' ORDER BY created_at`
+  ).bind(parent.id).all();
+
+  // 비밀번호가 맞는 아이를 찾는다. 아이마다 다르게 정했다면 한 명만 걸린다.
+  const matched = [];
+  for (const k of kids) if (await verifyPin(password, k.pin_hash)) matched.push(k);
+  if (!matched.length) return fail();
+  await clearLoginFails(c.env.DB, key);
+  // 정지 안내는 비밀번호가 맞은 뒤에만 (위 학부모 로그인과 같은 이유)
+  if (parent.status === 'suspended') return c.json({ error: SUSPENDED_MSG }, 403);
+
+  const pickedId = clean(b.child_id, 40);
+  const user = pickedId
+    ? matched.find((k) => k.id === pickedId)
+    : (matched.length === 1 ? matched[0] : null);
+  if (!user) {
+    return c.json({ choose: true, children: matched.map((k) => ({ id: k.id, display_name: k.display_name })) });
+  }
+  return c.json({
+    token: await makeToken(user),
+    user: { id: user.id, login_id: user.login_id, display_name: user.display_name, role: user.role },
+  });
+});
+
+// 내 아이 목록. 아이가 없어도 200으로 빈 목록을 준다(가입 직후 화면이 여기서 시작한다).
+app.get('/api/parent/children', requireParentAccount, async (c) => {
+  const parent = c.get('parent');
+  const children = await childrenOf(c.env.DB, parent.id);
+  return c.json({ parent: { email: parent.email, display_name: parent.display_name }, children });
+});
+
+app.post('/api/parent/children', requireParentAccount, async (c) => {
+  const parent = c.get('parent');
+  const b = await c.req.json().catch(() => ({}));
+  const name = clean(b.name, 12);
+  const password = String(b.password ?? '');
+  if (!name) return c.json({ error: '아이 이름을 입력해주세요' }, 400);
+  const bad = childPwReason(password);
+  if (bad) return c.json({ error: bad }, 400);
+
+  const { n } = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM users WHERE parent_id = ?1 AND role = 'student'`
+  ).bind(parent.id).first();
+  if (n >= MAX_CHILDREN) return c.json({ error: `아이는 ${MAX_CHILDREN}명까지 등록할 수 있어요` }, 400);
+
+  const child = await createChild(c.env.DB, { parentId: parent.id, name, password, grade: cleanGrade(b.grade) });
+  if (!child) return c.json({ error: '아이를 등록하지 못했어요. 다시 시도해주세요' }, 500);
+  return c.json({ child });
+});
+
+// 아이가 자기 비밀번호를 잊었을 때 부모가 새로 정해 준다.
+app.post('/api/parent/children/:id/password', requireParentAccount, async (c) => {
+  const parent = c.get('parent');
+  const b = await c.req.json().catch(() => ({}));
+  const password = String(b.password ?? '');
+  const bad = childPwReason(password);
+  if (bad) return c.json({ error: bad }, 400);
+  if (await verifySecret(password, parent.password_hash)) {
+    return c.json({ error: '아이 비밀번호는 보호자 것과 다르게 정해주세요' }, 400);
+  }
+
+  const child = await c.env.DB.prepare(
+    `SELECT id, login_id, display_name FROM users WHERE id = ?1 AND parent_id = ?2 AND role = 'student'`
+  ).bind(c.req.param('id'), parent.id).first();
+  if (!child) return c.json({ error: '아이를 찾을 수 없습니다' }, 404);
+
+  await c.env.DB.prepare('UPDATE users SET pin_hash = ?2 WHERE id = ?1')
+    .bind(child.id, await hashPin(password)).run();
+  // 비밀번호가 바뀌면 그 아이의 기존 토큰은 전부 무효가 된다(토큰 서명 열쇠가 pin_hash라서)
+  await clearLoginFails(c.env.DB, `FC:${parent.email}`);
+  return c.json({ child: { id: child.id, display_name: child.display_name } });
+});
+
+// 자녀 한 명의 요약. 부모는 이것만 본다 — 정답·해설·문항 원문은 내려주지 않는다.
+app.get('/api/parent/overview', requireParent, async (c) => {
+  const child = c.get('child');
+  const today = kstDate();
+  const [stats, { results: parts }, { results: days }, sm, klass] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT COUNT(*) AS answered, COALESCE(SUM(is_correct), 0) AS correct
+         FROM answers WHERE user_id = ?1`
+    ).bind(child.id).first(),
+    c.env.DB.prepare(
+      `SELECT q.part, COUNT(*) AS answered, COALESCE(SUM(a.is_correct), 0) AS correct
+         FROM answers a JOIN questions q ON q.id = a.question_id
+        WHERE a.user_id = ?1 GROUP BY q.part`
+    ).bind(child.id).all(),
+    c.env.DB.prepare(
+      `SELECT date(answered_at, '+9 hours') AS d, COUNT(*) AS n FROM answers
+        WHERE user_id = ?1 GROUP BY d ORDER BY d DESC LIMIT 21`
+    ).bind(child.id).all(),
+    computeSkillMap(c.env.DB, child, today),
+    c.env.DB.prepare('SELECT name, grade, set_size FROM classes WHERE id = ?1').bind(child.class_id).first(),
+  ]);
+
+  // 이어온 날(연속) — 오늘 아직 안 했으면 어제부터 센다
+  const dayset = new Set(days.map((r) => r.d));
+  let streak = 0;
+  const cur = new Date(`${today}T00:00:00Z`);
+  if (!dayset.has(today)) cur.setUTCDate(cur.getUTCDate() - 1);
+  while (dayset.has(cur.toISOString().slice(0, 10))) { streak += 1; cur.setUTCDate(cur.getUTCDate() - 1); }
+
+  // 직접 가입한 학부모는 아이가 여럿일 수 있다 — 화면에서 바꿔 볼 수 있게 목록을 함께 준다.
+  // 학원 발급 토큰은 아이 하나에 묶여 있어 목록이 없다(null).
+  const parent = c.get('parent');
+  const siblings = parent
+    ? (await c.env.DB.prepare(
+        `SELECT id, display_name FROM users WHERE parent_id = ?1 AND role = 'student' ORDER BY created_at`
+      ).bind(parent.id).all()).results
+    : null;
+
+  return c.json({
+    child: { id: child.id, display_name: child.display_name, login_id: child.login_id },
+    children: siblings,
+    parent: parent ? { email: parent.email, display_name: parent.display_name } : null,
+    class: klass ?? null,
+    // 오늘 날짜를 서버가 알려준다 — 화면이 기기 시계로 따로 계산하면 한국이 아닌 곳에서
+    // 보거나 자정~오전 9시 사이에 볼 때 하루가 어긋난다(서버는 한국 시간 기준).
+    today,
+    // 듣기 속도가 아이마다 다르게 나가므로 부모가 알 수 있어야 한다.
+    // "우리 애 소리가 갑자기 빨라졌어요" 문의를 이 한 줄이 막는다.
+    audio_rate: await audioRateOf(c.env.DB, child),
+    today_n: days.find((r) => r.d === today)?.n ?? 0,
+    recent_days: days.slice(0, 14).reverse(),   // 최근 2주, 오래된 날부터
+    streak,
+    answered: stats.answered,
+    correct: stats.correct,
+    parts: Object.fromEntries(parts.map((p) => [p.part, { answered: p.answered, correct: p.correct }])),
+    axes: sm.axes, misses: sm.misses, revive: sm.revive, speed: sm.speed,
+  });
+});
+
+// 오답 상세 — "5번 틀렸어요"라는 숫자 뒤의 실제 문제를 부모가 본다.
+// ?miss=G.pair (실수 유형) 또는 ?axis=read (실력 축) 중 하나로 고른다.
+// 정답·해설이 나가지만 '이미 푼 문제'만이고 부모 토큰 전용이다 — 앞으로 나올 문제는
+// 여기 없고, 아이 토큰으로는 열리지 않으므로 '정답은 서버에만' 원칙과 부딪히지 않는다.
+app.get('/api/parent/wrong-answers', requireParent, async (c) => {
+  const child = c.get('child');
+  const miss = c.req.query('miss') || null;
+  const ax = SKILL_AXES.find((a) => a.key === c.req.query('axis')) ?? null;
+  if (!(miss && MISS_KO[miss]) && !ax) return c.json({ error: '무엇을 볼지 알 수 없어요' }, 400);
+
+  // 실수 순위(rankMisses)와 같은 창(최근 30일) — 화면의 "n번"과 목록이 같은 것을 세게 한다
+  const since = shiftISO(kstDate(), -30);
+  const tagCond = ax
+    ? ` AND EXISTS (SELECT 1 FROM question_tags t WHERE t.question_id = q.id
+         AND t.tag_id IN (${ax.tags.map((_, i) => `?${i + 3}`).join(',')}))`
+    : '';
+  const { results: rows } = await c.env.DB.prepare(
+    `SELECT a.chosen_idx, date(a.answered_at, '+9 hours') AS d,
+            q.id AS qid, q.part, q.section, q.stem, q.choices, q.answer_idx,
+            q.explanation_ko, q.evidence, q.why_not, q.miss_type, q.script, q.image_url,
+            COALESCE(q.translation_ko, p.translation_ko) AS translation_ko,
+            p.content AS p_content
+       FROM answers a
+       JOIN questions q ON q.id = a.question_id
+       LEFT JOIN passages p ON p.id = q.passage_id
+      WHERE a.user_id = ?1 AND a.is_correct = 0 AND a.answered_at >= ?2${tagCond}
+      ORDER BY a.answered_at DESC LIMIT 200`
+  ).bind(child.id, since, ...(ax ? ax.tags : [])).all();
+
+  // 같은 문제를 두 번 틀렸으면 카드 하나에 "2번"으로 합친다(따로 두 장이면 헷갈린다).
+  // n은 합치기 전 횟수 — 홈 화면의 "n번 틀렸어요"와 같은 수가 되게.
+  const seen = new Map();
+  const items = [];
+  let n = 0;
+  for (const r of rows) {
+    if (miss && (parseJson(r.miss_type) ?? {})[String(r.chosen_idx)] !== miss) continue;
+    n += 1;
+    const got = seen.get(r.qid);
+    if (got) { got.times += 1; continue; }
+    const item = {
+      part: r.part, when: r.d, times: 1,
+      stem: r.stem,
+      choices: parseJson(r.choices) ?? [],
+      choice_images: r.part === 'L1' && r.image_url?.startsWith('[') ? parseJson(r.image_url) : null,
+      chosen_idx: r.chosen_idx,
+      answer_idx: r.answer_idx,
+      why_chosen: (parseJson(r.why_not) ?? {})[String(r.chosen_idx)] ?? null,
+      explanation_ko: r.explanation_ko,
+      evidence: r.evidence ?? null,
+      // 듣기는 들려준 문장(대본)을 글로 준다 — 부모가 소리를 안 틀어도 설명할 수 있게
+      passage: r.section === 'RC' ? (r.p_content ?? null) : null,
+      script: r.section === 'LC' ? (r.script || r.p_content || null) : null,
+      // 부모가 아이에게 설명하려면 지문 뜻부터 알아야 한다
+      translation_ko: r.translation_ko ?? null,
+    };
+    seen.set(r.qid, item);
+    items.push(item);
+  }
+  return c.json({
+    kind: miss ? 'miss' : 'axis',
+    code: miss ?? ax.key,
+    name: miss ? MISS_KO[miss] : ax.name,
+    n,
+    items: items.slice(0, 20),
+    more: Math.max(0, items.length - 20),
+  });
+});
+
+app.post('/api/setup/admin', async (c) => {
+  if (await superCount(c.env.DB)) {
+    return c.json({ error: '이미 관리자가 있습니다. 관리자 화면에서 로그인하세요.' }, 403);
+  }
+  const body = await c.req.json().catch(() => ({}));
+  const loginId = clean(body.login_id, 32).toUpperCase();
+  const secret = String(body.secret ?? '');
+  if (!/^[A-Z0-9-]{2,32}$/.test(loginId)) {
+    return c.json({ error: '아이디는 영문·숫자 2~32자입니다 (예: ADMIN)' }, 400);
+  }
+  // 새로 정하는 자리이므로 길이뿐 아니라 '뻔한 비밀번호'인지도 본다.
+  // 8자는 짧아서, admin1234 같은 걸 쓰면 DB가 유출됐을 때 금방 깨진다.
+  const weak = weakSecretReason(secret, loginId);
+  if (weak) return c.json({ error: weak }, 400);
+  const taken = await c.env.DB.prepare('SELECT 1 FROM users WHERE login_id = ?1').bind(loginId).first();
+  if (taken) return c.json({ error: '이미 쓰고 있는 아이디입니다' }, 409);
+
+  const id = crypto.randomUUID();
+  // 여기서도 한 번 더 확인한다 — 두 사람이 동시에 눌렀을 때 둘 다 통과하면 안 된다.
+  // D1은 트랜잭션 격리가 약해서, 조건부 INSERT 로 DB가 직접 막게 한다.
+  const r = await c.env.DB.prepare(
+    `INSERT INTO users (id, role, login_id, pin_hash, display_name, academy_id, class_id, created_at)
+     SELECT ?1, 'super', ?2, ?3, '관리자', NULL, NULL, ?4
+      WHERE NOT EXISTS (SELECT 1 FROM users WHERE role = 'super')`
+  ).bind(id, loginId, await hashPin(secret), nowISO()).run();
+  if (!r.meta?.changes) {
+    return c.json({ error: '이미 관리자가 있습니다. 관리자 화면에서 로그인하세요.' }, 403);
+  }
+  const user = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(id).first();
+  return c.json({
+    token: await makeToken(user),
+    user: { id: user.id, login_id: user.login_id, display_name: user.display_name, role: user.role },
+  });
+});
+const nowISO = () => new Date().toISOString();
+const clean = (s, max) => String(s ?? '').trim().slice(0, max);
+
+// 한눈에 보는 현황 — 고객은 가족이다(2026-08-11 B2C 전환).
+// 관리자 화면은 '읽기 전용'이다: 가족이 얼마나 들어와서 얼마나 쓰는지만 본다.
+// 계정 발급·비밀번호 재설정은 관리자가 못 한다 — 가입은 학부모가 직접 하고,
+// 아이 비밀번호는 학부모 화면에서 학부모가 바꾼다. 관리자가 남의 가족 비밀번호를
+// 만들 수 있으면 그게 곧 사고 경로가 된다.
+//
+// ⚠ 학원 관리(학원·반·학생 발급·PIN 재발급) 엔드포인트는 지웠다(2026-08-12).
+// 학원 영업을 접으면서 학생 앱에서 아이디·PIN 로그인 자체가 사라졌으므로,
+// 관리자가 발급한 PIN은 들어갈 문이 없는 열쇠였다. academies·classes 표는
+// 시뮬레이션·시드(tools/)용 내부 도구로만 남는다.
+app.get('/api/admin/overview', ...admin, async (c) => {
+  // '오늘'을 먼저 정해 둔다 — 아래 질의가 오늘 푼 문항 수를 세는 데 쓴다(한국 시간 기준)
+  const today = kstDate();
+  const [{ results: parents }, { results: kids }, pending] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT id, email, display_name, status, consent_at, created_at FROM parents ORDER BY created_at DESC LIMIT 500`
+    ).all(),
+    c.env.DB.prepare(
+      // '마지막 학습 = 오늘'만으로는 몇 문제를 풀었는지 알 수 없다.
+      // 한 문제만 열어보고 나간 아이와 한 세트를 끝낸 아이가 같아 보이므로 오늘 수를 따로 센다.
+      `SELECT u.id, u.parent_id, u.display_name, u.created_at,
+              (SELECT COUNT(*) FROM answers WHERE user_id = u.id) AS answers,
+              (SELECT COUNT(*) FROM answers
+                WHERE user_id = u.id AND date(answered_at, '+9 hours') = ?1) AS today_n,
+              (SELECT MAX(date(answered_at, '+9 hours')) FROM answers WHERE user_id = u.id) AS last_day
+         FROM users u WHERE u.parent_id IS NOT NULL AND u.role = 'student'`
+    ).bind(today).all(),
+    c.env.DB.prepare('SELECT COUNT(*) AS n FROM feedback WHERE handled_at IS NULL').first(),
+  ]);
+  const byParent = {};
+  for (const k of kids) (byParent[k.parent_id] ||= []).push(k);
+  const families = parents.map((p) => ({
+    id: p.id, email: p.email, display_name: p.display_name, status: p.status,
+    joined: p.created_at, children: byParent[p.id] ?? [],
+  }));
+  return c.json({
+    families,
+    stats: {
+      families: parents.length,
+      children: kids.length,
+      answers: kids.reduce((n, k) => n + k.answers, 0),
+      active_today: kids.filter((k) => k.today_n > 0).length,
+      // 오늘 몇 문항이 풀렸는지 — '몇 명이 켰나'보다 실제 사용량에 가깝다
+      today_answers: kids.reduce((n, k) => n + k.today_n, 0),
+    },
+    today,
+    feedback_pending: pending.n,
+  });
+});
+
+// ── 가족 관리 (2026-08-12, 사용자 선택: 4종 전부) ──
+// 원칙은 그대로다: 관리자는 비밀번호를 정하거나 볼 수 없다. 여기 있는 건
+// 상세·메모(문의 대응), 정지/해제(어뷰징), 탈퇴(법적 의무), 재설정 링크(잠긴 가족 구조)뿐이고
+// 정지·해제·링크 발급은 메모로 자동 기록되어 감사 흔적이 남는다.
+
+const familyOf = async (db, id) => db.prepare(
+  `SELECT id, email, display_name, status, consent_at, created_at, reset_expires_at
+     FROM parents WHERE id = ?1`
+).bind(clean(id, 40)).first();
+
+// 정지/해제/링크 발급을 메모로 자동 기록 — 몇 달 뒤 "이 집 왜 정지했더라"에 답하는 건 이 줄뿐이다
+const addNote = (db, parentId, body, by) => db.prepare(
+  `INSERT INTO admin_notes (id, parent_id, body, created_by, created_at) VALUES (?1, ?2, ?3, ?4, ?5)`
+).bind(crypto.randomUUID(), parentId, body, by, nowISO()).run();
+
+// 가족 한 팀 자세히 — 문의 전화를 받으며 여는 화면.
+// 아이가 여럿이면 **아이마다** 학습률·학습 흐름·능력(실력 지도)을 따로 보여준다.
+// "둘째만 안 하고 있어요" 같은 문의에 아이 단위로 답할 수 있어야 하기 때문이다.
+app.get('/api/admin/family/:id', ...admin, async (c) => {
+  const fam = await familyOf(c.env.DB, c.req.param('id'));
+  if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const today = kstDate();
+  const [{ results: children }, { results: notes }, { results: feedback }] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT u.id, u.display_name, u.created_at,
+              (SELECT COUNT(*) FROM answers WHERE user_id = u.id) AS answers,
+              (SELECT SUM(is_correct) FROM answers WHERE user_id = u.id) AS correct,
+              (SELECT MAX(date(answered_at, '+9 hours')) FROM answers WHERE user_id = u.id) AS last_day
+         FROM users u WHERE u.parent_id = ?1 AND u.role = 'student' ORDER BY u.created_at`
+    ).bind(fam.id).all(),
+    c.env.DB.prepare(
+      `SELECT body, created_by, created_at FROM admin_notes
+        WHERE parent_id = ?1 ORDER BY created_at DESC LIMIT 50`
+    ).bind(fam.id).all(),
+    c.env.DB.prepare(
+      `SELECT f.kind, f.note, f.created_at, f.handled_at, q.part, q.stem, u.display_name
+         FROM feedback f
+         JOIN users u ON u.id = f.user_id AND u.parent_id = ?1
+         LEFT JOIN questions q ON q.id = f.question_id
+        ORDER BY f.created_at DESC LIMIT 20`
+    ).bind(fam.id).all(),
+  ]);
+
+  // 아이별 심화 — 실력 지도(부모 화면과 같은 엔진 값)와 최근 2주 흐름.
+  // 아이는 가족당 최대 3명이라 순서대로 계산해도 관리자 화면 한 번 열기에 부담이 없다.
+  for (const kid of children) {
+    const [{ results: days }, sm] = await Promise.all([
+      c.env.DB.prepare(
+        `SELECT date(answered_at, '+9 hours') AS d, COUNT(*) AS n FROM answers
+          WHERE user_id = ?1 GROUP BY d ORDER BY d DESC LIMIT 21`
+      ).bind(kid.id).all(),
+      computeSkillMap(c.env.DB, kid, today),
+    ]);
+    // 이어온 날 — 오늘 아직 안 했으면 어제부터 센다 (부모 화면과 같은 규칙)
+    const dayset = new Set(days.map((r) => r.d));
+    let streak = 0;
+    const cur = new Date(`${today}T00:00:00Z`);
+    if (!dayset.has(today)) cur.setUTCDate(cur.getUTCDate() - 1);
+    while (dayset.has(cur.toISOString().slice(0, 10))) { streak += 1; cur.setUTCDate(cur.getUTCDate() - 1); }
+    // '최근 2주 N일'은 달력 14일 안만 센다 — 목록 길이로 세면 옛 기록까지 부풀려진다
+    const from = Date.parse(`${today}T00:00:00Z`) - 13 * 86400_000;
+    kid.week14 = days.filter((r) => r.n > 0 && Date.parse(`${r.d}T00:00:00Z`) >= from).length;
+    // 오늘 몇 문항 — 날짜별 개수를 이미 받아왔으므로 따로 물어보지 않는다
+    kid.today_n = days.find((r) => r.d === today)?.n ?? 0;
+    kid.streak = streak;
+    kid.axes = sm.axes;
+    kid.misses = sm.misses;
+    kid.revive = sm.revive;
+  }
+  return c.json({ family: fam, children, notes, feedback, today });
+});
+
+// 운영 메모 남기기
+app.post('/api/admin/family/:id/note', ...admin, async (c) => {
+  const fam = await familyOf(c.env.DB, c.req.param('id'));
+  if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const body = clean((await c.req.json().catch(() => ({}))).body, 500);
+  if (!body) return c.json({ error: '메모 내용을 적어주세요' }, 400);
+  await addNote(c.env.DB, fam.id, body, c.get('user').login_id);
+  return c.json({ ok: true });
+});
+
+// 일시 정지 / 해제 — 데이터는 그대로 두고 로그인만 막는다.
+// 학부모·아이 로그인, 살아 있던 토큰까지 그 즉시 막힌다(auth.mjs가 status를 본다).
+app.post('/api/admin/family/:id/suspend', ...admin, async (c) => {
+  const fam = await familyOf(c.env.DB, c.req.param('id'));
+  if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const suspend = (await c.req.json().catch(() => ({}))).suspend !== false;
+  await c.env.DB.prepare(`UPDATE parents SET status = ?2 WHERE id = ?1`)
+    .bind(fam.id, suspend ? 'suspended' : 'active').run();
+  await addNote(c.env.DB, fam.id, suspend ? '[정지] 계정을 일시 정지함' : '[해제] 정지를 풀어줌',
+    c.get('user').login_id);
+  return c.json({ ok: true, status: suspend ? 'suspended' : 'active' });
+});
+
+// 비밀번호 재설정 링크 발급 — 잠긴 가족을 구하는 유일한 문.
+// 관리자가 새 비밀번호를 정해 주는 방식은 일부러 안 만들었다: 링크만 만들어 전달하고,
+// 새 비밀번호는 학부모가 그 링크에서 직접 정한다. 관리자는 끝까지 비밀번호를 모른다.
+// 토큰 평문은 이 응답에 딱 한 번 실리고 서버에는 해시만 남는다(PIN과 같은 규칙).
+app.post('/api/admin/family/:id/reset-link', ...admin, async (c) => {
+  const fam = await familyOf(c.env.DB, c.req.param('id'));
+  if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const raw = new Uint8Array(24);
+  crypto.getRandomValues(raw);
+  const secret = btoa(String.fromCharCode(...raw)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const expires = new Date(Date.now() + 24 * 3600_000).toISOString();
+  await c.env.DB.prepare(
+    `UPDATE parents SET reset_token_hash = ?2, reset_expires_at = ?3 WHERE id = ?1`
+  ).bind(fam.id, await hashPin(secret), expires).run();
+  await addNote(c.env.DB, fam.id, '[재설정] 비밀번호 재설정 링크를 발급함 (24시간 유효)',
+    c.get('user').login_id);
+  const url = `${new URL(c.req.url).origin}/parent#reset=${fam.id}.${secret}`;
+  return c.json({ url, expires_at: expires,
+    note: '이 링크는 지금 한 번만 보입니다. 학부모에게 직접 전달하세요.' });
+});
+
+// 탈퇴(삭제) — 개인정보보호법상 삭제 요청은 지체 없이 처리해야 한다.
+// 가족의 모든 행을 지운다(아이 학습 기록·신고·메모·학부모 행까지). 복구는 없다.
+// 실수 방지로 가족 이메일을 그대로 다시 입력받는다.
+app.delete('/api/admin/family/:id', ...admin, async (c) => {
+  const fam = await familyOf(c.env.DB, c.req.param('id'));
+  if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const confirm = String((await c.req.json().catch(() => ({}))).email ?? '').trim().toLowerCase();
+  if (confirm !== fam.email) {
+    return c.json({ error: '확인용 이메일이 다릅니다. 가족의 이메일을 그대로 입력해주세요' }, 400);
+  }
+  const { results: kids } = await c.env.DB.prepare(
+    `SELECT id FROM users WHERE parent_id = ?1`
+  ).bind(fam.id).all();
+  const ids = kids.map((k) => k.id);
+  const stmts = [];
+  if (ids.length) {
+    const marks = ids.map((_, i) => `?${i + 1}`).join(',');
+    // 자식 행(외래키로 얽힌 것)부터 지운다 — 순서가 틀리면 FK 제약에 걸려 중간에 멈춘다
+    for (const t of ['answers', 'daily_sets', 'review_queue', 'user_tag_skills', 'user_skill_daily',
+                     'user_daily_stats', 'user_stats', 'user_badges', 'assignment_targets',
+                     'feedback', 'sessions']) {
+      stmts.push(c.env.DB.prepare(`DELETE FROM ${t} WHERE user_id IN (${marks})`).bind(...ids));
+    }
+    stmts.push(c.env.DB.prepare(`DELETE FROM users WHERE id IN (${marks})`).bind(...ids));
+  }
+  stmts.push(c.env.DB.prepare('DELETE FROM admin_notes WHERE parent_id = ?1').bind(fam.id));
+  stmts.push(c.env.DB.prepare('DELETE FROM login_attempts WHERE login_id IN (?1, ?2)')
+    .bind(`PE:${fam.email}`, `FC:${fam.email}`));
+  stmts.push(c.env.DB.prepare('DELETE FROM parents WHERE id = ?1').bind(fam.id));
+  await c.env.DB.batch(stmts);   // 한 트랜잭션 — 반쯤 지워진 가족을 남기지 않는다
+  return c.json({ ok: true, deleted: { children: ids.length } });
+});
+
+// ── 비밀번호 재설정 (공개 — 링크를 받은 학부모가 쓴다) ──
+// 토큰 = <parentId>.<secret>. 주소의 # 뒤에 실려 서버 로그에도 남지 않는다.
+app.post('/api/parent/reset-password', async (c) => {
+  const b = await c.req.json().catch(() => ({}));
+  const [pid, secret] = String(b.token ?? '').split('.');
+  const password = String(b.password ?? '');
+  const bad = () => c.json({ error: '링크가 만료됐거나 이미 사용됐어요. 새 링크를 요청해주세요' }, 400);
+  if (!pid || !secret) return bad();
+  const parent = await c.env.DB.prepare('SELECT * FROM parents WHERE id = ?1').bind(clean(pid, 40)).first();
+  if (!parent?.reset_token_hash || !parent.reset_expires_at) return bad();
+  if (Date.parse(parent.reset_expires_at) < Date.now()) return bad();
+  if (!(await verifyPin(secret, parent.reset_token_hash))) return bad();
+  const weak = weakSecretReason(password, parent.email.split('@')[0]);
+  if (weak) return c.json({ error: weak }, 400);
+  // 새 해시를 넣으면 기존 학부모 토큰은 전부 무효(토큰 서명 열쇠가 비밀번호 해시).
+  // 토큰도 지워서 한 번만 쓰이게 한다. 아이 로그인은 건드리지 않는다.
+  await c.env.DB.prepare(
+    `UPDATE parents SET password_hash = ?2, reset_token_hash = NULL, reset_expires_at = NULL WHERE id = ?1`
+  ).bind(parent.id, await hashSecret(password)).run();
+  await clearLoginFails(c.env.DB, `PE:${parent.email}`);
+  return c.json({ ok: true, email: parent.email });
+});
+
+// 신고 목록 — 아이가 어느 문항에서 막혔는지. 기본은 아직 안 본 것만.
+app.get('/api/admin/feedback', ...admin, async (c) => {
+  const all = c.req.query('all') === '1';
+  const { results } = await c.env.DB.prepare(
+    `SELECT f.id, f.kind, f.note, f.screen, f.created_at, f.handled_at,
+            f.question_id, q.part, q.stem, u.login_id, u.display_name
+       FROM feedback f
+       LEFT JOIN questions q ON q.id = f.question_id
+       LEFT JOIN users u ON u.id = f.user_id
+      ${all ? '' : 'WHERE f.handled_at IS NULL'}
+      ORDER BY f.created_at DESC LIMIT 200`
+  ).all();
+  return c.json({ feedback: results });
+});
+
+app.post('/api/admin/feedback/:id/handled', ...admin, async (c) => {
+  const done = (await c.req.json().catch(() => ({})))?.done !== false;
+  const r = await c.env.DB.prepare('UPDATE feedback SET handled_at = ?2, handled_by = ?3 WHERE id = ?1')
+    .bind(c.req.param('id'), done ? nowISO() : null, done ? c.get('user').id : null).run();
+  if (!r.meta?.changes) return c.json({ error: '신고를 찾을 수 없습니다' }, 404);
+  return c.json({ ok: true, handled: done });
+});
+
+// ── 문항 관리 (2026-08-23, 사용자 선택: 현황판 + 직접 저작 + AI 주문 / 저장소 커밋 / 듣기까지) ──
+//
+// 여기서 만든 문항은 **저장소의 content/questions/*.json 에 커밋된다.** DB에 바로 넣지 않는
+// 이유는 원본을 하나로 두기 위해서다 — 음원·사진을 만드는 배치와 배포가 모두 그 파일을 보고
+// 돌기 때문에, 파일에 들어가야 듣기 문항에 소리가 붙고 다음 배포에 출제까지 이어진다.
+//
+// 예외는 '출제 시작/내리기'다. 신고 들어온 문항을 당장 내려야 하는데 배포를 기다릴 수 없으므로
+// DB를 즉시 고치고 파일도 같이 고친다(다음 배포 때 같은 값이 다시 들어와 어긋나지 않는다).
+
+const CONTENT_DIR = 'content/questions';
+const IDMAP_PATH = 'content/.idmap.json';
+const REQ_DIR = 'requests';
+
+// AI 주문은 '주문서 파일'을 저장소에 커밋하는 것으로 넣는다.
+//
+// ⚠ 워크플로를 API 로 직접 부르지 않는 이유(2026-09-02): GitHub 은 워크플로 파일이
+// **기본 브랜치**에 있어야 그 이름을 인식하는데, 점프리시 배치들은 전부 작업 브랜치에서만 산다.
+// 그래서 dispatch 호출이 404 로 떨어져 버튼을 눌러도 아무 일이 없었다.
+// 저장소가 이미 쓰고 있는 방식(주문서 푸시 → push 트리거)이 같은 일을 하면서 브랜치를 안 탄다.
+// 덤으로 무엇을 언제 주문했는지가 커밋으로 남는다.
+async function commitOrders(gh, orders) {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const files = orders.map((o, i) => ({
+    path: `${REQ_DIR}/gen-${stamp}-${o.part}-${i + 1}.json`,
+    text: `${JSON.stringify({
+      part: o.part,
+      count: o.count,
+      tag: o.tag ?? '',
+      difficulty: o.difficulty ?? '',
+      note: o.note ?? '',
+      why: o.why ?? '',
+      requested_at: new Date().toISOString(),
+    }, null, 2)}\n`,
+  }));
+  const total = orders.reduce((n, o) => n + o.count, 0);
+  await gh.commitFiles(files,
+    `junior-toeic-master: 문제 만들기 주문 ${orders.length}건 (${total}문항) — 관리자 화면\n\n`
+    + orders.map((o) => `- ${o.part} ${o.count}문항${o.tag ? ` (${o.tag})` : ''}${o.why ? ` — ${o.why}` : ''}`).join('\n')
+    + '\n\n이 파일이 푸시되면 generate-questions.yml 이 읽어 초안을 만들고 주문서를 지운다.');
+  return files.length;
+}
+
+// 등록된 태그 표 — 검사에 쓸 {코드: 'LC'|'RC'|'ALL'}
+const tagSectionOf = async (db) => {
+  const { results } = await db.prepare('SELECT id, section FROM concept_tags').all();
+  return Object.fromEntries(results.map((t) => [t.id, t.section]));
+};
+
+// 문항 현황 — "무엇을 더 만들어야 하나"에 답하는 화면의 재료.
+// 태그별 개수를 보여주는 이유: 총량이 넉넉해도 특정 개념이 얇으면 그 축의 실력이 안 재진다.
+app.get('/api/admin/content', ...admin, async (c) => {
+  const [{ results: parts }, { results: tags }, { results: diff }, { results: reported }, media] =
+    await Promise.all([
+      c.env.DB.prepare(
+        `SELECT part,
+                COUNT(*) AS total,
+                SUM(CASE WHEN status = 'active'  THEN 1 ELSE 0 END) AS active,
+                SUM(CASE WHEN status = 'draft'   THEN 1 ELSE 0 END) AS draft,
+                SUM(CASE WHEN status = 'retired' THEN 1 ELSE 0 END) AS retired
+           FROM questions GROUP BY part ORDER BY part`).all(),
+      c.env.DB.prepare(
+        `SELECT t.id, t.name_ko, t.section,
+                COUNT(CASE WHEN q.status = 'active' THEN 1 END) AS n,
+                COUNT(CASE WHEN q.status = 'draft'  THEN 1 END) AS n_draft
+           FROM concept_tags t
+           LEFT JOIN question_tags qt ON qt.tag_id = t.id
+           LEFT JOIN questions q ON q.id = qt.question_id
+          GROUP BY t.id ORDER BY n ASC`).all(),
+      c.env.DB.prepare(
+        `SELECT difficulty_label AS label, COUNT(*) AS n
+           FROM questions WHERE status = 'active' GROUP BY difficulty_label ORDER BY label`).all(),
+      // 아이들이 신고한 문항 — 고쳐야 할 곳이 여기 있다
+      c.env.DB.prepare(
+        `SELECT q.id, q.part, q.stem, q.status, COUNT(*) AS n,
+                GROUP_CONCAT(DISTINCT f.kind) AS kinds
+           FROM feedback f JOIN questions q ON q.id = f.question_id
+          WHERE f.handled_at IS NULL
+          GROUP BY q.id ORDER BY n DESC LIMIT 20`).all(),
+      c.env.DB.prepare(
+        `SELECT SUM(CASE WHEN q.section = 'LC'
+                         AND COALESCE(q.audio_url, p.audio_url) IS NULL THEN 1 ELSE 0 END) AS lc_no_audio,
+                SUM(CASE WHEN q.part = 'L1' AND q.image_url IS NULL THEN 1 ELSE 0 END)      AS l1_no_image
+           FROM questions q LEFT JOIN passages p ON p.id = q.passage_id
+          WHERE q.status != 'retired'`).first(),
+    ]);
+
+  // 축(실력 5칸)별 문항 수 — 부모·아이 화면의 눈금과 같은 기준으로 센다.
+  // 어느 축이 얇은지가 "무엇을 만들지"의 첫 번째 답이다.
+  const byTag = Object.fromEntries(tags.map((t) => [t.id, t.n]));
+  const draftBy = Object.fromEntries(tags.map((t) => [t.id, t.n_draft ?? 0]));
+  const axes = SKILL_AXES.map((ax) => ({
+    key: ax.key, name: ax.name,
+    n: ax.tags.reduce((s, t) => s + (byTag[t] ?? 0), 0),
+    // 검수를 기다리는 몫도 함께 — 방금 만든 게 왜 숫자에 안 잡히는지 화면에서 바로 보이게
+    draft: ax.tags.reduce((s, t) => s + (draftBy[t] ?? 0), 0),
+  }));
+
+  const gh = new GithubRepo(c.env);
+  return c.json({
+    parts, tags, axes,
+    difficulty: diff,
+    reported,
+    media,
+    total: parts.reduce((s, p) => s + p.total, 0),
+    active: parts.reduce((s, p) => s + p.active, 0),
+    // 저장소에 글을 쓸 수 있는 상태인지 — 못 쓰면 화면이 미리 알려준다(저장 눌러 실패하지 않게)
+    repo: { ready: gh.configured, branch: gh.branch, repo: gh.repo },
+    parts_ko: PART_KO, part_form: PART_FORM, choices_by_part: CHOICES_BY_PART,
+    miss_types: MISS_KO, statuses: STATUSES, accents: ACCENTS,
+  });
+});
+
+// 문항 목록 — 고칠 문항을 찾는 곳. 정답·해설은 관리자만 보므로 여기 실어도 된다.
+app.get('/api/admin/questions', ...admin, async (c) => {
+  const part = clean(c.req.query('part') ?? '', 4);
+  const status = clean(c.req.query('status') ?? '', 10);
+  const tag = clean(c.req.query('tag') ?? '', 40);
+  const kw = clean(c.req.query('q') ?? '', 60);
+  const where = ['1=1'];
+  const bind = [];
+  const put = (v) => { bind.push(v); return `?${bind.length}`; };
+  if (PART_LIST.includes(part)) where.push(`q.part = ${put(part)}`);
+  if (STATUSES.includes(status)) where.push(`q.status = ${put(status)}`);
+  if (tag) where.push(`EXISTS (SELECT 1 FROM question_tags t WHERE t.question_id = q.id AND t.tag_id = ${put(tag)})`);
+  if (kw) where.push(`(q.stem LIKE ${put(`%${kw}%`)} OR q.script LIKE ${put(`%${kw}%`)})`);
+  const { results } = await c.env.DB.prepare(
+    `SELECT q.id, q.part, q.status, q.stem, q.difficulty_label, q.image_url,
+            COALESCE(q.audio_url, (SELECT audio_url FROM passages WHERE id = q.passage_id)) AS audio_url,
+            q.times_answered, q.times_correct,
+            (SELECT COUNT(*) FROM feedback f WHERE f.question_id = q.id AND f.handled_at IS NULL) AS reports,
+            (SELECT GROUP_CONCAT(tag_id) FROM question_tags WHERE question_id = q.id) AS tags
+       FROM questions q WHERE ${where.join(' AND ')}
+      ORDER BY q.part, q.id LIMIT 200`).bind(...bind).all();
+  return c.json({ items: results });
+});
+
+// 문항 하나 자세히 — 아이 화면 그대로 미리보기 + 고치기용
+app.get('/api/admin/questions/:id', ...admin, async (c) => {
+  const q = await c.env.DB.prepare(
+    `SELECT q.*, p.content AS p_content, p.kind AS p_kind, p.accent AS p_accent,
+            p.audio_url AS p_audio, p.translation_ko AS p_translation
+       FROM questions q LEFT JOIN passages p ON p.id = q.passage_id WHERE q.id = ?1`
+  ).bind(clean(c.req.param('id'), 40)).first();
+  if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
+  const [{ results: tags }, { results: reports }] = await Promise.all([
+    c.env.DB.prepare('SELECT tag_id FROM question_tags WHERE question_id = ?1').bind(q.id).all(),
+    c.env.DB.prepare(
+      `SELECT kind, note, created_at, handled_at FROM feedback
+        WHERE question_id = ?1 ORDER BY created_at DESC LIMIT 20`).bind(q.id).all(),
+  ]);
+  return c.json({
+    question: {
+      ...q,
+      choices: parseJson(q.choices) ?? [],
+      why_not: parseJson(q.why_not), miss_type: parseJson(q.miss_type), key_expr: parseJson(q.key_expr),
+      image_url: q.image_url?.startsWith('[') ? parseJson(q.image_url) : q.image_url,
+      // 듣기 묶음(L3·L4)은 소리가 '지문'에 붙어 있다. 문항 것만 보면 멀쩡한 문항이
+      // 소리 없는 것으로 보여, 화면에서 재생도 안 되고 출제도 막힌다.
+      audio_url: q.audio_url || q.p_audio || null,
+      translation_ko: q.translation_ko || q.p_translation || null,
+      tags: tags.map((t) => t.tag_id),
+    },
+    reports,
+  });
+});
+
+// 저장 전 검사만 — 화면이 타이핑 중에 불러 "지금 이대로 저장되나"를 알려준다.
+app.post('/api/admin/questions/validate', ...admin, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const part = clean(body.part ?? '', 4);
+  const errs = validateItem(body.item ?? {}, part, await tagSectionOf(c.env.DB));
+  return c.json({ ok: errs.length === 0, errors: errs });
+});
+
+// 새 문항 저장 — 저장소의 파트 파일에 붙이고 ULID 매핑까지 한 커밋으로 올린다.
+app.post('/api/admin/questions', ...admin, async (c) => {
+  const gh = new GithubRepo(c.env);
+  if (!gh.configured) {
+    return c.json({ error: '저장소 연결이 아직 설정되지 않았습니다 (GITHUB_TOKEN 등록 필요)' }, 503);
+  }
+  const body = await c.req.json().catch(() => ({}));
+  const part = clean(body.part ?? '', 4);
+  if (!PART_LIST.includes(part)) return c.json({ error: '문제 종류를 골라주세요' }, 400);
+  const item = body.item;
+  if (!item || typeof item !== 'object') return c.json({ error: '문항 내용이 비었습니다' }, 400);
+
+  // 새로 만드는 문항은 언제나 '준비 중'으로 들어간다. 사람이 미리보기로 확인한 뒤
+  // 출제 시작을 눌러야 아이에게 나간다 — 잘못 만든 문항이 바로 나가는 길을 막는다.
+  item.part = part;
+  item.status = 'draft';
+
+  const errs = validateItem(item, part, await tagSectionOf(c.env.DB));
+  if (errs.length) return c.json({ error: '아직 저장할 수 없어요', errors: errs }, 400);
+
+  const file = `${CONTENT_DIR}/${part}.json`;
+  const [cur, idmapFile] = await Promise.all([gh.readFile(file), gh.readFile(IDMAP_PATH)]);
+  let items;
+  try { items = cur ? JSON.parse(cur.text) : []; } catch { return c.json({ error: '저장소의 문항 파일을 읽지 못했습니다' }, 500); }
+  if (!Array.isArray(items)) return c.json({ error: '저장소의 문항 파일 형식이 예상과 다릅니다' }, 500);
+
+  // 이름표(tmp_id)는 그 파트에서 안 쓰인 가장 작은 번호로 — 사람이 읽을 수 있는 R1-0059 꼴.
+  const used = new Set(items.map((x) => x.tmp_id));
+  let n = items.length + 1;
+  while (used.has(`${part}-${String(n).padStart(4, '0')}`)) n += 1;
+  const tmpId = `${part}-${String(n).padStart(4, '0')}`;
+  item.tmp_id = tmpId;
+  item.section = PARTS[part];
+
+  // ULID 를 여기서 발급해 매핑까지 같은 커밋에 넣는다. 이게 빠지면 음원 배치가
+  // 러너에서 제 ULID 를 지어 파일 이름이 어긋난다(generate-tts.yml 이 그 상황을 막고 실패한다).
+  let idmap;
+  try { idmap = idmapFile ? JSON.parse(idmapFile.text) : {}; } catch { idmap = {}; }
+  const ulid = makeUlid();
+  const keys = item.type === 'set'
+    ? [`p:${tmpId}`, ...item.questions.map((_, i) => `q:${tmpId}#${i + 1}`)]
+    : [`q:${tmpId}`];
+  for (const k of keys) if (!idmap[k]) idmap[k] = ulid();
+
+  items.push(item);
+  const label = PART_KO[part] ?? part;
+  const commit = await gh.commitFiles([
+    { path: file, text: `${JSON.stringify(items, null, 2)}\n` },
+    { path: IDMAP_PATH, text: `${JSON.stringify(idmap, null, 2)}\n` },
+  ], `junior-toeic-master: 문항 추가 ${tmpId} (${label}) — 관리자 화면에서 저작\n\n`
+    + `준비 중(draft) 상태로 들어간다. 미리보기로 확인한 뒤 '출제 시작'을 눌러야 아이에게 나간다.`
+    + (PARTS[part] === 'LC' ? '\n듣기 문항이라 음원 배치가 소리를 만든 뒤에야 출제될 수 있다.' : ''));
+
+  return c.json({
+    ok: true, tmp_id: tmpId, commit: commit.url,
+    // 다음에 무슨 일이 일어나는지 화면이 그대로 읽어 준다 — 기다리는 시간이 불안하지 않게
+    next: PARTS[part] === 'LC'
+      ? '저장했어요. 음원을 만드는 작업이 자동으로 돌고(5~10분), 소리가 붙으면 출제할 수 있어요.'
+      : '저장했어요. 2~5분 뒤 배포가 끝나면 미리보기와 출제 시작을 할 수 있어요.',
+  });
+});
+
+// 출제 시작 / 내리기 — DB를 먼저 고쳐 즉시 반영하고, 저장소 파일도 같이 고친다.
+// 신고 들어온 문항을 당장 내리는 일은 배포(2~5분)를 기다릴 수 없기 때문이다.
+app.post('/api/admin/questions/:id/status', ...admin, async (c) => {
+  const id = clean(c.req.param('id'), 40);
+  const body = await c.req.json().catch(() => ({}));
+  const status = clean(body.status ?? '', 10);
+  if (!['active', 'retired', 'draft'].includes(status)) return c.json({ error: '모르는 상태입니다' }, 400);
+
+  // 듣기 묶음(L3·L4)은 소리가 지문 쪽에 있으므로 둘 다 본다 — 문항 것만 보면
+  // 소리가 멀쩡히 있는 문항의 출제를 막아 버린다.
+  const q = await c.env.DB.prepare(
+    `SELECT q.id, q.part, q.section, q.status, q.image_url,
+            COALESCE(q.audio_url, p.audio_url) AS audio_url
+       FROM questions q LEFT JOIN passages p ON p.id = q.passage_id WHERE q.id = ?1`).bind(id).first();
+  if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
+  // 소리 없는 듣기 문항을 출제하면 아이는 자기가 뭘 잘못한 줄 안다 — 그래서 막는다.
+  if (status === 'active' && q.section === 'LC' && !q.audio_url) {
+    return c.json({ error: '아직 소리가 없어 출제할 수 없어요. 음원이 만들어진 뒤 다시 눌러주세요.' }, 400);
+  }
+  if (status === 'active' && q.part === 'L1' && !q.image_url) {
+    return c.json({ error: '아직 보기 사진이 없어 출제할 수 없어요.' }, 400);
+  }
+
+  await c.env.DB.prepare('UPDATE questions SET status = ?2 WHERE id = ?1').bind(id, status).run();
+
+  // 저장소 파일도 같은 값으로 — 안 하면 다음 배포 때 예전 상태가 되돌아온다.
+  const gh = new GithubRepo(c.env);
+  let commit = null;
+  let synced = false;
+  if (gh.configured) {
+    try {
+      const idmapFile = await gh.readFile(IDMAP_PATH);
+      const idmap = idmapFile ? JSON.parse(idmapFile.text) : {};
+      // ULID(=DB의 문항 id)로 이름표를 거꾸로 찾는다
+      const key = Object.keys(idmap).find((k) => idmap[k] === id);
+      const tmpId = key?.startsWith('q:') ? key.slice(2).split('#')[0] : null;
+      if (tmpId) {
+        const file = `${CONTENT_DIR}/${q.part}.json`;
+        const cur = await gh.readFile(file);
+        const items = cur ? JSON.parse(cur.text) : [];
+        const target = items.find((x) => x.tmp_id === tmpId);
+        if (target) {
+          target.status = status;
+          const KO = { active: '출제 시작', retired: '내림', draft: '준비 중으로' };
+          commit = (await gh.commitFiles(
+            [{ path: file, text: `${JSON.stringify(items, null, 2)}\n` }],
+            `junior-toeic-master: 문항 ${tmpId} ${KO[status]} — 관리자 화면에서 변경`)).url;
+          synced = true;
+        }
+      }
+    } catch (e) {
+      // 저장소 반영이 실패해도 DB는 이미 바뀌었다(당장 내리는 게 더 급하다).
+      // 대신 화면에 "다음 배포 때 되돌아올 수 있다"고 알려 준다.
+      commit = null;
+    }
+  }
+  return c.json({ ok: true, status, commit, synced });
+});
+
+// AI 초안 주문 — 실제 생성은 깃허브 작업실이 한다(앱 서버에는 AI 열쇠를 두지 않는다).
+// 음원·사진 배치와 같은 방식이라 새 위험이 생기지 않는다.
+app.post('/api/admin/generate-order', ...admin, async (c) => {
+  const gh = new GithubRepo(c.env);
+  if (!gh.configured) return c.json({ error: '저장소 연결이 아직 설정되지 않았습니다' }, 503);
+  const body = await c.req.json().catch(() => ({}));
+  const part = clean(body.part ?? '', 4);
+  if (!PART_LIST.includes(part)) return c.json({ error: '문제 종류를 골라주세요' }, 400);
+  const count = Math.max(1, Math.min(20, Number(body.count) || 5));
+  const tag = clean(body.tag ?? '', 40);
+  const difficulty = clean(String(body.difficulty ?? ''), 3);
+  const note = clean(body.note ?? '', 300);
+  if (tag) {
+    const ok = await c.env.DB.prepare('SELECT 1 FROM concept_tags WHERE id = ?1').bind(tag).first();
+    if (!ok) return c.json({ error: '모르는 개념 태그입니다' }, 400);
+  }
+  await commitOrders(gh, [{ part, count, tag, difficulty, note }]);
+  return c.json({
+    ok: true,
+    next: `${PART_KO[part]} ${count}문항 초안을 만들기 시작했어요. `
+      + '5~15분 뒤 "준비 중" 목록에 올라오면 확인하고 출제 시작을 눌러주세요.',
+  });
+});
+
+// ── 부족한 곳을 서버가 스스로 찾는다 (2026-09-02) ──
+//
+// 운영자에게 "무슨 종류를, 어느 개념으로, 몇 개" 를 묻지 않는다. 그 답은 이미 데이터에 있다 —
+// 실력 5축 중 얇은 축, 그 축을 받치는 태그 중 문항이 적은 것, 그리고 그 태그가 실제로 나올 수
+// 있는 파트. 운영자는 버튼만 누르고, 무엇을 만들지는 아래 계산이 정한다.
+//
+// 왜 축부터 보나: 총 문항이 넉넉해도 한 축이 얇으면 그 축의 실력이 안 재져 아이 화면에
+// '재는 중'이 남는다. 그게 지금 이 제품에서 가장 아픈 구멍이라 여기부터 메운다.
+
+const AXIS_TARGET = 60;   // 축 하나가 이만큼은 받쳐져야 실력이 흔들리지 않고 재진다
+const GAP_BATCH = 6;      // 한 주문에 만들 문항 수 — 한 번에 20개를 시키면 AI가 규칙을 흘려 버림표가 늘고,
+                          // 너무 적으면 주문 수만 늘어난다. 6이 통과율과 속도의 절충.
+const GAP_MAX_ORDERS = 4; // 한 번 눌렀을 때 최대 주문 수 (= 최대 24문항, 실행 12분쯤)
+
+// 태그가 실제로 출제되는 파트 — 그 태그로 이미 나가고 있는 문항에서 배운다.
+// 표로 못박아 두면 새 태그를 넣을 때마다 여기도 고쳐야 하고, 안 고치면 조용히 틀린다.
+async function partsByTag(db) {
+  const { results } = await db.prepare(
+    `SELECT qt.tag_id AS tag, q.part, COUNT(*) AS n
+       FROM question_tags qt JOIN questions q ON q.id = qt.question_id
+      WHERE q.status = 'active' GROUP BY qt.tag_id, q.part`).all();
+  const by = {};
+  for (const r of results) (by[r.tag] ||= []).push({ part: r.part, n: r.n });
+  for (const t of Object.keys(by)) by[t].sort((a, b) => b.n - a.n);
+  return by;
+}
+
+// 지금 무엇이 모자란지 계산한다. 화면(미리보기)과 실제 주문이 같은 함수를 쓴다 —
+// 버튼에 적힌 말과 실제로 만들어지는 것이 어긋나면 신뢰를 잃는다.
+async function planGaps(db) {
+  const [{ results: tagRows }, byTag] = await Promise.all([
+    // ⚠ **준비 중(draft)도 센다.** 출제중만 세면, 방금 만들어 검수를 기다리는 문항을 모르고
+    // 같은 자리를 또 주문한다 — 누를 때마다 같은 구멍에 문항이 겹겹이 쌓인다(2026-09-05 실제로 그랬다).
+    db.prepare(
+      `SELECT t.id, t.name_ko, t.section,
+              COUNT(CASE WHEN q.status = 'active' THEN 1 END) AS n_active,
+              COUNT(CASE WHEN q.status = 'draft'  THEN 1 END) AS n_draft
+         FROM concept_tags t
+         LEFT JOIN question_tags qt ON qt.tag_id = t.id
+         LEFT JOIN questions q ON q.id = qt.question_id
+        GROUP BY t.id`).all(),
+    partsByTag(db),
+  ]);
+  const nOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n_active + t.n_draft]));
+  const activeOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n_active]));
+  const nameOf = Object.fromEntries(tagRows.map((t) => [t.id, t.name_ko]));
+
+  // 축을 얇은 순으로 — 가장 모자란 축부터 메운다
+  const axes = SKILL_AXES
+    .map((ax) => ({
+      ...ax,
+      n: ax.tags.reduce((s, t) => s + (nOf[t] ?? 0), 0),           // 출제중 + 준비중
+      active: ax.tags.reduce((s, t) => s + (activeOf[t] ?? 0), 0),
+    }))
+    .filter((ax) => ax.n < AXIS_TARGET)
+    .sort((a, b) => a.n - b.n);
+
+  // 가장 얇은 축부터 **모자란 만큼** 묶음을 배정한다. 축당 한 묶음(6개)만 주면
+  // 35개 모자란 자리를 채우는 데 여섯 번을 눌러야 한다 — 버튼 하나로 끝내자는 뜻과 어긋난다.
+  const orders = [];
+  for (const ax of axes) {
+    if (orders.length >= GAP_MAX_ORDERS) break;
+    // 그 축 안에서도 가장 얇은 태그를 고른다. 축 전체를 뭉뚱그려 주문하면
+    // AI가 만들기 쉬운 태그로만 쏠려 정작 빈 칸은 그대로 남는다.
+    const usable = [...ax.tags]
+      .filter((t) => (byTag[t] ?? []).length)      // 출제될 파트를 아는 태그만
+      .sort((a, b) => (nOf[a] ?? 0) - (nOf[b] ?? 0));
+    if (!usable.length) continue;
+    const want = Math.ceil((AXIS_TARGET - ax.n) / GAP_BATCH);      // 이 축에 필요한 묶음 수
+    const take = Math.min(want, GAP_MAX_ORDERS - orders.length);
+    for (let i = 0; i < take; i += 1) {
+      // 묶음이 여럿이면 얇은 태그부터 돌려 가며 — 한 태그에만 몰리지 않게
+      const tag = usable[i % usable.length];
+      orders.push({
+        part: byTag[tag][0].part,      // 그 태그가 가장 많이 나오는 파트에 얹는다
+        tag,
+        count: GAP_BATCH,
+        axis: ax.key,
+        why: `${ax.name} ${ax.active}문항${ax.n > ax.active ? `(+준비중 ${ax.n - ax.active})` : ''}`
+          + ` — ${nameOf[tag]}`,
+      });
+    }
+  }
+  return { orders, total: orders.reduce((s, o) => s + o.count, 0) };
+}
+
+// 버튼에 적을 말 — 누르기 전에 무엇이 만들어지는지 보이게 한다.
+app.get('/api/admin/fill-gaps', ...admin, async (c) => {
+  const plan = await planGaps(c.env.DB);
+  const gh = new GithubRepo(c.env);
+  const draft = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM questions WHERE status = 'draft'`).first();
+  return c.json({
+    ...plan,
+    ready: gh.configured,
+    // 검수를 기다리는 초안 수 — '전부 출제 시작' 버튼을 띄울지 정한다
+    drafts: draft.n,
+    label: plan.total
+      ? `부족한 문제 채우기 (${[...new Set(plan.orders.map((o) => o.why.split(' ')[0]))].join('·')} ${plan.total}개)`
+      : '지금은 부족한 곳이 없어요',
+  });
+});
+
+// 버튼 — 무엇을 만들지는 서버가 정하고, 운영자는 누르기만 한다.
+app.post('/api/admin/fill-gaps', ...admin, async (c) => {
+  const gh = new GithubRepo(c.env);
+  if (!gh.configured) return c.json({ error: '저장소 연결이 아직 설정되지 않았습니다' }, 503);
+  const plan = await planGaps(c.env.DB);
+  if (!plan.orders.length) {
+    return c.json({ ok: true, started: 0, next: '지금은 모든 칸이 충분해요. 더 만들 곳이 없습니다.' });
+  }
+  // 주문 전부를 한 커밋에 담는다 — 푸시 한 번이 워크플로 한 번이라, 여러 번 나눠 넣는 것보다
+  // 빠르고 실행 기록도 한 줄로 남는다. 실패하면 아무 주문도 안 들어간 상태라 되눌러도 안전하다.
+  try {
+    await commitOrders(gh, plan.orders);
+  } catch (e) {
+    return c.json({ error: `주문을 넣지 못했어요 — ${e.message}` }, 502);
+  }
+  return c.json({
+    ok: true, started: plan.orders.length, total: plan.total,
+    orders: plan.orders.map((o) => o.why),
+    next: `${plan.total}문항을 만들기 시작했어요 — `
+      + `${[...new Set(plan.orders.map((o) => o.why.split(' ')[0]))].join('·')}. `
+      + '10~15분 뒤 이 화면에 새 문제가 올라오면 훑어보고 한 번에 출제하실 수 있어요.',
+  });
+});
+
+// 준비 중인 문항을 한 번에 출제 — 검수는 사람이 하되, 손은 한 번만 움직인다.
+// 소리·사진이 없어 못 나가는 문항은 자동으로 남겨 둔다(내보내면 아이가 헤맨다).
+app.post('/api/admin/questions/activate-drafts', ...admin, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const ids = Array.isArray(body.ids) ? body.ids.slice(0, 100).map((x) => clean(x, 40)) : null;
+  const where = ids?.length
+    ? `q.status = 'draft' AND q.id IN (${ids.map((_, i) => `?${i + 1}`).join(',')})`
+    : `q.status = 'draft'`;
+  const { results: rows } = await c.env.DB.prepare(
+    `SELECT q.id, q.part, q.section, q.image_url,
+            COALESCE(q.audio_url, p.audio_url) AS audio_url
+       FROM questions q LEFT JOIN passages p ON p.id = q.passage_id
+      WHERE ${where}`).bind(...(ids ?? [])).all();
+
+  const ok = [];
+  const held = [];
+  for (const q of rows) {
+    if (q.section === 'LC' && !q.audio_url) { held.push(q.id); continue; }
+    if (q.part === 'L1' && !q.image_url) { held.push(q.id); continue; }
+    ok.push(q.id);
+  }
+  if (ok.length) {
+    await c.env.DB.batch(ok.map((id) =>
+      c.env.DB.prepare(`UPDATE questions SET status = 'active' WHERE id = ?1`).bind(id)));
+  }
+
+  // 저장소 파일도 같은 값으로 — 안 하면 다음 배포 때 준비 중으로 되돌아온다.
+  // 한 파트에 여러 문항이 걸리므로 파일 단위로 모아 한 커밋에 올린다.
+  const gh = new GithubRepo(c.env);
+  let synced = false;
+  if (ok.length && gh.configured) {
+    try {
+      const idmapFile = await gh.readFile(IDMAP_PATH);
+      const idmap = idmapFile ? JSON.parse(idmapFile.text) : {};
+      const tmpById = {};
+      for (const [k, v] of Object.entries(idmap)) {
+        if (k.startsWith('q:')) tmpById[v] = k.slice(2).split('#')[0];
+      }
+      const byPart = {};
+      for (const q of rows) {
+        if (!ok.includes(q.id)) continue;
+        const tmp = tmpById[q.id];
+        if (tmp) (byPart[q.part] ||= new Set()).add(tmp);
+      }
+      const files = [];
+      for (const [part, tmps] of Object.entries(byPart)) {
+        const path = `${CONTENT_DIR}/${part}.json`;
+        const cur = await gh.readFile(path);
+        if (!cur) continue;
+        const items = JSON.parse(cur.text);
+        let touched = 0;
+        for (const it of items) if (tmps.has(it.tmp_id)) { it.status = 'active'; touched += 1; }
+        if (touched) files.push({ path, text: `${JSON.stringify(items, null, 2)}\n` });
+      }
+      if (files.length) {
+        await gh.commitFiles(files, `junior-toeic-master: 준비 중 문항 ${ok.length}개 출제 시작 — 관리자 화면에서 일괄 확인`);
+        synced = true;
+      }
+    } catch (e) { /* DB는 이미 바뀌었다 — 아래에서 synced=false 로 알린다 */ }
+  }
+
+  return c.json({
+    ok: true, activated: ok.length, held: held.length, synced,
+    next: ok.length
+      ? `${ok.length}문항을 출제하기 시작했어요. 내일 세트부터 아이에게 나갑니다.`
+        + (held.length ? ` (${held.length}개는 소리·사진이 아직 없어 남겨뒀어요)` : '')
+      : held.length ? `${held.length}개 모두 소리·사진을 기다리는 중이에요.`
+        : '출제할 준비 중 문항이 없어요.',
+  });
+});
+
+app.get('/api/health', async (c) => {
+  const counts = await c.env.DB.prepare(
+    `SELECT
+       (SELECT COUNT(*) FROM questions)                          AS questions,
+       (SELECT COUNT(*) FROM questions WHERE status = 'active')  AS active_questions,
+       (SELECT COUNT(*) FROM passages)                           AS passages,
+       (SELECT COUNT(*) FROM concept_tags)                       AS tags,
+       (SELECT COUNT(*) FROM badges)                             AS badges`
+  ).first();
+  return c.json({ ok: true, service: 'jumplish', phase: 'M1', counts });
+});
+
+app.get('/api/parts', async (c) => {
+  const { results } = await c.env.DB.prepare(
+    `SELECT part, section,
+            COUNT(*)                                            AS total,
+            SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END)  AS active,
+            SUM(CASE WHEN audio_url IS NOT NULL THEN 1 ELSE 0 END) AS with_audio
+       FROM questions
+      GROUP BY part, section
+      ORDER BY part`
+  ).all();
+  return c.json({ parts: results });
+});
+
+// 문항 열람 (M1: 검수·풀어보기용) — 정답·해설 미포함
+app.get('/api/questions', async (c) => {
+  const part = c.req.query('part') || '';
+  if (!PART_RE.test(part)) {
+    return c.json({ error: 'part 파라미터가 필요합니다 (L1~L4, R1~R3)' }, 400);
+  }
+  const limit = Math.min(parseInt(c.req.query('limit') || '60', 10) || 60, 100);
+
+  const { results: rows } = await c.env.DB.prepare(
+    // script는 M1 검수 화면의 "음원 준비 전 스크립트 열람"용 — M2 학생용 API에서는 제외한다
+    `SELECT id, passage_id, section, part, stem, choices, difficulty_label,
+            audio_url, image_url, accent, script, status
+       FROM questions
+      WHERE part = ?1 AND status IN ('active', 'draft')
+      ORDER BY id
+      LIMIT ?2`
+  ).bind(part, limit).all();
+
+  const passageIds = [...new Set(rows.map((q) => q.passage_id).filter(Boolean))];
+  const passages = {};
+  if (passageIds.length > 0) {
+    const marks = passageIds.map((_, i) => `?${i + 1}`).join(',');
+    const { results } = await c.env.DB.prepare(
+      // content(지문/스크립트)는 독해 지문 표시 + 음원 준비 전 열람 대체용
+      `SELECT id, kind, content, image_url, audio_url, accent
+         FROM passages WHERE id IN (${marks})`
+    ).bind(...passageIds).all();
+    for (const p of results) passages[p.id] = p;
+  }
+
+  const questions = rows.map((q) => ({ ...q, choices: JSON.parse(q.choices) }));
+  return c.json({ part, count: questions.length, questions, passages });
+});
+
+// 오늘의 맞춤 학습 세트 (M1: 로그인 전이라 약점은 클라이언트가 보관한 기록으로 계산해 넘긴다.
+// M2에서 계정이 붙으면 서버의 user_skills·SRS 큐로 옮긴다 — docs/engine.md)
+//   weak=L4,R3   약한 파트(가중치 +1)
+//   exclude=id,id 최근에 맞힌 문항(다시 내보내지 않음)
+const SET_COMPOSITION = { L1: 1, L2: 2, L3: 1, L4: 2, R1: 2, R2: 2, R3: 2 }; // 합 12 — 실제 시험 파트 비율 반영
+
+app.get('/api/today', async (c) => {
+  // 로그인 학생: 서버가 복습+약점+신규+유지 슬롯으로 세트를 만든다 (하루 1세트 고정 저장)
+  const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
+  const user = m ? await verifyToken(c.env.DB, m[1]) : null;
+  if (user) {
+    const today = kstDate();
+    let set = await c.env.DB.prepare(
+      'SELECT question_ids, slots FROM daily_sets WHERE user_id = ?1 AND date = ?2'
+    ).bind(user.id, today).first();
+    if (!set) {
+      const made = await composeDailySet(c.env.DB, user, today);
+      set = { question_ids: JSON.stringify(made.ids), slots: JSON.stringify(made.slots) };
+      await c.env.DB.prepare(
+        `INSERT INTO daily_sets (id, user_id, date, question_ids, slots, generated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+         ON CONFLICT(user_id, date) DO NOTHING`
+      ).bind(crypto.randomUUID(), user.id, today, set.question_ids, set.slots, new Date().toISOString()).run();
+    }
+    const ids = JSON.parse(set.question_ids);
+    const { questions, passages } = await hydrate(c.env.DB, ids);
+    return c.json({ count: questions.length, plan: JSON.parse(set.slots), personalized: true, questions, passages });
+  }
+
+  const weak = (c.req.query('weak') || '').split(',').filter((p) => PART_RE.test(p));
+  const exclude = (c.req.query('exclude') || '').split(',').filter(Boolean).slice(0, 200);
+
+  // 약한 파트는 한 문항 더, 대신 가장 쉬운 파트에서 한 문항 뺀다 (총량 유지)
+  const plan = { ...SET_COMPOSITION };
+  const strong = (c.req.query('strong') || '').split(',').filter((p) => PART_RE.test(p));
+  weak.slice(0, 2).forEach((p, i) => {
+    plan[p] += 1;
+    const donor = strong[i];
+    if (donor && plan[donor] > 1) plan[donor] -= 1;
+  });
+
+  const marks = exclude.map((_, i) => `?${i + 3}`).join(',');
+  const draw = async (part, n, seen) => {
+    if (n < 1) return [];
+    const { results } = await c.env.DB.prepare(
+      `SELECT id, passage_id, section, part, stem, choices, difficulty_label,
+              audio_url, image_url, accent
+         FROM questions
+        WHERE part = ?1 AND status = 'active'
+              ${exclude.length ? `AND id NOT IN (${marks})` : ''}
+        ORDER BY RANDOM() LIMIT ?2`
+    ).bind(part, n + seen.size, ...exclude).all();
+    return results.filter((q) => !seen.has(q.id)).slice(0, n);
+  };
+
+  const picked = [];
+  const seen = new Set();
+  const target = Object.values(plan).reduce((a, b) => a + b, 0);
+  for (const [part, n] of Object.entries(plan)) {
+    const got = await draw(part, n, seen);
+    got.forEach((q) => seen.add(q.id));
+    picked.push(...got);
+    plan[part] = got.length; // 실제로 담은 수 (L1처럼 초안뿐인 파트는 0이 된다)
+  }
+  // 문항이 없는 파트(그림 준비 중인 L1 등) 때문에 세트가 비면 다른 파트로 채운다
+  for (const part of Object.keys(SET_COMPOSITION)) {
+    if (picked.length >= target) break;
+    const got = await draw(part, target - picked.length, seen);
+    got.forEach((q) => seen.add(q.id));
+    picked.push(...got);
+    plan[part] += got.length;
+  }
+  // 실제 시험 순서(듣기 → 읽기, 파트 오름차순)로 정렬
+  picked.sort((a, b) => a.part.localeCompare(b.part));
+
+  const passageIds = [...new Set(picked.map((q) => q.passage_id).filter(Boolean))];
+  const passages = {};
+  if (passageIds.length > 0) {
+    const marks = passageIds.map((_, i) => `?${i + 1}`).join(',');
+    const { results } = await c.env.DB.prepare(
+      `SELECT id, kind, content, image_url, audio_url, accent FROM passages WHERE id IN (${marks})`
+    ).bind(...passageIds).all();
+    for (const p of results) passages[p.id] = p;
+  }
+
+  return c.json({
+    count: picked.length,
+    plan,
+    questions: picked.map((q) => ({ ...q, choices: JSON.parse(q.choices) })),
+    passages,
+  });
+});
+
+// 간이 채점 (M1 전용 — M2에서 세션 기반 POST /api/answers 로 대체 예정)
+app.post('/api/check', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { question_id, chosen_idx } = body;
+  if (typeof question_id !== 'string' || !Number.isInteger(chosen_idx)) {
+    return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
+  }
+  const q = await c.env.DB.prepare(
+    'SELECT id, passage_id, stem, script, evidence, why_not, miss_type, key_expr, translation_ko, answer_idx, explanation_ko FROM questions WHERE id = ?1'
+  ).bind(question_id).first();
+  if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
+
+  const correct = chosen_idx === q.answer_idx;
+  await c.env.DB.prepare(
+    'UPDATE questions SET times_answered = times_answered + 1, times_correct = times_correct + ?1 WHERE id = ?2'
+  ).bind(correct ? 1 : 0, q.id).run();
+
+  return c.json({
+    correct, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko,
+    ...(await feedbackOf(c.env.DB, q, chosen_idx)),
+  });
+});
+
+app.notFound((c) => {
+  if (new URL(c.req.url).pathname.startsWith('/api/')) {
+    return c.json({ error: '없는 API 경로입니다' }, 404);
+  }
+  // 정적 자산은 [assets] 바인딩이 워커보다 먼저 서빙하므로 여기 오면 404가 맞다
+  return c.text('Not Found', 404);
+});
+
+export default app;
