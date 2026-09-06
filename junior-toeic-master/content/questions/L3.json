@@ -1174,7 +1174,7 @@
       },
       "translation_ko": "여: 오늘 오후에 수영 수업에 올 거야?\n남: 가고 싶은데, 동생 숙제를 도와줘야 해.\n여: 아쉽다. 다음에 오면 되지.\n남: 응, 목요일에는 꼭 갈게."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"I'd love to\"?",
@@ -1255,7 +1255,7 @@
       },
       "translation_ko": "남: 미나야, 과학 포스터 다 했어?\n여: 거의 다 했어. 아직 식물 그림을 그려야 해.\n남: 선생님이 내일 아침 아홉 시에 걷으신대.\n여: 아홉 시? 그럼 오늘 밤에 해야겠다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does the woman say \"Nine?\"",
@@ -1336,7 +1336,7 @@
       },
       "translation_ko": "여: 저 먹구름 좀 봐. 그래도 공원까지 걸어갈까?\n남: 음, 나 우산을 집에 두고 왔어.\n여: 우리 오빠가 태워다 줄 수 있어.\n남: 그게 훨씬 낫겠다. 지금 부탁하자."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"I left my umbrella at home\"?",
