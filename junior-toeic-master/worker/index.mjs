@@ -1620,14 +1620,21 @@ async function planGaps(db) {
 //
 // ⚠ '운영 중 외부 API 0회' 원칙과 어긋나지 않는다 — 아이 요청을 처리하는 길이 아니라
 // 저작(개발) 쪽 자동화다. 문항을 만드는 LLM 호출은 여전히 GitHub Actions 안에서만 일어난다.
+// 아직 처리되지 않은 주문서 수. 주문을 넣기 전에 반드시 본다.
+//
+// 왜 필요한가: 초안(draft)이 생기는 건 생성이 **끝난 뒤**다. 그 12분 동안 planGaps 는 만들어지는
+// 중인 문항을 모른다 — 그래서 연달아 주문하면 같은 자리를 두 번 채운다. 커밋도 fast-forward 만
+// 허용하므로 겹치면 그냥 실패한다. 버튼과 야간 채움이 **같은 잠금**을 쓴다.
+async function pendingOrders(gh) {
+  return (await gh.listDir(REQ_DIR)).filter((n) => n.endsWith('.json')).length;
+}
+
 async function nightlyTopUp(env) {
   const gh = new GithubRepo(env);
   if (!gh.configured) { console.log('[야간채움] 저장소 연결 없음 — 건너뜀'); return; }
 
-  // 아직 처리되지 않은 주문서가 남아 있으면 이번 밤은 쉰다. 겹쳐 넣으면 커밋이 부딪히고
-  // (fast-forward 만 허용한다) 같은 자리에 문항이 두 번 쌓인다.
-  const pending = (await gh.listDir(REQ_DIR)).filter((n) => n.endsWith('.json'));
-  if (pending.length) { console.log(`[야간채움] 주문서 ${pending.length}건이 아직 처리 중 — 건너뜀`); return; }
+  const pending = await pendingOrders(gh);
+  if (pending) { console.log(`[야간채움] 주문서 ${pending}건이 아직 처리 중 — 건너뜀`); return; }
 
   const plan = await planGaps(env.DB);
   if (!plan.orders.length) {
@@ -1659,6 +1666,13 @@ app.get('/api/admin/fill-gaps', ...admin, async (c) => {
 app.post('/api/admin/fill-gaps', ...admin, async (c) => {
   const gh = new GithubRepo(c.env);
   if (!gh.configured) return c.json({ error: '저장소 연결이 아직 설정되지 않았습니다' }, 503);
+  // 이미 만들고 있는 중이면 또 시키지 않는다 (야간 채움과 같은 잠금)
+  if (await pendingOrders(gh)) {
+    return c.json({
+      ok: true, started: 0,
+      next: '이미 만들고 있는 중이에요. 10~15분 뒤 "준비 중" 목록을 확인해주세요.',
+    });
+  }
   const plan = await planGaps(c.env.DB);
   if (!plan.orders.length) {
     return c.json({ ok: true, started: 0, next: '지금은 모든 칸이 충분해요. 더 만들 곳이 없습니다.' });
