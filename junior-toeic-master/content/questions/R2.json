@@ -2079,5 +2079,219 @@
       }
     ],
     "status": "active"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Cooking Club News\nOn Thursday, our club will make fruit salad.\nEach member (1) ______ to bring one kind of fruit.\nWe will use the school kitchen, (2) ______ please wear an apron.\n(3) ______ Then we will eat the salad together.\n— Ms. Kim",
+      "translation_ko": "요리 동아리 소식\n목요일에 우리 동아리는 과일 샐러드를 만들 거예요.\n회원들은 각자 과일 한 종류를 가져와야 해요.\n학교 조리실을 쓸 거니까 앞치마를 입어 주세요.\n큰 그릇에 모두 함께 섞을 거예요. 그다음에 샐러드를 같이 먹어요.\n— 김 선생님"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "need",
+          "needing",
+          "needs",
+          "needed"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "Each member는 한 사람 한 사람을 뜻해서 needs를 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.agreement",
+          "RS.context"
+        ],
+        "evidence": "Each member",
+        "why_not": {
+          "0": "여럿이거나 나·너일 때 써요",
+          "1": "혼자서는 못 쓰는 모양이에요",
+          "3": "이미 지난 일에 써요"
+        },
+        "key_expr": {
+          "en": "need to bring ~",
+          "ko": "~을 가져와야 한다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.form",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "so",
+          "but",
+          "or",
+          "if"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "조리실을 쓰니까 앞치마를 입으라는 뜻이라 so로 이어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.conj",
+          "RS.context"
+        ],
+        "evidence": "We will use the school kitchen,",
+        "why_not": {
+          "1": "반대되는 말을 이을 때 써요",
+          "2": "둘 중 하나를 고를 때 써요",
+          "3": "'만약'이라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "wear an apron",
+          "ko": "앞치마를 입다"
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "G.clue",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "Bring your own lunch box.",
+          "Our club will not meet this week.",
+          "The music club is full now.",
+          "We will mix everything in a big bowl."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "과일 샐러드를 만들고 함께 먹기 전이라, 큰 그릇에 섞는다는 말이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context",
+          "V.food"
+        ],
+        "evidence": "make fruit salad",
+        "why_not": {
+          "0": "점심 도시락 이야기는 없어요",
+          "1": "목요일에 모인다고 했어요",
+          "2": "음악 동아리 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "mix in a big bowl",
+          "ko": "큰 그릇에 섞다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "M.opposite",
+          "2": "F.offtopic"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0021"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Sunflower Library — Summer Reading Program\nDo you like stories? Join our reading program!\nWe meet every Saturday (1) ______ 10 a.m. in the reading room.\nYou can borrow three books (2) ______ a time.\n(3) ______ Come and find your favorite story!",
+      "translation_ko": "해바라기 도서관 — 여름 독서 프로그램\n이야기를 좋아하나요? 우리 독서 프로그램에 함께해요!\n우리는 토요일마다 아침 10시에 독서실에서 모여요.\n한 번에 책 세 권을 빌릴 수 있어요.\n책 다섯 권을 읽은 사람은 책갈피를 받아요. 와서 가장 좋아하는 이야기를 찾아보세요!"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "in",
+          "at",
+          "on",
+          "to"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "10 a.m.처럼 몇 시를 말할 때는 at을 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.prep",
+          "RS.context"
+        ],
+        "evidence": "10 a.m.",
+        "why_not": {
+          "0": "in은 달이나 해 앞에 써요",
+          "2": "on은 날짜나 요일 앞에 써요",
+          "3": "to는 가는 곳을 말할 때 써요"
+        },
+        "key_expr": {
+          "en": "at 10 a.m.",
+          "ko": "아침 10시에"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "for",
+          "by",
+          "in",
+          "at"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "'한 번에' 세 권을 빌린다는 뜻이라 at a time을 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.prep",
+          "RS.context"
+        ],
+        "evidence": "three books",
+        "why_not": {
+          "0": "for는 얼마 동안일 때 써요",
+          "1": "by는 '~까지'일 때 써요",
+          "2": "in a time으로는 쓰지 않아요"
+        },
+        "key_expr": {
+          "en": "at a time",
+          "ko": "한 번에"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "2": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "Everyone who reads five books gets a bookmark.",
+          "The library is closed all summer.",
+          "You must pay ten dollars to enter.",
+          "We do not have any books here."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "독서 프로그램에 오라고 권하는 글이라, 다섯 권 읽으면 책갈피를 준다는 말이 어울려요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context",
+          "RS.gist"
+        ],
+        "evidence": "Join our reading program!",
+        "why_not": {
+          "1": "토요일마다 모인다고 했어요",
+          "2": "돈 이야기는 나오지 않아요",
+          "3": "책 세 권을 빌릴 수 있어요"
+        },
+        "key_expr": {
+          "en": "borrow books",
+          "ko": "책을 빌리다"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0022"
   }
 ]

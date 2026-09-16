@@ -4188,5 +4188,1298 @@
     ],
     "status": "active",
     "tmp_id": "R3-0060"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "CITY LIBRARY NOTICE\nAll books must be returned within two weeks.\nIf you bring a book back late, you cannot borrow a new one for three days.\nPlease keep quiet in the reading room.\nDrinks are not allowed inside, but you may drink water in the hall.",
+      "translation_ko": "시립 도서관 안내\n모든 책은 2주 안에 돌려주어야 합니다.\n책을 늦게 가져오면 3일 동안 새 책을 빌릴 수 없습니다.\n열람실에서는 조용히 해 주세요.\n안에서는 음료를 마실 수 없지만, 복도에서는 물을 마실 수 있습니다."
+    },
+    "questions": [
+      {
+        "stem": "What does \"returned\" mean in the notice?",
+        "choices": [
+          "taken home again",
+          "brought back to the library",
+          "bought at a store",
+          "read one more time"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "빌린 책을 2주 안에 도서관에 다시 가져다 놓으라는 말이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ],
+        "evidence": "All books must be returned within two weeks.",
+        "why_not": {
+          "0": "집으로 또 가져가는 게 아니에요",
+          "2": "사는 이야기가 아니에요",
+          "3": "다시 읽는다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "return a book",
+          "ko": "책을 돌려주다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "\"Keep quiet\" is closest in meaning to",
+        "choices": [
+          "talk in a loud voice",
+          "run around the room",
+          "not make noise",
+          "sleep on the desk"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "책 읽는 방에서는 시끄럽게 하지 말라는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ],
+        "evidence": "Please keep quiet in the reading room.",
+        "why_not": {
+          "0": "크게 말하라는 말이 아니에요",
+          "1": "뛰라는 말이 아니에요",
+          "3": "잠자는 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "keep quiet",
+          "ko": "조용히 하다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0061"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Easy Banana Pancakes\n1. Mash two bananas with a fork until they are soft.\n2. Add one egg and mix it well.\n3. Pour a little oil into the pan and heat it.\n4. Cook each side for two minutes.\nEat them warm with milk. Enjoy!",
+      "translation_ko": "쉬운 바나나 팬케이크\n1. 바나나 두 개를 포크로 부드러워질 때까지 으깨세요.\n2. 달걀 한 개를 넣고 잘 섞으세요.\n3. 팬에 기름을 조금 붓고 달구세요.\n4. 양쪽 면을 2분씩 구우세요.\n따뜻할 때 우유와 함께 드세요. 맛있게 드세요!"
+    },
+    "questions": [
+      {
+        "stem": "The word \"Mash\" is closest in meaning to",
+        "choices": [
+          "cut into long pieces",
+          "press until soft",
+          "wash with cold water",
+          "put in the freezer"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "포크로 눌러서 말랑말랑하게 만드는 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.food"
+        ],
+        "evidence": "Mash two bananas with a fork until they are soft.",
+        "why_not": {
+          "0": "길게 자르는 게 아니에요",
+          "2": "씻는 이야기가 아니에요",
+          "3": "얼리는 이야기가 아니에요"
+        },
+        "key_expr": {
+          "en": "mash a banana",
+          "ko": "바나나를 으깨다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does \"Pour a little oil into the pan\" mean?",
+        "choices": [
+          "Throw the pan away",
+          "Wipe the pan with paper",
+          "Fill the pan with water",
+          "Let a small amount of oil run into the pan"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "기름을 팬에 조금 흘려 넣고 달구라는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.food"
+        ],
+        "evidence": "Pour a little oil into the pan and heat it.",
+        "why_not": {
+          "0": "팬을 버리라는 말이 아니에요",
+          "1": "닦는 이야기가 아니에요",
+          "2": "물이 아니라 기름이에요"
+        },
+        "key_expr": {
+          "en": "pour oil",
+          "ko": "기름을 붓다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0062"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "AIRPORT BUS INFORMATION\nThe bus leaves every 30 minutes from Gate 4.\nThe fare is 9,000 won. You can pay with a card or with cash.\nIf you miss the bus, please wait for the next one at the same spot.\nLarge bags go in the storage space under the bus.",
+      "translation_ko": "공항버스 안내\n버스는 4번 게이트에서 30분마다 출발합니다.\n요금은 9,000원입니다. 카드나 현금으로 낼 수 있습니다.\n버스를 놓치면 같은 자리에서 다음 차를 기다려 주세요.\n큰 가방은 버스 아래 짐칸에 넣어 주세요."
+    },
+    "questions": [
+      {
+        "stem": "The word \"fare\" is closest in meaning to",
+        "choices": [
+          "the money you pay to ride",
+          "the time of the trip",
+          "the name of the driver",
+          "the number of the seat"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "버스를 타려면 내는 돈이에요. 9,000원이라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.travel"
+        ],
+        "evidence": "The fare is 9,000 won.",
+        "why_not": {
+          "1": "시간을 말하는 낱말이 아니에요",
+          "2": "기사님 이름 이야기는 없어요",
+          "3": "자리 번호 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "The fare is 9,000 won.",
+          "ko": "요금은 9,000원입니다."
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does \"miss the bus\" mean?",
+        "choices": [
+          "You get on the bus early.",
+          "You feel sad about the bus.",
+          "You lose your bag on the bus.",
+          "The bus leaves without you."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "버스를 못 타고 보낸 거예요. 그래서 다음 차를 기다리래요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.travel"
+        ],
+        "evidence": "If you miss the bus, please wait for the next one at the same spot.",
+        "why_not": {
+          "0": "일찍 타는 것과 반대예요",
+          "1": "슬프다는 뜻이 아니에요",
+          "2": "가방을 잃어버린 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "miss the bus",
+          "ko": "버스를 놓치다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "W.meaning",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0064"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Swimming Class Notice\nOur swimming class will move to the new pool next month.\nStudents who cannot swim yet will practice in the shallow water first.\nPlease wear a swimming cap. Caps are required for everyone.\nBring a towel and slippers in a separate bag.",
+      "translation_ko": "수영 수업 안내\n우리 수영 수업은 다음 달에 새 수영장으로 옮깁니다.\n아직 수영을 못 하는 학생은 먼저 얕은 물에서 연습합니다.\n수영모를 꼭 쓰세요. 수영모는 모두에게 필수입니다.\n수건과 슬리퍼는 따로 가방에 넣어 오세요."
+    },
+    "questions": [
+      {
+        "stem": "The word \"shallow\" is closest in meaning to",
+        "choices": [
+          "not deep",
+          "very cold",
+          "very clean",
+          "far away"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아직 수영을 못 하는 친구들이 연습하니까 깊지 않은 물이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.leisure"
+        ],
+        "evidence": "Students who cannot swim yet will practice in the shallow water first.",
+        "why_not": {
+          "1": "물이 차갑다는 이야기가 아니에요",
+          "2": "깨끗하다는 뜻이 아니에요",
+          "3": "멀다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "shallow water",
+          "ko": "얕은 물"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "\"Caps are required for everyone\" means that everyone",
+        "choices": [
+          "may wear a cap if they want",
+          "must wear a cap",
+          "can buy a cap at the pool",
+          "gets a free cap"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "required는 '꼭 해야 한다'예요. 모두 수영모를 써야 해요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.school"
+        ],
+        "evidence": "Caps are required for everyone.",
+        "why_not": {
+          "0": "쓰고 싶으면 쓰는 게 아니에요",
+          "2": "파는 곳 이야기는 없어요",
+          "3": "공짜로 준다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "be required",
+          "ko": "꼭 해야 한다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0065"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Class Picnic Plan\nThe weather report says it will be chilly on Friday morning.\nPlease wear a jacket over your shirt.\nWe will walk to Green Hill and eat lunch under the big trees.\nIf it rains, the picnic will be postponed to next Tuesday.\nDon't forget your own water bottle.",
+      "translation_ko": "학급 소풍 계획\n일기 예보에서 금요일 아침에 쌀쌀할 거라고 합니다.\n셔츠 위에 겉옷을 입고 오세요.\n우리는 그린 힐까지 걸어가서 큰 나무 아래에서 점심을 먹을 거예요.\n비가 오면 소풍은 다음 주 화요일로 미뤄집니다.\n각자 물병을 꼭 가져오세요."
+    },
+    "questions": [
+      {
+        "stem": "The word \"chilly\" is closest in meaning to",
+        "choices": [
+          "very hot",
+          "dry and dusty",
+          "a little cold",
+          "bright and sunny"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "쌀쌀하다는 뜻이에요. 그래서 겉옷을 입고 오래요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ],
+        "evidence": "The weather report says it will be chilly on Friday morning.",
+        "why_not": {
+          "0": "덥다는 뜻과 반대예요",
+          "1": "먼지 이야기는 없어요",
+          "3": "해가 난다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "chilly morning",
+          "ko": "쌀쌀한 아침"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "What does \"postponed\" mean?",
+        "choices": [
+          "stopped forever",
+          "made shorter",
+          "started earlier",
+          "moved to a later day"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "비가 오면 소풍을 다음 주 화요일로 미룬대요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.school"
+        ],
+        "evidence": "If it rains, the picnic will be postponed to next Tuesday.",
+        "why_not": {
+          "0": "아주 없어지는 게 아니에요",
+          "1": "짧게 한다는 말은 없어요",
+          "2": "당기는 게 아니라 미루는 거예요"
+        },
+        "key_expr": {
+          "en": "be postponed",
+          "ko": "다음으로 미뤄지다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.notsaid",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0066"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "NOTICE: Library Reading Week\nFrom May 4 to May 8, our school library will hold Reading Week.\nDuring this week, you can borrow two books instead of one.\nEvery student who finishes a book can get a pretty bookmark.\nThe library will open one hour earlier, at 8 a.m.",
+      "translation_ko": "안내: 도서관 독서 주간\n5월 4일부터 5월 8일까지 우리 학교 도서관에서 독서 주간을 엽니다.\n이 주에는 책을 한 권이 아니라 두 권 빌릴 수 있습니다.\n책을 다 읽은 학생은 누구나 예쁜 책갈피를 받을 수 있습니다.\n도서관은 한 시간 일찍, 아침 8시에 문을 엽니다."
+    },
+    "questions": [
+      {
+        "stem": "What is the purpose of this notice?",
+        "choices": [
+          "To tell students about a special week in the library",
+          "To ask students to return lost books",
+          "To introduce a new library teacher",
+          "To teach students how to make a bookmark"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "도서관에서 독서 주간을 연다고 알려 주는 글이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ],
+        "evidence": "From May 4 to May 8, our school library will hold Reading Week.",
+        "why_not": {
+          "1": "잃어버린 책 이야기는 없어요",
+          "2": "새 선생님 이야기는 없어요",
+          "3": "책갈피는 선물이지 만들기가 아니에요"
+        },
+        "key_expr": {
+          "en": "hold Reading Week",
+          "ko": "독서 주간을 열다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What is the best title for this notice?",
+        "choices": [
+          "How to Fix Broken Books",
+          "Our New School Gym",
+          "Reading Week at Our Library",
+          "Library Rules for Teachers"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "글 전체가 도서관 독서 주간 소식이에요. 그게 제목이 돼요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ],
+        "evidence": "NOTICE: Library Reading Week",
+        "why_not": {
+          "0": "책 고치는 이야기는 없어요",
+          "1": "체육관 이야기는 없어요",
+          "3": "선생님을 위한 규칙이 아니에요"
+        },
+        "key_expr": {
+          "en": "borrow two books",
+          "ko": "책 두 권을 빌리다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0067"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Mina,\nI am having a birthday party at my house on Saturday at 3 p.m.\nWe will make pizza together and play board games.\nPlease tell me by Thursday if you can come.\nI really hope to see you!\nYour friend, Somin",
+      "translation_ko": "안녕, 미나야,\n나는 토요일 오후 3시에 우리 집에서 생일 파티를 해.\n우리 같이 피자를 만들고 보드게임도 할 거야.\n올 수 있는지 목요일까지 알려 줘.\n꼭 보고 싶어!\n친구 소민이가"
+    },
+    "questions": [
+      {
+        "stem": "Why did Somin write this email?",
+        "choices": [
+          "To say thank you for a present",
+          "To invite Mina to a party",
+          "To borrow a board game from Mina",
+          "To tell Mina about a test"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "생일 파티에 오라고 부르는 글이에요. 올 수 있는지 알려 달래요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ],
+        "evidence": "I am having a birthday party at my house on Saturday at 3 p.m.",
+        "why_not": {
+          "0": "선물 이야기는 없어요",
+          "2": "보드게임은 같이 할 거라고만 했어요",
+          "3": "시험 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "I am having a birthday party.",
+          "ko": "나는 생일 파티를 해."
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What is the email mainly about?",
+        "choices": [
+          "A pizza shop near school",
+          "A new board game store",
+          "A school field trip",
+          "A plan for a birthday party"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "언제, 어디서, 무엇을 할지 파티 계획을 알려 주는 글이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ],
+        "evidence": "We will make pizza together and play board games.",
+        "why_not": {
+          "0": "피자는 가게가 아니라 집에서 만들어요",
+          "1": "가게 이야기는 없어요",
+          "2": "학교 소풍 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "Please tell me by Thursday.",
+          "ko": "목요일까지 알려 주세요."
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0068"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "School Lunch Notice\nTomorrow's lunch will be different. The cooking room needs repair, so we cannot use the big pots.\nInstead of soup and rice, we will serve sandwiches and fruit.\nStudents who cannot drink milk should tell their teacher in the morning.\nThank you for understanding.",
+      "translation_ko": "급식 안내\n내일 점심이 달라집니다. 조리실을 고쳐야 해서 큰 솥을 쓸 수 없습니다.\n국과 밥 대신에 샌드위치와 과일을 드립니다.\n우유를 못 마시는 학생은 아침에 선생님께 말해 주세요.\n이해해 주셔서 고맙습니다."
+    },
+    "questions": [
+      {
+        "stem": "What is the main purpose of this notice?",
+        "choices": [
+          "To teach students how to make sandwiches",
+          "To ask students to bring their own lunch",
+          "To explain a change in tomorrow's lunch",
+          "To invite parents to the cooking room"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "내일 점심이 달라진다고 알려 주는 글이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.food"
+        ],
+        "evidence": "Tomorrow's lunch will be different.",
+        "why_not": {
+          "0": "만드는 방법은 나오지 않아요",
+          "1": "도시락을 가져오라는 말은 없어요",
+          "3": "부모님을 부르는 글이 아니에요"
+        },
+        "key_expr": {
+          "en": "Tomorrow's lunch will be different.",
+          "ko": "내일 점심이 달라집니다."
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What is the best title for this notice?",
+        "choices": [
+          "Different Food for Tomorrow",
+          "Our New Cooking Teacher",
+          "How to Wash Big Pots",
+          "Free Milk for Everyone"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "국과 밥 대신 샌드위치와 과일이 나와요. 내일 음식이 달라져요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "V.food"
+        ],
+        "evidence": "Instead of soup and rice, we will serve sandwiches and fruit.",
+        "why_not": {
+          "1": "새 선생님 이야기는 없어요",
+          "2": "솥은 고친다고만 했어요",
+          "3": "우유를 공짜로 준다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "instead of soup and rice",
+          "ko": "국과 밥 대신에"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0069"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Dear Jiho,\nI will come home late today, so please take care of Coco for me.\nGive her fresh water and a small bowl of food at six.\nTake her for a short walk in the park, but come back before dark.\nDo your homework after the walk.\nLove, Mom",
+      "translation_ko": "지호에게,\n엄마가 오늘 늦게 들어가니까 코코를 좀 돌봐 줘.\n여섯 시에 깨끗한 물과 작은 그릇에 담은 먹이를 줘.\n공원에서 짧게 산책시키고, 어두워지기 전에 돌아와.\n산책이 끝나면 숙제를 하렴.\n사랑하는 엄마가"
+    },
+    "questions": [
+      {
+        "stem": "Why did Mom write this note?",
+        "choices": [
+          "To tell Jiho about a new pet",
+          "To thank Jiho for walking the dog",
+          "To ask Jiho to buy dog food",
+          "To ask Jiho to look after the dog"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "엄마가 늦게 와서 코코를 돌봐 달라고 부탁하는 쪽지예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ],
+        "evidence": "I will come home late today, so please take care of Coco for me.",
+        "why_not": {
+          "0": "새로 온 반려동물 이야기는 없어요",
+          "1": "고맙다는 말이 아니라 부탁이에요",
+          "2": "먹이를 사 오라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "take care of Coco",
+          "ko": "코코를 돌보다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What is the note mainly about?",
+        "choices": [
+          "Mom will take Coco to the park.",
+          "Jiho has some jobs to do while Mom is out.",
+          "Coco is sick and needs a doctor.",
+          "Jiho has no homework today."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "물 주기, 산책, 숙제까지 지호가 할 일을 알려 주는 쪽지예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ],
+        "evidence": "Take her for a short walk in the park, but come back before dark.",
+        "why_not": {
+          "0": "공원에 가는 사람은 지호예요",
+          "2": "아프다는 이야기는 없어요",
+          "3": "숙제를 하라고 했어요"
+        },
+        "key_expr": {
+          "en": "Do your homework after the walk.",
+          "ko": "산책 후에 숙제를 하세요."
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0070"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "JOIN THE SCHOOL BAND!\nDo you like music? Our school band is looking for new members.\nYou do not need to play well. We will teach you from the start.\nWe practice every Wednesday after school in Music Room 2.\nWrite your name on the paper outside the music room.",
+      "translation_ko": "학교 밴드에 들어오세요!\n음악을 좋아하나요? 우리 학교 밴드는 새 부원을 찾고 있어요.\n잘 연주하지 못해도 괜찮아요. 처음부터 가르쳐 줄 거예요.\n우리는 수요일마다 방과 후에 음악실 2에서 연습해요.\n음악실 밖에 있는 종이에 이름을 써 주세요."
+    },
+    "questions": [
+      {
+        "stem": "What is the purpose of this poster?",
+        "choices": [
+          "To find new members for the band",
+          "To sell old instruments",
+          "To cancel band practice",
+          "To show the way to the school gym"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "밴드에 들어올 새 친구를 찾는 글이에요. 이름을 쓰라고 해요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Our school band is looking for new members.",
+        "why_not": {
+          "1": "악기를 판다는 말은 없어요",
+          "2": "연습을 안 한다는 게 아니에요",
+          "3": "체육관 길 안내가 아니에요"
+        },
+        "key_expr": {
+          "en": "look for new members",
+          "ko": "새 부원을 찾다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Who is this poster for?",
+        "choices": [
+          "Students who want to learn cooking",
+          "Teachers who need a music room",
+          "Parents who want concert tickets",
+          "Students who are interested in music"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "\"음악 좋아하니?\"라고 물으며 학생들을 부르고 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Do you like music?",
+        "why_not": {
+          "0": "요리 이야기는 없어요",
+          "1": "선생님에게 하는 말이 아니에요",
+          "2": "표를 판다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "You do not need to play well.",
+          "ko": "잘 연주하지 않아도 돼요."
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0071"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Last weekend my family went to the countryside to visit my grandmother.\nThe train ride took two hours, and I read a comic book on the way.\nGrandmother's garden was full of yellow flowers.\nWe picked tomatoes together and made a fresh salad for dinner.\nI was tired at night, but it was the happiest weekend of my summer.",
+      "translation_ko": "지난 주말에 우리 가족은 할머니를 뵈러 시골에 갔습니다.\n기차로 두 시간이 걸렸고, 저는 가는 길에 만화책을 읽었습니다.\n할머니의 정원은 노란 꽃으로 가득했습니다.\n우리는 함께 토마토를 따서 저녁에 신선한 샐러드를 만들었습니다.\n밤에는 피곤했지만, 제 여름에서 가장 행복한 주말이었습니다."
+    },
+    "questions": [
+      {
+        "stem": "What is this passage mainly about?",
+        "choices": [
+          "How to grow tomatoes at home",
+          "A long train trip to school",
+          "A happy weekend at grandmother's house",
+          "A comic book about flowers"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "할머니 집에서 보낸 즐거운 주말 이야기예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.travel"
+        ],
+        "evidence": "Last weekend my family went to the countryside to visit my grandmother.",
+        "why_not": {
+          "0": "키우는 방법은 나오지 않아요",
+          "1": "학교가 아니라 시골에 갔어요",
+          "3": "만화책은 기차에서 읽은 거예요"
+        },
+        "key_expr": {
+          "en": "visit my grandmother",
+          "ko": "할머니를 뵈러 가다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What is the best title for this passage?",
+        "choices": [
+          "My Favorite Comic Book",
+          "A Weekend in the Countryside",
+          "Cooking Class at School",
+          "The Longest Train in the World"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "시골에서 보낸 주말 이야기니까 이 제목이 딱 맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "V.leisure"
+        ],
+        "evidence": "I was tired at night, but it was the happiest weekend of my summer.",
+        "why_not": {
+          "0": "만화책은 잠깐 나온 이야기예요",
+          "2": "학교 수업 이야기는 없어요",
+          "3": "기차가 길다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "the happiest weekend",
+          "ko": "가장 행복한 주말"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0072"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "NOTICE: Lunch Room Rules\nPlease make a line before you take your tray.\nTake only what you can finish. Do not waste food.\nIf you want more rice, raise your hand and a helper will bring you some.\nReturn your tray to the window after you eat.",
+      "translation_ko": "안내: 급식실 규칙\n식판을 가져가기 전에 줄을 서 주세요.\n다 먹을 수 있는 만큼만 가져가세요. 음식을 버리지 마세요.\n밥을 더 먹고 싶으면 손을 드세요. 도우미가 가져다줄 거예요.\n식사를 마친 뒤에는 식판을 창구에 돌려주세요."
+    },
+    "questions": [
+      {
+        "stem": "In the notice, the word \"waste\" is closest in meaning to",
+        "choices": [
+          "throw food away",
+          "cook food slowly",
+          "share food with friends",
+          "keep food in a bag"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "다 먹을 만큼만 가져가라고 했으니 waste는 음식을 버린다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.school",
+          "V.food"
+        ],
+        "evidence": "Take only what you can finish. Do not waste food.",
+        "why_not": {
+          "1": "요리하는 이야기가 아니에요",
+          "2": "나눠 먹으라는 말은 없어요",
+          "3": "담아 두라는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "Do not waste food.",
+          "ko": "음식을 버리지 마세요."
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "M.notsaid",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "The word \"Return\" in the last line is closest in meaning to",
+        "choices": [
+          "wash with soap",
+          "bring back",
+          "hide somewhere",
+          "count one by one"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "다 먹고 나서 식판을 창구에 다시 갖다 놓으라는 말이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.school"
+        ],
+        "evidence": "Return your tray to the window after you eat.",
+        "why_not": {
+          "0": "씻으라는 말은 없어요",
+          "2": "숨기라는 뜻이 아니에요",
+          "3": "세어 보라는 말이 아니에요"
+        },
+        "key_expr": {
+          "en": "return your tray",
+          "ko": "식판을 돌려주다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0073"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Mina,\nOur class trip to the science museum is next Friday.\nThe bus leaves at eight, so please do not be late.\nPack a light lunch and a bottle of water in your backpack.\nThe weather may be chilly in the morning, so bring a jacket.\nSee you soon!\nMr. Kang",
+      "translation_ko": "민아에게,\n우리 반 과학관 견학이 다음 주 금요일이에요.\n버스가 8시에 출발하니 늦지 마세요.\n가방에 가벼운 점심과 물 한 병을 챙겨 넣으세요.\n아침에는 날씨가 쌀쌀할 수 있으니 재킷을 가져오세요.\n곧 만나요!\n강 선생님"
+    },
+    "questions": [
+      {
+        "stem": "In the email, the word \"Pack\" is closest in meaning to",
+        "choices": [
+          "eat very quickly",
+          "buy at the store",
+          "put things in a bag",
+          "wash carefully"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "가방에 점심과 물을 넣어서 챙겨 오라는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.travel"
+        ],
+        "evidence": "Pack a light lunch and a bottle of water in your backpack.",
+        "why_not": {
+          "0": "빨리 먹으라는 말이 아니에요",
+          "1": "사 오라는 말은 없어요",
+          "3": "씻으라는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "pack a lunch",
+          "ko": "점심을 챙겨 넣다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.notsaid",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "The word \"chilly\" is closest in meaning to",
+        "choices": [
+          "a little cold",
+          "very hot",
+          "bright and sunny",
+          "loud and busy"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "재킷을 가져오라고 했으니 chilly는 조금 춥다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ],
+        "evidence": "The weather may be chilly in the morning, so bring a jacket.",
+        "why_not": {
+          "1": "뜻이 반대예요",
+          "2": "날이 맑다는 말은 없어요",
+          "3": "날씨를 말하는 낱말이에요"
+        },
+        "key_expr": {
+          "en": "It may be chilly.",
+          "ko": "날이 쌀쌀할 수 있어요."
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0074"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "My uncle gave us a puppy named Bori last month.\nAt first Bori was shy and hid under the sofa all day.\nNow he is very lively and runs around the yard.\nHe is gentle with my little sister and never barks at her.\nMy sister and I take turns feeding him every evening.",
+      "translation_ko": "지난달에 삼촌이 우리에게 보리라는 강아지를 주셨습니다.\n처음에 보리는 수줍어서 하루 종일 소파 밑에 숨어 있었습니다.\n지금은 아주 활발해서 마당을 뛰어다닙니다.\n보리는 제 여동생에게 다정하고, 한 번도 짖지 않습니다.\n여동생과 저는 저녁마다 번갈아 가며 보리에게 밥을 줍니다."
+    },
+    "questions": [
+      {
+        "stem": "In the passage, the word \"lively\" is closest in meaning to",
+        "choices": [
+          "sleepy all day",
+          "full of energy",
+          "always hungry",
+          "afraid of people"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "마당을 뛰어다닌다고 했으니 힘이 넘친다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ],
+        "evidence": "Now he is very lively and runs around the yard.",
+        "why_not": {
+          "0": "뜻이 반대예요",
+          "2": "배고프다는 말은 없어요",
+          "3": "지금은 무서워하지 않아요"
+        },
+        "key_expr": {
+          "en": "very lively",
+          "ko": "아주 활발한"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.notsaid",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "The words \"take turns\" are closest in meaning to",
+        "choices": [
+          "turn around in a circle",
+          "do it at the same time",
+          "forget about it",
+          "do it one after the other"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "둘이서 한 사람씩 번갈아 가며 밥을 준다는 말이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ],
+        "evidence": "My sister and I take turns feeding him every evening.",
+        "why_not": {
+          "0": "빙글 도는 뜻이 아니에요",
+          "1": "같이가 아니라 차례대로예요",
+          "2": "잊는다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "take turns feeding him",
+          "ko": "번갈아 가며 밥을 주다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0075"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SPRING BOOK FAIR\nAll picture books are half price this week!\nThe fair is open from Monday to Saturday, ten to six.\nPopular titles sell out fast, so come early.\nMembers get a free bookmark with every purchase.",
+      "translation_ko": "봄 책 축제\n이번 주에는 모든 그림책이 반값입니다!\n축제는 월요일부터 토요일까지 10시에서 6시까지 열립니다.\n인기 있는 책은 빨리 다 팔리니 일찍 오세요.\n회원은 물건을 살 때마다 책갈피를 하나씩 무료로 받습니다."
+    },
+    "questions": [
+      {
+        "stem": "In the ad, the words \"sell out\" are closest in meaning to",
+        "choices": [
+          "arrive very late",
+          "cost more money",
+          "be put on a shelf",
+          "be all sold"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "인기 책은 금방 다 팔려서 일찍 오라고 하는 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.shopping"
+        ],
+        "evidence": "Popular titles sell out fast, so come early.",
+        "why_not": {
+          "0": "늦게 온다는 뜻이 아니에요",
+          "1": "값이 오른다는 말은 없어요",
+          "2": "책장에 놓는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "sell out fast",
+          "ko": "빨리 다 팔리다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.notsaid",
+          "2": "W.meaning"
+        }
+      },
+      {
+        "stem": "The word \"purchase\" is closest in meaning to",
+        "choices": [
+          "a gift from a friend",
+          "a long walk",
+          "something you buy",
+          "a free class"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "물건을 살 때마다 책갈피를 준다고 했으니 '사는 것'이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.shopping"
+        ],
+        "evidence": "Members get a free bookmark with every purchase.",
+        "why_not": {
+          "0": "친구 선물 이야기는 없어요",
+          "1": "산책과는 관계없어요",
+          "3": "수업을 연다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "with every purchase",
+          "ko": "살 때마다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "W.meaning",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0076"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Our soccer game was put off because of the heavy rain.\nThe coach said the field was too muddy to play on.\nWe will play next Saturday instead.\nI was disappointed, but I practiced passing in the gym with Junho.\nThe sun came out later, and we walked home together.",
+      "translation_ko": "우리 축구 경기는 많은 비 때문에 연기되었습니다.\n코치님은 운동장이 너무 질척거려서 경기를 할 수 없다고 하셨습니다.\n우리는 대신 다음 주 토요일에 경기를 합니다.\n저는 아쉬웠지만, 준호와 체육관에서 패스 연습을 했습니다.\n나중에 해가 나서 우리는 함께 걸어서 집에 갔습니다."
+    },
+    "questions": [
+      {
+        "stem": "In the passage, the words \"put off\" are closest in meaning to",
+        "choices": [
+          "moved to a later day",
+          "won very easily",
+          "started earlier",
+          "made much longer"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "다음 주 토요일에 대신 한다고 했으니 날짜를 미룬 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.leisure"
+        ],
+        "evidence": "We will play next Saturday instead.",
+        "why_not": {
+          "1": "이기고 지는 이야기가 아니에요",
+          "2": "일찍이 아니라 미뤘어요",
+          "3": "시간이 길어진 게 아니에요"
+        },
+        "key_expr": {
+          "en": "The game was put off.",
+          "ko": "경기가 미뤄졌어요."
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.opposite",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "The word \"disappointed\" is closest in meaning to",
+        "choices": [
+          "very proud",
+          "very hungry",
+          "sad about something",
+          "surprised and happy"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "경기가 미뤄져서 기분이 아쉽고 속상했다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.leisure"
+        ],
+        "evidence": "I was disappointed, but I practiced passing in the gym with Junho.",
+        "why_not": {
+          "0": "뿌듯한 마음과는 달라요",
+          "1": "배고픔과는 관계없어요",
+          "3": "기쁜 마음이 아니에요"
+        },
+        "key_expr": {
+          "en": "I was disappointed.",
+          "ko": "저는 아쉬웠어요."
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0077"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "COOKING CLUB NEWS\nThis month we will learn to make simple soup.\nBeginners are welcome; you do not need any experience.\nPlease wear an apron and tie your hair back.\nIf you cannot come, let Ms. Park know in advance.",
+      "translation_ko": "요리 동아리 소식\n이번 달에는 간단한 수프 만드는 법을 배웁니다.\n초보자도 환영해요. 경험이 전혀 없어도 됩니다.\n앞치마를 두르고 머리를 묶어 주세요.\n못 오게 되면 박 선생님께 미리 알려 주세요."
+    },
+    "questions": [
+      {
+        "stem": "In the notice, the word \"Beginners\" is closest in meaning to",
+        "choices": [
+          "people who cook every day",
+          "people who are just starting",
+          "people who teach others",
+          "people who eat a lot"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "해 본 적이 없어도 된다고 했으니 이제 막 시작하는 사람이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.food"
+        ],
+        "evidence": "Beginners are welcome; you do not need any experience.",
+        "why_not": {
+          "0": "날마다 요리하는 사람이 아니에요",
+          "2": "가르치는 사람이 아니에요",
+          "3": "많이 먹는 것과는 달라요"
+        },
+        "key_expr": {
+          "en": "Beginners are welcome.",
+          "ko": "초보자도 환영해요."
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "The words \"in advance\" are closest in meaning to",
+        "choices": [
+          "very loudly",
+          "after the class ends",
+          "one more time",
+          "before it happens"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "못 오게 되면 그전에 미리 알려 달라는 말이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.school"
+        ],
+        "evidence": "If you cannot come, let Ms. Park know in advance.",
+        "why_not": {
+          "0": "큰 소리와는 관계없어요",
+          "1": "끝난 뒤가 아니라 그전이에요",
+          "2": "다시 한번이라는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "let her know in advance",
+          "ko": "미리 알려 주다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.opposite",
+          "2": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0078"
   }
 ]
