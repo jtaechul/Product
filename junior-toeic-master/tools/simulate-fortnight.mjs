@@ -19,7 +19,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { composeDailySet, SRS_INTERVALS } from '../worker/engine.mjs';
+import { composeDailySet, SRS_INTERVALS, DEFAULT_RATING, ELO_SCALE, kFor } from '../worker/engine.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DAYS = Number(process.argv[2] || 14);
@@ -30,6 +30,20 @@ const d1Dir = join(ROOT, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject');
 const file = readdirSync(d1Dir).find((f) => f.endsWith('.sqlite') && f !== 'metadata.sqlite');
 if (!file) { console.error('로컬 D1 파일이 없습니다 — wrangler d1 migrations apply --local 을 먼저 하세요'); process.exit(1); }
 const sqlite = new DatabaseSync(join(d1Dir, file));
+
+// 실제 recordAnswer와 똑같이 태그 실력을 갱신하기 위한 준비.
+// ⚠ 이게 없으면 모든 태그가 '1200점·시도 0회'에 영원히 머문다. 그러면 엔진의 '축 채우기'가
+//   매일 발동해 세트를 통째로 가져가고(축은 문항 수가 적은 순서라 늘 같은 축만), 파트 분포가
+//   실제와 전혀 달라진다 — 실제로 사진 고르기(L1)가 1년 내내 0회로 나와 "문항이 모자라다"는
+//   거짓 결론이 나왔다. 시뮬레이션은 엔진이 보는 상태까지 똑같이 만들어야 의미가 있다.
+const tagsOfQ = sqlite.prepare('SELECT tag_id FROM question_tags WHERE question_id = ?');
+const skillOf = sqlite.prepare('SELECT rating, attempts FROM user_tag_skills WHERE user_id = ? AND tag_id = ?');
+const upsertSkill = sqlite.prepare(
+  `INSERT INTO user_tag_skills (user_id, tag_id, rating, attempts, correct, last_practiced_at)
+   VALUES (?, ?, ?, 1, ?, ?)
+   ON CONFLICT(user_id, tag_id) DO UPDATE SET
+     rating = excluded.rating, attempts = attempts + 1,
+     correct = correct + excluded.correct, last_practiced_at = excluded.last_practiced_at`);
 
 // D1 인터페이스(prepare/bind/all/first/run/batch)를 sqlite 위에 얇게 흉내 낸다.
 // ?1 ?2 형태를 sqlite가 이해하는 ? 로 바꿔 순서대로 바인딩한다.
@@ -87,6 +101,7 @@ const sid = (date) => `S-${USER.id}-${date}`;
 
 const PARTS = ['L1', 'L2', 'L3', 'L4', 'R1', 'R2', 'R3'];
 const seenOn = new Map();           // question_id → 마지막으로 푼 날(인덱스)
+const partOf = new Map();          // question_id → 파트 (끝에 파트별 사용률을 내기 위해)
 let short = 0, repeat = 0;
 const partTotals = Object.fromEntries(PARTS.map((p) => [p, 0]));
 
@@ -106,8 +121,8 @@ for (let day = 0; day < DAYS; day++) {
   let dup = 0;
 
   for (const id of ids) {
-    const row = sqlite.prepare('SELECT part, rating, answer_idx FROM questions WHERE id = ?').get(id);
-    parts[row.part]++; partTotals[row.part]++;
+    const row = sqlite.prepare('SELECT part, rating, answer_idx, choices FROM questions WHERE id = ?').get(id);
+    parts[row.part]++; partTotals[row.part]++; partOf.set(id, row.part);
     const last = seenOn.get(id);
     if (last !== undefined && day - last < 14 && !dueIds.has(id)) dup++;
     seenOn.set(id, day);
@@ -115,7 +130,9 @@ for (let day = 0; day < DAYS; day++) {
     // 맞고 틀림을 실력 차로 흉내 낸다 (문항 레이팅이 높을수록 어려움)
     const p = 1 / (1 + 10 ** ((row.rating - SKILL) / 400));
     const correct = Math.abs(Math.sin((day + 1) * 7919 + id.length * 31 + id.charCodeAt(12))) < p;
-    const chosen = correct ? row.answer_idx : (row.answer_idx + 1) % 4;
+    // 오답은 '옆 보기'를 고른 것으로 둔다 — 보기 수는 파트마다 다르다(L2는 3개)
+    const nChoices = JSON.parse(row.choices).length;
+    const chosen = correct ? row.answer_idx : (row.answer_idx + 1) % nChoices;
     // 푸는 시간도 흉내 낸다 — 익숙해질수록 조금씩 빨라지고, 문항마다 들쭉날쭉하다.
     // 고정값(9초)으로 넣으면 '빠르기' 화면이 늘 "지난주와 같음"이 되어 검증이 안 된다.
     const jitter = Math.abs(Math.sin((day + 3) * 104729 + id.length * 17)) * 5000 - 2500;
@@ -123,6 +140,15 @@ for (let day = 0; day < DAYS; day++) {
     sqlite.prepare(`INSERT INTO answers (id, session_id, user_id, question_id, chosen_idx, is_correct, time_ms, answered_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
       .run(`${USER.id}-${today}-${id}`, sid(today), USER.id, id, chosen, correct ? 1 : 0, timeMs, `${today}T09:00:00.000Z`);
+    // Elo-lite 태그 갱신 (recordAnswer와 같은 식). 찍기(2초 미만)는 위에서 안 나오게 해 뒀다.
+    for (const { tag_id } of tagsOfQ.all(id)) {
+      const cur = skillOf.get(USER.id, tag_id);
+      const r = cur?.rating ?? DEFAULT_RATING;
+      const expected = 1 / (1 + 10 ** ((row.rating - r) / ELO_SCALE));
+      const next = r + kFor(cur?.attempts ?? 0) * ((correct ? 1 : 0) - expected);
+      upsertSkill.run(USER.id, tag_id, Math.round(next * 10) / 10, correct ? 1 : 0, `${today}T09:00:00.000Z`);
+    }
+
     // 틀리면 복습 큐에 (SRS 1일 뒤) — 실제 recordAnswer와 같은 효과만 흉내
     if (!correct) {
       const next = dayStr(day + 1);
@@ -157,7 +183,22 @@ for (let day = 0; day < DAYS; day++) {
     (ids.length < SET_SIZE ? '  ← 정원 미달' : '') + (dup ? `  ← 14일 내 재출제 ${dup}` : ''));
 }
 
-console.log(`\n파트별 누적: ${PARTS.map((p) => `${p} ${partTotals[p]}`).join(' / ')}`);
+// 파트별 사용률 — 총량이 모자란 것과 '한 파트만 남아도는 것'은 처방이 다르다.
+// 안 쓰인 문항이 많으면 더 만들 게 아니라 고르는 규칙을 손봐야 한다.
+const haveBy = Object.fromEntries(PARTS.map((p) => [p, 0]));
+for (const r of sqlite.prepare("SELECT part, COUNT(*) n FROM questions WHERE status='active' GROUP BY part").all())
+  haveBy[r.part] = r.n;
+const usedBy = Object.fromEntries(PARTS.map((p) => [p, 0]));
+for (const p of partOf.values()) usedBy[p]++;
+
+console.log(`\n파트별 누적 출제: ${PARTS.map((p) => `${p} ${partTotals[p]}`).join(' / ')}`);
+console.log('파트별 사용률 (한 번이라도 나온 문항 / 보유 문항):');
+for (const p of PARTS) {
+  const left = haveBy[p] - usedBy[p];
+  console.log(`  ${p}  ${String(usedBy[p]).padStart(3)}/${String(haveBy[p]).padStart(3)}` +
+    (haveBy[p] ? `  (${Math.round((usedBy[p] / haveBy[p]) * 100)}%)` : '') +
+    (left > 0 ? `  — ${left}개는 한 번도 안 나옴` : '  — 전부 사용'));
+}
 console.log(`서로 다른 문항 ${seenOn.size}개 사용`);
 console.log(short ? `⚠ 정원 미달 ${short}일 — 문항이 모자랍니다` : '정원 미달 없음');
 console.log(repeat ? `⚠ 14일 내 재출제 ${repeat}건` : '14일 내 재출제 없음');
