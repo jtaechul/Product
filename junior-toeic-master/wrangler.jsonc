@@ -10,6 +10,12 @@
     "directory": "./public",
     "binding": "ASSETS"
   },
+  // 매일 밤 2시(KST=17:00 UTC) — 부족한 문항을 서버가 스스로 주문한다(worker/index.mjs nightlyTopUp).
+  // GitHub Actions 의 schedule 은 기본 브랜치(main)에 있는 워크플로만 돌리는데 점프리시 배치는
+  // 작업 브랜치에만 살아서 쓸 수 없다. Cloudflare Cron 은 브랜치와 무관하다.
+  "triggers": {
+    "crons": ["0 17 * * *"]
+  },
   "d1_databases": [
     {
       "binding": "DB",

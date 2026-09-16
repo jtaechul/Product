@@ -618,10 +618,13 @@ async function findQuestions() {
   } catch (e) { if (!guard(e)) box.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; }
 }
 
-// ── 버튼 하나로 부족한 문제 채우기 ──
-// 이 화면에서 운영자가 할 일은 사실상 이것뿐이다. 무엇을 몇 개 만들지는 서버가 정한다
-// (얇은 축 → 그 축의 얇은 태그 → 그 태그가 실제로 나오는 파트). 고를 것도, 적을 것도 없다.
-// 버튼에 미리 숫자를 적어 두는 이유: 누르기 전에 무엇이 만들어지는지 보여야 안심하고 누른다.
+// ── 문제 늘리기 ──
+// 무엇을 몇 개 만들지는 서버가 정한다 (얇은 축 → 그 축의 얇은 태그 → 그 태그가 실제로 나오는 파트).
+// 고를 것도, 적을 것도 없다. 버튼에 미리 숫자를 적어 두는 이유: 누르기 전에 무엇이 만들어지는지
+// 보여야 안심하고 누른다.
+// 2026-09-16부터 주문은 **매일 밤 2시에 서버가 스스로** 넣는다(목표 800문항까지). 그래서 이
+// 화면의 주인공은 버튼이 아니라 '목표까지 얼마나 왔나' 막대다 — 운영자가 매일 할 일은
+// 아침에 올라온 새 문제를 한 번 보고 '전부 출제 시작'을 누르는 것뿐이다.
 async function renderFillBox() {
   const box = view.querySelector('[data-fillbox]');
   if (!box) return;
@@ -636,14 +639,43 @@ async function renderFillBox() {
          <button class="btn small" data-activate>전부 출제 시작</button>
        </div>` : '';
 
+  // 어디가 얇은지는 **축별로 묶어 한 줄씩** 보여준다. 주문 네 건이 같은 축이면
+  // 그대로 나열할 때 "읽고 알기 66문항"이 네 번 반복돼 읽히지 않는다.
+  const byAxis = [];
+  for (const o of p.orders ?? []) {
+    const hit = byAxis.find((x) => x.axis === o.axis);
+    if (hit) { if (!hit.tags.includes(o.tag_name)) hit.tags.push(o.tag_name); }
+    else byAxis.push({ axis: o.axis, name: o.axis_name, n: o.axis_n, tags: [o.tag_name] });
+  }
+  const gapLine = byAxis
+    .map((a) => `<b>${esc(a.name)}</b>(${a.n}문항 — ${esc(a.tags.join(' · '))})`)
+    .join(', ');
+
+  // 목표까지 얼마나 왔나. 막대 모양은 학생·부모 화면과 같은 것(.sbar)을 쓴다.
+  const pct = p.bank_target ? Math.min(100, Math.round((p.bank / p.bank_target) * 100)) : 0;
+  const filled = p.bank_target && p.bank >= p.bank_target;
+  const bankLine = p.bank_target ? `
+    <div class="sbar">
+      <span class="sbl">문제 은행</span>
+      <span class="sbt"><span class="sbf" style="width:${pct}%"></span></span>
+      <span class="sbn">${p.bank} / ${p.bank_target}</span>
+    </div>
+    <p class="card-note">${filled
+      ? '목표만큼 모았어요. 밤마다 돌던 자동 주문은 저절로 멈춥니다.'
+      : '매일 밤 2시에 앱이 스스로 조금씩 주문합니다 — 아침에 올라온 새 문제만 확인해주세요.'}</p>` : '';
+
   box.innerHTML = `
     <div class="card-head"><span class="card-title">문제 늘리기</span></div>
+    ${bankLine}
     ${p.total ? `
-      <p class="card-note">지금 <b>${esc(p.orders.map((o) => o.why).join(' · '))}</b>가 얇아요.
-        아래 버튼을 누르면 앱이 알아서 그 자리를 채웁니다 — 고르실 것 없습니다.</p>
+      <p class="card-note">지금 ${gapLine}가 얇아요.
+        아래 버튼을 누르면 기다리지 않고 바로 채웁니다 — 고르실 것 없습니다.</p>
       <button class="btn big" data-fill${p.ready ? '' : ' disabled'}>${esc(p.label)}</button>
       ${p.ready ? '' : '<p class="card-note">저장소 연결(GITHUB_TOKEN)을 먼저 등록해주세요.</p>'}`
-    : '<p class="card-note">지금은 모든 칸이 충분해요. 더 만들 곳이 없습니다.</p>'}
+    : `<p class="card-note">${p.drafts
+        ? '먼저 아래 새 문제를 확인해주세요 — 확인이 끝나야 다음 주문이 나갑니다.'
+        : filled ? '더 만들 곳이 없습니다.'
+        : '지금 당장 주문할 곳은 없어요. 오늘 밤 자동으로 다시 살펴봅니다.'}</p>`}
     ${draftLine}
     <div data-fillmsg></div>`;
 

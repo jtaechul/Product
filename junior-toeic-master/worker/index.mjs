@@ -1506,10 +1506,18 @@ app.post('/api/admin/generate-order', ...admin, async (c) => {
 // 왜 축부터 보나: 총 문항이 넉넉해도 한 축이 얇으면 그 축의 실력이 안 재져 아이 화면에
 // '재는 중'이 남는다. 그게 지금 이 제품에서 가장 아픈 구멍이라 여기부터 메운다.
 
-const AXIS_TARGET = 60;   // 축 하나가 이만큼은 받쳐져야 실력이 흔들리지 않고 재진다
+// 은행 목표 문항 수. 감이 아니라 실측이다 (docs/content-pipeline.md 8-1):
+//   386문항 → 하루 20문항 반이 **62일이면 은행을 전부 본다**(그 뒤로 새 문제 0개)
+//   800문항 → 285일. 월 구독 한 해를 새 문제로 버틴다.
+// 1,000문항이면 1년을 더 넘기지만 검수량이 그만큼 늘어 800을 1차 목표로 잡았다(2026-09-16).
+const BANK_TARGET = 800;
+// 다섯 축이 고르게 이만큼씩. 문항 하나가 여러 축에 걸쳐 있어 축 합계는 은행보다 조금 크다
+// (386문항일 때 축 합계 413 = 1.07배) — 그 비율을 반영해 단순히 5로 나눈 값보다 살짝 크게 잡는다.
+const AXIS_TARGET = Math.round((BANK_TARGET * 1.07) / 5);
 const GAP_BATCH = 6;      // 한 주문에 만들 문항 수 — 한 번에 20개를 시키면 AI가 규칙을 흘려 버림표가 늘고,
                           // 너무 적으면 주문 수만 늘어난다. 6이 통과율과 속도의 절충.
-const GAP_MAX_ORDERS = 4; // 한 번 눌렀을 때 최대 주문 수 (= 최대 24문항, 실행 12분쯤)
+const GAP_MAX_ORDERS = 4; // 한 번(버튼 한 번 또는 하룻밤)에 넣는 최대 주문 수 — 최대 24문항, 실행 12분쯤.
+                          // 밤마다 돌면 3주 남짓이면 800문항에 닿는다.
 
 // 태그가 실제로 출제되는 파트 — 그 태그로 이미 나가고 있는 문항에서 배운다.
 // 표로 못박아 두면 새 태그를 넣을 때마다 여기도 고쳐야 하고, 안 고치면 조용히 틀린다.
@@ -1527,7 +1535,7 @@ async function partsByTag(db) {
 // 지금 무엇이 모자란지 계산한다. 화면(미리보기)과 실제 주문이 같은 함수를 쓴다 —
 // 버튼에 적힌 말과 실제로 만들어지는 것이 어긋나면 신뢰를 잃는다.
 async function planGaps(db) {
-  const [{ results: tagRows }, byTag] = await Promise.all([
+  const [{ results: tagRows }, byTag, bank] = await Promise.all([
     // ⚠ **준비 중(draft)도 센다.** 출제중만 세면, 방금 만들어 검수를 기다리는 문항을 모르고
     // 같은 자리를 또 주문한다 — 누를 때마다 같은 구멍에 문항이 겹겹이 쌓인다(2026-09-05 실제로 그랬다).
     db.prepare(
@@ -1539,6 +1547,8 @@ async function planGaps(db) {
          LEFT JOIN questions q ON q.id = qt.question_id
         GROUP BY t.id`).all(),
     partsByTag(db),
+    // 은행 전체 크기(출제중 + 준비중) — 목표를 넘겨 주문하지 않기 위해 센다
+    db.prepare(`SELECT COUNT(*) AS n FROM questions WHERE status IN ('active','draft')`).first(),
   ]);
   const nOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n_active + t.n_draft]));
   const activeOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n_active]));
@@ -1556,9 +1566,13 @@ async function planGaps(db) {
 
   // 가장 얇은 축부터 **모자란 만큼** 묶음을 배정한다. 축당 한 묶음(6개)만 주면
   // 35개 모자란 자리를 채우는 데 여섯 번을 눌러야 한다 — 버튼 하나로 끝내자는 뜻과 어긋난다.
+  // 은행 목표를 넘겨 주문하지 않는다 — 목표를 채우면 밤마다 도는 자동 주문이 저절로 멈춘다
+  const maxOrders = Math.min(
+    GAP_MAX_ORDERS, Math.ceil(Math.max(0, BANK_TARGET - bank.n) / GAP_BATCH));
+
   const orders = [];
   for (const ax of axes) {
-    if (orders.length >= GAP_MAX_ORDERS) break;
+    if (orders.length >= maxOrders) break;
     // 그 축 안에서도 가장 얇은 태그를 고른다. 축 전체를 뭉뚱그려 주문하면
     // AI가 만들기 쉬운 태그로만 쏠려 정작 빈 칸은 그대로 남는다.
     const usable = [...ax.tags]
@@ -1566,7 +1580,7 @@ async function planGaps(db) {
       .sort((a, b) => (nOf[a] ?? 0) - (nOf[b] ?? 0));
     if (!usable.length) continue;
     const want = Math.ceil((AXIS_TARGET - ax.n) / GAP_BATCH);      // 이 축에 필요한 묶음 수
-    const take = Math.min(want, GAP_MAX_ORDERS - orders.length);
+    const take = Math.min(want, maxOrders - orders.length);
     for (let i = 0; i < take; i += 1) {
       // 묶음이 여럿이면 얇은 태그부터 돌려 가며 — 한 태그에만 몰리지 않게
       const tag = usable[i % usable.length];
@@ -1575,12 +1589,53 @@ async function planGaps(db) {
         tag,
         count: GAP_BATCH,
         axis: ax.key,
+        // 화면이 축별로 묶어 한 줄로 보여줄 수 있게 조각을 따로 준다 —
+        // why 한 문장만 보내면 같은 축 주문이 네 줄 반복돼 읽기 어렵다.
+        axis_name: ax.name,
+        axis_n: ax.active,
+        tag_name: nameOf[tag],
         why: `${ax.name} ${ax.active}문항${ax.n > ax.active ? `(+준비중 ${ax.n - ax.active})` : ''}`
           + ` — ${nameOf[tag]}`,
       });
     }
   }
-  return { orders, total: orders.reduce((s, o) => s + o.count, 0) };
+  return {
+    orders, total: orders.reduce((s, o) => s + o.count, 0),
+    bank: bank.n, bank_target: BANK_TARGET,
+  };
+}
+
+// ── 매일 밤 스스로 채운다 (2026-09-16) ──
+//
+// 800문항까지는 400문항 넘게 더 만들어야 한다. 한 번에 24문항씩이면 운영자가 열일곱 번을
+// 눌러야 하는데, 그건 "버튼 한 번이면 끝"이라는 약속과 어긋난다. 그래서 **주문은 서버가
+// 매일 밤 넣고**, 사람은 아침에 올라온 초안을 확인하고 '전부 출제 시작'만 누른다
+// (사람이 한 번 보고 내보내는 검수 단계는 그대로 둔다 — 없애지 않는다).
+//
+// 왜 GitHub Actions 의 schedule 이 아니라 Cloudflare Cron 인가:
+// GitHub 은 **기본 브랜치(main)에 있는 워크플로만** 일정대로 돌린다. 점프리시 배치는 전부
+// 작업 브랜치에만 살아서 schedule 을 달아도 영영 돌지 않는다 — workflow_dispatch 가 404 로
+// 떨어지던 것과 똑같은 함정이다. Cloudflare Cron 은 브랜치와 무관하고, 하는 일도 버튼과
+// 똑같이 '주문서를 커밋'하는 것뿐이라 그 다음은 기존 push 트리거가 그대로 이어받는다.
+//
+// ⚠ '운영 중 외부 API 0회' 원칙과 어긋나지 않는다 — 아이 요청을 처리하는 길이 아니라
+// 저작(개발) 쪽 자동화다. 문항을 만드는 LLM 호출은 여전히 GitHub Actions 안에서만 일어난다.
+async function nightlyTopUp(env) {
+  const gh = new GithubRepo(env);
+  if (!gh.configured) { console.log('[야간채움] 저장소 연결 없음 — 건너뜀'); return; }
+
+  // 아직 처리되지 않은 주문서가 남아 있으면 이번 밤은 쉰다. 겹쳐 넣으면 커밋이 부딪히고
+  // (fast-forward 만 허용한다) 같은 자리에 문항이 두 번 쌓인다.
+  const pending = (await gh.listDir(REQ_DIR)).filter((n) => n.endsWith('.json'));
+  if (pending.length) { console.log(`[야간채움] 주문서 ${pending.length}건이 아직 처리 중 — 건너뜀`); return; }
+
+  const plan = await planGaps(env.DB);
+  if (!plan.orders.length) {
+    console.log(`[야간채움] 채울 곳 없음 (은행 ${plan.bank}/${plan.bank_target}문항)`);
+    return;
+  }
+  await commitOrders(gh, plan.orders);
+  console.log(`[야간채움] ${plan.total}문항 주문 — 은행 ${plan.bank}/${plan.bank_target}문항`);
 }
 
 // 버튼에 적을 말 — 누르기 전에 무엇이 만들어지는지 보이게 한다.
@@ -1595,7 +1650,7 @@ app.get('/api/admin/fill-gaps', ...admin, async (c) => {
     // 검수를 기다리는 초안 수 — '전부 출제 시작' 버튼을 띄울지 정한다
     drafts: draft.n,
     label: plan.total
-      ? `부족한 문제 채우기 (${[...new Set(plan.orders.map((o) => o.why.split(' ')[0]))].join('·')} ${plan.total}개)`
+      ? `부족한 문제 채우기 (${[...new Set(plan.orders.map((o) => o.axis_name))].join('·')} ${plan.total}개)`
       : '지금은 부족한 곳이 없어요',
   });
 });
@@ -1619,7 +1674,7 @@ app.post('/api/admin/fill-gaps', ...admin, async (c) => {
     ok: true, started: plan.orders.length, total: plan.total,
     orders: plan.orders.map((o) => o.why),
     next: `${plan.total}문항을 만들기 시작했어요 — `
-      + `${[...new Set(plan.orders.map((o) => o.why.split(' ')[0]))].join('·')}. `
+      + `${[...new Set(plan.orders.map((o) => o.axis_name))].join('·')}. `
       + '10~15분 뒤 이 화면에 새 문제가 올라오면 훑어보고 한 번에 출제하실 수 있어요.',
   });
 });
@@ -1878,4 +1933,10 @@ app.notFound((c) => {
   return c.text('Not Found', 404);
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+  // 매일 밤 2시(KST) — wrangler.jsonc 의 triggers.crons 가 부른다.
+  // 실패해도 워커는 멀쩡해야 하므로 여기서 삼키고 로그만 남긴다(다음 밤에 다시 시도).
+  scheduled: (event, env, ctx) => ctx.waitUntil(
+    nightlyTopUp(env).catch((e) => console.error('[야간채움] 실패:', e.message))),
+};

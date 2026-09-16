@@ -66,6 +66,20 @@ export class GithubRepo {
     }
   }
 
+  // 디렉터리 안의 파일 이름 목록 — 아직 처리되지 않은 주문서가 있는지 보는 데 쓴다.
+  // 폴더가 비어 있으면 깃허브는 404 를 준다(빈 폴더라는 개념이 없다) — 빈 목록으로 본다.
+  async listDir(relPath) {
+    const p = `${this.dir}/${relPath}`;
+    try {
+      const j = await this.call(
+        `/repos/${this.repo}/contents/${encodeURI(p)}?ref=${encodeURIComponent(this.branch)}`);
+      return Array.isArray(j) ? j.map((x) => x.name) : [];
+    } catch (e) {
+      if (e.status === 404) return [];
+      throw e;
+    }
+  }
+
   // 파일 여러 개를 한 커밋으로. files: [{ path: 'content/questions/R1.json', text }]
   // 반환: { sha, url } — 화면에서 "이 커밋이 배포 중" 링크로 쓴다.
   async commitFiles(files, message) {
