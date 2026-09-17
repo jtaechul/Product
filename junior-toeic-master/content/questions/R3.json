@@ -2925,7 +2925,7 @@
         "evidence": "The reading room on the second floor will be painted this week.",
         "why_not": {
           "1": "좁다는 말은 없어요",
-          "2": "조용하다는 말은 없어요",
+          "2": "시끄러워 죄송하다고 했지 1층이 조용하단 말은 없어요",
           "3": "도서관이 옮겼다는 말은 없어요"
         },
         "key_expr": {

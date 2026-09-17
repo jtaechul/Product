@@ -347,8 +347,14 @@ for (const it of questions) {
     [q(it.id), q(it.passage_id), q(it.section), q(it.part), q(it.stem), q(it.choices), it.answer_idx,
      q(it.explanation_ko), it.difficulty_label, it.rating, q(it.audio_url), q(it.image_url), q(it.accent), q(it.script), q(it.evidence),
      q(it.why_not), q(it.miss_type), q(it.key_expr), q(it.translation_ko), q(it.status), q(now)].join(', ') + `) ` +
-    // rating·times_answered·times_correct·created_at은 운영 데이터 — 재임포트 시 보존
-    `ON CONFLICT(id) DO UPDATE SET passage_id=excluded.passage_id, stem=excluded.stem, choices=excluded.choices, answer_idx=excluded.answer_idx, explanation_ko=excluded.explanation_ko, difficulty_label=excluded.difficulty_label, audio_url=excluded.audio_url, image_url=excluded.image_url, accent=excluded.accent, script=excluded.script, evidence=excluded.evidence, why_not=excluded.why_not, miss_type=excluded.miss_type, key_expr=excluded.key_expr, translation_ko=excluded.translation_ko, status=excluded.status;`
+    // times_answered·times_correct·created_at은 운영 데이터 — 재임포트 시 보존한다.
+    // ⚠ rating 은 **갱신한다**(2026-09-17). rating 은 difficulty_label 에서 나오는 값인데
+    //   (RATING_BY_LABEL), 예전엔 '운영 데이터'로 보고 보존만 했다. 그런데 문항 rating 을
+    //   나중에 조정하는 코드가 어디에도 없어서, 실제로는 첫 저장 때 값이 영영 굳어 있었다.
+    //   그래서 난이도를 고쳐도 엔진은 옛 rating 을 그대로 써 아무 일도 일어나지 않았다
+    //   (아이 신고를 보고 난이도를 고치려다 발견). 문항 rating 을 실제 정답률로 조정하는
+    //   장치가 생기면 그때 이 줄을 다시 본다.
+    `ON CONFLICT(id) DO UPDATE SET passage_id=excluded.passage_id, stem=excluded.stem, choices=excluded.choices, answer_idx=excluded.answer_idx, explanation_ko=excluded.explanation_ko, difficulty_label=excluded.difficulty_label, rating=excluded.rating, audio_url=excluded.audio_url, image_url=excluded.image_url, accent=excluded.accent, script=excluded.script, evidence=excluded.evidence, why_not=excluded.why_not, miss_type=excluded.miss_type, key_expr=excluded.key_expr, translation_ko=excluded.translation_ko, status=excluded.status;`
   );
 }
 const qIds = questions.map((x) => q(x.id)).join(', ');

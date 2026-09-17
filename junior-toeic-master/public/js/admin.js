@@ -413,8 +413,10 @@ async function showFeedback() {
       R1: '문장 완성', R2: '지문 완성', R3: '독해',
     };
     const list = feedback.length ? feedback.map((f) => {
-      // 듣기 문항은 화면에 지문이 없어서 stem이 비어 있다 — 파트 이름으로 대신 가리킨다
-      const what = f.stem || (f.part ? `${PART[f.part] ?? f.part} 문항` : '화면 전체');
+      // 듣기 문항(L1·L2)은 화면에 지문이 없어 stem 이 비어 있다. 그때는 **들려주는 문장**을
+      // 대신 보여준다 — 예전엔 "질의응답 문항"이라고만 떠서 어느 문항인지 알 수가 없었고,
+      // 그러면 신고를 받고도 고칠 수가 없다(확인만 누르고 끝난다).
+      const what = f.stem || f.script || (f.part ? `${PART[f.part] ?? f.part} 문항` : '화면 전체');
       return `<div class="row">
         <span class="chip k-${esc(f.kind)}">${esc(KIND[f.kind] ?? f.kind)}</span>
         <span class="row-main">
@@ -422,6 +424,7 @@ async function showFeedback() {
           <span class="row-s">${f.part ? esc(f.part) + ' · ' : ''}${esc(f.display_name || f.login_id || '로그인 안 함')} · ${esc(String(f.created_at).slice(0, 16).replace('T', ' '))}${
             f.note ? ` · “${esc(f.note)}”` : ''}</span>
         </span>
+        ${f.question_id ? `<button class="btn ghost small" data-fopen="${esc(f.question_id)}">문항 보기</button>` : ''}
         ${f.handled_at
           ? `<span class="chip done">확인함</span>`
           : `<button class="btn ghost small" data-done="${esc(f.id)}">확인함</button>`}
@@ -436,6 +439,12 @@ async function showFeedback() {
       </div>`;
     bindTabs();
     view.querySelector('[data-toggle]').addEventListener('click', () => { showHandled = !showHandled; showFeedback(); });
+    // 신고에서 그 문항으로 바로 간다 — 신고를 읽고 나면 다음에 할 일은 언제나 '그 문항 보기'다.
+    // 이게 없으면 제목을 외워서 문항 탭에서 다시 찾아야 한다.
+    view.querySelectorAll('[data-fopen]').forEach((b) => b.addEventListener('click', () => {
+      tab = 'q';
+      showQuestion(b.dataset.fopen);
+    }));
     view.querySelectorAll('[data-done]').forEach((b) => b.addEventListener('click', async () => {
       b.disabled = true;
       try {

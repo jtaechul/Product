@@ -1159,8 +1159,11 @@ app.post('/api/parent/reset-password', async (c) => {
 app.get('/api/admin/feedback', ...admin, async (c) => {
   const all = c.req.query('all') === '1';
   const { results } = await c.env.DB.prepare(
+    // q.script 도 함께 보낸다 — 사진 고르기(L1)·질의응답(L2)은 stem 이 없어서
+    // 화면에 "질의응답 문항"으로만 뜨고, 그러면 어느 문항인지 알 수 없어 고칠 수가 없다
+    // (2026-09-12 L2 신고가 실제로 그래서 확인만 하고 넘어갔다).
     `SELECT f.id, f.kind, f.note, f.screen, f.created_at, f.handled_at,
-            f.question_id, q.part, q.stem, u.login_id, u.display_name
+            f.question_id, q.part, q.stem, q.script, u.login_id, u.display_name
        FROM feedback f
        LEFT JOIN questions q ON q.id = f.question_id
        LEFT JOIN users u ON u.id = f.user_id
