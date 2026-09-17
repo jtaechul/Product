@@ -2231,5 +2231,951 @@
       "3": "G.pair"
     },
     "translation_ko": "내 사촌은 이제 혼자 해외여행을 갈 만큼 컸어요."
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My little sister ______ swim very well for her age.",
+    "choices": [
+      "swims can",
+      "cans swim",
+      "can swim",
+      "can swims"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "can은 swim 앞에 와요. can에는 s를 붙이지 않고, 뒤에는 swim을 그대로 써요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.modal",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "swim very well for her age",
+    "why_not": {
+      "0": "can은 swim 앞에 와야 해요",
+      "1": "can에는 s를 붙이지 않아요",
+      "3": "can 뒤에는 swim 그대로 써요"
+    },
+    "key_expr": {
+      "en": "can swim",
+      "ko": "수영할 수 있다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "제 여동생은 나이에 비해 수영을 아주 잘할 수 있어요.",
+    "tmp_id": "R1-0059"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The sign says the library is very quiet, so we ______ talk loudly here.",
+    "choices": [
+      "must",
+      "must not",
+      "would like to",
+      "are able to"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "도서관은 아주 조용한 곳이니까 크게 말하면 안 돼요. '하면 안 된다'는 must not이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.modal",
+      "RS.context"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "the library is very quiet",
+    "why_not": {
+      "0": "크게 말해야 한다는 반대 뜻이에요",
+      "2": "크게 말하고 싶다는 뜻이 돼요",
+      "3": "크게 말할 수 있다는 뜻이 돼요"
+    },
+    "key_expr": {
+      "en": "must not talk loudly",
+      "ko": "크게 말하면 안 된다"
+    },
+    "miss_type": {
+      "0": "M.opposite",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "표지판에 도서관은 아주 조용한 곳이라고 쓰여 있으니, 우리는 여기서 큰 소리로 말하면 안 돼요.",
+    "tmp_id": "R1-0060"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Tomorrow is a holiday, so I ______ get up early.",
+    "choices": [
+      "must",
+      "have to",
+      "should",
+      "don't have to"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "쉬는 날이라 일찍 일어날 필요가 없어요. '안 해도 된다'는 don't have to예요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.modal",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Tomorrow is a holiday",
+    "why_not": {
+      "0": "꼭 일어나야 한다는 반대 뜻이에요",
+      "1": "일어나야 한다는 뜻이 돼요",
+      "2": "일어나는 게 좋다는 뜻이 돼요"
+    },
+    "key_expr": {
+      "en": "don't have to",
+      "ko": "~하지 않아도 된다"
+    },
+    "miss_type": {
+      "0": "M.opposite",
+      "1": "M.opposite",
+      "2": "W.meaning"
+    },
+    "translation_ko": "내일은 쉬는 날이라서, 저는 일찍 일어나지 않아도 돼요.",
+    "tmp_id": "R1-0061"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "______ I borrow your eraser for a minute, please?",
+    "choices": [
+      "May",
+      "Do",
+      "Am",
+      "Must"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'~해도 될까요?'라고 예쁘게 물을 때는 May I ~?를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.modal",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "borrow your eraser for a minute, please?",
+    "why_not": {
+      "1": "허락을 물을 때 Do는 어색해요",
+      "2": "Am은 이 자리에 올 수 없어요",
+      "3": "꼭 빌려야 하냐는 뜻이 돼요"
+    },
+    "key_expr": {
+      "en": "May I borrow ~?",
+      "ko": "~를 빌려도 될까요?"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "G.form",
+      "3": "W.meaning"
+    },
+    "translation_ko": "잠깐 지우개를 빌려도 될까요?",
+    "tmp_id": "R1-0062"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "When I was five, I ______ ride a bike without any help.",
+    "choices": [
+      "can",
+      "could",
+      "can't",
+      "will"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "다섯 살 때 있었던 일이라 could를 써요. could는 can의 지난 일 모습이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.modal",
+      "G.tense"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "When I was five",
+    "why_not": {
+      "0": "지난 일에는 could를 써요",
+      "2": "탈 수 없었다는 반대 뜻이에요",
+      "3": "앞으로 할 일이 되어 버려요"
+    },
+    "key_expr": {
+      "en": "could ride",
+      "ko": "탈 수 있었다"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "2": "M.opposite",
+      "3": "G.clue"
+    },
+    "translation_ko": "다섯 살 때, 저는 아무 도움 없이 자전거를 탈 수 있었어요.",
+    "tmp_id": "R1-0063"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I can't join the club today, but I ______ join it next week.",
+    "choices": [
+      "can to",
+      "will can",
+      "will be able to",
+      "am can"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "will과 can은 나란히 못 써요. 앞으로 할 수 있다는 말은 will be able to예요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.modal",
+      "G.tense"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "I can't join the club today",
+    "why_not": {
+      "0": "can 뒤에는 to를 쓰지 않아요",
+      "1": "will과 can은 함께 못 써요",
+      "3": "am과 can은 함께 못 써요"
+    },
+    "key_expr": {
+      "en": "will be able to",
+      "ko": "~할 수 있을 것이다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "저는 오늘은 동아리에 갈 수 없지만, 다음 주에는 갈 수 있을 거예요.",
+    "tmp_id": "R1-0064"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The classroom is ______ by the students every Friday.",
+    "choices": [
+      "clean",
+      "cleaned",
+      "cleaning",
+      "cleans"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "교실이 스스로 치우는 게 아니라 치워지는 거예요. is 뒤에는 cleaned를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.passive",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "by the students every Friday",
+    "why_not": {
+      "0": "is 뒤에는 cleaned 모양이 와야 해요",
+      "2": "교실이 직접 청소한다는 말이 돼요",
+      "3": "is와 cleans는 나란히 못 써요"
+    },
+    "key_expr": {
+      "en": "is cleaned by ~",
+      "ko": "~에 의해 청소돼요"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "W.meaning",
+      "3": "G.form"
+    },
+    "translation_ko": "그 교실은 금요일마다 학생들이 청소해요.",
+    "tmp_id": "R1-0065"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "These cookies ______ made by my grandmother.",
+    "choices": [
+      "are",
+      "is",
+      "do",
+      "have"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "쿠키가 여러 개라서 are를 써요. are made는 '만들어졌다'는 뜻이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.passive",
+      "G.agreement",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "These cookies",
+    "why_not": {
+      "1": "쿠키가 여러 개라 is는 안 맞아요",
+      "2": "do와 made by는 짝이 안 돼요",
+      "3": "have는 made by와 이어지지 않아요"
+    },
+    "key_expr": {
+      "en": "are made by ~",
+      "ko": "~가 만든 거예요"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "G.pair",
+      "3": "G.pair"
+    },
+    "translation_ko": "이 쿠키들은 우리 할머니가 만드신 거예요.",
+    "tmp_id": "R1-0066"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The thank-you card was ______ by our whole class.",
+    "choices": [
+      "write",
+      "wrote",
+      "written",
+      "writing"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "카드는 써지는 거예요. was 뒤에는 write의 짝인 written을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.passive",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "by our whole class",
+    "why_not": {
+      "0": "was 뒤에 그냥 write는 못 와요",
+      "1": "was와 wrote는 나란히 못 써요",
+      "3": "카드가 직접 쓴다는 말이 돼요"
+    },
+    "key_expr": {
+      "en": "was written by ~",
+      "ko": "~가 썼어요"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "W.meaning"
+    },
+    "translation_ko": "그 감사 카드는 우리 반 전체가 썼어요.",
+    "tmp_id": "R1-0067"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "That song ______ by children all around the world.",
+    "choices": [
+      "sings",
+      "singing",
+      "is singing",
+      "is sung"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "노래는 아이들에게 불리는 거라서 is sung을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.passive",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "by children all around the world",
+    "why_not": {
+      "0": "노래가 직접 부른다는 말이 돼요",
+      "1": "singing만으로는 문장이 안 돼요",
+      "2": "노래가 노래를 한다는 뜻이 돼요"
+    },
+    "key_expr": {
+      "en": "is sung by ~",
+      "ko": "~가 불러요"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "G.form",
+      "2": "W.meaning"
+    },
+    "translation_ko": "그 노래는 전 세계 아이들이 불러요.",
+    "tmp_id": "R1-0068"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "This bridge ______ built a hundred years ago.",
+    "choices": [
+      "is",
+      "are",
+      "was",
+      "were"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "a hundred years ago는 아주 옛날 일이고 다리는 하나라서 was를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.passive",
+      "G.tense",
+      "V.travel"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "a hundred years ago",
+    "why_not": {
+      "0": "옛날 일이라 is는 안 맞아요",
+      "1": "다리는 하나라서 are는 안 돼요",
+      "3": "다리가 하나라 were는 안 맞아요"
+    },
+    "key_expr": {
+      "en": "was built",
+      "ko": "지어졌어요"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "이 다리는 백 년 전에 지어졌어요.",
+    "tmp_id": "R1-0069"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The flowers in the garden are watered ______ my sister every morning.",
+    "choices": [
+      "by",
+      "to",
+      "with",
+      "at"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "누가 해 주었는지 말할 때는 by를 써요. by my sister는 '언니가'예요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.passive",
+      "G.prep",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "The flowers in the garden are watered",
+    "why_not": {
+      "1": "to는 사람을 향한다는 뜻이라 어색해요",
+      "2": "with는 도구를 말할 때 써요",
+      "3": "at은 장소나 시간에 써요"
+    },
+    "key_expr": {
+      "en": "are watered by ~",
+      "ko": "~가 물을 줘요"
+    },
+    "miss_type": {
+      "1": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "정원에 있는 꽃들은 아침마다 언니가 물을 줘요.",
+    "tmp_id": "R1-0070"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "We decided ______ a picnic in the park on Saturday.",
+    "choices": [
+      "to have",
+      "have",
+      "having",
+      "had"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "decided 다음에는 to have처럼 to를 붙여서 말해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.toinf",
+      "V.leisure",
+      "RS.context"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "We decided",
+    "why_not": {
+      "1": "have만 오면 말이 이어지지 않아요",
+      "2": "decided 뒤에 having은 안 어울려요",
+      "3": "had는 이 자리에 맞지 않아요"
+    },
+    "key_expr": {
+      "en": "decide to ~",
+      "ko": "~하기로 정해요"
+    },
+    "miss_type": {
+      "1": "G.pair",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "우리는 토요일에 공원에서 소풍하기로 정했어요.",
+    "difficulty": 2,
+    "tmp_id": "R1-0071"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I want ______ a new book at the library today.",
+    "choices": [
+      "borrow",
+      "to borrow",
+      "borrowing",
+      "borrowed"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "want 뒤에는 to borrow처럼 to를 붙여 '빌리고 싶다'고 말해요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.toinf",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "I want",
+    "why_not": {
+      "0": "want 뒤에는 to가 함께 필요해요",
+      "2": "want 뒤에 borrowing은 안 써요",
+      "3": "borrowed는 이 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "want to borrow",
+      "ko": "빌리고 싶어요"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "저는 오늘 도서관에서 새 책을 빌리고 싶어요.",
+    "tmp_id": "R1-0072"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My sister enjoys ______ cookies with her friends on weekends.",
+    "choices": [
+      "bake",
+      "to bake",
+      "baking",
+      "baked"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "enjoy 뒤에는 baking처럼 -ing가 붙은 말이 와요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.toinf",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "My sister enjoys",
+    "why_not": {
+      "0": "enjoys 뒤에 bake만 오면 어색해요",
+      "1": "enjoy 뒤에는 to bake를 안 써요",
+      "3": "baked는 이 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "enjoy baking",
+      "ko": "구우며 즐거워해요"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.pair",
+      "3": "G.form"
+    },
+    "translation_ko": "제 언니는 주말에 친구들과 쿠키 만드는 것을 즐겨요.",
+    "tmp_id": "R1-0073"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Dad went to the store ______ some eggs for dinner.",
+    "choices": [
+      "buy",
+      "buys",
+      "buying",
+      "to buy"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "왜 갔는지 이유를 말할 때 to buy처럼 to를 붙여요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.toinf",
+      "V.shopping",
+      "RS.context"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Dad went to the store",
+    "why_not": {
+      "0": "buy만 오면 뜻이 이어지지 않아요",
+      "1": "buys는 이 자리에 안 맞아요",
+      "2": "buying만으로는 이유가 안 돼요"
+    },
+    "key_expr": {
+      "en": "went to buy ~",
+      "ko": "~를 사러 갔어요"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "2": "G.pair"
+    },
+    "translation_ko": "아빠는 저녁에 쓸 달걀을 사러 가게에 갔어요.",
+    "tmp_id": "R1-0074"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I hope ______ you again next summer.",
+    "choices": [
+      "to see",
+      "see",
+      "seeing",
+      "saw"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "hope 뒤에는 to see처럼 to를 붙여서 바라는 일을 말해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.toinf",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "I hope",
+    "why_not": {
+      "1": "hope 뒤에는 to가 함께 필요해요",
+      "2": "hope 뒤에 seeing은 안 써요",
+      "3": "saw는 이 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "hope to see",
+      "ko": "만나기를 바라요"
+    },
+    "miss_type": {
+      "1": "G.pair",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "저는 다음 여름에 너를 다시 만나기를 바라요.",
+    "tmp_id": "R1-0075"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My puppy is too small ______ up the stairs by himself.",
+    "choices": [
+      "climb",
+      "climbing",
+      "climbed",
+      "to climb"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "too small 다음에 to climb를 붙이면 '너무 작아서 못 올라가요'가 돼요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.toinf",
+      "V.daily",
+      "RS.context"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "too small",
+    "why_not": {
+      "0": "too 뒤에는 to가 짝으로 와야 해요",
+      "1": "climbing은 too와 짝이 안 돼요",
+      "2": "climbed는 이 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "too small to climb",
+      "ko": "너무 작아서 못 올라가요"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "G.pair",
+      "2": "G.form"
+    },
+    "translation_ko": "제 강아지는 너무 작아서 혼자 계단을 올라가지 못해요.",
+    "tmp_id": "R1-0076"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My sister sings very ______ in the school choir.",
+    "choices": [
+      "beautiful",
+      "beautifully",
+      "beauty",
+      "beautify"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "어떻게 노래하는지 말할 때는 beautifully처럼 -ly를 붙여요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pos",
+      "V.school",
+      "RS.context"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "sings very",
+    "why_not": {
+      "0": "beautiful은 노래하는 모습 자리에 안 맞아요",
+      "2": "beauty는 '아름다움'이라 뜻이 안 맞아요",
+      "3": "beautify는 이 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "sing beautifully",
+      "ko": "아름답게 노래해요"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "W.meaning",
+      "3": "G.form"
+    },
+    "translation_ko": "제 언니는 학교 합창단에서 아주 아름답게 노래해요.",
+    "tmp_id": "R1-0077"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Mom is a ______ cook, and everyone loves her soup.",
+    "choices": [
+      "wonderfully",
+      "wonder",
+      "wondered",
+      "wonderful"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "cook(요리하는 사람) 앞에서 어떤 사람인지 말하니 wonderful이 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pos",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "cook, and everyone loves her soup",
+    "why_not": {
+      "0": "wonderfully는 cook 앞에 못 와요",
+      "1": "wonder는 뜻이 이 자리에 안 맞아요",
+      "2": "wondered는 이 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "a wonderful cook",
+      "ko": "멋진 요리 솜씨를 가진 사람"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "W.meaning",
+      "2": "G.form"
+    },
+    "translation_ko": "엄마는 정말 훌륭한 요리사여서, 모두가 엄마의 국을 좋아해요.",
+    "tmp_id": "R1-0078"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The children played ______ in the park after school.",
+    "choices": [
+      "happily",
+      "happy",
+      "happiness",
+      "happier"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "어떻게 놀았는지 말하는 자리라서 happily(즐겁게)가 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pos",
+      "V.leisure",
+      "RS.context"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "The children played",
+    "why_not": {
+      "1": "happy는 노는 모습을 말할 때 안 써요",
+      "2": "happiness는 '행복'이라 뜻이 안 맞아요",
+      "3": "happier는 둘을 견줄 때 쓰는 말이에요"
+    },
+    "key_expr": {
+      "en": "play happily",
+      "ko": "즐겁게 놀아요"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "W.meaning",
+      "3": "G.form"
+    },
+    "translation_ko": "아이들은 방과 후에 공원에서 즐겁게 놀았어요.",
+    "tmp_id": "R1-0079"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Our teacher gave us a clear ______ before the science test.",
+    "choices": [
+      "explain",
+      "explained",
+      "explanation",
+      "explaining"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "a clear 다음에는 이름이 되는 낱말이 와야 해서 explanation이 맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.pos",
+      "V.school",
+      "RS.vocab"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "a clear",
+    "why_not": {
+      "0": "explain은 a clear 뒤에 못 와요",
+      "1": "explained는 이 자리에 안 맞아요",
+      "3": "explaining은 a clear 뒤에 어색해요"
+    },
+    "key_expr": {
+      "en": "a clear explanation",
+      "ko": "쉬운 설명"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "선생님은 과학 시험 전에 우리에게 쉬운 설명을 해 주셨어요.",
+    "tmp_id": "R1-0080"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The school music festival was a big ______ last year.",
+    "choices": [
+      "succeed",
+      "successful",
+      "successfully",
+      "success"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "a big 다음에는 이름이 되는 낱말이 와서 success(성공)가 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pos",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "a big",
+    "why_not": {
+      "0": "succeed는 a big 뒤에 못 와요",
+      "1": "successful 뒤에는 이름 낱말이 더 필요해요",
+      "2": "successfully는 이 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "a big success",
+      "ko": "큰 성공"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.pair",
+      "2": "G.form"
+    },
+    "translation_ko": "학교 음악 축제는 작년에 큰 성공이었어요.",
+    "tmp_id": "R1-0081"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Please be ______ when you carry the glass cups.",
+    "choices": [
+      "care",
+      "careful",
+      "carefully",
+      "cares"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "be 다음에는 careful처럼 '조심하는' 상태를 말하는 낱말이 와요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pos",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Please be",
+    "why_not": {
+      "0": "care는 be 뒤에 바로 못 와요",
+      "2": "carefully는 be 뒤에 안 맞아요",
+      "3": "cares는 이 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "Be careful.",
+      "ko": "조심하세요."
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "유리컵을 옮길 때는 조심하세요.",
+    "tmp_id": "R1-0082"
   }
 ]
