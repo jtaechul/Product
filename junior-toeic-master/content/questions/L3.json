@@ -2377,5 +2377,250 @@
       }
     ],
     "tmp_id": "L3-0029"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: My bike has a flat tire. Can you fix it today?\nW: Sorry, we have ten bikes waiting. Come back tomorrow after three.\nM: But I need to get to my cousin's party tonight.\nW: The subway station is just around the corner.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 제 자전거 타이어가 펑크 났어요. 오늘 고칠 수 있나요?\n여: 죄송해요, 기다리는 자전거가 열 대예요. 내일 3시 이후에 다시 오세요.\n남: 그런데 오늘 밤에 사촌 파티에 가야 해요.\n여: 지하철역이 바로 저 앞 모퉁이에 있어요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What does the woman mean when she says \"we have ten bikes waiting\"?",
+        "choices": [
+          "The shop is closing forever",
+          "She cannot fix his bike today",
+          "The man should buy a new bike",
+          "Ten people are waiting to pay"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "고칠 자전거가 열 대나 밀려 있어서 내일 오라고 했어요. 오늘은 못 고쳐 준다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "Sorry, we have ten bikes waiting. Come back tomorrow after three.",
+        "why_not": {
+          "0": "가게가 문 닫는다는 말은 없어요",
+          "2": "새 자전거 이야기는 없어요",
+          "3": "열 대는 자전거 수예요"
+        },
+        "key_expr": {
+          "en": "Come back tomorrow.",
+          "ko": "내일 다시 오세요."
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.number"
+        }
+      },
+      {
+        "stem": "What will the man probably do tonight?",
+        "choices": [
+          "Fix the tire by himself",
+          "Stay home all evening",
+          "Take the subway to the party",
+          "Come back to the shop at three"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "자전거를 못 고치는데 지하철역이 바로 옆이라고 했어요. 그래서 지하철을 타고 파티에 갈 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.travel"
+        ],
+        "evidence": "The subway station is just around the corner.",
+        "why_not": {
+          "0": "혼자 고친다는 말은 없어요",
+          "1": "파티에 가야 한다고 했어요",
+          "3": "3시는 내일 이야기예요"
+        },
+        "key_expr": {
+          "en": "just around the corner",
+          "ko": "바로 가까이에"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L3-0030"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Mum, can I make cookies this afternoon?\nW: We don't have any eggs left.\nM: The corner shop is still open. I can go now.\nW: All right. Take the money on the kitchen table.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 엄마, 오늘 오후에 쿠키 만들어도 돼요?\n여: 달걀이 하나도 없구나.\n남: 모퉁이 가게가 아직 열려 있어요. 제가 지금 다녀올게요.\n여: 그래. 부엌 식탁에 있는 돈을 가져가렴."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What does the woman mean when she says \"We don't have any eggs left\"?",
+        "choices": [
+          "They need eggs before baking",
+          "She already baked the cookies",
+          "The cookies taste too sweet",
+          "She does not like eggs at all"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "달걀이 없다는 말은 쿠키를 만들기 전에 달걀을 사 와야 한다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.food"
+        ],
+        "evidence": "We don't have any eggs left.",
+        "why_not": {
+          "1": "쿠키는 아직 만들지 않았어요",
+          "2": "맛 이야기는 나오지 않았어요",
+          "3": "eggs만 듣고 고르면 안 돼요"
+        },
+        "key_expr": {
+          "en": "We don't have any ~ left.",
+          "ko": "~이 하나도 없어요."
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "A.echo"
+        }
+      },
+      {
+        "stem": "What will the boy probably do next?",
+        "choices": [
+          "Eat all the cookies",
+          "Wash the dishes",
+          "Go to the shop for eggs",
+          "Call his grandmother"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "가게가 열려 있으니 지금 다녀오겠다고 했고, 엄마가 돈을 가져가라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.food",
+          "V.daily"
+        ],
+        "evidence": "The corner shop is still open. I can go now.",
+        "why_not": {
+          "0": "쿠키는 아직 만들지 않았어요",
+          "1": "설거지 이야기는 없어요",
+          "3": "전화 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "corner shop",
+          "ko": "동네 가게"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0031"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Your piano recital is on Friday, isn't it?\nM: Yes, but the piano at home makes a funny sound.\nW: The music room piano is free after school.\nM: Then I'll ask the music teacher for the key.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 네 피아노 발표회가 금요일이지?\n남: 응, 그런데 집에 있는 피아노가 이상한 소리를 내.\n여: 방과 후에는 음악실 피아노를 쓸 수 있어.\n남: 그럼 음악 선생님께 열쇠를 부탁드릴게."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the boy's problem?",
+        "choices": [
+          "He forgot the recital day",
+          "He has no time to practise",
+          "His music teacher is away",
+          "The piano at home sounds odd"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "집 피아노가 이상한 소리를 낸다고 했어요. 그게 남자아이의 걱정이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "the piano at home makes a funny sound",
+        "why_not": {
+          "0": "금요일인 걸 알고 있어요",
+          "1": "시간이 없다는 말은 없어요",
+          "2": "선생님은 학교에 계셔요"
+        },
+        "key_expr": {
+          "en": "make a funny sound",
+          "ko": "이상한 소리를 내다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will the boy probably do after school?",
+        "choices": [
+          "Practise in the music room",
+          "Buy a new piano",
+          "Hold his recital",
+          "Clean the music room"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "방과 후에 음악실 피아노를 쓸 수 있다고 해서 열쇠를 받아 연습할 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.school",
+          "V.leisure"
+        ],
+        "evidence": "The music room piano is free after school.",
+        "why_not": {
+          "1": "피아노를 산다는 말은 없어요",
+          "2": "발표회는 금요일이에요",
+          "3": "청소 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "ask for the key",
+          "ko": "열쇠를 부탁하다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0032"
   }
 ]
