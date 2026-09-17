@@ -778,13 +778,13 @@
       {
         "stem": "Choose the best answer for (2).",
         "choices": [
-          "until",
+          "by",
           "since",
-          "during",
+          "until",
           "from"
         ],
         "answer_idx": 0,
-        "explanation_ko": "금요일까지 돌려 달라는 말이에요. '~까지'는 until을 써요.",
+        "explanation_ko": "금요일까지 돌려주기를 끝내라는 '기한'이에요. 기한은 by를 써요.",
         "difficulty_label": 3,
         "tags": [
           "G.prep"
@@ -792,16 +792,16 @@
         "evidence": "return your books",
         "why_not": {
           "1": "'~부터 지금까지'라는 뜻이에요",
-          "2": "뒤에 기간이 와야 해요",
+          "2": "쭉 이어지는 '~까지'라 기한에 안 맞아요",
           "3": "'~부터'라 시작을 말해요"
         },
         "key_expr": {
-          "en": "until Friday",
-          "ko": "금요일까지"
+          "en": "by Friday",
+          "ko": "금요일까지 (기한)"
         },
         "miss_type": {
           "1": "W.meaning",
-          "2": "G.form",
+          "2": "W.meaning",
           "3": "M.opposite"
         }
       },

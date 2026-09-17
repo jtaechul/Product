@@ -738,7 +738,7 @@
       "in",
       "of",
       "to",
-      "by"
+      "for"
     ],
     "answer_idx": 0,
     "explanation_ko": "상자 안에서 자고 있으니 '~ 안에'라는 뜻의 in을 써요.",
@@ -754,7 +754,7 @@
     "why_not": {
       "1": "'~의'라는 뜻이라 자리에 안 맞아요",
       "2": "'~로'라는 뜻이라 안 맞아요",
-      "3": "'~옆에'라 안에 있는 게 아니에요"
+      "3": "'~를 위해'라는 뜻이라 안 맞아요"
     },
     "key_expr": {
       "en": "in the box",
@@ -1504,7 +1504,7 @@
     "part": "R1",
     "stem": "Everyone in the class brought ______ own lunch box.",
     "choices": [
-      "his",
+      "its",
       "their",
       "our",
       "them"
@@ -1521,7 +1521,7 @@
     "status": "active",
     "evidence": "Everyone in the class",
     "why_not": {
-      "0": "여자아이는 빠지게 돼요",
+      "0": "사람에게는 its를 쓰지 않아요",
       "2": "말하는 사람까지 들어가 버려요",
       "3": "뒤에 물건 이름이 못 와요"
     },
@@ -1530,7 +1530,7 @@
       "ko": "각자 자기 ~"
     },
     "miss_type": {
-      "0": "W.meaning",
+      "0": "G.form",
       "2": "W.meaning",
       "3": "G.form"
     },
@@ -1736,7 +1736,7 @@
     "part": "R1",
     "stem": "This bag is not ______ expensive as that one.",
     "choices": [
-      "so",
+      "much",
       "as",
       "more",
       "very"
@@ -2007,7 +2007,7 @@
     "stem": "Hana ______ her keys, so she can't open the door.",
     "choices": [
       "loses",
-      "lost",
+      "was lost",
       "has lost",
       "was losing"
     ],
@@ -2023,7 +2023,7 @@
     "evidence": "so she can't open the door",
     "why_not": {
       "0": "늘 잃어버린다는 말이 돼요",
-      "1": "지금 상태와 이어지는 느낌이 약해요",
+      "1": "하나가 길을 잃었다는 뜻이 돼요",
       "3": "잃는 중이라는 이상한 뜻이 돼요"
     },
     "key_expr": {
@@ -2032,7 +2032,7 @@
     },
     "miss_type": {
       "0": "G.clue",
-      "1": "G.clue",
+      "1": "W.meaning",
       "3": "G.form"
     },
     "translation_ko": "하나가 열쇠를 잃어버려서, 문을 열 수가 없어요."

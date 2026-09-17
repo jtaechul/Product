@@ -1446,7 +1446,7 @@
     "part": "L2",
     "stem": null,
     "choices": [
-      "Yes, I mind it a lot.",
+      "I opened it yesterday.",
       "Not at all.",
       "It's a big window."
     ],
@@ -1462,7 +1462,7 @@
     "status": "active",
     "evidence": "Would you mind opening",
     "why_not": {
-      "0": "mind만 듣고 어색하게 답했어요",
+      "0": "어제 일을 답했어요. 지금 열어달라는 부탁이에요",
       "2": "창문 크기는 묻지 않았어요"
     },
     "key_expr": {
@@ -1735,7 +1735,7 @@
     "stem": null,
     "choices": [
       "About five more minutes.",
-      "It's not very long.",
+      "I've been here since noon.",
       "We waited yesterday."
     ],
     "answer_idx": 0,
@@ -1750,7 +1750,7 @@
     "status": "active",
     "evidence": "How much longer",
     "why_not": {
-      "1": "얼마인지 말하지 않아 답이 안 돼요",
+      "1": "얼마나 기다렸는지예요. 얼마나 더인지 물었어요",
       "2": "어제 일을 답했어요"
     },
     "key_expr": {
@@ -1758,7 +1758,7 @@
       "ko": "얼마나 더?"
     },
     "miss_type": {
-      "1": "M.notsaid",
+      "1": "A.wrongkind",
       "2": "A.wrongkind"
     },
     "translation_ko": "우리 얼마나 더 기다려야 해?"
@@ -2059,7 +2059,7 @@
     "stem": null,
     "choices": [
       "Yes, twice actually.",
-      "No, I'm reading now.",
+      "I'd like to book a seat.",
       "It's on the top shelf."
     ],
     "answer_idx": 0,
@@ -2074,7 +2074,7 @@
     "status": "active",
     "evidence": "already read this book",
     "why_not": {
-      "1": "이미 읽었냐는 물음과 어긋나요",
+      "1": "book을 예약하다로 듣고 답했어요",
       "2": "책 위치를 답했어요"
     },
     "key_expr": {
@@ -2082,7 +2082,7 @@
       "ko": "~했지, 그렇지?"
     },
     "miss_type": {
-      "1": "M.opposite",
+      "1": "A.echo",
       "2": "A.wrongkind"
     },
     "translation_ko": "너 이 책 벌써 읽었지, 그렇지?"
@@ -2094,7 +2094,7 @@
     "part": "L2",
     "stem": null,
     "choices": [
-      "No, I wasn't supposed.",
+      "I will hand you the pen.",
       "I did, but they lost it.",
       "The form is two pages."
     ],
@@ -2110,7 +2110,7 @@
     "status": "active",
     "evidence": "supposed to hand in the form",
     "why_not": {
-      "0": "supposed만 따라 해 어색해요",
+      "0": "hand만 듣고 엉뚱하게 답했어요",
       "2": "종이 수를 답했어요"
     },
     "key_expr": {
