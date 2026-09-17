@@ -274,6 +274,65 @@ export function validateQuestionCore(it, ctx, part, source, tagSection) {
 
 // ---------- 저작 단위(single·set) 한 덩어리 검사 ----------
 // import.mjs 의 파일 순회와 관리자 저작 API 가 같은 규칙을 쓰게 하는 입구.
+// ── 판박이 문항 막기 (2026-09-17) ──
+//
+// 새 문항을 만들 때 AI에게 '형식 참고용'으로 기존 문항 몇 개를 보여준다. 그런데 형식만이
+// 아니라 **내용까지 따라** 만드는 일이 실제로 일어났다 — 피크닉·비·일요일 대화가 통째로 다시
+// 나오고, 도서관 안내문이 다섯 개나 겹쳤다. 그러면 문항 수만 늘고 아이가 만나는 새 문제는
+// 늘지 않는다(은행을 800개로 키우는 이유 자체가 없어진다).
+//
+// ⚠ 겹침 비율만 보면 안 된다. "Where is your umbrella?" 와 "Why are you carrying an
+// umbrella?" 는 낱말 하나 겹쳤다고 비율 0.50 이 나와 멀쩡한 문항이 잘린다. 짧은 한 문장
+// 문항일수록 심하다. 그래서 **공통 낱말 수**를 함께 본다.
+//
+// 기준은 감이 아니라 실측이다: 은행 9,954쌍을 전부 돌려 사람이 판정한 22쌍(판박이 12 +
+// 멀쩡 10)과 맞춰 **놓침 0 · 오탐 0** 이 되는 값으로 잡았다.
+export const DUP_RATIO = 0.30;   // 겹침 비율(자카드)
+export const DUP_SHARED = 3;     // 공통 낱말 수 — 짧은 문항의 오탐을 막는 쪽
+
+// 흔해서 겹쳐도 의미 없는 낱말. 이걸 안 빼면 the·is 만으로 전부 비슷해진다.
+const DUP_STOP = new Set(('the a an is are was were be been to of in on at for and or but it its '
+  + 'this that these those not too very will can could would should you your we our they their he '
+  + 'she his her i my me do does did have has had with as so if more than all no yes there here '
+  + 'from by about up down into over only just also then when what how why who where which some '
+  + 'any one two three please don may must am get got go goes going come see said say says us him '
+  + 'them because after before now today tomorrow').split(' '));
+
+// 소재를 견주는 데 쓰는 글 — 지문(또는 들려주는 문장)만 본다.
+// 문제 문장(stem)은 "What is this notice mainly about?" 처럼 원래 겹치게 돼 있어서 빼야 한다.
+export function itemTopicText(it) {
+  if (it?.passage) return `${it.passage.content || ''} ${it.passage.script || ''}`.trim();
+  return `${it?.stem || ''} ${it?.tts_script || ''} ${it?.script || ''}`.trim();
+}
+
+const topicWords = (text) => (String(text || '').toLowerCase().match(/[a-z']+/g) || [])
+  .filter((w) => w.length > 2 && !DUP_STOP.has(w));
+
+// 두 글이 얼마나 겹치나 → { ratio, shared }
+export function topicOverlap(a, b) {
+  const A = new Set(topicWords(a)), B = new Set(topicWords(b));
+  if (!A.size || !B.size) return { ratio: 0, shared: 0 };
+  let shared = 0;
+  for (const w of A) if (B.has(w)) shared += 1;
+  return { ratio: shared / (A.size + B.size - shared), shared };
+}
+
+// item 과 판박이인 기존 문항을 찾는다 (없으면 null).
+// others 는 같은 파트의 문항 배열. 자기 자신은 tmp_id 로 건너뛴다.
+export function findTwin(item, others) {
+  const mine = itemTopicText(item);
+  if (!mine) return null;
+  let worst = null;
+  for (const other of others || []) {
+    if (!other || (item.tmp_id && other.tmp_id === item.tmp_id)) continue;
+    const o = topicOverlap(mine, itemTopicText(other));
+    if (o.ratio >= DUP_RATIO && o.shared >= DUP_SHARED && (!worst || o.ratio > worst.ratio)) {
+      worst = { id: other.tmp_id || '(이름 없음)', ...o };
+    }
+  }
+  return worst;
+}
+
 export function validateItem(it, part, tagSection) {
   const out = [];
   const ctx = it?.tmp_id || '새 문항';

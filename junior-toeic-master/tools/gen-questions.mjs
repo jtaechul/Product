@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import {
   PARTS, PART_LIST, PART_KO, PART_FORM, CHOICES_BY_PART, ACCENTS,
   EXPLANATION_MAX, WHY_NOT_MAX, KEY_EXPR_KO_MAX, HARD_TERMS,
-  makeUlid, validateItem, MISS_KO,
+  makeUlid, validateItem, MISS_KO, findTwin, itemTopicText,
 } from '../worker/authoring.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -49,6 +49,9 @@ const COUNT = Math.max(1, Math.min(20, Number(pick('count', '5')) || 5));
 const TAG = pick('tag');
 const DIFF = String(pick('difficulty') ?? '');
 const NOTE = pick('note');
+// AI를 부르지 않고 '무엇을 시킬 것인지'만 보고 끝낸다. 프롬프트가 의도대로 만들어지는지
+// 열쇠 없이 확인할 수 있어야, 고친 뒤에 진짜로 고쳐졌는지 볼 수 있다.
+const DRY = process.argv.includes('--dry');
 
 if (!PART_LIST.includes(PART)) {
   console.error(`--part 는 ${PART_LIST.join(', ')} 중 하나여야 합니다 (받은 값: ${PART || '없음'})`);
@@ -63,15 +66,15 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
 const GEMINI_KEY = process.env.GEMINI_API_KEY_JUMPLISH || process.env.GEMINI_API_KEY || '';
 const ENGINE = process.env.GEN_ENGINE
   || (ANTHROPIC_KEY ? 'anthropic' : GEMINI_KEY ? 'gemini' : '');
-if (!ENGINE) {
+if (!ENGINE && !DRY) {
   console.error('AI 열쇠가 없습니다. Repository secrets 에 다음 중 하나를 등록해 주세요:');
   console.error('  ANTHROPIC_API_KEY  (권장 — 규칙 통과율이 높습니다)');
   console.error('  GEMINI_API_KEY     (이미 음원 제작에 쓰고 계시면 그대로 쓸 수 있습니다)');
   console.error('  ※ Environment secrets 에 넣으면 이 작업에서 보이지 않습니다.');
   process.exit(1);
 }
-if (ENGINE === 'anthropic' && !ANTHROPIC_KEY) { console.error('ANTHROPIC_API_KEY 가 없습니다'); process.exit(1); }
-if (ENGINE === 'gemini' && !GEMINI_KEY) { console.error('GEMINI_API_KEY 가 없습니다'); process.exit(1); }
+if (!DRY && ENGINE === 'anthropic' && !ANTHROPIC_KEY) { console.error('ANTHROPIC_API_KEY 가 없습니다'); process.exit(1); }
+if (!DRY && ENGINE === 'gemini' && !GEMINI_KEY) { console.error('GEMINI_API_KEY 가 없습니다'); process.exit(1); }
 
 const tags = JSON.parse(readFileSync(join(CONTENT, 'tags.json'), 'utf8'));
 const tagSection = Object.fromEntries(tags.map((t) => [t.code, t.section]));
@@ -82,7 +85,21 @@ const usable = tags.filter((t) => !t.code.startsWith('SEC.')
 const qFile = join(CONTENT, 'questions', `${PART}.json`);
 const items = existsSync(qFile) ? JSON.parse(readFileSync(qFile, 'utf8')) : [];
 // 이미 있는 문항 몇 개를 예시로 보여 준다 — 형식·말투·난이도를 글로 설명하는 것보다 정확하다.
-const samples = items.slice(-3);
+//
+// ⚠ **무작위로 고른다.** 예전엔 파일의 마지막 3개(items.slice(-3))를 썼는데, 그러면 늘 같은
+// 문항만 보여주게 되고, 방금 만든 문항이 다음 번 예시가 되어 같은 소재가 눈덩이처럼 불어난다.
+// 실제로 피크닉·비·일요일 대화와 도서관 안내문이 그렇게 늘어났다(2026-09-17 확인).
+// 검수를 통과해 나가고 있는 문항(active)만 예시로 쓴다 — 초안은 아직 품질이 정해지지 않았다.
+const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const activeItems = items.filter((x) => (x.status || 'active') === 'active');
+const samples = shuffle([...(activeItems.length >= 3 ? activeItems : items)]).slice(0, 3);
+
+// ② 이미 쓴 소재를 통째로 알려 준다 — "베끼지 마세요"만으로는 막히지 않는다.
+// 지문(또는 들려주는 문장)의 앞부분만 한 줄씩. 형식이 아니라 '무슨 이야기인지'만 보이면 된다.
+const usedTopics = items
+  .map((x) => itemTopicText(x).replace(/\s+/g, ' ').trim())
+  .filter(Boolean)
+  .map((t) => (t.length > 90 ? `${t.slice(0, 90)}…` : t));
 
 // R3(독해)는 단독 문항과 지문 묶음이 둘 다 가능한 'both' 다. 예전엔 이걸 'single' 로 눌러
 // 버렸는데, 아래에서 보여주는 예시는 실제 파일에서 가져오므로 묶음이 나온다 — 프롬프트는
@@ -148,7 +165,16 @@ ${form === 'both' ? '- 지문 묶음(passage 하나에 문항 2~3개)과 단독 
 - 실제 기출을 베끼지 말고 100% 새로 씁니다.
 ${NOTE ? `\n## 추가 요청\n${NOTE}` : ''}
 
-## 이 파일에 이미 있는 문항 (형식·말투를 그대로 따르세요)
+## 이미 나온 소재 — **다시 쓰지 마세요** (규칙 위반이면 버려집니다)
+아래는 이 파일에 이미 들어 있는 문항들입니다. **같은 상황·같은 장소·같은 문장으로 다시 만들면
+그 문항은 버려집니다.** 예를 들어 아래에 도서관 안내문이 있으면 도서관 안내문을 또 쓰지 말고,
+소풍이 비로 미뤄지는 이야기가 있으면 그 이야기를 다시 쓰지 마세요.
+장소·인물·사건을 바꾸세요 — 소재는 얼마든지 있습니다.
+${usedTopics.map((t) => `- ${t}`).join('\n')}
+
+## 형식 예시 (말투·구조만 따르고 **내용은 절대 따라 하지 마세요**)
+아래 ${samples.length}개는 **형식과 말투를 보라고** 주는 것입니다. 여기 나온 장소·상황·문장을
+가져다 쓰면 안 됩니다. 필요한 것은 JSON 구조, 해설의 말투, 난이도 감각뿐입니다.
 ${JSON.stringify(samples, null, 1)}`;
 
 console.log(`주문: ${PART_KO[PART]} ${COUNT}문항${TAG ? ` · 개념 ${TAG}` : ''}${DIFF ? ` · 난이도 ${DIFF}` : ''}`);
@@ -225,6 +251,20 @@ async function askGemini() {
   process.exit(1);
 }
 
+if (DRY) {
+  console.log(`\n--dry: AI를 부르지 않습니다. 프롬프트 ${prompt.length.toLocaleString()}자`);
+  console.log(`형식 예시 ${samples.length}개: ${samples.map((x) => x.tmp_id).join(', ')}`);
+  console.log(`쓰지 말라고 알려 준 소재 ${usedTopics.length}개`);
+  const show = (title, re) => {
+    const i = prompt.indexOf(title);
+    console.log(`\n[${title}] ${i >= 0 ? '있음' : '⚠ 없음'}`);
+    if (i >= 0) console.log(prompt.slice(i, i + (re || 400)).split('\n').slice(0, 8).join('\n'));
+  };
+  show('## 이미 나온 소재');
+  show('## 형식 예시');
+  process.exit(0);
+}
+
 if (ENGINE === 'anthropic') console.log('엔진: anthropic');
 const text = ENGINE === 'anthropic' ? await askAnthropic() : await askGemini();
 
@@ -266,6 +306,14 @@ for (const d of drafts) {
     section, part: PART, status: 'draft',
   };
   const errs = validateItem(item, PART, tagSection);
+  // 규칙집을 통과해도 **이미 있는 문항의 판박이면 버린다.** 프롬프트로 부탁만 해서는 막히지
+  // 않는다 — "같은 소재 쓰지 말라"고 적어도 AI는 예시를 따라간다. 이번 묶음 안에서 서로
+  // 비슷한 것도 걸러야 한다(한 번에 비슷한 걸 여섯 개 만들어 오는 일이 있다).
+  const twin = errs.length ? null : findTwin(item, [...items, ...accepted]);
+  if (twin) {
+    errs.push(`이미 있는 ${twin.id}와 소재가 너무 비슷합니다`
+      + ` (겹침 ${Math.round(twin.ratio * 100)}%, 같은 낱말 ${twin.shared}개)`);
+  }
   if (errs.length) rejected.push({ item, errs });
   else accepted.push(item);
 }
@@ -278,7 +326,8 @@ console.log(`\n초안 ${drafts.length}덩이 → 통과 ${accepted.length}덩이
 if (madeN !== COUNT) console.log(`⚠ 주문은 ${COUNT}문항인데 ${madeN}문항이 만들어졌습니다.`);
 for (const r of rejected) {
   const topic = r.errs.some((m) => m.includes('넣지 않는 소재'));
-  console.log(`  버림 (${r.item.tmp_id})${topic ? ' ⚠ 소재 위반' : ''}:`);
+  const dup = r.errs.some((m) => m.includes('소재가 너무 비슷'));
+  console.log(`  버림 (${r.item.tmp_id})${topic ? ' ⚠ 소재 위반' : ''}${dup ? ' ⚠ 판박이' : ''}:`);
   for (const m of r.errs) console.log(`    - ${m}`);
 }
 const topicN = rejected.filter((r) => r.errs.some((m) => m.includes('넣지 않는 소재'))).length;
