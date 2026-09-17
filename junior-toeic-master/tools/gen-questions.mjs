@@ -84,11 +84,19 @@ const items = existsSync(qFile) ? JSON.parse(readFileSync(qFile, 'utf8')) : [];
 // 이미 있는 문항 몇 개를 예시로 보여 준다 — 형식·말투·난이도를 글로 설명하는 것보다 정확하다.
 const samples = items.slice(-3);
 
-const form = PART_FORM[PART] === 'both' ? 'single' : PART_FORM[PART];
+// R3(독해)는 단독 문항과 지문 묶음이 둘 다 가능한 'both' 다. 예전엔 이걸 'single' 로 눌러
+// 버렸는데, 아래에서 보여주는 예시는 실제 파일에서 가져오므로 묶음이 나온다 — 프롬프트는
+// "단독 문항"이라 말하고 예시는 묶음인 모순이 생겨, AI가 예시를 따라 묶음을 만들고
+// 개수는 '지문 수'로 세어 버렸다(6개 주문 → 12문항 생성, 2026-09-17 확인).
+const form = PART_FORM[PART];
 const isLC = section === 'LC';
 
 const prompt = `당신은 초등 3학년~중학교 3학년 한국 학생을 위한 영어 문제(TOEIC Bridge 대비) 저작자입니다.
-"${PART_KO[PART]}" 문항을 **${COUNT}개** 새로 만들어 주세요.
+"${PART_KO[PART]}" 문항을 새로 만들어 주세요. **문항 수는 정확히 ${COUNT}개입니다.**
+
+⚠ **세는 단위는 '문항(질문)'입니다 — 지문 수가 아닙니다.** 지문 하나에 문항을 여러 개 다는
+형태라면, 지문 수가 아니라 **문항을 모두 합친 수**가 ${COUNT}개가 되게 지문 수를 맞추세요.
+(예: 지문마다 문항 2개라면 지문은 ${Math.ceil(COUNT / 2)}개 — 지문을 ${COUNT}개 만들면 안 됩니다.)
 
 ## 반드시 지킬 규칙
 - 출력은 **JSON 배열 하나만**. 설명·인사말·코드펜스 없이 배열만 출력합니다.
@@ -105,7 +113,9 @@ ${Object.entries(MISS_KO).map(([k, v]) => `  ${k} = ${v}`).join('\n')}
   ${isLC ? '들려줄 대본(script) 안에 있어야 합니다.' : '지문이나 문제 문장 안에 있어야 합니다.'}
 - key_expr: 이 문제에서 챙겨 갈 표현 하나. ko 는 ${KEY_EXPR_KO_MAX}자 이하.
 - **translation_ko (필수)**: 지문·문장의 한글 해석. 없으면 그 문항은 버려집니다.
-  ${form === 'set' ? 'passage 안에 넣습니다(문항이 아니라 지문에 붙습니다).' : '문항 안에 넣습니다.'}
+  ${form === 'set' ? 'passage 안에 넣습니다(문항이 아니라 지문에 붙습니다).'
+    : form === 'both' ? '지문 묶음이면 passage 안에, 단독 문항이면 문항 안에 넣습니다.'
+    : '문항 안에 넣습니다.'}
   · 빈칸 문제라면 **정답을 넣은 완성된 문장**을 해석합니다(빈칸을 그대로 두지 마세요).
   · 대화문은 화자 표시를 살립니다 — "W:" 는 "여:", "M:" 은 "남:", "N:" 은 "안내:".
   · 줄바꿈은 원문과 같은 자리에 둡니다.
@@ -116,6 +126,7 @@ ${usable.map((t) => `  ${t.code} = ${t.name_ko}`).join('\n')}
 ${TAG ? `- **이번 주문은 "${TAG}" 개념 문항입니다.** 모든 문항의 tags 에 ${TAG} 를 넣으세요.` : ''}
 ${isLC ? `- 듣기이므로 발음(accent)은 ${ACCENTS.join('/')} 중 하나를 고르게 섞습니다.` : ''}
 ${form === 'set' ? '- 지문 묶음형입니다. passage 하나에 문항 2~3개를 답니다.' : ''}
+${form === 'both' ? '- 지문 묶음(passage 하나에 문항 2~3개)과 단독 문항 둘 다 됩니다. 예시의 형태를 따르세요.' : ''}
 
 ## 소재 금지선 (가장 중요 — 하나라도 어기면 그 문항은 버려집니다)
 아이가 푸는 문제입니다. **집집마다 생각이 다를 수 있는 소재는 아예 쓰지 마세요.**
@@ -245,8 +256,11 @@ const rejected = [];
 for (const d of drafts) {
   // 초안이 제 이름표·파트·상태를 지어 왔더라도 여기서 덮어쓴다.
   // 특히 status 는 언제나 draft — 사람이 확인하기 전에는 아이에게 나가지 않는다.
+  // 검사기(validateItem)가 아는 형태는 single 과 set 뿐이다. R3 처럼 둘 다 되는 파트('both')는
+  // 초안 모양을 보고 정한다 — 'both' 를 그대로 넣으면 그 문항은 전부 버려진다.
+  const shapeOf = (x) => (x.questions || x.passage ? 'set' : 'single');
   const item = {
-    type: d.type || form,
+    type: d.type || (form === 'both' ? shapeOf(d) : form),
     ...d,
     tmp_id: nextTmp(),
     section, part: PART, status: 'draft',
@@ -256,7 +270,12 @@ for (const d of drafts) {
   else accepted.push(item);
 }
 
-console.log(`\n초안 ${drafts.length}개 → 통과 ${accepted.length}개 / 버림 ${rejected.length}개`);
+// 묶음형은 배열 원소 하나가 문항 여러 개다 — '문항 수'로 세어 적는다.
+// 주문(${COUNT}문항)과 결과가 어긋나면 이 줄에서 바로 드러난다.
+const qCount = (list) => list.reduce((n, x) => n + (Array.isArray(x.questions) ? x.questions.length : 1), 0);
+const madeN = qCount(accepted);
+console.log(`\n초안 ${drafts.length}덩이 → 통과 ${accepted.length}덩이(문항 ${madeN}개) / 버림 ${rejected.length}덩이`);
+if (madeN !== COUNT) console.log(`⚠ 주문은 ${COUNT}문항인데 ${madeN}문항이 만들어졌습니다.`);
 for (const r of rejected) {
   const topic = r.errs.some((m) => m.includes('넣지 않는 소재'));
   console.log(`  버림 (${r.item.tmp_id})${topic ? ' ⚠ 소재 위반' : ''}:`);
