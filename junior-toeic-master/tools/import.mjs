@@ -267,6 +267,18 @@ for (const part of Object.keys(PARTS)) {
   const total = Object.values(d).reduce((a, b) => a + b, 0);
   console.log(`  ${part}: ${total}문항  난이도 ${[1, 2, 3, 4, 5].map((l) => `${l}:${d[l] || 0}`).join(' ')}`);
 }
+// 소리가 아직 없는 듣기 문항 수 — **준비 중(draft)까지 센다.**
+// 예전엔 워크플로가 gateOnMedia 의 'draft로 내림' 경고 개수로 셌는데, 그 경고는
+// **active 를 draft 로 내릴 때만** 난다. AI 가 만든 초안은 처음부터 draft 라 경고가 없어서
+// "모든 듣기 문항에 음원이 있습니다"라고 하면서 소리 없는 새 문항을 그냥 지나쳤다
+// (2026-09-17 L3 3개가 그렇게 빠졌다). 그래서 상태와 무관하게 실제 파일 유무로 센다.
+// ⚠ 지문 묶음(L3·L4)은 음원이 **문항이 아니라 지문**에 붙는다. 문항의 audio_url 만 보면
+// 멀쩡한 문항까지 '소리 없음'으로 세어 버린다(관리자 화면에서도 같은 함정에 걸린 적이 있다).
+const passageAudio = Object.fromEntries(passages.map((x) => [x.id, x.audio_url]));
+const silentLC = questions.filter((q) => PARTS[q.part] === 'LC'
+  && !(q.audio_url || (q.passage_id ? passageAudio[q.passage_id] : null))).length;
+console.log(`소리 없는 듣기 문항: ${silentLC}개`);
+
 // ── 낱말 사전 (content/vocab.json → public/vocab.json) ──
 // 아이가 정답 화면에서 모르는 낱말을 눌러 뜻을 보는 기능의 재료다.
 // 운영 중 외부 사전 API를 부르지 않는다 — 뜻은 저작 단계에 다 적어 두고 정적 파일로 서빙한다.

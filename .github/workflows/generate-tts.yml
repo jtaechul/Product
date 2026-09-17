@@ -51,6 +51,14 @@ jobs:
         working-directory: junior-toeic-master
     steps:
       - uses: actions/checkout@v4
+        with:
+          # ⚠ 트리거된 커밋이 아니라 **브랜치의 최신 상태**를 받는다.
+          # 이 워크플로는 generate-questions.yml 이 uses: 로 부르는데, 그때 github.sha 는
+          # 주문서를 푸시한 커밋이라 방금 만들어진 새 문항이 들어 있지 않다. 그대로 두면
+          # 새 듣기 문항을 못 보고 "만들 게 없다"며 0초에 끝난다 — 소리 없는 문항이
+          # 영영 출제되지 않는다(2026-09-17 실제로 L3 3개가 그렇게 조용히 빠졌다).
+          # deploy-jumplish.yml 이 같은 이유로 같은 설정을 쓴다.
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-node@v4
         with:
@@ -151,10 +159,20 @@ jobs:
           echo "public/audio 총 $(find public/audio -name '*.mp3' | wc -l)개"
 
       # 만든 뒤에 실제로 소리가 채워졌는지 센다.
-      # import.mjs 는 음원 없는 듣기 문항을 draft 로 내리므로, 그 경고 수가 곧 '아직 소리 없는 문항 수'다.
+      #
+      # ⚠ 예전에는 import.mjs 의 'draft로 내림' 경고 수를 셌다. 그런데 그 경고는 **active 를
+      # draft 로 내릴 때만** 난다 — AI 가 만든 초안은 처음부터 draft 라 경고가 없다. 그래서
+      # 소리 없는 새 문항이 있어도 "모든 듣기 문항에 음원이 있습니다"라고 하고 넘어갔다
+      # (2026-09-17 L3 3개가 그렇게 조용히 빠졌다). 이제 import.mjs 가 상태와 무관하게
+      # 파일 유무로 세어 찍어 주는 숫자를 그대로 읽는다.
       - name: Check what is still silent
         run: |
-          LEFT=$(node tools/import.mjs --check 2>&1 | grep -c "draft로 내림" || true)
+          LEFT=$(node tools/import.mjs --check 2>&1 \
+            | sed -n 's/^소리 없는 듣기 문항: \([0-9][0-9]*\)개$/\1/p')
+          if [ -z "$LEFT" ]; then
+            echo "::error::소리 없는 문항 수를 읽지 못했습니다 — import.mjs 출력이 바뀌었는지 확인하세요"
+            exit 1
+          fi
           echo "아직 음원이 없어 출제되지 않는 듣기 문항: ${LEFT}개"
           if [ "$LEFT" -eq 0 ]; then
             echo "모든 듣기 문항에 음원이 있습니다."
