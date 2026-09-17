@@ -6393,5 +6393,459 @@
     ],
     "status": "draft",
     "tmp_id": "R3-0090"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "My Diary — Saturday\nMy cousin took me to the ice rink for the first time. I fell down three times in ten minutes, and my knees hurt. I wanted to sit on the bench and go home, but my cousin held my hand and skated slowly with me. After an hour I could skate one whole circle by myself. On the way home I asked my cousin when we could come again.",
+      "translation_ko": "내 일기 — 토요일\n사촌 언니가 나를 처음으로 아이스링크에 데려갔습니다. 나는 십 분 동안 세 번 넘어져서 무릎이 아팠습니다. 벤치에 앉아 집에 가고 싶었지만, 사촌 언니가 내 손을 잡고 천천히 함께 스케이트를 타 주었습니다. 한 시간이 지나자 나는 혼자서 한 바퀴를 다 돌 수 있었습니다. 집에 오는 길에 나는 사촌 언니에게 언제 또 올 수 있는지 물었습니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What can we guess about the writer?",
+        "choices": [
+          "She will never skate again.",
+          "She is angry with her cousin.",
+          "She wants to go skating again.",
+          "She hurt her arm badly."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "집에 오는 길에 \"언제 또 와?\"라고 물었으니 또 타고 싶은 마음이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.leisure"
+        ],
+        "evidence": "On the way home I asked my cousin when we could come again.",
+        "why_not": {
+          "0": "또 오고 싶다고 물었어요",
+          "1": "화났다는 말은 없어요",
+          "3": "아팠던 곳은 무릎이에요"
+        },
+        "key_expr": {
+          "en": "come again",
+          "ko": "또 오다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What can we guess about the writer's cousin?",
+        "choices": [
+          "She helped the writer kindly.",
+          "She could not skate at all.",
+          "She was skating for the first time, too.",
+          "She left the rink early."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "손을 잡고 천천히 같이 타 줬으니 친절하게 도와준 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "RS.gist"
+        ],
+        "evidence": "my cousin held my hand and skated slowly with me",
+        "why_not": {
+          "1": "천천히 함께 잘 탔어요",
+          "2": "처음 온 사람은 글쓴이예요",
+          "3": "먼저 갔다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "hold my hand",
+          "ko": "내 손을 잡다"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "R3-0091"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Clerk: Hello, can I help you?\nMom: My son needs running shoes for sports day.\nClerk: What size does he wear?\nBen: Size 240, but my old ones feel tight now.\nClerk: Then let's try size 245. Walk around and tell me how they feel.\nBen: Oh, these are much better. I can move my toes.",
+      "translation_ko": "점원: 안녕하세요, 도와드릴까요?\n엄마: 우리 아들이 운동회 때 신을 운동화가 필요해요.\n점원: 사이즈가 어떻게 되나요?\n벤: 240이요. 그런데 지금 신는 신발은 좀 꽉 껴요.\n점원: 그러면 245를 신어 봐요. 걸어 보고 어떤지 말해 주세요.\n벤: 아, 이게 훨씬 좋아요. 발가락도 움직일 수 있어요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Where are the speakers?",
+        "choices": [
+          "At school",
+          "At a library",
+          "At a bus stop",
+          "At a shoe shop"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "운동화 크기를 물어보고 신어 보고 있으니 신발 가게예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.shopping"
+        ],
+        "evidence": "My son needs running shoes for sports day.",
+        "why_not": {
+          "0": "운동회는 신발을 사는 이유예요",
+          "1": "책 이야기는 없어요",
+          "2": "버스 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "What size does he wear?",
+          "ko": "사이즈가 어떻게 되나요?"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we guess about Ben's old shoes?",
+        "choices": [
+          "They are brand new.",
+          "They are too small for him now.",
+          "They are size 245.",
+          "He lost them yesterday."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "지금 신는 신발이 꽉 낀다고 했으니 발에 작아진 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.daily"
+        ],
+        "evidence": "Size 240, but my old ones feel tight now.",
+        "why_not": {
+          "0": "새 신발이 아니라 꽉 껴요",
+          "2": "245는 새로 신어 본 크기예요",
+          "3": "잃어버렸다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "feel tight",
+          "ko": "꽉 끼는 느낌이 나다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.number",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "R3-0092"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Why Do Leaves Change Color?\nIn summer, leaves are green because trees make a green color inside them with the help of sunlight. In autumn, the days get shorter and colder, so trees stop making the green color. Then the yellow and orange colors that were hiding in the leaves all along can finally be seen. The bright autumn colors are not new at all.",
+      "translation_ko": "잎은 왜 색이 바뀔까요?\n여름에 잎이 초록색인 것은 나무가 햇빛의 도움을 받아 잎 속에서 초록색을 만들기 때문입니다. 가을에는 낮이 짧아지고 날씨가 추워져서 나무는 초록색 만들기를 멈춥니다. 그러면 그동안 잎 속에 숨어 있던 노란색과 주황색이 드디어 보이게 됩니다. 가을의 밝은 색들은 전혀 새로운 색이 아닙니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why do leaves look green in summer?",
+        "choices": [
+          "Trees make a green color with sunlight.",
+          "The days are very short.",
+          "The air gets cold.",
+          "The yellow color leaves the tree."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "나무가 햇빛을 받아 잎 속에서 초록색을 만들기 때문이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "RS.scan"
+        ],
+        "evidence": "leaves are green because trees make a green color inside them with the help of sunlight",
+        "why_not": {
+          "1": "낮이 짧아지는 건 가을이에요",
+          "2": "추워지는 건 가을이에요",
+          "3": "노란색은 잎 속에 숨어 있었어요"
+        },
+        "key_expr": {
+          "en": "with the help of sunlight",
+          "ko": "햇빛의 도움으로"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.swap",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What can we guess about the yellow color in leaves?",
+        "choices": [
+          "It comes up from the ground.",
+          "It appears only after rain.",
+          "It is made in winter.",
+          "It was in the leaves before autumn."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "노란색은 원래 잎 속에 숨어 있었어요. 새로 생긴 색이 아니에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "RS.gist"
+        ],
+        "evidence": "the yellow and orange colors that were hiding in the leaves all along",
+        "why_not": {
+          "0": "땅에서 온다는 말은 없어요",
+          "1": "비 이야기는 없어요",
+          "2": "겨울에 만든다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "all along",
+          "ko": "처음부터 줄곧"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "R3-0093"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SPRING TALENT SHOW\nFriday, April 18, 2:00 p.m. — School Hall\nSing, dance, play music, or show a magic trick!\nWrite your name on the list outside Room 105 by April 11.\nOnly 12 acts can go on stage, so put your name down early.\nA piano is already on the stage, but bring any other instrument yourself.",
+      "translation_ko": "봄 장기 자랑\n4월 18일 금요일 오후 2시 — 학교 강당\n노래, 춤, 악기 연주, 마술을 보여 주세요!\n4월 11일까지 105호 앞에 있는 명단에 이름을 적어 주세요.\n무대에는 12팀만 오를 수 있으니, 이름을 일찍 적어 주세요.\n무대에 피아노는 이미 있지만, 다른 악기는 직접 가져오세요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What can we learn from the notice?",
+        "choices": [
+          "Every student who signs up will go on stage",
+          "The show will last two hours",
+          "Some students may not get a place on stage",
+          "Students must write their names on April 18"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "무대에 오를 수 있는 팀이 12팀뿐이에요. 그래서 늦게 적으면 못 할 수도 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.school"
+        ],
+        "evidence": "Only 12 acts can go on stage, so put your name down early.",
+        "why_not": {
+          "0": "12팀만 무대에 오를 수 있어요",
+          "1": "공연 시간 길이는 나오지 않았어요",
+          "3": "4월 18일은 공연하는 날이에요"
+        },
+        "key_expr": {
+          "en": "put your name down",
+          "ko": "이름을 적다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Minho wants to play his guitar in the show. What does he need to do?",
+        "choices": [
+          "Bring his own guitar on the show day",
+          "Use the piano on the stage",
+          "Borrow a guitar in Room 105",
+          "Write his name on April 18"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "무대에는 피아노만 있어요. 기타 같은 다른 악기는 직접 들고 와야 해요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.leisure"
+        ],
+        "evidence": "bring any other instrument yourself",
+        "why_not": {
+          "1": "민호는 기타를 치고 싶어 해요",
+          "2": "악기를 빌려준다는 말은 없어요",
+          "3": "이름은 4월 11일까지 적어야 해요"
+        },
+        "key_expr": {
+          "en": "bring ~ yourself",
+          "ko": "~을 직접 가져오다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.number"
+        }
+      }
+    ],
+    "tmp_id": "R3-0094"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Wednesday\nThis morning I was in a hurry. I grabbed a blue bag by the door and ran to the bus stop. At school, I opened the bag to take out my art homework. Inside there were only soccer socks and a water bottle. Then I remembered — my brother's bag is blue, too. I called Mom at lunch time, and she said she would bring my bag after work. My art teacher gave me new paper, so I could still draw with my class.",
+      "translation_ko": "수요일\n오늘 아침에 저는 몹시 급했어요. 문 옆에 있던 파란 가방을 집어 들고 버스 정류장으로 뛰어갔어요. 학교에서 미술 숙제를 꺼내려고 가방을 열었어요. 안에는 축구 양말과 물병만 들어 있었어요. 그때 생각났어요 — 우리 형 가방도 파란색이에요. 점심시간에 엄마에게 전화했더니, 엄마가 일이 끝나고 제 가방을 가져다주신다고 하셨어요. 미술 선생님이 새 종이를 주셔서 저는 반 친구들과 함께 그림을 그릴 수 있었어요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why did the writer take the wrong bag?",
+        "choices": [
+          "He lost his own bag yesterday",
+          "His brother's bag looks like his own",
+          "His mother packed the wrong bag",
+          "He left his homework at school"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "형 가방도 파란색이에요. 급하게 나가다가 두 가방을 바꿔 들고 간 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.school"
+        ],
+        "evidence": "my brother's bag is blue, too",
+        "why_not": {
+          "0": "가방을 잃어버렸다는 말은 없어요",
+          "2": "엄마가 가방을 쌌다는 말은 없어요",
+          "3": "숙제는 자기 가방 안에 있었어요"
+        },
+        "key_expr": {
+          "en": "in a hurry",
+          "ko": "몹시 급하게"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What will most likely happen later that day?",
+        "choices": [
+          "The writer will go home to get his bag",
+          "The brother will carry the bag to school",
+          "The writer will miss his art class",
+          "The writer's mother will come to school with his bag"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "엄마가 일 끝나고 가방을 가져다주신다고 했어요. 그러니 이따가 학교로 오실 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "she said she would bring my bag after work",
+        "why_not": {
+          "0": "집에 간다는 말은 없어요",
+          "1": "가져다주시는 사람은 엄마예요",
+          "2": "새 종이로 미술 수업을 했어요"
+        },
+        "key_expr": {
+          "en": "after work",
+          "ko": "일이 끝난 뒤에"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "R3-0095"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Where Do the Birds Go?\nIn fall, you may see birds flying away in a long line. In cold places, insects and seeds are hard to find in winter. So many birds travel to warmer places in the south, where food is easy to find. They come back when spring arrives. Before the long trip, the birds eat a lot and become heavier. Some of them fly at night and rest during the day.",
+      "translation_ko": "새들은 어디로 갈까요?\n가을이 되면 새들이 긴 줄을 지어 날아가는 모습을 볼 수 있어요. 추운 곳에서는 겨울에 벌레와 씨앗을 찾기가 어려워요. 그래서 많은 새들이 먹이를 쉽게 찾을 수 있는 따뜻한 남쪽으로 이동해요. 그리고 봄이 오면 다시 돌아와요. 긴 여행을 떠나기 전에 새들은 많이 먹어서 몸이 무거워져요. 어떤 새들은 밤에 날고 낮에는 쉬어요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why do the birds eat a lot before the trip?",
+        "choices": [
+          "They need the power for the long flight",
+          "They want to be lighter in the sky",
+          "There is too much food in the south",
+          "They cannot eat anything in spring"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아주 먼 길을 날아가려면 힘이 많이 필요해요. 그래서 떠나기 전에 많이 먹어 둬요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "Before the long trip, the birds eat a lot and become heavier.",
+        "why_not": {
+          "1": "많이 먹어서 오히려 무거워져요",
+          "2": "남쪽 먹이는 도착한 뒤 이야기예요",
+          "3": "봄에 못 먹는다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "before the long trip",
+          "ko": "긴 여행을 떠나기 전에"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we guess about the warmer places in the south?",
+        "choices": [
+          "Birds cannot rest there at all",
+          "Snow falls there every winter",
+          "Birds can still find food there in winter",
+          "Birds stay there all year long"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "남쪽은 따뜻하고 먹이를 찾기 쉬워요. 그래서 새들이 겨울을 보내러 가요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "RS.gist"
+        ],
+        "evidence": "warmer places in the south, where food is easy to find",
+        "why_not": {
+          "0": "쉴 수 없다는 말은 없어요",
+          "1": "그곳은 더 따뜻한 곳이에요",
+          "3": "봄이 오면 다시 돌아와요"
+        },
+        "key_expr": {
+          "en": "easy to find",
+          "ko": "찾기 쉬운"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "R3-0096"
   }
 ]
