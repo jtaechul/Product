@@ -6847,5 +6847,464 @@
       }
     ],
     "tmp_id": "R3-0096"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "My Diary — Sunday\nDad and I took our new kite to the river park. At first there was almost no wind, so the kite kept falling down. Then the wind picked up, and my kite rose high above the trees. Dad told me to hold the string tight, but it slipped out of my hand for a second. Luckily I caught it again. We flew the kite until the sun went down. My arms were sore, but I felt great.",
+      "translation_ko": "내 일기 — 일요일\n아빠와 저는 새 연을 가지고 강가 공원에 갔어요. 처음에는 바람이 거의 없어서 연이 계속 떨어졌어요. 그러다 바람이 세지자, 제 연은 나무보다 높이 올라갔어요. 아빠는 줄을 꽉 잡으라고 하셨지만, 줄이 잠깐 손에서 미끄러졌어요. 다행히 다시 붙잡았어요. 우리는 해가 질 때까지 연을 날렸어요. 팔은 좀 아팠지만 기분은 정말 좋았어요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "In the diary, 'picked up' means ____.",
+        "choices": [
+          "lifted a heavy box",
+          "stopped blowing",
+          "became stronger",
+          "chose a new kite"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "바람이 picked up 하니까 연이 높이 올라갔어요. 바람이 더 세졌다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "RS.context",
+          "V.leisure"
+        ],
+        "evidence": "Then the wind picked up, and my kite rose high above the trees.",
+        "why_not": {
+          "0": "물건을 든다는 뜻도 있지만 여기선 아니에요",
+          "1": "바람이 멈췄다면 연이 올라갈 수 없어요",
+          "3": "연을 고른 이야기가 아니에요"
+        },
+        "key_expr": {
+          "en": "the wind picked up",
+          "ko": "바람이 세졌다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "The word 'sore' is closest in meaning to ____.",
+        "choices": [
+          "hurting a little",
+          "very clean",
+          "warm and soft",
+          "long and thin"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "오래 연을 날려서 팔이 조금 아팠다는 말이에요. 그래도 기분은 좋았대요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "My arms were sore, but I felt great.",
+        "why_not": {
+          "1": "깨끗하다는 뜻이 아니에요",
+          "2": "느낌이 좋다는 말이 아니에요",
+          "3": "모양을 말하는 낱말이 아니에요"
+        },
+        "key_expr": {
+          "en": "My arms were sore.",
+          "ko": "팔이 좀 아팠어요."
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "tmp_id": "R3-0097"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SCHOOL FLEA MARKET\nSaturday, June 7, 10 a.m. - 1 p.m. — School Yard\nBring toys, books, or board games you do not use any more. All items must be clean and in good shape. Please set up your table by 9:30. Prices should be under 3,000 won. The money we raise will buy new books for our classroom library. Anything left over at the end will go back home with you.",
+      "translation_ko": "학교 벼룩시장\n6월 7일 토요일, 오전 10시 ~ 오후 1시 — 학교 운동장\n이제 쓰지 않는 장난감, 책, 보드게임을 가져오세요. 모든 물건은 깨끗하고 상태가 좋아야 합니다. 9시 30분까지 자기 자리를 준비해 주세요. 가격은 3,000원 아래로 정해 주세요. 우리가 모은 돈으로 교실 도서관에 새 책을 살 거예요. 끝날 때 남은 물건은 집으로 가져가세요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "In the notice, 'in good shape' means ____.",
+        "choices": [
+          "round like a ball",
+          "very expensive",
+          "brand new and never used",
+          "not broken"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "'in good shape'는 물건이 망가지지 않고 쓸 만하다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "RS.context",
+          "V.shopping"
+        ],
+        "evidence": "All items must be clean and in good shape.",
+        "why_not": {
+          "0": "shape가 모양이라는 뜻도 있지만 여기선 아니에요",
+          "1": "값은 3,000원 아래로 하라고 했어요",
+          "2": "쓰지 않는 헌 물건을 가져오는 장터예요"
+        },
+        "key_expr": {
+          "en": "in good shape",
+          "ko": "상태가 좋은"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.swap",
+          "2": "M.opposite"
+        }
+      },
+      {
+        "stem": "The word 'raise' in the notice is closest in meaning to ____.",
+        "choices": [
+          "lift something up high",
+          "collect",
+          "spend",
+          "count again"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "모은 돈으로 새 책을 산다고 했어요. 여기서 raise는 '모으다'예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "RS.context",
+          "V.school"
+        ],
+        "evidence": "The money we raise will buy new books for our classroom library.",
+        "why_not": {
+          "0": "번쩍 든다는 뜻도 있지만 돈에는 안 맞아요",
+          "2": "돈을 쓰는 건 책을 살 때예요",
+          "3": "세어 본다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "raise money",
+          "ko": "돈을 모으다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "R3-0098"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "How Ants Work Together\nAn ant is tiny, but a group of ants can do big things. When one ant finds food, it leaves a smell on the ground as it walks home. Other ants follow this trail and soon a long line of ants reaches the food. If a piece of bread is too heavy for one ant, several ants grab it together and carry it back. Ants also take turns guarding the door of their nest. Working as a team makes their small bodies strong.",
+      "translation_ko": "개미들은 어떻게 함께 일할까요\n개미 한 마리는 아주 작지만, 개미들이 모이면 큰 일을 할 수 있어요. 개미 한 마리가 먹이를 찾으면, 집으로 걸어오면서 땅에 냄새를 남겨요. 다른 개미들이 이 길을 따라가고, 곧 긴 개미 줄이 먹이까지 이어져요. 빵 한 조각이 개미 한 마리에게 너무 무거우면, 여러 마리가 함께 붙잡아서 옮겨요. 개미들은 집 입구를 지키는 일도 번갈아 해요. 팀으로 일하면 작은 몸도 강해져요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "In the article, the word 'trail' means ____.",
+        "choices": [
+          "a kind of food",
+          "a loud sound",
+          "a path to follow",
+          "a heavy stone"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "개미가 땅에 남긴 냄새를 따라가요. trail은 따라가는 '길'이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "Other ants follow this trail and soon a long line of ants reaches the food.",
+        "why_not": {
+          "0": "먹이는 trail을 따라간 끝에 있어요",
+          "1": "소리 이야기는 나오지 않았어요",
+          "3": "무거운 것은 빵 조각이에요"
+        },
+        "key_expr": {
+          "en": "follow this trail",
+          "ko": "이 길을 따라가다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "'Take turns' in the article means ____.",
+        "choices": [
+          "turn around in a circle",
+          "do it one after another",
+          "all do it at the same time",
+          "stop doing it"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "개미들이 문을 지키는 일을 번갈아 한다는 뜻이에요. 한 마리씩 차례대로요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "Ants also take turns guarding the door of their nest.",
+        "why_not": {
+          "0": "turn이 '돌다'라는 뜻도 있지만 여기선 아니에요",
+          "2": "함께 하는 건 빵을 옮길 때예요",
+          "3": "지키기를 그만둔다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "take turns",
+          "ko": "번갈아 하다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "M.swap",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "R3-0099"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "GREEN HILL COMMUNITY CENTER\nPOTTERY CLASS FOR FAMILIES\nMake your own cup or bowl with clay!\nSaturday, March 9, 10:00 a.m. - 12:00 p.m.\nRoom 3, first floor\nChildren under 10 must come with a parent.\nBring an old shirt. Clay can be messy!\nPlease sign up at the front desk by March 7.",
+      "translation_ko": "그린힐 주민센터\n가족 도자기 수업\n찰흙으로 나만의 컵이나 그릇을 만들어 보세요!\n3월 9일 토요일, 오전 10시 ~ 낮 12시\n1층 3번 방\n10살 미만 어린이는 부모님과 함께 와야 합니다.\n낡은 옷을 가져오세요. 찰흙은 옷을 더럽힐 수 있어요!\n3월 7일까지 안내 데스크에서 신청해 주세요."
+    },
+    "questions": [
+      {
+        "stem": "What is the main purpose of this notice?",
+        "choices": [
+          "To sell cups and bowls at the center",
+          "To tell people about a class they can join",
+          "To ask people to clean Room 3",
+          "To give the center's new opening hours"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "찰흙으로 컵이나 그릇을 만드는 수업을 알리고 신청하라고 하는 글이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Make your own cup or bowl with clay!",
+        "why_not": {
+          "0": "물건을 판다는 말은 없어요",
+          "2": "청소 부탁 이야기가 아니에요",
+          "3": "센터 여는 시간은 안 나와요"
+        },
+        "key_expr": {
+          "en": "sign up",
+          "ko": "신청하다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Who is this notice mainly for?",
+        "choices": [
+          "People who want to sell pottery",
+          "Teachers who are looking for a job",
+          "Children who live at the center",
+          "Families who want to make something together"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "제목이 '가족 도자기 수업'이고, 어린 아이는 부모님과 오라고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "RS.infer"
+        ],
+        "evidence": "POTTERY CLASS FOR FAMILIES",
+        "why_not": {
+          "0": "파는 이야기는 없어요",
+          "1": "일자리 안내가 아니에요",
+          "2": "센터에 산다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "come with a parent",
+          "ko": "부모님과 함께 오다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0100"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Jiho's Diary — Sunday\nMy big brother took me to the empty parking lot to practice riding a bike.\nHe held the back of my seat and ran beside me.\nI fell twice and my knee hurt a little, but I got back on.\nOn the last try, he let go, and I rode all the way to the wall by myself.\nI did not know he had let go until I heard him clapping.",
+      "translation_ko": "지호의 일기 — 일요일\n형이 자전거 타는 연습을 하라고 나를 빈 주차장에 데려갔습니다.\n형은 내 안장 뒤를 잡고 옆에서 같이 뛰었습니다.\n나는 두 번 넘어져서 무릎이 조금 아팠지만, 다시 올라탔습니다.\n마지막 시도에서 형이 손을 놓았고, 나는 벽까지 혼자서 쭉 달렸습니다.\n형이 손뼉 치는 소리를 듣고서야 형이 손을 놓은 걸 알았습니다."
+    },
+    "questions": [
+      {
+        "stem": "What is this diary mainly about?",
+        "choices": [
+          "Riding a bike alone for the first time",
+          "Buying a new bike with a brother",
+          "A bike race between two brothers",
+          "Fixing a bike in a parking lot"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "형이 잡아 주다가 손을 놓았고, 지호가 혼자서 끝까지 달린 이야기예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.leisure"
+        ],
+        "evidence": "On the last try, he let go, and I rode all the way to the wall by myself.",
+        "why_not": {
+          "1": "자전거를 샀다는 말은 없어요",
+          "2": "둘이 시합하지 않았어요",
+          "3": "고치는 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "by myself",
+          "ko": "혼자 힘으로"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "How did Jiho most likely feel at the end?",
+        "choices": [
+          "Bored",
+          "Angry at his brother",
+          "Proud and happy",
+          "Sleepy"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "혼자 끝까지 달렸고 형이 손뼉을 쳐 주었으니 뿌듯하고 기뻤을 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "RS.infer"
+        ],
+        "evidence": "I did not know he had let go until I heard him clapping.",
+        "why_not": {
+          "0": "지루하다는 느낌은 없어요",
+          "1": "형에게 화내지 않았어요",
+          "3": "졸린 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "let go",
+          "ko": "잡았던 손을 놓다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0101"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "MORNING WALKING BUS\nDo you live near Maple Street?\nWalk to school together!\nEvery school morning, Ms. Yoon waits at the corner shop at 8:00.\nThe group leaves at 8:05 and arrives at school by 8:20.\nWalking together is fun, and you get fresh air before class.\nAsk your class teacher to write your name on the list.",
+      "translation_ko": "아침 걷기 버스\n메이플 거리 근처에 사나요?\n다 같이 걸어서 학교에 가요!\n학교 가는 날 아침마다 윤 선생님이 8시에 모퉁이 가게 앞에서 기다립니다.\n모임은 8시 5분에 출발해서 8시 20분까지 학교에 도착합니다.\n함께 걸으면 즐겁고, 수업 전에 맑은 공기도 마실 수 있어요.\n담임 선생님께 명단에 이름을 적어 달라고 하세요."
+    },
+    "questions": [
+      {
+        "stem": "What is the main purpose of this poster?",
+        "choices": [
+          "To tell about a new school bus route",
+          "To ask parents to drive students to school",
+          "To sell tickets for a morning trip",
+          "To ask students to walk to school in a group"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "친구들과 선생님이 함께 걸어서 학교에 가자고 부르는 글이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ],
+        "evidence": "Walk to school together!",
+        "why_not": {
+          "0": "진짜 버스 이야기가 아니에요",
+          "1": "차로 태워 달라고 안 했어요",
+          "2": "표를 판다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "walk to school together",
+          "ko": "함께 걸어서 학교에 가다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "According to the poster, what is good about the walking bus?",
+        "choices": [
+          "It is fun and gives you fresh air",
+          "It is faster than any bus",
+          "It costs less money than a bus",
+          "It gives students free snacks"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "함께 걸으면 즐겁고 수업 전에 맑은 공기를 마실 수 있다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "RS.scan"
+        ],
+        "evidence": "Walking together is fun, and you get fresh air before class.",
+        "why_not": {
+          "1": "더 빠르다는 말은 없어요",
+          "2": "돈 이야기는 나오지 않아요",
+          "3": "간식 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "fresh air",
+          "ko": "맑은 공기"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0102"
   }
 ]

@@ -2293,5 +2293,328 @@
     ],
     "status": "draft",
     "tmp_id": "R2-0022"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Friday, November 8th\nToday my grandmother showed me how to make gimbap. First, we washed the vegetables. (1) ______ we cooked the rice and put it on the seaweed. My first roll (2) ______ not pretty, but it tasted great. (3) ______ Next time I will make gimbap for my friends.",
+      "translation_ko": "11월 8일 금요일\n오늘 할머니께서 김밥 만드는 법을 알려 주셨어요. 먼저 우리는 채소를 씻었어요. 그런 다음 밥을 지어서 김 위에 올렸어요. 제가 처음 만 김밥은 예쁘지 않았지만 맛은 아주 좋았어요. 할머니께서 잘했다고 말씀해 주셨어요. 다음에는 친구들에게 김밥을 만들어 줄 거예요."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "Because",
+          "However",
+          "Then",
+          "If"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "First(먼저) 다음에 오는 차례라서 '그다음에'라는 뜻의 Then이 알맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.conj",
+          "RS.context",
+          "V.food"
+        ],
+        "evidence": "First, we washed the vegetables.",
+        "why_not": {
+          "0": "까닭을 말할 때 쓰는 말이에요",
+          "1": "앞과 반대되는 말을 이을 때 써요",
+          "3": "'만약 ~라면'이라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "First ~, Then ~",
+          "ko": "먼저 ~, 그다음에 ~"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "was",
+          "is",
+          "are",
+          "were"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "오늘 있었던 지난 일이고 김밥 한 줄 이야기라서 was를 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.tense",
+          "G.agreement",
+          "RS.context"
+        ],
+        "evidence": "but it tasted great",
+        "why_not": {
+          "1": "지금 일을 말하는 모양이에요",
+          "2": "여럿일 때 쓰는 말이에요",
+          "3": "여럿일 때 쓰는 말이에요"
+        },
+        "key_expr": {
+          "en": "My first roll was not pretty.",
+          "ko": "첫 김밥은 예쁘지 않았어요."
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "G.clue",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I did not eat anything today.",
+          "The bus was late this morning.",
+          "We bought our gimbap at a shop.",
+          "My grandmother said I did a good job."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "맛이 좋았고 다음에 또 만들겠다고 했으니, 할머니의 칭찬 이야기가 잘 이어져요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context",
+          "V.food"
+        ],
+        "evidence": "Next time I will make gimbap for my friends.",
+        "why_not": {
+          "0": "김밥을 먹었으니 반대되는 말이에요",
+          "1": "버스 이야기는 앞뒤와 안 이어져요",
+          "2": "직접 만들었는데 샀다고 하면 반대예요"
+        },
+        "key_expr": {
+          "en": "You did a good job.",
+          "ko": "정말 잘했어요."
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "F.offtopic",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0024"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Winter Skating Class\nDo you want to learn skating? The town ice rink will open a class for children (1) ______ January 5th.\nThe class starts at 10:00 a.m. and finishes at 11:30 a.m. Please wear warm gloves, (2) ______ the ice rink is very cold.\nYou can borrow skates at the front desk. (3) ______ Call 555-0147 to sign up!",
+      "translation_ko": "겨울 스케이트 교실\n스케이트를 배우고 싶나요? 동네 아이스링크에서 1월 5일에 어린이 교실을 엽니다.\n수업은 오전 10시에 시작해서 11시 30분에 끝납니다. 아이스링크가 많이 추우니 따뜻한 장갑을 끼고 오세요.\n스케이트화는 안내 데스크에서 빌릴 수 있습니다. 새 스케이트화를 살 필요는 없어요. 신청은 555-0147로 전화하세요!"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "on",
+          "in",
+          "at",
+          "by"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "며칠인지 말할 때는 앞에 on을 붙여요. 그래서 on January 5th예요.",
+        "difficulty_label": 1,
+        "tags": [
+          "G.prep",
+          "RS.context"
+        ],
+        "evidence": "January 5th",
+        "why_not": {
+          "1": "달이나 해 앞에 쓰는 말이에요",
+          "2": "시각이나 장소에 쓰는 말이에요",
+          "3": "'~까지'라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "on January 5th",
+          "ko": "1월 5일에"
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "G.clue",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "but",
+          "so",
+          "because",
+          "and"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "장갑을 끼라는 이유를 뒤에서 말해 주니까 '~때문에'인 because가 알맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.conj",
+          "RS.context"
+        ],
+        "evidence": "the ice rink is very cold",
+        "why_not": {
+          "0": "앞뒤가 반대일 때 쓰는 말이에요",
+          "1": "이유가 뒤에 와서 안 맞아요",
+          "3": "이유를 이어 주는 말이 아니에요"
+        },
+        "key_expr": {
+          "en": "because it is very cold",
+          "ko": "많이 추우니까"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The rink is closed all winter.",
+          "Swimming lessons begin in July.",
+          "The class is only for grown-ups.",
+          "You don't need to buy new skates."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "앞에서 스케이트화를 빌릴 수 있다고 했으니, 새로 살 필요 없다는 말이 자연스럽게 이어져요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context",
+          "V.leisure"
+        ],
+        "evidence": "You can borrow skates at the front desk.",
+        "why_not": {
+          "0": "교실을 여는 안내라 반대예요",
+          "1": "수영 이야기는 관계없어요",
+          "2": "어린이 교실이라고 했어요"
+        },
+        "key_expr": {
+          "en": "borrow skates",
+          "ko": "스케이트화를 빌리다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "F.offtopic",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0025"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Wednesday, October 2nd\nToday was our school sports day. My class ran in the relay race. I was the last runner, (1) ______ I was very nervous.\nWhen Suji passed me the baton, I ran as (2) ______ as I could. We finished second! (3) ______\nAfter the race, we shared cold watermelon under the big tree. It was the best day of the month.",
+      "translation_ko": "10월 2일 수요일\n오늘은 우리 학교 운동회였어요. 우리 반은 이어달리기에 나갔어요. 나는 마지막 주자여서 아주 떨렸어요.\n수지가 나에게 배턴을 넘겨줬을 때, 나는 있는 힘껏 빠르게 달렸어요. 우리는 2등으로 들어왔어요! 선생님은 우리 모두 아주 잘했다고 말해 주셨어요.\n경기가 끝난 뒤, 우리는 큰 나무 아래에서 차가운 수박을 나눠 먹었어요. 이번 달에서 가장 좋은 날이었어요."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "but",
+          "so",
+          "or",
+          "because"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "마지막 주자여서 떨렸다는 흐름이니까 '그래서'라는 뜻의 so가 알맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.conj",
+          "RS.context"
+        ],
+        "evidence": "I was the last runner",
+        "why_not": {
+          "0": "앞뒤가 반대일 때 쓰는 말이에요",
+          "2": "둘 중 하나를 고를 때 써요",
+          "3": "뒤에 이유가 와야 하는 말이에요"
+        },
+        "key_expr": {
+          "en": "so I was nervous",
+          "ko": "그래서 나는 떨렸다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "2": "W.meaning",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "fast",
+          "faster",
+          "fastest",
+          "more fast"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "as와 as 사이에는 fast를 그대로 넣어요. as fast as I could는 '있는 힘껏 빠르게'예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.compare",
+          "RS.context"
+        ],
+        "evidence": "as I could",
+        "why_not": {
+          "1": "as와 as 짝 사이에는 못 써요",
+          "2": "으뜸일 때 쓰는 말이에요",
+          "3": "이런 말은 없어요"
+        },
+        "key_expr": {
+          "en": "as fast as I could",
+          "ko": "있는 힘껏 빠르게"
+        },
+        "miss_type": {
+          "1": "G.form",
+          "2": "G.clue",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I forgot my lunch box at home.",
+          "Nobody in my class joined the race.",
+          "Our teacher said we all did a great job.",
+          "It rained, so sports day was canceled."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "2등으로 들어왔다는 말 뒤에는 선생님이 잘했다고 칭찬해 주는 문장이 잘 어울려요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context",
+          "RS.infer"
+        ],
+        "evidence": "We finished second!",
+        "why_not": {
+          "0": "도시락 이야기는 관계없어요",
+          "1": "우리 반이 이어달리기를 했어요",
+          "3": "운동회는 그대로 열렸어요"
+        },
+        "key_expr": {
+          "en": "did a great job",
+          "ko": "아주 잘했다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "M.opposite",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0026"
   }
 ]
