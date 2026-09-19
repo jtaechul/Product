@@ -1931,5 +1931,571 @@
       }
     ],
     "translation_ko": "한 여자가 노트북으로 타자를 치고 있어요."
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'washing the dishes'는 설거지를 한다는 뜻이에요. 싱크대에서 그릇을 씻는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "A boy is washing the dishes.",
+    "choice_image_prompts": [
+      "A boy sweeping the floor with a broom",
+      "A boy drinking a glass of milk in a kitchen",
+      "A boy washing dishes at a kitchen sink",
+      "A boy putting plates on a dining table"
+    ],
+    "status": "draft",
+    "evidence": "washing the dishes",
+    "why_not": {
+      "0": "빗자루로 바닥을 쓰는 사진이에요",
+      "1": "우유를 마시는 사진이에요",
+      "3": "그릇을 씻지 않고 상에 놓고 있어요"
+    },
+    "key_expr": {
+      "en": "wash the dishes",
+      "ko": "설거지를 하다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boy sweeping floor broom",
+        "need": [
+          "broom"
+        ],
+        "prefer": [
+          "sweeping"
+        ],
+        "avoid": [
+          "sink",
+          "dishes"
+        ]
+      },
+      {
+        "q": "boy drinking milk kitchen",
+        "need": [
+          "milk"
+        ],
+        "prefer": [
+          "drinking"
+        ],
+        "avoid": [
+          "sink",
+          "dishes"
+        ]
+      },
+      {
+        "q": "boy washing dishes kitchen sink",
+        "need": [
+          "dishes",
+          "sink"
+        ],
+        "prefer": [
+          "washing"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "child setting table plates",
+        "need": [
+          "plate",
+          "table"
+        ],
+        "prefer": [],
+        "avoid": [
+          "sink"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "M.swap"
+    },
+    "translation_ko": "한 남자아이가 설거지를 하고 있어요.",
+    "tmp_id": "L1-0021"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'eating lunch'는 점심을 먹는다는 말이에요. 급식실에서 밥을 먹는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "Students are eating lunch in the school cafeteria.",
+    "choice_image_prompts": [
+      "Students eating lunch with trays at long tables in a school cafeteria",
+      "Students studying at desks in a classroom",
+      "Children running on a school playground",
+      "A teacher writing on a whiteboard in front of students"
+    ],
+    "status": "draft",
+    "evidence": "eating lunch in the school cafeteria",
+    "why_not": {
+      "1": "교실에서 공부하는 사진이에요",
+      "2": "운동장에서 뛰는 사진이에요",
+      "3": "선생님이 칠판에 쓰는 사진이에요"
+    },
+    "key_expr": {
+      "en": "eat lunch",
+      "ko": "점심을 먹다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "students eating lunch school cafeteria trays",
+        "need": [
+          "cafeteria",
+          "eating"
+        ],
+        "prefer": [
+          "students"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "students studying classroom desks",
+        "need": [
+          "classroom"
+        ],
+        "prefer": [
+          "studying"
+        ],
+        "avoid": [
+          "food",
+          "cafeteria"
+        ]
+      },
+      {
+        "q": "children running school playground",
+        "need": [
+          "playground"
+        ],
+        "prefer": [
+          "running"
+        ],
+        "avoid": [
+          "food"
+        ]
+      },
+      {
+        "q": "teacher writing whiteboard classroom",
+        "need": [
+          "teacher",
+          "whiteboard"
+        ],
+        "prefer": [],
+        "avoid": [
+          "food"
+        ]
+      }
+    ],
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "학생들이 학교 급식실에서 점심을 먹고 있어요.",
+    "tmp_id": "L1-0022"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'flying a kite'는 연을 날린다는 뜻이에요. 아이 둘이 연을 날리는 사진을 고르면 돼요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Two children are flying a kite in the park.",
+    "choice_image_prompts": [
+      "Children blowing soap bubbles in a park",
+      "A child going down a playground slide",
+      "Children throwing a ball to each other in a grassy field",
+      "Two children flying a colourful kite in a park"
+    ],
+    "status": "draft",
+    "evidence": "flying a kite in the park",
+    "why_not": {
+      "0": "비눗방울을 부는 사진이에요",
+      "1": "미끄럼틀을 타는 사진이에요",
+      "2": "공을 던지는 사진이에요"
+    },
+    "key_expr": {
+      "en": "fly a kite",
+      "ko": "연을 날리다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "children blowing soap bubbles park",
+        "need": [
+          "bubbles"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "kite"
+        ]
+      },
+      {
+        "q": "child playground slide",
+        "need": [
+          "slide"
+        ],
+        "prefer": [
+          "playground"
+        ],
+        "avoid": [
+          "kite"
+        ]
+      },
+      {
+        "q": "children throwing ball field",
+        "need": [
+          "ball"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "kite"
+        ]
+      },
+      {
+        "q": "two children flying kite park",
+        "need": [
+          "kite"
+        ],
+        "prefer": [
+          "children",
+          "park"
+        ],
+        "avoid": []
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "translation_ko": "두 아이가 공원에서 연을 날리고 있어요.",
+    "tmp_id": "L1-0023"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'waiting for the bus'는 버스를 기다린다는 뜻이에요. 정류장에 서 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.travel"
+    ],
+    "accent": "US",
+    "tts_script": "A man is waiting for the bus at the bus stop.",
+    "choice_image_prompts": [
+      "A man driving a car on a road",
+      "A man standing with a bag beside a bus stop sign",
+      "A man sitting inside a moving train",
+      "A man walking across a crosswalk"
+    ],
+    "status": "draft",
+    "evidence": "waiting for the bus at the bus stop",
+    "why_not": {
+      "0": "차를 운전하는 사진이에요",
+      "2": "기차 안에 앉아 있는 사진이에요",
+      "3": "횡단보도를 건너는 사진이에요"
+    },
+    "key_expr": {
+      "en": "wait for the bus",
+      "ko": "버스를 기다리다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man driving car road",
+        "need": [
+          "driving"
+        ],
+        "prefer": [
+          "car"
+        ],
+        "avoid": [
+          "bus stop"
+        ]
+      },
+      {
+        "q": "man waiting at bus stop sign",
+        "need": [
+          "bus stop"
+        ],
+        "prefer": [
+          "waiting",
+          "man"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "man sitting inside train",
+        "need": [
+          "train"
+        ],
+        "prefer": [
+          "sitting"
+        ],
+        "avoid": [
+          "bus stop"
+        ]
+      },
+      {
+        "q": "man crossing crosswalk street",
+        "need": [
+          "crosswalk"
+        ],
+        "prefer": [
+          "walking"
+        ],
+        "avoid": [
+          "bus stop"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "2": "M.swap",
+      "3": "P.other"
+    },
+    "translation_ko": "한 남자가 버스 정류장에서 버스를 기다리고 있어요.",
+    "tmp_id": "L1-0024"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'putting a pizza into the oven'은 피자를 오븐에 넣는다는 뜻이에요. 먹는 사진이 아니에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "A cook is putting a pizza into the oven.",
+    "choice_image_prompts": [
+      "A cook chopping vegetables on a cutting board",
+      "A waiter carrying plates to a table",
+      "A family eating pizza together at a table",
+      "A cook sliding a pizza into a hot oven"
+    ],
+    "status": "draft",
+    "evidence": "putting a pizza into the oven",
+    "why_not": {
+      "0": "채소를 써는 사진이에요",
+      "1": "접시를 나르는 사진이에요",
+      "2": "피자를 먹고 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "put a pizza into the oven",
+      "ko": "피자를 오븐에 넣다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "cook chopping vegetables cutting board",
+        "need": [
+          "vegetables"
+        ],
+        "prefer": [
+          "chopping"
+        ],
+        "avoid": [
+          "pizza"
+        ]
+      },
+      {
+        "q": "waiter carrying plates restaurant",
+        "need": [
+          "waiter"
+        ],
+        "prefer": [
+          "plates"
+        ],
+        "avoid": [
+          "oven"
+        ]
+      },
+      {
+        "q": "family eating pizza table",
+        "need": [
+          "pizza",
+          "eating"
+        ],
+        "prefer": [
+          "family"
+        ],
+        "avoid": [
+          "oven"
+        ]
+      },
+      {
+        "q": "chef putting pizza into oven",
+        "need": [
+          "pizza",
+          "oven"
+        ],
+        "prefer": [
+          "chef"
+        ],
+        "avoid": []
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "A.echo"
+    },
+    "translation_ko": "요리사가 피자를 오븐에 넣고 있어요.",
+    "tmp_id": "L1-0025"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'checking her temperature'는 열을 재 본다는 말이에요. 체온계를 대고 있는 사진이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "A nurse is checking a girl's temperature.",
+    "choice_image_prompts": [
+      "A nurse holding a thermometer to a girl's forehead in a clinic",
+      "A dentist looking at a boy's teeth",
+      "A girl drinking water from a cup",
+      "A doctor writing on a clipboard at a desk"
+    ],
+    "status": "draft",
+    "evidence": "checking a girl's temperature",
+    "why_not": {
+      "1": "치과에서 이를 보는 사진이에요",
+      "2": "물을 마시는 사진이에요",
+      "3": "열을 재지 않고 적고만 있어요"
+    },
+    "key_expr": {
+      "en": "check one's temperature",
+      "ko": "열을 재다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "nurse thermometer child forehead clinic",
+        "need": [
+          "thermometer"
+        ],
+        "prefer": [
+          "nurse",
+          "child"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "dentist checking boy teeth",
+        "need": [
+          "dentist"
+        ],
+        "prefer": [
+          "teeth"
+        ],
+        "avoid": [
+          "thermometer"
+        ]
+      },
+      {
+        "q": "girl drinking water cup",
+        "need": [
+          "water"
+        ],
+        "prefer": [
+          "drinking"
+        ],
+        "avoid": [
+          "thermometer"
+        ]
+      },
+      {
+        "q": "doctor writing clipboard desk",
+        "need": [
+          "clipboard"
+        ],
+        "prefer": [
+          "doctor"
+        ],
+        "avoid": [
+          "thermometer"
+        ]
+      }
+    ],
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "G.clue"
+    },
+    "translation_ko": "간호사가 여자아이의 열을 재고 있어요.",
+    "tmp_id": "L1-0026"
   }
 ]

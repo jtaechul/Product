@@ -2158,5 +2158,221 @@
       "1": "A.yesno"
     },
     "translation_ko": "오늘 버스가 왜 이렇게 늦는지 알아?"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "A new bicycle.",
+      "It was last Friday.",
+      "Yes, I do."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "생일에 '무엇을' 갖고 싶냐고 물었으니 받고 싶은 물건으로 답해요. 자전거가 딱 맞아요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "What do you want for your birthday?",
+    "status": "draft",
+    "evidence": "What do you want for your birthday",
+    "why_not": {
+      "1": "언제였는지 날짜로 답했어요",
+      "2": "예·아니오로 답할 질문이 아니에요"
+    },
+    "key_expr": {
+      "en": "What do you want?",
+      "ko": "무엇을 갖고 싶어?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "생일에 무엇을 갖고 싶어?",
+    "tmp_id": "L2-0061"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "In the kitchen.",
+      "Some fried rice.",
+      "My uncle is."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'Who'는 누구인지 묻는 말이에요. 삼촌이 요리한다고 사람으로 답해야 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "Who's cooking dinner tonight?",
+    "status": "draft",
+    "evidence": "Who's cooking dinner tonight",
+    "why_not": {
+      "0": "어디인지 장소로 답했어요",
+      "1": "무슨 음식인지로 답했어요"
+    },
+    "key_expr": {
+      "en": "Who's cooking?",
+      "ko": "누가 요리해?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "오늘 저녁은 누가 요리해?",
+    "tmp_id": "L2-0062"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I go there by train.",
+      "It's windy and cold.",
+      "Yes, I've been there."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "날씨가 어떠냐고 물었으니 바람 불고 춥다는 날씨 말이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "How's the weather in Busan today?",
+    "status": "draft",
+    "evidence": "How's the weather in Busan today",
+    "why_not": {
+      "0": "가는 방법을 답했어요",
+      "2": "예·아니오로 답할 질문이 아니에요"
+    },
+    "key_expr": {
+      "en": "How's the weather?",
+      "ko": "날씨가 어때?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "오늘 부산 날씨는 어때요?",
+    "tmp_id": "L2-0063"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "They're on the table.",
+      "I made them yesterday.",
+      "That sounds fun!"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "같이 팬케이크 만들자고 했으니 '재밌겠다!' 하고 받아 주는 말이 자연스러워요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Let's make pancakes this Saturday.",
+    "status": "draft",
+    "evidence": "Let's make pancakes this Saturday",
+    "why_not": {
+      "0": "어디 있는지로 답했어요",
+      "1": "make라는 말에 낚였어요"
+    },
+    "key_expr": {
+      "en": "That sounds fun!",
+      "ko": "재밌겠다!"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.echo"
+    },
+    "translation_ko": "이번 토요일에 팬케이크 만들자.",
+    "tmp_id": "L2-0064"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "On the top shelf, please.",
+      "I washed them already.",
+      "They're really big."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'Where'는 어디에 두냐고 묻는 말이에요. 맨 위 칸에 놓으라는 답이 딱 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "Where should I put these dishes?",
+    "status": "draft",
+    "evidence": "Where should I put these dishes",
+    "why_not": {
+      "1": "이미 씻었다는 다른 이야기예요",
+      "2": "크기를 말해서 자리 답이 아니에요"
+    },
+    "key_expr": {
+      "en": "Where should I put ~?",
+      "ko": "어디에 둘까요?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "이 접시들을 어디에 둘까요?",
+    "tmp_id": "L2-0065"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The gym is upstairs.",
+      "You can borrow mine.",
+      "Yes, I brought it."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "체육복을 안 가져왔다고 했으니 내 것을 빌려 가라는 말이 가장 잘 어울려요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "I forgot to bring my gym clothes.",
+    "status": "draft",
+    "evidence": "I forgot to bring my gym clothes",
+    "why_not": {
+      "0": "gym이라는 말에 낚였어요",
+      "2": "가져왔다는 말은 앞말과 안 이어져요"
+    },
+    "key_expr": {
+      "en": "You can borrow mine.",
+      "ko": "내 것 빌려 가도 돼."
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "나 체육복 가져오는 걸 깜빡했어.",
+    "tmp_id": "L2-0066"
   }
 ]
