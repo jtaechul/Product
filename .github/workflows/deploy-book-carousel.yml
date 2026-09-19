@@ -17,7 +17,8 @@ jobs:
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
+          # 기존 CF_API_TOKEN이 폐기된 경우를 대비해 살아있는 토큰으로 폴백
+          apiToken: ${{ secrets.CF_API_TOKEN || secrets.CF_API_TOKEN_JUMPLISH || secrets.CF_API_TOKEN_JUMPLISH_DEPLOY }}
           workingDirectory: book-carousel
           secrets: |
             ANTHROPIC_API_KEY

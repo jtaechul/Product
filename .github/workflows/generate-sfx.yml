@@ -1,0 +1,61 @@
+name: Generate SFX (Jumplish)
+
+# 점프리시 효과음 4종을 Freesound API(CC0만)로 받아 커밋한다.
+# 개발 샌드박스는 외부망이 막혀 있어 GitHub 러너에서 실행한다.
+# 필요 시크릿: FREESOUND_API_KEY (https://freesound.org/apiv2/apply/)
+# 실행: 이 파일 또는 sfx-batch.mjs 푸시 시 자동 / Actions 탭에서 Run workflow 버튼
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/junior-toeic-master-planning-322l2t"]
+    paths:
+      - ".github/workflows/generate-sfx.yml"
+      - "junior-toeic-master/tools/sfx-batch.mjs"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jumplish-sfx
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: junior-toeic-master
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch CC0 sounds
+        id: fetch
+        continue-on-error: true   # 일부 실패해도 성공분은 커밋한다 (재실행 시 이어서)
+        env:
+          FREESOUND_API_KEY: ${{ secrets.FREESOUND_API_KEY }}
+        run: node tools/sfx-batch.mjs
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/sfx
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 커밋 생략"
+            exit 0
+          fi
+          git commit -m "junior-toeic-master: 효과음 4종 추가 (Freesound CC0, 자동 배치)" \
+            -m "generate-sfx.yml 러너에서 다운로드. 출처는 public/sfx/CREDITS.md 기록."
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin HEAD:"${GITHUB_REF_NAME}"
+
+      - name: Fail if fetch incomplete
+        if: steps.fetch.outcome == 'failure'
+        run: |
+          echo "::error::일부 효과음 다운로드 실패 — 다시 실행하면 이어서 받습니다"
+          exit 1

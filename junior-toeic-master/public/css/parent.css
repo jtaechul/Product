@@ -1,0 +1,159 @@
+/* 학부모 화면 — 학생 앱의 색·글꼴(style.css)을 그대로 쓰고 여기서 몇 가지만 더한다.
+   탭바가 없으므로 아래 여백을 없앤다. */
+body { padding-bottom: env(safe-area-inset-bottom); }
+
+/* 한 줄 요약 — 부모가 가장 먼저(때로는 유일하게) 읽는 문장 */
+.verdict {
+  background: var(--grad); color: #fff; border-radius: var(--radius);
+  padding: 20px 18px; box-shadow: var(--shadow-card);
+}
+.verdict-eyebrow { font-size: .78rem; font-weight: 700; opacity: .82; }
+.verdict-line { font-size: 1.28rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.4; margin-top: 3px; }
+.verdict-sub { font-size: .84rem; opacity: .88; margin-top: 7px; font-weight: 500; }
+
+/* 최근 2주 출석 — 점 14개 */
+.dots { display: flex; gap: 5px; margin-top: 10px; }
+.dot-day {
+  flex: 1; height: 26px; border-radius: 7px; background: var(--surface-2);
+  display: grid; place-items: center; font-size: .6rem; font-weight: 800; color: var(--muted);
+}
+.dot-day.on { background: var(--primary); color: #fff; }
+/* 이름을 is-today 로 쓰는 이유: style.css 의 .today 는 학생 앱의 큰 '오늘의 학습' 카드다.
+   같은 이름을 쓰면 그 카드의 여백(20px)이 이 작은 점에 그대로 붙어 혼자만 커진다. */
+.dot-day.is-today { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* 도와주는 법 — 한 줄짜리 행동 지침 */
+.tip { display: flex; gap: 11px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.tip:last-child { border-bottom: 0; }
+.tip-n {
+  flex: none; width: 21px; height: 21px; border-radius: 999px; margin-top: 1px;
+  background: var(--primary-soft); color: var(--primary);
+  font-size: .72rem; font-weight: 800; display: grid; place-items: center;
+}
+.tip-b { flex: 1; min-width: 0; }
+.tip-t { display: block; font-size: .9rem; font-weight: 700; }
+.tip-s { display: block; font-size: .8rem; color: var(--muted); margin-top: 2px; }
+
+/* 눌러 들어가는 팁·실수 줄 — 오답 상세로 이어진다. 버튼이지만 줄 모양은 그대로 두고
+   오른쪽 화살표로만 "눌린다"를 알린다. */
+.tip-go, .miss-go { width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.tip-go:active, .miss-go:active { background: var(--surface-2); }
+.tip-arrow { flex: none; align-self: center; color: var(--muted); font-size: 1.15rem; font-weight: 800; padding-left: 2px; }
+
+/* ── 오답 상세 (wq = wrong question) ── */
+.wq { display: block; }
+.wq-when { font-size: .75rem; font-weight: 700; color: var(--muted); }
+.wq-cap { display: block; font-size: .72rem; font-weight: 800; color: var(--muted); margin-bottom: 4px; }
+.wq-cap.bad-t { color: #8e2f36; }
+.wq-cap.good-t { color: #0f5f3f; }
+.wq-guide p { font-size: .87rem; line-height: 1.6; }
+.wq-passage {
+  background: var(--surface-2); border-radius: 12px; padding: 11px 13px;
+  font-size: .86rem; line-height: 1.62; white-space: pre-wrap; margin-top: 10px;
+}
+.wq-passage .wq-cap { margin-bottom: 6px; }
+.wq-ev { background: var(--hl); border-radius: 4px; padding: 0 2px; font-weight: 700; color: inherit; }
+.wq-stem { font-size: .94rem; font-weight: 700; margin-top: 12px; line-height: 1.5; }
+.wq-choice {
+  display: flex; align-items: center; gap: 9px; padding: 9px 11px;
+  border: 1.5px solid var(--line); border-radius: 12px; margin-top: 8px; font-size: .88rem;
+}
+.wq-choice.good, .wq-img.good { border-color: var(--ok); background: var(--ok-soft); }
+.wq-choice.bad, .wq-img.bad { border-color: var(--bad); background: var(--bad-soft); }
+.wq-letter {
+  flex: none; width: 22px; height: 22px; border-radius: 999px;
+  background: var(--surface-2); color: var(--muted);
+  font-size: .72rem; font-weight: 800; display: grid; place-items: center;
+}
+.wq-text { flex: 1; min-width: 0; line-height: 1.45; }
+.wq-tag { flex: none; font-size: .67rem; font-weight: 800; border-radius: 999px; padding: 3px 8px; color: #fff; }
+.wq-tag.good { background: var(--ok); }
+.wq-tag.bad { background: var(--bad); }
+.wq-imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.wq-img { position: relative; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; }
+.wq-img img { width: 100%; display: block; aspect-ratio: 4 / 3; object-fit: cover; }
+.wq-img .wq-letter { position: absolute; top: 6px; left: 6px; background: rgba(255,255,255,.92); }
+.wq-img .wq-tag { position: absolute; left: 6px; bottom: 6px; }
+.wq-line { margin-top: 11px; }
+.wq-line p { font-size: .86rem; line-height: 1.58; }
+.wq-foot { text-align: center; margin-top: 2px; }
+
+/* 로그인 */
+.p-login { margin-top: 40px; }
+.p-login .field { width: 100%; }
+.p-login .field input { width: 100%; }
+.p-brand { display: flex; align-items: center; gap: 9px; justify-content: center; margin-bottom: 18px; }
+.p-brand .appbar-mark { width: 34px; height: 34px; border-radius: 10px; }
+.p-brand .appbar-mark svg { width: 20px; height: 15px; }
+.p-brand span.t { font-size: 1.06rem; font-weight: 700; letter-spacing: -.03em; }
+.p-out { text-align: center; margin-top: 6px; }
+.p-out button { font-size: .8rem; color: var(--muted); font-weight: 700; text-decoration: underline; }
+
+/* 문장 안에 섞이는 링크형 버튼 (가입 / 로그인 전환) */
+.p-link {
+  font: inherit; color: var(--primary); font-weight: 800;
+  text-decoration: underline; padding: 2px 1px;
+}
+
+/* 보호자 동의 — 아이 계정을 만드는 절차라 눈에 띄어야 하고, 체크 영역이 넉넉해야 한다 */
+.p-consent {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--surface-2); border-radius: 12px; padding: 12px;
+  font-size: .82rem; line-height: 1.55; cursor: pointer;
+}
+.p-consent input { flex: none; width: 20px; height: 20px; margin-top: 1px; }
+
+/* 안내 상자 — 눈에 띄어야 하는 한 줄 */
+.p-warn {
+  margin-top: 12px; font-size: .82rem; line-height: 1.55;
+  background: var(--primary-soft); color: var(--primary);
+  border-radius: 12px; padding: 11px 13px; font-weight: 600;
+}
+
+/* 아이 목록 */
+.p-kid { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.p-kid:last-child { border-bottom: 0; }
+.p-kid-b { flex: 1; min-width: 0; }
+.p-kid-n { display: block; font-size: .95rem; font-weight: 700; }
+.p-kid-i { display: block; font-size: .8rem; color: var(--muted); letter-spacing: .04em; margin-top: 2px; }
+
+/* 아이가 둘 이상일 때 위에 뜨는 전환 줄 */
+.p-kidtabs { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; }
+.p-kidtab {
+  flex: none; padding: 9px 16px; border-radius: 999px; font-size: .85rem; font-weight: 700;
+  background: var(--surface-2); color: var(--muted); min-height: 40px;
+}
+.p-kidtab.on { background: var(--primary); color: #fff; }
+
+/* 상단바 — 브랜드를 가운데 두고 왼쪽에 돌아가는 길을 둔다.
+   양옆에 같은 폭의 빈칸을 둬야 브랜드가 진짜 가운데에 온다. */
+.p-top { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.p-top .p-brand { flex: 1; margin-bottom: 0; }
+.p-back, .p-back-sp { flex: none; width: 64px; }
+.p-back {
+  min-height: 40px; font-size: .85rem; font-weight: 700; color: var(--muted);
+  text-align: left; padding: 0 2px;
+}
+
+/* 계정 카드 — 지금 어느 이메일로 들어와 있는지 확인하는 곳.
+   .card 가 flex-direction:column 이라 여기서 row 를 다시 지정해야 한다
+   (안 하면 이름·이메일·버튼이 세로로 쌓여 가운데 정렬돼 버린다). */
+.p-acct {
+  display: flex; flex-direction: row; align-items: center;
+  gap: 12px; flex-wrap: wrap; text-align: left;
+}
+.p-acct-b { flex: 1; min-width: 0; }
+.p-acct-n { display: block; font-size: .92rem; font-weight: 700; }
+.p-acct-e {
+  display: block; font-size: .8rem; color: var(--muted); margin-top: 2px;
+  overflow-wrap: anywhere;      /* 긴 이메일이 카드를 밀어내지 않게 */
+}
+.p-acct-btns { display: flex; gap: 8px; flex: none; }
+.p-acct-btns .btn-ghost { min-height: 40px; padding: 0 14px; font-size: .82rem; }
+
+/* '오늘 푼 문항' — 오늘 한 날은 숫자에 색을 준다.
+   부모가 이 화면에서 가장 먼저 찾는 값이고, 0과 구분이 한눈에 돼야 한다. */
+.stat.on .value { color: var(--primary); }
+
+/* 한글 해석 — 부모가 아이에게 설명하려면 지문 뜻부터 알아야 한다 */
+.wq-tr { background: var(--accent-soft); }
