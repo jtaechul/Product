@@ -103,8 +103,13 @@ async function listRecords(env) {
 // (예전엔 클라우드플레어 보관함을 거쳤는데, 그 토큰에 보관함 권한이 없어 막혔다.
 //  깃허브에 바로 두면 14일 만료도, 용량 제한도, 배포 때 보관함 만드는 단계도 사라진다.)
 
+const MAX_SCENES = 10;
+const MAX_CHARS = 3;
 const sceneName = (n) => `scene${String(n).padStart(2, "0")}.mp4`;
-const CHAR_NAME = "character.png";   // 인물 참조 이미지 — 모든 씬의 기준
+// 인물 참조 이미지 — 모든 씬의 기준. 등장인물이 여럿이면 사람마다 한 장씩 둔다.
+// character.png 는 인물이 한 명뿐이던 시절의 이름이라 1번으로 함께 읽어 준다.
+const charName = (n) => `character${String(n).padStart(2, "0")}.png`;
+const LEGACY_CHAR = "character.png";
 
 async function release(env, id, create) {
   const tag = `moviegen-${id}`;
@@ -125,14 +130,18 @@ async function release(env, id, create) {
 async function uploadScene(req, env, url) {
   const id = url.searchParams.get("id") || "";
   const what = url.searchParams.get("scene") || "";
-  const isChar = what === "character";
+  // "3" = 3번 씬 영상 / "char2" = 2번 등장인물 이미지 / "character" = 옛 이름(1번 인물)
+  const cm = /^char(?:acter)?(\d*)$/.exec(what);
+  const isChar = !!cm;
+  const ci = isChar ? (parseInt(cm[1], 10) || 1) : 0;
   const n = parseInt(what, 10);
-  if (!/^[A-Za-z0-9._-]+$/.test(id) || (!isChar && !(n >= 1 && n <= 6)))
+  const okTarget = isChar ? (ci >= 1 && ci <= MAX_CHARS) : (n >= 1 && n <= MAX_SCENES);
+  if (!/^[A-Za-z0-9._-]+$/.test(id) || !okTarget)
     return err("잘못된 요청입니다.");
   if (!req.body) return err("파일이 비었습니다.");
 
   const rel = await release(env, id, true);
-  const name = isChar ? CHAR_NAME : sceneName(n);
+  const name = isChar ? charName(ci) : sceneName(n);
   // 같은 이름이 남아 있으면 깃허브가 422 로 거절한다. 먼저 지운다.
   const old = (rel.assets || []).find((a) => a.name === name);
   if (old) await gh(env, `/repos/${REPO}/releases/assets/${old.id}`, { method: "DELETE" });
@@ -157,7 +166,7 @@ async function uploadScene(req, env, url) {
     }
     return err(`업로드 실패 ${r.status} ${(await r.text()).slice(0, 150)}`, 502);
   }
-  return j({ ok: true, scene: isChar ? "character" : n });
+  return j({ ok: true, scene: isChar ? `char${ci}` : n });
 }
 
 async function uploadedScenes(env, id) {
@@ -165,9 +174,15 @@ async function uploadedScenes(env, id) {
   const assets = (rel && rel.assets) || [];
   const names = new Set(assets.map((a) => a.name));
   const out = [];
-  for (let n = 1; n <= 6; n += 1) if (names.has(sceneName(n))) out.push(n);
-  const ch = assets.find((a) => a.name === CHAR_NAME);
-  return { scenes: out, character: ch ? ch.browser_download_url : null };
+  for (let n = 1; n <= MAX_SCENES; n += 1) if (names.has(sceneName(n))) out.push(n);
+  // characters[i] = i+1 번 인물의 이미지 주소(없으면 null)
+  const characters = [];
+  for (let i = 1; i <= MAX_CHARS; i += 1) {
+    let a = assets.find((x) => x.name === charName(i));
+    if (!a && i === 1) a = assets.find((x) => x.name === LEGACY_CHAR);
+    characters.push(a ? a.browser_download_url : null);
+  }
+  return { scenes: out, characters, character: characters[0] };
 }
 
 /* ── 완성본 재생 ────────────────────────────────────── */
@@ -207,7 +222,7 @@ async function runScript(req, env) {
       ref: BRANCH,
       inputs: {
         topic,
-        scenes: String(b.scenes || "4"),
+        scenes: String(b.scenes || "8"),
         tool: String(b.tool || "Runway (Gen-3/Gen-4)"),
       },
     }),
@@ -230,7 +245,8 @@ async function runRender(req, env) {
       ref: BRANCH,
       inputs: {
         content_id: id,
-        voice: String(b.voice || "ko-KR-SunHiNeural"),
+        engine: String(b.engine || "gemini"),
+        voice: String(b.voice || "Sulafat"),
         highlight: String(b.highlight || "노란색"),
         hq: String(b.hq || "false"),
       },

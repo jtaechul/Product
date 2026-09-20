@@ -9,17 +9,19 @@ on:
         description: "작품 아이디 (예: 260920-071530)"
         required: true
         type: string
-      voice:
-        description: "성우"
+      engine:
+        description: "성우 엔진 (gemini = 감정 연기)"
         required: false
-        default: "ko-KR-SunHiNeural"
+        default: "gemini"
         type: choice
-        options:
-          - "ko-KR-SunHiNeural"
-          - "ko-KR-InJoonNeural"
-          - "ko-KR-HyunsuMultilingualNeural"
+        options: ["gemini", "edge"]
+      voice:
+        description: "성우 (gemini: Sulafat/Kore/Aoede/Leda/Charon/Enceladus)"
+        required: false
+        default: "Sulafat"
+        type: string
       rate:
-        description: "말하기 속도 (예: -5%)"
+        description: "말하기 속도 (edge 엔진 전용, 예: -5%)"
         required: false
         default: "-5%"
         type: string
@@ -68,7 +70,9 @@ jobs:
       - name: 렌더링
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CONTENT_ID: ${{ inputs.content_id }}
+          TTS_ENGINE: ${{ inputs.engine }}
           VOICE: ${{ inputs.voice }}
           RATE: ${{ inputs.rate }}
           HIGHLIGHT: ${{ inputs.highlight }}

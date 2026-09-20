@@ -9,9 +9,9 @@ on:
         required: true
         type: string
       scenes:
-        description: "컷 수 (3~6)"
+        description: "컷 수 (6~10)"
         required: false
-        default: "4"
+        default: "8"
         type: string
       tool:
         description: "영상 생성 툴"

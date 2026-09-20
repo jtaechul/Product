@@ -39,7 +39,7 @@ def main() -> int:
         print("::error::GEMINI_API_KEY 시크릿이 없습니다. 저장소 Settings > Secrets에 추가하세요.")
         return 1
 
-    scenes = int(os.environ.get("SCENES", "4"))
+    scenes = max(3, min(10, int(os.environ.get("SCENES", "8"))))
     tool = os.environ.get("TOOL", "Runway (Gen-3/Gen-4)")
     if tool not in llm.TOOLS:
         print(f"::error::모르는 영상 툴입니다: {tool}")
@@ -57,8 +57,8 @@ def main() -> int:
         "tool": tool,
         "tool_note": llm.TOOLS[tool]["ui_note"],
         "hashtags": board.hashtags,
-        "character_name": board.character_name,
-        "character_image_prompt": board.character_image_prompt,
+        "logline": board.logline,
+        "characters": [asdict(c) for c in board.characters],
         "style_lock": board.style_lock,
         "scenes": [asdict(s) for s in board.scenes],
         "status": "scripted",          # scripted → uploaded → rendered
@@ -73,7 +73,9 @@ def main() -> int:
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
-            f.write(f"## {board.title}\n\n아이디: `{cid}`\n\n")
+            f.write(f"## {board.title}\n\n아이디: `{cid}`\n\n{board.logline}\n\n")
+            for c in board.characters:
+                f.write(f"**인물 · {c.name}** ({c.role})\n\n```\n{c.image_prompt}\n```\n\n")
             for i, s in enumerate(board.scenes, 1):
                 f.write(f"**{i}번 씬** — {s.narration}\n\n```\n{s.prompt}\n```\n\n")
     return 0
