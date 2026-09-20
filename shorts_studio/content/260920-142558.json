@@ -19,7 +19,8 @@
       "prompt": "A wide establishing shot, slowly dollying in on two young sisters, Janghwa and her younger sister, sitting quietly in a dimly lit traditional Korean room. They are looking down, their shoulders slightly slumped, as a stern shadow of an adult looms over them from off-screen. Warm, melancholic lighting illuminates their faces softly. Ambient subtle indoor sounds and a hint of a sorrowful traditional instrument. Consistent warm palette of soft jade, peach blossom pink, and muted earth tones under a gentle, diffused golden-hour light, with a painterly 3D storybook render and subtle film grain. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
       "shot": "wide establishing shot, slow dolly-in",
       "negative": "",
-      "est_seconds": 6.2
+      "est_seconds": 6.2,
+      "actual_seconds": 6.5
     },
     {
       "narration": "어느 날, 새엄마의 간계로 장화는 연못에 빠져 버리고 말았지 뭐예요.",
@@ -27,7 +28,8 @@
       "prompt": "A medium shot, a dynamic crane down view, showing Janghwa stumbling and falling into a dark, reedy pond. The water splashes dramatically around her. The camera follows her descent, emphasizing the suddenness and danger. The atmosphere is tense and dramatic, with cool, murky lighting. Ambient water splashing and rustling reeds, ominous traditional string instrument. Consistent warm palette of soft jade, peach blossom pink, and muted earth tones under a gentle, diffused golden-hour light, with a painterly 3D storybook render and subtle film grain. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
       "shot": "medium shot, dynamic crane down",
       "negative": "",
-      "est_seconds": 6.0
+      "est_seconds": 6.0,
+      "actual_seconds": 5.7
     },
     {
       "narration": "자매의 억울함은 결국 밝혀져, 마을은 다시 평화로워졌답니다.",
@@ -35,10 +37,13 @@
       "prompt": "A medium close-up, gently panning right to reveal Janghwa and her younger sister, holding hands and smiling brightly in a sunlit field of wildflowers. Their faces are filled with relief and joy, looking towards a hopeful future. The lighting is warm and ethereal, casting a soft glow. Ambient sounds of chirping birds and a gentle breeze, peaceful traditional flute melody. Consistent warm palette of soft jade, peach blossom pink, and muted earth tones under a gentle, diffused golden-hour light, with a painterly 3D storybook render and subtle film grain. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
       "shot": "medium close-up, gentle pan right",
       "negative": "",
-      "est_seconds": 5.7
+      "est_seconds": 5.7,
+      "actual_seconds": 6.0
     }
   ],
-  "status": "scripted",
+  "status": "rendered",
   "created_at": "2026-09-20T14:25:58Z",
-  "video": null
+  "video": "https://github.com/jtaechul/Product/releases/download/moviegen-260920-142558/final.mp4",
+  "duration": 18.2,
+  "resolution": "1080x1920"
 }
