@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 
 MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
@@ -89,6 +90,8 @@ _USER = """주제: {topic}
 
 {{
   "title": "쇼츠 제목 (한국어, 18자 이내, 호기심을 자극)",
+  "character_name": "주인공 이름 (한국어, 예: 길동)",
+  "character_image_prompt": "주인공 전신 참조 이미지 1장을 만들 영문 프롬프트",
   "scenes": [
     {{
       "narration": "그 씬의 한국어 나레이션 대본",
@@ -108,12 +111,23 @@ _USER = """주제: {topic}
 - 마지막 씬은 잔잔한 교훈이나 여운으로 마무리. 설교조 금지.
 - 숫자·영어·특수문자 금지(음성으로 읽히므로). 한글과 기본 문장부호만.
 
-[영문 프롬프트 규칙]
+[인물 참조 이미지 프롬프트 규칙 — character_image_prompt]
+- 주인공 **한 명의 전신 참조 이미지** 1장을 만들 영문 프롬프트. 배경은 단순한 단색.
+- 나이·체형·머리 모양·한복 색과 무늬·신발까지 **구체적으로** 적는다. 이 한 장이
+  모든 씬의 기준이 되므로 여기서만 외모를 정한다.
+- 정면 전신, 중립 표정, 평범한 서 있는 자세. 동작·감정·소품 금지.
+- 스타일 키워드를 포함할 것: {style}
+
+[씬 프롬프트 규칙 — scenes[].prompt]
 - 툴 문법: {tool_guide}
-- 모든 프롬프트에 다음 스타일 키워드를 자연스럽게 녹여 넣을 것: {style}
+- ⭐ **외모를 한 글자도 쓰지 않는다.** 운영자가 위 참조 이미지를 영상 툴에 함께 넣는데,
+  글로 또 적으면 두 지시가 싸워 컷마다 인물이 달라진다.
+  · 금지: 옷·한복·색·머리·얼굴·나이·키·체형을 가리키는 모든 낱말
+  · 금지: 옷을 만지는 동작(소매를 쥔다 등)
+  · 인물은 이름으로만 부른다(예: "{{name}} walks along a mountain path")
 - 각 씬은 5~8초 분량의 단일 연속 샷. 컷 전환·여러 장면 금지.
+- 동작·장소·카메라·빛만 적는다. 스타일 키워드는 넣되 인물 묘사는 빼는 것이다: {style}
 - 화면에 글자·자막·워터마크가 나오지 않게 할 것(텍스트 요소 요청 금지).
-- 씬 간 등장인물의 생김새·의상·나이를 동일하게 유지하도록 매 프롬프트에 인물 묘사를 반복할 것.
 - "negative"는 {negative_note}
 """
 
@@ -131,6 +145,26 @@ class Storyboard:
     title: str
     scenes: list[Scene]
     hashtags: list[str]
+    character_name: str = ""
+    character_image_prompt: str = ""
+
+
+# 참조 이미지를 쓸 때 씬 프롬프트에 섞이면 안 되는 낱말.
+# 이게 들어가면 이미지와 글이 싸워 컷마다 인물이 달라진다.
+# (verdict-theater 의 wear_bait 규칙을 이식)
+_LOOK_WORDS = re.compile(
+    r"\b(hanbok|robe|dress|outfit|costume|clothes|clothing|sleeve|collar|"
+    r"hair|haircut|hairstyle|beard|face|facial|eyes|skin|"
+    r"young|old|teenage|boy|girl|man|woman|child|elderly|"
+    r"tall|short|slim|thin|plump|wearing|wears|dressed|clad)\b",
+    re.I,
+)
+
+
+def strip_look_words(prompt: str) -> tuple[str, list[str]]:
+    """외모 낱말이 남아 있으면 찾아서 돌려준다(지우지는 않는다 — 문장이 깨지므로)."""
+    hits = sorted({m.group(0).lower() for m in _LOOK_WORDS.finditer(prompt)})
+    return prompt, hits
 
 
 def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
@@ -172,8 +206,16 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
     if not scenes:
         raise RuntimeError("대본 생성 결과가 비었습니다. 주제를 조금 더 구체적으로 적어 보세요.")
 
-    return Storyboard(
+    board = Storyboard(
         title=str(data.get("title") or topic).strip(),
         scenes=scenes,
         hashtags=[str(h) for h in (data.get("hashtags") or [])][:5],
+        character_name=str(data.get("character_name") or "").strip(),
+        character_image_prompt=" ".join(str(data.get("character_image_prompt") or "").split()),
     )
+    for i, s in enumerate(board.scenes, 1):
+        _, hits = strip_look_words(s.prompt)
+        if hits:
+            print(f"::warning::{i}번 씬 프롬프트에 외모 낱말이 남았습니다({', '.join(hits)}). "
+                  "참조 이미지와 충돌해 인물이 달라질 수 있습니다.")
+    return board
