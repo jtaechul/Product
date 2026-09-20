@@ -49,8 +49,16 @@ shorts_studio/
 | `MOVIEGEN_ADMIN_PASSWORD` | 관리자 페이지 로그인 비밀번호 (직접 정한다) | 필수 |
 | `MOVIEGEN_ADMIN_GH_TOKEN` | 워커가 쓸 GitHub 토큰 — Contents = Read, Actions = Read and write | 필수 |
 | `GEMINI_API_KEY` | 대본 생성 | 이미 등록돼 있다 |
+| `CLOUDFLARE_ACCOUNT_ID` | 보관함(KV)을 어느 계정에 만들지 | 필수 |
 | `MOVIEGEN_SESSION_SECRET` | 로그인 위조 방지용 문자열 | 선택 (없으면 비밀번호를 쓴다) |
-| `CLOUDFLARE_ACCOUNT_ID` | 토큰이 여러 계정에 닿을 때만 | 선택 |
+
+`CLOUDFLARE_ACCOUNT_ID` 는 Cloudflare 대시보드 주소창의 `dash.cloudflare.com/` 바로 뒤에
+오는 긴 글자다. 이게 없으면 wrangler 가 "내 계정이 어디지?" 를 물으러 가는데, 커스텀 API
+토큰엔 그 권한이 없어 거부당한다.
+
+이 프로젝트가 만드는 것들도 이름을 나눠 둔다 — 워커 `shorts-studio`,
+보관함 `SHORTS_STUDIO_BLOB`, 릴리스 태그 `moviegen-<id>`.
+같은 계정·같은 저장소에 다른 프로젝트가 여럿 살기 때문이다.
 
 그다음 관리자 페이지 주소를 열고 `MOVIEGEN_ADMIN_PASSWORD` 로 들어가면 끝이다.
 **손님이 폰에서 토큰을 다룰 일은 없다** — GitHub 토큰은 워커 안에만 있다.
