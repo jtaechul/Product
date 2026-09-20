@@ -1,0 +1,44 @@
+{
+  "id": "260920-142558",
+  "topic": "장화홍련전",
+  "title": "새엄마의 질투, 자매의 운명은?",
+  "tool": "Veo (Google)",
+  "tool_note": "Veo는 소리도 함께 생성하므로 프롬프트 끝에 주변음 묘사를 넣었습니다.",
+  "hashtags": [
+    "#장화홍련전",
+    "#전래동화",
+    "#따뜻한이야기"
+  ],
+  "character_name": "장화",
+  "character_image_prompt": "A full body reference image of Janghwa, a 16-year-old Korean girl. She has a slender build, long straight black hair neatly tied in a simple braid that hangs over her shoulder, and wears a pristine pale pink hanbok with a subtle floral pattern on the skirt, light blue jeogori, and traditional white beoseon with simple floral embroidered shoes. Her expression is neutral and gentle. The background is a plain light grey. Korean traditional folklore style, 3D animated character, hanbok, warm storybook lighting, soft pastel color palette, cinematic depth of field.",
+  "style_lock": "Consistent warm palette of soft jade, peach blossom pink, and muted earth tones under a gentle, diffused golden-hour light, with a painterly 3D storybook render and subtle film grain.",
+  "scenes": [
+    {
+      "narration": "옛날 옛적, 착한 장화와 홍련 자매에게는 무서운 새엄마가 있었답니다.",
+      "visual": "새엄마의 눈치를 보는 자매.",
+      "prompt": "A wide establishing shot, slowly dollying in on two young sisters, Janghwa and her younger sister, sitting quietly in a dimly lit traditional Korean room. They are looking down, their shoulders slightly slumped, as a stern shadow of an adult looms over them from off-screen. Warm, melancholic lighting illuminates their faces softly. Ambient subtle indoor sounds and a hint of a sorrowful traditional instrument. Consistent warm palette of soft jade, peach blossom pink, and muted earth tones under a gentle, diffused golden-hour light, with a painterly 3D storybook render and subtle film grain. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "wide establishing shot, slow dolly-in",
+      "negative": "",
+      "est_seconds": 6.2
+    },
+    {
+      "narration": "어느 날, 새엄마의 간계로 장화는 연못에 빠져 버리고 말았지 뭐예요.",
+      "visual": "장화가 연못에 빠지는 순간.",
+      "prompt": "A medium shot, a dynamic crane down view, showing Janghwa stumbling and falling into a dark, reedy pond. The water splashes dramatically around her. The camera follows her descent, emphasizing the suddenness and danger. The atmosphere is tense and dramatic, with cool, murky lighting. Ambient water splashing and rustling reeds, ominous traditional string instrument. Consistent warm palette of soft jade, peach blossom pink, and muted earth tones under a gentle, diffused golden-hour light, with a painterly 3D storybook render and subtle film grain. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "medium shot, dynamic crane down",
+      "negative": "",
+      "est_seconds": 6.0
+    },
+    {
+      "narration": "자매의 억울함은 결국 밝혀져, 마을은 다시 평화로워졌답니다.",
+      "visual": "자매가 해맑게 웃으며 손을 잡는 모습.",
+      "prompt": "A medium close-up, gently panning right to reveal Janghwa and her younger sister, holding hands and smiling brightly in a sunlit field of wildflowers. Their faces are filled with relief and joy, looking towards a hopeful future. The lighting is warm and ethereal, casting a soft glow. Ambient sounds of chirping birds and a gentle breeze, peaceful traditional flute melody. Consistent warm palette of soft jade, peach blossom pink, and muted earth tones under a gentle, diffused golden-hour light, with a painterly 3D storybook render and subtle film grain. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "medium close-up, gentle pan right",
+      "negative": "",
+      "est_seconds": 5.7
+    }
+  ],
+  "status": "scripted",
+  "created_at": "2026-09-20T14:25:58Z",
+  "video": null
+}
