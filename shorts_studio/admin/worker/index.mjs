@@ -3,11 +3,11 @@
 // 설계는 verdict-theater/admin/worker.js 를 따른다(손님이 이미 쓰고 있는 검증된 방식):
 //   · 손님은 **비밀번호 하나로 로그인**한다. GitHub 토큰을 폰에서 만질 일이 없다.
 //   · GitHub 토큰은 **워커 시크릿**으로만 존재한다. 브라우저에 절대 내려보내지 않는다.
-//   · 큰 영상은 브라우저 → **보관함(KV)** 으로 조각내어 올리고, 워크플로가 받아 간다.
+//   · 씬 영상은 브라우저 → 워커 → **깃허브 릴리스**. 워커가 자기 토큰으로 올린다.
 //     깃허브로 직접 올리지 않으므로 CORS 문제도, 토큰 쓰기 권한도 필요 없다.
 //
 // 필요한 시크릿: GH_TOKEN · ADMIN_PASSWORD · SESSION_SECRET (배포 워크플로가 등록)
-// 필요한 바인딩: BLOB (KV) · ASSETS (정적 화면)
+// 필요한 바인딩: ASSETS (정적 화면)
 
 // 배포할 때 커밋 번호로 바뀐다. 손님이 "또 그러네" 하실 때 폰에 뜬 화면이
 // 고치기 전 것인지 후의 것인지 /health 로 바로 알기 위해서다.
@@ -20,9 +20,7 @@ const DIR = "shorts_studio/content";
 const WF_SCRIPT = "shorts-studio-script.yml";
 const WF_RENDER = "shorts-studio-render.yml";
 
-const KV_CHUNK = 8 * 1024 * 1024;          // 조각 하나 8MB (KV 한 값 상한 25MB 안쪽)
-const KV_MAX = 90 * 1024 * 1024;           // 영상 하나 최대 크기
-const KV_TTL = 60 * 60 * 24 * 14;          // 14일 보관 — 며칠에 걸쳐 만드셔도 남아 있게
+const UPLOADS = "https://uploads.github.com";
 const MEDIA_PREFIX = `https://github.com/${REPO}/releases/download/`;
 
 const JSON_H = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
@@ -99,82 +97,70 @@ async function listRecords(env) {
   return out;
 }
 
-/* ── 보관함(KV) ─────────────────────────────────────── */
-const bin_ = (env) => (env && env.BLOB ? env.BLOB : null);
+/* ── 씬 영상 보관 (GitHub Release) ──────────────────── */
+// 브라우저 → 워커 → 깃허브. 워커가 자기 토큰으로 올리므로 브라우저는 토큰을
+// 만질 일이 없고, 같은 출처로만 통신하니 CORS 문제도 없다.
+// (예전엔 클라우드플레어 보관함을 거쳤는데, 그 토큰에 보관함 권한이 없어 막혔다.
+//  깃허브에 바로 두면 14일 만료도, 용량 제한도, 배포 때 보관함 만드는 단계도 사라진다.)
 
-// 흘러 들어오는 것을 조각내어 넣는다. 통째로 메모리에 올리면 워커가 죽는다.
-async function blobPutStream(env, body, key) {
-  const kv = bin_(env);
-  const rd = body.getReader();
-  let hold = [], held = 0, part = 0, total = 0;
-  const flush = async () => {
-    if (!held) return;
-    await kv.put(`${key}.${part}`, await new Blob(hold).arrayBuffer(), { expirationTtl: KV_TTL });
-    part += 1; total += held; hold = []; held = 0;
-  };
-  for (;;) {
-    const { value, done } = await rd.read();
-    if (done) break;
-    hold.push(value); held += value.length;
-    if (total + held > KV_MAX) throw new Error("TOO_BIG");
-    if (held >= KV_CHUNK) await flush();
+const sceneName = (n) => `scene${String(n).padStart(2, "0")}.mp4`;
+
+async function release(env, id, create) {
+  const tag = `moviegen-${id}`;
+  let rel = await gh(env, `/repos/${REPO}/releases/tags/${tag}`);
+  if (!rel && create) {
+    rel = await gh(env, `/repos/${REPO}/releases`, {
+      method: "POST",
+      body: JSON.stringify({
+        tag_name: tag, name: `숏폼 동화 ${id}`,
+        body: "관리자 페이지가 올린 씬 영상과 완성본이 담깁니다.",
+        make_latest: "false",
+      }),
+    });
   }
-  await flush();
-  await kv.put(key, JSON.stringify({ parts: part, size: total, type: "video/mp4" }),
-    { expirationTtl: KV_TTL });
-  return total;
+  return rel;
 }
 
 async function uploadScene(req, env, url) {
-  const kv = bin_(env);
-  if (!kv) return err("보관함(KV)이 붙어 있지 않습니다. 관리자 페이지를 다시 배포하세요.", 503);
   const id = url.searchParams.get("id") || "";
   const n = parseInt(url.searchParams.get("scene") || "0", 10);
-  if (!/^[A-Za-z0-9가-힣._-]+$/.test(id) || !(n >= 1 && n <= 6)) return err("잘못된 요청입니다.");
+  if (!/^[A-Za-z0-9._-]+$/.test(id) || !(n >= 1 && n <= 6)) return err("잘못된 요청입니다.");
   if (!req.body) return err("영상이 비었습니다.");
 
-  // 열쇠에 임의 번호를 붙인다. 같은 이름을 다시 쓰면 보관함이 전 세계에 퍼지는
-  // 1분 사이에 워크플로가 **옛 영상**을 받아 갈 수 있다.
-  const key = `scene/${id}-${n}-${crypto.randomUUID()}`;
-  let size;
-  try {
-    size = await blobPutStream(env, req.body, key);
-  } catch (e) {
-    if (String(e.message) === "TOO_BIG") return err("영상이 너무 큽니다(90MB 이하로 올려 주세요).", 413);
-    throw e;
-  }
+  const rel = await release(env, id, true);
+  const name = sceneName(n);
+  // 같은 이름이 남아 있으면 깃허브가 422 로 거절한다. 먼저 지운다.
+  const old = (rel.assets || []).find((a) => a.name === name);
+  if (old) await gh(env, `/repos/${REPO}/releases/assets/${old.id}`, { method: "DELETE" });
 
-  const idxKey = `idx/${id}`;
-  const idx = JSON.parse((await kv.get(idxKey)) || "{}");
-  idx[n] = { key, size, at: new Date().toISOString() };
-  await kv.put(idxKey, JSON.stringify(idx), { expirationTtl: KV_TTL });
-  return j({ ok: true, scene: n, size });
+  const r = await fetch(`${UPLOADS}/repos/${REPO}/releases/${rel.id}/assets?name=${name}`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${env.GH_TOKEN}`,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "Content-Type": req.headers.get("Content-Type") || "video/mp4",
+      "User-Agent": "shorts-studio-admin",
+    },
+    body: req.body,
+  });
+  if (!r.ok) {
+    // 403 은 거의 항상 토큰 권한 문제다. 깃허브의 영어 답 대신 할 일을 알려 준다.
+    if (r.status === 403 || r.status === 404) {
+      return err("영상을 올릴 권한이 없습니다. MOVIEGEN_ADMIN_GH_TOKEN 의 "
+                 + "Contents 권한을 'Read and write' 로 바꿔 주세요.", 403);
+    }
+    return err(`업로드 실패 ${r.status} ${(await r.text()).slice(0, 150)}`, 502);
+  }
+  return j({ ok: true, scene: n });
 }
 
-async function serveBlob(req, env, url, ok) {
-  const kv = bin_(env);
-  if (!kv) return err("보관함이 없습니다.", 503);
-  const key = url.searchParams.get("key") || "";
-  if (!/^[a-z]+\/[A-Za-z0-9가-힣._-]+$/.test(key)) return err("열쇠가 이상합니다.");
-  // 워크플로(깃허브 러너)는 쿠키가 없다. 비밀번호 헤더로 들어온다.
-  const pass = req.headers.get("x-ss-pass") || "";
-  if (!ok && !(env.ADMIN_PASSWORD && pass === env.ADMIN_PASSWORD))
-    return err("unauthorized", 401);
-  const head = await kv.get(key);
-  if (!head) return err("없습니다(14일이 지나 지워졌을 수 있습니다).", 404);
-  const m = JSON.parse(head);
-  let i = 0;
-  const rs = new ReadableStream({
-    async pull(c) {
-      if (i >= m.parts) { c.close(); return; }
-      const b = await kv.get(`${key}.${i}`, "arrayBuffer");
-      i += 1;
-      if (b) c.enqueue(new Uint8Array(b)); else c.error(new Error("조각이 없습니다"));
-    },
-  });
-  return new Response(rs, {
-    headers: { "Content-Type": m.type || "application/octet-stream", "Cache-Control": "no-store" },
-  });
+async function uploadedScenes(env, id) {
+  const rel = await release(env, id, false);
+  const names = new Set(((rel && rel.assets) || []).map((a) => a.name));
+  const out = [];
+  for (let n = 1; n <= 6; n += 1) if (names.has(sceneName(n))) out.push(n);
+  return out;
 }
 
 /* ── 완성본 재생 ────────────────────────────────────── */
@@ -221,29 +207,21 @@ async function runScript(req, env) {
   return j({ ok: true });
 }
 
-async function runRender(req, env, url) {
-  const kv = bin_(env);
+async function runRender(req, env) {
   const b = await req.json().catch(() => ({}));
   const id = String(b.id || "");
   const count = parseInt(b.count || "0", 10);
-  if (!kv) return err("보관함이 없습니다.", 503);
-  const idx = JSON.parse((await kv.get(`idx/${id}`)) || "{}");
+  const have = new Set(await uploadedScenes(env, id));
   const missing = [];
-  for (let n = 1; n <= count; n += 1) if (!idx[n]) missing.push(n);
+  for (let n = 1; n <= count; n += 1) if (!have.has(n)) missing.push(n);
   if (missing.length) return err(`${missing.join(", ")}번 씬 영상을 먼저 올려 주세요.`);
 
-  const origin = new URL(url).origin;
-  const blobs = [];
-  for (let n = 1; n <= count; n += 1) {
-    blobs.push(`${origin}/api/blob?key=${encodeURIComponent(idx[n].key)}`);
-  }
   await gh(env, `/repos/${REPO}/actions/workflows/${WF_RENDER}/dispatches`, {
     method: "POST",
     body: JSON.stringify({
       ref: BRANCH,
       inputs: {
         content_id: id,
-        blobs: JSON.stringify(blobs),
         voice: String(b.voice || "ko-KR-SunHiNeural"),
         highlight: String(b.highlight || "노란색"),
         hq: String(b.hq || "false"),
@@ -262,23 +240,16 @@ export default {
     if (p === "/api/login") return login(req, env);
 
     const ok = await authed(req, env);
-    // 보관함은 워크플로도 받아 가므로 로그인 검사 전에 따로 처리한다.
-    if (p === "/api/blob") return serveBlob(req, env, url, ok);
-
     if (p.startsWith("/api/")) {
       if (!ok) return err("로그인이 필요합니다.", 401);
       try {
         if (p === "/api/me") return j({ ok: true });
         if (p === "/api/list") return j({ items: await listRecords(env) });
-        if (p === "/api/uploaded") {
-          const idx = bin_(env)
-            ? JSON.parse((await bin_(env).get(`idx/${url.searchParams.get("id") || ""}`)) || "{}")
-            : {};
-          return j({ scenes: Object.keys(idx).map(Number) });
-        }
+        if (p === "/api/uploaded")
+          return j({ scenes: await uploadedScenes(env, url.searchParams.get("id") || "") });
         if (p === "/api/upload") return uploadScene(req, env, url);
         if (p === "/api/script") return runScript(req, env);
-        if (p === "/api/render") return runRender(req, env, url);
+        if (p === "/api/render") return runRender(req, env);
         if (p === "/api/video") return playVideo(req, url);
       } catch (e) {
         return err(String(e.message || e), 500);

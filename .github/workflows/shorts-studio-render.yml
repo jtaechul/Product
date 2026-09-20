@@ -1,16 +1,12 @@
 name: Shorts Studio - 영상 렌더링
 
 # ② 업로드된 씬 영상 + 대본 → 나레이션·가라오케 자막 → 최종 MP4 → Release 업로드.
-# 씬 영상은 관리자 페이지가 Release 태그 shorts-<id> 에 scene01.mp4 형태로 올려 둔다.
+# 씬 영상은 관리자 페이지가 릴리스 moviegen-<id> 에 scene01.mp4 형태로 올려 둔다.
 on:
   workflow_dispatch:
     inputs:
       content_id:
-        description: "작품 아이디 (예: 260920-071530-나무꾼)"
-        required: true
-        type: string
-      blobs:
-        description: "씬 영상 주소 목록 (관리자 페이지가 채운다)"
+        description: "작품 아이디 (예: 260920-071530)"
         required: true
         type: string
       voice:
@@ -72,9 +68,7 @@ jobs:
       - name: 렌더링
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ADMIN_PASSWORD: ${{ secrets.MOVIEGEN_ADMIN_PASSWORD }}
           CONTENT_ID: ${{ inputs.content_id }}
-          BLOBS: ${{ inputs.blobs }}
           VOICE: ${{ inputs.voice }}
           RATE: ${{ inputs.rate }}
           HIGHLIGHT: ${{ inputs.highlight }}

@@ -1,9 +1,7 @@
 """② 업로드된 씬 영상 + 대본 → 나레이션·가라오케 자막 → 최종 MP4 → Release 업로드.
 
 GitHub Actions에서 실행된다(관리자 페이지가 호출).
-씬 영상은 관리자 페이지가 **클라우드플레어 보관함(KV)** 에 올려 둔 것을 받아 온다
-(BLOBS 입력에 주소 목록이 들어온다). 깃허브로 직접 올리지 않으므로 브라우저 CORS
-문제도, 관리자 토큰의 쓰기 권한도 필요 없다 — verdict-theater 에서 검증된 방식.
+씬 영상은 관리자 페이지가 릴리스 `moviegen-<id>` 에 `scene01.mp4` 형태로 올려 둔 것을 쓴다.
 """
 from __future__ import annotations
 
@@ -39,10 +37,11 @@ def gh(path: str, token: str, method: str = "GET", data: bytes | None = None,
     return json.loads(body) if body else None
 
 
-def download_blob(url: str, password: str, dest: Path) -> Path:
-    """보관함(KV)에서 씬 영상 내려받기. 워커는 쿠키 대신 비밀번호 헤더로 확인한다."""
+def download_asset(url: str, token: str, dest: Path) -> Path:
+    """릴리스 자산 내려받기. octet-stream 을 요청해야 파일 본문이 온다."""
     req = urllib.request.Request(url)
-    req.add_header("x-ss-pass", password)
+    req.add_header("Authorization", f"Bearer {token}")
+    req.add_header("Accept", "application/octet-stream")
     with urllib.request.urlopen(req) as r, open(dest, "wb") as f:
         while chunk := r.read(1 << 20):
             f.write(chunk)
@@ -55,7 +54,6 @@ def main() -> int:
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
     cid = os.environ.get("CONTENT_ID", "").strip()
-    password = os.environ.get("ADMIN_PASSWORD", "").strip()
     if not (token and repo and cid):
         print("::error::GITHUB_TOKEN / GITHUB_REPOSITORY / CONTENT_ID 가 필요합니다.")
         return 1
@@ -67,10 +65,13 @@ def main() -> int:
     record = json.loads(record_path.read_text(encoding="utf-8"))
     scenes = record["scenes"]
 
-    blobs = json.loads(os.environ.get("BLOBS", "[]"))
-    if len(blobs) != len(scenes):
-        print(f"::error::씬은 {len(scenes)}개인데 영상 주소는 {len(blobs)}개입니다. "
-              "관리자 페이지에서 모든 씬 영상을 올렸는지 확인하세요.")
+    tag = f"moviegen-{cid}"
+    rel = gh(f"/repos/{repo}/releases/tags/{tag}", token, allow404=True)
+    assets = {a["name"]: a for a in (rel or {}).get("assets", [])}
+    missing = [i for i in range(1, len(scenes) + 1) if f"scene{i:02d}.mp4" not in assets]
+    if missing:
+        print(f"::error::{', '.join(map(str, missing))}번 씬 영상이 아직 올라오지 않았습니다. "
+              "관리자 페이지에서 모두 올렸는지 확인하세요.")
         return 1
 
     video.ensure_ffmpeg()
@@ -89,11 +90,12 @@ def main() -> int:
                                            voice=voice, rate=rate))
     durs = [a.speech_duration + tail_pad for a in audios]
 
-    # 2. 보관함에서 씬 영상 받아 9:16 규격·길이 맞춤
+    # 2. 릴리스에서 씬 영상 받아 9:16 규격·길이 맞춤
     clips = []
     for i, dur in enumerate(durs):
         print(f"[{i + 1}/{len(scenes)}] 영상 내려받아 규격 변환")
-        raw = download_blob(blobs[i], password, WORK / f"raw_{i + 1:02d}.mp4")
+        raw = download_asset(assets[f"scene{i + 1:02d}.mp4"]["url"], token,
+                             WORK / f"raw_{i + 1:02d}.mp4")
         clips.append(video.normalize_scene(str(raw), dur, str(WORK / f"scene_{i + 1:02d}.mp4"),
                                            width=width, height=height))
 

@@ -19,9 +19,14 @@ CONTENT_DIR = Path(__file__).resolve().parent / "content"
 
 
 def make_id(topic: str) -> str:
-    """파일명·릴리스 태그로 쓸 수 있는 짧은 아이디. 시각 + 주제 앞부분."""
-    slug = re.sub(r"[^0-9a-z가-힣]+", "-", topic.lower()).strip("-")[:20]
-    return f"{time.strftime('%y%m%d-%H%M%S')}-{slug}" if slug else time.strftime("%y%m%d-%H%M%S")
+    """파일명·릴리스 태그·주소에 그대로 쓸 수 있는 아이디.
+
+    한글을 넣지 않는다. 릴리스 태그와 자산 주소에 섞이면 인코딩이 달라져
+    영상을 못 찾는 일이 생긴다. 사람이 읽을 제목은 레코드의 title 에 따로 있다.
+    """
+    slug = re.sub(r"[^a-z0-9]+", "-", topic.lower()).strip("-")[:16].strip("-")
+    stamp = time.strftime("%y%m%d-%H%M%S")
+    return f"{stamp}-{slug}" if slug else stamp
 
 
 def main() -> int:

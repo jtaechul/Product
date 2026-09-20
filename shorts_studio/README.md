@@ -20,8 +20,7 @@ GitHub Release가 맡는다. 저장소의 `book-carousel`·`short-movie-generato
 shorts_studio/
 ├── admin/                  관리자 페이지 (Cloudflare Workers)
 │   ├── public/index.html   모바일 UI — 주제입력·프롬프트복사·영상업로드·완성본재생
-│   ├── worker/index.mjs    로그인·GitHub 호출·보관함(KV) 업로드·완성본 재생
-│   └── kv_id.py            배포 때 보관함 번호를 찾는 도우미
+│   └── worker/index.mjs    로그인·GitHub 호출·영상 업로드·완성본 재생
 ├── core/                   제작 엔진 (Actions와 로컬이 공유)
 │   ├── llm.py              대본 + 툴별 영문 프롬프트 (Gemini)
 │   ├── tts.py              Edge-TTS 합성 + 단어 타임스탬프
@@ -47,17 +46,13 @@ shorts_studio/
 |---|---|---|
 | `CF_API_TOKEN` | 관리자 페이지 배포 | 이미 등록돼 있다 |
 | `MOVIEGEN_ADMIN_PASSWORD` | 관리자 페이지 로그인 비밀번호 (직접 정한다) | 필수 |
-| `MOVIEGEN_ADMIN_GH_TOKEN` | 워커가 쓸 GitHub 토큰 — Contents = Read, Actions = Read and write | 필수 |
+| `MOVIEGEN_ADMIN_GH_TOKEN` | 워커가 쓸 GitHub 토큰 — Contents = **Read and write**, Actions = Read and write | 필수 |
 | `GEMINI_API_KEY` | 대본 생성 | 이미 등록돼 있다 |
-| `CLOUDFLARE_ACCOUNT_ID` | 보관함(KV)을 어느 계정에 만들지 | 필수 |
+| `CLOUDFLARE_ACCOUNT_ID` | 토큰이 여러 계정에 닿을 때만 | 선택 |
 | `MOVIEGEN_SESSION_SECRET` | 로그인 위조 방지용 문자열 | 선택 (없으면 비밀번호를 쓴다) |
 
-`CLOUDFLARE_ACCOUNT_ID` 는 Cloudflare 대시보드 주소창의 `dash.cloudflare.com/` 바로 뒤에
-오는 긴 글자다. 이게 없으면 wrangler 가 "내 계정이 어디지?" 를 물으러 가는데, 커스텀 API
-토큰엔 그 권한이 없어 거부당한다.
-
 이 프로젝트가 만드는 것들도 이름을 나눠 둔다 — 워커 `shorts-studio`,
-보관함 `SHORTS_STUDIO_BLOB`, 릴리스 태그 `moviegen-<id>`.
+릴리스 태그 `moviegen-<id>`, 시크릿 `MOVIEGEN_*`.
 같은 계정·같은 저장소에 다른 프로젝트가 여럿 살기 때문이다.
 
 그다음 관리자 페이지 주소를 열고 `MOVIEGEN_ADMIN_PASSWORD` 로 들어가면 끝이다.
@@ -73,11 +68,11 @@ Edge-TTS는 음성을 만들면서 "몇 초에 어떤 단어를 발음했는지"
 **나레이션은 씬별로 따로 만든다.** 씬 영상 길이를 그 씬의 나레이션 길이에 정확히 맞추기
 위해서다. 전체를 한 덩어리로 만들면 말과 화면이 뒤로 갈수록 밀린다.
 
-**씬 영상은 보관함(KV)을 거쳐 간다.** 브라우저에서 깃허브로 바로 올리면 CORS에 막히고,
-관리자 토큰에 쓰기 권한까지 줘야 한다. 대신 워커가 8MB씩 조각내어 클라우드플레어
-보관함에 넣고, 워크플로가 자기 열쇠로 받아 간다(14일 보관). 열쇠에 임의 번호를 붙이는
-이유는, 같은 이름을 다시 쓰면 보관함이 전 세계에 퍼지는 1분 사이에 워크플로가 **옛 영상**을
-받아 갈 수 있기 때문이다.
+**씬 영상은 브라우저 → 워커 → 깃허브 릴리스로 간다.** 워커가 자기 토큰으로 올리므로
+브라우저는 토큰을 만질 일이 없고, 같은 출처로만 통신하니 CORS 문제도 없다.
+(처음엔 클라우드플레어 보관함(KV)을 거치게 만들었는데, 이 계정의 API 토큰에 보관함
+권한이 없어 막혔다. 깃허브에 바로 두니 14일 만료도, 용량 제한도, 배포할 때 보관함을
+만드는 단계도 함께 사라졌다.)
 
 **완성본 재생에 프록시를 쓰는 이유.** GitHub Release 주소는 `attachment`로 내려와
 아이폰 사파리가 인라인 재생을 거부한다(검은 화면). 워커가 `video/mp4` + `inline`으로
@@ -92,7 +87,7 @@ Edge-TTS는 음성을 만들면서 "몇 초에 어떤 단어를 발음했는지"
 | 워크플로 위치 | GitHub 규칙상 `workflow_dispatch`는 **기본 브랜치(main)에 있는 워크플로만** 실행된다. |
 | Edge-TTS 차단 | 일부 데이터센터 IP에서 마이크로소프트가 403을 낼 수 있다. Actions에서 막히면 성우 합성이 실패한다. |
 | 인물 일관성 | 씬마다 영상 AI가 따로 생성하므로 얼굴·의상이 완전히 같지는 않다. 프롬프트에 인물 묘사를 반복해 최대한 맞춘다. |
-| 업로드 용량 | Release 자산은 넉넉하지만, 휴대폰 회선으로 큰 영상을 올리면 시간이 걸린다. |
+| 업로드 용량 | 무료 Cloudflare 는 한 번에 100MB 까지 받는다. 씬 영상 하나가 그보다 크면 줄여서 올려야 한다. |
 
 ## 로컬에서 직접 돌리기 (선택)
 

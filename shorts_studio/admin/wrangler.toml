@@ -8,9 +8,3 @@ binding = "ASSETS"
 
 # 비밀값은 여기 적지 않는다. 배포 워크플로가 Cloudflare 쪽에 따로 넣는다.
 #   GH_TOKEN · ADMIN_PASSWORD · SESSION_SECRET
-#
-# 큰 파일 보관함(KV)은 배포할 때 자동으로 만들어져 아래 세 줄이 덧붙는다.
-#   [[kv_namespaces]]
-#   binding = "BLOB"
-#   id = "…"
-# ⚠️ 손으로 적지 마십시오. 다른 계정에서 배포할 때 어긋납니다.
