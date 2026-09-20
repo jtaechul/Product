@@ -40,13 +40,14 @@ shorts_studio/
 
 저장소 → Settings → Secrets and variables → Actions 에 아래를 등록한다.
 
-| 이름 | 쓰이는 곳 |
-|---|---|
-| `OPENAI_API_KEY` | 대본 생성 |
-| `ADMIN_PASSWORD` | 관리자 페이지 로그인 비밀번호 (직접 정한다) |
-| `ADMIN_GH_TOKEN` | 워커가 쓸 GitHub 토큰 — Contents = Read, Actions = Read and write |
-| `SESSION_SECRET` | 로그인 위조 방지용 아무 긴 문자열 |
-| `CLOUDFLARE_API_TOKEN` · `CLOUDFLARE_ACCOUNT_ID` | 관리자 페이지 배포 |
+| 이름 | 쓰이는 곳 | 상태 |
+|---|---|---|
+| `CF_API_TOKEN` | 관리자 페이지 배포 | 이미 등록돼 있다 |
+| `OPENAI_API_KEY` | 대본 생성 | 새로 등록해야 한다 |
+| `ADMIN_PASSWORD` | 관리자 페이지 로그인 비밀번호 (직접 정한다) | 새로 등록해야 한다 |
+| `ADMIN_GH_TOKEN` | 워커가 쓸 GitHub 토큰 — Contents = Read, Actions = Read and write | 새로 등록해야 한다 |
+| `SESSION_SECRET` | 로그인 위조 방지용 문자열 | 선택 (없으면 비밀번호를 쓴다) |
+| `CLOUDFLARE_ACCOUNT_ID` | 토큰이 여러 계정에 닿을 때만 | 선택 |
 
 그다음 관리자 페이지 주소를 열고 `ADMIN_PASSWORD` 로 들어가면 끝이다.
 **손님이 폰에서 토큰을 다룰 일은 없다** — GitHub 토큰은 워커 안에만 있다.
