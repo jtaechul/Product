@@ -7,14 +7,13 @@
 <style>
   :root {
     --bg: #faf7f8; --card: #fff; --line: #e9e2e5; --ink: #2a2328; --dim: #8a7f86;
-    --brand: #d9536f; --brand-soft: #fdeef1; --ok: #2e9e6b; --warn: #c8871f;
-    --radius: 14px;
+    --brand: #d9536f; --soft: #fdeef1; --ok: #2e9e6b; --warn: #c8871f;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
     font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-    padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
     word-break: keep-all; text-wrap: pretty;
   }
   header {
@@ -24,42 +23,37 @@
   h1 { margin: 0 0 8px; font-size: 18px; }
   nav { display: flex; gap: 4px; overflow-x: auto; }
   nav button {
-    flex: 0 0 auto; border: 0; background: none; color: var(--dim);
+    flex: 0 0 auto; border: 0; background: none; color: var(--dim); font-family: inherit;
     font-size: 15px; font-weight: 600; padding: 9px 12px; border-bottom: 2px solid transparent;
   }
   nav button.on { color: var(--brand); border-bottom-color: var(--brand); }
   main { padding: 16px; max-width: 620px; margin: 0 auto; }
-  section { display: none; }
-  section.on { display: block; }
+  section { display: none; } section.on { display: block; }
   .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
     padding: 16px; margin-bottom: 14px;
   }
   h2 { margin: 0 0 12px; font-size: 16px; }
   label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
-  label:first-child { margin-top: 0; }
+  .card > label:first-of-type { margin-top: 0; }
   input, select, textarea {
     width: 100%; padding: 12px; font-size: 16px; font-family: inherit;
     border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
   }
-  textarea { resize: vertical; line-height: 1.6; }
+  textarea { resize: vertical; }
   .btn {
-    display: block; width: 100%; min-height: 50px; margin-top: 14px;
-    border: 0; border-radius: 12px; background: var(--brand); color: #fff;
+    display: block; width: 100%; min-height: 50px; margin-top: 14px; border: 0;
+    border-radius: 12px; background: var(--brand); color: #fff;
     font-size: 16px; font-weight: 700; font-family: inherit;
   }
   .btn:disabled { opacity: .5; }
-  .btn.sub { background: var(--brand-soft); color: var(--brand); }
+  .btn.sub { background: var(--soft); color: var(--brand); }
   .btn.ghost { background: #f2eef0; color: var(--ink); }
   .btn.mini { width: auto; min-height: 38px; padding: 0 14px; font-size: 14px; margin: 0; }
-  .row { display: flex; gap: 10px; }
-  .row > * { flex: 1; }
+  .row { display: flex; gap: 10px; } .row > * { flex: 1; }
   .hint { font-size: 13px; color: var(--dim); margin: 8px 0 0; }
   .empty { color: var(--dim); font-size: 14px; text-align: center; padding: 24px 0; margin: 0; }
-  .item {
-    border: 1px solid var(--line); border-radius: 12px; padding: 12px;
-    margin-bottom: 10px; background: #fff;
-  }
+  .item { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
   .item .t { font-weight: 700; font-size: 15px; }
   .item .s { font-size: 13px; color: var(--dim); margin-top: 2px; }
   .tag {
@@ -69,35 +63,44 @@
   .tag.ok { background: #e6f5ee; color: var(--ok); }
   .tag.warn { background: #fbf1df; color: var(--warn); }
   pre {
-    background: #f6f2f4; border: 1px solid var(--line); border-radius: 10px;
-    padding: 12px; font-size: 13px; line-height: 1.55; white-space: pre-wrap;
-    word-break: break-word; margin: 0;
+    background: #f6f2f4; border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+    font-size: 13px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; margin: 0;
   }
   video { width: 100%; border-radius: 12px; background: #000; display: block; }
+  .scene { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+  .bar { height: 6px; border-radius: 99px; background: #f0e9ec; overflow: hidden; margin-top: 8px; display: none; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--brand); transition: width .2s; }
   #toast {
     position: fixed; left: 16px; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom));
     background: #2a2328; color: #fff; padding: 14px 16px; border-radius: 12px;
     font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50;
   }
   #toast.show { opacity: .96; }
-  .scene { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
-  .scene:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+  #login { max-width: 420px; margin: 18vh auto 0; padding: 0 16px; }
 </style>
 </head>
 <body>
 
+<div id="login" hidden>
+  <div class="card">
+    <h2>숏폼 동화 스튜디오</h2>
+    <label for="pw">비밀번호</label>
+    <input id="pw" type="password" autocomplete="current-password" enterkeyhint="go">
+    <button class="btn" id="btnLogin">들어가기</button>
+  </div>
+</div>
+
+<div id="app" hidden>
 <header>
   <h1>숏폼 동화 스튜디오</h1>
   <nav>
     <button data-tab="make" class="on">① 새로 만들기</button>
     <button data-tab="work">② 작업중</button>
     <button data-tab="done">③ 완성본</button>
-    <button data-tab="setup">설정</button>
   </nav>
 </header>
 
 <main>
-
 <section id="tab-make" class="on">
   <div class="card">
     <h2>주제로 대본 만들기</h2>
@@ -106,30 +109,25 @@
     <div class="row">
       <div>
         <label for="scenes">컷 수</label>
-        <select id="scenes">
-          <option>3</option><option selected>4</option><option>5</option><option>6</option>
-        </select>
+        <select id="scenes"><option>3</option><option selected>4</option><option>5</option><option>6</option></select>
       </div>
       <div>
         <label for="tool">영상 툴</label>
         <select id="tool">
-          <option>Runway (Gen-3/Gen-4)</option>
-          <option>Pika</option>
-          <option>Luma (Dream Machine)</option>
-          <option>Kling</option>
-          <option>Sora</option>
-          <option>Veo (Google)</option>
+          <option>Runway (Gen-3/Gen-4)</option><option>Pika</option>
+          <option>Luma (Dream Machine)</option><option>Kling</option>
+          <option>Sora</option><option>Veo (Google)</option>
         </select>
       </div>
     </div>
     <button class="btn" id="btnScript">대본 만들기</button>
-    <p class="hint">대본이 만들어지기까지 1~2분 걸립니다. 완료되면 ② 작업중 탭에 나타납니다.</p>
+    <p class="hint">1~2분 걸립니다. 완료되면 ② 작업중 탭에 나타납니다.</p>
   </div>
 </section>
 
 <section id="tab-work">
   <div class="card">
-    <h2>작업중 <button class="btn mini ghost" id="btnReloadWork" style="float:right">새로고침</button></h2>
+    <h2>작업중 <button class="btn mini ghost" id="rwork" style="float:right">새로고침</button></h2>
     <div id="workList"><p class="empty">불러오는 중...</p></div>
   </div>
   <div id="detail"></div>
@@ -137,72 +135,36 @@
 
 <section id="tab-done">
   <div class="card">
-    <h2>완성본 <button class="btn mini ghost" id="btnReloadDone" style="float:right">새로고침</button></h2>
+    <h2>완성본 <button class="btn mini ghost" id="rdone" style="float:right">새로고침</button></h2>
     <div id="doneList"><p class="empty">불러오는 중...</p></div>
   </div>
 </section>
-
-<section id="tab-setup">
-  <div class="card">
-    <h2>GitHub 연결 (최초 1회)</h2>
-    <p class="hint" style="margin-top:0">
-      이 페이지는 서버에 비밀정보를 두지 않습니다. 토큰은 이 기기에만 저장됩니다.
-    </p>
-    <label for="tok">개인 토큰 (ghp_ 로 시작)</label>
-    <input id="tok" type="password" placeholder="ghp_...">
-    <button class="btn" id="btnSaveTok">저장</button>
-    <p class="hint">
-      토큰 권한은 <b>Contents: Read and write</b> 와 <b>Actions: Read and write</b> 두 가지가 필요합니다.
-      <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">토큰 만들러 가기</a>
-    </p>
-  </div>
-</section>
-
 </main>
+</div>
+
 <div id="toast"></div>
 
 <script>
-/* ── 상수 ───────────────────────────────── */
-const OWNER = "jtaechul", REPO = "Product";
-const BRANCH = "main";
-const DIR = "shorts_studio/content";
-const WF_SCRIPT = "shorts-studio-script.yml";
-const WF_RENDER = "shorts-studio-render.yml";
-const LS_KEY = "shortsStudioToken";
-
-/* ── 유틸 ───────────────────────────────── */
 const $ = (id) => document.getElementById(id);
 let toastTimer;
 function toast(msg, ms = 3400) {
   const t = $("toast");
-  t.textContent = msg;
-  t.classList.add("show");
+  t.textContent = msg; t.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), ms);
 }
-function token() { return (localStorage.getItem(LS_KEY) || "").trim(); }
-
-async function gh(path, opts = {}) {
-  if (!token()) throw new Error("먼저 설정 탭에서 GitHub 토큰을 저장하세요.");
-  const res = await fetch("https://api.github.com" + path, {
-    ...opts,
-    headers: {
-      "Authorization": "Bearer " + token(),
-      "Accept": "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-      ...(opts.body ? { "Content-Type": "application/json" } : {}),
-    },
-  });
-  if (res.status === 401) throw new Error("토큰이 유효하지 않습니다. 설정 탭에서 다시 발급·저장하세요.");
-  if (res.status === 403) throw new Error("토큰 권한이 부족합니다. Contents와 Actions를 Read and write로 발급했는지 확인하세요.");
-  if (res.status === 404 && opts.allow404) return null;
-  if (!res.ok) throw new Error("GitHub 오류 " + res.status);
-  if (res.status === 204) return null;
-  return res.json();
-}
-function b64decodeUtf8(b64) {
-  const bin = atob((b64 || "").replace(/\n/g, ""));
-  return new TextDecoder("utf-8").decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+async function api(path, opts = {}) {
+  const r = await fetch(path, { credentials: "same-origin", ...opts,
+    headers: { ...(opts.body && typeof opts.body === "string" ? { "Content-Type": "application/json" } : {}) } });
+  const d = await r.json().catch(() => ({}));
+  // 로그인 요청의 401은 "비밀번호가 틀렸다"는 뜻이다. 로그인 화면으로 되돌리면
+  // 정작 틀렸다는 안내가 묻힌다.
+  if (r.status === 401 && path !== "/api/login") {
+    showLogin();
+    throw new Error("다시 로그인해 주세요.");
+  }
+  if (!r.ok) throw new Error(d.error || "오류 " + r.status);
+  return d;
 }
 async function busy(btn, fn) {
   const old = btn.textContent;
@@ -211,11 +173,23 @@ async function busy(btn, fn) {
   catch (e) { toast(e.message || String(e), 5200); }
   finally { btn.disabled = false; btn.textContent = old; }
 }
-function mediaUrl(u) { return "/media?u=" + encodeURIComponent(u); }
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); toast("복사했습니다."); }
   catch { toast("복사에 실패했습니다. 길게 눌러 직접 복사해 주세요.", 4500); }
 }
+
+/* ── 로그인 ─────────────────────────────── */
+function showLogin() { $("login").hidden = false; $("app").hidden = true; }
+function showApp() { $("login").hidden = true; $("app").hidden = false; }
+$("btnLogin").onclick = (e) => busy(e.target, async () => {
+  const pw = $("pw").value;
+  if (!pw) { toast("비밀번호를 입력하세요."); return; }
+  await api("/api/login", { method: "POST", body: JSON.stringify({ password: pw }) });
+  $("pw").value = "";
+  showApp();
+  loadList();
+});
+$("pw").onkeydown = (e) => { if (e.key === "Enter") $("btnLogin").click(); };
 
 /* ── 탭 ─────────────────────────────────── */
 document.querySelectorAll("nav button").forEach((b) => {
@@ -224,66 +198,45 @@ document.querySelectorAll("nav button").forEach((b) => {
     document.querySelectorAll("section").forEach((x) => x.classList.remove("on"));
     b.classList.add("on");
     $("tab-" + b.dataset.tab).classList.add("on");
-    if (b.dataset.tab === "work") loadList("work");
-    if (b.dataset.tab === "done") loadList("done");
+    if (b.dataset.tab !== "make") loadList();
   };
 });
 
-/* ── 설정 ───────────────────────────────── */
-$("tok").value = token();
-$("btnSaveTok").onclick = (e) => busy(e.target, async () => {
-  const v = $("tok").value.trim();
-  if (!v) { toast("토큰을 입력하세요."); return; }
-  localStorage.setItem(LS_KEY, v);
-  const me = await gh("/user");
-  toast(me.login + " 계정으로 연결됐습니다.");
-});
-
-/* ── ① 대본 만들기 ──────────────────────── */
+/* ── 대본 만들기 ────────────────────────── */
 $("btnScript").onclick = (e) => busy(e.target, async () => {
   const topic = $("topic").value.trim();
   if (!topic) { toast("동화 주제를 입력하세요."); return; }
-  e.target.textContent = "만드는 중...";
-  await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF_SCRIPT}/dispatches`, {
-    method: "POST",
-    body: JSON.stringify({
-      ref: BRANCH,
-      inputs: { topic, scenes: $("scenes").value, tool: $("tool").value },
-    }),
-  });
-  toast("대본을 만들고 있습니다. 1~2분 뒤 ② 작업중 탭에서 새로고침해 주세요.", 6000);
+  e.target.textContent = "보내는 중...";
+  await api("/api/script", { method: "POST", body: JSON.stringify({
+    topic, scenes: $("scenes").value, tool: $("tool").value }) });
   $("topic").value = "";
+  toast("대본을 만들고 있습니다. 1~2분 뒤 ② 작업중 탭에서 새로고침해 주세요.", 6000);
 });
 
 /* ── 목록 ───────────────────────────────── */
-let records = [];
-async function loadList(which) {
-  const box = which === "work" ? $("workList") : $("doneList");
-  box.innerHTML = '<p class="empty">불러오는 중...</p>';
-  if (which === "work") $("detail").innerHTML = "";
+let items = [];
+async function loadList() {
+  $("workList").innerHTML = '<p class="empty">불러오는 중...</p>';
+  $("doneList").innerHTML = '<p class="empty">불러오는 중...</p>';
   try {
-    const files = await gh(`/repos/${OWNER}/${REPO}/contents/${DIR}?ref=${BRANCH}&_=${Date.now()}`,
-      { allow404: true, cache: "no-store" }) || [];
-    const jsons = files.filter((f) => f.name.endsWith(".json"));
-    records = await Promise.all(jsons.map(async (f) => {
-      const r = await gh(`/repos/${OWNER}/${REPO}/contents/${f.path}?ref=${BRANCH}`);
-      return JSON.parse(b64decodeUtf8(r.content));
-    }));
-    records.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
-    const mine = records.filter((r) => which === "done" ? r.status === "rendered" : r.status !== "rendered");
-    if (!mine.length) {
-      box.innerHTML = `<p class="empty">${which === "done" ? "아직 완성된 영상이 없습니다." : "작업중인 작품이 없습니다."}</p>`;
-      return;
-    }
-    box.innerHTML = "";
-    mine.forEach((rec) => box.appendChild(which === "done" ? doneCard(rec) : workCard(rec)));
-  } catch (e) {
-    box.innerHTML = "";
-    toast(e.message, 5200);
-  }
+    items = (await api("/api/list")).items || [];
+  } catch (e) { toast(e.message, 5200); return; }
+  render("work"); render("done");
 }
-$("btnReloadWork").onclick = () => loadList("work");
-$("btnReloadDone").onclick = () => loadList("done");
+$("rwork").onclick = loadList;
+$("rdone").onclick = loadList;
+
+function render(which) {
+  const box = which === "work" ? $("workList") : $("doneList");
+  if (which === "work") $("detail").innerHTML = "";
+  const mine = items.filter((r) => which === "done" ? r.status === "rendered" : r.status !== "rendered");
+  if (!mine.length) {
+    box.innerHTML = `<p class="empty">${which === "done" ? "아직 완성된 영상이 없습니다." : "작업중인 작품이 없습니다."}</p>`;
+    return;
+  }
+  box.innerHTML = "";
+  mine.forEach((rec) => box.appendChild(which === "done" ? doneCard(rec) : workCard(rec)));
+}
 
 function workCard(rec) {
   const el = document.createElement("div");
@@ -292,7 +245,7 @@ function workCard(rec) {
     <button class="btn mini sub" style="margin-top:10px">열기</button>`;
   el.querySelector(".t").textContent = rec.title || rec.topic;
   el.querySelector(".s").textContent = `${rec.scenes.length}컷 · ${rec.tool}`;
-  el.querySelector("button").onclick = () => openDetail(rec);
+  el.querySelector("button").onclick = (e) => busy(e.target, () => openDetail(rec));
   return el;
 }
 
@@ -305,51 +258,39 @@ function doneCard(rec) {
   el.querySelector(".t").textContent = rec.title || rec.topic;
   el.querySelector(".s").textContent =
     `${rec.duration || "?"}초 · ${rec.resolution || ""} · ${(rec.hashtags || []).join(" ")}`;
-  el.querySelector("video").src = mediaUrl(rec.video);
+  el.querySelector("video").src = "/api/video?u=" + encodeURIComponent(rec.video);
   el.querySelector("button").onclick = () => window.open(rec.video, "_blank");
   return el;
 }
 
-/* ── 상세: 프롬프트 복사 + 씬 영상 업로드 + 렌더링 ── */
-async function release(cid, create) {
-  const tag = "shorts-" + cid;
-  let rel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${tag}`, { allow404: true, cache: "no-store" });
-  if (!rel && create) {
-    rel = await gh(`/repos/${OWNER}/${REPO}/releases`, {
-      method: "POST",
-      body: JSON.stringify({
-        tag_name: tag, name: "숏폼 동화 자산 " + cid,
-        body: "관리자 페이지가 올린 씬 영상과 완성본이 담깁니다.", make_latest: "false",
-      }),
-    });
-  }
-  return rel;
-}
-
-async function uploadScene(relId, file, name) {
-  const up = `https://uploads.github.com/repos/${OWNER}/${REPO}/releases/${relId}/assets?name=${encodeURIComponent(name)}`;
-  const headers = {
-    "Authorization": "Bearer " + token(),
-    "Accept": "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-    "Content-Type": file.type || "video/mp4",
-  };
-  let res;
-  try {
-    res = await fetch(up, { method: "POST", headers, body: file });
-  } catch (_) {
-    // 브라우저 → uploads.github.com 이 CORS로 막히면 같은 출처 워커 프록시로 재시도
-    res = await fetch("/ghup?u=" + encodeURIComponent(up), { method: "POST", headers, body: file });
-  }
-  if (!res.ok) throw new Error("업로드 실패 " + res.status);
-  return res.json();
+/* ── 상세: 프롬프트 복사 + 씬 영상 올리기 + 렌더링 ── */
+function upload(file, id, n, bar) {
+  // 진행률을 보여주려면 XHR이 필요하다(fetch는 업로드 진행률을 알려주지 않는다).
+  return new Promise((resolve, reject) => {
+    const x = new XMLHttpRequest();
+    x.open("POST", `/api/upload?id=${encodeURIComponent(id)}&scene=${n}`);
+    x.withCredentials = true;
+    x.upload.onprogress = (ev) => {
+      if (!ev.lengthComputable) return;
+      bar.style.display = "block";
+      bar.firstElementChild.style.width = Math.round(ev.loaded / ev.total * 100) + "%";
+    };
+    x.onload = () => {
+      bar.style.display = "none";
+      let d = {};
+      try { d = JSON.parse(x.responseText); } catch (_) {}
+      if (x.status >= 200 && x.status < 300) resolve(d);
+      else reject(new Error(d.error || "업로드 실패 " + x.status));
+    };
+    x.onerror = () => { bar.style.display = "none"; reject(new Error("업로드 중 연결이 끊겼습니다.")); };
+    x.send(file);
+  });
 }
 
 async function openDetail(rec) {
   const box = $("detail");
   box.innerHTML = '<div class="card"><p class="empty">불러오는 중...</p></div>';
-  const rel = await release(rec.id, false);
-  const have = new Set(((rel && rel.assets) || []).map((a) => a.name));
+  const have = new Set(((await api("/api/uploaded?id=" + encodeURIComponent(rec.id))).scenes) || []);
 
   const card = document.createElement("div");
   card.className = "card";
@@ -364,26 +305,29 @@ async function openDetail(rec) {
 
   rec.scenes.forEach((sc, i) => {
     const n = i + 1;
-    const name = `scene${String(n).padStart(2, "0")}.mp4`;
-    const wrap = document.createElement("div");
-    wrap.className = "scene";
-    wrap.innerHTML = `
-      <div class="t" style="font-weight:700">${n}번 씬 <span class="tag"></span></div>
+    const w = document.createElement("div");
+    w.className = "scene";
+    w.innerHTML = `
+      <div style="font-weight:700">${n}번 씬 <span class="tag"></span></div>
       <p class="hint" style="margin:6px 0 8px"></p>
       <pre></pre>
       <div class="row" style="margin-top:10px">
         <button class="btn mini sub">프롬프트 복사</button>
         <button class="btn mini ghost">영상 올리기</button>
       </div>
+      <div class="bar"><i></i></div>
       <input type="file" accept="video/mp4,video/quicktime,.mp4,.mov" hidden>`;
-    const tag = wrap.querySelector(".tag");
-    const done = have.has(name);
-    tag.textContent = done ? "영상 있음" : "영상 필요";
-    tag.className = "tag " + (done ? "ok" : "warn");
-    wrap.querySelector(".hint").textContent = sc.narration;
-    wrap.querySelector("pre").textContent = sc.prompt + (sc.negative ? "\n\n[네거티브] " + sc.negative : "");
-    const [btnCopy, btnUp] = wrap.querySelectorAll("button");
-    const file = wrap.querySelector("input");
+    const tag = w.querySelector(".tag");
+    const mark = (yes) => {
+      tag.textContent = yes ? "영상 있음" : "영상 필요";
+      tag.className = "tag " + (yes ? "ok" : "warn");
+    };
+    mark(have.has(n));
+    w.querySelector(".hint").textContent = sc.narration;
+    w.querySelector("pre").textContent = sc.prompt + (sc.negative ? "\n\n[네거티브] " + sc.negative : "");
+    const [btnCopy, btnUp] = w.querySelectorAll("button");
+    const bar = w.querySelector(".bar");
+    const file = w.querySelector("input");
     btnCopy.onclick = () => copy(sc.prompt);
     btnUp.onclick = () => file.click();
     file.onchange = () => busy(btnUp, async () => {
@@ -391,57 +335,39 @@ async function openDetail(rec) {
       file.value = "";
       if (!f) return;
       btnUp.textContent = "올리는 중...";
-      const r = await release(rec.id, true);
-      const old = (r.assets || []).find((a) => a.name === name);
-      if (old) await gh(`/repos/${OWNER}/${REPO}/releases/assets/${old.id}`, { method: "DELETE" });
-      await uploadScene(r.id, f, name);
-      tag.textContent = "영상 있음";
-      tag.className = "tag ok";
+      await upload(f, rec.id, n, bar);
+      mark(true);
       toast(`${n}번 씬 영상을 올렸습니다.`);
     });
-    card.appendChild(wrap);
+    card.appendChild(w);
   });
 
   const opts = document.createElement("div");
   opts.className = "scene";
   opts.innerHTML = `
-    <label for="dVoice">성우</label>
-    <select id="dVoice">
+    <label>성우</label>
+    <select class="v">
       <option value="ko-KR-SunHiNeural">선히 (여성 · 따뜻함)</option>
       <option value="ko-KR-InJoonNeural">인준 (남성 · 차분함)</option>
       <option value="ko-KR-HyunsuMultilingualNeural">현수 (남성 · 부드러움)</option>
     </select>
     <div class="row">
-      <div>
-        <label for="dHi">자막 색</label>
-        <select id="dHi"><option>노란색</option><option>연두색</option><option>하늘색</option><option>분홍색</option></select>
-      </div>
-      <div>
-        <label for="dHq">화질</label>
-        <select id="dHq"><option value="false">720 (빠름)</option><option value="true">1080 (느림)</option></select>
-      </div>
+      <div><label>자막 색</label>
+        <select class="h"><option>노란색</option><option>연두색</option><option>하늘색</option><option>분홍색</option></select></div>
+      <div><label>화질</label>
+        <select class="q"><option value="false">720 (빠름)</option><option value="true">1080 (느림)</option></select></div>
     </div>
     <button class="btn">최종 영상 만들기</button>
-    <p class="hint">모든 씬 영상을 올린 뒤 눌러 주세요. 3~10분 뒤 ③ 완성본 탭에 나타납니다.</p>`;
+    <p class="hint">모든 씬 영상을 올린 뒤 눌러 주세요. 3~10분 뒤 ③ 완성본 탭에 나타납니다.
+    올린 영상은 14일간 보관됩니다.</p>`;
   opts.querySelector("button").onclick = (e) => busy(e.target, async () => {
-    const r = await release(rec.id, false);
-    const names = new Set(((r && r.assets) || []).map((a) => a.name));
-    const miss = rec.scenes.map((_, i) => i + 1)
-      .filter((n) => !names.has(`scene${String(n).padStart(2, "0")}.mp4`));
-    if (miss.length) { toast(`${miss.join(", ")}번 씬 영상을 먼저 올려 주세요.`, 5000); return; }
     e.target.textContent = "보내는 중...";
-    await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF_RENDER}/dispatches`, {
-      method: "POST",
-      body: JSON.stringify({
-        ref: BRANCH,
-        inputs: {
-          content_id: rec.id,
-          voice: $("dVoice").value,
-          highlight: $("dHi").value,
-          hq: $("dHq").value,
-        },
-      }),
-    });
+    await api("/api/render", { method: "POST", body: JSON.stringify({
+      id: rec.id, count: rec.scenes.length,
+      voice: opts.querySelector(".v").value,
+      highlight: opts.querySelector(".h").value,
+      hq: opts.querySelector(".q").value,
+    }) });
     toast("영상을 만들고 있습니다. 3~10분 뒤 ③ 완성본 탭을 새로고침해 주세요.", 6500);
   });
   card.appendChild(opts);
@@ -452,10 +378,9 @@ async function openDetail(rec) {
 }
 
 /* ── 시작 ───────────────────────────────── */
-if (!token()) {
-  document.querySelector('nav button[data-tab="setup"]').click();
-  toast("처음이시면 설정 탭에서 GitHub 토큰을 먼저 저장해 주세요.", 5500);
-}
+fetch("/api/me", { credentials: "same-origin" })
+  .then((r) => { if (r.ok) { showApp(); loadList(); } else showLogin(); })
+  .catch(showLogin);
 </script>
 </body>
 </html>

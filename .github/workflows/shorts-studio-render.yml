@@ -9,6 +9,10 @@ on:
         description: "작품 아이디 (예: 260920-071530-나무꾼)"
         required: true
         type: string
+      blobs:
+        description: "씬 영상 주소 목록 (관리자 페이지가 채운다)"
+        required: true
+        type: string
       voice:
         description: "성우"
         required: false
@@ -68,7 +72,9 @@ jobs:
       - name: 렌더링
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           CONTENT_ID: ${{ inputs.content_id }}
+          BLOBS: ${{ inputs.blobs }}
           VOICE: ${{ inputs.voice }}
           RATE: ${{ inputs.rate }}
           HIGHLIGHT: ${{ inputs.highlight }}

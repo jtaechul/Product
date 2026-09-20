@@ -20,7 +20,8 @@ GitHub Release가 맡는다. 저장소의 `book-carousel`·`short-movie-generato
 shorts_studio/
 ├── admin/                  관리자 페이지 (Cloudflare Workers)
 │   ├── public/index.html   모바일 UI — 주제입력·프롬프트복사·영상업로드·완성본재생
-│   └── worker/index.mjs    /media 재생 프록시 + /ghup 업로드 프록시
+│   ├── worker/index.mjs    로그인·GitHub 호출·보관함(KV) 업로드·완성본 재생
+│   └── kv_id.py            배포 때 보관함 번호를 찾는 도우미
 ├── core/                   제작 엔진 (Actions와 로컬이 공유)
 │   ├── llm.py              대본 + 툴별 영문 프롬프트 (OpenAI)
 │   ├── tts.py              Edge-TTS 합성 + 단어 타임스탬프
@@ -37,12 +38,18 @@ shorts_studio/
 
 ## 처음 한 번만 하는 준비
 
-1. **저장소 시크릿** — Settings > Secrets and variables > Actions
-   - `OPENAI_API_KEY` (대본 생성)
-   - `CF_API_TOKEN` (관리자 페이지 배포 · 이미 등록돼 있음)
-2. **관리자 페이지에서 개인 토큰 저장** — 설정 탭에 GitHub 개인 토큰을 넣는다.
-   권한은 **Contents: Read and write** + **Actions: Read and write**.
-   토큰은 서버에 저장되지 않고 그 기기의 브라우저에만 남는다.
+저장소 → Settings → Secrets and variables → Actions 에 아래를 등록한다.
+
+| 이름 | 쓰이는 곳 |
+|---|---|
+| `OPENAI_API_KEY` | 대본 생성 |
+| `ADMIN_PASSWORD` | 관리자 페이지 로그인 비밀번호 (직접 정한다) |
+| `ADMIN_GH_TOKEN` | 워커가 쓸 GitHub 토큰 — Contents = Read, Actions = Read and write |
+| `SESSION_SECRET` | 로그인 위조 방지용 아무 긴 문자열 |
+| `CLOUDFLARE_API_TOKEN` · `CLOUDFLARE_ACCOUNT_ID` | 관리자 페이지 배포 |
+
+그다음 관리자 페이지 주소를 열고 `ADMIN_PASSWORD` 로 들어가면 끝이다.
+**손님이 폰에서 토큰을 다룰 일은 없다** — GitHub 토큰은 워커 안에만 있다.
 
 ## 설계 메모
 
@@ -54,10 +61,17 @@ Edge-TTS는 음성을 만들면서 "몇 초에 어떤 단어를 발음했는지"
 **나레이션은 씬별로 따로 만든다.** 씬 영상 길이를 그 씬의 나레이션 길이에 정확히 맞추기
 위해서다. 전체를 한 덩어리로 만들면 말과 화면이 뒤로 갈수록 밀린다.
 
-**영상 재생·업로드에 프록시를 쓰는 이유.** GitHub Release 주소는 `attachment`로 내려와
-아이폰 사파리가 인라인 재생을 거부한다(검은 화면). 또 브라우저에서 업로드 서버로 바로
-올리면 CORS에 막히는 환경이 있다. 워커가 둘 다 중계해서 푼다.
-(`projects/coupang-shorts-factory/admin`의 검증된 구현을 이식)
+**씬 영상은 보관함(KV)을 거쳐 간다.** 브라우저에서 깃허브로 바로 올리면 CORS에 막히고,
+관리자 토큰에 쓰기 권한까지 줘야 한다. 대신 워커가 8MB씩 조각내어 클라우드플레어
+보관함에 넣고, 워크플로가 자기 열쇠로 받아 간다(14일 보관). 열쇠에 임의 번호를 붙이는
+이유는, 같은 이름을 다시 쓰면 보관함이 전 세계에 퍼지는 1분 사이에 워크플로가 **옛 영상**을
+받아 갈 수 있기 때문이다.
+
+**완성본 재생에 프록시를 쓰는 이유.** GitHub Release 주소는 `attachment`로 내려와
+아이폰 사파리가 인라인 재생을 거부한다(검은 화면). 워커가 `video/mp4` + `inline`으로
+바꿔 중계하고, Range(몇 번째 바이트부터)를 그대로 넘겨 탐색도 되게 한다.
+
+(위 두 가지와 로그인 구조는 `verdict-theater/admin` 의 검증된 구현을 이식했다.)
 
 ## 알려진 제약
 

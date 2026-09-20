@@ -1,13 +1,25 @@
 name: Deploy Shorts Studio Admin
 
-# 숏폼 동화 스튜디오 관리자 페이지(Cloudflare Workers 무료) 자동 배포.
+# 숏폼 동화 스튜디오 관리자 페이지를 Cloudflare Workers 에 올린다.
+# (verdict-theater/.github/workflows/deploy-admin.yml 의 검증된 절차를 이식)
+#
+# 처음 한 번만 등록하면 되는 값 (Settings → Secrets and variables → Actions)
+#   CLOUDFLARE_API_TOKEN   Cloudflare → My Profile → API Tokens → Edit Cloudflare Workers 템플릿
+#   CLOUDFLARE_ACCOUNT_ID  Cloudflare 대시보드 오른쪽 Account ID
+#   ADMIN_PASSWORD         관리자 페이지에 들어갈 비밀번호 (직접 정한다)
+#   ADMIN_GH_TOKEN         GitHub 개인 토큰 — Contents = Read, Actions = Read and write
+#   SESSION_SECRET         로그인 위조 방지용 아무 긴 문자열 (없으면 비밀번호를 쓴다)
+
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - "shorts_studio/admin/**"
       - ".github/workflows/deploy-shorts-studio-admin.yml"
-  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: shorts-studio-admin-deploy
@@ -16,19 +28,134 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Cloudflare Workers 배포 (관리자 페이지)
+    name: 관리자 페이지 배포
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: shorts_studio/admin
     steps:
       - uses: actions/checkout@v5
 
+      - name: 열쇠 확인
+        env:
+          CF: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACC: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PW: ${{ secrets.ADMIN_PASSWORD }}
+          TK: ${{ secrets.ADMIN_GH_TOKEN }}
+        run: |
+          MISS=""
+          [ -z "$CF" ]  && MISS="$MISS CLOUDFLARE_API_TOKEN"
+          [ -z "$ACC" ] && MISS="$MISS CLOUDFLARE_ACCOUNT_ID"
+          [ -z "$PW" ]  && MISS="$MISS ADMIN_PASSWORD"
+          [ -z "$TK" ]  && MISS="$MISS ADMIN_GH_TOKEN"
+          if [ -n "$MISS" ]; then
+            {
+              echo "## 열쇠가 부족합니다"
+              echo ""
+              echo "없는 것:$MISS"
+              echo ""
+              echo "저장소 → **Settings** → **Secrets and variables** → **Actions**"
+              echo "→ **New repository secret** 에서 아래를 등록하십시오."
+              echo ""
+              echo "| 이름 | 어디서 받나 |"
+              echo "|---|---|"
+              echo "| \`CLOUDFLARE_API_TOKEN\` | Cloudflare → My Profile → API Tokens → **Edit Cloudflare Workers** 템플릿 |"
+              echo "| \`CLOUDFLARE_ACCOUNT_ID\` | Cloudflare 대시보드 오른쪽 **Account ID** |"
+              echo "| \`ADMIN_PASSWORD\` | 직접 정하십시오. 관리자 페이지에 들어갈 비밀번호 |"
+              echo "| \`ADMIN_GH_TOKEN\` | [토큰 만들기](https://github.com/settings/personal-access-tokens/new) — Repository access는 **Product 하나만**, Permissions는 **Contents = Read**, **Actions = Read and write** |"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::열쇠가 부족합니다:$MISS"
+            exit 1
+          fi
+          echo "열쇠 확인됨"
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
 
-      - run: npm install --no-audit --no-fund
+      - name: 문법 검사 (워커 + 화면)
+        run: |
+          set -o pipefail
+          node --check worker/index.mjs
+          node -e "
+            const fs=require('fs');
+            const h=fs.readFileSync('public/index.html','utf8');
+            const m=h.match(/<script>([\s\S]*)<\/script>/);
+            if(!m) throw new Error('화면 코드를 찾지 못했습니다');
+            new Function(m[1]);
+            console.log('화면 코드 문법 OK');
+          "
 
-      - run: npx wrangler deploy
+      # 큰 파일 보관함(KV) — 브라우저가 올린 씬 영상을 잠깐 둘 곳.
+      # 이름을 그냥 BLOB 으로 두면 같은 계정의 verdict-theater 보관함에 잘못 붙는다.
+      - name: 큰 파일 보관함 준비 (KV)
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          python3 kv_id.py --selftest
+          ID=$(npx --yes wrangler@4 kv namespace list 2>/dev/null | python3 kv_id.py || true)
+          if [ -z "$ID" ]; then
+            echo "보관함이 없다 — 만든다"
+            # 만든 직후 글에서 바로 번호를 읽는다. 목록을 다시 부르면 이름 규칙이
+            # 달라 못 찾는 일이 생긴다.
+            ID=$(npx --yes wrangler@4 kv namespace create SHORTS_STUDIO_BLOB 2>&1 \
+                 | tee /dev/stderr | python3 kv_id.py || true)
+          fi
+          if [ -z "$ID" ]; then
+            ID=$(npx --yes wrangler@4 kv namespace list 2>/dev/null | python3 kv_id.py || true)
+          fi
+          if [ -z "$ID" ]; then
+            # 여기서 조용히 넘어가면 영상을 못 올리는 채로 배포된다. 크게 멈춘다.
+            echo "::error::보관함을 만들지 못했습니다. 이대로 배포하면 영상을 못 올립니다."
+            exit 1
+          fi
+          printf '\n[[kv_namespaces]]\nbinding = "BLOB"\nid = "%s"\n' "$ID" >> wrangler.toml
+          tail -n 4 wrangler.toml
+
+      - name: 배포 + 비밀값 등록
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          # 배포가 먼저다. 비밀값은 이미 있는 Worker 에만 넣을 수 있어서,
+          # 순서를 반대로 하면 첫 배포가 "그런 Worker 가 없다"로 실패한다.
+          npx --yes wrangler@4 deploy 2>&1 | tee deploy.log
+
+          printf '%s' "${{ secrets.ADMIN_GH_TOKEN }}" | npx --yes wrangler@4 secret put GH_TOKEN
+          printf '%s' "${{ secrets.ADMIN_PASSWORD }}" | npx --yes wrangler@4 secret put ADMIN_PASSWORD
+          # 서명키에 커밋 번호를 섞지 않는다. 섞으면 고칠 때마다 로그인이 풀린다.
+          printf '%s' "${{ secrets.SESSION_SECRET || secrets.ADMIN_PASSWORD }}" \
+            | npx --yes wrangler@4 secret put SESSION_SECRET
+
+          # 배포가 성공해도 보관함이 안 붙은 채 지나갈 수 있다. 배포 기록으로 확인한다.
+          if grep -qi 'kv namespace\|KV Namespace' deploy.log; then
+            echo "보관함이 워커에 붙었다"
+          else
+            echo "::error::보관함이 워커에 안 붙었습니다 — 영상을 못 올립니다"
+            exit 1
+          fi
+
+      - name: 주소 안내
+        if: always()
+        run: |
+          URL=$(grep -oE 'https://[a-zA-Z0-9.-]+workers\.dev' deploy.log 2>/dev/null | tail -1)
+          {
+            echo "## 관리자 페이지 배포"
+            echo ""
+            if [ -n "$URL" ]; then
+              echo "### [$URL]($URL)"
+              echo ""
+              echo "이 주소를 **아이폰 사파리에서 열고 홈 화면에 추가**해 두십시오. 앱처럼 열립니다."
+              echo ""
+              echo "처음 열면 비밀번호를 묻습니다. \`ADMIN_PASSWORD\` 에 넣은 값입니다."
+            else
+              echo "주소를 찾지 못했습니다. 아래 기록을 확인하십시오."
+            fi
+            echo ""
+            echo '```'
+            tail -n 20 deploy.log 2>/dev/null || echo "기록 없음"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
