@@ -2603,46 +2603,64 @@ async function handleDeleteDraft(env, body) {
   return { success: true };
 }
 
-function generateBooksHTML(catalog) {
-  const CAT_COLORS = {
-    '애착': '#C2708F', '연애': '#D08A6E', '에세이': '#D08A6E',
-    '이별': '#9B6A8F', '회복': '#9B6A8F',
-    '자존감': '#C18A4B', '사랑': '#C2708F',
-    '관계': '#A2708F', '심리': '#8E6AA8',
-    '짝사랑': '#D98AA0', '설렘': '#D98AA0',
-  };
-  const catColor = c => { for (const [k, v] of Object.entries(CAT_COLORS)) if (c?.includes(k)) return v; return '#A98C7A'; };
+// ===== 반려동물 용품 상점 페이지 =====
+// 계정/사이트 이름. 바꾸려면 이 한 줄만 고치면 된다.
+const SHOP_NAME = '오늘의 반려템';
+const SHOP_TAGLINE = '써보고 고른 강아지 용품만 모았습니다';
 
-  const allCats = ['전체', ...new Set(catalog.map(b => b.category).filter(Boolean))];
-  const tabsHTML = allCats.map((c, i) =>
-    `<button class="tab${i === 0 ? ' active' : ''}" data-filter="${c}">${c}</button>`
+// 품목 카테고리 → 색. 새 카테고리를 추가하면 여기에 색도 함께 넣는다.
+const SHOP_CATS = {
+  '사료': '#C4703F', '간식': '#C4703F',
+  '산책': '#3F7F6B', '하네스': '#3F7F6B', '리드': '#3F7F6B',
+  '배변': '#4E7FA8', '위생': '#4E7FA8', '청소': '#4E7FA8',
+  '장난감': '#BE5A76', '놀이': '#BE5A76',
+  '미용': '#7C63A6', '건강': '#7C63A6', '영양': '#7C63A6',
+  '이동': '#A8823F', '하우스': '#A8823F', '쿠션': '#A8823F',
+};
+
+function shopEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function shopCatColor(c) {
+  for (const k of Object.keys(SHOP_CATS)) if (c && c.includes(k)) return SHOP_CATS[k];
+  return '#6F7C84';
+}
+
+function generateShopHTML(catalog) {
+  const cats = ['전체', ...new Set(catalog.map(p => p.category).filter(Boolean))];
+  const tabsHTML = cats.map((c, i) =>
+    `<button class="tab${i === 0 ? ' on' : ''}" data-filter="${shopEsc(c)}">${shopEsc(c)}</button>`
   ).join('');
 
   const cardsHTML = catalog.length === 0
-    ? `<div class="empty"><p>곧 첫 번째 책이 등록됩니다.</p></div>`
-    : catalog.map((b, i) => {
-        const color = catColor(b.category);
-        const btn = b.coupangLink
-          ? `<a href="${b.coupangLink}" target="_blank" rel="noopener" class="cta">책 만나보기 →</a>`
-          : `<span class="cta-soon">링크 준비 중</span>`;
+    ? `<div class="empty"><p>곧 첫 상품이 등록됩니다.</p><p class="empty-sub">인스타그램에서 소개한 용품이 여기에 차곡차곡 쌓입니다.</p></div>`
+    : catalog.map((p, i) => {
+        const color = shopCatColor(p.category);
+        const cta = p.coupangLink
+          ? `<a class="buy" href="${shopEsc(p.coupangLink)}" target="_blank" rel="noopener sponsored">쿠팡에서 보기</a>`
+          : `<span class="buy off">링크 준비 중</span>`;
+        const img = p.cover
+          ? `<img src="/api/cover?url=${encodeURIComponent(p.cover)}" alt="${shopEsc(p.title)}" loading="lazy" onerror="this.closest('.thumb').classList.add('noimg')">`
+          : '';
         return `
-  <article class="card" data-category="${b.category || '기타'}">
-    <div class="card-top">
-      ${i === 0 ? '<span class="badge-new">NEW</span>' : '<span></span>'}
-      <span class="book-num">No.${b.number}</span>
+  <article class="card" data-category="${shopEsc(p.category || '기타')}" data-q="${shopEsc(((p.title || '') + ' ' + (p.author || '') + ' ' + (p.category || '')).toLowerCase())}">
+    <div class="thumb${p.cover ? '' : ' noimg'}">
+      ${img}
+      ${i === 0 ? '<span class="new">NEW</span>' : ''}
+      <span class="no">No.${shopEsc(p.number)}</span>
     </div>
-    <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:14px;">
-      ${b.cover ? `<img src="/api/cover?url=${encodeURIComponent(b.cover)}" alt="표지" loading="lazy" onerror="this.style.display='none'" style="width:88px;height:126px;flex-shrink:0;border-radius:8px;object-fit:cover;box-shadow:0 3px 12px rgba(0,0,0,.2);background:#EDE6DD;">` : ''}
-      <div style="min-width:0;flex:1;">
-        <span class="cat-pill" style="background:${color}18;color:${color}">${b.category || '기타'}</span>
-        <h2 class="book-title">${b.title}</h2>
-        <p class="book-author" style="margin-bottom:0;">${b.author}</p>
+    <div class="body">
+      <span class="pill" style="background:${color}16;color:${color}">${shopEsc(p.category || '기타')}</span>
+      <h2 class="name">${shopEsc(p.title)}</h2>
+      ${p.author ? `<p class="brand">${shopEsc(p.author)}</p>` : ''}
+      ${p.coreMessage ? `<p class="why">${shopEsc(p.coreMessage)}</p>` : ''}
+      <div class="foot">
+        <span class="date">${shopEsc((p.date || '').slice(5).replace('-', '.'))}</span>
+        ${cta}
       </div>
-    </div>
-    ${b.coreMessage ? `<blockquote class="book-msg">${b.coreMessage}</blockquote>` : ''}
-    <div class="card-foot">
-      <span class="book-date">${b.date}</span>
-      ${btn}
     </div>
   </article>`;
       }).join('');
@@ -2651,105 +2669,328 @@ function generateBooksHTML(catalog) {
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>오늘의 연애 책방 | 행간</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>${shopEsc(SHOP_NAME)}</title>
+<meta name="description" content="${shopEsc(SHOP_TAGLINE)}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#FBF5F0;--card:#fff;--dark:#4A2F38;
-  --gold:#C2708F;--text:#3A2A2E;--sub:#8A7479;
-  --border:#EFE3DC;--radius:16px;
+  --bg:#F6F7F5; --card:#FFFFFF; --ink:#212629; --sub:#6C787E;
+  --line:#E4E8E4; --brand:#2F6F5E; --brand-ink:#1E4D41; --radius:16px;
 }
-body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding-bottom:80px}
-
-/* header */
-.hd{background:var(--dark);color:#fff;padding:44px 20px 0;text-align:center}
-.hd-eyebrow{font-size:10px;letter-spacing:4px;color:var(--gold);font-weight:600;text-transform:uppercase;margin-bottom:12px}
-.hd-title{font-family:'Noto Serif KR',serif;font-size:28px;font-weight:700;line-height:1.25;margin-bottom:10px}
-.hd-sub{font-size:12.5px;color:#9CA3AF;line-height:1.7;margin-bottom:28px}
-
-/* tabs */
-.tabs-wrap{background:var(--dark);padding:0 16px 18px;position:sticky;top:0;z-index:20}
-.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+body{
+  background:var(--bg); color:var(--ink); min-height:100vh;
+  font-family:'Noto Sans KR',system-ui,sans-serif; font-size:15px; line-height:1.6;
+  padding-bottom:60px; -webkit-font-smoothing:antialiased;
+}
+.hd{background:var(--brand); color:#fff; padding:38px 20px 20px; text-align:center}
+.hd-eyebrow{font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:#A9D6C6; font-weight:700; margin-bottom:10px}
+.hd-title{font-family:'Gothic A1','Noto Sans KR',sans-serif; font-size:26px; font-weight:800; letter-spacing:-.02em; margin-bottom:7px}
+.hd-sub{font-size:12.5px; color:#BEDCD2; line-height:1.65}
+.bar{background:var(--brand); padding:12px 16px 14px; position:sticky; top:0; z-index:20}
+.wrap-bar{max-width:760px; margin:0 auto}
+.search{
+  width:100%; background:var(--brand-ink); color:#fff; border:1px solid #3E8170;
+  border-radius:11px; padding:11px 13px; font-size:14px; font-family:inherit; outline:none; margin-bottom:10px;
+}
+.search::placeholder{color:#8FBFB1}
+.search:focus{border-color:#A9D6C6}
+.tabs{display:flex; gap:7px; overflow-x:auto; scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{background:#2A2A2A;color:#9CA3AF;border:none;padding:8px 18px;border-radius:20px;font-size:13px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;white-space:nowrap;transition:all .2s;font-weight:500}
-.tab.active,.tab:hover{background:var(--gold);color:var(--dark);font-weight:600}
-
-/* catalog */
-.catalog{max-width:520px;margin:0 auto;padding:24px 16px 0;display:flex;flex-direction:column;gap:16px}
-
-/* card */
-.card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:0 2px 16px rgba(0,0,0,.06);position:relative;overflow:hidden;transition:box-shadow .25s,transform .25s}
-.card:hover{box-shadow:0 8px 32px rgba(0,0,0,.11);transform:translateY(-2px)}
-.card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),transparent)}
-.card.hidden{display:none}
-
-.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.badge-new{background:#EF4444;color:#fff;font-size:9px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:1.5px;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
-.book-num{font-family:'Noto Serif KR',serif;font-size:32px;font-weight:700;color:#F0EBE2;line-height:1;user-select:none}
-
-.cat-pill{display:inline-block;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:14px}
-.book-title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;line-height:1.4;margin-bottom:6px}
-.book-author{font-size:13px;color:var(--sub);margin-bottom:14px}
-.book-msg{font-size:13.5px;line-height:1.75;color:#374151;background:#F9F5EF;border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:18px}
-.card-foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.book-date{font-size:11.5px;color:#9CA3AF}
-.cta{background:var(--dark);color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;transition:all .2s;white-space:nowrap}
-.cta:hover{background:var(--gold);color:var(--dark)}
-.cta-soon{font-size:12px;color:#9CA3AF;font-style:italic}
-
-/* empty */
-.empty{text-align:center;padding:60px 20px;color:var(--sub);font-size:15px}
-
-/* footer */
-.foot{max-width:520px;margin:40px auto 0;padding:0 16px;text-align:center;border-top:1px solid var(--border);padding-top:24px}
-.foot p{font-size:11px;color:#9CA3AF;line-height:1.8}
-.foot a{color:var(--gold);text-decoration:none}
-.foot .insta{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:8px}
+.tab{
+  flex:none; font-family:inherit; font-size:12.5px; white-space:nowrap; cursor:pointer;
+  border-radius:99px; padding:7px 14px; border:1px solid #3E8170;
+  background:transparent; color:#BEDCD2; transition:background .15s,color .15s;
+}
+.tab.on{background:#fff; color:var(--brand-ink); border-color:#fff; font-weight:700}
+main{max-width:760px; margin:0 auto; padding:20px 16px 0}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(216px,1fr)); gap:14px}
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  overflow:hidden; display:flex; flex-direction:column;
+}
+.thumb{position:relative; aspect-ratio:1/1; background:#EDEFEC; display:block}
+.thumb img{width:100%; height:100%; object-fit:cover; display:block}
+.thumb.noimg{background:repeating-linear-gradient(45deg,#EDEFEC,#EDEFEC 10px,#E6E9E5 10px,#E6E9E5 20px)}
+.thumb.noimg img{display:none}
+.new{
+  position:absolute; top:9px; left:9px; background:var(--brand); color:#fff;
+  font-size:9.5px; font-weight:700; letter-spacing:.1em; padding:3px 8px; border-radius:99px;
+}
+.no{
+  position:absolute; bottom:9px; right:9px; background:rgba(33,38,41,.72); color:#fff;
+  font-size:10px; padding:2px 7px; border-radius:5px; font-variant-numeric:tabular-nums;
+}
+.body{padding:13px 13px 14px; display:flex; flex-direction:column; gap:7px; flex:1}
+.pill{align-self:flex-start; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:99px}
+.name{font-family:'Gothic A1','Noto Sans KR',sans-serif; font-size:15px; font-weight:700; line-height:1.38; letter-spacing:-.01em}
+.brand{font-size:12px; color:var(--sub)}
+.why{
+  font-size:12.5px; color:#4A555B; line-height:1.62; padding-left:9px; border-left:2px solid var(--line);
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+}
+.foot{margin-top:auto; padding-top:11px; display:flex; align-items:center; justify-content:space-between; gap:9px}
+.date{font-size:10.5px; color:#9AA5AA; font-variant-numeric:tabular-nums; white-space:nowrap}
+.buy{
+  background:var(--brand); color:#fff; font-size:12.5px; font-weight:700;
+  padding:8px 13px; border-radius:9px; text-decoration:none; white-space:nowrap;
+}
+.buy:hover{background:var(--brand-ink)}
+.buy.off{background:#EDEFEC; color:#9AA5AA}
+.empty{text-align:center; padding:64px 20px; color:var(--sub)}
+.empty p{font-size:14px}
+.empty-sub{font-size:12.5px; color:#9AA5AA; margin-top:8px}
+.none{display:none!important}
+.note{
+  max-width:760px; margin:26px auto 0; padding:14px 16px;
+  font-size:11px; color:#8A959A; line-height:1.7; text-align:center;
+}
+@media(max-width:420px){
+  .grid{grid-template-columns:1fr 1fr; gap:10px}
+  .name{font-size:13.5px}
+  .body{padding:11px}
+  .why{font-size:11.5px; -webkit-line-clamp:2}
+}
 </style>
 </head>
 <body>
 <header class="hd">
-  <p class="hd-eyebrow">Love Between the Lines</p>
-  <h1 class="hd-title">행간<br>연애 책방</h1>
-  <p class="hd-sub">오늘 마음에 닿은 그 책을 여기서 만나요.<br>게시물의 도서 번호(No.000)로 바로 찾을 수 있습니다.</p>
+  <div class="hd-eyebrow">Pet Picks</div>
+  <div class="hd-title">${shopEsc(SHOP_NAME)}</div>
+  <p class="hd-sub">${shopEsc(SHOP_TAGLINE)}</p>
 </header>
-<div class="tabs-wrap"><div class="tabs" role="tablist">${tabsHTML}</div></div>
-<main class="catalog" id="catalog">${cardsHTML}</main>
-<footer class="foot">
-  <p class="insta"><a href="https://www.instagram.com/love.between.lines" target="_blank">@love.between.lines</a></p>
-  <p>이 페이지의 도서 구매 링크는 쿠팡 파트너스 활동의 일환으로,<br>이에 따른 일정액의 수수료를 제공받습니다.</p>
-</footer>
+<div class="bar">
+  <div class="wrap-bar">
+    <input class="search" id="q" type="search" placeholder="상품 이름이나 브랜드로 찾기" autocomplete="off">
+    <div class="tabs">${tabsHTML}</div>
+  </div>
+</div>
+<main>
+  <div class="grid" id="grid">${cardsHTML}</div>
+  <div class="empty none" id="noHit"><p>찾는 상품이 없습니다.</p></div>
+</main>
+<p class="note">이 사이트는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
 <script>
-const tabs=document.querySelectorAll('.tab');
-const cards=document.querySelectorAll('.card');
-tabs.forEach(t=>t.addEventListener('click',()=>{
-  tabs.forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  const f=t.dataset.filter;
-  cards.forEach(c=>c.classList.toggle('hidden',f!=='전체'&&c.dataset.category!==f));
-}));
-// URL #번호로 해당 책 카드 자동 스크롤 (숫자만 비교)
 (function(){
-  var t=(location.hash.replace('#','')||'').replace(/\\D/g,'');
-  if(!t)return;
-  cards.forEach(function(c){
-    var n=(c.querySelector('.book-num')?.textContent||'').replace(/\\D/g,'');
-    if(n===t){setTimeout(function(){c.scrollIntoView({behavior:'smooth',block:'center'});},300);c.style.outline='2px solid var(--gold)';c.style.outlineOffset='3px';}
+  var cards=[].slice.call(document.querySelectorAll('.card'));
+  var tabs=[].slice.call(document.querySelectorAll('.tab'));
+  var q=document.getElementById('q');
+  var noHit=document.getElementById('noHit');
+  var cat='전체';
+  function apply(){
+    var term=(q.value||'').trim().toLowerCase();
+    var hit=0;
+    cards.forEach(function(c){
+      var okCat = (cat==='전체') || (c.getAttribute('data-category')===cat);
+      var okQ = !term || (c.getAttribute('data-q')||'').indexOf(term)>=0;
+      var show = okCat && okQ;
+      c.classList.toggle('none', !show);
+      if(show) hit++;
+    });
+    noHit.classList.toggle('none', hit>0 || cards.length===0);
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){
+      tabs.forEach(function(x){ x.classList.remove('on'); });
+      t.classList.add('on');
+      cat=t.getAttribute('data-filter');
+      apply();
+    });
   });
+  q.addEventListener('input', apply);
+  // 주소 끝의 #번호로 해당 상품 카드로 이동
+  var target=(location.hash.replace('#','')||'').replace(/[^0-9]/g,'');
+  if(target){
+    cards.forEach(function(c){
+      var n=((c.querySelector('.no')||{}).textContent||'').replace(/[^0-9]/g,'');
+      if(n===target){
+        setTimeout(function(){ c.scrollIntoView({behavior:'smooth',block:'center'}); },300);
+        c.style.outline='2px solid var(--brand)';
+        c.style.outlineOffset='3px';
+      }
+    });
+  }
 })();
 </script>
 </body>
 </html>`;
 }
 
-async function handleBooksPage(env) {
+// ===== 상품 등록 관리 화면 (GET /manage) =====
+function generateManageHTML() {
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>상품 등록 · ${shopEsc(SHOP_NAME)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F6F7F5;--card:#fff;--ink:#212629;--sub:#6C787E;--line:#E4E8E4;--brand:#2F6F5E;--brand-ink:#1E4D41;--crit:#C0503F}
+body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.6;padding-bottom:60px}
+.hd{background:var(--brand);color:#fff;padding:30px 20px 22px}
+.hd-in{max-width:620px;margin:0 auto}
+.hd h1{font-family:'Gothic A1',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:5px}
+.hd p{font-size:12.5px;color:#BEDCD2}
+.hd a{color:#fff;font-size:12.5px;text-decoration:underline;display:inline-block;margin-top:9px}
+main{max-width:620px;margin:0 auto;padding:22px 16px 0;display:flex;flex-direction:column;gap:22px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+h2{font-family:'Gothic A1',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px}
+.f{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+.f label{font-size:12.5px;font-weight:700;color:var(--sub)}
+.f small{font-size:11.5px;color:#9AA5AA;line-height:1.55}
+input,select,textarea{
+  width:100%;font-family:inherit;font-size:14px;color:var(--ink);background:#fff;
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+textarea{resize:vertical;min-height:72px;line-height:1.65}
+.btn{
+  width:100%;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;
+  background:var(--brand);color:#fff;border:0;border-radius:11px;padding:13px;
+}
+.btn:hover{background:var(--brand-ink)}
+.btn:disabled{background:#C3CBC7;cursor:not-allowed}
+.msg{margin-top:12px;font-size:13px;padding:11px 13px;border-radius:10px;line-height:1.6;display:none}
+.msg.ok{display:block;background:rgba(47,111,94,.08);border:1px solid var(--brand);color:var(--brand-ink)}
+.msg.no{display:block;background:rgba(192,80,63,.07);border:1px solid var(--crit);color:var(--crit)}
+.item{display:flex;gap:11px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:#EDEFEC;flex:none}
+.item .t{flex:1;min-width:0}
+.item .n{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .m{font-size:11.5px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item button{
+  flex:none;font-family:inherit;font-size:12px;cursor:pointer;background:#fff;
+  color:var(--crit);border:1px solid var(--line);border-radius:8px;padding:6px 10px;
+}
+.item button:hover{border-color:var(--crit)}
+.muted{font-size:13px;color:var(--sub);text-align:center;padding:22px 0}
+</style>
+</head>
+<body>
+<header class="hd"><div class="hd-in">
+  <h1>상품 등록</h1>
+  <p>여기서 등록한 상품이 판매 페이지에 바로 올라갑니다.</p>
+  <a href="/shop" target="_blank">판매 페이지 열어보기</a>
+</div></header>
+<main>
+  <section class="box">
+    <h2>새 상품 넣기</h2>
+    <div class="f">
+      <label for="t">상품 이름</label>
+      <input id="t" type="text" placeholder="브리더랩 저알러지 연어 사료 2kg">
+    </div>
+    <div class="f">
+      <label for="b">브랜드</label>
+      <input id="b" type="text" placeholder="브리더랩">
+    </div>
+    <div class="f">
+      <label for="c">품목</label>
+      <select id="c">
+        <option>사료·간식</option><option>산책용품</option><option>배변·위생</option>
+        <option>장난감</option><option>미용·건강</option><option>이동·하우스</option>
+      </select>
+    </div>
+    <div class="f">
+      <label for="img">상품 사진 주소</label>
+      <input id="img" type="url" placeholder="https://...jpg">
+      <small>쿠팡 상품 페이지에서 사진을 길게 눌러 &quot;이미지 주소 복사&quot;를 하면 됩니다. 비워두면 회색 칸으로 나옵니다.</small>
+    </div>
+    <div class="f">
+      <label for="w">추천 이유</label>
+      <textarea id="w" placeholder="알러지로 긁던 아이가 2주 만에 확 줄었어요. 단일 단백질이라 속도 편합니다."></textarea>
+    </div>
+    <div class="f">
+      <label for="l">쿠팡 파트너스 링크</label>
+      <input id="l" type="url" placeholder="https://link.coupang.com/a/...">
+    </div>
+    <button class="btn" id="go">상품 등록하기</button>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <section class="box">
+    <h2>등록된 상품</h2>
+    <div id="list"><p class="muted">불러오는 중…</p></div>
+  </section>
+</main>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  function say(text, ok){ var m=$('msg'); m.className='msg '+(ok?'ok':'no'); m.textContent=text; }
+
+  function load(){
+    fetch('/api/shop-catalog').then(function(r){return r.json();}).then(function(rows){
+      var el=$('list');
+      if(!rows.length){ el.innerHTML='<p class="muted">아직 등록된 상품이 없습니다.</p>'; return; }
+      el.textContent='';
+      rows.forEach(function(p){
+        var d=document.createElement('div'); d.className='item';
+        var im=document.createElement('img');
+        im.src = p.cover ? ('/api/cover?url='+encodeURIComponent(p.cover)) : '';
+        im.alt=''; im.onerror=function(){ im.removeAttribute('src'); };
+        var t=document.createElement('div'); t.className='t';
+        var n=document.createElement('div'); n.className='n'; n.textContent='No.'+p.number+' '+(p.title||'');
+        var m=document.createElement('div'); m.className='m';
+        m.textContent=(p.category||'')+(p.author?' · '+p.author:'')+(p.coupangLink?'':' · 링크 없음');
+        t.appendChild(n); t.appendChild(m);
+        var rm=document.createElement('button'); rm.type='button'; rm.textContent='빼기';
+        rm.addEventListener('click', function(){
+          if(!confirm('No.'+p.number+' 상품을 뺄까요?')) return;
+          rm.disabled=true;
+          fetch('/api/delete-book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({number:p.number})})
+            .then(function(r){return r.json();})
+            .then(function(){ load(); })
+            .catch(function(){ rm.disabled=false; alert('빼지 못했습니다.'); });
+        });
+        d.appendChild(im); d.appendChild(t); d.appendChild(rm);
+        el.appendChild(d);
+      });
+    }).catch(function(){ $('list').innerHTML='<p class="muted">목록을 불러오지 못했습니다.</p>'; });
+  }
+
+  $('go').addEventListener('click', function(){
+    var title=$('t').value.trim();
+    if(!title){ say('상품 이름을 적어주세요.', false); return; }
+    var payload={
+      bookInfo:{
+        title:title, author:$('b').value.trim(), category:$('c').value,
+        coreMessage:$('w').value.trim(), cover:$('img').value.trim()
+      },
+      cover:$('img').value.trim(),
+      coupangLink:$('l').value.trim()
+    };
+    $('go').disabled=true; say('등록하는 중…', true);
+    fetch('/api/add-book-to-catalog',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        $('go').disabled=false;
+        if(res && res.success){
+          say('No.'+res.bookNumber+' 로 등록했습니다.', true);
+          ['t','b','img','w','l'].forEach(function(i){ $(i).value=''; });
+          load();
+        } else { say((res && res.error) || '등록하지 못했습니다.', false); }
+      })
+      .catch(function(e){ $('go').disabled=false; say('등록하지 못했습니다: '+e.message, false); });
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>`;
+}
+
+async function handleShopPage(env) {
   const catalog = (await env.PENDING_POSTS?.get('book_catalog', 'json').catch(() => null)) || [];
-  return new Response(generateBooksHTML(catalog), {
-    headers: { 'Content-Type': 'text/html;charset=UTF-8' },
+  return new Response(generateShopHTML(catalog), {
+    headers: { 'Content-Type': 'text/html;charset=UTF-8', 'Cache-Control': 'no-store' },
   });
 }
 
@@ -3044,7 +3285,7 @@ export default {
           }
           result = { success: true, message: `도서관이 초기화되었습니다. (보관함 ${deleted}건 삭제)` };
         }
-        else if (url.pathname === '/api/book-catalog') {
+        else if (url.pathname === '/api/book-catalog' || url.pathname === '/api/shop-catalog') {
           const catalog = (await env.PENDING_POSTS?.get('book_catalog', 'json').catch(() => null)) || [];
           return new Response(JSON.stringify(catalog), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
         }
@@ -3056,9 +3297,16 @@ export default {
       }
     }
 
-    // 도서 카탈로그 페이지 (GET /books)
-    if (request.method === 'GET' && url.pathname === '/books') {
-      return handleBooksPage(env);
+    // 상품 등록 관리 화면 (GET /manage)
+    if (request.method === 'GET' && url.pathname === '/manage') {
+      return new Response(generateManageHTML(), {
+        headers: { 'Content-Type': 'text/html;charset=UTF-8', 'Cache-Control': 'no-store' },
+      });
+    }
+
+    // 상품 카탈로그 페이지 (GET /shop). /books 는 예전 주소 호환용 별칭.
+    if (request.method === 'GET' && (url.pathname === '/shop' || url.pathname === '/books')) {
+      return handleShopPage(env);
     }
 
     return env.ASSETS.fetch(request);
