@@ -14,7 +14,7 @@ import streamlit as st
 
 from core import llm, subtitle, tts, video
 
-st.set_page_config(page_title="AI 숏폼 동화 스튜디오", page_icon="🌸", layout="centered")
+st.set_page_config(page_title="AI 숏폼 동화 스튜디오", layout="centered")
 
 # 모바일에서 손가락으로 누르기 쉬운 크기 + 세로 화면 가독성
 st.markdown("""
@@ -76,7 +76,7 @@ with st.sidebar:
 
 WIDTH, HEIGHT = video.PRESETS[preset]
 
-st.title("🌸 AI 숏폼 동화 스튜디오")
+st.title("AI 숏폼 동화 스튜디오")
 st.caption("한국 전래동화 쇼츠(9:16)를 반자동으로 만듭니다.")
 
 step1, step2, step3 = st.tabs(["① 대본·프롬프트", "② 영상 업로드", "③ 렌더링"])
