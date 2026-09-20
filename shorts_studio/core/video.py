@@ -121,6 +121,48 @@ def concat_videos(scene_mp4s: list[str], work_dir: str) -> str:
     return out
 
 
+# 씬이 바뀔 때 쓰는 전환. 순서대로 돌려 써서 매번 같은 효과가 반복되지 않게 한다.
+TRANSITIONS = ["fade", "wipeleft", "smoothup", "circleopen", "slideright", "dissolve"]
+
+
+def concat_with_transitions(scene_mp4s: list[str], scene_durs: list[float],
+                            work_dir: str, xdur: float = 0.4) -> str:
+    """씬 사이에 전환 효과를 넣어 이어붙인다.
+
+    ⚠️ 나레이션과 어긋나지 않게 하는 것이 핵심이다.
+    각 씬 영상은 제 길이 d 보다 xdur 만큼 길게 만들어 두고(normalize_scene 이 처리),
+    전환이 그 여분을 정확히 먹는다. 그래서 k번째 전환은 앞선 씬 길이의 합에서 시작하고,
+    마지막에 남는 xdur 한 번만 잘라내면 전체 길이가 정확히 sum(d) 가 된다.
+    이 계산이 틀어지면 뒤로 갈수록 말과 그림이 밀린다.
+    """
+    if len(scene_mp4s) < 2:
+        return concat_videos(scene_mp4s, work_dir)
+
+    cmd = ["ffmpeg", "-y"]
+    for p in scene_mp4s:
+        cmd += ["-i", p]
+
+    steps, prev, offset = [], "[0:v]", 0.0
+    for i in range(1, len(scene_mp4s)):
+        offset += scene_durs[i - 1]
+        label = f"[v{i}]"
+        steps.append(f"{prev}[{i}:v]xfade=transition="
+                     f"{TRANSITIONS[(i - 1) % len(TRANSITIONS)]}"
+                     f":duration={xdur:.3f}:offset={offset:.3f}{label}")
+        prev = label
+
+    out = str(Path(work_dir) / "joined.mp4")
+    cmd += [
+        "-filter_complex", ";".join(steps),
+        "-map", prev, "-an",
+        "-t", f"{sum(scene_durs):.3f}",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+        "-pix_fmt", "yuv420p", "-movflags", "+faststart", out,
+    ]
+    _run(cmd, "씬 전환 넣어 이어붙이기")
+    return out
+
+
 def finalize(video: str, audio: str, ass: str, out: str, *,
              width: int, fonts_dir: str) -> str:
     """나레이션을 입히고 가라오케 자막을 태워 최종 MP4를 만든다."""

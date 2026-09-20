@@ -80,7 +80,9 @@ def main() -> int:
     voice = os.environ.get("VOICE", "ko-KR-SunHiNeural")
     rate = os.environ.get("RATE", "-5%")
     highlight = os.environ.get("HIGHLIGHT", "노란색")
-    tail_pad = float(os.environ.get("TAIL_PAD", "0.4"))
+    tail_pad = float(os.environ.get("TAIL_PAD", "0.5"))
+    # 전환은 씬 끝 여백 안에서 일어나게 한다. 여백보다 길면 대사 위로 화면이 섞인다.
+    xdur = min(float(os.environ.get("XFADE", "0.4")), tail_pad)
 
     # 1. 씬별 나레이션 합성 (단어 타임스탬프 포함)
     audios = []
@@ -96,7 +98,9 @@ def main() -> int:
         print(f"[{i + 1}/{len(scenes)}] 영상 내려받아 규격 변환")
         raw = download_asset(assets[f"scene{i + 1:02d}.mp4"]["url"], token,
                              WORK / f"raw_{i + 1:02d}.mp4")
-        clips.append(video.normalize_scene(str(raw), dur, str(WORK / f"scene_{i + 1:02d}.mp4"),
+        # 전환이 먹을 여분(xdur)을 붙여 둔다. concat_with_transitions 가 정확히 그만큼 쓴다.
+        clips.append(video.normalize_scene(str(raw), dur + xdur,
+                                           str(WORK / f"scene_{i + 1:02d}.mp4"),
                                            width=width, height=height))
 
     # 3. 전역 타임라인으로 가라오케 자막
@@ -117,7 +121,7 @@ def main() -> int:
     # 4. 합성 → 최종 렌더
     print("합성 및 최종 렌더링")
     narration = video.build_narration_track([a.mp3 for a in audios], durs, str(WORK))
-    joined = video.concat_videos(clips, str(WORK))
+    joined = video.concat_with_transitions(clips, durs, str(WORK), xdur=xdur)
     final = video.finalize(joined, narration, ass, str(WORK / "final.mp4"),
                            width=width, fonts_dir=fonts_dir)
 

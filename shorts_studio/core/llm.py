@@ -11,6 +11,19 @@ from dataclasses import dataclass
 
 MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
+# 입을 움직이지 않게 하는 고정 문장. LLM이 매번 쓰기를 기대하지 않고 **무조건 붙인다**.
+# 나레이터가 들려주는 이야기이므로 인물이 말하면 누가 말하는지 헷갈리고, 영상 AI가
+# 지어낸 영어 입모양은 한국어 나레이션과도 어긋난다.
+# 바라는 상태를 먼저 적는다 — 안전 검사기는 부정문을 못 읽고 낱말만 보기 때문이다.
+SILENCE_LOCK = (
+    "All characters keep their mouths completely closed and motionless for the entire shot, "
+    "conveying everything through gesture, posture and eye expression alone. "
+    "Silent pantomime performance with zero lip movement and no lip-sync."
+)
+
+# 네거티브 칸이 따로 있는 툴에는 여기까지 넣는다(프롬프트 본문이 아니라 전용 칸이라 안전).
+SILENCE_NEGATIVE = "talking, speaking, mouth open, lip sync, moving lips, dialogue, subtitles, text"
+
 STYLE_KEYWORDS = (
     "Korean traditional folklore style, 3D animated character, hanbok, "
     "warm storybook lighting, soft pastel color palette, cinematic depth of field"
@@ -136,10 +149,13 @@ _USER = """주제: {topic}
   · 쓰지 않을 것: 옷을 만지는 동작(소매를 쥔다 등)
   · 인물은 이름으로만 부른다 (예: "{{name}} walks along a mountain path")
 
-- ⭐ **말을 하지 않는다.** 영상 AI가 영어 대사를 지어내 입을 움직이면, 한국어 나레이션과
-  어긋나 못 쓰는 영상이 된다. 바라는 상태를 적는다(금지 문장으로 적지 않는다):
-  · "lips closed, communicating through gesture and expression"
+- ⭐ **인물은 절대 말하지 않는다.** 나레이터가 들려주는 이야기라 인물이 입을 움직이면
+  누가 말하는지 헷갈리고, 영상 AI가 지어낸 영어 입모양은 한국어 나레이션과도 어긋난다.
+  · 대화·독백·외침·속삭임 같은 **발화 동작을 씬 내용으로 쓰지 않는다**
+    (쓰지 않을 것: says, shouts, calls out, whispers, talks, argues, sings)
+  · 감정은 몸짓·자세·눈빛·손으로만 드러낸다
   · 소리는 주변음만: "ambient wind and footsteps, soft traditional instrumental"
+  · 입을 다물라는 문장은 시스템이 자동으로 붙이니 직접 적지 않아도 된다
 
 - ⭐ **샷을 매번 다르게 한다.** shot 칸에 [샷 크기] + [카메라 움직임]을 적고 prompt 안에도 녹인다.
   · 샷 크기: wide establishing / medium / medium close-up / close-up / low-angle / high-angle /
@@ -187,6 +203,19 @@ _LOOK_WORDS = re.compile(
 )
 
 
+# 발화 동작이 씬 내용에 들어가면 입 다물라는 지시와 싸운다.
+_TALK_WORDS = re.compile(
+    r"\b(say|says|said|speak|speaks|speaking|shout|shouts|shouting|yell|yells|"
+    r"call out|calls out|whisper|whispers|talk|talks|talking|argue|argues|"
+    r"sing|sings|singing|cry out|announce|announces|dialogue|conversation)\b",
+    re.I,
+)
+
+
+def talk_words(prompt: str) -> list[str]:
+    return sorted({m.group(0).lower() for m in _TALK_WORDS.finditer(prompt)})
+
+
 def strip_look_words(prompt: str) -> tuple[str, list[str]]:
     """외모 낱말이 남아 있으면 찾아서 돌려준다(지우지는 않는다 — 문장이 깨지므로)."""
     hits = sorted({m.group(0).lower() for m in _LOOK_WORDS.finditer(prompt)})
@@ -229,12 +258,16 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
         body = " ".join(str(s.get("prompt", "")).split())
         if style_lock and style_lock.lower() not in body.lower():
             body = f"{body} {style_lock}"
+        body = f"{body} {SILENCE_LOCK}"          # 입 다무는 문장은 예외 없이 붙인다
+        neg = " ".join(str(s.get("negative", "")).split())
+        if cfg["negative"]:
+            neg = f"{neg}, {SILENCE_NEGATIVE}".strip(" ,")
         scenes.append(Scene(
             narration=" ".join(str(s.get("narration", "")).split()),
             visual=str(s.get("visual", "")).strip(),
             shot=" ".join(str(s.get("shot", "")).split()),
             prompt=(body + cfg["suffix"]).strip(),
-            negative=" ".join(str(s.get("negative", "")).split()),
+            negative=neg,
         ))
     if not scenes:
         raise RuntimeError("대본 생성 결과가 비었습니다. 주제를 조금 더 구체적으로 적어 보세요.")
@@ -252,4 +285,8 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
         if hits:
             print(f"::warning::{i}번 씬 프롬프트에 외모 낱말이 남았습니다({', '.join(hits)}). "
                   "참조 이미지와 충돌해 인물이 달라질 수 있습니다.")
+        talks = talk_words(s.prompt)
+        if talks:
+            print(f"::warning::{i}번 씬 프롬프트에 발화 동작이 있습니다({', '.join(talks)}). "
+                  "인물이 입을 움직일 수 있습니다.")
     return board
