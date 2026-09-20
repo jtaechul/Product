@@ -71,7 +71,31 @@ jobs:
             echo "::error::열쇠가 부족합니다:$MISS"
             exit 1
           fi
-          echo "열쇠 확인됨"
+
+          # 값이 있는 것과 쓸 수 있는 것은 다르다. Cloudflare 토큰이 살아 있는지
+          # 여기서 확인한다 — 안 그러면 배포 한참 뒤에 암호 같은 에러로 터진다.
+          VERIFY=$(curl -sS https://api.cloudflare.com/client/v4/user/tokens/verify \
+                     -H "Authorization: Bearer $CF" || echo '{}')
+          if ! printf '%s' "$VERIFY" | grep -q '"success":true'; then
+            {
+              echo "## Cloudflare 열쇠가 더 이상 듣지 않습니다"
+              echo ""
+              echo "\`CF_API_TOKEN\` 이 만료됐거나 지워졌습니다. 새로 만들어 주십시오."
+              echo ""
+              echo "1. [API 토큰 만들기](https://dash.cloudflare.com/profile/api-tokens) → **Create Token**"
+              echo "2. **Edit Cloudflare Workers** 템플릿의 **Use template** 누르기"
+              echo "3. 그대로 **Continue to summary** → **Create Token**"
+              echo "4. 나온 값을 복사해 저장소 시크릿 \`CF_API_TOKEN\` 에 덮어쓰기"
+              echo ""
+              echo "Cloudflare 가 준 답:"
+              echo '```'
+              printf '%s\n' "$VERIFY"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::Cloudflare 토큰이 유효하지 않습니다. 요약을 확인하세요."
+            exit 1
+          fi
+          echo "열쇠 확인됨 (Cloudflare 토큰 유효)"
 
       - uses: actions/setup-node@v4
         with:
