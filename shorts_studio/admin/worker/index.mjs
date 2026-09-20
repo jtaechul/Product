@@ -9,6 +9,10 @@
 // 필요한 시크릿: GH_TOKEN · ADMIN_PASSWORD · SESSION_SECRET (배포 워크플로가 등록)
 // 필요한 바인딩: BLOB (KV) · ASSETS (정적 화면)
 
+// 배포할 때 커밋 번호로 바뀐다. 손님이 "또 그러네" 하실 때 폰에 뜬 화면이
+// 고치기 전 것인지 후의 것인지 /health 로 바로 알기 위해서다.
+const BUILD = "dev";
+
 const REPO = "jtaechul/Product";
 const BRANCH = "main";
 const GH = "https://api.github.com";
@@ -254,7 +258,7 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     const p = url.pathname;
-    if (p === "/health") return new Response("ok");
+    if (p === "/health") return new Response("ok " + BUILD);
     if (p === "/api/login") return login(req, env);
 
     const ok = await authed(req, env);
