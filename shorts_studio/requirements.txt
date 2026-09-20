@@ -1,0 +1,3 @@
+streamlit>=1.64
+openai>=1.60
+edge-tts>=7.0
