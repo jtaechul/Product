@@ -1,0 +1,67 @@
+name: Shorts Studio - 대본 생성
+
+# ① 주제 → 대본 + 씬별 영상 프롬프트. 관리자 페이지가 Run workflow로 호출한다.
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "동화 주제"
+        required: true
+        type: string
+      scenes:
+        description: "컷 수 (3~6)"
+        required: false
+        default: "4"
+        type: string
+      tool:
+        description: "영상 생성 툴"
+        required: false
+        default: "Runway (Gen-3/Gen-4)"
+        type: choice
+        options:
+          - "Runway (Gen-3/Gen-4)"
+          - "Pika"
+          - "Luma (Dream Machine)"
+          - "Kling"
+          - "Sora"
+          - "Veo (Google)"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shorts-studio-script
+  cancel-in-progress: false
+
+jobs:
+  script:
+    runs-on: ubuntu-latest
+    name: 대본·프롬프트 생성
+    defaults:
+      run:
+        working-directory: shorts_studio
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - run: pip install --quiet "openai>=1.60"
+
+      - name: 대본 생성
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TOPIC: ${{ inputs.topic }}
+          SCENES: ${{ inputs.scenes }}
+          TOOL: ${{ inputs.tool }}
+        run: python run_script.py
+
+      - name: 결과 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/
+          git diff --cached --quiet && echo "변경 없음" && exit 0
+          git commit -m "shorts_studio: 대본 생성 (${{ inputs.topic }})"
+          git push

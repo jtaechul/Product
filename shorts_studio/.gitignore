@@ -3,3 +3,6 @@ __pycache__/
 .streamlit/secrets.toml
 output/
 work/
+node_modules/
+.wrangler/
+_hf_stage/

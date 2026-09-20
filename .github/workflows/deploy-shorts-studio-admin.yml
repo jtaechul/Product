@@ -1,0 +1,34 @@
+name: Deploy Shorts Studio Admin
+
+# 숏폼 동화 스튜디오 관리자 페이지(Cloudflare Workers 무료) 자동 배포.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "shorts_studio/admin/**"
+      - ".github/workflows/deploy-shorts-studio-admin.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: shorts-studio-admin-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Cloudflare Workers 배포 (관리자 페이지)
+    defaults:
+      run:
+        working-directory: shorts_studio/admin
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install --no-audit --no-fund
+
+      - run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}

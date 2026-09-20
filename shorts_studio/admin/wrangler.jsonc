@@ -1,0 +1,8 @@
+{
+  // 숏폼 동화 스튜디오 관리자 페이지 — 정적 에셋 + 미디어/업로드 프록시 (서버 시크릿 없음)
+  // 배포: .github/workflows/deploy-shorts-studio-admin.yml
+  "name": "shorts-studio",
+  "compatibility_date": "2026-06-01",
+  "main": "worker/index.mjs",
+  "assets": { "directory": "./public", "binding": "ASSETS" }
+}
