@@ -1,0 +1,35 @@
+{
+  "id": "260920-134329",
+  "topic": "홍길동전",
+  "title": "아버지를 아버지라 부르지 못했던 소년의 비밀은?",
+  "tool": "Veo (Google)",
+  "tool_note": "Veo는 소리도 함께 생성하므로 프롬프트 끝에 주변음 묘사를 넣었습니다.",
+  "hashtags": [
+    "#홍길동전",
+    "#전래동화",
+    "#영웅이야기"
+  ],
+  "scenes": [
+    {
+      "narration": "옛날 옛적, 길동이라는 총명한 소년이 살았답니다. 하지만 세상의 억울함 때문에 아버지를 아버지라 부르지 못하는 슬픔을 안고 있었지 뭐예요.",
+      "visual": "어린 홍길동이 슬픈 표정으로 아버지에게 멀리서 절하는 모습",
+      "prompt": "A young Hong Gildong, a 3D animated character in traditional Korean hanbok, stands in a humble traditional Korean house courtyard with a sad expression, bowing respectfully from a distance to an older man who is his father, reflecting the Korean traditional folklore style. The camera is at eye level, capturing the warm storybook lighting and soft pastel color palette, with a cinematic depth of field. Ambient sound of a gentle traditional flute. Vertical 9:16 aspect ratio.",
+      "negative": ""
+    },
+    {
+      "narration": "억울함을 견디다 못한 길동이는 어느 날 집을 떠나 정의를 찾는 활빈당 우두머리가 되었답니다. 탐관오리들에게서 백성들의 재물을 되찾아주지 뭐예요!",
+      "visual": "홍길동이 의적 복장으로 탐관오리의 재물을 훔치는 모습",
+      "prompt": "The adult Hong Gildong, a 3D animated character in a dark, heroic hanbok with a subtle mask, stands on a rooftop overlooking a lavish traditional Korean official's house at night, holding a sack of recovered goods in a Korean traditional folklore style. The camera is a low-angle shot, emphasizing his heroic silhouette under warm storybook lighting with a soft pastel color palette and cinematic depth of field. Ambient sound of a distant night market. Vertical 9:16 aspect ratio.",
+      "negative": ""
+    },
+    {
+      "narration": "그렇게 길동이는 어려운 백성들에게 도움을 주고, 모두가 행복하게 웃을 수 있는 세상을 꿈꾸었답니다. 따뜻한 마음을 가진 진짜 영웅이었지요!",
+      "visual": "홍길동이 가난한 백성들에게 곡식을 나누어주고 백성들이 기뻐하는 모습",
+      "prompt": "The heroic Hong Gildong, a 3D animated character in his familiar heroic hanbok, is warmly distributing sacks of grain to grateful villagers in a bustling traditional Korean village square, reflecting the Korean traditional folklore style. The camera is a medium shot, capturing the joyful interactions under bright, warm storybook lighting with a soft pastel color palette and cinematic depth of field. Ambient sound of happy village chatter and children playing. Vertical 9:16 aspect ratio.",
+      "negative": ""
+    }
+  ],
+  "status": "scripted",
+  "created_at": "2026-09-20T13:43:29Z",
+  "video": null
+}
