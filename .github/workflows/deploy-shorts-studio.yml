@@ -3,12 +3,9 @@ name: Deploy Shorts Studio
 # shorts_studio/ 를 허깅페이스 Space로 올린다.
 # Space는 저장소 루트에 app.py가 있어야 하므로, shorts_studio/ '안의 내용'을 Space 루트로 올린다.
 
+# 수동 실행 전용. 허깅페이스는 Docker Space를 무료 티어에서 더 이상 호스팅하지 않는다
+# (PRO 구독 필요, 402 Payment Required). PRO를 구독하면 그때 이 워크플로를 실행하면 된다.
 on:
-  push:
-    branches: ["claude/listen-and-plan-z3yryb", "main"]
-    paths:
-      - "shorts_studio/**"
-      - ".github/workflows/deploy-shorts-studio.yml"
   workflow_dispatch:
 
 jobs:
