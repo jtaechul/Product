@@ -375,7 +375,8 @@ async function openDetail(rec) {
       tag.className = "tag " + (yes ? "ok" : "warn");
     };
     mark(have.has(n));
-    w.querySelector(".hint").textContent = sc.narration;
+    w.querySelector(".hint").textContent =
+      (sc.shot ? "[" + sc.shot + "] " : "") + sc.narration;
     w.querySelector("pre").textContent = sc.prompt + (sc.negative ? "\n\n[네거티브] " + sc.negative : "");
     const [btnCopy, btnUp] = w.querySelectorAll("button");
     const bar = w.querySelector(".bar");
