@@ -11,16 +11,17 @@
   → 관리자 페이지에서 바로 재생·다운로드
 ```
 
-무료다. 화면은 Cloudflare Workers, 무거운 영상 작업은 GitHub Actions, 파일 보관은
-GitHub Release가 맡는다. 저장소의 `book-carousel`·`short-movie-generator`와 같은 구조다.
+무료다. 화면은 GitHub Pages, 무거운 영상 작업은 GitHub Actions, 파일 보관은
+GitHub Release가 맡는다. **GitHub 하나로 끝나고 다른 서비스가 필요 없다.**
+
+관리자 페이지: [jtaechul.github.io/Product/shorts-studio/](https://jtaechul.github.io/Product/shorts-studio/)
 
 ## 구조
 
 ```
 shorts_studio/
-├── admin/                  관리자 페이지 (Cloudflare Workers)
-│   ├── public/index.html   모바일 UI — 주제입력·프롬프트복사·영상업로드·완성본재생
-│   └── worker/index.mjs    로그인·GitHub 호출·영상 업로드·완성본 재생
+├── webapp/index.html       관리자 페이지 (GitHub Pages · 서버 없음)
+│                           주제입력·프롬프트복사·영상업로드·완성본재생
 ├── core/                   제작 엔진 (Actions와 로컬이 공유)
 │   ├── llm.py              대본 + 툴별 영문 프롬프트 (Gemini)
 │   ├── tts.py              Edge-TTS 합성 + 단어 타임스탬프
@@ -32,31 +33,16 @@ shorts_studio/
 └── app.py                  (선택) 로컬 PC에서 쓰는 Streamlit 단독 실행판
 ```
 
-워크플로: `.github/workflows/shorts-studio-script.yml` · `shorts-studio-render.yml` ·
-`deploy-shorts-studio-admin.yml`
+워크플로: `.github/workflows/shorts-studio-script.yml` · `shorts-studio-render.yml`
+(페이지 자체는 `deploy-pages.yml` 이 main 푸시마다 함께 올린다)
 
 ## 처음 한 번만 하는 준비
 
-저장소 → Settings → Secrets and variables → Actions 에 아래를 등록한다.
+저장소 시크릿은 `GEMINI_API_KEY` 하나면 된다(이미 등록돼 있다). 대본 생성에만 쓰인다.
 
-이 저장소엔 프로젝트가 여럿이라, 이 프로젝트 전용 값에는 `MOVIEGEN_` 을 붙인다.
-여러 프로젝트가 같이 쓰는 API 키는 접두어 없이 그대로 쓴다.
-
-| 이름 | 쓰이는 곳 | 상태 |
-|---|---|---|
-| `CF_API_TOKEN` | 관리자 페이지 배포 | 이미 등록돼 있다 |
-| `MOVIEGEN_ADMIN_PASSWORD` | 관리자 페이지 로그인 비밀번호 (직접 정한다) | 필수 |
-| `MOVIEGEN_ADMIN_GH_TOKEN` | 워커가 쓸 GitHub 토큰 — Contents = **Read and write**, Actions = Read and write | 필수 |
-| `GEMINI_API_KEY` | 대본 생성 | 이미 등록돼 있다 |
-| `CLOUDFLARE_ACCOUNT_ID` | 토큰이 여러 계정에 닿을 때만 | 선택 |
-| `MOVIEGEN_SESSION_SECRET` | 로그인 위조 방지용 문자열 | 선택 (없으면 비밀번호를 쓴다) |
-
-이 프로젝트가 만드는 것들도 이름을 나눠 둔다 — 워커 `shorts-studio`,
-릴리스 태그 `moviegen-<id>`, 시크릿 `MOVIEGEN_*`.
-같은 계정·같은 저장소에 다른 프로젝트가 여럿 살기 때문이다.
-
-그다음 관리자 페이지 주소를 열고 `MOVIEGEN_ADMIN_PASSWORD` 로 들어가면 끝이다.
-**손님이 폰에서 토큰을 다룰 일은 없다** — GitHub 토큰은 워커 안에만 있다.
+관리자 페이지에 처음 들어가면 GitHub 개인 토큰을 한 번 넣는다.
+권한은 **Contents = Read and write**, **Actions = Read and write** 두 가지.
+토큰은 그 기기의 브라우저에만 남고 어디로도 전송되지 않는다.
 
 ## 설계 메모
 
@@ -68,17 +54,15 @@ Edge-TTS는 음성을 만들면서 "몇 초에 어떤 단어를 발음했는지"
 **나레이션은 씬별로 따로 만든다.** 씬 영상 길이를 그 씬의 나레이션 길이에 정확히 맞추기
 위해서다. 전체를 한 덩어리로 만들면 말과 화면이 뒤로 갈수록 밀린다.
 
-**씬 영상은 브라우저 → 워커 → 깃허브 릴리스로 간다.** 워커가 자기 토큰으로 올리므로
-브라우저는 토큰을 만질 일이 없고, 같은 출처로만 통신하니 CORS 문제도 없다.
-(처음엔 클라우드플레어 보관함(KV)을 거치게 만들었는데, 이 계정의 API 토큰에 보관함
-권한이 없어 막혔다. 깃허브에 바로 두니 14일 만료도, 용량 제한도, 배포할 때 보관함을
-만드는 단계도 함께 사라졌다.)
+**왜 Cloudflare 를 안 쓰나.** 처음엔 `verdict-theater` 처럼 Cloudflare Workers 에 올려
+토큰을 서버에 숨기려 했다. 그런데 이 계정의 Cloudflare API 토큰이 만료돼 배포 자체가
+되지 않았고(`9109 Invalid access token`), 그건 계정 주인만 고칠 수 있는 문제였다.
+GitHub Pages 는 이미 main 푸시마다 자동 배포되고 있어 새로 준비할 것이 없다.
+대가로 GitHub 토큰이 서버가 아니라 브라우저에 저장된다.
 
-**완성본 재생에 프록시를 쓰는 이유.** GitHub Release 주소는 `attachment`로 내려와
-아이폰 사파리가 인라인 재생을 거부한다(검은 화면). 워커가 `video/mp4` + `inline`으로
-바꿔 중계하고, Range(몇 번째 바이트부터)를 그대로 넘겨 탐색도 되게 한다.
-
-(위 두 가지와 로그인 구조는 `verdict-theater/admin` 의 검증된 구현을 이식했다.)
+**완성본은 통째로 받아서 재생한다.** GitHub Release 주소는 `attachment` 로 내려와
+아이폰 사파리가 인라인 재생을 거부한다(검은 화면). 서버가 없어 중계할 수 없으므로,
+파일을 받아 `blob` 으로 바꿔 물린다. 쇼츠라 용량이 작아 이 방식으로 충분하다.
 
 ## 알려진 제약
 
@@ -87,7 +71,7 @@ Edge-TTS는 음성을 만들면서 "몇 초에 어떤 단어를 발음했는지"
 | 워크플로 위치 | GitHub 규칙상 `workflow_dispatch`는 **기본 브랜치(main)에 있는 워크플로만** 실행된다. |
 | Edge-TTS 차단 | 일부 데이터센터 IP에서 마이크로소프트가 403을 낼 수 있다. Actions에서 막히면 성우 합성이 실패한다. |
 | 인물 일관성 | 씬마다 영상 AI가 따로 생성하므로 얼굴·의상이 완전히 같지는 않다. 프롬프트에 인물 묘사를 반복해 최대한 맞춘다. |
-| 업로드 용량 | 무료 Cloudflare 는 한 번에 100MB 까지 받는다. 씬 영상 하나가 그보다 크면 줄여서 올려야 한다. |
+| 토큰 보관 | 서버가 없어 GitHub 토큰이 브라우저(localStorage)에 남는다. 공용 기기에서는 쓰지 않는다. |
 
 ## 로컬에서 직접 돌리기 (선택)
 
