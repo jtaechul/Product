@@ -92,10 +92,12 @@ _USER = """주제: {topic}
   "title": "쇼츠 제목 (한국어, 18자 이내, 호기심을 자극)",
   "character_name": "주인공 이름 (한국어, 예: 길동)",
   "character_image_prompt": "주인공 전신 참조 이미지 1장을 만들 영문 프롬프트",
+  "style_lock": "모든 씬에 그대로 붙일 색감·조명 고정 문장 (영문 1문장)",
   "scenes": [
     {{
       "narration": "그 씬의 한국어 나레이션 대본",
       "visual": "그 씬 화면을 한국어로 한 줄 요약(사용자 확인용)",
+      "shot": "샷 크기 + 카메라 움직임 (영문, 예: medium shot, slow dolly-in)",
       "prompt": "영상 생성 AI에 넣을 영문 프롬프트",
       "negative": "네거티브 프롬프트(영문). 필요 없으면 빈 문자열"
     }}
@@ -118,15 +120,37 @@ _USER = """주제: {topic}
 - 정면 전신, 중립 표정, 평범한 서 있는 자세. 동작·감정·소품 금지.
 - 스타일 키워드를 포함할 것: {style}
 
-[씬 프롬프트 규칙 — scenes[].prompt]
+[색감 고정 문장 규칙 — style_lock]
+- 색·빛·질감을 못 박는 영문 **1문장**. 이 문장이 모든 씬 끝에 **글자 그대로** 붙는다.
+- 반드시 담을 것: 색 팔레트(구체적인 색 3~4개), 광원의 성질, 시간대 느낌, 렌더링 질감.
+- 예: "Consistent warm palette of ochre, deep indigo and pale jade under soft diffused
+  late-afternoon light, gentle film grain, matte 3D storybook render."
+- 장면마다 달라질 내용(장소·날씨·감정)은 여기 쓰지 않는다. 씬이 바뀌어도 **똑같아야** 한다.
+
+[씬 프롬프트 규칙 — scenes[].shot 과 scenes[].prompt]
 - 툴 문법: {tool_guide}
+
 - ⭐ **외모를 한 글자도 쓰지 않는다.** 운영자가 위 참조 이미지를 영상 툴에 함께 넣는데,
   글로 또 적으면 두 지시가 싸워 컷마다 인물이 달라진다.
-  · 금지: 옷·한복·색·머리·얼굴·나이·키·체형을 가리키는 모든 낱말
-  · 금지: 옷을 만지는 동작(소매를 쥔다 등)
-  · 인물은 이름으로만 부른다(예: "{{name}} walks along a mountain path")
-- 각 씬은 5~8초 분량의 단일 연속 샷. 컷 전환·여러 장면 금지.
-- 동작·장소·카메라·빛만 적는다. 스타일 키워드는 넣되 인물 묘사는 빼는 것이다: {style}
+  · 쓰지 않을 것: 옷·한복·색·머리·얼굴·나이·키·체형을 가리키는 모든 낱말
+  · 쓰지 않을 것: 옷을 만지는 동작(소매를 쥔다 등)
+  · 인물은 이름으로만 부른다 (예: "{{name}} walks along a mountain path")
+
+- ⭐ **말을 하지 않는다.** 영상 AI가 영어 대사를 지어내 입을 움직이면, 한국어 나레이션과
+  어긋나 못 쓰는 영상이 된다. 바라는 상태를 적는다(금지 문장으로 적지 않는다):
+  · "lips closed, communicating through gesture and expression"
+  · 소리는 주변음만: "ambient wind and footsteps, soft traditional instrumental"
+
+- ⭐ **샷을 매번 다르게 한다.** shot 칸에 [샷 크기] + [카메라 움직임]을 적고 prompt 안에도 녹인다.
+  · 샷 크기: wide establishing / medium / medium close-up / close-up / low-angle / high-angle /
+    over-the-shoulder / extreme close-up on hands — **연속한 두 씬이 같은 크기면 안 된다.**
+  · 카메라 움직임: slow dolly-in / dolly-out / pan left / crane up / handheld follow /
+    rack focus / orbit — 씬마다 다른 것을 고른다. 정지 샷은 최대 1개까지만.
+  · 각 씬 안에서 **무언가가 변한다**: 인물이 움직이거나, 빛이 바뀌거나, 카메라가 새 정보를
+    드러낸다. 5~8초 동안 아무 일도 없는 고정 화면은 쓰지 않는다.
+
+- 각 씬은 단일 연속 샷. 씬 안에서 컷 전환·여러 장소 금지.
+- 장소·동작·카메라·빛만 적는다.
 - 화면에 글자·자막·워터마크가 나오지 않게 할 것(텍스트 요소 요청 금지).
 - "negative"는 {negative_note}
 """
@@ -137,6 +161,7 @@ class Scene:
     narration: str
     visual: str
     prompt: str
+    shot: str = ""
     negative: str = ""
 
 
@@ -147,6 +172,7 @@ class Storyboard:
     hashtags: list[str]
     character_name: str = ""
     character_image_prompt: str = ""
+    style_lock: str = ""
 
 
 # 참조 이미지를 쓸 때 씬 프롬프트에 섞이면 안 되는 낱말.
@@ -194,13 +220,20 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
         raise RuntimeError("대본 생성 결과가 비었습니다. 주제를 조금 더 구체적으로 적어 보세요.")
     data = json.loads(text)
 
+    # 색감 문장은 AI가 씬마다 새로 쓰게 두지 않고, 한 문장을 **그대로 복사**해 붙인다.
+    # 매번 새로 쓰게 하면 표현이 조금씩 달라지고, 영상 AI는 그걸 다른 색으로 그린다.
+    style_lock = " ".join(str(data.get("style_lock") or "").split())
+
     scenes = []
     for s in (data.get("scenes") or [])[:n_scenes]:
-        prompt = " ".join(str(s.get("prompt", "")).split()) + cfg["suffix"]
+        body = " ".join(str(s.get("prompt", "")).split())
+        if style_lock and style_lock.lower() not in body.lower():
+            body = f"{body} {style_lock}"
         scenes.append(Scene(
             narration=" ".join(str(s.get("narration", "")).split()),
             visual=str(s.get("visual", "")).strip(),
-            prompt=prompt.strip(),
+            shot=" ".join(str(s.get("shot", "")).split()),
+            prompt=(body + cfg["suffix"]).strip(),
             negative=" ".join(str(s.get("negative", "")).split()),
         ))
     if not scenes:
@@ -212,6 +245,7 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
         hashtags=[str(h) for h in (data.get("hashtags") or [])][:5],
         character_name=str(data.get("character_name") or "").strip(),
         character_image_prompt=" ".join(str(data.get("character_image_prompt") or "").split()),
+        style_lock=style_lock,
     )
     for i, s in enumerate(board.scenes, 1):
         _, hits = strip_look_words(s.prompt)
