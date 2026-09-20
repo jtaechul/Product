@@ -57,6 +57,8 @@ def main() -> int:
         "tool": tool,
         "tool_note": llm.TOOLS[tool]["ui_note"],
         "hashtags": board.hashtags,
+        "character_name": board.character_name,
+        "character_image_prompt": board.character_image_prompt,
         "scenes": [asdict(s) for s in board.scenes],
         "status": "scripted",          # scripted → uploaded → rendered
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
