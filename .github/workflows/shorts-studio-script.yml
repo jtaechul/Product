@@ -47,11 +47,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - run: pip install --quiet "openai>=1.60"
+      - run: pip install --quiet "google-genai>=2.10"
 
       - name: 대본 생성
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TOPIC: ${{ inputs.topic }}
           SCENES: ${{ inputs.scenes }}
           TOOL: ${{ inputs.tool }}

@@ -1,10 +1,14 @@
-"""llm — 동화 대본 + 타깃 영상 AI 툴에 맞춘 영문 프롬프트 생성 (OpenAI)."""
+"""llm — 동화 대본 + 타깃 영상 AI 툴에 맞춘 영문 프롬프트 생성 (Gemini).
+
+저장소에 이미 GEMINI_API_KEY 가 있고 short-movie-generator 가 같은 SDK를 쓰고 있어,
+키를 새로 만들지 않고 그대로 쓴다.
+"""
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 
-MODELS = ["gpt-4o", "gpt-4o-mini", "gpt-4.1"]
+MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
 STYLE_KEYWORDS = (
     "Korean traditional folklore style, 3D animated character, hanbok, "
@@ -130,26 +134,31 @@ class Storyboard:
 
 
 def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
-                        model: str = "gpt-4o") -> Storyboard:
-    from openai import OpenAI
+                        model: str = "gemini-2.5-flash") -> Storyboard:
+    from google import genai
+    from google.genai import types
 
     cfg = TOOLS[tool]
-    client = OpenAI(api_key=api_key)
-    resp = client.chat.completions.create(
-        model=model,
-        response_format={"type": "json_object"},
-        temperature=0.85,
-        messages=[
-            {"role": "system", "content": _SYSTEM},
-            {"role": "user", "content": _USER.format(
-                topic=topic, n_scenes=n_scenes, tool=tool,
-                tool_guide=cfg["guide"], style=STYLE_KEYWORDS,
-                negative_note=("이 툴이 네거티브 프롬프트를 지원하므로 반드시 채울 것"
-                               if cfg["negative"] else "빈 문자열로 둘 것"),
-            )},
-        ],
+    client = genai.Client(api_key=api_key)
+    prompt = _USER.format(
+        topic=topic, n_scenes=n_scenes, tool=tool,
+        tool_guide=cfg["guide"], style=STYLE_KEYWORDS,
+        negative_note=("이 툴이 네거티브 프롬프트를 지원하므로 반드시 채울 것"
+                       if cfg["negative"] else "빈 문자열로 둘 것"),
     )
-    data = json.loads(resp.choices[0].message.content)
+    resp = client.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=_SYSTEM,
+            temperature=0.85,
+            response_mime_type="application/json",
+        ),
+    )
+    text = (resp.text or "").strip()
+    if not text:
+        raise RuntimeError("대본 생성 결과가 비었습니다. 주제를 조금 더 구체적으로 적어 보세요.")
+    data = json.loads(text)
 
     scenes = []
     for s in (data.get("scenes") or [])[:n_scenes]:

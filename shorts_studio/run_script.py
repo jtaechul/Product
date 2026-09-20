@@ -29,9 +29,9 @@ def main() -> int:
     if not topic:
         print("::error::주제(TOPIC)가 비었습니다.")
         return 1
-    key = os.environ.get("OPENAI_API_KEY", "").strip()
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
-        print("::error::OPENAI_API_KEY 시크릿이 없습니다. 저장소 Settings > Secrets에 추가하세요.")
+        print("::error::GEMINI_API_KEY 시크릿이 없습니다. 저장소 Settings > Secrets에 추가하세요.")
         return 1
 
     scenes = int(os.environ.get("SCENES", "4"))
@@ -42,7 +42,7 @@ def main() -> int:
 
     print(f"대본 생성 시작 — 주제: {topic} / {scenes}컷 / {tool}")
     board = llm.generate_storyboard(key, topic, scenes, tool,
-                                    os.environ.get("MODEL", "gpt-4o"))
+                                    os.environ.get("MODEL", "gemini-2.5-flash"))
 
     cid = make_id(topic)
     record = {

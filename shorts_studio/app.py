@@ -56,9 +56,9 @@ def workdir() -> Path:
 # ── 사이드바: 설정 ─────────────────────────────────────────────
 with st.sidebar:
     st.header("설정")
-    api_key = st.text_input("OpenAI API Key", type="password",
-                            value=secret("OPENAI_API_KEY"),
-                            help="sk- 로 시작하는 키. 저장되지 않고 이 세션에서만 쓰입니다.")
+    api_key = st.text_input("Gemini API Key", type="password",
+                            value=secret("GEMINI_API_KEY"),
+                            help="저장되지 않고 이 세션에서만 쓰입니다.")
     model = st.selectbox("대본 생성 모델", llm.MODELS, index=0)
 
     st.divider()
@@ -92,7 +92,7 @@ with step1:
 
     if st.button("대본 + 영상 프롬프트 생성", type="primary", width="stretch"):
         if not api_key:
-            st.error("사이드바에 OpenAI API Key를 먼저 입력하세요.")
+            st.error("사이드바에 Gemini API Key를 먼저 입력하세요.")
         elif not topic.strip():
             st.error("동화 주제를 입력하세요.")
         else:

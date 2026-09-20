@@ -23,7 +23,7 @@ shorts_studio/
 │   ├── worker/index.mjs    로그인·GitHub 호출·보관함(KV) 업로드·완성본 재생
 │   └── kv_id.py            배포 때 보관함 번호를 찾는 도우미
 ├── core/                   제작 엔진 (Actions와 로컬이 공유)
-│   ├── llm.py              대본 + 툴별 영문 프롬프트 (OpenAI)
+│   ├── llm.py              대본 + 툴별 영문 프롬프트 (Gemini)
 │   ├── tts.py              Edge-TTS 합성 + 단어 타임스탬프
 │   ├── subtitle.py         가라오케 ASS 자막
 │   └── video.py            FFmpeg 규격변환·합성·자막번인
@@ -48,11 +48,11 @@ shorts_studio/
 | `CF_API_TOKEN` | 관리자 페이지 배포 | 이미 등록돼 있다 |
 | `MOVIEGEN_ADMIN_PASSWORD` | 관리자 페이지 로그인 비밀번호 (직접 정한다) | 필수 |
 | `MOVIEGEN_ADMIN_GH_TOKEN` | 워커가 쓸 GitHub 토큰 — Contents = Read, Actions = Read and write | 필수 |
-| `OPENAI_API_KEY` | 대본 생성 | 필수 |
+| `GEMINI_API_KEY` | 대본 생성 | 이미 등록돼 있다 |
 | `MOVIEGEN_SESSION_SECRET` | 로그인 위조 방지용 문자열 | 선택 (없으면 비밀번호를 쓴다) |
 | `CLOUDFLARE_ACCOUNT_ID` | 토큰이 여러 계정에 닿을 때만 | 선택 |
 
-그다음 관리자 페이지 주소를 열고 `ADMIN_PASSWORD` 로 들어가면 끝이다.
+그다음 관리자 페이지 주소를 열고 `MOVIEGEN_ADMIN_PASSWORD` 로 들어가면 끝이다.
 **손님이 폰에서 토큰을 다룰 일은 없다** — GitHub 토큰은 워커 안에만 있다.
 
 ## 설계 메모
