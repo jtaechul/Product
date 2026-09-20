@@ -109,7 +109,10 @@
     <div class="row">
       <div>
         <label for="scenes">컷 수</label>
-        <select id="scenes"><option>3</option><option selected>4</option><option>5</option><option>6</option></select>
+        <select id="scenes">
+          <option>6</option><option>7</option><option selected>8</option>
+          <option>9</option><option>10</option>
+        </select>
       </div>
       <div>
         <label for="tool">영상 툴</label>
@@ -308,52 +311,64 @@ async function openDetail(rec) {
   // 씬마다 영상 AI가 따로 그리면 인물이 매번 달라진다. 기준 이미지 한 장을 만들어
   // 모든 씬에 함께 넣는 것이 유일하게 확실한 방법이다. 그래서 씬 프롬프트에는
   // 외모를 한 글자도 넣지 않는다(글과 이미지가 싸우면 컷마다 인물이 바뀐다).
-  const ch = document.createElement("div");
-  ch.className = "scene";
-  ch.innerHTML = `
-    <div style="font-weight:700">인물 기준 이미지 <span class="tag"></span></div>
-    <p class="hint" style="margin:6px 0 8px">
-      이 그림 한 장이 모든 씬의 기준입니다. 먼저 만들어 올린 뒤, 씬 영상을 만들 때
-      영상 툴의 <b>참조 이미지</b> 칸에 매번 같이 넣어 주세요.</p>
-    <img alt="" style="display:none;width:46%;border-radius:10px;margin-bottom:10px">
-    <pre></pre>
-    <div class="row" style="margin-top:10px">
-      <button class="btn mini sub">이미지 프롬프트 복사</button>
-      <button class="btn mini ghost">기준 이미지 올리기</button>
-    </div>
-    <div class="bar"><i></i></div>
-    <input type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" hidden>`;
-  const chTag = ch.querySelector(".tag");
-  const chImg = ch.querySelector("img");
-  const markCh = (urlOrNull) => {
-    chTag.textContent = urlOrNull ? "준비됨" : "필요함";
-    chTag.className = "tag " + (urlOrNull ? "ok" : "warn");
-    if (urlOrNull) {
-      chImg.src = "/api/video?u=" + encodeURIComponent(urlOrNull);
-      chImg.style.display = "block";
-    }
-  };
-  markCh(up.character);
-  ch.querySelector("pre").textContent =
-    rec.character_image_prompt || "(이 작품은 인물 이미지 프롬프트 없이 만들어졌습니다)";
-  {
+  // 등장인물이 여럿이면 사람마다 한 장씩. 옛 기록(인물 한 명)도 그대로 읽는다.
+  const cast = (rec.characters && rec.characters.length)
+    ? rec.characters
+    : (rec.character_image_prompt
+        ? [{ name: rec.character_name || "주인공", role: "",
+             image_prompt: rec.character_image_prompt }]
+        : []);
+  const upChars = up.characters || [up.character || null];
+
+  cast.forEach((c, ci) => {
+    const n = ci + 1;
+    const ch = document.createElement("div");
+    ch.className = "scene";
+    ch.innerHTML = `
+      <div style="font-weight:700">인물 ${n} · <span class="nm"></span> <span class="tag"></span></div>
+      <p class="hint" style="margin:6px 0 8px"></p>
+      <img alt="" style="display:none;width:46%;border-radius:10px;margin-bottom:10px">
+      <pre></pre>
+      <div class="row" style="margin-top:10px">
+        <button class="btn mini sub">이미지 프롬프트 복사</button>
+        <button class="btn mini ghost">기준 이미지 올리기</button>
+      </div>
+      <div class="bar"><i></i></div>
+      <input type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" hidden>`;
+    ch.querySelector(".nm").textContent = c.name || "주인공";
+    ch.querySelector(".hint").textContent = (c.role ? c.role + " — " : "")
+      + "이 그림이 이 인물의 기준입니다. 이 사람이 나오는 씬 영상을 만들 때 영상 툴의 참조 이미지 칸에 매번 같이 넣어 주세요.";
+    ch.querySelector("pre").textContent = c.image_prompt || "(이미지 프롬프트가 없습니다)";
+
+    const chTag = ch.querySelector(".tag");
+    const chImg = ch.querySelector("img");
+    const markCh = (urlOrNull) => {
+      chTag.textContent = urlOrNull ? "준비됨" : "필요함";
+      chTag.className = "tag " + (urlOrNull ? "ok" : "warn");
+      if (urlOrNull) {
+        chImg.src = "/api/video?u=" + encodeURIComponent(urlOrNull);
+        chImg.style.display = "block";
+      }
+    };
+    markCh(upChars[ci]);
+
     const [bCopy, bUp] = ch.querySelectorAll("button");
     const bar = ch.querySelector(".bar");
     const file = ch.querySelector("input");
-    bCopy.onclick = () => copy(rec.character_image_prompt || "");
+    bCopy.onclick = () => copy(c.image_prompt || "");
     bUp.onclick = () => file.click();
     file.onchange = () => busy(bUp, async () => {
       const f = file.files[0];
       file.value = "";
       if (!f) return;
       bUp.textContent = "올리는 중...";
-      await upload(f, rec.id, "character", bar);
+      await upload(f, rec.id, "char" + n, bar);
       const again = await api("/api/uploaded?id=" + encodeURIComponent(rec.id));
-      markCh(again.character);
-      toast("인물 기준 이미지를 올렸습니다.");
+      markCh((again.characters || [])[ci]);
+      toast(`${c.name || "인물"} 기준 이미지를 올렸습니다.`);
     });
-  }
-  card.appendChild(ch);
+    card.appendChild(ch);
+  });
 
   rec.scenes.forEach((sc, i) => {
     const n = i + 1;
@@ -384,8 +399,10 @@ async function openDetail(rec) {
       tag.className = "tag " + (yes ? "ok" : "warn");
     };
     mark(have.has(n));
+    // 이 씬에 누가 나오는지 = 어떤 기준 이미지를 참조 칸에 넣어야 하는지.
     w.querySelector(".hint").textContent =
-      (sc.shot ? "[" + sc.shot + "] " : "") + sc.narration;
+      (sc.cast && sc.cast.length ? "[참조 이미지: " + sc.cast.join(", ") + "] " : "")
+      + (sc.shot ? "[" + sc.shot + "] " : "") + sc.narration;
     w.querySelector("pre").textContent = sc.prompt + (sc.negative ? "\n\n[네거티브] " + sc.negative : "");
     const [btnCopy, btnUp] = w.querySelectorAll("button");
     const bar = w.querySelector(".bar");
@@ -407,11 +424,14 @@ async function openDetail(rec) {
   const opts = document.createElement("div");
   opts.className = "scene";
   opts.innerHTML = `
-    <label>성우</label>
+    <label>성우 (감정 연기)</label>
     <select class="v">
-      <option value="ko-KR-SunHiNeural">선히 (여성 · 따뜻함)</option>
-      <option value="ko-KR-InJoonNeural">인준 (남성 · 차분함)</option>
-      <option value="ko-KR-HyunsuMultilingualNeural">현수 (남성 · 부드러움)</option>
+      <option value="Sulafat">술라팟 (여성 · 따뜻하고 포근함 · 추천)</option>
+      <option value="Kore">코레 (여성 · 또렷하고 단단함)</option>
+      <option value="Aoede">아오이데 (여성 · 가볍고 산뜻함)</option>
+      <option value="Leda">레다 (여성 · 앳되고 발랄함)</option>
+      <option value="Charon">카론 (남성 · 차분한 이야기꾼)</option>
+      <option value="Enceladus">엔켈라두스 (남성 · 낮고 숨결 섞인 톤)</option>
     </select>
     <div class="row">
       <div><label>자막 색</label>

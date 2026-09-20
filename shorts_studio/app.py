@@ -63,7 +63,10 @@ with st.sidebar:
 
     st.divider()
     st.subheader("음성")
-    voice = st.selectbox("성우", list(tts.VOICES), format_func=lambda v: tts.VOICES[v])
+    engine = st.radio("성우 엔진", ["gemini", "edge"], horizontal=True,
+                      format_func=lambda e: "Gemini (감정 연기)" if e == "gemini" else "Edge (무료·빠름)")
+    _voices = tts.GEMINI_VOICES if engine == "gemini" else tts.EDGE_VOICES
+    voice = st.selectbox("성우", list(_voices), format_func=lambda v: _voices[v])
     speed = st.slider("말하기 속도", -30, 30, -5, 5, format="%d%%",
                       help="동화 낭독은 조금 느린 편(-10% 안팎)이 잘 어울립니다.")
 
@@ -144,7 +147,7 @@ with step3:
     elif not S.get("uploads_ready"):
         st.info("② 탭에서 모든 씬 영상을 업로드하세요.")
     else:
-        st.write(f"출력 규격: **{WIDTH}×{HEIGHT}** · 성우 **{tts.VOICES[voice].split(' (')[0]}**")
+        st.write(f"출력 규격: **{WIDTH}×{HEIGHT}** · 성우 **{(tts.GEMINI_VOICES | tts.EDGE_VOICES)[voice].split(' (')[0]}**")
         if st.button("최종 영상 만들기", type="primary", width="stretch"):
             prog = st.progress(0.0, "준비 중…")
             try:
@@ -161,7 +164,9 @@ with step3:
                 for i, sc in enumerate(scenes):
                     prog.progress(0.05 + 0.25 * i / n, f"{i + 1}번 씬 음성 합성 중…")
                     audios.append(tts.synthesize_scene(
-                        i, sc.narration, str(work), voice=voice, rate=f"{speed:+d}%"))
+                        i, sc.narration, str(work), engine=engine, api_key=api_key,
+                        voice=voice, rate=f"{speed:+d}%",
+                        direction=getattr(sc, "voice_direction", "")))
 
                 scene_durs = [a.speech_duration + tail_pad for a in audios]
 
@@ -179,7 +184,7 @@ with step3:
                 prog.progress(0.72, "가라오케 자막 만드는 중…")
                 lines, offset = [], 0.0
                 for a, dur in zip(audios, scene_durs):
-                    for ln in tts.group_words_into_lines(a.words, a.text):
+                    for ln in a.lines:
                         lines.append({
                             "start": ln["start"] + offset,
                             "end": ln["end"] + offset,
@@ -194,7 +199,7 @@ with step3:
                 # 4. 합성 → 최종 렌더
                 prog.progress(0.78, "영상·오디오 이어붙이는 중…")
                 narration = video.build_narration_track(
-                    [a.mp3 for a in audios], scene_durs, str(work))
+                    [a.audio for a in audios], scene_durs, str(work))
                 joined = video.concat_videos(clips, str(work))
 
                 prog.progress(0.85, "자막을 입혀 최종 렌더링 중… (가장 오래 걸립니다)")

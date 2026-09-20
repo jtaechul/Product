@@ -77,19 +77,32 @@ def main() -> int:
     video.ensure_ffmpeg()
     WORK.mkdir(parents=True, exist_ok=True)
     width, height = (1080, 1920) if os.environ.get("HQ") == "true" else (720, 1280)
-    voice = os.environ.get("VOICE", "ko-KR-SunHiNeural")
+    engine = os.environ.get("TTS_ENGINE", "gemini").strip().lower()
+    voice = os.environ.get("VOICE", "Sulafat")
     rate = os.environ.get("RATE", "-5%")
     highlight = os.environ.get("HIGHLIGHT", "노란색")
     tail_pad = float(os.environ.get("TAIL_PAD", "0.5"))
     # 전환은 씬 끝 여백 안에서 일어나게 한다. 여백보다 길면 대사 위로 화면이 섞인다.
     xdur = min(float(os.environ.get("XFADE", "0.4")), tail_pad)
+    # 자막 한 줄 길이 = Gemini 성우의 합성 단위. 늘리면 호출 수가 줄어 빠르고 할당량을
+    # 덜 쓰지만, 줄 안에서의 어절 하이라이트가 그만큼 어림값이 된다.
+    max_chars = int(os.environ.get("SUB_MAX_CHARS", "13"))
+    gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if engine == "gemini" and not gemini_key:
+        print("::error::Gemini 성우를 쓰려면 GEMINI_API_KEY 시크릿이 필요합니다.")
+        return 1
 
-    # 1. 씬별 나레이션 합성 (단어 타임스탬프 포함)
+    # 1. 씬별 나레이션 합성.
+    #    Gemini 성우는 타임스탬프를 안 주므로 자막 한 줄씩 따로 합성해 실제 길이를 잰다
+    #    (core/tts.py 설명 참고). 그래서 줄이 뜨고 사라지는 시각이 오디오와 정확히 맞는다.
     audios = []
     for i, sc in enumerate(scenes):
         print(f"[{i + 1}/{len(scenes)}] 음성 합성")
-        audios.append(tts.synthesize_scene(i, sc["narration"], str(WORK),
-                                           voice=voice, rate=rate))
+        audios.append(tts.synthesize_scene(
+            i, sc["narration"], str(WORK),
+            engine=engine, api_key=gemini_key, voice=voice, rate=rate,
+            direction=sc.get("voice_direction", ""), max_chars=max_chars,
+        ))
     durs = [a.speech_duration + tail_pad for a in audios]
 
     # 2. 릴리스에서 씬 영상 받아 9:16 규격·길이 맞춤
@@ -107,7 +120,7 @@ def main() -> int:
     print("가라오케 자막 생성")
     lines, offset = [], 0.0
     for a, dur in zip(audios, durs):
-        for ln in tts.group_words_into_lines(a.words, a.text):
+        for ln in a.lines:
             lines.append({
                 "start": ln["start"] + offset,
                 "end": ln["end"] + offset,
@@ -120,7 +133,7 @@ def main() -> int:
 
     # 4. 합성 → 최종 렌더
     print("합성 및 최종 렌더링")
-    narration = video.build_narration_track([a.mp3 for a in audios], durs, str(WORK))
+    narration = video.build_narration_track([a.audio for a in audios], durs, str(WORK))
     joined = video.concat_with_transitions(clips, durs, str(WORK), xdur=xdur)
     final = video.finalize(joined, narration, ass, str(WORK / "final.mp4"),
                            width=width, fonts_dir=fonts_dir)
