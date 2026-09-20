@@ -120,7 +120,9 @@ def main() -> int:
                            width=width, fonts_dir=fonts_dir)
 
     # 5. Release 업로드(없으면 만들고, 같은 이름이 있으면 먼저 지운다)
-    tag = f"shorts-{cid}"
+    # 태그 접두어를 프로젝트로 나눈다. 이 저장소엔 coupang 쪽 `shorts-cand` 등
+    # 다른 프로젝트의 릴리스가 같이 살아서, 접두어가 겹치면 목록이 뒤섞인다.
+    tag = f"moviegen-{cid}"
     rel = gh(f"/repos/{repo}/releases/tags/{tag}", token, allow404=True)
     if rel is None:
         rel = gh(f"/repos/{repo}/releases", token, method="POST",

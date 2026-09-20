@@ -7,10 +7,14 @@ name: Deploy Shorts Studio Admin
 #   CF_API_TOKEN           이미 등록돼 있다 (book-carousel·shorts-admin 이 쓰는 그 값)
 #   MOVIEGEN_ADMIN_PASSWORD   관리자 페이지에 들어갈 비밀번호 (직접 정한다)
 #   MOVIEGEN_ADMIN_GH_TOKEN   GitHub 개인 토큰 — Contents = Read, Actions = Read and write
+#   CLOUDFLARE_ACCOUNT_ID     보관함(KV)을 어느 계정에 만들지 — 필수
 #   MOVIEGEN_SESSION_SECRET   (선택) 로그인 위조 방지용 문자열. 없으면 비밀번호를 쓴다
 # 이름 앞에 MOVIEGEN_ 을 붙인 이유: 이 저장소엔 프로젝트가 여럿이라
 # ADMIN_PASSWORD 같은 이름은 다른 프로젝트와 부딪힌다.
-#   CLOUDFLARE_ACCOUNT_ID  (선택) 토큰이 여러 계정에 닿을 때만 필요하다
+#
+# ⚠️ CLOUDFLARE_ACCOUNT_ID 를 빼면 안 된다. wrangler 가 "내 계정이 어디지?" 를
+#    물으러 /memberships 를 부르는데, 커스텀 API 토큰엔 그 권한이 없어 10000 으로
+#    거부당한다(2026-09-20 실제 실패). 계정 번호가 있으면 아예 묻지 않는다.
 
 on:
   workflow_dispatch:
@@ -43,11 +47,13 @@ jobs:
           CF: ${{ secrets.CF_API_TOKEN }}
           PW: ${{ secrets.MOVIEGEN_ADMIN_PASSWORD }}
           TK: ${{ secrets.MOVIEGEN_ADMIN_GH_TOKEN }}
+          ACC: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           MISS=""
-          [ -z "$CF" ] && MISS="$MISS CF_API_TOKEN"
-          [ -z "$PW" ] && MISS="$MISS MOVIEGEN_ADMIN_PASSWORD"
-          [ -z "$TK" ] && MISS="$MISS MOVIEGEN_ADMIN_GH_TOKEN"
+          [ -z "$CF" ]  && MISS="$MISS CF_API_TOKEN"
+          [ -z "$PW" ]  && MISS="$MISS MOVIEGEN_ADMIN_PASSWORD"
+          [ -z "$TK" ]  && MISS="$MISS MOVIEGEN_ADMIN_GH_TOKEN"
+          [ -z "$ACC" ] && MISS="$MISS CLOUDFLARE_ACCOUNT_ID"
           if [ -n "$MISS" ]; then
             {
               echo "## 열쇠가 부족합니다"
@@ -62,6 +68,7 @@ jobs:
               echo "| \`CF_API_TOKEN\` | Cloudflare → My Profile → API Tokens → **Edit Cloudflare Workers** 템플릿 |"
               echo "| \`MOVIEGEN_ADMIN_PASSWORD\` | 직접 정하십시오. 관리자 페이지에 들어갈 비밀번호 |"
               echo "| \`MOVIEGEN_ADMIN_GH_TOKEN\` | [토큰 만들기](https://github.com/settings/personal-access-tokens/new) — Repository access는 **Product 하나만**, Permissions는 **Contents = Read**, **Actions = Read and write** |"
+              echo "| \`CLOUDFLARE_ACCOUNT_ID\` | Cloudflare 대시보드 주소창의 \`dash.cloudflare.com/\` 바로 뒤에 오는 긴 글자 |"
             } >> "$GITHUB_STEP_SUMMARY"
             echo "::error::열쇠가 부족합니다:$MISS"
             exit 1
@@ -93,9 +100,6 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -o pipefail
-          # 계정 번호는 토큰이 여러 계정에 닿을 때만 필요하다. 빈 값을 넘기면
-          # wrangler 가 그 빈 문자열을 계정 번호로 알아들어 실패한다.
-          [ -z "$CLOUDFLARE_ACCOUNT_ID" ] && unset CLOUDFLARE_ACCOUNT_ID
           python3 kv_id.py --selftest
           ID=$(npx --yes wrangler@4 kv namespace list 2>/dev/null | python3 kv_id.py || true)
           if [ -z "$ID" ]; then
@@ -122,7 +126,6 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -o pipefail
-          [ -z "$CLOUDFLARE_ACCOUNT_ID" ] && unset CLOUDFLARE_ACCOUNT_ID
           # 배포가 먼저다. 비밀값은 이미 있는 Worker 에만 넣을 수 있어서,
           # 순서를 반대로 하면 첫 배포가 "그런 Worker 가 없다"로 실패한다.
           npx --yes wrangler@4 deploy 2>&1 | tee deploy.log
