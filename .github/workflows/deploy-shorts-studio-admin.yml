@@ -5,9 +5,11 @@ name: Deploy Shorts Studio Admin
 #
 # 필요한 값 (Settings → Secrets and variables → Actions)
 #   CF_API_TOKEN           이미 등록돼 있다 (book-carousel·shorts-admin 이 쓰는 그 값)
-#   ADMIN_PASSWORD         관리자 페이지에 들어갈 비밀번호 (직접 정한다)
-#   ADMIN_GH_TOKEN         GitHub 개인 토큰 — Contents = Read, Actions = Read and write
-#   SESSION_SECRET         (선택) 로그인 위조 방지용 문자열. 없으면 비밀번호를 쓴다
+#   MOVIEGEN_ADMIN_PASSWORD   관리자 페이지에 들어갈 비밀번호 (직접 정한다)
+#   MOVIEGEN_ADMIN_GH_TOKEN   GitHub 개인 토큰 — Contents = Read, Actions = Read and write
+#   MOVIEGEN_SESSION_SECRET   (선택) 로그인 위조 방지용 문자열. 없으면 비밀번호를 쓴다
+# 이름 앞에 MOVIEGEN_ 을 붙인 이유: 이 저장소엔 프로젝트가 여럿이라
+# ADMIN_PASSWORD 같은 이름은 다른 프로젝트와 부딪힌다.
 #   CLOUDFLARE_ACCOUNT_ID  (선택) 토큰이 여러 계정에 닿을 때만 필요하다
 
 on:
@@ -39,13 +41,13 @@ jobs:
       - name: 열쇠 확인
         env:
           CF: ${{ secrets.CF_API_TOKEN }}
-          PW: ${{ secrets.ADMIN_PASSWORD }}
-          TK: ${{ secrets.ADMIN_GH_TOKEN }}
+          PW: ${{ secrets.MOVIEGEN_ADMIN_PASSWORD }}
+          TK: ${{ secrets.MOVIEGEN_ADMIN_GH_TOKEN }}
         run: |
           MISS=""
           [ -z "$CF" ] && MISS="$MISS CF_API_TOKEN"
-          [ -z "$PW" ] && MISS="$MISS ADMIN_PASSWORD"
-          [ -z "$TK" ] && MISS="$MISS ADMIN_GH_TOKEN"
+          [ -z "$PW" ] && MISS="$MISS MOVIEGEN_ADMIN_PASSWORD"
+          [ -z "$TK" ] && MISS="$MISS MOVIEGEN_ADMIN_GH_TOKEN"
           if [ -n "$MISS" ]; then
             {
               echo "## 열쇠가 부족합니다"
@@ -58,8 +60,8 @@ jobs:
               echo "| 이름 | 어디서 받나 |"
               echo "|---|---|"
               echo "| \`CF_API_TOKEN\` | Cloudflare → My Profile → API Tokens → **Edit Cloudflare Workers** 템플릿 |"
-              echo "| \`ADMIN_PASSWORD\` | 직접 정하십시오. 관리자 페이지에 들어갈 비밀번호 |"
-              echo "| \`ADMIN_GH_TOKEN\` | [토큰 만들기](https://github.com/settings/personal-access-tokens/new) — Repository access는 **Product 하나만**, Permissions는 **Contents = Read**, **Actions = Read and write** |"
+              echo "| \`MOVIEGEN_ADMIN_PASSWORD\` | 직접 정하십시오. 관리자 페이지에 들어갈 비밀번호 |"
+              echo "| \`MOVIEGEN_ADMIN_GH_TOKEN\` | [토큰 만들기](https://github.com/settings/personal-access-tokens/new) — Repository access는 **Product 하나만**, Permissions는 **Contents = Read**, **Actions = Read and write** |"
             } >> "$GITHUB_STEP_SUMMARY"
             echo "::error::열쇠가 부족합니다:$MISS"
             exit 1
@@ -125,10 +127,10 @@ jobs:
           # 순서를 반대로 하면 첫 배포가 "그런 Worker 가 없다"로 실패한다.
           npx --yes wrangler@4 deploy 2>&1 | tee deploy.log
 
-          printf '%s' "${{ secrets.ADMIN_GH_TOKEN }}" | npx --yes wrangler@4 secret put GH_TOKEN
-          printf '%s' "${{ secrets.ADMIN_PASSWORD }}" | npx --yes wrangler@4 secret put ADMIN_PASSWORD
+          printf '%s' "${{ secrets.MOVIEGEN_ADMIN_GH_TOKEN }}" | npx --yes wrangler@4 secret put GH_TOKEN
+          printf '%s' "${{ secrets.MOVIEGEN_ADMIN_PASSWORD }}" | npx --yes wrangler@4 secret put ADMIN_PASSWORD
           # 서명키에 커밋 번호를 섞지 않는다. 섞으면 고칠 때마다 로그인이 풀린다.
-          printf '%s' "${{ secrets.SESSION_SECRET || secrets.ADMIN_PASSWORD }}" \
+          printf '%s' "${{ secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}" \
             | npx --yes wrangler@4 secret put SESSION_SECRET
 
           # 배포가 성공해도 보관함이 안 붙은 채 지나갈 수 있다. 배포 기록으로 확인한다.
@@ -151,7 +153,7 @@ jobs:
               echo ""
               echo "이 주소를 **아이폰 사파리에서 열고 홈 화면에 추가**해 두십시오. 앱처럼 열립니다."
               echo ""
-              echo "처음 열면 비밀번호를 묻습니다. \`ADMIN_PASSWORD\` 에 넣은 값입니다."
+              echo "처음 열면 비밀번호를 묻습니다. \`MOVIEGEN_ADMIN_PASSWORD\` 에 넣은 값입니다."
             else
               echo "주소를 찾지 못했습니다. 아래 기록을 확인하십시오."
             fi
