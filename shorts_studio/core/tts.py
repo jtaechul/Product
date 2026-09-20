@@ -142,3 +142,17 @@ def group_words_into_lines(words: list[tuple[float, float, str]], text: str,
         else:
             merged.append(ln)
     return merged
+
+
+# 한국어 낭독 속도(음절/초). 대본만 보고 "몇 초짜리 영상을 만들어야 하나"를 미리 알려주려고 쓴다.
+# 실제 길이는 합성해 봐야 알지만, 영상을 만들기 전에 알아야 쓸모가 있다.
+# 렌더가 끝나면 진짜 잰 값이 기록에 덮어써진다.
+_SYLLABLES_PER_SEC = 5.2
+_SENTENCE_PAUSE = 0.35
+
+
+def estimate_seconds(text: str, tail_pad: float = 0.5) -> float:
+    """대본 한 줄이 몇 초쯤 읽힐지 어림한다(한글 음절 수 + 문장 끝 쉼)."""
+    syllables = sum(1 for c in str(text) if "가" <= c <= "힣")
+    sentences = sum(1 for c in str(text) if c in ".!?…")
+    return round(syllables / _SYLLABLES_PER_SEC + sentences * _SENTENCE_PAUSE + tail_pad, 1)

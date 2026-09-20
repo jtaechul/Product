@@ -9,6 +9,8 @@ import json
 import re
 from dataclasses import dataclass
 
+from .tts import estimate_seconds
+
 MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
 # 입을 움직이지 않게 하는 고정 문장. LLM이 매번 쓰기를 기대하지 않고 **무조건 붙인다**.
@@ -120,7 +122,8 @@ _USER = """주제: {topic}
 
 [나레이션 규칙]
 - 정확히 {n_scenes}개의 씬. 전체를 이어 읽으면 하나의 완결된 이야기.
-- 각 씬 나레이션은 한국어 2~3문장, 45~70자. 전체 합계 35~55초 분량.
+- ⭐ 각 씬 나레이션은 한국어 **1~2문장, 30~42자**. 이보다 길면 씬 하나가 10초를 넘는데,
+  영상 생성 툴 대부분이 10초까지만 만들어 주어 쓸 수 없는 대본이 된다.
 - 따뜻하고 해학적인 구어체 존댓말("~했답니다", "~하지 뭐예요"). 옛이야기 들려주듯.
 - 1번 씬 첫 문장은 훅: 궁금증을 만들고 끝까지 보게 만들 것.
 - 마지막 씬은 잔잔한 교훈이나 여운으로 마무리. 설교조 금지.
@@ -179,6 +182,7 @@ class Scene:
     prompt: str
     shot: str = ""
     negative: str = ""
+    est_seconds: float = 0.0
 
 
 @dataclass
@@ -259,6 +263,10 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
         if style_lock and style_lock.lower() not in body.lower():
             body = f"{body} {style_lock}"
         body = f"{body} {SILENCE_LOCK}"          # 입 다무는 문장은 예외 없이 붙인다
+        # 몇 초짜리로 만들어야 하는지 프롬프트에도 박아 둔다. 영상이 짧으면 마지막
+        # 프레임이 얼어붙고, 길면 잘려 나간다.
+        est = estimate_seconds(" ".join(str(s.get("narration", "")).split()))
+        body = f"{body} Single continuous shot of about {est:.0f} seconds."
         neg = " ".join(str(s.get("negative", "")).split())
         if cfg["negative"]:
             neg = f"{neg}, {SILENCE_NEGATIVE}".strip(" ,")
@@ -268,6 +276,7 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
             shot=" ".join(str(s.get("shot", "")).split()),
             prompt=(body + cfg["suffix"]).strip(),
             negative=neg,
+            est_seconds=est,
         ))
     if not scenes:
         raise RuntimeError("대본 생성 결과가 비었습니다. 주제를 조금 더 구체적으로 적어 보세요.")
@@ -289,4 +298,7 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
         if talks:
             print(f"::warning::{i}번 씬 프롬프트에 발화 동작이 있습니다({', '.join(talks)}). "
                   "인물이 입을 움직일 수 있습니다.")
+        if s.est_seconds > 10:
+            print(f"::warning::{i}번 씬이 약 {s.est_seconds:.0f}초입니다. 영상 툴 대부분이 "
+                  "10초까지라 대본을 줄이는 편이 좋습니다.")
     return board

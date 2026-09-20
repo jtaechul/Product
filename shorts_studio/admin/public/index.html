@@ -360,7 +360,7 @@ async function openDetail(rec) {
     const w = document.createElement("div");
     w.className = "scene";
     w.innerHTML = `
-      <div style="font-weight:700">${n}번 씬 <span class="tag"></span></div>
+      <div style="font-weight:700">${n}번 씬 <span class="len"></span> <span class="tag st"></span></div>
       <p class="hint" style="margin:6px 0 8px"></p>
       <pre></pre>
       <div class="row" style="margin-top:10px">
@@ -369,7 +369,16 @@ async function openDetail(rec) {
       </div>
       <div class="bar"><i></i></div>
       <input type="file" accept="video/mp4,video/quicktime,.mp4,.mov" hidden>`;
-    const tag = w.querySelector(".tag");
+    // 몇 초짜리를 만들어야 하는지 바로 보이게 한다. 짧으면 마지막 프레임이 얼어붙고
+    // 길면 잘린다. 한 번 렌더한 뒤에는 실제로 잰 값이 표시된다.
+    const secs = sc.actual_seconds || sc.est_seconds;
+    const lenEl = w.querySelector(".len");
+    if (secs) {
+      lenEl.className = "tag len" + (secs > 10 ? " warn" : "");
+      lenEl.textContent = (sc.actual_seconds ? "" : "약 ") + secs + "초"
+        + (secs > 10 ? " · 너무 김" : "");
+    }
+    const tag = w.querySelector(".st");
     const mark = (yes) => {
       tag.textContent = yes ? "영상 있음" : "영상 필요";
       tag.className = "tag " + (yes ? "ok" : "warn");

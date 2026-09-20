@@ -145,6 +145,10 @@ def main() -> int:
             method="POST", data=data, content_type="video/mp4",
             base="https://uploads.github.com")
 
+    # 다음에 다시 만들 때는 추정치가 아니라 실제로 잰 길이를 보여 준다.
+    for sc, a in zip(record["scenes"], audios):
+        sc["actual_seconds"] = round(a.speech_duration + tail_pad, 1)
+
     record["status"] = "rendered"
     record["video"] = up["browser_download_url"]
     record["duration"] = round(offset, 1)
