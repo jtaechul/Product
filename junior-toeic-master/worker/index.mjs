@@ -186,12 +186,35 @@ app.get('/api/me', requireAuth, async (c) => {
       WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2`
   ).bind(u.id, kstDate()).first();
   const climb = await computeClimb(c.env.DB, u);
+  // 오늘의 세트를 몇 개까지 풀었나 — **서버가 정답이다.**
+  // 앱 화면의 진행도는 그동안 그 기기의 localStorage 에만 있었다. 그래서 기기를 바꾸거나
+  // 브라우저 기록이 지워지면, 학부모 화면에는 푼 걸로 나오는데 아이 화면만 '하나도 안 푼'
+  // 상태로 보였다(2026-09-21 제보). 이 값으로 아이 화면을 맞춘다.
+  // 같은 문항을 복습으로 또 풀어도 한 개로 센다(DISTINCT) — 진행도는 '어디까지 왔나'지
+  // '몇 번 눌렀나'가 아니다.
+  const todaySet = await c.env.DB.prepare(
+    'SELECT question_ids FROM daily_sets WHERE user_id = ?1 AND date = ?2'
+  ).bind(u.id, kstDate()).first();
+  let todayDone = 0;
+  if (todaySet) {
+    const ids = JSON.parse(todaySet.question_ids);
+    if (ids.length) {
+      const marks = ids.map((_, i) => `?${i + 3}`).join(',');
+      const row = await c.env.DB.prepare(
+        `SELECT COUNT(DISTINCT question_id) AS n FROM answers
+          WHERE user_id = ?1 AND date(answered_at, '+9 hours') = ?2
+            AND question_id IN (${marks})`
+      ).bind(u.id, kstDate(), ...ids).first();
+      todayDone = row?.n ?? 0;
+    }
+  }
   const diag = await c.env.DB.prepare(
     `SELECT summary FROM sessions WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NOT NULL LIMIT 1`
   ).bind(u.id).first();
   return c.json({
     user: { id: u.id, login_id: u.login_id, display_name: u.display_name, role: u.role },
     answered: stats.answered, correct: stats.correct, review_due: due.n, sealed: climb.breakdown.sealed,
+    today_done: todayDone,
     climb,
     diagnosed: !!diag, diag_report: diag ? JSON.parse(diag.summary) : null,
     // 듣기 재생 배속. 앱이 이 값을 들고 있다가 음원을 틀 때 그대로 쓴다 —

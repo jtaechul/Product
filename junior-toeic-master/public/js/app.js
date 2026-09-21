@@ -598,6 +598,15 @@ async function showHome() {
         if (me.user?.display_name && me.user.display_name !== auth.user.display_name) {
           saveAuth({ ...auth, user: { ...auth.user, display_name: me.user.display_name } });
         }
+        // 오늘 푼 개수도 같은 이유로 서버에 맞춘다. 진행도는 그동안 이 기기에만 있어서,
+        // 기기를 바꾸거나 브라우저 기록이 지워지면 학부모 화면에는 푼 걸로 나오는데
+        // 아이 화면만 '하나도 안 푼' 상태로 보였다(2026-09-21 제보).
+        // 서버가 더 많이 알고 있을 때만 올린다 — 방금 푼 것이 아직 안 올라갔을 수 있어
+        // 무조건 덮으면 진행도가 거꾸로 줄어든다.
+        if (typeof me.today_done === 'number' && me.today_done > store.setIdx) {
+          store.setIdx = Math.min(me.today_done, set.questions.length);
+          save();
+        }
       } catch { /* 무시 */ }
       try { sm = await api('/api/skillmap', { headers: authHeaders() }); } catch { /* 무시 */ }
     }
