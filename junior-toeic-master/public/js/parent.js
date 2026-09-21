@@ -30,8 +30,19 @@ async function api(path, opts = {}) {
       ...opts.headers,
     },
   });
+  // 서버가 수명 절반이 지난 토큰을 갱신해 보내 준다 — 받아서 저장하면 매일 쓰는 동안
+  // 로그인이 풀리지 않는다(worker/auth.mjs RENEW_HEADER).
+  const fresh = r.headers.get('X-Token-Renew');
+  if (fresh && auth && fresh !== auth.token) saveAuth({ ...auth, token: fresh });
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.error || `오류가 났어요 (${r.status})`);
+  if (!r.ok) {
+    // ⚠ 상태 코드를 버리면 안 된다. 예전엔 메시지에 '로그인'·'권한이 없습니다'가 들어 있는지로
+    // 로그아웃을 판단했는데, 그러면 세션과 상관없는 오류에도 튕겨 나갔다 —
+    // 깃허브 오류 "저장소에 글을 쓸 권한이 없습니다"가 대표적이었다(2026-09-21).
+    const err = new Error(data.error || `오류가 났어요 (${r.status})`);
+    err.status = r.status;
+    throw err;
+  }
   return data;
 }
 
@@ -237,7 +248,7 @@ function showChildren() {
     view.querySelector('[data-back]')?.addEventListener('click', () => showHome());
     view.querySelector('[data-out]').addEventListener('click', () => { saveAuth(null); showLogin(); });
   }).catch((e) => {
-    if (/로그인/.test(e.message)) { saveAuth(null); showLogin(); return; }
+    if (e.status === 401) { saveAuth(null); showLogin(); return; }
     view.innerHTML = `<div class="card"><p class="empty">${esc(e.message)}</p></div>`;
   });
 }
@@ -388,7 +399,7 @@ async function showHome(childId = currentChildId) {
   try {
     d = await api('/api/parent/overview' + (childId ? `?child_id=${encodeURIComponent(childId)}` : ''));
   } catch (e) {
-    if (/로그인이 필요/.test(e.message)) { saveAuth(null); showLogin(); return; }
+    if (e.status === 401) { saveAuth(null); showLogin(); return; }
     // 가입은 했는데 아이를 아직 안 만든 경우 — 막다른 화면 대신 아이 만드는 곳으로 보낸다
     if (/아이를 먼저/.test(e.message)) { showChildren(); return; }
     view.innerHTML = `<div class="card"><p class="empty">${esc(e.message)}</p></div>`;
@@ -549,7 +560,7 @@ async function showWrong(q) {
     const pick = q.miss ? `miss=${encodeURIComponent(q.miss)}` : `axis=${encodeURIComponent(q.axis)}`;
     d = await api(`/api/parent/wrong-answers?child_id=${encodeURIComponent(currentChildId ?? '')}&${pick}`);
   } catch (e) {
-    if (/로그인이 필요/.test(e.message)) { saveAuth(null); showLogin(); return; }
+    if (e.status === 401) { saveAuth(null); showLogin(); return; }
     view.insertAdjacentHTML('beforeend', `<div class="card"><p class="empty">${esc(e.message)}</p></div>`);
     view.querySelector('.loading')?.remove();
     return;

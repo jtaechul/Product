@@ -63,6 +63,28 @@ async function hmacHex(key, msg) {
 
 const TOKEN_TTL_S = 30 * 24 * 3600; // 30일
 
+// ── 토큰 자동 연장 (2026-09-21) ──
+//
+// 수명이 절반 넘게 지난 토큰은, 그 요청의 응답에 **새 토큰을 얹어** 보낸다. 화면이 그걸
+// 받아 저장하므로 매일 쓰는 사람은 30일이 계속 다시 차서 로그인이 풀리지 않는다.
+// 반대로 30일 넘게 안 들어온 기기는 그대로 만료된다 — 잃어버린 기기가 영원히 열려 있으면
+// 안 되므로, '무제한'이 아니라 '쓰는 동안만 연장'이 맞다.
+//
+// 왜 헤더인가: 모든 응답 본문에 토큰을 끼워 넣으려면 API 수십 곳을 다 고쳐야 하고,
+// 한 곳이라도 빠뜨리면 그 화면만 조용히 로그인이 풀린다. 헤더는 미들웨어 한 곳에서 끝난다.
+export const RENEW_HEADER = 'X-Token-Renew';
+
+// 학생 토큰 <id>.<만료초>.<서명> / 학부모 토큰 pa.<id>.<만료초>.<서명>
+// 둘 다 뒤에서 두 번째 조각이 만료초라 한 함수로 처리된다.
+async function maybeRenew(c, token, make, subject) {
+  const exp = Number(String(token).split('.').at(-2));
+  if (!Number.isFinite(exp)) return;
+  if (exp - Math.floor(Date.now() / 1000) > TOKEN_TTL_S / 2) return;  // 아직 넉넉하다
+  try {
+    c.res.headers.set(RENEW_HEADER, await make(subject));
+  } catch { /* 응답 헤더를 못 건드리면 연장만 걸러질 뿐 요청은 정상이다 */ }
+}
+
 export async function makeToken(user) {
   const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_S;
   const msg = `${user.id}.${exp}`;
@@ -146,6 +168,7 @@ export const requireParent = async (c, next) => {
   c.set('child', child);
   c.set('parent', parent);
   await next();
+  await maybeRenew(c, m[1], makeAccountToken, parent);
 };
 
 // 자녀 등록·PIN 재발급처럼 '아이가 아직 없어도' 되는 화면용.
@@ -157,6 +180,7 @@ export const requireParentAccount = async (c, next) => {
   if (parent.status === 'suspended') return c.json({ error: SUSPENDED_MSG }, 403);
   c.set('parent', parent);
   await next();
+  await maybeRenew(c, m[1], makeAccountToken, parent);
 };
 
 // 정지된 가족에게 보여줄 한 문장 — 로그인·토큰 검사 어디서 걸려도 같은 말이 나오게 한곳에 둔다
@@ -256,6 +280,7 @@ export const requireAuth = async (c, next) => {
   if (!user) return c.json({ error: '로그인이 필요합니다' }, 401);
   c.set('user', user);
   await next();
+  await maybeRenew(c, m[1], makeToken, user);
 };
 
 // 역할 제한 — requireAuth 뒤에 붙여 쓴다. 권한이 없으면 404가 아니라 403으로 분명히 막는다.

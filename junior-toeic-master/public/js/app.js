@@ -246,8 +246,18 @@ const sfx = {
 // ---------- 통신 ----------
 async function api(path, opts) {
   const res = await fetch(path, opts);
+  // 서버가 수명 절반이 지난 토큰을 갱신해 보내 준다 — 받아서 저장하면 매일 쓰는 동안
+  // 로그인이 풀리지 않는다(worker/auth.mjs RENEW_HEADER).
+  const fresh = res.headers.get('X-Token-Renew');
+  if (fresh && auth && fresh !== auth.token) saveAuth({ ...auth, token: fresh });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `요청 실패 (${res.status})`);
+  if (!res.ok) {
+    // ⚠ 상태 코드를 버리면 안 된다. 예전엔 메시지에 '로그인'이 들어 있는지로 로그아웃을
+    // 판단해서, "이미 가입된 이메일이에요. 로그인해주세요" 같은 것에도 튕겨 나갔다.
+    const err = new Error(data.error || `요청 실패 (${res.status})`);
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 const renderError = (msg) => {
@@ -401,7 +411,7 @@ async function ensureTodaySet() {
     try {
       data = await api('/api/today', { headers: authHeaders() });
     } catch (e) {
-      if (/로그인/.test(e.message)) { saveAuth(null); } else throw e;
+      if (e.status === 401) { saveAuth(null); } else throw e;
     }
   }
   if (!data) {
@@ -924,7 +934,7 @@ async function renderReview() {
         startSession(r.questions, r.passages, '리매치'));
       return;
     } catch (e) {
-      if (/로그인/.test(e.message)) saveAuth(null);
+      if (e.status === 401) saveAuth(null);
       else return renderError(e.message);
     }
   }
@@ -1548,7 +1558,7 @@ function renderQuestion() {
               body: payload,
             });
           } catch (e) {
-            if (/로그인/.test(e.message)) saveAuth(null);
+            if (e.status === 401) saveAuth(null);
             else throw e;
           }
         }

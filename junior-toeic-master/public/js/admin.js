@@ -35,14 +35,27 @@ async function api(path, opts = {}) {
       ...opts.headers,
     },
   });
+  // 서버가 수명 절반이 지난 토큰을 갱신해 보내 준다 — 받아서 저장하면 매일 쓰는 동안
+  // 로그인이 풀리지 않는다(worker/auth.mjs RENEW_HEADER).
+  const fresh = r.headers.get('X-Token-Renew');
+  if (fresh && auth && fresh !== auth.token) saveAuth({ ...auth, token: fresh });
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.error || `오류가 났어요 (${r.status})`);
+  if (!r.ok) {
+    // ⚠ 상태 코드를 버리면 안 된다. 예전엔 메시지에 '로그인'·'권한이 없습니다'가 들어 있는지로
+    // 로그아웃을 판단했는데, 그러면 세션과 상관없는 오류에도 튕겨 나갔다 —
+    // 깃허브 오류 "저장소에 글을 쓸 권한이 없습니다"가 대표적이었다(2026-09-21).
+    const err = new Error(data.error || `오류가 났어요 (${r.status})`);
+    err.status = r.status;
+    throw err;
+  }
   return data;
 }
 
-// 로그인이 풀리면(토큰 만료·비밀번호 변경) 조용히 로그인 화면으로 돌려보낸다
+// 로그인이 풀리면(토큰 만료·비밀번호 변경) 조용히 로그인 화면으로 돌려보낸다.
+// **401(= 로그인 안 됨)일 때만** 내보낸다. 403은 '정지된 계정' 안내에도 쓰이는데,
+// 그걸 로그아웃으로 처리하면 왜 막혔는지 알려주는 문장을 아무도 못 읽는다.
 const guard = (e) => {
-  if (/로그인이 필요|권한이 없습니다/.test(e.message)) { saveAuth(null); start(); return true; }
+  if (e.status === 401) { saveAuth(null); start(); return true; }
   return false;
 };
 
