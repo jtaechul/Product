@@ -248,7 +248,15 @@ async function getApiUsage(env) {
 // 403은 영구 오류("Request not allowed") — 재시도해도 같은 결과. 즉시 실패 처리.
 const RETRYABLE_STATUS = new Set([408, 409, 429, 500, 502, 503, 504, 529]);
 
+// ⛔ Claude(Anthropic) API 사용 영구 금지 — 비용 문제로 2026-09 확정.
+// 남아 있는 옛 캐럿셀 코드가 실수로 호출해도 요금이 발생하지 않도록 입구에서 막는다.
+// 되살리려면 이 가드를 지우는 것이 아니라, 먼저 사용자에게 확인을 받아야 한다.
+const CLAUDE_DISABLED = true;
+
 async function callClaude(apiKey, opts, attempt = 0) {
+  if (CLAUDE_DISABLED) {
+    throw new Error('CLAUDE_DISABLED: 이 프로젝트는 Claude(Anthropic) API를 사용하지 않습니다. Gemini를 쓰세요.');
+  }
   const MAX_RETRIES = 3;
   const BACKOFF_MS = [1000, 3000, 7000];
   const { system, user, max_tokens = 2048, env, tier = 'main' } = opts;
@@ -1334,13 +1342,11 @@ async function callGeminiText(apiKey, opts) {
     return t;
   } catch (e) { clearTimeout(timer); throw e; }
 }
-// 보조 텍스트 호출 라우터 — Gemini(저렴) 우선, 실패 시 Claude light 폴백(안정성 유지).
+// 보조 텍스트 호출 라우터 — Gemini 전용. (Claude 폴백은 비용 금지 규칙에 따라 제거)
 async function callLightModel(env, opts) {
   const gk = await getGeminiKey(env);
-  if (gk) {
-    try { return await callGeminiText(gk, opts); } catch { /* Claude 폴백 */ }
-  }
-  return callClaude(env.ANTHROPIC_API_KEY, { ...opts, env, tier: 'light' });
+  if (!gk) throw new Error('GEMINI_KEY_MISSING: Gemini 키가 설정되지 않았습니다.');
+  return callGeminiText(gk, opts);
 }
 
 async function generateGeminiImageBytes(apiKey, prompt) {
@@ -2738,24 +2744,15 @@ async function handleVideoPrompts(env, body) {
 }
 clips 배열은 정확히 ${clips}개여야 한다.`;
 
-  // Gemini 우선(저렴·크레딧 독립), 실패 시 Claude 폴백.
-  // 프롬프트 생성은 구조가 정해진 작업이라 Gemini로 충분하고, Claude 크레딧을 아낀다.
-  const maxTok = Math.min(4000, 700 + clips * 300);
-  let raw = null, firstErr = '';
+  // Gemini 전용. (Claude는 이 프로젝트에서 사용 금지)
   const gk = await getGeminiKey(env);
-  if (gk) {
-    try {
-      raw = await callGeminiText(gk, { system: VEO_SYSTEM, user, max_tokens: maxTok });
-    } catch (e) { firstErr = e.message; }
+  if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
+  let raw;
+  try {
+    raw = await callGeminiText(gk, { system: VEO_SYSTEM, user, max_tokens: Math.min(4000, 700 + clips * 300) });
+  } catch (e) {
+    throw new Error(`프롬프트를 만들지 못했습니다: ${e.message}`);
   }
-  if (!raw && env.ANTHROPIC_API_KEY) {
-    try {
-      raw = await callClaude(env.ANTHROPIC_API_KEY, { system: VEO_SYSTEM, user, max_tokens: maxTok, env, tier: 'main' });
-    } catch (e) {
-      throw new Error(`프롬프트를 만들지 못했습니다. (Gemini: ${firstErr || '키 없음'} / Claude: ${e.message})`);
-    }
-  }
-  if (!raw) throw new Error(`프롬프트를 만들지 못했습니다. ${firstErr || 'AI 키가 설정되지 않았습니다.'}`);
   const out = extractJson(raw);
   const list = Array.isArray(out.clips) ? out.clips : [];
   const style = String(out.styleBlock || '').trim();

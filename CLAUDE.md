@@ -2,6 +2,18 @@
 
 ---
 
+> ## ⛔ 핵심 규칙 — Claude(Anthropic) API 사용 영구 금지 (절대 위반 금지)
+> **2026-09 확정.** 비용 문제로 이 저장소의 어떤 기능도 Claude(Anthropic) API를 호출하지 않는다.
+> **텍스트 생성은 전부 Gemini를 쓴다.**
+> - `book-carousel/worker.js`의 `CLAUDE_DISABLED = true` 가드가 `callClaude` 입구를 막는다.
+>   옛 캐럿셀 코드가 실수로 호출해도 요금이 발생하지 않는다. **이 가드를 지우지 않는다.**
+> - `callLightModel`·`handleVideoPrompts`는 Gemini 전용이며 Claude 폴백이 없다.
+> - 배포 워크플로에서 `ANTHROPIC_API_KEY`를 더 이상 올리지 않는다.
+> - 새 기능을 만들 때도 Claude를 쓰지 않는다. Gemini로 안 되는 일이면 **먼저 사용자에게 묻는다.**
+> - 되살리는 것은 사용자가 명시적으로 요구할 때만 가능하다. 추측으로 되돌리지 않는다.
+
+---
+
 ## 반려동물 용품 사이트 + 릴스 편집 (`book-carousel/`) — 현재 방향
 
 > **⚠️ 방향 전환(2026-09 확정)**: 연애 도서 큐레이션은 **폐지**. 같은 인스타 계정을
