@@ -2649,7 +2649,10 @@ async function handleDeleteDraft(env, body) {
 // 키(COUPANG_ACCESS_KEY / COUPANG_SECRET_KEY)는 서버 시크릿으로만 두고 절대 화면에 내보내지 않는다.
 // 키 등록: GitHub 시크릿 COUPANG_ACCESS_KEY / COUPANG_SECRET_KEY → 배포 시 워커 시크릿으로 올라간다.
 const COUPANG_HOST = 'https://api-gateway.coupang.com';
-const COUPANG_PET_CATEGORY = '1016'; // 반려동물용품
+// 카테고리 번호는 문서에 없어 실제 호출로 확인한 값이다(2026-09 확인):
+//   1022 반려/애완용품 · 1013~1015 생활용품 · 1016 가전디지털 · 1020 주방용품
+//   1010 뷰티 · 1011 출산/유아 · 1018 자동차용품 · 1019 도서/음반 · 1021 문구/사무
+const COUPANG_PET_CATEGORY = '1022'; // 반려/애완용품
 
 function _cpDatetime() {
   // yyMMdd'T'HHmmss'Z' (GMT) — 예: 260921T045512Z
