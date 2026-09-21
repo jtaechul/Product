@@ -2603,6 +2603,164 @@ async function handleDeleteDraft(env, body) {
   return { success: true };
 }
 
+// ===== 쿠팡 파트너스 Open API =====
+// 인증: HMAC-SHA256. 서명 원문 = 시각 + 메서드 + 경로 + 쿼리(물음표 제외).
+// 키(COUPANG_ACCESS_KEY / COUPANG_SECRET_KEY)는 서버 시크릿으로만 두고 절대 화면에 내보내지 않는다.
+const COUPANG_HOST = 'https://api-gateway.coupang.com';
+const COUPANG_PET_CATEGORY = '1016'; // 반려동물용품
+
+function _cpDatetime() {
+  // yyMMdd'T'HHmmss'Z' (GMT) — 예: 260921T045512Z
+  return new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '').slice(2);
+}
+
+async function _cpSign(secretKey, message) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(secretKey), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+  return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function coupangApi(env, method, path, query = '', body = null) {
+  const ak = env.COUPANG_ACCESS_KEY, sk = env.COUPANG_SECRET_KEY;
+  if (!ak || !sk) throw new Error('COUPANG_KEY_MISSING: 쿠팡 파트너스 API 키가 아직 설정되지 않았습니다.');
+  const dt = _cpDatetime();
+  const signature = await _cpSign(sk, dt + method + path + query);
+  const res = await fetch(COUPANG_HOST + path + (query ? '?' + query : ''), {
+    method,
+    headers: {
+      Authorization: `CEA algorithm=HmacSHA256, access-key=${ak}, signed-date=${dt}, signature=${signature}`,
+      'Content-Type': 'application/json;charset=UTF-8',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  let data; try { data = JSON.parse(text); } catch { data = null; }
+  if (!res.ok) {
+    throw new Error(`쿠팡 API 오류 [${res.status}] ${data?.rMessage || data?.message || text.slice(0, 200)}`);
+  }
+  if (data && data.rCode && String(data.rCode) !== '0') {
+    throw new Error(`쿠팡 API 오류 [${data.rCode}] ${data.rMessage || ''}`);
+  }
+  return data;
+}
+
+// 응답 상품을 화면·등록에서 쓰는 모양으로 통일.
+// ⚠️ 파트너스 API는 별점·리뷰 수를 주지 않는다. 판매 순위(rank)·가격·로켓배송 여부만 온다.
+function _cpNormalize(items) {
+  return (Array.isArray(items) ? items : []).map(it => ({
+    productId: it.productId || null,
+    title: it.productName || '',
+    price: Number(it.productPrice) || 0,
+    image: it.productImage || '',
+    link: it.productUrl || '',
+    category: it.categoryName || '',
+    rocket: !!it.isRocket,
+    freeShip: !!it.isFreeShipping,
+    rank: it.rank || null,
+  })).filter(x => x.title);
+}
+
+async function handleCoupangBest(env, body) {
+  const cat = String(body.categoryId || COUPANG_PET_CATEGORY).replace(/[^0-9]/g, '') || COUPANG_PET_CATEGORY;
+  const limit = Math.max(1, Math.min(50, parseInt(body.limit, 10) || 20));
+  const d = await coupangApi(env, 'GET',
+    `/v2/providers/affiliate_open_api/apis/openapi/products/bestcategories/${cat}`, `limit=${limit}`);
+  return { success: true, products: _cpNormalize(d?.data) };
+}
+
+async function handleCoupangSearch(env, body) {
+  const kw = String(body.keyword || '').trim();
+  if (!kw) throw new Error('찾을 상품 이름을 입력하세요.');
+  const limit = Math.max(1, Math.min(50, parseInt(body.limit, 10) || 20));
+  const d = await coupangApi(env, 'GET',
+    '/v2/providers/affiliate_open_api/apis/openapi/v1/products/search',
+    `keyword=${encodeURIComponent(kw)}&limit=${limit}`);
+  return { success: true, products: _cpNormalize(d?.data?.productData || d?.data) };
+}
+
+// 일반 쿠팡 주소 → 파트너스 추적 링크 변환(직접 고른 상품을 쓸 때).
+async function handleCoupangDeeplink(env, body) {
+  const urls = (Array.isArray(body.urls) ? body.urls : [body.url]).filter(Boolean);
+  if (!urls.length) throw new Error('변환할 쿠팡 주소가 없습니다.');
+  const d = await coupangApi(env, 'POST',
+    '/v2/providers/affiliate_open_api/apis/openapi/v1/deeplink', '', { coupangUrls: urls });
+  return { success: true, links: (d?.data || []).map(x => x.shortenUrl || x.landingUrl).filter(Boolean) };
+}
+
+// ===== 릴스 영상 프롬프트 생성 (Google Flow / Veo 용) =====
+// Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
+// 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
+// styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
+const VEO_SYSTEM = `당신은 반려동물 용품 인스타그램 릴스의 영상 프롬프트를 설계하는 사람이다.
+사용자는 Google Flow(Veo)로 8초짜리 클립을 하나씩 만들어 순서대로 이어 붙인다.
+
+[절대 규칙]
+1. Veo는 특정 상품의 포장지·로고·브랜드를 정확히 그리지 못한다. 영상에 상품을 절대 등장시키지 마라.
+   영상은 "그 상품이 필요해지는 문제 상황"만 보여준다.
+2. 클립마다 강아지나 장소가 달라지면 영상이 망가진다. styleBlock에 강아지 외모·장소·조명·카메라를
+   아주 구체적으로 고정하고, 클립 action에는 그 안에서 일어나는 동작만 쓴다.
+3. action은 영어로만 쓴다. 영상 안에 글자·자막·대사를 넣으라는 지시를 하지 마라(자막은 나중에 따로 입힌다).
+4. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리·뒷모습까지만 보이게 한다(AI 인체 하자 방지).
+5. action 하나는 8초 안에 담기는 단일 동작이어야 한다. 장면 전환이나 여러 동작을 한 클립에 넣지 마라.
+
+[구성]
+- 첫 클립: 2초 안에 문제가 터져야 한다. 스크롤을 멈추게 하는 가장 웃긴 순간으로 시작한다.
+- 중간 클립: 같은 문제가 과장된 코미디로 쌓인다. 견주가 시도했다 실패하는 장면도 좋다.
+- 마지막 클립: 문제가 해결된 뒤의 평화롭고 사랑스러운 모습.
+- subtitle은 한국어 한 줄, 공백 포함 22자 이내. 반말·구어체로 웃기게 쓴다. 상품 이름을 넣지 않는다.
+
+반드시 JSON만 출력한다.`;
+
+async function handleVideoPrompts(env, body) {
+  if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY가 설정되지 않았습니다.');
+  const title = String(body.title || '').trim();
+  if (!title) throw new Error('상품 이름이 필요합니다.');
+  const category = String(body.category || '').trim();
+  const note = String(body.note || '').trim();
+  const dog = String(body.dog || '').trim() || '흰색 몰티즈, 솜털 같은 털, 작은 체구, 까만 동그란 눈';
+  const clips = Math.max(3, Math.min(10, parseInt(body.clips, 10) || 7));
+
+  const user = `상품: ${title}
+품목: ${category || '반려동물 용품'}
+강아지 설정: ${dog}${note ? `\n추가 메모: ${note}` : ''}
+
+이 상품이 해결해 주는 "견주의 진짜 문제"를 하나 잡고, 그 문제를 ${clips}개 클립으로 웃기게 풀어라.
+
+아래 형태의 JSON만 출력:
+{
+  "problem": "이 영상이 다루는 문제 한 줄 (한국어)",
+  "styleBlock": "영어. 강아지 외모 + 장소 + 조명 + 카메라 스타일을 고정하는 한 문단. 모든 클립 앞에 그대로 반복된다",
+  "clips": [
+    { "action": "영어 한 문단. 이 클립에서 일어나는 단일 동작", "subtitle": "한국어 자막 한 줄" }
+  ],
+  "caption": "인스타그램 캡션. 공감 첫 줄 + 2~3줄 본문 + 저장 유도 + 프로필 링크 유도",
+  "hashtags": ["#태그1", "#태그2", "#태그3"]
+}
+clips 배열은 정확히 ${clips}개여야 한다.`;
+
+  const raw = await callClaude(env.ANTHROPIC_API_KEY, {
+    system: VEO_SYSTEM, user, max_tokens: Math.min(4000, 700 + clips * 300), env, tier: 'main',
+  });
+  const out = extractJson(raw);
+  const list = Array.isArray(out.clips) ? out.clips : [];
+  const style = String(out.styleBlock || '').trim();
+  return {
+    success: true,
+    problem: out.problem || '',
+    styleBlock: style,
+    caption: out.caption || '',
+    hashtags: Array.isArray(out.hashtags) ? out.hashtags.slice(0, 3) : [],
+    clips: list.map((c, i) => ({
+      no: i + 1,
+      action: String(c.action || '').trim(),
+      subtitle: String(c.subtitle || '').trim(),
+      // Flow에 그대로 붙여넣을 최종 프롬프트 = 고정 블록 + 이 클립의 동작
+      prompt: (style ? style + ' ' : '') + String(c.action || '').trim(),
+    })),
+  };
+}
+
 // ===== 반려동물 용품 상점 페이지 =====
 // 계정/사이트 이름. 바꾸려면 이 한 줄만 고치면 된다.
 const SHOP_NAME = '오늘의 반려템';
@@ -2829,102 +2987,222 @@ function generateManageHTML() {
 <title>상품 등록 · ${shopEsc(SHOP_NAME)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;800&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#F6F7F5;--card:#fff;--ink:#212629;--sub:#6C787E;--line:#E4E8E4;--brand:#2F6F5E;--brand-ink:#1E4D41;--crit:#C0503F}
+:root{--bg:#F6F7F5;--card:#fff;--ink:#212629;--sub:#6C787E;--line:#E4E8E4;--brand:#2F6F5E;--brand-ink:#1E4D41;--crit:#C0503F;--amber:#B5761F}
 body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.6;padding-bottom:60px}
 .hd{background:var(--brand);color:#fff;padding:30px 20px 22px}
-.hd-in{max-width:620px;margin:0 auto}
+.hd-in{max-width:660px;margin:0 auto}
 .hd h1{font-family:'Gothic A1',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:5px}
 .hd p{font-size:12.5px;color:#BEDCD2}
-.hd a{color:#fff;font-size:12.5px;text-decoration:underline;display:inline-block;margin-top:9px}
-main{max-width:620px;margin:0 auto;padding:22px 16px 0;display:flex;flex-direction:column;gap:22px}
+.hd nav{margin-top:11px;display:flex;gap:14px;flex-wrap:wrap}
+.hd nav a{color:#fff;font-size:12.5px;text-decoration:underline}
+main{max-width:660px;margin:0 auto;padding:22px 16px 0;display:flex;flex-direction:column;gap:20px}
 .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
-h2{font-family:'Gothic A1',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px}
+.box-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.step{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--brand);background:rgba(47,111,94,.1);border-radius:5px;padding:2px 6px;flex:none}
+h2{font-family:'Gothic A1',sans-serif;font-size:16px;font-weight:700}
+.lead{font-size:12.5px;color:var(--sub);line-height:1.6;margin-bottom:14px}
 .f{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
 .f label{font-size:12.5px;font-weight:700;color:var(--sub)}
 .f small{font-size:11.5px;color:#9AA5AA;line-height:1.55}
-input,select,textarea{
-  width:100%;font-family:inherit;font-size:14px;color:var(--ink);background:#fff;
-  border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none;
-}
+input,select,textarea{width:100%;font-family:inherit;font-size:14px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none}
 input:focus,select:focus,textarea:focus{border-color:var(--brand)}
 textarea{resize:vertical;min-height:72px;line-height:1.65}
-.btn{
-  width:100%;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;
-  background:var(--brand);color:#fff;border:0;border-radius:11px;padding:13px;
-}
+.btn{font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;background:var(--brand);color:#fff;border:0;border-radius:11px;padding:13px}
 .btn:hover{background:var(--brand-ink)}
 .btn:disabled{background:#C3CBC7;cursor:not-allowed}
+.btn-wide{width:100%}
+.btn-2{background:#fff;color:var(--brand);border:1px solid var(--line)}
+.btn-2:hover{background:#F2F5F3;border-color:var(--brand)}
+.btn-sm{font-size:12.5px;font-weight:500;padding:8px 12px;border-radius:9px}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.row .grow2{flex:2}
 .msg{margin-top:12px;font-size:13px;padding:11px 13px;border-radius:10px;line-height:1.6;display:none}
 .msg.ok{display:block;background:rgba(47,111,94,.08);border:1px solid var(--brand);color:var(--brand-ink)}
 .msg.no{display:block;background:rgba(192,80,63,.07);border:1px solid var(--crit);color:var(--crit)}
+.msg.wait{display:block;background:#F2F5F3;border:1px solid var(--line);color:var(--sub)}
+.finds{display:flex;flex-direction:column;gap:9px;margin-top:14px;max-height:460px;overflow-y:auto}
+.find{display:flex;gap:11px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px}
+.find img{width:52px;height:52px;border-radius:8px;object-fit:cover;background:#EDEFEC;flex:none}
+.find .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.find .n{font-size:13px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.find .m{font-size:11.5px;color:var(--sub);font-variant-numeric:tabular-nums}
+.rk{color:var(--amber);font-weight:700}
+.rocket{color:var(--brand);font-weight:700}
 .item{display:flex;gap:11px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
 .item:last-child{border-bottom:0}
 .item img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:#EDEFEC;flex:none}
 .item .t{flex:1;min-width:0}
 .item .n{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .item .m{font-size:11.5px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.item button{
-  flex:none;font-family:inherit;font-size:12px;cursor:pointer;background:#fff;
-  color:var(--crit);border:1px solid var(--line);border-radius:8px;padding:6px 10px;
-}
+.item button{flex:none;font-family:inherit;font-size:12px;cursor:pointer;background:#fff;color:var(--crit);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 .item button:hover{border-color:var(--crit)}
 .muted{font-size:13px;color:var(--sub);text-align:center;padding:22px 0}
+.clip{border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px}
+.clip-hd{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:8px}
+.clip-no{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--brand);font-weight:500}
+.clip pre{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;line-height:1.6;color:#3A464C;
+  background:#F4F6F4;border-radius:8px;padding:10px;white-space:pre-wrap;word-break:break-word;max-height:170px;overflow-y:auto;
+}
+.clip .sub{font-size:13px;margin-top:8px;padding-left:9px;border-left:2px solid var(--brand)}
+.prob{background:#F4F6F4;border-radius:10px;padding:11px 13px;font-size:13px;margin-bottom:14px;line-height:1.6}
+.prob b{color:var(--brand-ink)}
+.note{background:#FFF8EC;border:1px solid #EBD9B8;border-left:3px solid var(--amber);border-radius:10px;padding:11px 13px;font-size:12px;color:#6B5423;line-height:1.65;margin-bottom:14px}
 </style>
 </head>
 <body>
 <header class="hd"><div class="hd-in">
-  <h1>상품 등록</h1>
-  <p>여기서 등록한 상품이 판매 페이지에 바로 올라갑니다.</p>
-  <a href="/shop" target="_blank">판매 페이지 열어보기</a>
+  <h1>상품 등록 · 영상 준비</h1>
+  <p>쿠팡에서 잘 팔리는 상품을 찾아 등록하고, 영상 프롬프트까지 여기서 뽑습니다.</p>
+  <nav>
+    <a href="/shop" target="_blank">판매 페이지 보기</a>
+  </nav>
 </div></header>
 <main>
+
   <section class="box">
-    <h2>새 상품 넣기</h2>
-    <div class="f">
-      <label for="t">상품 이름</label>
-      <input id="t" type="text" placeholder="브리더랩 저알러지 연어 사료 2kg">
+    <div class="box-hd"><span class="step">01</span><h2>쿠팡에서 상품 찾기</h2></div>
+    <p class="lead">반려동물 카테고리에서 실제로 많이 팔린 순서대로 불러옵니다. 마음에 드는 상품의 "이 상품 쓰기"를 누르면 이름·사진·구매 링크가 아래 칸에 자동으로 채워집니다.</p>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn btn-2 btn-sm" id="best" type="button">잘 팔리는 순서로 불러오기</button>
     </div>
-    <div class="f">
-      <label for="b">브랜드</label>
-      <input id="b" type="text" placeholder="브리더랩">
+    <div class="row">
+      <input class="grow2" id="kw" type="text" placeholder="또는 상품 이름으로 찾기">
+      <button class="btn btn-2 btn-sm" id="search" type="button" style="flex:0 0 78px">찾기</button>
     </div>
-    <div class="f">
-      <label for="c">품목</label>
+    <div class="msg" id="findMsg"></div>
+    <div class="finds" id="finds"></div>
+  </section>
+
+  <section class="box">
+    <div class="box-hd"><span class="step">02</span><h2>판매 페이지에 올리기</h2></div>
+    <p class="lead">위에서 상품을 고르면 대부분 자동으로 채워집니다. 추천 이유만 직접 적어주세요.</p>
+    <div class="f"><label for="t">상품 이름</label><input id="t" type="text" placeholder="브리더랩 저알러지 연어 사료 2kg"></div>
+    <div class="f"><label for="b">브랜드</label><input id="b" type="text" placeholder="브리더랩"></div>
+    <div class="f"><label for="c">품목</label>
       <select id="c">
         <option>사료·간식</option><option>산책용품</option><option>배변·위생</option>
         <option>장난감</option><option>미용·건강</option><option>이동·하우스</option>
       </select>
     </div>
-    <div class="f">
-      <label for="img">상품 사진 주소</label>
-      <input id="img" type="url" placeholder="https://...jpg">
-      <small>쿠팡 상품 페이지에서 사진을 길게 눌러 &quot;이미지 주소 복사&quot;를 하면 됩니다. 비워두면 회색 칸으로 나옵니다.</small>
-    </div>
-    <div class="f">
-      <label for="w">추천 이유</label>
-      <textarea id="w" placeholder="알러지로 긁던 아이가 2주 만에 확 줄었어요. 단일 단백질이라 속도 편합니다."></textarea>
-    </div>
-    <div class="f">
-      <label for="l">쿠팡 파트너스 링크</label>
-      <input id="l" type="url" placeholder="https://link.coupang.com/a/...">
-    </div>
-    <button class="btn" id="go">상품 등록하기</button>
+    <div class="f"><label for="img">상품 사진 주소</label><input id="img" type="url" placeholder="https://...jpg">
+      <small>쿠팡에서 불러온 상품은 자동으로 들어갑니다.</small></div>
+    <div class="f"><label for="w">추천 이유</label>
+      <textarea id="w" placeholder="알러지로 긁던 아이가 2주 만에 확 줄었어요. 단일 단백질이라 속도 편합니다."></textarea></div>
+    <div class="f"><label for="l">쿠팡 구매 링크</label><input id="l" type="url" placeholder="https://link.coupang.com/a/...">
+      <small>쿠팡에서 불러온 상품은 수수료가 붙는 링크가 자동으로 들어갑니다.</small></div>
+    <button class="btn btn-wide" id="go" type="button">상품 등록하기</button>
     <div class="msg" id="msg"></div>
   </section>
 
   <section class="box">
-    <h2>등록된 상품</h2>
+    <div class="box-hd"><span class="step">03</span><h2>영상 프롬프트 만들기</h2></div>
+    <p class="lead">Google Flow에 그대로 붙여넣을 영어 프롬프트와, 영상에 새길 한글 자막을 한 번에 뽑습니다.</p>
+    <div class="note">AI 영상은 실제 상품 포장을 그리지 못합니다. 그래서 영상은 <b>그 상품이 필요해지는 상황</b>만 보여주고, 상품 연결은 자막과 프로필 링크가 맡습니다.</div>
+    <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
+    <div class="f"><label for="pdog">강아지 설정</label>
+      <input id="pdog" type="text" value="흰색 몰티즈, 솜털 같은 털, 작은 체구, 까만 동그란 눈">
+      <small>클립마다 같은 강아지가 나오도록 고정하는 설명입니다. 실제 키우는 아이에 맞춰 바꾸세요.</small></div>
+    <div class="row">
+      <div class="f" style="flex:1"><label for="pclips">클립 개수</label>
+        <select id="pclips"><option>5</option><option selected>7</option><option>9</option></select></div>
+      <div class="f" style="flex:2"><label for="pnote">추가 주문 (선택)</label>
+        <input id="pnote" type="text" placeholder="예: 겨울 산책 상황으로"></div>
+    </div>
+    <button class="btn btn-wide" id="mk" type="button">프롬프트 만들기</button>
+    <div class="msg" id="pMsg"></div>
+    <div id="pOut" style="margin-top:16px"></div>
+  </section>
+
+  <section class="box">
+    <div class="box-hd"><span class="step">04</span><h2>등록된 상품</h2></div>
     <div id="list"><p class="muted">불러오는 중…</p></div>
   </section>
 </main>
 <script>
 (function(){
   var $=function(i){return document.getElementById(i);};
-  function say(text, ok){ var m=$('msg'); m.className='msg '+(ok?'ok':'no'); m.textContent=text; }
+  function say(el,text,kind){ var m=$(el); m.className='msg '+(kind||'ok'); m.textContent=text; }
+  function hide(el){ $(el).className='msg'; }
+  function post(path,payload){
+    return fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})})
+      .then(function(r){return r.json();});
+  }
+  function won(n){ return (Number(n)||0).toLocaleString('ko-KR')+'원'; }
+  function copy(text,btn){
+    var done=function(){ var t=btn.textContent; btn.textContent='복사됨'; setTimeout(function(){btn.textContent=t;},1200); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){ fallback(text); done(); });
+    } else { fallback(text); done(); }
+  }
+  function fallback(text){
+    var ta=document.createElement('textarea'); ta.value=text;
+    ta.style.cssText='position:fixed;left:-9999px'; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(e){} ta.remove();
+  }
 
+  /* ---- 01 쿠팡에서 찾기 ---- */
+  function guessCat(name){
+    var s=(name||'');
+    if(/사료|간식|츄르|육포|캔|영양제|덴탈/.test(s)) return '사료·간식';
+    if(/하네스|리드|목줄|산책|가슴줄/.test(s)) return '산책용품';
+    if(/배변|패드|탈취|위생|기저귀|청소/.test(s)) return '배변·위생';
+    if(/장난감|노즈워크|공|터그|삑삑/.test(s)) return '장난감';
+    if(/미용|빗|발톱|샴푸|이발|브러시/.test(s)) return '미용·건강';
+    if(/이동|켄넬|하우스|방석|쿠션|가방|카시트/.test(s)) return '이동·하우스';
+    return '사료·간식';
+  }
+  function showFinds(rows){
+    var el=$('finds'); el.textContent='';
+    if(!rows.length){ say('findMsg','조건에 맞는 상품이 없습니다.','no'); return; }
+    rows.forEach(function(p){
+      var d=document.createElement('div'); d.className='find';
+      var im=document.createElement('img');
+      if(p.image) im.src='/api/cover?url='+encodeURIComponent(p.image);
+      im.alt=''; im.onerror=function(){ im.removeAttribute('src'); };
+      var t=document.createElement('div'); t.className='t';
+      var n=document.createElement('div'); n.className='n'; n.textContent=p.title;
+      var m=document.createElement('div'); m.className='m';
+      var bits=[];
+      if(p.rank) bits.push('<span class="rk">'+p.rank+'위</span>');
+      bits.push(won(p.price));
+      if(p.rocket) bits.push('<span class="rocket">로켓</span>');
+      m.innerHTML=bits.join(' · ');
+      t.appendChild(n); t.appendChild(m);
+      var use=document.createElement('button');
+      use.type='button'; use.className='btn btn-2 btn-sm'; use.textContent='이 상품 쓰기';
+      use.style.flex='none';
+      use.addEventListener('click', function(){
+        $('t').value=p.title; $('img').value=p.image||''; $('l').value=p.link||'';
+        $('c').value=guessCat(p.title); $('pt').value=p.title;
+        say('findMsg','아래 칸에 채웠습니다. 추천 이유만 적으면 등록할 수 있어요.','ok');
+        $('w').focus();
+      });
+      d.appendChild(im); d.appendChild(t); d.appendChild(use);
+      el.appendChild(d);
+    });
+  }
+  function find(path,payload,btn){
+    btn.disabled=true; say('findMsg','쿠팡에서 불러오는 중…','wait'); $('finds').textContent='';
+    post(path,payload).then(function(res){
+      btn.disabled=false;
+      if(res && res.success){ hide('findMsg'); showFinds(res.products||[]); }
+      else say('findMsg',(res&&res.error)||'불러오지 못했습니다.','no');
+    }).catch(function(e){ btn.disabled=false; say('findMsg','불러오지 못했습니다: '+e.message,'no'); });
+  }
+  $('best').addEventListener('click', function(){ find('/api/coupang/best',{limit:20},$('best')); });
+  $('search').addEventListener('click', function(){
+    var kw=$('kw').value.trim();
+    if(!kw){ say('findMsg','찾을 상품 이름을 적어주세요.','no'); return; }
+    find('/api/coupang/search',{keyword:kw,limit:20},$('search'));
+  });
+  $('kw').addEventListener('keydown', function(e){ if(e.key==='Enter') $('search').click(); });
+
+  /* ---- 02 등록 ---- */
   function load(){
     fetch('/api/shop-catalog').then(function(r){return r.json();}).then(function(rows){
       var el=$('list');
@@ -2933,7 +3211,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       rows.forEach(function(p){
         var d=document.createElement('div'); d.className='item';
         var im=document.createElement('img');
-        im.src = p.cover ? ('/api/cover?url='+encodeURIComponent(p.cover)) : '';
+        if(p.cover) im.src='/api/cover?url='+encodeURIComponent(p.cover);
         im.alt=''; im.onerror=function(){ im.removeAttribute('src'); };
         var t=document.createElement('div'); t.className='t';
         var n=document.createElement('div'); n.className='n'; n.textContent='No.'+p.number+' '+(p.title||'');
@@ -2944,9 +3222,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
         rm.addEventListener('click', function(){
           if(!confirm('No.'+p.number+' 상품을 뺄까요?')) return;
           rm.disabled=true;
-          fetch('/api/delete-book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({number:p.number})})
-            .then(function(r){return r.json();})
-            .then(function(){ load(); })
+          post('/api/delete-book',{number:p.number}).then(load)
             .catch(function(){ rm.disabled=false; alert('빼지 못했습니다.'); });
         });
         d.appendChild(im); d.appendChild(t); d.appendChild(rm);
@@ -2957,27 +3233,85 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 
   $('go').addEventListener('click', function(){
     var title=$('t').value.trim();
-    if(!title){ say('상품 이름을 적어주세요.', false); return; }
-    var payload={
-      bookInfo:{
-        title:title, author:$('b').value.trim(), category:$('c').value,
-        coreMessage:$('w').value.trim(), cover:$('img').value.trim()
-      },
-      cover:$('img').value.trim(),
-      coupangLink:$('l').value.trim()
-    };
-    $('go').disabled=true; say('등록하는 중…', true);
-    fetch('/api/add-book-to-catalog',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-      .then(function(r){return r.json();})
-      .then(function(res){
-        $('go').disabled=false;
-        if(res && res.success){
-          say('No.'+res.bookNumber+' 로 등록했습니다.', true);
-          ['t','b','img','w','l'].forEach(function(i){ $(i).value=''; });
-          load();
-        } else { say((res && res.error) || '등록하지 못했습니다.', false); }
-      })
-      .catch(function(e){ $('go').disabled=false; say('등록하지 못했습니다: '+e.message, false); });
+    if(!title){ say('msg','상품 이름을 적어주세요.','no'); return; }
+    $('go').disabled=true; say('msg','등록하는 중…','wait');
+    post('/api/add-book-to-catalog',{
+      bookInfo:{title:title,author:$('b').value.trim(),category:$('c').value,
+                coreMessage:$('w').value.trim(),cover:$('img').value.trim()},
+      cover:$('img').value.trim(), coupangLink:$('l').value.trim()
+    }).then(function(res){
+      $('go').disabled=false;
+      if(res && res.success){
+        say('msg','No.'+res.bookNumber+' 로 등록했습니다.','ok');
+        ['t','b','img','w','l'].forEach(function(i){ $(i).value=''; });
+        load();
+      } else say('msg',(res&&res.error)||'등록하지 못했습니다.','no');
+    }).catch(function(e){ $('go').disabled=false; say('msg','등록하지 못했습니다: '+e.message,'no'); });
+  });
+
+  /* ---- 03 영상 프롬프트 ---- */
+  function addCopyBtn(parent,label,text){
+    var b=document.createElement('button');
+    b.type='button'; b.className='btn btn-2 btn-sm'; b.textContent=label; b.style.flex='none';
+    b.addEventListener('click', function(){ copy(text,b); });
+    parent.appendChild(b);
+    return b;
+  }
+  function renderPrompts(r){
+    var out=$('pOut'); out.textContent='';
+    if(r.problem){
+      var pb=document.createElement('div'); pb.className='prob';
+      pb.innerHTML='<b>이 영상이 다루는 문제</b><br>'+r.problem;
+      out.appendChild(pb);
+    }
+    var subs=(r.clips||[]).map(function(c){ return c.subtitle; }).filter(Boolean).join('\\n');
+    var bar=document.createElement('div'); bar.className='row'; bar.style.marginBottom='14px';
+    addCopyBtn(bar,'자막 전부 복사',subs);
+    if(r.caption){
+      addCopyBtn(bar,'캡션 복사', r.caption+'\\n\\n'+(r.hashtags||[]).join(' '));
+    }
+    out.appendChild(bar);
+
+    (r.clips||[]).forEach(function(c){
+      var d=document.createElement('div'); d.className='clip';
+      var hd=document.createElement('div'); hd.className='clip-hd';
+      var no=document.createElement('span'); no.className='clip-no'; no.textContent='클립 '+c.no;
+      hd.appendChild(no);
+      addCopyBtn(hd,'프롬프트 복사',c.prompt);
+      d.appendChild(hd);
+      var pre=document.createElement('pre'); pre.textContent=c.prompt; d.appendChild(pre);
+      if(c.subtitle){
+        var sb=document.createElement('div'); sb.className='sub'; sb.textContent=c.subtitle; d.appendChild(sb);
+      }
+      out.appendChild(d);
+    });
+
+    if(r.caption){
+      var cap=document.createElement('div'); cap.className='clip';
+      var ch=document.createElement('div'); ch.className='clip-hd';
+      var cn=document.createElement('span'); cn.className='clip-no'; cn.textContent='인스타 캡션';
+      ch.appendChild(cn); cap.appendChild(ch);
+      var cp=document.createElement('pre');
+      cp.style.fontFamily="'Noto Sans KR',sans-serif"; cp.style.fontSize='12.5px';
+      cp.textContent=r.caption+'\\n\\n'+(r.hashtags||[]).join(' ');
+      cap.appendChild(cp);
+      out.appendChild(cap);
+    }
+  }
+  $('mk').addEventListener('click', function(){
+    var title=$('pt').value.trim() || $('t').value.trim();
+    if(!title){ say('pMsg','어떤 상품의 영상인지 적어주세요.','no'); return; }
+    $('mk').disabled=true; $('pOut').textContent='';
+    say('pMsg','프롬프트를 짜는 중… 30초쯤 걸립니다.','wait');
+    post('/api/video-prompts',{
+      title:title, category:$('c').value, dog:$('pdog').value.trim(),
+      clips:parseInt($('pclips').value,10), note:$('pnote').value.trim()
+    }).then(function(res){
+      $('mk').disabled=false;
+      if(res && res.success && (res.clips||[]).length){
+        hide('pMsg'); renderPrompts(res);
+      } else say('pMsg',(res&&res.error)||'프롬프트를 만들지 못했습니다.','no');
+    }).catch(function(e){ $('mk').disabled=false; say('pMsg','만들지 못했습니다: '+e.message,'no'); });
   });
 
   load();
@@ -3202,6 +3536,13 @@ export default {
             result = { success: true, configured: has, source: env.GEMINI_API_KEY ? 'secret' : (has ? 'app' : 'none') };
           }
         }
+        else if (url.pathname === '/api/coupang/best') result = await handleCoupangBest(env, body);
+        else if (url.pathname === '/api/coupang/search') result = await handleCoupangSearch(env, body);
+        else if (url.pathname === '/api/coupang/deeplink') result = await handleCoupangDeeplink(env, body);
+        else if (url.pathname === '/api/coupang/status') result = {
+          success: true, configured: !!(env.COUPANG_ACCESS_KEY && env.COUPANG_SECRET_KEY),
+        };
+        else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
         else if (url.pathname === '/api/telegram-recipients') {
           // 앱에서 텔레그램 추가 수신자(채팅 ID) 등록/삭제/조회 (터미널·대시보드 없이).
           if (request.method === 'POST') {
