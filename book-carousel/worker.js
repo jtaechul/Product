@@ -1323,8 +1323,8 @@ const GEMINI_TEXT_MODEL = 'gemini-flash-lite-latest';
 // Gemini는 과부하 시 503/429를 자주 내므로 지수 백오프로 재시도한다.
 const GEMINI_RETRY_STATUS = new Set([429, 500, 502, 503, 504]);
 
-async function callGeminiText(apiKey, opts, attempt = 0) {
-  const { system, user, max_tokens = 1024, timeout_ms = 30000 } = opts;
+async function callGeminiText(apiKey, opts, attempt = 0, noThinking = true) {
+  const { system, user, max_tokens = 1024, timeout_ms = 30000, json = false } = opts;
   const MAX_TRIES = 3;
   const BACKOFF = [1500, 4000];
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TEXT_MODEL}:generateContent?key=${apiKey}`;
@@ -1337,7 +1337,13 @@ async function callGeminiText(apiKey, opts, attempt = 0) {
       body: JSON.stringify({
         systemInstruction: system ? { parts: [{ text: system }] } : undefined,
         contents: [{ role: 'user', parts: [{ text: user }] }],
-        generationConfig: { maxOutputTokens: max_tokens, temperature: 0.7 },
+        generationConfig: {
+          maxOutputTokens: max_tokens,
+          temperature: 0.7,
+          // 내부 추론을 끈다 — 켜져 있으면 출력 예산을 추론이 먹어 응답이 느리거나 비어 온다.
+          ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+          ...(json ? { responseMimeType: 'application/json' } : {}),
+        },
       }),
       signal: ctrl.signal,
     });
@@ -1346,15 +1352,17 @@ async function callGeminiText(apiKey, opts, attempt = 0) {
     // 시간 초과(abort)도 재시도 대상 — 과부하일 때 첫 응답이 느린 경우가 많다.
     if (attempt < MAX_TRIES - 1) {
       await new Promise(r => setTimeout(r, BACKOFF[attempt] || 4000));
-      return callGeminiText(apiKey, opts, attempt + 1);
+      return callGeminiText(apiKey, opts, attempt + 1, noThinking);
     }
     throw new Error(`gemini 응답 시간 초과 (${Math.round(timeout_ms / 1000)}초)`);
   }
   clearTimeout(timer);
   if (!res.ok) {
+    // 이 모델이 추론 끄기/JSON 모드를 모르면 400 → 그 옵션 없이 한 번 더.
+    if (res.status === 400 && noThinking) return callGeminiText(apiKey, opts, attempt, false);
     if (GEMINI_RETRY_STATUS.has(res.status) && attempt < MAX_TRIES - 1) {
       await new Promise(r => setTimeout(r, BACKOFF[attempt] || 4000));
-      return callGeminiText(apiKey, opts, attempt + 1);
+      return callGeminiText(apiKey, opts, attempt + 1, noThinking);
     }
     throw new Error(`[gemini ${res.status}]`);
   }
@@ -1363,7 +1371,7 @@ async function callGeminiText(apiKey, opts, attempt = 0) {
   if (!t.trim()) {
     if (attempt < MAX_TRIES - 1) {
       await new Promise(r => setTimeout(r, BACKOFF[attempt] || 4000));
-      return callGeminiText(apiKey, opts, attempt + 1);
+      return callGeminiText(apiKey, opts, attempt + 1, noThinking);
     }
     throw new Error('gemini 빈 응답');
   }
@@ -2777,7 +2785,8 @@ clips 배열은 정확히 ${clips}개여야 한다.`;
   let raw;
   try {
     raw = await callGeminiText(gk, {
-      system: VEO_SYSTEM, user, max_tokens: Math.min(4000, 700 + clips * 300), timeout_ms: 75000,
+      system: VEO_SYSTEM, user, max_tokens: Math.min(4000, 700 + clips * 300),
+      timeout_ms: 35000, json: true,
     });
   } catch (e) {
     throw new Error(`프롬프트를 만들지 못했습니다: ${e.message}`);
