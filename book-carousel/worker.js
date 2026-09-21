@@ -1319,13 +1319,20 @@ async function getGeminiKey(env) {
 // 보조 호출(검증·캡션·교정·적합성 게이트·텍스트 압축·분석·이미지 프롬프트)은
 // 훨씬 저렴한 Gemini Flash-Lite로 처리한다. 실패·키 없음 시 Claude light로 자동 폴백.
 const GEMINI_TEXT_MODEL = 'gemini-flash-lite-latest';
-async function callGeminiText(apiKey, opts) {
-  const { system, user, max_tokens = 1024 } = opts;
+// 긴 생성(영상 프롬프트 등)은 30초를 넘기므로 timeout_ms 로 조절한다.
+// Gemini는 과부하 시 503/429를 자주 내므로 지수 백오프로 재시도한다.
+const GEMINI_RETRY_STATUS = new Set([429, 500, 502, 503, 504]);
+
+async function callGeminiText(apiKey, opts, attempt = 0) {
+  const { system, user, max_tokens = 1024, timeout_ms = 30000 } = opts;
+  const MAX_TRIES = 3;
+  const BACKOFF = [1500, 4000];
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TEXT_MODEL}:generateContent?key=${apiKey}`;
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 30000);
+  const timer = setTimeout(() => ctrl.abort(), timeout_ms);
+  let res;
   try {
-    const res = await fetch(url, {
+    res = await fetch(url, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         systemInstruction: system ? { parts: [{ text: system }] } : undefined,
@@ -1334,13 +1341,33 @@ async function callGeminiText(apiKey, opts) {
       }),
       signal: ctrl.signal,
     });
+  } catch (e) {
     clearTimeout(timer);
-    if (!res.ok) throw new Error(`[gemini ${res.status}]`);
-    const d = await res.json();
-    const t = (d?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
-    if (!t.trim()) throw new Error('gemini 빈 응답');
-    return t;
-  } catch (e) { clearTimeout(timer); throw e; }
+    // 시간 초과(abort)도 재시도 대상 — 과부하일 때 첫 응답이 느린 경우가 많다.
+    if (attempt < MAX_TRIES - 1) {
+      await new Promise(r => setTimeout(r, BACKOFF[attempt] || 4000));
+      return callGeminiText(apiKey, opts, attempt + 1);
+    }
+    throw new Error(`gemini 응답 시간 초과 (${Math.round(timeout_ms / 1000)}초)`);
+  }
+  clearTimeout(timer);
+  if (!res.ok) {
+    if (GEMINI_RETRY_STATUS.has(res.status) && attempt < MAX_TRIES - 1) {
+      await new Promise(r => setTimeout(r, BACKOFF[attempt] || 4000));
+      return callGeminiText(apiKey, opts, attempt + 1);
+    }
+    throw new Error(`[gemini ${res.status}]`);
+  }
+  const d = await res.json();
+  const t = (d?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+  if (!t.trim()) {
+    if (attempt < MAX_TRIES - 1) {
+      await new Promise(r => setTimeout(r, BACKOFF[attempt] || 4000));
+      return callGeminiText(apiKey, opts, attempt + 1);
+    }
+    throw new Error('gemini 빈 응답');
+  }
+  return t;
 }
 // 보조 텍스트 호출 라우터 — Gemini 전용. (Claude 폴백은 비용 금지 규칙에 따라 제거)
 async function callLightModel(env, opts) {
@@ -2749,7 +2776,9 @@ clips 배열은 정확히 ${clips}개여야 한다.`;
   if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
   let raw;
   try {
-    raw = await callGeminiText(gk, { system: VEO_SYSTEM, user, max_tokens: Math.min(4000, 700 + clips * 300) });
+    raw = await callGeminiText(gk, {
+      system: VEO_SYSTEM, user, max_tokens: Math.min(4000, 700 + clips * 300), timeout_ms: 75000,
+    });
   } catch (e) {
     throw new Error(`프롬프트를 만들지 못했습니다: ${e.message}`);
   }
