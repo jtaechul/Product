@@ -2647,6 +2647,7 @@ async function handleDeleteDraft(env, body) {
 // ===== 쿠팡 파트너스 Open API =====
 // 인증: HMAC-SHA256. 서명 원문 = 시각 + 메서드 + 경로 + 쿼리(물음표 제외).
 // 키(COUPANG_ACCESS_KEY / COUPANG_SECRET_KEY)는 서버 시크릿으로만 두고 절대 화면에 내보내지 않는다.
+// 키 등록: GitHub 시크릿 COUPANG_ACCESS_KEY / COUPANG_SECRET_KEY → 배포 시 워커 시크릿으로 올라간다.
 const COUPANG_HOST = 'https://api-gateway.coupang.com';
 const COUPANG_PET_CATEGORY = '1016'; // 반려동물용품
 
