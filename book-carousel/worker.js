@@ -2744,6 +2744,9 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타그램 릴스의 영�
 3. action은 영어로만 쓴다. 영상 안에 글자·자막·대사를 넣으라는 지시를 하지 마라(자막은 나중에 따로 입힌다).
 4. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리·뒷모습까지만 보이게 한다(AI 인체 하자 방지).
 5. action 하나는 8초 안에 담기는 단일 동작이어야 한다. 장면 전환이나 여러 동작을 한 클립에 넣지 마라.
+6. action은 영어 1~2문장, 35단어 이내로 짧게 쓴다. 강아지 외모·장소·조명은 styleBlock이 이미 담당하므로
+   action에서 다시 설명하지 마라. 동작과 표정만 쓴다.
+7. styleBlock도 45단어 이내로 압축한다.
 
 [구성]
 - 첫 클립: 2초 안에 문제가 터져야 한다. 스크롤을 멈추게 하는 가장 웃긴 순간으로 시작한다.
@@ -2770,9 +2773,9 @@ async function handleVideoPrompts(env, body) {
 아래 형태의 JSON만 출력:
 {
   "problem": "이 영상이 다루는 문제 한 줄 (한국어)",
-  "styleBlock": "영어. 강아지 외모 + 장소 + 조명 + 카메라 스타일을 고정하는 한 문단. 모든 클립 앞에 그대로 반복된다",
+  "styleBlock": "영어 45단어 이내. 강아지 외모 + 장소 + 조명 + 카메라 스타일. 모든 클립 앞에 그대로 반복된다",
   "clips": [
-    { "action": "영어 한 문단. 이 클립에서 일어나는 단일 동작", "subtitle": "한국어 자막 한 줄" }
+    { "action": "영어 35단어 이내. 이 클립의 단일 동작과 표정만", "subtitle": "한국어 자막 한 줄" }
   ],
   "caption": "인스타그램 캡션. 공감 첫 줄 + 2~3줄 본문 + 저장 유도 + 프로필 링크 유도",
   "hashtags": ["#태그1", "#태그2", "#태그3"]
@@ -2785,8 +2788,8 @@ clips 배열은 정확히 ${clips}개여야 한다.`;
   let raw;
   try {
     raw = await callGeminiText(gk, {
-      system: VEO_SYSTEM, user, max_tokens: Math.min(4000, 700 + clips * 300),
-      timeout_ms: 35000, json: true,
+      system: VEO_SYSTEM, user, max_tokens: Math.min(2200, 500 + clips * 150),
+      timeout_ms: 40000, json: true,
     });
   } catch (e) {
     throw new Error(`프롬프트를 만들지 못했습니다: ${e.message}`);
