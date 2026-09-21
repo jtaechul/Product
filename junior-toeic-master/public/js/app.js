@@ -113,8 +113,27 @@ const totalAnswered = () => Object.values(store.parts).reduce((n, p) => n + p.an
 // ---------- 로그인 (학부모가 만들어 준 아이디 + 6자리 PIN) ----------
 const AUTH_KEY = 'jumplish.auth.v1';
 let auth = null;
-try { auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch { auth = null; }
-const saveAuth = (a) => { auth = a; try { a ? localStorage.setItem(AUTH_KEY, JSON.stringify(a)) : localStorage.removeItem(AUTH_KEY); } catch { /* 무시 */ } };
+// ── 로그인 유지 ──
+// 켜면 localStorage(브라우저를 닫았다 켜도 남는다), 끄면 sessionStorage(탭을 닫으면 사라진다).
+// 학원·도서관 같은 공용 기기에서는 끌 수 있어야 하므로 화면에 체크박스로 내놓는다.
+// 어느 쪽에 저장돼 있는지가 곧 '유지 여부'라, 따로 플래그를 저장하지 않는다.
+let keepLogin = true;
+try {
+  const mine = localStorage.getItem(AUTH_KEY);
+  const raw = mine ?? sessionStorage.getItem(AUTH_KEY);
+  keepLogin = mine != null || raw == null;      // 저장된 게 없으면 기본값(유지)
+  auth = JSON.parse(raw || 'null');
+} catch { auth = null; }
+// keep 을 안 주면 지금 쓰던 방식을 그대로 이어 간다 (토큰 자동 연장이 이 경로로 온다).
+const saveAuth = (a, keep = keepLogin) => {
+  auth = a;
+  keepLogin = keep;
+  try {
+    localStorage.removeItem(AUTH_KEY);
+    sessionStorage.removeItem(AUTH_KEY);
+    if (a) (keep ? localStorage : sessionStorage).setItem(AUTH_KEY, JSON.stringify(a));
+  } catch { /* 저장이 막혀도 이번 화면에서는 계속 쓸 수 있다 */ }
+};
 
 // ---------- 개인 설정 (캐릭터·소리) ----------
 const PREF_KEY = 'jumplish.pref.v1';
@@ -704,6 +723,8 @@ function showLogin() {
           autocomplete="username" placeholder="parent@example.com" /></label>
       <label class="field"><span>비밀번호</span>
         <input data-pw type="password" autocomplete="current-password" placeholder="••••••••" /></label>
+      <label class="keep-row"><input type="checkbox" data-keep checked />
+        <span>로그인 유지<em>공용 기기라면 꺼주세요</em></span></label>
       <div data-result></div>
       <button class="btn-primary" data-submit>로그인</button>
       <p class="card-note">아직 가입 전이어도 괜찮아요 — 로그인 없이 풀면 이 기기에만 기록됩니다.</p>
@@ -711,18 +732,18 @@ function showLogin() {
   view.querySelector('[data-back]').addEventListener('click', () => { setTab('home'); showHome(); });
   const box = () => view.querySelector('[data-result]');
 
-  const enter = async (email, password, childId) => {
+  const enter = async (email, password, childId, keep) => {
     const r = await api('/api/family/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, ...(childId ? { child_id: childId } : {}) }),
     });
-    if (r.choose) { pickChild(email, password, r.children); return; }
-    saveAuth({ token: r.token, user: r.user });
+    if (r.choose) { pickChild(email, password, r.children, keep); return; }
+    saveAuth({ token: r.token, user: r.user }, keep);
     setTab('home'); showHome();
   };
 
   // 형제가 있을 때만 뜨는 화면. 이름만 누르면 끝이다.
-  const pickChild = (email, password, kids) => {
+  const pickChild = (email, password, kids, keep) => {
     view.innerHTML = `
       <div class="qcard" style="gap:15px">
         <div><h1 class="greet-title">누구예요?</h1>
@@ -732,7 +753,7 @@ function showLogin() {
         <div data-result></div>
       </div>`;
     view.querySelectorAll('[data-kid]').forEach((b) => b.addEventListener('click', async () => {
-      try { await enter(email, password, b.dataset.kid); }
+      try { await enter(email, password, b.dataset.kid, keep); }
       catch (e) { box().innerHTML = `<div class="result bad"><p>${esc(e.message)}</p></div>`; }
     }));
   };
@@ -744,7 +765,8 @@ function showLogin() {
       box().innerHTML = '<div class="result bad"><p>이메일과 비밀번호를 넣어주세요.</p></div>';
       return;
     }
-    try { await enter(email, password); }
+    const keep = view.querySelector('[data-keep]')?.checked !== false;
+    try { await enter(email, password, null, keep); }
     catch (e) { box().innerHTML = `<div class="result bad"><p>${esc(e.message)}</p></div>`; }
   };
   view.querySelector('[data-submit]').addEventListener('click', submit);

@@ -16,11 +16,26 @@ const whoEl = document.getElementById('who');
 const AUTH_KEY = 'jumplish.admin.v1';
 
 let auth = null;
-try { auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch { auth = null; }
-const saveAuth = (a) => {
+// ── 로그인 유지 ──
+// 켜면 localStorage(브라우저를 닫았다 켜도 남는다), 끄면 sessionStorage(탭을 닫으면 사라진다).
+// 학원·도서관 같은 공용 기기에서는 끌 수 있어야 하므로 화면에 체크박스로 내놓는다.
+// 어느 쪽에 저장돼 있는지가 곧 '유지 여부'라, 따로 플래그를 저장하지 않는다.
+let keepLogin = true;
+try {
+  const mine = localStorage.getItem(AUTH_KEY);
+  const raw = mine ?? sessionStorage.getItem(AUTH_KEY);
+  keepLogin = mine != null || raw == null;      // 저장된 게 없으면 기본값(유지)
+  auth = JSON.parse(raw || 'null');
+} catch { auth = null; }
+// keep 을 안 주면 지금 쓰던 방식을 그대로 이어 간다 (토큰 자동 연장이 이 경로로 온다).
+const saveAuth = (a, keep = keepLogin) => {
   auth = a;
-  try { a ? localStorage.setItem(AUTH_KEY, JSON.stringify(a)) : localStorage.removeItem(AUTH_KEY); }
-  catch { /* 무시 */ }
+  keepLogin = keep;
+  try {
+    localStorage.removeItem(AUTH_KEY);
+    sessionStorage.removeItem(AUTH_KEY);
+    if (a) (keep ? localStorage : sessionStorage).setItem(AUTH_KEY, JSON.stringify(a));
+  } catch { /* 저장이 막혀도 이번 화면에서는 계속 쓸 수 있다 */ }
 };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (m) =>
@@ -119,6 +134,8 @@ function showLogin() {
         <input data-id autocapitalize="characters" autocomplete="username" placeholder="ADMIN" /></label>
       <label class="field" style="margin-top:10px"><span>비밀번호</span>
         <input data-pw type="password" autocomplete="current-password" placeholder="긴 비밀번호" /></label>
+      <label class="keep-row"><input type="checkbox" data-keep checked />
+        <span>로그인 유지<em>공용 기기라면 꺼주세요</em></span></label>
       <button class="btn" data-go>로그인</button>
       <p class="msg" data-msg></p>
     </div>`;
@@ -130,7 +147,7 @@ function showLogin() {
     try {
       const r = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ login_id, pin }) });
       if (r.user.role !== 'super') { msg.className = 'msg bad'; msg.textContent = '관리자 계정이 아닙니다'; return; }
-      saveAuth(r);
+      saveAuth(r, view.querySelector('[data-keep]')?.checked !== false);
       showMain();
     } catch (e) { msg.className = 'msg bad'; msg.textContent = e.message; }
   };
