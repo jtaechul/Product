@@ -13,6 +13,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Cloudflare Workers 배포
+    env:
+      # 쿠팡 키는 "있을 때만" 등록한다. 여기서 미리 판정해 두는 이유:
+      # 스텝의 if 에서는 secrets 컨텍스트를 직접 읽을 수 없기 때문.
+      HAS_COUPANG: ${{ secrets.COUPANG_ACCESS_KEY != '' && secrets.COUPANG_SECRET_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,11 +29,24 @@ jobs:
             ANTHROPIC_API_KEY
             TELEGRAM_BOT_TOKEN
             TELEGRAM_CHAT_ID
-            COUPANG_ACCESS_KEY
-            COUPANG_SECRET_KEY
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+      # 쿠팡 파트너스 키는 아직 없을 수도 있으므로 배포와 분리한다.
+      # (wrangler-action 의 secrets 목록에 넣으면 값이 비었을 때 배포 전체가 실패한다.)
+      - name: 쿠팡 파트너스 키 등록 (설정돼 있을 때만)
+        if: env.HAS_COUPANG == 'true'
+        working-directory: book-carousel
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
           COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+        run: |
+          printf '%s' "$COUPANG_ACCESS_KEY" | npx --yes wrangler@3.90.0 secret put COUPANG_ACCESS_KEY
+          printf '%s' "$COUPANG_SECRET_KEY" | npx --yes wrangler@3.90.0 secret put COUPANG_SECRET_KEY
+
+      - name: 쿠팡 키 미설정 안내
+        if: env.HAS_COUPANG != 'true'
+        run: echo "COUPANG_ACCESS_KEY / COUPANG_SECRET_KEY 가 없어 쿠팡 상품 찾기 기능은 비활성 상태로 배포됩니다."
