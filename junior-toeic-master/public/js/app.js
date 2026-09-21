@@ -696,8 +696,14 @@ async function showHome() {
     view.querySelector('[data-login]')?.addEventListener('click', showLogin);
     view.querySelector('[data-diag]')?.addEventListener('click', showDiagnostic);
     view.querySelector('[data-start]').addEventListener('click', () => {
-      if (left === 0) { store.setIdx = 0; save(); }
-      startSession(set.questions, set.passages, '오늘의 학습', { trackToday: true });
+      // 다 푼 세트를 다시 여는 건 **복습**이다 — 오늘의 진행도를 건드리면 안 된다.
+      // 예전엔 여기서 store.setIdx = 0 으로 먼저 지우고 시작했다. 그래서 한 문제도
+      // 안 풀고 '나가기'를 누르면 오늘 하나도 안 푼 것처럼 보였다(2026-09-21 제보).
+      // 복습은 trackToday 를 끄면 진행도를 안 세고 1번부터 시작한다 — 지울 필요가 없다.
+      // 답 자체는 복습에서도 서버에 그대로 기록된다(recordAnswer 는 이 값과 무관).
+      const again = left === 0;
+      startSession(set.questions, set.passages, again ? '다시 풀어보기' : '오늘의 학습',
+        { trackToday: !again });
     });
     view.querySelector('[data-focus]')?.addEventListener('click', (e) => showPartPractice(e.target.dataset.focus));
     view.querySelector('[data-tab-go]').addEventListener('click', () => { setTab('review'); showReview(); });
