@@ -2713,7 +2713,6 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타그램 릴스의 영�
 반드시 JSON만 출력한다.`;
 
 async function handleVideoPrompts(env, body) {
-  if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY가 설정되지 않았습니다.');
   const title = String(body.title || '').trim();
   if (!title) throw new Error('상품 이름이 필요합니다.');
   const category = String(body.category || '').trim();
@@ -2739,9 +2738,24 @@ async function handleVideoPrompts(env, body) {
 }
 clips 배열은 정확히 ${clips}개여야 한다.`;
 
-  const raw = await callClaude(env.ANTHROPIC_API_KEY, {
-    system: VEO_SYSTEM, user, max_tokens: Math.min(4000, 700 + clips * 300), env, tier: 'main',
-  });
+  // Gemini 우선(저렴·크레딧 독립), 실패 시 Claude 폴백.
+  // 프롬프트 생성은 구조가 정해진 작업이라 Gemini로 충분하고, Claude 크레딧을 아낀다.
+  const maxTok = Math.min(4000, 700 + clips * 300);
+  let raw = null, firstErr = '';
+  const gk = await getGeminiKey(env);
+  if (gk) {
+    try {
+      raw = await callGeminiText(gk, { system: VEO_SYSTEM, user, max_tokens: maxTok });
+    } catch (e) { firstErr = e.message; }
+  }
+  if (!raw && env.ANTHROPIC_API_KEY) {
+    try {
+      raw = await callClaude(env.ANTHROPIC_API_KEY, { system: VEO_SYSTEM, user, max_tokens: maxTok, env, tier: 'main' });
+    } catch (e) {
+      throw new Error(`프롬프트를 만들지 못했습니다. (Gemini: ${firstErr || '키 없음'} / Claude: ${e.message})`);
+    }
+  }
+  if (!raw) throw new Error(`프롬프트를 만들지 못했습니다. ${firstErr || 'AI 키가 설정되지 않았습니다.'}`);
   const out = extractJson(raw);
   const list = Array.isArray(out.clips) ? out.clips : [];
   const style = String(out.styleBlock || '').trim();
