@@ -36,7 +36,7 @@
       "cast": [
         "흥부"
       ],
-      "actual_seconds": 9.2
+      "actual_seconds": 7.5
     },
     {
       "narration": "그러던 어느 날, 마당에서 다리 부러진 아기 제비를 발견하고 정성껏 돌보아 주었어요.",
@@ -50,7 +50,7 @@
       "cast": [
         "흥부"
       ],
-      "actual_seconds": 8.8
+      "actual_seconds": 6.8
     },
     {
       "narration": "이듬해 봄, 건강해진 제비가 흥부에게 고맙다며 작은 박씨 하나를 물어다 주지 뭐예요.",
@@ -64,7 +64,7 @@
       "cast": [
         "흥부"
       ],
-      "actual_seconds": 8.6
+      "actual_seconds": 6.8
     },
     {
       "narration": "흥부는 박씨를 마당에 심었고, 놀랍게도 박은 무럭무럭 자라 큰 열매를 주렁주렁 맺었답니다.",
@@ -78,7 +78,7 @@
       "cast": [
         "흥부"
       ],
-      "actual_seconds": 10.7
+      "actual_seconds": 7.6
     },
     {
       "narration": "흥부네 가족은 설레는 마음으로 가장 큰 박 하나를 조심스럽게 타 보았어요.",
@@ -92,7 +92,7 @@
       "cast": [
         "흥부"
       ],
-      "actual_seconds": 7.9
+      "actual_seconds": 5.8
     },
     {
       "narration": "그러자 박 속에서 맛있는 음식과 비단 옷, 그리고 돈이 쏟아져 나와 모두 배불리 먹고 행복해졌지요.",
@@ -106,7 +106,7 @@
       "cast": [
         "흥부"
       ],
-      "actual_seconds": 11.1
+      "actual_seconds": 7.6
     },
     {
       "narration": "이 소식을 들은 욕심 많은 형 놀부는 샘이 나서, 못된 꾀를 부리기로 마음먹었답니다.",
@@ -120,7 +120,7 @@
       "cast": [
         "놀부"
       ],
-      "actual_seconds": 10.4
+      "actual_seconds": 6.7
     },
     {
       "narration": "놀부도 박이 주렁주렁 열리자 신이 나서 커다란 박을 얼른 타 보았어요.",
@@ -134,7 +134,7 @@
       "cast": [
         "놀부"
       ],
-      "actual_seconds": 5.6
+      "actual_seconds": 5.4
     },
     {
       "narration": "하지만 놀부의 박에서는 도깨비와 무서운 벌들이 쏟아져 나와 놀부를 혼내주었답니다.",
@@ -148,7 +148,7 @@
       "cast": [
         "놀부"
       ],
-      "actual_seconds": 8.0
+      "actual_seconds": 6.5
     },
     {
       "narration": "놀부는 자신의 잘못을 뉘우치고 착한 흥부와 화해하며 함께 행복하게 살았답니다.",
@@ -163,14 +163,14 @@
         "흥부",
         "놀부"
       ],
-      "actual_seconds": 8.7
+      "actual_seconds": 6.8
     }
   ],
   "status": "rendered",
   "created_at": "2026-09-22T03:08:16Z",
   "video": "https://github.com/jtaechul/Product/releases/download/moviegen-260922-030816/final.mp4",
-  "rendered_at": "20260922065618",
-  "duration": 89.0,
+  "rendered_at": "20260922102543",
+  "duration": 67.5,
   "resolution": "720x1280",
-  "voice_used": "gemini:Charon"
+  "voice_used": "edge:Charon"
 }
