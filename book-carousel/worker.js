@@ -3050,6 +3050,11 @@ clips 배열은 정확히 ${clips}개여야 한다.`;
   if (breedEn && !new RegExp(breedEn.replace(/\s+/g, '\\s*'), 'i').test(style)) {
     style = breedEn + ', ' + style;
   }
+  // 3D 애니메이션풍을 지정했는데 실사 표현이 섞이면 Veo가 사진처럼 그려버린다. 서버에서 걷어낸다.
+  if (/3d|애니메이션|animation|stylized/i.test(dog + ' ' + style)) {
+    style = style.replace(/\b(photo-?realistic|hyper-?realistic|realistic|lifelike)\b/gi, 'stylized')
+                 .replace(/\bstylized(,?\s+stylized)+\b/gi, 'stylized');
+  }
   return {
     success: true,
     problem: out.problem || '',
