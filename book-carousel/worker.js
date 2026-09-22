@@ -2666,6 +2666,21 @@ async function _cpSign(secretKey, message) {
   return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// 쿠팡이 돌려주는 영어 오류를 운영자가 알아볼 수 있는 안내로 바꾼다.
+function coupangFriendly(code, raw) {
+  const m = String(raw || '');
+  if (/limit is out of range/i.test(m)) return '한 번에 가져올 개수가 허용 범위를 넘었습니다.';
+  if (/invalid.*(access|key)|unauthorized|signature/i.test(m) || String(code) === '401') {
+    return '키가 올바르지 않거나 서명이 맞지 않습니다. 쿠팡 파트너스에서 키를 다시 확인해주세요.';
+  }
+  if (/too many|rate|quota/i.test(m) || String(code) === '429') {
+    return '요청이 너무 잦습니다. 잠시 뒤에 다시 눌러주세요.';
+  }
+  if (/keyword/i.test(m)) return '검색어를 인식하지 못했습니다. 다른 말로 찾아보세요.';
+  if (/category/i.test(m)) return '카테고리 번호가 올바르지 않습니다.';
+  return m || '알 수 없는 오류';
+}
+
 async function coupangApi(env, method, path, query = '', body = null) {
   const ak = env.COUPANG_ACCESS_KEY, sk = env.COUPANG_SECRET_KEY;
   if (!ak || !sk) throw new Error('COUPANG_KEY_MISSING: 쿠팡 파트너스 API 키가 아직 설정되지 않았습니다.');
@@ -2682,10 +2697,11 @@ async function coupangApi(env, method, path, query = '', body = null) {
   const text = await res.text();
   let data; try { data = JSON.parse(text); } catch { data = null; }
   if (!res.ok) {
-    throw new Error(`쿠팡 API 오류 [${res.status}] ${data?.rMessage || data?.message || text.slice(0, 200)}`);
+    const raw = data?.rMessage || data?.message || text.slice(0, 200);
+    throw new Error(`쿠팡에서 거절했습니다 — ${coupangFriendly(res.status, raw)}`);
   }
   if (data && data.rCode && String(data.rCode) !== '0') {
-    throw new Error(`쿠팡 API 오류 [${data.rCode}] ${data.rMessage || ''}`);
+    throw new Error(`쿠팡에서 거절했습니다 — ${coupangFriendly(data.rCode, data.rMessage || '')}`);
   }
   return data;
 }
@@ -2706,9 +2722,14 @@ function _cpNormalize(items) {
   })).filter(x => x.title);
 }
 
+// 상한은 문서에 없어 실제 호출로 확인한 값이다(2026-09):
+//   베스트 = 최대 50 (초과해도 50개만 옴) · 검색 = 최대 10 (초과하면 400 limit is out of range)
+const COUPANG_MAX_BEST = 50;
+const COUPANG_MAX_SEARCH = 10;
+
 async function handleCoupangBest(env, body) {
   const cat = String(body.categoryId || COUPANG_PET_CATEGORY).replace(/[^0-9]/g, '') || COUPANG_PET_CATEGORY;
-  const limit = Math.max(1, Math.min(50, parseInt(body.limit, 10) || 20));
+  const limit = Math.max(1, Math.min(COUPANG_MAX_BEST, parseInt(body.limit, 10) || 20));
   const d = await coupangApi(env, 'GET',
     `/v2/providers/affiliate_open_api/apis/openapi/products/bestcategories/${cat}`, `limit=${limit}`);
   return { success: true, products: _cpNormalize(d?.data) };
@@ -2717,7 +2738,7 @@ async function handleCoupangBest(env, body) {
 async function handleCoupangSearch(env, body) {
   const kw = String(body.keyword || '').trim();
   if (!kw) throw new Error('찾을 상품 이름을 입력하세요.');
-  const limit = Math.max(1, Math.min(50, parseInt(body.limit, 10) || 20));
+  const limit = Math.max(1, Math.min(COUPANG_MAX_SEARCH, parseInt(body.limit, 10) || COUPANG_MAX_SEARCH));
   const d = await coupangApi(env, 'GET',
     '/v2/providers/affiliate_open_api/apis/openapi/v1/products/search',
     `keyword=${encodeURIComponent(kw)}&limit=${limit}`);
@@ -3342,7 +3363,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   $('search').addEventListener('click', function(){
     var kw=$('kw').value.trim();
     if(!kw){ say('findMsg','찾을 상품 이름을 적어주세요.','no'); return; }
-    find('/api/coupang/search',{keyword:kw,limit:20},$('search'));
+    find('/api/coupang/search',{keyword:kw,limit:10},$('search'));
   });
   $('kw').addEventListener('keydown', function(e){ if(e.key==='Enter') $('search').click(); });
 
