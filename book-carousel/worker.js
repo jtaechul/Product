@@ -2960,7 +2960,7 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 // Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
 // 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
 // styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
-const VEO_NEGATIVE = 'cartoon, 3D render, anime, illustration, stylized, plastic skin, waxy fur, uncanny valley, human face, English speech, English dialogue, foreign language audio, on-screen text, subtitles, captions, watermark, logo, product packaging, brand label, deformed paws, extra limbs, blurry, low quality, oversaturated, different dog breed, character redesign';
+const VEO_NEGATIVE = 'adult dog, hunting dog, working dog, wolf-like, long sharp muzzle, narrow eyes, intense stare, serious face, aggressive, harsh shadows, high contrast, documentary photography, wildlife photo, gritty, dirty fur, visible skin pores, cartoon, 3D render, anime, plastic skin, waxy fur, uncanny valley, human face, English speech, English dialogue, foreign language audio, on-screen text, subtitles, captions, watermark, logo, product packaging, brand label, deformed paws, extra limbs, blurry, low quality, oversaturated, different dog breed, character redesign';
 
 const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 촬영 지시서를 쓰는 사람이다.
 사용자는 Flow에 이미 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고, 여기에 이 지시서를 붙인다.
@@ -2976,8 +2976,11 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
 4. line(대사)은 반드시 한국어다. 영어 대사를 절대 쓰지 마라.
 5. 상품 실물(포장·로고·브랜드)은 화면에 넣지 마라. Veo가 그리지 못한다.
 6. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
-7. 화면은 실사 영상이다. cartoon, 3D render, anime, illustration 같은 표현을 쓰지 마라.
-   필요하면 natural light, shallow depth of field 처럼 실제 촬영 용어를 쓴다.
+7. 화면은 실사지만 **귀엽게 보정한 실사**다. 다큐멘터리·야생동물 사진처럼 날것으로 가면
+   개가 사냥개처럼 무섭게 나온다. sceneBlock에는 soft diffused light, warm pastel grading,
+   creamy bokeh, shallow depth of field, gentle glow 같은 부드러운 광고 사진 톤을 쓴다.
+   harsh shadows, high contrast, gritty, documentary 같은 표현은 절대 쓰지 마라.
+   cartoon·3D render·anime 같은 만화 표현도 쓰지 마라.
 
 [클립 구성 — 역할이 정해져 있다]
 - "problem": 앞쪽. 문제 상황을 과장된 코미디로. 첫 클립은 2초 안에 터져야 한다.
@@ -3024,7 +3027,7 @@ async function handleVideoPrompts(env, body) {
   if (!title) throw new Error('상품 이름이 필요합니다.');
   const category = String(body.category || '').trim();
   const note = String(body.note || '').trim();
-  const dog = String(body.dog || '').trim() || '실사풍 귀여운 시바견';
+  const dog = String(body.dog || '').trim() || '실사 기반이되 귀엽게 보정한 시바견 강아지(퍼피)';
   const clips = Math.max(3, Math.min(10, parseInt(body.clips, 10) || 7));
 
   // 02단계 분석에서 근거가 확인된 것만 넘어온다. 없는 기능을 지어내지 못하게 하는 장치.
@@ -3075,8 +3078,11 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
     .trim();
   // 실사로 가기로 확정(2026-09). 만화·3D 표현이 섞이면 캐릭터가 흔들리므로 걷어낸다.
   if (!/3d|애니메이션|animation|cartoon/i.test(dog)) {
-    scene = scene.replace(/\b(cartoon|cartoonish|3d\s*render|anime|illustrated|illustration|stylized)\b/gi, 'photorealistic')
-                 .replace(/\bphotorealistic(,?\s+photorealistic)+\b/gi, 'photorealistic');
+    scene = scene.replace(/\b(cartoon|cartoonish|3d\s*render|anime|illustrated|illustration|stylized)\b/gi, 'photoreal')
+                 .replace(/\bphotoreal(,?\s+photoreal)+\b/gi, 'photoreal')
+                 // 거친 톤은 개를 사냥개처럼 보이게 한다 — 부드러운 광고 톤으로 바꾼다.
+                 .replace(/\b(harsh shadows?|high contrast|gritty|documentary|moody|dramatic lighting)\b/gi, 'soft diffused light')
+                 .replace(/\b(soft diffused light)(,?\s+soft diffused light)+\b/gi, 'soft diffused light');
   }
 
   const tone = String(out.tone || 'calm natural voice').trim();
@@ -3521,7 +3527,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="note">AI 영상은 실제 상품 포장을 그리지 못합니다. 그래서 영상은 <b>그 상품이 필요해지는 상황</b>만 보여주고, 상품 연결은 자막과 프로필 링크가 맡습니다.</div>
     <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
     <div class="f"><label for="pdog">강아지 설정</label>
-      <input id="pdog" type="text" value="실사풍 귀여운 시바견">
+      <input id="pdog" type="text" value="실사 기반이되 귀엽게 보정한 시바견 강아지(퍼피)">
       <small>Flow에 캐릭터 이미지를 끌어다 쓰시니 짧게만 적으세요. 외모를 길게 적으면 참고 이미지와 충돌해 오히려 다른 개가 나옵니다.</small></div>
     <div class="row">
       <div class="f" style="flex:1"><label for="pclips">클립 개수</label>
