@@ -73,7 +73,12 @@ async function login(req, env) {
   const list = users(env);
   if (!list.length) return err("서버에 사용자가 설정되지 않았습니다.", 503);
   const id = String(b.id || "").trim();
-  const hit = list.find((u) => u.id === id && u.pw === String(b.password || ""));
+  const pw = String(b.password || "");
+  // 아이디를 비워도 들어가진다. 예전엔 비밀번호 하나로 쓰던 화면이라, 아이디를 꼭
+  // 치게 만들면 쓰던 사람이 멀쩡한 비밀번호로도 막힌다.
+  const hit = id
+    ? list.find((u) => u.id === id && u.pw === pw)
+    : list.find((u) => u.pw === pw);
   if (!hit) return err("아이디나 비밀번호가 틀렸습니다.", 401);
   const val = `${hit.id}|${Date.now()}`;
   const cookie = `ss=${encodeURIComponent(val + "." + await sign(env, val))}` +
