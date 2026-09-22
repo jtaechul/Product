@@ -61,7 +61,8 @@ def build_karaoke_ass(lines: list[dict], out_path: str, *,
                       font: str = "NanumGothic",
                       highlight: str = "노란색",
                       video_w: int = 720, video_h: int = 1280,
-                      cover_title: str = "", cover_end: float = 0.0) -> str:
+                      cover_title: str = "", cover_end: float = 0.0,
+                      bottom_px: int = 0) -> str:
     """전역 타임라인 기준 줄 목록 → 가라오케 ASS 파일.
 
     lines: [{"start": 초, "end": 초, "words": [(단어시작초, 단어길이초, 표시어), ...]}]
@@ -77,7 +78,8 @@ def build_karaoke_ass(lines: list[dict], out_path: str, *,
         outline=max(3, round(video_w * 0.0055, 1)),
         shadow=max(1, round(video_w * 0.0028, 1)),
         mx=int(video_w * 0.09),
-        mv=int(video_h * 0.135),   # 화면 중앙 하단
+        # 아래 검은 띠보다 위에 놓는다. 띠에 글자가 걸치면 지저분하다.
+        mv=max(int(video_h * 0.135), bottom_px + int(video_h * 0.035)),
         csize=max(56, int(video_w * 0.115)),        # 표지 제목 — 훨씬 크게
         coutline=max(4, round(video_w * 0.009, 1)),
         cmx=int(video_w * 0.07),

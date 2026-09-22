@@ -570,6 +570,13 @@ async function openDetail(rec) {
     <div class="row">
       <div><label>자막 색</label>
         <select class="h"><option>노란색</option><option>연두색</option><option>하늘색</option><option>분홍색</option></select></div>
+      <div><label>워터마크 가림</label>
+        <select class="b">
+          <option value="0.16">보통 (권장)</option>
+          <option value="0.22">크게</option>
+          <option value="0.10">작게</option>
+          <option value="0">없음</option>
+        </select></div>
       <div><label>화질</label>
         <select class="q"><option value="false">720 (빠름)</option><option value="true">1080 (느림)</option></select></div>
     </div>
@@ -583,6 +590,7 @@ async function openDetail(rec) {
       engine: opts.querySelector(".e").value,
       voice: opts.querySelector(".v").value,
       highlight: opts.querySelector(".h").value,
+      band_bottom: opts.querySelector(".b").value,
       hq: opts.querySelector(".q").value,
     }) });
     toast("영상을 만들고 있습니다. 3~10분 뒤 ③ 완성본 탭을 새로고침해 주세요.", 6500);

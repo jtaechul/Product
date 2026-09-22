@@ -347,6 +347,7 @@ async function runRender(req, env, uid) {
         engine: String(b.engine || "gemini"),
         voice: String(b.voice || "Sulafat"),
         gemini_key_enc: await sealKey(env, b.gemini_key),
+        band_bottom: String(b.band_bottom || "0.16"),
         highlight: String(b.highlight || "노란색"),
         hq: String(b.hq || "false"),
       },
