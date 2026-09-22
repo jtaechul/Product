@@ -2838,6 +2838,7 @@ function featuresFromTitle(title) {
 }
 
 // 웹검색을 붙인 Gemini 호출. 검색 도구는 2.5 계열에서 지원되므로 전용 모델을 쓴다.
+// 키 출처: GitHub 시크릿 GEMINI_API_KEY → 배포 시 워커 시크릿으로 올라간다.
 const GEMINI_SEARCH_MODEL = 'gemini-2.5-flash';
 
 async function callGeminiGrounded(apiKey, opts, noThinking = true) {
