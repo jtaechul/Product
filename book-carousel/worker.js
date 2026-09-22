@@ -2886,10 +2886,13 @@ async function handleProductInsight(env, body) {
 {
   "notFound": false,
   "points": [{"text": "특징이나 장점 한 줄", "evidence": "어느 글에서 확인했는지 + 그 글이 다루는 상품의 브랜드명을 반드시 포함"}],
-  "pains": [{"text": "이 상품을 사기 전 견주가 겪던 불편 한 줄", "evidence": "어디서 확인했는지 + 그 글이 다루는 상품의 브랜드명"}]
+  "pains": [{"text": "이 상품을 쓰기 전에 겪던 불편 한 줄 — 즉 이 상품이 해결해 주는 문제", "evidence": "어디서 확인했는지 + 그 글이 다루는 상품의 브랜드명"}]
 }
 points는 최대 5개, pains는 최대 4개. 확인하지 못한 것은 넣지 말고 빈 배열로 둬라.
-evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.`;
+evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
+
+⚠️ pains 주의: 이 상품을 쓰고 나서 생긴 불만(맛을 안 본다, 변이 묽어졌다, 포장이 부실하다 등)은
+절대 넣지 마라. pains는 오직 "이 상품을 쓰기 전에 겪던 문제"만 담는다. 우리는 이 상품을 파는 쪽이다.`;
     try {
       const r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 2048 });
       sources = r.sources;
@@ -2919,6 +2922,9 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.`;
   //    근거에 이 상품의 브랜드가 없으면 "이 상품이 확인됐다"고 말하지 않고 품목 일반으로 내린다.
   const brand = brandOf(title);
   const isThis = (x) => !!brand && (x.text + ' ' + x.evidence).includes(brand);
+  // 이 상품을 쓰기 전의 불편이라면 이 상품 브랜드가 나올 까닭이 없다.
+  // 브랜드가 섞여 있으면 '쓰고 나서 생긴 불만'일 가능성이 높아 영상 소재에서 제외한다.
+  if (brand) pains = pains.filter(x => !x.text.includes(brand));
   const verified = brand ? points.filter(isThis) : [];
   const general = brand ? points.filter(x => !isThis(x)) : points;
   if (brand && !verified.length && general.length && !note) {
@@ -2926,7 +2932,9 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.`;
   }
 
   // 추천 이유 초안은 "이 상품이라고 확신할 수 있는 것"만으로 만든다.
-  const sure = [...titleFeatures.map(x => x.text), ...verified.map(x => x.text)].slice(0, 3);
+  const tidy = (t) => String(t || '').trim().replace(/[.。\s]+$/, '');
+  const sure = [...titleFeatures.map(x => x.text), ...verified.map(x => x.text)]
+    .map(tidy).filter(Boolean).slice(0, 3);
 
   return {
     success: true,
