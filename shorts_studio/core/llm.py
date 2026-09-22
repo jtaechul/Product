@@ -14,7 +14,7 @@ import json
 import re
 from dataclasses import dataclass, field
 
-from .tts import estimate_seconds
+from .tts import MARKERS, estimate_seconds
 
 MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
@@ -281,7 +281,16 @@ _SCENE_USER = """아래 줄거리와 컷 개요를 바탕으로, **{first}번부
   영상 생성 툴 대부분이 10초까지만 만들어 주어 쓸 수 없는 대본이 된다.
 - 따뜻하고 해학적인 구어체 존댓말("~했답니다", "~하지 뭐예요"). 옛이야기 들려주듯.
 - 앞 씬에서 이미 쓴 표현을 되풀이하지 않습니다. 컷이 많을수록 같은 말투가 반복되기 쉽습니다.
-- 숫자·영어·특수문자 금지(음성으로 읽히므로). 한글과 기본 문장부호만.
+- 숫자·영어 금지(음성으로 읽히므로). 한글과 기본 문장부호, 그리고 아래 연기 마커만.
+
+[⭐ 연기 마커 — 나레이션 안에 직접 넣습니다]
+- 감정이 바뀌는 자리에 아래 마커를 **대사 바로 앞에** 붙입니다. 성우가 그 지시대로 연기합니다.
+  마커는 소리로 나가지 않고 자막에도 안 보입니다(시스템이 걷어냅니다).
+- 쓸 수 있는 마커(이것만): {markers}
+- 한 씬에 **1~2개**. 문장마다 붙이면 오히려 산만해집니다. 감정이 실제로 꺾이는 자리에만.
+- 예: "[놀라며] 박을 타자 금은보화가 쏟아져 나왔지 뭐예요!"
+- 예: "흥부는 제비를 품에 안았습니다. [속삭이며] 이제 괜찮단다."
+- 마커를 뺀 글자 수가 위 32~45자 기준입니다.
 {edge_note}
 
 [연기 지시 규칙 — voice_direction]
@@ -522,6 +531,7 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
                        if bi == 0 else "")
             + ("\n- 마지막 씬은 잔잔한 교훈이나 여운으로 마무리. 설교조 금지."
                if bi == len(batches) - 1 else ""),
+            markers=" ".join(MARKERS),
             negative_note=("이 툴이 네거티브 프롬프트를 지원하므로 반드시 채울 것"
                            if cfg["negative"] else "빈 문자열로 둘 것"),
         ), temperature=0.85)
