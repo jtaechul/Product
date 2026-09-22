@@ -102,6 +102,17 @@ def make_cover(image: str, dur: float, out: str, *,
     return out
 
 
+def pad_lead(src: str, lead: float, out: str) -> str:
+    """음성 **앞에** 무음을 붙인다(표지에서 제목을 읽기 전 한 박자 쉬려고)."""
+    ms = max(0, int(lead * 1000))
+    _run([
+        "ffmpeg", "-y", "-i", src,
+        "-af", f"adelay={ms}|{ms}:all=1",
+        "-ar", "48000", "-ac", "2", out,
+    ], "앞 무음 붙이기")
+    return out
+
+
 def make_silence(dur: float, out: str) -> str:
     """표지가 나오는 동안 깔 무음. 나레이션 트랙 맨 앞에 붙는다."""
     _run([

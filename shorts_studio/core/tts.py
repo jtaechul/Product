@@ -58,6 +58,9 @@ GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts"
 _GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 # 모든 낭독에 공통으로 거는 연기 지시. 씬별 지시(voice_direction)가 뒤에 덧붙는다.
+# 표지에서 제목을 소개할 때의 연기 지시. 본문과 결이 같되 또렷하게 얹는다.
+TITLE_DIRECTION = "이야기의 제목을 소개하듯 또박또박, 한 박자 느리게, 살짝 힘주어"
+
 BASE_DIRECTION = (
     "당신은 한국 전래동화를 들려주는 전문 성우입니다. 아이에게 이야기를 들려주듯 "
     "따뜻하고 다정하게, 또렷한 발음으로, 감정을 실어 읽어 주세요"
