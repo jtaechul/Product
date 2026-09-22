@@ -2881,13 +2881,146 @@ async function handleProductInsight(env, body) {
   } else {
     const user = `상품: ${title}
 품목: ${category || '반려동물 용품'}
+
+이 상품의 실제 구매 후기와 사용기를 검색해서 아래 JSON으로 정리하라.
+{
+  "notFound": false,
+  "points": [{"text": "특징이나 장점 한 줄", "evidence": "어느 글에서 확인했는지 + 그 글이 다루는 상품의 브랜드명을 반드시 포함"}],
+  "pains": [{"text": "이 상품을 쓰기 전에 겪던 불편 한 줄 — 즉 이 상품이 해결해 주는 문제", "evidence": "어디서 확인했는지 + 그 글이 다루는 상품의 브랜드명"}]
+}
+points는 최대 5개, pains는 최대 4개. 확인하지 못한 것은 넣지 말고 빈 배열로 둬라.
+evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
+
+⚠️ pains 주의: 이 상품을 쓰고 나서 생긴 불만(맛을 안 본다, 변이 묽어졌다, 포장이 부실하다 등)은
+절대 넣지 마라. pains는 오직 "이 상품을 쓰기 전에 겪던 문제"만 담는다. 우리는 이 상품을 파는 쪽이다.`;
+    try {
+      const r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 2048 });
+      sources = r.sources;
+      grounded = sources.length > 0;
+      const parsed = extractJson(r.text);
+      if (parsed?.notFound === true) {
+        note = '검색으로 이 상품을 확인하지 못해, 상품명에서 읽은 것만 남겼습니다.';
+      }
+      // ⭐ 근거 없는 항목은 서버에서 버린다 — 모델이 규칙을 어겨도 통과하지 못한다.
+      const clean = (arr) => (Array.isArray(arr) ? arr : [])
+        .map(x => (typeof x === 'string' ? { text: x, evidence: '' } : x))
+        .filter(x => x && String(x.text || '').trim() && String(x.evidence || '').trim())
+        .map(x => ({ text: String(x.text).trim().slice(0, 120), evidence: String(x.evidence).trim().slice(0, 160) }));
+      points = clean(parsed?.points).slice(0, 5);
+      pains = clean(parsed?.pains).slice(0, 4);
+      // 웹 출처가 하나도 없으면 "검색했다"고 볼 수 없다 → 검색 기반 항목을 신뢰하지 않는다.
+      if (!grounded && (points.length || pains.length)) {
+        points = []; pains = [];
+        note = '웹 출처를 확인하지 못해 검색 결과는 버리고, 상품명에서 읽은 것만 남겼습니다.';
+      }
+    } catch (e) {
+      note = `웹검색 조사는 실패했고(${e.message}) 상품명 해독만 했습니다.`;
+    }
+  }
+
+  // ⭐ 교차 오염 차단 — 검색이 다른 브랜드 글을 물어오는 일이 잦다.
+  //    근거에 이 상품의 브랜드가 없으면 "이 상품이 확인됐다"고 말하지 않고 품목 일반으로 내린다.
+  const brand = brandOf(title);
+  const isThis = (x) => !!brand && (x.text + ' ' + x.evidence).includes(brand);
+  // 이 상품을 쓰기 전의 불편이라면 이 상품 브랜드가 나올 까닭이 없다.
+  // 브랜드가 섞여 있으면 '쓰고 나서 생긴 불만'일 가능성이 높아 영상 소재에서 제외한다.
+  if (brand) pains = pains.filter(x => !x.text.includes(brand));
+  const verified = brand ? points.filter(isThis) : [];
+  const general = brand ? points.filter(x => !isThis(x)) : points;
+  if (brand && !verified.length && general.length && !note) {
+    note = `검색 결과가 "${brand}" 제품을 직접 다루지 않아, 같은 품목의 일반적인 이야기로 표시했습니다.`;
+  }
+
+  // 추천 이유 초안은 "이 상품이라고 확신할 수 있는 것"만으로 만든다.
+  const tidy = (t) => String(t || '').trim().replace(/[.。\s]+$/, '');
+  const sure = [...titleFeatures.map(x => x.text), ...verified.map(x => x.text)]
+    .map(tidy).filter(Boolean).slice(0, 3);
+
+  return {
+    success: true,
+    grounded,
+    note,
+    brand,
+    titleFeatures,   // 상품명 근거 — 확실
+    verified,        // 검색 결과 중 이 브랜드가 언급된 것
+    general,         // 같은 품목의 일반적인 이야기 (참고용)
+    pains,
+    sources,
+    draft: sure.length ? sure.join('. ') + '.' : '',
+  };
+}
+
+// ===== 릴스 영상 프롬프트 생성 (Google Flow / Veo 용) =====
+// Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
+// 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
+// styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
+const VEO_NEGATIVE = 'photorealistic, live action, real dog, English speech, English dialogue, foreign language audio, on-screen text, subtitles, captions, watermark, logo, product packaging, brand label, deformed paws, extra limbs, blurry, low quality, oversaturated, different dog breed, character redesign';
+
+const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 촬영 지시서를 쓰는 사람이다.
+사용자는 Flow에 이미 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고, 여기에 이 지시서를 붙인다.
+
+[절대 규칙]
+1. 캐릭터 외모를 절대 설명하지 마라. 털색·눈·목줄·체형·견종 특징을 쓰면 참고 이미지와
+   충돌해 클립마다 다른 개가 된다. 주인공은 "the puppy" 처럼 최소한으로만 부른다.
+2. sceneBlock에는 장소·색감·조명만 담는다(25단어 이내, 영어). 모든 클립 앞에 그대로 반복된다.
+   여기에도 캐릭터 묘사를 절대 넣지 마라.
+3. shots는 타임코드와 카메라 움직임으로 쓴다(영어). 8초 안에 2~3구간으로 나눈다.
+4. line(대사)은 반드시 한국어다. 영어 대사를 절대 쓰지 마라.
+5. 상품 실물(포장·로고·브랜드)은 화면에 넣지 마라. Veo가 그리지 못한다.
+6. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
+
+[클립 구성 — 역할이 정해져 있다]
+- "problem": 앞쪽. 문제 상황을 과장된 코미디로. 첫 클립은 2초 안에 터져야 한다.
+- "transition": 딱 1개. 그런데 어느 날부터 달라졌다는 전환.
+- "benefit": 1~2개. 상품이 만든 변화. 주어진 확인된 장점에서만 골라 쓴다.
+  장점 목록이 비어 있으면 일반적인 변화만 말하고 없는 기능을 지어내지 마라.
+- "cta": 마지막 1개. 프로필 링크로 보내는 마무리.
+- subtitle은 한국어 22자 이내. line을 그대로 쓰거나 짧게 줄인 것.
+- 상품 이름·브랜드는 대사와 자막에 넣지 마라. 효용만 말한다.
+
+반드시 JSON만 출력한다.`;
+
+// 한국어 견종 → Veo가 알아듣는 영어 견종. styleBlock에 빠지면 클립마다 다른 개가 나오므로
+// 모델의 준수에 맡기지 않고 서버가 직접 채워 넣는다.
+const BREEDS = [
+  [/시바|시바견/, 'Shiba Inu'], [/말티즈|몰티즈/, 'Maltese'], [/포메라니안|포메/, 'Pomeranian'],
+  [/푸들|푸들리/, 'Poodle'], [/비숑/, 'Bichon Frise'], [/웰시코기|코기/, 'Welsh Corgi'],
+  [/골든\s?리트리버|리트리버/, 'Golden Retriever'], [/진돗개|진도개/, 'Jindo'],
+  [/치와와/, 'Chihuahua'], [/닥스훈트|닥스/, 'Dachshund'], [/시츄|시추/, 'Shih Tzu'],
+  [/요크셔|요키/, 'Yorkshire Terrier'], [/불독|불도그/, 'Bulldog'], [/사모예드/, 'Samoyed'],
+  [/보더콜리|콜리/, 'Border Collie'], [/비글/, 'Beagle'], [/슈나우저/, 'Schnauzer'],
+  [/허스키/, 'Siberian Husky'], [/스피츠/, 'Spitz'], [/퍼그/, 'Pug'],
+];
+function breedEnOf(dogText) {
+  const t = String(dogText || '');
+  for (const [re, en] of BREEDS) if (re.test(t)) return en;
+  return '';
+}
+
+async function handleVideoPrompts(env, body) {
+  const title = String(body.title || '').trim();
+  if (!title) throw new Error('상품 이름이 필요합니다.');
+  const category = String(body.category || '').trim();
+  const note = String(body.note || '').trim();
+  const dog = String(body.dog || '').trim() || '3D 애니메이션풍 시바견';
+  const clips = Math.max(3, Math.min(10, parseInt(body.clips, 10) || 7));
+
+  // 02단계 분석에서 근거가 확인된 것만 넘어온다. 없는 기능을 지어내지 못하게 하는 장치.
+  const pick = (v) => (Array.isArray(v) ? v : [])
+    .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
+    .filter(Boolean);
+  const pains = pick(body.pains).slice(0, 4);
+  const benefits = pick(body.benefits).slice(0, 5);
+
+  const user = `상품: ${title}
+품목: ${category || '반려동물 용품'}
 주인공: ${dog}${note ? `\n추가 주문: ${note}` : ''}${pains.length ? `\n\n[확인된 견주 불편 — 이 중에서 문제를 고를 것]\n- ${pains.join('\n- ')}` : ''}${benefits.length ? `\n\n[확인된 상품 장점 — benefit 클립은 이 중에서만 쓸 것]\n- ${benefits.join('\n- ')}` : ''}
 
 ${clips}개 클립짜리 릴스 촬영 지시서를 써라. 아래 JSON만 출력:
 {
   "problem": "이 영상이 다루는 문제 한 줄 (한국어)",
   "sceneBlock": "영어 25단어 이내. 장소 + 색감 + 조명만. 캐릭터 묘사 금지",
-  "tone": "영어 5단어 이내. 목소리 톤 (예: dry sarcastic low voice)",
+  "tone": "영어 5단어 이내. 목소리 톤",
   "clips": [
     { "role": "problem", "shots": "영어. 타임코드 2~3구간과 카메라 움직임·동작", "line": "한국어 대사 한 줄", "subtitle": "한국어 자막 22자 이내" }
   ],
@@ -2896,28 +3029,27 @@ ${clips}개 클립짜리 릴스 촬영 지시서를 써라. 아래 JSON만 출�
 }
 clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반드시 포함하고 나머지는 problem.`;
 
-  // Gemini 전용. (Claude는 이 프로젝트에서 사용 금지)
   const gk = await getGeminiKey(env);
   if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
   let raw;
   try {
     raw = await callGeminiText(gk, {
-      system: VEO_SYSTEM, user, max_tokens: Math.min(2200, 500 + clips * 150),
-      timeout_ms: 40000, json: true,
+      system: VEO_SYSTEM, user, max_tokens: Math.min(2600, 600 + clips * 180),
+      timeout_ms: 45000, json: true,
     });
   } catch (e) {
     throw new Error(`프롬프트를 만들지 못했습니다: ${e.message}`);
   }
+
   const out = extractJson(raw);
   const list = Array.isArray(out.clips) ? out.clips : [];
 
-  // 장면 블록에는 캐릭터 묘사가 들어오면 안 된다(참고 이미지와 충돌).
-  // 규칙을 어기고 들어온 외모 서술은 서버가 걷어낸다.
+  // 장면 블록에 캐릭터 묘사가 섞이면 참고 이미지와 충돌한다. 서버가 걷어낸다.
   let scene = String(out.sceneBlock || '').trim();
   scene = scene
-    .replace(/\b(fluffy|furry|cream|ginger|white|brown|black)?\s*(fur|coat|eyes|ears|tail|paws?|collar|muzzle|nose|puppy|dog|shiba|breed)\b[^,.]*[,.]?/gi, '')
+    .replace(/[^,.]*\b(fur|coat|eyes|ears|tail|paws?|collar|muzzle|snout|puppy|dog|shiba|breed)\b[^,.]*[,.]?/gi, ' ')
     .replace(/\s{2,}/g, ' ')
-    .replace(/^[,\s]+|[,\s]+$/g, '')
+    .replace(/^[,.\s]+|[,\s]+$/g, '')
     .trim();
   if (/3d|애니메이션|animation|stylized/i.test(dog + ' ' + scene)) {
     scene = scene.replace(/\b(photo-?realistic|hyper-?realistic|realistic|lifelike)\b/gi, 'stylized');
@@ -2930,8 +3062,7 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
     const shots = String(c.shots || c.action || '').trim();
     const line = String(c.line || '').trim();
     const role = String(c.role || 'problem').trim();
-    // Flow에 그대로 붙여넣을 최종 지시서.
-    // 캐릭터는 참고 이미지가 담당하므로 "the puppy" 한 마디만 두고 외모는 쓰지 않는다.
+    // 캐릭터는 참고 이미지가 맡으므로 "The puppy" 한 마디만 두고 외모는 쓰지 않는다.
     const prompt = [
       'The puppy.' + (scene ? ' ' + scene : ''),
       shots,
@@ -2939,11 +3070,8 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
       line ? `Korean dialogue: "${line}"` : '',
     ].filter(Boolean).join('\n');
     return {
-      no: i + 1,
-      role,
-      roleKo: ROLE_KO[role] || '문제',
-      shots,
-      line,
+      no: i + 1, role, roleKo: ROLE_KO[role] || '문제',
+      shots, line,
       subtitle: String(c.subtitle || line || '').trim(),
       prompt,
     };
@@ -3364,7 +3492,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
     <div class="f"><label for="pdog">강아지 설정</label>
       <input id="pdog" type="text" value="3D 애니메이션풍 시바견">
-      <small>Flow에 캐릭터 이미지를 끌어다 쓰시므로 짧게만 적으세요. 외모를 길게 적으면 참고 이미지와 충돌해 오히려 다른 개가 나옵니다.</small></div>
+      <small>Flow에 캐릭터 이미지를 끌어다 쓰시니 짧게만 적으세요. 외모를 길게 적으면 참고 이미지와 충돌해 오히려 다른 개가 나옵니다.</small></div>
     <div class="row">
       <div class="f" style="flex:1"><label for="pclips">클립 개수</label>
         <select id="pclips"><option>5</option><option selected>7</option><option>9</option></select></div>
@@ -3634,13 +3762,12 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(r.negativePrompt){
       var ng=document.createElement('div'); ng.className='clip';
       var nh=document.createElement('div'); nh.className='clip-hd';
-      var nn=document.createElement('span'); nn.className='clip-no'; nn.textContent='제외 조건 (Negative prompt)';
+      var nn=document.createElement('span'); nn.className='clip-no'; nn.textContent='제외 조건 (한 번만 넣어두세요)';
       nh.appendChild(nn); addCopyBtn(nh,'복사',r.negativePrompt); ng.appendChild(nh);
       var np=document.createElement('pre'); np.textContent=r.negativePrompt; ng.appendChild(np);
       var nt=document.createElement('div'); nt.className='sub';
-      nt.textContent='Flow의 제외 조건 칸에 한 번만 넣어두면 영어 대사와 실사풍이 안 나옵니다.';
-      ng.appendChild(nt);
-      out.appendChild(ng);
+      nt.textContent='Flow의 Negative prompt 칸에 넣으면 영어 대사와 실사풍이 안 나옵니다.';
+      ng.appendChild(nt); out.appendChild(ng);
     }
 
     (r.clips||[]).forEach(function(c){
@@ -3652,14 +3779,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       addCopyBtn(hd,'프롬프트 복사',c.prompt);
       d.appendChild(hd);
       var pre=document.createElement('pre'); pre.textContent=c.prompt; d.appendChild(pre);
-      if(c.line){
-        var ln=document.createElement('div'); ln.className='sub';
-        ln.textContent='대사 · '+c.line; d.appendChild(ln);
-      }
-      if(c.subtitle && c.subtitle!==c.line){
-        var sb=document.createElement('div'); sb.className='sub';
-        sb.textContent='자막 · '+c.subtitle; d.appendChild(sb);
-      }
+      if(c.line){ var ln=document.createElement('div'); ln.className='sub'; ln.textContent='대사 · '+c.line; d.appendChild(ln); }
+      if(c.subtitle && c.subtitle!==c.line){ var sb=document.createElement('div'); sb.className='sub'; sb.textContent='자막 · '+c.subtitle; d.appendChild(sb); }
       out.appendChild(d);
     });
 
@@ -3671,8 +3792,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       var cp=document.createElement('pre');
       cp.style.fontFamily="'Noto Sans KR',sans-serif"; cp.style.fontSize='12.5px';
       cp.textContent=r.caption+'\\n\\n'+(r.hashtags||[]).join(' ');
-      cap.appendChild(cp);
-      out.appendChild(cap);
+      cap.appendChild(cp); out.appendChild(cap);
     }
   }
   $('mk').addEventListener('click', function(){
