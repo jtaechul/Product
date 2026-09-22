@@ -33,17 +33,26 @@ const err = (msg, s = 400) => j({ error: msg }, s);
 //   [{"id":"jt","pw":"비밀번호","name":"보여줄 이름"}, ...]
 // USERS 가 없으면 예전처럼 ADMIN_PASSWORD 하나로 쓰는 1인 모드로 동작한다.
 function users(env) {
+  const out = [];
   try {
     const list = JSON.parse(env.USERS || "[]");
-    if (Array.isArray(list) && list.length) {
-      return list
-        .filter((u) => u && u.id && u.pw)
-        .map((u) => ({ id: String(u.id), pw: String(u.pw), name: String(u.name || u.id) }));
+    if (Array.isArray(list)) {
+      for (const u of list) {
+        if (u && u.id && u.pw) {
+          out.push({ id: String(u.id), pw: String(u.pw), name: String(u.name || u.id) });
+        }
+      }
     }
-  } catch (_) { /* 시크릿이 깨졌으면 1인 모드로 떨어진다 */ }
-  return env.ADMIN_PASSWORD
-    ? [{ id: "admin", pw: env.ADMIN_PASSWORD, name: "관리자" }]
-    : [];
+  } catch (_) { /* 시크릿이 깨져도 아래 관리자 계정으로 들어올 수 있다 */ }
+
+  // ⭐ 관리자 계정은 **언제나** 살려 둔다.
+  // 예전엔 USERS 가 있으면 ADMIN_PASSWORD 를 통째로 무시했다. 그래서 사용자 칸을
+  // 하나 등록한 순간 관리자 비밀번호가 죽었고, 그걸 아무리 바꿔도 안 들어가졌다
+  // (실제로 겪었다). 목록을 잘못 넣어도 주인은 못 잠기게 한다.
+  if (env.ADMIN_PASSWORD && !out.some((u) => u.id === "admin")) {
+    out.push({ id: "admin", pw: env.ADMIN_PASSWORD, name: "관리자" });
+  }
+  return out;
 }
 
 async function sign(env, value) {
