@@ -550,7 +550,15 @@ async function openDetail(rec) {
   const opts = document.createElement("div");
   opts.className = "scene";
   opts.innerHTML = `
-    <label>성우 (감정 연기)</label>
+    <label>성우 엔진</label>
+    <select class="e">
+      <option value="gemini">Gemini · 감정 연기 (하루 할당량 있음)</option>
+      <option value="edge">무료 성우 · 제한 없음 (감정 없음)</option>
+    </select>
+    <p class="hint" style="margin:6px 0 0">
+      Gemini 할당량이 바닥나면 <b>자동으로 무료 성우로 바꿔</b> 끝까지 만듭니다.
+      감정 연기를 계속 쓰시려면 위 "내 API 키"에 결제된 키를 넣으세요.</p>
+    <label>목소리</label>
     <select class="v">
       <option value="Sulafat">술라팟 (여성 · 따뜻하고 포근함 · 추천)</option>
       <option value="Kore">코레 (여성 · 또렷하고 단단함)</option>
@@ -572,6 +580,7 @@ async function openDetail(rec) {
     await api("/api/render", { method: "POST", body: JSON.stringify({
       id: rec.id, count: rec.scenes.length,
       gemini_key: myKey.get(),
+      engine: opts.querySelector(".e").value,
       voice: opts.querySelector(".v").value,
       highlight: opts.querySelector(".h").value,
       hq: opts.querySelector(".q").value,

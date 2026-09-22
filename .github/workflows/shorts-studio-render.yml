@@ -31,6 +31,11 @@ on:
         default: "노란색"
         type: choice
         options: ["노란색", "연두색", "하늘색", "분홍색"]
+      tts_gap:
+        description: "Gemini 성우 호출 사이 간격(초). 분당 제한에 걸리면 올린다"
+        required: false
+        default: "1.0"
+        type: string
       band:
         description: "워터마크를 덮는 위아래 검은 띠 두께 (화면 높이 비율, 0 이면 없음)"
         required: false
@@ -93,6 +98,7 @@ jobs:
           VOICE: ${{ inputs.voice }}
           RATE: ${{ inputs.rate }}
           HIGHLIGHT: ${{ inputs.highlight }}
+          TTS_GAP: ${{ inputs.tts_gap }}
           BAND: ${{ inputs.band }}
           COVER_SEC: ${{ inputs.cover_sec }}
           HQ: ${{ inputs.hq }}
