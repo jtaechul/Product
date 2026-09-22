@@ -91,8 +91,11 @@ def main() -> int:
     # Gemini 성우는 자막 한 줄이 곧 호출 한 번이라 할당량을 빨리 태운다.
     # 호출 사이에 조금씩 쉬어 분당 제한을 덜 건드린다.
     gap = float(os.environ.get("TTS_GAP", "1.0"))
-    # 영상 생성 AI가 화면 구석에 박는 워터마크를 위아래 검은 띠로 덮는다(화면 높이 비율).
-    band = float(os.environ.get("BAND", "0.08"))
+    # 영상 생성 AI가 화면 구석에 박는 워터마크를 검은 띠로 덮는다(화면 높이 비율).
+    # 아래가 더 두껍다 — 워터마크는 오른쪽 아래에만 박히고, 실측해 보니 8%로는
+    # 워터마크 바로 아래까지만 덮여 하나도 안 가려졌다.
+    band_top = float(os.environ.get("BAND_TOP", os.environ.get("BAND", "0.08")))
+    band_bottom = float(os.environ.get("BAND_BOTTOM", "0.16"))
     cover_sec = float(os.environ.get("COVER_SEC", "1.8"))
     # 관리자 페이지가 봉해 보낸 사용자 개인 키를 먼저 쓰고, 없으면 저장소 기본 키.
     try:
@@ -175,7 +178,8 @@ def main() -> int:
     ass = subtitle.build_karaoke_ass(lines, str(WORK / "sub.ass"), font=font_name,
                                      highlight=highlight, video_w=width, video_h=height,
                                      cover_title=record.get("title", "") if cover_dur else "",
-                                     cover_end=max(0.0, cover_dur - 0.15))
+                                     cover_end=max(0.0, cover_dur - 0.15),
+                                     bottom_px=video.band_px(height, band_bottom))
 
     # 4. 합성 → 최종 렌더
     print("합성 및 최종 렌더링")
@@ -183,7 +187,7 @@ def main() -> int:
     joined = video.concat_with_transitions(clips, durs, str(WORK), xdur=xdur)
     final = video.finalize(joined, narration, ass, str(WORK / "final.mp4"),
                            width=width, height=height, fonts_dir=fonts_dir,
-                           band=band)
+                           band_top=band_top, band_bottom=band_bottom)
 
     # 5. Release 업로드(없으면 만들고, 같은 이름이 있으면 먼저 지운다)
     # 태그 접두어를 프로젝트로 나눈다. 이 저장소엔 coupang 쪽 `shorts-cand` 등

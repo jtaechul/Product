@@ -185,23 +185,38 @@ def concat_with_transitions(scene_mp4s: list[str], scene_durs: list[float],
     return out
 
 
+def band_px(height: int, frac: float) -> int:
+    """띠 두께를 픽셀 정수로 못 박는다.
+
+    ffmpeg 식(ih*0.08)에 맡기면 소수점이 잘려 맨 아랫줄 한두 픽셀이 새고,
+    거기로 워터마크 끄트머리가 비친다(실제로 겪었다).
+    """
+    return max(0, int(round(height * max(0.0, min(0.35, frac)))))
+
+
 def finalize(video: str, audio: str, ass: str, out: str, *,
-             width: int, height: int, fonts_dir: str, band: float = 0.0) -> str:
+             width: int, height: int, fonts_dir: str,
+             band_top: float = 0.0, band_bottom: float = 0.0) -> str:
     """나레이션을 입히고 가라오케 자막을 태워 최종 MP4를 만든다.
 
-    band(0~0.2)를 주면 화면 **위아래에 검은 띠**를 덮는다. 영상 생성 AI가 화면
-    구석에 박아 넣는 워터마크를 가리려는 것이다. 띠를 먼저 그리고 자막을 나중에
-    올리므로 자막은 띠에 가려지지 않는다.
+    위아래에 **검은 띠**를 덮는다. 영상 생성 AI가 화면 구석에 박아 넣는 워터마크를
+    가리려는 것이다. 띠를 먼저 그리고 자막을 나중에 올리므로 자막은 안 가려진다.
+
+    ⚠️ 아래 띠가 위보다 두껍다. 워터마크는 **오른쪽 아래**에만 박히기 때문이다.
+    실제로 재 보니 1280 높이 영상에서 워터마크가 바닥에서 103~145px 지점에 있었다.
+    8%(102px)로는 그 바로 아래까지만 덮여 하나도 안 가려졌다 — 그래서 16%로 잡는다.
     """
     ass_esc = ass.replace("\\", "/").replace(":", r"\:")
     fonts_esc = fonts_dir.replace("\\", "/").replace(":", r"\:")
     vf = f"ass='{ass_esc}':fontsdir='{fonts_esc}'"
-    if band > 0:
-        # 픽셀 수를 여기서 정수로 못 박는다. ffmpeg 식(ih*0.08)에 맡기면 소수점이
-        # 잘려 맨 아랫줄 한두 픽셀이 새고, 거기로 워터마크 끄트머리가 비친다.
-        bp = max(1, int(round(height * min(0.2, band))))
-        vf = (f"drawbox=x=0:y=0:w=iw:h={bp}:color=black@1:t=fill,"
-              f"drawbox=x=0:y=ih-{bp}:w=iw:h={bp}:color=black@1:t=fill,") + vf
+    boxes = []
+    top_px, bot_px = band_px(height, band_top), band_px(height, band_bottom)
+    if top_px:
+        boxes.append(f"drawbox=x=0:y=0:w=iw:h={top_px}:color=black@1:t=fill")
+    if bot_px:
+        boxes.append(f"drawbox=x=0:y=ih-{bot_px}:w=iw:h={bot_px}:color=black@1:t=fill")
+    if boxes:
+        vf = ",".join(boxes) + "," + vf
     _run([
         "ffmpeg", "-y", "-i", video, "-i", audio,
         "-vf", vf,

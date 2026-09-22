@@ -36,10 +36,15 @@ on:
         required: false
         default: "1.0"
         type: string
-      band:
-        description: "워터마크를 덮는 위아래 검은 띠 두께 (화면 높이 비율, 0 이면 없음)"
+      band_top:
+        description: "위 검은 띠 두께 (화면 높이 비율, 0 이면 없음)"
         required: false
         default: "0.08"
+        type: string
+      band_bottom:
+        description: "아래 검은 띠 두께 — 워터마크를 덮는 쪽이라 더 두껍다 (0.16 권장)"
+        required: false
+        default: "0.16"
         type: string
       cover_sec:
         description: "표지가 뜨는 시간(초). 0 이면 표지를 넣지 않음"
@@ -99,7 +104,8 @@ jobs:
           RATE: ${{ inputs.rate }}
           HIGHLIGHT: ${{ inputs.highlight }}
           TTS_GAP: ${{ inputs.tts_gap }}
-          BAND: ${{ inputs.band }}
+          BAND_TOP: ${{ inputs.band_top }}
+          BAND_BOTTOM: ${{ inputs.band_bottom }}
           COVER_SEC: ${{ inputs.cover_sec }}
           HQ: ${{ inputs.hq }}
         run: python run_render.py
