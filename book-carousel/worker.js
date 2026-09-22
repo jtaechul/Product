@@ -2968,6 +2968,9 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타그램 릴스의 영�
 6. action은 영어 1~2문장, 35단어 이내로 짧게 쓴다. 강아지 외모·장소·조명은 styleBlock이 이미 담당하므로
    action에서 다시 설명하지 마라. 동작과 표정만 쓴다.
 7. styleBlock도 45단어 이내로 압축한다.
+8. 사용자가 지정한 그림체(예: 3D 애니메이션풍)는 styleBlock에 반드시 그대로 반영한다.
+   3D 애니메이션풍이면 stylized 3D animation, soft fluffy fur, rounded shapes,
+   large expressive eyes 같은 표현을 넣고 실사(photorealistic) 표현은 쓰지 마라.
 
 [구성]
 - 첫 클립: 2초 안에 문제가 터져야 한다. 스크롤을 멈추게 하는 가장 웃긴 순간으로 시작한다.
@@ -2982,7 +2985,7 @@ async function handleVideoPrompts(env, body) {
   if (!title) throw new Error('상품 이름이 필요합니다.');
   const category = String(body.category || '').trim();
   const note = String(body.note || '').trim();
-  const dog = String(body.dog || '').trim() || '흰색 몰티즈, 솜털 같은 털, 작은 체구, 까만 동그란 눈';
+  const dog = String(body.dog || '').trim() || '3D 애니메이션풍 시바견, 크림빛 주황 털에 볼·주둥이·가슴·배는 흰색, 머리가 크고 몸은 작은 아기 체형, 크고 촉촉한 짙은 갈색 눈, 까만 단추 코, 쫑긋한 삼각 귀, 도톰하게 말린 꼬리, 남색 얇은 목줄에 작은 황동 인식표';
   // 상품 분석에서 근거가 확인된 불편만 넘어온다. 있으면 이 중에서 고르게 해 지어내기를 막는다.
   const pains = (Array.isArray(body.pains) ? body.pains : [])
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
@@ -3441,7 +3444,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="note">AI 영상은 실제 상품 포장을 그리지 못합니다. 그래서 영상은 <b>그 상품이 필요해지는 상황</b>만 보여주고, 상품 연결은 자막과 프로필 링크가 맡습니다.</div>
     <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
     <div class="f"><label for="pdog">강아지 설정</label>
-      <input id="pdog" type="text" value="흰색 몰티즈, 솜털 같은 털, 작은 체구, 까만 동그란 눈">
+      <input id="pdog" type="text" value="3D 애니메이션풍 시바견, 크림빛 주황 털에 볼·주둥이·가슴·배는 흰색, 머리가 크고 몸은 작은 아기 체형, 크고 촉촉한 짙은 갈색 눈, 까만 단추 코, 쫑긋한 삼각 귀, 도톰하게 말린 꼬리, 남색 얇은 목줄에 작은 황동 인식표">
       <small>클립마다 같은 강아지가 나오도록 고정하는 설명입니다. 실제 키우는 아이에 맞춰 바꾸세요.</small></div>
     <div class="row">
       <div class="f" style="flex:1"><label for="pclips">클립 개수</label>
@@ -3812,7 +3815,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     pvx.font="500 12px 'Noto Sans KR', sans-serif"; pvx.textAlign='center';
     pvx.fillText('여기에 클립이 표시됩니다',w/2,h*0.38);
     drawBars(pvx,w,h);
-    drawSub(pvx,'산책만 나가면 내가 끌려다닌다',w,h,barOf(h));
+    drawSub(pvx,'현관문만 열리면 돌변하는 시바견',w,h,barOf(h));
   }
   function drawPreview(){
     var c=st.clips[st.sel];
