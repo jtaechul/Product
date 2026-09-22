@@ -1,12 +1,13 @@
 // 숏폼 동화 스튜디오 관리자 페이지 워커.
 //
 // 설계는 verdict-theater/admin/worker.js 를 따른다(손님이 이미 쓰고 있는 검증된 방식):
-//   · 손님은 **비밀번호 하나로 로그인**한다. GitHub 토큰을 폰에서 만질 일이 없다.
+//   · 손님은 **아이디 + 비밀번호로 로그인**한다. GitHub 토큰을 폰에서 만질 일이 없다.
 //   · GitHub 토큰은 **워커 시크릿**으로만 존재한다. 브라우저에 절대 내려보내지 않는다.
 //   · 씬 영상은 브라우저 → 워커 → **깃허브 릴리스**. 워커가 자기 토큰으로 올린다.
 //     깃허브로 직접 올리지 않으므로 CORS 문제도, 토큰 쓰기 권한도 필요 없다.
 //
-// 필요한 시크릿: GH_TOKEN · ADMIN_PASSWORD · SESSION_SECRET (배포 워크플로가 등록)
+// 필요한 시크릿: GH_TOKEN · USERS(또는 ADMIN_PASSWORD) · SESSION_SECRET · KEY_SECRET
+//                (배포 워크플로가 등록한다)
 // 필요한 바인딩: ASSETS (정적 화면)
 
 // 배포할 때 커밋 번호로 바뀐다. 손님이 "또 그러네" 하실 때 폰에 뜬 화면이
@@ -27,7 +28,24 @@ const JSON_H = { "Content-Type": "application/json; charset=utf-8", "Cache-Contr
 const j = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: JSON_H });
 const err = (msg, s = 400) => j({ error: msg }, s);
 
-/* ── 로그인 (서명 쿠키) ─────────────────────────────── */
+/* ── 로그인 (아이디 + 비밀번호, 서명 쿠키) ───────────── */
+// 사용자 목록은 워커 시크릿 USERS 에 JSON 으로 둔다. 브라우저로 내려가지 않는다.
+//   [{"id":"jt","pw":"비밀번호","name":"보여줄 이름"}, ...]
+// USERS 가 없으면 예전처럼 ADMIN_PASSWORD 하나로 쓰는 1인 모드로 동작한다.
+function users(env) {
+  try {
+    const list = JSON.parse(env.USERS || "[]");
+    if (Array.isArray(list) && list.length) {
+      return list
+        .filter((u) => u && u.id && u.pw)
+        .map((u) => ({ id: String(u.id), pw: String(u.pw), name: String(u.name || u.id) }));
+    }
+  } catch (_) { /* 시크릿이 깨졌으면 1인 모드로 떨어진다 */ }
+  return env.ADMIN_PASSWORD
+    ? [{ id: "admin", pw: env.ADMIN_PASSWORD, name: "관리자" }]
+    : [];
+}
+
 async function sign(env, value) {
   const key = await crypto.subtle.importKey(
     "raw", new TextEncoder().encode(env.SESSION_SECRET || "ss"),
@@ -36,24 +54,54 @@ async function sign(env, value) {
   return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function authed(req, env) {
+// 로그인했으면 사용자 아이디를, 아니면 빈 문자열을 돌려준다.
+async function whoami(req, env) {
   const m = (req.headers.get("Cookie") || "").match(/ss=([^;]+)/);
-  if (!m) return false;
-  const [val, mac] = decodeURIComponent(m[1]).split(".");
-  if (!val || !mac) return false;
-  return (await sign(env, val)) === mac;
+  if (!m) return "";
+  const raw = decodeURIComponent(m[1]);
+  const at = raw.lastIndexOf(".");
+  if (at < 0) return "";
+  const val = raw.slice(0, at);
+  if ((await sign(env, val)) !== raw.slice(at + 1)) return "";
+  const uid = val.split("|")[0];
+  // 목록에서 빠진 사용자는 바로 막힌다(시크릿에서 지우면 그 즉시 로그아웃).
+  return users(env).some((u) => u.id === uid) ? uid : "";
 }
 
 async function login(req, env) {
-  const { password } = await req.json().catch(() => ({}));
-  if (!env.ADMIN_PASSWORD) return err("서버에 비밀번호가 설정되지 않았습니다.", 503);
-  if (password !== env.ADMIN_PASSWORD) return err("비밀번호가 틀렸습니다.", 401);
-  const val = String(Date.now());
+  const b = await req.json().catch(() => ({}));
+  const list = users(env);
+  if (!list.length) return err("서버에 사용자가 설정되지 않았습니다.", 503);
+  const id = String(b.id || "").trim();
+  const hit = list.find((u) => u.id === id && u.pw === String(b.password || ""));
+  if (!hit) return err("아이디나 비밀번호가 틀렸습니다.", 401);
+  const val = `${hit.id}|${Date.now()}`;
   const cookie = `ss=${encodeURIComponent(val + "." + await sign(env, val))}` +
     "; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000";
-  return new Response(JSON.stringify({ ok: true }), {
+  return new Response(JSON.stringify({ ok: true, id: hit.id, name: hit.name }), {
     headers: { ...JSON_H, "Set-Cookie": cookie },
   });
+}
+
+/* ── 개인 API 키 봉하기 ─────────────────────────────── */
+// 실제 작업은 GitHub Actions 에서 돌아가는데, 이 저장소는 **공개**라
+// 워크플로 입력값이 실행 기록 화면에 그대로 보인다. 사용자의 API 키를 날것으로
+// 넘기면 전 세계에 공개된다. 그래서 워커가 자물쇠를 채워 보내고,
+// 같은 열쇠(KEY_SECRET)를 가진 Actions 만 연다. 기록에는 알아볼 수 없는 문자열만 남는다.
+async function sealKey(env, plain) {
+  const text = String(plain || "").trim();
+  if (!text) return "";
+  const secret = env.KEY_SECRET || env.SESSION_SECRET || "ss";
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
+  const key = await crypto.subtle.importKey("raw", hash, { name: "AES-GCM" }, false, ["encrypt"]);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv }, key, new TextEncoder().encode(text)));
+  const out = new Uint8Array(iv.length + ct.length);
+  out.set(iv); out.set(ct, iv.length);
+  let bin = "";
+  for (const byte of out) bin += String.fromCharCode(byte);
+  return btoa(bin);
 }
 
 /* ── GitHub (서버에서만 호출) ───────────────────────── */
@@ -83,14 +131,33 @@ function b64utf8(b64) {
   return new TextDecoder("utf-8").decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
 }
 
-async function listRecords(env) {
+// 작품 주인 판정. owner 가 없는 옛 기록은 1인 모드 시절 것이라 admin 소유로 본다.
+const ownerOf = (rec) => String((rec && rec.owner) || "admin");
+
+async function loadRecord(env, id) {
+  if (!/^[A-Za-z0-9._-]+$/.test(id)) return null;
+  const r = await gh(env, `/repos/${REPO}/contents/${DIR}/${id}.json?ref=${BRANCH}`);
+  if (!r || !r.content) return null;
+  try { return JSON.parse(b64utf8(r.content)); } catch (_) { return null; }
+}
+
+// 남의 작품을 건드리지 못하게 한다. 없는 작품은 통과시킨다(아직 대본 커밋 전일 수 있다).
+async function mine(env, id, uid) {
+  const rec = await loadRecord(env, id);
+  return !rec || ownerOf(rec) === uid;
+}
+
+async function listRecords(env, uid) {
   const files = await gh(env, `/repos/${REPO}/contents/${DIR}?ref=${BRANCH}`) || [];
   const jsons = files.filter((f) => f.name && f.name.endsWith(".json"));
   const out = [];
   for (const f of jsons) {
     const r = await gh(env, `/repos/${REPO}/contents/${f.path}?ref=${BRANCH}`);
     if (r && r.content) {
-      try { out.push(JSON.parse(b64utf8(r.content))); } catch (_) { /* 깨진 파일은 건너뛴다 */ }
+      try {
+        const rec = JSON.parse(b64utf8(r.content));
+        if (ownerOf(rec) === uid) out.push(rec);     // 남의 작품은 목록에 안 보인다
+      } catch (_) { /* 깨진 파일은 건너뛴다 */ }
     }
   }
   out.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
@@ -103,7 +170,7 @@ async function listRecords(env) {
 // (예전엔 클라우드플레어 보관함을 거쳤는데, 그 토큰에 보관함 권한이 없어 막혔다.
 //  깃허브에 바로 두면 14일 만료도, 용량 제한도, 배포 때 보관함 만드는 단계도 사라진다.)
 
-const MAX_SCENES = 10;
+const MAX_SCENES = 20;
 const MAX_CHARS = 3;
 const sceneName = (n) => `scene${String(n).padStart(2, "0")}.mp4`;
 // 인물 참조 이미지 — 모든 씬의 기준. 등장인물이 여럿이면 사람마다 한 장씩 둔다.
@@ -127,8 +194,9 @@ async function release(env, id, create) {
   return rel;
 }
 
-async function uploadScene(req, env, url) {
+async function uploadScene(req, env, url, uid) {
   const id = url.searchParams.get("id") || "";
+  if (!(await mine(env, id, uid))) return err("내 작품이 아닙니다.", 403);
   const what = url.searchParams.get("scene") || "";
   // "3" = 3번 씬 영상 / "char2" = 2번 등장인물 이미지 / "character" = 옛 이름(1번 인물)
   const cm = /^char(?:acter)?(\d*)$/.exec(what);
@@ -212,27 +280,31 @@ async function playVideo(req, url) {
 }
 
 /* ── 워크플로 실행 ──────────────────────────────────── */
-async function runScript(req, env) {
+async function runScript(req, env, uid) {
   const b = await req.json().catch(() => ({}));
   const topic = String(b.topic || "").trim();
   if (!topic) return err("동화 주제를 입력하세요.");
+  const scenes = Math.max(5, Math.min(MAX_SCENES, parseInt(b.scenes, 10) || 8));
   await gh(env, `/repos/${REPO}/actions/workflows/${WF_SCRIPT}/dispatches`, {
     method: "POST",
     body: JSON.stringify({
       ref: BRANCH,
       inputs: {
         topic,
-        scenes: String(b.scenes || "8"),
+        scenes: String(scenes),
         tool: String(b.tool || "Runway (Gen-3/Gen-4)"),
+        owner: uid,
+        gemini_key_enc: await sealKey(env, b.gemini_key),
       },
     }),
   });
   return j({ ok: true });
 }
 
-async function runRender(req, env) {
+async function runRender(req, env, uid) {
   const b = await req.json().catch(() => ({}));
   const id = String(b.id || "");
+  if (!(await mine(env, id, uid))) return err("내 작품이 아닙니다.", 403);
   const count = parseInt(b.count || "0", 10);
   const have = new Set((await uploadedScenes(env, id)).scenes);
   const missing = [];
@@ -247,6 +319,7 @@ async function runRender(req, env) {
         content_id: id,
         engine: String(b.engine || "gemini"),
         voice: String(b.voice || "Sulafat"),
+        gemini_key_enc: await sealKey(env, b.gemini_key),
         highlight: String(b.highlight || "노란색"),
         hq: String(b.hq || "false"),
       },
@@ -263,17 +336,20 @@ export default {
     if (p === "/health") return new Response("ok " + BUILD);
     if (p === "/api/login") return login(req, env);
 
-    const ok = await authed(req, env);
+    const uid = await whoami(req, env);
     if (p.startsWith("/api/")) {
-      if (!ok) return err("로그인이 필요합니다.", 401);
+      if (!uid) return err("로그인이 필요합니다.", 401);
       try {
-        if (p === "/api/me") return j({ ok: true });
-        if (p === "/api/list") return j({ items: await listRecords(env) });
+        if (p === "/api/me") {
+          const me = users(env).find((u) => u.id === uid);
+          return j({ ok: true, id: uid, name: (me && me.name) || uid });
+        }
+        if (p === "/api/list") return j({ items: await listRecords(env, uid) });
         if (p === "/api/uploaded")
           return j(await uploadedScenes(env, url.searchParams.get("id") || ""));
-        if (p === "/api/upload") return uploadScene(req, env, url);
-        if (p === "/api/script") return runScript(req, env);
-        if (p === "/api/render") return runRender(req, env);
+        if (p === "/api/upload") return uploadScene(req, env, url, uid);
+        if (p === "/api/script") return runScript(req, env, uid);
+        if (p === "/api/render") return runRender(req, env, uid);
         if (p === "/api/video") return playVideo(req, url);
       } catch (e) {
         return err(String(e.message || e), 500);

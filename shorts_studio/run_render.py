@@ -11,7 +11,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-from core import subtitle, tts, video
+from core import seal, subtitle, tts, video
 
 ROOT = Path(__file__).resolve().parent
 CONTENT_DIR = ROOT / "content"
@@ -87,9 +87,15 @@ def main() -> int:
     # 자막 한 줄 길이 = Gemini 성우의 합성 단위. 늘리면 호출 수가 줄어 빠르고 할당량을
     # 덜 쓰지만, 줄 안에서의 어절 하이라이트가 그만큼 어림값이 된다.
     max_chars = int(os.environ.get("SUB_MAX_CHARS", "13"))
-    gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    # 관리자 페이지가 봉해 보낸 사용자 개인 키를 먼저 쓰고, 없으면 저장소 기본 키.
+    try:
+        gemini_key = seal.gemini_key()
+    except seal.SealError as e:
+        print(f"::error::{e}")
+        return 1
     if engine == "gemini" and not gemini_key:
-        print("::error::Gemini 성우를 쓰려면 GEMINI_API_KEY 시크릿이 필요합니다.")
+        print("::error::Gemini 성우를 쓰려면 API 키가 필요합니다. 관리자 페이지 설정에서 "
+              "내 API 키를 넣거나, 성우 엔진을 edge 로 바꾸세요.")
         return 1
 
     # 1. 씬별 나레이션 합성.

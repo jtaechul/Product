@@ -1,10 +1,12 @@
 """llm — 동화 대본 + 타깃 영상 AI 툴에 맞춘 영문 프롬프트 생성 (Gemini).
 
-두 단계로 만든다.
-  ① 줄거리 먼저 — 발단·전개·위기·결말과 등장인물을 통째로 설계한다.
-  ② 그 줄거리를 씬으로 쪼갠다 — 각 씬이 앞 씬에서 무엇을 물려받아 다음으로 무엇을
-     넘기는지 명시하게 해, 컷이 따로 노는 것을 막는다.
-한 번에 시키면 모델이 앞뒤를 안 보고 씬을 하나씩 지어내어 이야기가 끊긴다.
+세 단계로 만든다.
+  ① 줄거리 먼저 — 발단·전개·위기·절정·결말과 등장인물을 통째로 설계한다.
+     컷 수에 따라 대목마다 몇 컷씩 줄지 미리 나눠, 컷이 늘면 이야기도 함께 두꺼워지게 한다.
+  ② 컷 개요 — 컷마다 무슨 일이 벌어지는지 한 줄씩. 여기서 이야기가 한 칸씩 나아가는지 본다.
+  ③ 컷 본문 — 그 개요를 여덟 개씩 묶어 나레이션·연기지시·영문 프롬프트를 쓴다.
+한 번에 다 시키면 모델이 앞뒤를 안 보고 컷을 지어내어 이야기가 끊기고,
+컷이 많을수록 뒤쪽이 통째로 부실해진다.
 """
 from __future__ import annotations
 
@@ -18,6 +20,10 @@ MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
 
 # 기준 이미지를 만들 인물 수 상한. 늘릴수록 운영자가 만들어야 할 이미지가 늘어난다.
 MAX_CHARACTERS = 3
+
+# 컷 수 상한. 컷 하나에 영상 클립 하나를 사람이 직접 만들어 올려야 하므로,
+# 여기를 늘리면 코드가 아니라 운영자의 손이 그만큼 더 든다.
+MAX_SCENES = 20
 
 # 입을 움직이지 않게 하는 고정 문장. LLM이 매번 쓰기를 기대하지 않고 **무조건 붙인다**.
 # 나레이터가 들려주는 이야기이므로 인물이 말하면 누가 말하는지 헷갈리고, 영상 AI가
@@ -104,10 +110,38 @@ in the warm, humorous, gently moralistic style of 전래동화 / 태담동화 Yo
 You always return a single valid JSON object. No markdown, no commentary."""
 
 
+# 이야기를 나누는 다섯 대목과, 컷을 몇 개씩 줄지 정하는 비중.
+# 컷이 늘어나면 각 대목이 함께 두꺼워져야 이야기가 헐거워지지 않는다.
+ACTS: list[tuple[str, float]] = [
+    ("발단", 0.20),   # 인물과 그가 바라는 것
+    ("전개", 0.30),   # 일이 굴러가며 커진다 — 컷이 늘면 여기가 제일 많이 늘어난다
+    ("위기", 0.20),   # 가로막히는 것
+    ("절정", 0.20),   # 부딪히고 결판난다
+    ("결말", 0.10),   # 거둬들이고 여운
+]
+
+# 한 번에 본문을 쓰게 할 씬 수. 이보다 많이 시키면 뒤쪽이 대충 써지고 응답이 잘린다.
+SCENES_PER_CALL = 8
+
+
+def allocate_acts(n_scenes: int) -> list[int]:
+    """대목마다 컷을 몇 개씩 줄지 나눈다. 각 대목 최소 1개, 합은 정확히 n_scenes."""
+    k = len(ACTS)
+    n = max(k, int(n_scenes))
+    rest = n - k                       # 대목마다 1개씩 깔고 남은 것을 비중대로
+    raw = [rest * w for _, w in ACTS]
+    out = [int(x) for x in raw]
+    left = rest - sum(out)
+    for i in sorted(range(k), key=lambda i: raw[i] - out[i], reverse=True)[:left]:
+        out[i] += 1
+    return [1 + x for x in out]
+
+
 # ---------------------------------------------------------------- ① 줄거리
 
 _PLOT_USER = """주제: {topic}
-이 이야기는 {n_scenes}개의 컷으로 만들 세로 쇼츠입니다. 먼저 **줄거리와 등장인물**만 설계하세요.
+이 이야기는 {n_scenes}개의 컷으로 만들 세로 쇼츠입니다({total_sec}초 안팎).
+먼저 **줄거리와 등장인물**만 설계하세요.
 
 아래 JSON 스키마로만 답하세요.
 
@@ -122,16 +156,24 @@ _PLOT_USER = """주제: {topic}
     }}
   ],
   "style_lock": "모든 씬에 그대로 붙일 색감·조명 고정 문장 (영문 1문장)",
-  "beats": [
-    {{"stage": "발단|전개|위기|절정|결말", "summary": "그 대목에서 실제로 벌어지는 일 (한국어 1~2문장)"}}
+  "acts": [
+    {{"stage": "발단", "summary": "그 대목에서 실제로 벌어지는 일 (한국어 2~3문장)"}},
+    {{"stage": "전개", "summary": "..."}},
+    {{"stage": "위기", "summary": "..."}},
+    {{"stage": "절정", "summary": "..."}},
+    {{"stage": "결말", "summary": "..."}}
   ]
 }}
 
-[줄거리 규칙 — beats]
+[줄거리 규칙 — acts]
+- **다섯 대목을 모두, 반드시 이 순서로** 채웁니다: 발단 · 전개 · 위기 · 절정 · 결말.
 - **인과로 이어질 것.** 각 대목은 앞 대목 때문에 벌어져야 한다. "그리고"가 아니라 "그래서".
 - 발단에서 **인물이 무엇을 원하는지**, 위기에서 **그것을 가로막는 것이 무엇인지**를 분명히 한다.
+- 절정은 원하던 것과 가로막는 것이 정면으로 부딪히는 한 장면이어야 한다. 얼버무리지 않는다.
 - 결말은 앞에서 깔아 둔 것으로 풀어낸다. 갑자기 등장하는 해결사·우연 금지.
-- 5개 대목 모두 채운다. 각 대목은 뒤에서 {n_scenes}개 컷으로 쪼개질 분량이다.
+- 이 이야기는 컷 {n_scenes}개로 펼쳐집니다. 대목별로 이만큼 배정됩니다: {allocation}
+  배정이 많은 대목은 **사건을 여러 단계로 쪼갤 수 있을 만큼** 두껍게 쓰세요.
+  (예: 전개에 여섯 컷이면 "점점 커지는 일" 을 여섯 단계로 나눌 거리가 있어야 합니다.)
 
 [등장인물 규칙 — characters]
 - **최대 {max_chars}명.** 주인공 1명은 반드시 넣고, 이야기에 꼭 필요한 인물만 더한다.
@@ -152,19 +194,58 @@ _PLOT_USER = """주제: {topic}
 """
 
 
-# ---------------------------------------------------------------- ② 씬 쪼개기
+# ---------------------------------------------------------------- ② 컷 개요
 
-_SCENE_USER = """아래는 이미 확정된 줄거리입니다. 이것을 정확히 {n_scenes}개의 컷으로 쪼개세요.
+_BEATS_USER = """아래는 확정된 줄거리입니다. 이것을 정확히 {n_scenes}개의 컷으로 나누되,
+**지금은 각 컷에서 무슨 일이 벌어지는지 한 줄씩만** 적으세요. 대사나 프롬프트는 쓰지 마세요.
 
 제목: {title}
 한 줄 줄거리: {logline}
 등장인물: {cast_list}
-대목:
-{beats}
 
-타깃 영상 생성 툴: {tool}
+대목과 배정된 컷 수:
+{acts}
 
 아래 JSON 스키마로만 답하세요.
+
+{{
+  "beats": [
+    {{
+      "n": 1,
+      "act": "발단",
+      "summary": "그 컷에서 실제로 벌어지는 일 (한국어 한 문장)",
+      "place": "장소 (한국어 몇 글자)",
+      "cast": ["그 컷에 얼굴이 보이는 인물 이름"]
+    }}
+  ]
+}}
+
+[규칙]
+- 정확히 {n_scenes}개. n은 1부터 {n_scenes}까지 빠짐없이.
+- 대목별 배정 컷 수를 **정확히** 지킵니다. 순서도 발단 → 전개 → 위기 → 절정 → 결말 그대로.
+- ⭐ **컷마다 이야기가 한 칸씩 나아갑니다.** 같은 상황을 각도만 바꿔 두 번 보여 주지 않습니다.
+  앞 컷과 견주어 "무엇이 달라졌는가"를 한 마디로 댈 수 없으면 그 컷은 버리고 다시 쓰세요.
+- ⭐ **앞 컷의 마지막 상태에서 이어 시작합니다.** 인물의 위치·손에 든 것·시간대가 이어져야 합니다.
+- 장소가 바뀌는 컷은 place 를 바꾸고, 그 전환이 자연스럽도록 앞뒤를 배치합니다.
+- cast 는 위 등장인물 목록 안에서만 고릅니다. 한 컷에 세 명을 넘기지 않습니다.
+"""
+
+
+# ---------------------------------------------------------------- ③ 컷 본문
+
+_SCENE_USER = """아래 줄거리와 컷 개요를 바탕으로, **{first}번부터 {last}번까지의 컷 본문**만 쓰세요.
+
+제목: {title}
+한 줄 줄거리: {logline}
+등장인물: {cast_list}
+타깃 영상 생성 툴: {tool}
+
+전체 컷 개요(흐름 파악용, 이번에 쓸 것은 {first}~{last}번뿐):
+{all_beats}
+
+{prev_note}
+
+아래 JSON 스키마로만 답하세요. scenes 는 정확히 {count}개, {first}번 컷부터 순서대로입니다.
 
 {{
   "scenes": [
@@ -178,27 +259,18 @@ _SCENE_USER = """아래는 이미 확정된 줄거리입니다. 이것을 정확
       "prompt": "영상 생성 AI에 넣을 영문 프롬프트",
       "negative": "네거티브 프롬프트(영문). 필요 없으면 빈 문자열"
     }}
-  ],
-  "hashtags": ["#해시태그", "#3개", "#한국어"]
+  ]{hashtag_slot}
 }}
 
-[이야기 연결 규칙 — 가장 중요]
-- 정확히 {n_scenes}개. 위 대목을 순서대로 덮되, 분량이 많은 대목은 여러 컷으로 나눈다.
-- ⭐ **컷마다 이야기가 한 칸씩 나아간다.** 같은 상황을 각도만 바꿔 두 번 보여 주지 않는다.
-- ⭐ **앞 씬의 마지막 상태에서 이어 시작한다.** 인물의 위치·손에 든 것·시간대·감정이
-  앞 씬 끝과 맞아야 한다. continuity 칸에 그 연결고리를 적고, 프롬프트도 거기 맞춘다.
-- 장소가 바뀌면 나레이션에서 먼저 옮겨 준다("다음 날 아침, 마을 어귀에서는…").
-  화면만 갑자기 다른 곳으로 뛰지 않는다.
-- 마지막 씬은 앞에서 깔아 둔 것을 거둬들여 닫는다.
-
 [나레이션 규칙]
-- 전체를 이어 읽으면 하나의 완결된 이야기. 문장이 씬 경계에서 잘리지 않는다.
+- 컷 개요에 적힌 그 컷의 일을 **그대로** 옮깁니다. 개요에 없는 사건을 새로 지어내지 않습니다.
+- 전체를 이어 읽으면 하나의 완결된 이야기. 문장이 씬 경계에서 잘리지 않습니다.
 - ⭐ 각 씬 나레이션은 한국어 **1~2문장, 32~45자**. 이보다 길면 씬 하나가 10초를 넘는데,
   영상 생성 툴 대부분이 10초까지만 만들어 주어 쓸 수 없는 대본이 된다.
 - 따뜻하고 해학적인 구어체 존댓말("~했답니다", "~하지 뭐예요"). 옛이야기 들려주듯.
-- 1번 씬 첫 문장은 훅: 궁금증을 만들고 끝까지 보게 만들 것.
-- 마지막 씬은 잔잔한 교훈이나 여운으로 마무리. 설교조 금지.
+- 앞 씬에서 이미 쓴 표현을 되풀이하지 않습니다. 컷이 많을수록 같은 말투가 반복되기 쉽습니다.
 - 숫자·영어·특수문자 금지(음성으로 읽히므로). 한글과 기본 문장부호만.
+{edge_note}
 
 [연기 지시 규칙 — voice_direction]
 - 성우에게 주는 지문. **감정 + 속도 + 힘**을 한 줄에 담는다. 그대로 TTS에 전달된다.
@@ -261,6 +333,7 @@ class Scene:
     est_seconds: float = 0.0
     voice_direction: str = ""
     continuity: str = ""
+    act: str = ""
     cast: list[str] = field(default_factory=list)
 
 
@@ -328,14 +401,28 @@ def _one_line(v) -> str:
 
 def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
                         model: str = "gemini-2.5-flash") -> Storyboard:
+    """주제 → 스토리보드. 세 단계로 나눠 만든다.
+
+    ① 줄거리와 인물(발단·전개·위기·절정·결말) → ② 컷마다 무슨 일이 벌어지는지 한 줄씩
+    → ③ 그 개요를 {SCENES_PER_CALL}개씩 묶어 본문(나레이션·프롬프트) 작성.
+    한 번에 다 시키면 모델이 앞뒤를 안 보고 컷을 지어내어 이야기가 끊기고,
+    컷이 많을수록 뒤쪽이 통째로 부실해진다.
+    """
     from google import genai
 
     cfg = TOOLS[tool]
     client = genai.Client(api_key=api_key)
+    # 대목이 다섯이라 컷도 최소 다섯이어야 한 대목이 통째로 비지 않는다.
+    n_scenes = max(len(ACTS), min(MAX_SCENES, int(n_scenes)))
+    alloc = allocate_acts(n_scenes)
 
-    # ① 줄거리와 인물 먼저
+    # ① 줄거리와 인물
+    print(f"[1/3] 줄거리 설계 — {n_scenes}컷, 대목별 배정 "
+          f"{', '.join(f'{s}{c}' for (s, _), c in zip(ACTS, alloc))}")
     plot = _ask(client, model, _PLOT_USER.format(
         topic=topic, n_scenes=n_scenes, style=STYLE_KEYWORDS, max_chars=MAX_CHARACTERS,
+        total_sec=int(n_scenes * 8),
+        allocation=", ".join(f"{s} {c}컷" for (s, _), c in zip(ACTS, alloc)),
     ), temperature=0.9)
 
     characters = [
@@ -353,53 +440,114 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
     style_lock = _one_line(plot.get("style_lock"))
     title = _one_line(plot.get("title")) or topic
     logline = _one_line(plot.get("logline"))
-    beats = "\n".join(
-        f"  - [{_one_line(b.get('stage'))}] {_one_line(b.get('summary'))}"
-        for b in (plot.get("beats") or [])
-    ) or "  - (대목 없음)"
+    cast_list = ", ".join(f"{c.name}({c.role})" for c in characters)
 
-    # ② 그 줄거리를 씬으로
-    data = _ask(client, model, _SCENE_USER.format(
-        n_scenes=n_scenes, title=title, logline=logline, beats=beats, tool=tool,
-        cast_list=", ".join(f"{c.name}({c.role})" for c in characters),
-        tool_guide=cfg["guide"],
-        negative_note=("이 툴이 네거티브 프롬프트를 지원하므로 반드시 채울 것"
-                       if cfg["negative"] else "빈 문자열로 둘 것"),
-    ), temperature=0.85)
+    by_stage = {_one_line(a.get("stage")): _one_line(a.get("summary"))
+                for a in (plot.get("acts") or [])}
+    acts_text = "\n".join(
+        f"  [{stage}] {count}컷 — {by_stage.get(stage, '(비어 있음)')}"
+        for (stage, _), count in zip(ACTS, alloc)
+    )
 
+    # ② 컷마다 무슨 일이 벌어지는지 한 줄씩
+    print(f"[2/3] {n_scenes}컷 개요")
+    beats_raw = (_ask(client, model, _BEATS_USER.format(
+        n_scenes=n_scenes, title=title, logline=logline,
+        cast_list=cast_list, acts=acts_text,
+    ), temperature=0.85).get("beats") or [])[:n_scenes]
+    if len(beats_raw) < n_scenes:
+        raise RuntimeError(f"컷 개요를 {n_scenes}개 만들지 못했습니다"
+                           f"(받은 개수: {len(beats_raw)}). 다시 시도해 보세요.")
+
+    # 대목 이름은 우리가 정한 배정에서 가져온다(모델이 틀리게 적어도 흔들리지 않게).
+    stage_of: list[str] = []
+    for (stage, _), count in zip(ACTS, alloc):
+        stage_of += [stage] * count
+    beats = []
+    for i, b in enumerate(beats_raw):
+        beats.append({
+            "n": i + 1,
+            "act": stage_of[i] if i < len(stage_of) else "",
+            "summary": _one_line(b.get("summary")),
+            "place": _one_line(b.get("place")),
+        })
+    all_beats = "\n".join(
+        f"  {b['n']}. [{b['act']}] ({b['place']}) {b['summary']}" for b in beats
+    )
+
+    # ③ 본문을 SCENES_PER_CALL 개씩 나눠 작성
     known = {c.name for c in characters}
-    scenes = []
-    for s in (data.get("scenes") or [])[:n_scenes]:
-        body = _one_line(s.get("prompt"))
-        if style_lock and style_lock.lower() not in body.lower():
-            body = f"{body} {style_lock}"
-        body = f"{body} {SILENCE_LOCK}"          # 입 다무는 문장은 예외 없이 붙인다
-        # 몇 초짜리로 만들어야 하는지 프롬프트에도 박아 둔다. 영상이 짧으면 마지막
-        # 프레임이 얼어붙고, 길면 잘려 나간다.
-        narration = _one_line(s.get("narration"))
-        est = estimate_seconds(narration)
-        body = f"{body} Single continuous shot of about {est:.0f} seconds."
-        neg = _one_line(s.get("negative"))
-        if cfg["negative"]:
-            neg = f"{neg}, {SILENCE_NEGATIVE}".strip(" ,")
-        scenes.append(Scene(
-            narration=narration,
-            visual=str(s.get("visual", "")).strip(),
-            shot=_one_line(s.get("shot")),
-            prompt=(body + cfg["suffix"]).strip(),
-            negative=neg,
-            est_seconds=est,
-            voice_direction=_one_line(s.get("voice_direction")),
-            continuity=_one_line(s.get("continuity")),
-            cast=[n for n in (_one_line(c) for c in (s.get("cast") or [])) if n in known],
-        ))
+    scenes: list[Scene] = []
+    hashtags: list[str] = []
+    batches = [(i, min(i + SCENES_PER_CALL, n_scenes))
+               for i in range(0, n_scenes, SCENES_PER_CALL)]
+    for bi, (lo, hi) in enumerate(batches):
+        print(f"[3/3] 본문 {lo + 1}~{hi}번 컷 ({bi + 1}/{len(batches)})")
+        prev_note = ""
+        if scenes:
+            prev = scenes[-1]
+            prev_note = ("[바로 앞 컷에서 이어집니다]\n"
+                         f"  {lo}번 나레이션: {prev.narration}\n"
+                         f"  {lo}번 화면: {prev.visual}\n"
+                         "  이 상태에서 자연스럽게 이어 시작하세요.")
+        data = _ask(client, model, _SCENE_USER.format(
+            first=lo + 1, last=hi, count=hi - lo,
+            title=title, logline=logline, cast_list=cast_list, tool=tool,
+            all_beats=all_beats, prev_note=prev_note,
+            tool_guide=cfg["guide"],
+            # 해시태그는 마지막 묶음에서 한 번만 받는다.
+            hashtag_slot=(',\n  "hashtags": ["#해시태그", "#3개", "#한국어"]'
+                          if bi == len(batches) - 1 else ""),
+            edge_note=("- 1번 씬 첫 문장은 훅: 궁금증을 만들고 끝까지 보게 만들 것."
+                       if bi == 0 else "")
+            + ("\n- 마지막 씬은 잔잔한 교훈이나 여운으로 마무리. 설교조 금지."
+               if bi == len(batches) - 1 else ""),
+            negative_note=("이 툴이 네거티브 프롬프트를 지원하므로 반드시 채울 것"
+                           if cfg["negative"] else "빈 문자열로 둘 것"),
+        ), temperature=0.85)
+        if bi == len(batches) - 1:
+            hashtags = [str(h) for h in (data.get("hashtags") or [])][:5]
+
+        got = (data.get("scenes") or [])[:hi - lo]
+        if not got:
+            raise RuntimeError(f"{lo + 1}~{hi}번 컷 본문이 비었습니다. 다시 시도해 보세요.")
+        for j, s in enumerate(got):
+            body = _one_line(s.get("prompt"))
+            if style_lock and style_lock.lower() not in body.lower():
+                body = f"{body} {style_lock}"
+            body = f"{body} {SILENCE_LOCK}"      # 입 다무는 문장은 예외 없이 붙인다
+            # 몇 초짜리로 만들어야 하는지 프롬프트에도 박아 둔다. 영상이 짧으면 마지막
+            # 프레임이 얼어붙고, 길면 잘려 나간다.
+            narration = _one_line(s.get("narration"))
+            est = estimate_seconds(narration)
+            body = f"{body} Single continuous shot of about {est:.0f} seconds."
+            neg = _one_line(s.get("negative"))
+            if cfg["negative"]:
+                neg = f"{neg}, {SILENCE_NEGATIVE}".strip(" ,")
+            idx = lo + j
+            scenes.append(Scene(
+                narration=narration,
+                visual=str(s.get("visual", "")).strip(),
+                shot=_one_line(s.get("shot")),
+                prompt=(body + cfg["suffix"]).strip(),
+                negative=neg,
+                est_seconds=est,
+                voice_direction=_one_line(s.get("voice_direction")),
+                continuity=_one_line(s.get("continuity")),
+                act=beats[idx]["act"] if idx < len(beats) else "",
+                cast=[n for n in (_one_line(c) for c in (s.get("cast") or []))
+                      if n in known],
+            ))
+
+    if len(scenes) != n_scenes:
+        print(f"::warning::컷을 {n_scenes}개 요청했는데 {len(scenes)}개가 만들어졌습니다.")
     if not scenes:
         raise RuntimeError("대본 생성 결과가 비었습니다. 주제를 조금 더 구체적으로 적어 보세요.")
 
     board = Storyboard(
         title=title,
         scenes=scenes,
-        hashtags=[str(h) for h in (data.get("hashtags") or [])][:5],
+        hashtags=hashtags,
         characters=characters,
         style_lock=style_lock,
         logline=logline,

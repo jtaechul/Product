@@ -13,7 +13,7 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 
-from core import llm
+from core import llm, seal
 
 CONTENT_DIR = Path(__file__).resolve().parent / "content"
 
@@ -34,12 +34,18 @@ def main() -> int:
     if not topic:
         print("::error::주제(TOPIC)가 비었습니다.")
         return 1
-    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    # 관리자 페이지가 봉해 보낸 사용자 개인 키를 먼저 쓰고, 없으면 저장소 기본 키.
+    try:
+        key = seal.gemini_key()
+    except seal.SealError as e:
+        print(f"::error::{e}")
+        return 1
     if not key:
-        print("::error::GEMINI_API_KEY 시크릿이 없습니다. 저장소 Settings > Secrets에 추가하세요.")
+        print("::error::쓸 수 있는 Gemini API 키가 없습니다. 관리자 페이지 설정에서 "
+              "내 API 키를 넣거나, 저장소 시크릿 GEMINI_API_KEY 를 등록하세요.")
         return 1
 
-    scenes = max(3, min(10, int(os.environ.get("SCENES", "8"))))
+    scenes = max(len(llm.ACTS), min(llm.MAX_SCENES, int(os.environ.get("SCENES", "8"))))
     tool = os.environ.get("TOOL", "Runway (Gen-3/Gen-4)")
     if tool not in llm.TOOLS:
         print(f"::error::모르는 영상 툴입니다: {tool}")
@@ -52,6 +58,7 @@ def main() -> int:
     cid = make_id(topic)
     record = {
         "id": cid,
+        "owner": os.environ.get("OWNER", "admin").strip() or "admin",
         "topic": topic,
         "title": board.title,
         "tool": tool,

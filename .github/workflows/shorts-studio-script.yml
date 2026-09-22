@@ -9,7 +9,7 @@ on:
         required: true
         type: string
       scenes:
-        description: "컷 수 (6~10)"
+        description: "컷 수 (5~20)"
         required: false
         default: "8"
         type: string
@@ -25,6 +25,16 @@ on:
           - "Kling"
           - "Sora"
           - "Veo (Google)"
+      owner:
+        description: "작품 주인(관리자 페이지 아이디)"
+        required: false
+        default: "admin"
+        type: string
+      gemini_key_enc:
+        description: "봉해진 개인 API 키 (관리자 페이지가 넣습니다 · 사람이 쓰지 마세요)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -47,12 +57,15 @@ jobs:
         with:
           python-version: "3.11"
 
-      - run: pip install --quiet "google-genai>=2.10"
+      - run: pip install --quiet "google-genai>=2.10" "cryptography>=42.0"
 
       - name: 대본 생성
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_KEY_ENC: ${{ inputs.gemini_key_enc }}
+          KEY_SECRET: ${{ secrets.MOVIEGEN_KEY_SECRET || secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}
           TOPIC: ${{ inputs.topic }}
+          OWNER: ${{ inputs.owner }}
           SCENES: ${{ inputs.scenes }}
           TOOL: ${{ inputs.tool }}
         run: python run_script.py
