@@ -111,7 +111,18 @@ def main() -> int:
     # 1. 씬별 나레이션 합성.
     #    Gemini 성우는 타임스탬프를 안 주므로 자막 한 줄씩 따로 합성해 실제 길이를 잰다
     #    (core/tts.py 설명 참고). 그래서 줄이 뜨고 사라지는 시각이 오디오와 정확히 맞는다.
+    want_cover = cover_sec > 0 and "cover.png" in assets
+    title = " ".join(str(record.get("title", "")).split())
+
     def synth_all(eng: str, v: str):
+        # 표지에서 제목도 읽어 준다. 씬과 **같은 성우·같은 페르소나**로 뽑아야
+        # 표지에서 본문으로 넘어갈 때 목소리가 바뀌지 않는다.
+        head = None
+        if want_cover and title:
+            print(f"[표지] 제목 읽기 ({eng})")
+            head = tts.synthesize_scene(
+                -1, title, str(WORK), engine=eng, api_key=gemini_key, voice=v,
+                rate=rate, direction=tts.TITLE_DIRECTION, max_chars=40, gap=gap)
         out = []
         for i, sc in enumerate(scenes):
             print(f"[{i + 1}/{len(scenes)}] 음성 합성 ({eng})")
@@ -121,10 +132,10 @@ def main() -> int:
                 direction=sc.get("voice_direction", ""), max_chars=max_chars,
                 gap=gap,
             ))
-        return out
+        return head, out
 
     try:
-        audios = synth_all(engine, voice)
+        head, audios = synth_all(engine, voice)
     except tts.QuotaError as e:
         # 할당량이 바닥났다고 영상까지 못 만들 이유는 없다. 무료 성우로 갈아타
         # 끝까지 뽑는다. 목소리는 밋밋해지지만 빈손으로 끝나지는 않는다.
@@ -133,7 +144,7 @@ def main() -> int:
               "감정 연기를 쓰려면 관리자 페이지 설정에서 결제된 개인 API 키를 넣으세요.")
         engine = "edge"
         voice = tts.FALLBACK_VOICE.get(voice, "ko-KR-SunHiNeural")
-        audios = synth_all(engine, voice)
+        head, audios = synth_all(engine, voice)
     durs = [a.speech_duration + tail_pad for a in audios]
 
     # 2. 릴리스에서 씬 영상 받아 9:16 규격·길이 맞춤
@@ -147,19 +158,28 @@ def main() -> int:
                                            str(WORK / f"scene_{i + 1:02d}.mp4"),
                                            width=width, height=height))
 
-    # 2-1. 표지를 맨 앞에 붙인다(올려 뒀을 때만). 나레이션은 없으므로 무음을 함께 깐다.
+    # 2-1. 표지를 맨 앞에 붙인다(올려 뒀을 때만). 제목을 읽어 주고, 그 길이에 맞춰
+    #      표지가 머무는 시간을 정한다 — 고정 시간으로 두면 말이 잘리거나 남는다.
     #      뒤따르는 모든 자막이 표지 길이만큼 밀린다 — 이 계산이 틀어지면 말과 글자가 어긋난다.
     parts = [a.audio for a in audios]
     cover_dur = 0.0
-    if cover_sec > 0 and "cover.png" in assets:
+    if want_cover:
         print("표지 붙이기")
         img = download_asset(assets["cover.png"]["url"], token, WORK / "cover.png")
-        cover_dur = cover_sec
+        lead, tail = 0.35, 0.65          # 제목 읽기 전후의 한 박자
+        if head:
+            cover_dur = max(cover_sec, lead + head.speech_duration + tail)
+            narr0 = video.pad_lead(head.audio, lead, str(WORK / "narr_00.wav"))
+        else:
+            cover_dur = cover_sec
+            narr0 = video.make_silence(cover_dur, str(WORK / "narr_00.wav"))
         clips.insert(0, video.make_cover(str(img), cover_dur + xdur,
                                          str(WORK / "scene_00.mp4"),
                                          width=width, height=height))
         durs.insert(0, cover_dur)
-        parts.insert(0, video.make_silence(cover_dur, str(WORK / "narr_00.wav")))
+        parts.insert(0, narr0)           # 남는 뒤쪽은 build_narration_track 이 무음으로 채운다
+        print(f"  표지 {cover_dur:.2f}초 (제목 낭독 {head.speech_duration:.2f}초)"
+              if head else f"  표지 {cover_dur:.2f}초 (무음)")
     else:
         print("표지 없음 — 건너뜁니다.")
 
