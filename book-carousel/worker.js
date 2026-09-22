@@ -1323,6 +1323,17 @@ const GEMINI_TEXT_MODEL = 'gemini-flash-lite-latest';
 // Gemini는 과부하 시 503/429를 자주 내므로 지수 백오프로 재시도한다.
 const GEMINI_RETRY_STATUS = new Set([429, 500, 502, 503, 504]);
 
+// 구글 429 응답에서 "분당 한도인지 하루 한도인지"와 "몇 초 뒤 재시도"를 읽어낸다.
+async function geminiQuotaInfo(res) {
+  let body = null;
+  try { body = await res.clone().json(); } catch { /* 본문 없음 */ }
+  const raw = JSON.stringify(body || '');
+  const daily = /PerDay|per day|daily/i.test(raw);
+  const m = raw.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/i);
+  const retrySec = m ? Math.ceil(parseFloat(m[1])) : 0;
+  return { daily, retrySec, retryMs: retrySec * 1000 };
+}
+
 async function callGeminiText(apiKey, opts, attempt = 0, noThinking = true) {
   const { system, user, max_tokens = 1024, timeout_ms = 30000, json = false } = opts;
   const MAX_TRIES = 3;
@@ -1361,14 +1372,22 @@ async function callGeminiText(apiKey, opts, attempt = 0, noThinking = true) {
   if (!res.ok) {
     // 이 모델이 추론 끄기/JSON 모드를 모르면 400 → 그 옵션 없이 한 번 더.
     if (res.status === 400 && noThinking) return callGeminiText(apiKey, opts, attempt, false);
-    if (GEMINI_RETRY_STATUS.has(res.status) && attempt < MAX_TRIES - 1) {
-      // 429는 분당 한도라 짧은 백오프로는 못 빠져나온다. 훨씬 길게 쉰다.
-      const wait = res.status === 429 ? (LONG_BACKOFF[attempt] || 25000) : (BACKOFF[attempt] || 4000);
-      await new Promise(r => setTimeout(r, wait));
-      return callGeminiText(apiKey, opts, attempt + 1, noThinking);
-    }
     if (res.status === 429) {
-      throw new Error('요청 한도에 걸렸습니다. 1분쯤 뒤에 다시 눌러주세요.');
+      // 한도는 두 종류다 — 분당(잠깐 기다리면 풀림)과 하루(내일까지 못 씀).
+      // 구글이 알려주는 정보를 읽어 어느 쪽인지 정확히 안내한다.
+      const info = await geminiQuotaInfo(res);
+      if (!info.daily && attempt < MAX_TRIES - 1) {
+        const wait = Math.min(30000, Math.max(info.retryMs || 0, LONG_BACKOFF[attempt] || 25000));
+        await new Promise(r => setTimeout(r, wait));
+        return callGeminiText(apiKey, opts, attempt + 1, noThinking);
+      }
+      throw new Error(info.daily
+        ? '오늘 쓸 수 있는 AI 사용량을 모두 썼습니다. 내일 다시 쓸 수 있고, 지금 바로 쓰시려면 Google AI Studio에서 결제를 연결하면 풀립니다.'
+        : `요청이 몰렸습니다. ${info.retrySec || 30}초쯤 뒤에 다시 눌러주세요.`);
+    }
+    if (GEMINI_RETRY_STATUS.has(res.status) && attempt < MAX_TRIES - 1) {
+      await new Promise(r => setTimeout(r, BACKOFF[attempt] || 4000));
+      return callGeminiText(apiKey, opts, attempt + 1, noThinking);
     }
     throw new Error(`[gemini ${res.status}]`);
   }
