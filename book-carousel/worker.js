@@ -2960,7 +2960,7 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 // Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
 // 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
 // styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
-const VEO_NEGATIVE = 'photorealistic, live action, real dog, English speech, English dialogue, foreign language audio, on-screen text, subtitles, captions, watermark, logo, product packaging, brand label, deformed paws, extra limbs, blurry, low quality, oversaturated, different dog breed, character redesign';
+const VEO_NEGATIVE = 'cartoon, 3D render, anime, illustration, stylized, plastic skin, waxy fur, uncanny valley, human face, English speech, English dialogue, foreign language audio, on-screen text, subtitles, captions, watermark, logo, product packaging, brand label, deformed paws, extra limbs, blurry, low quality, oversaturated, different dog breed, character redesign';
 
 const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 촬영 지시서를 쓰는 사람이다.
 사용자는 Flow에 이미 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고, 여기에 이 지시서를 붙인다.
@@ -2976,6 +2976,8 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
 4. line(대사)은 반드시 한국어다. 영어 대사를 절대 쓰지 마라.
 5. 상품 실물(포장·로고·브랜드)은 화면에 넣지 마라. Veo가 그리지 못한다.
 6. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
+7. 화면은 실사 영상이다. cartoon, 3D render, anime, illustration 같은 표현을 쓰지 마라.
+   필요하면 natural light, shallow depth of field 처럼 실제 촬영 용어를 쓴다.
 
 [클립 구성 — 역할이 정해져 있다]
 - "problem": 앞쪽. 문제 상황을 과장된 코미디로. 첫 클립은 2초 안에 터져야 한다.
@@ -3022,7 +3024,7 @@ async function handleVideoPrompts(env, body) {
   if (!title) throw new Error('상품 이름이 필요합니다.');
   const category = String(body.category || '').trim();
   const note = String(body.note || '').trim();
-  const dog = String(body.dog || '').trim() || '3D 애니메이션풍 시바견';
+  const dog = String(body.dog || '').trim() || '실사풍 귀여운 시바견';
   const clips = Math.max(3, Math.min(10, parseInt(body.clips, 10) || 7));
 
   // 02단계 분석에서 근거가 확인된 것만 넘어온다. 없는 기능을 지어내지 못하게 하는 장치.
@@ -3071,8 +3073,10 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
     .replace(/\s{2,}/g, ' ')
     .replace(/^[,.\s]+|[,\s]+$/g, '')
     .trim();
-  if (/3d|애니메이션|animation|stylized/i.test(dog + ' ' + scene)) {
-    scene = scene.replace(/\b(photo-?realistic|hyper-?realistic|realistic|lifelike)\b/gi, 'stylized');
+  // 실사로 가기로 확정(2026-09). 만화·3D 표현이 섞이면 캐릭터가 흔들리므로 걷어낸다.
+  if (!/3d|애니메이션|animation|cartoon/i.test(dog)) {
+    scene = scene.replace(/\b(cartoon|cartoonish|3d\s*render|anime|illustrated|illustration|stylized)\b/gi, 'photorealistic')
+                 .replace(/\bphotorealistic(,?\s+photorealistic)+\b/gi, 'photorealistic');
   }
 
   const tone = String(out.tone || 'calm natural voice').trim();
@@ -3390,6 +3394,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 .item .m{font-size:11.5px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .item button{flex:none;font-family:inherit;font-size:12px;cursor:pointer;background:#fff;color:var(--crit);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 .item button:hover{border-color:var(--crit)}
+.resume{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#EDF4F1;border:1px solid var(--brand);border-radius:12px;padding:11px 13px;font-size:12.5px;color:var(--brand-ink);line-height:1.5}
 .muted{font-size:13px;color:var(--sub);text-align:center;padding:22px 0}
 /* ---- 영상 편집기 ---- */
 .ed-stage{display:flex;flex-direction:column;align-items:center;gap:9px;margin-bottom:16px}
@@ -3465,6 +3470,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   </nav>
 </div></header>
 <main>
+  <div class="resume" id="resumeBar" hidden>
+    <span id="resumeTxt">이어서 작업 중</span>
+    <button class="btn btn-2 btn-sm" id="resumeNew" type="button" style="flex:none">새로 시작</button>
+  </div>
 
   <section class="box">
     <div class="box-hd"><span class="step">01</span><h2>쿠팡에서 상품 찾기</h2></div>
@@ -3512,7 +3521,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="note">AI 영상은 실제 상품 포장을 그리지 못합니다. 그래서 영상은 <b>그 상품이 필요해지는 상황</b>만 보여주고, 상품 연결은 자막과 프로필 링크가 맡습니다.</div>
     <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
     <div class="f"><label for="pdog">강아지 설정</label>
-      <input id="pdog" type="text" value="3D 애니메이션풍 시바견">
+      <input id="pdog" type="text" value="실사풍 귀여운 시바견">
       <small>Flow에 캐릭터 이미지를 끌어다 쓰시니 짧게만 적으세요. 외모를 길게 적으면 참고 이미지와 충돌해 오히려 다른 개가 나옵니다.</small></div>
     <div class="row">
       <div class="f" style="flex:1"><label for="pclips">클립 개수</label>
@@ -3695,6 +3704,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       $('go').disabled=false;
       if(res && res.success){
         say('msg','No.'+res.bookNumber+' 로 등록했습니다.','ok');
+        lastResult=null; post('/api/work-state',{action:'clear'}).catch(function(){});
+        $('resumeBar').hidden=true;
         ['t','b','img','w','l'].forEach(function(i){ $(i).value=''; });
         load();
       } else say('msg',(res&&res.error)||'등록하지 못했습니다.','no');
@@ -3728,6 +3739,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       if(!r||!r.success){ say('insMsg',(r&&r.error)||'분석하지 못했습니다.','no'); return; }
       lastPains=(r.pains||[]).map(function(x){ return x.text; });
       lastBenefits=(r.titleFeatures||[]).concat(r.verified||[]).map(function(x){ return x.text; });
+      saveSoon();
       var out=$('insOut'); out.textContent='';
       var g1=group('상품명으로 확인된 것 (확실)','sure',r.titleFeatures||[],true); if(g1) out.appendChild(g1);
       var g2=group('후기에서 이 상품으로 확인된 것','sure',r.verified||[],true); if(g2) out.appendChild(g2);
@@ -3828,12 +3840,99 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     }).then(function(res){
       $('mk').disabled=false;
       if(res && res.success && (res.clips||[]).length){
-        hide('pMsg'); renderPrompts(res);
+        hide('pMsg'); lastResult=res; renderPrompts(res); saveSoon();
       } else say('pMsg',(res&&res.error)||'프롬프트를 만들지 못했습니다.','no');
     }).catch(function(e){ $('mk').disabled=false; say('pMsg','만들지 못했습니다: '+e.message,'no'); });
   });
 
+
+  /* ---- 작업 자동 저장 (서버에 보관 → 다른 기기에서도 이어짐) ---- */
+  var SAVE_FIELDS = ['t','b','c','img','w','l','pt','pdog','pclips','pnote'];
+  var lastResult = null, saveTimer = null, restoring = false;
+
+  function collectWork(){
+    var o = { fields:{} };
+    SAVE_FIELDS.forEach(function(id){ var el=$(id); if(el) o.fields[id]=el.value; });
+    var sc=document.getElementById('edScript'); if(sc) o.script=sc.value;
+    o.pains=lastPains; o.benefits=lastBenefits; o.result=lastResult;
+    return o;
+  }
+  function hasWork(o){
+    if(!o) return false;
+    if(o.result) return true;
+    if(o.script && o.script.trim()) return true;
+    var f=o.fields||{};
+    return ['t','b','img','w','l','pt','pnote'].some(function(id){ return (f[id]||'').trim(); });
+  }
+  function stampKo(iso){
+    var d=new Date(iso||'');
+    if(isNaN(d.getTime())) return '';
+    var z=function(n){ return (n<10?'0':'')+n; };
+    return (d.getMonth()+1)+'월 '+d.getDate()+'일 '+z(d.getHours())+':'+z(d.getMinutes());
+  }
+  function showResume(iso, justSaved){
+    var bar=$('resumeBar'); if(!bar) return;
+    bar.hidden=false;
+    var when=stampKo(iso);
+    $('resumeTxt').textContent = justSaved
+      ? ('자동 저장됨'+(when?' · '+when:''))
+      : (when ? ('이어서 작업 중 · '+when+'에 저장한 내용을 불러왔습니다')
+              : '이어서 작업 중 · 저장해 둔 내용을 불러왔습니다');
+  }
+  function saveSoon(){
+    if(restoring) return;
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(function(){
+      var o=collectWork();
+      if(!hasWork(o)) return;
+      post('/api/work-state',{action:'save',data:o}).then(function(r){
+        if(r && r.success) showResume(r.savedAt, true);
+      }).catch(function(){});
+    }, 1500);
+  }
+
+  SAVE_FIELDS.forEach(function(id){
+    var el=$(id); if(!el) return;
+    el.addEventListener('input', saveSoon);
+    el.addEventListener('change', saveSoon);
+  });
+  (function(){ var sc=document.getElementById('edScript'); if(sc) sc.addEventListener('input', saveSoon); })();
+
+  $('resumeNew').addEventListener('click', function(){
+    if(!confirm('지금까지 만들던 내용을 지우고 새로 시작할까요?')) return;
+    post('/api/work-state',{action:'clear'}).then(function(){
+      SAVE_FIELDS.forEach(function(id){
+        var el=$(id); if(!el) return;
+        if(el.tagName==='SELECT') el.selectedIndex=0; else el.value='';
+      });
+      var sc=document.getElementById('edScript'); if(sc) sc.value='';
+      $('pOut').textContent=''; $('insOut').textContent='';
+      lastPains=[]; lastBenefits=[]; lastResult=null;
+      $('resumeBar').hidden=true;
+    });
+  });
+
+  function restoreWork(){
+    post('/api/work-state',{action:'load'}).then(function(r){
+      var d = r && r.data;
+      if(!hasWork(d)) return;
+      restoring = true;
+      SAVE_FIELDS.forEach(function(id){
+        var el=$(id);
+        if(el && d.fields && d.fields[id]!=null && d.fields[id]!=='') el.value=d.fields[id];
+      });
+      lastPains = d.pains || []; lastBenefits = d.benefits || [];
+      if(d.result){ lastResult = d.result; renderPrompts(d.result); }
+      // renderPrompts 가 자막 칸을 덮어쓰므로 저장본을 마지막에 되돌린다.
+      var sc=document.getElementById('edScript');
+      if(sc && d.script) sc.value = d.script;
+      restoring = false;
+      showResume(d.savedAt, false);
+    }).catch(function(){});
+  }
+
   load();
+  restoreWork();
 })();
 </script>
 <script>
@@ -4341,6 +4440,23 @@ export default {
         else if (url.pathname === '/api/coupang/status') result = {
           success: true, configured: !!(env.COUPANG_ACCESS_KEY && env.COUPANG_SECRET_KEY),
         };
+        else if (url.pathname === '/api/work-state') {
+          // 만들던 작업을 서버에 보관한다. 폰에서 고르고 PC에서 이어 편집할 수 있게.
+          if (!env.PENDING_POSTS) throw new Error('저장소가 없습니다.');
+          const act = String(body.action || 'load');
+          if (act === 'save') {
+            const data = body.data && typeof body.data === 'object' ? body.data : {};
+            data.savedAt = new Date().toISOString();
+            await env.PENDING_POSTS.put('work_draft', JSON.stringify(data));
+            result = { success: true, savedAt: data.savedAt };
+          } else if (act === 'clear') {
+            await env.PENDING_POSTS.delete('work_draft');
+            result = { success: true };
+          } else {
+            const d = await env.PENDING_POSTS.get('work_draft', 'json').catch(() => null);
+            result = { success: true, data: d || null };
+          }
+        }
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
         else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
         else if (url.pathname === '/api/telegram-recipients') {
