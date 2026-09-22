@@ -2990,7 +2990,7 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 // Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
 // 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
 // styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
-const VEO_NEGATIVE = 'speech, talking, lip sync, moving mouth speaking, dialogue audio, voice over, adult dog, hunting dog, long sharp muzzle, narrow eyes, intense stare, black mask or black fur markings, collar, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, deformed paws, extra limbs, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
+const VEO_NEGATIVE = 'adult dog, hunting dog, long sharp muzzle, narrow eyes, black mask or black fur markings, collar, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, deformed paws, extra limbs, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
 
 const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 촬영 지시서를 쓰는 사람이다.
 사용자는 Flow에 이미 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고, 여기에 이 지시서를 붙인다.
@@ -3003,11 +3003,18 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
 3. shots는 타임코드와 카메라 움직임으로 쓴다(영어). 8초를 반드시 2~3구간으로 나눈다.
    타임코드 형식은 정확히 "0:00-0:03" 꼴만 쓴다. 초 단위(2.5s)나 다른 형식은 쓰지 마라.
    예: "0:00-0:03 macro shot tilting up, ... , 0:03-0:06 low angle bust shot, ..."
-4. 영상 안에서는 아무도 말하지 않는다. 목소리는 나중에 따로 녹음해 얹으므로
-   shots에 대사·말하기·입 움직임을 넣지 마라. 표정과 몸짓으로만 감정을 보여준다.
-5. 상품 실물(포장·로고·브랜드)은 화면에 넣지 마라. Veo가 그리지 못한다.
-6. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
-7. 화풍은 "photorealistic 3D animated style"이다. 질감은 실사인데 비율·표정은 귀엽게
+4. 목소리는 나중에 따로 녹음해 얹는다. shots에는 대사·말하기를 넣지 말고
+   표정과 몸짓으로만 감정을 보여준다. 소리를 막는 문구(no speech 등)는 쓰지 마라.
+5. ⚠️ 동물이 아파하거나 학대받는 것처럼 읽히는 표현은 절대 쓰지 마라. 안전 필터에 걸려
+   생성 자체가 거부된다. 다음 단어를 쓰지 마라:
+   angry, angrily, frustration, frustrated, choking, gasping, struggling, painful, hurt,
+   tight strap, tight leash, restrained, trapped, distressed, suffering, whimpering
+   대신 과장된 코미디 몸짓으로 쓴다:
+   dramatic pout, puffed cheeks, theatrical sigh, flopping onto the floor,
+   stubbornly sitting down, comically refusing to move, side-eye glance, slow blink
+6. 상품 실물(포장·로고·브랜드)은 화면에 넣지 마라. Veo가 그리지 못한다.
+7. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
+8. 화풍은 "photorealistic 3D animated style"이다. 질감은 실사인데 비율·표정은 귀엽게
    과장한 3D 애니메이션 중간 지대다. 시스템이 화풍 문구를 자동으로 붙이므로
    sceneBlock에는 화풍을 다시 쓰지 말고 장소·색감·조명만 담아라.
    다큐멘터리·야생동물 사진처럼 날것으로 가면 개가 사냥개처럼 무섭게 나온다.
@@ -3066,6 +3073,28 @@ function breedEnOf(dogText) {
 
 // 사용자가 실제로 성공한 화풍. 모든 장면 블록 앞에 반드시 들어간다.
 const STYLE_TOKEN = 'Photorealistic 3D animated style, soft even lighting, unbelievably fluffy cloud-like soft fur texture, 8k, masterful texturing';
+
+// 안전 필터에 걸리는 표현을 코미디 몸짓으로 바꾼다.
+// (동물 학대로 읽히면 Flow가 생성 자체를 거부한다 — 실제로 관측됨)
+const SAFE_SWAPS = [
+  [/\bglaring\s+angrily\s+at\b/gi, 'giving a sulky side-eye to'],
+  [/\bglaring\s+at\b/gi, 'giving a sulky side-eye to'],
+  [/\bangrily\b/gi, 'with a dramatic pout'],
+  [/\bangry\b/gi, 'sulky'],
+  [/\bin frustration\b/gi, 'with a theatrical sigh'],
+  [/\bfrustrated\b/gi, 'sulky'],
+  [/\bhuffing and puffing\b/gi, 'puffing its cheeks'],
+  [/\b(choking|gasping|coughing|wheezing)\b/gi, 'shaking its head'],
+  [/\bstruggl(ing|es|e)\b/gi, 'wiggling playfully'],
+  [/\b(painful|in pain|hurt|suffering|distressed|whimpering)\b/gi, 'sulky'],
+  [/\btight (strap|leash|collar|harness)\b/gi, 'strap'],
+  [/\b(restrained|trapped|tangled)\b/gi, 'lounging'],
+];
+function safeShots(t) {
+  let out = String(t || '');
+  for (const [re, rep] of SAFE_SWAPS) out = out.replace(re, rep);
+  return out.replace(/\s{2,}/g, ' ').trim();
+}
 
 // 타임코드 표기를 0:00-0:03 꼴로 통일한다(모델이 실행마다 다른 형식을 쓴다).
 function normShots(t) {
@@ -3148,7 +3177,7 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
 
   const clipsOut = list.map((c, i) => {
     // 실행마다 0.0-2.5s / 00:00-00:02 등으로 흔들려 형식을 0:00-0:03 꼴로 맞춘다.
-    const shots = normShots(String(c.shots || c.action || '').trim());
+    const shots = safeShots(normShots(String(c.shots || c.action || '').trim()));
     // 내레이션 대본 = 자막. 둘을 따로 두면 소리와 글자가 어긋나 보기 불편하다.
     const line = String(c.line || c.subtitle || '').trim();
     const role = String(c.role || 'problem').trim();
@@ -3158,7 +3187,7 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
     const prompt = [
       'The puppy.' + (scene ? ' ' + scene : ''),
       shots,
-      'No speech, no talking, ambient room sound only.',
+      'Ambient sound: soft quiet room tone with gentle paw steps.',
       `Avoid: ${VEO_NEGATIVE}.`,
     ].filter(Boolean).join('\n');
     return {
