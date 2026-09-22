@@ -2990,7 +2990,7 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 // Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
 // 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
 // styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
-const VEO_NEGATIVE = 'adult dog, hunting dog, long sharp muzzle, narrow eyes, intense stare, black mask or black fur markings, collar, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, deformed paws, extra limbs, English speech, English dialogue, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
+const VEO_NEGATIVE = 'speech, talking, lip sync, moving mouth speaking, dialogue audio, voice over, adult dog, hunting dog, long sharp muzzle, narrow eyes, intense stare, black mask or black fur markings, collar, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, deformed paws, extra limbs, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
 
 const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 촬영 지시서를 쓰는 사람이다.
 사용자는 Flow에 이미 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고, 여기에 이 지시서를 붙인다.
@@ -3003,7 +3003,8 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
 3. shots는 타임코드와 카메라 움직임으로 쓴다(영어). 8초를 반드시 2~3구간으로 나눈다.
    타임코드 형식은 정확히 "0:00-0:03" 꼴만 쓴다. 초 단위(2.5s)나 다른 형식은 쓰지 마라.
    예: "0:00-0:03 macro shot tilting up, ... , 0:03-0:06 low angle bust shot, ..."
-4. line(대사)은 반드시 한국어다. 영어 대사를 절대 쓰지 마라.
+4. 영상 안에서는 아무도 말하지 않는다. 목소리는 나중에 따로 녹음해 얹으므로
+   shots에 대사·말하기·입 움직임을 넣지 마라. 표정과 몸짓으로만 감정을 보여준다.
 5. 상품 실물(포장·로고·브랜드)은 화면에 넣지 마라. Veo가 그리지 못한다.
 6. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
 7. 화풍은 "photorealistic 3D animated style"이다. 질감은 실사인데 비율·표정은 귀엽게
@@ -3019,8 +3020,30 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
 - "benefit": 1~2개. 상품이 만든 변화. 주어진 확인된 장점에서만 골라 쓴다.
   장점 목록이 비어 있으면 일반적인 변화만 말하고 없는 기능을 지어내지 마라.
 - "cta": 마지막 1개. 프로필 링크로 보내는 마무리.
-- subtitle은 한국어 22자 이내. line을 그대로 쓰거나 짧게 줄인 것.
-- 상품 이름·브랜드는 대사와 자막에 넣지 마라. 효용만 말한다.
+- line은 내레이션 대본이자 자막이다. 둘은 **반드시 같은 문장**이어야 한다(따로 만들지 마라).
+- 상품 이름·브랜드는 넣지 마라. 효용만 말한다.
+
+[대사 쓰는 법 — 이게 영상의 성패를 가른다]
+겉모습은 귀여운 꼬마 강아지인데, 속마음은 **뻔뻔하고 능청맞고 발칙하다.**
+그 낙차가 웃음을 만든다. 강아지는 절대 반성하지 않고, 늘 자기가 옳다고 여긴다.
+
+- 한국어 22자 이내, 반말. 존댓말·설명조 금지.
+- 상황을 **설명하지 마라.** 강아지의 속마음 한 방으로 끝내라.
+- 견주를 은근히 깔보거나, 자기 잘못을 남 탓하거나, 뻔뻔하게 요구하는 말이 좋다.
+
+나쁜 예(설명조라 재미없다):
+  "산책 나갈 때마다 켁켁거려요"
+  "흡수가 빨라서 좋아요"
+  "매번 닦느라 힘들었어요"
+좋은 예(뻔뻔한 속마음):
+  "목줄이 날 죽이려 든다"
+  "이 집 서비스 왜 이래"
+  "나는 잘못 없다 바닥이 미끄러웠을 뿐"
+  "패드는 장식이고 바닥이 내 화장실이다"
+  "인간아 이제야 좀 아네"
+
+benefit 클립도 광고 문구처럼 쓰지 마라. 강아지가 마지못해 인정하는 투로 쓴다.
+  예: "인정한다 이건 좀 쓸 만하다"
 
 반드시 JSON만 출력한다.`;
 
@@ -3079,9 +3102,9 @@ ${clips}개 클립짜리 릴스 촬영 지시서를 써라. 아래 JSON만 출�
 {
   "problem": "이 영상이 다루는 문제 한 줄 (한국어)",
   "sceneBlock": "영어 25단어 이내. 장소 + 색감 + 조명만. 캐릭터 묘사 금지",
-  "tone": "영어 5단어 이내. 목소리 톤",
+  "tone": "내레이션 목소리 톤을 한국어로 한 줄 (예: 느긋하고 뻔뻔한 꼬마 목소리)",
   "clips": [
-    { "role": "problem", "shots": "영어. 타임코드 2~3구간과 카메라 움직임·동작", "line": "한국어 대사 한 줄", "subtitle": "한국어 자막 22자 이내" }
+    { "role": "problem", "shots": "영어. 타임코드 2~3구간과 카메라 움직임·동작. 말하는 장면 금지", "line": "내레이션이자 자막이 될 한 문장. 한국어 22자 이내, 뻔뻔한 속마음" }
   ],
   "caption": "인스타 캡션. 공감 첫 줄 + 본문 + 저장 유도 + 프로필 링크 유도",
   "hashtags": ["#태그1", "#태그2", "#태그3"]
@@ -3120,27 +3143,28 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
   // 화풍은 모델 준수에 맡기지 않고 서버가 직접 붙인다 — 클립 간 그림체를 고정하는 핵심.
   scene = STYLE_TOKEN + (scene ? '. ' + scene : '');
 
-  const tone = String(out.tone || 'calm natural voice').trim();
+  const tone = String(out.tone || '느긋하고 뻔뻔한 꼬마 목소리').trim();
   const ROLE_KO = { problem: '문제', transition: '전환', benefit: '상품 효용', cta: '마무리' };
 
   const clipsOut = list.map((c, i) => {
     // 실행마다 0.0-2.5s / 00:00-00:02 등으로 흔들려 형식을 0:00-0:03 꼴로 맞춘다.
     const shots = normShots(String(c.shots || c.action || '').trim());
-    const line = String(c.line || '').trim();
+    // 내레이션 대본 = 자막. 둘을 따로 두면 소리와 글자가 어긋나 보기 불편하다.
+    const line = String(c.line || c.subtitle || '').trim();
     const role = String(c.role || 'problem').trim();
     // 캐릭터는 참고 이미지가 맡으므로 "The puppy" 한 마디만 두고 외모는 쓰지 않는다.
     // Flow에는 제외 조건 칸이 따로 없다 → 프롬프트 맨 밑에 한 줄로 붙인다.
+    // 목소리는 영상에 넣지 않는다 — 나중에 내레이션으로 얹는다.
     const prompt = [
       'The puppy.' + (scene ? ' ' + scene : ''),
       shots,
-      line ? `The puppy speaks in Korean, ${tone}.` : '',
-      line ? `Korean dialogue: "${line}"` : '',
+      'No speech, no talking, ambient room sound only.',
       `Avoid: ${VEO_NEGATIVE}.`,
     ].filter(Boolean).join('\n');
     return {
       no: i + 1, role, roleKo: ROLE_KO[role] || '문제',
       shots, line,
-      subtitle: String(c.subtitle || line || '').trim(),
+      subtitle: line,
       prompt,
     };
   });
@@ -3835,9 +3859,26 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(r.caption) addCopyBtn(bar,'캡션 복사', r.caption+'\\n\\n'+(r.hashtags||[]).join(' '));
     out.appendChild(bar);
 
+    var lines=(r.clips||[]).map(function(c){ return c.line; }).filter(Boolean);
+    if(lines.length){
+      var nc=document.createElement('div'); nc.className='clip';
+      var nh=document.createElement('div'); nh.className='clip-hd';
+      var nn=document.createElement('span'); nn.className='clip-no'; nn.textContent='내레이션 대본 (목소리 녹음용)';
+      nh.appendChild(nn); addCopyBtn(nh,'복사',lines.join('\\n')); nc.appendChild(nh);
+      var npre=document.createElement('pre');
+      npre.style.fontFamily="'Noto Sans KR',sans-serif"; npre.style.fontSize='13px';
+      npre.textContent=lines.join('\\n'); nc.appendChild(npre);
+      if(r.tone){
+        var tn=document.createElement('div'); tn.className='sub'; tn.textContent='목소리 톤 · '+r.tone;
+        nc.appendChild(tn);
+      }
+      out.appendChild(nc);
+    }
+
     var tip=document.createElement('div'); tip.className='prob';
-    tip.innerHTML='<b>제외 조건은 각 프롬프트 맨 아래에 이미 들어 있습니다</b><br>'+
-      'Flow에는 제외 조건 칸이 따로 없어서, 프롬프트 끝의 Avoid 줄로 함께 넣습니다. 통째로 복사해 붙여넣으세요.';
+    tip.innerHTML='<b>영상은 소리 없이 뽑고, 목소리는 나중에 얹습니다</b><br>'+
+      'Veo의 한국어 발음이 불안정해서 영상에는 말소리를 넣지 않습니다. 위 내레이션 대본으로 목소리를 따로 만들어 얹으세요. '+
+      '제외 조건은 각 프롬프트 맨 아래 Avoid 줄에 이미 들어 있으니 통째로 복사하시면 됩니다.';
     out.appendChild(tip);
 
     (r.clips||[]).forEach(function(c){
@@ -3849,8 +3890,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       addCopyBtn(hd,'프롬프트 복사',c.prompt);
       d.appendChild(hd);
       var pre=document.createElement('pre'); pre.textContent=c.prompt; d.appendChild(pre);
-      if(c.line){ var ln=document.createElement('div'); ln.className='sub'; ln.textContent='대사 · '+c.line; d.appendChild(ln); }
-      if(c.subtitle && c.subtitle!==c.line){ var sb=document.createElement('div'); sb.className='sub'; sb.textContent='자막 · '+c.subtitle; d.appendChild(sb); }
+      if(c.line){ var ln=document.createElement('div'); ln.className='sub'; ln.textContent='내레이션 · 자막 · '+c.line; d.appendChild(ln); }
       out.appendChild(d);
     });
 
