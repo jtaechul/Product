@@ -3629,6 +3629,21 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       <button class="btn btn-2 btn-sm" id="edClear" type="button">자막 지우기</button>
     </div>
 
+    <div class="f">
+      <label for="edVoice">목소리 파일 (선택)</label>
+      <input id="edVoice" type="file" accept="audio/*">
+      <small>03단계의 내레이션 대본으로 만든 목소리 파일을 넣으면 영상에 함께 얹습니다. 영상 시작과 동시에 재생됩니다.</small>
+      <div class="ed-status" id="edVoiceInfo" style="text-align:left;margin-top:4px"></div>
+    </div>
+    <div class="f">
+      <label for="edBg">영상 소리 크기</label>
+      <select id="edBg">
+        <option value="0.25" selected>작게 — 목소리가 잘 들리게</option>
+        <option value="0">끄기 — 목소리만</option>
+        <option value="1">그대로</option>
+      </select>
+    </div>
+
     <label class="ed-toggle" for="edBars">
       <input type="checkbox" id="edBars" checked>
       <span class="ed-box" aria-hidden="true"></span>
@@ -4187,13 +4202,32 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   $('edClear').addEventListener('click',function(){ st.clips.forEach(function(c){ c.sub=''; }); render(); drawPreview(); });
   $('edBars').addEventListener('change',function(e){ st.bars=e.target.checked; drawPreview(); });
 
+  // 목소리(내레이션) 파일
+  var voiceUrl=null, voiceDur=0;
+  $('edVoice').addEventListener('change',function(e){
+    var f=e.target.files && e.target.files[0];
+    if(voiceUrl){ try{ URL.revokeObjectURL(voiceUrl); }catch(x){} voiceUrl=null; voiceDur=0; }
+    if(!f){ $('edVoiceInfo').textContent=''; return; }
+    voiceUrl=URL.createObjectURL(f);
+    var a=document.createElement('audio'); a.preload='metadata'; a.src=voiceUrl;
+    a.addEventListener('loadedmetadata',function(){
+      voiceDur=isFinite(a.duration)?a.duration:0;
+      var vt=total();
+      var msg='목소리 '+fmt(voiceDur)+' · 영상 '+fmt(vt);
+      if(vt && voiceDur > vt+0.6) msg+=' — 목소리가 더 깁니다. 뒷부분이 잘립니다.';
+      else if(vt && voiceDur < vt-0.6) msg+=' — 목소리가 더 짧습니다. 뒤는 조용해집니다.';
+      $('edVoiceInfo').textContent=msg;
+    });
+    a.addEventListener('error',function(){ $('edVoiceInfo').textContent='이 파일은 읽지 못했습니다. mp3나 m4a로 넣어주세요.'; });
+  });
+
   function pickMime(){
     var l=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1','video/mp4',
            'video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
     for(var i=0;i<l.length;i++){ try{ if(window.MediaRecorder&&MediaRecorder.isTypeSupported(l[i])) return l[i]; }catch(e){} }
     return '';
   }
-  function playClip(clip,ctx,w,h,ac,dest,onTime){
+  function playClip(clip,ctx,w,h,ac,dest,onTime,bgGain){
     return new Promise(function(res){
       var v=document.createElement('video');
       v.playsInline=true; v.preload='auto';
@@ -4218,7 +4252,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       v.addEventListener('ended',finish); v.addEventListener('error',finish);
       v.addEventListener('canplay',function(){
         if(fin)return;
-        try{ node=ac.createMediaElementSource(v); node.connect(dest); }catch(e){}
+        try{
+          node=ac.createMediaElementSource(v);
+          if(bgGain && bgGain.connect){ node.connect(bgGain); } else { node.connect(dest); }
+        }catch(e){}
         v.play().then(function(){ raf=requestAnimationFrame(draw); }).catch(finish);
       },{once:true});
       v.src=clip.url;
@@ -4229,6 +4266,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     st.busy=on;
     $('edGo').disabled=on||st.clips.length===0;
     $('edPick').disabled=on; $('edSpread').disabled=on; $('edClear').disabled=on; $('edBars').disabled=on;
+    $('edVoice').disabled=on; $('edBg').disabled=on;
     Array.prototype.forEach.call(document.querySelectorAll('input[name=edq]'),function(el){ el.disabled=on; });
   }
   function stamp(){
@@ -4244,13 +4282,34 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
     var ctx=cv.getContext('2d'); ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
     var ac,dest,rec,chunks=[],tot=total()||1,elapsed=0;
-    var cleanup=function(){ try{ if(ac&&ac.state!=='closed') ac.close(); }catch(e){} setBusy(false); };
+    var voiceElRef=null;
+    var cleanup=function(){
+      try{ if(voiceElRef){ voiceElRef.pause(); voiceElRef.remove(); } }catch(e){}
+      try{ if(ac&&ac.state!=='closed') ac.close(); }catch(e){} setBusy(false);
+    };
     document.fonts.ready.then(function(){
       try{ ac=new (window.AudioContext||window.webkitAudioContext)(); dest=ac.createMediaStreamDestination(); }
       catch(e){ say('소리를 준비하지 못했어요. 크롬으로 열어주세요.','bad'); cleanup(); return; }
       return ac.resume().catch(function(){});
     }).then(function(){
       if(!ac) return;
+      // 영상 소리는 게인을 거쳐 작게, 목소리는 그대로 섞는다.
+      var bgLevel=parseFloat(document.querySelector('#edBg').value);
+      if(isNaN(bgLevel)) bgLevel=0.25;
+      var bgGain=ac.createGain(); bgGain.gain.value=bgLevel; bgGain.connect(dest);
+      var voiceEl=null;
+      if(voiceUrl){
+        voiceEl=document.createElement('audio');
+        voiceEl.src=voiceUrl; voiceEl.preload='auto';
+        voiceEl.style.cssText='position:absolute;left:-9999px;width:1px;height:1px';
+        document.body.appendChild(voiceEl);
+        voiceElRef=voiceEl;
+        try{
+          var vSrc=ac.createMediaElementSource(voiceEl);
+          var vg=ac.createGain(); vg.gain.value=1;
+          vSrc.connect(vg); vg.connect(dest);
+        }catch(e){}
+      }
       var vs=cv.captureStream(30);
       var stream=new MediaStream(vs.getVideoTracks().concat(dest.stream.getAudioTracks()));
       try{ rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:(q==='hd'?7000000:4000000),audioBitsPerSecond:128000}); }
@@ -4258,17 +4317,20 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       rec.ondataavailable=function(e){ if(e.data&&e.data.size) chunks.push(e.data); };
       var stopped=new Promise(function(r){ rec.onstop=r; });
       rec.start(400);
+      // 목소리는 녹화 시작과 동시에 처음부터 재생한다.
+      if(voiceEl){ try{ voiceEl.currentTime=0; voiceEl.play().catch(function(){}); }catch(e){} }
       var chain=Promise.resolve();
       st.clips.forEach(function(clip,idx){
         chain=chain.then(function(){
           say('이어 붙이는 중 · '+(idx+1)+'/'+st.clips.length);
           return playClip(clip,ctx,w,h,ac,dest,function(t){
             $('edFill').style.width=(Math.min(0.99,(elapsed+t)/tot)*100).toFixed(1)+'%';
-          });
+          },bgGain);
         }).then(function(){ elapsed+=(clip.dur||0); });
       });
       return chain.then(function(){
         say('마무리하는 중…');
+        if(voiceEl){ try{ voiceEl.pause(); }catch(e){} }
         setTimeout(function(){ try{ rec.stop(); }catch(e){} },350);
         return stopped;
       }).then(function(){
