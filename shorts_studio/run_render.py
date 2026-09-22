@@ -136,9 +136,10 @@ def main() -> int:
 
     try:
         head, audios = synth_all(engine, voice)
-    except tts.QuotaError as e:
-        # 할당량이 바닥났다고 영상까지 못 만들 이유는 없다. 무료 성우로 갈아타
-        # 끝까지 뽑는다. 목소리는 밋밋해지지만 빈손으로 끝나지는 않는다.
+    except tts.FallbackError as e:
+        # 할당량이 바닥났거나(QuotaError) 구글이 그 TTS 모델을 닫았다고(ModelError)
+        # 영상까지 못 만들 이유는 없다. 무료 성우로 갈아타 끝까지 뽑는다.
+        # 목소리는 밋밋해지지만 빈손으로 끝나지는 않는다.
         # (목소리가 섞이지 않게 처음부터 다시 합성한다)
         print(f"::warning::{e} 무료 성우(Edge)로 바꿔 끝까지 만듭니다. "
               "감정 연기를 쓰려면 관리자 페이지 설정에서 결제된 개인 API 키를 넣으세요.")
