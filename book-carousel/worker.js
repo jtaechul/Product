@@ -2964,7 +2964,9 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
    충돌해 클립마다 다른 개가 된다. 주인공은 "the puppy" 처럼 최소한으로만 부른다.
 2. sceneBlock에는 장소·색감·조명만 담는다(25단어 이내, 영어). 모든 클립 앞에 그대로 반복된다.
    여기에도 캐릭터 묘사를 절대 넣지 마라.
-3. shots는 타임코드와 카메라 움직임으로 쓴다(영어). 8초 안에 2~3구간으로 나눈다.
+3. shots는 타임코드와 카메라 움직임으로 쓴다(영어). 8초를 반드시 2~3구간으로 나눈다.
+   타임코드 형식은 정확히 "0:00-0:03" 꼴만 쓴다. 초 단위(2.5s)나 다른 형식은 쓰지 마라.
+   예: "0:00-0:03 macro shot tilting up, ... , 0:03-0:06 low angle bust shot, ..."
 4. line(대사)은 반드시 한국어다. 영어 대사를 절대 쓰지 마라.
 5. 상품 실물(포장·로고·브랜드)은 화면에 넣지 마라. Veo가 그리지 못한다.
 6. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
@@ -2995,6 +2997,18 @@ function breedEnOf(dogText) {
   const t = String(dogText || '');
   for (const [re, en] of BREEDS) if (re.test(t)) return en;
   return '';
+}
+
+// 타임코드 표기를 0:00-0:03 꼴로 통일한다(모델이 실행마다 다른 형식을 쓴다).
+function normShots(t) {
+  const fmt = (v) => {
+    const n = Math.max(0, Math.round(parseFloat(v) || 0));
+    return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0');
+  };
+  return String(t || '')
+    .replace(/(\d+(?:\.\d+)?)\s*[-~\u2013]\s*(\d+(?:\.\d+)?)\s*s(?:ec|econds?)?\b/gi,
+             (m, x, y) => fmt(x) + '-' + fmt(y))
+    .replace(/\b0(\d):(\d{2})\b/g, '$1:$2');
 }
 
 async function handleVideoPrompts(env, body) {
@@ -3059,7 +3073,8 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
   const ROLE_KO = { problem: '문제', transition: '전환', benefit: '상품 효용', cta: '마무리' };
 
   const clipsOut = list.map((c, i) => {
-    const shots = String(c.shots || c.action || '').trim();
+    // 실행마다 0.0-2.5s / 00:00-00:02 등으로 흔들려 형식을 0:00-0:03 꼴로 맞춘다.
+    const shots = normShots(String(c.shots || c.action || '').trim());
     const line = String(c.line || '').trim();
     const role = String(c.role || 'problem').trim();
     // 캐릭터는 참고 이미지가 맡으므로 "The puppy" 한 마디만 두고 외모는 쓰지 않는다.
