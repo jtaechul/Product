@@ -156,6 +156,7 @@ _PLOT_USER = """주제: {topic}
     }}
   ],
   "style_lock": "모든 씬에 그대로 붙일 색감·조명 고정 문장 (영문 1문장)",
+  "cover_prompt": "표지(썸네일) 이미지 1장을 만들 영문 프롬프트",
   "acts": [
     {{"stage": "발단", "summary": "그 대목에서 실제로 벌어지는 일 (한국어 2~3문장)"}},
     {{"stage": "전개", "summary": "..."}},
@@ -184,6 +185,17 @@ _PLOT_USER = """주제: {topic}
   이 한 장이 모든 씬의 기준이 되므로 **외모는 오직 여기서만** 정한다.
   인물끼리 한눈에 구별되게 색과 실루엣을 다르게 준다.
   스타일 키워드를 포함할 것: {style}
+
+[표지 프롬프트 규칙 — cover_prompt]
+- 쇼츠 맨 앞에 1.8초 뜨는 **세로 9:16 표지 이미지 한 장**을 만들 영문 프롬프트.
+- 이야기 전체를 한눈에 알리는 **가장 인상적인 한 장면**. 넘기려던 손가락을 멈추게 할 것.
+- ⭐ **글자를 넣지 않는다.** "no text, no letters, no title, no watermark" 를 반드시 포함.
+  제목은 시스템이 한글로 또렷하게 얹는다. 영상 AI가 쓰는 한글은 반드시 깨진다.
+- ⭐ **화면 위쪽 삼분의 일은 하늘·안개·단색 벽처럼 단순하게 비워 둔다.** 그 위에 제목이 올라간다.
+  인물과 핵심 사물은 가운데와 아래쪽에 둔다.
+- ⭐ **화면 맨 위와 맨 아래 끝자락에는 중요한 것을 두지 않는다.** 검은 띠가 덮인다.
+- 인물이 나온다면 위 등장인물 중 주인공. 외모는 적지 않는다(참조 이미지를 함께 넣는다).
+- 색감은 style_lock 과 같은 결. 스타일 키워드를 포함할 것: {style}
 
 [색감 고정 문장 규칙 — style_lock]
 - 색·빛·질감을 못 박는 영문 **1문장**. 이 문장이 모든 씬 끝에 **글자 그대로** 붙는다.
@@ -345,6 +357,7 @@ class Storyboard:
     characters: list[Character] = field(default_factory=list)
     style_lock: str = ""
     logline: str = ""
+    cover_prompt: str = ""
 
 
 # 참조 이미지를 쓸 때 씬 프롬프트에 섞이면 안 되는 낱말.
@@ -438,6 +451,13 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
     # 색감 문장은 AI가 씬마다 새로 쓰게 두지 않고, 한 문장을 **그대로 복사**해 붙인다.
     # 매번 새로 쓰게 하면 표현이 조금씩 달라지고, 영상 AI는 그걸 다른 색으로 그린다.
     style_lock = _one_line(plot.get("style_lock"))
+    cover_prompt = _one_line(plot.get("cover_prompt"))
+    if cover_prompt and style_lock and style_lock.lower() not in cover_prompt.lower():
+        cover_prompt = f"{cover_prompt} {style_lock}"
+    if cover_prompt:
+        # 글자 금지는 모델이 빠뜨리기 쉬워서 시스템이 못 박는다.
+        cover_prompt = (f"{cover_prompt} Vertical 9:16 poster composition, "
+                        "no text, no letters, no title, no watermark, no logo.")
     title = _one_line(plot.get("title")) or topic
     logline = _one_line(plot.get("logline"))
     cast_list = ", ".join(f"{c.name}({c.role})" for c in characters)
@@ -551,6 +571,7 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
         characters=characters,
         style_lock=style_lock,
         logline=logline,
+        cover_prompt=cover_prompt,
     )
 
     # 기준 이미지가 있는데 한 번도 안 쓰이는 인물이 있으면 운영자가 헛일을 한다.

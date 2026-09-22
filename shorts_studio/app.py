@@ -204,7 +204,8 @@ with step3:
 
                 prog.progress(0.85, "자막을 입혀 최종 렌더링 중… (가장 오래 걸립니다)")
                 out = video.finalize(joined, narration, ass, str(work / "final.mp4"),
-                                     width=WIDTH, fonts_dir=fonts_dir)
+                                     width=WIDTH, height=HEIGHT, fonts_dir=fonts_dir,
+                                     band=0.08)
 
                 prog.progress(1.0, "완성!")
                 S.result = {"path": out, "duration": offset}

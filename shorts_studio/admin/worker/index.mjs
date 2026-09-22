@@ -177,6 +177,11 @@ const sceneName = (n) => `scene${String(n).padStart(2, "0")}.mp4`;
 // character.png 는 인물이 한 명뿐이던 시절의 이름이라 1번으로 함께 읽어 준다.
 const charName = (n) => `character${String(n).padStart(2, "0")}.png`;
 const LEGACY_CHAR = "character.png";
+const COVER_NAME = "cover.png";      // 맨 앞 1.8초에 뜨는 표지
+
+// 같은 이름으로 다시 올리면 주소가 그대로라, 폰이 옛 그림을 계속 보여 준다.
+// 자산 번호는 올릴 때마다 바뀌므로 주소 뒤에 붙여 "다른 주소"로 만든다.
+const fresh = (a) => (a ? `${a.browser_download_url}?v=${a.id}` : null);
 
 async function release(env, id, create) {
   const tag = `moviegen-${id}`;
@@ -199,17 +204,22 @@ async function uploadScene(req, env, url, uid) {
   if (!(await mine(env, id, uid))) return err("내 작품이 아닙니다.", 403);
   const what = url.searchParams.get("scene") || "";
   // "3" = 3번 씬 영상 / "char2" = 2번 등장인물 이미지 / "character" = 옛 이름(1번 인물)
+  // "cover" = 표지 이미지
+  const isCover = what === "cover";
   const cm = /^char(?:acter)?(\d*)$/.exec(what);
   const isChar = !!cm;
   const ci = isChar ? (parseInt(cm[1], 10) || 1) : 0;
   const n = parseInt(what, 10);
-  const okTarget = isChar ? (ci >= 1 && ci <= MAX_CHARS) : (n >= 1 && n <= MAX_SCENES);
+  const okTarget = isCover ? true
+    : isChar ? (ci >= 1 && ci <= MAX_CHARS)
+    : (n >= 1 && n <= MAX_SCENES);
   if (!/^[A-Za-z0-9._-]+$/.test(id) || !okTarget)
     return err("잘못된 요청입니다.");
   if (!req.body) return err("파일이 비었습니다.");
 
   const rel = await release(env, id, true);
-  const name = isChar ? charName(ci) : sceneName(n);
+  const name = isCover ? COVER_NAME : isChar ? charName(ci) : sceneName(n);
+  const isImage = isCover || isChar;
   // 같은 이름이 남아 있으면 깃허브가 422 로 거절한다. 먼저 지운다.
   const old = (rel.assets || []).find((a) => a.name === name);
   if (old) await gh(env, `/repos/${REPO}/releases/assets/${old.id}`, { method: "DELETE" });
@@ -221,7 +231,7 @@ async function uploadScene(req, env, url, uid) {
       "Accept": "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
       "Content-Type": req.headers.get("Content-Type")
-        || (isChar ? "image/png" : "video/mp4"),
+        || (isImage ? "image/png" : "video/mp4"),
       "User-Agent": "shorts-studio-admin",
     },
     body: req.body,
@@ -234,7 +244,7 @@ async function uploadScene(req, env, url, uid) {
     }
     return err(`업로드 실패 ${r.status} ${(await r.text()).slice(0, 150)}`, 502);
   }
-  return j({ ok: true, scene: isChar ? `char${ci}` : n });
+  return j({ ok: true, scene: isCover ? "cover" : isChar ? `char${ci}` : n });
 }
 
 async function uploadedScenes(env, id) {
@@ -248,9 +258,10 @@ async function uploadedScenes(env, id) {
   for (let i = 1; i <= MAX_CHARS; i += 1) {
     let a = assets.find((x) => x.name === charName(i));
     if (!a && i === 1) a = assets.find((x) => x.name === LEGACY_CHAR);
-    characters.push(a ? a.browser_download_url : null);
+    characters.push(fresh(a));
   }
-  return { scenes: out, characters, character: characters[0] };
+  const cover = fresh(assets.find((x) => x.name === COVER_NAME));
+  return { scenes: out, characters, character: characters[0], cover };
 }
 
 /* ── 완성본 재생 ────────────────────────────────────── */
@@ -270,7 +281,9 @@ async function playVideo(req, url) {
     "Content-Type": isImg ? "image/png" : "video/mp4",
     "Content-Disposition": "inline",
     "Accept-Ranges": "bytes",
-    "Cache-Control": "public, max-age=3600",
+    // 같은 주소에 새 파일을 올리는 일이 잦다(인물 이미지 교체, 다시 렌더).
+    // 여기서 캐시를 허용하면 폰이 옛 그림·옛 영상을 계속 보여 준다 — 실제로 겪었다.
+    "Cache-Control": isImg ? "no-store" : "private, max-age=60",
   });
   for (const k of ["Content-Length", "Content-Range"]) {
     const v = r.headers.get(k);

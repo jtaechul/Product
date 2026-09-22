@@ -89,6 +89,28 @@ def normalize_scene(src: str, target_dur: float, out: str, *,
     return out
 
 
+def make_cover(image: str, dur: float, out: str, *,
+               width: int, height: int, fps: int = 30) -> str:
+    """표지 이미지 한 장 → 9:16 정지 영상. 맨 앞에 붙는다."""
+    _run([
+        "ffmpeg", "-y", "-loop", "1", "-i", image,
+        "-vf", (f"scale={width}:{height}:force_original_aspect_ratio=increase,"
+                f"crop={width}:{height},setsar=1,fps={fps}"),
+        "-t", f"{dur:.3f}", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+        "-pix_fmt", "yuv420p", "-movflags", "+faststart", out,
+    ], "표지 영상 만들기")
+    return out
+
+
+def make_silence(dur: float, out: str) -> str:
+    """표지가 나오는 동안 깔 무음. 나레이션 트랙 맨 앞에 붙는다."""
+    _run([
+        "ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo",
+        "-t", f"{dur:.3f}", out,
+    ], "무음 만들기")
+    return out
+
+
 def build_narration_track(scene_mp3s: list[str], scene_durs: list[float],
                           work_dir: str) -> str:
     """씬별 mp3를 각 씬 길이에 맞춰 무음 패딩 후 하나로 이어붙인다."""
@@ -164,13 +186,25 @@ def concat_with_transitions(scene_mp4s: list[str], scene_durs: list[float],
 
 
 def finalize(video: str, audio: str, ass: str, out: str, *,
-             width: int, fonts_dir: str) -> str:
-    """나레이션을 입히고 가라오케 자막을 태워 최종 MP4를 만든다."""
+             width: int, height: int, fonts_dir: str, band: float = 0.0) -> str:
+    """나레이션을 입히고 가라오케 자막을 태워 최종 MP4를 만든다.
+
+    band(0~0.2)를 주면 화면 **위아래에 검은 띠**를 덮는다. 영상 생성 AI가 화면
+    구석에 박아 넣는 워터마크를 가리려는 것이다. 띠를 먼저 그리고 자막을 나중에
+    올리므로 자막은 띠에 가려지지 않는다.
+    """
     ass_esc = ass.replace("\\", "/").replace(":", r"\:")
     fonts_esc = fonts_dir.replace("\\", "/").replace(":", r"\:")
+    vf = f"ass='{ass_esc}':fontsdir='{fonts_esc}'"
+    if band > 0:
+        # 픽셀 수를 여기서 정수로 못 박는다. ffmpeg 식(ih*0.08)에 맡기면 소수점이
+        # 잘려 맨 아랫줄 한두 픽셀이 새고, 거기로 워터마크 끄트머리가 비친다.
+        bp = max(1, int(round(height * min(0.2, band))))
+        vf = (f"drawbox=x=0:y=0:w=iw:h={bp}:color=black@1:t=fill,"
+              f"drawbox=x=0:y=ih-{bp}:w=iw:h={bp}:color=black@1:t=fill,") + vf
     _run([
         "ffmpeg", "-y", "-i", video, "-i", audio,
-        "-vf", f"ass='{ass_esc}':fontsdir='{fonts_esc}'",
+        "-vf", vf,
         "-map", "0:v:0", "-map", "1:a:0",
         "-c:v", "libx264", "-preset", "veryfast",
         "-crf", "20" if width <= 720 else "22",

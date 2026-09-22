@@ -31,6 +31,16 @@ on:
         default: "노란색"
         type: choice
         options: ["노란색", "연두색", "하늘색", "분홍색"]
+      band:
+        description: "워터마크를 덮는 위아래 검은 띠 두께 (화면 높이 비율, 0 이면 없음)"
+        required: false
+        default: "0.08"
+        type: string
+      cover_sec:
+        description: "표지가 뜨는 시간(초). 0 이면 표지를 넣지 않음"
+        required: false
+        default: "1.8"
+        type: string
       gemini_key_enc:
         description: "봉해진 개인 API 키 (관리자 페이지가 넣습니다 · 사람이 쓰지 마세요)"
         required: false
@@ -83,6 +93,8 @@ jobs:
           VOICE: ${{ inputs.voice }}
           RATE: ${{ inputs.rate }}
           HIGHLIGHT: ${{ inputs.highlight }}
+          BAND: ${{ inputs.band }}
+          COVER_SEC: ${{ inputs.cover_sec }}
           HQ: ${{ inputs.hq }}
         run: python run_render.py
 

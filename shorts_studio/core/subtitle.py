@@ -27,6 +27,7 @@ YCbCr Matrix: TV.709
 [V4+ Styles]
 Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
 Style: Kara,{font},{size},{hi},&H00FFFFFF,&H00101010,&H80000000,-1,0,0,0,100,100,0,0,1,{outline},{shadow},2,{mx},{mx},{mv},1
+Style: Cover,{font},{csize},&H00FFFFFF,&H00FFFFFF,&H00101010,&H90000000,-1,0,0,0,100,100,0,0,1,{coutline},{shadow},8,{cmx},{cmx},{cmv},1
 
 [Events]
 Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
@@ -42,13 +43,31 @@ def _esc(s: str) -> str:
     return (s or "").replace("\\", "").replace("{", "(").replace("}", ")").replace("\n", " ")
 
 
+def wrap_title(text: str, max_chars: int = 11) -> str:
+    """표지 제목을 어절 경계에서 줄바꿈한다(ASS 줄바꿈은 \\N)."""
+    out, cur = [], ""
+    for tok in str(text).split():
+        if cur and len(cur) + 1 + len(tok) > max_chars:
+            out.append(cur)
+            cur = tok
+        else:
+            cur = f"{cur} {tok}".strip()
+    if cur:
+        out.append(cur)
+    return "\\N".join(out[:3])
+
+
 def build_karaoke_ass(lines: list[dict], out_path: str, *,
                       font: str = "NanumGothic",
                       highlight: str = "노란색",
-                      video_w: int = 720, video_h: int = 1280) -> str:
+                      video_w: int = 720, video_h: int = 1280,
+                      cover_title: str = "", cover_end: float = 0.0) -> str:
     """전역 타임라인 기준 줄 목록 → 가라오케 ASS 파일.
 
     lines: [{"start": 초, "end": 초, "words": [(단어시작초, 단어길이초, 표시어), ...]}]
+    cover_title/cover_end 를 주면 맨 앞 표지 구간에 제목을 큼직하게 얹는다.
+    표지 이미지 프롬프트에는 글자를 넣지 않는다 — 영상 AI가 쓰는 한글은 깨지므로
+    제목은 여기서 얹는 편이 항상 깨끗하다.
     """
     hi = HIGHLIGHTS.get(highlight, HIGHLIGHTS["노란색"])
     head = _HEAD.format(
@@ -59,8 +78,18 @@ def build_karaoke_ass(lines: list[dict], out_path: str, *,
         shadow=max(1, round(video_w * 0.0028, 1)),
         mx=int(video_w * 0.09),
         mv=int(video_h * 0.135),   # 화면 중앙 하단
+        csize=max(56, int(video_w * 0.115)),        # 표지 제목 — 훨씬 크게
+        coutline=max(4, round(video_w * 0.009, 1)),
+        cmx=int(video_w * 0.07),
+        cmv=int(video_h * 0.13),                    # 위쪽 — 인물 얼굴을 안 가리게
     )
     events = []
+    if cover_title and cover_end > 0:
+        # 화면 위쪽(Alignment 8). 가운데에 얹으면 인물 얼굴을 가린다.
+        events.append(
+            f"Dialogue: 0,{_ts(0)},{_ts(cover_end)},Cover,,0,0,0,,"
+            "{\\fad(250,200)}" + wrap_title(_esc(cover_title))
+        )
     for ln in lines:
         words = ln.get("words") or []
         if not words:
