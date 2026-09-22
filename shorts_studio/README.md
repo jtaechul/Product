@@ -20,7 +20,8 @@ GitHub Release가 맡는다. 저장소의 `book-carousel`·`verdict-theater`와 
 shorts_studio/
 ├── admin/                  관리자 페이지 (Cloudflare Workers)
 │   ├── public/index.html   모바일 UI — 표지·인물기준이미지·프롬프트복사·영상업로드·재생
-│   └── worker/index.mjs    로그인·GitHub 호출·업로드 중계·완성본 재생
+│   ├── worker/index.mjs    로그인·GitHub 호출·업로드 중계·완성본 재생
+│   └── build_users.py      아이디별 시크릿 → 사용자 목록 (배포 때 실행)
 ├── core/                   제작 엔진 (Actions와 로컬이 공유)
 │   ├── llm.py              줄거리 → 씬 대본 + 툴별 영문 프롬프트 (Gemini)
 │   ├── tts.py              Gemini TTS 합성 + 줄 단위 실측 타이밍
@@ -44,15 +45,25 @@ shorts_studio/
 | `CLOUDFLARE_ACCOUNT_ID` | 어느 Cloudflare 계정에 올릴지 |
 | `MOVIEGEN_ADMIN_PASSWORD` | 1인 모드 비밀번호 (아이디는 `admin`) |
 | `MOVIEGEN_ADMIN_GH_TOKEN` | 워커가 쓸 GitHub 토큰 (Contents·Actions 모두 Read and write) |
-| `MOVIEGEN_USERS` | (선택) 여러 사람이 쓸 때 아이디·비밀번호 목록 |
+| `MOVIEGEN_USER_1`~`_8` | (선택) 여러 사람이 쓸 때 — **아이디 하나에 시크릿 하나** |
 | `MOVIEGEN_SESSION_SECRET` | (선택) 로그인 위조 방지용 |
 | `MOVIEGEN_KEY_SECRET` | (선택) 개인 API 키를 봉할 열쇠 |
 
-`MOVIEGEN_USERS` 는 JSON 한 줄이다. 여기 없는 사람은 못 들어오고, 지우면 그 즉시 로그아웃된다.
+사용자는 **아이디마다 시크릿을 하나씩** 만든다. 값은 한 줄:
 
-```json
-[{"id":"jt","pw":"비밀번호","name":"장태철"},{"id":"mina","pw":"비밀번호","name":"미나"}]
 ```
+MOVIEGEN_USER_1  →  jt:내비밀번호:장태철
+MOVIEGEN_USER_2  →  mina:다른비밀번호:미나
+```
+
+`아이디:비밀번호:보여줄이름`. 이름은 빼도 되고(아이디를 쓴다), 비밀번호에 콜론이 있어도 된다
+(마지막 콜론 뒤가 이름). 여기 없는 사람은 못 들어오고, 칸을 지우면 그 즉시 로그아웃된다.
+
+**왜 한 칸에 몰아 두지 않는가**: GitHub 시크릿은 **한 번 넣으면 다시 볼 수 없다.** 전부 한 칸에
+두면 세 번째 사람을 넣을 때 앞의 두 명 것까지 다시 타이핑해야 하고, 하나라도 빠뜨리면 그 사람이
+조용히 로그인 못 하게 된다. 칸을 나눠 두면 **추가는 빈 번호에 새로 하나, 수정은 그 칸 하나**로
+끝나고 나머지는 손댈 일이 없다. 배포할 때 `admin/build_users.py` 가 칸들을 모아 워커에 넣는다.
+(옛 방식 `MOVIEGEN_USERS` — JSON 한 줄 — 도 칸이 하나도 없을 때만 계속 받아 준다.)
 
 손님은 관리자 페이지 주소를 열고 아이디·비밀번호만 치면 된다. GitHub 토큰은 워커 안에만 있다.
 

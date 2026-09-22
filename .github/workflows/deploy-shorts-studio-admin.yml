@@ -6,9 +6,15 @@ name: Deploy Shorts Studio Admin
 # 필요한 값 (Settings → Secrets and variables → Actions)
 #   CF_API_TOKEN              이미 등록돼 있다 (book-carousel 이 쓰는 그 값)
 #   MOVIEGEN_ADMIN_PASSWORD   관리자 페이지에 들어갈 비밀번호 (직접 정한다)
-#   MOVIEGEN_USERS            (선택) 여러 사람이 쓸 때 아이디·비밀번호 목록. JSON 한 줄:
+#   MOVIEGEN_USER_1 ..._8     (선택) 여러 사람이 쓸 때. **아이디 하나에 시크릿 하나.**
+#                             값은 한 줄:  아이디:비밀번호:보여줄이름
+#                             예) MOVIEGEN_USER_1 = jt:내비밀번호:장태철
+#                             사람을 더 넣을 땐 빈 번호에 새로 만들기만 하면 되고,
+#                             이미 있는 칸은 건드릴 필요가 없다(시크릿은 다시 볼 수 없으므로
+#                             한 칸에 몰아 두면 추가할 때마다 전부 다시 타이핑해야 한다).
+#   MOVIEGEN_USERS            (선택·옛 방식) 위 칸이 하나도 없을 때만 쓰인다. JSON 한 줄:
 #                             [{"id":"jt","pw":"비밀번호","name":"보여줄 이름"}]
-#                             없으면 아이디 admin + MOVIEGEN_ADMIN_PASSWORD 1인 모드
+#                             둘 다 없으면 아이디 admin + MOVIEGEN_ADMIN_PASSWORD 1인 모드
 #   MOVIEGEN_KEY_SECRET       (선택) 개인 API 키를 봉할 열쇠. 없으면 위 값들을 물려받는다
 #   MOVIEGEN_ADMIN_GH_TOKEN   GitHub 토큰 — Contents = Read and write, Actions = Read and write
 #                             ⚠️ Contents 는 **쓰기**가 필요하다. 씬 영상을 깃허브 릴리스에
@@ -123,6 +129,17 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           USERS_JSON: ${{ secrets.MOVIEGEN_USERS }}
+          # 사용자는 아이디마다 칸을 따로 둔다. 시크릿은 다시 볼 수 없어서, 한 칸에
+          # 몰아 두면 사람을 추가할 때마다 전부 다시 타이핑해야 하기 때문이다.
+          # 형식(한 줄): 아이디:비밀번호:보여줄이름
+          U1: ${{ secrets.MOVIEGEN_USER_1 }}
+          U2: ${{ secrets.MOVIEGEN_USER_2 }}
+          U3: ${{ secrets.MOVIEGEN_USER_3 }}
+          U4: ${{ secrets.MOVIEGEN_USER_4 }}
+          U5: ${{ secrets.MOVIEGEN_USER_5 }}
+          U6: ${{ secrets.MOVIEGEN_USER_6 }}
+          U7: ${{ secrets.MOVIEGEN_USER_7 }}
+          U8: ${{ secrets.MOVIEGEN_USER_8 }}
         run: |
           set -o pipefail
           # 어느 판이 올라갔는지 코드에 찍는다 — /health 로 확인할 수 있다.
@@ -142,13 +159,15 @@ jobs:
           # (shorts-studio-script/render 워크플로의 KEY_SECRET).
           printf '%s' "${{ secrets.MOVIEGEN_KEY_SECRET || secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}" \
             | npx --yes wrangler@4 secret put KEY_SECRET
-          # 사용자 목록(아이디+비밀번호). 값은 셸에 직접 박지 않고 환경변수로 받는다
-          # — JSON 안에 따옴표가 있어도 명령이 깨지지 않게.
-          if [ -n "$USERS_JSON" ]; then
-            printf '%s' "$USERS_JSON" | npx --yes wrangler@4 secret put USERS
+          # 사용자 목록. 아이디별 칸(MOVIEGEN_USER_1..8)을 모아 JSON 한 덩어리로 만든다.
+          # 비밀번호는 화면에 찍지 않는다 — 스크립트가 아이디만 알려 준다.
+          python3 build_users.py users.json
+          if [ -s users.json ]; then
+            npx --yes wrangler@4 secret put USERS < users.json
           else
-            echo "MOVIEGEN_USERS 가 없어 1인 모드(아이디 admin)로 둡니다."
+            echo "1인 모드로 둡니다(아이디 admin)."
           fi
+          rm -f users.json
 
 
       - name: 주소 안내
@@ -165,7 +184,7 @@ jobs:
               echo ""
               echo "처음 열면 아이디와 비밀번호를 묻습니다."
               echo ""
-              echo "- \`MOVIEGEN_USERS\` 를 등록했다면 그 목록의 아이디·비밀번호"
+              echo "- \`MOVIEGEN_USER_1\`~\`_8\` 을 등록했다면 그 아이디·비밀번호"
               echo "- 등록하지 않았다면 아이디 \`admin\` + \`MOVIEGEN_ADMIN_PASSWORD\` 값"
             else
               echo "주소를 찾지 못했습니다. 아래 기록을 확인하십시오."
