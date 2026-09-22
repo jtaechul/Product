@@ -3047,6 +3047,7 @@ function generateManageHTML() {
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#F6F7F5;--card:#fff;--ink:#212629;--sub:#6C787E;--line:#E4E8E4;--brand:#2F6F5E;--brand-ink:#1E4D41;--crit:#C0503F;--amber:#B5761F}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.6;padding-bottom:60px}
 .hd{background:var(--brand);color:#fff;padding:30px 20px 22px}
 .hd-in{max-width:660px;margin:0 auto}
@@ -3097,6 +3098,48 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 .item button{flex:none;font-family:inherit;font-size:12px;cursor:pointer;background:#fff;color:var(--crit);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 .item button:hover{border-color:var(--crit)}
 .muted{font-size:13px;color:var(--sub);text-align:center;padding:22px 0}
+/* ---- 영상 편집기 ---- */
+.ed-stage{display:flex;flex-direction:column;align-items:center;gap:9px;margin-bottom:16px}
+.ed-screen{position:relative;width:100%;max-width:196px;aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:#000;border:1px solid var(--line)}
+.ed-screen canvas{display:block;width:100%;height:100%}
+.ed-tag{position:absolute;top:8px;left:8px;z-index:2;font-size:9px;font-weight:700;letter-spacing:.1em;padding:3px 7px;border-radius:99px;background:rgba(0,0,0,.6);color:#fff}
+.ed-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:#9AA5AA;font-variant-numeric:tabular-nums}
+.ed-drop{border:1.5px dashed var(--line);border-radius:12px;padding:18px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;margin-bottom:12px}
+.ed-drop.over{border-color:var(--brand);background:rgba(47,111,94,.06)}
+.ed-drop p{font-size:12px;color:#9AA5AA}
+.ed-clips{display:flex;flex-direction:column;gap:7px;list-style:none;margin:0 0 13px;padding:0}
+.ed-clip{display:grid;grid-template-columns:34px 1fr auto;gap:9px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:8px}
+.ed-clip.on{border-color:var(--brand)}
+.ed-clip img,.ed-clip .ed-noimg{width:34px;height:60px;border-radius:6px;object-fit:cover;display:block;background:#EDEFEC;border:1px solid var(--line);cursor:pointer}
+.ed-body{min-width:0;display:flex;flex-direction:column;gap:5px}
+.ed-top{display:flex;align-items:center;gap:6px;min-width:0}
+.ed-n{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--brand);flex:none}
+.ed-name{font-size:11px;color:#9AA5AA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.ed-dur{font-family:'JetBrains Mono',monospace;font-size:10px;color:#9AA5AA;flex:none}
+.ed-clip input[type=text]{font-size:12.5px;padding:7px 9px;border-radius:8px}
+.ed-ops{display:flex;flex-direction:column;gap:3px;flex:none}
+.ed-op{width:25px;height:21px;border-radius:5px;border:1px solid var(--line);background:#fff;color:var(--sub);cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0;font-family:inherit}
+.ed-op:hover:not(:disabled){border-color:var(--brand);color:var(--brand)}
+.ed-op:disabled{opacity:.3;cursor:not-allowed}
+.ed-op.rm:hover{color:var(--crit);border-color:var(--crit)}
+.ed-opts{display:flex;gap:7px;margin-bottom:12px}
+.ed-opt{flex:1;position:relative}
+.ed-opt input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;padding:0;margin:0;border:0}
+.ed-opt span{display:block;text-align:center;cursor:pointer;border-radius:10px;border:1px solid var(--line);padding:9px;font-size:12.5px}
+.ed-opt input:checked+span{border-color:var(--brand);color:var(--brand);background:rgba(47,111,94,.07)}
+.ed-toggle{display:flex;align-items:flex-start;gap:9px;cursor:pointer;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:12px;position:relative}
+.ed-toggle input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;padding:0;margin:0;border:0}
+.ed-box{width:16px;height:16px;border-radius:4px;border:1.5px solid #B4BEBA;flex:none;margin-top:2px;position:relative}
+.ed-toggle input:checked+.ed-box{background:var(--brand);border-color:var(--brand)}
+.ed-toggle input:checked+.ed-box::after{content:'';position:absolute;left:5px;top:1px;width:4px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(43deg)}
+.ed-tt{font-size:13px;line-height:1.45}
+.ed-tt small{display:block;font-size:11.5px;color:#9AA5AA;margin-top:2px}
+.ed-bar{height:5px;border-radius:99px;background:#E9EDEA;overflow:hidden;margin-top:11px}
+.ed-bar i{display:block;height:100%;width:0%;background:var(--brand);transition:width .25s}
+.ed-status{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--sub);text-align:center;margin-top:9px;font-variant-numeric:tabular-nums}
+.ed-status.bad{color:var(--crit);font-family:'Noto Sans KR',sans-serif;line-height:1.6}
+.ed-status.good{color:var(--brand)}
+.ed-out{display:block;margin-top:11px;text-align:center;font-size:13.5px;font-weight:700;color:var(--brand);text-decoration:underline}
 .clip{border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px}
 .clip-hd{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:8px}
 .clip-no{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--brand);font-weight:500}
@@ -3175,7 +3218,52 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   </section>
 
   <section class="box">
-    <div class="box-hd"><span class="step">04</span><h2>등록된 상품</h2></div>
+    <div class="box-hd"><span class="step">04</span><h2>영상 이어붙이기</h2></div>
+    <p class="lead">Flow에서 만든 클립을 넣으면 순서대로 이어 붙이고 자막을 새겨 릴스용 영상 한 편으로 내보냅니다. 파일은 이 기기 안에서만 처리되며 어디로도 올라가지 않습니다.</p>
+
+    <div class="ed-stage">
+      <div class="ed-screen">
+        <span class="ed-tag" id="edTag">예시</span>
+        <canvas id="edPv" width="360" height="640"></canvas>
+      </div>
+      <div class="ed-meta" id="edMeta">클립 0개 · 00:00</div>
+    </div>
+
+    <div class="ed-drop" id="edDrop">
+      <button class="btn btn-2 btn-sm" id="edPick" type="button">영상 파일 고르기</button>
+      <p>또는 파일을 여기에 끌어다 놓으세요</p>
+      <input id="edFile" type="file" accept="video/*" multiple hidden>
+    </div>
+    <ul class="ed-clips" id="edList"></ul>
+
+    <div class="f">
+      <label for="edScript">자막 (한 줄에 한 클립)</label>
+      <textarea id="edScript" placeholder="위에서 프롬프트를 만들면 자막이 여기에 자동으로 들어옵니다."></textarea>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <button class="btn btn-2 btn-sm" id="edSpread" type="button">클립에 나눠 담기</button>
+      <button class="btn btn-2 btn-sm" id="edClear" type="button">자막 지우기</button>
+    </div>
+
+    <label class="ed-toggle" for="edBars">
+      <input type="checkbox" id="edBars" checked>
+      <span class="ed-box" aria-hidden="true"></span>
+      <span class="ed-tt">위아래 검은 띠 넣기<small>아래쪽 생성 표시가 가려질 만큼만 자동으로 잡습니다</small></span>
+    </label>
+
+    <div class="ed-opts">
+      <label class="ed-opt"><input type="radio" name="edq" value="sd" checked><span>빠르게 720</span></label>
+      <label class="ed-opt"><input type="radio" name="edq" value="hd"><span>고화질 1080</span></label>
+    </div>
+
+    <button class="btn btn-wide" id="edGo" type="button" disabled>영상 만들기</button>
+    <div class="ed-bar"><i id="edFill"></i></div>
+    <p class="ed-status" id="edStatus">클립을 먼저 넣어주세요</p>
+    <a class="ed-out" id="edOut" hidden>완성된 영상 내려받기</a>
+  </section>
+
+  <section class="box">
+    <div class="box-hd"><span class="step">05</span><h2>등록된 상품</h2></div>
     <div id="list"><p class="muted">불러오는 중…</p></div>
   </section>
 </main>
@@ -3321,6 +3409,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       out.appendChild(pb);
     }
     var subs=(r.clips||[]).map(function(c){ return c.subtitle; }).filter(Boolean).join('\\n');
+    var sc=document.getElementById('edScript');
+    if(sc) sc.value=subs;
     var bar=document.createElement('div'); bar.className='row'; bar.style.marginBottom='14px';
     addCopyBtn(bar,'자막 전부 복사',subs);
     if(r.caption){
@@ -3373,6 +3463,286 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   load();
 })();
 </script>
+<script>
+/* ===== 04 영상 이어붙이기 — 기기 안에서만 처리 ===== */
+(function(){
+  "use strict";
+  var SIZES={ sd:{w:720,h:1280}, hd:{w:1080,h:1920} };
+  var st={ clips:[], sel:0, busy:false, bars:true };
+  var seq=0;
+  var $=function(i){ return document.getElementById(i); };
+  var pv=$('edPv'), pvx=pv.getContext('2d'), prevV=null;
+
+  function wrapLines(ctx,text,maxW){
+    var out=[],paras=String(text).split('\\n'),i,j,line,ch,test;
+    for(i=0;i<paras.length;i++){
+      line='';
+      for(j=0;j<paras[i].length;j++){
+        ch=paras[i][j]; test=line+ch;
+        if(ctx.measureText(test).width>maxW && line){ out.push(line); line=ch; }
+        else line=test;
+      }
+      if(line) out.push(line);
+    }
+    return out;
+  }
+  function barOf(h){ return st.bars ? Math.round(h*0.085) : 0; }
+  function drawBars(ctx,w,h){
+    var b=barOf(h); if(!b) return;
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,w,b); ctx.fillRect(0,h-b,w,b);
+  }
+  function drawSub(ctx,text,w,h,bar){
+    if(!text||!text.trim()) return;
+    bar=bar||0;
+    var fs=Math.round(w/16.5);
+    ctx.font='700 '+fs+"px 'Noto Sans KR', sans-serif";
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.lineJoin='round';
+    var lines=wrapLines(ctx,text.trim(),w-fs*2), lh=fs*1.34;
+    var y=(h-bar-Math.round(h*0.062))-(lines.length-1)*lh;
+    for(var i=0;i<lines.length;i++){
+      ctx.lineWidth=fs*0.24; ctx.strokeStyle='rgba(0,0,0,.88)'; ctx.strokeText(lines[i],w/2,y);
+      ctx.fillStyle='#fff'; ctx.fillText(lines[i],w/2,y); y+=lh;
+    }
+  }
+  function drawCover(ctx,src,w,h){
+    var sw=src.videoWidth||src.naturalWidth||src.width, sh=src.videoHeight||src.naturalHeight||src.height;
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
+    if(!sw||!sh) return;
+    var sc=Math.max(w/sw,h/sh), dw=sw*sc, dh=sh*sc;
+    try{ ctx.drawImage(src,(w-dw)/2,(h-dh)/2,dw,dh); }catch(e){}
+  }
+  function drawSample(){
+    var w=pv.width,h=pv.height;
+    var g=pvx.createLinearGradient(0,0,w,h);
+    g.addColorStop(0,'#3A4A44'); g.addColorStop(1,'#1B2320');
+    pvx.fillStyle=g; pvx.fillRect(0,0,w,h);
+    pvx.fillStyle='rgba(255,255,255,.28)';
+    pvx.font="500 12px 'Noto Sans KR', sans-serif"; pvx.textAlign='center';
+    pvx.fillText('여기에 클립이 표시됩니다',w/2,h*0.38);
+    drawBars(pvx,w,h);
+    drawSub(pvx,'산책만 나가면 내가 끌려다닌다',w,h,barOf(h));
+  }
+  function drawPreview(){
+    var c=st.clips[st.sel];
+    if(!c){ $('edTag').hidden=false; drawSample(); return; }
+    $('edTag').hidden=true;
+    if(prevV){ prevV.remove(); prevV=null; }
+    var v=document.createElement('video'); prevV=v;
+    v.preload='metadata'; v.muted=true; v.playsInline=true;
+    v.style.cssText='position:absolute;left:-9999px;top:0;width:2px;height:2px;opacity:0';
+    document.body.appendChild(v);
+    var paint=function(){
+      drawCover(pvx,v,pv.width,pv.height);
+      drawBars(pvx,pv.width,pv.height);
+      drawSub(pvx,c.sub,pv.width,pv.height,barOf(pv.height));
+    };
+    v.addEventListener('seeked',paint); v.addEventListener('loadeddata',paint);
+    v.addEventListener('loadedmetadata',function(){ try{ v.currentTime=Math.min(0.12,(v.duration||1)/2); }catch(e){} });
+    v.src=c.url;
+  }
+  function fmt(t){ t=Math.max(0,Math.round(t||0)); var m=Math.floor(t/60),x=t%60; return (m<10?'0':'')+m+':'+(x<10?'0':'')+x; }
+  function total(){ return st.clips.reduce(function(a,c){ return a+(c.dur||0); },0); }
+  function say(text,kind){ var e=$('edStatus'); e.className='ed-status'+(kind?' '+kind:''); e.textContent=text; }
+
+  function render(){
+    var ul=$('edList'); ul.textContent='';
+    st.clips.forEach(function(c,i){
+      var li=document.createElement('li'); li.className='ed-clip'+(i===st.sel?' on':'');
+      var th;
+      if(c.thumb){ th=document.createElement('img'); th.src=c.thumb; th.alt=''; }
+      else { th=document.createElement('div'); th.className='ed-noimg'; }
+      th.addEventListener('click',function(){ st.sel=i; render(); drawPreview(); });
+      li.appendChild(th);
+      var body=document.createElement('div'); body.className='ed-body';
+      var top=document.createElement('div'); top.className='ed-top';
+      var n=document.createElement('span'); n.className='ed-n'; n.textContent=(i+1<10?'0':'')+(i+1);
+      var nm=document.createElement('span'); nm.className='ed-name'; nm.textContent=c.name;
+      var du=document.createElement('span'); du.className='ed-dur'; du.textContent=c.dur?c.dur.toFixed(1)+'s':'-';
+      top.appendChild(n); top.appendChild(nm); top.appendChild(du); body.appendChild(top);
+      var inp=document.createElement('input'); inp.type='text'; inp.value=c.sub||''; inp.placeholder='이 클립 자막';
+      inp.addEventListener('input',function(){ c.sub=inp.value; if(i===st.sel) drawPreview(); });
+      body.appendChild(inp); li.appendChild(body);
+      var ops=document.createElement('div'); ops.className='ed-ops';
+      var up=document.createElement('button'); up.className='ed-op'; up.type='button'; up.textContent='↑'; up.disabled=(i===0);
+      up.addEventListener('click',function(){ move(i,-1); });
+      var dn=document.createElement('button'); dn.className='ed-op'; dn.type='button'; dn.textContent='↓'; dn.disabled=(i===st.clips.length-1);
+      dn.addEventListener('click',function(){ move(i,1); });
+      var rm=document.createElement('button'); rm.className='ed-op rm'; rm.type='button'; rm.textContent='✕';
+      rm.addEventListener('click',function(){ removeAt(i); });
+      ops.appendChild(up); ops.appendChild(dn); ops.appendChild(rm); li.appendChild(ops);
+      ul.appendChild(li);
+    });
+    $('edMeta').textContent='클립 '+st.clips.length+'개 · '+fmt(total());
+    $('edGo').disabled=st.busy||st.clips.length===0;
+    if(!st.busy) say(st.clips.length?'준비 완료 · 완성 길이 '+fmt(total()):'클립을 먼저 넣어주세요');
+  }
+  function move(i,d){
+    var j=i+d; if(j<0||j>=st.clips.length) return;
+    var t=st.clips[i]; st.clips[i]=st.clips[j]; st.clips[j]=t; st.sel=j; render(); drawPreview();
+  }
+  function removeAt(i){
+    try{ URL.revokeObjectURL(st.clips[i].url); }catch(e){}
+    st.clips.splice(i,1);
+    if(st.sel>=st.clips.length) st.sel=Math.max(0,st.clips.length-1);
+    render(); drawPreview();
+  }
+  function readMeta(c){
+    return new Promise(function(res){
+      var v=document.createElement('video');
+      v.preload='metadata'; v.muted=true; v.playsInline=true;
+      v.style.cssText='position:absolute;left:-9999px;top:0;width:2px;height:2px;opacity:0';
+      document.body.appendChild(v);
+      var done=false, fin=function(){ if(done)return; done=true; try{v.remove();}catch(e){} res(); };
+      v.addEventListener('loadedmetadata',function(){
+        c.dur=isFinite(v.duration)?v.duration:0;
+        try{ v.currentTime=Math.min(0.12,(v.duration||1)/2); }catch(e){ fin(); }
+      });
+      v.addEventListener('seeked',function(){
+        try{
+          var cv=document.createElement('canvas'); cv.width=102; cv.height=180;
+          drawCover(cv.getContext('2d'),v,102,180);
+          c.thumb=cv.toDataURL('image/jpeg',0.72);
+        }catch(e){}
+        fin();
+      });
+      v.addEventListener('error',fin);
+      setTimeout(fin,8000);
+      v.src=c.url;
+    });
+  }
+  function addFiles(files){
+    var vids=Array.prototype.filter.call(files,function(f){ return /^video\\//.test(f.type)||/\\.(mp4|mov|webm|m4v)$/i.test(f.name); });
+    if(!vids.length){ say('영상 파일이 아니에요. mp4, mov, webm 파일을 골라주세요.','bad'); return; }
+    var jobs=vids.map(function(f){
+      var c={ id:(++seq), url:URL.createObjectURL(f), name:f.name, sub:'', dur:0, thumb:'' };
+      st.clips.push(c); return readMeta(c);
+    });
+    render();
+    Promise.all(jobs).then(function(){ render(); drawPreview(); });
+  }
+  $('edPick').addEventListener('click',function(){ $('edFile').click(); });
+  $('edFile').addEventListener('change',function(e){ addFiles(e.target.files); e.target.value=''; });
+  var dz=$('edDrop');
+  ['dragenter','dragover'].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.remove('over'); }); });
+  dz.addEventListener('drop',function(e){ if(e.dataTransfer&&e.dataTransfer.files) addFiles(e.dataTransfer.files); });
+
+  $('edSpread').addEventListener('click',function(){
+    var lines=$('edScript').value.split('\\n').map(function(x){ return x.trim(); }).filter(Boolean);
+    if(!lines.length){ say('나눠 담을 자막이 비어 있어요.','bad'); return; }
+    if(!st.clips.length){ say('클립을 먼저 넣어야 자막을 담을 수 있어요.','bad'); return; }
+    st.clips.forEach(function(c,i){ c.sub=lines[i]||''; });
+    render(); drawPreview();
+    say(lines.length+'줄을 클립 '+Math.min(lines.length,st.clips.length)+'개에 담았습니다','good');
+  });
+  $('edClear').addEventListener('click',function(){ st.clips.forEach(function(c){ c.sub=''; }); render(); drawPreview(); });
+  $('edBars').addEventListener('change',function(e){ st.bars=e.target.checked; drawPreview(); });
+
+  function pickMime(){
+    var l=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1','video/mp4',
+           'video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+    for(var i=0;i<l.length;i++){ try{ if(window.MediaRecorder&&MediaRecorder.isTypeSupported(l[i])) return l[i]; }catch(e){} }
+    return '';
+  }
+  function playClip(clip,ctx,w,h,ac,dest,onTime){
+    return new Promise(function(res){
+      var v=document.createElement('video');
+      v.playsInline=true; v.preload='auto';
+      v.style.cssText='position:absolute;left:-9999px;top:0;width:2px;height:2px;opacity:0';
+      document.body.appendChild(v);
+      var node=null, raf=0, fin=false;
+      var finish=function(){
+        if(fin)return; fin=true;
+        if(raf) cancelAnimationFrame(raf);
+        try{ v.pause(); }catch(e){}
+        try{ if(node) node.disconnect(); }catch(e){}
+        try{ v.remove(); }catch(e){}
+        res();
+      };
+      var draw=function(){
+        if(fin)return;
+        drawCover(ctx,v,w,h); drawBars(ctx,w,h); drawSub(ctx,clip.sub,w,h,barOf(h));
+        onTime(v.currentTime||0);
+        if(v.ended){ finish(); return; }
+        raf=requestAnimationFrame(draw);
+      };
+      v.addEventListener('ended',finish); v.addEventListener('error',finish);
+      v.addEventListener('canplay',function(){
+        if(fin)return;
+        try{ node=ac.createMediaElementSource(v); node.connect(dest); }catch(e){}
+        v.play().then(function(){ raf=requestAnimationFrame(draw); }).catch(finish);
+      },{once:true});
+      v.src=clip.url;
+      setTimeout(function(){ if(!fin&&v.readyState===0) finish(); },12000);
+    });
+  }
+  function setBusy(on){
+    st.busy=on;
+    $('edGo').disabled=on||st.clips.length===0;
+    $('edPick').disabled=on; $('edSpread').disabled=on; $('edClear').disabled=on; $('edBars').disabled=on;
+    Array.prototype.forEach.call(document.querySelectorAll('input[name=edq]'),function(el){ el.disabled=on; });
+  }
+  function stamp(){
+    var d=new Date(), z=function(n){ return (n<10?'0':'')+n; };
+    return d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'-'+z(d.getHours())+z(d.getMinutes());
+  }
+  $('edGo').addEventListener('click',function(){
+    if(st.busy||!st.clips.length) return;
+    var q=document.querySelector('input[name=edq]:checked').value;
+    var dim=SIZES[q], w=dim.w, h=dim.h, mime=pickMime();
+    if(!window.MediaRecorder||!mime){ say('이 브라우저는 영상 만들기를 지원하지 않아요. 크롬으로 열어주세요.','bad'); return; }
+    setBusy(true); $('edFill').style.width='0%'; $('edOut').hidden=true; say('준비하는 중…');
+    var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    var ctx=cv.getContext('2d'); ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
+    var ac,dest,rec,chunks=[],tot=total()||1,elapsed=0;
+    var cleanup=function(){ try{ if(ac&&ac.state!=='closed') ac.close(); }catch(e){} setBusy(false); };
+    document.fonts.ready.then(function(){
+      try{ ac=new (window.AudioContext||window.webkitAudioContext)(); dest=ac.createMediaStreamDestination(); }
+      catch(e){ say('소리를 준비하지 못했어요. 크롬으로 열어주세요.','bad'); cleanup(); return; }
+      return ac.resume().catch(function(){});
+    }).then(function(){
+      if(!ac) return;
+      var vs=cv.captureStream(30);
+      var stream=new MediaStream(vs.getVideoTracks().concat(dest.stream.getAudioTracks()));
+      try{ rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:(q==='hd'?7000000:4000000),audioBitsPerSecond:128000}); }
+      catch(e){ try{ rec=new MediaRecorder(stream,{mimeType:mime}); }catch(e2){ say('영상 만들기를 시작하지 못했어요.','bad'); cleanup(); return; } }
+      rec.ondataavailable=function(e){ if(e.data&&e.data.size) chunks.push(e.data); };
+      var stopped=new Promise(function(r){ rec.onstop=r; });
+      rec.start(400);
+      var chain=Promise.resolve();
+      st.clips.forEach(function(clip,idx){
+        chain=chain.then(function(){
+          say('이어 붙이는 중 · '+(idx+1)+'/'+st.clips.length);
+          return playClip(clip,ctx,w,h,ac,dest,function(t){
+            $('edFill').style.width=(Math.min(0.99,(elapsed+t)/tot)*100).toFixed(1)+'%';
+          });
+        }).then(function(){ elapsed+=(clip.dur||0); });
+      });
+      return chain.then(function(){
+        say('마무리하는 중…');
+        setTimeout(function(){ try{ rec.stop(); }catch(e){} },350);
+        return stopped;
+      }).then(function(){
+        $('edFill').style.width='100%';
+        var ext=mime.indexOf('mp4')>=0?'mp4':'webm';
+        var blob=new Blob(chunks,{type:mime.split(';')[0]});
+        if(!blob.size){ say('영상이 비어 있어요. 클립을 다시 넣고 시도해주세요.','bad'); return; }
+        var mb=(blob.size/1048576).toFixed(1), name='pet-reels-'+stamp()+'.'+ext;
+        var url=URL.createObjectURL(blob);
+        var a=$('edOut'); a.href=url; a.download=name; a.hidden=false;
+        a.textContent='완성된 영상 내려받기 ('+mb+'MB)';
+        try{ a.click(); }catch(e){}
+        say('완성 · '+mb+'MB. 자동으로 안 받아지면 아래 링크를 누르세요.','good');
+      });
+    }).then(cleanup,function(err){
+      say('만드는 중 문제가 생겼어요: '+((err&&err.message)||'알 수 없는 오류'),'bad'); cleanup();
+    });
+  });
+
+  drawSample(); render();
+})();
+</script>
+
 </body>
 </html>`;
 }
