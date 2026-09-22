@@ -17,6 +17,7 @@ jobs:
       # 쿠팡 키는 "있을 때만" 등록한다. 여기서 미리 판정해 두는 이유:
       # 스텝의 if 에서는 secrets 컨텍스트를 직접 읽을 수 없기 때문.
       HAS_COUPANG: ${{ secrets.COUPANG_ACCESS_KEY != '' && secrets.COUPANG_SECRET_KEY != '' }}
+      HAS_GEMINI: ${{ secrets.GEMINI_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -44,6 +45,14 @@ jobs:
         run: |
           printf '%s' "$COUPANG_ACCESS_KEY" | npx --yes wrangler@3.90.0 secret put COUPANG_ACCESS_KEY
           printf '%s' "$COUPANG_SECRET_KEY" | npx --yes wrangler@3.90.0 secret put COUPANG_SECRET_KEY
+
+      - name: Gemini 키 갱신 (GitHub 시크릿에 있을 때만)
+        if: env.HAS_GEMINI == 'true'
+        working-directory: book-carousel
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: printf '%s' "$GEMINI_API_KEY" | npx --yes wrangler@3.90.0 secret put GEMINI_API_KEY
 
       - name: 쿠팡 키 미설정 안내
         if: env.HAS_COUPANG != 'true'

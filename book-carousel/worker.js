@@ -4463,8 +4463,13 @@ export default {
               else { await env.PENDING_POSTS.put('gemini_api_key', key); result = { success: true, message: '표지 AI 키가 저장되었습니다. 다음 제작부터 표지가 Gemini로 생성됩니다.' }; }
             }
           } else {
-            const has = !!(await getGeminiKey(env));
-            result = { success: true, configured: has, source: env.GEMINI_API_KEY ? 'secret' : (has ? 'app' : 'none') };
+            // 어느 키가 실제로 쓰이는지 확인용 — 끝 4자리만 보여준다(키 전체는 절대 노출 금지).
+            const k = await getGeminiKey(env);
+            result = {
+              success: true, configured: !!k,
+              source: env.GEMINI_API_KEY ? 'secret' : (k ? 'app' : 'none'),
+              tail: k ? ('...' + String(k).slice(-4)) : '',
+            };
           }
         }
         else if (url.pathname === '/api/coupang/best') result = await handleCoupangBest(env, body);
