@@ -97,6 +97,17 @@ async function login(req, env) {
   });
 }
 
+// 쿠키를 지운다. 쿠키가 이미 망가졌어도 눌리게 로그인 검사 앞에 둔다
+// — 못 들어가는데 로그아웃도 안 되면 손쓸 방법이 없다.
+function logout() {
+  return new Response(JSON.stringify({ ok: true }), {
+    headers: {
+      ...JSON_H,
+      "Set-Cookie": "ss=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0",
+    },
+  });
+}
+
 /* ── 개인 API 키 봉하기 ─────────────────────────────── */
 // 실제 작업은 GitHub Actions 에서 돌아가는데, 이 저장소는 **공개**라
 // 워크플로 입력값이 실행 기록 화면에 그대로 보인다. 사용자의 API 키를 날것으로
@@ -363,6 +374,7 @@ export default {
     const p = url.pathname;
     if (p === "/health") return new Response("ok " + BUILD);
     if (p === "/api/login") return login(req, env);
+    if (p === "/api/logout") return logout();
 
     const uid = await whoami(req, env);
     if (p.startsWith("/api/")) {

@@ -95,7 +95,11 @@
 
 <div id="app" hidden>
 <header>
-  <h1>숏폼 동화 스튜디오 <span id="who" class="tag" style="float:right"></span></h1>
+  <h1 style="display:flex;align-items:center;gap:8px">
+    <span style="flex:1">숏폼 동화 스튜디오</span>
+    <span id="who" class="tag"></span>
+    <button class="btn mini ghost" id="btnOut">로그아웃</button>
+  </h1>
   <nav>
     <button data-tab="make" class="on">① 새로 만들기</button>
     <button data-tab="work">② 작업중</button>
@@ -222,6 +226,16 @@ $("btnLogin").onclick = (e) => busy(e.target, async () => {
 $("uid").onkeydown = (e) => { if (e.key === "Enter") $("pw").focus(); };
 $("pw").onkeydown = (e) => { if (e.key === "Enter") $("btnLogin").click(); };
 try { $("uid").value = localStorage.getItem("uid") || ""; } catch (_) {}
+
+$("btnOut").onclick = (e) => busy(e.target, async () => {
+  await fetch("/api/logout", { method: "POST", credentials: "same-origin" }).catch(() => {});
+  // 화면에 남은 목록·상세를 비운다. 다음 사람이 앞사람 작업을 보면 안 된다.
+  items = [];
+  for (const id of ["workList", "doneList", "detail"]) $(id).innerHTML = "";
+  $("pw").value = "";
+  showLogin();
+  toast("로그아웃했습니다. API 키는 이 폰에 그대로 있습니다.", 4200);
+});
 
 /* ── 내 API 키 (폰에만 저장) ─────────────────── */
 // 키를 우리 서버에 두지 않는다. 이 폰의 브라우저에만 저장하고, 작업을 보낼 때만
