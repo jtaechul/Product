@@ -3012,8 +3012,7 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
    대신 과장된 코미디 몸짓으로 쓴다:
    dramatic pout, puffed cheeks, theatrical sigh, flopping onto the floor,
    stubbornly sitting down, comically refusing to move, side-eye glance, slow blink
-6. 상품 실물은 물론 **강아지가 몸에 걸친 것**도 쓰지 마라. 제외 목록에서 이미 금지하고 있어
-   함께 쓰면 서로 모순되어 생성이 거부된다.
+6. shots에 강아지가 몸에 걸친 것을 쓰지 마라. 착용 여부는 시스템이 알아서 붙인다.
    금지: harness, chest support, collar, leash, strap, vest, wearing, strapped
    상품의 효과는 **강아지의 움직임과 표정**으로만 보여준다.
    예) "walking steadily with chest support" (X) → "walking lightly with a bouncy step" (O)
@@ -3086,6 +3085,34 @@ function breedEnOf(dogText) {
   const t = String(dogText || '');
   for (const [re, en] of BREEDS) if (re.test(t)) return en;
   return '';
+}
+
+// 입는 상품이면 그 품목만 예외로 허용한다. 상품명으로 자동 판별.
+// (하네스를 파는데 액세서리를 전부 막으면 정작 상품이 화면에 못 나온다)
+const WEARABLES = [
+  [/하네스|가슴줄|가슴\s?줄/, 'a simple plain chest harness'],
+  [/리드줄|목줄|리드\s?줄/, 'a simple plain leash'],
+  [/넥카라|넥칼라|목보호대/, 'a soft neck cone'],
+  [/우비|레인코트|비옷/, 'a small plain raincoat'],
+  [/패딩|티셔츠|후드|맨투맨|강아지\s?옷|애견\s?옷/, 'a simple plain pet shirt'],
+  [/신발|부츠|발\s?양말|paw/i, 'small plain paw boots'],
+  [/방울|이름표|인식표/, 'a small plain name tag'],
+];
+function wearableOf(title) {
+  const t = String(title || '');
+  for (const [re, en] of WEARABLES) if (re.test(t)) return en;
+  return '';
+}
+
+// 착용 클립에서는 그 품목 금지를 풀되, 엉뚱한 장신구는 계속 막는다.
+function negativeFor(wearing) {
+  if (!wearing) return VEO_NEGATIVE;
+  const keep = VEO_NEGATIVE.split(', ').filter(w =>
+    !/(collar|harness|chest support|vest|leash|strap|clothes|accessories)/i.test(w));
+  return keep.concat([
+    'extra accessories', 'ribbons', 'bows', 'hats', 'sunglasses', 'scarves',
+    'multiple items', 'decorated gear', 'patterned gear', 'logo on gear',
+  ]).join(', ');
 }
 
 // 사용자가 실제로 성공한 화풍. 모든 장면 블록 앞에 반드시 들어간다.
@@ -3220,24 +3247,46 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
   const tone = String(out.tone || '느긋하고 뻔뻔한 꼬마 목소리').trim();
   const ROLE_KO = { problem: '문제', transition: '전환', benefit: '상품 효용', cta: '마무리' };
 
+  // 입는 상품이면 후반부(전환 이후)에만 착용시킨다 — 전후 대비가 생겨 효과가 눈에 보인다.
+  const wearEn = wearableOf(title);
+  let seenTransition = false;
+
   const clipsOut = list.map((c, i) => {
-    // 실행마다 0.0-2.5s / 00:00-00:02 등으로 흔들려 형식을 0:00-0:03 꼴로 맞춘다.
     const shots = safeShots(normShots(String(c.shots || c.action || '').trim()));
-    // 내레이션 대본 = 자막. 둘을 따로 두면 소리와 글자가 어긋나 보기 불편하다.
     const line = String(c.line || c.subtitle || '').trim();
     const role = String(c.role || 'problem').trim();
-    // 캐릭터는 참고 이미지가 맡으므로 "The puppy" 한 마디만 두고 외모는 쓰지 않는다.
-    // Flow에는 제외 조건 칸이 따로 없다 → 프롬프트 맨 밑에 한 줄로 붙인다.
-    // 목소리는 영상에 넣지 않는다 — 나중에 내레이션으로 얹는다.
+    if (role === 'transition') seenTransition = true;
+    // 문제 클립은 맨몸(불편했던 시절), 전환부터는 착용(편해진 뒤).
+    const wearing = !!wearEn && (seenTransition || role === 'benefit' || role === 'cta');
+    const wearLine = wearing ? `The puppy is wearing ${wearEn}.` : '';
+    const neg = negativeFor(wearing ? wearEn : '');
+
+    // 첫 구간 동작만 뽑아 스틸 이미지 프롬프트를 만든다(먼저 이미지를 만들고 거기서 영상을 뽑는 방식).
+    const firstMoment = (shots.split(/(?=\d:\d{2}-\d:\d{2})/)[0] || shots)
+      .replace(/^\s*\d:\d{2}-\d:\d{2}\s*/, '')
+      .replace(/\b(panning|tilting|tracking|zooming|dollying|pushing)\s+\w+,?\s*/gi, '')
+      .replace(/\s{2,}/g, ' ').replace(/[,\s]+$/, '').trim();
+
+    const imagePrompt = [
+      'The puppy.' + (scene ? ' ' + scene : ''),
+      firstMoment ? firstMoment + '.' : '',
+      wearLine,
+      'Single still image, sharp focus, no motion blur.',
+      `Avoid: ${neg}.`,
+    ].filter(Boolean).join('\n');
+
     const prompt = [
       'The puppy.' + (scene ? ' ' + scene : ''),
       shots,
-      `Avoid: ${VEO_NEGATIVE}.`,
+      wearLine,
+      `Avoid: ${neg}.`,
     ].filter(Boolean).join('\n');
+
     return {
       no: i + 1, role, roleKo: ROLE_KO[role] || '문제',
-      shots, line,
+      shots, line, wearing,
       subtitle: line,
+      imagePrompt,
       prompt,
     };
   });
@@ -3247,6 +3296,7 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
     problem: out.problem || '',
     sceneBlock: scene,
     tone,
+    wearable: wearEn,
     negativePrompt: VEO_NEGATIVE,
     caption: out.caption || '',
     hashtags: Array.isArray(out.hashtags) ? out.hashtags.slice(0, 3) : [],
@@ -3979,19 +4029,35 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     }
 
     var tip=document.createElement('div'); tip.className='prob';
-    tip.innerHTML='<b>영상은 소리 없이 뽑고, 목소리는 나중에 얹습니다</b><br>'+
-      'Veo의 한국어 발음이 불안정해서 영상에는 말소리를 넣지 않습니다. 위 내레이션 대본으로 목소리를 따로 만들어 얹으세요. '+
-      '제외 조건은 각 프롬프트 맨 아래 Avoid 줄에 이미 들어 있으니 통째로 복사하시면 됩니다.';
+    tip.innerHTML='<b>이미지를 먼저 만들고, 그 이미지로 영상을 뽑으세요</b><br>'+
+      '클립마다 1단계 이미지 프롬프트와 2단계 영상 프롬프트가 함께 나옵니다. '+
+      '스틸을 먼저 만들어 마음에 드는 장면을 고른 뒤 그 이미지에서 영상을 만들면, 강아지도 착용한 물건도 모양이 흔들리지 않습니다.'+
+      (r.wearable ? '<br><b>착용 상품으로 인식했습니다.</b> 문제 클립은 맨몸, 전환 이후 클립만 착용한 모습으로 나옵니다.' : '')+
+      '<br>소리는 넣지 않습니다. 위 내레이션 대본으로 목소리를 만들어 04단계에서 얹으세요. '+
+      '제외 조건은 각 프롬프트 맨 아래 Avoid 줄에 이미 들어 있습니다.';
     out.appendChild(tip);
 
     (r.clips||[]).forEach(function(c){
       var d=document.createElement('div'); d.className='clip';
       var hd=document.createElement('div'); hd.className='clip-hd';
       var no=document.createElement('span'); no.className='clip-no';
-      no.textContent='클립 '+c.no+(c.roleKo?' · '+c.roleKo:'');
+      no.textContent='클립 '+c.no+(c.roleKo?' · '+c.roleKo:'')+(c.wearing?' · 착용':'');
       hd.appendChild(no);
-      addCopyBtn(hd,'프롬프트 복사',c.prompt);
       d.appendChild(hd);
+
+      if(c.imagePrompt){
+        var ih=document.createElement('div'); ih.className='clip-hd'; ih.style.marginTop='2px';
+        var it=document.createElement('span'); it.className='clip-no'; it.style.color='var(--amber)';
+        it.textContent='1단계 · 이미지 만들기';
+        ih.appendChild(it); addCopyBtn(ih,'복사',c.imagePrompt);
+        d.appendChild(ih);
+        var ipre=document.createElement('pre'); ipre.textContent=c.imagePrompt; d.appendChild(ipre);
+      }
+
+      var vh=document.createElement('div'); vh.className='clip-hd'; vh.style.marginTop='10px';
+      var vt=document.createElement('span'); vt.className='clip-no'; vt.textContent='2단계 · 그 이미지로 영상 만들기';
+      vh.appendChild(vt); addCopyBtn(vh,'복사',c.prompt);
+      d.appendChild(vh);
       var pre=document.createElement('pre'); pre.textContent=c.prompt; d.appendChild(pre);
       if(c.line){ var ln=document.createElement('div'); ln.className='sub'; ln.textContent='내레이션 · 자막 · '+c.line; d.appendChild(ln); }
       out.appendChild(d);
