@@ -47,6 +47,13 @@ GEMINI_VOICES = {
 
 VOICES = GEMINI_VOICES          # 관리자 화면이 보여 주는 기본 목록
 
+# 할당량이 바닥나 Edge 로 갈아탈 때, 성별이라도 맞춰 준다.
+FALLBACK_VOICE = {
+    "Sulafat": "ko-KR-SunHiNeural", "Kore": "ko-KR-SunHiNeural",
+    "Aoede": "ko-KR-SunHiNeural", "Leda": "ko-KR-SunHiNeural",
+    "Charon": "ko-KR-InJoonNeural", "Enceladus": "ko-KR-InJoonNeural",
+}
+
 GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts"
 _GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
@@ -78,9 +85,13 @@ class TTSError(RuntimeError):
     pass
 
 
+class QuotaError(TTSError):
+    """할당량이 바닥났다. 기다려도 안 되므로 예비 엔진으로 갈아타야 한다."""
+
+
 # ---------------------------------------------------------------- 줄 나누기
 
-def split_lines(text: str, max_chars: int = 13) -> list[dict]:
+def split_lines(text: str, max_chars: int = 20) -> list[dict]:
     """대본 한 편을 화면 한 줄 단위로 나눈다(합성 단위이자 자막 단위).
 
     문장부호에서 먼저 끊고, 그래도 길면 어절 경계에서 max_chars 기준으로 끊는다.
@@ -198,7 +209,7 @@ def _write_wav(path: str, pcm: bytes, rate: int) -> None:
 # ---------------------------------------------------------------- Gemini TTS
 
 def _gemini_say(api_key: str, text: str, voice: str, style: str,
-                model: str = GEMINI_TTS_MODEL, attempts: int = 4) -> tuple[bytes, int]:
+                model: str = GEMINI_TTS_MODEL, attempts: int = 3) -> tuple[bytes, int]:
     """한 덩어리를 Gemini TTS로 합성해 원시 PCM과 샘플레이트를 돌려준다."""
     body = json.dumps({
         "contents": [{"parts": [{"text": f"{style}:\n{text}" if style else text}]}],
@@ -225,15 +236,23 @@ def _gemini_say(api_key: str, text: str, voice: str, style: str,
                 raise TTSError(f"Gemini TTS 응답에 음성이 없습니다: {str(data)[:200]}")
             return base64.b64decode(inline["data"]), _pcm_rate(inline.get("mimeType", ""))
         except urllib.error.HTTPError as e:
-            detail = e.read().decode("utf-8", "replace")[:300]
+            detail = e.read().decode("utf-8", "replace")[:400]
             last = f"HTTP {e.code}: {detail}"
             if e.code in (401, 403):      # 키 문제 — 다시 해도 같다
                 raise TTSError(f"Gemini TTS 인증 실패({last}). GEMINI_API_KEY 를 확인하세요.") from e
-            if e.code == 429 and i < attempts - 1:
-                wait = 8 * (i + 1)        # 분당 호출 제한 — 넉넉히 쉬고 다시
-                print(f"  호출 제한에 걸려 {wait}초 쉬었다 다시 시도합니다({i + 2}/{attempts})")
-                time.sleep(wait)
-                continue
+            if e.code == 429:
+                # 하루치가 바닥난 것이면 기다려도 오늘은 안 열린다. 바로 손을 턴다
+                # (예전엔 씬마다 48초씩 버리고도 결국 실패했다).
+                if re.search(r"per\s*day|PerDay|daily", detail, re.I):
+                    raise QuotaError(
+                        "Gemini 성우의 오늘 할당량을 다 썼습니다.") from e
+                if i < attempts - 1:
+                    wait = 20 * (i + 1)   # 분당 제한 — 한 번은 넉넉히 쉬고 다시
+                    print(f"  분당 호출 제한에 걸려 {wait}초 쉽니다({i + 2}/{attempts})")
+                    time.sleep(wait)
+                    continue
+                raise QuotaError(
+                    "Gemini 성우 호출 제한을 계속 넘습니다(할당량 소진으로 보입니다).") from e
             if i < attempts - 1:
                 time.sleep(2 ** i)
                 continue
@@ -264,7 +283,8 @@ def _style_for(direction: str, line: dict, is_first: bool, is_last: bool) -> str
 
 
 def _synth_gemini(index: int, text: str, work_dir: str, *, api_key: str,
-                  voice: str, direction: str, max_chars: int) -> SceneAudio:
+                  voice: str, direction: str, max_chars: int,
+                  gap: float = 0.0) -> SceneAudio:
     lines = split_lines(text, max_chars=max_chars)
     if not lines:
         raise TTSError(f"{index + 1}번 씬 대본이 비어 있습니다.")
@@ -274,6 +294,8 @@ def _synth_gemini(index: int, text: str, work_dir: str, *, api_key: str,
     timed: list[dict] = []
     for i, ln in enumerate(lines):
         style = _style_for(direction, ln, is_first=(i == 0), is_last=(i == len(lines) - 1))
+        if gap > 0 and not (index == 0 and i == 0):
+            time.sleep(gap)               # 분당 호출 제한을 덜 건드리게 띄엄띄엄 부른다
         pcm, rate = _gemini_say(api_key, ln["text"], voice, style)
         pcm = _trim_silence(pcm, rate)
         start = len(pcm_all) / 2 / rate
@@ -342,7 +364,7 @@ def _core(s: str) -> str:
 
 
 def _group_edge_lines(words: list[tuple[float, float, str]], text: str,
-                      max_chars: int) -> list[dict]:
+                      max_chars: int = 20) -> list[dict]:
     """Edge-TTS 단어 타임스탬프를 화면 한 줄 단위로 묶는다."""
     tokens = text.split()
     ti, lines, cur, cur_chars = 0, [], [], 0
@@ -404,7 +426,7 @@ def synthesize_scene(index: int, text: str, work_dir: str, *,
                      voice: str = "Sulafat",
                      direction: str = "",
                      rate: str = "+0%", pitch: str = "+0Hz",
-                     max_chars: int = 13) -> SceneAudio:
+                     max_chars: int = 20, gap: float = 0.0) -> SceneAudio:
     """씬 대본 한 편 → 음성 파일 + 줄 단위 자막 타이밍."""
     text = " ".join(str(text).split())
     if not text:
@@ -417,7 +439,7 @@ def synthesize_scene(index: int, text: str, work_dir: str, *,
         raise TTSError("Gemini TTS 에는 GEMINI_API_KEY 가 필요합니다.")
     v = voice if voice in GEMINI_VOICES else "Sulafat"
     return _synth_gemini(index, text, work_dir, api_key=api_key, voice=v,
-                         direction=direction, max_chars=max_chars)
+                         direction=direction, max_chars=max_chars, gap=gap)
 
 
 # 한국어 낭독 속도(음절/초). 대본만 보고 "몇 초짜리 영상을 만들어야 하나"를 미리 알려주려고 쓴다.

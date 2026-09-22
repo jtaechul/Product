@@ -87,7 +87,10 @@ def main() -> int:
     xdur = min(float(os.environ.get("XFADE", "0.4")), tail_pad)
     # 자막 한 줄 길이 = Gemini 성우의 합성 단위. 늘리면 호출 수가 줄어 빠르고 할당량을
     # 덜 쓰지만, 줄 안에서의 어절 하이라이트가 그만큼 어림값이 된다.
-    max_chars = int(os.environ.get("SUB_MAX_CHARS", "13"))
+    max_chars = int(os.environ.get("SUB_MAX_CHARS", "20"))
+    # Gemini 성우는 자막 한 줄이 곧 호출 한 번이라 할당량을 빨리 태운다.
+    # 호출 사이에 조금씩 쉬어 분당 제한을 덜 건드린다.
+    gap = float(os.environ.get("TTS_GAP", "1.0"))
     # 영상 생성 AI가 화면 구석에 박는 워터마크를 위아래 검은 띠로 덮는다(화면 높이 비율).
     band = float(os.environ.get("BAND", "0.08"))
     cover_sec = float(os.environ.get("COVER_SEC", "1.8"))
@@ -105,14 +108,29 @@ def main() -> int:
     # 1. 씬별 나레이션 합성.
     #    Gemini 성우는 타임스탬프를 안 주므로 자막 한 줄씩 따로 합성해 실제 길이를 잰다
     #    (core/tts.py 설명 참고). 그래서 줄이 뜨고 사라지는 시각이 오디오와 정확히 맞는다.
-    audios = []
-    for i, sc in enumerate(scenes):
-        print(f"[{i + 1}/{len(scenes)}] 음성 합성")
-        audios.append(tts.synthesize_scene(
-            i, sc["narration"], str(WORK),
-            engine=engine, api_key=gemini_key, voice=voice, rate=rate,
-            direction=sc.get("voice_direction", ""), max_chars=max_chars,
-        ))
+    def synth_all(eng: str, v: str):
+        out = []
+        for i, sc in enumerate(scenes):
+            print(f"[{i + 1}/{len(scenes)}] 음성 합성 ({eng})")
+            out.append(tts.synthesize_scene(
+                i, sc["narration"], str(WORK),
+                engine=eng, api_key=gemini_key, voice=v, rate=rate,
+                direction=sc.get("voice_direction", ""), max_chars=max_chars,
+                gap=gap,
+            ))
+        return out
+
+    try:
+        audios = synth_all(engine, voice)
+    except tts.QuotaError as e:
+        # 할당량이 바닥났다고 영상까지 못 만들 이유는 없다. 무료 성우로 갈아타
+        # 끝까지 뽑는다. 목소리는 밋밋해지지만 빈손으로 끝나지는 않는다.
+        # (목소리가 섞이지 않게 처음부터 다시 합성한다)
+        print(f"::warning::{e} 무료 성우(Edge)로 바꿔 끝까지 만듭니다. "
+              "감정 연기를 쓰려면 관리자 페이지 설정에서 결제된 개인 API 키를 넣으세요.")
+        engine = "edge"
+        voice = tts.FALLBACK_VOICE.get(voice, "ko-KR-SunHiNeural")
+        audios = synth_all(engine, voice)
     durs = [a.speech_duration + tail_pad for a in audios]
 
     # 2. 릴리스에서 씬 영상 받아 9:16 규격·길이 맞춤
@@ -197,6 +215,7 @@ def main() -> int:
     record["rendered_at"] = time.strftime("%Y%m%d%H%M%S", time.gmtime())
     record["duration"] = round(offset, 1)
     record["resolution"] = f"{width}x{height}"
+    record["voice_used"] = f"{engine}:{voice}"    # 할당량 때문에 바뀌었을 수 있다
     record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"완료: {up['browser_download_url']} ({offset:.1f}초, {width}x{height})")
