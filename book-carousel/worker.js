@@ -2960,7 +2960,7 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 // Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
 // 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
 // styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
-const VEO_NEGATIVE = 'adult dog, hunting dog, working dog, wolf-like, long sharp muzzle, narrow eyes, intense stare, serious face, aggressive, harsh shadows, high contrast, documentary photography, wildlife photo, gritty, dirty fur, visible skin pores, cartoon, 3D render, anime, plastic skin, waxy fur, uncanny valley, human face, English speech, English dialogue, foreign language audio, on-screen text, subtitles, captions, watermark, logo, product packaging, brand label, deformed paws, extra limbs, blurry, low quality, oversaturated, different dog breed, character redesign';
+const VEO_NEGATIVE = 'adult dog, hunting dog, working dog, wolf-like, long sharp muzzle, narrow eyes, intense stare, serious face, aggressive, black mask, black hairs, black fur markings, dark sesame coat, collar, clothes, costume, accessories, harsh shadows, high contrast, documentary photography, wildlife photo, gritty, dirty fur, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, uncanny valley, human face, English speech, English dialogue, foreign language audio, on-screen text, subtitles, captions, watermark, logo, product packaging, brand label, deformed paws, extra limbs, blurry, low quality, oversaturated, different dog breed, character redesign';
 
 const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 촬영 지시서를 쓰는 사람이다.
 사용자는 Flow에 이미 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고, 여기에 이 지시서를 붙인다.
@@ -2976,11 +2976,12 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
 4. line(대사)은 반드시 한국어다. 영어 대사를 절대 쓰지 마라.
 5. 상품 실물(포장·로고·브랜드)은 화면에 넣지 마라. Veo가 그리지 못한다.
 6. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
-7. 화면은 실사지만 **귀엽게 보정한 실사**다. 다큐멘터리·야생동물 사진처럼 날것으로 가면
-   개가 사냥개처럼 무섭게 나온다. sceneBlock에는 soft diffused light, warm pastel grading,
-   creamy bokeh, shallow depth of field, gentle glow 같은 부드러운 광고 사진 톤을 쓴다.
-   harsh shadows, high contrast, gritty, documentary 같은 표현은 절대 쓰지 마라.
-   cartoon·3D render·anime 같은 만화 표현도 쓰지 마라.
+7. 화풍은 "photorealistic 3D animated style"이다. 질감은 실사인데 비율·표정은 귀엽게
+   과장한 3D 애니메이션 중간 지대다. 시스템이 화풍 문구를 자동으로 붙이므로
+   sceneBlock에는 화풍을 다시 쓰지 말고 장소·색감·조명만 담아라.
+   다큐멘터리·야생동물 사진처럼 날것으로 가면 개가 사냥개처럼 무섭게 나온다.
+   harsh shadows, high contrast, gritty, documentary, moody 같은 표현은 절대 쓰지 마라.
+   조명은 soft even lighting, soft diffused light 처럼 부드럽게 쓴다.
 
 [클립 구성 — 역할이 정해져 있다]
 - "problem": 앞쪽. 문제 상황을 과장된 코미디로. 첫 클립은 2초 안에 터져야 한다.
@@ -3010,6 +3011,9 @@ function breedEnOf(dogText) {
   return '';
 }
 
+// 사용자가 실제로 성공한 화풍. 모든 장면 블록 앞에 반드시 들어간다.
+const STYLE_TOKEN = 'Photorealistic 3D animated style, soft even lighting, unbelievably fluffy cloud-like soft fur texture, 8k, masterful texturing';
+
 // 타임코드 표기를 0:00-0:03 꼴로 통일한다(모델이 실행마다 다른 형식을 쓴다).
 function normShots(t) {
   const fmt = (v) => {
@@ -3027,7 +3031,7 @@ async function handleVideoPrompts(env, body) {
   if (!title) throw new Error('상품 이름이 필요합니다.');
   const category = String(body.category || '').trim();
   const note = String(body.note || '').trim();
-  const dog = String(body.dog || '').trim() || '실사 기반이되 귀엽게 보정한 시바견 강아지(퍼피)';
+  const dog = String(body.dog || '').trim() || 'photorealistic 3D animated style 시바견 퍼피 — 골든크림·화이트 털, 검은 털·마스크 없음, 목줄·옷·액세서리 없음';
   const clips = Math.max(3, Math.min(10, parseInt(body.clips, 10) || 7));
 
   // 02단계 분석에서 근거가 확인된 것만 넘어온다. 없는 기능을 지어내지 못하게 하는 장치.
@@ -3078,12 +3082,13 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
     .trim();
   // 실사로 가기로 확정(2026-09). 만화·3D 표현이 섞이면 캐릭터가 흔들리므로 걷어낸다.
   if (!/3d|애니메이션|animation|cartoon/i.test(dog)) {
-    scene = scene.replace(/\b(cartoon|cartoonish|3d\s*render|anime|illustrated|illustration|stylized)\b/gi, 'photoreal')
-                 .replace(/\bphotoreal(,?\s+photoreal)+\b/gi, 'photoreal')
-                 // 거친 톤은 개를 사냥개처럼 보이게 한다 — 부드러운 광고 톤으로 바꾼다.
-                 .replace(/\b(harsh shadows?|high contrast|gritty|documentary|moody|dramatic lighting)\b/gi, 'soft diffused light')
-                 .replace(/\b(soft diffused light)(,?\s+soft diffused light)+\b/gi, 'soft diffused light');
+    // 거친 톤은 개를 사냥개처럼 보이게 한다 — 부드러운 톤으로 바꾼다. (3D 표현은 우리 화풍이라 건드리지 않는다)
+    scene = scene.replace(/\b(harsh shadows?|high contrast|gritty|documentary|moody|dramatic lighting|flat 2d cartoon|anime)\b/gi, 'soft even lighting')
+                 .replace(/\b(soft even lighting)(,?\s+soft even lighting)+\b/gi, 'soft even lighting');
   }
+
+  // 화풍은 모델 준수에 맡기지 않고 서버가 직접 붙인다 — 클립 간 그림체를 고정하는 핵심.
+  scene = STYLE_TOKEN + (scene ? '. ' + scene : '');
 
   const tone = String(out.tone || 'calm natural voice').trim();
   const ROLE_KO = { problem: '문제', transition: '전환', benefit: '상품 효용', cta: '마무리' };
@@ -3527,7 +3532,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="note">AI 영상은 실제 상품 포장을 그리지 못합니다. 그래서 영상은 <b>그 상품이 필요해지는 상황</b>만 보여주고, 상품 연결은 자막과 프로필 링크가 맡습니다.</div>
     <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
     <div class="f"><label for="pdog">강아지 설정</label>
-      <input id="pdog" type="text" value="실사 기반이되 귀엽게 보정한 시바견 강아지(퍼피)">
+      <input id="pdog" type="text" value="photorealistic 3D animated style 시바견 퍼피 (검은 털 없음, 목줄 없음)">
       <small>Flow에 캐릭터 이미지를 끌어다 쓰시니 짧게만 적으세요. 외모를 길게 적으면 참고 이미지와 충돌해 오히려 다른 개가 나옵니다.</small></div>
     <div class="row">
       <div class="f" style="flex:1"><label for="pclips">클립 개수</label>
