@@ -1327,6 +1327,7 @@ async function callGeminiText(apiKey, opts, attempt = 0, noThinking = true) {
   const { system, user, max_tokens = 1024, timeout_ms = 30000, json = false } = opts;
   const MAX_TRIES = 3;
   const BACKOFF = [1500, 4000];
+  const LONG_BACKOFF = [9000, 25000];
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TEXT_MODEL}:generateContent?key=${apiKey}`;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout_ms);
@@ -1361,8 +1362,13 @@ async function callGeminiText(apiKey, opts, attempt = 0, noThinking = true) {
     // 이 모델이 추론 끄기/JSON 모드를 모르면 400 → 그 옵션 없이 한 번 더.
     if (res.status === 400 && noThinking) return callGeminiText(apiKey, opts, attempt, false);
     if (GEMINI_RETRY_STATUS.has(res.status) && attempt < MAX_TRIES - 1) {
-      await new Promise(r => setTimeout(r, BACKOFF[attempt] || 4000));
+      // 429는 분당 한도라 짧은 백오프로는 못 빠져나온다. 훨씬 길게 쉰다.
+      const wait = res.status === 429 ? (LONG_BACKOFF[attempt] || 25000) : (BACKOFF[attempt] || 4000);
+      await new Promise(r => setTimeout(r, wait));
       return callGeminiText(apiKey, opts, attempt + 1, noThinking);
+    }
+    if (res.status === 429) {
+      throw new Error('요청 한도에 걸렸습니다. 1분쯤 뒤에 다시 눌러주세요.');
     }
     throw new Error(`[gemini ${res.status}]`);
   }
