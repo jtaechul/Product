@@ -53,7 +53,7 @@ def main() -> int:
 
     print(f"대본 생성 시작 — 주제: {topic} / {scenes}컷 / {tool}")
     board = llm.generate_storyboard(key, topic, scenes, tool,
-                                    os.environ.get("MODEL", "gemini-2.5-flash"))
+                                    os.environ.get("MODEL", ""))
 
     cid = make_id(topic)
     record = {

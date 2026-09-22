@@ -54,7 +54,15 @@ FALLBACK_VOICE = {
     "Charon": "ko-KR-InJoonNeural", "Enceladus": "ko-KR-InJoonNeural",
 }
 
-GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts"
+# Google 은 TTS 모델 아이디도 예고 없이 닫는다. 아래는 **선호 순서**일 뿐이고,
+# 실제로는 키로 쓸 수 있는 목록을 받아 살아 있는 것을 고른다(resolve_tts_model).
+TTS_MODELS = [
+    "gemini-2.5-flash-preview-tts",
+    "gemini-3.6-flash-preview-tts",
+    "gemini-flash-preview-tts",
+    "gemini-2.5-pro-preview-tts",
+]
+GEMINI_TTS_MODEL = TTS_MODELS[0]
 _GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 # 모든 낭독에 공통으로 거는 연기 지시. 씬별 지시(voice_direction)가 뒤에 덧붙는다.
@@ -88,8 +96,16 @@ class TTSError(RuntimeError):
     pass
 
 
-class QuotaError(TTSError):
+class FallbackError(TTSError):
+    """Gemini 쪽 사정이라 기다려도 안 되는 문제. 예비 엔진(Edge)으로 갈아탄다."""
+
+
+class QuotaError(FallbackError):
     """할당량이 바닥났다. 기다려도 안 되므로 예비 엔진으로 갈아타야 한다."""
+
+
+class ModelError(FallbackError):
+    """쓰려던 TTS 모델이 닫혔다(404). 살아 있는 모델이 없으면 Edge 로 간다."""
 
 
 # ---------------------------------------------------------------- 감정 마커
@@ -419,6 +435,40 @@ def _write_wav(path: str, pcm: bytes, rate: int) -> None:
 
 # ---------------------------------------------------------------- Gemini TTS
 
+_TTS_PICK: dict[str, str] = {}
+
+
+def resolve_tts_model(api_key: str) -> str:
+    """이 키로 지금 쓸 수 있는 TTS 모델 이름. 닫힌 아이디를 붙들고 죽지 않게 한다."""
+    if "m" in _TTS_PICK:
+        return _TTS_PICK["m"]
+    names: list[str] = []
+    try:
+        req = urllib.request.Request(f"{_GEMINI_BASE}/models?pageSize=1000")
+        req.add_header("x-goog-api-key", api_key)
+        with urllib.request.urlopen(req, timeout=60) as r:
+            data = json.loads(r.read())
+        for m in data.get("models") or []:
+            name = str(m.get("name") or "").split("/")[-1]
+            methods = m.get("supportedGenerationMethods") or []
+            if name and "tts" in name and (not methods or "generateContent" in methods):
+                names.append(name)
+    except Exception as e:  # noqa: BLE001 — 목록이 막혀도 기본값으로 시도해 본다
+        print(f"  (TTS 모델 목록을 못 받았습니다: {str(e)[:100]})")
+        return GEMINI_TTS_MODEL
+    if not names:
+        raise ModelError("이 키로 쓸 수 있는 Gemini TTS 모델이 없습니다.")
+
+    pick = next((c for c in TTS_MODELS if c in names), "")
+    if not pick:
+        flash = [n for n in names if "flash" in n]
+        pick = (flash or names)[0]
+    if pick != GEMINI_TTS_MODEL:
+        print(f"  TTS 모델을 {pick} 로 씁니다({GEMINI_TTS_MODEL} 은 쓸 수 없습니다).")
+    _TTS_PICK["m"] = pick
+    return pick
+
+
 def _gemini_say(api_key: str, text: str, voice: str, style: str,
                 model: str = GEMINI_TTS_MODEL, attempts: int = 3) -> tuple[bytes, int]:
     """한 덩어리를 Gemini TTS로 합성해 원시 PCM과 샘플레이트를 돌려준다."""
@@ -451,6 +501,8 @@ def _gemini_say(api_key: str, text: str, voice: str, style: str,
             last = f"HTTP {e.code}: {detail}"
             if e.code in (401, 403):      # 키 문제 — 다시 해도 같다
                 raise TTSError(f"Gemini TTS 인증 실패({last}). GEMINI_API_KEY 를 확인하세요.") from e
+            if e.code == 404:             # 모델이 닫혔다 — 다시 해도 같다
+                raise ModelError(f"Gemini TTS 모델 {model} 을 쓸 수 없습니다({last}).") from e
             if e.code == 429:
                 # 하루치가 바닥난 것이면 기다려도 오늘은 안 열린다. 바로 손을 턴다
                 # (예전엔 씬마다 48초씩 버리고도 결국 실패했다).
@@ -485,6 +537,7 @@ def _synth_gemini(index: int, text: str, work_dir: str, *, api_key: str,
 
     # ⭐ 한 씬 안에서는 **똑같은** 지시문을 쓴다. 조각마다 바꾸면 톤이 흔들린다.
     style = build_style(direction)
+    model = resolve_tts_model(api_key)
 
     pcm_all = bytearray()
     rate = 24000
@@ -492,7 +545,7 @@ def _synth_gemini(index: int, text: str, work_dir: str, *, api_key: str,
     for i, ch in enumerate(chunks):
         if gap > 0 and not (index == 0 and i == 0):
             time.sleep(gap)               # 분당 호출 제한을 덜 건드리게 띄엄띄엄
-        pcm, rate = _gemini_say(api_key, ch["tts"], voice, style)
+        pcm, rate = _gemini_say(api_key, ch["tts"], voice, style, model=model)
         pcm = zero_cross_trim(_trim_silence(pcm, rate), rate)
         pcm = edge_fade(pcm, rate, ms=10)
         if not pcm:

@@ -18,7 +18,67 @@ from dataclasses import dataclass, field
 
 from .tts import MARKERS, estimate_seconds, strip_markers
 
-MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
+# Google 은 모델 아이디를 예고 없이 닫는다(gemini-2.5-flash 는 2026-09 에 막혀
+# 대본 생성이 404 로 통째로 죽었다). 그래서 아이디를 하나로 못 박지 않고,
+# **키로 실제 쓸 수 있는 목록을 받아** 아래 선호 순서대로 고른다(resolve_model).
+MODELS = [
+    "gemini-3.6-flash",
+    "gemini-flash-latest",
+    "gemini-3-flash",
+    "gemini-2.5-flash",
+    "gemini-3.6-pro",
+    "gemini-2.5-pro",
+]
+
+# 대본에 쓰면 안 되는 계열 — 이름만 보고 거른다.
+_NOT_TEXT = ("tts", "embedding", "image", "vision", "aqa", "live", "native-audio")
+
+_MODEL_PICK: dict[str, str] = {}
+
+
+def available_models(client) -> list[str]:
+    """이 키로 글을 만들 수 있는 모델 이름 목록."""
+    out = []
+    for m in client.models.list():
+        name = str(getattr(m, "name", "") or "").split("/")[-1]
+        acts = list(getattr(m, "supported_actions", None) or [])
+        if not name or any(k in name for k in _NOT_TEXT):
+            continue
+        if acts and "generateContent" not in acts:
+            continue
+        out.append(name)
+    return out
+
+
+def resolve_model(client, want: str = "") -> str:
+    """쓰겠다고 한 모델이 아직 살아 있으면 그대로, 막혔으면 살아 있는 것으로 바꾼다."""
+    key = want or "*"
+    if key in _MODEL_PICK:
+        return _MODEL_PICK[key]
+    try:
+        names = available_models(client)
+    except Exception as e:  # noqa: BLE001 — 목록 조회가 막혀도 생성은 시도해 본다
+        print(f"::warning::모델 목록을 못 받았습니다({str(e)[:120]}). {want or MODELS[0]} 로 그냥 갑니다.")
+        return want or MODELS[0]
+    if not names:
+        return want or MODELS[0]
+
+    pick = ""
+    for cand in ([want] if want else []) + MODELS:
+        if cand and cand in names:
+            pick = cand
+            break
+    if not pick:
+        # 선호 목록이 전부 닫혔을 때 — 살아 있는 flash 계열 중 별칭(latest)을 먼저 본다.
+        flash = [n for n in names if "flash" in n]
+        pool = flash or names
+        pick = next((n for n in pool if n.endswith("-latest")), pool[0])
+    if want and pick != want:
+        print(f"::warning::{want} 모델을 쓸 수 없어 {pick} 로 바꿉니다.")
+    else:
+        print(f"대본 모델: {pick}")
+    _MODEL_PICK[key] = pick
+    return pick
 
 # 기준 이미지를 만들 인물 수 상한. 늘릴수록 운영자가 만들어야 할 이미지가 늘어난다.
 MAX_CHARACTERS = 3
@@ -531,7 +591,7 @@ def _check_flow(narrations: list[str], names: list[str]) -> None:
 
 
 def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
-                        model: str = "gemini-2.5-flash") -> Storyboard:
+                        model: str = "") -> Storyboard:
     """주제 → 스토리보드. 세 단계로 나눠 만든다.
 
     ① 줄거리와 인물(발단·전개·위기·절정·결말) → ② 컷마다 무슨 일이 벌어지는지 한 줄씩
@@ -543,6 +603,7 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
 
     cfg = TOOLS[tool]
     client = genai.Client(api_key=api_key)
+    model = resolve_model(client, model)
     # 대목이 다섯이라 컷도 최소 다섯이어야 한 대목이 통째로 비지 않는다.
     n_scenes = max(len(ACTS), min(MAX_SCENES, int(n_scenes)))
     alloc = allocate_acts(n_scenes)
