@@ -2971,6 +2971,8 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타그램 릴스의 영�
 8. 사용자가 지정한 그림체(예: 3D 애니메이션풍)는 styleBlock에 반드시 그대로 반영한다.
    3D 애니메이션풍이면 stylized 3D animation, soft fluffy fur, rounded shapes,
    large expressive eyes 같은 표현을 넣고 실사(photorealistic) 표현은 쓰지 마라.
+9. styleBlock 맨 앞에 견종 이름을 영어로 반드시 적는다(예: Shiba Inu). 견종이 빠지면
+   클립마다 다른 개가 나온다.
 
 [구성]
 - 첫 클립: 2초 안에 문제가 터져야 한다. 스크롤을 멈추게 하는 가장 웃긴 순간으로 시작한다.
@@ -2979,6 +2981,23 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타그램 릴스의 영�
 - subtitle은 한국어 한 줄, 공백 포함 22자 이내. 반말·구어체로 웃기게 쓴다. 상품 이름을 넣지 않는다.
 
 반드시 JSON만 출력한다.`;
+
+// 한국어 견종 → Veo가 알아듣는 영어 견종. styleBlock에 빠지면 클립마다 다른 개가 나오므로
+// 모델의 준수에 맡기지 않고 서버가 직접 채워 넣는다.
+const BREEDS = [
+  [/시바|시바견/, 'Shiba Inu'], [/말티즈|몰티즈/, 'Maltese'], [/포메라니안|포메/, 'Pomeranian'],
+  [/푸들|푸들리/, 'Poodle'], [/비숑/, 'Bichon Frise'], [/웰시코기|코기/, 'Welsh Corgi'],
+  [/골든\s?리트리버|리트리버/, 'Golden Retriever'], [/진돗개|진도개/, 'Jindo'],
+  [/치와와/, 'Chihuahua'], [/닥스훈트|닥스/, 'Dachshund'], [/시츄|시추/, 'Shih Tzu'],
+  [/요크셔|요키/, 'Yorkshire Terrier'], [/불독|불도그/, 'Bulldog'], [/사모예드/, 'Samoyed'],
+  [/보더콜리|콜리/, 'Border Collie'], [/비글/, 'Beagle'], [/슈나우저/, 'Schnauzer'],
+  [/허스키/, 'Siberian Husky'], [/스피츠/, 'Spitz'], [/퍼그/, 'Pug'],
+];
+function breedEnOf(dogText) {
+  const t = String(dogText || '');
+  for (const [re, en] of BREEDS) if (re.test(t)) return en;
+  return '';
+}
 
 async function handleVideoPrompts(env, body) {
   const title = String(body.title || '').trim();
@@ -3025,7 +3044,12 @@ clips 배열은 정확히 ${clips}개여야 한다.`;
   }
   const out = extractJson(raw);
   const list = Array.isArray(out.clips) ? out.clips : [];
-  const style = String(out.styleBlock || '').trim();
+  let style = String(out.styleBlock || '').trim();
+  // 견종이 빠졌으면 맨 앞에 붙인다 — 클립 간 같은 개를 보장하는 핵심 장치.
+  const breedEn = breedEnOf(dog);
+  if (breedEn && !new RegExp(breedEn.replace(/\s+/g, '\\s*'), 'i').test(style)) {
+    style = breedEn + ', ' + style;
+  }
   return {
     success: true,
     problem: out.problem || '',
