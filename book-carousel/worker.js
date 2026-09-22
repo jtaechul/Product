@@ -2784,6 +2784,15 @@ const TITLE_FEATURES = [
   [/기모|보온|겨울/, '추위 대비'],
 ];
 
+// 쿠팡 상품명은 보통 브랜드로 시작한다. 검색 결과가 이 상품 이야기인지 가르는 데 쓴다.
+function brandOf(title) {
+  const first = String(title || '').trim().split(/\s+/)[0] || '';
+  const c = first.replace(/[^가-힣A-Za-z0-9]/g, '');
+  if (!c || c.length < 2) return '';
+  if (/^(강아지|고양이|반려견|반려묘|반려|애견|애완|펫|대형견|중형견|소형견)$/.test(c)) return '';
+  return c;
+}
+
 function featuresFromTitle(title) {
   const t = String(title || '');
   const out = [];
@@ -2876,10 +2885,11 @@ async function handleProductInsight(env, body) {
 이 상품의 실제 구매 후기와 사용기를 검색해서 아래 JSON으로 정리하라.
 {
   "notFound": false,
-  "points": [{"text": "특징이나 장점 한 줄", "evidence": "어느 후기·글에서 확인했는지 한 줄"}],
-  "pains": [{"text": "이 상품을 사기 전 견주가 겪던 불편 한 줄", "evidence": "어디서 확인했는지 한 줄"}]
+  "points": [{"text": "특징이나 장점 한 줄", "evidence": "어느 글에서 확인했는지 + 그 글이 다루는 상품의 브랜드명을 반드시 포함"}],
+  "pains": [{"text": "이 상품을 사기 전 견주가 겪던 불편 한 줄", "evidence": "어디서 확인했는지 + 그 글이 다루는 상품의 브랜드명"}]
 }
-points는 최대 5개, pains는 최대 4개. 확인하지 못한 것은 넣지 말고 빈 배열로 둬라.`;
+points는 최대 5개, pains는 최대 4개. 확인하지 못한 것은 넣지 말고 빈 배열로 둬라.
+evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.`;
     try {
       const r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 2048 });
       sources = r.sources;
@@ -2905,17 +2915,30 @@ points는 최대 5개, pains는 최대 4개. 확인하지 못한 것은 넣지 �
     }
   }
 
+  // ⭐ 교차 오염 차단 — 검색이 다른 브랜드 글을 물어오는 일이 잦다.
+  //    근거에 이 상품의 브랜드가 없으면 "이 상품이 확인됐다"고 말하지 않고 품목 일반으로 내린다.
+  const brand = brandOf(title);
+  const isThis = (x) => !!brand && (x.text + ' ' + x.evidence).includes(brand);
+  const verified = brand ? points.filter(isThis) : [];
+  const general = brand ? points.filter(x => !isThis(x)) : points;
+  if (brand && !verified.length && general.length && !note) {
+    note = `검색 결과가 "${brand}" 제품을 직접 다루지 않아, 같은 품목의 일반적인 이야기로 표시했습니다.`;
+  }
+
+  // 추천 이유 초안은 "이 상품이라고 확신할 수 있는 것"만으로 만든다.
+  const sure = [...titleFeatures.map(x => x.text), ...verified.map(x => x.text)].slice(0, 3);
+
   return {
     success: true,
     grounded,
     note,
-    titleFeatures,
-    points,
+    brand,
+    titleFeatures,   // 상품명 근거 — 확실
+    verified,        // 검색 결과 중 이 브랜드가 언급된 것
+    general,         // 같은 품목의 일반적인 이야기 (참고용)
     pains,
     sources,
-    // 추천 이유 칸에 바로 넣을 초안 (근거 있는 것만 모아 만든다)
-    draft: [...titleFeatures.map(x => x.text), ...points.map(x => x.text)].slice(0, 3).join('. ')
-      + (titleFeatures.length || points.length ? '.' : ''),
+    draft: sure.length ? sure.join('. ') + '.' : '',
   };
 }
 
