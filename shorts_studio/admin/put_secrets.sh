@@ -28,7 +28,8 @@ put SESSION_SECRET "${SEC_SESSION_SECRET:-}"
 put KEY_SECRET     "${SEC_KEY_SECRET:-}"
 
 # 사용자 목록은 아이디별 칸(U1..U8)을 모아서 만든다. 비밀번호는 찍지 않는다.
-python3 build_users.py users.json
+WHO=$(python3 build_users.py users.json)
+echo "  $WHO"
 if [ -s users.json ]; then
   $W secret put USERS < users.json >/dev/null
   echo "  USERS 반영"
@@ -37,3 +38,14 @@ fi
 rm -f users.json
 
 echo "끝났습니다 (총 ${changed}개)."
+
+# 로그를 뒤지지 않아도 "무슨 아이디로 들어가면 되는지" 바로 보이게 한다.
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+  {
+    echo "## 로그인 정보"
+    echo ""
+    echo "- $WHO"
+    echo "- 관리자 계정 \`admin\` + \`MOVIEGEN_ADMIN_PASSWORD\` 는 **언제나** 살아 있습니다."
+    echo "- 아이디 칸을 비우고 비밀번호만 쳐도 들어갑니다."
+  } >> "$GITHUB_STEP_SUMMARY"
+fi
