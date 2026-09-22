@@ -2754,6 +2754,171 @@ async function handleCoupangDeeplink(env, body) {
   return { success: true, links: (d?.data || []).map(x => x.shortenUrl || x.landingUrl).filter(Boolean) };
 }
 
+// ===== 상품 특징·장점 도출 =====
+// 두 갈래로 근거를 만든다.
+//  (1) 상품명 해독 — 쿠팡 상품명에 이미 박혀 있는 특징. 근거가 상품명 자체라 지어낼 수 없다.
+//  (2) 웹검색 조사 — Gemini에 검색 도구를 붙여 실제 후기를 찾아 읽게 한다. 근거 없는 항목은 버린다.
+
+// 상품명에 나타나는 표현 → 그 표현이 실제로 뜻하는 특징.
+// 왼쪽 표현이 상품명에 없으면 절대 만들어지지 않으므로 할루시네이션이 구조적으로 불가능하다.
+const TITLE_FEATURES = [
+  [/고흡수|초흡수|흡수력/, '흡수가 빠름'],
+  [/논슬립|미끄럼\s?방지|미끄러짐/, '미끄러지지 않음'],
+  [/저알러지|알러지|알레르기|단일\s?단백|가수분해/, '알러지 부담을 줄임'],
+  [/관절|슬개골|무릎/, '관절 부담을 줄임'],
+  [/무형광|무표백|친환경|천연|무독성/, '유해 성분을 줄임'],
+  [/탈취|소취|냄새/, '냄새를 잡아줌'],
+  [/대용량|[0-9]{2,}\s?(개입|매|p|P)/, '대용량'],
+  [/방수|생활방수/, '물이 새지 않음'],
+  [/경량|초경량|가벼운/, '가벼움'],
+  [/조절|사이즈\s?조절|길이조절/, '몸에 맞게 조절됨'],
+  [/야광|빛반사|반사/, '어두운 곳에서 잘 보임'],
+  [/세척|물세탁|빨아|재사용/, '빨아서 다시 씀'],
+  [/국내산|국산/, '국내 생산'],
+  [/무첨가|무곡물|그레인프리|휴먼그레이드/, '첨가물을 줄임'],
+  [/덴탈|치석|치아|이빨/, '치아 관리'],
+  [/퍼피|어덜트|시니어|전연령|노령/, '연령대에 맞춤'],
+  [/소형견|중형견|대형견|초소형/, '견종 크기에 맞춤'],
+  [/가슴줄|하네스/, '목 대신 가슴을 잡아줌'],
+  [/쿨|냉감|여름/, '더위 대비'],
+  [/기모|보온|겨울/, '추위 대비'],
+];
+
+function featuresFromTitle(title) {
+  const t = String(title || '');
+  const out = [];
+  for (const [re, label] of TITLE_FEATURES) {
+    const m = t.match(re);
+    if (m && !out.some(x => x.text === label)) {
+      out.push({ text: label, evidence: `상품명의 "${m[0]}"` });
+    }
+  }
+  return out;
+}
+
+// 웹검색을 붙인 Gemini 호출. 검색 도구는 2.5 계열에서 지원되므로 전용 모델을 쓴다.
+const GEMINI_SEARCH_MODEL = 'gemini-2.5-flash';
+
+async function callGeminiGrounded(apiKey, opts, noThinking = true) {
+  const { system, user, max_tokens = 2048, timeout_ms = 60000 } = opts;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_SEARCH_MODEL}:generateContent?key=${apiKey}`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeout_ms);
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: system ? { parts: [{ text: system }] } : undefined,
+        contents: [{ role: 'user', parts: [{ text: user }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: {
+          maxOutputTokens: max_tokens,
+          temperature: 0.2, // 조사용이므로 낮게 — 상상하지 않게
+          ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+        },
+      }),
+      signal: ctrl.signal,
+    });
+  } catch (e) {
+    clearTimeout(timer);
+    throw new Error('웹검색 조사 시간 초과');
+  }
+  clearTimeout(timer);
+  if (!res.ok) {
+    // 이 모델/계정이 검색 도구나 추론 끄기를 모르면 한 번 더 완화해서 시도.
+    if (res.status === 400 && noThinking) return callGeminiGrounded(apiKey, opts, false);
+    const t = await res.text();
+    throw new Error(`[gemini-search ${res.status}] ${t.slice(0, 160)}`);
+  }
+  const d = await res.json();
+  const cand = d?.candidates?.[0];
+  const text = (cand?.content?.parts || []).map(x => x.text || '').join('');
+  if (!text.trim() && noThinking) return callGeminiGrounded(apiKey, opts, false);
+  // 검색으로 실제 참고한 웹 출처 — 운영자가 직접 눌러 확인할 수 있게 그대로 넘긴다.
+  const chunks = cand?.groundingMetadata?.groundingChunks || [];
+  const sources = chunks
+    .map(c => ({ title: c?.web?.title || '', url: c?.web?.uri || '' }))
+    .filter(x => x.url)
+    .slice(0, 8);
+  return { text, sources };
+}
+
+const INSIGHT_SYSTEM = `당신은 반려동물 용품의 실제 구매 후기를 조사해 "사실만" 정리하는 조사원이다.
+
+[절대 규칙 — 어기면 결과 전체가 폐기된다]
+1. 웹 검색으로 확인한 내용만 쓴다. 검색 결과에 없으면 절대 지어내지 마라.
+2. 모든 항목에 근거(evidence)를 반드시 남긴다. 근거를 댈 수 없으면 그 항목을 통째로 빼라.
+3. 확인된 것이 하나도 없으면 빈 배열을 돌려라. 빈 배열은 실패가 아니라 정직한 결과다.
+4. 존재하지 않는 상품 같으면 notFound를 true로 하고 빈 배열을 돌려라.
+5. 병을 고친다·낫는다 같은 의학적 효능 주장은 절대 쓰지 마라.
+6. 특정 브랜드를 깎아내리는 말은 쓰지 마라.
+
+한국어로 쓰고, JSON만 출력한다.`;
+
+async function handleProductInsight(env, body) {
+  const title = String(body.title || '').trim();
+  if (!title) throw new Error('상품 이름이 필요합니다.');
+  const category = String(body.category || '').trim();
+
+  // (1) 상품명 해독 — 항상 된다. 설정도 통신도 필요 없다.
+  const titleFeatures = featuresFromTitle(title);
+
+  // (2) 웹검색 조사 — 실패해도 (1)은 남으므로 전체가 죽지 않는다.
+  let points = [], pains = [], sources = [], grounded = false, note = '';
+  const gk = await getGeminiKey(env);
+  if (!gk) {
+    note = 'Gemini 키가 없어 상품명 해독만 했습니다.';
+  } else {
+    const user = `상품: ${title}
+품목: ${category || '반려동물 용품'}
+
+이 상품의 실제 구매 후기와 사용기를 검색해서 아래 JSON으로 정리하라.
+{
+  "notFound": false,
+  "points": [{"text": "특징이나 장점 한 줄", "evidence": "어느 후기·글에서 확인했는지 한 줄"}],
+  "pains": [{"text": "이 상품을 사기 전 견주가 겪던 불편 한 줄", "evidence": "어디서 확인했는지 한 줄"}]
+}
+points는 최대 5개, pains는 최대 4개. 확인하지 못한 것은 넣지 말고 빈 배열로 둬라.`;
+    try {
+      const r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 2048 });
+      sources = r.sources;
+      grounded = sources.length > 0;
+      const parsed = extractJson(r.text);
+      if (parsed?.notFound === true) {
+        note = '검색으로 이 상품을 확인하지 못해, 상품명에서 읽은 것만 남겼습니다.';
+      }
+      // ⭐ 근거 없는 항목은 서버에서 버린다 — 모델이 규칙을 어겨도 통과하지 못한다.
+      const clean = (arr) => (Array.isArray(arr) ? arr : [])
+        .map(x => (typeof x === 'string' ? { text: x, evidence: '' } : x))
+        .filter(x => x && String(x.text || '').trim() && String(x.evidence || '').trim())
+        .map(x => ({ text: String(x.text).trim().slice(0, 120), evidence: String(x.evidence).trim().slice(0, 160) }));
+      points = clean(parsed?.points).slice(0, 5);
+      pains = clean(parsed?.pains).slice(0, 4);
+      // 웹 출처가 하나도 없으면 "검색했다"고 볼 수 없다 → 검색 기반 항목을 신뢰하지 않는다.
+      if (!grounded && (points.length || pains.length)) {
+        points = []; pains = [];
+        note = '웹 출처를 확인하지 못해 검색 결과는 버리고, 상품명에서 읽은 것만 남겼습니다.';
+      }
+    } catch (e) {
+      note = `웹검색 조사는 실패했고(${e.message}) 상품명 해독만 했습니다.`;
+    }
+  }
+
+  return {
+    success: true,
+    grounded,
+    note,
+    titleFeatures,
+    points,
+    pains,
+    sources,
+    // 추천 이유 칸에 바로 넣을 초안 (근거 있는 것만 모아 만든다)
+    draft: [...titleFeatures.map(x => x.text), ...points.map(x => x.text)].slice(0, 3).join('. ')
+      + (titleFeatures.length || points.length ? '.' : ''),
+  };
+}
+
 // ===== 릴스 영상 프롬프트 생성 (Google Flow / Veo 용) =====
 // Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
 // 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
@@ -2787,13 +2952,18 @@ async function handleVideoPrompts(env, body) {
   const category = String(body.category || '').trim();
   const note = String(body.note || '').trim();
   const dog = String(body.dog || '').trim() || '흰색 몰티즈, 솜털 같은 털, 작은 체구, 까만 동그란 눈';
+  // 상품 분석에서 근거가 확인된 불편만 넘어온다. 있으면 이 중에서 고르게 해 지어내기를 막는다.
+  const pains = (Array.isArray(body.pains) ? body.pains : [])
+    .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
+    .filter(Boolean).slice(0, 4);
   const clips = Math.max(3, Math.min(10, parseInt(body.clips, 10) || 7));
 
   const user = `상품: ${title}
 품목: ${category || '반려동물 용품'}
 강아지 설정: ${dog}${note ? `\n추가 메모: ${note}` : ''}
 
-이 상품이 해결해 주는 "견주의 진짜 문제"를 하나 잡고, 그 문제를 ${clips}개 클립으로 웃기게 풀어라.
+${pains.length ? `실제 구매자들이 겪었다고 확인된 불편(이 중에서 고를 것):\n- ${pains.join('\n- ')}\n` : ''}
+이 상품이 해결해 주는 "견주의 진짜 문제"를 하나 잡고, 그 문제를 ${clips}개 클립으로 웃기게 풀어라.${pains.length ? ' 위에 적힌 불편 중 하나를 골라라. 목록에 없는 문제를 지어내지 마라.' : ''}
 
 아래 형태의 JSON만 출력:
 {
@@ -3989,6 +4159,7 @@ export default {
         else if (url.pathname === '/api/coupang/status') result = {
           success: true, configured: !!(env.COUPANG_ACCESS_KEY && env.COUPANG_SECRET_KEY),
         };
+        else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
         else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
         else if (url.pathname === '/api/telegram-recipients') {
           // 앱에서 텔레그램 추가 수신자(채팅 ID) 등록/삭제/조회 (터미널·대시보드 없이).
