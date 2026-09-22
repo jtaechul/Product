@@ -31,6 +31,11 @@ on:
         default: "노란색"
         type: choice
         options: ["노란색", "연두색", "하늘색", "분홍색"]
+      gemini_key_enc:
+        description: "봉해진 개인 API 키 (관리자 페이지가 넣습니다 · 사람이 쓰지 마세요)"
+        required: false
+        default: ""
+        type: string
       hq:
         description: "고화질 1080x1920 (느림)"
         required: false
@@ -48,7 +53,7 @@ jobs:
   render:
     runs-on: ubuntu-latest
     name: 렌더링
-    timeout-minutes: 45
+    timeout-minutes: 90   # 20컷이면 클립 20개를 받아 변환하고 전환까지 걸어야 한다
     defaults:
       run:
         working-directory: shorts_studio
@@ -65,12 +70,14 @@ jobs:
           sudo apt-get install -y -qq ffmpeg fonts-nanum fonts-nanum-extra
           fc-cache -f
 
-      - run: pip install --quiet "edge-tts>=7.0"
+      - run: pip install --quiet "edge-tts>=7.0" "cryptography>=42.0"
 
       - name: 렌더링
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_KEY_ENC: ${{ inputs.gemini_key_enc }}
+          KEY_SECRET: ${{ secrets.MOVIEGEN_KEY_SECRET || secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}
           CONTENT_ID: ${{ inputs.content_id }}
           TTS_ENGINE: ${{ inputs.engine }}
           VOICE: ${{ inputs.voice }}

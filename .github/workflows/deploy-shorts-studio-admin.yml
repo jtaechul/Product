@@ -6,6 +6,10 @@ name: Deploy Shorts Studio Admin
 # 필요한 값 (Settings → Secrets and variables → Actions)
 #   CF_API_TOKEN              이미 등록돼 있다 (book-carousel 이 쓰는 그 값)
 #   MOVIEGEN_ADMIN_PASSWORD   관리자 페이지에 들어갈 비밀번호 (직접 정한다)
+#   MOVIEGEN_USERS            (선택) 여러 사람이 쓸 때 아이디·비밀번호 목록. JSON 한 줄:
+#                             [{"id":"jt","pw":"비밀번호","name":"보여줄 이름"}]
+#                             없으면 아이디 admin + MOVIEGEN_ADMIN_PASSWORD 1인 모드
+#   MOVIEGEN_KEY_SECRET       (선택) 개인 API 키를 봉할 열쇠. 없으면 위 값들을 물려받는다
 #   MOVIEGEN_ADMIN_GH_TOKEN   GitHub 토큰 — Contents = Read and write, Actions = Read and write
 #                             ⚠️ Contents 는 **쓰기**가 필요하다. 씬 영상을 깃허브 릴리스에
 #                                올리기 때문이다.
@@ -118,6 +122,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          USERS_JSON: ${{ secrets.MOVIEGEN_USERS }}
         run: |
           set -o pipefail
           # 어느 판이 올라갔는지 코드에 찍는다 — /health 로 확인할 수 있다.
@@ -133,6 +138,17 @@ jobs:
           # 서명키에 커밋 번호를 섞지 않는다. 섞으면 고칠 때마다 로그인이 풀린다.
           printf '%s' "${{ secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}" \
             | npx --yes wrangler@4 secret put SESSION_SECRET
+          # 개인 API 키를 봉할 열쇠. Actions 쪽도 같은 값을 써야 열 수 있다
+          # (shorts-studio-script/render 워크플로의 KEY_SECRET).
+          printf '%s' "${{ secrets.MOVIEGEN_KEY_SECRET || secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}" \
+            | npx --yes wrangler@4 secret put KEY_SECRET
+          # 사용자 목록(아이디+비밀번호). 값은 셸에 직접 박지 않고 환경변수로 받는다
+          # — JSON 안에 따옴표가 있어도 명령이 깨지지 않게.
+          if [ -n "$USERS_JSON" ]; then
+            printf '%s' "$USERS_JSON" | npx --yes wrangler@4 secret put USERS
+          else
+            echo "MOVIEGEN_USERS 가 없어 1인 모드(아이디 admin)로 둡니다."
+          fi
 
 
       - name: 주소 안내
@@ -147,7 +163,10 @@ jobs:
               echo ""
               echo "이 주소를 **아이폰 사파리에서 열고 홈 화면에 추가**해 두십시오. 앱처럼 열립니다."
               echo ""
-              echo "처음 열면 비밀번호를 묻습니다. \`MOVIEGEN_ADMIN_PASSWORD\` 에 넣은 값입니다."
+              echo "처음 열면 아이디와 비밀번호를 묻습니다."
+              echo ""
+              echo "- \`MOVIEGEN_USERS\` 를 등록했다면 그 목록의 아이디·비밀번호"
+              echo "- 등록하지 않았다면 아이디 \`admin\` + \`MOVIEGEN_ADMIN_PASSWORD\` 값"
             else
               echo "주소를 찾지 못했습니다. 아래 기록을 확인하십시오."
             fi

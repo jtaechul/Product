@@ -84,6 +84,9 @@
 <div id="login" hidden>
   <div class="card">
     <h2>숏폼 동화 스튜디오</h2>
+    <label for="uid">아이디</label>
+    <input id="uid" type="text" autocomplete="username" autocapitalize="off"
+           autocorrect="off" spellcheck="false" enterkeyhint="next">
     <label for="pw">비밀번호</label>
     <input id="pw" type="password" autocomplete="current-password" enterkeyhint="go">
     <button class="btn" id="btnLogin">들어가기</button>
@@ -92,7 +95,7 @@
 
 <div id="app" hidden>
 <header>
-  <h1>숏폼 동화 스튜디오</h1>
+  <h1>숏폼 동화 스튜디오 <span id="who" class="tag" style="float:right"></span></h1>
   <nav>
     <button data-tab="make" class="on">① 새로 만들기</button>
     <button data-tab="work">② 작업중</button>
@@ -111,7 +114,8 @@
         <label for="scenes">컷 수</label>
         <select id="scenes">
           <option>6</option><option>7</option><option selected>8</option>
-          <option>9</option><option>10</option>
+          <option>9</option><option>10</option><option>12</option>
+          <option>14</option><option>16</option><option>18</option><option>20</option>
         </select>
       </div>
       <div>
@@ -124,7 +128,22 @@
       </div>
     </div>
     <button class="btn" id="btnScript">대본 만들기</button>
-    <p class="hint">1~2분 걸립니다. 완료되면 ② 작업중 탭에 나타납니다.</p>
+    <p class="hint" id="scHint"></p>
+  </div>
+
+  <div class="card">
+    <h2>내 API 키 <span id="keyState" class="tag" style="float:right"></span></h2>
+    <p class="hint" style="margin-top:0">
+      대본과 성우 목소리를 만들 때 쓰는 구글 Gemini 키입니다.
+      <b>이 폰에만 저장</b>되고 서버에는 남지 않습니다. 작업을 보낼 때만 잠가서 전달합니다.</p>
+    <input id="gkey" type="password" autocomplete="off" autocapitalize="off"
+           autocorrect="off" spellcheck="false">
+    <div class="row" style="margin-top:12px">
+      <button class="btn mini sub" id="btnKeySave">이 폰에 저장</button>
+      <button class="btn mini ghost" id="btnKeyClear">지우기</button>
+    </div>
+    <p class="hint">키는 <a href="https://aistudio.google.com/apikey" target="_blank"
+      rel="noopener">구글 AI 스튜디오</a>에서 무료로 만들 수 있습니다.</p>
   </div>
 </section>
 
@@ -183,16 +202,51 @@ async function copy(text) {
 
 /* ── 로그인 ─────────────────────────────── */
 function showLogin() { $("login").hidden = false; $("app").hidden = true; }
-function showApp() { $("login").hidden = true; $("app").hidden = false; }
+function showApp(me) {
+  $("login").hidden = true;
+  $("app").hidden = false;
+  if (me && (me.name || me.id)) $("who").textContent = me.name || me.id;
+  paintKey();
+}
 $("btnLogin").onclick = (e) => busy(e.target, async () => {
+  const id = $("uid").value.trim();
   const pw = $("pw").value;
-  if (!pw) { toast("비밀번호를 입력하세요."); return; }
-  await api("/api/login", { method: "POST", body: JSON.stringify({ password: pw }) });
+  if (!id || !pw) { toast("아이디와 비밀번호를 모두 입력하세요."); return; }
+  const me = await api("/api/login", {
+    method: "POST", body: JSON.stringify({ id, password: pw }) });
   $("pw").value = "";
-  showApp();
+  try { localStorage.setItem("uid", id); } catch (_) {}
+  showApp(me);
   loadList();
 });
+$("uid").onkeydown = (e) => { if (e.key === "Enter") $("pw").focus(); };
 $("pw").onkeydown = (e) => { if (e.key === "Enter") $("btnLogin").click(); };
+try { $("uid").value = localStorage.getItem("uid") || ""; } catch (_) {}
+
+/* ── 내 API 키 (폰에만 저장) ─────────────────── */
+// 키를 우리 서버에 두지 않는다. 이 폰의 브라우저에만 저장하고, 작업을 보낼 때만
+// 워커로 넘긴다. 워커는 그걸 자물쇠로 잠가 Actions 에 전달한다 — 이 저장소는
+// 공개라, 잠그지 않으면 실행 기록 화면에 키가 그대로 보이기 때문이다.
+const myKey = {
+  get() { try { return localStorage.getItem("gk") || ""; } catch (_) { return ""; } },
+  set(v) { try { v ? localStorage.setItem("gk", v) : localStorage.removeItem("gk"); } catch (_) {} },
+};
+function maskKey(k) {
+  return k ? k.slice(0, 4) + "…" + k.slice(-4) + ` (${k.length}자)` : "";
+}
+function paintKey() {
+  const k = myKey.get();
+  $("keyState").textContent = k ? "저장됨 " + maskKey(k) : "아직 없음";
+  $("keyState").className = "tag " + (k ? "ok" : "warn");
+  $("gkey").value = "";
+  $("gkey").placeholder = k ? "바꾸려면 새 키를 붙여넣으세요" : "AIza... 로 시작하는 키";
+}
+$("btnKeySave").onclick = () => {
+  const v = $("gkey").value.trim();
+  if (!v) { toast("키를 붙여넣으세요."); return; }
+  myKey.set(v); paintKey(); toast("이 폰에 저장했습니다.");
+};
+$("btnKeyClear").onclick = () => { myKey.set(""); paintKey(); toast("지웠습니다."); };
 
 /* ── 탭 ─────────────────────────────────── */
 document.querySelectorAll("nav button").forEach((b) => {
@@ -206,14 +260,26 @@ document.querySelectorAll("nav button").forEach((b) => {
 });
 
 /* ── 대본 만들기 ────────────────────────── */
+// 컷이 늘면 영상도 그만큼 직접 만들어 올려야 한다. 누르기 전에 알려 준다.
+function paintSceneHint() {
+  const n = parseInt($("scenes").value, 10) || 8;
+  $("scHint").textContent =
+    `1~3분 걸립니다. 완료되면 ② 작업중 탭에 나타납니다. `
+    + `영상 클립을 ${n}개 만들어 올리셔야 하고, 완성본은 약 ${Math.round(n * 8)}초가 됩니다.`;
+}
+$("scenes").onchange = paintSceneHint;
+paintSceneHint();
+
 $("btnScript").onclick = (e) => busy(e.target, async () => {
   const topic = $("topic").value.trim();
   if (!topic) { toast("동화 주제를 입력하세요."); return; }
+  if (!myKey.get() && !confirm("내 API 키가 없습니다. 저장소 기본 키로 진행할까요?")) return;
   e.target.textContent = "보내는 중...";
   await api("/api/script", { method: "POST", body: JSON.stringify({
-    topic, scenes: $("scenes").value, tool: $("tool").value }) });
+    topic, scenes: $("scenes").value, tool: $("tool").value,
+    gemini_key: myKey.get() }) });
   $("topic").value = "";
-  toast("대본을 만들고 있습니다. 1~2분 뒤 ② 작업중 탭에서 새로고침해 주세요.", 6000);
+  toast("대본을 만들고 있습니다. 1~3분 뒤 ② 작업중 탭에서 새로고침해 주세요.", 6000);
 });
 
 /* ── 목록 ───────────────────────────────── */
@@ -459,6 +525,7 @@ async function openDetail(rec) {
     e.target.textContent = "보내는 중...";
     await api("/api/render", { method: "POST", body: JSON.stringify({
       id: rec.id, count: rec.scenes.length,
+      gemini_key: myKey.get(),
       voice: opts.querySelector(".v").value,
       highlight: opts.querySelector(".h").value,
       hq: opts.querySelector(".q").value,
@@ -474,7 +541,11 @@ async function openDetail(rec) {
 
 /* ── 시작 ───────────────────────────────── */
 fetch("/api/me", { credentials: "same-origin" })
-  .then((r) => { if (r.ok) { showApp(); loadList(); } else showLogin(); })
+  .then(async (r) => {
+    if (!r.ok) return showLogin();
+    showApp(await r.json().catch(() => ({})));
+    loadList();
+  })
   .catch(showLogin);
 </script>
 </body>
