@@ -2990,7 +2990,7 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 // Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
 // 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
 // styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
-const VEO_NEGATIVE = 'adult dog, hunting dog, long sharp muzzle, narrow eyes, black mask or black fur markings, collar, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, deformed paws, extra limbs, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
+const VEO_NEGATIVE = 'adult dog, hunting dog, long sharp muzzle, narrow eyes, black mask or black fur markings, collar, harness, chest support, vest, leash, strap, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, deformed paws, extra limbs, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
 
 const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 촬영 지시서를 쓰는 사람이다.
 사용자는 Flow에 이미 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고, 여기에 이 지시서를 붙인다.
@@ -3012,9 +3012,15 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
    대신 과장된 코미디 몸짓으로 쓴다:
    dramatic pout, puffed cheeks, theatrical sigh, flopping onto the floor,
    stubbornly sitting down, comically refusing to move, side-eye glance, slow blink
-6. 상품 실물(포장·로고·브랜드)은 화면에 넣지 마라. Veo가 그리지 못한다.
-7. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
-8. 화풍은 "photorealistic 3D animated style"이다. 질감은 실사인데 비율·표정은 귀엽게
+6. 상품 실물은 물론 **강아지가 몸에 걸친 것**도 쓰지 마라. 제외 목록에서 이미 금지하고 있어
+   함께 쓰면 서로 모순되어 생성이 거부된다.
+   금지: harness, chest support, collar, leash, strap, vest, wearing, strapped
+   상품의 효과는 **강아지의 움직임과 표정**으로만 보여준다.
+   예) "walking steadily with chest support" (X) → "walking lightly with a bouncy step" (O)
+7. shots에 소리·오디오에 관한 말을 한 글자도 쓰지 마라(ambient sound, no speech 등 전부).
+   소리 지시가 들어가면 Flow가 생성을 거부한다. 소리는 편집에서 따로 얹는다.
+8. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
+9. 화풍은 "photorealistic 3D animated style"이다. 질감은 실사인데 비율·표정은 귀엽게
    과장한 3D 애니메이션 중간 지대다. 시스템이 화풍 문구를 자동으로 붙이므로
    sceneBlock에는 화풍을 다시 쓰지 말고 장소·색감·조명만 담아라.
    다큐멘터리·야생동물 사진처럼 날것으로 가면 개가 사냥개처럼 무섭게 나온다.
@@ -3101,10 +3107,38 @@ const SAFE_SWAPS = [
   [/\btight (strap|leash|collar|harness)\b/gi, 'strap'],
   [/\b(restrained|trapped|tangled)\b/gi, 'lounging'],
 ];
+// 착용물·소리 언급은 제외 목록과 모순되어 생성이 거부된다. 서버가 직접 지운다.
+const GEAR_PATTERNS = [
+  /\bwith\s+(a\s+|the\s+|comfortable\s+|soft\s+|new\s+)*(chest\s+support|harness|vest|collar|leash|strap)[a-z\s]*/gi,
+  /\bwearing\s+[^,.]*/gi,
+  /\bstrapped\s+[^,.]*/gi,
+  /\b(a|the)\s+(chest\s+support|harness|vest|collar|leash|strap)\b/gi,
+  /\b(chest\s+support|harness|vest|leash)\b/gi,
+];
+const AUDIO_PATTERNS = [
+  /\bambient\s+sound\s*:?[^,.\n]*/gi,
+  /\broom tone\b[^,.\n]*/gi,
+  /\bno speech[^,.\n]*/gi,
+  /\bno audio[^,.\n]*/gi,
+  /\bsound (of|effects?)[^,.\n]*/gi,
+  /\b(audio|voice ?over|narration)\b[^,.\n]*/gi,
+];
+function stripGearAndAudio(t) {
+  let out = String(t || '');
+  for (const re of GEAR_PATTERNS) out = out.replace(re, ' ');
+  for (const re of AUDIO_PATTERNS) out = out.replace(re, ' ');
+  return out
+    .replace(/\s*,\s*,+/g, ', ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.])/g, '$1')
+    .replace(/,\s*\./g, '.')
+    .trim();
+}
+
 function safeShots(t) {
   let out = String(t || '');
   for (const [re, rep] of SAFE_SWAPS) out = out.replace(re, rep);
-  return out.replace(/\s{2,}/g, ' ').trim();
+  return stripGearAndAudio(out);
 }
 
 // 타임코드 표기를 0:00-0:03 꼴로 통일한다(모델이 실행마다 다른 형식을 쓴다).
@@ -3198,7 +3232,6 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
     const prompt = [
       'The puppy.' + (scene ? ' ' + scene : ''),
       shots,
-      'Ambient sound: soft quiet room tone with gentle paw steps.',
       `Avoid: ${VEO_NEGATIVE}.`,
     ].filter(Boolean).join('\n');
     return {
