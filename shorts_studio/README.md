@@ -21,7 +21,8 @@ shorts_studio/
 ├── admin/                  관리자 페이지 (Cloudflare Workers)
 │   ├── public/index.html   모바일 UI — 표지·인물기준이미지·프롬프트복사·영상업로드·재생
 │   ├── worker/index.mjs    로그인·GitHub 호출·업로드 중계·완성본 재생
-│   └── build_users.py      아이디별 시크릿 → 사용자 목록 (배포 때 실행)
+│   ├── build_users.py      아이디별 시크릿 → 사용자 목록
+│   └── put_secrets.sh      워커에 비밀값 밀어 넣기 (배포·주기반영이 공유)
 ├── core/                   제작 엔진 (Actions와 로컬이 공유)
 │   ├── llm.py              줄거리 → 씬 대본 + 툴별 영문 프롬프트 (Gemini)
 │   ├── tts.py              Gemini TTS 합성 + 줄 단위 실측 타이밍
@@ -34,7 +35,15 @@ shorts_studio/
 ```
 
 워크플로: `.github/workflows/shorts-studio-script.yml` · `shorts-studio-render.yml` ·
-`deploy-shorts-studio-admin.yml`
+`deploy-shorts-studio-admin.yml` · `shorts-studio-sync-secrets.yml`
+
+**⭐ 비밀번호를 바꾸면 최대 15분 안에 저절로 반영된다.**
+GitHub 시크릿을 고쳐도 그것만으로는 워커에 전달되지 않는다 — 누군가 밀어 넣어 줘야 한다.
+예전엔 사람이 배포를 다시 돌려야 했고, 그걸 모르면 "비밀번호를 바꿨는데 안 들어가진다"가 된다.
+그래서 `shorts-studio-sync-secrets` 가 **15분마다 알아서 밀어 넣는다.** 당장 반영하려면
+[그 워크플로](https://github.com/jtaechul/Product/actions/workflows/shorts-studio-sync-secrets.yml)
+에서 **Run workflow** 를 누르면 된다. 배포 워크플로와 **같은 `put_secrets.sh`** 를 쓴다 —
+두 군데에 같은 코드를 두면 한쪽만 고쳐져 같은 사고가 또 난다.
 
 ## 처음 한 번만 하는 준비
 
@@ -65,7 +74,7 @@ MOVIEGEN_USER_2  →  mina:다른비밀번호:미나
 끝나고 나머지는 손댈 일이 없다. 배포할 때 `admin/build_users.py` 가 칸들을 모아 워커에 넣는다.
 (옛 방식 `MOVIEGEN_USERS` — JSON 한 줄 — 도 칸이 하나도 없을 때만 계속 받아 준다.)
 
-손님은 관리자 페이지 주소를 열고 아이디·비밀번호만 치면 된다. GitHub 토큰은 워커 안에만 있다.
+혼자 쓸 때는 **아이디 칸을 비우고 비밀번호만** 치면 된다(아이디는 여러 명일 때만 필요). GitHub 토큰은 워커 안에만 있다.
 
 ## 설계 메모
 
