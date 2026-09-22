@@ -1321,7 +1321,8 @@ async function getGeminiKey(env) {
 const GEMINI_TEXT_MODEL = 'gemini-flash-lite-latest';
 // 긴 생성(영상 프롬프트 등)은 30초를 넘기므로 timeout_ms 로 조절한다.
 // Gemini는 과부하 시 503/429를 자주 내므로 지수 백오프로 재시도한다.
-const GEMINI_RETRY_STATUS = new Set([429, 500, 502, 503, 504]);
+// 429(한도)와 모든 5xx를 재시도한다. 520·522 같은 중계 구간 오류가 실제로 관측됐다.
+function geminiRetryable(status) { return status === 429 || status >= 500; }
 
 // 구글 429 응답에서 "분당 한도인지 하루 한도인지"와 "몇 초 뒤 재시도"를 읽어낸다.
 async function geminiQuotaInfo(res) {
@@ -1392,11 +1393,13 @@ async function callGeminiText(apiKey, opts, attempt = 0, noThinking = true) {
             : `오늘 쓸 수 있는 한도를 다 썼습니다.${tail}`)
         : `요청이 몰렸습니다. ${info.retrySec || 30}초쯤 뒤에 다시 눌러주세요.${tail}`);
     }
-    if (GEMINI_RETRY_STATUS.has(res.status) && attempt < MAX_TRIES - 1) {
+    if (geminiRetryable(res.status) && attempt < MAX_TRIES - 1) {
       await new Promise(r => setTimeout(r, BACKOFF[attempt] || 4000));
       return callGeminiText(apiKey, opts, attempt + 1, noThinking);
     }
-    throw new Error(`[gemini ${res.status}]`);
+    throw new Error(res.status >= 500
+      ? `AI 서버가 잠시 불안정합니다(${res.status}). 잠시 뒤 다시 눌러주세요.`
+      : `[gemini ${res.status}]`);
   }
   const d = await res.json();
   const t = (d?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
