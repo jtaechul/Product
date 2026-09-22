@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 import urllib.request
 from pathlib import Path
 
@@ -87,6 +88,9 @@ def main() -> int:
     # 자막 한 줄 길이 = Gemini 성우의 합성 단위. 늘리면 호출 수가 줄어 빠르고 할당량을
     # 덜 쓰지만, 줄 안에서의 어절 하이라이트가 그만큼 어림값이 된다.
     max_chars = int(os.environ.get("SUB_MAX_CHARS", "13"))
+    # 영상 생성 AI가 화면 구석에 박는 워터마크를 위아래 검은 띠로 덮는다(화면 높이 비율).
+    band = float(os.environ.get("BAND", "0.08"))
+    cover_sec = float(os.environ.get("COVER_SEC", "1.8"))
     # 관리자 페이지가 봉해 보낸 사용자 개인 키를 먼저 쓰고, 없으면 저장소 기본 키.
     try:
         gemini_key = seal.gemini_key()
@@ -122,10 +126,26 @@ def main() -> int:
                                            str(WORK / f"scene_{i + 1:02d}.mp4"),
                                            width=width, height=height))
 
+    # 2-1. 표지를 맨 앞에 붙인다(올려 뒀을 때만). 나레이션은 없으므로 무음을 함께 깐다.
+    #      뒤따르는 모든 자막이 표지 길이만큼 밀린다 — 이 계산이 틀어지면 말과 글자가 어긋난다.
+    parts = [a.audio for a in audios]
+    cover_dur = 0.0
+    if cover_sec > 0 and "cover.png" in assets:
+        print("표지 붙이기")
+        img = download_asset(assets["cover.png"]["url"], token, WORK / "cover.png")
+        cover_dur = cover_sec
+        clips.insert(0, video.make_cover(str(img), cover_dur + xdur,
+                                         str(WORK / "scene_00.mp4"),
+                                         width=width, height=height))
+        durs.insert(0, cover_dur)
+        parts.insert(0, video.make_silence(cover_dur, str(WORK / "narr_00.wav")))
+    else:
+        print("표지 없음 — 건너뜁니다.")
+
     # 3. 전역 타임라인으로 가라오케 자막
     print("가라오케 자막 생성")
-    lines, offset = [], 0.0
-    for a, dur in zip(audios, durs):
+    lines, offset = [], cover_dur
+    for a, dur in zip(audios, durs[1:] if cover_dur else durs):
         for ln in a.lines:
             lines.append({
                 "start": ln["start"] + offset,
@@ -135,14 +155,17 @@ def main() -> int:
         offset += dur
     font_name, fonts_dir = video.pick_font()
     ass = subtitle.build_karaoke_ass(lines, str(WORK / "sub.ass"), font=font_name,
-                                     highlight=highlight, video_w=width, video_h=height)
+                                     highlight=highlight, video_w=width, video_h=height,
+                                     cover_title=record.get("title", "") if cover_dur else "",
+                                     cover_end=max(0.0, cover_dur - 0.15))
 
     # 4. 합성 → 최종 렌더
     print("합성 및 최종 렌더링")
-    narration = video.build_narration_track([a.audio for a in audios], durs, str(WORK))
+    narration = video.build_narration_track(parts, durs, str(WORK))
     joined = video.concat_with_transitions(clips, durs, str(WORK), xdur=xdur)
     final = video.finalize(joined, narration, ass, str(WORK / "final.mp4"),
-                           width=width, fonts_dir=fonts_dir)
+                           width=width, height=height, fonts_dir=fonts_dir,
+                           band=band)
 
     # 5. Release 업로드(없으면 만들고, 같은 이름이 있으면 먼저 지운다)
     # 태그 접두어를 프로젝트로 나눈다. 이 저장소엔 coupang 쪽 `shorts-cand` 등
@@ -169,7 +192,9 @@ def main() -> int:
         sc["actual_seconds"] = round(a.speech_duration + tail_pad, 1)
 
     record["status"] = "rendered"
+    # 주소가 같아도 내용은 바뀌었으니, 화면이 옛 영상을 캐시해 보여 주지 않게 표시를 남긴다.
     record["video"] = up["browser_download_url"]
+    record["rendered_at"] = time.strftime("%Y%m%d%H%M%S", time.gmtime())
     record["duration"] = round(offset, 1)
     record["resolution"] = f"{width}x{height}"
     record_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")

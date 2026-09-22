@@ -330,7 +330,8 @@ function doneCard(rec) {
   el.querySelector(".t").textContent = rec.title || rec.topic;
   el.querySelector(".s").textContent =
     `${rec.duration || "?"}초 · ${rec.resolution || ""} · ${(rec.hashtags || []).join(" ")}`;
-  el.querySelector("video").src = "/api/video?u=" + encodeURIComponent(rec.video);
+  el.querySelector("video").src = "/api/video?u="
+    + encodeURIComponent(rec.video + (rec.rendered_at ? "?v=" + rec.rendered_at : ""));
   const [bDown, bAgain] = el.querySelectorAll("button");
   bDown.onclick = () => window.open(rec.video, "_blank");
   // 성우나 자막 색만 바꿔 다시 만들고 싶을 때. 씬 영상은 이미 올라가 있으니 버튼 하나면 된다.
@@ -391,6 +392,51 @@ async function openDetail(rec) {
   // 씬마다 영상 AI가 따로 그리면 인물이 매번 달라진다. 기준 이미지 한 장을 만들어
   // 모든 씬에 함께 넣는 것이 유일하게 확실한 방법이다. 그래서 씬 프롬프트에는
   // 외모를 한 글자도 넣지 않는다(글과 이미지가 싸우면 컷마다 인물이 바뀐다).
+  // ── 표지 ──
+  // 쇼츠 맨 앞 1.8초에 뜨는 그림. 제목 글자는 시스템이 얹으므로 이미지엔 글자가 없어야 한다.
+  if (rec.cover_prompt) {
+    const cv = document.createElement("div");
+    cv.className = "scene";
+    cv.innerHTML = `
+      <div style="font-weight:700">표지 <span class="tag"></span></div>
+      <p class="hint" style="margin:6px 0 8px">
+        맨 앞 1.8초에 뜹니다. 제목 글자는 시스템이 또렷하게 얹으니
+        <b>그림에는 글자가 없어야</b> 합니다. 없으면 표지 없이 만들어집니다.</p>
+      <img alt="" style="display:none;width:46%;border-radius:10px;margin-bottom:10px">
+      <pre></pre>
+      <div class="row" style="margin-top:10px">
+        <button class="btn mini sub">표지 프롬프트 복사</button>
+        <button class="btn mini ghost">표지 올리기</button>
+      </div>
+      <div class="bar"><i></i></div>
+      <input type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" hidden>`;
+    cv.querySelector("pre").textContent = rec.cover_prompt;
+    const cvTag = cv.querySelector(".tag");
+    const cvImg = cv.querySelector("img");
+    const markCv = (u) => {
+      cvTag.textContent = u ? "준비됨" : "없음 (선택)";
+      cvTag.className = "tag " + (u ? "ok" : "");
+      if (u) { cvImg.src = "/api/video?u=" + encodeURIComponent(u); cvImg.style.display = "block"; }
+    };
+    markCv(up.cover);
+    const [cCopy, cUp] = cv.querySelectorAll("button");
+    const cBar = cv.querySelector(".bar");
+    const cFile = cv.querySelector("input");
+    cCopy.onclick = () => copy(rec.cover_prompt);
+    cUp.onclick = () => cFile.click();
+    cFile.onchange = () => busy(cUp, async () => {
+      const f = cFile.files[0];
+      cFile.value = "";
+      if (!f) return;
+      cUp.textContent = "올리는 중...";
+      await upload(f, rec.id, "cover", cBar);
+      const again = await api("/api/uploaded?id=" + encodeURIComponent(rec.id));
+      markCv(again.cover);
+      toast("표지를 올렸습니다.");
+    });
+    card.appendChild(cv);
+  }
+
   // 등장인물이 여럿이면 사람마다 한 장씩. 옛 기록(인물 한 명)도 그대로 읽는다.
   const cast = (rec.characters && rec.characters.length)
     ? rec.characters

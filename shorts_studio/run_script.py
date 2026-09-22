@@ -66,6 +66,7 @@ def main() -> int:
         "hashtags": board.hashtags,
         "logline": board.logline,
         "characters": [asdict(c) for c in board.characters],
+        "cover_prompt": board.cover_prompt,
         "style_lock": board.style_lock,
         "scenes": [asdict(s) for s in board.scenes],
         "status": "scripted",          # scripted → uploaded → rendered
@@ -81,6 +82,8 @@ def main() -> int:
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
             f.write(f"## {board.title}\n\n아이디: `{cid}`\n\n{board.logline}\n\n")
+            if board.cover_prompt:
+                f.write(f"**표지**\n\n```\n{board.cover_prompt}\n```\n\n")
             for c in board.characters:
                 f.write(f"**인물 · {c.name}** ({c.role})\n\n```\n{c.image_prompt}\n```\n\n")
             for i, s in enumerate(board.scenes, 1):
