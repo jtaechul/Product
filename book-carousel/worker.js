@@ -1331,7 +1331,11 @@ async function geminiQuotaInfo(res) {
   const daily = /PerDay|per day|daily/i.test(raw);
   const m = raw.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/i);
   const retrySec = m ? Math.ceil(parseFloat(m[1])) : 0;
-  return { daily, retrySec, retryMs: retrySec * 1000 };
+  // 어떤 한도인지(무료 등급인지, 검색 연동 한도인지) 그대로 보여줘야 원인을 특정할 수 있다.
+  const q = raw.match(/"quotaId"\s*:\s*"([^"]+)"/i);
+  const quotaId = q ? q[1] : '';
+  const freeTier = /FreeTier/i.test(raw);
+  return { daily, retrySec, retryMs: retrySec * 1000, quotaId, freeTier };
 }
 
 async function callGeminiText(apiKey, opts, attempt = 0, noThinking = true) {
@@ -1381,9 +1385,12 @@ async function callGeminiText(apiKey, opts, attempt = 0, noThinking = true) {
         await new Promise(r => setTimeout(r, wait));
         return callGeminiText(apiKey, opts, attempt + 1, noThinking);
       }
+      const tail = info.quotaId ? ` (한도 이름: ${info.quotaId})` : '';
       throw new Error(info.daily
-        ? '오늘 쓸 수 있는 AI 사용량을 모두 썼습니다. 내일 다시 쓸 수 있고, 지금 바로 쓰시려면 Google AI Studio에서 결제를 연결하면 풀립니다.'
-        : `요청이 몰렸습니다. ${info.retrySec || 30}초쯤 뒤에 다시 눌러주세요.`);
+        ? (info.freeTier
+            ? `이 API 키가 무료 등급 프로젝트에 속해 있어 하루 한도를 다 썼습니다. 결제가 연결된 프로젝트의 키로 바꾸면 풀립니다.${tail}`
+            : `오늘 쓸 수 있는 한도를 다 썼습니다.${tail}`)
+        : `요청이 몰렸습니다. ${info.retrySec || 30}초쯤 뒤에 다시 눌러주세요.${tail}`);
     }
     if (GEMINI_RETRY_STATUS.has(res.status) && attempt < MAX_TRIES - 1) {
       await new Promise(r => setTimeout(r, BACKOFF[attempt] || 4000));
@@ -2979,7 +2986,7 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 // Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
 // 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
 // styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
-const VEO_NEGATIVE = 'adult dog, hunting dog, working dog, wolf-like, long sharp muzzle, narrow eyes, intense stare, serious face, aggressive, black mask, black hairs, black fur markings, dark sesame coat, collar, clothes, costume, accessories, harsh shadows, high contrast, documentary photography, wildlife photo, gritty, dirty fur, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, uncanny valley, human face, English speech, English dialogue, foreign language audio, on-screen text, subtitles, captions, watermark, logo, product packaging, brand label, deformed paws, extra limbs, blurry, low quality, oversaturated, different dog breed, character redesign';
+const VEO_NEGATIVE = 'adult dog, hunting dog, long sharp muzzle, narrow eyes, intense stare, black mask or black fur markings, collar, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, deformed paws, extra limbs, English speech, English dialogue, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
 
 const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 촬영 지시서를 쓰는 사람이다.
 사용자는 Flow에 이미 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고, 여기에 이 지시서를 붙인다.
@@ -3118,11 +3125,13 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
     const line = String(c.line || '').trim();
     const role = String(c.role || 'problem').trim();
     // 캐릭터는 참고 이미지가 맡으므로 "The puppy" 한 마디만 두고 외모는 쓰지 않는다.
+    // Flow에는 제외 조건 칸이 따로 없다 → 프롬프트 맨 밑에 한 줄로 붙인다.
     const prompt = [
       'The puppy.' + (scene ? ' ' + scene : ''),
       shots,
       line ? `The puppy speaks in Korean, ${tone}.` : '',
       line ? `Korean dialogue: "${line}"` : '',
+      `Avoid: ${VEO_NEGATIVE}.`,
     ].filter(Boolean).join('\n');
     return {
       no: i + 1, role, roleKo: ROLE_KO[role] || '문제',
@@ -3822,16 +3831,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(r.caption) addCopyBtn(bar,'캡션 복사', r.caption+'\\n\\n'+(r.hashtags||[]).join(' '));
     out.appendChild(bar);
 
-    if(r.negativePrompt){
-      var ng=document.createElement('div'); ng.className='clip';
-      var nh=document.createElement('div'); nh.className='clip-hd';
-      var nn=document.createElement('span'); nn.className='clip-no'; nn.textContent='제외 조건 (한 번만 넣어두세요)';
-      nh.appendChild(nn); addCopyBtn(nh,'복사',r.negativePrompt); ng.appendChild(nh);
-      var np=document.createElement('pre'); np.textContent=r.negativePrompt; ng.appendChild(np);
-      var nt=document.createElement('div'); nt.className='sub';
-      nt.textContent='Flow의 Negative prompt 칸에 넣으면 영어 대사와 실사풍이 안 나옵니다.';
-      ng.appendChild(nt); out.appendChild(ng);
-    }
+    var tip=document.createElement('div'); tip.className='prob';
+    tip.innerHTML='<b>제외 조건은 각 프롬프트 맨 아래에 이미 들어 있습니다</b><br>'+
+      'Flow에는 제외 조건 칸이 따로 없어서, 프롬프트 끝의 Avoid 줄로 함께 넣습니다. 통째로 복사해 붙여넣으세요.';
+    out.appendChild(tip);
 
     (r.clips||[]).forEach(function(c){
       var d=document.createElement('div'); d.className='clip';
