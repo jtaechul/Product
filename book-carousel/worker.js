@@ -3371,6 +3371,16 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 }
 .clip .sub{font-size:13px;margin-top:8px;padding-left:9px;border-left:2px solid var(--brand)}
 .prob{background:#F4F6F4;border-radius:10px;padding:11px 13px;font-size:13px;margin-bottom:14px;line-height:1.6}
+.ins-grp{border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:9px}
+.ins-hd{font-size:11.5px;font-weight:700;letter-spacing:.02em;margin-bottom:7px}
+.ins-hd.sure{color:var(--brand)}
+.ins-hd.maybe{color:var(--amber)}
+.ins-hd.pain{color:var(--sub)}
+.ins-li{font-size:12.5px;line-height:1.6;padding:4px 0;border-bottom:1px dashed var(--line)}
+.ins-li:last-child{border-bottom:0}
+.ins-ev{display:block;font-size:11px;color:#9AA5AA;margin-top:2px}
+.ins-src{font-size:11.5px;color:var(--sub);margin-top:6px;line-height:1.7}
+.ins-src a{color:var(--brand)}
 .prob b{color:var(--brand-ink)}
 .note{background:#FFF8EC;border:1px solid #EBD9B8;border-left:3px solid var(--amber);border-radius:10px;padding:11px 13px;font-size:12px;color:#6B5423;line-height:1.65;margin-bottom:14px}
 </style>
@@ -3414,6 +3424,11 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       <small>쿠팡에서 불러온 상품은 자동으로 들어갑니다.</small></div>
     <div class="f"><label for="w">추천 이유</label>
       <textarea id="w" placeholder="알러지로 긁던 아이가 2주 만에 확 줄었어요. 단일 단백질이라 속도 편합니다."></textarea></div>
+    <div class="row" style="margin-bottom:13px">
+      <button class="btn btn-2 btn-sm" id="ins" type="button">특징·장점 자동 분석</button>
+    </div>
+    <div class="msg" id="insMsg"></div>
+    <div id="insOut" style="margin-bottom:13px"></div>
     <div class="f"><label for="l">쿠팡 구매 링크</label><input id="l" type="url" placeholder="https://link.coupang.com/a/...">
       <small>쿠팡에서 불러온 상품은 수수료가 붙는 링크가 자동으로 들어갑니다.</small></div>
     <button class="btn btn-wide" id="go" type="button">상품 등록하기</button>
@@ -3615,6 +3630,60 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     }).catch(function(e){ $('go').disabled=false; say('msg','등록하지 못했습니다: '+e.message,'no'); });
   });
 
+
+  /* ---- 02b 상품 특징·장점 자동 분석 ---- */
+  var lastPains = [];
+  function group(title, cls, items, withEv){
+    if(!items.length) return null;
+    var g=document.createElement('div'); g.className='ins-grp';
+    var h=document.createElement('div'); h.className='ins-hd '+cls; h.textContent=title; g.appendChild(h);
+    items.forEach(function(x){
+      var li=document.createElement('div'); li.className='ins-li'; li.textContent=x.text;
+      if(withEv && x.evidence){
+        var ev=document.createElement('span'); ev.className='ins-ev'; ev.textContent='근거 · '+x.evidence;
+        li.appendChild(ev);
+      }
+      g.appendChild(li);
+    });
+    return g;
+  }
+  $('ins').addEventListener('click', function(){
+    var title=$('t').value.trim();
+    if(!title){ say('insMsg','먼저 상품을 고르거나 상품 이름을 적어주세요.','no'); return; }
+    $('ins').disabled=true; $('insOut').textContent=''; lastPains=[];
+    say('insMsg','후기를 찾아 읽는 중… 30초쯤 걸립니다.','wait');
+    post('/api/product-insight',{title:title,category:$('c').value}).then(function(r){
+      $('ins').disabled=false;
+      if(!r||!r.success){ say('insMsg',(r&&r.error)||'분석하지 못했습니다.','no'); return; }
+      lastPains=(r.pains||[]).map(function(x){ return x.text; });
+      var out=$('insOut'); out.textContent='';
+      var g1=group('상품명으로 확인된 것 (확실)','sure',r.titleFeatures||[],true); if(g1) out.appendChild(g1);
+      var g2=group('후기에서 이 상품으로 확인된 것','sure',r.verified||[],true); if(g2) out.appendChild(g2);
+      var g3=group('같은 품목의 일반적인 이야기 (참고)','maybe',r.general||[],true); if(g3) out.appendChild(g3);
+      var g4=group('쓰기 전에 겪던 불편 (영상 소재로 쓰임)','pain',r.pains||[],false); if(g4) out.appendChild(g4);
+      if((r.sources||[]).length){
+        var sd=document.createElement('div'); sd.className='ins-src';
+        sd.appendChild(document.createTextNode('찾아본 글 '+r.sources.length+'건 · '));
+        r.sources.slice(0,4).forEach(function(sx,i){
+          var a=document.createElement('a'); a.href=sx.url; a.target='_blank'; a.rel='noopener';
+          a.textContent=(sx.title||('출처 '+(i+1))).slice(0,22);
+          sd.appendChild(a);
+          if(i<Math.min(3,r.sources.length-1)) sd.appendChild(document.createTextNode(' · '));
+        });
+        out.appendChild(sd);
+      }
+      if(r.draft){
+        var bw=document.createElement('div'); bw.className='row'; bw.style.marginTop='10px';
+        var bt=document.createElement('button');
+        bt.type='button'; bt.className='btn btn-2 btn-sm'; bt.textContent='추천 이유 칸에 넣기';
+        bt.addEventListener('click',function(){ $('w').value=r.draft; say('insMsg','추천 이유에 넣었습니다. 손보셔도 됩니다.','ok'); });
+        bw.appendChild(bt); out.appendChild(bw);
+      }
+      var msg = r.note ? r.note : '근거가 확인된 것만 표시했습니다.';
+      say('insMsg', msg, r.note ? 'wait' : 'ok');
+    }).catch(function(e){ $('ins').disabled=false; say('insMsg','분석하지 못했습니다: '+e.message,'no'); });
+  });
+
   /* ---- 03 영상 프롬프트 ---- */
   function addCopyBtn(parent,label,text){
     var b=document.createElement('button');
@@ -3673,7 +3742,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     say('pMsg','프롬프트를 짜는 중… 30초쯤 걸립니다.','wait');
     post('/api/video-prompts',{
       title:title, category:$('c').value, dog:$('pdog').value.trim(),
-      clips:parseInt($('pclips').value,10), note:$('pnote').value.trim()
+      clips:parseInt($('pclips').value,10), note:$('pnote').value.trim(),
+      pains:lastPains
     }).then(function(res){
       $('mk').disabled=false;
       if(res && res.success && (res.clips||[]).length){
