@@ -6,6 +6,9 @@ name: Deploy Shorts Studio Admin
 # 필요한 값 (Settings → Secrets and variables → Actions)
 #   CF_API_TOKEN              이미 등록돼 있다 (book-carousel 이 쓰는 그 값)
 #   MOVIEGEN_ADMIN_PASSWORD   관리자 페이지에 들어갈 비밀번호 (직접 정한다)
+#                             ※ 시크릿을 고치면 15분마다 도는 `shorts-studio-sync-secrets`
+#                                워크플로가 알아서 반영한다. 당장 반영하려면 그 워크플로의
+#                                Run workflow 를 누르면 된다.
 #   MOVIEGEN_USER_1 ..._8     (선택) 여러 사람이 쓸 때. **아이디 하나에 시크릿 하나.**
 #                             값은 한 줄:  아이디:비밀번호:보여줄이름
 #                             예) MOVIEGEN_USER_1 = jt:내비밀번호:장태철
@@ -128,6 +131,12 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SEC_GH_TOKEN: ${{ secrets.MOVIEGEN_ADMIN_GH_TOKEN }}
+          SEC_ADMIN_PASSWORD: ${{ secrets.MOVIEGEN_ADMIN_PASSWORD }}
+          # 서명키에 커밋 번호를 섞지 않는다. 섞으면 고칠 때마다 로그인이 풀린다.
+          SEC_SESSION_SECRET: ${{ secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}
+          # 개인 API 키를 봉할 열쇠. Actions 쪽(KEY_SECRET)도 같은 값을 써야 열 수 있다.
+          SEC_KEY_SECRET: ${{ secrets.MOVIEGEN_KEY_SECRET || secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}
           USERS_JSON: ${{ secrets.MOVIEGEN_USERS }}
           # 사용자는 아이디마다 칸을 따로 둔다. 시크릿은 다시 볼 수 없어서, 한 칸에
           # 몰아 두면 사람을 추가할 때마다 전부 다시 타이핑해야 하기 때문이다.
@@ -150,24 +159,9 @@ jobs:
           # 순서를 반대로 하면 첫 배포가 "그런 Worker 가 없다"로 실패한다.
           npx --yes wrangler@4 deploy 2>&1 | tee deploy.log
 
-          printf '%s' "${{ secrets.MOVIEGEN_ADMIN_GH_TOKEN }}" | npx --yes wrangler@4 secret put GH_TOKEN
-          printf '%s' "${{ secrets.MOVIEGEN_ADMIN_PASSWORD }}" | npx --yes wrangler@4 secret put ADMIN_PASSWORD
-          # 서명키에 커밋 번호를 섞지 않는다. 섞으면 고칠 때마다 로그인이 풀린다.
-          printf '%s' "${{ secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}" \
-            | npx --yes wrangler@4 secret put SESSION_SECRET
-          # 개인 API 키를 봉할 열쇠. Actions 쪽도 같은 값을 써야 열 수 있다
-          # (shorts-studio-script/render 워크플로의 KEY_SECRET).
-          printf '%s' "${{ secrets.MOVIEGEN_KEY_SECRET || secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}" \
-            | npx --yes wrangler@4 secret put KEY_SECRET
-          # 사용자 목록. 아이디별 칸(MOVIEGEN_USER_1..8)을 모아 JSON 한 덩어리로 만든다.
-          # 비밀번호는 화면에 찍지 않는다 — 스크립트가 아이디만 알려 준다.
-          python3 build_users.py users.json
-          if [ -s users.json ]; then
-            npx --yes wrangler@4 secret put USERS < users.json
-          else
-            echo "1인 모드로 둡니다(아이디 admin)."
-          fi
-          rm -f users.json
+          # 비밀값은 주기 반영 워크플로와 **같은 스크립트**로 넣는다.
+          # 두 군데에 같은 코드를 두면 한쪽만 고쳐져 "왜 반영이 안 되지"가 또 생긴다.
+          bash put_secrets.sh
 
 
       - name: 주소 안내
@@ -182,7 +176,7 @@ jobs:
               echo ""
               echo "이 주소를 **아이폰 사파리에서 열고 홈 화면에 추가**해 두십시오. 앱처럼 열립니다."
               echo ""
-              echo "처음 열면 아이디와 비밀번호를 묻습니다."
+              echo "처음 열면 비밀번호를 묻습니다(혼자 쓰시면 아이디 칸은 비워 두십시오)."
               echo ""
               echo "- \`MOVIEGEN_USER_1\`~\`_8\` 을 등록했다면 그 아이디·비밀번호"
               echo "- 등록하지 않았다면 아이디 \`admin\` + \`MOVIEGEN_ADMIN_PASSWORD\` 값"
