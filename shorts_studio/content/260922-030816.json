@@ -1,0 +1,162 @@
+{
+  "id": "260922-030816",
+  "topic": "야 흥부놀부 이야기인데 좀 태교 동화인데 권선 징악이 있고 아기가 듣기 좋게끔\n만들어줘",
+  "title": "흥부와 놀부: 착한 마음의 선물",
+  "tool": "Veo (Google)",
+  "tool_note": "Veo는 소리도 함께 생성하므로 프롬프트 끝에 주변음 묘사를 넣었습니다.",
+  "hashtags": [
+    "#흥부와놀부",
+    "#전래동화",
+    "#행복의비밀"
+  ],
+  "logline": "가난해도 착한 마음을 가진 흥부와 욕심 많은 놀부 형제의 이야기에서 진정한 행복을 찾아보세요.",
+  "characters": [
+    {
+      "name": "흥부",
+      "role": "마음씨 착하고 가난하지만, 가족을 사랑하며 희망을 잃지 않는 동생.",
+      "image_prompt": "A kind-faced Korean man in his late 30s, slim build, with short, neatly tied black hair. He wears a faded, patched light-blue hanbok top (저고리) and dark brown pants (바지), with simple straw shoes (짚신). His expression is gentle and hopeful. Korean traditional folklore style, 3D animated character, hanbok, warm storybook lighting, soft pastel color palette, cinematic depth of field."
+    },
+    {
+      "name": "놀부",
+      "role": "부유하고 욕심이 많지만, 결국 동생의 행복을 보며 깨달음을 얻는 형.",
+      "image_prompt": "A plump Korean man in his early 40s, with a stern yet slightly mischievous expression, short black hair with a topknot (상투). He wears a pristine, rich dark-green hanbok top (저고리) with gold trim and clean white pants (바지), along with black traditional shoes (태사혜). Korean traditional folklore style, 3D animated character, hanbok, warm storybook lighting, soft pastel color palette, cinematic depth of field."
+    }
+  ],
+  "style_lock": "Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render.",
+  "scenes": [
+    {
+      "narration": "옛날 옛적에, 마음씨 착한 흥부가 가난했지만 아내와 많은 아이들과 행복하게 살았답니다.",
+      "visual": "흥부와 가족이 단칸방에서 오순도순 지내는 모습.",
+      "prompt": "A wide establishing shot slowly dollies into a cozy, humble home where Heungbu and his family share a simple meal, illuminated by soft, warm light from a small window. Ambient sounds of gentle family chatter and a crackling hearth. Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 8 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "wide establishing shot, slow dolly-in",
+      "negative": "",
+      "est_seconds": 8.3,
+      "voice_direction": "이야기의 시작을 알리듯 부드럽고 따뜻하게, 보통 속도로.",
+      "continuity": "흥부가 가족과 함께 있는 모습에서 홀로 제비를 발견하는 모습으로 이어집니다.",
+      "cast": [
+        "흥부"
+      ]
+    },
+    {
+      "narration": "그러던 어느 날, 마당에서 다리 부러진 아기 제비를 발견하고 정성껏 돌보아 주었어요.",
+      "visual": "흥부가 제비 다리를 조심스럽게 싸매주는 모습.",
+      "prompt": "A medium close-up, handheld shot follows Heungbu's gentle hands as he carefully splints the tiny leg of a baby swallow, his expression full of compassion under warm, natural daylight. Ambient sounds of soft bird chirps and rustling leaves. Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 8 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "medium close-up, handheld follow",
+      "negative": "",
+      "est_seconds": 7.9,
+      "voice_direction": "안쓰럽고 따뜻한 마음으로, 차분하고 다정한 목소리로.",
+      "continuity": "흥부가 제비 다리를 고쳐준 상태에서, 다음 해 제비가 다시 찾아오는 모습으로 이어집니다.",
+      "cast": [
+        "흥부"
+      ]
+    },
+    {
+      "narration": "이듬해 봄, 건강해진 제비가 흥부에게 고맙다며 작은 박씨 하나를 물어다 주지 뭐예요.",
+      "visual": "제비가 흥부에게 박씨를 물어다 주는 모습.",
+      "prompt": "A close-up shot focuses on Heungbu's outstretched hand as a swallow gently drops a small gourd seed into his palm, with a rack focus shifting from the bird to the seed. Sunlight filters through spring leaves. Ambient sounds of distant bird song and a light breeze. Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 8 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "close-up on hands, rack focus",
+      "negative": "",
+      "est_seconds": 7.9,
+      "voice_direction": "약간의 놀라움과 기대를 담아, 밝고 경쾌한 톤으로.",
+      "continuity": "흥부가 받은 박씨를 든 상태에서, 박씨를 심는 모습으로 이어집니다.",
+      "cast": [
+        "흥부"
+      ]
+    },
+    {
+      "narration": "흥부는 박씨를 마당에 심었고, 놀랍게도 박은 무럭무럭 자라 큰 열매를 주렁주렁 맺었답니다.",
+      "visual": "흥부가 박씨를 심고, 시간이 흘러 박넝쿨에 큰 박들이 열려있는 모습.",
+      "prompt": "A medium shot shows Heungbu planting a seed in his garden, then transitions into a time-lapse effect as a gourd vine rapidly grows, bearing multiple large gourds under a bright, clear sky. Ambient sounds of growing plants and gentle nature. Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 9 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "medium shot, time-lapse effect",
+      "negative": "",
+      "est_seconds": 8.6,
+      "voice_direction": "희망과 성장의 기쁨을 표현하듯, 점진적으로 밝아지는 톤으로.",
+      "continuity": "잘 자란 박이 주렁주렁 열린 상태에서, 가족이 박을 따는 모습으로 이어집니다.",
+      "cast": [
+        "흥부"
+      ]
+    },
+    {
+      "narration": "흥부네 가족은 설레는 마음으로 가장 큰 박 하나를 조심스럽게 타 보았어요.",
+      "visual": "흥부와 가족이 마당에서 박을 타기 위해 준비하는 모습.",
+      "prompt": "A low-angle shot cranes up, showing Heungbu and his family gathered around a large gourd in their sunny courtyard, preparing to cut it open, their faces filled with anticipation. Ambient sounds of soft murmurs and anticipation. Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 7 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "low-angle shot, slow crane up",
+      "negative": "",
+      "est_seconds": 7.1,
+      "voice_direction": "호기심과 기대감으로 가득 찬, 살짝 들뜬 목소리로.",
+      "continuity": "박이 갈라진 상태에서, 그 안에서 보물이 쏟아져 나오는 모습으로 이어집니다.",
+      "cast": [
+        "흥부"
+      ]
+    },
+    {
+      "narration": "그러자 박 속에서 맛있는 음식과 비단 옷, 그리고 돈이 쏟아져 나와 모두 배불리 먹고 행복해졌지요.",
+      "visual": "박에서 쏟아져 나오는 보물들과 흥부네 가족이 기뻐하는 모습.",
+      "prompt": "A medium close-up dollies out to reveal a pile of delicious food, beautiful clothes, and coins spilling from the opened gourd, as Heungbu and his family cheer joyfully, bathed in warm, magical light. Ambient sounds of happy exclamations and shimmering magic. Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 9 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "medium close-up, dolly-out",
+      "negative": "",
+      "est_seconds": 9.0,
+      "voice_direction": "기적을 목격한 듯한 놀라움과 행복이 넘치게, 환한 목소리로.",
+      "continuity": "흥부네 가족이 행복해하는 모습에서, 이 소식을 듣는 놀부의 모습으로 이어집니다.",
+      "cast": [
+        "흥부"
+      ]
+    },
+    {
+      "narration": "이 소식을 들은 욕심 많은 형 놀부는 샘이 나서, 못된 꾀를 부리기로 마음먹었답니다.",
+      "visual": "놀부가 턱을 괸 채 음흉한 표정을 지으며 생각하는 모습.",
+      "prompt": "A medium shot slowly pans left, revealing Nolbu sitting in his opulent home, a scheming expression on his face as he contemplates Heungbu's fortune, shadows playing across his features. Ambient sounds of distant wealth and a slight, suspicious hum. Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 8 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "medium shot, slow pan left",
+      "negative": "",
+      "est_seconds": 7.7,
+      "voice_direction": "탐욕과 시기심이 묻어나도록, 낮고 음흉한 목소리로.",
+      "continuity": "놀부가 꾀를 낸 상태에서, 그 결과로 박씨를 받는 모습으로 이어집니다.",
+      "cast": [
+        "놀부"
+      ]
+    },
+    {
+      "narration": "놀부도 박이 주렁주렁 열리자 신이 나서 커다란 박을 얼른 타 보았어요.",
+      "visual": "놀부가 흥분해서 박을 타는 모습.",
+      "prompt": "An over-the-shoulder shot dollies in on Nolbu, who excitedly hacks at a large gourd with an axe in his lavish courtyard, his face eagerly anticipating riches under a bright sun. Ambient sounds of chopping and eager grunts. Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 7 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "over-the-shoulder shot, dolly-in",
+      "negative": "",
+      "est_seconds": 6.7,
+      "voice_direction": "잔뜩 기대에 부풀어 서두르듯, 조금 빠르게.",
+      "continuity": "박이 갈라진 상태에서, 그 안에서 도깨비와 벌이 쏟아져 나오는 모습으로 이어집니다.",
+      "cast": [
+        "놀부"
+      ]
+    },
+    {
+      "narration": "하지만 놀부의 박에서는 도깨비와 무서운 벌들이 쏟아져 나와 놀부를 혼내주었답니다.",
+      "visual": "박에서 도깨비와 벌들이 쏟아져 나와 놀부를 혼내는 모습.",
+      "prompt": "A high-angle shot rapidly dollies out, showing Nolbu recoiling in terror as mischievous goblins and swarming bees burst from his opened gourd, creating chaos and confusion in his courtyard. Ambient sounds of buzzing, cackling, and surprised yelps. Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 8 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "high-angle shot, rapid dolly-out",
+      "negative": "",
+      "est_seconds": 8.1,
+      "voice_direction": "깜짝 놀라 비명을 지르듯, 급박하고 두려운 목소리로.",
+      "continuity": "놀부가 혼나는 상황에서, 자신의 잘못을 뉘우치는 모습으로 이어집니다.",
+      "cast": [
+        "놀부"
+      ]
+    },
+    {
+      "narration": "놀부는 자신의 잘못을 뉘우치고 착한 흥부와 화해하며 함께 행복하게 살았답니다.",
+      "visual": "흥부와 놀부가 서로 손을 잡고 화해하며 함께 행복하게 웃는 모습.",
+      "prompt": "A medium shot with a slow orbit shows Heungbu and Nolbu, standing together in a peaceful field, shaking hands and smiling warmly, signifying their reconciliation and shared happiness under a gentle, sunset glow. Ambient sounds of distant laughter and a gentle breeze. Consistent warm palette of soft pink, gentle sky blue, warm cream, and natural green under a soft diffused morning glow, with a gentle, smooth painterly 3D storybook render. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 8 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "medium shot, slow orbit",
+      "negative": "",
+      "est_seconds": 7.7,
+      "voice_direction": "깨달음을 얻은 듯 차분하고 진심 어린, 온화한 목소리로 마무리.",
+      "continuity": "이야기의 마지막, 형제가 화해하고 행복해지는 모습으로 마무리됩니다.",
+      "cast": [
+        "흥부",
+        "놀부"
+      ]
+    }
+  ],
+  "status": "scripted",
+  "created_at": "2026-09-22T03:08:16Z",
+  "video": null
+}
