@@ -3665,12 +3665,27 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       <div class="ed-status" id="edVoiceInfo" style="text-align:left;margin-top:4px"></div>
     </div>
     <div class="f">
-      <label for="edBg">영상 소리 크기</label>
+      <label for="edMusic">배경음악 파일 (선택)</label>
+      <input id="edMusic" type="file" accept="audio/*">
+      <small>영상 길이에 맞춰 자동으로 반복됩니다.</small>
+      <div class="ed-status" id="edMusicInfo" style="text-align:left;margin-top:4px"></div>
+    </div>
+    <div class="f">
+      <label for="edMusicVol">배경음악 크기</label>
+      <select id="edMusicVol">
+        <option value="0.12" selected>작게 — 말이 잘 들리게</option>
+        <option value="0.25">보통</option>
+        <option value="0.45">크게</option>
+      </select>
+    </div>
+    <div class="f">
+      <label for="edBg">영상에 딸린 소리</label>
       <select id="edBg">
-        <option value="0.25" selected>작게 — 목소리가 잘 들리게</option>
-        <option value="0">끄기 — 목소리만</option>
+        <option value="0" selected>끄기 — 목소리·음악만 사용 (권장)</option>
+        <option value="0.25">작게 깔기</option>
         <option value="1">그대로</option>
       </select>
+      <small>Flow 영상에 섞여 든 말소리나 잡음을 통째로 없앱니다.</small>
     </div>
 
     <label class="ed-toggle" for="edBars">
@@ -4233,6 +4248,19 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 
   // 목소리(내레이션) 파일
   var voiceUrl=null, voiceDur=0;
+  var musicUrl=null;
+  $('edMusic').addEventListener('change',function(e){
+    var f=e.target.files && e.target.files[0];
+    if(musicUrl){ try{ URL.revokeObjectURL(musicUrl); }catch(x){} musicUrl=null; }
+    if(!f){ $('edMusicInfo').textContent=''; return; }
+    musicUrl=URL.createObjectURL(f);
+    var a=document.createElement('audio'); a.preload='metadata'; a.src=musicUrl;
+    a.addEventListener('loadedmetadata',function(){
+      $('edMusicInfo').textContent='배경음악 '+fmt(isFinite(a.duration)?a.duration:0)+' · 짧으면 자동 반복됩니다';
+    });
+    a.addEventListener('error',function(){ $('edMusicInfo').textContent='이 파일은 읽지 못했습니다. mp3나 m4a로 넣어주세요.'; });
+  });
+
   $('edVoice').addEventListener('change',function(e){
     var f=e.target.files && e.target.files[0];
     if(voiceUrl){ try{ URL.revokeObjectURL(voiceUrl); }catch(x){} voiceUrl=null; voiceDur=0; }
@@ -4296,6 +4324,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     $('edGo').disabled=on||st.clips.length===0;
     $('edPick').disabled=on; $('edSpread').disabled=on; $('edClear').disabled=on; $('edBars').disabled=on;
     $('edVoice').disabled=on; $('edBg').disabled=on;
+    $('edMusic').disabled=on; $('edMusicVol').disabled=on;
     Array.prototype.forEach.call(document.querySelectorAll('input[name=edq]'),function(el){ el.disabled=on; });
   }
   function stamp(){
@@ -4311,9 +4340,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
     var ctx=cv.getContext('2d'); ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
     var ac,dest,rec,chunks=[],tot=total()||1,elapsed=0;
-    var voiceElRef=null;
+    var voiceElRef=null, musicElRef=null;
     var cleanup=function(){
       try{ if(voiceElRef){ voiceElRef.pause(); voiceElRef.remove(); } }catch(e){}
+      try{ if(musicElRef){ musicElRef.pause(); musicElRef.remove(); } }catch(e){}
       try{ if(ac&&ac.state!=='closed') ac.close(); }catch(e){} setBusy(false);
     };
     document.fonts.ready.then(function(){
@@ -4326,6 +4356,20 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       var bgLevel=parseFloat(document.querySelector('#edBg').value);
       if(isNaN(bgLevel)) bgLevel=0.25;
       var bgGain=ac.createGain(); bgGain.gain.value=bgLevel; bgGain.connect(dest);
+      var musicEl=null;
+      if(musicUrl){
+        musicEl=document.createElement('audio');
+        musicEl.src=musicUrl; musicEl.preload='auto'; musicEl.loop=true;
+        musicEl.style.cssText='position:absolute;left:-9999px;width:1px;height:1px';
+        document.body.appendChild(musicEl);
+        musicElRef=musicEl;
+        try{
+          var mSrc=ac.createMediaElementSource(musicEl);
+          var mv=parseFloat($('edMusicVol').value); if(isNaN(mv)) mv=0.12;
+          var mg=ac.createGain(); mg.gain.value=mv;
+          mSrc.connect(mg); mg.connect(dest);
+        }catch(e){}
+      }
       var voiceEl=null;
       if(voiceUrl){
         voiceEl=document.createElement('audio');
@@ -4348,6 +4392,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       rec.start(400);
       // 목소리는 녹화 시작과 동시에 처음부터 재생한다.
       if(voiceEl){ try{ voiceEl.currentTime=0; voiceEl.play().catch(function(){}); }catch(e){} }
+      if(musicEl){ try{ musicEl.currentTime=0; musicEl.play().catch(function(){}); }catch(e){} }
       var chain=Promise.resolve();
       st.clips.forEach(function(clip,idx){
         chain=chain.then(function(){
@@ -4360,6 +4405,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       return chain.then(function(){
         say('마무리하는 중…');
         if(voiceEl){ try{ voiceEl.pause(); }catch(e){} }
+        if(musicEl){ try{ musicEl.pause(); }catch(e){} }
         setTimeout(function(){ try{ rec.stop(); }catch(e){} },350);
         return stopped;
       }).then(function(){
