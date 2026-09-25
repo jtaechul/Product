@@ -2252,7 +2252,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "swim very well for her age",
     "why_not": {
       "0": "can은 swim 앞에 와야 해요",
@@ -2291,7 +2291,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "the library is very quiet",
     "why_not": {
       "0": "크게 말해야 한다는 반대 뜻이에요",
@@ -2330,7 +2330,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "Tomorrow is a holiday",
     "why_not": {
       "0": "꼭 일어나야 한다는 반대 뜻이에요",
@@ -2369,7 +2369,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "borrow your eraser for a minute, please?",
     "why_not": {
       "1": "허락을 물을 때 Do는 어색해요",
@@ -2408,7 +2408,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "When I was five",
     "why_not": {
       "0": "지난 일에는 could를 써요",
@@ -2447,7 +2447,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "I can't join the club today",
     "why_not": {
       "0": "can 뒤에는 to를 쓰지 않아요",
@@ -2526,7 +2526,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "These cookies",
     "why_not": {
       "1": "쿠키가 여러 개라 is는 안 맞아요",
@@ -2565,7 +2565,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "by our whole class",
     "why_not": {
       "0": "was 뒤에 그냥 write는 못 와요",
@@ -2604,7 +2604,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "by children all around the world",
     "why_not": {
       "0": "노래가 직접 부른다는 말이 돼요",
@@ -2684,7 +2684,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "The flowers in the garden are watered",
     "why_not": {
       "1": "to는 사람을 향한다는 뜻이라 어색해요",
@@ -2724,7 +2724,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "We decided",
     "why_not": {
       "1": "have만 오면 말이 이어지지 않아요",
@@ -2764,7 +2764,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "I want",
     "why_not": {
       "0": "want 뒤에는 to가 함께 필요해요",
@@ -2803,7 +2803,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "My sister enjoys",
     "why_not": {
       "0": "enjoys 뒤에 bake만 오면 어색해요",
@@ -2843,7 +2843,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "Dad went to the store",
     "why_not": {
       "0": "buy만 오면 뜻이 이어지지 않아요",
@@ -2882,7 +2882,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "I hope",
     "why_not": {
       "1": "hope 뒤에는 to가 함께 필요해요",
@@ -2922,7 +2922,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "too small",
     "why_not": {
       "0": "too 뒤에는 to가 짝으로 와야 해요",
@@ -2962,7 +2962,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "sings very",
     "why_not": {
       "0": "beautiful은 노래하는 모습 자리에 안 맞아요",
@@ -3001,7 +3001,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "cook, and everyone loves her soup",
     "why_not": {
       "0": "wonderfully는 cook 앞에 못 와요",
@@ -3041,7 +3041,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "The children played",
     "why_not": {
       "1": "happy는 노는 모습을 말할 때 안 써요",
@@ -3081,7 +3081,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "a clear",
     "why_not": {
       "0": "explain은 a clear 뒤에 못 와요",
@@ -3120,7 +3120,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "a big",
     "why_not": {
       "0": "succeed는 a big 뒤에 못 와요",
@@ -3159,7 +3159,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "Please be",
     "why_not": {
       "0": "care는 be 뒤에 바로 못 와요",

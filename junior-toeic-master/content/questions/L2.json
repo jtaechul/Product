@@ -2178,7 +2178,7 @@
     ],
     "accent": "US",
     "tts_script": "What do you want for your birthday?",
-    "status": "draft",
+    "status": "active",
     "evidence": "What do you want for your birthday",
     "why_not": {
       "1": "언제였는지 날짜로 답했어요",
@@ -2214,7 +2214,7 @@
     ],
     "accent": "UK",
     "tts_script": "Who's cooking dinner tonight?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Who's cooking dinner tonight",
     "why_not": {
       "0": "어디인지 장소로 답했어요",
@@ -2250,7 +2250,7 @@
     ],
     "accent": "AU",
     "tts_script": "How's the weather in Busan today?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How's the weather in Busan today",
     "why_not": {
       "0": "가는 방법을 답했어요",
@@ -2286,7 +2286,7 @@
     ],
     "accent": "US",
     "tts_script": "Let's make pancakes this Saturday.",
-    "status": "draft",
+    "status": "active",
     "evidence": "Let's make pancakes this Saturday",
     "why_not": {
       "0": "어디 있는지로 답했어요",
@@ -2322,7 +2322,7 @@
     ],
     "accent": "AU",
     "tts_script": "Where should I put these dishes?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Where should I put these dishes",
     "why_not": {
       "1": "이미 씻었다는 다른 이야기예요",
@@ -2358,7 +2358,7 @@
     ],
     "accent": "UK",
     "tts_script": "I forgot to bring my gym clothes.",
-    "status": "draft",
+    "status": "active",
     "evidence": "I forgot to bring my gym clothes",
     "why_not": {
       "0": "gym이라는 말에 낚였어요",

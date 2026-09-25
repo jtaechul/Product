@@ -2184,7 +2184,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "R2-0021"
   },
   {
@@ -2291,7 +2291,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "R2-0022"
   },
   {
@@ -2400,7 +2400,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "R2-0024"
   },
   {
@@ -2507,7 +2507,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "R2-0025"
   },
   {
@@ -2614,7 +2614,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "R2-0026"
   }
 ]

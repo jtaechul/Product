@@ -1903,7 +1903,7 @@
       },
       "translation_ko": "여: 이 책 세 권을 빌리고 싶어요.\n남: 카드를 보니 두 권이 이미 반납일이 지났네요.\n여: 아, 그 책들을 집 책상에 두고 왔어요.\n남: 내일 가져오셔도 되지만, 오늘은 한 권만 빌릴 수 있어요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"I left them on my desk at home\"?",
@@ -1984,7 +1984,7 @@
       },
       "translation_ko": "남: 토마토 수프로 하시겠어요, 버섯 수프로 하시겠어요?\n여: 저는 점심에 버섯 파스타를 먹었어요.\n남: 그럼 토마토 수프로 하죠. 마실 것은요?\n여: 물만 주세요. 그리고 계산서를 곧 주실 수 있나요? 제 버스가 여섯 시에 떠나요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"I had mushroom pasta for lunch\"?",
@@ -2065,7 +2065,7 @@
       },
       "translation_ko": "여: 아빠, 일곱 시에 수영 연습에 데려다줄 수 있어요?\n남: 아빠 차가 금요일까지 수리점에 있어.\n여: 그럼 버스를 탈게요.\n남: 여섯 시 삼십 분 버스를 타렴. 그 버스가 수영장 바로 앞에 서."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"My car is at the repair shop until Friday\"?",
@@ -2146,7 +2146,7 @@
       },
       "translation_ko": "여: 월요일에 나랑 같이 미술 동아리에 들어올래?\n남: 나는 벌써 축구 동아리에 신청했어.\n여: 아, 아쉽네. 우리 동아리는 점심 바로 뒤에 모여.\n남: 그럼 5월에 너희 미술 전시회는 보러 갈게."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"I already signed up for the soccer club\"?",
@@ -2228,7 +2228,7 @@
       },
       "translation_ko": "여: 딸기 케이크 남아 있나요?\n남: 한 시간쯤 전에 마지막 하나를 팔았어요.\n여: 아, 안 돼요. 오늘 밤이 제 동생 생일 파티예요.\n남: 초콜릿 케이크는 아직 있어요. 그리고 제가 케이크에 동생 이름을 공짜로 써 드릴 수 있어요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"We sold the last one about an hour ago\"?",
@@ -2392,7 +2392,7 @@
       },
       "translation_ko": "남: 제 자전거 타이어가 펑크 났어요. 오늘 고칠 수 있나요?\n여: 죄송해요, 기다리는 자전거가 열 대예요. 내일 3시 이후에 다시 오세요.\n남: 그런데 오늘 밤에 사촌 파티에 가야 해요.\n여: 지하철역이 바로 저 앞 모퉁이에 있어요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"we have ten bikes waiting\"?",
@@ -2473,7 +2473,7 @@
       },
       "translation_ko": "남: 엄마, 오늘 오후에 쿠키 만들어도 돼요?\n여: 달걀이 하나도 없구나.\n남: 모퉁이 가게가 아직 열려 있어요. 제가 지금 다녀올게요.\n여: 그래. 부엌 식탁에 있는 돈을 가져가렴."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"We don't have any eggs left\"?",
@@ -2555,7 +2555,7 @@
       },
       "translation_ko": "여: 네 피아노 발표회가 금요일이지?\n남: 응, 그런데 집에 있는 피아노가 이상한 소리를 내.\n여: 방과 후에는 음악실 피아노를 쓸 수 있어.\n남: 그럼 음악 선생님께 열쇠를 부탁드릴게."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the boy's problem?",
@@ -2637,7 +2637,7 @@
       },
       "translation_ko": "여: 민호야, 이번 주말에 내 햄스터 밥 좀 줄 수 있어?\n남: 나는 일요일 밤까지 사촌 집에 있을 거야.\n여: 아, 그러면 소라에게 부탁할게.\n남: 좋은 생각이야. 소라는 바로 옆집에 살잖아."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"I'll be at my cousin's house until Sunday night\"?",
@@ -2718,7 +2718,7 @@
       },
       "translation_ko": "여: 빵집까지 걸어갈래, 아니면 버스를 탈래?\n남: 새 신발이 발을 아프게 해.\n여: 그러면 모퉁이에서 버스를 타자.\n남: 고마워. 버스가 5분 뒤에 출발해."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does the man talk about his new shoes?",
@@ -2799,7 +2799,7 @@
       },
       "translation_ko": "남: 수진아, 금요일 학교 공연에서 노래해 줄 수 있어?\n여: 월요일부터 목이 아파.\n남: 아 어쩌지. 그럼 대신 드럼을 쳐 줄 수 있어?\n여: 좋아, 그건 나한테 쉬워."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"I've had a sore throat since Monday\"?",
@@ -2880,7 +2880,7 @@
       },
       "translation_ko": "여: 지호 생일이 목요일이야. 선물 샀어?\n남: 나는 책 축제에서 용돈을 다 써 버렸어.\n여: 그럼 방과 후에 같이 카드를 만들자.\n남: 좋은 생각이야. 내 책상에 색깔 펜이 있어."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"I spent all my pocket money at the book fair\"?",
@@ -2961,7 +2961,7 @@
       },
       "translation_ko": "여: 오늘 학교 정원에 해바라기 씨를 심을까?\n남: 땅을 만져 봐. 아직 꽁꽁 얼어 있어.\n여: 맞네. 대신 안에서 화분에 심기 시작하자.\n남: 내가 내일 창고에서 흙을 가져올게."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"It's still frozen hard\"?",
@@ -3042,7 +3042,7 @@
       },
       "translation_ko": "남: 엄마, 오늘 오후에 링크에서 스케이트 타러 가도 돼요?\n여: 안내판을 읽어 봤어. 오늘은 청소 때문에 링크가 문을 닫는다고 하네.\n남: 아쉬워요. 그러면 정원에서 눈사람을 만들어도 돼요?\n여: 좋아. 따뜻한 장갑을 끼면 세 시에 시작하자."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"It says the rink is closed for cleaning today\"?",
