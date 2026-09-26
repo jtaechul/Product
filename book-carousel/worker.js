@@ -3061,18 +3061,18 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
   "걸을 기분이 전혀 아니거든"    (밋밋함)
   "가볍고 시원해서 좋아!"        (느낌표·광고문구)
 
-[좋은 예 — 담담한 통보, 뒤집힌 위계]
-  "이 집 관리인, 일을 참 못한다"
-  "내 목을 조르는 건 예의가 아니지"
-  "산책은 취소다. 사유는 기분"
-  "바닥이 젖은 건 내 소관이 아니다"
-  "인간, 드디어 일을 했군"
-  "이 정도면 봐준다"
-  "칭찬은 안 한다. 계속 잘해라"
+[좋은 말투 — 문장이 아니라 '틀'로 익혀라]
+  ① 인사평가형 : 인간의 일처리를 윗사람이 매기듯 평가한다.
+  ② 통보형     : 결정 사실만 던지고, 사유는 어이없게 짧다.
+  ③ 책임회피형 : 명백히 자기 잘못인데 관할이 아니라고 선을 긋는다.
+  ④ 생색형     : 마지못해 인정하면서 반드시 단서를 붙인다.
+  ⑤ 예의지적형 : 자기가 겪은 불편을 '예의 없음'으로 격상시킨다.
 
-⚠️ 위 [좋은 예]는 **말투를 보여주는 견본일 뿐이다. 그대로 베껴 쓰지 마라.**
-   같은 온도·같은 구조로 **이 상품 상황에 맞는 새 문장**을 직접 지어라.
-   예시 문장이 결과에 그대로 나오면 실패다.
+⚠️ 아래 7문장은 **이미 다 써먹은 문장이다. 하나라도 그대로 쓰면 실패다.**
+   틀만 가져오고 **이 상품 상황에서 나올 법한 새 문장**을 지어라.
+   (금지) "이 집 관리인, 일을 참 못한다" / "내 목을 조르는 건 예의가 아니지" /
+   "산책은 취소다. 사유는 기분" / "바닥이 젖은 건 내 소관이 아니다" /
+   "인간, 드디어 일을 했군" / "이 정도면 봐준다" / "칭찬은 안 한다. 계속 잘해라"
 
 [역할별 말투]
 - problem: 불평이 아니라 **판정**이다. "~하다", "~군", "~지" 로 끝내라.
@@ -3144,6 +3144,22 @@ const CHARACTER_SHEET_PROMPT = 'A photorealistic 3D animated style full-body sho
 
 // 사용자가 실제로 성공한 화풍. 모든 장면 블록 앞에 반드시 들어간다.
 const STYLE_TOKEN = 'Photorealistic 3D animated style, soft even lighting, unbelievably fluffy cloud-like soft fur texture, 8k, masterful texturing';
+
+// 시스템 프롬프트의 말투 견본. 모델이 이걸 그대로 베껴 쓰는 일이 잦아 서버가 감시한다.
+const WORN_LINES = [
+  '이 집 관리인, 일을 참 못한다',
+  '내 목을 조르는 건 예의가 아니지',
+  '산책은 취소다. 사유는 기분',
+  '바닥이 젖은 건 내 소관이 아니다',
+  '인간, 드디어 일을 했군',
+  '이 정도면 봐준다',
+  '칭찬은 안 한다. 계속 잘해라',
+];
+// 공백·문장부호 차이는 같은 문장으로 본다("이 정도면 봐준다." 같은 변형 통과 방지).
+function sameLine(a, b) {
+  const n = (x) => String(x || '').replace(/[\s.,!?~·]/g, '');
+  return !!n(a) && n(a) === n(b);
+}
 
 // 안전 필터에 걸리는 표현을 코미디 몸짓으로 바꾼다.
 // (동물 학대로 읽히면 Flow가 생성 자체를 거부한다 — 실제로 관측됨)
@@ -3257,14 +3273,34 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
 
   const gk = await getGeminiKey(env);
   if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
+
+  const ask = async (extra) => callGeminiText(gk, {
+    system: VEO_SYSTEM + (extra || ''), user,
+    max_tokens: Math.min(2600, 600 + clips * 180),
+    timeout_ms: 45000, json: true,
+  });
+
   let raw;
   try {
-    raw = await callGeminiText(gk, {
-      system: VEO_SYSTEM, user, max_tokens: Math.min(2600, 600 + clips * 180),
-      timeout_ms: 45000, json: true,
-    });
+    raw = await ask('');
   } catch (e) {
     throw new Error(`프롬프트를 만들지 못했습니다: ${e.message}`);
+  }
+
+  // 모델이 견본 문장을 그대로 베끼는 일이 잦다(실측: 5개 중 3개).
+  // 지시만으로는 막히지 않으므로 서버가 확인하고 딱 1회만 다시 요청한다.
+  const copied = (txt) => {
+    let o; try { o = extractJson(txt); } catch { return []; }
+    return (Array.isArray(o.clips) ? o.clips : [])
+      .map(c => String(c.line || '').trim())
+      .filter(l => WORN_LINES.some(w => sameLine(w, l)));
+  };
+  const dup = copied(raw);
+  if (dup.length) {
+    try {
+      const retry = await ask(`\n\n[재작성 지시] 방금 쓴 다음 문장은 금지 목록에 있는 문장이다. 전부 새 문장으로 바꿔라:\n- ${dup.join('\n- ')}`);
+      if (copied(retry).length < dup.length) raw = retry;
+    } catch { /* 재요청 실패 시 처음 결과를 그대로 쓴다 */ }
   }
 
   const out = extractJson(raw);
