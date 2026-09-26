@@ -105,6 +105,14 @@ STYLE_KEYWORDS = (
     "warm storybook lighting, soft pastel color palette, cinematic depth of field"
 )
 
+# 어른용은 같은 화풍을 쓰되 **빛과 채도만** 바꾼다. 화풍까지 바꾸면 인물 기준 이미지와
+# 씬 화면이 따로 놀아, 컷마다 다른 사람이 나온다.
+STYLE_KEYWORDS_ADULT = (
+    "Korean traditional folklore style, 3D animated character, hanbok, "
+    "low-key moonlit lantern light, desaturated muted color palette, "
+    "deep shadows, cinematic depth of field"
+)
+
 # 툴마다 프롬프트를 읽는 방식이 다르다 — 문법·파라미터를 각각 맞춰 준다.
 TOOLS: dict[str, dict] = {
     "Runway (Gen-3/Gen-4)": {
@@ -166,15 +174,30 @@ TOOLS: dict[str, dict] = {
     },
 }
 
-_SYSTEM = """You are a senior writer-director for Korean short-form folklore animation,
+_SYSTEM_BABY = """You are a senior writer-director for Korean short-form folklore animation,
 in the warm, humorous, gently moralistic style of 전래동화 / 태담동화 YouTube Shorts.
 
 You always return a single valid JSON object. No markdown, no commentary."""
 
+_SYSTEM_ADULT = """You are a senior writer-director for Korean short-form dark folklore
+(전래 괴담 · 야담) aimed at adults. You write taut, restrained, unsettling stories where
+someone wants something badly, crosses a line to get it, and pays for it.
+
+Craft rules you never break:
+- The cost is real and irreversible. No last-minute rescue, no tidy moral.
+- Dread comes from what is implied, not from what is shown. You never describe blood,
+  wounds, corpses, or self-harm. You show the empty shoe, the overturned bowl, the shadow
+  that has one arm too many.
+- Plain, dry sentences. You never explain a feeling you can stage instead.
+
+You always return a single valid JSON object. No markdown, no commentary."""
+
+_SYSTEM = _SYSTEM_BABY        # 예전 코드 호환
+
 
 # 이야기를 나누는 다섯 대목과, 컷을 몇 개씩 줄지 정하는 비중.
 # 컷이 늘어나면 각 대목이 함께 두꺼워져야 이야기가 헐거워지지 않는다.
-ACTS: list[tuple[str, float]] = [
+ACTS_BABY: list[tuple[str, float]] = [
     ("발단", 0.20),   # 인물과 그가 바라는 것
     ("전개", 0.30),   # 일이 굴러가며 커진다 — 컷이 늘면 여기가 제일 많이 늘어난다
     ("위기", 0.20),   # 가로막히는 것
@@ -182,16 +205,148 @@ ACTS: list[tuple[str, float]] = [
     ("결말", 0.10),   # 거둬들이고 여운
 ]
 
+# 어른용은 **도입을 짧게 치고** 위기·절정에 컷을 몰아준다. 쇼츠는 앞 3초에 승부가 나고,
+# 어른 시청자는 "무슨 일이 벌어지나"보다 "얼마나 잘못되나"를 보러 남는다.
+ACTS_ADULT: list[tuple[str, float]] = [
+    ("도입", 0.10),   # 콜드오픈 — 파국 직전 한 장면으로 문을 연다
+    ("전개", 0.25),   # 선을 넘게 되는 사정
+    ("위기", 0.25),   # 돌이킬 수 없어지는 지점
+    ("절정", 0.25),   # 대가를 치른다
+    ("결말", 0.15),   # 서늘한 여운 · 남겨진 것
+]
+
+ACTS = ACTS_BABY                    # 예전 코드 호환
+
+
+# ---------------------------------------------------------------- 모드(태담용 / 어른용)
+#
+# 두 모드는 **말투만 다른 것이 아니라 이야기 골격부터 다르다.** 막 비중·나레이션 길이·
+# 화풍·금지선·성우·자막색을 한 군데(MODES)에 모아 두고, 프롬프트에는 이 값을 끼워 넣는다.
+# 파일을 둘로 쪼개지 않는 이유는 간단하다 — 버그를 두 번 고치게 되기 때문이다.
+
+DEFAULT_MODE = "태담용"
+
+MODES: dict[str, dict] = {
+    "태담용": {
+        "label": "태담용 · 따뜻한 전래동화",
+        "channel": "태담",
+        "acts": ACTS_BABY,
+        "system": _SYSTEM_BABY,
+        "default_scenes": 8,
+        "voice": "Sulafat",
+        "highlight": "노란색",
+        "len_min": 32, "len_max": 45, "warn_len": 48,
+        "kind": "한국 전래동화",
+        "style_kw": STYLE_KEYWORDS,
+        "act_names": " · ".join(n for n, _ in ACTS_BABY),
+        "act_arrow": " → ".join(n for n, _ in ACTS_BABY),
+        "style_ex": ('"Consistent warm palette of ochre, deep indigo and pale jade under '
+                     'soft diffused late-afternoon light, gentle film grain, '
+                     'matte 3D storybook render."'),
+        "tone_rule": ('- 따뜻하고 해학적인 구어체 존댓말("~했답니다", "~하지 뭐예요"). '
+                      '옛이야기 들려주듯.'),
+        "ending_rule": ('"~답니다 / ~었어요 / ~지 뭐예요 / ~더랍니다" 를 번갈아 쓰되, '
+                        '**바로 앞 씬과 같은 어미는 쓰지 않습니다.** 마지막 씬은 "~답니다"로 닫습니다.'),
+        "hook_rule": ('"옛날 옛적에" 처럼 뻔하게 시작하지 않습니다. 사건 한가운데나 '
+                      '의외의 장면에서 시작하거나, 답을 알고 싶게 만드는 한마디로 엽니다.'),
+        "plot": """[이 이야기의 결 — 태담용]
+- 듣는 사람은 **아이, 그리고 아이를 기다리는 부모**입니다. 듣고 나면 마음이 놓여야 합니다.
+- 갈등은 있되 **무섭지 않게**. 위협은 자연·오해·욕심이지, 악의로 사람을 해치는 것이 아닙니다.
+- 결말은 앞에서 깔아 둔 착한 마음이 거둬들여지는 자리입니다. 교훈은 말로 설명하지 말고
+  마지막 장면으로 보여 줍니다.""",
+        "beats": "",
+        "last_note": "\n- 마지막 씬은 잔잔한 교훈이나 여운으로 마무리. 설교조 금지.",
+        "scene": """[화면 규칙 — 태담용]
+- 밝고 포근한 낮·노을 빛. 아이가 봐도 편안한 화면.
+- 무서운 표정·어두운 그림자·피·흉기는 넣지 않습니다.""",
+        "polish": "",
+    },
+
+    "어른용": {
+        "label": "어른용 · 서늘한 옛이야기(괴담·야담)",
+        "channel": "어른",
+        "acts": ACTS_ADULT,
+        "system": _SYSTEM_ADULT,
+        "default_scenes": 14,
+        "voice": "Charon",
+        "highlight": "붉은색",
+        "len_min": 22, "len_max": 32, "warn_len": 36,
+        "kind": "한국 괴담·야담",
+        "style_kw": STYLE_KEYWORDS_ADULT,
+        "act_names": " · ".join(n for n, _ in ACTS_ADULT),
+        "act_arrow": " → ".join(n for n, _ in ACTS_ADULT),
+        "style_ex": ('"Consistent desaturated palette of ash grey, ink black and dull ember '
+                     'orange under low backlight, long hard shadows, heavy film grain, '
+                     'matte 3D render."'),
+        "tone_rule": ('- **짧고 건조한 단문 서술체 존댓말**("~했습니다", "~였습니다"). 꾸밈말을 덜어냅니다.\n'
+                      '- 감정을 설명하지 않습니다. 감정은 장면으로만 드러냅니다.\n'
+                      '  (나쁜 예: "너무나 무서웠습니다" / 좋은 예: "숟가락이 손에서 떨어졌습니다")'),
+        "ending_rule": ('"~했습니다 / ~였습니다 / ~합니다" 를 번갈아 쓰되 **이웃한 두 컷이 같은 어미로 '
+                        '끝나지 않게** 합니다. 서너 컷에 한 번은 **명사로 끊어** 리듬을 깹니다'
+                        '(예: "문 앞에 놓인 헌 짚신 한 짝."). 마지막 컷은 설명하지 말고 여운으로 닫습니다.'),
+        "hook_rule": ('**1번 컷은 콜드오픈입니다.** 이야기의 처음이 아니라 **가장 잘못된 순간 직전 '
+                      '또는 직후**의 한 장면으로 엽니다. 무슨 일인지 설명하지 않습니다. '
+                      '보는 사람 머릿속에 "이게 뭐지?" 라는 질문 하나만 남기고 끊습니다.'),
+        "plot": """[이 이야기의 결 — 어른용]
+- 듣는 사람은 **어른**입니다. 위로가 아니라 **서늘함**을 얻으러 왔습니다.
+- ⭐ 뼈대는 하나입니다: **간절히 바란다 → 선을 넘는다 → 돌이킬 수 없다 → 대가를 치른다.**
+  발단에서 인물이 무엇을 못 견디는지, 위기에서 어떤 선을 넘었는지 분명히 못 박으세요.
+- ⭐ **구해 주는 사람이 없습니다.** 우연한 구원·착한 이웃·꿈이었다는 결말 전부 금지.
+- ⭐ **결말에는 대가가 남습니다.** 되돌아오지 않는 것(사람·이름·얼굴·세월·목소리)이
+  무엇인지 정하고, 그것이 사라진 자리를 마지막 장면으로 보여 주세요.
+- ⭐ **도입(1컷)은 콜드오픈**입니다. 파국 직전 또는 직후의 한 장면으로 열고, 전개 첫 컷에서
+  "그 일이 있기 며칠 전" 으로 되감습니다. 되감는 컷은 시간 표지를 반드시 답니다.
+
+[⛔ 넘지 않는 선 — 반드시 지킵니다]
+- 죽음·복수·원귀·저주·배신은 **씁니다**. 다만 **피·상처·시신·자해·시신 훼손은 쓰지도,
+  화면에 보이게 하지도 않습니다.** 영상 AI가 그 프롬프트를 거부해 컷이 통째로 비고,
+  쇼츠 수익화도 막힙니다.
+- 아이를 해치는 장면, 성적인 내용, 실존 인물·특정 지역·특정 종교를 겨냥한 내용 금지.
+- 공포는 **보여 주지 않는 것**에서 옵니다: 뒤집힌 밥그릇, 한 짝만 남은 신발,
+  문틈으로 늘어난 그림자, 멈춘 물레, 젖은 발자국이 방 안에서 끝나 있는 것.""",
+        "beats": """[컷 나누기 — 어른용에서 더 지킬 것]
+- ⭐ **1번(도입)은 콜드오픈**: 파국 직전/직후 한 장면. 앞뒤 설명 없이 던집니다.
+- ⭐ **2번 컷에서 시간을 되감습니다.** 2번 summary 앞에 시간 표지를 답니다
+  ("사흘 전", "그해 가을"). 되감는 자리는 여기 한 번뿐이고, 3번부터는 다시 순서대로입니다.
+- ⭐ **위기 대목의 마지막 컷에 '돌이킬 수 없어지는 한 동작'** 을 둡니다
+  (문을 잠근다 / 그릇을 엎는다 / 이름을 부른다). 그 컷 뒤로는 되돌릴 길이 없어야 합니다.
+- ⭐ **컷이 갈수록 좁아집니다.** 넓은 풍경에서 시작해 뒤로 갈수록 방 안, 손, 눈으로 좁혀
+  숨 막히게 만듭니다.""",
+        "last_note": ("\n- 마지막 씬은 **설명하지 않고 남겨진 것 하나**를 보여 주며 닫습니다."
+                      "\n  교훈·구원·'꿈이었다'·반전 해설 전부 금지. 앞에서 던진 후킹 질문의 답이"
+                      "\n  절정·결말에서 갚아졌는지 확인하고, 안 갚아졌으면 여기서 갚습니다."),
+        "scene": """[화면 규칙 — 어른용]
+- 낮은 채도, 역광과 긴 그림자, 짙은 어둠 속의 작은 광원(등잔·달·불씨).
+- ⭐ **피·상처·시신·흉기로 사람을 해치는 동작을 영문 프롬프트에 쓰지 않습니다.**
+  (금지 낱말: blood, wound, corpse, dead body, stab, strangle, self-harm, gore)
+  영상 AI가 거부해 그 컷이 통째로 비어 버립니다.
+- 대신 **자리·흔적·그림자**로 보여 줍니다: an overturned bowl, a single straw shoe left at
+  the door, a shadow stretching through the gap, wet footprints ending in the middle of a room.
+- 무서움은 **정적과 여백**에서 옵니다. 카메라를 천천히 밀고, 화면 한쪽을 비워 둡니다.""",
+        "polish": """[어른용에서 더 볼 것]
+- 감정을 설명한 문장("무서웠습니다", "슬펐습니다")은 **장면으로 바꿉니다.**
+- 꾸밈말을 덜어 문장을 더 짧고 건조하게. 형용사 두 개가 붙어 있으면 하나 지웁니다.
+- 1번은 무슨 일인지 **설명하지 않은 채** 질문만 남기는지 확인합니다.
+- 마지막 컷이 교훈을 말하고 있으면 지우고, 남겨진 것 하나를 보여 주는 문장으로 바꿉니다.""",
+    },
+}
+
+
+def get_mode(name: str) -> dict:
+    """모드 이름 → 설정. 모르는 이름이면 기본(태담용)."""
+    return MODES.get(str(name or "").strip(), MODES[DEFAULT_MODE])
+
 # 한 번에 본문을 쓰게 할 씬 수. 이보다 많이 시키면 뒤쪽이 대충 써지고 응답이 잘린다.
 SCENES_PER_CALL = 8
 
 
-def allocate_acts(n_scenes: int) -> list[int]:
+def allocate_acts(n_scenes: int, acts: list[tuple[str, float]] | None = None) -> list[int]:
     """대목마다 컷을 몇 개씩 줄지 나눈다. 각 대목 최소 1개, 합은 정확히 n_scenes."""
-    k = len(ACTS)
+    acts = acts or ACTS
+    k = len(acts)
     n = max(k, int(n_scenes))
     rest = n - k                       # 대목마다 1개씩 깔고 남은 것을 비중대로
-    raw = [rest * w for _, w in ACTS]
+    raw = [rest * w for _, w in acts]
     out = [int(x) for x in raw]
     left = rest - sum(out)
     for i in sorted(range(k), key=lambda i: raw[i] - out[i], reverse=True)[:left]:
@@ -205,11 +360,26 @@ _PLOT_USER = """주제: {topic}
 이 이야기는 {n_scenes}개의 컷으로 만들 세로 쇼츠입니다({total_sec}초 안팎).
 먼저 **줄거리와 등장인물**만 설계하세요.
 
+{mode_plot}
+
+[⭐⭐ 첫 3초 — 후킹 (가장 먼저 정합니다)]
+쇼츠는 **앞 3초에서 절반이 넘어갑니다.** 줄거리보다 **1번 컷에 무엇을 보여 줄지를 먼저**
+정하고, 나머지를 거기에 맞춰 짜세요.
+- 1번 컷은 **설명이 아니라 질문**입니다. 상황을 알려 주면 넘깁니다. 알고 싶게 만들어야 남습니다.
+- 쓸 수 있는 후킹 수: ① 이상한 상태로 열기(있어야 할 것이 없다 / 없어야 할 것이 있다)
+  ② 결말 직전 장면을 먼저 보여 주고 되감기 ③ 금지된 한 마디("그 문만은 열지 마라")
+  ④ 숫자 없는 초읽기("그날 밤, 셋째 닭이 울기 전까지였습니다")
+- ⛔ 금지: "옛날 옛적에", 인물 소개로 시작, 평화로운 풍경으로 시작, 나레이터의 설명으로 시작.
+- {hook_rule}
+- "opening_hook" 칸에 **그 질문 한 줄**을 적고, 발단(도입) 대목 summary 가 그 장면이 되게 하세요.
+- ⭐ 그 질문의 **답은 절정·결말에서 반드시 갚습니다.** 던지고 안 갚으면 다음 편을 안 봅니다.
+
 아래 JSON 스키마로만 답하세요.
 
 {{
   "title": "쇼츠 제목 (한국어, 18자 이내, 호기심을 자극)",
   "logline": "한 문장 줄거리 (한국어)",
+  "opening_hook": "1번 컷이 보는 사람 머릿속에 심는 질문 한 줄 (한국어)",
   "characters": [
     {{
       "name": "이름 (한국어, 2~4자)",
@@ -220,18 +390,14 @@ _PLOT_USER = """주제: {topic}
   "style_lock": "모든 씬에 그대로 붙일 색감·조명 고정 문장 (영문 1문장)",
   "cover_prompt": "표지(썸네일) 이미지 1장을 만들 영문 프롬프트",
   "acts": [
-    {{"stage": "발단", "summary": "그 대목에서 실제로 벌어지는 일 (한국어 2~3문장)"}},
-    {{"stage": "전개", "summary": "..."}},
-    {{"stage": "위기", "summary": "..."}},
-    {{"stage": "절정", "summary": "..."}},
-    {{"stage": "결말", "summary": "..."}}
+{acts_schema}
   ]
 }}
 
 [줄거리 규칙 — acts]
-- **다섯 대목을 모두, 반드시 이 순서로** 채웁니다: 발단 · 전개 · 위기 · 절정 · 결말.
+- **다섯 대목을 모두, 반드시 이 순서로** 채웁니다: {act_names}.
 - **인과로 이어질 것.** 각 대목은 앞 대목 때문에 벌어져야 한다. "그리고"가 아니라 "그래서".
-- 발단에서 **인물이 무엇을 원하는지**, 위기에서 **그것을 가로막는 것이 무엇인지**를 분명히 한다.
+- {first_act}에서 **인물이 무엇을 원하는지**, 위기에서 **그것을 가로막는 것이 무엇인지**를 분명히 한다.
 - 절정은 원하던 것과 가로막는 것이 정면으로 부딪히는 한 장면이어야 한다. 얼버무리지 않는다.
 - 결말은 앞에서 깔아 둔 것으로 풀어낸다. 갑자기 등장하는 해결사·우연 금지.
 - 이 이야기는 컷 {n_scenes}개로 펼쳐집니다. 대목별로 이만큼 배정됩니다: {allocation}
@@ -262,8 +428,7 @@ _PLOT_USER = """주제: {topic}
 [색감 고정 문장 규칙 — style_lock]
 - 색·빛·질감을 못 박는 영문 **1문장**. 이 문장이 모든 씬 끝에 **글자 그대로** 붙는다.
 - 반드시 담을 것: 색 팔레트(구체적인 색 3~4개), 광원의 성질, 시간대 느낌, 렌더링 질감.
-- 예: "Consistent warm palette of ochre, deep indigo and pale jade under soft diffused
-  late-afternoon light, gentle film grain, matte 3D storybook render."
+- 예: {style_ex}
 - 장면마다 달라질 내용(장소·날씨·감정)은 여기 쓰지 않는다. 씬이 바뀌어도 **똑같아야** 한다.
 """
 
@@ -275,6 +440,7 @@ _BEATS_USER = """아래는 확정된 줄거리입니다. 이것을 정확히 {n_
 
 제목: {title}
 한 줄 줄거리: {logline}
+후킹 질문(1번 컷이 심어야 할 질문): {hook}
 등장인물: {cast_list}
 
 대목과 배정된 컷 수:
@@ -296,7 +462,10 @@ _BEATS_USER = """아래는 확정된 줄거리입니다. 이것을 정확히 {n_
 
 [규칙]
 - 정확히 {n_scenes}개. n은 1부터 {n_scenes}까지 빠짐없이.
-- 대목별 배정 컷 수를 **정확히** 지킵니다. 순서도 발단 → 전개 → 위기 → 절정 → 결말 그대로.
+- ⭐ **1번 컷은 위 후킹 질문이 생기게 하는 장면**입니다. 설명하지 않고 보여 주기만 합니다.
+- ⭐ **2번 컷은 손을 멈추게 한 값을 합니다.** 1번에서 생긴 질문을 더 키우거나, 한 겹만 벗깁니다.
+  여기서 평범한 일상으로 돌아가면 그대로 넘어갑니다.
+- 대목별 배정 컷 수를 **정확히** 지킵니다. 순서도 {act_arrow} 그대로.
 - ⭐ **컷마다 이야기가 한 칸씩 나아갑니다.** 같은 상황을 각도만 바꿔 두 번 보여 주지 않습니다.
   앞 컷과 견주어 "무엇이 달라졌는가"를 한 마디로 댈 수 없으면 그 컷은 버리고 다시 쓰세요.
 - ⭐ **앞 컷의 마지막 상태에서 이어 시작합니다.** 인물의 위치·손에 든 것·시간대가 이어져야 합니다.
@@ -308,6 +477,8 @@ _BEATS_USER = """아래는 확정된 줄거리입니다. 이것을 정확히 {n_
    하게 된다. 원인이 결과 바로 앞에 와야 한다.)
 - 장소가 바뀌는 컷은 place 를 바꾸고, 그 전환이 자연스럽도록 앞뒤를 배치합니다.
 - cast 는 위 등장인물 목록 안에서만 고릅니다. 한 컷에 세 명을 넘기지 않습니다.
+
+{mode_beats}
 """
 
 
@@ -317,8 +488,11 @@ _SCENE_USER = """아래 줄거리와 컷 개요를 바탕으로, **{first}번부
 
 제목: {title}
 한 줄 줄거리: {logline}
+후킹 질문(1번 컷이 심어야 할 질문): {hook}
 등장인물: {cast_list}
 타깃 영상 생성 툴: {tool}
+
+{mode_scene}
 
 전체 컷 개요(흐름 파악용, 이번에 쓸 것은 {first}~{last}번뿐):
 {all_beats}
@@ -343,11 +517,11 @@ _SCENE_USER = """아래 줄거리와 컷 개요를 바탕으로, **{first}번부
 }}
 
 [나레이션 규칙]
-- 컷 개요에 적힌 그 컷의 일을 **그대로** 옮깁니다. 개요에 없는 사건을 새로 지어내지 않습니다.
+- 컷 개요에 적힌 그 컷의 일을 **그대로** 옮깁니다. 개요에 없는 사건을 새로 지어내지 않습니다.{hook_note}
 - 전체를 이어 읽으면 하나의 완결된 이야기. 문장이 씬 경계에서 잘리지 않습니다.
-- ⭐ 각 씬 나레이션은 한국어 **1~2문장, 32~45자**. 이보다 길면 씬 하나가 10초를 넘는데,
-  영상 생성 툴 대부분이 10초까지만 만들어 주어 쓸 수 없는 대본이 된다.
-- 따뜻하고 해학적인 구어체 존댓말("~했답니다", "~하지 뭐예요"). 옛이야기 들려주듯.
+- ⭐ 각 씬 나레이션은 한국어 **1~2문장, {len_min}~{len_max}자**. 이보다 길면 씬 하나가
+  10초를 넘는데, 영상 생성 툴 대부분이 10초까지만 만들어 주어 쓸 수 없는 대본이 된다.
+{tone_rule}
 - ⭐ **한 문장에 사건 하나.** 두 문장이면 사건 둘까지. 한 문장에 사건을 셋 넣으면 숨이 찹니다.
   (나쁜 예: "박 속에서 음식과 비단 옷과 돈이 쏟아져 나와 모두 배불리 먹고 행복해졌지요."
    — 쏟아짐·먹음·행복해짐 셋이 한 문장에 들어갔습니다.)
@@ -355,8 +529,7 @@ _SCENE_USER = """아래 줄거리와 컷 개요를 바탕으로, **{first}번부
   생략합니다. 매 씬 이름을 부르면 낭독체가 딱딱해집니다.
   (나쁜 예: 4번 "흥부는~", 5번 "흥부네 가족은~" / 좋은 예: 4번 "흥부는~", 5번 "설레는 마음으로~")
   인물이 **바뀌는 씬에서만** 이름을 밝힙니다.
-- ⭐ **종결어미를 연달아 겹치지 않습니다.** "~답니다 / ~었어요 / ~지 뭐예요 / ~더랍니다" 를
-  번갈아 쓰되, **바로 앞 씬과 같은 어미는 쓰지 않습니다.** 마지막 씬은 "~답니다"로 닫습니다.
+- ⭐ **종결어미를 연달아 겹치지 않습니다.** {ending_rule}
 - ⭐ **씬 첫머리에 앞과 잇는 말**을 둡니다(그러자 / 그런데 / 며칠 뒤 / 그 말을 들은 /
   이윽고 / 하지만). 단 **같은 연결어를 두 번 쓰지 않습니다.**
 - 숫자·영어 금지(음성으로 읽히므로). 한글과 기본 문장부호, 그리고 아래 연기 마커만.
@@ -368,7 +541,7 @@ _SCENE_USER = """아래 줄거리와 컷 개요를 바탕으로, **{first}번부
 - 한 씬에 **1~2개**. 문장마다 붙이면 오히려 산만해집니다. 감정이 실제로 꺾이는 자리에만.
 - 예: "[놀라며] 박을 타자 금은보화가 쏟아져 나왔지 뭐예요!"
 - 예: "흥부는 제비를 품에 안았습니다. [속삭이며] 이제 괜찮단다."
-- 마커를 뺀 글자 수가 위 32~45자 기준입니다.
+- 마커를 뺀 글자 수가 위 {len_min}~{len_max}자 기준입니다.
 {edge_note}
 
 [연기 지시 규칙 — voice_direction]
@@ -417,7 +590,7 @@ _SCENE_USER = """아래 줄거리와 컷 개요를 바탕으로, **{first}번부
 
 # ---------------------------------------------------------------- ④ 윤문(다듬기)
 
-_POLISH_USER = """아래는 한국 전래동화 쇼츠의 나레이션입니다. 컷마다 따로 쓰다 보니
+_POLISH_USER = """아래는 {kind} 쇼츠의 나레이션입니다. 컷마다 따로 쓰다 보니
 **이어 읽으면 어색한 곳**이 있습니다. 내용은 그대로 두고 **말맛만** 다듬어 주세요.
 
 제목: {title}
@@ -436,20 +609,20 @@ _POLISH_USER = """아래는 한국 전래동화 쇼츠의 나레이션입니다.
 - 개수. {count}개를 {count}개로 돌려줍니다.
 
 [다듬을 것 — 이어 읽었을 때 자연스럽게]
-1. ⭐ **길이**: 연기 마커를 뺀 글자 수가 **32~45자**. 지금 넘치는 것은 줄입니다.
+1. ⭐ **길이**: 연기 마커를 뺀 글자 수가 **{len_min}~{len_max}자**. 지금 넘치는 것은 줄입니다.
    줄일 때는 꾸밈말부터 덜어내고, 사건은 남깁니다.
 2. ⭐ **한 문장에 사건 하나.** 셋이 들어간 문장은 둘로 나누거나 덜어냅니다.
 3. ⭐ **주어 생략**: 앞 컷과 같은 인물이면 이름을 다시 부르지 않습니다. 인물이 바뀌는
    컷에서만 이름을 밝힙니다. 한국어는 문맥이 이어지면 주어를 생략합니다.
-4. ⭐ **종결어미 리듬**: "~답니다 / ~었어요 / ~지 뭐예요 / ~더랍니다" 를 번갈아 쓰되
-   **이웃한 두 컷이 같은 어미로 끝나지 않게** 합니다. 마지막 컷은 "~답니다"로 닫습니다.
+4. ⭐ **종결어미 리듬**: {ending_rule}
 5. ⭐ **연결어**: 컷 첫머리에 앞과 잇는 말을 둡니다(그러자 / 그런데 / 며칠 뒤 /
    그 말을 들은 / 이윽고 / 하지만). **같은 연결어를 두 번 쓰지 않습니다.**
-6. ⭐ **1번은 훅**: "옛날 옛적에" 처럼 뻔하게 시작하지 않습니다. 사건 한가운데나
-   의외의 장면에서 시작하거나, 답을 알고 싶게 만드는 한마디로 엽니다.
+6. ⭐ **1번은 훅**: {hook_rule}
 7. **연기 마커**({markers})는 감정이 꺾이는 컷에만 1~2개 남기고, 너무 많으면 덜어냅니다.
    마커는 대사 바로 앞에 붙입니다.
 8. 숫자·영어 금지. 한글과 기본 문장부호, 마커만.
+
+{mode_polish}
 """
 
 
@@ -483,6 +656,11 @@ class Storyboard:
     style_lock: str = ""
     logline: str = ""
     cover_prompt: str = ""
+    mode: str = DEFAULT_MODE
+    channel: str = ""
+    opening_hook: str = ""
+    voice: str = ""
+    highlight: str = ""
 
 
 # 참조 이미지를 쓸 때 씬 프롬프트에 섞이면 안 되는 낱말.
@@ -516,13 +694,14 @@ def strip_look_words(prompt: str) -> tuple[str, list[str]]:
     return prompt, hits
 
 
-def _ask(client, model: str, prompt: str, temperature: float) -> dict:
+def _ask(client, model: str, prompt: str, temperature: float,
+         system: str = "") -> dict:
     from google.genai import types
     resp = client.models.generate_content(
         model=model,
         contents=prompt,
         config=types.GenerateContentConfig(
-            system_instruction=_SYSTEM,
+            system_instruction=system or _SYSTEM,
             temperature=temperature,
             response_mime_type="application/json",
         ),
@@ -538,7 +717,7 @@ def _one_line(v) -> str:
 
 
 def _polish(client, model: str, title: str, logline: str, cast_list: str,
-            narrations: list[str]) -> list[str]:
+            narrations: list[str], mode: dict | None = None) -> list[str]:
     """컷마다 따로 쓴 나레이션을 **한꺼번에 놓고** 다듬는다.
 
     컷을 여덟 개씩 나눠 쓰다 보면 묶음 경계에서 말맛이 끊기고, 종결어미가 겹치고,
@@ -547,11 +726,15 @@ def _polish(client, model: str, title: str, logline: str, cast_list: str,
     """
     numbered = "\n".join(f"{i}. {t}" for i, t in enumerate(narrations, 1))
     try:
+        md = mode or MODES[DEFAULT_MODE]
         data = _ask(client, model, _POLISH_USER.format(
             title=title, logline=logline, cast_list=cast_list,
             numbered=numbered, count=len(narrations),
             markers=" ".join(MARKERS),
-        ), temperature=0.7)
+            kind=md["kind"], len_min=md["len_min"], len_max=md["len_max"],
+            ending_rule=md["ending_rule"], hook_rule=md["hook_rule"],
+            mode_polish=md["polish"],
+        ), temperature=0.7, system=md["system"])
         got = [_one_line(x) for x in (data.get("narrations") or [])]
     except Exception as e:  # noqa: BLE001
         print(f"::warning::나레이션 다듬기를 건너뜁니다({str(e)[:120]}).")
@@ -563,10 +746,11 @@ def _polish(client, model: str, title: str, logline: str, cast_list: str,
         return narrations
 
     # 한 줄씩 검사 — 이상한 것만 원본으로 되돌린다(통째로 버리지 않는다).
+    cap = (mode or MODES[DEFAULT_MODE])["len_max"] + 15
     out = []
     for i, (old, new) in enumerate(zip(narrations, got), 1):
         plain = strip_markers(new)
-        if not plain or len(plain) > 60 or len(plain) < 12:
+        if not plain or len(plain) > cap or len(plain) < 10:
             print(f"::warning::{i}번 다듬기 결과가 {len(plain)}자라 원본을 씁니다.")
             out.append(old)
         else:
@@ -574,12 +758,15 @@ def _polish(client, model: str, title: str, logline: str, cast_list: str,
     return out
 
 
-def _check_flow(narrations: list[str], names: list[str]) -> None:
+def _check_flow(narrations: list[str], names: list[str],
+                mode: dict | None = None) -> None:
     """다듬은 뒤에도 남은 어색함을 알려 준다(고치지는 않는다)."""
+    md = mode or MODES[DEFAULT_MODE]
     plains = [strip_markers(t) for t in narrations]
     for i, t in enumerate(plains, 1):
-        if len(t) > 48:
-            print(f"::warning::{i}번 나레이션이 {len(t)}자입니다(45자 권장). 씬이 길어집니다.")
+        if len(t) > md["warn_len"]:
+            print(f"::warning::{i}번 나레이션이 {len(t)}자입니다"
+                  f"({md['len_max']}자 권장). 씬이 길어집니다.")
     ends = [re.sub(r"[.!?…]+$", "", t)[-4:] for t in plains]
     for i in range(1, len(ends)):
         if ends[i] and ends[i] == ends[i - 1]:
@@ -591,7 +778,7 @@ def _check_flow(narrations: list[str], names: list[str]) -> None:
 
 
 def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
-                        model: str = "") -> Storyboard:
+                        model: str = "", mode: str = DEFAULT_MODE) -> Storyboard:
     """주제 → 스토리보드. 세 단계로 나눠 만든다.
 
     ① 줄거리와 인물(발단·전개·위기·절정·결말) → ② 컷마다 무슨 일이 벌어지는지 한 줄씩
@@ -602,20 +789,32 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
     from google import genai
 
     cfg = TOOLS[tool]
+    md = get_mode(mode)
+    mode = next(k for k, v in MODES.items() if v is md)
+    acts = md["acts"]
     client = genai.Client(api_key=api_key)
     model = resolve_model(client, model)
     # 대목이 다섯이라 컷도 최소 다섯이어야 한 대목이 통째로 비지 않는다.
-    n_scenes = max(len(ACTS), min(MAX_SCENES, int(n_scenes)))
-    alloc = allocate_acts(n_scenes)
+    n_scenes = max(len(acts), min(MAX_SCENES, int(n_scenes)))
+    alloc = allocate_acts(n_scenes, acts)
 
     # ① 줄거리와 인물
-    print(f"[1/4] 줄거리 설계 — {n_scenes}컷, 대목별 배정 "
-          f"{', '.join(f'{s}{c}' for (s, _), c in zip(ACTS, alloc))}")
+    print(f"[1/4] {mode} 줄거리 설계 — {n_scenes}컷, 대목별 배정 "
+          f"{', '.join(f'{s}{c}' for (s, _), c in zip(acts, alloc))}")
+    acts_schema = ",\n".join(
+        '    {"stage": "%s", "summary": "%s"}' % (
+            stage,
+            "그 대목에서 실제로 벌어지는 일 (한국어 2~3문장)" if i == 0 else "...")
+        for i, (stage, _) in enumerate(acts)
+    )
     plot = _ask(client, model, _PLOT_USER.format(
-        topic=topic, n_scenes=n_scenes, style=STYLE_KEYWORDS, max_chars=MAX_CHARACTERS,
+        topic=topic, n_scenes=n_scenes, style=md["style_kw"], max_chars=MAX_CHARACTERS,
+        first_act=acts[0][0],
         total_sec=int(n_scenes * 8),
-        allocation=", ".join(f"{s} {c}컷" for (s, _), c in zip(ACTS, alloc)),
-    ), temperature=0.9)
+        allocation=", ".join(f"{s} {c}컷" for (s, _), c in zip(acts, alloc)),
+        mode_plot=md["plot"], acts_schema=acts_schema,
+        act_names=md["act_names"], style_ex=md["style_ex"], hook_rule=md["hook_rule"],
+    ), temperature=0.9, system=md["system"])
 
     characters = [
         Character(name=_one_line(c.get("name")),
@@ -639,28 +838,30 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
                         "no text, no letters, no title, no watermark, no logo.")
     title = _one_line(plot.get("title")) or topic
     logline = _one_line(plot.get("logline"))
+    hook = _one_line(plot.get("opening_hook")) or "(모델이 후킹 질문을 적지 않았습니다)"
     cast_list = ", ".join(f"{c.name}({c.role})" for c in characters)
 
     by_stage = {_one_line(a.get("stage")): _one_line(a.get("summary"))
                 for a in (plot.get("acts") or [])}
     acts_text = "\n".join(
         f"  [{stage}] {count}컷 — {by_stage.get(stage, '(비어 있음)')}"
-        for (stage, _), count in zip(ACTS, alloc)
+        for (stage, _), count in zip(acts, alloc)
     )
 
     # ② 컷마다 무슨 일이 벌어지는지 한 줄씩
     print(f"[2/4] {n_scenes}컷 개요")
     beats_raw = (_ask(client, model, _BEATS_USER.format(
         n_scenes=n_scenes, title=title, logline=logline,
-        cast_list=cast_list, acts=acts_text,
-    ), temperature=0.85).get("beats") or [])[:n_scenes]
+        cast_list=cast_list, acts=acts_text, hook=hook,
+        act_arrow=md["act_arrow"], mode_beats=md["beats"],
+    ), temperature=0.85, system=md["system"]).get("beats") or [])[:n_scenes]
     if len(beats_raw) < n_scenes:
         raise RuntimeError(f"컷 개요를 {n_scenes}개 만들지 못했습니다"
                            f"(받은 개수: {len(beats_raw)}). 다시 시도해 보세요.")
 
     # 대목 이름은 우리가 정한 배정에서 가져온다(모델이 틀리게 적어도 흔들리지 않게).
     stage_of: list[str] = []
-    for (stage, _), count in zip(ACTS, alloc):
+    for (stage, _), count in zip(acts, alloc):
         stage_of += [stage] * count
     beats = []
     for i, b in enumerate(beats_raw):
@@ -692,23 +893,26 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
         data = _ask(client, model, _SCENE_USER.format(
             first=lo + 1, last=hi, count=hi - lo,
             title=title, logline=logline, cast_list=cast_list, tool=tool,
-            all_beats=all_beats, prev_note=prev_note,
+            all_beats=all_beats, prev_note=prev_note, hook=hook,
             tool_guide=cfg["guide"],
+            mode_scene=md["scene"], tone_rule=md["tone_rule"],
+            ending_rule=md["ending_rule"],
+            len_min=md["len_min"], len_max=md["len_max"],
+            # 1번 컷이 들어 있는 묶음에서만 후킹 지침을 건다.
+            hook_note=("\n- ⭐⭐ **1번 컷이 이 묶음에 있습니다.** 1번 나레이션은 위 후킹 질문이\n"
+                       "  머릿속에 남게 씁니다. 설명하지 말고, 질문 하나만 남기고 끊으세요.\n"
+                       f"  {md['hook_rule']}\n"
+                       "  ⭐ **2번 나레이션은 그 질문을 더 키우거나 한 겹만 벗깁니다.**\n"
+                       "  여기서 평범한 설명으로 돌아가면 보던 사람이 그대로 넘깁니다."
+                       if bi == 0 else ""),
             # 해시태그는 마지막 묶음에서 한 번만 받는다.
             hashtag_slot=(',\n  "hashtags": ["#해시태그", "#3개", "#한국어"]'
                           if bi == len(batches) - 1 else ""),
-            edge_note=("- ⭐ 1번 씬은 **훅**입니다. \"옛날 옛적에\" 처럼 뻔하게 시작하지 마세요 —\n"
-                       "  쇼츠에서 손가락이 그냥 지나갑니다. 사건 한가운데나 의외의 장면에서 시작하거나,\n"
-                       "  듣는 사람이 답을 알고 싶게 만드는 한마디로 엽니다.\n"
-                       "  (나쁜 예: \"옛날 옛적에 마음씨 착한 흥부가 살았답니다.\"\n"
-                       "   좋은 예: \"부러진 제비 다리 하나가 한 집안의 운명을 바꿔 놓았지 뭐예요.\")"
-                       if bi == 0 else "")
-            + ("\n- 마지막 씬은 잔잔한 교훈이나 여운으로 마무리. 설교조 금지."
-               if bi == len(batches) - 1 else ""),
+            edge_note=(md["last_note"] if bi == len(batches) - 1 else ""),
             markers=" ".join(MARKERS),
             negative_note=("이 툴이 네거티브 프롬프트를 지원하므로 반드시 채울 것"
                            if cfg["negative"] else "빈 문자열로 둘 것"),
-        ), temperature=0.85)
+        ), temperature=0.85, system=md["system"])
         if bi == len(batches) - 1:
             hashtags = [str(h) for h in (data.get("hashtags") or [])][:5]
 
@@ -744,13 +948,13 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
     # ④ 전체를 한꺼번에 놓고 말맛을 다듬는다. 컷마다 따로 쓰면 이어 읽을 때 어색하다.
     print(f"[4/4] 나레이션 다듬기 ({len(scenes)}컷 한꺼번에)")
     polished = _polish(client, model, title, logline, cast_list,
-                       [sc.narration for sc in scenes])
+                       [sc.narration for sc in scenes], md)
     for sc, new_n in zip(scenes, polished):
         sc.narration = new_n
         sc.est_seconds = estimate_seconds(new_n)
         sc.prompt = sc.prompt.replace(
             "__DUR__", f"Single continuous shot of about {sc.est_seconds:.0f} seconds.")
-    _check_flow([sc.narration for sc in scenes], [c.name for c in characters])
+    _check_flow([sc.narration for sc in scenes], [c.name for c in characters], md)
 
     if len(scenes) != n_scenes:
         print(f"::warning::컷을 {n_scenes}개 요청했는데 {len(scenes)}개가 만들어졌습니다.")
@@ -765,6 +969,11 @@ def generate_storyboard(api_key: str, topic: str, n_scenes: int, tool: str,
         style_lock=style_lock,
         logline=logline,
         cover_prompt=cover_prompt,
+        mode=mode,
+        channel=md["channel"],
+        opening_hook=hook,
+        voice=md["voice"],
+        highlight=md["highlight"],
     )
 
     # 기준 이미지가 있는데 한 번도 안 쓰이는 인물이 있으면 운영자가 헛일을 한다.

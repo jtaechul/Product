@@ -51,7 +51,7 @@
   .btn.ghost { background: #f2eef0; color: var(--ink); }
   .btn.mini { width: auto; min-height: 38px; padding: 0 14px; font-size: 14px; margin: 0; }
   .row { display: flex; gap: 10px; } .row > * { flex: 1; }
-  .hint { font-size: 13px; color: var(--dim); margin: 8px 0 0; }
+  .hint { font-size: 13px; color: var(--dim); margin: 8px 0 0; white-space: pre-line; }
   .empty { color: var(--dim); font-size: 14px; text-align: center; padding: 24px 0; margin: 0; }
   .item { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
   .item .t { font-weight: 700; font-size: 15px; }
@@ -61,6 +61,16 @@
     border-radius: 999px; background: #f2eef0; color: var(--dim);
   }
   .tag.ok { background: #e6f5ee; color: var(--ok); }
+  .tag.dark { background: #2a2328; color: #f3e6d8; }
+  .seg { display: flex; gap: 10px; margin-bottom: 14px; }
+  .seg > button {
+    flex: 1; min-height: 62px; border-radius: 12px; cursor: pointer;
+    border: 2px solid var(--line); background: #fff; color: var(--dim);
+    font: inherit; font-weight: 700; line-height: 1.35; padding: 8px 6px;
+  }
+  .seg > button small { display: block; font-size: 12px; font-weight: 500; margin-top: 3px; }
+  .seg > button[aria-pressed="true"] { border-color: var(--brand); background: var(--soft); color: var(--brand); }
+  .seg > button.dark[aria-pressed="true"] { border-color: #2a2328; background: #2a2328; color: #f3e6d8; }
   .tag.warn { background: #fbf1df; color: var(--warn); }
   pre {
     background: #f6f2f4; border: 1px solid var(--line); border-radius: 10px; padding: 12px;
@@ -111,6 +121,11 @@
 <section id="tab-make" class="on">
   <div class="card">
     <h2>주제로 대본 만들기</h2>
+    <label>대본 결</label>
+    <div class="seg" id="modeSeg">
+      <button type="button" data-mode="태담용" aria-pressed="true">태담용<small>따뜻한 전래동화</small></button>
+      <button type="button" class="dark" data-mode="어른용" aria-pressed="false">어른용<small>서늘한 괴담·야담</small></button>
+    </div>
     <label for="topic">동화 주제</label>
     <textarea id="topic" rows="3" placeholder="예) 욕심 많은 형과 착한 아우가 나눠 가진 신기한 박씨"></textarea>
     <div class="row">
@@ -274,14 +289,34 @@ document.querySelectorAll("nav button").forEach((b) => {
 });
 
 /* ── 대본 만들기 ────────────────────────── */
-// 컷이 늘면 영상도 그만큼 직접 만들어 올려야 한다. 누르기 전에 알려 준다.
+// 태담용과 어른용은 이야기 골격부터 다르다. 어른용은 긴장을 쌓을 컷이 더 필요해
+// 기본 컷 수도 다르게 잡아 준다(운영자가 바꾸면 그 선택을 존중한다).
+const MODE_INFO = {
+  "태담용": { scenes: 8,  note: "따뜻한 전래동화. 아이와 부모가 듣습니다. 밝은 화면·여성 성우·노란 자막." },
+  "어른용": { scenes: 14, note: "서늘한 괴담·야담. 첫 컷을 파국 직전 장면으로 열고, 대가를 치르고 닫습니다. 어두운 화면·남성 성우·붉은 자막." },
+};
+let mode = "태담용";
+let scenesTouched = false;
+
 function paintSceneHint() {
   const n = parseInt($("scenes").value, 10) || 8;
   $("scHint").textContent =
-    `1~3분 걸립니다. 완료되면 ② 작업중 탭에 나타납니다. `
+    `${MODE_INFO[mode].note}\n`
+    + `1~3분 걸립니다. 완료되면 ② 작업중 탭에 나타납니다. `
     + `영상 클립을 ${n}개 만들어 올리셔야 하고, 완성본은 약 ${Math.round(n * 8)}초가 됩니다.`;
 }
-$("scenes").onchange = paintSceneHint;
+$("scenes").onchange = () => { scenesTouched = true; paintSceneHint(); };
+
+$("modeSeg").querySelectorAll("button").forEach((b) => {
+  b.onclick = () => {
+    mode = b.dataset.mode;
+    $("modeSeg").querySelectorAll("button").forEach(
+      (x) => x.setAttribute("aria-pressed", String(x === b)));
+    // 컷 수를 손대지 않았으면 그 결에 맞는 기본값으로 바꿔 준다.
+    if (!scenesTouched) $("scenes").value = String(MODE_INFO[mode].scenes);
+    paintSceneHint();
+  };
+});
 paintSceneHint();
 
 $("btnScript").onclick = (e) => busy(e.target, async () => {
@@ -290,7 +325,7 @@ $("btnScript").onclick = (e) => busy(e.target, async () => {
   if (!myKey.get() && !confirm("내 API 키가 없습니다. 저장소 기본 키로 진행할까요?")) return;
   e.target.textContent = "보내는 중...";
   await api("/api/script", { method: "POST", body: JSON.stringify({
-    topic, scenes: $("scenes").value, tool: $("tool").value,
+    topic, mode, scenes: $("scenes").value, tool: $("tool").value,
     gemini_key: myKey.get() }) });
   $("topic").value = "";
   toast("대본을 만들고 있습니다. 1~3분 뒤 ② 작업중 탭에서 새로고침해 주세요.", 6000);
@@ -321,12 +356,19 @@ function render(which) {
   mine.forEach((rec) => box.appendChild(which === "done" ? doneCard(rec) : workCard(rec)));
 }
 
+// 대본 결 배지. 예전에 만든 대본에는 mode 가 없으므로 태담용으로 본다.
+function modeTag(rec) {
+  const m = rec.mode || "태담용";
+  return `<span class="tag${m === "어른용" ? " dark" : ""}">${m}</span> `;
+}
+
 function workCard(rec) {
   const el = document.createElement("div");
   el.className = "item";
   el.innerHTML = `<div class="t"></div><div class="s"></div>
     <button class="btn mini sub" style="margin-top:10px">열기</button>`;
-  el.querySelector(".t").textContent = rec.title || rec.topic;
+  el.querySelector(".t").innerHTML = modeTag(rec);
+  el.querySelector(".t").append(rec.title || rec.topic);
   el.querySelector(".s").textContent = `${rec.scenes.length}컷 · ${rec.tool}`;
   el.querySelector("button").onclick = (e) => busy(e.target, () => openDetail(rec));
   return el;
@@ -341,9 +383,11 @@ function doneCard(rec) {
       <button class="btn mini ghost">원본 내려받기</button>
       <button class="btn mini sub">다시 만들기</button>
     </div>`;
-  el.querySelector(".t").textContent = rec.title || rec.topic;
+  el.querySelector(".t").innerHTML = modeTag(rec);
+  el.querySelector(".t").append(rec.title || rec.topic);
   el.querySelector(".s").textContent =
-    `${rec.duration || "?"}초 · ${rec.resolution || ""} · ${(rec.hashtags || []).join(" ")}`;
+    `${rec.channel ? rec.channel + " 채널 · " : ""}${rec.duration || "?"}초 · `
+    + `${rec.resolution || ""} · ${(rec.hashtags || []).join(" ")}`;
   el.querySelector("video").src = "/api/video?u="
     + encodeURIComponent(rec.video + (rec.rendered_at ? "?v=" + rec.rendered_at : ""));
   const [bDown, bAgain] = el.querySelectorAll("button");
@@ -574,7 +618,8 @@ async function openDetail(rec) {
       감정 연기를 계속 쓰시려면 위 "내 API 키"에 결제된 키를 넣으세요.</p>
     <label>목소리</label>
     <select class="v">
-      <option value="Sulafat">술라팟 (여성 · 따뜻하고 포근함 · 추천)</option>
+      <option value="자동">자동 (대본 결에 맞춰 고름 · 추천)</option>
+      <option value="Sulafat">술라팟 (여성 · 따뜻하고 포근함)</option>
       <option value="Kore">코레 (여성 · 또렷하고 단단함)</option>
       <option value="Aoede">아오이데 (여성 · 가볍고 산뜻함)</option>
       <option value="Leda">레다 (여성 · 앳되고 발랄함)</option>
@@ -583,7 +628,7 @@ async function openDetail(rec) {
     </select>
     <div class="row">
       <div><label>자막 색</label>
-        <select class="h"><option>노란색</option><option>연두색</option><option>하늘색</option><option>분홍색</option></select></div>
+        <select class="h"><option>자동</option><option>노란색</option><option>연두색</option><option>하늘색</option><option>분홍색</option><option>붉은색</option></select></div>
       <div><label>워터마크 가림</label>
         <select class="b">
           <option value="0.16">보통 (권장)</option>
@@ -595,7 +640,10 @@ async function openDetail(rec) {
         <select class="q"><option value="false">720 (빠름)</option><option value="true">1080 (느림)</option></select></div>
     </div>
     <button class="btn">최종 영상 만들기</button>
-    <p class="hint">모든 씬 영상을 올린 뒤 눌러 주세요. 3~10분 뒤 ③ 완성본 탭에 나타납니다.</p>`;
+    <p class="hint">${(rec.mode || "태담용") === "어른용"
+        ? "어른용 대본입니다. 자동으로 두면 남성 저음(카론) + 붉은 자막으로 만듭니다."
+        : "태담용 대본입니다. 자동으로 두면 여성 음색(술라팟) + 노란 자막으로 만듭니다."}
+      모든 씬 영상을 올린 뒤 눌러 주세요. 3~10분 뒤 ③ 완성본 탭에 나타납니다.</p>`;
   opts.querySelector("button").onclick = (e) => busy(e.target, async () => {
     e.target.textContent = "보내는 중...";
     await api("/api/render", { method: "POST", body: JSON.stringify({

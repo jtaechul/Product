@@ -79,9 +79,22 @@ def main() -> int:
     WORK.mkdir(parents=True, exist_ok=True)
     width, height = (1080, 1920) if os.environ.get("HQ") == "true" else (720, 1280)
     engine = os.environ.get("TTS_ENGINE", "gemini").strip().lower()
-    voice = os.environ.get("VOICE", "Sulafat")
     rate = os.environ.get("RATE", "-5%")
-    highlight = os.environ.get("HIGHLIGHT", "노란색")
+
+    # ⭐ 성우·자막색 자동 맞춤. 대본이 태담용이면 따뜻한 여성 목소리에 노란 자막,
+    # 어른용이면 낮은 남성 목소리에 핏빛 자막이 기본이다. 운영자가 화면에서 직접
+    # 고르면 그 선택이 언제나 이긴다("자동"이 아닐 때).
+    mode = str(record.get("mode") or "태담용")
+    auto_voice = str(record.get("voice") or "") or ("Charon" if mode == "어른용" else "Sulafat")
+    auto_hi = str(record.get("highlight") or "") or ("붉은색" if mode == "어른용" else "노란색")
+
+    def picked(env_name: str, auto_value: str) -> str:
+        v = os.environ.get(env_name, "").strip()
+        return auto_value if (not v or v == "자동") else v
+
+    voice = picked("VOICE", auto_voice)
+    highlight = picked("HIGHLIGHT", auto_hi)
+    print(f"대본 결: {mode} · 성우 {voice} · 자막 {highlight}")
     tail_pad = float(os.environ.get("TAIL_PAD", "0.5"))
     # 전환은 씬 끝 여백 안에서 일어나게 한다. 여백보다 길면 대사 위로 화면이 섞인다.
     xdur = min(float(os.environ.get("XFADE", "0.4")), tail_pad)

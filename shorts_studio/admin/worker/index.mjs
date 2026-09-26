@@ -16,6 +16,8 @@ const BUILD = "dev";
 
 const REPO = "jtaechul/Product";
 const BRANCH = "main";
+// 대본 결 — 워크플로 choice 입력과 **글자까지 똑같아야** 한다.
+const MODES = ["태담용", "어른용"];
 const GH = "https://api.github.com";
 const DIR = "shorts_studio/content";
 const WF_SCRIPT = "shorts-studio-script.yml";
@@ -323,12 +325,15 @@ async function runScript(req, env, uid) {
   const topic = String(b.topic || "").trim();
   if (!topic) return err("동화 주제를 입력하세요.");
   const scenes = Math.max(5, Math.min(MAX_SCENES, parseInt(b.scenes, 10) || 8));
+  // 대본 결. 모르는 값이 오면 기존(태담용)으로 떨어뜨린다.
+  const mode = MODES.includes(String(b.mode)) ? String(b.mode) : MODES[0];
   await gh(env, `/repos/${REPO}/actions/workflows/${WF_SCRIPT}/dispatches`, {
     method: "POST",
     body: JSON.stringify({
       ref: BRANCH,
       inputs: {
         topic,
+        mode,
         scenes: String(scenes),
         tool: String(b.tool || "Runway (Gen-3/Gen-4)"),
         owner: uid,
@@ -356,10 +361,10 @@ async function runRender(req, env, uid) {
       inputs: {
         content_id: id,
         engine: String(b.engine || "gemini"),
-        voice: String(b.voice || "Sulafat"),
+        voice: String(b.voice || "자동"),
         gemini_key_enc: await sealKey(env, b.gemini_key),
         band_bottom: String(b.band_bottom || "0.16"),
-        highlight: String(b.highlight || "노란색"),
+        highlight: String(b.highlight || "자동"),
         hq: String(b.hq || "false"),
       },
     }),

@@ -45,15 +45,19 @@ def main() -> int:
               "내 API 키를 넣거나, 저장소 시크릿 GEMINI_API_KEY 를 등록하세요.")
         return 1
 
-    scenes = max(len(llm.ACTS), min(llm.MAX_SCENES, int(os.environ.get("SCENES", "8"))))
+    mode = os.environ.get("MODE", "").strip() or llm.DEFAULT_MODE
+    md = llm.get_mode(mode)
+    scenes = max(len(md["acts"]),
+                 min(llm.MAX_SCENES,
+                     int(os.environ.get("SCENES", "") or md["default_scenes"])))
     tool = os.environ.get("TOOL", "Runway (Gen-3/Gen-4)")
     if tool not in llm.TOOLS:
         print(f"::error::모르는 영상 툴입니다: {tool}")
         return 1
 
-    print(f"대본 생성 시작 — 주제: {topic} / {scenes}컷 / {tool}")
+    print(f"대본 생성 시작 — [{mode}] 주제: {topic} / {scenes}컷 / {tool}")
     board = llm.generate_storyboard(key, topic, scenes, tool,
-                                    os.environ.get("MODEL", ""))
+                                    os.environ.get("MODEL", ""), mode)
 
     cid = make_id(topic)
     record = {
@@ -63,6 +67,12 @@ def main() -> int:
         "title": board.title,
         "tool": tool,
         "tool_note": llm.TOOLS[tool]["ui_note"],
+        "mode": board.mode,               # 태담용 / 어른용
+        "channel": board.channel,         # 업로드할 채널 구분
+        "opening_hook": board.opening_hook,
+        # 모드에 맞는 성우·자막색. 영상 만들 때 "자동"이면 이 값을 쓴다.
+        "voice": board.voice,
+        "highlight": board.highlight,
         "hashtags": board.hashtags,
         "logline": board.logline,
         "characters": [asdict(c) for c in board.characters],
@@ -81,7 +91,10 @@ def main() -> int:
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
-            f.write(f"## {board.title}\n\n아이디: `{cid}`\n\n{board.logline}\n\n")
+            f.write(f"## {board.title}\n\n아이디: `{cid}` · **{board.mode}** "
+                    f"({board.channel} 채널)\n\n{board.logline}\n\n")
+            if board.opening_hook:
+                f.write(f"**후킹 질문** — {board.opening_hook}\n\n")
             if board.cover_prompt:
                 f.write(f"**표지**\n\n```\n{board.cover_prompt}\n```\n\n")
             for c in board.characters:
