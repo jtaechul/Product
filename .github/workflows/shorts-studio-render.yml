@@ -16,9 +16,9 @@ on:
         type: choice
         options: ["gemini", "edge"]
       voice:
-        description: "성우 (gemini: Sulafat/Kore/Aoede/Leda/Charon/Enceladus)"
+        description: "성우 (자동 = 대본 결에 맞춰 고름 / Sulafat·Kore·Aoede·Leda·Charon·Enceladus)"
         required: false
-        default: "Sulafat"
+        default: "자동"
         type: string
       rate:
         description: "말하기 속도 (edge 엔진 전용, 예: -5%)"
@@ -26,11 +26,11 @@ on:
         default: "-5%"
         type: string
       highlight:
-        description: "자막 하이라이트 색"
+        description: "자막 하이라이트 색 (자동 = 대본 결에 맞춰 고름)"
         required: false
-        default: "노란색"
+        default: "자동"
         type: choice
-        options: ["노란색", "연두색", "하늘색", "분홍색"]
+        options: ["자동", "노란색", "연두색", "하늘색", "분홍색", "붉은색"]
       tts_gap:
         description: "Gemini 성우 호출 사이 간격(초). 분당 제한에 걸리면 올린다"
         required: false
