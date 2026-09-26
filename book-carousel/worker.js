@@ -3782,6 +3782,12 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       <small>Flow 영상에 섞여 든 말소리나 잡음을 통째로 없앱니다.</small>
     </div>
 
+    <label class="ed-toggle" for="edOutro">
+      <input type="checkbox" id="edOutro" checked>
+      <span class="ed-box" aria-hidden="true"></span>
+      <span class="ed-tt">마지막에 상품 사진 넣기<small>02단계에 넣은 쿠팡 상품 사진을 영상 끝에 2.6초 붙입니다</small></span>
+    </label>
+
     <label class="ed-toggle" for="edBars">
       <input type="checkbox" id="edBars" checked>
       <span class="ed-box" aria-hidden="true"></span>
@@ -4388,6 +4394,78 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     a.addEventListener('error',function(){ $('edVoiceInfo').textContent='이 파일은 읽지 못했습니다. mp3나 m4a로 넣어주세요.'; });
   });
 
+
+  // ---- 마지막에 쿠팡 상품 사진 넣기 ----
+  var OUTRO_SEC = 2.6;
+  function productInfo(){
+    var iu=document.getElementById('img'), tt=document.getElementById('t');
+    return { url: iu ? iu.value.trim() : '', title: tt ? tt.value.trim() : '' };
+  }
+  function loadProductImage(url){
+    return new Promise(function(res){
+      if(!url) return res(null);
+      var im=new Image();
+      im.onload=function(){ res(im); };
+      im.onerror=function(){ res(null); };
+      // 같은 주소로 받아와야 캔버스가 오염되지 않는다(외부 주소로 직접 받으면 내보내기가 실패한다)
+      im.src='/api/cover?url='+encodeURIComponent(url);
+    });
+  }
+  function wrapFit(ctx,text,maxW){
+    var out=[],line='';
+    for(var i=0;i<text.length;i++){
+      var t=line+text[i];
+      if(ctx.measureText(t).width>maxW && line){ out.push(line); line=text[i]; }
+      else line=t;
+    }
+    if(line) out.push(line);
+    return out.slice(0,2);
+  }
+  function drawOutro(ctx,w,h,img,title,t){
+    var bar=barOf(h);
+    ctx.fillStyle='#F7F4EF'; ctx.fillRect(0,0,w,h);
+    var fade=Math.min(1, t/0.35);
+    ctx.globalAlpha=fade;
+    if(img && img.width){
+      var maxW=w*0.70, maxH=h*0.42;
+      var sc=Math.min(maxW/img.width, maxH/img.height);
+      var dw=img.width*sc, dh=img.height*sc;
+      var dy=h*0.20;
+      ctx.save();
+      ctx.shadowColor='rgba(0,0,0,.18)'; ctx.shadowBlur=w*0.04; ctx.shadowOffsetY=h*0.006;
+      ctx.fillStyle='#fff';
+      ctx.fillRect((w-dw)/2-w*0.02, dy-w*0.02, dw+w*0.04, dh+w*0.04);
+      ctx.restore();
+      ctx.drawImage(img,(w-dw)/2, dy, dw, dh);
+    }
+    if(title){
+      var fs=Math.round(w/20);
+      ctx.font='700 '+fs+"px 'Noto Sans KR', sans-serif";
+      ctx.textAlign='center'; ctx.fillStyle='#22282B';
+      var lines=wrapFit(ctx,title,w*0.82), y=h*0.70;
+      for(var i=0;i<lines.length;i++){ ctx.fillText(lines[i],w/2,y); y+=fs*1.34; }
+    }
+    var fs2=Math.round(w/24);
+    ctx.font='500 '+fs2+"px 'Noto Sans KR', sans-serif";
+    ctx.textAlign='center'; ctx.fillStyle='#2F6F5E';
+    ctx.fillText('프로필 링크에서 확인', w/2, h-bar-Math.round(h*0.10));
+    ctx.globalAlpha=1;
+    drawBars(ctx,w,h);
+  }
+  function playOutro(ctx,w,h,img,title,onTime){
+    return new Promise(function(res){
+      var t0=performance.now(), raf=0;
+      var step=function(){
+        var t=(performance.now()-t0)/1000;
+        drawOutro(ctx,w,h,img,title,t);
+        onTime(t);
+        if(t>=OUTRO_SEC){ cancelAnimationFrame(raf); res(); return; }
+        raf=requestAnimationFrame(step);
+      };
+      raf=requestAnimationFrame(step);
+    });
+  }
+
   function pickMime(){
     var l=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1','video/mp4',
            'video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
@@ -4434,7 +4512,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     $('edGo').disabled=on||st.clips.length===0;
     $('edPick').disabled=on; $('edSpread').disabled=on; $('edClear').disabled=on; $('edBars').disabled=on;
     $('edVoice').disabled=on; $('edBg').disabled=on;
-    $('edMusic').disabled=on; $('edMusicVol').disabled=on;
+    $('edMusic').disabled=on; $('edMusicVol').disabled=on; $('edOutro').disabled=on;
     Array.prototype.forEach.call(document.querySelectorAll('input[name=edq]'),function(el){ el.disabled=on; });
   }
   function stamp(){
@@ -4503,6 +4581,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       // 목소리는 녹화 시작과 동시에 처음부터 재생한다.
       if(voiceEl){ try{ voiceEl.currentTime=0; voiceEl.play().catch(function(){}); }catch(e){} }
       if(musicEl){ try{ musicEl.currentTime=0; musicEl.play().catch(function(){}); }catch(e){} }
+      var useOutro=$('edOutro').checked;
+      var prod=productInfo();
+      var outroImgP = useOutro ? loadProductImage(prod.url) : Promise.resolve(null);
       var chain=Promise.resolve();
       st.clips.forEach(function(clip,idx){
         chain=chain.then(function(){
@@ -4513,6 +4594,15 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
         }).then(function(){ elapsed+=(clip.dur||0); });
       });
       return chain.then(function(){
+        if(!useOutro) return;
+        return outroImgP.then(function(img){
+          if(!img && !prod.title) return;   // 넣을 게 없으면 건너뛴다
+          say('상품 사진 붙이는 중…');
+          return playOutro(ctx,w,h,img,prod.title,function(){
+            $('edFill').style.width='99%';
+          });
+        });
+      }).then(function(){
         say('마무리하는 중…');
         if(voiceEl){ try{ voiceEl.pause(); }catch(e){} }
         if(musicEl){ try{ musicEl.pause(); }catch(e){} }
@@ -4568,7 +4658,13 @@ export default {
       // 책 표지 프록시 — 네이버 이미지를 우리 도메인으로 받아 캔버스 CORS 오염 없이 그릴 수 있게
       if (url.pathname === '/api/cover') {
         const src = url.searchParams.get('url') || '';
-        if (!/^https:\/\/[\w.-]*pstatic\.net\//.test(src) && !/^https:\/\/[\w.-]*(naver|nstatic)\.[\w.]+\//.test(src)) {
+        // 허용 도메인: 네이버(도서 시절) + 쿠팡(현재 상품 사진).
+        // 같은 주소에서 받아와야 캔버스가 오염되지 않아 영상에 사진을 넣을 수 있다.
+        const okHost = /^https:\/\/[\w.-]*pstatic\.net\//.test(src)
+          || /^https:\/\/[\w.-]*(naver|nstatic)\.[\w.]+\//.test(src)
+          || /^https:\/\/[\w.-]*coupangcdn\.com\//.test(src)
+          || /^https:\/\/[\w.-]*coupang\.com\//.test(src);
+        if (!okHost) {
           return new Response('bad url', { status: 400, headers: CORS });
         }
         try {
