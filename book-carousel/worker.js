@@ -2990,21 +2990,20 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 // Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
 // 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
 // styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
-const VEO_NEGATIVE = 'adult dog, hunting dog, long sharp muzzle, narrow eyes, black mask or black fur markings, on all fours, quadruped crawling pose, realistic animal anatomy, bare body with no clothes, collar, harness, chest support, vest, leash, strap, extra accessories, hats, sunglasses, scarves, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, human skin, deformed paws, extra limbs, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
+const VEO_NEGATIVE = 'adult dog, hunting dog, long sharp muzzle, narrow eyes, black mask or black fur markings, standing upright on two legs, anthropomorphic pose, collar, harness, chest support, vest, leash, strap, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, human skin, deformed paws, extra limbs, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
 
 const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 촬영 지시서를 쓰는 사람이다.
 사용자는 Flow에 이미 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고, 여기에 이 지시서를 붙인다.
 
 [절대 규칙]
-1. 캐릭터 외모를 절대 설명하지 마라. 털색·눈·체형·견종 특징을 쓰면 참고 이미지와
+1. 캐릭터 외모를 절대 설명하지 마라. 털색·눈·목줄·체형·견종 특징을 쓰면 참고 이미지와
    충돌해 클립마다 다른 개가 된다. 주인공은 "the puppy" 처럼 최소한으로만 부른다.
-1-1. ⭐ 주인공은 **두 발로 서서 사람처럼 사는 꼬마 강아지**다. 옷(흰 셔츠·반바지)을 입고
-   앞발을 손처럼 쓴다. 자세와 의상은 시스템이 자동으로 붙이므로 다시 쓰지 마라.
-   대신 동작은 **반드시 사람 같은 동작**으로 써라. 네발 동작을 쓰면 캐릭터가 무너진다.
-   금지: trotting, on all fours, padding around, scampering, crawling, bounding on four paws
-   권장: standing with its paws on its hips, folding its arms, pointing a paw, tapping a foot,
-   walking upright down the hallway, plopping onto the sofa, holding something with both paws,
-   shrugging, turning its back and walking away, leaning against the doorframe
+1-1. ⭐ 주인공은 **옷을 입지 않은 보통 네발 강아지**다. 사람처럼 두 발로 서게 하지 마라.
+   금지: standing upright on two legs, walking upright, using its paws as hands,
+   folding its arms, hands on hips, wearing a shirt, anthropomorphic
+   감정은 개가 실제로 할 수 있는 몸짓으로 쓴다:
+   plopping onto the floor, turning its head away, slow blink, tilting its head,
+   stretching, sitting down stubbornly, trotting off, flopping onto its side
 2. sceneBlock에는 장소·색감·조명만 담는다(25단어 이내, 영어). 모든 클립 앞에 그대로 반복된다.
    여기에도 캐릭터 묘사를 절대 넣지 마라.
 3. shots는 타임코드와 카메라 움직임으로 쓴다(영어). 8초를 반드시 2~3구간으로 나눈다.
@@ -3019,8 +3018,7 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
    대신 과장된 코미디 몸짓으로 쓴다:
    dramatic pout, puffed cheeks, theatrical sigh, flopping onto the floor,
    stubbornly sitting down, comically refusing to move, side-eye glance, slow blink
-6. shots에 **상품**을 몸에 걸쳤다고 쓰지 마라. 착용 여부는 시스템이 알아서 붙인다.
-   (기본 의상인 셔츠·반바지도 시스템이 붙이므로 shots에 쓰지 않는다.)
+6. shots에 강아지가 몸에 걸친 것을 쓰지 마라. 착용 여부는 시스템이 알아서 붙인다.
    금지: harness, chest support, collar, leash, strap, vest, wearing, strapped
    상품의 효과는 **강아지의 움직임과 표정**으로만 보여준다.
    예) "walking steadily with chest support" (X) → "walking lightly with a bouncy step" (O)
@@ -3102,12 +3100,12 @@ function breedEnOf(dogText) {
 // 입는 상품이면 그 품목만 예외로 허용한다. 상품명으로 자동 판별.
 // (하네스를 파는데 액세서리를 전부 막으면 정작 상품이 화면에 못 나온다)
 const WEARABLES = [
-  [/하네스|가슴줄|가슴\s?줄/, 'a simple plain chest harness over its shirt'],
-  [/리드줄|목줄|리드\s?줄/, 'a simple plain leash clipped at its back'],
+  [/하네스|가슴줄|가슴\s?줄/, 'a simple plain chest harness'],
+  [/리드줄|목줄|리드\s?줄/, 'a simple plain leash'],
   [/넥카라|넥칼라|목보호대/, 'a soft neck cone'],
-  [/우비|레인코트|비옷/, 'a small plain raincoat over its shirt'],
-  [/패딩|티셔츠|후드|맨투맨|강아지\s?옷|애견\s?옷/, 'a simple plain hoodie instead of its usual shirt'],
-  [/신발|부츠|발\s?양말|paw/i, 'small plain boots on its hind paws'],
+  [/우비|레인코트|비옷/, 'a small plain raincoat'],
+  [/패딩|티셔츠|후드|맨투맨|강아지\s?옷|애견\s?옷/, 'a simple plain pet shirt'],
+  [/신발|부츠|발\s?양말|paw/i, 'small plain paw boots'],
   [/방울|이름표|인식표/, 'a small plain name tag'],
 ];
 function wearableOf(title) {
@@ -3121,7 +3119,7 @@ function negativeFor(wearing) {
   if (!wearing) return VEO_NEGATIVE;
   // 상품 품목만 금지를 풀고, 기본 의상(옷 없는 맨몸) 금지는 그대로 둔다.
   const keep = VEO_NEGATIVE.split(', ').filter(w =>
-    !/^(collar|harness|chest support|vest|leash|strap|extra accessories)$/i.test(w.trim()));
+    !/^(collar|harness|chest support|vest|leash|strap|clothes|accessories)$/i.test(w.trim()));
   const add = [
     'extra accessories', 'ribbons', 'bows', 'hats', 'sunglasses', 'scarves',
     'multiple items', 'decorated gear', 'patterned gear', 'logo on gear',
@@ -3134,13 +3132,13 @@ function negativeFor(wearing) {
   }).join(', ');
 }
 
-// 주인공은 두 발로 서서 사람처럼 행동하는 꼬마 시바견이다(2026-09 확정, 사용자 레퍼런스 이미지).
-// Flow 참고 이미지가 생김새를 잡아주지만, "puppy"라고만 쓰면 Veo가 네발 짐승으로 되돌린다.
-// 그래서 자세와 기본 의상만 매 클립에 다시 못박는다(참고 이미지와 같은 내용이라 충돌하지 않는다).
-const CHARACTER_LINE = 'The puppy stands and moves upright on two legs like a small child, using its front paws as hands, wearing its usual plain white collared shirt and dark grey shorts.';
+// 주인공은 옷을 입지 않은 **네발 강아지**다(2026-09 확정). 의인화·이족보행으로 가지 않는다.
+// 클립마다 "The puppy."로만 부르고 생김새는 Flow 참고 이미지에 맡긴다.
+const CHARACTER_LINE = 'The puppy.';
 
 // Flow에서 주인공 캐릭터 이미지를 다시 만들 때 쓰는 프롬프트. 관리자 페이지에 그대로 노출한다.
-const CHARACTER_SHEET_PROMPT = 'A photorealistic 3D animated style full-body shot of an ultra-cute Shiba Inu puppy standing upright on two legs like a small child, oversized round head with chubby cheeks, huge round sparkling dark brown eyes, a small playful smile with a tiny pink tongue sticking out, soft plush-like purest golden-cream and snow-white fur, absolutely no black hairs or mask, short stubby arms and legs with soft rounded paws used like little hands, wearing a plain crisp white collared shirt and plain dark grey shorts, no collar and no other accessories, unbelievably fluffy cloud-like soft texture, soft even studio lighting, isolated clean background, 8k resolution, masterful texturing, clean 3D rendering';
+// 사용자가 실제로 성공한 프롬프트가 원본이고, 얼굴 귀여움(큰 머리·볼살)만 보강했다.
+const CHARACTER_SHEET_PROMPT = 'A photorealistic 3D animated style close-up of an ultra-cute Shiba Inu puppy standing naturally on all four legs, oversized round head with chubby cheeks, huge round sparkling dark brown eyes, a small playful smile with a tiny pink tongue sticking out, soft plush-like purest golden-cream and snow-white fur, absolutely no black hairs or mask, entirely natural body with no clothes no collars and no accessories, unbelievably fluffy cloud-like soft texture, soft even studio lighting, isolated clean background, 8k resolution, masterful texturing, clean 3D rendering';
 
 // 사용자가 실제로 성공한 화풍. 모든 장면 블록 앞에 반드시 들어간다.
 const STYLE_TOKEN = 'Photorealistic 3D animated style, soft even lighting, unbelievably fluffy cloud-like soft fur texture, 8k, masterful texturing';
@@ -3178,20 +3176,6 @@ const SAFE_SWAPS = [
   [/\b(restrained|trapped|tangled)\b/gi, 'lounging'],
 ];
 
-// 주인공은 두 발로 선 캐릭터다. 모델이 습관적으로 쓰는 네발 동작을 사람 동작으로 바꾼다.
-// (요청만으로는 새어 나온다 — 실제로 관측됨)
-const BIPED_SWAPS = [
-  [/\bon all fours\b/gi, 'on its two feet'],
-  [/\btrott(ing|s|ed)?\b/gi, 'walking'],
-  [/\bscamper(ing|s|ed)?\b/gi, 'hurrying'],
-  [/\bpadd(ing|s|ed)\s+(around|over|up|down|toward)/gi, 'walking $2'],
-  [/\bcrawl(ing|s|ed)?\b/gi, 'shuffling'],
-  [/\bbound(ing|s)\s+on\s+four\s+paws\b/gi, 'hopping'],
-  [/\bfour\s+paws\b/gi, 'feet'],
-  [/\bcrouch(ing|es|ed)?\s+low\s+on\s+its\s+paws\b/gi, 'crouching down'],
-  [/\b(front|fore)\s+legs\b/gi, 'arms'],
-  [/\bhind\s+legs\b/gi, 'legs'],
-];
 // 착용물·소리 언급은 제외 목록과 모순되어 생성이 거부된다. 서버가 직접 지운다.
 const GEAR_PATTERNS = [
   /\bwith\s+(a\s+|the\s+|comfortable\s+|soft\s+|new\s+)*(chest\s+support|harness|vest|collar|leash|strap)[a-z\s]*/gi,
@@ -3223,7 +3207,6 @@ function stripGearAndAudio(t) {
 function safeShots(t) {
   let out = String(t || '');
   for (const [re, rep] of SAFE_SWAPS) out = out.replace(re, rep);
-  for (const [re, rep] of BIPED_SWAPS) out = out.replace(re, rep);
   return stripGearAndAudio(out);
 }
 
@@ -3796,10 +3779,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="note">AI 영상은 실제 상품 포장을 그리지 못합니다. 그래서 영상은 <b>그 상품이 필요해지는 상황</b>만 보여주고, 상품 연결은 자막과 프로필 링크가 맡습니다.</div>
     <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
     <div class="f"><label for="pdog">강아지 설정</label>
-      <input id="pdog" type="text" value="photorealistic 3D animated style 시바견 꼬마 (두 발로 서서 사람처럼 행동, 흰 셔츠·반바지)">
+      <input id="pdog" type="text" value="photorealistic 3D animated style 시바견 퍼피 (검은 털 없음, 목줄·옷 없음)">
       <small>Flow에 캐릭터 이미지를 끌어다 쓰시니 짧게만 적으세요. 외모를 길게 적으면 참고 이미지와 충돌해 오히려 다른 개가 나옵니다.</small></div>
     <details class="ref-char"><summary>주인공 캐릭터 이미지 만드는 프롬프트</summary>
-      <p class="lead" style="margin:8px 0">Flow에서 주인공 이미지를 새로 뽑을 때 아래를 그대로 붙여넣으세요. 두 발로 서서 옷을 입은 꼬마 시바견이 나옵니다.</p>
+      <p class="lead" style="margin:8px 0">Flow에서 주인공 이미지를 새로 뽑을 때 아래를 그대로 붙여넣으세요. 옷·목줄 없는 네발 꼬마 시바견이 나옵니다.</p>
       <textarea id="charP" readonly rows="6">${CHARACTER_SHEET_PROMPT}</textarea>
       <button class="btn btn-2 btn-sm" id="charC" type="button">복사하기</button>
     </details>
