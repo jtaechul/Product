@@ -1,0 +1,60 @@
+name: Generate characters (Jumplish)
+
+# 등반 지도용 동물 캐릭터 6종 + 산 배경을 Gemini 이미지 생성으로 만들어 커밋한다.
+# 개발 샌드박스는 외부망이 막혀 있어 GitHub 러너에서 실행한다.
+# 필요 시크릿: GEMINI_API_KEY_JUMPLISH
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/junior-toeic-master-planning-322l2t"]
+    paths:
+      - ".github/workflows/generate-chars.yml"
+      - "junior-toeic-master/tools/char-batch.mjs"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jumplish-chars
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: junior-toeic-master
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate images
+        id: gen
+        continue-on-error: true   # 일부 실패해도 성공분은 커밋 (재실행 시 이어서)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_JUMPLISH || secrets.GEMINI_API_KEY }}
+        run: node tools/char-batch.mjs
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/img/char public/img/map
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 커밋 생략"
+            exit 0
+          fi
+          git commit -m "junior-toeic-master: 등반 캐릭터·산 배경 생성 (자동 배치)" \
+            -m "generate-chars.yml 러너에서 Gemini 이미지 생성으로 제작."
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin HEAD:"${GITHUB_REF_NAME}"
+
+      - name: Fail if incomplete
+        if: steps.gen.outcome == 'failure'
+        run: |
+          echo "::error::일부 이미지 생성 실패 — 다시 실행하면 이어서 만듭니다"
+          exit 1
