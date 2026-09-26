@@ -3070,6 +3070,10 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
   "이 정도면 봐준다"
   "칭찬은 안 한다. 계속 잘해라"
 
+⚠️ 위 [좋은 예]는 **말투를 보여주는 견본일 뿐이다. 그대로 베껴 쓰지 마라.**
+   같은 온도·같은 구조로 **이 상품 상황에 맞는 새 문장**을 직접 지어라.
+   예시 문장이 결과에 그대로 나오면 실패다.
+
 [역할별 말투]
 - problem: 불평이 아니라 **판정**이다. "~하다", "~군", "~지" 로 끝내라.
 - transition: 인간이 뒤늦게 정신 차렸다는 투. 생색내듯.
@@ -3308,7 +3312,7 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
 
     const imagePrompt = [
       CHARACTER_LINE + (scene ? ' ' + scene : ''),
-      firstMoment ? firstMoment + '.' : '',
+      firstMoment ? firstMoment.replace(/[.\s]+$/, '') + '.' : '',
       wearLine,
       'Single still image, sharp focus, no motion blur.',
       `Avoid: ${neg}.`,
