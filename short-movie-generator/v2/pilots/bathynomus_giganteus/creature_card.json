@@ -1,0 +1,18 @@
+{
+  "status": "확정(운영자 승인: 눈 교정 후 확정)",
+  "use_as_reference": [
+    {"file": "out/04_creature_card_final/card_side.jpg", "role": "주 기준 — 옆 3/4. 눈이 실제처럼 머리 앞 모서리에 납작하게 박힌 형태로 교정됨"},
+    {"file": "out/03_creature_card_eyes/card_top.jpg", "role": "등 쪽 배치 기준 — 전신 마디·가시 달린 꼬리판·다리 배열이 가장 정확"},
+    {"file": "out/01_fetch_refs/ref_05.jpg", "role": "실사 기준(NOAA · 퍼블릭도메인) — 해부학의 최종 근거"}
+  ],
+  "rejected": [
+    {"file": "out/02_creature_card/*", "reason": "겹눈 누락"},
+    {"file": "out/03_creature_card_eyes/card_side.jpg, card_head.jpg", "reason": "눈이 둥글고 튀어나옴(실제는 삼각형·납작)"},
+    {"file": "out/04_creature_card_final/card_head.jpg", "reason": "교정 요청에도 눈이 여전히 둥글게 나옴"},
+    {"file": "out/04_creature_card_final/card_top.jpg", "reason": "등 쪽 구도가 앞쪽 시점으로 바뀌어 전신 배치가 흐트러짐"}
+  ],
+  "anatomy_checklist": ["연보라 광택 껍데기", "옆에서 아치형으로 볼록한 몸", "갑옷처럼 겹친 등 마디",
+                        "가늘고 긴 더듬이", "몸 아래 가는 다리 7쌍", "가시 달린 부채꼴 꼬리판 + 양옆 노 모양 판",
+                        "머리 앞 모서리의 검은 삼각형 겹눈(납작)"],
+  "cost_note": "이미지 9장 생성(02·03·04 각 3장) · gemini-3-pro-image-preview"
+}
