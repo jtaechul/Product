@@ -262,13 +262,132 @@ def gen_video(req: dict, pilot: Path, out: Path) -> dict:
     return {"ok": all("file" in r for r in results), "items": results}
 
 
+def _find_video(o):
+    """Interactions 응답에서 영상(base64 data 또는 uri)을 찾는다 — 필드 위치가 SDK·REST 문서마다 달라 재귀 탐색."""
+    if isinstance(o, dict):
+        mt = str(o.get("mime_type") or o.get("mimeType") or "")
+        if (o.get("type") == "video" or mt.startswith("video")) and (o.get("data") or o.get("uri")):
+            return o
+        for k in ("output_video", "outputVideo"):
+            if isinstance(o.get(k), dict) and (o[k].get("data") or o[k].get("uri")):
+                return o[k]
+        for v in o.values():
+            f = _find_video(v)
+            if f:
+                return f
+    elif isinstance(o, list):
+        for v in o:
+            f = _find_video(v)
+            if f:
+                return f
+    return None
+
+
+def _strip_data(o):
+    if isinstance(o, dict):
+        return {k: (f"<{len(v)} chars>" if k == "data" and isinstance(v, str) else _strip_data(v)) for k, v in o.items()}
+    if isinstance(o, list):
+        return [_strip_data(v) for v in o]
+    return o
+
+
+def gen_omni(req: dict, pilot: Path, out: Path) -> dict:
+    """Gemini Omni Flash(Interactions API, REST) 영상 생성 — Veo Lite와 1:1 비교용.
+
+    item: start(시작 이미지) 또는 extend_from(앞 클립을 '이어 늘리기' task=extend) + prompt.
+    extend가 실패하면 앞 클립 마지막 프레임을 시작으로 image_to_video 재시도(기록 남김)."""
+    key = os.environ.get("GEMINI_API_KEY", "")
+    if not key:
+        return {"ok": False, "error": "GEMINI_API_KEY 없음"}
+    model = req.get("model", "gemini-omni-1.1-flash")
+    hdr = {"x-goog-api-key": key, "Content-Type": "application/json"}
+    results = []
+
+    def call(inputs: list, task: str):
+        body = {"model": model, "input": inputs,
+                "response_format": {"type": "video", "aspect_ratio": "9:16",
+                                    "resolution": req.get("resolution", "720p")},
+                "generation_config": {"video_config": {"task": task}}}
+        t0 = time.time()
+        st, raw = _http(f"{API}/interactions", json.dumps(body).encode(), hdr, timeout=900)
+        if st != 200:
+            raise RuntimeError(f"HTTP {st}: {raw[:300].decode('utf-8', 'replace')}")
+        j = json.loads(raw)
+        while not _find_video(j) and j.get("id") and str(j.get("status", "")).lower() in (
+                "in_progress", "pending", "running", "queued"):
+            if time.time() - t0 > 900:
+                raise TimeoutError("Omni 폴링 15분 초과")
+            time.sleep(10)
+            st, raw = _http(f"{API}/interactions/{j['id']}", None, hdr)
+            j = json.loads(raw) if st == 200 else j
+        v = _find_video(j)
+        if not v:
+            raise RuntimeError(f"영상 없음: {json.dumps(_strip_data(j), ensure_ascii=False)[:400]}")
+        if v.get("data"):
+            vid = base64.b64decode(v["data"])
+        else:
+            fid = str(v["uri"]).rstrip("/").split("/")[-1]
+            for _ in range(90):
+                st, raw = _http(f"{API}/files/{fid}", None, hdr)
+                if st == 200 and json.loads(raw).get("state") == "ACTIVE":
+                    break
+                time.sleep(5)
+            st, vid = _http(f"{API}/files/{fid}:download?alt=media", None, hdr)
+            if st != 200:
+                raise RuntimeError(f"다운로드 실패 HTTP {st}")
+        return vid, round(time.time() - t0, 1), _strip_data(j)
+
+    def img(p: Path) -> dict:
+        return {"type": "image", "data": base64.b64encode(p.read_bytes()).decode(), "mime_type": "image/jpeg"}
+
+    for it in req["items"]:
+        rec = {"name": it["name"], "model": model, "attempts": []}
+        prev = next((r for r in results if r["name"] == it.get("extend_from")), None) if it.get("extend_from") else None
+        plans = []
+        if it.get("extend_from"):
+            if not prev or "file" not in prev:
+                rec["error"] = f"앞 클립({it['extend_from']}) 실패 → 건너뜀"
+                results.append(rec)
+                continue
+            pv = out / prev["file"]
+            plans.append(("extend", [{"type": "video", "data": base64.b64encode(pv.read_bytes()).decode(),
+                                      "mime_type": "video/mp4"}, {"type": "text", "text": it["prompt"]}]))
+            last = out / f"{it['name']}_start.jpg"
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-sseof", "-0.1", "-i", str(pv),
+                            "-frames:v", "1", "-q:v", "2", str(last)], check=True)
+            plans.append(("image_to_video", [img(last), {"type": "text", "text": it["prompt"]}]))
+        else:
+            start = _fit_9x16(pilot / it["start"], out / f"{it['name']}_start.jpg")
+            plans.append(("image_to_video", [img(start), {"type": "text", "text": it["prompt"]}]))
+        for task, inputs in plans:
+            try:
+                vid, secs, meta = call(inputs, task)
+                fn = out / f"{it['name']}.mp4"
+                fn.write_bytes(vid)
+                dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                            "-of", "csv=p=0", str(fn)], capture_output=True, text=True).stdout or 0)
+                sheet = out / f"{fn.stem}_frames.jpg"
+                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(fn), "-vf",
+                                f"fps=4/{max(dur, 0.1):.2f},scale=240:-2,tile=4x1:margin=4:padding=4:color=white",
+                                "-frames:v", "1", str(sheet)], check=False)
+                rec["attempts"].append({"task": task, "ok": True, "file": fn.name, "video_s": round(dur, 2),
+                                        "wait_s": secs, "frames": sheet.name,
+                                        "usage": meta.get("usage") or meta.get("usageMetadata")})
+                rec["file"] = fn.name
+                break
+            except Exception as e:  # noqa: BLE001
+                rec["attempts"].append({"task": task, "ok": False, "error": str(e)[:400]})
+        results.append(rec)
+    return {"ok": all("file" in r for r in results), "items": results}
+
+
 def main(path: str) -> int:
     rp = Path(path)
     req = json.loads(rp.read_text(encoding="utf-8"))
     pilot = rp.parent.parent
     out = pilot / "out" / req["id"]
     out.mkdir(parents=True, exist_ok=True)
-    fn = {"fetch_refs": fetch_refs, "gen_images": gen_images, "gen_video": gen_video}[req["kind"]]
+    fn = {"fetch_refs": fetch_refs, "gen_images": gen_images, "gen_video": gen_video, "gen_omni": gen_omni}[req["kind"]]
     res = fn(req, pilot, out)
     res.update({"request": rp.name, "kind": req["kind"], "ran_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
     (out / "result.json").write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
