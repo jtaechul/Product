@@ -1,0 +1,51 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "grid12",
+      "http": 200,
+      "file": "grid12.jpg",
+      "panels": [
+        "p01.jpg",
+        "p02.jpg",
+        "p03.jpg",
+        "p04.jpg",
+        "p05.jpg",
+        "p06.jpg",
+        "p07.jpg",
+        "p08.jpg",
+        "p09.jpg",
+        "p10.jpg",
+        "p11.jpg",
+        "p12.jpg"
+      ],
+      "usage": {
+        "promptTokenCount": 2444,
+        "candidatesTokenCount": 2889,
+        "totalTokenCount": 5571,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 1154
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1290
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 2000
+          }
+        ],
+        "thoughtsTokenCount": 238,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "14_storyboard_12.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T06:26:39Z"
+}
