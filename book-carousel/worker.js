@@ -3687,8 +3687,17 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const foodLine = `On the table in front of the ${sp.noun}: ${foodEn}.`;
   const neg = negativeFor('', sp) + ', food packaging, pet food bag, labels or text on the bowl, spilled food, messy table, cutlery';
 
+  // 모델 결과를 순서가 아니라 장면 이름(role)으로 짝짓는다. 모델이 비워 두라는 입장 칸을 아예 빼먹으면
+  // 순서가 한 칸씩 밀려 계산 장면에 시식 대사가 붙는 일이 있었다(실측). 이름이 없을 때만 순서로 채운다.
+  const used = new Set();
+  const pickClip = (role, i) => {
+    let k = list.findIndex((c, j) => !used.has(j) && String(c && c.role || '').trim() === role);
+    if (k < 0) k = list.findIndex((c, j) => !used.has(j) && !String(c && c.role || '').trim() && j >= i);
+    if (k < 0) return {};
+    used.add(k); return list[k] || {};
+  };
   const clipsOut = roles.map((role, i) => {
-    const c = list[i] || {};
+    const c = pickClip(role, i);
     const shots = toSpecies(safeShots(normShots(String(c.shots || '').trim())), sp);
     let line = role === 'enter' ? DINER_OPENING : String(c.line || '').trim().replace(/!+/g, '');
     // 가격을 모르면 계산 대사에 숫자가 들어가면 안 된다(지어낸 가격 방지).
@@ -5511,6 +5520,11 @@ export default {
             const d = await env.PENDING_POSTS.get('work_draft', 'json').catch(() => null);
             result = { success: true, data: d || null };
           }
+        }
+        else if (url.pathname === '/api/diner-episodes') {
+          // 「한 그릇의 품격」 회차 번호 조회·초기화(시험 제작으로 번호가 올라갔을 때 되돌리기용)
+          if (body.action === 'reset') { await env.PENDING_POSTS.delete('diner_episodes'); result = { success: true, episodes: {} }; }
+          else result = { success: true, episodes: (await env.PENDING_POSTS.get('diner_episodes', 'json')) || {} };
         }
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
         else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
