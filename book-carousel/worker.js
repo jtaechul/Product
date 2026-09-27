@@ -2939,7 +2939,17 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 ⚠️ pains 주의: 이 상품을 쓰고 나서 생긴 불만(맛을 안 본다, 변이 묽어졌다, 포장이 부실하다 등)은
 절대 넣지 마라. pains는 오직 "이 상품을 쓰기 전에 겪던 문제"만 담는다. 우리는 이 상품을 파는 쪽이다.`;
     try {
-      const r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 4096 });
+      // 모델이 검색을 할지 말지 스스로 정한다 — 가끔 검색 없이 기억으로 답한다(실측 2회 중 1회).
+      // 출처가 0건이면 검색을 못박아 딱 1회 다시 묻는다.
+      let r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 4096 });
+      if (!r.sources.length) {
+        const again = await callGeminiGrounded(gk, {
+          system: INSIGHT_SYSTEM,
+          user: '반드시 google_search 도구로 먼저 웹을 검색한 뒤, 검색 결과만 근거로 답하라. 기억으로 답하지 마라.\n\n' + user,
+          max_tokens: 4096,
+        }).catch(() => null);
+        if (again && again.sources.length) r = again;
+      }
       sources = r.sources;
       grounded = sources.length > 0;
       const parsed = extractJson(r.text);
