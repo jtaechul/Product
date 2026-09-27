@@ -1,0 +1,19 @@
+{
+  "id": "09_ending_chart_real",
+  "kind": "gen_images",
+  "purpose": "운영자 지적: 지도 위 큰 파도 띠는 물리적으로 말이 안 됨 → 등고선·수심 점·작은 물결 무늬로. 우상단 장식 틀·하단 빈 라벨 제거. 등대·구름·나침반·도장 유지. (이미지 검토용 — 영상 생성 안 함)",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "chart_real",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/07_ending_chart_full/chart_full.jpg"
+      ],
+      "prompt": "Edit the attached antique parchment sea chart to make it look like a physically believable old nautical chart (encyclopedia plate style). Changes: 1) REMOVE the large bands of big rolling wave lines across the middle. Instead, fill the sea areas with engraved depth-contour lines (isobaths) following the coastlines, rows of tiny depth-sounding dots, and only small, scattered, short wave-mark symbols (little groups of 2-3 tiny curved strokes) dotted here and there on the open sea, like on real old charts. 2) Keep the two small sailing ships, each sitting on a small patch of those little wave marks. 3) REMOVE the decorative empty cartouche frame at the upper right and REMOVE the empty label frame at the bottom centre — replace them with more chart (coastline, contours, sounding dots). 4) KEEP the lighthouse on the rocky point, the islands, the engraved clouds and wind swirls, both compass roses with rhumb lines, the depth ruler with tick marks only, the red wax seal, the scroll, paper colour, border and lighting. The whole sheet stays richly filled edge to edge. Do NOT add animals, sea monsters, fish, birds, faces or people. ABSOLUTELY NO letters, words, numbers or pseudo-writing anywhere. Flat, straight-on view, 9:16 vertical."
+    }
+  ]
+}
