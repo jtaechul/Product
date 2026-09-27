@@ -56,6 +56,22 @@ def bunsetsu_breaks(text: str) -> set[int]:
     return bps
 
 
+def word_breaks(text: str) -> set[int]:
+    """문절 경계 + **단어와 서술어 사이**(명사 뒤 「でした/です/だ」 등 助動詞 앞) — 운영자 지시:
+    문절 경계만으로 한 줄에 안 들어가면 단어·서술어 사이에서 끊는다(예: 「ダイオウグソクムシ | でした。」)."""
+    global _TOK
+    bps = set(bunsetsu_breaks(text))
+    toks = list(_TOK.tokenize(text))
+    pos, prev = 0, None
+    for t in toks:
+        if prev is not None and pos > 0:
+            if t.part_of_speech.startswith("助動詞") and prev.part_of_speech.startswith("名詞"):
+                bps.add(pos)
+        pos += len(t.surface)
+        prev = t
+    return bps
+
+
 def split_chunks(text: str) -> list[str]:
     """문장부호에서만 끊는다(단어 중간 분할 없음)."""
     return [p.strip() for p in _PUNCT_SPLIT.split(text) if p.strip()]
@@ -75,39 +91,54 @@ def disp_from_timepoints(jp: str, tps: list[dict], offset: float = 0.0, tail: fl
     return disp
 
 
-SUB_SCALE = 0.8   # v1 자막(h*0.039)의 0.8배 — '작은 하단 자막'(운영자 확정). 13글자 가타카나 이름도 한 줄에 든다
+SUB_SCALE = 1.0   # v1 자막 크기 그대로(운영자 지시 2026-09-27: 가급적 줄이지 않는다)
+MIN_FS_RATIO = 0.95   # 줄이더라도 눈치채지 못할 만큼만(v1은 0.82) — 운영자 지시
 
 
 def _fit_pieces_no_forced(orig_fit):
-    """v1 `_fit_pieces` 결과에서 **문절 경계가 아닌 곳의 강제 분할**을 되돌린다 → 그 줄은 글자만 줄여 한 줄 유지.
-    (규칙: 단어 중간에서 자르지 않는다 · 넘치면 글자 크기만 조금 줄인다)"""
-    def fit(text, st, en, max_px, subsz):
+    """v1 `_fit_pieces`를 감싼다 — **억지로(글자 수로) 자르지 않는다**(운영자 지시).
+    ① 문절 경계로 나눠 본다 ② 그래도 한 줄(글자 크기 5% 이내 축소 허용)에 안 들어가는 조각이 있으면
+    단어·서술어 경계까지 허용해 다시 나눈다 ③ 그래도 경계가 아닌 곳에서 잘린 조각은 앞 조각에 되붙인다."""
+    def _max_w(max_px):
+        return max_px / MIN_FS_RATIO            # 5% 축소로 들어가면 한 줄로 본다
+
+    def attempt(bp_fn, text, st, en, max_px, subsz):
+        NS._break_points = bp_fn
         pieces = orig_fit(text, st, en, max_px, subsz)
         if len(pieces) <= 1:
             return pieces
-        ok = bunsetsu_breaks(text.strip())
+        ok = bp_fn(text.strip())
         merged, pos = [list(pieces[0])], len(pieces[0][0])
         for p, ps, pe in pieces[1:]:
             if pos in ok:
                 merged.append([p, ps, pe])
-            else:                               # 강제 분할 → 앞 조각에 붙인다
+            else:
                 merged[-1][0] += p
                 merged[-1][2] = pe
             pos += len(p)
         return [tuple(m) for m in merged]
+
+    def width(s, subsz):
+        return sum(NS._char_px(c, subsz) for c in s)
+
+    def fit(text, st, en, max_px, subsz):
+        pieces = attempt(bunsetsu_breaks, text, st, en, max_px, subsz)
+        if any(width(p, subsz) > _max_w(max_px) for p, _, _ in pieces):
+            pieces = attempt(word_breaks, text, st, en, max_px, subsz)
+        return pieces
     return fit
 
 
 def build_ass(disp: list[tuple], out_path: str | Path) -> str:
     """v1 `build_synced_ass` 그대로(하단 Sub 스타일·한 줄·고아 흡수·숫자 통째) — 줄 나눔 경계만 형태소 문절로 바꿔 끼운다."""
-    orig_bp, orig_fit = NS._break_points, NS._fit_pieces
-    NS._break_points = bunsetsu_breaks
+    orig_bp, orig_fit, orig_ratio = NS._break_points, NS._fit_pieces, NS._MIN_FS_RATIO
     NS._fit_pieces = _fit_pieces_no_forced(orig_fit)
+    NS._MIN_FS_RATIO = MIN_FS_RATIO
     try:
         return NS.build_synced_ass(disp, str(out_path), font=FONT, hook_first=False, mid_badge=False,
                                    sub_scale=SUB_SCALE)
     finally:
-        NS._break_points, NS._fit_pieces = orig_bp, orig_fit
+        NS._break_points, NS._fit_pieces, NS._MIN_FS_RATIO = orig_bp, orig_fit, orig_ratio
 
 
 def burn_filter(ass_path: str | Path) -> str:
