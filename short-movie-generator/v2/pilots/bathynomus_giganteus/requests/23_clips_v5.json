@@ -1,0 +1,57 @@
+{
+  "id": "23_clips_v5",
+  "kind": "gen_omni",
+  "model": "gemini-omni-1.1-flash",
+  "resolution": "720p",
+  "purpose": "대왕구족충 v5 본편 8컷 — Omni Flash · 컷별 초 단위 타임라인(나레이션 시각에 맞춤) · 4번 컷은 6초 영상 + 편집에서 겹눈 확대 인서트(5.0~8.0초). 오디오는 조립 때 버림(음악 금지).",
+  "items": [
+    {
+      "name": "c01",
+      "start": "out/14_storyboard_12/p01.jpg",
+      "prompt": "Vertical 9:16 video, exactly 8 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it. The giant isopod (whenever visible) keeps its exact anatomy and size: pale lavender-lilac glossy segmented armour, FLAT dark triangular compound eyes at the front corners of the head, short antennae, seven pairs of thin legs, spiny fan-shaped tail plate.\n\nTIMELINE\n0.0–3.0s  Slow smooth dolly-in from a high three-quarter view toward the tiny rowing boat on the old sea chart; the candle flame flickers softly.\n3.0–5.5s  The two small painted clay fishermen figures in the boat pull the rope net up out of the dark hole in the chart, hand over hand.\n5.5–8.0s  The wet net rises clear of the hole. Through the mesh, only a few pale lilac armour segments are glimpsed in one corner of the net; most of the animal stays hidden. The camera settles close on the net and stops.\n\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the isopod growing, shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker.",
+      "sec": 8
+    },
+    {
+      "name": "c02",
+      "start": "out/14_storyboard_12/p03.jpg",
+      "prompt": "Vertical 9:16 video, exactly 6 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it. The giant isopod (whenever visible) keeps its exact anatomy and size: pale lavender-lilac glossy segmented armour, FLAT dark triangular compound eyes at the front corners of the head, short antennae, seven pairs of thin legs, spiny fan-shaped tail plate.\n\nTIMELINE\n0.0–2.0s  Slow push toward the brass magnifying glass over the giant isopod lying on the wooden specimen tray.\n2.0–4.5s  The camera glides smoothly down and to the left, past the small round grey clay pill bug model, and comes to rest on the flat brown clay sea-slater model with long legs, which is now sharp in focus.\n4.5–6.0s  Hold on the sea-slater model with the giant isopod softly out of focus behind it; only a gentle breathing of focus.\n\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the isopod growing, shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker.",
+      "sec": 6
+    },
+    {
+      "name": "c03",
+      "start": "out/15_storyboard_fix/p04a.jpg",
+      "prompt": "Vertical 9:16 video, exactly 6 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it. The giant isopod (whenever visible) keeps its exact anatomy and size: pale lavender-lilac glossy segmented armour, FLAT dark triangular compound eyes at the front corners of the head, short antennae, seven pairs of thin legs, spiny fan-shaped tail plate.\n\nTIMELINE\n0.0–3.0s  Straight top-down view. The camera pans very slowly along the blank tape measure from the tail end toward the head of the motionless isopod.\n3.0–6.0s  The camera pulls back slowly until the whole isopod lies centred next to the tape measure. Nothing moves except the camera; the soft light stays even.\n\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the isopod growing, shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker.",
+      "sec": 6
+    },
+    {
+      "name": "c04",
+      "start": "out/14_storyboard_12/p05.jpg",
+      "prompt": "Vertical 9:16 video, exactly 6 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it. The giant isopod (whenever visible) keeps its exact anatomy and size: pale lavender-lilac glossy segmented armour, FLAT dark triangular compound eyes at the front corners of the head, short antennae, seven pairs of thin legs, spiny fan-shaped tail plate.\n\nTIMELINE\n0.0–2.3s  Dark deep-sea floor. The giant isopod faces the camera; it lifts its head very slightly and its antennae sway; fine marine snow drifts down through a soft beam of light.\n2.3–6.0s  Slow, smooth push-in toward the isopod's left compound eye (the flat, dark triangular eye at the front corner of the head) until that eye and the surrounding lilac head armour fill most of the frame. The isopod stays still.\n\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the isopod growing, shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker.",
+      "sec": 6
+    },
+    {
+      "name": "c05",
+      "start": "out/15_storyboard_fix/p07a.jpg",
+      "prompt": "Vertical 9:16 video, exactly 8 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it. The giant isopod (whenever visible) keeps its exact anatomy and size: pale lavender-lilac glossy segmented armour, FLAT dark triangular compound eyes at the front corners of the head, short antennae, seven pairs of thin legs, spiny fan-shaped tail plate.\n\nTIMELINE\n0.0–2.5s  Low wide view of the huge whale vertebra resting on the dark seafloor, much larger than the isopods; marine snow drifts slowly.\n2.5–5.5s  The small giant isopods crawl slowly over and along the bone; one of them lowers its head to the bone surface as if feeding. Calm, not gruesome.\n5.5–8.0s  The camera cranes up and pulls back slowly, keeping the bone much bigger than the isopods; the scene grows calm and dim.\n\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the isopod growing, shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker.",
+      "sec": 8
+    },
+    {
+      "name": "c06",
+      "start": "out/14_storyboard_12/p08.jpg",
+      "prompt": "Vertical 9:16 video, exactly 6 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it. The giant isopod (whenever visible) keeps its exact anatomy and size: pale lavender-lilac glossy segmented armour, FLAT dark triangular compound eyes at the front corners of the head, short antennae, seven pairs of thin legs, spiny fan-shaped tail plate.\n\nTIMELINE\n0.0–2.5s  Top-down view into the roofless miniature aquarium backroom; slow push-in toward the small glass tank with the giant isopod on the sand.\n2.5–4.5s  A long pair of metal tongs, held from outside the frame (no hands visible), lowers a small silver fish into the tank and lays it on the sand in front of the isopod, then withdraws upward out of frame.\n4.5–6.0s  The isopod moves forward and grips the small fish with its front legs.\n\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the isopod growing, shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker.",
+      "sec": 6
+    },
+    {
+      "name": "c07",
+      "start": "out/14_storyboard_12/p10.jpg",
+      "prompt": "Vertical 9:16 video, exactly 6 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it. The giant isopod (whenever visible) keeps its exact anatomy and size: pale lavender-lilac glossy segmented armour, FLAT dark triangular compound eyes at the front corners of the head, short antennae, seven pairs of thin legs, spiny fan-shaped tail plate.\n\nTIMELINE\n0.0–4.5s  Night, dark room. Blank torn-off paper calendar pages (no printing on them) drift and fall past the dimly lit glass tank, slowly at first and then faster, showing time passing. The giant isopod in the tank does not move at all.\n4.5–6.0s  The last pages settle; very slow push-in toward the motionless isopod.\n\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the isopod growing, shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker.",
+      "sec": 6
+    },
+    {
+      "name": "c08",
+      "start": "out/14_storyboard_12/p11.jpg",
+      "prompt": "Vertical 9:16 video, exactly 6 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it. The giant isopod (whenever visible) keeps its exact anatomy and size: pale lavender-lilac glossy segmented armour, FLAT dark triangular compound eyes at the front corners of the head, short antennae, seven pairs of thin legs, spiny fan-shaped tail plate.\n\nTIMELINE\n0.0–3.5s  The isopod specimen lies still on dark velvet under a single soft spotlight; very slow push-in. Respectful, quiet, nothing moves.\n3.5–6.0s  The spotlight dims gradually until the frame is completely black; the specimen fades into darkness.\n\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the isopod growing, shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker.",
+      "sec": 6
+    }
+  ]
+}

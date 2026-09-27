@@ -630,7 +630,8 @@
       "stage": "map_desk→net",
       "keyframe": "out/14_storyboard_12/p01.jpg",
       "speech_est_s": 7.7,
-      "sec": 10
+      "sec": 8,
+      "speech_s": 6.77
     },
     {
       "cut": 2,
@@ -641,7 +642,8 @@
       "stage": "magnifier_study",
       "keyframe": "out/14_storyboard_12/p03.jpg",
       "speech_est_s": 4.2,
-      "sec": 6
+      "sec": 6,
+      "speech_s": 4.21
     },
     {
       "cut": 3,
@@ -652,8 +654,9 @@
       "stage": "tape_flatlay",
       "keyframe": "out/15_storyboard_fix/p04a.jpg",
       "speech_est_s": 5.8,
-      "sec": 8,
-      "annotation": "最大 約50cm"
+      "sec": 6,
+      "annotation": "最大 約50cm",
+      "speech_s": 5.22
     },
     {
       "cut": 4,
@@ -669,7 +672,8 @@
         "part": "겹눈(머리 앞 양옆의 검고 납작한 삼각형 눈)",
         "when": "'黒い目は'부터",
         "how": "눈으로 천천히 줌인 → 겹눈 매크로 인서트(작은 낱눈이 촘촘히 모인 표면) + 빨간 원 주석"
-      }
+      },
+      "speech_s": 6.4
     },
     {
       "cut": 5,
@@ -681,7 +685,8 @@
       "keyframe": "out/15_storyboard_fix/p07a.jpg",
       "speech_est_s": 6.0,
       "sec": 8,
-      "annotation": "水深 300〜1,000m"
+      "annotation": "水深 300〜1,000m",
+      "speech_s": 5.63
     },
     {
       "cut": 6,
@@ -692,7 +697,8 @@
       "stage": "backroom→eating",
       "keyframe": "out/14_storyboard_12/p08.jpg",
       "speech_est_s": 6.3,
-      "sec": 8
+      "sec": 6,
+      "speech_s": 5.48
     },
     {
       "cut": 7,
@@ -704,7 +710,8 @@
       "keyframe": "out/14_storyboard_12/p10.jpg",
       "speech_est_s": 5.1,
       "sec": 6,
-      "annotation": "1,869日"
+      "annotation": "1,869日",
+      "speech_s": 4.27
     },
     {
       "cut": 8,
@@ -716,7 +723,8 @@
       "keyframe": "out/14_storyboard_12/p11.jpg",
       "speech_est_s": 4.7,
       "sec": 6,
-      "transition_out": "조명이 서서히 꺼지며 표본이 어둠 속으로 사라진다(공용 엔딩으로 연결)"
+      "transition_out": "조명이 서서히 꺼지며 표본이 어둠 속으로 사라진다(공용 엔딩으로 연결)",
+      "speech_s": 4.48
     },
     {
       "cut": 9,
@@ -756,5 +764,218 @@
     "date": "2026-09-27",
     "fact_check": "v4에서 검증한 사실만 사용(새 사실 없음). 뺀 것: 미에현·2007년·50g·砂泥·弱った生き物",
     "japanese_check": "'ダンゴムシの仲間では世界最大'(등각류=공벌레 무리, 정확) · 6→7컷은 한 문장이 컷을 넘어감(…最後に、/1869日…) — 자막은 컷별로 끊음"
-  }
+  },
+  "timing_v5": [
+    {
+      "cut": 1,
+      "sec": 8,
+      "audio_from": 0.015,
+      "audio_to": 6.787,
+      "speech_s": 6.77,
+      "lead": 0.15,
+      "local_tps": [
+        {
+          "jp_seg": null,
+          "start": 0.15,
+          "end": 1.84
+        },
+        {
+          "jp_seg": null,
+          "start": 1.84,
+          "end": 2.86
+        },
+        {
+          "jp_seg": null,
+          "start": 2.86,
+          "end": 3.96
+        },
+        {
+          "jp_seg": null,
+          "start": 3.96,
+          "end": 6.92
+        }
+      ]
+    },
+    {
+      "cut": 2,
+      "sec": 6,
+      "audio_from": 6.787,
+      "audio_to": 11.0,
+      "speech_s": 4.21,
+      "lead": 0.15,
+      "local_tps": [
+        {
+          "jp_seg": null,
+          "start": 0.15,
+          "end": 1.71
+        },
+        {
+          "jp_seg": null,
+          "start": 1.71,
+          "end": 2.59
+        },
+        {
+          "jp_seg": null,
+          "start": 2.59,
+          "end": 4.36
+        }
+      ]
+    },
+    {
+      "cut": 3,
+      "sec": 6,
+      "audio_from": 11.0,
+      "audio_to": 16.219,
+      "speech_s": 5.22,
+      "lead": 0.15,
+      "local_tps": [
+        {
+          "jp_seg": null,
+          "start": 0.15,
+          "end": 2.63
+        },
+        {
+          "jp_seg": null,
+          "start": 2.63,
+          "end": 4.09
+        },
+        {
+          "jp_seg": null,
+          "start": 4.09,
+          "end": 5.37
+        }
+      ]
+    },
+    {
+      "cut": 4,
+      "sec": 8,
+      "audio_from": 16.219,
+      "audio_to": 22.62,
+      "speech_s": 6.4,
+      "lead": 0.15,
+      "local_tps": [
+        {
+          "jp_seg": null,
+          "start": 0.15,
+          "end": 0.92
+        },
+        {
+          "jp_seg": null,
+          "start": 0.92,
+          "end": 2.31
+        },
+        {
+          "jp_seg": null,
+          "start": 2.31,
+          "end": 3.2
+        },
+        {
+          "jp_seg": null,
+          "start": 3.2,
+          "end": 6.55
+        }
+      ]
+    },
+    {
+      "cut": 5,
+      "sec": 8,
+      "audio_from": 22.62,
+      "audio_to": 28.254,
+      "speech_s": 5.63,
+      "lead": 0.15,
+      "local_tps": [
+        {
+          "jp_seg": null,
+          "start": 0.15,
+          "end": 1.43
+        },
+        {
+          "jp_seg": null,
+          "start": 1.43,
+          "end": 4.08
+        },
+        {
+          "jp_seg": null,
+          "start": 4.08,
+          "end": 5.78
+        }
+      ]
+    },
+    {
+      "cut": 6,
+      "sec": 6,
+      "audio_from": 28.254,
+      "audio_to": 33.737,
+      "speech_s": 5.48,
+      "lead": 0.15,
+      "local_tps": [
+        {
+          "jp_seg": null,
+          "start": 0.15,
+          "end": 2.6
+        },
+        {
+          "jp_seg": null,
+          "start": 2.6,
+          "end": 3.65
+        },
+        {
+          "jp_seg": null,
+          "start": 3.65,
+          "end": 5.63
+        }
+      ]
+    },
+    {
+      "cut": 7,
+      "sec": 6,
+      "audio_from": 33.737,
+      "audio_to": 38.003,
+      "speech_s": 4.27,
+      "lead": 0.15,
+      "local_tps": [
+        {
+          "jp_seg": null,
+          "start": 0.15,
+          "end": 1.92
+        },
+        {
+          "jp_seg": null,
+          "start": 1.92,
+          "end": 4.42
+        }
+      ]
+    },
+    {
+      "cut": 8,
+      "sec": 6,
+      "audio_from": 38.003,
+      "audio_to": 42.483,
+      "speech_s": 4.48,
+      "lead": 0.15,
+      "local_tps": [
+        {
+          "jp_seg": null,
+          "start": 0.15,
+          "end": 1.05
+        },
+        {
+          "jp_seg": null,
+          "start": 1.05,
+          "end": 2.42
+        },
+        {
+          "jp_seg": null,
+          "start": 2.42,
+          "end": 3.17
+        },
+        {
+          "jp_seg": null,
+          "start": 3.17,
+          "end": 4.63
+        }
+      ]
+    }
+  ],
+  "total_sec": 54
 }
