@@ -7,7 +7,7 @@
   배경이 어두운 심해라 **밝은 종이색 글자 + 어두운 테두리**. 뒤 흐림 없음. 번호(No.) 없음.
 - 소리: 영상의 효과음(두루마리·물소리)은 작게 깔고 심해 구간에서 줄인다 + 나레이션(-16 LUFS). **음악 없음.**
 
-사용: python ending_overlay.py <확정엔딩.mp4> <생물 일본어 이름> <나레이션.wav> <출력.mp4>
+사용: python ending_overlay.py <확정엔딩.mp4> <생물 일본어 이름> <나레이션.wav> <출력.mp4> [조각시각.json]
 """
 from __future__ import annotations
 
@@ -29,13 +29,15 @@ SETTLE_S = 5.6                          # 이 시점부터 심해 정지 구간(
 NAR_T0 = 7.4                            # 나레이션 시작(질문 줄이 써지기 시작할 때)
 MIN_TOTAL_S = 11.5
 
-# (문구, 글자 크기, SETTLE_S 기준 시작 초, 끝 초) — {name} 자리에 그 편 생물 이름
+# (문구, 글자 크기, SETTLE_S 기준 시작 초, 끝 초, 나레이션 조각 번호) — {name} 자리에 그 편 생물 이름
+# ★조각 번호가 있는 줄은 고정 초가 아니라 **그 조각을 실제로 읽기 시작하는 시각**에 써진다(운영자 확정:
+#   자막과 말이 어긋나면 안 됨). 시각은 합성 때 받은 timepoints(<mark>)에서 온다. 없으면 고정 초로 폴백.
 LINES = [
-    ("深海図鑑", 54, 0.0, 0.6),
-    ("{name}", 64, 0.7, 1.6),
-    ("あなたが見てみたい", 46, 1.9, 2.6),
-    ("深海の生き物は？", 46, 2.6, 3.3),
-    ("コメントで教えてください", 42, 3.5, 4.3),
+    ("深海図鑑", 54, 0.0, 0.6, None),
+    ("{name}", 64, 0.7, 1.6, None),
+    ("あなたが見てみたい", 46, 1.9, 2.6, 0),
+    ("深海の生き物は？", 46, 2.6, 3.3, 1),
+    ("コメントで教えてください", 42, 3.5, 4.3, 2),
 ]
 GAP = [0, 6, 22, 2, 14]                 # 줄 앞 간격(px)
 
@@ -54,14 +56,19 @@ def _fit(text: str, size: int) -> ImageFont.FreeTypeFont:
     return ImageFont.truetype(str(FONT), size)
 
 
-def layout(name: str):
+def layout(name: str, tps: list | None = None):
     rows, y = [], 0
-    for (txt, size, t0, t1), gap in zip(LINES, GAP):
+    for (txt, size, t0, t1, seg), gap in zip(LINES, GAP):
         txt = txt.format(name=name)
         f = _fit(txt, size)
         a, d = f.getmetrics()
         y += gap
-        rows.append({"text": txt, "font": f, "y": y, "t0": SETTLE_S + t0, "t1": SETTLE_S + t1})
+        a0, a1 = SETTLE_S + t0, SETTLE_S + t1
+        if seg is not None and tps and seg < len(tps) and tps[seg].get("start") is not None:
+            st = NAR_T0 + tps[seg]["start"]
+            en = NAR_T0 + (tps[seg].get("end") or tps[seg]["start"] + 1.0)
+            a0, a1 = st, st + max(0.35, min(1.2, 0.8 * (en - st)))   # 말하는 동안 다 써지게
+        rows.append({"text": txt, "font": f, "y": y, "t0": a0, "t1": a1})
         y += a + d
     top = int(H * 0.5 - y / 2)                  # 화면 가운데 정렬
     for r in rows:
@@ -69,8 +76,8 @@ def layout(name: str):
     return rows
 
 
-def render_frames(name: str, dur: float, out_dir: Path) -> None:
-    rows = layout(name)
+def render_frames(name: str, dur: float, out_dir: Path, tps: list | None = None) -> None:
+    rows = layout(name, tps)
     ink = []
     for r in rows:
         im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -98,7 +105,9 @@ def render_frames(name: str, dur: float, out_dir: Path) -> None:
         fr.save(out_dir / f"o{i:04d}.png")
 
 
-def main(src: str, name: str, narration: str, dst: str) -> None:
+def main(src: str, name: str, narration: str, dst: str, timepoints: str | None = None) -> None:
+    import json
+    tps = json.loads(Path(timepoints).read_text(encoding="utf-8")) if timepoints else None
     src_d, nar_d = _dur(src), _dur(narration)
     total = max(MIN_TOTAL_S, NAR_T0 + nar_d + 1.0)
     k = (total - SETTLE_S) / (src_d - SETTLE_S)          # 심해 구간 늘림 배율
@@ -114,7 +123,7 @@ def main(src: str, name: str, narration: str, dst: str) -> None:
             "-map", "[v]", "-an", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(t / "base.mp4")],
             check=True)
         # ② 손글씨 프레임
-        render_frames(name, total, t)
+        render_frames(name, total, t, tps)
         # ③ 합성: 효과음(작게, 심해 구간에서 줄임) + 나레이션(-16 LUFS, NAR_T0부터)
         ms = int(NAR_T0 * 1000)
         subprocess.run([
@@ -129,4 +138,4 @@ def main(src: str, name: str, narration: str, dst: str) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5] if len(sys.argv) > 5 else None)
