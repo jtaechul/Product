@@ -1,0 +1,28 @@
+{
+  "id": "15_ending_imgs",
+  "kind": "gen_images",
+  "purpose": "운영자 승인: 공용 엔딩 재시도용 이미지 2장 — ①장식 틀 없는 깨끗한 도면(참고 이미지용) ②완전히 말린 두루마리만 있는 첫 화면. 이미지 검토 후 영상.",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "chart_clean",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/09_ending_chart_real/chart_real.jpg"
+      ],
+      "prompt": "Edit the attached antique parchment sea chart. REMOVE the empty ornate cartouche frame at the upper right completely, and fill that area naturally with more of the same chart: the coastline and small islands continuing, engraved depth-contour lines, depth-sounding dots and a few tiny wave-mark symbols. Keep EVERYTHING else exactly as it is (lighthouse, islands, clouds and wind swirls, both compass roses and rhumb lines, both sailing ships, depth ruler with tick marks only, contours, red wax seal, scroll, border, colours, lighting). There must be no empty frame or box anywhere. ABSOLUTELY NO letters, words, numbers or pseudo-writing. No animals, no people. Flat straight-on view, 9:16 vertical."
+    },
+    {
+      "name": "scroll_rolled",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/09_ending_chart_real/chart_real.jpg"
+      ],
+      "prompt": "A photorealistic top-down photo, vertical 9:16, of a dark wooden table in warm dim candle-like light. Near the TOP of the frame lies a single aged parchment scroll that is COMPLETELY ROLLED UP into one paper roll, lying HORIZONTALLY across the frame, parallel to the top edge (like a closed window blind). Only the rolled outside of the paper is visible: slightly rough, yellowed parchment with a frayed edge — none of the map is visible. The roll is the same aged parchment as the attached chart, about as wide as the chart. The rest of the frame below is empty dark wood, where the scroll will unroll. No rods, no ribbon, no seal, no other objects, no text, no letters, no numbers, no hands, no people."
+    }
+  ]
+}
