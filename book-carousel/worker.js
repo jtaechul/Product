@@ -3542,6 +3542,58 @@ async function dinerEpisodeNo(env, title) {
   } catch { return 0; }
 }
 
+// ⭐ 상품을 숨긴다(사용자 확정 2026-09): 이름이 보이면 쿠팡에서 직접 검색해 사 버려 수수료가 0이 된다.
+// 메뉴판에는 상품명 대신 보편적 특징만 살린 '메뉴 이름'을 쓰고, 상품 사진(포장에 브랜드가 찍혀 있음)은 넣지 않는다.
+// 메뉴 이름에 들어가도 되는 보편 단어. 여기 없는 상품명 단어(브랜드·제품 라인명)는 메뉴 이름에서 금지된다.
+const MENU_GENERIC = /^(강아지|고양이|반려견|반려묘|애견|애묘|퍼피|키튼|어덜트|시니어|전연령|전견종|전묘종|소형견|중형견|대형견|실내|실내견|실내묘|인도어|사료|건사료|건식|건식사료|습식|습식사료|간식|트릿|저키|육포|츄르|캔|주식캔|파우치|동결건조|닭|닭고기|연어|소고기|오리|양고기|참치|북어|황태|칠면조|흰살생선|생선|가다랑어|고기|치킨|그레인프리|저알러지|작은|알갱이|용|전용|대용량|어린|노령)$/;
+function menuBannedWords(title) {
+  const out = new Set();
+  const brand = brandOf(title);
+  if (brand) out.add(brand);
+  String(title || '').split(/[\s()\[\],/·+]+/)
+    .map(w => w.replace(/[^가-힣A-Za-z]/g, ''))
+    .filter(w => w.length >= 2 && !/^(kg|g|ml|개|개입|매|팩|입|포)$/i.test(w) && !MENU_GENERIC.test(w))
+    .forEach(w => out.add(w));
+  return [...out];
+}
+function hasBanned(text, banned) {
+  const t = String(text || '').toLowerCase();
+  return banned.some(w => w && t.includes(w.toLowerCase()));
+}
+// 상품명·브랜드를 '이 메뉴'로 바꾼다. 뒤에 붙은 조사도 '메뉴'(모음으로 끝남)에 맞게 고친다.
+const MENU_PARTICLE = { '으로': '로', '로': '로', '이라': '라', '라': '라', '이': '가', '가': '가', '은': '는', '는': '는', '을': '를', '를': '를', '의': '의', '도': '도', '과': '와', '와': '와' };
+function scrubBanned(text, banned) {
+  let t = String(text || '');
+  for (const w of banned) {
+    if (!w) continue;
+    const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    t = t.replace(new RegExp(esc + '(으로|이라|로|라|이|가|은|는|을|를|의|도|과|와)?', 'gi'), (_, pt) => '이 메뉴' + (pt ? MENU_PARTICLE[pt] : ''));
+  }
+  return t.replace(/(이 메뉴)(\s*이 메뉴)+/g, '$1').replace(/\s{2,}/g, ' ').trim();
+}
+const MENU_INGREDIENTS = ['닭고기', '연어', '소고기', '오리', '양고기', '참치', '북어', '황태', '칠면조', '흰살생선', '가다랑어', '닭'];
+// 모델이 이름을 못 지었거나 상품명이 섞였을 때 쓰는 보편 이름
+function fallbackMenuName(title, spKey) {
+  const t = String(title || '');
+  const ing = MENU_INGREDIENTS.find(x => t.includes(x));
+  const kind = /츄르|페이스트|퓨레/.test(t) ? '크림 한 접시'
+    : /캔|습식|파우치|무스|파테/.test(t) ? '촉촉한 한 그릇'
+    : /저키|육포|트릿|간식|동결건조|큐브|껌/.test(t) ? '간식 한 접시' : '바삭한 정식';
+  const who = /실내|인도어/.test(t) ? (spKey === 'cat' ? '실내묘 ' : '실내견 ') : '';
+  return `${who}${ing ? ing + ' ' : ''}${kind}`.trim();
+}
+// 같은 메뉴 이름이 연달아 나오지 않게 최근 이름을 기억한다(KV diner_menu_names, 최근 40개).
+async function recentMenuNames(env) {
+  try { return (await env.PENDING_POSTS.get('diner_menu_names', 'json')) || []; } catch { return []; }
+}
+async function rememberMenuName(env, name) {
+  try {
+    const list = (await recentMenuNames(env)).filter(x => x !== name);
+    list.unshift(name);
+    await env.PENDING_POSTS.put('diner_menu_names', JSON.stringify(list.slice(0, 40)));
+  } catch { /* 기록 실패는 무시 */ }
+}
+
 // 쿠팡 파트너스 필수 고지 문구(쿠팡 안내 표준 문장). 캡션·유튜브 설명에 서버가 직접 붙인다.
 const COUPANG_DISCLOSURE = '이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.';
 
@@ -3615,6 +3667,8 @@ async function handleDinerEpisode(env, body, ctx) {
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
     .filter(Boolean);
   const factsSafe = adSafeFacts(facts).slice(0, 5);
+  const recentMenus = await recentMenuNames(env);
+  const banned = menuBannedWords(title);
   // 입장 훅 재료 — 02단계에서 확인된 '사기 전 불편'. 증상 이야기는 효능 암시가 되므로 뺀다.
   const worries = adSafeFacts((Array.isArray(body.pains) ? body.pains : [])
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
@@ -3637,10 +3691,11 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "tone": "내레이션 목소리 톤 한 줄(한국어)",
   "clips": [ { "role": "enter", "shots": "영어 타임코드 구간", "line": "속마음 한 문장" } ],
   "verdict": "재방문 의사 판정 한 줄(한국어)",
-  "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도",
+  "menuName": "메뉴판에 적을 메뉴 이름(한국어 4~14자). 상품명·브랜드·제품 라인명 절대 금지. [확인된 정보]와 상품명의 보편 특징(주원료·알갱이 모양이나 식감·대상) 중 2개를 조합하고 '정식', '한 그릇', '한 접시', '세트' 중 하나로 끝낸다",
+  "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도. 상품명·브랜드는 절대 쓰지 않는다",
   "hashtags": ["#태그1", "#태그2", "#태그3"],
-  "ytTitle": "유튜브 쇼츠 제목 40자 이내"
-}`;
+  "ytTitle": "유튜브 설명 첫 줄에 쓸 한 줄 요약 40자 이내(상품명·브랜드 금지)"
+}${recentMenus.length ? `\n최근에 쓴 메뉴 이름(겹치지 않게 다른 특징을 골라라): ${recentMenus.slice(0, 12).join(', ')}` : ''}`;
 
   const gk = await getGeminiKey(env);
   if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
@@ -3696,10 +3751,14 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     if (k < 0) return {};
     used.add(k); return list[k] || {};
   };
+  let menuName = String(out.menuName || '').trim().replace(/["'「」]/g, '').slice(0, 20);
+  if (!menuName || hasBanned(menuName, banned)) menuName = fallbackMenuName(title, spKey);
+  await rememberMenuName(env, menuName);
+
   const clipsOut = roles.map((role, i) => {
     const c = pickClip(role, i);
     const shots = toSpecies(safeShots(normShots(String(c.shots || '').trim())), sp);
-    let line = role === 'enter' ? DINER_OPENING : String(c.line || '').trim().replace(/!+/g, '');
+    let line = role === 'enter' ? DINER_OPENING : scrubBanned(String(c.line || '').trim().replace(/!+/g, ''), banned);
     // 가격을 모르면 계산 대사에 숫자가 들어가면 안 된다(지어낸 가격 방지).
     if (role === 'bill' && !priceNote && /\d/.test(line)) line = '계산은 조용히 끝냈다. 값은 묻지 않는 게 예의다';
     const withFood = role === 'serve' || role === 'taste' || role === 'bill';
@@ -3713,7 +3772,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     const prompt = [head, shots, withFood ? foodLine : '', `Avoid: ${neg}.`].filter(Boolean).join('\n');
     // opening: 편집기가 세 번 끊어 뒤로 빠지는 줌을 입힌다 / menu: 상품 사진 메뉴판 / bill: 100g당 가격 계산서
     const card = role === 'enter' ? { type: 'opening' }
-      : role === 'order' ? { type: 'menu' }
+      : role === 'order' ? { type: 'menu', name: menuName }
       : (role === 'bill' && priceNote ? { type: 'bill', text: priceNote } : null);
     return { no: i + 1, role, roleKo: DINER_ROLE_KO[role], shots, line, subtitle: line, wearing: false, card, imagePrompt, prompt };
   });
@@ -3721,20 +3780,22 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const tags = (Array.isArray(out.hashtags) ? out.hashtags : []).slice(0, 3);
   const epNo = await dinerEpisodeNo(env, title);
   const seriesTag = `[${DINER_SERIES}${epNo ? ' #' + epNo : ''}]`;
-  const caption = [seriesTag, String(out.caption || '').trim(), COUPANG_DISCLOSURE].filter(Boolean).join('\n\n');
+  const caption = [seriesTag, scrubBanned(String(out.caption || '').trim(), banned), COUPANG_DISCLOSURE].filter(Boolean).join('\n\n');
   const link = String(body.link || '').trim();
   const shop = String(out.shop || '').trim();
-  const verdict = String(out.verdict || '').trim();
-  const ytHook = String(out.ytTitle || '').trim();
-  const ytTitle = `[${DINER_SERIES}]${epNo ? ' #' + epNo : ''} ${title}`.slice(0, 100);
+  const verdict = scrubBanned(String(out.verdict || '').trim(), banned);
+  const ytHook = scrubBanned(String(out.ytTitle || '').trim(), banned);
+  // 제목에도 상품명 대신 메뉴 이름. 상품명은 설명란의 링크 바로 옆에만 둔다.
+  const ytTitle = `[${DINER_SERIES}]${epNo ? ' #' + epNo : ''} ${menuName}`.slice(0, 100);
   const ytDescription = [
     ytHook,
     '',
-    shop ? `오늘의 가게: ${shop}` : '',
-    `오늘의 메뉴: ${title}`,
+    shop ? `가게: ${shop}` : '',
+    `오늘의 메뉴: ${menuName}`,
     priceNote ? `계산: ${priceNote} (영상 제작 시점 쿠팡 판매가 기준, 가격은 변동될 수 있습니다)` : '',
     verdict ? `판정: ${verdict}` : '',
     '',
+    `이 메뉴의 정체: ${title}`,
     link ? `상품 보러 가기: ${link}` : '상품 보러 가기: (쿠팡 링크를 02단계에 넣으면 여기에 자동으로 들어갑니다)',
     '',
     COUPANG_DISCLOSURE,
@@ -3748,8 +3809,8 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     format: 'diner',
     series: DINER_SERIES, episode: epNo, opening: DINER_OPENING,
     species: spKey, speciesKo: sp.ko,
-    problem: `${seriesTag} ${shop || '식당 에피소드'}`,
-    shop, verdict, priceNote, foodLook: foodEn,
+    problem: `${seriesTag} ${shop || '식당 에피소드'} · 오늘의 메뉴 「${menuName}」`,
+    shop, verdict, priceNote, menuName, foodLook: foodEn,
     sceneBlock: scene,
     tone: String(out.tone || '낮고 담담한 독백 목소리').trim(),
     wearable: '',
@@ -4265,13 +4326,13 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <label class="ed-toggle" for="edCards" id="edCardsWrap" hidden>
       <input type="checkbox" id="edCards" checked>
       <span class="ed-box" aria-hidden="true"></span>
-      <span class="ed-tt">식당 장면 연출 넣기<small>입장 클립엔 세 번 끊어 빠지는 줌, 주문 클립엔 상품 사진 메뉴판, 계산 클립엔 가격 계산서가 붙습니다</small></span>
+      <span class="ed-tt">식당 장면 연출 넣기<small>입장 클립엔 세 번 끊어 빠지는 줌, 주문 클립엔 메뉴판(상품명 대신 메뉴 이름), 계산 클립엔 가격 계산서가 붙습니다</small></span>
     </label>
 
     <label class="ed-toggle" for="edOutro">
       <input type="checkbox" id="edOutro" checked>
       <span class="ed-box" aria-hidden="true"></span>
-      <span class="ed-tt">마지막에 상품 사진 넣기<small>02단계에 넣은 쿠팡 상품 사진을 영상 끝에 2.6초 붙입니다</small></span>
+      <span class="ed-tt">마지막 화면 넣기<small>영상 끝 2.6초. 일반 릴스는 쿠팡 상품 사진, 식당 에피소드는 상품을 숨긴 영수증 카드(메뉴 이름·100g당 가격·프로필 링크 안내)</small></span>
     </label>
 
     <label class="ed-toggle" for="edBars">
@@ -4332,7 +4393,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var who=/고양이|캣|냥|키튼|kitten|\\bcats?\\b|feline/i.test(title)?'고양이':'강아지';
     var food=/사료|간식|먹거리|식품/.test(cat);
     el.innerHTML = food
-      ? '<b>식당 에피소드</b>로 만듭니다 · 주인공: <b>'+who+'</b><br>가게에 들어가 이 사료를 주문해 먹으며 속마음으로 평가합니다. 주문 장면엔 상품 사진 메뉴판, 계산 장면엔 가격 계산서가 붙습니다.'
+      ? '<b>식당 에피소드</b>로 만듭니다 · 주인공: <b>'+who+'</b><br>가게에 들어가 이 사료를 주문해 먹으며 속마음으로 평가합니다. 주문 장면엔 메뉴판(상품명 대신 메뉴 이름), 계산 장면엔 가격 계산서, 마지막엔 영수증이 붙습니다. 상품명은 영상에 나오지 않습니다.'
       : '<b>문제 → 해결 릴스</b>로 만듭니다 · 주인공: <b>'+who+'</b>';
   }
   ['c','pt','t'].forEach(function(id){ var el=$(id); if(el){ el.addEventListener('input',updateHint); el.addEventListener('change',updateHint); } });
@@ -4521,7 +4582,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       out.appendChild(pb);
     }
     // 04단계 편집기에 장면 카드(메뉴판·계산서) 위치를 넘긴다. 자막과 같은 순서(클립 번호)로 붙는다.
-    window.PET_EPISODE = { format: r.format||'reel', series: r.series||'', episode: r.episode||0, priceNote: r.priceNote||'',
+    window.PET_EPISODE = { format: r.format||'reel', series: r.series||'', episode: r.episode||0, priceNote: r.priceNote||'', menuName: r.menuName||'',
       cards: (r.clips||[]).map(function(c){ return c.card||null; }) };
     try{ document.dispatchEvent(new CustomEvent('pet-episode')); }catch(e){}
     var subs=(r.clips||[]).map(function(c){ return c.subtitle; }).filter(Boolean).join('\\n');
@@ -4566,7 +4627,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       '클립마다 1단계 이미지 프롬프트와 2단계 영상 프롬프트가 함께 나옵니다. '+
       '스틸을 먼저 만들어 마음에 드는 장면을 고른 뒤 그 이미지에서 영상을 만들면, 강아지도 착용한 물건도 모양이 흔들리지 않습니다.'+
       (r.wearable ? '<br><b>착용 상품으로 인식했습니다.</b> 문제 클립은 맨몸, 전환 이후 클립만 착용한 모습으로 나옵니다.' : '')+
-      (diner ? '<br><b>식당 에피소드:</b> 음식 모양은 모든 클립에 같은 문장으로 고정돼 있습니다. 04단계에서 "클립에 나눠 담기"를 누르면 주문 클립엔 상품 사진 메뉴판, 계산 클립엔 가격 계산서가 자동으로 붙습니다.' : '')+
+      (diner ? '<br><b>식당 에피소드:</b> 음식 모양은 모든 클립에 같은 문장으로 고정돼 있습니다. 04단계에서 "클립에 나눠 담기"를 누르면 주문 클립엔 메뉴판, 계산 클립엔 가격 계산서가 자동으로 붙습니다. 링크 클릭을 위해 상품명·상품 사진은 영상에 넣지 않습니다(유튜브 설명란 링크 옆에만).' : '')+
       '<br>소리는 넣지 않습니다. 위 내레이션 대본으로 목소리를 만들어 04단계에서 얹으세요. '+
       '제외 조건은 각 프롬프트 맨 아래 Avoid 줄에 이미 들어 있습니다.';
     out.appendChild(tip);
@@ -4791,7 +4852,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       drawSub(pvx,c.sub,pv.width,pv.height,barOf(pv.height));
       drawCard(pvx,pv.width,pv.height,c.card,1);
     };
-    if(c.card && c.card.type==='menu') ensureCardImg();
+
     v.addEventListener('seeked',paint); v.addEventListener('loadeddata',paint);
     v.addEventListener('loadedmetadata',function(){ try{ v.currentTime=Math.min(0.12,(v.duration||1)/2); }catch(e){} });
     v.src=c.url;
@@ -4929,15 +4990,6 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 
 
   // ---- 식당 에피소드 장면 카드 ----
-  var cardImg=null, cardImgUrl=null, cardImgP=null;
-  function ensureCardImg(){
-    var u=productInfo().url;
-    if(u===cardImgUrl && cardImgP) return cardImgP;   // 받는 중이면 그 약속을 그대로 돌려준다
-    cardImgUrl=u; cardImg=null;
-    cardImgP=loadProductImage(u).then(function(im){ if(cardImgUrl===u){ cardImg=im; if(!st.busy) repaintPreview(); } return im; });
-    return cardImgP;
-  }
-  function repaintPreview(){ var c=st.clips[st.sel]; if(c && c.card) drawPreview(); }
   function roundRect(ctx,x,y,w,h,r){
     ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
     ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
@@ -4967,24 +5019,20 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var bar=barOf(h), a=Math.min(1,Math.max(0,(t||0)/0.3));
     ctx.save(); ctx.globalAlpha=a;
     if(card.type==='menu'){
-      var cw=w*0.62, chh=h*0.30, cx=(w-cw)/2, cy=bar+h*0.035;
-      ctx.shadowColor='rgba(0,0,0,.28)'; ctx.shadowBlur=w*0.03; ctx.shadowOffsetY=h*0.004;
-      ctx.fillStyle='#FBF7EF'; roundRect(ctx,cx,cy,cw,chh,w*0.025); ctx.fill();
+      // 상품 사진은 넣지 않는다(포장의 브랜드가 보이면 이름을 숨긴 의미가 없다). 메뉴 이름만.
+      var name=card.name||'오늘의 메뉴', cw=w*0.70, chh=h*0.165, cx=(w-cw)/2, cy=bar+h*0.035;
+      ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=w*0.03; ctx.shadowOffsetY=h*0.004;
+      ctx.fillStyle='#3B2B20'; roundRect(ctx,cx,cy,cw,chh,w*0.02); ctx.fill();
       ctx.shadowColor='transparent';
-      ctx.strokeStyle='#5B4636'; ctx.lineWidth=Math.max(2,w*0.004); roundRect(ctx,cx+w*0.012,cy+w*0.012,cw-w*0.024,chh-w*0.024,w*0.018); ctx.stroke();
-      var fs1=Math.round(w/34);
-      ctx.fillStyle='#5B4636'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-      ctx.font='700 '+fs1+"px 'Noto Sans KR', sans-serif";
-      ctx.fillText('오늘의 메뉴', w/2, cy+w*0.012+fs1*1.6);
-      var imgTop=cy+fs1*2.6, imgH=chh*0.52, imgW=cw*0.80;
-      if(cardImg && cardImg.width){
-        var sc=Math.min(imgW/cardImg.width, imgH/cardImg.height), dw=cardImg.width*sc, dh=cardImg.height*sc;
-        ctx.drawImage(cardImg,(w-dw)/2,imgTop+(imgH-dh)/2,dw,dh);
-      }
-      var title=productInfo().title, fs2=Math.round(w/30);
-      ctx.fillStyle='#22282B'; ctx.font='600 '+fs2+"px 'Noto Sans KR', sans-serif";
-      var tl=wrapFit(ctx,title,cw*0.86), ty=imgTop+imgH+fs2*1.5;
-      for(var i=0;i<tl.length;i++){ ctx.fillText(tl[i],w/2,ty); ty+=fs2*1.3; }
+      ctx.strokeStyle='#C9A77A'; ctx.lineWidth=Math.max(2,w*0.004);
+      roundRect(ctx,cx+w*0.014,cy+w*0.014,cw-w*0.028,chh-w*0.028,w*0.014); ctx.stroke();
+      var fs1=Math.round(w/34), fs2=Math.round(w/17);
+      ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.fillStyle='#C9A77A'; ctx.font='700 '+fs1+"px 'Noto Sans KR', sans-serif";
+      ctx.fillText('오늘의 메뉴', w/2, cy+w*0.014+fs1*1.9);
+      ctx.fillStyle='#F7EFE2'; ctx.font='800 '+fs2+"px 'Noto Sans KR', sans-serif";
+      var nl=wrapFit(ctx,name,cw*0.86), ny=cy+chh*0.52+(nl.length>1?0:fs2*0.35);
+      for(var i=0;i<nl.length;i++){ ctx.fillText(nl[i],w/2,ny); ny+=fs2*1.2; }
     } else if(card.type==='bill' && card.text){
       var bw=w*0.50, bh=h*0.155, bx=w-bw-w*0.05, by=bar+h*0.035;
       ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=w*0.025; ctx.shadowOffsetY=h*0.004;
@@ -5043,8 +5091,39 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(line) out.push(line);
     return out.slice(0,2);
   }
+  // 식당 에피소드의 마무리 = 영수증. 상품 사진·상품명 없이 메뉴 이름·100g당 가격·링크 안내만.
+  function drawReceipt(ctx,w,h,ep,t){
+    var bar=barOf(h), a=Math.min(1,t/0.35), lift=(1-a)*h*0.02;
+    ctx.fillStyle='#EFE9DF'; ctx.fillRect(0,0,w,h);
+    ctx.save(); ctx.globalAlpha=a;
+    var rw=w*0.74, rh=h*0.41, rx=(w-rw)/2, ry=(h-rh)/2-h*0.02+lift, pad=rw*0.09, tooth=w*0.022;
+    ctx.shadowColor='rgba(0,0,0,.16)'; ctx.shadowBlur=w*0.04; ctx.shadowOffsetY=h*0.006;
+    ctx.fillStyle='#FFFFFF';
+    ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx+rw,ry); ctx.lineTo(rx+rw,ry+rh);
+    for(var zx=rx+rw, k=0; zx>rx; zx-=tooth, k++){ ctx.lineTo(Math.max(rx,zx-tooth/2), ry+rh+(k%2?0:tooth*0.6)); }
+    ctx.lineTo(rx,ry+rh); ctx.closePath(); ctx.fill();
+    ctx.shadowColor='transparent';
+    var cx=w/2, y=ry+h*0.07, f1=Math.round(w/15), f2=Math.round(w/34), f3=Math.round(w/22), f4=Math.round(w/19);
+    var dash=function(yy){ ctx.strokeStyle='#C9C3B8'; ctx.lineWidth=Math.max(1,w*0.002); ctx.setLineDash([w*0.012,w*0.009]);
+      ctx.beginPath(); ctx.moveTo(rx+pad,yy); ctx.lineTo(rx+rw-pad,yy); ctx.stroke(); ctx.setLineDash([]); };
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillStyle='#22282B'; ctx.font='800 '+f1+"px 'Noto Sans KR', sans-serif"; ctx.fillText('영수증', cx, y);
+    y+=f2*2.1; ctx.fillStyle='#8A918D'; ctx.font='600 '+f2+"px 'Noto Sans KR', sans-serif";
+    ctx.fillText((ep.series||'')+(ep.episode?'  #'+ep.episode:''), cx, y);
+    y+=f2*1.6; dash(y);
+    y+=f3*2.0; ctx.fillStyle='#22282B'; ctx.font='700 '+f3+"px 'Noto Sans KR', sans-serif";
+    var ml=wrapFit(ctx,ep.menuName||'오늘의 메뉴',rw-pad*2);
+    for(var i=0;i<ml.length;i++){ ctx.fillText(ml[i],cx,y); y+=f3*1.3; }
+    if(ep.priceNote){ y+=f2*0.4; ctx.fillStyle='#8A6A4F'; ctx.font='700 '+f3+"px 'Noto Sans KR', sans-serif"; ctx.fillText(ep.priceNote,cx,y); y+=f3*0.6; }
+    y+=f2*1.2; dash(y);
+    y+=f4*1.9; ctx.fillStyle='#2F6F5E'; ctx.font='800 '+f4+"px 'Noto Sans KR', sans-serif";
+    ctx.fillText('이 메뉴는', cx, y); y+=f4*1.3; ctx.fillText('프로필 링크에서', cx, y);
+    ctx.restore();
+    drawBars(ctx,w,h);
+  }
   function drawOutro(ctx,w,h,img,title,t){
     var bar=barOf(h), ep=window.PET_EPISODE, diner=!!(ep && ep.format==='diner');
+    if(diner){ drawReceipt(ctx,w,h,ep,t); return; }
     ctx.fillStyle='#F7F4EF'; ctx.fillRect(0,0,w,h);
     var fade=Math.min(1, t/0.35);
     ctx.globalAlpha=fade;
@@ -5221,9 +5300,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       if(musicEl){ try{ musicEl.currentTime=0; musicEl.play().catch(function(){}); }catch(e){} }
       var useOutro=$('edOutro').checked;
       var prod=productInfo();
-      var outroImgP = useOutro ? loadProductImage(prod.url) : Promise.resolve(null);
-      var needMenu = st.cards && st.clips.some(function(c){ return c.card && c.card.type==='menu'; });
-      var chain = needMenu ? ensureCardImg().then(function(){}) : Promise.resolve();
+      var epNow = window.PET_EPISODE, dinerNow = !!(epNow && epNow.format==='diner');
+      var outroImgP = (useOutro && !dinerNow) ? loadProductImage(prod.url) : Promise.resolve(null);
+      var chain = Promise.resolve();
       st.clips.forEach(function(clip,idx){
         chain=chain.then(function(){
           say('이어 붙이는 중 · '+(idx+1)+'/'+st.clips.length);
@@ -5523,7 +5602,11 @@ export default {
         }
         else if (url.pathname === '/api/diner-episodes') {
           // 「한 그릇의 품격」 회차 번호 조회·초기화(시험 제작으로 번호가 올라갔을 때 되돌리기용)
-          if (body.action === 'reset') { await env.PENDING_POSTS.delete('diner_episodes'); result = { success: true, episodes: {} }; }
+          if (body.action === 'reset') {
+            await env.PENDING_POSTS.delete('diner_episodes');
+            await env.PENDING_POSTS.delete('diner_menu_names');
+            result = { success: true, episodes: {} };
+          }
           else result = { success: true, episodes: (await env.PENDING_POSTS.get('diner_episodes', 'json')) || {} };
         }
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
