@@ -1,0 +1,45 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "keys6",
+      "http": 200,
+      "file": "keys6.jpg",
+      "panels": [
+        "key1.jpg",
+        "key2.jpg",
+        "key3.jpg",
+        "key4.jpg",
+        "key5.jpg",
+        "key6.jpg"
+      ],
+      "usage": {
+        "promptTokenCount": 870,
+        "candidatesTokenCount": 2264,
+        "totalTokenCount": 3469,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 354
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 516
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 2000
+          }
+        ],
+        "thoughtsTokenCount": 335,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "12_ending_keyframes6.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T07:26:30Z"
+}
