@@ -197,13 +197,27 @@ def gen_video(req: dict, pilot: Path, out: Path) -> dict:
     results = []
     for it in req["items"]:
         model = it.get("model", "veo-3.1-lite-generate-preview")
-        start = _fit_9x16(pilot / it["start"], out / f"{it['name']}_start.jpg")
+        if it.get("start_from"):
+            # ★장면 안 이어붙이기(Lite는 끝 프레임 미지원): 앞 클립의 **마지막 프레임**을 시작으로 쓴다
+            prev = next((r for r in results if r["name"] == it["start_from"]), None)
+            if not prev or "file" not in prev:
+                results.append({"name": it["name"], "model": model, "attempts": [],
+                                "error": f"앞 클립({it['start_from']}) 실패 → 건너뜀"})
+                continue
+            start = out / f"{it['name']}_start.jpg"
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-sseof", "-0.1", "-i",
+                            str(out / prev["file"]), "-frames:v", "1", "-vf", "scale=720:1280,setsar=1",
+                            "-q:v", "2", str(start)], check=True)
+        else:
+            start = _fit_9x16(pilot / it["start"], out / f"{it['name']}_start.jpg")
         end = _fit_9x16(pilot / it["end"], out / f"{it['name']}_end.jpg") if it.get("end") else None
         rec = {"name": it["name"], "model": model, "duration_s": it.get("duration", 4), "attempts": []}
 
         def run(with_end: bool):
             cfg = dict(aspect_ratio="9:16", resolution=it.get("resolution", "720p"),
                        duration_seconds=int(it.get("duration", 4)), number_of_videos=1)
+            if it.get("negative_prompt") or req.get("negative_prompt"):
+                cfg["negative_prompt"] = it.get("negative_prompt") or req["negative_prompt"]
             if with_end:
                 cfg["last_frame"] = types.Image(image_bytes=end.read_bytes(), mime_type="image/jpeg")
             t0 = time.time()
@@ -222,7 +236,7 @@ def gen_video(req: dict, pilot: Path, out: Path) -> dict:
                 raise RuntimeError(f"영상 없음: {str(err)[:200] if err else '응답 비어 있음(안전 필터 가능)'}")
             v = resp.generated_videos[0].video
             client.files.download(file=v)
-            fn = out / f"{it['name']}{'' if with_end else '_start_only'}.mp4"
+            fn = out / f"{it['name']}{'' if (with_end or not end) else '_start_only'}.mp4"
             v.save(str(fn))
             return fn, round(time.time() - t0, 1)
 
