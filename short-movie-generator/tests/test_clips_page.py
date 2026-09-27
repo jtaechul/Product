@@ -60,7 +60,9 @@ def test_previews_go_through_the_media_proxy():
 
 
 def test_route_and_nav_exist():
+    # ★v2 관리자 개편(운영자 확정 2026-09-27): 상단 메뉴는 '영상 목록'·'새 영상' 두 개만 —
+    #   '확보 영상'은 화면(메뉴)에서 숨기고 /clips 주소로는 그대로 열린다(예전 화면 백업).
     w = (ROOT / "worker" / "index.mjs").read_text(encoding="utf-8")
-    assert 'data-p="clips"' in w and 'href="/clips"' in w, "상단 메뉴에 '확보 영상'이 없습니다"
+    assert 'data-p="clips"' not in w, "숨기기로 한 '확보 영상' 메뉴가 상단에 남아 있습니다"
     assert 'renderClips()' in w and 'path.indexOf("/clips")===0' in w, "라우팅이 없습니다"
     assert "src\\/data\\/noaa_clips\\.json" in w, "서버가 이 파일 읽기를 허용하지 않습니다"

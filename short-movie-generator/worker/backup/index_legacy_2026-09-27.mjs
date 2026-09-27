@@ -100,33 +100,11 @@ button:disabled{opacity:.5}
 .cbadge{font-size:10px;color:var(--am);border:1px solid var(--am);border-radius:4px;padding:1px 5px}
 .cgo{margin-top:7px;background:var(--cy);color:#04252b;border:0;border-radius:7px;padding:7px 12px;font-weight:700;font-size:13px;cursor:pointer}
 .cgo:disabled{opacity:.5}
-/* v2 관리자(단계 카드) */
-.v2st{font-size:11px;padding:2px 8px;border-radius:12px;border:1px solid var(--line);letter-spacing:1px;white-space:nowrap;color:var(--gy)}
-.v2st.prog{border-color:var(--cy);color:var(--cy)}.v2st.wait{border-color:var(--am);color:var(--am)}
-.v2st.done{border-color:var(--gr);color:var(--gr)}.v2st.fail{border-color:var(--rd);color:var(--rd)}
-.v2head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.v2title{font-weight:800;font-size:15px;flex:1}
-.v2gate{font-size:10px;color:var(--gy);border:1px dashed var(--line);border-radius:10px;padding:1px 7px}
-.v2locked{opacity:.55}
-.v2bar{display:flex;gap:4px;margin-top:12px}
-.v2step{flex:1;text-align:center;font-size:11px;padding:7px 2px;border-radius:7px;border:1px solid var(--line);color:var(--gy);text-decoration:none;word-break:keep-all}
-.v2step.done{border-color:var(--gr);color:var(--gr)}.v2step.wait{border-color:var(--am);color:var(--am)}
-.v2step.prog{border-color:var(--cy);color:var(--cy)}.v2step.fail{border-color:var(--rd);color:var(--rd)}
-.v2step.cur{background:#0d1e26;font-weight:700}
-.v2btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
-.v2btns .btn{min-height:44px;white-space:nowrap}
-.v2cut{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(150,200,215,.08);font-size:14px;line-height:1.6}
-.v2cut b{color:var(--cy);min-width:18px}.v2cut small{display:block;color:var(--gy);font-size:12px}
-.v2clips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.v2clip video{width:100%;border-radius:8px;border:1px solid var(--line);background:#000;aspect-ratio:9/16;object-fit:cover}
-.v2clip .btn{width:100%;margin-top:6px;font-size:12px;padding:9px 4px;white-space:normal}
-.detail video,.card video{max-width:100%}
-.card>img,.card video{width:100%;border-radius:10px;border:1px solid var(--line);display:block}
 </style></head>
 <body><div class="wrap">
 <header><div class="dot"></div>
   <h1><a href="/">DEEP DIVE <span>LOG</span></a></h1>
-  <div class="nav" id="nav"><a href="/" data-p="v2list">영상 목록</a><a href="/new" data-p="v2new">새 영상</a></div>
+  <div class="nav" id="nav"><a href="/" data-p="home">제작</a><a href="/library" data-p="library">라이브러리</a><a href="/clips" data-p="clips">확보 영상</a></div>
 </header>
 <div id="view"><div class="hint">불러오는 중…</div></div>
 </div>
@@ -137,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-27-1 (v2 관리자: 영상 목록 · 새 영상 · 단계 승인)";
+const BUILD="v2026-08-07-1 (난파선 채널 분리 표시)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -300,17 +278,12 @@ function route(){
   const m=path.match(/^\\/c\\/(\\w+)/);
   const lm=path.match(/^\\/lf\\/(\\S+)/);
   const nv=path.match(/^\\/nv\\/(\\S+)/);
-  const v2=path.match(/^\\/v\\/([a-z0-9_]+)/);
-  // ★v2 관리자(운영자 확정 2026-09-27): 메뉴는 '영상 목록'·'새 영상' 두 개만. 예전 화면은 숨기고 /legacy 로 보존.
-  if(v2){setNav("v2list");renderV2Episode(v2[1]);}
-  else if(path.indexOf("/new")===0){setNav("v2new");renderV2New();}
-  else if(m){setNav("");renderDetail(m[1]);}
-  else if(nv){setNav("");renderNarrateDetail(decodeURIComponent(nv[1]));}
-  else if(lm){setNav("");renderLongformDetail(decodeURIComponent(lm[1]));}
-  else if(path.indexOf("/clips")===0){setNav("");renderClips();}
-  else if(path.indexOf("/library")===0){setNav("");renderLibrary();}
-  else if(path.indexOf("/legacy")===0){setNav("");renderHome();}
-  else{setNav("v2list");renderV2List();}
+  if(m){setNav("library");renderDetail(m[1]);}
+  else if(nv){setNav("home");renderNarrateDetail(decodeURIComponent(nv[1]));}
+  else if(lm){setNav("home");renderLongformDetail(decodeURIComponent(lm[1]));}
+  else if(path.indexOf("/clips")===0){setNav("clips");renderClips();}
+  else if(path.indexOf("/library")===0){setNav("library");renderLibrary();}
+  else{setNav("home");renderHome();}
   // ★모든 화면 하단에 빌드 표시 — 화면이 최신인지 눈으로 바로 확인(캐시 혼선 방지).
   try{
     const v=view();
@@ -715,11 +688,11 @@ async function loadNarrateResults(){
 }
 // 나레이션 결과 상세: 영상 + 자동 생성 제목·설명·해시태그(일/한) 복사
 async function renderNarrateDetail(id,fresh){
-  view().innerHTML='<a class="back" href="/legacy">← 예전 제작 페이지</a><div class="card" id="nvcard"><div class="hint">불러오는 중…</div></div>';
+  view().innerHTML='<a class="back" href="/">← 제작 페이지</a><div class="card" id="nvcard"><div class="hint">불러오는 중…</div></div>';
   const rec=await fetchRecord(id,fresh);
   const dc=document.getElementById("nvcard");
   if(!rec){dc.innerHTML='<div class="hint">이 나레이션 기록을 찾을 수 없습니다(아직 제작 중이거나 완료 전).</div>'+
-      '<div class="btnrow" style="margin-top:14px"><a class="btn" href="/legacy">← 예전 제작 페이지로</a></div>';return;}
+      '<div class="btnrow" style="margin-top:14px"><a class="btn" href="/">← 제작 페이지로</a></div>';return;}
   const md=rec.media||{};
   const mediaHtml=md.video_url?('<video id="nvout" src="'+prox(md.video_url)+'" controls playsinline preload="metadata"></video>'):"";
   const tagsJp=(rec.hashtags||[]).join(" "), tagsKo=(rec.hashtags_ko||[]).join(" ");
@@ -1884,7 +1857,7 @@ async function renderLibrary(){
     return '<a class="clitem" href="'+href+'"><span class="no">'+chip+'</span>'+
       '<span class="nm">'+esc(it.common_name_ko||"종")+'<small>'+sub+'</small></span>'+
       '<span class="t">'+esc(it.date||"")+'</span></a>';
-  }).join(""):'<div class="hint">아직 쇼츠가 없습니다. <a href="/legacy">제작하러 가기</a></div>';
+  }).join(""):'<div class="hint">아직 쇼츠가 없습니다. <a href="/">제작하러 가기</a></div>';
 }
 
 // 게시물(캐러셀) 섹션: 5장 이미지 가로 스크롤 + 게시물 캡션(다음날 오후 발행용)
@@ -2073,12 +2046,12 @@ async function uploadShort(id){
 
 // ── 롱폼 상세: 제목·설명(일/한, 타임스탬프 포함) 프레임 + 영상 미리보기 ──
 async function renderLongformDetail(id){
-  view().innerHTML='<a class="back" href="/legacy">← 예전 제작 페이지</a><div class="card" id="lfcard"><div class="hint">불러오는 중…</div></div>';
+  view().innerHTML='<a class="back" href="/">← 제작 페이지</a><div class="card" id="lfcard"><div class="hint">불러오는 중…</div></div>';
   const rec=await fetchRecord(id);
   const dc=document.getElementById("lfcard");
   if(!rec){
     dc.innerHTML='<div class="hint">이 롱폼 기록을 찾을 수 없습니다(아직 제작 중이거나 완료 전).</div>'+
-      '<div class="btnrow" style="margin-top:14px"><a class="btn" href="/legacy">← 예전 제작 페이지로</a></div>';
+      '<div class="btnrow" style="margin-top:14px"><a class="btn" href="/">← 제작 페이지로</a></div>';
     return;
   }
   const md=rec.media||{};
@@ -2310,206 +2283,6 @@ async function regen(id,scope,extra){
   }catch(e){banner("요청 실패: "+e,"err");}
 }
 
-// ══ v2 관리자 페이지(운영자 확정 2026-09-27) ══════════════════════════════════════════
-// 메뉴 2개: 「영상 목록」(/) · 「새 영상」(/new). 한 편 = 한 페이지(/v/<id>): 주제 → 대본 → 스토리보드 → 영상 → 업로드.
-// 각 단계 카드는 결과 보기 + [승인 / 수정 요청 / 다시 하기] 버튼만. 앞 단계 승인 전에는 다음 단계가 잠긴다.
-// 버튼은 v2-admin.yml 을 디스패치 → v2/tools/admin.py 가 status.json 을 바꿔 커밋 → 이 페이지가 다시 읽는다.
-// 예전 메뉴(제작·라이브러리·확보 영상·상세 편집)는 화면에서 숨기고 /legacy 에서 그대로 쓸 수 있다(백업).
-const V2_WF="v2-admin.yml";
-const V2P="short-movie-generator/v2/pilots";
-const V2_RAW="https://raw.githubusercontent.com/"+OWNER+"/"+REPO+"/"+BRANCH+"/"+V2P+"/";
-const STG=["topic","script","storyboard","video","upload"];
-const STG_KO={topic:"1. 주제 선택",script:"2. 대본",storyboard:"3. 스토리보드",video:"4. 영상 제작",upload:"5. 업로드"};
-const ST_KO={locked:"잠김",working:"작업 중",review:"승인 대기",revise:"수정 요청됨",approved:"승인 완료"};
-const ST_CLS={locked:"",working:"prog",review:"wait",revise:"fail",approved:"done"};
-const GATE_KO={script:"승인 관문 1",storyboard:"승인 관문 2",video:"승인 관문 3",upload:"승인 관문 4"};
-const OMNI_USD=0.10;   // Omni Flash 720p 초당 약 $0.10
-function v2media(pid,rel,rev){return rel?prox(V2_RAW+pid+"/"+rel+(rev?("?v="+encodeURIComponent(rev)):"")):"";}
-async function v2json(path){const t=await fetchRaw(path,true);try{return JSON.parse(t);}catch(e){return null;}}
-function v2badge(state){return '<span class="v2st '+(ST_CLS[state]||"")+'">'+esc(ST_KO[state]||state)+'</span>';}
-function v2when(iso){return iso?esc(String(iso).slice(0,16).replace("T"," ")):"";}
-function v2tokbox(){
-  if(SERVER)return "";
-  return '<details class="tok" id="tokbox"'+(pat()?'':' open')+'><summary>'+(pat()?'GitHub 토큰 저장됨 (변경하려면 열기)':'최초 1회 설정 — GitHub 연결 토큰')+'</summary>'+
-    '<ol><li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">GitHub 토큰 만들기</a>를 여세요.</li>'+
-    '<li>Repository access → Only select repositories → '+OWNER+'/'+REPO+'</li>'+
-    '<li>Permissions → <b>Actions: Read and write</b></li>'+
-    '<li>만든 토큰을 아래에 붙여넣고 저장을 누르세요.</li></ol>'+
-    '<div class="row2"><input id="pat" placeholder="github_pat_..." autocomplete="off"><button id="savepat">저장</button></div></details>';
-}
-function v2bindTok(){const b=$("#savepat");if(b)b.onclick=()=>{ensurePat();banner("토큰을 저장했습니다.","ok");};}
-async function v2do(action,pid,stage,note,btn){
-  if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;banner("먼저 GitHub 토큰을 설정하세요(맨 아래 칸).","err");return false;}
-  if(btn)btn.disabled=true;
-  banner("요청 중…");
-  try{
-    const r=await fetch(API+"/actions/workflows/"+V2_WF+"/dispatches",{method:"POST",headers:headers(true),
-      body:JSON.stringify({ref:BRANCH,inputs:{action:action,pilot:pid||"",stage:String(stage==null?"":stage),note:note||""}})});
-    if(r.status===204){
-      banner(action==="redo_cut"
-        ?"컷 재생성을 요청했습니다. 5~10분 뒤 새로고침하면 새 컷과 다시 조립된 완성본이 보입니다."
-        :"요청했습니다. 1~2분 뒤 새로고침하면 반영됩니다.","ok");
-      return true;
-    }
-    const t=await r.text();banner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요. <span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");
-  }catch(e){banner("요청 실패: "+e,"err");}
-  if(btn)btn.disabled=false;
-  return false;
-}
-
-// ── 영상 목록(/) ──
-async function renderV2List(){
-  view().innerHTML='<div class="banner" id="msg"></div><div class="card"><span class="lbl">영상 목록</span><div class="hint">불러오는 중…</div></div>';
-  const idx=await v2json(V2P+"/index.json");
-  const items=(idx&&Array.isArray(idx.items))?idx.items:[];
-  const groups=[["승인 대기 — 확인해 주세요",x=>x.state==="review"],
-                ["작업 중",x=>x.state==="working"||x.state==="revise"],
-                ["완성",x=>x.stage==="done"]];
-  let html='<div class="banner" id="msg"></div>';
-  html+='<div class="card"><span class="lbl">영상 목록</span>'+
-    '<div class="hint" style="margin-top:0">한 편을 누르면 주제 → 대본 → 스토리보드 → 영상 → 업로드 순서로 한 페이지에서 확인·승인합니다.</div>'+
-    '<a class="btn save" style="display:block;text-align:center;text-decoration:none;margin-top:12px" href="/new">새 영상 만들기</a></div>';
-  groups.forEach(([title,fn])=>{
-    const g=items.filter(fn);
-    html+='<div class="card"><span class="lbl">'+esc(title)+' ('+g.length+')</span>'+
-      (g.length?g.map(x=>'<a class="clitem" href="/v/'+encodeURIComponent(x.id)+'">'+
-        '<span class="nm">'+esc(x.name_ko||x.id)+'<small><i>'+esc(x.sci||"")+'</i></small></span>'+
-        '<span class="t">'+(x.stage==="done"?"":esc(STG_KO[x.stage]||x.stage)+" · ")+v2badge(x.state)+'</span></a>').join("")
-        :'<div class="hint" style="margin-top:0">없음</div>')+'</div>';
-  });
-  html+=v2tokbox();
-  view().innerHTML=html;v2bindTok();
-}
-
-// ── 새 영상 만들기(/new) ──
-async function renderV2New(){
-  view().innerHTML='<div class="banner" id="msg"></div><div class="card"><span class="lbl">새 영상 만들기</span><div class="hint">불러오는 중…</div></div>';
-  const tp=await v2json("short-movie-generator/v2/topics.json");
-  const all=(tp&&Array.isArray(tp.topics))?tp.topics:[];
-  const ready=all.filter(t=>t.ready&&!t.in_progress), notReady=all.filter(t=>!t.ready&&!t.in_progress);
-  const card=t=>'<div class="ccard"><div class="cbody">'+
-      '<div class="ctitle">'+esc(t.name_ko)+'</div><div class="cmeta"><i>'+esc(t.sci)+'</i>'+(t.depth_m?(' · 수심 '+esc(t.depth_m)+'m'):'')+'</div>'+
-      (t.facts||[]).map(f=>'<div class="cfact">· '+esc(f)+'</div>').join("")+
-      '<div class="cfact">'+Object.entries(t.checks||{}).map(([k,v])=>'<span class="'+(v?"ok":"err")+'">'+(v?"통과":"미달")+' '+esc(k)+'</span>').join(" · ")+'</div>'+
-      '<div class="cfact warn">실사 사진 2장 이상 · 이야기거리(발견 사건·연도)는 시작 후 대본 단계에서 확인합니다.</div>'+
-      (t.ready?'<button class="cgo" data-new="'+esc(t.id)+'">이 종으로 시작</button>':'')+
-    '</div></div>';
-  let html='<div class="banner" id="msg"></div><a class="back" href="/">← 영상 목록</a>'+
-    '<div class="card"><span class="lbl">새 영상 만들기 — 주제 선택</span>'+
-    '<div class="hint" style="margin-top:0">조건(한 편 = 한 대상 · 출처 있는 사실 3개 이상 · 서식 수심)을 갖춘 종만 보여줍니다. 고르면 대본 작성이 시작됩니다(비용: 거의 0).</div></div>'+
-    '<div class="card"><span class="lbl">시작할 수 있는 종 ('+ready.length+')</span>'+(ready.length?ready.map(card).join(""):'<div class="hint">없음</div>')+'</div>'+
-    (notReady.length?'<details class="card"><summary class="lbl" style="cursor:pointer">조건 미달 ('+notReady.length+') — 보기</summary>'+notReady.map(card).join("")+'</details>':'')+
-    v2tokbox();
-  view().innerHTML=html;v2bindTok();
-  document.querySelectorAll("[data-new]").forEach(b=>b.onclick=async()=>{
-    const id=b.dataset.new;const t=all.find(x=>x.id===id)||{};
-    if(!confirm((t.name_ko||id)+" 으로 새 영상을 시작할까요?"))return;
-    if(await v2do("new",id,"","",b))setTimeout(()=>{location.href="/v/"+encodeURIComponent(id);},2500);
-  });
-}
-
-// ── 한 편 페이지(/v/<id>) ──
-function v2stageBody(st,stage){
-  const pid=st.id, a=(st.artifacts||{})[stage]||{}, rev=(st.artifacts&&st.artifacts.video&&st.artifacts.video.built_at)||"";
-  if(stage==="topic"){
-    const facts=a.facts||[];
-    return '<div class="meta"><b>'+esc(st.name_ko)+'</b> · <i>'+esc(st.sci)+'</i></div>'+
-      (facts.length?'<div class="sect">사실(출처)</div>'+facts.map(f=>'<div class="cfact">'+esc(f.id||"")+' '+esc(f.fact||f)+
-        ((f.sources||[]).length?' <span style="opacity:.7">['+f.sources.map((u,i)=>'<a href="'+esc(u)+'" target="_blank">출처'+(i+1)+'</a>').join(" ")+']</span>':'')+'</div>').join("")
-        :(st.topic&&st.topic.facts||[]).map(f=>'<div class="cfact">· '+esc(f)+'</div>').join(""));
-  }
-  if(stage==="script"){
-    if(!a.cuts)return '<div class="hint">대본을 작성하고 있습니다. 끝나면 이 칸에 컷별 대사(일본어/한국어)와 나레이션 미리듣기가 나옵니다.</div>';
-    return (a.audio?'<span class="lbl">나레이션 미리듣기 (1.33배)</span><audio controls preload="none" style="width:100%" src="'+v2media(pid,a.audio)+'"></audio>':'')+
-      (a.verification?'<div class="hint">'+esc(a.verification)+'</div>':'')+
-      '<div class="sect">컷별 대사</div>'+a.cuts.map(c=>'<div class="v2cut"><b>'+c.cut+'</b><div>'+esc(c.jp)+'<small>'+esc(c.ko)+'</small></div></div>').join("");
-  }
-  if(stage==="storyboard"){
-    if(!a.sheet)return '<div class="hint">스토리보드 이미지를 만들고 있습니다.</div>';
-    return '<span class="lbl">콘티(컷별 시작 이미지)</span><img src="'+v2media(pid,a.sheet)+'" loading="lazy">'+
-      ((a.card||[]).length?'<span class="lbl" style="margin-top:14px">생물 카드 · 실사 대조</span><div class="postscroll">'+a.card.map(p=>'<img src="'+v2media(pid,p)+'" loading="lazy">').join("")+'</div>':'')+
-      ((a.macro||[]).length?'<span class="lbl" style="margin-top:14px">특징 줌인 확대 이미지</span><div class="postscroll">'+a.macro.map(p=>'<img src="'+v2media(pid,p)+'" loading="lazy">').join("")+'</div>':'');
-  }
-  if(stage==="video"){
-    if(!a.final)return '<div class="hint">영상을 만들고 있습니다.</div>';
-    const ck=st.checks||{};
-    const rows=[["white_edge_px","가장자리 흰 줄","px"],["loudness_lufs","음량","LUFS"],["music","음악 없음",""]]
-      .filter(([k])=>ck[k]).map(([k,lab,u])=>'<div class="cfact"><span class="'+(ck[k].ok?"ok":"err")+'">'+(ck[k].ok?"통과":"불통과")+'</span> '+esc(lab)+
-        (ck[k].value!=null?(' — '+esc(ck[k].value)+(u?(" "+u):"")):"")+' <span style="opacity:.6">('+esc(ck[k].rule||"")+')</span></div>').join("");
-    const spent=((st.cost||{}).spent||[]).reduce((s,x)=>s+(+x.usd||0),0);
-    return '<span class="lbl">완성본'+(ck.duration_s?(' ('+ck.duration_s+'초)'):'')+'</span>'+
-      '<video controls playsinline preload="metadata" src="'+v2media(pid,a.final,rev)+'"></video>'+
-      (rows?'<div class="sect">자동 검사'+(ck.at?(' · '+v2when(ck.at)):'')+'</div>'+rows:'')+
-      '<div class="sect">컷별 검수 — 마음에 안 드는 컷만 다시 만들기</div>'+
-      '<div class="v2clips">'+(a.clips||[]).map(c=>'<div class="v2clip">'+
-        '<video controls playsinline preload="metadata" src="'+v2media(pid,c.file)+'"></video>'+
-        '<div class="cfact"><b>'+c.cut+'번 컷</b> · '+esc(c.sec)+'초'+((c.history||[]).length?(' · 재생성 '+c.history.length+'회'):'')+'</div>'+
-        (c.review?'<div class="cfact'+(c.review==="양호"?'':' warn')+'">'+esc(c.review)+'</div>':'')+
-        '<button class="btn warn" data-cut="'+c.cut+'" data-sec="'+esc(c.sec)+'">이 컷만 다시 만들기 (약 $'+(Number(c.sec||0)*OMNI_USD).toFixed(2)+')</button>'+
-      '</div>').join("")+'</div>'+
-      '<div class="btnrow"><button class="btn" id="v2asm" style="grid-column:1/3">완성본 다시 조립 + 자동 검사 (무료)</button></div>'+
-      (spent?'<div class="hint">이 편에서 재생성에 쓴 금액: 약 $'+spent.toFixed(2)+'</div>':'');
-  }
-  if(stage==="upload"){
-    return '<div class="hint" style="margin-top:0">완성본을 승인하면 열립니다. 유튜브 제목·설명·해시태그(일본어/한국어)를 확인하고 승인하면 업로드 + 고정 댓글 「次に見たい深海の生き物は？」을 답니다.</div>'+
-      '<div class="hint warn">현재는 승인 기록까지만 됩니다 — 제목·설명 자동 작성과 유튜브 업로드 연결은 다음 작업으로 붙입니다.</div>';
-  }
-  return "";
-}
-function v2stageCard(st,stage){
-  const s=(st.stages||{})[stage]||{state:"locked"}, state=s.state, locked=state==="locked";
-  const est=((st.cost||{}).estimate||{})[stage];
-  const notes=(s.notes||[]).slice(-3).reverse();
-  let h='<div class="card v2stage'+(locked?' v2locked':'')+'" id="stg-'+stage+'">'+
-    '<div class="v2head"><span class="v2title">'+esc(STG_KO[stage])+'</span>'+
-    (GATE_KO[stage]?'<span class="v2gate">'+esc(GATE_KO[stage])+'</span>':'')+v2badge(state)+'</div>';
-  if(locked){
-    h+='<div class="hint" style="margin-top:6px">앞 단계를 승인하면 열립니다.'+(est?(' (예상 비용 약 $'+est+')'):'')+'</div></div>';
-    return h;
-  }
-  h+=v2stageBody(st,stage);
-  if(notes.length)h+='<div class="sect">기록</div>'+notes.map(n=>'<div class="cfact">'+v2when(n.at)+' · '+esc(n.text||n.kind)+'</div>').join("");
-  if(stage!=="topic"){
-    h+='<textarea class="v2note" id="note-'+stage+'" placeholder="수정 요청 내용(예: 2번 컷 대사를 더 쉽게)" style="min-height:70px;margin-top:12px"></textarea>'+
-      '<div class="v2btns">'+
-        '<button class="btn save" data-act="approve" data-stage="'+stage+'"'+(state==="review"?'':' disabled')+'>승인</button>'+
-        '<button class="btn warn" data-act="revise" data-stage="'+stage+'">수정 요청</button>'+
-        '<button class="btn rd" data-act="redo" data-stage="'+stage+'">다시 하기</button>'+
-      '</div>'+
-      (state!=="review"?'<div class="hint">승인은 결과가 나온 뒤(승인 대기)에 누를 수 있습니다.</div>':'')+
-      (est?'<div class="hint">이 단계 예상 비용: 약 $'+est+'</div>':'');
-  }
-  return h+'</div>';
-}
-async function renderV2Episode(pid){
-  view().innerHTML='<div class="banner" id="msg"></div><a class="back" href="/">← 영상 목록</a><div class="card"><div class="hint">불러오는 중…</div></div>';
-  const st=await v2json(V2P+"/"+pid+"/status.json");
-  if(!st||!st.stages){view().innerHTML='<a class="back" href="/">← 영상 목록</a><div class="card"><div class="hint">이 편을 찾지 못했습니다. 방금 시작했다면 1~2분 뒤 새로고침하세요.</div></div>';return;}
-  const cur=STG.find(s=>st.stages[s].state!=="approved")||"upload";
-  let html='<div class="banner" id="msg"></div><a class="back" href="/">← 영상 목록</a>'+
-    '<div class="card"><div class="ctitle" style="font-size:18px">'+esc(st.name_ko)+'</div><div class="cmeta"><i>'+esc(st.sci)+'</i></div>'+
-    '<div class="v2bar">'+STG.map(s=>'<a href="#stg-'+s+'" class="v2step '+(ST_CLS[st.stages[s].state]||"")+(s===cur?" cur":"")+'">'+esc(STG_KO[s].slice(3))+'</a>').join("")+'</div></div>';
-  STG.forEach(s=>{html+=v2stageCard(st,s);});
-  html+=v2tokbox();
-  view().innerHTML=html;v2bindTok();
-  document.querySelectorAll("[data-act]").forEach(b=>b.onclick=async()=>{
-    const act=b.dataset.act, stage=b.dataset.stage, note=(($("#note-"+stage)||{}).value||"").trim();
-    const lab=STG_KO[stage];
-    if(act==="revise"&&!note){banner("수정 요청은 무엇을 고칠지 칸에 적어 주세요.","err");return;}
-    const msg=act==="approve"?(lab+"을(를) 승인할까요? 다음 단계가 열립니다.")
-             :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다.")
-             :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다.");
-    if(!confirm(msg))return;
-    if(await v2do(act,pid,stage,note,b))setTimeout(()=>renderV2Episode(pid),60000);
-  });
-  document.querySelectorAll("[data-cut]").forEach(b=>b.onclick=async()=>{
-    const cut=b.dataset.cut, usd=(Number(b.dataset.sec||0)*OMNI_USD).toFixed(2), note=(($("#note-video")||{}).value||"").trim();
-    if(!confirm(cut+"번 컷만 다시 만들까요? 비용 약 $"+usd+" (같은 시작 이미지·지시문으로 새로 생성 → 완성본 자동 재조립)"))return;
-    await v2do("redo_cut",pid,cut,note,b);
-  });
-  const asm=$("#v2asm");if(asm)asm.onclick=async()=>{if(confirm("완성본을 다시 조립하고 자동 검사를 돌릴까요? (무료)"))await v2do("assemble",pid,"","",asm);};
-}
-
 // 서버 토큰 모드 감지 후 라우팅(어느 브라우저든 서버에 토큰이 있으면 입력창을 아예 띄우지 않음)
 async function init(){
   try{const r=await fetch("/api/mode");if(r.ok){const j=await r.json();SERVER=!!j.server;if(SERVER)API="/api/gh";}}catch(e){}
@@ -2725,7 +2498,7 @@ async function pubRead(url){
   //   눈으로 정하려면 원본을 재생해야 하므로 이 파일 읽기를 허용한다(읽기 전용 · 공개 저장소 경로).
   // ★확보된 심해 영상 목록(noaa_clips.json)도 읽기 허용 — 관리자 화면 '확보 영상' 목록의 원본.
   //   파이썬(제작)과 **같은 파일**을 읽으므로 화면에 보이는 것 = 실제로 제작에 쓰이는 것.
-  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/_video_cache\.json|src\/categories\/deep_sea\/catalog\.json|src\/data\/noaa_clips\.json|src\/categories\/[\w\-]+\/discovered\.json|src\/categories\/[\w\-]+\/[\w\-]+_(candidates|image_only)\.json|v2\/topics\.json|v2\/pilots\/index\.json|v2\/pilots\/[a-z0-9_]+\/(status|script)\.json)$/.test(path))
+  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/_video_cache\.json|src\/categories\/deep_sea\/catalog\.json|src\/data\/noaa_clips\.json|src\/categories\/[\w\-]+\/discovered\.json|src\/categories\/[\w\-]+\/[\w\-]+_(candidates|image_only)\.json)$/.test(path))
     return j({error:"path not allowed"}, 403);
   // ★현행화 지연 수정(운영자 지적: 재생성 완료 텔레그램 받았는데 관리자 페이지가 한참 뒤에 갱신):
   //   raw.githubusercontent.com은 경로 기준 CDN 캐시(~5분)가 있어, 재생성 커밋이 올라와도 옛 JSON을
@@ -2811,10 +2584,7 @@ const SOURCE_PREFIXES = [
   "https://www.ncei.noaa.gov/",             // NOAA NCEI 비디오 포털
   "https://sanctuaries.noaa.gov/",          // NOAA 보호구역
 ];
-// ★v2 제작물(저장소에 커밋된 이미지·클립·완성본·나레이션)은 raw 경로로 중계한다(v2 폴더만).
-const V2_MEDIA_PREFIX = ("https://raw.githubusercontent.com/" + OWNER + "/" + REPO + "/" + BRANCH +
-                         "/short-movie-generator/v2/pilots/").toLowerCase();
-const MEDIA_TYPES = { wav: "audio/wav", mp4: "video/mp4", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+const MEDIA_TYPES = { mp4: "video/mp4", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
                       webm: "video/webm", mov: "video/quicktime", mkv: "video/x-matroska" };
 
 async function mediaProxy(request, url) {
@@ -2823,8 +2593,7 @@ async function mediaProxy(request, url) {
   //   403이 나지 않게 — 저장 버튼이 갑자기 안 되던 사고의 방어). 개방 프록시는 여전히 차단.
   const lu = u.toLowerCase();
   const allowed = lu.startsWith(MEDIA_PREFIX.toLowerCase()) ||
-                  SOURCE_PREFIXES.some(p => lu.startsWith(p)) ||
-                  (lu.startsWith(V2_MEDIA_PREFIX) && !u.includes(".."));
+                  SOURCE_PREFIXES.some(p => lu.startsWith(p));
   if (!allowed) return j({ error: "url not allowed" }, 403);
   // 확장자 판정 시 캐시버스터(?v=...) 쿼리는 떼고 본다(붙어 있으면 'mp4?v=1'로 오판돼 403 나던 버그).
   const ext = (u.split("?")[0].split(".").pop() || "").toLowerCase();

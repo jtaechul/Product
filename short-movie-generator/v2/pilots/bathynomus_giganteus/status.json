@@ -1,0 +1,321 @@
+{
+  "id": "bathynomus_giganteus",
+  "name_ko": "대왕구족충",
+  "sci": "Bathynomus giganteus",
+  "created": "2026-09-27T00:00:00Z",
+  "stages": {
+    "topic": {
+      "state": "approved",
+      "notes": [
+        {
+          "at": "2026-09-27T00:00:00Z",
+          "kind": "approve",
+          "text": "시범 1편으로 선택"
+        }
+      ],
+      "approved_at": "2026-09-27T00:00:00Z"
+    },
+    "script": {
+      "state": "approved",
+      "notes": [],
+      "approved_at": "2026-09-27T00:00:00Z"
+    },
+    "storyboard": {
+      "state": "approved",
+      "notes": [],
+      "approved_at": "2026-09-27T00:00:00Z"
+    },
+    "video": {
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-09-27T00:00:00Z",
+          "kind": "ready",
+          "text": "완성본 1차(65.2초) — 흰 줄 제거 재조립. 재생성 추천: 1·2번 컷"
+        }
+      ]
+    },
+    "upload": {
+      "state": "locked",
+      "notes": []
+    }
+  },
+  "topic": {
+    "name_ko": "대왕구족충",
+    "sci": "Bathynomus giganteus",
+    "depth_m": "310-2140",
+    "facts": [
+      "1878년 멕시코만 해저에서 수컷이 발견(드라이 토르투가스 앞바다 어부의 그물), 1879년 A. Milne-Edwards가 기재",
+      "생김새는 공벌레(ダンゴムシ)를 닮았지만 분류상으로는 갯강구(フナムシ)에 가깝다",
+      "몸길이 20~40cm, 최대 50cm 가까이 · 1kg 이상"
+    ]
+  },
+  "artifacts": {
+    "topic": {
+      "facts": [
+        {
+          "id": "F1",
+          "fact": "1878년 멕시코만 해저에서 수컷이 발견(드라이 토르투가스 앞바다 어부의 그물), 1879년 A. Milne-Edwards가 기재",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ",
+            "https://en.wikipedia.org/wiki/Bathynomus_giganteus"
+          ]
+        },
+        {
+          "id": "F2",
+          "fact": "생김새는 공벌레(ダンゴムシ)를 닮았지만 분류상으로는 갯강구(フナムシ)에 가깝다",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+          ]
+        },
+        {
+          "id": "F3",
+          "fact": "몸길이 20~40cm, 최대 50cm 가까이 · 1kg 이상",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+          ]
+        },
+        {
+          "id": "F4",
+          "fact": "서식 수심 310~2,140m(서대서양·멕시코만·카리브해) — 일본 위키는 200~1,000m로 적어 출처 간 차이가 있음 → 화면 수치는 '2,000m를 넘는 곳까지'로 표현",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Bathynomus_giganteus",
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+          ]
+        },
+        {
+          "id": "F5",
+          "fact": "해저에 가라앉은 큰 물고기·고래 사체, 약한 생물 등을 먹는 청소부",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ",
+            "https://en.wikipedia.org/wiki/Bathynomus_giganteus"
+          ]
+        },
+        {
+          "id": "F6",
+          "fact": "눈은 수천 개의 낱눈으로 된 큰 겹눈(일본 위키 약 3,500 / 영어 위키 4,000 이상 — 출처 차이로 '수천'으로만 표현)",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ",
+            "https://en.wikipedia.org/wiki/Bathynomus_giganteus"
+          ]
+        },
+        {
+          "id": "F7",
+          "fact": "도바 수족관 No.1: 2007-09-09 입관 → 2009-01-02 전갱이(アジ) 약 50g을 먹은 뒤 먹지 않음 → 2014-02-14 사망. 절식 5년 43일(1,869일). 해부 결과 위는 비어 있었고 사인은 불명",
+          "sources": [
+            "https://www.nikkei.com/article/DGXNASFK1404F_U4A210C1000000/",
+            "https://iseshima.keizai.biz/headline/1962/",
+            "https://aquarium.co.jp/topics/id=250/"
+          ]
+        },
+        {
+          "id": "F8",
+          "fact": "일본 근해에는 자연 서식하지 않는다(일본 최대 토종 등각류는 오오구소쿠무시, 최대 15cm)",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+          ]
+        },
+        {
+          "id": "F9",
+          "fact": "등각류(等脚類) 중 세계 최대 — '等脚類としては世界最大'",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+          ]
+        },
+        {
+          "id": "F10",
+          "fact": "머리의 검은 겹눈은 약 3,500개의 낱눈으로 이뤄짐 — '頭部の黒い複眼は約3500個の個眼から形成'",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+          ]
+        },
+        {
+          "id": "F11",
+          "fact": "'深海の掃除屋'라고 불림 · 심해 모래·진흙 바닥(砂泥地)에 서식",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+          ]
+        },
+        {
+          "id": "F12",
+          "fact": "도바 수족관 개체가 먹은 것은 약 50g의 아지 · 절식 5년 1개월(1,869일) · 2014년 2월 사망",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/ダイオウグソクムシ",
+            "https://www.nikkei.com/article/DGXNASFK1404F_U4A210C1000000/",
+            "https://iseshima.keizai.biz/headline/1962/"
+          ]
+        }
+      ]
+    },
+    "script": {
+      "script": "script.json",
+      "audio": "out/22_body_tts/body.wav",
+      "cuts": [
+        {
+          "cut": 1,
+          "jp": "1878年、メキシコ湾。漁師の網に、見たことのない大きな生き物がかかりました。",
+          "ko": "1878년, 멕시코만. 어부의 그물에 처음 보는 커다란 생물이 걸렸습니다.",
+          "fact": "F1",
+          "keyframe": "out/14_storyboard_12/p01.jpg"
+        },
+        {
+          "cut": 2,
+          "jp": "見た目はダンゴムシ。でも実は、フナムシに近い仲間です。",
+          "ko": "생김새는 공벌레. 하지만 사실은 갯강구에 가까운 무리입니다.",
+          "fact": "F2",
+          "keyframe": "out/14_storyboard_12/p03.jpg"
+        },
+        {
+          "cut": 3,
+          "jp": "大きさは最大50センチ近く。ダンゴムシの仲間では、世界最大です。",
+          "ko": "크기는 최대 50cm 가까이. 공벌레 무리 중에서는 세계 최대입니다.",
+          "fact": "F3,F9",
+          "keyframe": "out/15_storyboard_fix/p04a.jpg"
+        },
+        {
+          "cut": 4,
+          "jp": "その名は、ダイオウグソクムシ。黒い目は、約3500個の小さな目の集まりです。",
+          "ko": "그 이름은 대왕구족충. 검은 눈은 약 3,500개의 작은 눈이 모인 것입니다.",
+          "fact": "F1,F10",
+          "keyframe": "out/14_storyboard_12/p05.jpg"
+        },
+        {
+          "cut": 5,
+          "jp": "深い海の底で、沈んできたクジラや魚の死骸を食べる、深海の掃除屋です。",
+          "ko": "깊은 바다 밑에서, 가라앉은 고래나 물고기의 사체를 먹는 '심해의 청소부'입니다.",
+          "fact": "F4,F5,F11",
+          "keyframe": "out/15_storyboard_fix/p07a.jpg"
+        },
+        {
+          "cut": 6,
+          "jp": "鳥羽水族館で飼われていた1匹は、2009年、エサのアジを食べたのを最後に、",
+          "ko": "도바 수족관에서 기르던 한 마리는, 2009년 먹이로 준 전갱이를 먹은 것을 마지막으로",
+          "fact": "F7",
+          "keyframe": "out/14_storyboard_12/p08.jpg"
+        },
+        {
+          "cut": 7,
+          "jp": "1869日、5年以上も何も食べませんでした。",
+          "ko": "1,869일, 5년 넘게 아무것도 먹지 않았습니다.",
+          "fact": "F7,F12",
+          "keyframe": "out/14_storyboard_12/p10.jpg"
+        },
+        {
+          "cut": 8,
+          "jp": "死んだあと、胃の中は空っぽ。理由は、今も分かっていません。",
+          "ko": "죽은 뒤 위 속은 텅 비어 있었고, 이유는 지금도 알 수 없습니다.",
+          "fact": "F7",
+          "keyframe": "out/14_storyboard_12/p11.jpg"
+        }
+      ],
+      "verification": "재검증 v5 통과(사실 대조·일본어 중복 검사·표기/읽기 대조) — script.json verification_v5"
+    },
+    "storyboard": {
+      "sheet": "out/20_storyboard_v5/storyboard_v5.jpg",
+      "card": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg"
+      ],
+      "macro": [
+        "out/19_eye_macro/eye_macro.jpg"
+      ]
+    },
+    "video": {
+      "final": "out/24_final/bathynomus_v5.mp4",
+      "clips_request": "23_clips_v5",
+      "clips": [
+        {
+          "cut": 1,
+          "file": "out/23_clips_v5/c01.mp4",
+          "sec": 8,
+          "use_sec": 8,
+          "review": "그물 속 형체가 끝에 공처럼 커 보임(크기감 주의)"
+        },
+        {
+          "cut": 2,
+          "file": "out/23_clips_v5/c02.mp4",
+          "sec": 6,
+          "use_sec": 6,
+          "review": "스케치북에 가짜 글씨(작음)"
+        },
+        {
+          "cut": 3,
+          "file": "out/23_clips_v5/c03.mp4",
+          "sec": 6,
+          "use_sec": 6,
+          "review": "양호"
+        },
+        {
+          "cut": 4,
+          "file": "out/23_clips_v5/c04.mp4",
+          "sec": 6,
+          "use_sec": 8,
+          "review": "줌인 끝 0.5초 눈이 약간 둥글게 보임 → 5.0초부터 겹눈 확대 인서트로 전환"
+        },
+        {
+          "cut": 5,
+          "file": "out/23_clips_v5/c05.mp4",
+          "sec": 8,
+          "use_sec": 8,
+          "review": "양호"
+        },
+        {
+          "cut": 6,
+          "file": "out/23_clips_v5/c06.mp4",
+          "sec": 6,
+          "use_sec": 6,
+          "review": "양호"
+        },
+        {
+          "cut": 7,
+          "file": "out/23_clips_v5/c07.mp4",
+          "sec": 6,
+          "use_sec": 6,
+          "review": "달력 종이에 인쇄 무늬(숫자처럼 보임, 작음)"
+        },
+        {
+          "cut": 8,
+          "file": "out/23_clips_v5/c08.mp4",
+          "sec": 6,
+          "use_sec": 6,
+          "review": "양호"
+        }
+      ],
+      "assemble": {
+        "clips_id": "23_clips_v5",
+        "tts_id": "22_body_tts",
+        "ending": "out/17_ending/ending_bathynomus.mp4"
+      },
+      "built_at": "2026-09-27T23:42:55Z"
+    },
+    "upload": {}
+  },
+  "checks": {
+    "at": "2026-09-27T23:42:55Z",
+    "duration_s": 65.22,
+    "white_edge_px": {
+      "value": 0,
+      "ok": true,
+      "rule": "좌우 가장자리 흰 줄 0px"
+    },
+    "loudness_lufs": {
+      "value": -16.5,
+      "ok": true,
+      "rule": "-16 LUFS ±1"
+    },
+    "music": {
+      "ok": true,
+      "rule": "음악 없음(영상 AI 오디오는 조립 때 전부 버림)"
+    }
+  },
+  "cost": {
+    "estimate": {
+      "script": 0.5,
+      "storyboard": 1.0,
+      "video": 5.4,
+      "total": 6.9
+    },
+    "spent": []
+  }
+}

@@ -131,7 +131,8 @@ def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: P
     return cur
 
 
-def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str) -> None:
+def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, overrides: dict | None = None) -> None:
+    """overrides: {컷번호: 클립 경로} — 관리자 페이지에서 그 컷만 다시 만든 경우 새 클립을 쓴다."""
     P = Path(pilot)
     sc = json.loads((P / "script.json").read_text(encoding="utf-8"))
     cuts = {c["cut"]: c for c in sc["cuts"] if "tts" in c}
@@ -143,7 +144,7 @@ def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str) -> None:
         parts, starts, acc = [], [], 0.0
         for tm in timing:
             n, sec = tm["cut"], float(tm["sec"])
-            clip = P / "out" / clips_id / f"c{n:02d}.mp4"
+            clip = Path((overrides or {}).get(n) or P / "out" / clips_id / f"c{n:02d}.mp4")
             parts.append(build_cut(P, clip, sec, n, cuts[n].get("annotation"), t))
             starts.append(acc)
             acc += sec
