@@ -60,8 +60,9 @@
 - 대조 시트·판정은 `creature_card.json` + `out/` 에 남긴다(운영자가 언제든 확인 가능).
 
 ### 영상 모델 (실측 2026-09-27)
-- **★모델 배정(운영자 확정 2026-09-27)**: **공용 엔딩만 Veo 3.1 Fast**(`veo-3.1-fast-generate-preview`, 글만으로 8초 ·
-  확정 프롬프트 `v2/pilots/_shared/ending_prompt.txt`), **나머지 본편 컷은 전부 Gemini Omni Flash**. 이 배정을 바꾸지 않는다.
+- **★모델 배정(운영자 확정 2026-09-27 · 최종)**: **공용 엔딩 포함 모든 컷을 Gemini Omni Flash**로 만든다(Veo 사용 안 함).
+  공용 엔딩은 우리 도면 이미지를 **참고 이미지(reference_to_video)** 로 넣는다 — 첫 화면(image_to_video)으로 넣으면 이미 펼쳐진
+  도면에서 시작해 양피지 펼침이 사라진다. 글만 넣으면 AI가 다른 지도·가짜 글자를 그린다(실측).
 - **기본 = Gemini Omni Flash(`gemini-omni-1.1-flash`) 720p** — 같은 장면 비교에서 Veo 3.1 Lite는
   **실제 사람 손가락이 화면에 들어와 미니어처 크기감을 깨뜨렸다**(치명). Omni는 초당 약 $0.10(720p 초당
   5,792토큰), Lite는 약 $0.05.

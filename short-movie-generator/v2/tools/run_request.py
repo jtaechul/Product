@@ -303,10 +303,11 @@ def gen_omni(req: dict, pilot: Path, out: Path) -> dict:
     hdr = {"x-goog-api-key": key, "Content-Type": "application/json"}
     results = []
 
-    def call(inputs: list, task: str):
-        body = {"model": model, "input": inputs,
-                "response_format": {"type": "video", "aspect_ratio": "9:16",
-                                    "resolution": req.get("resolution", "720p")},
+    def call(inputs: list, task: str, with_aspect: bool = True):
+        rf = {"type": "video", "resolution": req.get("resolution", "720p")}
+        if with_aspect:
+            rf["aspect_ratio"] = "9:16"
+        body = {"model": model, "input": inputs, "response_format": rf,
                 "generation_config": {"video_config": {"task": task}}}
         t0 = time.time()
         st, raw = _http(f"{API}/interactions", json.dumps(body).encode(), hdr, timeout=900)
@@ -356,12 +357,23 @@ def gen_omni(req: dict, pilot: Path, out: Path) -> dict:
             subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-sseof", "-0.1", "-i", str(pv),
                             "-frames:v", "1", "-q:v", "2", str(last)], check=True)
             plans.append(("image_to_video", [img(last), {"type": "text", "text": it["prompt"]}]))
+        elif it.get("refs"):
+            # ★참고 이미지(reference_to_video): 첫 화면으로 고정하지 않고 "이 도면·물체를 그려라"로만 쓴다
+            #   (공용 엔딩: 첫 화면으로 넣으면 이미 펼쳐진 도면에서 시작해 양피지 펼침이 사라진다)
+            refs = [img(_fit_9x16(pilot / r, out / f"{it['name']}_ref{i}.jpg")) for i, r in enumerate(it["refs"])]
+            plans.append(("reference_to_video", refs + [{"type": "text", "text": it["prompt"]}]))
         else:
             start = _fit_9x16(pilot / it["start"], out / f"{it['name']}_start.jpg")
             plans.append(("image_to_video", [img(start), {"type": "text", "text": it["prompt"]}]))
         for task, inputs in plans:
             try:
-                vid, secs, meta = call(inputs, task)
+                try:
+                    vid, secs, meta = call(inputs, task)
+                except RuntimeError as e:          # 일부 task는 비율 지정을 거절(extend 실측) → 비율 없이 1회 재시도
+                    if "spect" not in str(e):
+                        raise
+                    rec["attempts"].append({"task": task, "ok": False, "error": str(e)[:300]})
+                    vid, secs, meta = call(inputs, task, with_aspect=False)
                 fn = out / f"{it['name']}.mp4"
                 fn.write_bytes(vid)
                 dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
