@@ -12,6 +12,7 @@
 | `Pretendard-Black.woff2` | Pretendard Black | 한국어 리빌 종명 | SIL OFL 1.1 | github.com/orioncactus/pretendard |
 | `Pretendard-Bold.woff2` | Pretendard Bold | 예비 | SIL OFL 1.1 | github.com/orioncactus/pretendard |
 | `Pretendard-Medium.woff2` | Pretendard Medium | 한국어 본문·팩트 | SIL OFL 1.1 | github.com/orioncactus/pretendard |
+| `YujiSyuku-Regular.ttf` | Yuji Syuku | v2 공용 엔딩 손글씨(일본어 붓글씨) | SIL OFL 1.1 | Google Fonts |
 
 > OFL 요약: 소프트웨어/제품에 번들·임베드 가능, 서체 자체를 단독 판매만 금지.
 > 영상에 렌더된 결과물의 상업적 사용에는 제약이 없다.

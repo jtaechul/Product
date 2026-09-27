@@ -1,0 +1,14 @@
+{
+  "id": "06_ending_clip",
+  "kind": "gen_omni",
+  "model": "gemini-omni-1.1-flash",
+  "resolution": "720p",
+  "purpose": "공용 엔딩 영상(한 번만 생성해 모든 편 재사용) — 도면의 파도 선·배만 아주 작게 일렁임. 글씨는 편집에서 입힘.",
+  "items": [
+    {
+      "name": "ending",
+      "start": "out/05_ending_chart_edit/chart_final.jpg",
+      "prompt": "A single continuous 7-second shot with a completely static, locked-off camera looking straight at an antique parchment sea chart. Only the engraved ink wave lines on the chart and the small engraved sailing ship move, very slightly and slowly, like a gently animated ink drawing: the wave lines undulate a tiny amount and the ship rocks softly on them. Everything else stays perfectly still: the paper, scroll, border, compass roses, ruler, label frame, wax seal, lighting. The upper third of the paper stays empty. No camera movement, no zoom, no new objects, no creatures, no people, no hands. No dialogue, no music. Avoid: text, letters, numbers, writing appearing, morphing, paper warping, flicker."
+    }
+  ]
+}
