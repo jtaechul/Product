@@ -15,6 +15,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -413,7 +414,8 @@ def gen_tts(req: dict, pilot: Path, out: Path) -> dict:
         return {"ok": False, "error": "GOOGLE_TTS_KEY 없음"}
     results = []
     for it in req["items"]:
-        segs = it.get("segments") or [it["tts"]]
+        # ★조각마다 <mark> — 따로 안 주면 문장부호(、。？！)에서 자동으로 끊는다(자막 조각과 같은 규칙 · karaoke.py)
+        segs = it.get("segments") or [p.strip() for p in re.split(r"(?<=[、。！？!?])", it["tts"]) if p.strip()]
         inner = "".join(f'<mark name="s{i}"/>{t} ' for i, t in enumerate(segs)) + '<mark name="end"/>'
         ssml = f'<speak><prosody rate="{TTS_RATE}" pitch="{TTS_PITCH}">{inner}</prosody></speak>'
         body = {"input": {"ssml": ssml}, "voice": TTS_VOICE, "enableTimePointing": ["SSML_MARK"],
