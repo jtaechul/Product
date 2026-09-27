@@ -1,0 +1,31 @@
+{
+  "id": "09_s01_variants",
+  "kind": "gen_images",
+  "purpose": "08 검수: 1번에 지도 글자(GULF OF MEXICO) + 그물 속 주인공이 어부만큼 큼 → 주인공 없이 '작은 어선이 그물을 내리는' 장면, 구도 4종을 격자 1장으로",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "grid4",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/08_storyboard_v2/s01.jpg",
+        "out/08_storyboard_v2/s02.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "s01a",
+          "s01b",
+          "s01c",
+          "s01d"
+        ]
+      },
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters. All four panels show the SAME scene from four different camera angles, as described below. Shared look for all panels: handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Everything except the giant isopod is a deliberately rough, simple, hand-made model (chunky clay, wood, foam, paper textures). The giant isopod must match the attached replica and real reference images exactly and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Real-world scale is consistent: the isopod is about 40 cm long; never make it look bigger than people, boats or furniture. Keep the upper quarter of every panel calm for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no watermark inside the panels. SCENE (all panels): an old sea chart spread on a dark wooden desk with a brass compass and a lit candle. The chart shows only coastlines, a compass rose and faint grid lines — absolutely NO letters, words or numbers anywhere on it. On the sea area of the chart sits a small rough 19th-century rowing fishing boat model with two tiny fishermen figures lowering a rope net over the side; the net disappears into a small dark hole in the chart where black water glimmers. The giant isopod does NOT appear in this scene.  TOP-LEFT: high three-quarter view of the whole desk. TOP-RIGHT: low eye-level view across the desk, candle flame softly out of focus in front. BOTTOM-LEFT: straight top-down view of the chart. BOTTOM-RIGHT: close-up of the tiny boat and the two fishermen pulling the net. Match the rendering, lighting and materials of the attached storyboard panels."
+    }
+  ]
+}
