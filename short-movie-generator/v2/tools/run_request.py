@@ -176,13 +176,82 @@ def gen_images(req: dict, pilot: Path, out: Path) -> dict:
     return {"ok": all("file" in r for r in results), "model": model, "items": results}
 
 
+def _fit_9x16(src: Path, dst: Path) -> Path:
+    """시작·끝 프레임을 정확한 9:16(720x1280)으로 가운데 맞춤 — 두 프레임에 같은 변환을 적용해
+    구도가 어긋나지 않게 한다(격자에서 잘린 칸은 비율이 9:16에서 조금 벗어난다)."""
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-vf",
+                    "crop='min(iw,ih*9/16)':'min(ih,iw*16/9)',scale=720:1280,setsar=1",
+                    "-q:v", "2", str(dst)], check=True)
+    return dst
+
+
+def gen_video(req: dict, pilot: Path, out: Path) -> dict:
+    """Veo 영상 생성(시작 프레임 + 선택적 끝 프레임). 끝 프레임이 거절되면 그 사유를 기록하고
+    시작 프레임만으로 한 번 더 시도한다 → '결제 연결'과 '끝 프레임 지원 여부'를 한 번에 확인."""
+    key = os.environ.get("GEMINI_API_KEY", "")
+    if not key:
+        return {"ok": False, "error": "GEMINI_API_KEY 없음"}
+    from google import genai
+    from google.genai import types
+    client = genai.Client(api_key=key)
+    results = []
+    for it in req["items"]:
+        model = it.get("model", "veo-3.1-lite-generate-preview")
+        start = _fit_9x16(pilot / it["start"], out / f"{it['name']}_start.jpg")
+        end = _fit_9x16(pilot / it["end"], out / f"{it['name']}_end.jpg") if it.get("end") else None
+        rec = {"name": it["name"], "model": model, "duration_s": it.get("duration", 4), "attempts": []}
+
+        def run(with_end: bool):
+            cfg = dict(aspect_ratio="9:16", resolution=it.get("resolution", "720p"),
+                       duration_seconds=int(it.get("duration", 4)), number_of_videos=1)
+            if with_end:
+                cfg["last_frame"] = types.Image(image_bytes=end.read_bytes(), mime_type="image/jpeg")
+            t0 = time.time()
+            op = client.models.generate_videos(
+                model=model, prompt=it["prompt"],
+                image=types.Image(image_bytes=start.read_bytes(), mime_type="image/jpeg"),
+                config=types.GenerateVideosConfig(**cfg))
+            while not op.done:
+                if time.time() - t0 > 900:
+                    raise TimeoutError("Veo 폴링 15분 초과")
+                time.sleep(10)
+                op = client.operations.get(op)
+            resp = getattr(op, "response", None) or getattr(op, "result", None)
+            if not resp or not getattr(resp, "generated_videos", None):
+                err = getattr(op, "error", None)
+                raise RuntimeError(f"영상 없음: {str(err)[:200] if err else '응답 비어 있음(안전 필터 가능)'}")
+            v = resp.generated_videos[0].video
+            client.files.download(file=v)
+            fn = out / f"{it['name']}{'' if with_end else '_start_only'}.mp4"
+            v.save(str(fn))
+            return fn, round(time.time() - t0, 1)
+
+        for with_end in ([True, False] if end else [False]):
+            try:
+                fn, secs = run(with_end)
+                dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                            "-of", "csv=p=0", str(fn)], capture_output=True, text=True).stdout or 0)
+                sheet = out / f"{fn.stem}_frames.jpg"
+                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(fn), "-vf",
+                                f"fps=4/{max(dur, 0.1):.2f},scale=240:-2,tile=4x1:margin=4:padding=4:color=white",
+                                "-frames:v", "1", str(sheet)], check=False)
+                rec["attempts"].append({"with_end_frame": with_end, "ok": True, "file": fn.name,
+                                        "video_s": round(dur, 2), "wait_s": secs, "frames": sheet.name})
+                rec["file"] = fn.name
+                break
+            except Exception as e:  # noqa: BLE001
+                rec["attempts"].append({"with_end_frame": with_end, "ok": False, "error": str(e)[:300]})
+        results.append(rec)
+    return {"ok": all("file" in r for r in results), "items": results}
+
+
 def main(path: str) -> int:
     rp = Path(path)
     req = json.loads(rp.read_text(encoding="utf-8"))
     pilot = rp.parent.parent
     out = pilot / "out" / req["id"]
     out.mkdir(parents=True, exist_ok=True)
-    fn = {"fetch_refs": fetch_refs, "gen_images": gen_images}[req["kind"]]
+    fn = {"fetch_refs": fetch_refs, "gen_images": gen_images, "gen_video": gen_video}[req["kind"]]
     res = fn(req, pilot, out)
     res.update({"request": rp.name, "kind": req["kind"], "ran_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
     (out / "result.json").write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")

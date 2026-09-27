@@ -1,0 +1,16 @@
+{
+  "id": "10_veo_test",
+  "kind": "gen_video",
+  "purpose": "첫 4초 시험 — ① 결제 연결 확인 ② Veo 3.1 Lite 끝 프레임 지원 확인 ③ 미니어처 톤·움직임 품질 확인",
+  "items": [
+    {
+      "name": "c01",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration": 4,
+      "resolution": "720p",
+      "start": "out/09_s01_variants/s01a.jpg",
+      "end": "out/09_s01_variants/s01d.jpg",
+      "prompt": "Miniature tabletop scale-model scene with strong tilt-shift shallow depth of field. The camera makes one slow, smooth dolly-in from a high three-quarter view of the desk toward the tiny rowing boat on the old sea chart. The two small fisherman figures pull the rope net down into the dark hole in the chart; the candle flame flickers softly. Subtle, gentle movement like a handcrafted miniature. Keep every object's shape and material unchanged. No text, no letters, no new objects, no extra people, no giant creature."
+    }
+  ]
+}
