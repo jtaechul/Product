@@ -115,6 +115,8 @@ button:disabled{opacity:.5}
 .v2step.cur{background:#0d1e26;font-weight:700}
 .v2btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
 .v2btns .btn{min-height:44px;white-space:nowrap}
+.v2btns .btn.save{grid-column:auto}
+.cfact a{color:var(--cy)}
 .v2cut{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(150,200,215,.08);font-size:14px;line-height:1.6}
 .v2cut b{color:var(--cy);min-width:18px}.v2cut small{display:block;color:var(--gy);font-size:12px}
 .v2clips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -137,7 +139,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-27-1 (v2 관리자: 영상 목록 · 새 영상 · 단계 승인)";
+const BUILD="v2026-09-27-2 (v2 관리자: 영상 목록 · 새 영상 · 단계 승인)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2438,11 +2440,11 @@ function v2stageBody(st,stage){
         (ck[k].value!=null?(' — '+esc(ck[k].value)+(u?(" "+u):"")):"")+' <span style="opacity:.6">('+esc(ck[k].rule||"")+')</span></div>').join("");
     const spent=((st.cost||{}).spent||[]).reduce((s,x)=>s+(+x.usd||0),0);
     return '<span class="lbl">완성본'+(ck.duration_s?(' ('+ck.duration_s+'초)'):'')+'</span>'+
-      '<video controls playsinline preload="metadata" src="'+v2media(pid,a.final,rev)+'"></video>'+
+      '<video controls playsinline preload="metadata" src="'+v2media(pid,a.final,rev)+'#t=0.5"></video>'+
       (rows?'<div class="sect">자동 검사'+(ck.at?(' · '+v2when(ck.at)):'')+'</div>'+rows:'')+
       '<div class="sect">컷별 검수 — 마음에 안 드는 컷만 다시 만들기</div>'+
       '<div class="v2clips">'+(a.clips||[]).map(c=>'<div class="v2clip">'+
-        '<video controls playsinline preload="metadata" src="'+v2media(pid,c.file)+'"></video>'+
+        '<video controls playsinline preload="metadata" src="'+v2media(pid,c.file)+'#t=0.5"></video>'+
         '<div class="cfact"><b>'+c.cut+'번 컷</b> · '+esc(c.sec)+'초'+((c.history||[]).length?(' · 재생성 '+c.history.length+'회'):'')+'</div>'+
         (c.review?'<div class="cfact'+(c.review==="양호"?'':' warn')+'">'+esc(c.review)+'</div>':'')+
         '<button class="btn warn" data-cut="'+c.cut+'" data-sec="'+esc(c.sec)+'">이 컷만 다시 만들기 (약 $'+(Number(c.sec||0)*OMNI_USD).toFixed(2)+')</button>'+
