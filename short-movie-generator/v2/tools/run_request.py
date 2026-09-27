@@ -209,7 +209,8 @@ def gen_video(req: dict, pilot: Path, out: Path) -> dict:
                             str(out / prev["file"]), "-frames:v", "1", "-vf", "scale=720:1280,setsar=1",
                             "-q:v", "2", str(start)], check=True)
         else:
-            start = _fit_9x16(pilot / it["start"], out / f"{it['name']}_start.jpg")
+            # 글만으로 생성(text-to-video)도 허용 — 공용 엔딩처럼 시작 이미지를 넣지 않을 때
+            start = _fit_9x16(pilot / it["start"], out / f"{it['name']}_start.jpg") if it.get("start") else None
         end = _fit_9x16(pilot / it["end"], out / f"{it['name']}_end.jpg") if it.get("end") else None
         rec = {"name": it["name"], "model": model, "duration_s": it.get("duration", 4), "attempts": []}
 
@@ -224,10 +225,9 @@ def gen_video(req: dict, pilot: Path, out: Path) -> dict:
             if with_end:
                 cfg["last_frame"] = types.Image(image_bytes=end.read_bytes(), mime_type="image/jpeg")
             t0 = time.time()
+            kw = {"image": types.Image(image_bytes=start.read_bytes(), mime_type="image/jpeg")} if start else {}
             op = client.models.generate_videos(
-                model=model, prompt=prompt,
-                image=types.Image(image_bytes=start.read_bytes(), mime_type="image/jpeg"),
-                config=types.GenerateVideosConfig(**cfg))
+                model=model, prompt=prompt, config=types.GenerateVideosConfig(**cfg), **kw)
             while not op.done:
                 if time.time() - t0 > 900:
                     raise TimeoutError("Veo 폴링 15분 초과")
