@@ -1,0 +1,31 @@
+{
+  "id": "11_ending_conti6",
+  "kind": "gen_images",
+  "purpose": "운영자 지시: 공용 엔딩 전개 6컷 콘티 한 장(검토용 — 영상 생성 안 함). ①양피지 위→아래 펼침 ②살아 있는 도면 ③돋보기 훑기 ④깊은 바다에서 멈춤 ⑤렌즈 속 줌인→심해 ⑥손글씨+나레이션",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "conti6",
+      "aspect": "4:5",
+      "size": "2K",
+      "refs": [
+        "out/09_ending_chart_real/chart_real.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 3,
+        "names": [
+          "k1",
+          "k2",
+          "k3",
+          "k4",
+          "k5",
+          "k6"
+        ]
+      },
+      "prompt": "Create ONE storyboard image: a clean grid of SIX equal-sized vertical 9:16 panels arranged in 2 rows x 3 columns, separated by thin plain white gutters, read left-to-right then top-to-bottom. It shows six moments of ONE continuous closing shot. Use the attached antique parchment sea chart as the chart in every panel, but WITHOUT the ornate empty frame at its upper right (that area is just more coastline and contour lines). Style: handcrafted miniature photography, warm dim candle-like light, dark background, tilt-shift shallow depth of field.\nPANEL 1 (top-left): in darkness, the parchment scroll is still mostly rolled; the top roller is fixed and the rolled cylinder is rolling DOWNWARD, the paper curving as the upper part of the chart is revealed from top to bottom.\nPANEL 2 (top-middle): the chart is fully unrolled flat (rollers at top and bottom); tiny wave marks, the two small sailing ships, drifting clouds and the lighthouse glow give a sense of life.\nPANEL 3 (top-right): a brass magnifying glass enters from the side and glides over the chart, passing over the islands and the lighthouse; the lens enlarges the ink lines beneath it.\nPANEL 4 (bottom-left): the magnifying glass has stopped over the deepest part of the sea, where the depth-contour lines are densest; the lens shows the tight contour rings magnified.\nPANEL 5 (bottom-middle): extreme close-up diving into the lens: inside the glass the ink lines dissolve into dark deep-sea blue water, with faint, blurry, unidentifiable dark shadows far away.\nPANEL 6 (bottom-right): full frame of calm dark deep-sea water; in the middle, several horizontal lines of handwriting are being written in brush ink — represent the handwriting only as abstract brush strokes, NOT readable letters.\nNo readable letters, words or numbers anywhere. No animals that can be identified, no people, no hands (the magnifying glass moves by itself), no logos, no watermark."
+    }
+  ]
+}
