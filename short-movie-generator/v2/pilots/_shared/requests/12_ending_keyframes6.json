@@ -1,0 +1,32 @@
+{
+  "id": "12_ending_keyframes6",
+  "kind": "gen_images",
+  "purpose": "운영자 확정: 6컷 흐름 승인 · 두루마리 끝은 종이 말림으로 통일 · 4번 컷 장식 틀 제거 → 시작 이미지용 6컷(4K). 검토용 — 영상 생성 안 함.",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "keys6",
+      "aspect": "4:5",
+      "size": "4K",
+      "refs": [
+        "out/11_ending_conti6/conti6.jpg",
+        "out/09_ending_chart_real/chart_real.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 3,
+        "names": [
+          "key1",
+          "key2",
+          "key3",
+          "key4",
+          "key5",
+          "key6"
+        ]
+      },
+      "prompt": "Recreate the attached six-panel storyboard as a clean grid of SIX equal-sized vertical 9:16 panels in 2 rows x 3 columns, separated by thin plain white gutters, keeping the same six moments, compositions, lighting and style. These panels will be used as start frames, so make them sharp and consistent. Fixes:\n1) The scroll ends must be the SAME in every panel: rolled PAPER ends (the parchment itself curled into a roll at the top and at the bottom) — NO brass rods, no metal rollers anywhere.\n2) The chart must be the SAME chart in every panel (use the attached flat chart as the reference) and must NOT contain the ornate empty frame/cartouche at the upper right — that area is just coastline, islands, contour lines and sounding dots.\n3) Panel 1: in darkness, the parchment is mostly rolled, the roll at the bottom is rolling DOWNWARD and the paper curves as the upper part of the chart appears. Panel 2: chart fully unrolled flat with rolled paper ends at top and bottom. Panel 3: a brass magnifying glass glides over the islands and a small sailing ship. Panel 4: the magnifying glass has stopped over the deepest, densest contour rings. Panel 5: diving into the lens — the ink lines dissolve into dark deep-sea blue water with faint, blurry, unidentifiable shadows. Panel 6: full frame of calm dark deep-sea water, empty in the middle (handwriting will be added later in editing — do NOT draw any writing).\nNo letters, words, numbers or pseudo-writing anywhere. No identifiable animals, no people, no hands, no logos, no watermark."
+    }
+  ]
+}
