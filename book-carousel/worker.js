@@ -3586,6 +3586,16 @@ function fallbackMenuName(title, spKey) {
 async function recentMenuNames(env) {
   try { return (await env.PENDING_POSTS.get('diner_menu_names', 'json')) || []; } catch { return []; }
 }
+async function recentDinerLines(env) {
+  try { return (await env.PENDING_POSTS.get('diner_recent_lines', 'json')) || []; } catch { return []; }
+}
+async function rememberDinerLines(env, lines) {
+  try {
+    const prev = await recentDinerLines(env);
+    const list = [...lines.filter(Boolean), ...prev.filter(x => !lines.includes(x))].slice(0, 24);
+    await env.PENDING_POSTS.put('diner_recent_lines', JSON.stringify(list));
+  } catch { /* 기록 실패는 무시 */ }
+}
 async function rememberMenuName(env, name) {
   try {
     const list = (await recentMenuNames(env)).filter(x => x !== name);
@@ -3653,7 +3663,9 @@ function dinerSystem(sp) {
   (돈가스) "튀김옷이 조용하다. 고기가 할 말이 많군"
   (비유) "면발이 탄탄하다. 월요일 아침 같은 결의다"
   (계산) "이 값에 이 정직함이면 남는 장사다"
-  (소회) "아무도 말을 걸지 않았다. 그게 좋았다"
+- 소회(exit)는 예시 없이 매회 새로 쓴다. '방해받지 않았다', '말을 걸지 않았다' 같은 틀을 반복하지 마라.
+  오늘 먹은 메뉴의 인상(식감·향)이나 오늘의 날씨·기분과 엮어 이 회차만의 한 줄로 끝낸다.
+- 비유 소재는 계절(특히 가을·낙엽)에 몰리지 않게 다양하게 고른다: 소리, 물건, 날씨, 동네 풍경, 하루의 시간대 등.
 
 반드시 JSON만 출력한다.`;
 }
@@ -3668,6 +3680,7 @@ async function handleDinerEpisode(env, body, ctx) {
     .filter(Boolean);
   const factsSafe = adSafeFacts(facts).slice(0, 5);
   const recentMenus = await recentMenuNames(env);
+  const recentLines = await recentDinerLines(env);
   const banned = menuBannedWords(title);
   // 입장 훅 재료 — 02단계에서 확인된 '사기 전 불편'. 증상 이야기는 효능 암시가 되므로 뺀다.
   const worries = adSafeFacts((Array.isArray(body.pains) ? body.pains : [])
@@ -3695,7 +3708,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도. 상품명·브랜드는 절대 쓰지 않는다",
   "hashtags": ["#태그1", "#태그2", "#태그3"],
   "ytTitle": "유튜브 설명 첫 줄에 쓸 한 줄 요약 40자 이내(상품명·브랜드 금지)"
-}${recentMenus.length ? `\n최근에 쓴 메뉴 이름(겹치지 않게 다른 특징을 골라라): ${recentMenus.slice(0, 12).join(', ')}` : ''}`;
+}${recentMenus.length ? `\n최근에 쓴 메뉴 이름(겹치지 않게 다른 특징을 골라라): ${recentMenus.slice(0, 12).join(', ')}` : ''}${recentLines.length ? `\n최근 회차에서 이미 쓴 대사(말투·비유·소재가 비슷하지 않게 새로 써라):\n- ${recentLines.slice(0, 12).join('\n- ')}` : ''}`;
 
   const gk = await getGeminiKey(env);
   if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
@@ -3754,6 +3767,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   let menuName = String(out.menuName || '').trim().replace(/["'「」]/g, '').slice(0, 20);
   if (!menuName || hasBanned(menuName, banned)) menuName = fallbackMenuName(title, spKey);
   await rememberMenuName(env, menuName);
+  await rememberDinerLines(env, list.filter(c => /^(taste|exit)$/.test(String(c && c.role || ''))).map(c => String(c.line || '').trim()));
 
   const clipsOut = roles.map((role, i) => {
     const c = pickClip(role, i);
@@ -5605,6 +5619,7 @@ export default {
           if (body.action === 'reset') {
             await env.PENDING_POSTS.delete('diner_episodes');
             await env.PENDING_POSTS.delete('diner_menu_names');
+            await env.PENDING_POSTS.delete('diner_recent_lines');
             result = { success: true, episodes: {} };
           }
           else result = { success: true, episodes: (await env.PENDING_POSTS.get('diner_episodes', 'json')) || {} };
