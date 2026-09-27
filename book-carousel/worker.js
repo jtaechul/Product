@@ -2941,18 +2941,24 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
     try {
       // 모델이 검색을 할지 말지 스스로 정한다 — 가끔 검색 없이 기억으로 답한다(실측 2회 중 1회).
       // 출처가 0건이면 검색을 못박아 딱 1회 다시 묻는다.
+      // JSON이 가끔 중간이 깨져 나오는 것도(실측 4회 중 1회) 같은 방식으로 1회 재시도한다.
+      const tryParse = (t) => { try { return extractJson(t); } catch { return null; } };
       let r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 4096 });
-      if (!r.sources.length) {
+      let parsed = tryParse(r.text);
+      if (!r.sources.length || !parsed) {
         const again = await callGeminiGrounded(gk, {
           system: INSIGHT_SYSTEM,
-          user: '반드시 google_search 도구로 먼저 웹을 검색한 뒤, 검색 결과만 근거로 답하라. 기억으로 답하지 마라.\n\n' + user,
+          user: '반드시 google_search 도구로 먼저 웹을 검색한 뒤, 검색 결과만 근거로 답하라. 기억으로 답하지 마라. 올바른 JSON만 출력하라.\n\n' + user,
           max_tokens: 4096,
         }).catch(() => null);
-        if (again && again.sources.length) r = again;
+        const p2 = again ? tryParse(again.text) : null;
+        // 출처와 JSON이 둘 다 갖춰진 쪽을 우선, 아니면 더 나은 쪽을 쓴다.
+        if (again && p2 && (again.sources.length || !r.sources.length)) { r = again; parsed = p2; }
+        else if (!parsed && p2) { r = again; parsed = p2; }
       }
+      if (!parsed) throw new Error('검색 결과를 읽지 못했습니다');
       sources = r.sources;
       grounded = sources.length > 0;
-      const parsed = extractJson(r.text);
       if (parsed?.notFound === true) {
         note = '검색으로 이 상품을 확인하지 못해, 상품명에서 읽은 것만 남겼습니다.';
       }
@@ -4976,21 +4982,6 @@ export default {
             const d = await env.PENDING_POSTS.get('work_draft', 'json').catch(() => null);
             result = { success: true, data: d || null };
           }
-        }
-        else if (url.pathname === '/api/parts-diag') {
-          // 임시: 검색 응답의 parts 구조만 본다(키·본문 전문 노출 없음).
-          const gk = await getGeminiKey(env);
-          const title = String(body.title || '네오핏 강아지 에어 X 하네스 베이지');
-          const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${gk}`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ systemInstruction: { parts: [{ text: INSIGHT_SYSTEM }] },
-              contents: [{ role: 'user', parts: [{ text: `상품: ${title}\n\n이 상품의 실제 구매 후기를 검색해서 JSON으로 정리하라. {"points":[{"text":"","evidence":""}]}` }] }],
-              tools: [{ google_search: {} }], generationConfig: { maxOutputTokens: 4096, temperature: 0.2 } }),
-          });
-          const j = await r.json();
-          const parts = j?.candidates?.[0]?.content?.parts || [];
-          result = { success: true, status: r.status, finish: j?.candidates?.[0]?.finishReason,
-            parts: parts.map(x => ({ keys: Object.keys(x), thought: !!x.thought, len: (x.text || '').length, head: (x.text || '').slice(0, 60), tail: (x.text || '').slice(-40) })) };
         }
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
         else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
