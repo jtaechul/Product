@@ -398,28 +398,42 @@ def gen_omni(req: dict, pilot: Path, out: Path) -> dict:
     return {"ok": all("file" in r for r in results), "items": results}
 
 
+# ★TTS 목소리 고정(규칙) — 한 곳에서만 정한다. 속도는 운영자 확정 2026-09-27: 90%는 너무 느림 → 1.3배 이상(120%)
+TTS_VOICE = {"languageCode": "ja-JP", "name": "ja-JP-Neural2-B"}
+TTS_RATE = "120%"
+TTS_PITCH = "-2st"
+
+
 def gen_tts(req: dict, pilot: Path, out: Path) -> dict:
-    """Google Cloud TTS — 목소리 고정(규칙): ja-JP-Neural2-B · 속도 90% · 높낮이 -2st.
-    item: name, tts(히라가나 낭독문). 결과 wav(24kHz)와 길이를 남긴다. 음량 맞춤(-16 LUFS)은 조립 단계."""
+    """Google Cloud TTS(고정 목소리). item: name + tts(낭독문) 또는 segments(자막 줄 단위 낭독문 리스트).
+    segments를 주면 각 조각 앞에 <mark>를 넣어 **조각별 시작 시각(timepoints)** 을 함께 받는다
+    → 편집에서 자막을 실제 말에 맞춘다(운영자 확정: 자막과 말이 어긋나면 안 됨)."""
     key = os.environ.get("GOOGLE_TTS_KEY", "")
     if not key:
         return {"ok": False, "error": "GOOGLE_TTS_KEY 없음"}
-    voice = req.get("voice", {"languageCode": "ja-JP", "name": "ja-JP-Neural2-B"})
     results = []
     for it in req["items"]:
-        ssml = f'<speak><prosody rate="90%" pitch="-2st">{it["tts"]}</prosody></speak>'
-        body = {"input": {"ssml": ssml}, "voice": voice,
+        segs = it.get("segments") or [it["tts"]]
+        inner = "".join(f'<mark name="s{i}"/>{t} ' for i, t in enumerate(segs)) + '<mark name="end"/>'
+        ssml = f'<speak><prosody rate="{TTS_RATE}" pitch="{TTS_PITCH}">{inner}</prosody></speak>'
+        body = {"input": {"ssml": ssml}, "voice": TTS_VOICE, "enableTimePointing": ["SSML_MARK"],
                 "audioConfig": {"audioEncoding": "LINEAR16", "sampleRateHertz": 24000}}
-        code, raw = _http("https://texttospeech.googleapis.com/v1/text:synthesize", json.dumps(body).encode(),
+        code, raw = _http("https://texttospeech.googleapis.com/v1beta1/text:synthesize", json.dumps(body).encode(),
                           {"x-goog-api-key": key, "Content-Type": "application/json"})
-        rec = {"name": it["name"], "http": code}
+        rec = {"name": it["name"], "http": code, "rate": TTS_RATE}
         if code == 200:
+            j = json.loads(raw)
             fn = out / f"{it['name']}.wav"
-            fn.write_bytes(base64.b64decode(json.loads(raw)["audioContent"]))
+            fn.write_bytes(base64.b64decode(j["audioContent"]))
             rec["file"] = fn.name
             rec["sec"] = round(float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
                                                      "-of", "csv=p=0", str(fn)], capture_output=True,
                                                     text=True).stdout or 0), 2)
+            tp = {t["markName"]: round(float(t["timeSeconds"]), 3) for t in j.get("timepoints", [])}
+            rec["timepoints"] = [{"seg": segs[i], "start": tp.get(f"s{i}"),
+                                  "end": tp.get(f"s{i + 1}", tp.get("end"))} for i in range(len(segs))]
+            (out / f"{it['name']}_timepoints.json").write_text(
+                json.dumps(rec["timepoints"], ensure_ascii=False, indent=2), encoding="utf-8")
         else:
             rec["error"] = raw[:300].decode("utf-8", "replace")
         results.append(rec)
