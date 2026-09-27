@@ -5,9 +5,11 @@
 - 심해 정지 구간을 나레이션 길이만큼 천천히 늘린다(떠다니는 입자만 있는 장면이라 늘려도 티가 안 난다).
 - 글씨는 화면 가운데, 줄마다 왼쪽→오른쪽으로 써진다(AI가 쓴 글씨 금지 — 뭉개짐).
   배경이 어두운 심해라 **밝은 종이색 글자 + 어두운 테두리**. 뒤 흐림 없음. 번호(No.) 없음.
+- 첫머리(약 0.4초~): 편별 마무리 멘트 나레이션 + **본편과 같은 하단 자막**(subtitle_style).
 - 소리: 영상의 효과음(두루마리·물소리)은 작게 깔고 심해 구간에서 줄인다 + 나레이션(-16 LUFS). **음악 없음.**
 
-사용: python ending_overlay.py <확정엔딩.mp4> <생물 일본어 이름> <나레이션.wav> <출력.mp4> [조각시각.json]
+사용: python ending_overlay.py <확정엔딩.mp4> <출력.mp4> --cta-wav 질문.wav [--cta-tp 조각시각.json]
+      [--recap-wav 마무리멘트.wav --recap-text 「今回探った深海の生き物は、〇〇でした。」]
 """
 from __future__ import annotations
 
@@ -17,6 +19,8 @@ import tempfile
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))   # subtitle_style
 
 FONT = Path(__file__).resolve().parents[2] / "vendor" / "fonts" / "YujiSyuku-Regular.ttf"
 W, H, FPS = 720, 1280, 24
@@ -75,8 +79,12 @@ def layout(name: str, tps: list | None = None):
     return rows
 
 
-def render_frames(name: str, dur: float, out_dir: Path, tps: list | None = None) -> None:
+def render_frames(name: str, dur: float, out_dir: Path, tps: list | None = None,
+                  recap: tuple | None = None) -> None:
+    """recap = (자막 문구, 시작 초, 끝 초) — 엔딩 첫머리 편별 멘트의 하단 나레이션 자막(본편과 같은 모양)."""
+    import subtitle_style
     rows = layout(name, tps)
+    recap_img = subtitle_style.render(recap[0]) if recap else None
     ink = []
     for r in rows:
         im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -88,6 +96,8 @@ def render_frames(name: str, dur: float, out_dir: Path, tps: list | None = None)
     for i in range(int(round(dur * FPS))):
         t = i / FPS
         fr = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        if recap_img is not None and recap[1] <= t < recap[2]:
+            fr = Image.alpha_composite(fr, recap_img)
         for r, (im, x, tw) in zip(rows, ink):
             if t < r["t0"]:
                 continue
@@ -104,10 +114,20 @@ def render_frames(name: str, dur: float, out_dir: Path, tps: list | None = None)
         fr.save(out_dir / f"o{i:04d}.png")
 
 
-def main(src: str, name: str, narration: str, dst: str, timepoints: str | None = None) -> None:
+RECAP_T0 = 0.4                          # 편별 마무리 멘트 시작(양피지가 펼쳐지기 시작할 때)
+
+
+def main(src: str, dst: str, cta_wav: str, cta_tp: str | None = None,
+         recap_wav: str | None = None, recap_text: str | None = None) -> None:
     import json
-    tps = json.loads(Path(timepoints).read_text(encoding="utf-8")) if timepoints else None
-    src_d, nar_d = _dur(src), _dur(narration)
+    tps = json.loads(Path(cta_tp).read_text(encoding="utf-8")) if cta_tp else None
+    src_d, nar_d = _dur(src), _dur(cta_wav)
+    recap = None
+    if recap_wav and recap_text:
+        rd = _dur(recap_wav)
+        if RECAP_T0 + rd > NAR_T0 - 0.3:
+            raise SystemExit(f"마무리 멘트가 너무 깁니다({rd:.1f}초) — 질문 나레이션과 겹칩니다")
+        recap = (recap_text, RECAP_T0, RECAP_T0 + rd + 0.3)
     total = max(MIN_TOTAL_S, NAR_T0 + nar_d + 1.0)
     k = (total - SETTLE_S) / (src_d - SETTLE_S)          # 심해 구간 늘림 배율
     with tempfile.TemporaryDirectory() as td:
@@ -121,20 +141,35 @@ def main(src: str, name: str, narration: str, dst: str, timepoints: str | None =
             f"[v1][v2]concat=n=2:v=1:a=0,trim=0:{total:.3f}[v]",
             "-map", "[v]", "-an", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(t / "base.mp4")],
             check=True)
-        # ② 손글씨 프레임
-        render_frames(name, total, t, tps)
-        # ③ 합성: 효과음(작게, 심해 구간에서 줄임) + 나레이션(-16 LUFS, NAR_T0부터)
+        # ② 손글씨 + 하단 멘트 자막 프레임
+        render_frames("", total, t, tps, recap)
+        # ③ 합성: 효과음(작게) + 질문 나레이션 + (있으면) 마무리 멘트. ★지연(adelay)은 음량 맞춤(loudnorm) **앞**에
+        #    (loudnorm 뒤에 두면 지연이 무시돼 영상 맨 앞에 깔린다 — 실측 사고)
         ms = int(NAR_T0 * 1000)
-        subprocess.run([
-            "ffmpeg", "-y", "-loglevel", "error", "-i", str(t / "base.mp4"), "-framerate", str(FPS),
-            "-i", str(t / "o%04d.png"), "-i", src, "-i", narration, "-filter_complex",
-            "[0:v][1:v]overlay=0:0:shortest=1[v];"
-            f"[2:a]volume=0.5,afade=t=out:st={SETTLE_S}:d=1.5,apad,atrim=0:{total:.3f}[sfx];"
-            f"[3:a]aresample=48000,adelay={ms}|{ms},loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,apad,atrim=0:{total:.3f}[nar];"
-            "[sfx]aresample=48000[sfx2];[sfx2][nar]amix=inputs=2:normalize=0[a]",
-            "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
-            "-c:a", "aac", "-b:a", "192k", "-t", f"{total:.3f}", dst], check=True)
+        inputs = ["-i", str(t / "base.mp4"), "-framerate", str(FPS), "-i", str(t / "o%04d.png"), "-i", src, "-i", cta_wav]
+        fc = ("[0:v][1:v]overlay=0:0:shortest=1[v];"
+              f"[2:a]volume=0.5,afade=t=out:st={SETTLE_S}:d=1.5,apad,atrim=0:{total:.3f},aresample=48000[sfx];"
+              f"[3:a]aresample=48000,adelay={ms}|{ms},loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,apad,atrim=0:{total:.3f}[nar];")
+        mix = "[sfx][nar]"
+        n = 2
+        if recap:
+            inputs += ["-i", recap_wav]
+            rms = int(RECAP_T0 * 1000)
+            fc += (f"[4:a]aresample=48000,adelay={rms}|{rms},loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,"
+                   f"apad,atrim=0:{total:.3f}[rec];")
+            mix += "[rec]"
+            n = 3
+        fc += f"{mix}amix=inputs={n}:normalize=0[a]"
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *inputs, "-filter_complex", fc,
+                        "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
+                        "-c:a", "aac", "-b:a", "192k", "-t", f"{total:.3f}", dst], check=True)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5] if len(sys.argv) > 5 else None)
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("src"); ap.add_argument("dst")
+    ap.add_argument("--cta-wav", required=True); ap.add_argument("--cta-tp")
+    ap.add_argument("--recap-wav"); ap.add_argument("--recap-text")
+    a = ap.parse_args()
+    main(a.src, a.dst, a.cta_wav, a.cta_tp, a.recap_wav, a.recap_text)
