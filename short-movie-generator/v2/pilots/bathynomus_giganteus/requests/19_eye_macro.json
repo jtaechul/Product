@@ -1,0 +1,22 @@
+{
+  "id": "19_eye_macro",
+  "kind": "gen_images",
+  "purpose": "v5 4번 컷 특징 줌인(운영자 확정 규칙) — 겹눈 확대 인서트 1장. 생물 카드·실사 참조, 실제 구조(작은 낱눈이 촘촘히 모임)대로.",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "eye_macro",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/14_storyboard_12/p05.jpg"
+      ],
+      "prompt": "Extreme macro photograph, vertical 9:16, of the compound eye of the giant deep-sea isopod shown in the attached replica and real reference images. The eye is the FLAT, dark, roughly triangular compound eye at the front corner of the head, next to the pale lavender-lilac glossy head armour. Fill most of the frame with the eye surface so that its structure is clearly visible: thousands of tiny, tightly packed facets (ommatidia) forming a fine honeycomb-like mosaic with subtle reflections, dark grey-black in colour. At one edge show a little of the lilac armour for context. Soft light from the side, very shallow depth of field, scientific-documentary macro style consistent with a handcrafted miniature look. Do NOT make the eye round or bulging, do not add pupils, do not add other animals. No text, no letters, no numbers, no arrows, no circles, no watermark, no hands."
+    }
+  ]
+}
