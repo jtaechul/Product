@@ -1,0 +1,14 @@
+{
+  "id": "08_ending_clip_v2",
+  "kind": "gen_omni",
+  "model": "gemini-omni-1.1-flash",
+  "resolution": "720p",
+  "purpose": "공용 엔딩 v2(운영자 확정): 꽉 찬 도면이 살아 움직이는 5초 — 파도·배·바람·구름·등대·나침반·빛. 앞 1초 양피지 펼침과 글씨는 편집에서.",
+  "items": [
+    {
+      "name": "ending_v2",
+      "start": "out/07_ending_chart_full/chart_full.jpg",
+      "prompt": "A single continuous 5-second shot with a completely static, locked-off camera looking straight down at an antique parchment sea chart that comes alive like an animated ink engraving. The engraved wave lines roll and undulate clearly across the sea in steady rhythm; both small sailing ships bob on the waves and glide slowly forward, their sails billowing in the wind; the engraved clouds drift slowly to the right while the swirling wind-stream lines flow and curl across the sky; the tiny lighthouse light glows and pulses softly; the needles of the compass roses sway gently; a warm, faint candle-like light flickers softly across the paper. All motion stays within the ink drawing — the paper itself, the scroll, border, ruler, cartouche frame, label frame and wax seal stay perfectly still and flat. No camera movement, no zoom. No animals, no creatures, no people, no hands. No dialogue, no music. Avoid: text, letters, numbers, writing appearing, paper warping, melting lines, flicker of the whole frame."
+    }
+  ]
+}
