@@ -1,0 +1,29 @@
+{
+  "id": "04_ending_chart_only",
+  "kind": "gen_images",
+  "purpose": "운영자 확정: 공용 엔딩은 도면만 — 가운데 해저 단면 큐브 모형 제거. 03의 b안 기준, 위쪽 35% 손글씨 자리 유지.",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "chartonly4",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/03_ending_chart/chart_b.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "only_a",
+          "only_b",
+          "only_c",
+          "only_d"
+        ]
+      },
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters. All four panels are small variations of the SAME composition. Base it on the attached image: the same unrolled antique parchment sea-chart scroll on a dark background, same border, compass roses, depth ruler with tick marks only, empty specimen-label frame, red wax seal and the engraved line-art sailing ship. REMOVE the blue cube model completely — there must be NO 3D object, NO cube, NO box, NO ocean cross-section and NO shadow of an object on the paper. Fill the place where the cube was with the chart itself: engraved sepia ink wave lines across the open sea, gentle depth-contour rings drawn WITHOUT any numbers, and coastlines continuing naturally. LAYOUT RULE: the upper 35% of the parchment must stay clean, EMPTY blank paper (only the border line) — reserved for handwriting added later. ABSOLUTELY NO letters, words, numbers, labels or pseudo-writing anywhere. Old natural-history encyclopedia plate style, warm dim lighting, photographed flat and straight-on, shallow depth of field at the very edges only. No people, no hands, no logos, no watermark."
+    }
+  ]
+}
