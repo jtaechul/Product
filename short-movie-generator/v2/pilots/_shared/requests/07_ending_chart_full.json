@@ -1,0 +1,19 @@
+{
+  "id": "07_ending_chart_full",
+  "kind": "gen_images",
+  "purpose": "운영자 확정: 글씨는 편집에서 위에 입히므로 도면을 위쪽까지 꽉 채운다(섬·등대·바람 구름·항정선·파도·배·빈 카르투슈). 생물·얼굴·글자 금지.",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "chart_full",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/05_ending_chart_edit/chart_final.jpg"
+      ],
+      "prompt": "Edit the attached antique parchment sea chart so that the WHOLE sheet is richly filled edge to edge, like a lavish old natural-history encyclopedia plate — no large empty areas anywhere, including the top. Keep the same scroll, paper colour, border, lighting, the compass rose, the depth ruler with tick marks only, the empty label frame, the red wax seal and the style of the engraved sepia ink line-art. ADD in the same engraved style: in the upper part, a second coastline with small islands and a tiny lighthouse on a rocky point; engraved clouds with swirling wind-stream lines blowing across the sky area; rhumb lines radiating from the compass roses across the sea; more rows of rolling engraved waves across the middle; the small three-masted sailing ship with full sails on the waves; a decorative empty cartouche frame with scrollwork (empty inside); a second smaller compass rose. Do NOT add any animals, sea monsters, fish, birds, faces or people. ABSOLUTELY NO letters, words, numbers or pseudo-writing anywhere. Flat, straight-on view of the paper, 9:16 vertical."
+    }
+  ]
+}
