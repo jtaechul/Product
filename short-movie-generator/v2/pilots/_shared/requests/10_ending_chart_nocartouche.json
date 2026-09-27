@@ -1,0 +1,19 @@
+{
+  "id": "10_ending_chart_nocartouche",
+  "kind": "gen_images",
+  "purpose": "운영자 지시: 09 도면에서 우측 상단 장식 틀만 제거(이미지만 — 영상 생성 안 함)",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "chart_v3",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/09_ending_chart_real/chart_real.jpg"
+      ],
+      "prompt": "Edit the attached antique parchment sea chart. REMOVE the empty ornate cartouche frame at the upper right completely, and fill that area naturally with more of the same chart: the coastline and small islands continuing, engraved depth-contour lines, depth-sounding dots and a few tiny wave-mark symbols. Keep EVERYTHING else exactly as it is (lighthouse, islands, clouds and wind swirls, both compass roses and rhumb lines, both sailing ships, depth ruler with tick marks only, contours, red wax seal, scroll, border, colours, lighting). ABSOLUTELY NO letters, words, numbers or pseudo-writing. No animals, no people. Flat straight-on view, 9:16 vertical."
+    }
+  ]
+}
