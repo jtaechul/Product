@@ -1,0 +1,93 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "card_top",
+      "http": 200,
+      "file": "card_top.jpg",
+      "usage": {
+        "promptTokenCount": 1051,
+        "candidatesTokenCount": 1387,
+        "totalTokenCount": 2801,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 277
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 774
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 363,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "card_side",
+      "http": 200,
+      "file": "card_side.jpg",
+      "usage": {
+        "promptTokenCount": 1057,
+        "candidatesTokenCount": 1387,
+        "totalTokenCount": 2690,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 283
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 774
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 246,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "card_head",
+      "http": 200,
+      "file": "card_head.jpg",
+      "usage": {
+        "promptTokenCount": 799,
+        "candidatesTokenCount": 1333,
+        "totalTokenCount": 2365,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 283
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 516
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 233,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "03_creature_card_eyes.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T04:40:49Z"
+}
