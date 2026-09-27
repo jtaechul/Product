@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "items": [
+    {
+      "name": "c01",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": true,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Your use case is currently not supported.  Please refer to Gemini API documentation for current model offering.', 'status': 'INVALID_ARGUMENT'}}"
+        },
+        {
+          "with_end_frame": false,
+          "ok": true,
+          "file": "c01_start_only.mp4",
+          "video_s": 4.0,
+          "wait_s": 31.5,
+          "frames": "c01_start_only_frames.jpg"
+        }
+      ],
+      "file": "c01_start_only.mp4"
+    }
+  ],
+  "request": "10_veo_test.json",
+  "kind": "gen_video",
+  "ran_at": "2026-09-27T05:47:39Z"
+}
