@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "items": [
+    {
+      "name": "cta",
+      "http": 200,
+      "rate": "120%",
+      "file": "cta.wav",
+      "sec": 4.13,
+      "timepoints": [
+        {
+          "seg": "あなたが みてみたい",
+          "start": 0.015,
+          "end": 0.964
+        },
+        {
+          "seg": "しんかいの いきものは？",
+          "start": 0.964,
+          "end": 2.44
+        },
+        {
+          "seg": "コメントで おしえてください。",
+          "start": 2.44,
+          "end": 4.127
+        }
+      ]
+    }
+  ],
+  "request": "18_ending_tts_fast.json",
+  "kind": "gen_tts",
+  "ran_at": "2026-09-27T12:58:19Z"
+}
