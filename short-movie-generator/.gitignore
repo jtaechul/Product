@@ -10,6 +10,8 @@ __pycache__/
 work/
 output/
 *.mp4
+# v2 파일럿 시험 클립은 운영자 검토용으로 커밋한다(4초·수 MB)
+!v2/pilots/*/out/**/*.mp4
 
 # 에셋 (소싱/게이트 산출물 — 실행 시 재생성)
 assets/raw/
