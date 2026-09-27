@@ -1,0 +1,62 @@
+name: Google Keys Check
+
+# v2 제작 전 키 점검(운영자 요청): GEMINI_API_KEY(Veo 모델 접근) · GOOGLE_TTS_KEY(TTS API 사용 설정·목소리).
+# ★키 값은 절대 출력하지 않는다(헤더로만 전달 · URL에 넣지 않음). 영상 생성은 하지 않는다(비용 0).
+# TTS는 「テスト」 한 단어 합성으로 API 사용 설정 여부만 확인한다.
+on:
+  push:
+    branches: [claude/gemini-shorts-reels-generator-dhjfdt]
+    paths: [".github/workflows/google-keys-check.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gemini 키 · Veo 모델 접근 확인
+        env:
+          KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then echo "GEMINI_API_KEY 시크릿 없음"; exit 1; fi
+          code=$(curl -s -o models.json -w '%{http_code}' -H "x-goog-api-key: $KEY" \
+                 "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000")
+          echo "gemini_models_http=$code"
+          python3 - <<'PY'
+          import json
+          d = json.load(open("models.json"))
+          if "error" in d:
+              e = d["error"]; print("gemini_error=", e.get("status"), (e.get("message") or "")[:200])
+          names = [m["name"].split("/")[-1] for m in d.get("models", [])]
+          print("gemini_model_count=", len(names))
+          print("veo_models=", sorted(n for n in names if "veo" in n))
+          PY
+
+      - name: TTS 키 · 일본어 목소리 확인
+        env:
+          KEY: ${{ secrets.GOOGLE_TTS_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then echo "GOOGLE_TTS_KEY 시크릿 없음"; exit 1; fi
+          code=$(curl -s -o voices.json -w '%{http_code}' -H "X-Goog-Api-Key: $KEY" \
+                 "https://texttospeech.googleapis.com/v1/voices?languageCode=ja-JP")
+          echo "tts_voices_http=$code"
+          code2=$(curl -s -o synth.json -w '%{http_code}' -H "X-Goog-Api-Key: $KEY" \
+                  -H "Content-Type: application/json" \
+                  -d '{"input":{"text":"テスト"},"voice":{"languageCode":"ja-JP","name":"ja-JP-Neural2-B"},"audioConfig":{"audioEncoding":"MP3"}}' \
+                  "https://texttospeech.googleapis.com/v1/text:synthesize")
+          echo "tts_synth_http=$code2"
+          python3 - <<'PY'
+          import json
+          v = json.load(open("voices.json"))
+          if "error" in v:
+              e = v["error"]; print("tts_voices_error=", e.get("status"), (e.get("message") or "")[:200])
+          for x in v.get("voices", []):
+              if "Neural2" in x["name"]:
+                  print("voice=", x["name"], x.get("ssmlGender"))
+          s = json.load(open("synth.json"))
+          if "error" in s:
+              e = s["error"]; print("tts_synth_error=", e.get("status"), (e.get("message") or "")[:200])
+          print("tts_synth_audio_bytes=", len(s.get("audioContent", "")))
+          PY
