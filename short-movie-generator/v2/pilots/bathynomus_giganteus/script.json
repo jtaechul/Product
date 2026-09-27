@@ -102,7 +102,7 @@
     }
   ],
   "dropped_from_v1_draft": "겹눈(F6) 문장 — 이야기 흐름보다 정보 나열에 가까워 길이 조정 때 제외(사실은 facts에 보존)",
-  "clip_count": 12,
+  "clip_count": "본편 11 + 공용 엔딩 1",
   "image_count_needed": 26,
   "ending_policy": {
     "narration": "댓글 요청 1개만(구독 요청과 섞지 않아 메시지가 흩어지지 않게)",
@@ -449,16 +449,13 @@
       "ko": "죽은 뒤 위 속은 텅 비어 있었고, 사인은 지금도 수수께끼입니다.",
       "fact": "F7",
       "sec": 7,
-      "stage": "spotlight_specimen"
+      "stage": "spotlight_specimen",
+      "transition_out": "조명이 서서히 꺼지며 주인공이 어둠 속으로 사라진다(공용 엔딩으로 연결)"
     },
     {
       "cut": 12,
-      "jp": "あなたが見てみたい深海の生き物は？ コメントで教えてください。",
-      "tts": "あなたが みてみたい しんかいの いきものは？ コメントで おしえてください。",
-      "ko": "당신이 보고 싶은 심해 생물은? 댓글로 알려주세요.",
-      "fact": null,
-      "sec": 7,
-      "stage": "cross_section_end"
+      "shared": "v2/pilots/_shared/ending.json",
+      "note": "공용 엔딩 재사용 — 이 편에서 새로 만들지 않음"
     }
   ],
   "total_sec_est": 65,

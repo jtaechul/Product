@@ -1,0 +1,30 @@
+{
+  "id": "01_ending_keyframe",
+  "kind": "gen_images",
+  "purpose": "공용 엔딩 컷(운영자 확정 2026-09-27) — 모든 편에 재사용하는 질문형 댓글 유도 마지막 컷의 시작 이미지. 특정 생물 없음. 4안 중 1안 채택.",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "ending4",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "../bathynomus_giganteus/out/14_storyboard_12/p12.jpg",
+        "../bathynomus_giganteus/out/14_storyboard_12/p06.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "end_a",
+          "end_b",
+          "end_c",
+          "end_d"
+        ]
+      },
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters. All four panels are variations of the SAME ending scene (slightly different camera angles), for a channel's reusable closing shot. Look: handcrafted miniature / scale-model photography, tilt-shift shallow depth of field, soft practical lighting, muted blue-grey palette. SCENE: a rough-edged cross-section chunk of deep ocean floating on a pure black background, like a slice cut out of the sea: a thin dim blue water layer at the top, rocky seabed layers visible on its cut sides, and below it deeper and deeper black water. Far down in the black water, three faint, blurry, dark silhouettes of unknown deep-sea creatures drift — deliberately vague, featureless shapes that do NOT resemble any specific species (no recognisable fish, shark, squid or isopod outline). NO creature on the seabed or anywhere in sharp focus. NOT a glass tank, no glass walls, no aquarium. Keep the upper third of each panel dark and empty for captions. No text, no letters, no numbers, no logos, no watermark, no people, no hands. Match the rendering and materials of the attached panels, but remove the isopod entirely."
+    }
+  ]
+}
