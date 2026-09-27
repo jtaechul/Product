@@ -4970,6 +4970,19 @@ export default {
           // 웹검색 모델 진단: 후보 모델마다 상태·검색 사용 여부만 돌려준다(키·본문은 노출하지 않음).
           const gk = await getGeminiKey(env);
           const rows = [];
+          if (body.mode === 'insight') {
+            // 실제 분석과 같은 시스템 프롬프트로, 추론 끔/켬 각각 검색이 일어나는지 본다.
+            const title = String(body.title || '로얄캐닌 미니 인도어 어덜트 강아지 사료 3kg');
+            const user = `상품: ${title}\n\n이 상품의 실제 구매 후기와 사용기를 검색해서 JSON으로 정리하라. {"points":[{"text":"","evidence":""}]}`;
+            for (const think of [true, false]) {
+              const t0 = Date.now();
+              try {
+                const r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 2048 }, think, 0);
+                rows.push({ thinkOff: think, ms: Date.now() - t0, sources: r.sources.length, textLen: r.text.length, head: r.text.slice(0, 80) });
+              } catch (e) { rows.push({ thinkOff: think, ms: Date.now() - t0, err: String(e.message).slice(0, 160) }); }
+            }
+            result = { success: true, rows };
+          } else {
           for (const m of GEMINI_SEARCH_MODELS) {
             for (const think of [true, false]) {
               try {
@@ -4993,6 +5006,7 @@ export default {
             }
           }
           result = { success: true, rows };
+          }
         }
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
         else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
