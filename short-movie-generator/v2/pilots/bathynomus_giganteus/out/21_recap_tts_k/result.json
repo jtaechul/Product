@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "items": [
+    {
+      "name": "recap",
+      "http": 200,
+      "rate": "120%",
+      "file": "recap.wav",
+      "sec": 4.0,
+      "timepoints": [
+        {
+          "seg": "こんかい さぐった しんかいの いきものは、",
+          "start": 0.015,
+          "end": 2.171
+        },
+        {
+          "seg": "ダイオウグソクムシでした。",
+          "start": 2.171,
+          "end": 3.999
+        }
+      ]
+    }
+  ],
+  "request": "21_recap_tts_k.json",
+  "kind": "gen_tts",
+  "ran_at": "2026-09-27T13:39:24Z"
+}
