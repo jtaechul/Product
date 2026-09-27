@@ -3031,7 +3031,9 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 // Veo는 특정 상품(브랜드 포장·로고)을 정확히 못 그린다 → 영상은 "상품이 필요한 문제 상황"만 담고,
 // 상품 연결은 자막·캡션·프로필 링크로 한다. 클립 간 강아지·장소가 달라지는 것을 막기 위해
 // styleBlock을 모든 클립 앞에 그대로 붙여 쓰게 한다.
-const VEO_NEGATIVE = 'adult dog, hunting dog, long sharp muzzle, narrow eyes, black mask or black fur markings, standing upright on two legs, anthropomorphic pose, collar, harness, chest support, vest, leash, strap, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, human skin, deformed paws, extra limbs, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
+// 종(강아지·고양이…)마다 다른 부분과 모든 종에 공통인 부분을 나눠 둔다.
+const VEO_NEGATIVE_COMMON = 'standing upright on two legs, anthropomorphic pose, collar, harness, chest support, vest, leash, strap, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, human skin, deformed paws, extra limbs, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated';
+const VEO_NEGATIVE = 'adult dog, hunting dog, long sharp muzzle, narrow eyes, black mask or black fur markings, ' + VEO_NEGATIVE_COMMON;
 
 const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 촬영 지시서를 쓰는 사람이다.
 사용자는 Flow에 이미 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고, 여기에 이 지시서를 붙인다.
@@ -3156,10 +3158,11 @@ function wearableOf(title) {
 }
 
 // 착용 클립에서는 그 품목 금지를 풀되, 엉뚱한 장신구는 계속 막는다.
-function negativeFor(wearing) {
-  if (!wearing) return VEO_NEGATIVE;
+function negativeFor(wearing, sp = SPECIES.dog) {
+  const base = sp.negAnimal + ', ' + VEO_NEGATIVE_COMMON;
+  if (!wearing) return base;
   // 상품 품목만 금지를 풀고, 기본 의상(옷 없는 맨몸) 금지는 그대로 둔다.
-  const keep = VEO_NEGATIVE.split(', ').filter(w =>
+  const keep = base.split(', ').filter(w =>
     !/^(collar|harness|chest support|vest|leash|strap|clothes|accessories)$/i.test(w.trim()));
   const add = [
     'extra accessories', 'ribbons', 'bows', 'hats', 'sunglasses', 'scarves',
@@ -3180,6 +3183,40 @@ const CHARACTER_LINE = 'The puppy.';
 // Flow에서 주인공 캐릭터 이미지를 다시 만들 때 쓰는 프롬프트. 관리자 페이지에 그대로 노출한다.
 // 사용자가 실제로 성공한 프롬프트가 원본이고, 얼굴 귀여움(큰 머리·볼살)만 보강했다.
 const CHARACTER_SHEET_PROMPT = 'A photorealistic 3D animated style close-up of an ultra-cute Shiba Inu puppy standing naturally on all four legs, oversized round head with chubby cheeks, huge round sparkling dark brown eyes, a small playful smile with a tiny pink tongue sticking out, soft plush-like purest golden-cream and snow-white fur, absolutely no black hairs or mask, entirely natural body with no clothes no collars and no accessories, unbelievably fluffy cloud-like soft texture, soft even studio lighting, isolated clean background, 8k resolution, masterful texturing, clean 3D rendering';
+
+// 고양이 주인공 캐릭터 이미지 프롬프트 — 강아지와 같은 화풍·같은 원칙(네발·맨몸).
+const CAT_SHEET_PROMPT = 'A photorealistic 3D animated style close-up of an ultra-cute kitten sitting naturally on all four legs, oversized round head with chubby cheeks, huge round sparkling eyes, a tiny pink nose and a small soft smile, soft plush-like cream and snow-white fur, entirely natural body with no clothes no collars and no accessories, unbelievably fluffy cloud-like soft texture, soft even studio lighting, isolated clean background, 8k resolution, masterful texturing, clean 3D rendering';
+
+// ⭐ 채널 주인공 표. 상품명으로 종을 자동으로 고른다(고양이 사료 → 고양이 주인공).
+// 새 주인공(파충류 등)을 늘릴 때는 여기에 한 항목만 추가하면 된다:
+//   ko(한글 이름) · noun(영어 호칭) · line(클립 첫 줄) · sheet(캐릭터 이미지 프롬프트)
+//   negAnimal(그 종이 무섭거나 이상하게 나오는 모습) · match(상품명 판별식) · cfg(관리자 페이지 설정칸 id)
+// match는 위에서부터 검사하고, 아무것도 안 맞으면 dog(기본 주인공)이다.
+const SPECIES = {
+  cat: {
+    ko: '고양이', noun: 'kitten', line: 'The kitten.', sheet: CAT_SHEET_PROMPT, cfg: 'pcat',
+    negAnimal: 'adult cat, feral cat, thin sharp face, narrow slit eyes, hissing, bared teeth, dog',
+    match: /고양이|캣|냥|키튼|kitten|\bcats?\b|feline/i,
+  },
+  dog: {
+    ko: '강아지', noun: 'puppy', line: 'The puppy.', sheet: CHARACTER_SHEET_PROMPT, cfg: 'pdog',
+    negAnimal: 'adult dog, hunting dog, long sharp muzzle, narrow eyes, black mask or black fur markings, cat',
+    match: /강아지|애견|퍼피|도그|puppy|\bdogs?\b|견/i,
+  },
+};
+const SPECIES_ORDER = ['cat', 'dog'];
+function speciesOf(title) {
+  const t = String(title || '');
+  for (const k of SPECIES_ORDER) if (SPECIES[k].match.test(t)) return k;
+  return 'dog';
+}
+// 모델이 습관처럼 쓰는 강아지 호칭을 그 종의 호칭으로 바꾼다.
+function toSpecies(text, sp) {
+  if (sp.noun === 'puppy') return text;
+  return String(text || '')
+    .replace(/\bpupp(y|ies)\b/gi, sp.noun)
+    .replace(/\bdogs?\b/gi, sp.noun);
+}
 
 // 사용자가 실제로 성공한 화풍. 모든 장면 블록 앞에 반드시 들어간다.
 const STYLE_TOKEN = 'Photorealistic 3D animated style, soft even lighting, unbelievably fluffy cloud-like soft fur texture, 8k, masterful texturing';
@@ -3215,6 +3252,8 @@ const SAFE_SWAPS = [
   [/\b(painful|in pain|hurt|suffering|distressed|whimpering)\b/gi, 'sulky'],
   [/\btight (strap|leash|collar|harness)\b/gi, 'strap'],
   [/\b(restrained|trapped|tangled)\b/gi, 'lounging'],
+  [/\b(gagging|retching|vomiting|spitting (?:it )?out)\b/gi, 'pausing mid-chew'],
+  [/\bdisgusted\b/gi, 'unimpressed'],
 ];
 
 // 착용물·소리 언급은 제외 목록과 모순되어 생성이 거부된다. 서버가 직접 지운다.
@@ -3268,8 +3307,18 @@ async function handleVideoPrompts(env, body) {
   if (!title) throw new Error('상품 이름이 필요합니다.');
   const category = String(body.category || '').trim();
   const note = String(body.note || '').trim();
-  const dog = String(body.dog || '').trim() || 'photorealistic 3D animated style 시바견 퍼피 — 골든크림·화이트 털, 검은 털·마스크 없음, 목줄·옷·액세서리 없음';
+  // 주인공은 상품명으로 자동 결정(고양이 상품 → 고양이). 설정칸 문구도 그 종의 것을 쓴다.
+  const spKey = speciesOf(title);
+  const sp = SPECIES[spKey];
+  const HERO_DEFAULT = {
+    dog: 'photorealistic 3D animated style 시바견 퍼피 — 골든크림·화이트 털, 검은 털·마스크 없음, 목줄·옷·액세서리 없음',
+    cat: 'photorealistic 3D animated style 아기 고양이 — 크림·화이트 털, 목걸이·옷·액세서리 없음',
+  };
+  const dog = String(body[sp.cfg === 'pcat' ? 'cat' : 'dog'] || '').trim() || HERO_DEFAULT[spKey] || HERO_DEFAULT.dog;
   const clips = Math.max(3, Math.min(10, parseInt(body.clips, 10) || 7));
+
+  // 사료·간식은 '식당 에피소드' 형식으로 만든다(주인공이 가게에서 그 사료를 시켜 먹으며 속마음으로 평가).
+  if (isFoodProduct(category, title)) return handleDinerEpisode(env, body, { title, category, note, spKey, sp, hero: dog, clips });
 
   // 02단계 분석에서 근거가 확인된 것만 넘어온다. 없는 기능을 지어내지 못하게 하는 장치.
   const pick = (v) => (Array.isArray(v) ? v : [])
@@ -3280,7 +3329,7 @@ async function handleVideoPrompts(env, body) {
 
   const user = `상품: ${title}
 품목: ${category || '반려동물 용품'}
-주인공: ${dog}${note ? `\n추가 주문: ${note}` : ''}${pains.length ? `\n\n[확인된 견주 불편 — 이 중에서 문제를 고를 것]\n- ${pains.join('\n- ')}` : ''}${benefits.length ? `\n\n[확인된 상품 장점 — benefit 클립은 이 중에서만 쓸 것]\n- ${benefits.join('\n- ')}` : ''}
+주인공: ${dog}${spKey !== 'dog' ? `\n(주인공은 ${sp.ko}다. 규칙의 "the puppy"·"강아지"는 전부 "the ${sp.noun}"·"${sp.ko}"로 바꿔 읽어라.)` : ''}${note ? `\n추가 주문: ${note}` : ''}${pains.length ? `\n\n[확인된 견주 불편 — 이 중에서 문제를 고를 것]\n- ${pains.join('\n- ')}` : ''}${benefits.length ? `\n\n[확인된 상품 장점 — benefit 클립은 이 중에서만 쓸 것]\n- ${benefits.join('\n- ')}` : ''}
 
 ${clips}개 클립짜리 릴스 촬영 지시서를 써라. 아래 JSON만 출력:
 {
@@ -3333,7 +3382,7 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
   // 장면 블록에 캐릭터 묘사가 섞이면 참고 이미지와 충돌한다. 서버가 걷어낸다.
   let scene = String(out.sceneBlock || '').trim();
   scene = scene
-    .replace(/[^,.]*\b(fur|coat|eyes|ears|tail|paws?|collar|muzzle|snout|puppy|dog|shiba|breed)\b[^,.]*[,.]?/gi, ' ')
+    .replace(/[^,.]*\b(fur|coat|eyes|ears|tail|paws?|collar|muzzle|snout|puppy|dog|shiba|breed|kitten|cat|whiskers)\b[^,.]*[,.]?/gi, ' ')
     .replace(/\s{2,}/g, ' ')
     .replace(/^[,.\s]+|[,\s]+$/g, '')
     .trim();
@@ -3355,14 +3404,14 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
   let seenTransition = false;
 
   const clipsOut = list.map((c, i) => {
-    const shots = safeShots(normShots(String(c.shots || c.action || '').trim()));
+    const shots = toSpecies(safeShots(normShots(String(c.shots || c.action || '').trim())), sp);
     const line = String(c.line || c.subtitle || '').trim();
     const role = String(c.role || 'problem').trim();
     if (role === 'transition') seenTransition = true;
     // 문제 클립은 맨몸(불편했던 시절), 전환부터는 착용(편해진 뒤).
     const wearing = !!wearEn && (seenTransition || role === 'benefit' || role === 'cta');
-    const wearLine = wearing ? `The puppy is wearing ${wearEn}.` : '';
-    const neg = negativeFor(wearing ? wearEn : '');
+    const wearLine = wearing ? `The ${sp.noun} is wearing ${wearEn}.` : '';
+    const neg = negativeFor(wearing ? wearEn : '', sp);
 
     // 첫 구간 동작만 뽑아 스틸 이미지 프롬프트를 만든다(먼저 이미지를 만들고 거기서 영상을 뽑는 방식).
     const firstMoment = (shots.split(/(?=\d:\d{2}-\d:\d{2})/)[0] || shots)
@@ -3371,7 +3420,7 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
       .replace(/\s{2,}/g, ' ').replace(/[,\s]+$/, '').trim();
 
     const imagePrompt = [
-      CHARACTER_LINE + (scene ? ' ' + scene : ''),
+      sp.line + (scene ? ' ' + scene : ''),
       firstMoment ? firstMoment.replace(/[.\s]+$/, '') + '.' : '',
       wearLine,
       'Single still image, sharp focus, no motion blur.',
@@ -3379,7 +3428,7 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
     ].filter(Boolean).join('\n');
 
     const prompt = [
-      CHARACTER_LINE + (scene ? ' ' + scene : ''),
+      sp.line + (scene ? ' ' + scene : ''),
       shots,
       wearLine,
       `Avoid: ${neg}.`,
@@ -3400,9 +3449,224 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
     sceneBlock: scene,
     tone,
     wearable: wearEn,
-    negativePrompt: VEO_NEGATIVE,
+    format: 'reel',
+    species: spKey, speciesKo: sp.ko,
+    negativePrompt: negativeFor('', sp),
     caption: out.caption || '',
     hashtags: Array.isArray(out.hashtags) ? out.hashtags.slice(0, 3) : [],
+    clips: clipsOut,
+  };
+}
+
+// ===== 식당 에피소드 (사료·간식 리뷰) =====
+// 주인공이 작은 가게에 들어가 그 사료를 주문해 먹으며 속마음으로 담담하게 평가한다.
+// 입장 → 주문(편집에서 상품 사진 메뉴판) → 서빙 → 시식 → 계산(편집에서 1kg당 가격 계산서) → 퇴장.
+
+// 품목이 사료·간식이면 식당 에피소드. 품목이 비어 있으면 상품명으로 판단한다.
+function isFoodProduct(category, title) {
+  const c = String(category || '');
+  if (c) return /사료|간식|먹거리|식품/.test(c);
+  return /사료|간식|츄르|트릿|저키|육포|캔|파우치|습식|건식|동결건조|덴탈껌|개껌|영양제/.test(String(title || ''));
+}
+
+// 음식 모양. AI 영상은 실제 포장을 못 그리므로 '그릇에 담긴 모양'만 고정해 클립마다 같게 한다.
+const FOOD_LOOKS = [
+  [/츄르|짜먹는|페이스트|퓨레/, 'a small plain dish of smooth creamy lickable paste'],
+  [/캔|습식|파우치|주식캔|무스|파테|스튜/, 'a small plain bowl of moist wet food pate'],
+  [/동결건조|트릿.*큐브|큐브/, 'a small plain bowl of freeze-dried meat cubes'],
+  [/저키|육포|져키/, 'a small plain plate of thin meat jerky strips'],
+  [/덴탈|개껌|껌|스틱/, 'a single plain dental chew stick on a small plate'],
+  [/우유|밀크/, 'a shallow plain bowl of pet milk'],
+  [/영양제|츄어블/, 'a few small soft chew tablets on a small plate'],
+  [/트릿|간식|쿠키|비스킷/, 'a small plain plate of bite-sized treats'],
+];
+function foodLookOf(title) {
+  const t = String(title || '');
+  for (const [re, en] of FOOD_LOOKS) if (re.test(t)) return en;
+  return 'a plain white ceramic bowl of small round dry kibble';
+}
+
+// 상품명에서 총 중량(그램)을 읽는다. "85g x 12개" → 1020, "1.2kg 2개" → 2400. 못 읽으면 0.
+function packGrams(title) {
+  const t = String(title || '').replace(/,/g, '');
+  const m = t.match(/(\d+(?:\.\d+)?)\s*(kg|㎏|g|그램)(?![a-z])/i);
+  if (!m) return 0;
+  let g = parseFloat(m[1]) * (/kg|㎏/i.test(m[2]) ? 1000 : 1);
+  const rest = t.slice(m.index + m[0].length);
+  const n = rest.match(/^\s*(?:[x×*]\s*(\d+)|(\d+)\s*(?:개입|개|팩|봉|입|캔|포)(?!월))/i);
+  const mult = n ? parseInt(n[1] || n[2], 10) : 1;
+  if (mult > 1 && mult <= 200) g *= mult;
+  return g >= 10 && g <= 60000 ? g : 0;
+}
+
+// 계산 장면용 단가. 1kg 이상이면 1kg당, 그보다 작으면 100g당. 10원 단위 반올림.
+function unitPriceNote(price, title) {
+  const won = Number(price) || 0;
+  const g = packGrams(title);
+  if (!won || !g) return '';
+  const per = g >= 1000 ? 1000 : 100;
+  const v = Math.round((won / g) * per / 10) * 10;
+  if (!v) return '';
+  return `${per === 1000 ? '1kg' : '100g'}당 약 ${v.toLocaleString('ko-KR')}원`;
+}
+
+// 클립 개수별 장면 순서(고정). 서버가 역할을 강제한다 — 모델이 순서를 흐트러뜨려도 편집 카드가 맞게 붙는다.
+function dinerRoles(n) {
+  if (n <= 5) return ['enter', 'order', 'taste', 'bill', 'exit'];
+  if (n <= 7) return ['enter', 'order', 'serve', 'taste', 'taste', 'bill', 'exit'];
+  return ['enter', 'order', 'serve', 'taste', 'taste', 'taste', 'taste', 'bill', 'exit'];
+}
+const DINER_ROLE_KO = { enter: '입장', order: '주문', serve: '서빙', taste: '시식', bill: '계산', exit: '퇴장' };
+
+// 쿠팡 파트너스 필수 고지 문구(쿠팡 안내 표준 문장). 캡션·유튜브 설명에 서버가 직접 붙인다.
+const COUPANG_DISCLOSURE = '이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.';
+
+function dinerSystem(sp) {
+  return `당신은 반려동물 사료·간식 리뷰 채널의 '식당 에피소드' 촬영 지시서를 쓰는 사람이다.
+주인공 ${sp.ko}(영어 호칭 "the ${sp.noun}")가 작은 가게에 혼자 들어가 그 사료를 주문해 먹으며,
+속으로만 담담하고 냉철하게 맛을 평가한다. 말은 한마디도 하지 않는다. 목소리는 나중에 따로 입힌다.
+사용자는 Flow에 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고 이 지시서를 붙인다.
+
+[촬영 규칙 — 어기면 Flow가 거부하거나 캐릭터가 무너진다]
+1. 주인공 외모를 절대 설명하지 마라(털색·눈·체형·품종). "the ${sp.noun}"로만 부른다.
+2. 주인공은 옷을 입지 않은 보통 네발 ${sp.ko}다. 두 발로 서기, 앞발을 손처럼 쓰기, 옷·앞치마·턱받이 전부 금지.
+   자리에 앉을 때는 의자나 방석 위에 ${sp.ko}답게 앉는다. 식기는 쓰지 않고 그릇에 입을 대고 먹는다.
+3. sceneBlock은 가게 내부의 장소·색감·조명만(영어 25단어 이내). 캐릭터·음식 묘사 금지. 화풍 문구는 시스템이 붙인다.
+4. shots는 영어, 타임코드 "0:00-0:03" 꼴로 8초를 2~3구간으로 나눈다. 카메라 움직임과 동작만 쓴다.
+5. 말하기·입모양·대사·소리에 관한 단어를 한 글자도 쓰지 마라(ambient, sound, speaking 등 전부).
+6. 괴로워 보이는 표현 금지: angry, disgusted, choking, gagging, coughing, vomiting, spitting out, struggling.
+   마음에 안 드는 순간은 코믹한 몸짓으로: slow blink, a long pause mid-chew, tilting its head, nudging the bowl with its nose.
+7. 사람은 손과 팔까지만 나온다(서빙하는 손, 계산서를 놓는 손). 얼굴 금지.
+8. 음식은 포장·봉투·상표·글자 없이 그릇에 담긴 모습으로만. 음식 모양은 시스템이 모든 클립에 고정 문장으로 붙이므로 shots에 새로 지어내지 마라.
+9. 조명은 soft even lighting, warm diffused light처럼 부드럽게. harsh, gritty, moody, high contrast 금지.
+
+[장면별 연출]
+- enter: 가게 문으로 걸어 들어와 자리에 앉는다.
+- order: 벽의 메뉴판을 올려다보며 고민하다 결정한다. 편집에서 화면 위쪽에 상품 사진 메뉴판이 겹쳐지니 주인공은 화면 아래쪽 절반에 둔다.
+- serve: 사람의 손이 그릇을 앞에 내려놓는다. 주인공이 먼저 냄새를 맡는다.
+- taste: 먹는 장면. 매크로·클로즈업·씹다 멈춤·다시 한 입 등 클립마다 카메라를 다르게.
+- bill: 사람의 손이 작은 쟁반에 계산서를 놓고 주인공이 그것을 지긋이 본다. 편집에서 위쪽에 계산서 카드가 겹쳐지니 주인공은 아래쪽에 둔다.
+- exit: 가게를 나서다 문 앞에서 한 번 뒤돌아본다.
+
+[속마음 대사(line) — 내레이션이자 자막. 둘은 같은 문장이다]
+- 한국어 26자 이내, 반말 독백. 느낌표·감탄사·의성어 금지. 설명하지 말고 판정하고 해부한다.
+- 맛 표현은 구체적이고 냉철하게: 향(고소함·비린 정도·첫 냄새), 식감(바삭함·단단함·부서지는 방식),
+  알갱이 크기와 모양, 기름기, 뒷맛. 이것은 주인공의 주관적 평이므로 자유롭게 쓴다.
+- 사실 정보(원료·영양 성분·연령·품종 적합성)는 [확인된 정보]와 상품명에 있는 것만 쓴다. 없으면 절대 쓰지 마라.
+- 병이 낫는다·개선된다 같은 효능 주장, 다른 브랜드 언급·비교는 금지.
+- 상품명·브랜드명은 말하지 않는다(메뉴판 카드가 보여준다).
+- 역할별: enter=오늘 이 가게에 온 이유나 허기의 선언 / order=메뉴를 고르는 속마음 / serve=첫인상 /
+  taste=감각 해부 또는 확인된 원료·영양 확인 / bill=가격 판정 / exit=한줄평과 재방문 의사.
+- bill은 [가격]이 주어지면 그 숫자를 그대로만 쓰고, 주어지지 않으면 숫자를 쓰지 마라.
+
+반드시 JSON만 출력한다.`;
+}
+
+async function handleDinerEpisode(env, body, ctx) {
+  const { title, category, note, spKey, sp, hero, clips } = ctx;
+  const roles = dinerRoles(clips);
+  const priceNote = unitPriceNote(body.price, title);
+  const foodEn = foodLookOf(title);
+  const facts = (Array.isArray(body.benefits) ? body.benefits : [])
+    .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
+    .filter(Boolean).slice(0, 6);
+
+  const user = `상품: ${title}
+품목: ${category || '사료·간식'}
+주인공: ${sp.ko} (the ${sp.noun}) — ${hero}${note ? `\n추가 주문: ${note}` : ''}
+[가격] ${priceNote || '없음 — bill 대사에 숫자를 쓰지 마라'}
+[확인된 정보 — 사실은 이 안에서만]
+${facts.length ? '- ' + facts.join('\n- ') : '(없음 — 원료·영양·연령 이야기는 하지 말고 향·식감 평만 해라)'}
+
+클립 ${roles.length}개, 순서는 반드시 이대로: ${roles.map((r, i) => `${i + 1}.${r}`).join(' ')}
+아래 JSON만 출력:
+{
+  "shop": "오늘 들어간 가게 콘셉트 한 줄(한국어, 예: 골목 끝 작은 백반집)",
+  "sceneBlock": "영어 25단어 이내. 가게 내부 장소 + 색감 + 조명만",
+  "tone": "내레이션 목소리 톤 한 줄(한국어)",
+  "clips": [ { "role": "enter", "shots": "영어 타임코드 구간", "line": "속마음 한 문장" } ],
+  "verdict": "재방문 의사 판정 한 줄(한국어)",
+  "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도",
+  "hashtags": ["#태그1", "#태그2", "#태그3"],
+  "ytTitle": "유튜브 쇼츠 제목 40자 이내"
+}`;
+
+  const gk = await getGeminiKey(env);
+  if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
+  let raw;
+  try {
+    raw = await callGeminiText(gk, {
+      system: dinerSystem(sp), user,
+      max_tokens: Math.min(3200, 900 + roles.length * 200),
+      timeout_ms: 50000, json: true,
+    });
+  } catch (e) {
+    throw new Error(`프롬프트를 만들지 못했습니다: ${e.message}`);
+  }
+  const out = extractJson(raw);
+  const list = Array.isArray(out.clips) ? out.clips : [];
+  if (!list.length) throw new Error('프롬프트를 만들지 못했습니다: 빈 결과');
+
+  let scene = String(out.sceneBlock || '').trim()
+    .replace(/[^,.]*\b(fur|coat|eyes|ears|tail|paws?|collar|muzzle|snout|puppy|dog|shiba|breed|kitten|cat|whiskers|kibble|food|bowl)\b[^,.]*[,.]?/gi, ' ')
+    .replace(/\b(harsh shadows?|high contrast|gritty|documentary|moody|dramatic lighting)\b/gi, 'soft even lighting')
+    .replace(/\s{2,}/g, ' ').replace(/^[,.\s]+|[,\s]+$/g, '').trim();
+  scene = STYLE_TOKEN + (scene ? '. ' + scene : '');
+
+  const foodLine = `On the table in front of the ${sp.noun}: ${foodEn}.`;
+  const neg = negativeFor('', sp) + ', food packaging, pet food bag, labels or text on the bowl, spilled food, messy table, cutlery';
+
+  const clipsOut = roles.map((role, i) => {
+    const c = list[i] || {};
+    const shots = toSpecies(safeShots(normShots(String(c.shots || '').trim())), sp);
+    let line = String(c.line || '').trim().replace(/!+/g, '');
+    // 가격을 모르면 계산 대사에 숫자가 들어가면 안 된다(지어낸 가격 방지).
+    if (role === 'bill' && !priceNote && /\d/.test(line)) line = '계산은 조용히 끝냈다. 값은 묻지 않는 게 예의다';
+    const withFood = role === 'serve' || role === 'taste' || role === 'bill';
+    const firstMoment = (shots.split(/(?=\d:\d{2}-\d:\d{2})/)[0] || shots)
+      .replace(/^\s*\d:\d{2}-\d:\d{2}\s*/, '')
+      .replace(/\b(panning|tilting|tracking|zooming|dollying|pushing)\s+\w+,?\s*/gi, '')
+      .replace(/\s{2,}/g, ' ').replace(/[,.\s]+$/, '').trim();
+    const head = sp.line + (scene ? ' ' + scene : '');
+    const imagePrompt = [head, firstMoment ? firstMoment + '.' : '', withFood ? foodLine : '',
+      'Single still image, sharp focus, no motion blur.', `Avoid: ${neg}.`].filter(Boolean).join('\n');
+    const prompt = [head, shots, withFood ? foodLine : '', `Avoid: ${neg}.`].filter(Boolean).join('\n');
+    const card = role === 'order' ? { type: 'menu' } : (role === 'bill' && priceNote ? { type: 'bill', text: priceNote } : null);
+    return { no: i + 1, role, roleKo: DINER_ROLE_KO[role], shots, line, subtitle: line, wearing: false, card, imagePrompt, prompt };
+  });
+
+  const tags = (Array.isArray(out.hashtags) ? out.hashtags : []).slice(0, 3);
+  const caption = [String(out.caption || '').trim(), COUPANG_DISCLOSURE].filter(Boolean).join('\n\n');
+  const link = String(body.link || '').trim();
+  const shop = String(out.shop || '').trim();
+  const verdict = String(out.verdict || '').trim();
+  const ytTitle = (String(out.ytTitle || '').trim() || `${sp.ko} 미식가 | ${title}`).slice(0, 60);
+  const ytDescription = [
+    shop ? `오늘의 가게: ${shop}` : '',
+    `오늘의 메뉴: ${title}`,
+    priceNote ? `계산: ${priceNote} (영상 제작 시점 쿠팡 판매가 기준, 가격은 변동될 수 있습니다)` : '',
+    verdict ? `판정: ${verdict}` : '',
+    '',
+    link ? `상품 보러 가기: ${link}` : '상품 보러 가기: (쿠팡 링크를 02단계에 넣으면 여기에 자동으로 들어갑니다)',
+    '',
+    COUPANG_DISCLOSURE,
+    '맛 평가는 캐릭터의 재미를 위한 연출이며, 원료·영양 정보는 공개된 자료와 구매 후기에서 확인한 내용만 담았습니다.',
+    '',
+    tags.join(' '),
+  ].join('\n').replace(/\n{3,}/g, '\n\n').trim();
+
+  return {
+    success: true,
+    format: 'diner',
+    species: spKey, speciesKo: sp.ko,
+    problem: shop ? `식당 에피소드 · ${shop}` : '식당 에피소드',
+    shop, verdict, priceNote, foodLook: foodEn,
+    sceneBlock: scene,
+    tone: String(out.tone || '낮고 담담한 독백 목소리').trim(),
+    wearable: '',
+    negativePrompt: neg,
+    caption, hashtags: tags,
+    youtube: { title: ytTitle, description: ytDescription },
     clips: clipsOut,
   };
 }
@@ -3665,6 +3929,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 .btn-2:hover{background:#F2F5F3;border-color:var(--brand)}
 .btn-sm{font-size:12.5px;font-weight:500;padding:8px 12px;border-radius:9px}
 .ref-char{margin:-4px 0 14px}
+.ref-char .sub-lb{display:block;font-size:12px;font-weight:600;color:#55605B;margin:0 0 5px}
+.fmt-hint{font-size:12.5px;line-height:1.55;color:#2F5E4F;background:#EEF4F0;border-radius:10px;padding:9px 12px;margin:0 0 13px}
+.fmt-hint:empty{display:none}
 .ref-char>summary{cursor:pointer;font-size:13px;font-weight:600;color:#3B6E52;list-style:none;padding:4px 0}
 .ref-char>summary::-webkit-details-marker{display:none}
 .ref-char>summary::before{content:'+ ';font-weight:700}
@@ -3796,8 +4063,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="f"><label for="c">품목</label>
       <select id="c">
         <option>사료·간식</option><option>산책용품</option><option>배변·위생</option>
-        <option>장난감</option><option>미용·건강</option><option>이동·하우스</option>
+        <option>장난감</option><option>미용·건강</option><option>이동·하우스</option><option>기타</option>
       </select>
+      <small>사료·간식을 고르면 03단계 영상이 <b>식당 에피소드</b>로 만들어집니다.</small>
     </div>
     <div class="f"><label for="img">상품 사진 주소</label><input id="img" type="url" placeholder="https://...jpg">
       <small>쿠팡에서 불러온 상품은 자동으로 들어갑니다.</small></div>
@@ -3810,6 +4078,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div id="insOut" style="margin-bottom:13px"></div>
     <div class="f"><label for="l">쿠팡 구매 링크</label><input id="l" type="url" placeholder="https://link.coupang.com/a/...">
       <small>쿠팡에서 불러온 상품은 수수료가 붙는 링크가 자동으로 들어갑니다.</small></div>
+    <div class="f"><label for="pr">판매가 (원)</label><input id="pr" type="number" inputmode="numeric" min="0" placeholder="38900">
+      <small>식당 에피소드의 계산 장면에 1kg당 가격으로 나옵니다. 쿠팡에서 불러오면 자동으로 들어갑니다.</small></div>
     <button class="btn btn-wide" id="go" type="button">상품 등록하기</button>
     <div class="msg" id="msg"></div>
   </section>
@@ -3819,13 +4089,20 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <p class="lead">Google Flow에 그대로 붙여넣을 영어 프롬프트와, 영상에 새길 한글 자막을 한 번에 뽑습니다.</p>
     <div class="note">AI 영상은 실제 상품 포장을 그리지 못합니다. 그래서 영상은 <b>그 상품이 필요해지는 상황</b>만 보여주고, 상품 연결은 자막과 프로필 링크가 맡습니다.</div>
     <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
-    <div class="f"><label for="pdog">강아지 설정</label>
-      <input id="pdog" type="text" value="photorealistic 3D animated style 시바견 퍼피 (검은 털 없음, 목줄·옷 없음)">
-      <small>Flow에 캐릭터 이미지를 끌어다 쓰시니 짧게만 적으세요. 외모를 길게 적으면 참고 이미지와 충돌해 오히려 다른 개가 나옵니다.</small></div>
+    <div class="fmt-hint" id="fmtHint"></div>
+    <div class="f"><label for="pdog">강아지 주인공 설정</label>
+      <input id="pdog" type="text" value="photorealistic 3D animated style 시바견 퍼피 (검은 털 없음, 목줄·옷 없음)"></div>
+    <div class="f"><label for="pcat">고양이 주인공 설정</label>
+      <input id="pcat" type="text" value="photorealistic 3D animated style 아기 고양이 (크림·화이트 털, 목걸이·옷 없음)">
+      <small>주인공은 상품 이름을 보고 자동으로 정해집니다(고양이 상품이면 고양이). Flow에 캐릭터 이미지를 끌어다 쓰시니 짧게만 적으세요.</small></div>
     <details class="ref-char"><summary>주인공 캐릭터 이미지 만드는 프롬프트</summary>
-      <p class="lead" style="margin:8px 0">Flow에서 주인공 이미지를 새로 뽑을 때 아래를 그대로 붙여넣으세요. 옷·목줄 없는 네발 꼬마 시바견이 나옵니다.</p>
-      <textarea id="charP" readonly rows="6">${CHARACTER_SHEET_PROMPT}</textarea>
-      <button class="btn btn-2 btn-sm" id="charC" type="button">복사하기</button>
+      <p class="lead" style="margin:8px 0">Flow에서 주인공 이미지를 새로 뽑을 때 그대로 붙여넣으세요. 둘 다 옷·목줄 없는 네발 꼬마입니다.</p>
+      <label class="sub-lb" for="charP">강아지 (시바견)</label>
+      <textarea id="charP" readonly rows="5">${CHARACTER_SHEET_PROMPT}</textarea>
+      <button class="btn btn-2 btn-sm" id="charC" type="button">강아지 프롬프트 복사</button>
+      <label class="sub-lb" for="charCatP" style="margin-top:12px">고양이</label>
+      <textarea id="charCatP" readonly rows="5">${CAT_SHEET_PROMPT}</textarea>
+      <button class="btn btn-2 btn-sm" id="charCatC" type="button">고양이 프롬프트 복사</button>
     </details>
     <div class="row">
       <div class="f" style="flex:1"><label for="pclips">클립 개수</label>
@@ -3896,6 +4173,12 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       <small>Flow 영상에 섞여 든 말소리나 잡음을 통째로 없앱니다.</small>
     </div>
 
+    <label class="ed-toggle" for="edCards" id="edCardsWrap" hidden>
+      <input type="checkbox" id="edCards" checked>
+      <span class="ed-box" aria-hidden="true"></span>
+      <span class="ed-tt">식당 장면 카드 넣기<small>주문 클립엔 상품 사진 메뉴판, 계산 클립엔 가격 계산서가 위쪽에 뜹니다</small></span>
+    </label>
+
     <label class="ed-toggle" for="edOutro">
       <input type="checkbox" id="edOutro" checked>
       <span class="ed-box" aria-hidden="true"></span>
@@ -3934,6 +4217,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       .then(function(r){return r.json();});
   }
   function won(n){ return (Number(n)||0).toLocaleString('ko-KR')+'원'; }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(ch){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]; }); }
   function copy(text,btn){
     var done=function(){ var t=btn.textContent; btn.textContent='복사됨'; setTimeout(function(){btn.textContent=t;},1200); };
     if(navigator.clipboard && navigator.clipboard.writeText){
@@ -3948,17 +4232,32 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 
   /* ---- 주인공 캐릭터 프롬프트 복사 ---- */
   if($('charC')) $('charC').onclick=function(){ copy($('charP').value, $('charC')); };
+  if($('charCatC')) $('charCatC').onclick=function(){ copy($('charCatP').value, $('charCatC')); };
+
+  /* ---- 이번 영상의 형식·주인공 안내 (서버 판정과 같은 규칙: speciesOf · isFoodProduct) ---- */
+  function updateHint(){
+    var title=($('pt').value||$('t').value||'').trim();
+    var cat=$('c').value||'';
+    var el=$('fmtHint'); if(!el) return;
+    if(!title){ el.textContent=''; return; }
+    var who=/고양이|캣|냥|키튼|kitten|\bcats?\b|feline/i.test(title)?'고양이':'강아지';
+    var food=/사료|간식|먹거리|식품/.test(cat);
+    el.innerHTML = food
+      ? '<b>식당 에피소드</b>로 만듭니다 · 주인공: <b>'+who+'</b><br>가게에 들어가 이 사료를 주문해 먹으며 속마음으로 평가합니다. 주문 장면엔 상품 사진 메뉴판, 계산 장면엔 가격 계산서가 붙습니다.'
+      : '<b>문제 → 해결 릴스</b>로 만듭니다 · 주인공: <b>'+who+'</b>';
+  }
+  ['c','pt','t'].forEach(function(id){ var el=$(id); if(el){ el.addEventListener('input',updateHint); el.addEventListener('change',updateHint); } });
 
   /* ---- 01 쿠팡에서 찾기 ---- */
   function guessCat(name){
     var s=(name||'');
-    if(/사료|간식|츄르|육포|캔|영양제|덴탈/.test(s)) return '사료·간식';
+    if(/사료|간식|츄르|육포|저키|트릿|캔|파우치|습식|건식|동결건조|영양제|덴탈|개껌/.test(s)) return '사료·간식';
     if(/하네스|리드|목줄|산책|가슴줄/.test(s)) return '산책용품';
-    if(/배변|패드|탈취|위생|기저귀|청소/.test(s)) return '배변·위생';
-    if(/장난감|노즈워크|공|터그|삑삑/.test(s)) return '장난감';
+    if(/배변|패드|탈취|위생|기저귀|청소|모래|화장실/.test(s)) return '배변·위생';
+    if(/장난감|노즈워크|공|터그|삑삑|스크래쳐|낚싯대|캣타워/.test(s)) return '장난감';
     if(/미용|빗|발톱|샴푸|이발|브러시/.test(s)) return '미용·건강';
     if(/이동|켄넬|하우스|방석|쿠션|가방|카시트/.test(s)) return '이동·하우스';
-    return '사료·간식';
+    return '기타';
   }
   function showFinds(rows){
     var el=$('finds'); el.textContent='';
@@ -3983,6 +4282,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       use.addEventListener('click', function(){
         $('t').value=p.title; $('img').value=p.image||''; $('l').value=p.link||'';
         $('c').value=guessCat(p.title); $('pt').value=p.title;
+        $('pr').value=p.price?String(p.price):'';
+        updateHint(); saveSoon();
         say('findMsg','아래 칸에 채웠습니다. 추천 이유만 적으면 등록할 수 있어요.','ok');
         $('w').focus();
       });
@@ -4121,11 +4422,18 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   }
   function renderPrompts(r){
     var out=$('pOut'); out.textContent='';
+    var diner = r.format==='diner';
     if(r.problem){
       var pb=document.createElement('div'); pb.className='prob';
-      pb.innerHTML='<b>이 영상이 다루는 문제</b><br>'+r.problem;
+      pb.innerHTML=(diner?'<b>오늘의 에피소드</b><br>':'<b>이 영상이 다루는 문제</b><br>')+esc(r.problem)+
+        (r.speciesKo?'<br><b>주인공:</b> '+esc(r.speciesKo)+' — Flow에서 '+esc(r.speciesKo)+' 캐릭터 이미지를 끌어다 쓰세요.':'')+
+        (diner&&r.priceNote?'<br><b>계산서:</b> '+esc(r.priceNote):'')+
+        (diner&&r.verdict?'<br><b>판정:</b> '+esc(r.verdict):'');
       out.appendChild(pb);
     }
+    // 04단계 편집기에 장면 카드(메뉴판·계산서) 위치를 넘긴다. 자막과 같은 순서(클립 번호)로 붙는다.
+    window.PET_EPISODE = { format: r.format||'reel', cards: (r.clips||[]).map(function(c){ return c.card||null; }) };
+    try{ document.dispatchEvent(new CustomEvent('pet-episode')); }catch(e){}
     var subs=(r.clips||[]).map(function(c){ return c.subtitle; }).filter(Boolean).join('\\n');
     var sc=document.getElementById('edScript');
     if(sc) sc.value=subs;
@@ -4151,11 +4459,24 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       out.appendChild(nc);
     }
 
+    if(r.youtube && r.youtube.description){
+      var yc=document.createElement('div'); yc.className='clip';
+      var yh=document.createElement('div'); yh.className='clip-hd';
+      var yn=document.createElement('span'); yn.className='clip-no'; yn.textContent='유튜브 쇼츠 제목 · 설명 (쿠팡 링크·고지 포함)';
+      yh.appendChild(yn); addCopyBtn(yh,'제목 복사',r.youtube.title); addCopyBtn(yh,'설명 복사',r.youtube.description);
+      yc.appendChild(yh);
+      var yt=document.createElement('div'); yt.className='sub'; yt.textContent='제목 · '+r.youtube.title; yc.appendChild(yt);
+      var yp=document.createElement('pre'); yp.style.fontFamily="'Noto Sans KR',sans-serif"; yp.style.fontSize='12.5px';
+      yp.textContent=r.youtube.description; yc.appendChild(yp);
+      out.appendChild(yc);
+    }
+
     var tip=document.createElement('div'); tip.className='prob';
     tip.innerHTML='<b>이미지를 먼저 만들고, 그 이미지로 영상을 뽑으세요</b><br>'+
       '클립마다 1단계 이미지 프롬프트와 2단계 영상 프롬프트가 함께 나옵니다. '+
       '스틸을 먼저 만들어 마음에 드는 장면을 고른 뒤 그 이미지에서 영상을 만들면, 강아지도 착용한 물건도 모양이 흔들리지 않습니다.'+
       (r.wearable ? '<br><b>착용 상품으로 인식했습니다.</b> 문제 클립은 맨몸, 전환 이후 클립만 착용한 모습으로 나옵니다.' : '')+
+      (diner ? '<br><b>식당 에피소드:</b> 음식 모양은 모든 클립에 같은 문장으로 고정돼 있습니다. 04단계에서 "클립에 나눠 담기"를 누르면 주문 클립엔 상품 사진 메뉴판, 계산 클립엔 가격 계산서가 자동으로 붙습니다.' : '')+
       '<br>소리는 넣지 않습니다. 위 내레이션 대본으로 목소리를 만들어 04단계에서 얹으세요. '+
       '제외 조건은 각 프롬프트 맨 아래 Avoid 줄에 이미 들어 있습니다.';
     out.appendChild(tip);
@@ -4203,7 +4524,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     $('mk').disabled=true; $('pOut').textContent='';
     say('pMsg','프롬프트를 짜는 중… 30초쯤 걸립니다.','wait');
     post('/api/video-prompts',{
-      title:title, category:$('c').value, dog:$('pdog').value.trim(),
+      title:title, category:$('c').value, dog:$('pdog').value.trim(), cat:$('pcat').value.trim(),
+      price:$('pr').value, link:$('l').value.trim(),
       clips:parseInt($('pclips').value,10), note:$('pnote').value.trim(),
       pains:lastPains, benefits:lastBenefits
     }).then(function(res){
@@ -4216,7 +4538,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 
 
   /* ---- 작업 자동 저장 (서버에 보관 → 다른 기기에서도 이어짐) ---- */
-  var SAVE_FIELDS = ['t','b','c','img','w','l','pt','pdog','pclips','pnote'];
+  var SAVE_FIELDS = ['t','b','c','img','w','l','pr','pt','pdog','pcat','pclips','pnote'];
   var lastResult = null, saveTimer = null, restoring = false;
 
   function collectWork(){
@@ -4296,6 +4618,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       var sc=document.getElementById('edScript');
       if(sc && d.script) sc.value = d.script;
       restoring = false;
+      updateHint();
       showResume(d.savedAt, false);
     }).catch(function(){});
   }
@@ -4309,7 +4632,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 (function(){
   "use strict";
   var SIZES={ sd:{w:720,h:1280}, hd:{w:1080,h:1920} };
-  var st={ clips:[], sel:0, busy:false, bars:true };
+  var st={ clips:[], sel:0, busy:false, bars:true, cards:true };
   var seq=0;
   var $=function(i){ return document.getElementById(i); };
   var pv=$('edPv'), pvx=pv.getContext('2d'), prevV=null;
@@ -4376,7 +4699,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       drawCover(pvx,v,pv.width,pv.height);
       drawBars(pvx,pv.width,pv.height);
       drawSub(pvx,c.sub,pv.width,pv.height,barOf(pv.height));
+      drawCard(pvx,pv.width,pv.height,c.card,1);
     };
+    if(c.card && c.card.type==='menu') ensureCardImg();
     v.addEventListener('seeked',paint); v.addEventListener('loadeddata',paint);
     v.addEventListener('loadedmetadata',function(){ try{ v.currentTime=Math.min(0.12,(v.duration||1)/2); }catch(e){} });
     v.src=c.url;
@@ -4472,7 +4797,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var lines=$('edScript').value.split('\\n').map(function(x){ return x.trim(); }).filter(Boolean);
     if(!lines.length){ say('나눠 담을 자막이 비어 있어요.','bad'); return; }
     if(!st.clips.length){ say('클립을 먼저 넣어야 자막을 담을 수 있어요.','bad'); return; }
-    st.clips.forEach(function(c,i){ c.sub=lines[i]||''; });
+    var ep=window.PET_EPISODE, cards=(ep && ep.format==='diner' && ep.cards) || [];
+    st.clips.forEach(function(c,i){ c.sub=lines[i]||''; c.card=cards[i]||null; });
     render(); drawPreview();
     say(lines.length+'줄을 클립 '+Math.min(lines.length,st.clips.length)+'개에 담았습니다','good');
   });
@@ -4511,6 +4837,69 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     a.addEventListener('error',function(){ $('edVoiceInfo').textContent='이 파일은 읽지 못했습니다. mp3나 m4a로 넣어주세요.'; });
   });
 
+
+  // ---- 식당 에피소드 장면 카드 ----
+  var cardImg=null, cardImgUrl=null, cardImgP=null;
+  function ensureCardImg(){
+    var u=productInfo().url;
+    if(u===cardImgUrl && cardImgP) return cardImgP;   // 받는 중이면 그 약속을 그대로 돌려준다
+    cardImgUrl=u; cardImg=null;
+    cardImgP=loadProductImage(u).then(function(im){ if(cardImgUrl===u){ cardImg=im; if(!st.busy) repaintPreview(); } return im; });
+    return cardImgP;
+  }
+  function repaintPreview(){ var c=st.clips[st.sel]; if(c && c.card) drawPreview(); }
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+  }
+  function drawCard(ctx,w,h,card,t){
+    if(!st.cards || !card) return;
+    var bar=barOf(h), a=Math.min(1,Math.max(0,(t||0)/0.3));
+    ctx.save(); ctx.globalAlpha=a;
+    if(card.type==='menu'){
+      var cw=w*0.62, chh=h*0.30, cx=(w-cw)/2, cy=bar+h*0.035;
+      ctx.shadowColor='rgba(0,0,0,.28)'; ctx.shadowBlur=w*0.03; ctx.shadowOffsetY=h*0.004;
+      ctx.fillStyle='#FBF7EF'; roundRect(ctx,cx,cy,cw,chh,w*0.025); ctx.fill();
+      ctx.shadowColor='transparent';
+      ctx.strokeStyle='#5B4636'; ctx.lineWidth=Math.max(2,w*0.004); roundRect(ctx,cx+w*0.012,cy+w*0.012,cw-w*0.024,chh-w*0.024,w*0.018); ctx.stroke();
+      var fs1=Math.round(w/34);
+      ctx.fillStyle='#5B4636'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.font='700 '+fs1+"px 'Noto Sans KR', sans-serif";
+      ctx.fillText('오늘의 메뉴', w/2, cy+w*0.012+fs1*1.6);
+      var imgTop=cy+fs1*2.6, imgH=chh*0.52, imgW=cw*0.80;
+      if(cardImg && cardImg.width){
+        var sc=Math.min(imgW/cardImg.width, imgH/cardImg.height), dw=cardImg.width*sc, dh=cardImg.height*sc;
+        ctx.drawImage(cardImg,(w-dw)/2,imgTop+(imgH-dh)/2,dw,dh);
+      }
+      var title=productInfo().title, fs2=Math.round(w/30);
+      ctx.fillStyle='#22282B'; ctx.font='600 '+fs2+"px 'Noto Sans KR', sans-serif";
+      var tl=wrapFit(ctx,title,cw*0.86), ty=imgTop+imgH+fs2*1.5;
+      for(var i=0;i<tl.length;i++){ ctx.fillText(tl[i],w/2,ty); ty+=fs2*1.3; }
+    } else if(card.type==='bill' && card.text){
+      var bw=w*0.50, bh=h*0.155, bx=w-bw-w*0.05, by=bar+h*0.035;
+      ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=w*0.025; ctx.shadowOffsetY=h*0.004;
+      ctx.fillStyle='#FFFFFF'; roundRect(ctx,bx,by,bw,bh,w*0.012); ctx.fill();
+      ctx.shadowColor='transparent';
+      var pad=bw*0.09, f1=Math.round(w/36), f2=Math.round(w/22), f3=Math.round(w/48);
+      ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+      ctx.fillStyle='#55605B'; ctx.font='700 '+f1+"px 'Noto Sans KR', sans-serif";
+      ctx.fillText('계산서', bx+pad, by+f1*1.8);
+      ctx.strokeStyle='#C9C3B8'; ctx.lineWidth=Math.max(1,w*0.002); ctx.setLineDash([w*0.01,w*0.008]);
+      ctx.beginPath(); ctx.moveTo(bx+pad,by+f1*2.6); ctx.lineTo(bx+bw-pad,by+f1*2.6); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle='#22282B'; ctx.font='800 '+f2+"px 'Noto Sans KR', sans-serif";
+      var lines2=wrapFit(ctx,card.text,bw-pad*2), yy=by+f1*2.6+f2*1.3;
+      for(var j=0;j<lines2.length;j++){ ctx.fillText(lines2[j],bx+pad,yy); yy+=f2*1.2; }
+      ctx.fillStyle='#8A918D'; ctx.font='500 '+f3+"px 'Noto Sans KR', sans-serif";
+      ctx.fillText('쿠팡 판매가 기준 · 변동 가능', bx+pad, by+bh-f3*1.1);
+    }
+    ctx.restore();
+  }
+  document.addEventListener('pet-episode',function(){
+    var ep=window.PET_EPISODE, wrap=$('edCardsWrap');
+    if(wrap) wrap.hidden=!(ep && ep.format==='diner');
+  });
+  $('edCards').addEventListener('change',function(e){ st.cards=e.target.checked; drawPreview(); });
 
   // ---- 마지막에 쿠팡 상품 사진 넣기 ----
   var OUTRO_SEC = 2.6;
@@ -4607,6 +4996,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       var draw=function(){
         if(fin)return;
         drawCover(ctx,v,w,h); drawBars(ctx,w,h); drawSub(ctx,clip.sub,w,h,barOf(h));
+        drawCard(ctx,w,h,clip.card,v.currentTime||0);
         onTime(v.currentTime||0);
         if(v.ended){ finish(); return; }
         raf=requestAnimationFrame(draw);
@@ -4629,7 +5019,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     $('edGo').disabled=on||st.clips.length===0;
     $('edPick').disabled=on; $('edSpread').disabled=on; $('edClear').disabled=on; $('edBars').disabled=on;
     $('edVoice').disabled=on; $('edBg').disabled=on;
-    $('edMusic').disabled=on; $('edMusicVol').disabled=on; $('edOutro').disabled=on;
+    $('edMusic').disabled=on; $('edMusicVol').disabled=on; $('edOutro').disabled=on; $('edCards').disabled=on;
     Array.prototype.forEach.call(document.querySelectorAll('input[name=edq]'),function(el){ el.disabled=on; });
   }
   function stamp(){
@@ -4701,7 +5091,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       var useOutro=$('edOutro').checked;
       var prod=productInfo();
       var outroImgP = useOutro ? loadProductImage(prod.url) : Promise.resolve(null);
-      var chain=Promise.resolve();
+      var needMenu = st.cards && st.clips.some(function(c){ return c.card && c.card.type==='menu'; });
+      var chain = needMenu ? ensureCardImg().then(function(){}) : Promise.resolve();
       st.clips.forEach(function(clip,idx){
         chain=chain.then(function(){
           say('이어 붙이는 중 · '+(idx+1)+'/'+st.clips.length);
