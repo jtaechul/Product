@@ -1,0 +1,41 @@
+{
+  "id": "14_storyboard_12",
+  "kind": "gen_images",
+  "purpose": "v3 12컷 스토리보드 — 운영자 확정(같은 장면 반복 금지 → 한 컷 = 한 장면). 4K 한 장 4열×3줄(전체 3:4 = 9:16 칸 12개), 칸당 약 720p급. 틀린 칸만 개별 재생성.",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "grid12",
+      "aspect": "3:4",
+      "size": "4K",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/08_storyboard_v2/s02.jpg",
+        "out/08_storyboard_v2/s06.jpg"
+      ],
+      "split": {
+        "rows": 3,
+        "cols": 4,
+        "names": [
+          "p01",
+          "p02",
+          "p03",
+          "p04",
+          "p05",
+          "p06",
+          "p07",
+          "p08",
+          "p09",
+          "p10",
+          "p11",
+          "p12"
+        ]
+      },
+      "prompt": "Create ONE image that is a clean grid of TWELVE separate, equal-sized vertical 9:16 photographs arranged in 3 rows x 4 columns, separated by thin plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described below. Shared look for all panels: handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Everything except the giant isopod is a deliberately rough, simple, hand-made model (chunky clay, wood, foam, paper textures). The giant isopod must match the attached replica and real reference images exactly and be highly detailed and identical in every panel: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, seven pairs of thin legs, spiny fan-shaped tail plate, FLAT dark triangular compound eyes at the front corners of the head (never round or bulging). The isopod is about 40 cm long in real life; never place it next to boats, people or furniture that would make it look giant. Keep the upper quarter of every panel calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no watermark in any panel. No human hands or real people anywhere.\n\nPANEL 1 (row1-left): an old sea chart spread on a dark wooden desk with a brass compass and a lit candle; the chart shows only coastlines, a compass rose and faint grid lines. On the sea area sits a small rough 19th-century rowing fishing boat model with two tiny fishermen figures lowering a rope net into a small dark hole in the chart where black water glimmers. High three-quarter view. The isopod does NOT appear.\nPANEL 2 (row1-2nd): extreme close-up of the rope net being hauled up out of the dark water hole; through the wet mesh only a glimpse of pale lilac armoured segments and the edge of a spiny tail plate is visible, most of the animal hidden. Only the net and the water fill the frame (no boat, no people in this panel).\nPANEL 3 (row1-3rd): a cluttered scientist's study desk: a brass magnifying glass hovers over the giant isopod lying on a wooden specimen tray; in front of the tray two small, deliberately crude clay models stand side by side — a round grey pill bug curled half into a ball, and a flat brownish sea slater (Ligia) with long legs. Open sketchbook with pencil drawings (no writing).\nPANEL 4 (row1-right): straight top-down flat lay on pale grey paper: the giant isopod lying straight next to a vintage cloth tape measure with blank tick marks only (NO numbers), a few steel pins scattered. Clean, clinical.\nPANEL 5 (row2-left): full-frame deep-sea floor, the giant isopod alone, facing the camera at its own eye level, a single soft light beam from above, fine marine snow drifting, dark blue-grey sediment. Heroic reveal portrait. No borders, no box.\nPANEL 6 (row2-2nd): a tall rectangular cross-section slice of ocean shown as a handmade model: sunlit pale water at the top fading layer by layer through blue into black, and at the very bottom a thin seafloor layer where the small giant isopod rests. Side view of the whole slice on a dark background.\nPANEL 7 (row2-3rd): wide low view of a dark seafloor: a rough, simple hand-made whale skeleton model lies on the sediment and six giant isopods crawl over and around the bones. Only bones, sediment and isopods (no people, no boats).\nPANEL 8 (row2-right): top-down view into a roofless dollhouse-style aquarium backroom model: metal shelves with buckets, coiled hoses, a small glass tank in the middle with the giant isopod on sand; a long pair of metal tongs enters from the top edge holding a small silver fish above the water. The tongs' holder is out of frame — NO hands, NO people.\nPANEL 9 (row3-left): eye-level close-up through the glass of that tank: the giant isopod grips a small silver fish with its front legs and eats it. Calm, not gruesome. Sand, glass edge, soft light.\nPANEL 10 (row3-2nd): night, dark room: the same glass tank lit faintly, the giant isopod completely motionless on the sand; around the tank, blank torn-off paper calendar pages (NO numbers or writing) float and fall slowly through the air.\nPANEL 11 (row3-3rd): the giant isopod specimen lying still on dark velvet cloth under a single soft spotlight, surrounded by darkness, respectful museum-like mood. No tools, no dissection, no people.\nPANEL 12 (row3-right): ending: a rough-edged cross-section chunk of deep ocean floating on a black background (like a slice cut out of the sea, with rocky seabed layers at its sides — NOT a glass tank, no glass walls): the giant isopod rests on its seabed ledge; far below in deeper black water three faint, blurry, unidentifiable dark silhouettes drift. Mysterious.\n\nMatch the rendering, lighting and materials of the attached earlier storyboard panels."
+    }
+  ]
+}
