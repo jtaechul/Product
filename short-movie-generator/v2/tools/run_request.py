@@ -213,16 +213,19 @@ def gen_video(req: dict, pilot: Path, out: Path) -> dict:
         end = _fit_9x16(pilot / it["end"], out / f"{it['name']}_end.jpg") if it.get("end") else None
         rec = {"name": it["name"], "model": model, "duration_s": it.get("duration", 4), "attempts": []}
 
+        # ★Veo 3.1 Lite는 negativePrompt 설정을 400으로 거절한다(실측 2026-09-27) → 프롬프트 문장에 합친다
+        neg = it.get("negative_prompt") or req.get("negative_prompt")
+        prompt = it["prompt"] + (f" Avoid: {neg}." if neg else "")
+
         def run(with_end: bool):
             cfg = dict(aspect_ratio="9:16", resolution=it.get("resolution", "720p"),
                        duration_seconds=int(it.get("duration", 4)), number_of_videos=1)
-            if it.get("negative_prompt") or req.get("negative_prompt"):
-                cfg["negative_prompt"] = it.get("negative_prompt") or req["negative_prompt"]
+
             if with_end:
                 cfg["last_frame"] = types.Image(image_bytes=end.read_bytes(), mime_type="image/jpeg")
             t0 = time.time()
             op = client.models.generate_videos(
-                model=model, prompt=it["prompt"],
+                model=model, prompt=prompt,
                 image=types.Image(image_bytes=start.read_bytes(), mime_type="image/jpeg"),
                 config=types.GenerateVideosConfig(**cfg))
             while not op.done:

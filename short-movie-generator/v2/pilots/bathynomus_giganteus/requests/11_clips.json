@@ -132,5 +132,6 @@
       "prompt": "Handcrafted miniature diorama, tilt-shift shallow depth of field, soft practical lighting, stop-motion-like gentle movement. The giant isopod keeps its exact shape: pale lilac segmented armored shell, flat triangular eyes, short antennae, seven pairs of legs, fan tail — never changes anatomy or size. Slow pull-back from the ocean cross-section box. The giant isopod rests on its seafloor layer; in the black deeper water below, three faint dark silhouettes drift slowly and remain unidentifiable. Mysterious, calm. Keep every object's shape, material and scale unchanged. No text, no letters, no new creatures.",
       "start": "out/08_storyboard_v2/s10.jpg"
     }
-  ]
+  ],
+  "retry_note": "1차: negativePrompt 미지원 400으로 16개 전부 거절(생성 없음) → 금지 항목을 프롬프트 문장에 합쳐 재실행"
 }
