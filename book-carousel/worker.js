@@ -3325,7 +3325,7 @@ async function handleVideoPrompts(env, body) {
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
     .filter(Boolean);
   const pains = pick(body.pains).slice(0, 4);
-  const benefits = pick(body.benefits).slice(0, 5);
+  const benefits = adSafeFacts(pick(body.benefits)).slice(0, 5);
 
   const user = `상품: ${title}
 품목: ${category || '반려동물 용품'}
@@ -3462,6 +3462,11 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
 // 주인공이 작은 가게에 들어가 그 사료를 주문해 먹으며 속마음으로 담담하게 평가한다.
 // 입장 → 주문(편집에서 상품 사진 메뉴판) → 서빙 → 시식 → 계산(편집에서 1kg당 가격 계산서) → 퇴장.
 
+// 구매 후기에 흔한 '먹이고 나서 몸이 좋아졌다'류는 광고 문구로 쓰면 사료관리법·표시광고 위반 소지가 있다
+// (질병·증상의 예방·개선 효능 표시 금지). 영상 대본 재료에서는 빼고, 02단계 화면에는 그대로 보여준다.
+const HEALTH_CLAIM = /구토|설사|변비|변\s?냄새|변을|변이|피부|털\s?(빠짐|날림)|눈물\s?자국|치석|구취|입\s?냄새|알러지|알레르기|관절|비만|질병|치료|개선|완화|예방|면역|증상/;
+function adSafeFacts(list) { return (list || []).filter(x => !HEALTH_CLAIM.test(String(x))); }
+
 // 품목이 사료·간식이면 식당 에피소드. 품목이 비어 있으면 상품명으로 판단한다.
 function isFoodProduct(category, title) {
   const c = String(category || '');
@@ -3549,15 +3554,24 @@ function dinerSystem(sp) {
 - exit: 가게를 나서다 문 앞에서 한 번 뒤돌아본다.
 
 [속마음 대사(line) — 내레이션이자 자막. 둘은 같은 문장이다]
-- 한국어 26자 이내, 반말 독백. 느낌표·감탄사·의성어 금지. 설명하지 말고 판정하고 해부한다.
-- 맛 표현은 구체적이고 냉철하게: 향(고소함·비린 정도·첫 냄새), 식감(바삭함·단단함·부서지는 방식),
-  알갱이 크기와 모양, 기름기, 뒷맛. 이것은 주인공의 주관적 평이므로 자유롭게 쓴다.
-- 사실 정보(원료·영양 성분·연령·품종 적합성)는 [확인된 정보]와 상품명에 있는 것만 쓴다. 없으면 절대 쓰지 마라.
-- 병이 낫는다·개선된다 같은 효능 주장, 다른 브랜드 언급·비교는 금지.
+⭐ 이 영상의 재미는 '미식가의 냉철한 감각 묘사'다. 후기 요약문을 쓰면 실패다.
+- **한국어 22자 이내**(공백 포함), 짧게 끊는다. 두 문장이면 각각 아주 짧게. 반말 독백.
+- 느낌표·감탄사·의성어 금지. 설명하지 말고 판정하고 해부한다. 끝은 "~다", "~군", "~지".
+- serve·taste 대사는 **지금 이 순간 입과 코로 느끼는 것만** 쓴다:
+  첫 냄새, 알갱이 크기·모양, 씹을 때 부서지는 방식, 단단함, 기름기, 입안에 남는 뒷맛.
+  먹은 뒤 며칠이 지나야 알 수 있는 일(변·털·몸 상태·건강 변화)은 절대 쓰지 마라. 식탁에서는 알 수 없다.
+- 사실 정보(원료·영양 성분·연령·품종 적합성)는 [확인된 정보]와 상품명에 있는 것만, **영상 전체에서 한 번까지**.
+- 병·증상이 낫는다·줄어든다 같은 효능 주장, 다른 브랜드 언급·비교는 금지.
 - 상품명·브랜드명은 말하지 않는다(메뉴판 카드가 보여준다).
-- 역할별: enter=오늘 이 가게에 온 이유나 허기의 선언 / order=메뉴를 고르는 속마음 / serve=첫인상 /
-  taste=감각 해부 또는 확인된 원료·영양 확인 / bill=가격 판정 / exit=한줄평과 재방문 의사.
-- bill은 [가격]이 주어지면 그 숫자를 그대로만 쓰고, 주어지지 않으면 숫자를 쓰지 마라.
+- 역할별: enter=허기나 오늘의 기분을 툭 던진다 / order=메뉴 앞에서의 짧은 결단 / serve=첫 냄새와 생김새 /
+  taste=식감·향·뒷맛 해부(클립마다 다른 감각) / bill=가격 판정 / exit=한줄평과 재방문 의사.
+- bill은 [가격]이 주어지면 그 숫자를 그대로 쓰고, 주어지지 않으면 숫자를 쓰지 마라.
+
+[말투 감 잡기 — 사람 음식 예시다. 말투만 보고, 문장은 절대 가져오지 마라]
+  (라멘) "국물이 먼저 온다. 짠맛이 늦게 도착한다"
+  (돈가스) "튀김옷이 조용하다. 고기가 할 말이 많군"
+  (계산) "이 값에 이 정직함이면 남는 장사다"
+  (퇴장) "다음에도 이 자리다. 굳이 말은 안 한다"
 
 반드시 JSON만 출력한다.`;
 }
@@ -3569,14 +3583,15 @@ async function handleDinerEpisode(env, body, ctx) {
   const foodEn = foodLookOf(title);
   const facts = (Array.isArray(body.benefits) ? body.benefits : [])
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
-    .filter(Boolean).slice(0, 6);
+    .filter(Boolean);
+  const factsSafe = adSafeFacts(facts).slice(0, 5);
 
   const user = `상품: ${title}
 품목: ${category || '사료·간식'}
 주인공: ${sp.ko} (the ${sp.noun}) — ${hero}${note ? `\n추가 주문: ${note}` : ''}
 [가격] ${priceNote || '없음 — bill 대사에 숫자를 쓰지 마라'}
 [확인된 정보 — 사실은 이 안에서만]
-${facts.length ? '- ' + facts.join('\n- ') : '(없음 — 원료·영양·연령 이야기는 하지 말고 향·식감 평만 해라)'}
+${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양·연령 이야기는 하지 말고 향·식감 평만 해라)'}
 
 클립 ${roles.length}개, 순서는 반드시 이대로: ${roles.map((r, i) => `${i + 1}.${r}`).join(' ')}
 아래 JSON만 출력:
@@ -3603,6 +3618,25 @@ ${facts.length ? '- ' + facts.join('\n- ') : '(없음 — 원료·영양·연령
   } catch (e) {
     throw new Error(`프롬프트를 만들지 못했습니다: ${e.message}`);
   }
+  // 대사가 길거나(22자 기준, 여유 4자) 식탁에서 알 수 없는 몸 상태 이야기가 섞이면 1회만 다시 묻는다.
+  const badLines = (txt) => {
+    let o; try { o = extractJson(txt); } catch { return ['(JSON 오류)']; }
+    return (Array.isArray(o.clips) ? o.clips : [])
+      .map(c => String(c.line || '').trim())
+      .filter(l => l.length > 26 || HEALTH_CLAIM.test(l));
+  };
+  const bad1 = badLines(raw);
+  if (bad1.length >= 2 || bad1.includes('(JSON 오류)')) {
+    try {
+      const retry = await callGeminiText(gk, {
+        system: dinerSystem(sp),
+        user: user + `\n\n[재작성 지시] 다음 대사가 규칙 위반이다(22자 초과 또는 몸 상태·효능 이야기). 전부 짧은 감각 묘사로 다시 써라:\n- ${bad1.join('\n- ')}`,
+        max_tokens: Math.min(3200, 900 + roles.length * 200), timeout_ms: 50000, json: true,
+      });
+      if (badLines(retry).length < bad1.length) raw = retry;
+    } catch { /* 재요청 실패 시 첫 결과 사용 */ }
+  }
+
   const out = extractJson(raw);
   const list = Array.isArray(out.clips) ? out.clips : [];
   if (!list.length) throw new Error('프롬프트를 만들지 못했습니다: 빈 결과');
