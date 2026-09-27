@@ -3460,7 +3460,7 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
 
 // ===== 식당 에피소드 (사료·간식 리뷰) =====
 // 주인공이 작은 가게에 들어가 그 사료를 주문해 먹으며 속마음으로 담담하게 평가한다.
-// 입장 → 주문(편집에서 상품 사진 메뉴판) → 서빙 → 시식 → 계산(편집에서 1kg당 가격 계산서) → 퇴장.
+// 입장 → 주문(편집에서 상품 사진 메뉴판) → 서빙 → 시식 → 계산(편집에서 100g당 가격 계산서) → 퇴장.
 
 // 구매 후기에 흔한 '먹이고 나서 몸이 좋아졌다'류는 광고 문구로 쓰면 사료관리법·표시광고 위반 소지가 있다
 // (질병·증상의 예방·개선 효능 표시 금지). 영상 대본 재료에서는 빼고, 02단계 화면에는 그대로 보여준다.
@@ -3504,15 +3504,15 @@ function packGrams(title) {
   return g >= 10 && g <= 60000 ? g : 0;
 }
 
-// 계산 장면용 단가. 1kg 이상이면 1kg당, 그보다 작으면 100g당. 10원 단위 반올림.
+// 계산 장면용 단가. 항상 100g당(사용자 확정) — 한 끼가 100g 안팎이라 체감이 쉽고,
+// 가격은 수시로 바뀌니 총액이 아니라 단가만 '약'으로 보여준다. 10원 단위 반올림.
 function unitPriceNote(price, title) {
   const won = Number(price) || 0;
   const g = packGrams(title);
   if (!won || !g) return '';
-  const per = g >= 1000 ? 1000 : 100;
-  const v = Math.round((won / g) * per / 10) * 10;
+  const v = Math.round((won / g) * 100 / 10) * 10;
   if (!v) return '';
-  return `${per === 1000 ? '1kg' : '100g'}당 약 ${v.toLocaleString('ko-KR')}원`;
+  return `100g당 약 ${v.toLocaleString('ko-KR')}원`;
 }
 
 // 클립 개수별 장면 순서(고정). 서버가 역할을 강제한다 — 모델이 순서를 흐트러뜨려도 편집 카드가 맞게 붙는다.
@@ -4113,7 +4113,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="f"><label for="l">쿠팡 구매 링크</label><input id="l" type="url" placeholder="https://link.coupang.com/a/...">
       <small>쿠팡에서 불러온 상품은 수수료가 붙는 링크가 자동으로 들어갑니다.</small></div>
     <div class="f"><label for="pr">판매가 (원)</label><input id="pr" type="number" inputmode="numeric" min="0" placeholder="38900">
-      <small>식당 에피소드의 계산 장면에 1kg당 가격으로 나옵니다. 쿠팡에서 불러오면 자동으로 들어갑니다.</small></div>
+      <small>식당 에피소드의 계산 장면에 100g당 가격으로 나옵니다. 쿠팡에서 불러오면 자동으로 들어갑니다.</small></div>
     <button class="btn btn-wide" id="go" type="button">상품 등록하기</button>
     <div class="msg" id="msg"></div>
   </section>
