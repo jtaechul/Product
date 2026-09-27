@@ -4966,6 +4966,34 @@ export default {
             result = { success: true, data: d || null };
           }
         }
+        else if (url.pathname === '/api/search-diag') {
+          // 웹검색 모델 진단: 후보 모델마다 상태·검색 사용 여부만 돌려준다(키·본문은 노출하지 않음).
+          const gk = await getGeminiKey(env);
+          const rows = [];
+          for (const m of GEMINI_SEARCH_MODELS) {
+            for (const think of [true, false]) {
+              try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${gk}`, {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    contents: [{ role: 'user', parts: [{ text: '로얄캐닌 미니 인도어 어덜트 사료 후기를 웹에서 찾아 한 줄로 요약해줘' }] }],
+                    tools: [{ google_search: {} }],
+                    generationConfig: { maxOutputTokens: 400, ...(think ? { thinkingConfig: { thinkingBudget: 0 } } : {}) },
+                  }),
+                });
+                const j = await r.json().catch(() => ({}));
+                const c = j?.candidates?.[0];
+                rows.push({ model: m, thinkOff: think, status: r.status,
+                  modelVersion: j?.modelVersion || '', finish: c?.finishReason || '',
+                  hasGrounding: !!c?.groundingMetadata, chunks: (c?.groundingMetadata?.groundingChunks || []).length,
+                  queries: c?.groundingMetadata?.webSearchQueries || [], gmKeys: Object.keys(c?.groundingMetadata || {}),
+                  textLen: (c?.content?.parts || []).map(x => x.text || '').join('').length,
+                  err: j?.error?.message ? String(j.error.message).slice(0, 140) : '' });
+              } catch (e) { rows.push({ model: m, thinkOff: think, err: String(e.message || e) }); }
+            }
+          }
+          result = { success: true, rows };
+        }
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
         else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
         else if (url.pathname === '/api/telegram-recipients') {
