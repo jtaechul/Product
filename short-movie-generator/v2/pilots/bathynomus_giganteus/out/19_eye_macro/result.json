@@ -1,0 +1,37 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "eye_macro",
+      "http": 200,
+      "file": "eye_macro.jpg",
+      "usage": {
+        "promptTokenCount": 1224,
+        "candidatesTokenCount": 1316,
+        "totalTokenCount": 2761,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 192
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 221,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "19_eye_macro.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T13:21:02Z"
+}
