@@ -1,0 +1,37 @@
+{
+  "id": "02_creature_card",
+  "kind": "gen_images",
+  "purpose": "생물 카드 — 이후 모든 키프레임·클립의 참조(칸 나누지 않은 단독 이미지 3장)",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "card_top",
+      "aspect": "1:1",
+      "refs": [
+        "out/01_fetch_refs/ref_02.jpg",
+        "out/01_fetch_refs/ref_05.jpg"
+      ],
+      "prompt": "A single hand-crafted museum-grade miniature replica of a giant deep-sea isopod (Bathynomus giganteus), photographed as a macro studio shot. The creature itself must be extremely detailed and anatomically faithful to the attached real ROV reference photos: pale lavender-lilac glossy exoskeleton with lighter whitish segment edges; an elongated oval body that is strongly arched like a dome when seen from the side; overlapping armour-like body segments across the back; a small rounded head at the front; long thin pale antennae pointing forward; thin pale jointed walking legs mostly tucked beneath the body; a broad flattened fan-shaped tail plate with paddle-like side flaps at the rear. Resin figure with subtle hand-painted texture, shallow depth of field (tilt-shift macro), warm soft studio light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans, no extra legs. View: straight top-down dorsal view of the whole body, head pointing up."
+    },
+    {
+      "name": "card_side",
+      "aspect": "1:1",
+      "refs": [
+        "out/01_fetch_refs/ref_02.jpg",
+        "out/01_fetch_refs/ref_05.jpg"
+      ],
+      "prompt": "A single hand-crafted museum-grade miniature replica of a giant deep-sea isopod (Bathynomus giganteus), photographed as a macro studio shot. The creature itself must be extremely detailed and anatomically faithful to the attached real ROV reference photos: pale lavender-lilac glossy exoskeleton with lighter whitish segment edges; an elongated oval body that is strongly arched like a dome when seen from the side; overlapping armour-like body segments across the back; a small rounded head at the front; long thin pale antennae pointing forward; thin pale jointed walking legs mostly tucked beneath the body; a broad flattened fan-shaped tail plate with paddle-like side flaps at the rear. Resin figure with subtle hand-painted texture, shallow depth of field (tilt-shift macro), warm soft studio light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans, no extra legs. View: three-quarter side view at a low camera angle, showing the arched body profile, legs and antennae."
+    },
+    {
+      "name": "card_head",
+      "aspect": "1:1",
+      "refs": [
+        "out/01_fetch_refs/ref_05.jpg"
+      ],
+      "prompt": "A single hand-crafted museum-grade miniature replica of a giant deep-sea isopod (Bathynomus giganteus), photographed as a macro studio shot. The creature itself must be extremely detailed and anatomically faithful to the attached real ROV reference photos: pale lavender-lilac glossy exoskeleton with lighter whitish segment edges; an elongated oval body that is strongly arched like a dome when seen from the side; overlapping armour-like body segments across the back; a small rounded head at the front; long thin pale antennae pointing forward; thin pale jointed walking legs mostly tucked beneath the body; a broad flattened fan-shaped tail plate with paddle-like side flaps at the rear. Resin figure with subtle hand-painted texture, shallow depth of field (tilt-shift macro), warm soft studio light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans, no extra legs. View: close-up of the head and front segments from a low front-side angle, antennae clearly visible."
+    }
+  ]
+}
