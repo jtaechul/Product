@@ -1,0 +1,100 @@
+{
+  "ok": true,
+  "items": [
+    {
+      "name": "ending",
+      "model": "gemini-omni-1.1-flash",
+      "attempts": [
+        {
+          "task": "image_to_video",
+          "ok": true,
+          "file": "ending.mp4",
+          "video_s": 7.02,
+          "wait_s": 29.0,
+          "frames": "ending_frames.jpg",
+          "usage": {
+            "total_tokens": 42952,
+            "total_input_tokens": 1252,
+            "input_tokens_by_modality": [
+              {
+                "modality": "image",
+                "tokens": 1100
+              },
+              {
+                "modality": "text",
+                "tokens": 152
+              }
+            ],
+            "total_cached_tokens": 0,
+            "total_output_tokens": 41383,
+            "output_tokens_by_modality": [
+              {
+                "modality": "video",
+                "tokens": 40544
+              }
+            ],
+            "total_tool_use_tokens": 0,
+            "total_thought_tokens": 317,
+            "raw_prompt_token": 33144,
+            "model_invocation_token_counts": [
+              {
+                "prompt_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 1952
+                  },
+                  {
+                    "modality": "image",
+                    "tokens": 1100
+                  }
+                ],
+                "candidates_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 845
+                  }
+                ],
+                "thoughts_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 317
+                  }
+                ]
+              }
+            ],
+            "non_grounding_model_invocation_token_counts": [
+              {
+                "prompt_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 1952
+                  },
+                  {
+                    "modality": "image",
+                    "tokens": 1100
+                  }
+                ],
+                "candidates_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 845
+                  }
+                ],
+                "thoughts_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 317
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "file": "ending.mp4"
+    }
+  ],
+  "request": "06_ending_clip.json",
+  "kind": "gen_omni",
+  "ran_at": "2026-09-27T06:57:59Z"
+}
