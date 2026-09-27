@@ -4977,6 +4977,21 @@ export default {
             result = { success: true, data: d || null };
           }
         }
+        else if (url.pathname === '/api/parts-diag') {
+          // 임시: 검색 응답의 parts 구조만 본다(키·본문 전문 노출 없음).
+          const gk = await getGeminiKey(env);
+          const title = String(body.title || '네오핏 강아지 에어 X 하네스 베이지');
+          const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${gk}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ systemInstruction: { parts: [{ text: INSIGHT_SYSTEM }] },
+              contents: [{ role: 'user', parts: [{ text: `상품: ${title}\n\n이 상품의 실제 구매 후기를 검색해서 JSON으로 정리하라. {"points":[{"text":"","evidence":""}]}` }] }],
+              tools: [{ google_search: {} }], generationConfig: { maxOutputTokens: 4096, temperature: 0.2 } }),
+          });
+          const j = await r.json();
+          const parts = j?.candidates?.[0]?.content?.parts || [];
+          result = { success: true, status: r.status, finish: j?.candidates?.[0]?.finishReason,
+            parts: parts.map(x => ({ keys: Object.keys(x), thought: !!x.thought, len: (x.text || '').length, head: (x.text || '').slice(0, 60), tail: (x.text || '').slice(-40) })) };
+        }
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
         else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
         else if (url.pathname === '/api/telegram-recipients') {
