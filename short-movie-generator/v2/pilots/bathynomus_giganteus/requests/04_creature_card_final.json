@@ -1,0 +1,38 @@
+{
+  "id": "04_creature_card_final",
+  "kind": "gen_images",
+  "purpose": "03 검수: 눈이 둥글고 튀어나옴 → 실제처럼 삼각형·납작하게 교정한 확정본(출처: 영어 위키 'large triangular compound eyes')",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "card_top",
+      "aspect": "1:1",
+      "refs": [
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/03_creature_card_eyes/card_top.jpg"
+      ],
+      "prompt": "A single hand-crafted museum-grade miniature replica of a giant deep-sea isopod (Bathynomus giganteus), photographed as a macro studio shot. The creature itself must be extremely detailed and anatomically faithful to the attached real ROV reference photos: pale lavender-lilac glossy exoskeleton with lighter whitish segment edges; an elongated oval body that is strongly arched like a dome when seen from the side; overlapping armour-like body segments across the back; a small rounded head at the front; long thin pale antennae pointing forward; thin pale jointed walking legs mostly tucked beneath the body; a broad flattened fan-shaped tail plate with paddle-like side flaps at the rear. Resin figure with subtle hand-painted texture, shallow depth of field (tilt-shift macro), warm soft studio light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans, no extra legs. View: straight top-down dorsal view of the whole body, head pointing up. IMPORTANT eye anatomy: a pair of large dark black-grey compound eyes set FLUSH into the front corners of the head, one on each side, widely separated. Their outline is roughly TRIANGULAR / kidney-shaped, following the curve of the head edge. They must NOT be round, NOT bulging, NOT glossy beads, NOT cartoon-like; the faceted surface is subtly visible up close. Keep every other feature exactly as in the attached previous replica image."
+    },
+    {
+      "name": "card_side",
+      "aspect": "1:1",
+      "refs": [
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/03_creature_card_eyes/card_side.jpg"
+      ],
+      "prompt": "A single hand-crafted museum-grade miniature replica of a giant deep-sea isopod (Bathynomus giganteus), photographed as a macro studio shot. The creature itself must be extremely detailed and anatomically faithful to the attached real ROV reference photos: pale lavender-lilac glossy exoskeleton with lighter whitish segment edges; an elongated oval body that is strongly arched like a dome when seen from the side; overlapping armour-like body segments across the back; a small rounded head at the front; long thin pale antennae pointing forward; thin pale jointed walking legs mostly tucked beneath the body; a broad flattened fan-shaped tail plate with paddle-like side flaps at the rear. Resin figure with subtle hand-painted texture, shallow depth of field (tilt-shift macro), warm soft studio light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans, no extra legs. View: three-quarter side view at a low camera angle, showing the arched body profile, legs and antennae. IMPORTANT eye anatomy: a pair of large dark black-grey compound eyes set FLUSH into the front corners of the head, one on each side, widely separated. Their outline is roughly TRIANGULAR / kidney-shaped, following the curve of the head edge. They must NOT be round, NOT bulging, NOT glossy beads, NOT cartoon-like; the faceted surface is subtly visible up close. Keep every other feature exactly as in the attached previous replica image."
+    },
+    {
+      "name": "card_head",
+      "aspect": "1:1",
+      "refs": [
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/03_creature_card_eyes/card_head.jpg"
+      ],
+      "prompt": "A single hand-crafted museum-grade miniature replica of a giant deep-sea isopod (Bathynomus giganteus), photographed as a macro studio shot. The creature itself must be extremely detailed and anatomically faithful to the attached real ROV reference photos: pale lavender-lilac glossy exoskeleton with lighter whitish segment edges; an elongated oval body that is strongly arched like a dome when seen from the side; overlapping armour-like body segments across the back; a small rounded head at the front; long thin pale antennae pointing forward; thin pale jointed walking legs mostly tucked beneath the body; a broad flattened fan-shaped tail plate with paddle-like side flaps at the rear. Resin figure with subtle hand-painted texture, shallow depth of field (tilt-shift macro), warm soft studio light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans, no extra legs. View: close-up of the head and front segments from a low front-side angle, antennae clearly visible. IMPORTANT eye anatomy: a pair of large dark black-grey compound eyes set FLUSH into the front corners of the head, one on each side, widely separated. Their outline is roughly TRIANGULAR / kidney-shaped, following the curve of the head edge. They must NOT be round, NOT bulging, NOT glossy beads, NOT cartoon-like; the faceted surface is subtly visible up close. Keep every other feature exactly as in the attached previous replica image."
+    }
+  ]
+}
