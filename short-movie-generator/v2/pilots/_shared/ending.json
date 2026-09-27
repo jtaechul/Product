@@ -7,7 +7,7 @@
     "pinned_comment": "次に見たい深海の生き物は？"
   },
   "sec": 6,
-  "status": "★공용 엔딩 최종 — approved/ending_final.mp4",
+  "status": "★공용 엔딩 최종 + 편별 마무리 멘트 — 대왕구족충 적용본 bathynomus_giganteus/out/17_ending/ending_bathynomus.mp4 (11.1초)",
   "keyframe": "v2/pilots/_shared/out/07_ending_chart_full/chart_full.jpg (위쪽까지 꽉 찬 도면)",
   "review": "a·b·c는 그림자가 물고기·고래 모양으로 알아볼 수 있어 탈락(특정 생물 암시 금지). d는 그림자가 형체 없이 흐릿 + 양옆 암반 단면 → 채택 / 운영자 결정: B안 채택 + 백과사전 느낌 배경 요청(2026-09-27)",
   "design": {
@@ -95,5 +95,11 @@
     "sync": "자막 3줄은 각 조각을 읽기 시작하는 시각(7.42/8.36/9.84초)에 써짐 — 실측 발화 7.42~9.53·9.87~11.22초"
   },
   "edit_tool": "v2/tools/ending_overlay.py <확정엔딩.mp4> <생물 일본어 이름> <나레이션.wav> <출력.mp4> — 심해 정지 구간을 나레이션 길이만큼 천천히 늘리고 손글씨(밝은 종이색+어두운 테두리)·나레이션을 입힘",
-  "final_file": "v2/pilots/_shared/approved/ending_final.mp4 (11.1초 · 모든 편 공용 — 생물 이름 없음)"
+  "final_file": "v2/pilots/_shared/approved/ending_final.mp4 (11.1초 · 모든 편 공용 — 생물 이름 없음)",
+  "recap": {
+    "rule": "엔딩 첫머리(0.4초~) 편별 마무리 멘트 + 본편과 같은 하단 나레이션 자막(subtitle_style)",
+    "template_jp": "今回探った深海の生き物は、{name}でした。",
+    "ko": "이번에 탐구해 본 심해 생물은 {name}였습니다.",
+    "example": "v2/pilots/bathynomus_giganteus/out/20_recap_tts/recap.wav (4.0초)"
+  }
 }
