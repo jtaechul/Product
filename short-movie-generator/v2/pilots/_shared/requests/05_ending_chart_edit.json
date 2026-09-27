@@ -1,0 +1,19 @@
+{
+  "id": "05_ending_chart_edit",
+  "kind": "gen_images",
+  "purpose": "04 실패(격자 무너짐 + 큐브가 흐릿하게 남음) → 격자 없이 한 장 편집으로 큐브만 지우기",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "chart_final",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/03_ending_chart/chart_b.jpg"
+      ],
+      "prompt": "Edit the attached image. Remove the blue cube model and its shadow completely, and repaint that area of the parchment so the chart continues naturally: engraved sepia ink wave lines across the open sea and gentle depth-contour rings WITHOUT any numbers, matching the existing line-art style exactly. Keep everything else exactly as it is: the scroll, border, compass roses, depth ruler with tick marks only, empty label frame, red wax seal, the small engraved sailing ship, lighting and colours. Keep the upper 35% of the parchment clean EMPTY blank paper (only the border line). The result must be a single flat antique chart with NO 3D objects on it. ABSOLUTELY NO letters, words, numbers or pseudo-writing anywhere. No people, no hands, no watermark."
+    }
+  ]
+}
