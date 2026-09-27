@@ -1,0 +1,37 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "chart_full",
+      "http": 200,
+      "file": "chart_full.jpg",
+      "usage": {
+        "promptTokenCount": 492,
+        "candidatesTokenCount": 1338,
+        "totalTokenCount": 2036,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 234
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 258
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 206,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "07_ending_chart_full.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T07:05:03Z"
+}
