@@ -1,0 +1,29 @@
+{
+  "id": "03_ending_chart",
+  "kind": "gen_images",
+  "purpose": "운영자 확정: 공용 엔딩 = B안(두루마리 해도) 재생성 — 글자·숫자 제거, 백과사전 도판 장식 보강, 도면에 배 그림 추가, 위쪽 35%는 손글씨 자리로 비움. 4안 중 선택.",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "chart4",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/02_ending_bg/bg_b.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "chart_a",
+          "chart_b",
+          "chart_c",
+          "chart_d"
+        ]
+      },
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters. All four panels are small variations of the SAME composition (only the ship position and ornament details differ). Base it on the attached image: an unrolled antique parchment sea chart scroll on a dark background, with the same blue ocean cross-section cube model standing on it (keep the cube's shape, rocky sides, water surface and lighting exactly). Make the three silhouettes inside the cube blurrier and featureless so no specific animal can be recognised. CHART CONTENT (engraved sepia ink line-art, old natural-history encyclopedia plate style): wavy coastlines, gentle engraved wave lines across the sea areas, depth-contour lines drawn WITHOUT any numbers, two ornate compass roses, a decorative double-ruled border with corner flourishes, a small empty specimen-label frame, a vertical depth ruler with tick marks only, and a red wax seal near a lower corner. Add ONE small engraved line-art sailing ship drawn in the ink style on the sea area in the LOWER half of the chart (a drawing on the paper, not a 3D model). LAYOUT RULE: the upper 35% of the parchment must be left as clean, EMPTY blank paper (only the border line) — no drawings, no contours, no ship, no ornaments there — reserved for handwriting added later. The cube sits in the middle-lower part. ABSOLUTELY NO letters, words, numbers, labels or pseudo-writing anywhere on the chart. Warm dim lighting, handcrafted miniature photography, tilt-shift shallow depth of field. No people, no hands, no logos, no watermark."
+    }
+  ]
+}
