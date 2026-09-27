@@ -1,0 +1,93 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "s05",
+      "http": 200,
+      "file": "s05.jpg",
+      "usage": {
+        "promptTokenCount": 1611,
+        "candidatesTokenCount": 1448,
+        "totalTokenCount": 3246,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 321
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1290
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 187,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s07",
+      "http": 200,
+      "file": "s07.jpg",
+      "usage": {
+        "promptTokenCount": 1604,
+        "candidatesTokenCount": 1423,
+        "totalTokenCount": 3236,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 314
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1290
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 209,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s09",
+      "http": 200,
+      "file": "s09.jpg",
+      "usage": {
+        "promptTokenCount": 1601,
+        "candidatesTokenCount": 1443,
+        "totalTokenCount": 3186,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 311
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1290
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 142,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "07_storyboard_fix2.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T04:55:51Z"
+}
