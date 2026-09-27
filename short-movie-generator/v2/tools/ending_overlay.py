@@ -2,7 +2,8 @@
 
 영상(도면 + 파도·배 미세 일렁임)은 모든 편 공용 1개이고, 여기서 **그 편 생물 이름만 바꿔** 글씨를 입힌다.
 - 글씨는 화면 가운데. 줄마다 왼쪽→오른쪽으로 먹이 번지듯 써진다(AI가 쓴 글씨 금지 — 뭉개짐).
-- 파도 선과 겹쳐도 읽히게 글씨 뒤에만 종이색을 옅게 깐다.
+- 글씨 뒤 흐림 없음 — 얇은 종이색 테두리로 잉크 선 위에서도 읽히게 한다(운영자 확정).
+- 앞 1초는 양피지가 좌우로 펼쳐지는 편집 효과.
 - 번호(No.)는 쓰지 않는다. 음악 없음(소리는 나레이션만 — 여기서는 영상만 만든다).
 
 사용: python ending_overlay.py <공용엔딩.mp4> <생물 일본어 이름> <출력.mp4>
@@ -14,23 +15,25 @@ import sys
 import tempfile
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 FONT = Path(__file__).resolve().parents[2] / "vendor" / "fonts" / "YujiSyuku-Regular.ttf"
 W, H, FPS = 720, 1280, 24
 INK = (52, 36, 22)
 PAPER = (232, 214, 184)
 
-# (문구, 글자 크기, 쓰기 시작 초, 쓰기 끝 초) — {name} 자리에 그 편 생물 이름
+# (문구, 글자 크기, 쓰기 시작 초, 쓰기 끝 초) — {name} 자리에 그 편 생물 이름. 시간은 양피지 펼침(INTRO_S) 포함 전체 기준.
+# ★'次のページは…？' 줄 삭제 · 줄 간격 좁힘 · 글씨 뒤 흐림 없음(운영자 확정 2026-09-27)
 LINES = [
-    ("深海図鑑", 58, 0.3, 1.1),
-    ("{name}", 66, 1.2, 2.4),
-    ("次のページは…？", 46, 2.6, 3.5),
-    ("あなたが見てみたい", 46, 3.7, 4.6),
-    ("深海の生き物は？", 46, 4.6, 5.4),
-    ("コメントで教えてください", 42, 5.6, 6.6),
+    ("深海図鑑", 56, 1.2, 1.8),
+    ("{name}", 64, 1.9, 2.8),
+    ("あなたが見てみたい", 46, 3.0, 3.7),
+    ("深海の生き物は？", 46, 3.7, 4.4),
+    ("コメントで教えてください", 42, 4.6, 5.4),
 ]
-GAP = [0, 26, 44, 20, 8, 26]           # 줄 앞 간격(px) — 제목·이름 뒤를 조금 띄운다
+GAP = [0, 6, 18, 2, 12]                 # 줄 앞 간격(px)
+INTRO_S = 1.0                           # 앞 1초: 양피지가 가운데에서 좌우로 빠르게 펼쳐짐(편집 효과 — AI에 맡기면 종이가 녹아내림)
+STROKE = 3                              # 글씨 테두리(종이색) — 잉크 선 위에서도 또렷하게
 MAX_W = W - 120
 
 
@@ -58,19 +61,8 @@ def layout(name: str):
     return rows, top, top + y
 
 
-def _wash(top: int, bottom: int) -> Image.Image:
-    """글씨 뒤 종이색 옅은 번짐(가장자리 부드럽게)."""
-    m = Image.new("L", (W, H), 0)
-    ImageDraw.Draw(m).rounded_rectangle([40, top - 40, W - 40, bottom + 40], radius=60, fill=110)
-    m = m.filter(ImageFilter.GaussianBlur(28))
-    im = Image.new("RGBA", (W, H), PAPER + (0,))
-    im.putalpha(m)
-    return im
-
-
 def render_frames(name: str, dur: float, out_dir: Path) -> int:
-    rows, top, bottom = layout(name)
-    wash = _wash(top, bottom)
+    rows, _top, _bottom = layout(name)
     n = int(round(dur * FPS))
     # 줄별 완성 이미지(잉크) 미리 그리기
     ink = []
@@ -78,21 +70,17 @@ def render_frames(name: str, dur: float, out_dir: Path) -> int:
         im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         tw = r["font"].getlength(r["text"])
         x = int((W - tw) / 2)
-        ImageDraw.Draw(im).text((x, r["y"]), r["text"], font=r["font"], fill=INK + (255,))
+        ImageDraw.Draw(im).text((x, r["y"]), r["text"], font=r["font"], fill=INK + (255,),
+                                stroke_width=STROKE, stroke_fill=PAPER + (255,))
         ink.append((im, x, int(tw)))
     for i in range(n):
         t = i / FPS
         fr = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        wa = min(1.0, t / 0.4)                  # 종이 번짐은 0.4초에 걸쳐 나타남
-        if wa > 0:
-            w2 = wash.copy()
-            w2.putalpha(wash.getchannel("A").point(lambda v, k=wa: int(v * k)))
-            fr = Image.alpha_composite(fr, w2)
         for r, (im, x, tw) in zip(rows, ink):
             if t < r["t0"]:
                 continue
             p = 1.0 if t >= r["t1"] else (t - r["t0"]) / (r["t1"] - r["t0"])
-            reveal = int(x + tw * p) + 6
+            reveal = int(x - STROKE + (tw + 2 * STROKE) * p) + 6
             mask = Image.new("L", (W, H), 0)
             md = ImageDraw.Draw(mask)
             md.rectangle([0, 0, reveal, H], fill=255)
@@ -105,14 +93,49 @@ def render_frames(name: str, dur: float, out_dir: Path) -> int:
     return n
 
 
+def _ease(x: float) -> float:
+    return 1 - (1 - x) ** 3
+
+
+def render_intro(first_frame: Path, out_dir: Path) -> int:
+    """양피지 펼침: 첫 프레임을 가운데에서 좌우로 열고, 열리는 양 끝에 말린 두루마리 봉을 그린다."""
+    base = Image.open(first_frame).convert("RGB").resize((W, H))
+    n = int(round(INTRO_S * FPS))
+    for i in range(n):
+        p = _ease((i + 1) / n)
+        half = max(6, int(W / 2 * p))
+        fr = Image.new("RGB", (W, H), (8, 6, 5))
+        l, r = W // 2 - half, W // 2 + half
+        fr.paste(base.crop((l, 0, r, H)), (l, 0))
+        d = ImageDraw.Draw(fr)
+        if p < 0.999:
+            for cx in (l, r):                  # 말린 종이 봉(음영 원기둥)
+                for k in range(-14, 15):
+                    shade = int(200 - abs(k) * 7)
+                    d.line([(cx + k, int(H * 0.04)), (cx + k, int(H * 0.96))],
+                           fill=(shade, int(shade * 0.86), int(shade * 0.66)))
+        fr.save(out_dir / f"i{i:04d}.png")
+    return n
+
+
 def main(src: str, name: str, dst: str) -> None:
-    dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
-                                src], capture_output=True, text=True, check=True).stdout.strip())
     with tempfile.TemporaryDirectory() as td:
-        render_frames(name, dur, Path(td))
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", src, "-framerate", str(FPS),
-                        "-i", str(Path(td) / "o%04d.png"), "-filter_complex",
-                        f"[0:v]scale={W}:{H},setsar=1,fps={FPS}[b];[b][1:v]overlay=0:0:shortest=1[v]",
+        t = Path(td)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", src, "-vf", f"scale={W}:{H},setsar=1,fps={FPS}",
+                        "-an", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(t / "body.mp4")], check=True)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(t / "body.mp4"), "-frames:v", "1",
+                        str(t / "first.png")], check=True)
+        render_intro(t / "first.png", t)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS), "-i", str(t / "i%04d.png"),
+                        "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(t / "intro.mp4")], check=True)
+        (t / "list.txt").write_text(f"file '{t / 'intro.mp4'}'\nfile '{t / 'body.mp4'}'\n")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(t / "list.txt"),
+                        "-c", "copy", str(t / "full.mp4")], check=True)
+        dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
+                                    str(t / "full.mp4")], capture_output=True, text=True, check=True).stdout.strip())
+        render_frames(name, dur, t)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(t / "full.mp4"), "-framerate", str(FPS),
+                        "-i", str(t / "o%04d.png"), "-filter_complex", "[0:v][1:v]overlay=0:0:shortest=1[v]",
                         "-map", "[v]", "-an", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", dst],
                        check=True)
 
