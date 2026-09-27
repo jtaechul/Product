@@ -104,6 +104,16 @@ def split_grid(img_path: Path, spec: dict, out: Path) -> list[str]:
             else:                                        # 경계가 안 보이면 등분
                 edges += [c, c]
         edges.append(length)
+        # ★격자 바깥 흰 테두리도 잘라낸다(실사고: 바깥 칸 가장자리에 흰 줄 약 10px이 남아
+        #   영상 AI가 첫 0.25~1초 동안 화면 왼쪽/오른쪽에 흰 선으로 옮겨 그렸다).
+        lim = int(length * 0.08)
+        a = 0
+        while a < lim and line_mean(a, axis) > 200:
+            a += 1
+        b = length
+        while length - b < lim and line_mean(b - 1, axis) > 200:
+            b -= 1
+        edges[0], edges[-1] = a, b
         return [(edges[2 * i], edges[2 * i + 1]) for i in range(n)]
 
     xs, ys = bands(cols, W, "x"), bands(rows, H, "y")

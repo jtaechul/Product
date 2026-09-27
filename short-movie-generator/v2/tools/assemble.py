@@ -22,6 +22,7 @@ W, H, FPS = 720, 1280, 24
 ROOT = Path(__file__).resolve().parents[2]
 FONT_BOLD = ROOT / "vendor" / "fonts" / "NotoSansJP-VF.ttf"
 RED = (220, 38, 38)
+EDGE = 12                      # 좌우 가장자리 여유 크롭(px)
 
 # 특징 줌인 인서트: 컷 번호 → (인서트 이미지, 시작 초, 빨간 원 중심 x,y(0~1), 반지름(0~1))
 INSERTS = {4: ("out/19_eye_macro/eye_macro.jpg", 5.0, (0.40, 0.50), 0.36)}
@@ -99,7 +100,10 @@ def _place_slices(src: Path, slices: list[tuple], total: float, out: Path) -> No
 def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: Path) -> Path:
     """한 컷: 9:16 맞춤 · 무음 · 길이 맞춤(짧으면 마지막 장면 유지) · 인서트·주석."""
     base = t / f"cut{n}_base.mp4"
-    _run(["-i", str(clip), "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1,fps={FPS},"
+    # ★좌우 가장자리 12px씩 여유 크롭(약 3% 확대) — 시작 이미지의 흰 격자 테두리가 영상 첫머리에
+    #   흰 선으로 남는 사고 방지(실측 최대 9px). 모든 컷에 같게 적용해 컷끼리 크기 차이가 없다.
+    _run(["-i", str(clip), "-vf", f"scale={W + 2 * EDGE}:{(H + 2 * EDGE * H // W) // 2 * 2}:force_original_aspect_ratio=increase,"
+          f"crop={W}:{H},setsar=1,fps={FPS},"
           f"tpad=stop_mode=clone:stop_duration={sec}", "-t", f"{sec}", "-an", "-c:v", "libx264", "-crf", "16",
           "-pix_fmt", "yuv420p", str(base)])
     cur = base
