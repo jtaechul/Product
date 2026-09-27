@@ -1,0 +1,29 @@
+{
+  "id": "02_ending_bg",
+  "kind": "gen_images",
+  "purpose": "운영자 확정: 공용 엔딩은 B안 모형 + 백과사전 느낌 배경. 배경 4안 중 운영자 선택. (그림자는 특정 생물로 보이지 않게 조금 더 흐리게)",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "ending_bg4",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/01_ending_keyframe/end_b.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "bg_a",
+          "bg_b",
+          "bg_c",
+          "bg_d"
+        ]
+      },
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters. In EVERY panel, keep the attached ocean cross-section cube model EXACTLY as it is (same shape, rocky sides, water surface, camera angle, lighting on the cube); only make the three dark silhouettes inside it a little blurrier and more featureless so no specific animal can be recognised. Replace the plain black background with an 'old natural-history encyclopedia' setting, one idea per panel: TOP-LEFT: the cube stands on an open antique encyclopedia whose pages show faded engraved ocean-depth diagrams and wave line-art; TOP-RIGHT: behind the cube, a large aged parchment plate with engraved depth-contour lines and a compass rose, like a vintage oceanographic chart; BOTTOM-LEFT: the cube on a dark wooden museum desk in front of a wall of old leather-bound encyclopedia volumes with gilt spines (spines plain, no titles); BOTTOM-RIGHT: the cube in front of an antique scientific illustration board with faint engraved seafloor cross-section drawings and ruled borders. All book pages, plates and charts must be text-free: only line illustrations, borders and ornaments — absolutely NO letters, words, numbers or labels anywhere. Keep the background slightly dim and warm (sepia, parchment, brown) so the blue cube stays the focus, and keep the upper third of each panel calm for captions. Handcrafted miniature photography, tilt-shift shallow depth of field. No people, no hands, no logos, no watermark."
+    }
+  ]
+}
