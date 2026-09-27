@@ -65,6 +65,61 @@ def fetch_refs(req: dict, pilot: Path, out: Path) -> dict:
             "license": req.get("license"), "credit": req.get("credit"), "source": req["video_url"]}
 
 
+def split_grid(img_path: Path, spec: dict, out: Path) -> list[str]:
+    """격자 이미지를 칸별 파일로 자른다. 칸 사이 흰 경계선을 밝기로 찾아 자르고(없으면 등분),
+    경계선이 남지 않게 안쪽으로 조금 더 잘라낸다.
+
+    왜: 요금이 '이미지 1장당'이라 4칸을 한 장에 그리면 비용이 1/4이고, 한 번에 그려져 화풍도
+    더 잘 맞는다. 단 Veo에 격자를 그대로 넣으면 분할 화면으로 오인하므로 반드시 잘라서 넘긴다."""
+    from PIL import Image
+    im = Image.open(img_path).convert("RGB")
+    W, H = im.size
+    rows, cols, names = int(spec["rows"]), int(spec["cols"]), list(spec["names"])
+    g = im.convert("L")
+
+    def line_mean(x: int, axis: str) -> float:
+        if axis == "x":
+            vals = [g.getpixel((x, y)) for y in range(0, H, max(1, H // 200))]
+        else:
+            vals = [g.getpixel((xx, x)) for xx in range(0, W, max(1, W // 200))]
+        return sum(vals) / len(vals)
+
+    def bands(n: int, length: int, axis: str) -> list[tuple[int, int]]:
+        """칸 구간 [(시작, 끝), ...]. 경계는 '밝은 띠' 전체를 찾아 그 바깥에서 자른다."""
+        edges = [0]
+        for k in range(1, n):
+            c = length * k // n
+            lo, hi = max(1, int(c - length * 0.08)), min(length - 1, int(c + length * 0.08))
+            means = {x: line_mean(x, axis) for x in range(lo, hi)}
+            best = max(means, key=means.get)
+            if means[best] > 200:                       # 흰 경계 띠: 양 끝까지 넓힌다
+                a = best
+                while a - 1 >= lo and means.get(a - 1, 0) > 200:
+                    a -= 1
+                b = best
+                while b + 1 < hi and means.get(b + 1, 0) > 200:
+                    b += 1
+                edges += [a, b + 1]
+            else:                                        # 경계가 안 보이면 등분
+                edges += [c, c]
+        edges.append(length)
+        return [(edges[2 * i], edges[2 * i + 1]) for i in range(n)]
+
+    xs, ys = bands(cols, W, "x"), bands(rows, H, "y")
+    inset = max(4, int(min(W, H) * 0.006))
+    saved = []
+    for r in range(rows):
+        for c in range(cols):
+            i = r * cols + c
+            if i >= len(names) or not names[i]:
+                continue
+            box = (xs[c][0] + inset, ys[r][0] + inset, xs[c][1] - inset, ys[r][1] - inset)
+            fn = f"{names[i]}.jpg"
+            im.crop(box).save(out / fn, quality=95)
+            saved.append(fn)
+    return saved
+
+
 def _pick_model(key: str, prefs: list[str]) -> str | None:
     code, body = _http(f"{API}/models?pageSize=1000", headers={"x-goog-api-key": key})
     if code != 200:
@@ -88,9 +143,11 @@ def gen_images(req: dict, pilot: Path, out: Path) -> dict:
             b = (pilot / r).read_bytes()
             parts.append({"inline_data": {"mime_type": "image/jpeg" if r.endswith((".jpg", ".jpeg"))
                                           else "image/png", "data": base64.b64encode(b).decode()}})
+        img_cfg = {"aspectRatio": it.get("aspect", "1:1")}
+        if it.get("size"):                       # "2K" 등 — 격자 생성 시 칸 해상도 확보
+            img_cfg["imageSize"] = it["size"]
         body = {"contents": [{"role": "user", "parts": parts}],
-                "generationConfig": {"responseModalities": ["IMAGE"],
-                                     "imageConfig": {"aspectRatio": it.get("aspect", "1:1")}}}
+                "generationConfig": {"responseModalities": ["IMAGE"], "imageConfig": img_cfg}}
         code, raw = _http(f"{API}/models/{model}:generateContent",
                           data=json.dumps(body).encode(),
                           headers={"x-goog-api-key": key, "Content-Type": "application/json"})
@@ -103,6 +160,8 @@ def gen_images(req: dict, pilot: Path, out: Path) -> dict:
                 ext = ".png" if "png" in imgs[0].get("mimeType", "") else ".jpg"
                 (out / f"{it['name']}{ext}").write_bytes(base64.b64decode(imgs[0]["data"]))
                 rec["file"] = f"{it['name']}{ext}"
+                if it.get("split"):              # ★격자 1장 → 칸별 단독 파일(Veo엔 칸만 넣는다)
+                    rec["panels"] = split_grid(out / rec["file"], it["split"], out)
             else:
                 rec["error"] = "이미지 없음(안전 필터 등)"
                 rec["finish"] = [c.get("finishReason") for c in d.get("candidates", [])]

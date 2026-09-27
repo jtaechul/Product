@@ -1,0 +1,88 @@
+{
+  "id": "08_storyboard_v2",
+  "kind": "gen_images",
+  "purpose": "운영자 요청: 상자 틀에 갇힌 구도 → 무대 형태·카메라 시점 다양화. 비용 절감: 2×2 격자 3장 → 10장면 + 예비 2장",
+  "stage_plan": {
+    "s01": "책상 위 고지도 디오라마",
+    "s02": "연구실 책상(돋보기 접사)",
+    "s03": "작업대 플랫레이",
+    "s04": "테두리 없는 풀프레임 해저",
+    "s05": "단면 블록(상자 1)",
+    "s06": "테두리 없는 와이드 해저",
+    "s07": "지붕 뗀 돌하우스 방",
+    "s08": "수조 유리 극접사(밤)",
+    "s09": "밤의 서재 책상",
+    "s10": "단면 블록(상자 2) · 엔딩"
+  },
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "grid1",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "s01",
+          "s02",
+          "s03",
+          "s04"
+        ]
+      },
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters. Each panel is a completely different miniature set with its own stage type and camera angle, as described below. Shared look for all panels: handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Everything except the giant isopod is a deliberately rough, simple, hand-made model (chunky clay, wood, foam, paper textures). The giant isopod must match the attached replica and real reference images exactly and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Real-world scale is consistent: the isopod is about 40 cm long; never make it look bigger than people, boats or furniture. Keep the upper quarter of every panel calm for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no watermark inside the panels. TOP-LEFT (antique map desk, high three-quarter view): an old sea chart of the Gulf of Mexico spread on a dark wooden desk with a brass compass and a candle; on the chart sits a small rough 19th-century rowing fishing boat model with two tiny fishermen hauling a rope net; in the net, small next to the men, one giant isopod. TOP-RIGHT (naturalist's study desk, eye-level macro through a large magnifying glass): the giant isopod lies on a specimen tray; beside it a tiny rough clay pill bug and a tiny rough clay sea slater; an open sketchbook with pencil drawings (no readable text). BOTTOM-LEFT (flat-lay, straight top-down): the giant isopod on a worn wooden workbench next to an old wooden folding ruler laid straight along its body, pencils and a cloth around. BOTTOM-RIGHT (borderless full-frame deep seafloor, low eye-level angle): no box and no base visible; a wide pale muddy seafloor landscape fills the whole panel, the giant isopod walks toward the camera, fine marine snow falling in a dim blue beam."
+    },
+    {
+      "name": "grid2",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/08_storyboard_v2/grid1.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "s05",
+          "s06",
+          "s07",
+          "s08"
+        ]
+      },
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters. Each panel is a completely different miniature set with its own stage type and camera angle, as described below. Shared look for all panels: handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Everything except the giant isopod is a deliberately rough, simple, hand-made model (chunky clay, wood, foam, paper textures). The giant isopod must match the attached replica and real reference images exactly and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Real-world scale is consistent: the isopod is about 40 cm long; never make it look bigger than people, boats or furniture. Keep the upper quarter of every panel calm for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no watermark inside the panels. TOP-LEFT (cross-section block, side elevation): a tall glass-sided block showing the sea in layers — bright light at the surface, darker blue layers below, black near the bottom — and one giant isopod on the pale mud at the very bottom. No boats. TOP-RIGHT (borderless wide establishing shot from high above): a wide dark seafloor landscape filling the panel; a huge rough whale skeleton model lies across it and several small giant isopods feed on it. BOTTOM-LEFT (dollhouse room with the roof removed, looking down): a rough model of an aquarium back room with shelves, buckets and hoses around one plain glass tank; long metal tongs holding a small silver fish reach into the tank where the giant isopod waits. No people, no logos, no signs. BOTTOM-RIGHT (extreme close-up at the tank glass, night): the giant isopod sits motionless on the tank bottom behind the glass; blank paper calendar pages drift through the dark air in front of the glass; reflections on the glass. Match ONLY the rendering quality, lighting and material roughness of the attached earlier storyboard grid — do NOT copy its stage layouts; every panel here must use the different stage described."
+    },
+    {
+      "name": "grid3",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/08_storyboard_v2/grid1.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "s09",
+          "s10",
+          "s03b",
+          "s07b"
+        ]
+      },
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters. Each panel is a completely different miniature set with its own stage type and camera angle, as described below. Shared look for all panels: handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Everything except the giant isopod is a deliberately rough, simple, hand-made model (chunky clay, wood, foam, paper textures). The giant isopod must match the attached replica and real reference images exactly and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Real-world scale is consistent: the isopod is about 40 cm long; never make it look bigger than people, boats or furniture. Keep the upper quarter of every panel calm for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no watermark inside the panels. TOP-LEFT (quiet study desk at night, top-down): a single warm desk lamp lights a white cloth on which the giant isopod specimen lies calmly; a closed wooden specimen box and a magnifying glass nearby. Respectful mood, no cutting, no gore. No furniture besides the desk surface. TOP-RIGHT (tall cross-section block, slow pull-back framing with dark space around): the deep sea in layers fading to black; the giant isopod rests on a mud ledge at middle depth; far below in the deepest black, three faint blurred silhouettes of unknown deep-sea creatures that resemble no specific species. BOTTOM-LEFT (alternate, flat-lay top-down): the giant isopod on pale grey card with a simple tailor's measuring tape running alongside it (no printed numbers visible), a few pins around. BOTTOM-RIGHT (alternate, side view of a single plain glass tank on a wooden bench, eye-level): long tongs holding a small silver fish dip into the water; the giant isopod reaches up toward it. No people. Match ONLY the rendering quality, lighting and material roughness of the attached earlier storyboard grid — do NOT copy its stage layouts; every panel here must use the different stage described."
+    }
+  ]
+}
