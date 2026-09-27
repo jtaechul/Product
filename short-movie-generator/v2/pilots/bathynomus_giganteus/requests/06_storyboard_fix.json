@@ -1,0 +1,95 @@
+{
+  "id": "06_storyboard_fix",
+  "kind": "gen_images",
+  "purpose": "05 검수: 크기 왜곡(주인공이 배·사람·고래만큼 큼) + 10번 단면 구도 미흡 → 7장면을 실제 축척 명시로 재생성. 2·4·8번은 05 유지",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "s01",
+      "aspect": "9:16",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/05_storyboard/s04.jpg",
+        "out/05_storyboard/s02.jpg"
+      ],
+      "prompt": "Miniature diorama photograph, vertical 9:16. The whole scene is built as ONE square block diorama floating on a plain dark charcoal background, with its chunky wooden base edge clearly visible. Everything except the giant isopod is a deliberately rough, simple, hand-made scale model: chunky shapes, visible clay, wood and foam textures, like a tabletop model kit. Strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Camera: high three-quarter angle looking down at the block. The giant isopod, when present, must match the attached replica and real reference images EXACTLY in anatomy and colour and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Keep the upper quarter of the frame calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no signs, no watermark, no collage, no split screen, no multiple panels, no border frames. SCENE: A rough 19th-century wooden fishing boat model on a patch of glossy resin sea. Two tiny simple fisherman figures lean over the side hauling up a dripping rope net. Inside the net, small compared with the men and the boat, one giant isopod is caught. Overcast evening light. IMPORTANT real-world scale: every model shares ONE consistent real-world scale. The giant isopod is about 40 cm long in reality, so an adult human figure is about four times longer than the isopod, a small rowing fishing boat is about fifteen times longer, and a whale skull is many times larger. Never make the isopod look bigger than it really is. Match the diorama style, lighting, palette and model roughness of the attached storyboard scenes."
+    },
+    {
+      "name": "s03",
+      "aspect": "9:16",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/05_storyboard/s04.jpg",
+        "out/05_storyboard/s02.jpg"
+      ],
+      "prompt": "Miniature diorama photograph, vertical 9:16. The whole scene is built as ONE square block diorama floating on a plain dark charcoal background, with its chunky wooden base edge clearly visible. Everything except the giant isopod is a deliberately rough, simple, hand-made scale model: chunky shapes, visible clay, wood and foam textures, like a tabletop model kit. Strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Camera: high three-quarter angle looking down at the block. The giant isopod, when present, must match the attached replica and real reference images EXACTLY in anatomy and colour and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Keep the upper quarter of the frame calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no signs, no watermark, no collage, no split screen, no multiple panels, no border frames. SCENE: The giant isopod lies on a flat stone slab next to a rough simplified model of an adult human hand laid flat; the isopod is clearly longer than the hand, about twice the hand's length. IMPORTANT real-world scale: every model shares ONE consistent real-world scale. The giant isopod is about 40 cm long in reality, so an adult human figure is about four times longer than the isopod, a small rowing fishing boat is about fifteen times longer, and a whale skull is many times larger. Never make the isopod look bigger than it really is. Match the diorama style, lighting, palette and model roughness of the attached storyboard scenes."
+    },
+    {
+      "name": "s05",
+      "aspect": "9:16",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/05_storyboard/s04.jpg",
+        "out/05_storyboard/s02.jpg"
+      ],
+      "prompt": "Miniature diorama photograph, vertical 9:16. The whole scene is built as ONE square block diorama floating on a plain dark charcoal background, with its chunky wooden base edge clearly visible. Everything except the giant isopod is a deliberately rough, simple, hand-made scale model: chunky shapes, visible clay, wood and foam textures, like a tabletop model kit. Strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Camera: high three-quarter angle looking down at the block. The giant isopod, when present, must match the attached replica and real reference images EXACTLY in anatomy and colour and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Keep the upper quarter of the frame calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no signs, no watermark, no collage, no split screen, no multiple panels, no border frames. SCENE: A tall vertical cross-section block of the sea seen through glass: at the very top a bright water surface with a tiny rowing boat; below, the water gets darker layer by layer; at the bottom a pale muddy seafloor where one small giant isopod walks. The isopod is far smaller than the boat. IMPORTANT real-world scale: every model shares ONE consistent real-world scale. The giant isopod is about 40 cm long in reality, so an adult human figure is about four times longer than the isopod, a small rowing fishing boat is about fifteen times longer, and a whale skull is many times larger. Never make the isopod look bigger than it really is. Match the diorama style, lighting, palette and model roughness of the attached storyboard scenes."
+    },
+    {
+      "name": "s06",
+      "aspect": "9:16",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/05_storyboard/s04.jpg",
+        "out/05_storyboard/s02.jpg"
+      ],
+      "prompt": "Miniature diorama photograph, vertical 9:16. The whole scene is built as ONE square block diorama floating on a plain dark charcoal background, with its chunky wooden base edge clearly visible. Everything except the giant isopod is a deliberately rough, simple, hand-made scale model: chunky shapes, visible clay, wood and foam textures, like a tabletop model kit. Strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Camera: high three-quarter angle looking down at the block. The giant isopod, when present, must match the attached replica and real reference images EXACTLY in anatomy and colour and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Keep the upper quarter of the frame calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no signs, no watermark, no collage, no split screen, no multiple panels, no border frames. SCENE: Deep seafloor block: a rough, simple model of a whale skull and ribs lying on pale mud, very large compared with the isopods; several small giant isopods gather around and feed on it; dark water with a soft top light. IMPORTANT real-world scale: every model shares ONE consistent real-world scale. The giant isopod is about 40 cm long in reality, so an adult human figure is about four times longer than the isopod, a small rowing fishing boat is about fifteen times longer, and a whale skull is many times larger. Never make the isopod look bigger than it really is. Match the diorama style, lighting, palette and model roughness of the attached storyboard scenes."
+    },
+    {
+      "name": "s07",
+      "aspect": "9:16",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/05_storyboard/s04.jpg",
+        "out/05_storyboard/s02.jpg"
+      ],
+      "prompt": "Miniature diorama photograph, vertical 9:16. The whole scene is built as ONE square block diorama floating on a plain dark charcoal background, with its chunky wooden base edge clearly visible. Everything except the giant isopod is a deliberately rough, simple, hand-made scale model: chunky shapes, visible clay, wood and foam textures, like a tabletop model kit. Strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Camera: high three-quarter angle looking down at the block. The giant isopod, when present, must match the attached replica and real reference images EXACTLY in anatomy and colour and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Keep the upper quarter of the frame calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no signs, no watermark, no collage, no split screen, no multiple panels, no border frames. SCENE: A simple rough model of an aquarium back room: one plain glass tank; a tiny simplified keeper figure standing next to it lowers a small silver fish with long tongs; inside the tank the giant isopod reaches toward it. The keeper figure is about four times as tall as the isopod is long. No logos, no signs. IMPORTANT real-world scale: every model shares ONE consistent real-world scale. The giant isopod is about 40 cm long in reality, so an adult human figure is about four times longer than the isopod, a small rowing fishing boat is about fifteen times longer, and a whale skull is many times larger. Never make the isopod look bigger than it really is. Match the diorama style, lighting, palette and model roughness of the attached storyboard scenes."
+    },
+    {
+      "name": "s09",
+      "aspect": "9:16",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/05_storyboard/s04.jpg",
+        "out/05_storyboard/s02.jpg"
+      ],
+      "prompt": "Miniature diorama photograph, vertical 9:16. The whole scene is built as ONE square block diorama floating on a plain dark charcoal background, with its chunky wooden base edge clearly visible. Everything except the giant isopod is a deliberately rough, simple, hand-made scale model: chunky shapes, visible clay, wood and foam textures, like a tabletop model kit. Strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Camera: high three-quarter angle looking down at the block. The giant isopod, when present, must match the attached replica and real reference images EXACTLY in anatomy and colour and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Keep the upper quarter of the frame calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no signs, no watermark, no collage, no split screen, no multiple panels, no border frames. SCENE: A quiet examination room model: a table covered with a white cloth under a single warm desk lamp; the giant isopod specimen lies on the cloth and fits on the tabletop with plenty of space around it. Respectful mood, no cutting, no gore. IMPORTANT real-world scale: every model shares ONE consistent real-world scale. The giant isopod is about 40 cm long in reality, so an adult human figure is about four times longer than the isopod, a small rowing fishing boat is about fifteen times longer, and a whale skull is many times larger. Never make the isopod look bigger than it really is. Match the diorama style, lighting, palette and model roughness of the attached storyboard scenes."
+    },
+    {
+      "name": "s10",
+      "aspect": "9:16",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/05_storyboard/s04.jpg",
+        "out/05_storyboard/s02.jpg"
+      ],
+      "prompt": "Miniature diorama photograph, vertical 9:16. The whole scene is built as ONE square block diorama floating on a plain dark charcoal background, with its chunky wooden base edge clearly visible. Everything except the giant isopod is a deliberately rough, simple, hand-made scale model: chunky shapes, visible clay, wood and foam textures, like a tabletop model kit. Strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Camera: high three-quarter angle looking down at the block. The giant isopod, when present, must match the attached replica and real reference images EXACTLY in anatomy and colour and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Keep the upper quarter of the frame calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no signs, no watermark, no collage, no split screen, no multiple panels, no border frames. SCENE: A tall vertical cross-section block of the deep sea seen from the side through glass: the water column fades from dark blue to black toward the bottom. On a ledge of pale mud at middle depth, the giant isopod rests. Far below it, in the deepest black layer, three faint blurred silhouettes of unknown deep-sea creatures that do NOT resemble any specific species. IMPORTANT real-world scale: every model shares ONE consistent real-world scale. The giant isopod is about 40 cm long in reality, so an adult human figure is about four times longer than the isopod, a small rowing fishing boat is about fifteen times longer, and a whale skull is many times larger. Never make the isopod look bigger than it really is. Match the diorama style, lighting, palette and model roughness of the attached storyboard scenes."
+    }
+  ]
+}
