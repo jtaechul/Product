@@ -1,0 +1,43 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "chartonly4",
+      "http": 200,
+      "file": "chartonly4.jpg",
+      "panels": [
+        "only_a.jpg",
+        "only_b.jpg",
+        "only_c.jpg",
+        "only_d.jpg"
+      ],
+      "usage": {
+        "promptTokenCount": 525,
+        "candidatesTokenCount": 1384,
+        "totalTokenCount": 2189,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 267
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 258
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 280,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "04_ending_chart_only.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T06:52:06Z"
+}
