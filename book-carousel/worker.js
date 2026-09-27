@@ -3523,6 +3523,25 @@ function dinerRoles(n) {
 }
 const DINER_ROLE_KO = { enter: '입장', order: '주문', serve: '서빙', taste: '시식', bill: '계산', exit: '퇴장' };
 
+// 시리즈 이름·고정 오프닝(사용자 확정 2026-09). 원작 대사를 그대로 쓰지 않고 비틀어 우리 것으로 만든 한마디.
+// 입장 클립 대사는 모델이 쓰지 않고 서버가 이 문장으로 고정한다(매회 같은 의식 = 브랜드).
+const DINER_SERIES = '한 그릇의 품격';
+const DINER_OPENING = '배가 고프다. 심각하다';
+
+// 상품마다 회차 번호를 한 번만 매긴다(같은 상품을 다시 만들어도 번호가 바뀌지 않게). KV diner_episodes.
+async function dinerEpisodeNo(env, title) {
+  const key = String(title || '').replace(/\s+/g, '').slice(0, 80);
+  if (!env || !env.PENDING_POSTS || !key) return 0;
+  try {
+    const map = (await env.PENDING_POSTS.get('diner_episodes', 'json')) || {};
+    if (map[key]) return map[key];
+    const next = Object.values(map).reduce((m, v) => Math.max(m, Number(v) || 0), 0) + 1;
+    map[key] = next;
+    await env.PENDING_POSTS.put('diner_episodes', JSON.stringify(map));
+    return next;
+  } catch { return 0; }
+}
+
 // 쿠팡 파트너스 필수 고지 문구(쿠팡 안내 표준 문장). 캡션·유튜브 설명에 서버가 직접 붙인다.
 const COUPANG_DISCLOSURE = '이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.';
 
@@ -3546,12 +3565,14 @@ function dinerSystem(sp) {
 9. 조명은 soft even lighting, warm diffused light처럼 부드럽게. harsh, gritty, moody, high contrast 금지.
 
 [장면별 연출]
-- enter: 가게 문으로 걸어 들어와 자리에 앉는다. 들어오기 직전 잠깐 멈칫하거나 한숨 쉬듯 코를 킁 하는 몸짓이면 좋다.
-- order: 벽의 메뉴판을 올려다보며 고민하다 결정한다. 편집에서 화면 위쪽에 상품 사진 메뉴판이 겹쳐지니 주인공은 화면 아래쪽 절반에 둔다.
+- enter: 가게 앞에 멈춰 서서 간판을 올려다본 뒤 들어간다. **마지막 구간은 반드시 주인공 얼굴을 정면에서 잡은 미디엄 클로즈업**으로 끝낸다
+  (편집에서 이 장면을 세 번 끊어 뒤로 빠지는 줌 효과를 입힌다).
+- order: 자리에 앉아 벽의 메뉴판을 왼쪽·오른쪽 번갈아 올려다보며 진지하게 고민하다, 한 곳에서 멈추고 결정한다.
+  편집에서 화면 위쪽에 상품 사진 메뉴판이 겹쳐지니 주인공은 화면 아래쪽 절반에 둔다.
 - serve: 사람의 손이 그릇을 앞에 내려놓는다. 주인공이 먼저 냄새를 맡는다.
 - taste: 먹는 장면. 매크로·클로즈업·씹다 멈춤·다시 한 입 등 클립마다 카메라를 다르게.
 - bill: 사람의 손이 작은 쟁반에 계산서를 놓고 주인공이 그것을 지긋이 본다. 편집에서 위쪽에 계산서 카드가 겹쳐지니 주인공은 아래쪽에 둔다.
-- exit: 가게를 나서다 문 앞에서 한 번 뒤돌아본다.
+- exit: 가게를 나서다 문 앞에서 한 번 뒤돌아본 뒤, 천천히 길을 걸어간다.
 
 [속마음 대사(line) — 내레이션이자 자막. 둘은 같은 문장이다]
 ⭐ 이 영상의 재미는 '미식가의 냉철한 감각 묘사'다. 후기 요약문을 쓰면 실패다.
@@ -3563,19 +3584,24 @@ function dinerSystem(sp) {
 - 사실 정보(원료·영양 성분·연령·품종 적합성)는 [확인된 정보]와 상품명에 있는 것만, **영상 전체에서 한 번까지**.
 - 병·증상이 낫는다·줄어든다 같은 효능 주장, 다른 브랜드 언급·비교는 금지.
 - 상품명·브랜드명은 말하지 않는다(메뉴판 카드가 보여준다).
-- ⭐ enter 대사 = **사료를 바꾸러 온 진짜 이유(고민)** 한 줄. 시청자가 "우리 애 얘기네" 하고 멈추게 하는 훅이다.
-  [구매자 고민]에서 하나를 골라 주인공 시점으로 담담하게 던진다(예: 입이 짧다, 원료가 못 미덥다, 알갱이가 크다).
+- enter 대사는 시스템이 "${DINER_OPENING}"로 고정한다. 너는 enter의 line을 비워 둬라("").
+- ⭐ order 대사 = **사료를 바꾸러 온 진짜 고민 → 결단**을 두 박자로(26자 이내). 메뉴 앞에서 인생 결정처럼 과하게 진지하다.
+  [구매자 고민]에서 하나를 골라 주인공 시점으로 던지고, 바로 짧게 결단한다.
   고민이 주어지지 않으면 이 상품 종류에 흔한 고민(입맛·원료·알갱이 크기·질림) 중 하나를 쓴다.
   몸의 증상·질병 이야기는 쓰지 마라(효능 암시가 된다).
-- 역할별: enter=사료를 바꾸러 온 고민 / order=메뉴 앞에서의 짧은 결단 / serve=첫 냄새와 생김새 /
-  taste=식감·향·뒷맛 해부(클립마다 다른 감각) / bill=가격 판정 / exit=한줄평과 재방문 의사.
+- ⭐ taste 대사 = **감각 한 마디 + 비유로 마무리**. 형용사만 늘어놓지 말고, 그 감각을 사물·소리·풍경·사람에 빗대 끝낸다.
+  비유는 이 주인공의 일상(창가 햇볕, 산책길, 낙엽, 빗소리, 담요 등)에서 가져온다.
+- ⭐ exit 대사 = 재방문 판정이 아니라 **혼자 먹은 한 끼에 대한 짧은 소회**(누구 눈치도 안 본 식사의 자유로움).
+  재방문 의사는 verdict 칸에 따로 쓴다.
+- 역할별: order=고민→결단 / serve=첫 냄새와 생김새 / taste=감각+비유(클립마다 다른 감각) / bill=가격 판정 / exit=소회.
 - bill은 [가격]이 주어지면 그 숫자를 그대로 쓰고, 주어지지 않으면 숫자를 쓰지 마라.
 
 [말투 감 잡기 — 사람 음식 예시다. 말투만 보고, 문장은 절대 가져오지 마라]
   (라멘) "국물이 먼저 온다. 짠맛이 늦게 도착한다"
   (돈가스) "튀김옷이 조용하다. 고기가 할 말이 많군"
+  (비유) "면발이 탄탄하다. 월요일 아침 같은 결의다"
   (계산) "이 값에 이 정직함이면 남는 장사다"
-  (퇴장) "다음에도 이 자리다. 굳이 말은 안 한다"
+  (소회) "아무도 말을 걸지 않았다. 그게 좋았다"
 
 반드시 JSON만 출력한다.`;
 }
@@ -3598,7 +3624,7 @@ async function handleDinerEpisode(env, body, ctx) {
 품목: ${category || '사료·간식'}
 주인공: ${sp.ko} (the ${sp.noun}) — ${hero}${note ? `\n추가 주문: ${note}` : ''}
 [가격] ${priceNote || '없음 — bill 대사에 숫자를 쓰지 마라'}
-[구매자 고민 — 입장 대사 재료]
+[구매자 고민 — 주문(order) 대사 재료]
 ${worries.length ? '- ' + worries.join('\n- ') : '(없음 — 이 상품 종류에 흔한 고민 하나를 골라라)'}
 [확인된 정보 — 사실은 이 안에서만]
 ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양·연령 이야기는 하지 말고 향·식감 평만 해라)'}
@@ -3632,8 +3658,9 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const badLines = (txt) => {
     let o; try { o = extractJson(txt); } catch { return ['(JSON 오류)']; }
     return (Array.isArray(o.clips) ? o.clips : [])
+      .filter(c => String(c.role || '') !== 'enter')
       .map(c => String(c.line || '').trim())
-      .filter(l => l.length > 26 || HEALTH_CLAIM.test(l));
+      .filter(l => l.length > 28 || HEALTH_CLAIM.test(l));
   };
   const bad1 = badLines(raw);
   if (bad1.length >= 2 || bad1.includes('(JSON 오류)')) {
@@ -3663,7 +3690,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const clipsOut = roles.map((role, i) => {
     const c = list[i] || {};
     const shots = toSpecies(safeShots(normShots(String(c.shots || '').trim())), sp);
-    let line = String(c.line || '').trim().replace(/!+/g, '');
+    let line = role === 'enter' ? DINER_OPENING : String(c.line || '').trim().replace(/!+/g, '');
     // 가격을 모르면 계산 대사에 숫자가 들어가면 안 된다(지어낸 가격 방지).
     if (role === 'bill' && !priceNote && /\d/.test(line)) line = '계산은 조용히 끝냈다. 값은 묻지 않는 게 예의다';
     const withFood = role === 'serve' || role === 'taste' || role === 'bill';
@@ -3675,17 +3702,25 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     const imagePrompt = [head, firstMoment ? firstMoment + '.' : '', withFood ? foodLine : '',
       'Single still image, sharp focus, no motion blur.', `Avoid: ${neg}.`].filter(Boolean).join('\n');
     const prompt = [head, shots, withFood ? foodLine : '', `Avoid: ${neg}.`].filter(Boolean).join('\n');
-    const card = role === 'order' ? { type: 'menu' } : (role === 'bill' && priceNote ? { type: 'bill', text: priceNote } : null);
+    // opening: 편집기가 세 번 끊어 뒤로 빠지는 줌을 입힌다 / menu: 상품 사진 메뉴판 / bill: 100g당 가격 계산서
+    const card = role === 'enter' ? { type: 'opening' }
+      : role === 'order' ? { type: 'menu' }
+      : (role === 'bill' && priceNote ? { type: 'bill', text: priceNote } : null);
     return { no: i + 1, role, roleKo: DINER_ROLE_KO[role], shots, line, subtitle: line, wearing: false, card, imagePrompt, prompt };
   });
 
   const tags = (Array.isArray(out.hashtags) ? out.hashtags : []).slice(0, 3);
-  const caption = [String(out.caption || '').trim(), COUPANG_DISCLOSURE].filter(Boolean).join('\n\n');
+  const epNo = await dinerEpisodeNo(env, title);
+  const seriesTag = `[${DINER_SERIES}${epNo ? ' #' + epNo : ''}]`;
+  const caption = [seriesTag, String(out.caption || '').trim(), COUPANG_DISCLOSURE].filter(Boolean).join('\n\n');
   const link = String(body.link || '').trim();
   const shop = String(out.shop || '').trim();
   const verdict = String(out.verdict || '').trim();
-  const ytTitle = (String(out.ytTitle || '').trim() || `${sp.ko} 미식가 | ${title}`).slice(0, 60);
+  const ytHook = String(out.ytTitle || '').trim();
+  const ytTitle = `[${DINER_SERIES}]${epNo ? ' #' + epNo : ''} ${title}`.slice(0, 100);
   const ytDescription = [
+    ytHook,
+    '',
     shop ? `오늘의 가게: ${shop}` : '',
     `오늘의 메뉴: ${title}`,
     priceNote ? `계산: ${priceNote} (영상 제작 시점 쿠팡 판매가 기준, 가격은 변동될 수 있습니다)` : '',
@@ -3702,8 +3737,9 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   return {
     success: true,
     format: 'diner',
+    series: DINER_SERIES, episode: epNo, opening: DINER_OPENING,
     species: spKey, speciesKo: sp.ko,
-    problem: shop ? `식당 에피소드 · ${shop}` : '식당 에피소드',
+    problem: `${seriesTag} ${shop || '식당 에피소드'}`,
     shop, verdict, priceNote, foodLook: foodEn,
     sceneBlock: scene,
     tone: String(out.tone || '낮고 담담한 독백 목소리').trim(),
@@ -4220,7 +4256,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <label class="ed-toggle" for="edCards" id="edCardsWrap" hidden>
       <input type="checkbox" id="edCards" checked>
       <span class="ed-box" aria-hidden="true"></span>
-      <span class="ed-tt">식당 장면 카드 넣기<small>주문 클립엔 상품 사진 메뉴판, 계산 클립엔 가격 계산서가 위쪽에 뜹니다</small></span>
+      <span class="ed-tt">식당 장면 연출 넣기<small>입장 클립엔 세 번 끊어 빠지는 줌, 주문 클립엔 상품 사진 메뉴판, 계산 클립엔 가격 계산서가 붙습니다</small></span>
     </label>
 
     <label class="ed-toggle" for="edOutro">
@@ -4284,7 +4320,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var cat=$('c').value||'';
     var el=$('fmtHint'); if(!el) return;
     if(!title){ el.textContent=''; return; }
-    var who=/고양이|캣|냥|키튼|kitten|\bcats?\b|feline/i.test(title)?'고양이':'강아지';
+    var who=/고양이|캣|냥|키튼|kitten|\\bcats?\\b|feline/i.test(title)?'고양이':'강아지';
     var food=/사료|간식|먹거리|식품/.test(cat);
     el.innerHTML = food
       ? '<b>식당 에피소드</b>로 만듭니다 · 주인공: <b>'+who+'</b><br>가게에 들어가 이 사료를 주문해 먹으며 속마음으로 평가합니다. 주문 장면엔 상품 사진 메뉴판, 계산 장면엔 가격 계산서가 붙습니다.'
@@ -4476,7 +4512,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       out.appendChild(pb);
     }
     // 04단계 편집기에 장면 카드(메뉴판·계산서) 위치를 넘긴다. 자막과 같은 순서(클립 번호)로 붙는다.
-    window.PET_EPISODE = { format: r.format||'reel', cards: (r.clips||[]).map(function(c){ return c.card||null; }) };
+    window.PET_EPISODE = { format: r.format||'reel', series: r.series||'', episode: r.episode||0, priceNote: r.priceNote||'',
+      cards: (r.clips||[]).map(function(c){ return c.card||null; }) };
     try{ document.dispatchEvent(new CustomEvent('pet-episode')); }catch(e){}
     var subs=(r.clips||[]).map(function(c){ return c.subtitle; }).filter(Boolean).join('\\n');
     var sc=document.getElementById('edScript');
@@ -4897,6 +4934,25 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
     ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
   }
+  var OPEN_STEPS=[1.45,1.28,1.13,1.0], OPEN_TAIL=1.2;
+  function openingZoom(card,t,dur){
+    if(!st.cards || !card || card.type!=='opening' || !dur) return 1;
+    var start=Math.max(0,dur-OPEN_TAIL);
+    if(t<start) return OPEN_STEPS[0];
+    var k=Math.min(OPEN_STEPS.length-1, 1+Math.floor((t-start)/(OPEN_TAIL/(OPEN_STEPS.length-1))));
+    return OPEN_STEPS[k];
+  }
+  function drawCoverZoom(ctx,src,w,h,z){
+    if(z<=1.001){ drawCover(ctx,src,w,h); return; }
+    var sw=src.videoWidth||src.width, sh=src.videoHeight||src.height;
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
+    if(!sw||!sh) return;
+    // 얼굴이 대개 화면 가운데보다 약간 위에 있으므로 그 지점을 중심으로 당긴다
+    var sc=Math.max(w/sw,h/sh)*z, dw=sw*sc, dh=sh*sc, fx=0.5, fy=0.42;
+    var x=w*fx-dw*fx, y=h*fy-dh*fy;
+    x=Math.min(0,Math.max(w-dw,x)); y=Math.min(0,Math.max(h-dh,y));
+    try{ ctx.drawImage(src,x,y,dw,dh); }catch(e){}
+  }
   function drawCard(ctx,w,h,card,t){
     if(!st.cards || !card) return;
     var bar=barOf(h), a=Math.min(1,Math.max(0,(t||0)/0.3));
@@ -4961,26 +5017,42 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       im.src='/api/cover?url='+encodeURIComponent(url);
     });
   }
+  // 띄어쓰기 단위로 줄을 나눈다("2kg"가 "2k / g"로 쪼개지지 않게). 한 단어가 너무 길 때만 글자 단위로 자른다.
   function wrapFit(ctx,text,maxW){
-    var out=[],line='';
-    for(var i=0;i<text.length;i++){
-      var t=line+text[i];
-      if(ctx.measureText(t).width>maxW && line){ out.push(line); line=text[i]; }
-      else line=t;
+    var out=[],line='',words=String(text||'').split(/\\s+/).filter(Boolean);
+    for(var i=0;i<words.length;i++){
+      var wd=words[i], t=line?line+' '+wd:wd;
+      if(ctx.measureText(t).width<=maxW){ line=t; continue; }
+      if(line) out.push(line);
+      line='';
+      if(ctx.measureText(wd).width<=maxW){ line=wd; continue; }
+      for(var j=0;j<wd.length;j++){
+        var tt=line+wd[j];
+        if(ctx.measureText(tt).width>maxW && line){ out.push(line); line=wd[j]; } else line=tt;
+      }
     }
     if(line) out.push(line);
     return out.slice(0,2);
   }
   function drawOutro(ctx,w,h,img,title,t){
-    var bar=barOf(h);
+    var bar=barOf(h), ep=window.PET_EPISODE, diner=!!(ep && ep.format==='diner');
     ctx.fillStyle='#F7F4EF'; ctx.fillRect(0,0,w,h);
     var fade=Math.min(1, t/0.35);
     ctx.globalAlpha=fade;
+    if(diner){
+      // 에필로그 = 실제 가게 소개. 시리즈 이름·회차 + '오늘의 가게'
+      var fsA=Math.round(w/30), fsB=Math.round(w/19);
+      ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.fillStyle='#8A6A4F'; ctx.font='600 '+fsA+"px 'Noto Sans KR', sans-serif";
+      ctx.fillText((ep.series||'')+(ep.episode?'  #'+ep.episode:''), w/2, bar+h*0.075);
+      ctx.fillStyle='#22282B'; ctx.font='800 '+fsB+"px 'Noto Sans KR', sans-serif";
+      ctx.fillText('오늘의 가게', w/2, bar+h*0.075+fsB*1.45);
+    }
     if(img && img.width){
-      var maxW=w*0.70, maxH=h*0.42;
+      var maxW=w*0.70, maxH=diner?h*0.37:h*0.42;
       var sc=Math.min(maxW/img.width, maxH/img.height);
       var dw=img.width*sc, dh=img.height*sc;
-      var dy=h*0.20;
+      var dy=diner?h*0.265:h*0.20;
       ctx.save();
       ctx.shadowColor='rgba(0,0,0,.18)'; ctx.shadowBlur=w*0.04; ctx.shadowOffsetY=h*0.006;
       ctx.fillStyle='#fff';
@@ -4994,6 +5066,11 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       ctx.textAlign='center'; ctx.fillStyle='#22282B';
       var lines=wrapFit(ctx,title,w*0.82), y=h*0.70;
       for(var i=0;i<lines.length;i++){ ctx.fillText(lines[i],w/2,y); y+=fs*1.34; }
+    }
+    if(diner && ep.priceNote){
+      var fsP=Math.round(w/24);
+      ctx.font='700 '+fsP+"px 'Noto Sans KR', sans-serif"; ctx.textAlign='center'; ctx.fillStyle='#8A6A4F';
+      ctx.fillText(ep.priceNote, w/2, h*0.775);
     }
     var fs2=Math.round(w/24);
     ctx.font='500 '+fs2+"px 'Noto Sans KR', sans-serif";
@@ -5039,7 +5116,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       };
       var draw=function(){
         if(fin)return;
-        drawCover(ctx,v,w,h); drawBars(ctx,w,h); drawSub(ctx,clip.sub,w,h,barOf(h));
+        drawCoverZoom(ctx,v,w,h,openingZoom(clip.card,v.currentTime||0,v.duration||0));
+        drawBars(ctx,w,h); drawSub(ctx,clip.sub,w,h,barOf(h));
         drawCard(ctx,w,h,clip.card,v.currentTime||0);
         onTime(v.currentTime||0);
         if(v.ended){ finish(); return; }
