@@ -33,6 +33,7 @@ jobs:
       - name: 바뀐 요청 실행
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_TTS_KEY: ${{ secrets.GOOGLE_TTS_KEY }}
           BEFORE: ${{ github.event.before }}
           AFTER: ${{ github.sha }}
         run: |
