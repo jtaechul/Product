@@ -1,22 +1,58 @@
 {
-  "status": "운영자 승인 대기(승인 ①) — 승인되면 이 이미지가 각 장면 첫 클립의 시작 프레임",
-  "scenes": {
-    "s01": "out/06_storyboard_fix/s01.jpg",
-    "s02": "out/05_storyboard/s02.jpg",
-    "s03": "out/06_storyboard_fix/s03.jpg",
-    "s04": "out/05_storyboard/s04.jpg",
-    "s05": "out/07_storyboard_fix2/s05.jpg",
-    "s06": "out/06_storyboard_fix/s06.jpg",
-    "s07": "out/07_storyboard_fix2/s07.jpg",
-    "s08": "out/05_storyboard/s08.jpg",
-    "s09": "out/07_storyboard_fix2/s09.jpg",
-    "s10": "out/06_storyboard_fix/s10.jpg"
-  },
+  "status": "v2 — 운영자 승인 대기(승인 ①)",
   "review_log": [
     "05: 화풍·주인공 일관성 양호. 1·3·5·6·7·9번에서 주인공이 배·사람·고래만큼 커지는 크기 날조, 10번 단면 구도 미흡",
     "06: 축척을 문장으로 지시 → 1·3·6·10번 해결, 5·7·9번은 여전히 큼(모델이 주인공을 크게 그리려는 경향)",
-    "07: 크기 비교 소품(배·사람·가구)을 화면에서 빼서 5·7·9번 해결"
+    "07: 크기 비교 소품(배·사람·가구)을 화면에서 빼서 5·7·9번 해결",
+    "08: 무대 다양화 성공(연속 같은 무대 없음 · 상자 2장면). 1번만 지도 글자 + 주인공 크기 왜곡",
+    "09: 1번을 주인공 없이 구도 4종 격자 1장으로 → 글자·크기 문제 해소, 격자 내 소품·조명 완전 일치 확인"
   ],
-  "lesson": "주인공 크기는 문장 지시보다 '크기를 오해시키는 소품을 빼는 구도'가 확실하다(다음 종 스토리보드에 기본 적용)",
-  "images_generated_total": 29
+  "lesson": "주인공 크기는 문장 지시보다 '크기를 오해시키는 소품을 빼는 구도'가 확실하다(다음 종 스토리보드에 기본 적용) / 격자 생성은 비용 1/4이면서 칸끼리 일관성이 더 높다(운영자 지적 확인)",
+  "images_generated_total": 33,
+  "superseded": {
+    "v1_scenes": {
+      "s01": "out/06_storyboard_fix/s01.jpg",
+      "s02": "out/05_storyboard/s02.jpg",
+      "s03": "out/06_storyboard_fix/s03.jpg",
+      "s04": "out/05_storyboard/s04.jpg",
+      "s05": "out/07_storyboard_fix2/s05.jpg",
+      "s06": "out/06_storyboard_fix/s06.jpg",
+      "s07": "out/07_storyboard_fix2/s07.jpg",
+      "s08": "out/05_storyboard/s08.jpg",
+      "s09": "out/07_storyboard_fix2/s09.jpg",
+      "s10": "out/06_storyboard_fix/s10.jpg"
+    },
+    "reason": "운영자: 상자 틀에 갇힌 구도 → 무대 다양화 v2로 교체"
+  },
+  "scenes": {
+    "s01": "out/09_s01_variants/s01a.jpg",
+    "s02": "out/08_storyboard_v2/s02.jpg",
+    "s03": "out/08_storyboard_v2/s03b.jpg",
+    "s04": "out/08_storyboard_v2/s04.jpg",
+    "s05": "out/08_storyboard_v2/s05.jpg",
+    "s06": "out/08_storyboard_v2/s06.jpg",
+    "s07": "out/08_storyboard_v2/s07.jpg",
+    "s08": "out/08_storyboard_v2/s08.jpg",
+    "s09": "out/08_storyboard_v2/s09.jpg",
+    "s10": "out/08_storyboard_v2/s10.jpg"
+  },
+  "stage_plan": {
+    "s01": "책상 위 고지도(주인공 없음)",
+    "s02": "연구실 돋보기 접사",
+    "s03": "줄자 플랫레이",
+    "s04": "풀프레임 해저",
+    "s05": "층층 단면(상자 1)",
+    "s06": "와이드 고래 사체",
+    "s07": "지붕 뗀 돌하우스 방",
+    "s08": "밤의 수조·날리는 달력",
+    "s09": "밤의 서재 책상",
+    "s10": "단면 엔딩(상자 2)"
+  },
+  "extra_keyframes": {
+    "s01_end": "out/09_s01_variants/s01d.jpg (어선 근접 — 1번 장면 끝 프레임)",
+    "alternates": [
+      "out/08_storyboard_v2/s03.jpg",
+      "out/08_storyboard_v2/s07b.jpg"
+    ]
+  }
 }
