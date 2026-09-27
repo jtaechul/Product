@@ -1,0 +1,197 @@
+{
+  "ok": true,
+  "items": [
+    {
+      "name": "c11",
+      "model": "gemini-omni-1.1-flash",
+      "attempts": [
+        {
+          "task": "image_to_video",
+          "ok": true,
+          "file": "c11.mp4",
+          "video_s": 4.01,
+          "wait_s": 24.3,
+          "frames": "c11_frames.jpg",
+          "usage": {
+            "total_tokens": 25439,
+            "total_input_tokens": 1280,
+            "input_tokens_by_modality": [
+              {
+                "modality": "image",
+                "tokens": 1100
+              },
+              {
+                "modality": "text",
+                "tokens": 180
+              }
+            ],
+            "total_cached_tokens": 0,
+            "total_output_tokens": 23864,
+            "output_tokens_by_modality": [
+              {
+                "modality": "video",
+                "tokens": 23168
+              }
+            ],
+            "total_tool_use_tokens": 0,
+            "total_thought_tokens": 295,
+            "raw_prompt_token": 32820,
+            "model_invocation_token_counts": [
+              {
+                "prompt_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 1980
+                  },
+                  {
+                    "modality": "image",
+                    "tokens": 1100
+                  }
+                ],
+                "candidates_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 702
+                  }
+                ],
+                "thoughts_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 295
+                  }
+                ]
+              }
+            ],
+            "non_grounding_model_invocation_token_counts": [
+              {
+                "prompt_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 1980
+                  },
+                  {
+                    "modality": "image",
+                    "tokens": 1100
+                  }
+                ],
+                "candidates_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 702
+                  }
+                ],
+                "thoughts_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 295
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "file": "c11.mp4"
+    },
+    {
+      "name": "c12",
+      "model": "gemini-omni-1.1-flash",
+      "attempts": [
+        {
+          "task": "extend",
+          "ok": false,
+          "error": "HTTP 400: {\"error\":{\"message\":\"Aspect ratio cannot be set in response format for extend task.\",\"code\":\"invalid_request\"}}"
+        },
+        {
+          "task": "image_to_video",
+          "ok": true,
+          "file": "c12.mp4",
+          "video_s": 4.01,
+          "wait_s": 25.6,
+          "frames": "c12_frames.jpg",
+          "usage": {
+            "total_tokens": 25520,
+            "total_input_tokens": 1266,
+            "input_tokens_by_modality": [
+              {
+                "modality": "text",
+                "tokens": 166
+              },
+              {
+                "modality": "image",
+                "tokens": 1100
+              }
+            ],
+            "total_cached_tokens": 0,
+            "total_output_tokens": 23877,
+            "output_tokens_by_modality": [
+              {
+                "modality": "video",
+                "tokens": 23168
+              }
+            ],
+            "total_tool_use_tokens": 0,
+            "total_thought_tokens": 377,
+            "raw_prompt_token": 32775,
+            "model_invocation_token_counts": [
+              {
+                "prompt_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 1966
+                  },
+                  {
+                    "modality": "image",
+                    "tokens": 1100
+                  }
+                ],
+                "candidates_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 715
+                  }
+                ],
+                "thoughts_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 377
+                  }
+                ]
+              }
+            ],
+            "non_grounding_model_invocation_token_counts": [
+              {
+                "prompt_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 1966
+                  },
+                  {
+                    "modality": "image",
+                    "tokens": 1100
+                  }
+                ],
+                "candidates_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 715
+                  }
+                ],
+                "thoughts_tokens_details": [
+                  {
+                    "modality": "text",
+                    "tokens": 377
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "file": "c12.mp4"
+    }
+  ],
+  "request": "12_omni_s07.json",
+  "kind": "gen_omni",
+  "ran_at": "2026-09-27T06:05:51Z"
+}
