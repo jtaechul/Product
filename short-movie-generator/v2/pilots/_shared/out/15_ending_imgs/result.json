@@ -1,0 +1,65 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "chart_clean",
+      "http": 200,
+      "file": "chart_clean.jpg",
+      "usage": {
+        "promptTokenCount": 413,
+        "candidatesTokenCount": 1316,
+        "totalTokenCount": 1911,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 155
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 258
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 182,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "scroll_rolled",
+      "http": 200,
+      "file": "scroll_rolled.jpg",
+      "usage": {
+        "promptTokenCount": 426,
+        "candidatesTokenCount": 1323,
+        "totalTokenCount": 1963,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 168
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 258
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 214,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "15_ending_imgs.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T08:05:19Z"
+}
