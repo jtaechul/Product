@@ -3546,7 +3546,7 @@ function dinerSystem(sp) {
 9. 조명은 soft even lighting, warm diffused light처럼 부드럽게. harsh, gritty, moody, high contrast 금지.
 
 [장면별 연출]
-- enter: 가게 문으로 걸어 들어와 자리에 앉는다.
+- enter: 가게 문으로 걸어 들어와 자리에 앉는다. 들어오기 직전 잠깐 멈칫하거나 한숨 쉬듯 코를 킁 하는 몸짓이면 좋다.
 - order: 벽의 메뉴판을 올려다보며 고민하다 결정한다. 편집에서 화면 위쪽에 상품 사진 메뉴판이 겹쳐지니 주인공은 화면 아래쪽 절반에 둔다.
 - serve: 사람의 손이 그릇을 앞에 내려놓는다. 주인공이 먼저 냄새를 맡는다.
 - taste: 먹는 장면. 매크로·클로즈업·씹다 멈춤·다시 한 입 등 클립마다 카메라를 다르게.
@@ -3563,7 +3563,11 @@ function dinerSystem(sp) {
 - 사실 정보(원료·영양 성분·연령·품종 적합성)는 [확인된 정보]와 상품명에 있는 것만, **영상 전체에서 한 번까지**.
 - 병·증상이 낫는다·줄어든다 같은 효능 주장, 다른 브랜드 언급·비교는 금지.
 - 상품명·브랜드명은 말하지 않는다(메뉴판 카드가 보여준다).
-- 역할별: enter=허기나 오늘의 기분을 툭 던진다 / order=메뉴 앞에서의 짧은 결단 / serve=첫 냄새와 생김새 /
+- ⭐ enter 대사 = **사료를 바꾸러 온 진짜 이유(고민)** 한 줄. 시청자가 "우리 애 얘기네" 하고 멈추게 하는 훅이다.
+  [구매자 고민]에서 하나를 골라 주인공 시점으로 담담하게 던진다(예: 입이 짧다, 원료가 못 미덥다, 알갱이가 크다).
+  고민이 주어지지 않으면 이 상품 종류에 흔한 고민(입맛·원료·알갱이 크기·질림) 중 하나를 쓴다.
+  몸의 증상·질병 이야기는 쓰지 마라(효능 암시가 된다).
+- 역할별: enter=사료를 바꾸러 온 고민 / order=메뉴 앞에서의 짧은 결단 / serve=첫 냄새와 생김새 /
   taste=식감·향·뒷맛 해부(클립마다 다른 감각) / bill=가격 판정 / exit=한줄평과 재방문 의사.
 - bill은 [가격]이 주어지면 그 숫자를 그대로 쓰고, 주어지지 않으면 숫자를 쓰지 마라.
 
@@ -3585,11 +3589,17 @@ async function handleDinerEpisode(env, body, ctx) {
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
     .filter(Boolean);
   const factsSafe = adSafeFacts(facts).slice(0, 5);
+  // 입장 훅 재료 — 02단계에서 확인된 '사기 전 불편'. 증상 이야기는 효능 암시가 되므로 뺀다.
+  const worries = adSafeFacts((Array.isArray(body.pains) ? body.pains : [])
+    .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
+    .filter(Boolean)).slice(0, 4);
 
   const user = `상품: ${title}
 품목: ${category || '사료·간식'}
 주인공: ${sp.ko} (the ${sp.noun}) — ${hero}${note ? `\n추가 주문: ${note}` : ''}
 [가격] ${priceNote || '없음 — bill 대사에 숫자를 쓰지 마라'}
+[구매자 고민 — 입장 대사 재료]
+${worries.length ? '- ' + worries.join('\n- ') : '(없음 — 이 상품 종류에 흔한 고민 하나를 골라라)'}
 [확인된 정보 — 사실은 이 안에서만]
 ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양·연령 이야기는 하지 말고 향·식감 평만 해라)'}
 
