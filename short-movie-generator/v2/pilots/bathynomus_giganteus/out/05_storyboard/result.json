@@ -1,0 +1,289 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "s01",
+      "http": 200,
+      "file": "s01.jpg",
+      "usage": {
+        "promptTokenCount": 1067,
+        "candidatesTokenCount": 1386,
+        "totalTokenCount": 2671,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 293
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 774
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 218,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s02",
+      "http": 200,
+      "file": "s02.jpg",
+      "usage": {
+        "promptTokenCount": 1342,
+        "candidatesTokenCount": 1405,
+        "totalTokenCount": 2975,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 310
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 228,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s03",
+      "http": 200,
+      "file": "s03.jpg",
+      "usage": {
+        "promptTokenCount": 1332,
+        "candidatesTokenCount": 1372,
+        "totalTokenCount": 2896,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 300
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 192,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s04",
+      "http": 200,
+      "file": "s04.jpg",
+      "usage": {
+        "promptTokenCount": 1331,
+        "candidatesTokenCount": 1363,
+        "totalTokenCount": 2928,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 299
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 234,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s05",
+      "http": 200,
+      "file": "s05.jpg",
+      "usage": {
+        "promptTokenCount": 1344,
+        "candidatesTokenCount": 1382,
+        "totalTokenCount": 2973,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 312
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 247,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s06",
+      "http": 200,
+      "file": "s06.jpg",
+      "usage": {
+        "promptTokenCount": 1331,
+        "candidatesTokenCount": 1432,
+        "totalTokenCount": 3010,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 299
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 247,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s07",
+      "http": 200,
+      "file": "s07.jpg",
+      "usage": {
+        "promptTokenCount": 1343,
+        "candidatesTokenCount": 1378,
+        "totalTokenCount": 2928,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 311
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 207,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s08",
+      "http": 200,
+      "file": "s08.jpg",
+      "usage": {
+        "promptTokenCount": 1338,
+        "candidatesTokenCount": 1401,
+        "totalTokenCount": 2952,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 306
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 213,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s09",
+      "http": 200,
+      "file": "s09.jpg",
+      "usage": {
+        "promptTokenCount": 1327,
+        "candidatesTokenCount": 1391,
+        "totalTokenCount": 2905,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 295
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 187,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "s10",
+      "http": 200,
+      "file": "s10.jpg",
+      "usage": {
+        "promptTokenCount": 1349,
+        "candidatesTokenCount": 1455,
+        "totalTokenCount": 3175,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 317
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 371,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "05_storyboard.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T04:49:14Z"
+}
