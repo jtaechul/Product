@@ -2840,13 +2840,16 @@ function featuresFromTitle(title) {
   return out;
 }
 
-// 웹검색을 붙인 Gemini 호출. 검색 도구는 2.5 계열에서 지원되므로 전용 모델을 쓴다.
-// 키 출처: GitHub 시크릿 GEMINI_API_KEY → 배포 시 워커 시크릿으로 올라간다.
-const GEMINI_SEARCH_MODEL = 'gemini-2.5-flash';
+// 웹검색을 붙인 Gemini 호출. 키 출처: GitHub 시크릿 GEMINI_API_KEY → 배포 시 워커 시크릿.
+// 고정 버전(gemini-2.5-flash)은 구글이 신규 키에서 막아 404가 났다(2026-09 실측).
+// 그래서 항상 최신을 가리키는 별칭을 먼저 쓰고, 404(모델 없음)면 다음 후보로 넘어간다.
+const GEMINI_SEARCH_MODELS = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash'];
+let geminiSearchModelIdx = 0; // 한 번 성공한 후보를 기억해 다음 요청부터 바로 쓴다(인스턴스 수명 동안)
 
-async function callGeminiGrounded(apiKey, opts, noThinking = true) {
+async function callGeminiGrounded(apiKey, opts, noThinking = true, idx = geminiSearchModelIdx) {
   const { system, user, max_tokens = 2048, timeout_ms = 60000 } = opts;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_SEARCH_MODEL}:generateContent?key=${apiKey}`;
+  const model = GEMINI_SEARCH_MODELS[idx];
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout_ms);
   let res;
@@ -2872,14 +2875,19 @@ async function callGeminiGrounded(apiKey, opts, noThinking = true) {
   clearTimeout(timer);
   if (!res.ok) {
     // 이 모델/계정이 검색 도구나 추론 끄기를 모르면 한 번 더 완화해서 시도.
-    if (res.status === 400 && noThinking) return callGeminiGrounded(apiKey, opts, false);
+    if (res.status === 400 && noThinking) return callGeminiGrounded(apiKey, opts, false, idx);
+    // 모델이 없어졌거나(404) 이 키로 못 쓰면(403) 다음 후보 모델로.
+    if ((res.status === 404 || res.status === 403) && idx + 1 < GEMINI_SEARCH_MODELS.length) {
+      return callGeminiGrounded(apiKey, opts, true, idx + 1);
+    }
     const t = await res.text();
-    throw new Error(`[gemini-search ${res.status}] ${t.slice(0, 160)}`);
+    throw new Error(`[gemini-search ${model} ${res.status}] ${t.slice(0, 160)}`);
   }
+  geminiSearchModelIdx = idx;
   const d = await res.json();
   const cand = d?.candidates?.[0];
   const text = (cand?.content?.parts || []).map(x => x.text || '').join('');
-  if (!text.trim() && noThinking) return callGeminiGrounded(apiKey, opts, false);
+  if (!text.trim() && noThinking) return callGeminiGrounded(apiKey, opts, false, idx);
   // 검색으로 실제 참고한 웹 출처 — 운영자가 직접 눌러 확인할 수 있게 그대로 넘긴다.
   const chunks = cand?.groundingMetadata?.groundingChunks || [];
   const sources = chunks
