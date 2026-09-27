@@ -1,0 +1,32 @@
+{
+  "id": "15_storyboard_fix",
+  "kind": "gen_images",
+  "purpose": "14 검수: 4번 줄자 숫자(1~5) 노출 · 7번 고래 뼈가 구족충보다 작음(크기 날조) → 두 칸만 재생성(2×2 격자에 각 2안)",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "fix4",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/14_storyboard_12/p05.jpg"
+      ],
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "p04a",
+          "p04b",
+          "p07a",
+          "p07b"
+        ]
+      },
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters. Shared look: handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette; everything except the giant isopod is a deliberately rough hand-made model. The giant isopod must match the attached replica and real reference images exactly: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, seven pairs of thin legs, spiny fan-shaped tail plate, FLAT dark triangular compound eyes (never round or bulging). Keep the upper quarter of every panel calm for captions. No text, no letters, NO NUMBERS, no labels, no logos, no watermark. No human hands or people.\n\nTOP-LEFT and TOP-RIGHT: two variations of SCENE A (slightly different angle). BOTTOM-LEFT and BOTTOM-RIGHT: two variations of SCENE B (different camera angle).\n\nSCENE A: straight top-down flat lay on pale grey paper: the giant isopod lying straight next to a plain vintage cloth tape measure that has ONLY small blank tick lines — absolutely no digits or printing on it; a few steel pins scattered. Clean, clinical.\n\nSCENE B: SCALE IS CRITICAL. A real whale skeleton is about 15 metres long and each giant isopod is only 40 cm, so a whale bone must look HUGE next to the isopods. Show a low close-up of just ONE enormous whale rib or vertebra section resting on dark seafloor sediment, the bone filling most of the frame and continuing out of frame; five small giant isopods crawl over and along it, each isopod much smaller than the width of the bone. The rest of the whale is out of frame. Dim deep-sea light, marine snow.\n\nMatch the rendering, lighting and materials of the attached storyboard panel."
+    }
+  ]
+}
