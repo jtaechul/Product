@@ -398,13 +398,41 @@ def gen_omni(req: dict, pilot: Path, out: Path) -> dict:
     return {"ok": all("file" in r for r in results), "items": results}
 
 
+def gen_tts(req: dict, pilot: Path, out: Path) -> dict:
+    """Google Cloud TTS — 목소리 고정(규칙): ja-JP-Neural2-B · 속도 90% · 높낮이 -2st.
+    item: name, tts(히라가나 낭독문). 결과 wav(24kHz)와 길이를 남긴다. 음량 맞춤(-16 LUFS)은 조립 단계."""
+    key = os.environ.get("GOOGLE_TTS_KEY", "")
+    if not key:
+        return {"ok": False, "error": "GOOGLE_TTS_KEY 없음"}
+    voice = req.get("voice", {"languageCode": "ja-JP", "name": "ja-JP-Neural2-B"})
+    results = []
+    for it in req["items"]:
+        ssml = f'<speak><prosody rate="90%" pitch="-2st">{it["tts"]}</prosody></speak>'
+        body = {"input": {"ssml": ssml}, "voice": voice,
+                "audioConfig": {"audioEncoding": "LINEAR16", "sampleRateHertz": 24000}}
+        code, raw = _http("https://texttospeech.googleapis.com/v1/text:synthesize", json.dumps(body).encode(),
+                          {"x-goog-api-key": key, "Content-Type": "application/json"})
+        rec = {"name": it["name"], "http": code}
+        if code == 200:
+            fn = out / f"{it['name']}.wav"
+            fn.write_bytes(base64.b64decode(json.loads(raw)["audioContent"]))
+            rec["file"] = fn.name
+            rec["sec"] = round(float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                                     "-of", "csv=p=0", str(fn)], capture_output=True,
+                                                    text=True).stdout or 0), 2)
+        else:
+            rec["error"] = raw[:300].decode("utf-8", "replace")
+        results.append(rec)
+    return {"ok": all("file" in r for r in results), "items": results}
+
+
 def main(path: str) -> int:
     rp = Path(path)
     req = json.loads(rp.read_text(encoding="utf-8"))
     pilot = rp.parent.parent
     out = pilot / "out" / req["id"]
     out.mkdir(parents=True, exist_ok=True)
-    fn = {"fetch_refs": fetch_refs, "gen_images": gen_images, "gen_video": gen_video, "gen_omni": gen_omni}[req["kind"]]
+    fn = {"fetch_refs": fetch_refs, "gen_images": gen_images, "gen_video": gen_video, "gen_omni": gen_omni, "gen_tts": gen_tts}[req["kind"]]
     res = fn(req, pilot, out)
     res.update({"request": rp.name, "kind": req["kind"], "ran_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
     (out / "result.json").write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
