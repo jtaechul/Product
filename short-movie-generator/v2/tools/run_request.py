@@ -357,6 +357,11 @@ def gen_omni(req: dict, pilot: Path, out: Path) -> dict:
             subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-sseof", "-0.1", "-i", str(pv),
                             "-frames:v", "1", "-q:v", "2", str(last)], check=True)
             plans.append(("image_to_video", [img(last), {"type": "text", "text": it["prompt"]}]))
+        elif it.get("start") and it.get("refs"):
+            # ★첫 화면 1장 + 참고 이미지(공용 엔딩: 말린 두루마리로 시작 → 펼치면 참고 도면이 드러남)
+            start = _fit_9x16(pilot / it["start"], out / f"{it['name']}_start.jpg")
+            refs = [img(_fit_9x16(pilot / r, out / f"{it['name']}_ref{i}.jpg")) for i, r in enumerate(it["refs"])]
+            plans.append(("image_to_video", [img(start)] + refs + [{"type": "text", "text": it["prompt"]}]))
         elif it.get("refs"):
             # ★참고 이미지(reference_to_video): 첫 화면으로 고정하지 않고 "이 도면·물체를 그려라"로만 쓴다
             #   (공용 엔딩: 첫 화면으로 넣으면 이미 펼쳐진 도면에서 시작해 양피지 펼침이 사라진다)
