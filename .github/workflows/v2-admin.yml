@@ -1,0 +1,82 @@
+name: V2 Admin
+
+# 제작 체계 v2 — 관리자 페이지 버튼 실행기(운영자 확정 2026-09-27).
+# 관리자 페이지(shorts-dashboard)의 승인·수정 요청·다시 하기·"이 컷만 다시 만들기"·새 영상 시작 버튼이
+# 이 워크플로를 디스패치한다 → short-movie-generator/v2/tools/admin.py 실행 → status.json 등을 커밋.
+# 입력값은 셸에 직접 치환하지 않고 env 로만 넘긴다(인용부호 소실·주입 방지 — 기존 실사고 규칙).
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "new | approve | revise | redo | ready | redo_cut | assemble | topics"
+        required: true
+      pilot:
+        description: "편 id (예: bathynomus_giganteus)"
+        required: false
+        default: ""
+      stage:
+        description: "topic | script | storyboard | video | upload (컷 재생성이면 컷 번호)"
+        required: false
+        default: ""
+      note:
+        description: "메모(수정 요청 내용 등)"
+        required: false
+        default: ""
+
+concurrency:
+  group: v2-admin
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: 준비
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          pip install -q Pillow numpy google-genai janome
+
+      - name: 버튼 실행
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_TTS_KEY: ${{ secrets.GOOGLE_TTS_KEY }}
+          IN_ACTION: ${{ inputs.action }}
+          IN_PILOT: ${{ inputs.pilot }}
+          IN_STAGE: ${{ inputs.stage }}
+          IN_NOTE: ${{ inputs.note }}
+        run: |
+          set -e
+          case "$IN_ACTION" in
+            new|assemble)               python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" ;;
+            topics)                     python3 v2/tools/admin.py topics ;;
+            approve|revise|redo|ready|redo_cut)
+                                        python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
+            *) echo "모르는 동작: $IN_ACTION"; exit 1 ;;
+          esac
+
+      - name: 결과 커밋
+        if: always()
+        env:
+          IN_ACTION: ${{ inputs.action }}
+          IN_PILOT: ${{ inputs.pilot }}
+          IN_STAGE: ${{ inputs.stage }}
+        run: |
+          git add v2/pilots v2/topics.json || true
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(v2): 관리자 페이지 $IN_ACTION $IN_PILOT $IN_STAGE [skip ci]"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin "${{ github.ref_name }}" && git push origin HEAD:"${{ github.ref_name }}" && break
+            sleep $((i*3))
+          done
