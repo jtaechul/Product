@@ -1,0 +1,43 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "fix4",
+      "http": 200,
+      "file": "fix4.jpg",
+      "panels": [
+        "p04a.jpg",
+        "p04b.jpg",
+        "p07a.jpg",
+        "p07b.jpg"
+      ],
+      "usage": {
+        "promptTokenCount": 1440,
+        "candidatesTokenCount": 1568,
+        "totalTokenCount": 3401,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 408
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 393,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "15_storyboard_fix.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T06:28:46Z"
+}
