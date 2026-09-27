@@ -1,0 +1,164 @@
+{
+  "ok": false,
+  "items": [
+    {
+      "name": "c01",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": false,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'INVALID_ARGUMENT'}}"
+        }
+      ]
+    },
+    {
+      "name": "c02",
+      "model": "veo-3.1-lite-generate-preview",
+      "attempts": [],
+      "error": "앞 클립(c01) 실패 → 건너뜀"
+    },
+    {
+      "name": "c03",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": false,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'INVALID_ARGUMENT'}}"
+        }
+      ]
+    },
+    {
+      "name": "c04",
+      "model": "veo-3.1-lite-generate-preview",
+      "attempts": [],
+      "error": "앞 클립(c03) 실패 → 건너뜀"
+    },
+    {
+      "name": "c05",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": false,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'INVALID_ARGUMENT'}}"
+        }
+      ]
+    },
+    {
+      "name": "c06",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": false,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'INVALID_ARGUMENT'}}"
+        }
+      ]
+    },
+    {
+      "name": "c07",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": false,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'INVALID_ARGUMENT'}}"
+        }
+      ]
+    },
+    {
+      "name": "c08",
+      "model": "veo-3.1-lite-generate-preview",
+      "attempts": [],
+      "error": "앞 클립(c07) 실패 → 건너뜀"
+    },
+    {
+      "name": "c09",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": false,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'INVALID_ARGUMENT'}}"
+        }
+      ]
+    },
+    {
+      "name": "c10",
+      "model": "veo-3.1-lite-generate-preview",
+      "attempts": [],
+      "error": "앞 클립(c09) 실패 → 건너뜀"
+    },
+    {
+      "name": "c11",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": false,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'INVALID_ARGUMENT'}}"
+        }
+      ]
+    },
+    {
+      "name": "c12",
+      "model": "veo-3.1-lite-generate-preview",
+      "attempts": [],
+      "error": "앞 클립(c11) 실패 → 건너뜀"
+    },
+    {
+      "name": "c13",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": false,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'INVALID_ARGUMENT'}}"
+        }
+      ]
+    },
+    {
+      "name": "c14",
+      "model": "veo-3.1-lite-generate-preview",
+      "attempts": [],
+      "error": "앞 클립(c13) 실패 → 건너뜀"
+    },
+    {
+      "name": "c15",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": false,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'INVALID_ARGUMENT'}}"
+        }
+      ]
+    },
+    {
+      "name": "c16",
+      "model": "veo-3.1-lite-generate-preview",
+      "duration_s": 4,
+      "attempts": [
+        {
+          "with_end_frame": false,
+          "ok": false,
+          "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'INVALID_ARGUMENT'}}"
+        }
+      ]
+    }
+  ],
+  "request": "11_clips.json",
+  "kind": "gen_video",
+  "ran_at": "2026-09-27T05:53:15Z"
+}
