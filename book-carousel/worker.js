@@ -2846,7 +2846,9 @@ function featuresFromTitle(title) {
 const GEMINI_SEARCH_MODELS = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash'];
 let geminiSearchModelIdx = 0; // 한 번 성공한 후보를 기억해 다음 요청부터 바로 쓴다(인스턴스 수명 동안)
 
-async function callGeminiGrounded(apiKey, opts, noThinking = true, idx = geminiSearchModelIdx) {
+// ⚠️ 추론을 끄면(thinkingBudget:0) gemini-3.x는 검색 도구를 건너뛰고 기억으로 답한다
+//    (실측: 끔=출처 0건 2.7초 / 켬=출처 7건 8.4초). 그래서 검색 호출은 추론을 켜 둔다.
+async function callGeminiGrounded(apiKey, opts, noThinking = false, idx = geminiSearchModelIdx) {
   const { system, user, max_tokens = 2048, timeout_ms = 60000 } = opts;
   const model = GEMINI_SEARCH_MODELS[idx];
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -2878,7 +2880,7 @@ async function callGeminiGrounded(apiKey, opts, noThinking = true, idx = geminiS
     if (res.status === 400 && noThinking) return callGeminiGrounded(apiKey, opts, false, idx);
     // 모델이 없어졌거나(404) 이 키로 못 쓰면(403) 다음 후보 모델로.
     if ((res.status === 404 || res.status === 403) && idx + 1 < GEMINI_SEARCH_MODELS.length) {
-      return callGeminiGrounded(apiKey, opts, true, idx + 1);
+      return callGeminiGrounded(apiKey, opts, false, idx + 1);
     }
     const t = await res.text();
     throw new Error(`[gemini-search ${model} ${res.status}] ${t.slice(0, 160)}`);
@@ -2886,8 +2888,7 @@ async function callGeminiGrounded(apiKey, opts, noThinking = true, idx = geminiS
   geminiSearchModelIdx = idx;
   const d = await res.json();
   const cand = d?.candidates?.[0];
-  const text = (cand?.content?.parts || []).map(x => x.text || '').join('');
-  if (!text.trim() && noThinking) return callGeminiGrounded(apiKey, opts, false, idx);
+  const text = (cand?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join('');
   // 검색으로 실제 참고한 웹 출처 — 운영자가 직접 눌러 확인할 수 있게 그대로 넘긴다.
   const chunks = cand?.groundingMetadata?.groundingChunks || [];
   const sources = chunks
@@ -2938,7 +2939,7 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 ⚠️ pains 주의: 이 상품을 쓰고 나서 생긴 불만(맛을 안 본다, 변이 묽어졌다, 포장이 부실하다 등)은
 절대 넣지 마라. pains는 오직 "이 상품을 쓰기 전에 겪던 문제"만 담는다. 우리는 이 상품을 파는 쪽이다.`;
     try {
-      const r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 2048 });
+      const r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 4096 });
       sources = r.sources;
       grounded = sources.length > 0;
       const parsed = extractJson(r.text);
@@ -4964,48 +4965,6 @@ export default {
           } else {
             const d = await env.PENDING_POSTS.get('work_draft', 'json').catch(() => null);
             result = { success: true, data: d || null };
-          }
-        }
-        else if (url.pathname === '/api/search-diag') {
-          // 웹검색 모델 진단: 후보 모델마다 상태·검색 사용 여부만 돌려준다(키·본문은 노출하지 않음).
-          const gk = await getGeminiKey(env);
-          const rows = [];
-          if (body.mode === 'insight') {
-            // 실제 분석과 같은 시스템 프롬프트로, 추론 끔/켬 각각 검색이 일어나는지 본다.
-            const title = String(body.title || '로얄캐닌 미니 인도어 어덜트 강아지 사료 3kg');
-            const user = `상품: ${title}\n\n이 상품의 실제 구매 후기와 사용기를 검색해서 JSON으로 정리하라. {"points":[{"text":"","evidence":""}]}`;
-            for (const think of [true, false]) {
-              const t0 = Date.now();
-              try {
-                const r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 2048 }, think, 0);
-                rows.push({ thinkOff: think, ms: Date.now() - t0, sources: r.sources.length, textLen: r.text.length, head: r.text.slice(0, 80) });
-              } catch (e) { rows.push({ thinkOff: think, ms: Date.now() - t0, err: String(e.message).slice(0, 160) }); }
-            }
-            result = { success: true, rows };
-          } else {
-          for (const m of GEMINI_SEARCH_MODELS) {
-            for (const think of [true, false]) {
-              try {
-                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${gk}`, {
-                  method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    contents: [{ role: 'user', parts: [{ text: '로얄캐닌 미니 인도어 어덜트 사료 후기를 웹에서 찾아 한 줄로 요약해줘' }] }],
-                    tools: [{ google_search: {} }],
-                    generationConfig: { maxOutputTokens: 400, ...(think ? { thinkingConfig: { thinkingBudget: 0 } } : {}) },
-                  }),
-                });
-                const j = await r.json().catch(() => ({}));
-                const c = j?.candidates?.[0];
-                rows.push({ model: m, thinkOff: think, status: r.status,
-                  modelVersion: j?.modelVersion || '', finish: c?.finishReason || '',
-                  hasGrounding: !!c?.groundingMetadata, chunks: (c?.groundingMetadata?.groundingChunks || []).length,
-                  queries: c?.groundingMetadata?.webSearchQueries || [], gmKeys: Object.keys(c?.groundingMetadata || {}),
-                  textLen: (c?.content?.parts || []).map(x => x.text || '').join('').length,
-                  err: j?.error?.message ? String(j.error.message).slice(0, 140) : '' });
-              } catch (e) { rows.push({ model: m, thinkOff: think, err: String(e.message || e) }); }
-            }
-          }
-          result = { success: true, rows };
           }
         }
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
