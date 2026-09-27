@@ -2928,43 +2928,52 @@ async function handleProductInsight(env, body) {
   if (!gk) {
     note = 'Gemini 키가 없어 상품명 해독만 했습니다.';
   } else {
-    const user = `상품: ${title}
+    // ── 1단계: 검색만 시킨다(짧고 평범한 질문) ──
+    // 긴 규칙+JSON 지시를 함께 주면 모델이 "검색 없이 답할 수 있다"고 판단해 절반은 검색을
+    // 건너뛰었다(실측: 5회 중 3회 출처 0건, 검색어 0개). 짧은 질문은 거의 항상 검색한다.
+    const searchQ = `"${title}" 제품의 실제 구매 후기와 사용기를 웹에서 검색해줘.
+찾은 후기에 나온 장점, 그리고 구매자들이 이 제품을 사기 전에 겪던 불편을 정리해줘.
+각 내용마다 어느 사이트의 후기인지, 그 후기가 어떤 브랜드 제품에 대한 것인지 함께 적어줘.
+찾지 못한 내용은 지어내지 말고 "찾지 못함"이라고 적어줘.`;
+    const user2 = (notes) => `상품: ${title}
 품목: ${category || '반려동물 용품'}
 
-이 상품의 실제 구매 후기와 사용기를 검색해서 아래 JSON으로 정리하라.
+[웹검색 조사 메모 — 이것만 근거로 쓴다]
+${notes}
+
+위 메모에 **적혀 있는 것만** 아래 JSON으로 옮겨라. 메모에 없는 내용은 절대 보태지 마라.
 {
   "notFound": false,
   "points": [{"text": "특징이나 장점 한 줄", "evidence": "어느 글에서 확인했는지 + 그 글이 다루는 상품의 브랜드명을 반드시 포함"}],
   "pains": [{"text": "이 상품을 쓰기 전에 겪던 불편 한 줄 — 즉 이 상품이 해결해 주는 문제", "evidence": "어디서 확인했는지 + 그 글이 다루는 상품의 브랜드명"}]
 }
-points는 최대 5개, pains는 최대 4개. 확인하지 못한 것은 넣지 말고 빈 배열로 둬라.
+points는 최대 5개, pains는 최대 4개. 메모가 "찾지 못함"이면 notFound를 true로 하고 빈 배열로 둬라.
 evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 
 ⚠️ pains 주의: 이 상품을 쓰고 나서 생긴 불만(맛을 안 본다, 변이 묽어졌다, 포장이 부실하다 등)은
 절대 넣지 마라. pains는 오직 "이 상품을 쓰기 전에 겪던 문제"만 담는다. 우리는 이 상품을 파는 쪽이다.`;
     try {
-      // 모델이 검색을 할지 말지 스스로 정한다 — 가끔 검색 없이 기억으로 답한다(실측 2회 중 1회).
-      // 출처가 0건이면 검색을 못박아 딱 1회 다시 묻는다.
-      // JSON이 가끔 중간이 깨져 나오는 것도(실측 4회 중 1회) 같은 방식으로 1회 재시도한다.
-      const tryParse = (t) => { try { return extractJson(t); } catch { return null; } };
-      let r = await callGeminiGrounded(gk, { system: INSIGHT_SYSTEM, user, max_tokens: 4096 });
-      let parsed = tryParse(r.text);
-      if (!r.sources.length || !parsed) {
-        const again = await callGeminiGrounded(gk, {
-          system: INSIGHT_SYSTEM,
-          user: '반드시 google_search 도구로 먼저 웹을 검색한 뒤, 검색 결과만 근거로 답하라. 기억으로 답하지 마라. 올바른 JSON만 출력하라.\n\n' + user,
-          max_tokens: 4096,
-        }).catch(() => null);
-        const p2 = again ? tryParse(again.text) : null;
-        searchTrace = [r.trace, again ? again.trace : { err: 'retry failed' }];
-        // 출처와 JSON이 둘 다 갖춰진 쪽을 우선, 아니면 더 나은 쪽을 쓴다.
-        if (again && p2 && (again.sources.length || !r.sources.length)) { r = again; parsed = p2; }
-        else if (!parsed && p2) { r = again; parsed = p2; }
+      let r = await callGeminiGrounded(gk, { system: '', user: searchQ, max_tokens: 4096 });
+      searchTrace = [r.trace];
+      if (!r.sources.length) {
+        // 그래도 검색을 건너뛰면 1회만 다시 묻는다.
+        const again = await callGeminiGrounded(gk, { system: '', user: searchQ, max_tokens: 4096 }).catch(() => null);
+        if (again) searchTrace.push(again.trace);
+        if (again && again.sources.length) r = again;
       }
-      if (!searchTrace.length) searchTrace = [r.trace];
-      if (!parsed) throw new Error('검색 결과를 읽지 못했습니다');
       sources = r.sources;
       grounded = sources.length > 0;
+
+      // ── 2단계: 조사 메모를 JSON으로 옮기기만 한다(웹 접근 없음 → 새 내용을 보탤 수 없다) ──
+      // 출처가 없으면 메모 자체가 기억에서 나온 것이므로 옮길 필요도 없다.
+      let parsed = { points: [], pains: [] };
+      if (grounded) {
+        const tryParse = (t) => { try { return extractJson(t); } catch { return null; } };
+        const ask = () => callGeminiText(gk, { system: INSIGHT_SYSTEM, user: user2(r.text.slice(0, 6000)), max_tokens: 2048, timeout_ms: 40000, json: true });
+        parsed = tryParse(await ask());
+        if (!parsed) parsed = tryParse(await ask().catch(() => ''));
+        if (!parsed) throw new Error('검색 결과를 읽지 못했습니다');
+      }
       if (parsed?.notFound === true) {
         note = '검색으로 이 상품을 확인하지 못해, 상품명에서 읽은 것만 남겼습니다.';
       }
@@ -2976,9 +2985,9 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
       points = clean(parsed?.points).slice(0, 5);
       pains = clean(parsed?.pains).slice(0, 4);
       // 웹 출처가 하나도 없으면 "검색했다"고 볼 수 없다 → 검색 기반 항목을 신뢰하지 않는다.
-      if (!grounded && (points.length || pains.length)) {
+      if (!grounded) {
         points = []; pains = [];
-        note = '웹 출처를 확인하지 못해 검색 결과는 버리고, 상품명에서 읽은 것만 남겼습니다.';
+        note = '웹에서 이 상품의 후기를 확인하지 못해, 상품명에서 읽은 것만 남겼습니다.';
       }
     } catch (e) {
       note = `웹검색 조사는 실패했고(${e.message}) 상품명 해독만 했습니다.`;
