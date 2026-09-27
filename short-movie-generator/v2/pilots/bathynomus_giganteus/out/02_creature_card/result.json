@@ -1,0 +1,93 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "card_top",
+      "http": 200,
+      "file": "card_top.jpg",
+      "usage": {
+        "promptTokenCount": 753,
+        "candidatesTokenCount": 1301,
+        "totalTokenCount": 2289,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 237
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 516
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 235,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "card_side",
+      "http": 200,
+      "file": "card_side.jpg",
+      "usage": {
+        "promptTokenCount": 759,
+        "candidatesTokenCount": 1311,
+        "totalTokenCount": 2267,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 243
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 516
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 197,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "card_head",
+      "http": 200,
+      "file": "card_head.jpg",
+      "usage": {
+        "promptTokenCount": 501,
+        "candidatesTokenCount": 1307,
+        "totalTokenCount": 2035,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 243
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 258
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 227,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "02_creature_card.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T04:38:25Z"
+}
