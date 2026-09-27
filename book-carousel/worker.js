@@ -2890,12 +2890,16 @@ async function callGeminiGrounded(apiKey, opts, noThinking = false, idx = gemini
   const cand = d?.candidates?.[0];
   const text = (cand?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join('');
   // 검색으로 실제 참고한 웹 출처 — 운영자가 직접 눌러 확인할 수 있게 그대로 넘긴다.
-  const chunks = cand?.groundingMetadata?.groundingChunks || [];
+  const gm = cand?.groundingMetadata || {};
+  const chunks = gm.groundingChunks || [];
   const sources = chunks
     .map(c => ({ title: c?.web?.title || '', url: c?.web?.uri || '' }))
     .filter(x => x.url)
     .slice(0, 8);
-  return { text, sources };
+  // 검색이 실제로 일어났는지 확인용 흔적(운영 점검). 키·본문은 담지 않는다.
+  const trace = { model: d?.modelVersion || model, think: !noThinking, queries: (gm.webSearchQueries || []).length,
+    chunks: chunks.length, gmKeys: Object.keys(gm), finish: cand?.finishReason || '', textLen: text.length };
+  return { text, sources, trace };
 }
 
 const INSIGHT_SYSTEM = `당신은 반려동물 용품의 실제 구매 후기를 조사해 "사실만" 정리하는 조사원이다.
@@ -2919,7 +2923,7 @@ async function handleProductInsight(env, body) {
   const titleFeatures = featuresFromTitle(title);
 
   // (2) 웹검색 조사 — 실패해도 (1)은 남으므로 전체가 죽지 않는다.
-  let points = [], pains = [], sources = [], grounded = false, note = '';
+  let points = [], pains = [], sources = [], grounded = false, note = '', searchTrace = [];
   const gk = await getGeminiKey(env);
   if (!gk) {
     note = 'Gemini 키가 없어 상품명 해독만 했습니다.';
@@ -2952,10 +2956,12 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
           max_tokens: 4096,
         }).catch(() => null);
         const p2 = again ? tryParse(again.text) : null;
+        searchTrace = [r.trace, again ? again.trace : { err: 'retry failed' }];
         // 출처와 JSON이 둘 다 갖춰진 쪽을 우선, 아니면 더 나은 쪽을 쓴다.
         if (again && p2 && (again.sources.length || !r.sources.length)) { r = again; parsed = p2; }
         else if (!parsed && p2) { r = again; parsed = p2; }
       }
+      if (!searchTrace.length) searchTrace = [r.trace];
       if (!parsed) throw new Error('검색 결과를 읽지 못했습니다');
       sources = r.sources;
       grounded = sources.length > 0;
@@ -3007,6 +3013,7 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
     general,         // 같은 품목의 일반적인 이야기 (참고용)
     pains,
     sources,
+    searchTrace,
     draft: sure.length ? sure.join('. ') + '.' : '',
   };
 }
