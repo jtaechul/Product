@@ -1,0 +1,111 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "grid1",
+      "http": 200,
+      "file": "grid1.jpg",
+      "panels": [
+        "s01.jpg",
+        "s02.jpg",
+        "s03.jpg",
+        "s04.jpg"
+      ],
+      "usage": {
+        "promptTokenCount": 1257,
+        "candidatesTokenCount": 1636,
+        "totalTokenCount": 3292,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 483
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 774
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 399,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "grid2",
+      "http": 200,
+      "file": "grid2.jpg",
+      "panels": [
+        "s05.jpg",
+        "s06.jpg",
+        "s07.jpg",
+        "s08.jpg"
+      ],
+      "usage": {
+        "promptTokenCount": 1525,
+        "candidatesTokenCount": 1671,
+        "totalTokenCount": 3929,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 493
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 733,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "grid3",
+      "http": 200,
+      "file": "grid3.jpg",
+      "panels": [
+        "s09.jpg",
+        "s10.jpg",
+        "s03b.jpg",
+        "s07b.jpg"
+      ],
+      "usage": {
+        "promptTokenCount": 1530,
+        "candidatesTokenCount": 1645,
+        "totalTokenCount": 3880,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 498
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 705,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "08_storyboard_v2.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-27T05:40:55Z"
+}
