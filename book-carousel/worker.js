@@ -3583,8 +3583,17 @@ function fallbackMenuName(title, spKey) {
   return `${who}${ing ? ing + ' ' : ''}${kind}`.trim();
 }
 // 같은 메뉴 이름이 연달아 나오지 않게 최근 이름을 기억한다(KV diner_menu_names, 최근 40개).
-async function recentMenuNames(env) {
-  try { return (await env.PENDING_POSTS.get('diner_menu_names', 'json')) || []; } catch { return []; }
+// 항목: { k: 상품 키, n: 메뉴 이름 }. 같은 상품을 다시 만들 때는 자기 이름을 중복으로 치지 않는다.
+const menuKey = (title) => String(title || '').replace(/\s+/g, '').slice(0, 80);
+async function recentMenuEntries(env) {
+  try {
+    const raw = (await env.PENDING_POSTS.get('diner_menu_names', 'json')) || [];
+    return raw.map(x => (typeof x === 'string' ? { k: '', n: x } : x)).filter(x => x && x.n);
+  } catch { return []; }
+}
+async function recentMenuNames(env, title) {
+  const key = menuKey(title);
+  return (await recentMenuEntries(env)).filter(x => !key || x.k !== key).map(x => x.n);
 }
 async function recentDinerLines(env) {
   try { return (await env.PENDING_POSTS.get('diner_recent_lines', 'json')) || []; } catch { return []; }
@@ -3596,10 +3605,11 @@ async function rememberDinerLines(env, lines) {
     await env.PENDING_POSTS.put('diner_recent_lines', JSON.stringify(list));
   } catch { /* 기록 실패는 무시 */ }
 }
-async function rememberMenuName(env, name) {
+async function rememberMenuName(env, name, title) {
   try {
-    const list = (await recentMenuNames(env)).filter(x => x !== name);
-    list.unshift(name);
+    const key = menuKey(title);
+    const list = (await recentMenuEntries(env)).filter(x => x.k !== key && x.n !== name);
+    list.unshift({ k: key, n: name });
     await env.PENDING_POSTS.put('diner_menu_names', JSON.stringify(list.slice(0, 40)));
   } catch { /* 기록 실패는 무시 */ }
 }
@@ -3679,7 +3689,7 @@ async function handleDinerEpisode(env, body, ctx) {
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
     .filter(Boolean);
   const factsSafe = adSafeFacts(facts).slice(0, 5);
-  const recentMenus = await recentMenuNames(env);
+  const recentMenus = await recentMenuNames(env, title);
   const recentLines = await recentDinerLines(env);
   const banned = menuBannedWords(title);
   // 입장 훅 재료 — 02단계에서 확인된 '사기 전 불편'. 증상 이야기는 효능 암시가 되므로 뺀다.
@@ -3766,7 +3776,15 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   };
   let menuName = String(out.menuName || '').trim().replace(/["'「」]/g, '').slice(0, 20);
   if (!menuName || hasBanned(menuName, banned)) menuName = fallbackMenuName(title, spKey);
-  await rememberMenuName(env, menuName);
+  // 최근 회차와 이름이 같으면 상품명의 보편 특징(전연령·실내·대용량 등)을 앞에 붙여 구분한다.
+  if (recentMenus.includes(menuName)) {
+    const extra = String(title).split(/[\s()\[\],/·+]+/).map(w => w.replace(/[^가-힣]/g, ''))
+      .find(w => w.length >= 2 && MENU_GENERIC.test(w) && !/^(강아지|고양이|사료|간식|건식|건식사료|용|전용)$/.test(w) && !menuName.includes(w));
+    menuName = extra ? `${extra} ${menuName}` : menuName;
+    let n = 2; const base = menuName;
+    while (recentMenus.includes(menuName) && n < 10) menuName = `${base} ${n++}호`;
+  }
+  await rememberMenuName(env, menuName, title);
   await rememberDinerLines(env, list.filter(c => /^(taste|exit)$/.test(String(c && c.role || ''))).map(c => String(c.line || '').trim()));
 
   const clipsOut = roles.map((role, i) => {
