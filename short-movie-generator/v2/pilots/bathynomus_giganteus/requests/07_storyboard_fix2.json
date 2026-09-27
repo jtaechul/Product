@@ -1,0 +1,47 @@
+{
+  "id": "07_storyboard_fix2",
+  "kind": "gen_images",
+  "purpose": "06 검수: 5·7·9번 여전히 크기 왜곡 → 축척을 오해시키는 소품(배·사람·가구)을 빼서 해결",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "s05",
+      "aspect": "9:16",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/05_storyboard/s04.jpg",
+        "out/06_storyboard_fix/s06.jpg"
+      ],
+      "prompt": "Miniature diorama photograph, vertical 9:16. The whole scene is built as ONE square block diorama floating on a plain dark charcoal background, with its chunky wooden base edge clearly visible. Everything except the giant isopod is a deliberately rough, simple, hand-made scale model: chunky shapes, visible clay, wood and foam textures, like a tabletop model kit. Strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Camera: high three-quarter angle looking down at the block. The giant isopod, when present, must match the attached replica and real reference images EXACTLY in anatomy and colour and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Keep the upper quarter of the frame calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no signs, no watermark, no collage, no split screen, no multiple panels, no border frames. SCENE: A tall vertical cross-section block of the sea seen through glass: bright light at the very top where the water surface is, the water getting darker layer by layer, and at the bottom a pale muddy seafloor where one giant isopod walks. No boats, no people, no objects at the surface. Match the diorama style, lighting, palette and model roughness of the attached storyboard scenes."
+    },
+    {
+      "name": "s07",
+      "aspect": "9:16",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/05_storyboard/s04.jpg",
+        "out/06_storyboard_fix/s06.jpg"
+      ],
+      "prompt": "Miniature diorama photograph, vertical 9:16. The whole scene is built as ONE square block diorama floating on a plain dark charcoal background, with its chunky wooden base edge clearly visible. Everything except the giant isopod is a deliberately rough, simple, hand-made scale model: chunky shapes, visible clay, wood and foam textures, like a tabletop model kit. Strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Camera: high three-quarter angle looking down at the block. The giant isopod, when present, must match the attached replica and real reference images EXACTLY in anatomy and colour and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Keep the upper quarter of the frame calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no signs, no watermark, no collage, no split screen, no multiple panels, no border frames. SCENE: A simple rough model of an aquarium back room with one plain glass tank. Long metal tongs holding a small silver fish reach down into the tank from above the frame; the giant isopod inside reaches toward the fish. No people, no hands, no logos, no signs. Match the diorama style, lighting, palette and model roughness of the attached storyboard scenes."
+    },
+    {
+      "name": "s09",
+      "aspect": "9:16",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/05_storyboard/s04.jpg",
+        "out/06_storyboard_fix/s06.jpg"
+      ],
+      "prompt": "Miniature diorama photograph, vertical 9:16. The whole scene is built as ONE square block diorama floating on a plain dark charcoal background, with its chunky wooden base edge clearly visible. Everything except the giant isopod is a deliberately rough, simple, hand-made scale model: chunky shapes, visible clay, wood and foam textures, like a tabletop model kit. Strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette. Camera: high three-quarter angle looking down at the block. The giant isopod, when present, must match the attached replica and real reference images EXACTLY in anatomy and colour and be highly detailed: pale lavender-lilac glossy armour, arched body, overlapping segments, long thin antennae, thin legs tucked beneath, spiny fan-shaped tail plate, flat dark triangular compound eyes at the front corners of the head. Keep the upper quarter of the frame calm and uncluttered for captions. No text, no letters, no numbers, no labels, no arrows, no logos, no signs, no watermark, no collage, no split screen, no multiple panels, no border frames. SCENE: A quiet examination setup: a white cloth-covered tray on a plain tabletop under a single warm desk lamp; the giant isopod specimen lies calmly on the cloth. No chairs, no furniture, no people. Respectful mood, no cutting, no gore. Match the diorama style, lighting, palette and model roughness of the attached storyboard scenes."
+    }
+  ]
+}
