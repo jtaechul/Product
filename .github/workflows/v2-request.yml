@@ -1,0 +1,66 @@
+name: V2 Request
+
+# 제작 체계 v2 — 요청 파일 실행기.
+# short-movie-generator/v2/pilots/<종>/requests/*.json 을 푸시하면 **이번 푸시에서 바뀐 요청만** 실행하고,
+# 결과(out/<요청id>/)를 같은 브랜치에 커밋한다. 키는 시크릿으로만 전달(출력 금지).
+on:
+  push:
+    branches: [claude/gemini-shorts-reels-generator-dhjfdt]
+    paths: ["short-movie-generator/v2/pilots/*/requests/*.json"]
+
+concurrency:
+  group: v2-request
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+
+      - name: 바뀐 요청 실행
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          set -o pipefail
+          files=$(git diff --name-only "$BEFORE" "$AFTER" -- 'v2/pilots/*/requests/*.json' 2>/dev/null \
+                  | sed 's#^short-movie-generator/##' || true)
+          [ -z "$files" ] && files=$(git diff --name-only HEAD~1 HEAD | grep '^short-movie-generator/v2/pilots/.*/requests/.*\.json$' | sed 's#^short-movie-generator/##')
+          echo "실행할 요청: $files"
+          rc=0
+          for f in $files; do
+            [ -f "$f" ] || continue
+            echo "::group::$f"; python3 v2/tools/run_request.py "$f" || rc=1; echo "::endgroup::"
+          done
+          echo "rc=$rc" >> "$GITHUB_ENV"
+
+      - name: 결과 커밋
+        if: always()
+        run: |
+          git add v2/pilots/*/out || true
+          if git diff --cached --quiet; then echo "결과 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(v2): 요청 실행 결과 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin "${{ github.ref_name }}" && git push origin HEAD:"${{ github.ref_name }}" && break
+            sleep $((i*3))
+          done
+
+      - name: 실패 표시
+        if: env.rc == '1'
+        run: exit 1
