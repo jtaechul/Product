@@ -1,12 +1,12 @@
 {
-  "updated": "2026-09-28T10:47:11Z",
+  "updated": "2026-09-28T10:58:16Z",
   "items": [
     {
       "id": "bathynomus_giganteus",
       "name_ko": "대왕구족충",
       "sci": "Bathynomus giganteus",
-      "stage": "video",
-      "state": "review",
+      "stage": "upload",
+      "state": "working",
       "created": "2026-09-27T00:00:00Z"
     }
   ]

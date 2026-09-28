@@ -42,7 +42,7 @@
       "approved_at": "2026-09-27T00:00:00Z"
     },
     "video": {
-      "state": "review",
+      "state": "approved",
       "notes": [
         {
           "at": "2026-09-27T00:00:00Z",
@@ -73,11 +73,17 @@
           "at": "2026-09-28T10:40:02Z",
           "kind": "recut_done",
           "text": "8번 컷을 수정 방향대로 다시 만들었습니다(샷 2개 · 전환 1회)"
+        },
+        {
+          "at": "2026-09-28T10:58:16Z",
+          "kind": "approve",
+          "text": ""
         }
-      ]
+      ],
+      "approved_at": "2026-09-28T10:58:16Z"
     },
     "upload": {
-      "state": "locked",
+      "state": "working",
       "notes": []
     }
   },
