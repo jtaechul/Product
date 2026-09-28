@@ -16,6 +16,7 @@ const HTML = `<!doctype html>
 <style>
 :root{--bg:#070b10;--panel:#0d151d;--line:rgba(150,200,215,.18);--cy:#43c8da;--wt:#e8eef2;--gy:#8fa0aa;--am:#ffc24d;--rd:#ff6b6b;--gr:#5be08a}
 *{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:radial-gradient(120% 100% at 50% 0%,#0b1620,#05080c 70%);color:var(--wt);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;min-height:100vh}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
@@ -76,6 +77,8 @@ button:disabled{opacity:.5}
 .detail video,.detail img{width:100%;border-radius:10px;border:1px solid var(--line);background:#000;display:block}
 /* 일본어(좌)·한국어(우) 동시 열람 2단 프레임 */
 .dual{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dual>div{min-width:0}
+@media (max-width:520px){.dual{grid-template-columns:1fr}}
 .dual textarea{min-height:220px}
 .meta{font-size:13px;color:#c6d2da;line-height:1.7}
 .meta b{color:var(--wt)}
@@ -121,7 +124,7 @@ button:disabled{opacity:.5}
 .v2ed{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#0a1018}
 .cfact.err{color:var(--rd)}
 .v2copy{display:flex;gap:8px;align-items:flex-start}
-.v2copytxt{flex:1;white-space:pre-wrap;word-break:keep-all;font-size:13px;line-height:1.6;background:#0a1018;border:1px solid var(--line);border-radius:8px;padding:8px}
+.v2copytxt{flex:1;min-width:0;max-width:100%;white-space:pre-wrap;word-break:normal;overflow-wrap:anywhere;font-size:13px;line-height:1.6;background:#0a1018;border:1px solid var(--line);border-radius:8px;padding:8px}
 .v2copy .btn{flex:none}
 .v2rc{margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0a1018}
 .v2rc img{width:100%;border-radius:8px}
@@ -153,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-28-8 (업로드 뒤에도 복사 · 화면 값 그대로 업로드 · 카테고리)";
+const BUILD="v2026-09-28-9 (아이폰 화면 넘침 수정)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)

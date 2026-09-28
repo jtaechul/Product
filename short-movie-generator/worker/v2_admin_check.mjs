@@ -53,6 +53,9 @@ globalThis.fetch = async (url, opts) => {
 const api = new Function(js.replace(/\ninit\(\);\s*$/, "\n") +
   "\n; return { renderV2List, renderV2New, renderV2Episode, renderHome };").call(null);
 const res = {};
+// 아이폰 화면 넘침 방지(2026-09-28 실사고: 긴 URL·일본어가 카드 밖으로 밀려 나감)
+res.mobile_no_overflow = /html\{-webkit-text-size-adjust:100%/.test(html) && /\.v2copytxt\{[^}]*min-width:0[^}]*overflow-wrap:anywhere/.test(html)
+  && /@media \(max-width:520px\)\{\.dual\{grid-template-columns:1fr\}\}/.test(html);
 res.nav_two_menus = /<div class="nav" id="nav"><a href="\/" data-p="v2list">영상 목록<\/a><a href="\/new" data-p="v2new">새 영상<\/a><\/div>/.test(html)
   && !/data-p="library"|data-p="clips"/.test(html);
 
