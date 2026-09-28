@@ -108,12 +108,13 @@ def _pick_model(key, prefs):
     return next((m for m in prefs if m in _model_cache["names"]), prefs[-1])
 
 
-def gen_image(prompt: str, refs: list[Path], out: Path, aspect="9:16") -> dict:
+def gen_image(prompt: str, refs: list[Path], out: Path, aspect="9:16", size: str = "") -> dict:
     key = _key("GEMINI_API_KEY")
     model = _pick_model(key, IMAGE_MODELS)
     parts = [{"inline_data": _b64img(r)} for r in refs] + [{"text": prompt}]
     body = {"contents": [{"role": "user", "parts": parts}],
-            "generationConfig": {"responseModalities": ["IMAGE"], "imageConfig": {"aspectRatio": aspect}}}
+            "generationConfig": {"responseModalities": ["IMAGE"],
+                                 "imageConfig": {"aspectRatio": aspect, **({"imageSize": size} if size else {})}}}
     for attempt in range(2):
         code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
                           {"x-goog-api-key": key, "Content-Type": "application/json"})
@@ -158,7 +159,7 @@ def step_character(ep, epdir, work, log, redo):
 #   ③ 영상 AI에도 첫 장면과 함께 이 원본을 넣어 움직이는 동안 배경을 붙잡는다.
 SET_PROMPT = ("Create an empty interior photo of one small quiet diner for a vertical 9:16 film. Nobody in it: no animals, no "
               "people. Eye-level wide shot showing the whole room: the single entrance door, the walls, the floor, the one "
-              "table and the seat, the lighting and the prop, exactly as described below. On the table sits {vessel}, empty. "
+              "table and the seat, the lighting and the prop, exactly as described below. The table is bare (nothing on it). "
               "{style}\nSET: {set}\nNo text, letters, signs with writing, logos or watermarks. Full-frame image with no borders.")
 KF_HEAD = ("Create the FIRST FRAME of one shot of a vertical 9:16 film. "
            "Reference image 1 is the main character: draw exactly this {noun} (same face, fur colours, markings and "
@@ -191,6 +192,152 @@ def step_set(ep, epdir, work, log, redo):
     return out
 
 
+# ---------- 2-b. 격자 스토리보드(심해 v2 방식 · 사용자 확정 2026-09) ----------
+# 모든 컷의 첫 장면을 '한 장'에 같이 그린다 → 가게·조명·강아지·그릇이 전 컷에서 한 번에 통일된다(따로 그리면 조금씩 달라짐).
+# 그린 뒤 칸 사이 흰 선을 찾아 칸별로 잘라 영상 AI에 넘긴다(격자를 통째로 넣으면 분할 화면으로 오인).
+# 컷마다 '그릇 상태'를 정해 그림·영상 모두에 적는다 — 음식·그릇이 갑자기 생겼다 사라지던 오류(3차 실측) 대책.
+def bowl_state(roles: list[str], i: int) -> str:
+    r = roles[i]
+    tastes = [k for k, x in enumerate(roles) if x == "taste"]
+    if r in ("enter", "order"):
+        return "The table is bare: no bowl, no food and no tray on it yet."
+    if r == "serve":
+        return "A human hand is setting the bowl down on the table; the bowl is completely full of the food."
+    if r == "taste":
+        k = tastes.index(i)
+        left = ["almost full", "about half full", "about a quarter full", "nearly empty"][min(k, 3)]
+        return f"The bowl stays on the table in the same place and is {left} of the food; no other dishes."
+    if r == "bill":
+        return ("The empty bowl stays on the table; beside it a small plain wooden tray holds one folded blank paper "
+                "slip (no writing visible).")
+    if r == "exit":
+        return "The empty bowl and the small wooden tray stay on the table where they were."
+    return ""
+
+
+GRID_ASPECTS = {"1:1": 1.0, "4:5": 0.8, "5:4": 1.25, "3:4": 0.75, "4:3": 4 / 3, "2:3": 2 / 3, "3:2": 1.5, "9:16": 0.5625}
+
+
+def grid_layout(n: int):
+    """컷 수 → (행, 열, 전체 비율). 칸은 세로 9:16에 가깝게."""
+    rows, cols = {5: (2, 3), 6: (2, 3), 7: (2, 4), 8: (2, 4), 9: (3, 3)}.get(n, (2, (n + 1) // 2))
+    want = (cols * 9) / (rows * 16)
+    aspect = min(GRID_ASPECTS, key=lambda k: abs(GRID_ASPECTS[k] - want))
+    return rows, cols, aspect
+
+
+def split_grid(img_path: Path, rows: int, cols: int, names: list[str], out_dir: Path) -> list[Path]:
+    """격자 → 칸별 파일. 흰 경계 띠를 밝기로 찾아 그 바깥에서 자르고, 바깥 흰 테두리도 잘라낸다(심해 v2 split_grid)."""
+    im = Image.open(img_path).convert("RGB")
+    Wd, Hd = im.size
+    g = im.convert("L")
+
+    def line_mean(x, axis):
+        if axis == "x":
+            vals = [g.getpixel((x, y)) for y in range(0, Hd, max(1, Hd // 200))]
+        else:
+            vals = [g.getpixel((xx, x)) for xx in range(0, Wd, max(1, Wd // 200))]
+        return sum(vals) / len(vals)
+
+    def bands(n, length, axis):
+        edges = [0]
+        for k in range(1, n):
+            c = length * k // n
+            lo, hi = max(1, int(c - length * 0.08)), min(length - 1, int(c + length * 0.08))
+            means = {x: line_mean(x, axis) for x in range(lo, hi)}
+            best = max(means, key=means.get)
+            if means[best] > 200:
+                a = best
+                while a - 1 >= lo and means.get(a - 1, 0) > 200:
+                    a -= 1
+                b = best
+                while b + 1 < hi and means.get(b + 1, 0) > 200:
+                    b += 1
+                edges += [a, b + 1]
+            else:
+                edges += [c, c]
+        edges.append(length)
+        lim = int(length * 0.08)
+        a = 0
+        while a < lim and line_mean(a, axis) > 200:
+            a += 1
+        b = length
+        while length - b < lim and line_mean(b - 1, axis) > 200:
+            b -= 1
+        edges[0], edges[-1] = a, b
+        return [(edges[2 * i], edges[2 * i + 1]) for i in range(n)]
+
+    xs, ys = bands(cols, Wd, "x"), bands(rows, Hd, "y")
+    inset = max(4, int(min(Wd, Hd) * 0.006))
+    saved = []
+    for r in range(rows):
+        for c in range(cols):
+            i = r * cols + c
+            if i >= len(names) or not names[i]:
+                continue
+            box = (xs[c][0] + inset, ys[r][0] + inset, xs[c][1] - inset, ys[r][1] - inset)
+            p = out_dir / f"{names[i]}.png"
+            panel = im.crop(box)
+            # 9:16로 가운데 맞춤(칸 비율이 조금 달라도 영상 AI가 늘려 그리지 않게)
+            pw, ph = panel.size
+            tw = min(pw, int(ph * 9 / 16))
+            th = min(ph, int(tw * 16 / 9))
+            panel = panel.crop(((pw - tw) // 2, (ph - th) // 2, (pw - tw) // 2 + tw, (ph - th) // 2 + th))
+            panel.resize((720, 1280), Image.LANCZOS).save(p)
+            saved.append(p)
+    return saved
+
+
+GRID_HEAD = ("Create ONE image that is a clean grid of {n} separate, equal-sized vertical 9:16 photographs arranged in "
+             "{rows} rows x {cols} columns, separated by thin plain white gutters, read left-to-right, top-to-bottom. "
+             "{blank}Together they are the storyboard of ONE continuous short film, so every panel shows the SAME place, "
+             "the SAME character and the SAME props, only from a different camera angle and at a later moment.\n"
+             "Reference image 1 is the main character: in every panel draw exactly this {noun} (same face, fur colours, "
+             "markings, proportions and size), a natural four-legged animal with no clothes, no collar and no accessories.\n"
+             "Reference image 2 is the restaurant set: every panel happens inside exactly this room — the same single door, "
+             "walls, floor, the same table (same wood, shape, size and position), the same seat cushion, the same lamp and "
+             "prop, the same lighting. Do not copy its camera angle; frame each panel as its SHOT says.\n"
+             "{food}"
+             "Shared look for all panels: {style}\n"
+             "In every panel keep the upper quarter calm and uncluttered for captions. No text, letters, numbers, signs "
+             "with writing, logos or watermarks in any panel. No humans except a hand and forearm where a panel says so. "
+             "No banknotes, coins or cash.\n\n")
+
+
+def step_storyboard(ep, epdir, work, log, redo, character, setimg):
+    clips = ep["clips"]
+    names = [f"kf_c{c['no']:02d}" for c in clips]
+    grid = work / "storyboard.png"
+    if grid.exists() and "storyboard" not in redo and all((work / f"{n}.png").exists() for n in names):
+        return
+    food = next((p for p in (epdir / "refs" / "food.png", epdir / "refs" / "food.jpg") if p.exists()), None)
+    rows, cols, aspect = grid_layout(len(clips))
+    roles = [c.get("role") for c in clips]
+    noun = "kitten" if ep.get("species") == "cat" else "puppy"
+    p0 = clips[0].get("imagePrompt", "")
+    foodtxt = ""
+    refs = [character, setimg]
+    if food:
+        refs.append(food)
+        foodtxt = ("Reference image 3 is the real food: wherever the bowl has food, draw exactly these food pieces (same "
+                   "shape, size, colour and texture) in the same shallow plain white ceramic bowl — the only dish in the "
+                   "film. Never show any packaging or bag.\n")
+    blank = (f"The last {rows * cols - len(clips)} panel(s) stay plain white. " if rows * cols > len(clips) else "")
+    text = GRID_HEAD.format(n=rows * cols, rows=rows, cols=cols, blank=blank, noun=noun, food=foodtxt,
+                            style=_line(p0, "STYLE"))
+    for i, c in enumerate(clips):
+        r, k = divmod(i, cols)
+        moment = _line(c.get("imagePrompt", ""), "MOMENT")
+        shot = c.get("shot") or _line(c.get("imagePrompt", ""), "SHOT")
+        text += (f"PANEL {i + 1} (row {r + 1}, column {k + 1}) — {c.get('roleKo') or c.get('role')}: SHOT: {shot}. "
+                 f"MOMENT: {moment}. PROPS: {bowl_state(roles, i)}\n")
+    r = gen_image(text, refs, grid, aspect, size="4K")
+    log["storyboard"] = {**r, "layout": f"{rows}x{cols}", "aspect": aspect}
+    if not r["ok"]:
+        raise RuntimeError(f"스토리보드 실패: {r.get('error')}")
+    split_grid(grid, rows, cols, names, work)
+
+
 def step_keyframes(ep, epdir, work, log, redo, character, setimg):
     food = next((p for p in (epdir / "refs" / "food.png", epdir / "refs" / "food.jpg") if p.exists()), epdir / "refs" / "food.png")
     noun = "kitten" if ep.get("species") == "cat" else "puppy"
@@ -204,7 +351,13 @@ def step_keyframes(ep, epdir, work, log, redo, character, setimg):
         if "FOOD:" in c.get("prompt", "") and food.exists():
             refs.append(food)
             text += KF_FOOD.format(n=len(refs))
-        r = gen_image(text + "\n\nSHOT DESCRIPTION:\n" + c["imagePrompt"] + KF_TAIL, refs, out)
+        roles = [x.get("role") for x in ep["clips"]]
+        grid = work / "storyboard.png"
+        if grid.exists():                                      # 격자가 있으면 화풍·소품 기준으로 함께 참고
+            refs.append(grid)
+            text += f"Reference image {len(refs)} is the storyboard of the other shots: match its look exactly. "
+        props = bowl_state(roles, ep["clips"].index(c))
+        r = gen_image(text + "\n\nSHOT DESCRIPTION:\n" + c["imagePrompt"] + f"\nPROPS: {props}" + KF_TAIL, refs, out)
         res[name] = r
     missing = [f"c{c['no']:02d}" for c in ep["clips"] if not (work / f"kf_c{c['no']:02d}.png").exists()]
     if missing:
@@ -317,7 +470,9 @@ def step_clips(ep, epdir, work, log, redo):
         if out.exists() and name not in redo:
             continue
         lock = ROLE_LOCK.get(c.get("role"), "").format(n="kitten" if ep.get("species") == "cat" else "puppy")
-        prompt = c["prompt"] + (f"\nACTION LOCK: {lock}" if lock else "") + CLIP_TAIL
+        props = bowl_state([x.get("role") for x in ep["clips"]], ep["clips"].index(c))
+        prompt = (c["prompt"] + (f"\nACTION LOCK: {lock}" if lock else "")
+                  + (f"\nPROPS (for the whole clip — nothing appears or disappears): {props}" if props else "") + CLIP_TAIL)
         rec = {"attempts": []}
         for label, fn in (("omni", _omni), ("veo-lite", _veo)):
             t0 = time.time()
@@ -820,7 +975,9 @@ def main(path: str) -> int:
         character = step_character(ep, epdir, work, log, redo)
         if "keyframes" in steps:
             setimg = step_set(ep, epdir, work, log, redo)
-            step_keyframes(ep, epdir, work, log, redo, character, setimg)
+            if req.get("storyboard", True):                     # 기본: 격자 한 장(사용자 확정 2026-09)
+                step_storyboard(ep, epdir, work, log, redo, character, setimg)
+            step_keyframes(ep, epdir, work, log, redo, character, setimg)   # 빠진 칸·redo 칸만 개별로
         if "clips" in steps:
             step_clips(ep, epdir, work, log, redo)
         if "tts" in steps:
