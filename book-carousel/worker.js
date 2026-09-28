@@ -4028,8 +4028,14 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
       .replace(/\b(panning|tilting|tracking|zooming|dollying|pushing)\s+\w+,?\s*/gi, '')
       .replace(/\s{2,}/g, ' ').replace(/[,.\s]+$/, '').trim();
     // 칸으로 나눈다: 길이 · 화풍 · 캐릭터 · 세트(고정) · 음식 · 카메라/동작 · 제약 · 금지
-    const camera = shots.replace(/(\d+):(\d{2})\s*-\s*(\d+):(\d{2})\s*/g,
-      (_, a, b, c, d) => `[${+a * 60 + +b}-${+c * 60 + +d}s] `).replace(/,\s*(?=\[\d)/g, ' -> ');
+    // 모델이 8초를 넘는 시각(예: 12-15s)을 쓰면 클립 안(0~8초)으로 비율을 맞춰 다시 적는다.
+    const tcRe = /(\d+):(\d{2})\s*-\s*(\d+):(\d{2})\s*/g;
+    const spans = [...shots.matchAll(tcRe)].map(m => [+m[1] * 60 + +m[2], +m[3] * 60 + +m[4]]);
+    const t0 = spans.length ? Math.min(...spans.map(x => x[0])) : 0;
+    const t1 = spans.length ? Math.max(...spans.map(x => x[1])) : 8;
+    const fit = (t) => (t0 === 0 && t1 <= 8) ? t : Math.round(((t - t0) / Math.max(1, t1 - t0)) * 8);
+    const camera = shots.replace(tcRe, (_, a, b, c, d) => `[${fit(+a * 60 + +b)}-${fit(+c * 60 + +d)}s] `)
+      .replace(/,\s*(?=\[\d)/g, ' -> ');
     const doorScene = role === 'enter' || role === 'exit';
     const constraints = [
       'Single unified composition, one continuous take with no cuts or transitions.',
@@ -4041,7 +4047,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
       'DURATION: 8-second single continuous shot, vertical 9:16.',
       `STYLE: ${STYLE_TOKEN}.`,
       `CHARACTER: ${sp.line}`,
-      `SET (identical in every clip): ${setBlock}.`,
+      `SET (identical in every clip): ${setBlock.replace(/[.\s]+$/, '')}.`,
       withFood ? `FOOD: ${foodLine}` : '',
       `CAMERA & ACTION: ${camera}`,
       `CONSTRAINTS: ${constraints}`,
@@ -4051,7 +4057,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
       'IMAGE: single still frame, vertical 9:16, sharp focus, no motion blur.',
       `STYLE: ${STYLE_TOKEN}.`,
       `CHARACTER: ${sp.line}`,
-      `SET (identical in every clip): ${setBlock}.`,
+      `SET (identical in every clip): ${setBlock.replace(/[.\s]+$/, '')}.`,
       withFood ? `FOOD: ${foodLine}` : '',
       firstMoment ? `MOMENT: ${firstMoment}.` : '',
       'CONSTRAINTS: Single unified composition. The set matches the SET description exactly.',
