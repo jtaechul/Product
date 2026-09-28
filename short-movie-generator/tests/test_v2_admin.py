@@ -126,6 +126,9 @@ def real_copy(tmp_path, monkeypatch):
     for f in ("script.json", "status.json"):
         shutil.copy(REAL / f, dst / f)
     shutil.copy(REAL / "out" / tts / "body_timepoints.json", dst / "out" / tts / "body_timepoints.json")
+    st = json.loads((dst / "status.json").read_text(encoding="utf-8"))
+    st.get("artifacts", {}).pop("upload", None)             # 실제 편은 이미 업로드됨 — 테스트는 올리기 전 상태에서 시작
+    (dst / "status.json").write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
     monkeypatch.setattr(admin, "V2", tmp_path)
     monkeypatch.setattr(admin, "PILOTS", pilots)
     return dst
@@ -201,6 +204,8 @@ def test_line_edit_page_buttons():
     assert r["recut_approve_dispatch"] == ["recut_approve:8"]
     assert r["upload_fields"] and r["upload_no_revise_box"]
     assert r["download_buttons"] == 2 and r["download_fetches_final"]         # 완성본 저장(영상·업로드 카드)
+    assert r["after_upload_copy_boxes"] and r["copy_button_copies_description"]   # 업로드 뒤에도 복사 가능
+    assert r["upload_sends_screen_values"]                                        # 저장 안 눌러도 화면 값 그대로
 
 
 # ── 검증 ①② (운영자 확정 2026-09-28): AI 교차 검사 + 근거 원문 ──
@@ -362,7 +367,7 @@ def test_upload_once_and_only_on_approve(real_copy):
     admin._save(admin.status_path("bathynomus_giganteus"), st)
     calls = []
 
-    def fake(path, title, desc, tags=None, privacy="private"):
+    def fake(path, title, desc, tags=None, privacy="private", category_id="15"):
         calls.append((title, privacy, tags))
         return {"url": "https://youtu.be/TEST", "video_id": "TEST", "privacy": privacy}
     admin.youtube_upload("bathynomus_giganteus", uploader=fake)
@@ -380,3 +385,27 @@ def test_save_meta_validation(real_copy):
         admin.save_upload_meta("bathynomus_giganteus", {"title_jp": "テスト #Shorts"})
     st = admin.save_upload_meta("bathynomus_giganteus", {"title_jp": "新しい題名 #ダイオウグソクムシ #深海", "privacy": "public"})
     assert st["artifacts"]["upload"]["meta"]["privacy"] == "public"
+
+
+def test_upload_uses_values_on_screen_even_without_save(real_copy):
+    """실사고: 화면에서 '공개'를 골랐는데 저장 전 값(비공개)으로 올라감 → 승인 버튼이 화면 값을 함께 보낸다."""
+    st = admin.upload_meta("bathynomus_giganteus", ask=lambda p: json.dumps(_META))
+    for s_ in ("video", "upload"):
+        st["stages"][s_]["state"] = "approved" if s_ == "video" else "review"
+    admin._save(admin.status_path("bathynomus_giganteus"), st)
+    got = {}
+
+    def fake(path, title, desc, tags=None, privacy="private", category_id="15"):
+        got.update(title=title, privacy=privacy, category=category_id)
+        return {"url": "https://youtu.be/T", "video_id": "T", "privacy": privacy}
+    import importlib
+    orig = admin.youtube_upload
+    admin.youtube_upload = lambda pid: orig(pid, uploader=fake)
+    try:
+        admin.approve("bathynomus_giganteus", "upload",
+                      json.dumps({"title_jp": "画面の題名 #ダイオウグソクムシ #深海", "privacy": "public", "category": "28"}))
+    finally:
+        admin.youtube_upload = orig
+    assert got == {"title": "画面の題名 #ダイオウグソクムシ #深海", "privacy": "public", "category": "28"}
+    st = admin.load_status("bathynomus_giganteus")
+    assert st["stages"]["upload"]["state"] == "approved" and st["artifacts"]["upload"]["result"]["category"] == "28"

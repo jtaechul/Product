@@ -164,6 +164,30 @@ res.download_buttons = (ep6.match(/data-v2dl="/g) || []).length;   // 영상 카
   res.download_fetches_final = fetched.some(u => decodeURIComponent(u).includes("out/24_final/bathynomus_v5.mp4"));
   globalThis.fetch = of; }
 statusOverride = null;
+// ── 업로드 뒤에도 복사 칸 유지 + 복사 버튼 + 업로드 버튼이 화면 값을 보냄 ──
+{
+  const meta = { title_jp: "題 #ダイオウグソクムシ #深海", title_ko: "제목 #대왕구족충 #심해", desc_jp: "説明本文\n#ダイオウグソクムシ #深海",
+    desc_ko: "설명", tags_jp: ["#ダイオウグソクムシ", "#深海"], tags_ko: ["#대왕구족충", "#심해"], pinned_comment: "次に見たい深海の生き物は？", privacy: "private", category: "15" };
+  const s7 = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+  s7.stages.video.state = "approved"; s7.stages.upload.state = "approved";
+  s7.artifacts.upload = { meta, result: { url: "https://youtu.be/X", privacy: "public", category: "28" } };
+  statusOverride = s7; els = {}; await api.renderV2Episode("bathynomus_giganteus"); const e7 = els.view.innerHTML;
+  const u7 = e7.slice(e7.indexOf('id="stg-upload"'));
+  res.after_upload_copy_boxes = ["cp_tj", "cp_dj", "cp_hj", "cp_tk", "cp_dk", "cp_pc"].every(x => u7.includes('id="' + x + '"')) && u7.includes("説明本文") && u7.includes("공개") && u7.includes("과학기술");
+  let copied = ""; Object.defineProperty(globalThis, "navigator", { value: { clipboard: { writeText: async t => { copied = t; } } }, configurable: true });
+  els["cp_dj"] = makeEl("cp_dj"); delete els["cp_dj"].value; els["cp_dj"].textContent = meta.desc_jp;
+  const cb = (lists["[data-copyfrom]"] || []).find(b => b.dataset.copyfrom === "cp_dj"); if (cb?.onclick) cb.onclick(); for (let i = 0; i < 10; i++) await Promise.resolve();
+  res.copy_button_copies_description = copied === meta.desc_jp;
+  // 업로드 전: 화면에서 '공개'·'과학기술'을 고르고 저장 없이 바로 업로드 → 그 값이 그대로 전송
+  const s8 = JSON.parse(JSON.stringify(s7)); s8.stages.upload.state = "review"; delete s8.artifacts.upload.result;
+  statusOverride = s8; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  for (const [id, v] of [["up_tj", "画面の題名"], ["up_pv", "public"], ["up_ct", "28"], ["up_dj", "説明"]]) { els[id] = makeEl(id); els[id].value = v; }
+  const d3 = dispatched.length; const ap = (lists["[data-act]"] || []).find(b => b.dataset.act === "approve" && b.dataset.stage === "upload");
+  if (ap?.onclick) await ap.onclick();
+  const sent = dispatched.slice(d3)[0]; const note = sent ? JSON.parse(sent.body.inputs.note) : {};
+  res.upload_sends_screen_values = !!sent && sent.body.inputs.action === "approve" && note.privacy === "public" && note.category === "28" && note.title_jp === "画面の題名";
+  statusOverride = null;
+}
 
 els = {}; window.location.pathname = "/legacy"; api.renderHome(); res.legacy_home_renders = (els.view?.innerHTML || "").includes("쇼츠 생성 시작");
 console.log(JSON.stringify(res, null, 1));

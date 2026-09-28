@@ -83,6 +83,9 @@ def approve(pid: str, stage: str, memo: str = "") -> dict:
     if s["state"] != "review":
         raise SystemExit(f"{STAGE_KO[stage]}은(는) 지금 승인할 수 없습니다(상태: {s['state']}) — 결과가 나온 뒤(승인 대기)에만 승인")
     if stage == "upload":                                   # ★업로드 단계의 승인 = 실제 유튜브 업로드(실패하면 승인 안 됨)
+        if memo.strip().startswith("{"):                     # ★화면에 보이는 값 그대로 올린다(저장 버튼을 안 눌렀어도)
+            save_upload_meta(pid, json.loads(memo))           #   실사고: '공개'를 골랐는데 저장 전 값(비공개)으로 올라감
+            memo = ""
         youtube_upload(pid)
         st = load_status(pid)
         s = st["stages"][stage]
@@ -770,10 +773,11 @@ def _compose_meta(sc: dict, gen: dict) -> dict:
         "title_ko": (gen["title_ko"].strip() + " " + " ".join(tags_ko))[:100],
         "desc_jp": desc(gen["desc_jp"], _CTA_JP, _REPRO_JP, tags_jp, "出典:"),
         "desc_ko": desc(gen["desc_ko"], _CTA_KO, _REPRO_KO, tags_ko, "출처:"),
-        "tags_jp": tags_jp, "tags_ko": tags_ko, "pinned_comment": PINNED_COMMENT, "privacy": "private",
+        "tags_jp": tags_jp, "tags_ko": tags_ko, "pinned_comment": PINNED_COMMENT, "privacy": "private", "category": "15",
     }
 
 
+YT_CATEGORIES = {"15": "반려동물/동물", "28": "과학기술", "27": "교육"}   # 유튜브 카테고리 번호(명시해서 보낸다)
 _STALE = re.compile(r"有給|残業|定時|上司|出社|유급|야근|상사|출근|퇴근|직장인")
 
 
@@ -792,9 +796,10 @@ def upload_meta(pid: str, ask=None) -> dict:
     if _STALE.search(gen["title_jp"] + gen["title_ko"]):
         raise ValueError("제목에 금지된 회사원 소재가 들어갔습니다 — 다시 쓰기")
     up = st.setdefault("artifacts", {}).setdefault("upload", {})
-    keep = (up.get("meta") or {}).get("privacy", "private")
+    old = up.get("meta") or {}
     up["meta"] = _compose_meta(sc, gen)
-    up["meta"]["privacy"] = keep
+    up["meta"]["privacy"] = old.get("privacy", "private")
+    up["meta"]["category"] = old.get("category", "15")
     up["meta_at"] = _now()
     if st["stages"]["upload"]["state"] in ("working", "revise"):
         st["stages"]["upload"]["state"] = "review"
@@ -809,11 +814,13 @@ def save_upload_meta(pid: str, data: dict) -> dict:
     if (up.get("result") or {}).get("url"):
         raise SystemExit("이미 업로드했습니다 — 제목·설명은 유튜브 스튜디오에서 고쳐 주세요")
     m = up.setdefault("meta", {})
-    for k in ("title_jp", "title_ko", "desc_jp", "desc_ko", "pinned_comment", "privacy"):
+    for k in ("title_jp", "title_ko", "desc_jp", "desc_ko", "pinned_comment", "privacy", "category"):
         if k in data:
             m[k] = str(data[k]).strip()
     if m.get("privacy") not in ("private", "unlisted", "public"):
         m["privacy"] = "private"
+    if m.get("category") not in YT_CATEGORIES:
+        m["category"] = "15"
     if not m.get("title_jp") or len(m["title_jp"]) > 100:
         raise SystemExit("제목(일본어)은 1~100자여야 합니다")
     if "#shorts" in (m["title_jp"] + m.get("desc_jp", "")).lower():
@@ -843,12 +850,14 @@ def youtube_upload(pid: str, uploader=None) -> dict:
         uploader = yt.upload
     tags = [t.lstrip("#") for t in m.get("tags_jp", [])]
     try:
-        r = uploader(str(video), m["title_jp"], m.get("desc_jp", ""), tags=tags, privacy=m.get("privacy", "private"))
+        r = uploader(str(video), m["title_jp"], m.get("desc_jp", ""), tags=tags, privacy=m.get("privacy", "private"),
+                     category_id=m.get("category") or "15")
     except Exception as e:                                   # noqa: BLE001
         _note(st, "upload", "error", f"유튜브 업로드 실패: {str(e)[:160]}")
         _save(status_path(pid), st)
         raise SystemExit(f"유튜브 업로드 실패: {e}")
-    up["result"] = {"url": r["url"], "video_id": r.get("video_id", ""), "privacy": r.get("privacy", ""), "at": _now()}
+    up["result"] = {"url": r["url"], "video_id": r.get("video_id", ""), "privacy": r.get("privacy", ""),
+                    "category": m.get("category") or "15", "at": _now()}
     _note(st, "upload", "uploaded", f"유튜브 업로드 완료({r.get('privacy', '')}): {r['url']} — 고정 댓글은 유튜브 앱에서 직접 달고 고정")
     _save(status_path(pid), st)
     return st

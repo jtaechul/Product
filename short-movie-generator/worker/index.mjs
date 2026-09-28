@@ -120,6 +120,9 @@ button:disabled{opacity:.5}
 .v2edit{width:auto;margin-top:6px;padding:6px 12px;font-size:12px;min-height:36px}
 .v2ed{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#0a1018}
 .cfact.err{color:var(--rd)}
+.v2copy{display:flex;gap:8px;align-items:flex-start}
+.v2copytxt{flex:1;white-space:pre-wrap;word-break:keep-all;font-size:13px;line-height:1.6;background:#0a1018;border:1px solid var(--line);border-radius:8px;padding:8px}
+.v2copy .btn{flex:none}
 .v2rc{margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0a1018}
 .v2rc img{width:100%;border-radius:8px}
 .v2clip .btn+.btn{margin-top:4px}
@@ -150,7 +153,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-28-7 (완성본 영상 저장)";
+const BUILD="v2026-09-28-8 (업로드 뒤에도 복사 · 화면 값 그대로 업로드 · 카테고리)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2482,15 +2485,23 @@ function v2stageBody(st,stage){
   }
   if(stage==="upload"){
     const m=a.meta||null, res=a.result||null;
-    if(res&&res.url)return v2dlHTML("u")+'<div class="cfact"><span class="ok">업로드 완료</span> ('+esc(res.privacy||"")+') · <a href="'+esc(res.url)+'" target="_blank">유튜브에서 보기</a></div>'+
-      '<div class="hint">고정 댓글은 유튜브 앱에서 직접 달고 고정해 주세요(유튜브가 자동 고정을 막아 둠): <b>'+esc((m&&m.pinned_comment)||"")+'</b></div>';
+    if(res&&res.url)return '<div class="cfact"><span class="ok">업로드 완료</span> ('+esc(V2_PV[res.privacy]||res.privacy||"")+
+        (res.category?' · '+esc(V2_CAT[res.category]||res.category):'')+') · <a href="'+esc(res.url)+'" target="_blank">유튜브에서 보기</a></div>'+
+      v2dlHTML("u")+
+      '<div class="sect">인스타그램 등에 붙여넣기 — 복사</div>'+
+      v2copyBox("제목 (일본어)",m.title_jp,"cp_tj")+v2copyBox("설명 (일본어 · 해시태그 포함)",m.desc_jp,"cp_dj")+
+      v2copyBox("해시태그 (일본어)",(m.tags_jp||[]).join(" "),"cp_hj")+
+      v2copyBox("제목 (한국어)",m.title_ko,"cp_tk")+v2copyBox("설명 (한국어 · 해시태그 포함)",m.desc_ko,"cp_dk")+
+      v2copyBox("해시태그 (한국어)",(m.tags_ko||[]).join(" "),"cp_hk")+
+      v2copyBox("고정 댓글 (유튜브 앱에서 직접 달고 고정)",m.pinned_comment,"cp_pc");
     if(!m)return '<div class="hint" style="margin-top:0">완성본을 승인하면 유튜브 제목·설명·해시태그를 자동으로 씁니다.</div>'+
       '<button class="btn save" id="upmeta" style="width:100%;margin-top:8px">제목·설명 AI로 쓰기 (약 $0.01)</button>';
-    return v2dlHTML("u")+'<div class="dual" style="margin-top:4px"><div><span class="lbl">제목 (일본어 · 실제로 올라감)</span><input id="up_tj" value="'+esc(m.title_jp)+'"></div>'+
-        '<div><span class="lbl">제목 (한국어 · 확인용)</span><input id="up_tk" value="'+esc(m.title_ko)+'"></div></div>'+
-      '<div class="dual"><div><span class="lbl">설명 (일본어 · 실제로 올라감)</span><textarea id="up_dj">'+esc(m.desc_jp)+'</textarea></div>'+
-        '<div><span class="lbl">설명 (한국어 · 확인용)</span><textarea id="up_dk">'+esc(m.desc_ko)+'</textarea></div></div>'+
+    return v2dlHTML("u")+'<div class="dual" style="margin-top:4px"><div><span class="lbl">제목 (일본어 · 실제로 올라감)</span><input id="up_tj" value="'+esc(m.title_jp)+'">'+v2copyBtn("up_tj")+'</div>'+
+        '<div><span class="lbl">제목 (한국어 · 확인용)</span><input id="up_tk" value="'+esc(m.title_ko)+'">'+v2copyBtn("up_tk")+'</div></div>'+
+      '<div class="dual"><div><span class="lbl">설명 (일본어 · 실제로 올라감)</span><textarea id="up_dj">'+esc(m.desc_jp)+'</textarea>'+v2copyBtn("up_dj")+'</div>'+
+        '<div><span class="lbl">설명 (한국어 · 확인용)</span><textarea id="up_dk">'+esc(m.desc_ko)+'</textarea>'+v2copyBtn("up_dk")+'</div></div>'+
       '<span class="lbl">해시태그</span><div>'+(m.tags_jp||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join("")+' / '+(m.tags_ko||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join("")+'</div>'+
+      '<span class="lbl">유튜브 카테고리</span><select id="up_ct">'+Object.entries(V2_CAT).map(([v,l])=>'<option value="'+v+'"'+((m.category||"15")===v?' selected':'')+'>'+l+'</option>').join("")+'</select>'+
       '<div class="hint">제목 끝 해시태그 2개(종명 + #深海) · #Shorts 없음 · 설명에 구독·댓글 유도, AI 재현 영상 표기, 출처가 자동으로 들어갑니다.</div>'+
       '<span class="lbl">고정 댓글 (업로드 후 유튜브 앱에서 직접 고정)</span><input id="up_pc" value="'+esc(m.pinned_comment||"")+'">'+
       '<span class="lbl">공개 범위</span><select id="up_pv">'+[["private","비공개(먼저 확인)"],["unlisted","일부 공개"],["public","공개"]].map(([v,l])=>'<option value="'+v+'"'+(m.privacy===v?' selected':'')+'>'+l+'</option>').join("")+'</select>'+
@@ -2521,6 +2532,13 @@ function v2recutPanels(st){
       '<button class="btn save" data-rcgo="'+c.cut+'" style="width:100%;margin-top:8px">'+(rc.state==="conti_review"?"방향 고쳐 콘티 다시 만들기":"콘티 먼저 만들기")+' (약 $0.13 · 영상은 아직 안 만듦)</button></div>';
     return h;}).join("");
 }
+// ── 복사(운영자 요청 2026-09-28: 업로드 뒤에도 제목·설명·해시태그를 인스타그램에 붙여넣을 수 있게) ──
+const V2_PV={private:"비공개",unlisted:"일부 공개",public:"공개"};
+const V2_CAT={"15":"반려동물/동물","28":"과학기술","27":"교육"};
+function v2copyBtn(fromId){return '<button class="btn v2edit" data-copyfrom="'+fromId+'">복사</button>';}
+function v2copyBox(label,text,id){return '<span class="lbl">'+esc(label)+'</span><div class="v2copy"><div class="v2copytxt" id="'+id+'">'+esc(text||"")+'</div>'+v2copyBtn(id)+'</div>';}
+function v2upFields(){return {title_jp:($("#up_tj")||{}).value,title_ko:($("#up_tk")||{}).value,desc_jp:($("#up_dj")||{}).value,
+  desc_ko:($("#up_dk")||{}).value,pinned_comment:($("#up_pc")||{}).value,privacy:($("#up_pv")||{}).value,category:($("#up_ct")||{}).value};}
 // ── 완성본 저장(운영자 요청 2026-09-28 · 인스타그램 등 직접 올리기용) ──
 //   아이폰: 공유 창이 열리면 「비디오 저장」 → 사진 앱에 저장. 안 되면 안내에 뜨는 직접 저장 링크.
 function v2dlHTML(k){return '<button class="btn save" data-v2dl="'+k+'" style="width:100%;margin-top:10px">완성본 영상 저장 (휴대폰 사진에 저장)</button>'+
@@ -2608,8 +2626,10 @@ async function renderV2Episode(pid){
     const nIss=stage==="script"?((((st.artifacts||{}).script||{}).crosscheck||{}).issues||[]).length:0;
     if(act==="approve"&&stage==="upload"){
       const pv=(($("#up_pv")||{}).value)||"private", pvk={private:"비공개",unlisted:"일부 공개",public:"공개"}[pv]||pv;
-      if(!confirm("유튜브에 '"+pvk+"'로 업로드할까요? (한 번 올리면 이 페이지에서 다시 올릴 수 없습니다)"))return;
-      if(await v2do("approve",pid,"upload","",b))banner("업로드를 시작했습니다. 2~5분 뒤 새로고침하면 유튜브 링크가 보입니다.","ok");
+      const d=v2upFields();
+      if(!String(d.title_jp||"").trim()){banner("일본어 제목이 비어 있습니다.","err");return;}
+      if(!confirm("유튜브에 '"+pvk+"' · 카테고리 '"+(V2_CAT[d.category]||d.category)+"'(으)로 업로드할까요? 지금 화면의 제목·설명 그대로 올라갑니다. (한 번 올리면 다시 올릴 수 없습니다)"))return;
+      if(await v2do("approve",pid,"upload",JSON.stringify(d),b))banner("업로드를 시작했습니다. 2~5분 뒤 새로고침하면 유튜브 링크가 보입니다.","ok");
       return;
     }
     const msg=act==="approve"?((nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):"")+lab+"을(를) 승인할까요? 다음 단계가 열립니다.")
@@ -2658,11 +2678,15 @@ async function renderV2Episode(pid){
   document.querySelectorAll("[data-rcno]").forEach(b=>b.onclick=async()=>{if(confirm(b.dataset.rcno+"번 컷 수정을 취소할까요?"))await v2do("recut_cancel",pid,b.dataset.rcno,"",b);});
   const um=$("#upmeta");if(um)um.onclick=async()=>{if(confirm("유튜브 제목·설명을 AI로 (다시) 쓸까요? 지금 칸의 내용은 바뀝니다."))await v2do("upload_meta",pid,"","",um);};
   const us=$("#upsave");if(us)us.onclick=async()=>{
-    const d={title_jp:($("#up_tj")||{}).value,title_ko:($("#up_tk")||{}).value,desc_jp:($("#up_dj")||{}).value,
-             desc_ko:($("#up_dk")||{}).value,pinned_comment:($("#up_pc")||{}).value,privacy:($("#up_pv")||{}).value};
+    const d=v2upFields();
     if(!String(d.title_jp||"").trim()){banner("일본어 제목이 비어 있습니다.","err");return;}
     await v2do("save_meta",pid,"",JSON.stringify(d),us);
   };
+  document.querySelectorAll("[data-copyfrom]").forEach(b=>b.onclick=()=>{
+    const e=$("#"+b.dataset.copyfrom); if(!e)return;
+    const t=("value" in e && e.value!==undefined && e.value!=="")?e.value:(e.textContent||"");
+    copyText(t,"복사했습니다. 인스타그램 등에 붙여넣으세요.");
+  });
   const va=(st.artifacts||{}).video||{};
   document.querySelectorAll("[data-v2dl]").forEach(b=>b.onclick=()=>{
     if(!va.final){banner("아직 완성본이 없습니다.","err");return;}
