@@ -1,0 +1,14 @@
+{
+  "id": "r09281039_c08_recut",
+  "kind": "gen_omni",
+  "model": "gemini-omni-1.1-flash",
+  "resolution": "720p",
+  "purpose": "8번 컷 수정 — 뱃속이 텅 비었다는 묘사와 원인을 알 수 없다는 묘사 필요",
+  "items": [
+    {
+      "name": "s1",
+      "start": "out/r09281033_c08_conti/p2.jpg",
+      "prompt": "Vertical 9:16 video, exactly 4 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it. The giant isopod (whenever visible) keeps its exact anatomy and size.\n\nTIMELINE\nVertical 9:16 video, exactly 2.8 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The giant isopod keeps its exact anatomy: pale lavender-lilac glossy segmented armour. TIMELINE: 0.0-1.0s The isopod specimen lies still on dark velvet under a single soft spotlight. 1.0-2.8s The spotlight dims gradually until the frame is completely black; the specimen fades into total darkness. SOUND: none. NEVER SHOW: text, letters, numbers, symbols, human hands, morphing.\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, symbols, labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the isopod growing, shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker."
+    }
+  ]
+}
