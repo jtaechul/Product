@@ -3668,7 +3668,11 @@ function dinerSystem(sp) {
 1. 주인공 외모를 절대 설명하지 마라(털색·눈·체형·품종). "the ${sp.noun}"로만 부른다.
 2. 주인공은 옷을 입지 않은 보통 네발 ${sp.ko}다. 두 발로 서기, 앞발을 손처럼 쓰기, 옷·앞치마·턱받이 전부 금지.
    자리에 앉을 때는 의자나 방석 위에 ${sp.ko}답게 앉는다. 식기는 쓰지 않고 그릇에 입을 대고 먹는다.
-3. sceneBlock은 가게 내부의 장소·색감·조명만(영어 25단어 이내). 캐릭터·음식 묘사 금지. 화풍 문구는 시스템이 붙인다.
+3. ⭐ setBlock = 이 가게의 **고정 세트 설계도**(영어 35~55단어). 모든 클립에 한 글자도 안 바뀌고 반복된다.
+   구체적 명사로 적는다: 출입문(딱 1개, 재질, 여는 방식, 색, 유리창·창살 모양), 벽과 바닥(재질·색),
+   카운터나 테이블(재질·모양·위치), 주인공 자리(방석이나 낮은 의자), 조명 기구, 눈에 띄는 소품 1개.
+   예시 형식: "a single dark-wood sliding entrance door with a four-pane glass window and a cream fabric curtain, ..."
+   캐릭터·음식·사람 묘사, 움직임, 화풍 문구는 쓰지 마라(화풍은 시스템이 붙인다).
 4. shots는 영어, 타임코드 "0:00-0:03" 꼴로 8초를 2~3구간으로 나눈다. 카메라 움직임과 동작만 쓴다.
 5. 말하기·입모양·대사·소리에 관한 단어를 한 글자도 쓰지 마라(ambient, sound, speaking 등 전부).
 6. 괴로워 보이는 표현 금지: angry, disgusted, choking, gagging, coughing, vomiting, spitting out, struggling.
@@ -3678,6 +3682,8 @@ function dinerSystem(sp) {
 9. 조명은 soft even lighting, warm diffused light처럼 부드럽게. harsh, gritty, moody, high contrast 금지.
 
 [장면별 연출]
+- ⭐ 문이 화면에 나오는 장면(enter·exit)은 카메라를 고정(locked-off)하거나 한 방향으로 천천히 한 번만 움직인다.
+  문 주위를 돌거나(orbit) 좌우로 흔들거나 빠르게 이동하지 마라 — 문 모양이 바뀌는 오류가 난다.
 - enter: 가게 앞에 멈춰 서서 간판을 올려다본 뒤 들어간다. **마지막 구간은 반드시 주인공 얼굴을 정면에서 잡은 미디엄 클로즈업**으로 끝낸다
   (편집에서 이 장면을 세 번 끊어 뒤로 빠지는 줌 효과를 입힌다).
 - order: 자리에 앉아 벽의 메뉴판을 왼쪽·오른쪽 번갈아 올려다보며 진지하게 고민하다, 한 곳에서 멈추고 결정한다.
@@ -3685,7 +3691,7 @@ function dinerSystem(sp) {
 - serve: 사람의 손이 그릇을 앞에 내려놓는다. 주인공이 먼저 냄새를 맡는다.
 - taste: 먹는 장면. 매크로·클로즈업·씹다 멈춤·다시 한 입 등 클립마다 카메라를 다르게.
 - bill: 사람의 손이 작은 쟁반에 계산서를 놓고 주인공이 그것을 지긋이 본다. 편집에서 위쪽에 계산서 카드가 겹쳐지니 주인공은 아래쪽에 둔다.
-- exit: 가게를 나서다 문 앞에서 한 번 뒤돌아본 뒤, 천천히 길을 걸어간다.
+- exit: 고정된 카메라 앞에서 SET의 그 출입문으로 걸어 나가다 문턱에서 한 번 뒤돌아본다(문 밖 거리까지 따라가지 않는다).
 
 [속마음 대사(line) — 내레이션이자 자막. 둘은 같은 문장이다]
 ⭐ 이 영상의 재미는 '미식가의 냉철한 감각 묘사'다. 후기 요약문을 쓰면 실패다.
@@ -3757,7 +3763,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
 아래 JSON만 출력:
 {
   "shop": "오늘 들어간 가게 콘셉트 한 줄(한국어, 예: 골목 끝 작은 백반집)",
-  "sceneBlock": "영어 25단어 이내. 가게 내부 장소 + 색감 + 조명만",
+  "setBlock": "영어 35~55단어. 이 가게의 고정 세트 설계도(출입문·벽·바닥·테이블·자리·조명·소품 1개)",
   "tone": "내레이션 목소리 톤 한 줄(한국어)",
   "clips": [ { "role": "enter", "shots": "영어 타임코드 구간", "line": "속마음 한 문장" } ],
   "verdict": "재방문 의사 판정 한 줄(한국어)",
@@ -3803,14 +3809,16 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const list = Array.isArray(out.clips) ? out.clips : [];
   if (!list.length) throw new Error('프롬프트를 만들지 못했습니다: 빈 결과');
 
-  let scene = String(out.sceneBlock || '').trim()
+  let setBlock = String(out.setBlock || out.sceneBlock || '').trim()
     .replace(/[^,.]*\b(fur|coat|eyes|ears|tail|paws?|collar|muzzle|snout|puppy|dog|shiba|breed|kitten|cat|whiskers|kibble|food|bowl)\b[^,.]*[,.]?/gi, ' ')
     .replace(/\b(harsh shadows?|high contrast|gritty|documentary|moody|dramatic lighting)\b/gi, 'soft even lighting')
     .replace(/\s{2,}/g, ' ').replace(/^[,.\s]+|[,\s]+$/g, '').trim();
-  scene = STYLE_TOKEN + (scene ? '. ' + scene : '');
+  if (!setBlock) setBlock = 'a small quiet diner with a single wooden sliding entrance door with a four-pane glass window, cream plaster walls, a warm wooden floor, a low wooden table with a round floor cushion, and soft paper lanterns';
+  const scene = STYLE_TOKEN + '. ' + setBlock;
 
   const foodLine = `On the table in front of the ${sp.noun}: ${foodEn}.`;
-  const neg = negativeFor('', sp) + ', food packaging, pet food bag, labels or text on the bowl, spilled food, messy table, cutlery';
+  const neg = negativeFor('', sp) + ', food packaging, pet food bag, labels or text on the bowl, spilled food, messy table, cutlery'
+    + ', morphing door, changing door shape, warping walls, shifting background, changing architecture, melting objects, split screen, divided frame, collage, multiple panels, jump cut';
 
   // 모델 결과를 순서가 아니라 장면 이름(role)으로 짝짓는다. 모델이 비워 두라는 입장 칸을 아예 빼먹으면
   // 순서가 한 칸씩 밀려 계산 장면에 시식 대사가 붙는 일이 있었다(실측). 이름이 없을 때만 순서로 채운다.
@@ -3845,10 +3853,36 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
       .replace(/^\s*\d:\d{2}-\d:\d{2}\s*/, '')
       .replace(/\b(panning|tilting|tracking|zooming|dollying|pushing)\s+\w+,?\s*/gi, '')
       .replace(/\s{2,}/g, ' ').replace(/[,.\s]+$/, '').trim();
-    const head = sp.line + (scene ? ' ' + scene : '');
-    const imagePrompt = [head, firstMoment ? firstMoment + '.' : '', withFood ? foodLine : '',
-      'Single still image, sharp focus, no motion blur.', `Avoid: ${neg}.`].filter(Boolean).join('\n');
-    const prompt = [head, shots, withFood ? foodLine : '', `Avoid: ${neg}.`].filter(Boolean).join('\n');
+    // 칸으로 나눈다: 길이 · 화풍 · 캐릭터 · 세트(고정) · 음식 · 카메라/동작 · 제약 · 금지
+    const camera = shots.replace(/(\d+):(\d{2})\s*-\s*(\d+):(\d{2})\s*/g,
+      (_, a, b, c, d) => `[${+a * 60 + +b}-${+c * 60 + +d}s] `).replace(/,\s*(?=\[\d)/g, ' -> ');
+    const doorScene = role === 'enter' || role === 'exit';
+    const constraints = [
+      'Single unified composition, one continuous take with no cuts or transitions.',
+      'The set is locked: the door, walls, windows, floor, table and seat keep exactly the same shape, material, color and position for the entire clip.',
+      doorScene ? 'The entrance door is the single door described in SET; its shape, size, frame and window pattern never change. The camera stays locked-off or moves slowly in one direction while the door is in frame.' : '',
+      `The ${sp.noun} stays a natural four-legged animal throughout.`,
+    ].filter(Boolean).join(' ');
+    const prompt = [
+      'DURATION: 8-second single continuous shot, vertical 9:16.',
+      `STYLE: ${STYLE_TOKEN}.`,
+      `CHARACTER: ${sp.line}`,
+      `SET (identical in every clip): ${setBlock}.`,
+      withFood ? `FOOD: ${foodLine}` : '',
+      `CAMERA & ACTION: ${camera}`,
+      `CONSTRAINTS: ${constraints}`,
+      `Avoid: ${neg}.`,
+    ].filter(Boolean).join('\n');
+    const imagePrompt = [
+      'IMAGE: single still frame, vertical 9:16, sharp focus, no motion blur.',
+      `STYLE: ${STYLE_TOKEN}.`,
+      `CHARACTER: ${sp.line}`,
+      `SET (identical in every clip): ${setBlock}.`,
+      withFood ? `FOOD: ${foodLine}` : '',
+      firstMoment ? `MOMENT: ${firstMoment}.` : '',
+      'CONSTRAINTS: Single unified composition. The set matches the SET description exactly.',
+      `Avoid: ${neg}.`,
+    ].filter(Boolean).join('\n');
     // opening: 편집기가 세 번 끊어 뒤로 빠지는 줌을 입힌다 / menu: 상품 사진 메뉴판 / bill: 100g당 가격 계산서
     const card = role === 'enter' ? { type: 'opening' }
       : role === 'order' ? { type: 'menu', name: menuName }
@@ -3892,7 +3926,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     problem: `${seriesTag} ${shop || '식당 에피소드'} · 오늘의 메뉴 「${menuName}」`,
     shop, verdict, priceNote, menuName, foodLook: foodEn,
     guestNote: guest.note, guestMismatch: !!guest.mismatch,
-    sceneBlock: scene,
+    sceneBlock: scene, setBlock,
     tone: String(out.tone || '낮고 담담한 독백 목소리').trim(),
     wearable: '',
     negativePrompt: neg,
