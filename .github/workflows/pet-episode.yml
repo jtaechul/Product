@@ -1,0 +1,65 @@
+name: Pet Episode
+
+# 반려동물 식당 에피소드 자동 제작 — 요청 파일 실행기(심해 v2-request.yml과 같은 방식).
+# pet-episodes/episodes/<에피소드>/requests/*.json 을 푸시하면 이번 푸시에서 바뀐 요청만 실행하고,
+# 결과(work/)를 같은 브랜치에 커밋한다. 키는 시크릿으로만 전달(출력 금지).
+on:
+  push:
+    branches: [claude/book-carousel-auto-upload-xpwihz]
+    paths: ["pet-episodes/episodes/*/requests/*.json"]
+
+concurrency:
+  group: pet-episode
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: 도구 설치
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-noto-cjk >/dev/null
+          pip install -q Pillow google-genai
+
+      - name: 바뀐 요청 실행
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_TTS_KEY: ${{ secrets.GOOGLE_TTS_KEY }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          files=$(git diff --name-only "$BEFORE" "$AFTER" -- 'pet-episodes/episodes/*/requests/*.json' 2>/dev/null || true)
+          [ -z "$files" ] && files=$(git diff --name-only HEAD~1 HEAD | grep '^pet-episodes/episodes/.*/requests/.*\.json$' || true)
+          echo "실행할 요청: $files"
+          rc=0
+          for f in $files; do
+            [ -f "$f" ] || continue
+            echo "::group::$f"; python3 pet-episodes/tools/episode.py "$f" || rc=1; echo "::endgroup::"
+          done
+          echo "rc=$rc" >> "$GITHUB_ENV"
+
+      - name: 결과 커밋
+        if: always()
+        run: |
+          git add pet-episodes/episodes/*/work || true
+          if git diff --cached --quiet; then echo "결과 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(pet): 에피소드 제작 결과 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin "${{ github.ref_name }}" && git push origin HEAD:"${{ github.ref_name }}" && break
+            sleep $((i*3))
+          done
+
+      - name: 실패 표시
+        if: env.rc == '1'
+        run: exit 1
