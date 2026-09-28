@@ -17,6 +17,8 @@
   python admin.py redo_cut <id> <컷번호> [메모]  # 그 컷만 영상 재생성(유료) → 재조립까지
   python admin.py assemble <id>                 # 완성본 다시 조립 + 자동 검사
   python admin.py ready <id> <stage> [메모]      # 작업 결과가 나왔음 → 승인 대기로
+  python admin.py edit_line <id> <컷> '<json>'   # 컷 대사 수정(대본만 · 영상은 안 바뀜)
+  python admin.py apply_lines <id>              # 수정한 대사를 영상에 반영(나레이션 다시 읽기 + 재조립만)
   python admin.py topics                        # 주제 후보 목록(topics.json) 갱신
   python admin.py index                         # 편 목록(index.json) 갱신
 """
@@ -176,6 +178,145 @@ def assemble(pid: str) -> dict:
     return st
 
 
+# ── 컷별 대사 수정(운영자 확정 2026-09-28) ────────────────────────────────
+# ★대사를 고쳐도 영상은 자동으로 바뀌지 않는다: edit_line 은 대본(script.json)만 고치고 '미반영'으로 표시한다.
+#   영상에 넣으려면 운영자가 따로 apply_lines(「수정한 대사 영상에 반영」)를 눌러야 하고, 그때도 **나레이션 다시 읽기 +
+#   재조립만** 한다(약 $0.01). 영상 컷은 절대 다시 만들지 않는다 — 새 대사가 그 컷 길이에 안 들어가면 멈추고 알려 준다.
+MARGIN_S = 0.6                                              # 컷 길이 = 나레이션 + 여유 0.6초 이상(운영자 확정 규칙)
+_PUNCT = re.compile(r"(?<=[、。！？!?])")
+
+
+def _chunks(text: str) -> list[str]:
+    return [p.strip() for p in _PUNCT.split(text or "") if p.strip()]
+
+
+def auto_reading(jp: str) -> str:
+    """표시문(jp) → 낭독문(히라가나). 형태소 분석(Janome) 읽기를 히라가나로 바꾼다. 읽기가 없는 것(숫자·기호)은 그대로 둔다
+    (TTS가 숫자는 제대로 읽는다). 운영자가 읽기를 직접 적으면 그걸 쓴다."""
+    from janome.tokenizer import Tokenizer
+    out = []
+    for t in Tokenizer().tokenize(jp):
+        r = t.reading if t.reading and t.reading != "*" else t.surface
+        out.append("".join(chr(ord(c) - 0x60) if "ァ" <= c <= "ヶ" else c for c in r))
+    return "".join(out)
+
+
+def _script_path(pid: str) -> Path:
+    return PILOTS / pid / "script.json"
+
+
+def _sync_script_artifacts(st: dict, sc: dict) -> None:
+    """관리자 페이지가 보는 컷 목록(status.artifacts.script.cuts)을 script.json 에서 다시 만든다."""
+    tm = {t["cut"]: t for t in sc.get("timing_v5", [])}
+    cuts = []
+    for c in sc["cuts"]:
+        if "tts" not in c:
+            continue
+        t = tm.get(c["cut"], {})
+        cuts.append({"cut": c["cut"], "jp": c["jp"], "ko": c.get("ko", ""), "tts": c["tts"], "fact": c.get("fact", ""),
+                     "sec": t.get("sec"), "speech_s": t.get("speech_s"), "pending": bool(c.get("pending_edit"))})
+    st.setdefault("artifacts", {}).setdefault("script", {})["cuts"] = cuts
+    st["artifacts"]["script"]["pending_lines"] = [c["cut"] for c in cuts if c["pending"]]
+
+
+def edit_line(pid: str, cut: int, jp: str, ko: str = "", tts: str = "") -> dict:
+    jp, ko, tts = (jp or "").strip(), (ko or "").strip(), (tts or "").strip()
+    if not jp:
+        raise SystemExit("대사(일본어)가 비어 있습니다")
+    st = load_status(pid)
+    sc = _load(_script_path(pid))
+    c = next((x for x in sc["cuts"] if x.get("cut") == int(cut) and "tts" in x), None)
+    if not c:
+        raise SystemExit(f"{cut}번 컷이 없습니다")
+    reading = tts or auto_reading(jp)
+    if len(_chunks(reading)) != len(_chunks(jp)):          # 자막 조각 수 = 낭독 조각 수(카라오케 규칙)
+        raise SystemExit(f"읽기 문장부호 수가 대사와 다릅니다(대사 {len(_chunks(jp))}조각 · 읽기 {len(_chunks(reading))}조각)")
+    c.setdefault("line_history", []).append({"at": _now(), "jp": c["jp"], "ko": c.get("ko", ""), "tts": c["tts"]})
+    c.update(jp=jp, tts=reading, pending_edit=True)
+    if ko:
+        c["ko"] = ko
+    c.setdefault("verification_note", "")
+    c["verification_note"] = "운영자 수정 대사 — 사실 대조 재검증 필요(대본 재검증 규칙)"
+    _save(_script_path(pid), sc)
+    _sync_script_artifacts(st, sc)
+    _note(st, "script", "edit_line", f"{cut}번 컷 대사 수정 — 아직 영상에 반영 안 됨(「수정한 대사 영상에 반영」을 눌러야 반영)")
+    _save(status_path(pid), st)
+    return st
+
+
+def plan_timing(sc: dict, tps: list[dict], lead: float = 0.15) -> tuple[list[dict], list[str]]:
+    """새 나레이션 조각 시각(tps)으로 컷별 구간을 다시 계산한다. 컷 길이(sec)는 **그대로**(영상은 안 바꾼다).
+    반환: (새 timing, 안 들어가는 컷 설명 목록)."""
+    old = {t["cut"]: t for t in sc["timing_v5"]}
+    cuts = [c for c in sc["cuts"] if "tts" in c]
+    timing, problems, i = [], [], 0
+    for k, c in enumerate(cuts):
+        n = len(_chunks(c["jp"]))
+        seg = tps[i:i + n]
+        nxt = tps[i + n]["start"] if i + n < len(tps) else seg[-1]["end"]
+        a0, a1 = seg[0]["start"], nxt
+        sec = float(old[c["cut"]]["sec"])
+        ld = float(old[c["cut"]].get("lead", lead))
+        speech = round(a1 - a0, 3)
+        timing.append({"cut": c["cut"], "sec": old[c["cut"]]["sec"], "audio_from": a0, "audio_to": a1,
+                       "speech_s": round(speech, 2), "lead": ld,
+                       "local_tps": [{"jp_seg": None, "start": round(t["start"] - a0 + ld, 3),
+                                      "end": round((t["end"] or a1) - a0 + ld, 3)} for t in seg]})
+        # 고친 컷은 규칙대로 여유 0.6초, 안 고친 컷(이미 승인된 영상)은 말이 잘리지만 않으면 된다
+        margin = MARGIN_S if c.get("pending_edit") else 0.0
+        if ld + speech + margin > sec + 1e-6:
+            need = ld + speech + MARGIN_S
+            up = next((x for x in (4, 6, 8, 10) if x >= need), None)
+            problems.append(f"{c['cut']}번 컷: 새 나레이션 {speech:.1f}초 — 지금 영상 {sec:g}초에 안 들어갑니다"
+                            + (f"(필요 {up}초 · 이 컷만 다시 만들기 약 ${up * OMNI_USD_PER_SEC:.2f}) 또는 대사를 줄이세요"
+                               if up else " — 대사를 줄이세요"))
+        i += n
+    return timing, problems
+
+
+def apply_lines(pid: str) -> dict:
+    """수정한 대사를 영상에 반영: 나레이션 전체 다시 읽기(TTS · 약 $0.01) → 컷별 구간 재계산 → 재조립 + 자동 검사.
+    영상 컷은 다시 만들지 않는다. 새 대사가 컷 길이에 안 들어가면 아무것도 바꾸지 않고 멈춘다."""
+    st = load_status(pid)
+    pilot = PILOTS / pid
+    sc = _load(_script_path(pid))
+    cuts = [c for c in sc["cuts"] if "tts" in c]
+    if not any(c.get("pending_edit") for c in cuts):
+        raise SystemExit("반영할 대사 수정이 없습니다")
+    rid = f"r{time.strftime('%m%d%H%M', time.gmtime())}_tts"
+    req = {"id": rid, "kind": "gen_tts", "purpose": "관리자 페이지 대사 수정 반영 — 대본 전체를 한 번에 다시 읽기(억양·음량 일관)",
+           "cut_map": [{"cut": c["cut"], "n": len(_chunks(c["jp"]))} for c in cuts],
+           "items": [{"name": "body", "jp": "".join(c["jp"] for c in cuts),
+                      "segments": [s for c in cuts for s in _chunks(c["tts"])]}]}
+    rp = pilot / "requests" / f"{rid}.json"
+    _save(rp, req)
+    r = subprocess.run([sys.executable, str(V2 / "tools" / "run_request.py"), str(rp)], cwd=str(ROOT))
+    tpf = pilot / "out" / rid / "body_timepoints.json"
+    if r.returncode != 0 or not tpf.exists():
+        _note(st, "video", "error", f"대사 반영 실패 — 나레이션 합성 오류(요청 {rid})")
+        _save(status_path(pid), st)
+        raise SystemExit("나레이션 합성 실패")
+    timing, problems = plan_timing(sc, _load(tpf))
+    if problems:                                            # ★영상은 건드리지 않고 멈춘다
+        _note(st, "video", "blocked", "대사 반영 보류 — " + " / ".join(problems))
+        st["artifacts"]["script"]["apply_blocked"] = problems
+        _save(status_path(pid), st)
+        return st
+    sc.setdefault("superseded_timing", []).append({"at": _now(), "timing": sc["timing_v5"]})
+    sc["timing_v5"] = timing
+    for c in cuts:
+        c.pop("pending_edit", None)
+    _save(_script_path(pid), sc)
+    st["artifacts"]["script"]["audio"] = f"out/{rid}/body.wav"
+    st["artifacts"]["script"].pop("apply_blocked", None)
+    st["artifacts"]["video"]["assemble"]["tts_id"] = rid
+    _sync_script_artifacts(st, sc)
+    st.setdefault("cost", {}).setdefault("spent", []).append({"at": _now(), "what": "대사 반영 나레이션 다시 읽기", "usd": 0.01})
+    _note(st, "video", "apply_lines", "수정한 대사 반영 — 나레이션 다시 읽기 + 재조립(영상 컷은 그대로)")
+    _save(status_path(pid), st)
+    return assemble(pid)
+
+
 # ── 자동 검사(완성본) ─────────────────────────────────────────────────────
 def _frame_gray(mp4: Path, t: float):
     import numpy as np
@@ -290,6 +431,13 @@ def main(argv: list[str]) -> int:
         st["stages"][a[1]]["state"] = "review"
         _note(st, a[1], "ready", memo(2) or "결과 준비됨 — 승인 대기")
         _save(status_path(a[0]), st)
+    elif cmd == "edit_line":                                 # note = {"jp":..,"ko":..,"tts":..} (JSON)
+        d = json.loads(memo(2) or "{}")
+        edit_line(a[0], int(a[1]), d.get("jp", ""), d.get("ko", ""), d.get("tts", ""))
+    elif cmd == "apply_lines":
+        apply_lines(a[0])
+    elif cmd == "sync":                                      # 컷 목록 새로 만들기(script.json → status)
+        st = load_status(a[0]); _sync_script_artifacts(st, _load(_script_path(a[0]))); _save(status_path(a[0]), st)
     elif cmd == "assemble":
         assemble(a[0])
     elif cmd == "topics":

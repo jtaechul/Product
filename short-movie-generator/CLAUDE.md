@@ -61,8 +61,16 @@
 - **상태 파일 하나**: 편마다 `v2/pilots/<id>/status.json`(단계 상태 locked/working/review/revise/approved · 기록 · 결과물 경로 ·
   자동 검사 · 비용). 목록 `v2/pilots/index.json`, 주제 후보 `v2/topics.json`(`admin.py topics`로 갱신).
 - **버튼 = 워크플로**: 페이지는 파일을 직접 쓰지 않는다 → `v2-admin.yml` 디스패치 → `v2/tools/admin.py`
-  (new·approve·revise·redo·ready·redo_cut·assemble) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
+  (new·approve·revise·redo·ready·redo_cut·assemble·edit_line·apply_lines) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
   `v2-admin.yml`은 **main에도** 둔다(디스패치 워크플로 규칙 · 하드룰 #15③).
+- **★컷별 대사 수정(운영자 확정 2026-09-28) — 대사를 고쳐도 영상은 자동으로 바뀌지 않는다**:
+  대본 카드의 컷마다 「대사 수정」 → 일본어·한국어(·읽기, 비우면 Janome 자동) 입력 → 「이 대사로 저장」(`admin.py edit_line`)은
+  **script.json만** 고치고 '수정됨 · 미반영'으로 표시한다(이전 대사는 `line_history`에 보관, 단계 잠금도 바꾸지 않음).
+  영상에 넣는 것은 **영상 카드의 별도 버튼 「수정한 대사 영상에 반영」**(`apply_lines`)을 눌렀을 때만 —
+  이때도 **나레이션 전체 다시 읽기(약 $0.01) + 컷 구간 재계산 + 재조립만** 하고 **영상 컷은 절대 다시 만들지 않는다**.
+  새 대사가 그 컷 길이(고친 컷은 나레이션+여유 0.6초, 안 고친 컷은 말이 잘리지 않을 것)에 안 들어가면
+  **아무것도 바꾸지 않고 멈춘 뒤** "N번 컷: 대사를 줄이거나 이 컷만 다시 만들기(약 $)"를 알린다(컷 재생성은 운영자가 따로 누름).
+  고친 대사는 대본 재검증 규칙(사실 대조) 대상이다. 회귀: `tests/test_v2_admin.py`(저장 시 영상 불변 · 긴 대사 반영 보류).
 - **아직 자동이 아닌 것(정직 표기)**: 대본 작성·스토리보드 이미지 생성은 지금은 Claude 세션이 맡고, 끝나면 `admin.py ready`로
   '승인 대기'로 올린다. 업로드 단계는 승인 기록까지만 — 제목·설명 자동 작성·유튜브 업로드 연결은 다음 작업.
 - 검사: `worker/v2_admin_check.mjs`(메뉴 2개·페이지 렌더·잠금/승인 버튼·디스패치 입력·/legacy) · `tests/test_v2_admin.py`.

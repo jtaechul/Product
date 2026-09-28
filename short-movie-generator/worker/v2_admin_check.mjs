@@ -37,8 +37,10 @@ globalThis.document = { getElementById: el, querySelector: s => el(s.replace(/^#
 globalThis.localStorage = { getItem: k => (k === "gh_pat" ? "tok" : null), setItem(){}, removeItem(){} };
 globalThis.confirm = () => true; globalThis.alert = () => {};
 globalThis.setTimeout = () => 0;
+let statusOverride = null;
 globalThis.fetch = async (url, opts) => {
   url = String(url);
+  if (statusOverride && url.includes("status.json")) return { ok: true, status: 200, text: async () => JSON.stringify(statusOverride) };
   if (url.includes("/dispatches")) { dispatched.push({ url, body: JSON.parse(opts.body) }); return { status: 204, ok: true, text: async () => "" }; }
   const m = url.match(/\/api\/pub\?path=([^&]+)/);
   if (m) {
@@ -81,6 +83,26 @@ if (appr?.onclick) await appr.onclick();
 const c1 = (lists["[data-cut]"] || []).find(b => b.dataset.cut === "1");
 if (c1?.onclick) await c1.onclick();
 res.dispatches = dispatched.map(d => ({ wf: d.url.split("/workflows/")[1].split("/")[0], ref: d.body.ref, ...d.body.inputs }));
+
+// ── 컷별 대사 수정(운영자 확정 2026-09-28): 저장은 대본만 · 영상 반영은 별도 버튼 ──
+const scr2 = ep.slice(ep.indexOf('id="stg-script"'), ep.indexOf('id="stg-storyboard"'));
+res.line_edit_buttons = (scr2.match(/data-edit="/g) || []).length;
+res.line_save_says_video_unchanged = scr2.includes("영상은 안 바뀜");
+res.no_apply_button_without_edits = !ep.includes('id="v2apply"') && ep.includes('id="v2asm"');
+const d0 = dispatched.length;
+const sv = (lists["[data-saveline]"] || []).find(b => b.dataset.saveline === "3");
+els["edjp-3"] = makeEl("edjp-3"); els["edjp-3"].value = "大きさは最大50センチ近く。世界最大の仲間です。";
+els["edko-3"] = makeEl("edko-3"); els["edko-3"].value = "크기는 최대 50cm 가까이. 세계 최대 무리입니다.";
+if (sv?.onclick) await sv.onclick();
+const ed = dispatched.slice(d0);
+res.edit_dispatch = ed.map(d => ({ action: d.body.inputs.action, stage: d.body.inputs.stage, note: JSON.parse(d.body.inputs.note) }));
+res.edit_does_not_touch_video = ed.every(d => !["redo_cut", "assemble", "apply_lines"].includes(d.body.inputs.action));
+// 미반영 대사가 있는 상태: 반영 버튼이 나타나고 재조립 버튼도 그대로 있어야 한다
+const stNow = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+stNow.artifacts.script.pending_lines = [3]; stNow.artifacts.script.cuts[2].pending = true;
+statusOverride = stNow; els = {}; await api.renderV2Episode("bathynomus_giganteus"); const ep2 = els.view.innerHTML;
+res.pending_shows_apply_and_asm = ep2.includes('id="v2apply"') && ep2.includes('id="v2asm"') && ep2.includes("아직 영상에 반영 안 된 컷: 3번");
+statusOverride = null;
 
 els = {}; window.location.pathname = "/legacy"; api.renderHome(); res.legacy_home_renders = (els.view?.innerHTML || "").includes("쇼츠 생성 시작");
 console.log(JSON.stringify(res, null, 1));

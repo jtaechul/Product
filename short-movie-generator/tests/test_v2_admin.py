@@ -101,3 +101,86 @@ def test_admin_pages_render_and_buttons_dispatch():
     acts = [(d["wf"], d["action"], d["pilot"], d["stage"]) for d in r["dispatches"]]
     assert ("v2-admin.yml", "approve", "bathynomus_giganteus", "video") in acts
     assert ("v2-admin.yml", "redo_cut", "bathynomus_giganteus", "1") in acts
+
+
+# ── 컷별 대사 수정(운영자 확정 2026-09-28): 저장은 대본만, 영상은 자동으로 안 바뀐다 ──
+REAL = ROOT / "v2" / "pilots" / "bathynomus_giganteus"
+
+
+@pytest.fixture()
+def real_copy(tmp_path, monkeypatch):
+    pilots = tmp_path / "pilots"
+    dst = pilots / "bathynomus_giganteus"
+    (dst / "out" / "22_body_tts").mkdir(parents=True)
+    (dst / "requests").mkdir()
+    for f in ("script.json", "status.json"):
+        shutil.copy(REAL / f, dst / f)
+    shutil.copy(REAL / "out/22_body_tts/body_timepoints.json", dst / "out/22_body_tts/body_timepoints.json")
+    monkeypatch.setattr(admin, "V2", tmp_path)
+    monkeypatch.setattr(admin, "PILOTS", pilots)
+    return dst
+
+
+def test_edit_line_changes_script_only(real_copy):
+    before = (real_copy / "status.json").read_text(encoding="utf-8")
+    st0 = json.loads(before)
+    admin.edit_line("bathynomus_giganteus", 3, "大きさは最大50センチ近く。世界最大の仲間です。", "크기는 최대 50cm. 세계 최대입니다.")
+    st = admin.load_status("bathynomus_giganteus")
+    sc = json.loads((real_copy / "script.json").read_text(encoding="utf-8"))
+    c3 = next(c for c in sc["cuts"] if c.get("cut") == 3)
+    assert c3["jp"].startswith("大きさは") and c3["pending_edit"] and c3["line_history"][-1]["jp"] != c3["jp"]
+    assert "せかいさいだい" in c3["tts"]                             # 읽기 자동 생성(히라가나)
+    assert st["artifacts"]["video"] == st0["artifacts"]["video"]      # ★영상 쪽은 그대로
+    assert [st["stages"][s]["state"] for s in admin.STAGES] == [st0["stages"][s]["state"] for s in admin.STAGES]
+    assert st["artifacts"]["script"]["pending_lines"] == [3]
+    assert sc["timing_v5"] == json.loads((REAL / "script.json").read_text(encoding="utf-8"))["timing_v5"]
+
+
+def test_edit_line_rejects_reading_with_different_chunks(real_copy):
+    with pytest.raises(SystemExit):
+        admin.edit_line("bathynomus_giganteus", 3, "大きさは最大。世界最大です。", "", "おおきさは さいだい せかいさいだいです。")
+
+
+def test_timing_unchanged_audio_reproduces_current_cut_times(real_copy):
+    sc = json.loads((real_copy / "script.json").read_text(encoding="utf-8"))
+    tps = json.loads((real_copy / "out/22_body_tts/body_timepoints.json").read_text(encoding="utf-8"))
+    timing, problems = admin.plan_timing(sc, tps)
+    assert problems == []
+    for a, b in zip(timing, sc["timing_v5"]):
+        assert abs(a["audio_from"] - b["audio_from"]) < 1e-6 and abs(a["audio_to"] - b["audio_to"]) < 1e-6
+        assert a["sec"] == b["sec"]                                      # 컷 길이(영상)는 그대로
+
+
+def test_apply_stops_without_touching_video_when_line_too_long(real_copy, monkeypatch):
+    admin.edit_line("bathynomus_giganteus", 3, "大きさは最大50センチ近く。ダンゴムシの仲間では、世界最大です。")
+    tps = json.loads((real_copy / "out/22_body_tts/body_timepoints.json").read_text(encoding="utf-8"))
+    for t in tps[8:]:                          # 3번 컷(조각 7~9)의 두 번째 조각부터 밀어 3번 컷이 3초 길어졌다고 가정
+        t["start"] += 3.0
+        t["end"] = (t["end"] or 0) + 3.0
+
+    def fake_run(args, cwd=None):
+        req = json.loads(Path(args[-1]).read_text(encoding="utf-8"))
+        out = real_copy / "out" / req["id"]
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "body_timepoints.json").write_text(json.dumps(tps), encoding="utf-8")
+        (out / "body.wav").write_bytes(b"")
+        return subprocess.CompletedProcess(args, 0)
+    monkeypatch.setattr(admin.subprocess, "run", fake_run)
+    called = []
+    monkeypatch.setattr(admin, "assemble", lambda pid: called.append(pid))
+    st = admin.apply_lines("bathynomus_giganteus")
+    sc = json.loads((real_copy / "script.json").read_text(encoding="utf-8"))
+    assert called == []                                                  # 재조립 안 함
+    assert st["artifacts"]["video"]["assemble"]["tts_id"] == "22_body_tts"   # 나레이션 교체 안 함
+    assert sc["timing_v5"] == json.loads((REAL / "script.json").read_text(encoding="utf-8"))["timing_v5"]
+    assert any("3번 컷" in x for x in st["artifacts"]["script"]["apply_blocked"])
+    assert not any(n.get("kind") == "redo_cut" for n in st["stages"]["video"]["notes"])   # 컷 재생성 안 함
+
+
+def test_line_edit_page_buttons():
+    out = subprocess.run(["node", str(ROOT / "worker" / "v2_admin_check.mjs")], capture_output=True, text=True,
+                         timeout=120)
+    r = json.loads(out.stdout)
+    assert r["line_edit_buttons"] == 8 and r["line_save_says_video_unchanged"]
+    assert r["no_apply_button_without_edits"] and r["pending_shows_apply_and_asm"]
+    assert r["edit_does_not_touch_video"] and r["edit_dispatch"][0]["action"] == "edit_line"

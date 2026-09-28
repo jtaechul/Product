@@ -117,6 +117,9 @@ button:disabled{opacity:.5}
 .v2btns .btn{min-height:44px;white-space:nowrap}
 .v2btns .btn.save{grid-column:auto}
 .cfact a{color:var(--cy)}
+.v2edit{width:auto;margin-top:6px;padding:6px 12px;font-size:12px;min-height:36px}
+.v2ed{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#0a1018}
+.cfact.err{color:var(--rd)}
 .v2cut{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(150,200,215,.08);font-size:14px;line-height:1.6}
 .v2cut b{color:var(--cy);min-width:18px}.v2cut small{display:block;color:var(--gy);font-size:12px}
 .v2clips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -139,7 +142,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-27-2 (v2 관리자: 영상 목록 · 새 영상 · 단계 승인)";
+const BUILD="v2026-09-28-1 (v2 관리자: 컷별 대사 수정 · 반영 분리)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2424,7 +2427,17 @@ function v2stageBody(st,stage){
     if(!a.cuts)return '<div class="hint">대본을 작성하고 있습니다. 끝나면 이 칸에 컷별 대사(일본어/한국어)와 나레이션 미리듣기가 나옵니다.</div>';
     return (a.audio?'<span class="lbl">나레이션 미리듣기 (1.33배)</span><audio controls preload="none" style="width:100%" src="'+v2media(pid,a.audio)+'"></audio>':'')+
       (a.verification?'<div class="hint">'+esc(a.verification)+'</div>':'')+
-      '<div class="sect">컷별 대사</div>'+a.cuts.map(c=>'<div class="v2cut"><b>'+c.cut+'</b><div>'+esc(c.jp)+'<small>'+esc(c.ko)+'</small></div></div>').join("");
+      v2pendingNote(a)+
+      '<div class="sect">컷별 대사 — 고쳐도 영상은 자동으로 바뀌지 않습니다</div>'+a.cuts.map(c=>'<div class="v2cut"><b>'+c.cut+'</b><div style="flex:1">'+esc(c.jp)+
+        (c.pending?' <span class="v2st wait">수정됨 · 미반영</span>':'')+'<small>'+esc(c.ko)+'</small>'+
+        '<button class="btn v2edit" data-edit="'+c.cut+'">대사 수정</button>'+
+        '<div class="v2ed" id="ed-'+c.cut+'" style="display:none">'+
+          '<span class="lbl">일본어 대사(화면 자막)</span><textarea id="edjp-'+c.cut+'" data-est="'+c.cut+'" style="min-height:70px">'+esc(c.jp)+'</textarea>'+
+          '<span class="lbl">한국어(확인용)</span><input id="edko-'+c.cut+'" value="'+esc(c.ko)+'">'+
+          '<span class="lbl">읽기(히라가나) — 비우면 자동</span><input id="edtts-'+c.cut+'" placeholder="예: おおきさは さいだい…">'+
+          '<div class="hint" id="est-'+c.cut+'"></div>'+
+          '<button class="btn save" data-saveline="'+c.cut+'" style="width:100%;margin-top:8px">이 대사로 저장 (영상은 안 바뀜)</button>'+
+        '</div></div></div>').join("");
   }
   if(stage==="storyboard"){
     if(!a.sheet)return '<div class="hint">스토리보드 이미지를 만들고 있습니다.</div>';
@@ -2449,6 +2462,10 @@ function v2stageBody(st,stage){
         (c.review?'<div class="cfact'+(c.review==="양호"?'':' warn')+'">'+esc(c.review)+'</div>':'')+
         '<button class="btn warn" data-cut="'+c.cut+'" data-sec="'+esc(c.sec)+'">이 컷만 다시 만들기 (약 $'+(Number(c.sec||0)*OMNI_USD).toFixed(2)+')</button>'+
       '</div>').join("")+'</div>'+
+      ((((st.artifacts||{}).script||{}).pending_lines||[]).length?(
+        '<div class="sect">수정한 대사 — 아직 영상에 반영 안 됨</div>'+v2pendingNote(st.artifacts.script)+
+        '<div class="btnrow"><button class="btn save" id="v2apply" style="grid-column:1/3">수정한 대사 영상에 반영 (나레이션 다시 읽기 + 재조립 · 약 $0.01)</button></div>'+
+        '<div class="hint">영상 컷은 다시 만들지 않습니다. 새 대사가 컷 길이에 안 들어가면 아무것도 바꾸지 않고 멈춘 뒤 알려 드립니다.</div>'):'')+
       '<div class="btnrow"><button class="btn" id="v2asm" style="grid-column:1/3">완성본 다시 조립 + 자동 검사 (무료)</button></div>'+
       (spent?'<div class="hint">이 편에서 재생성에 쓴 금액: 약 $'+spent.toFixed(2)+'</div>':'');
   }
@@ -2457,6 +2474,18 @@ function v2stageBody(st,stage){
       '<div class="hint warn">현재는 승인 기록까지만 됩니다 — 제목·설명 자동 작성과 유튜브 업로드 연결은 다음 작업으로 붙입니다.</div>';
   }
   return "";
+}
+// 미반영 대사 안내(대본·영상 카드 공용) + 반영이 막혔을 때 이유
+function v2pendingNote(a){
+  const pend=(a&&a.pending_lines)||[], bl=(a&&a.apply_blocked)||[];
+  return (pend.length?'<div class="cfact warn">수정했지만 아직 영상에 반영 안 된 컷: '+pend.join(", ")+'번 — 영상 제작 카드의 「수정한 대사 영상에 반영」을 눌러야 바뀝니다.</div>':'')+
+    bl.map(x=>'<div class="cfact err">반영 보류: '+esc(x)+'</div>').join("");
+}
+// 새 대사 예상 길이(기존 대사 글자 수 대비 비례 추정 · 실제 길이는 반영 때 다시 잰다)
+function v2estimate(c,jp){
+  if(!c||!c.speech_s||!c.sec)return "";
+  const n0=String(c.jp||"").length||1, est=c.speech_s*String(jp||"").length/n0, need=0.15+est+0.6;
+  return "예상 나레이션 약 "+est.toFixed(1)+"초 / 이 컷 영상 "+c.sec+"초 — "+(need<=c.sec?"들어갑니다":"길어서 안 들어갈 수 있습니다(줄이거나, 반영 때 이 컷만 다시 만들기가 필요)");
 }
 function v2stageCard(st,stage){
   const s=(st.stages||{})[stage]||{state:"locked"}, state=s.state, locked=state==="locked";
@@ -2509,6 +2538,17 @@ async function renderV2Episode(pid){
     if(!confirm(cut+"번 컷만 다시 만들까요? 비용 약 $"+usd+" (같은 시작 이미지·지시문으로 새로 생성 → 완성본 자동 재조립)"))return;
     await v2do("redo_cut",pid,cut,note,b);
   });
+  const cutsA=((st.artifacts||{}).script||{}).cuts||[];
+  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const e=$("#ed-"+b.dataset.edit);if(e)e.style.display=(e.style.display==="none"?"block":"none");
+    const est=$("#est-"+b.dataset.edit), c=cutsA.find(x=>String(x.cut)===b.dataset.edit);if(est)est.innerHTML=esc(v2estimate(c,($("#edjp-"+b.dataset.edit)||{}).value));});
+  document.querySelectorAll("[data-est]").forEach(t=>t.oninput=()=>{const est=$("#est-"+t.dataset.est), c=cutsA.find(x=>String(x.cut)===t.dataset.est);if(est)est.innerHTML=esc(v2estimate(c,t.value));});
+  document.querySelectorAll("[data-saveline]").forEach(b=>b.onclick=async()=>{
+    const n=b.dataset.saveline, jp=(($("#edjp-"+n)||{}).value||"").trim(), ko=(($("#edko-"+n)||{}).value||"").trim(), tts=(($("#edtts-"+n)||{}).value||"").trim();
+    if(!jp){banner("대사가 비어 있습니다.","err");return;}
+    if(!confirm(n+"번 컷 대사를 저장할까요? 대본만 바뀌고 영상은 그대로입니다(반영은 따로 버튼)."))return;
+    if(await v2do("edit_line",pid,n,JSON.stringify({jp:jp,ko:ko,tts:tts}),b))setTimeout(()=>renderV2Episode(pid),60000);
+  });
+  const ap=$("#v2apply");if(ap)ap.onclick=async()=>{if(confirm("수정한 대사를 영상에 반영할까요? 나레이션을 다시 읽고 완성본을 다시 조립합니다(약 $0.01 · 영상 컷은 그대로)."))await v2do("apply_lines",pid,"","",ap);};
   const asm=$("#v2asm");if(asm)asm.onclick=async()=>{if(confirm("완성본을 다시 조립하고 자동 검사를 돌릴까요? (무료)"))await v2do("assemble",pid,"","",asm);};
 }
 
