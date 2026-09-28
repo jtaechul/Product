@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "new | approve | revise | redo | ready | redo_cut | assemble | topics | edit_line | apply_lines | crosscheck | recut_plan | recut_approve | recut_cancel"
+        description: "new | approve | revise | redo | ready | redo_cut | assemble | topics | edit_line | apply_lines | crosscheck | recut_plan | recut_approve | recut_cancel | upload_meta | save_meta"
         required: true
       pilot:
         description: "편 id (예: bathynomus_giganteus)"
@@ -44,12 +44,15 @@ jobs:
       - name: 준비
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
-          pip install -q Pillow numpy google-genai janome
+          pip install -q Pillow numpy google-genai janome google-auth google-auth-oauthlib google-api-python-client
 
       - name: 버튼 실행
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_TTS_KEY: ${{ secrets.GOOGLE_TTS_KEY }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           IN_ACTION: ${{ inputs.action }}
           IN_PILOT: ${{ inputs.pilot }}
           IN_STAGE: ${{ inputs.stage }}
@@ -57,9 +60,9 @@ jobs:
         run: |
           set -e
           case "$IN_ACTION" in
-            new|assemble|apply_lines|sync|crosscheck) python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" ;;
+            new|assemble|apply_lines|sync|crosscheck|upload_meta) python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" ;;
             topics)                     python3 v2/tools/admin.py topics ;;
-            approve|revise|redo|ready|redo_cut|edit_line|recut_plan|recut_approve|recut_cancel)
+            approve|revise|redo|ready|redo_cut|edit_line|recut_plan|recut_approve|recut_cancel|save_meta)
                                         python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
             *) echo "모르는 동작: $IN_ACTION"; exit 1 ;;
           esac
