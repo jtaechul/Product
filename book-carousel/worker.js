@@ -3571,6 +3571,36 @@ function dinerRoles(n) {
   return ['enter', 'order', 'serve', 'taste', 'taste', 'taste', 'taste', 'bill', 'exit'];
 }
 const DINER_ROLE_KO = { enter: '입장', order: '주문', serve: '서빙', taste: '시식', bill: '계산', exit: '퇴장' };
+// 컷마다 구도·카메라를 다르게(사용자 확정 2026-09: "너무 단순하다"). 움직임은 한 방향 한 번만 — 크게 움직이면 배경이 무너진다.
+const DINER_SHOTS = {
+  enter: 'Wide establishing shot from inside the diner at knee height, locked-off camera',
+  order: 'Low-angle medium shot from beside the table, slow gentle push-in toward the face',
+  serve: 'High overhead top-down shot of the table and the dish, very slow descending crane',
+  taste: [
+    'Extreme close-up macro in side profile at mouth level, slow lateral slide',
+    'Medium close-up from the front across the table, slow pull-back',
+    'Three-quarter close-up from behind the shoulder looking at the dish, slow small arc',
+    'Close-up at table height with shallow depth of field, slow rack focus from dish to face',
+  ],
+  bill: 'Medium side shot at table height, slow dolly-in',
+  exit: 'Wide locked-off shot from behind the table toward the door',
+};
+function dinerShot(roles, i) {
+  const r = roles[i];
+  const v = DINER_SHOTS[r];
+  if (!Array.isArray(v)) return v || '';
+  const k = roles.slice(0, i).filter(x => x === r).length;
+  return v[k % v.length];
+}
+// 그릇은 음식 참고 이미지와 같은 것 하나로 통일(컷마다 접시·그릇이 바뀌던 문제).
+const DINER_VESSEL = 'a shallow plain white ceramic bowl';
+function inVessel(look) {
+  const t = String(look || '')
+    .replace(/,?\s*(served|placed|arranged|piled|heaped)?\s*(on|in)\s+(a|an|the)\s+[^,.;]*\b(bowl|plate|dish|saucer)\b[^,.;]*/gi, '')
+    .replace(/^(a|an)\s+[^,.;]*\b(bowl|plate|dish|saucer)\b\s+of\s+/i, '')
+    .replace(/^(a|an)\s+single\s+/i, '').replace(/[\s,.;]+$/, '').trim();
+  return `${DINER_VESSEL} of ${t}`;
+}
 
 // 시리즈 이름·고정 오프닝(사용자 확정 2026-09). 원작 대사를 그대로 쓰지 않고 비틀어 우리 것으로 만든 한마디.
 // 입장 클립 대사는 모델이 쓰지 않고 서버가 이 문장으로 고정한다(매회 같은 의식 = 브랜드).
@@ -3681,7 +3711,10 @@ function dinerSystem(sp) {
    카운터나 테이블(재질·모양·위치), 주인공 자리(방석이나 낮은 의자), 조명 기구, 눈에 띄는 소품 1개.
    문 하나를 적을 때도 재질·색·여는 방식·창 모양 네 가지를 모두 넣는다. 가게마다 다르게 설계하라(매회 같은 문 금지).
    캐릭터·음식·사람 묘사, 움직임, 화풍 문구는 쓰지 마라(화풍은 시스템이 붙인다).
-4. shots는 영어, 타임코드 "0:00-0:03" 꼴로 8초를 2~3구간으로 나눈다. 카메라 움직임과 동작만 쓴다.
+4. shots는 영어, 타임코드 "0:00-0:03" 꼴로 8초를 2~3구간으로 나눈다. **주인공의 동작만** 쓴다(구도·카메라는 시스템이 컷마다 정해 붙인다).
+   ⭐ 구간 순서는 그 컷 line의 문장 순서와 맞춘다: 첫 문장을 말하는 동안 보일 동작 → 둘째 문장 동안의 동작.
+   예) line이 "냄새 → 한 입 → 비유"면 shots도 "코를 대고 냄새 맡기 → 한 입 물기 → 씹으며 눈을 가늘게 뜨기".
+   먹는 이야기를 하는 동안에는 반드시 먹고 있어야 하고, 걷는 장면에서는 맛 이야기를 하지 않는다.
 5. 말하기·입모양·대사·소리에 관한 단어를 한 글자도 쓰지 마라(ambient, sound, speaking 등 전부).
 6. 괴로워 보이는 표현 금지: angry, disgusted, choking, gagging, coughing, vomiting, spitting out, struggling.
    마음에 안 드는 순간은 코믹한 몸짓으로: slow blink, a long pause mid-chew, tilting its head, nudging the bowl with its nose.
@@ -3808,7 +3841,7 @@ function cleanFoodLook(look, title) {
   for (const w of menuBannedWords(title)) if (/^[a-z]/i.test(w)) t = t.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '');
   t = t.replace(/[가-힣]+/g, '').replace(/\s{2,}/g, ' ').replace(/^[\s,.;]+|[\s,.;]+$/g, '').trim();
   if (t.split(/\s+/).length < 5) return '';
-  if (!/\b(bowl|plate|dish|saucer)\b/i.test(t)) t = `a plain white ceramic bowl of ${t}`;
+  t = inVessel(t);
   return t.split(/\s+/).slice(0, 45).join(' ');
 }
 
@@ -3916,7 +3949,7 @@ async function handleDinerEpisode(env, body, ctx) {
   if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
   // 실제 상품 사진·웹검색으로 알맹이 모양을 읽는다(실패 시 품목별 공용 문장).
   const fl = await resolveFoodLook(env, gk, title, String(body.image || '').trim()).catch(() => ({ look: foodBase, source: 'generic', note: '' }));
-  const foodEn = fl.look || foodBase;
+  const foodEn = inVessel(fl.look || foodBase);
   const facts = (Array.isArray(body.benefits) ? body.benefits : [])
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
     .filter(Boolean);
@@ -3946,6 +3979,7 @@ ${worries.length ? '- ' + worries.join('\n- ') : '(없음 — 이 상품 종류�
 ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양·연령 이야기는 하지 말고 향·식감 평만 해라)'}
 
 클립 ${roles.length}개, 순서는 반드시 이대로: ${roles.map((r, i) => `${i + 1}.${r}`).join(' ')}
+컷별 구도(시스템이 붙인다 — 동작은 이 구도에서 잘 보이게): ${roles.map((r, i) => `${i + 1}.${dinerShot(roles, i)}`).join(' / ')}
 아래 JSON만 출력:
 {
   "shop": "오늘 들어간 가게 콘셉트 한 줄(한국어, 예: 골목 끝 작은 백반집)",
@@ -3953,6 +3987,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "tone": "내레이션 목소리 톤 한 줄(한국어)",
   "clips": [ { "role": "enter", "shots": "영어 타임코드 구간", "line": "속마음 2~3문장(35~60자). enter는 가게 앞 생각 한 문장" } ],
   "verdict": "재방문 의사 판정 한 줄(한국어)",
+  "tasteNotes": [ { "k": "식감", "v": "한국어 2~8자" }, { "k": "향", "v": "..." }, { "k": "맛", "v": "..." }, { "k": "한줄평", "v": "한국어 16자 이내" } ],
   "menuName": "메뉴판에 적을 메뉴 이름(한국어 4~14자). 상품명·브랜드·제품 라인명 절대 금지. [확인된 정보]와 상품명의 보편 특징(주원료·알갱이 모양이나 식감·대상) 중 2개를 조합하고 '정식', '한 그릇', '한 접시', '세트' 중 하나로 끝낸다",
   "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도. 상품명·브랜드는 절대 쓰지 않는다",
   "hashtags": ["#태그1", "#태그2", "#태그3"],
@@ -4068,6 +4103,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
       `CHARACTER: ${sp.line}`,
       `SET (identical in every clip): ${setBlock.replace(/[.\s]+$/, '')}.`,
       withFood ? `FOOD: ${foodLine}` : '',
+      `SHOT: ${dinerShot(roles, i)}.`,
       `CAMERA & ACTION: ${camera}`,
       `CONSTRAINTS: ${constraints}`,
       `Avoid: ${neg}.`,
@@ -4078,6 +4114,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
       `CHARACTER: ${sp.line}`,
       `SET (identical in every clip): ${setBlock.replace(/[.\s]+$/, '')}.`,
       withFood ? `FOOD: ${foodLine}` : '',
+      `SHOT: ${dinerShot(roles, i).replace(/,?\s*(slow|very slow)[^,.]*$/i, '')}.`,
       firstMoment ? `MOMENT: ${firstMoment}.` : '',
       'CONSTRAINTS: Single unified composition. The set matches the SET description exactly.',
       `Avoid: ${neg}.`,
@@ -4086,7 +4123,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     const card = role === 'enter' ? { type: 'opening' }
       : role === 'order' ? { type: 'menu', name: menuName }
       : (role === 'bill' && priceNote ? { type: 'bill', text: priceNote } : null);
-    return { no: i + 1, role, roleKo: DINER_ROLE_KO[role], shots, line, subtitle: line, wearing: false, card, imagePrompt, prompt };
+    return { no: i + 1, role, roleKo: DINER_ROLE_KO[role], shot: dinerShot(roles, i), shots, line, subtitle: line, wearing: false, card, imagePrompt, prompt };
   });
 
   const tags = (Array.isArray(out.hashtags) ? out.hashtags : []).slice(0, 3);
@@ -4123,6 +4160,9 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     series: DINER_SERIES, episode: epNo, opening: DINER_OPENING,
     species: spKey, speciesKo: sp.ko,
     problem: `${seriesTag} ${shop || '식당 에피소드'} · 오늘의 메뉴 「${menuName}」`,
+    tasteNotes: (Array.isArray(out.tasteNotes) ? out.tasteNotes : [])
+      .map(x => ({ k: String(x && x.k || '').trim().slice(0, 6), v: scrubBanned(String(x && x.v || '').trim(), banned).replace(/!+/g, '').slice(0, 18) }))
+      .filter(x => x.k && x.v && !HEALTH_CLAIM.test(x.v)).slice(0, 4),
     shop, verdict, priceNote, menuName, foodLook: foodEn, foodLookSource: fl.source, foodLookNote: fl.note || '',
     guestNote: guest.note, guestMismatch: !!guest.mismatch,
     sceneBlock: scene, setBlock,

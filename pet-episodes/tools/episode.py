@@ -147,40 +147,59 @@ def step_character(ep, epdir, work, log, redo):
     return out
 
 
-# ---------- 2. 컷별 첫 장면 ----------
-KF_HEAD = ("Create the FIRST FRAME of one shot of a vertical 9:16 animated short film. "
-           "Reference image 1 is the main character: draw exactly this {noun} (same face, fur colours, proportions and cute "
-           "look), a natural four-legged animal with no clothes, no collar and no accessories. ")
-KF_FOOD = ("Reference image {n} is the real food: draw exactly these food pieces (same shape, size, colour and texture) in a "
-           "plain white bowl or plate. Never show any packaging or bag. ")
-KF_SET = ("Reference image {n} is the same restaurant from an earlier shot: keep the same room, the same single door, walls, "
-          "floor, table, seat and lighting. ")
+# ---------- 2. 가게 세트 원본 + 컷별 첫 장면 ----------
+# 배경·테이블이 컷마다 바뀌던 문제(사용자 지적 2026-09) 대책:
+#   ① 사람·동물 없는 '가게 세트 원본' 1장을 먼저 만들고 ② 모든 컷의 첫 장면이 이 원본을 참고한다
+#   ③ 영상 AI에도 첫 장면과 함께 이 원본을 넣어 움직이는 동안 배경을 붙잡는다.
+SET_PROMPT = ("Create an empty interior photo of one small quiet diner for a vertical 9:16 film. Nobody in it: no animals, no "
+              "people. Eye-level wide shot showing the whole room: the single entrance door, the walls, the floor, the one "
+              "table and the seat, the lighting and the prop, exactly as described below. On the table sits {vessel}, empty. "
+              "{style}\nSET: {set}\nNo text, letters, signs with writing, logos or watermarks. Full-frame image with no borders.")
+KF_HEAD = ("Create the FIRST FRAME of one shot of a vertical 9:16 film. "
+           "Reference image 1 is the main character: draw exactly this {noun} (same face, fur colours, markings and "
+           "proportions), a natural four-legged animal with no clothes, no collar and no accessories. "
+           "Reference image 2 is THE restaurant set: this shot happens inside exactly this room — the same door, walls, "
+           "floor, the same table (same wood, shape and size) and seat, the same lamp and prop. Only the camera position "
+           "and framing change, as given in SHOT. ")
+KF_FOOD = ("Reference image {n} is the real food: draw exactly these food pieces (same shape, size, colour and texture) in "
+           "the same shallow plain white ceramic bowl. Never show any packaging or bag. ")
 KF_TAIL = ("\nNo text, letters, numbers, signs with writing, logos or watermarks anywhere. No humans. No banknotes, coins or cash. "
            "Full-frame image with no borders.")
 
 
-def step_keyframes(ep, epdir, work, log, redo, character):
+def _line(prompt: str, head: str) -> str:
+    m = re.search(rf"^{head}:\s*(.+)$", prompt or "", re.M)
+    return m.group(1).strip() if m else ""
+
+
+def step_set(ep, epdir, work, log, redo):
+    out = work / "set.png"
+    if out.exists() and "set" not in redo:
+        return out
+    p0 = ep["clips"][0].get("imagePrompt", "")
+    r = gen_image(SET_PROMPT.format(vessel="a shallow plain white ceramic bowl", style=_line(p0, "STYLE"),
+                                    set=ep.get("setBlock") or _line(p0, r"SET \(identical in every clip\)")), [], out)
+    log["set"] = r
+    if not r["ok"]:
+        raise RuntimeError(f"가게 세트 원본 실패: {r.get('error')}")
+    return out
+
+
+def step_keyframes(ep, epdir, work, log, redo, character, setimg):
     food = next((p for p in (epdir / "refs" / "food.png", epdir / "refs" / "food.jpg") if p.exists()), epdir / "refs" / "food.png")
     noun = "kitten" if ep.get("species") == "cat" else "puppy"
-    first = None
     res = log.setdefault("keyframes", {})
     for c in ep["clips"]:
         name = f"c{c['no']:02d}"
         out = work / f"kf_{name}.png"
         if out.exists() and f"kf_{name}" not in redo:
-            first = first or out
             continue
-        refs, text = [character], KF_HEAD.format(noun=noun)
+        refs, text = [character, setimg], KF_HEAD.format(noun=noun)
         if "FOOD:" in c.get("prompt", "") and food.exists():
             refs.append(food)
             text += KF_FOOD.format(n=len(refs))
-        if first is not None:
-            refs.append(first)
-            text += KF_SET.format(n=len(refs))
         r = gen_image(text + "\n\nSHOT DESCRIPTION:\n" + c["imagePrompt"] + KF_TAIL, refs, out)
         res[name] = r
-        if r["ok"] and first is None:
-            first = out
     missing = [f"c{c['no']:02d}" for c in ep["clips"] if not (work / f"kf_c{c['no']:02d}.png").exists()]
     if missing:
         raise RuntimeError(f"첫 장면 실패: {missing}")
@@ -204,10 +223,11 @@ def _find_video(o):
     return None
 
 
-def _omni(key, start: Path, prompt: str) -> bytes:
+def _omni(key, start: Path, prompt: str, setimg: Path | None = None) -> bytes:
     hdr = {"x-goog-api-key": key, "Content-Type": "application/json"}
+    extra = [{"type": "image", **_b64img(setimg)}] if setimg and setimg.exists() else []
     body = {"model": CLIP_MODEL,
-            "input": [{"type": "image", **_b64img(start)}, {"type": "text", "text": prompt}],
+            "input": [{"type": "image", **_b64img(start)}, *extra, {"type": "text", "text": prompt}],
             "response_format": {"type": "video", "resolution": "720p", "aspect_ratio": "9:16"},
             "generation_config": {"video_config": {"task": "image_to_video"}}}
     t0 = time.time()
@@ -238,7 +258,7 @@ def _omni(key, start: Path, prompt: str) -> bytes:
     return vid
 
 
-def _veo(key, start: Path, prompt: str) -> bytes:
+def _veo(key, start: Path, prompt: str, setimg: Path | None = None) -> bytes:
     from google import genai
     from google.genai import types
     client = genai.Client(api_key=key)
@@ -262,9 +282,12 @@ def _veo(key, start: Path, prompt: str) -> bytes:
     return tmp.read_bytes()
 
 
-CLIP_TAIL = ("\nThe attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it, "
-             "and keep the character exactly as drawn.\nSOUND: none needed (it will be replaced). No dialogue. "
-             "NEVER SHOW: text, letters, numbers, logos, packaging, humans, banknotes or cash, the character changing shape, morphing objects, cuts.")
+CLIP_TAIL = ("\nThe first attached image is the FIRST FRAME. The second attached image (if any) is the empty restaurant set "
+             "for reference: the room, door, walls, floor, table, seat, lamp and props must stay exactly like these images "
+             "for the whole clip — nothing is added, removed, moved or reshaped. Only the camera and the character move, "
+             "slowly and smoothly. The bowl and the food never change.\nSOUND: none needed (it will be replaced). No dialogue. "
+             "NEVER SHOW: text, letters, numbers, logos, packaging, humans, banknotes or cash, the character changing shape, "
+             "morphing objects, changing furniture, cuts.")
 
 
 def step_clips(ep, epdir, work, log, redo):
@@ -280,7 +303,7 @@ def step_clips(ep, epdir, work, log, redo):
         for label, fn in (("omni", _omni), ("veo-lite", _veo)):
             t0 = time.time()
             try:
-                out.write_bytes(fn(key, work / f"kf_{name}.png", prompt))
+                out.write_bytes(fn(key, work / f"kf_{name}.png", prompt, work / "set.png"))
                 rec["attempts"].append({"model": label, "ok": True, "wait_s": round(time.time() - t0, 1)})
                 rec["model"], rec["sec"] = label, round(_dur(out), 2)
                 break
@@ -296,7 +319,10 @@ def step_clips(ep, epdir, work, log, redo):
 def _pcm_to_wav(pcm: bytes, out: Path, speed: float):
     raw = out.with_suffix(".pcm")
     raw.write_bytes(pcm)
-    _ff(["-f", "s16le", "-ar", "24000", "-ac", "1", "-i", str(raw), "-af", f"atempo={speed}", str(out)])
+    # 앞뒤 무음은 잘라 낸다(문장을 이어 붙일 때 간격이 제멋대로 벌어지지 않게) → 정확히 speed배속
+    trim = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse,"
+            "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.08,areverse")
+    _ff(["-f", "s16le", "-ar", "24000", "-ac", "1", "-i", str(raw), "-af", f"{trim},atempo={speed}", str(out)])
     raw.unlink()
 
 
@@ -350,21 +376,71 @@ def step_voices(ep, epdir, work, log):
     log["voices_text"] = text
 
 
+def split_sentences(text: str) -> list[str]:
+    """대사를 자막·낭독 단위 문장으로. "음…" 같은 짧은 조각은 다음 문장과 붙인다."""
+    out = []
+    for x in [x.strip() for x in re.split(r"(?<=[.?…])\s+", (text or "").strip()) if x.strip()]:
+        if out and len(out[-1]) <= 4:
+            out[-1] = f"{out[-1]} {x}"
+        else:
+            out.append(x)
+    return out
+
+
+SENT_GAP = 0.28          # 문장 사이 숨 고르기(초)
+
+
 def step_tts(ep, epdir, work, log, redo):
+    """문장마다 따로 읽혀 이어 붙인다 → 각 문장이 몇 초에 시작·끝나는지 정확히 안다(자막을 말에 딱 맞추기 위해)."""
     res = log.setdefault("tts", {})
     for c in ep["clips"]:
         name = f"c{c['no']:02d}"
-        out = work / f"v_{name}.wav"
+        out, tj = work / f"v_{name}.wav", work / f"v_{name}.json"
         line = (c.get("line") or "").strip()
-        if not line or (out.exists() and name not in redo and f"v_{name}" not in redo):
+        if not line or (out.exists() and tj.exists() and name not in redo and f"v_{name}" not in redo):
             continue
-        r = tts_gemini(line, out)
-        if not r["ok"]:
-            r = {"gemini": r, **tts_cloud(line, out)}
-        res[name] = r
+        parts, timing, t, rec = [], [], 0.0, {"voice": VOICE_NAME, "sents": []}
+        for k, sent in enumerate(split_sentences(line)):
+            p = work / f"v_{name}_{k}.wav"
+            r = tts_gemini(sent, p)
+            if not r["ok"]:
+                r = {"gemini": r, **tts_cloud(sent, p)}
+            rec["sents"].append(r)
+            if not p.exists():
+                continue
+            d = _dur(p)
+            timing.append({"text": sent, "start": round(t, 3), "end": round(t + d, 3)})
+            parts.append(p)
+            t += d + SENT_GAP
+        if not parts:
+            res[name] = {**rec, "ok": False}
+            continue
+        ins, fc = [], []
+        for i, p in enumerate(parts):
+            ins += ["-i", str(p)]
+            fc.append(f"[{i}:a]aresample=24000,aformat=channel_layouts=mono,apad=pad_dur={SENT_GAP if i < len(parts) - 1 else 0}[s{i}]")
+        fc.append("".join(f"[s{i}]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=0:a=1[a]")
+        _ff([*ins, "-filter_complex", ";".join(fc), "-map", "[a]", str(out)])
+        tj.write_text(json.dumps(timing, ensure_ascii=False, indent=1), encoding="utf-8")
+        for p in parts:
+            p.unlink()
+        res[name] = {**rec, "ok": True, "sec": round(_dur(out), 2)}
 
 
 # ---------- 5. 조립 ----------
+FONT_DIR = Path(__file__).resolve().parent.parent / "fonts"
+SUB_FONT = FONT_DIR / "Pretendard-ExtraBold.otf"        # 자막: 굵고 깔끔한 고딕(배경 상자 없이 글자만)
+SERIF_XB = FONT_DIR / "NanumMyeongjo-ExtraBold.ttf"     # 제목·메뉴판·영수증: 식당 간판 같은 명조
+SERIF_B = FONT_DIR / "NanumMyeongjo-Bold.ttf"
+INK, PAPER, SEAL = (42, 30, 22), (246, 240, 226), (178, 34, 34)
+
+
+def _f(path: Path, size: int):
+    if path.exists():
+        return ImageFont.truetype(str(path), size)
+    return _font(size)
+
+
 def _wrap(text, font, width):
     lines, cur = [], ""
     for word in text.split(" "):
@@ -388,186 +464,315 @@ def _wrap(text, font, width):
     return out
 
 
+def _balanced(text, font, width):
+    """두 줄이 되면 줄 길이를 비슷하게(윗줄만 길고 아랫줄에 한 단어 남는 모양 방지)."""
+    lines = _wrap(text, font, width)
+    if len(lines) == 2:
+        words = text.split(" ")
+        best = None
+        for k in range(1, len(words)):
+            a, b = " ".join(words[:k]), " ".join(words[k:])
+            if font.getlength(a) <= width and font.getlength(b) <= width:
+                d = abs(font.getlength(a) - font.getlength(b))
+                if best is None or d < best[0]:
+                    best = (d, [a, b])
+        if best:
+            return best[1]
+    return lines
+
+
+def _shadowed(size, draw_fn, blur=6, alpha=150, offset=(0, 4)):
+    """글자·카드에 부드러운 그림자를 깐다(검은 상자 대신)."""
+    from PIL import ImageFilter
+    base = Image.new("RGBA", size, (0, 0, 0, 0))
+    mask = Image.new("RGBA", size, (0, 0, 0, 0))
+    draw_fn(ImageDraw.Draw(mask), shadow=True)
+    sh = Image.new("RGBA", size, (0, 0, 0, 0))
+    a = mask.split()[3].point(lambda v: min(255, v) * alpha // 255)
+    sh.putalpha(a.filter(ImageFilter.GaussianBlur(blur)))
+    base.alpha_composite(sh, offset)
+    draw_fn(ImageDraw.Draw(base), shadow=False)
+    return base
+
+
 def subtitle_png(text, out: Path):
-    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    f = _font(44)
-    lines = _wrap(text, f, W - 120)
-    lh = 60
-    y = int(H * 0.80) - lh * len(lines) // 2
-    dr = ImageDraw.Draw(im)
-    for i, ln in enumerate(lines):
-        tw = f.getlength(ln)
-        x = (W - tw) / 2
-        dr.rounded_rectangle([x - 18, y + i * lh - 6, x + tw + 18, y + i * lh + lh - 4], radius=10, fill=(0, 0, 0, 150))
-        dr.text((x, y + i * lh), ln, font=f, fill=(255, 255, 255, 255), stroke_width=2, stroke_fill=(0, 0, 0, 200))
-    im.save(out)
+    """자막 — 배경 상자 없이 흰 글자 + 얇은 외곽선 + 부드러운 그림자(사용자 지시 2026-09)."""
+    f = _f(SUB_FONT, 50)
+    lines = _balanced(text, f, W - 110)[:3]
+    lh = 66
+    y0 = int(H * 0.79) - lh * len(lines) // 2
+
+    def draw(dr, shadow):
+        for i, ln in enumerate(lines):
+            x = (W - f.getlength(ln)) / 2
+            if shadow:
+                dr.text((x, y0 + i * lh), ln, font=f, fill=(0, 0, 0, 255), stroke_width=6, stroke_fill=(0, 0, 0, 255))
+            else:
+                dr.text((x, y0 + i * lh), ln, font=f, fill=(255, 255, 255, 255), stroke_width=3, stroke_fill=(20, 16, 12, 235))
+    _shadowed((W, H), draw, blur=7, alpha=120, offset=(0, 3)).save(out)
 
 
 def title_png(series, epno, out: Path):
-    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    dr = ImageDraw.Draw(im)
-    f1, f2 = _font(30), _font(52)
-    dr.text((40, 70), f"{series}", font=f1, fill=(255, 236, 200, 235), stroke_width=2, stroke_fill=(0, 0, 0, 160))
-    if epno:
-        dr.text((40, 108), f"#{epno}", font=f2, fill=(255, 255, 255, 245), stroke_width=3, stroke_fill=(0, 0, 0, 170))
-    im.save(out)
+    """오프닝 제목 — 드라마 타이틀처럼 명조 + 가는 선 + 제N화."""
+    f1, f2 = _f(SERIF_XB, 58), _f(SERIF_B, 30)
+
+    def draw(dr, shadow):
+        col = (0, 0, 0, 255) if shadow else (255, 250, 240, 255)
+        x, y = 56, 118
+        dr.text((x, y), series, font=f1, fill=col)
+        w = f1.getlength(series)
+        dr.line([x, y + 84, x + w, y + 84], fill=col if shadow else (226, 190, 120, 255), width=2)
+        if epno:
+            dr.text((x, y + 98), f"제{epno}화", font=f2, fill=col if shadow else (236, 214, 170, 255))
+    _shadowed((W, H), draw, blur=8, alpha=170).save(out)
+
+
+def _seal(dr, x, y, s, text="품격"):
+    """붉은 낙관(도장) — 이모지 대신 직접 그린 도형."""
+    dr.rounded_rectangle([x, y, x + s, y + s], radius=6, fill=SEAL + (235,))
+    f = _f(SERIF_XB, int(s * 0.36))
+    for i, ch in enumerate(text):
+        dr.text((x + (s - f.getlength(ch)) / 2, y + s * 0.10 + i * s * 0.42), ch, font=f, fill=(255, 240, 230, 255))
 
 
 def menu_png(name, out: Path):
-    """나무 메뉴판 — 메뉴 이름만(상품명·사진 금지)."""
-    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    dr = ImageDraw.Draw(im)
-    bw, bh = 560, 250
+    """오늘의 메뉴 — 한지 느낌 크림색 종이 + 이중 테두리 + 명조 + 붉은 낙관. 메뉴 이름만(상품명·사진 금지)."""
+    bw, bh = 560, 300
     x0, y0 = (W - bw) // 2, 150
-    dr.rounded_rectangle([x0, y0, x0 + bw, y0 + bh], radius=18, fill=(62, 40, 24, 238), outline=(150, 110, 70, 255), width=6)
-    fh, fn = _font(30), _font(46)
-    t = "오늘의 메뉴"
-    dr.text(((W - fh.getlength(t)) / 2, y0 + 30), t, font=fh, fill=(235, 200, 140, 255))
-    lines = _wrap(name, fn, bw - 70)[:2]
-    for i, ln in enumerate(lines):
-        dr.text(((W - fn.getlength(ln)) / 2, y0 + 92 + i * 62 - (31 if len(lines) == 1 else 0) + 30), ln, font=fn,
-                fill=(255, 246, 225, 255))
-    im.save(out)
+    ft, fn = _f(SERIF_B, 28), _f(SERIF_XB, 50)
+    lines = _balanced(name, fn, bw - 120)[:2]
+
+    def draw(dr, shadow):
+        if shadow:
+            dr.rectangle([x0, y0, x0 + bw, y0 + bh], fill=(0, 0, 0, 255))
+            return
+        dr.rectangle([x0, y0, x0 + bw, y0 + bh], fill=PAPER + (250,))
+        dr.rectangle([x0 + 14, y0 + 14, x0 + bw - 14, y0 + bh - 14], outline=INK + (200,), width=2)
+        dr.rectangle([x0 + 20, y0 + 20, x0 + bw - 20, y0 + bh - 20], outline=INK + (110,), width=1)
+        t = "오 늘 의   메 뉴"
+        dr.text(((W - ft.getlength(t)) / 2, y0 + 42), t, font=ft, fill=(120, 92, 64, 255))
+        cx, cy = W // 2, y0 + 96
+        dr.line([cx - 120, cy, cx - 12, cy], fill=(150, 120, 90, 255), width=1)
+        dr.line([cx + 12, cy, cx + 120, cy], fill=(150, 120, 90, 255), width=1)
+        dr.polygon([(cx, cy - 6), (cx + 6, cy), (cx, cy + 6), (cx - 6, cy)], fill=(150, 120, 90, 255))
+        top = y0 + 128 + (32 if len(lines) == 1 else 0)
+        for i, ln in enumerate(lines):
+            dr.text(((W - fn.getlength(ln)) / 2, top + i * 66), ln, font=fn, fill=INK + (255,))
+        _seal(dr, x0 + bw - 76, y0 + bh - 96, 56)
+    _shadowed((W, H), draw, blur=14, alpha=140, offset=(0, 10)).save(out)
 
 
 def bill_png(text, out: Path):
-    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    dr = ImageDraw.Draw(im)
-    bw, bh = 520, 210
-    x0, y0 = (W - bw) // 2, 160
-    dr.rounded_rectangle([x0, y0, x0 + bw, y0 + bh], radius=10, fill=(252, 250, 244, 245), outline=(200, 195, 185, 255), width=3)
-    fh, fb = _font(30), _font(44)
-    dr.text(((W - fh.getlength("계산서")) / 2, y0 + 26), "계산서", font=fh, fill=(90, 80, 70, 255))
-    dr.line([x0 + 40, y0 + 78, x0 + bw - 40, y0 + 78], fill=(190, 180, 170, 255), width=2)
-    for i, ln in enumerate(_wrap(text, fb, bw - 60)[:2]):
-        dr.text(((W - fb.getlength(ln)) / 2, y0 + 100 + i * 56), ln, font=fb, fill=(30, 28, 26, 255))
-    im.save(out)
+    bw, bh = 480, 200
+    x0, y0 = (W - bw) // 2, 170
+    fh, fb = _f(SERIF_B, 28), _f(SERIF_XB, 44)
+
+    def draw(dr, shadow):
+        if shadow:
+            dr.rectangle([x0, y0, x0 + bw, y0 + bh], fill=(0, 0, 0, 255))
+            return
+        dr.rectangle([x0, y0, x0 + bw, y0 + bh], fill=PAPER + (250,))
+        dr.rectangle([x0 + 12, y0 + 12, x0 + bw - 12, y0 + bh - 12], outline=INK + (170,), width=2)
+        dr.text(((W - fh.getlength("계 산 서")) / 2, y0 + 32), "계 산 서", font=fh, fill=(120, 92, 64, 255))
+        for i, ln in enumerate(_balanced(text, fb, bw - 70)[:2]):
+            dr.text(((W - fb.getlength(ln)) / 2, y0 + 92 + i * 54), ln, font=fb, fill=INK + (255,))
+    _shadowed((W, H), draw, blur=12, alpha=130, offset=(0, 8)).save(out)
 
 
-def receipt_png(ep, out: Path):
-    im = Image.new("RGB", (W, H), (26, 22, 20))
-    dr = ImageDraw.Draw(im)
-    x0, y0, x1, y1 = 90, 170, W - 90, H - 190
-    dr.rectangle([x0, y0, x1, y1], fill=(250, 248, 242))
-    for x in range(x0, x1, 24):          # 톱니 가장자리
-        dr.polygon([(x, y1), (x + 12, y1 + 14), (x + 24, y1)], fill=(250, 248, 242))
-    c = lambda t, f, y, col=(40, 36, 32): dr.text(((W - f.getlength(t)) / 2, y), t, font=f, fill=col)
-    fs, fm, fl = _font(28), _font(34), _font(46)
-    c("영 수 증", fl, y0 + 50)
-    c(f"{ep.get('series', '')}" + (f"  #{ep['episode']}" if ep.get("episode") else ""), fs, y0 + 120, (110, 100, 90))
-    dr.line([x0 + 40, y0 + 180, x1 - 40, y0 + 180], fill=(180, 170, 160), width=2)
-    y = y0 + 220
-    for ln in _wrap(ep.get("menuName", ""), fm, x1 - x0 - 80)[:2]:
-        c(ln, fm, y)
+def receipt_png(ep, food: Path | None, out: Path):
+    """영수증 엔딩 — 음식 사진(그릇에 담긴 알맹이, 포장 없음) + 맛 평가 + 메뉴·가격·추천 손님 + 프로필 링크."""
+    from PIL import ImageFilter, ImageOps
+    bg = Image.new("RGB", (W, H), (30, 24, 20))
+    if food and food.exists():                       # 배경: 음식 사진을 흐리게 깔아 따뜻한 분위기
+        b = ImageOps.fit(Image.open(food).convert("RGB"), (W, H)).filter(ImageFilter.GaussianBlur(28))
+        bg = Image.blend(bg, b, 0.45)
+    im = bg.convert("RGBA")
+    pw, x0, y0 = 560, (W - 560) // 2, 96
+    notes = [n for n in (ep.get("tasteNotes") or []) if n.get("k") and n.get("v")][:4]
+    ph = 1060
+    paper = Image.new("RGBA", (pw, ph + 16), (0, 0, 0, 0))
+    dr = ImageDraw.Draw(paper)
+    dr.rectangle([0, 0, pw, ph], fill=(250, 247, 238, 255))
+    for x in range(0, pw, 20):                       # 아래 톱니
+        dr.polygon([(x, ph), (x + 10, ph + 14), (x + 20, ph)], fill=(250, 247, 238, 255))
+    fs, fm, fl, fx = _f(SERIF_B, 26), _f(SERIF_B, 30), _f(SERIF_XB, 44), _f(SERIF_XB, 38)
+    c = lambda t, f, y, col=INK: dr.text(((pw - f.getlength(t)) / 2, y), t, font=f, fill=col + (255,))
+    dots = lambda y: [dr.ellipse([x, y, x + 3, y + 3], fill=(170, 160, 148, 255)) for x in range(36, pw - 36, 12)]
+    c("영  수  증", fl, 34)
+    c(f"{ep.get('series', '')}" + (f"  제{ep['episode']}화" if ep.get("episode") else ""), fs, 96, (130, 110, 90))
+    dots(144)
+    y, seal_y = 166, 0
+    if food and food.exists():                       # 오늘 먹은 한 그릇(포장 없는 음식 사진)
+        ph_img = ImageOps.fit(Image.open(food).convert("RGB"), (pw - 120, 250))
+        m = Image.new("L", ph_img.size, 0)
+        ImageDraw.Draw(m).rounded_rectangle([0, 0, *ph_img.size], radius=14, fill=255)
+        paper.paste(ph_img, (60, y), m)
+        seal_y = y + 250 - 60
+        y += 270
+    for ln in _balanced(ep.get("menuName", ""), fx, pw - 80)[:2]:
+        c(ln, fx, y)
         y += 50
-    if ep.get("priceNote"):
-        c(ep["priceNote"], fm, y + 20)
-        y += 70
-    if ep.get("guestNote"):
-        for ln in _wrap(ep["guestNote"], fs, x1 - x0 - 80)[:2]:
-            c(ln, fs, y + 20, (90, 82, 74))
+    y += 14
+    dots(y)
+    y += 22
+    for n in notes:                                  # 식감 ········ 쫀득 부드러움
+        k, v = n["k"], n["v"]
+        if k == "한줄평":
+            continue
+        dr.text((48, y), k, font=fm, fill=(110, 90, 70, 255))
+        vw = fm.getlength(v)
+        dr.text((pw - 48 - vw, y), v, font=fm, fill=INK + (255,))
+        kw = fm.getlength(k)
+        for x in range(int(48 + kw + 14), int(pw - 48 - vw - 10), 10):
+            dr.ellipse([x, y + 20, x + 2, y + 22], fill=(190, 180, 168, 255))
+        y += 48
+    one = next((n["v"] for n in notes if n["k"] == "한줄평"), "") or ep.get("verdict", "")
+    if one:
+        y += 6
+        for ln in _balanced(f"“{one}”", fm, pw - 90)[:2]:
+            c(ln, fm, y, (80, 60, 44))
             y += 42
-    dr.line([x0 + 40, y1 - 250, x1 - 40, y1 - 250], fill=(180, 170, 160), width=2)
-    c("이 메뉴는", fl, y1 - 200)
-    c("프로필 링크에서", fl, y1 - 130)
-    im.save(out)
+    if ep.get("priceNote"):
+        y += 8
+        c(ep["priceNote"], fm, y)
+        y += 44
+    if ep.get("guestNote"):
+        c(ep["guestNote"], fs, y + 4, (120, 104, 88))
+        y += 40
+    dots(ph - 190)
+    c("이 메뉴는", fl, ph - 160)
+    c("프로필 링크에서", fl, ph - 100)
+    if seal_y:                                       # 붉은 '완식' 낙관 — 음식 사진 오른쪽 아래 모서리에 찍는다
+        _seal(ImageDraw.Draw(paper), pw - 128, seal_y, 78, "완식")
+    paper = paper.rotate(-1.5, resample=Image.BICUBIC, expand=True)
+    sh = Image.new("RGBA", paper.size, (0, 0, 0, 0))
+    sh.putalpha(paper.split()[3].point(lambda v: v * 150 // 255).filter(ImageFilter.GaussianBlur(16)))
+    im.alpha_composite(sh, (x0 - 6, y0 + 14))
+    im.alpha_composite(paper, (x0 - 10, y0))
+    im.convert("RGB").save(out, quality=95)
+
+
+# 컷 사이 전환(다음 컷의 역할별). 너무 요란하지 않게 드라마식으로.
+TRANSITIONS = {"order": "fadeblack", "serve": "smoothleft", "taste": "dissolve", "bill": "smoothup",
+               "exit": "fadeblack", "outro": "fade"}
+XF = 0.4
+LEAD = 0.45              # 컷 시작 후 대사가 시작되기까지(초)
+TAIL = 0.75              # 대사가 끝난 뒤 다음 컷까지 여유(초)
+
+
+def _zoom_expr(role, idx, L):
+    """컷 안의 카메라 느낌(편집): 천천히 밀고 들어가거나 빠지는 줌을 번갈아. 입장은 끝에서 세 번 끊어 빠지는 줌."""
+    if role == "enter":
+        return (f"if(lt(it,{L - 1.2:.2f}),1+0.05*it/{L:.2f},if(lt(it,{L - 0.8:.2f}),1.45,"
+                f"if(lt(it,{L - 0.4:.2f}),1.28,1.13)))")
+    if idx % 2:
+        return f"1.10-0.10*it/{L:.2f}"
+    return f"1+0.09*it/{L:.2f}"
+
+
+def _overlay_input(png: Path, L: float, a: float, b: float, fade=0.25):
+    return (["-loop", "1", "-t", f"{L:.2f}", "-i", str(png)],
+            f"format=rgba,fade=in:st={max(0, a):.2f}:d={fade}:alpha=1,fade=out:st={max(0, b - fade):.2f}:d={fade}:alpha=1")
+
+
+def build_segment(ep, c, idx, work, tmp):
+    name = f"c{c['no']:02d}"
+    src = work / f"{name}.mp4"
+    role = c.get("role")
+    V = min(8.0, _dur(src)) or 8.0
+    voice = work / f"v_{name}.wav"
+    tjp = work / f"v_{name}.json"
+    timing = json.loads(tjp.read_text(encoding="utf-8")) if tjp.exists() else []
+    N = _dur(voice) if voice.exists() else 0.0
+    # 컷 길이는 대사에 맞춘다: 대사가 길면 목소리를 빠르게 하지 않고 영상을 조금 늘리거나 마지막 장면을 잠시 멈춘다.
+    L = max(V, LEAD + N + TAIL)
+    slow = min(1.3, L / V)
+    a0 = max(0.3, L - N - 0.35) if role == "enter" else LEAD   # 입장: 오프닝이 끝의 줌과 겹치게
+    ins, fcs, labels = [], [], []
+    ins += ["-i", str(src)]
+    z = _zoom_expr(role, idx, L)
+    fcs.append(f"[0:v]setpts={slow:.4f}*PTS,scale=1440:2560:force_original_aspect_ratio=increase,crop=1440:2560,"
+               f"tpad=stop_mode=clone:stop_duration=3,trim=0:{L:.2f},setpts=PTS-STARTPTS,fps={FPS},"
+               f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={W}x{H}:fps={FPS},setsar=1[v0]")
+    ov = []                                                     # (png, from, to, fade)
+    for k, t in enumerate(timing):                              # 자막: 실제로 말하는 시간에 딱 맞춰
+        p = tmp / f"sub_{name}_{k}.png"
+        subtitle_png(t["text"], p)
+        ov.append((p, a0 + t["start"] - 0.05, a0 + t["end"] + 0.18, 0.12))
+    card = c.get("card") or {}
+    if card.get("type") == "menu" and card.get("name"):
+        p = tmp / f"menu_{name}.png"
+        menu_png(card["name"], p)
+        ov.append((p, 0.5, L - 0.2, 0.35))
+    elif card.get("type") == "bill" and card.get("text"):
+        p = tmp / f"bill_{name}.png"
+        bill_png(card["text"], p)
+        ov.append((p, 0.5, L - 0.2, 0.35))
+    if role == "enter":
+        p = tmp / "title.png"
+        title_png(ep.get("series", ""), ep.get("episode"), p)
+        ov.append((p, 0.3, min(L - 1.4, 3.8), 0.5))
+    last = "v0"
+    for i, (p, a, b, fd) in enumerate(ov, start=1):
+        args, flt = _overlay_input(p, L, a, b, fd)
+        ins += args
+        fcs.append(f"[{i}:v]{flt}[o{i}]")
+        fcs.append(f"[{last}][o{i}]overlay=0:0[v{i}]")
+        last = f"v{i}"
+    n = len(ov) + 1
+    if voice.exists():
+        ins += ["-i", str(voice)]
+        ms = int(a0 * 1000)
+        fcs.append(f"[{n}:a]aresample=44100,aformat=channel_layouts=stereo,adelay={ms}|{ms},apad,atrim=0:{L:.2f},"
+                   f"loudnorm=I=-16:TP=-1.5:LRA=11[a]")
+    else:
+        ins += ["-f", "lavfi", "-t", f"{L:.2f}", "-i", "anullsrc=r=44100:cl=stereo"]
+        fcs.append(f"[{n}:a]atrim=0:{L:.2f}[a]")
+    seg = tmp / f"seg_{name}.mp4"
+    _ff([*ins, "-filter_complex", ";".join(fcs), "-map", f"[{last}]", "-map", "[a]", "-t", f"{L:.2f}",
+         "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-r", str(FPS),
+         "-c:a", "aac", "-b:a", "160k", "-ar", "44100", str(seg)])
+    return seg, L, {"clip": name, "len": round(L, 2), "voice": round(N, 2), "slow": round(slow, 3)}
 
 
 def step_assemble(ep, epdir, work, log):
     tmp = work / "tmp"
     tmp.mkdir(exist_ok=True)
-    segs = []
-    for c in ep["clips"]:
-        name = f"c{c['no']:02d}"
-        src = work / f"{name}.mp4"
-        D = min(8.0, _dur(src)) or 8.0
-        voice = work / f"v_{name}.wav"
-        vd = _dur(voice) if voice.exists() else 0.0
-        role = c.get("role")
-        # 입장 대사는 끝의 줌과 함께, 나머지는 조금 뒤에 시작. 대사가 컷 밖으로 넘지 않게 당긴다.
-        fit = 1.0
-        if vd > D - 0.5:                    # 대사가 컷보다 길면 그 컷만 살짝 더 빠르게(잘리지 않게)
-            fit = min(1.35, vd / (D - 0.5))
-            vd = vd / fit
-        at = (D - vd - 0.3) if role == "enter" else 0.6
-        at = max(0.2, min(at, D - vd - 0.15))
-        overlays = []                       # (png, from, to)
-        # 자막: 대사를 문장 단위로 나눠 말하는 동안 차례로 보여준다(글자 수 비례로 시간 배분).
-        text = (c.get("subtitle") or c.get("line") or "").strip()
-        if text:
-            sents = []
-            for x in [x.strip() for x in re.split(r"(?<=[.?…])\s+", text) if x.strip()]:
-                if sents and len(sents[-1]) <= 4:          # "음…" 같은 짧은 조각은 다음 문장과 한 화면에
-                    sents[-1] = f"{sents[-1]} {x}"
-                else:
-                    sents.append(x)
-            span = max(vd, 1.6 * len(sents))
-            total_chars = sum(len(x) for x in sents) or 1
-            t = at
-            for k, sent in enumerate(sents):
-                p = tmp / f"sub_{name}_{k}.png"
-                subtitle_png(sent, p)
-                d = span * len(sent) / total_chars
-                end = min(D, t + d + (0.35 if k == len(sents) - 1 else 0))
-                overlays.append((p, t, end))
-                t += d
-        card = c.get("card") or {}
-        if card.get("type") == "menu" and card.get("name"):
-            p = tmp / f"menu_{name}.png"
-            menu_png(card["name"], p)
-            overlays.append((p, 0.6, D))
-        elif card.get("type") == "bill" and card.get("text"):
-            p = tmp / f"bill_{name}.png"
-            bill_png(card["text"], p)
-            overlays.append((p, 0.6, D))
-        if role == "enter":
-            p = tmp / "title.png"
-            title_png(ep.get("series", ""), ep.get("episode"), p)
-            overlays.append((p, 0.3, min(D, 3.6)))
-        # 영상: 9:16 맞춤 + (입장) 끝에서 세 번 끊어 뒤로 빠지는 줌
-        base = f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={FPS},setsar=1"
-        if role == "enter":
-            z = (f"if(lt(t,{D - 1.2:.2f}),1,if(lt(t,{D - 0.8:.2f}),1.45,if(lt(t,{D - 0.4:.2f}),1.28,1.13)))")
-            base += (f",scale=w='trunc({W}*{z}/2)*2':h='trunc({H}*{z}/2)*2':eval=frame,crop={W}:{H}")
-        inputs = ["-i", str(src)]
-        for p, _, _ in overlays:
-            inputs += ["-i", str(p)]
-        fc = [f"[0:v]trim=0:{D:.2f},setpts=PTS-STARTPTS,{base}[v0]"]
-        last = "v0"
-        for i, (_, a, b) in enumerate(overlays, start=1):
-            fc.append(f"[{last}][{i}:v]overlay=0:0:enable='between(t,{a:.2f},{b:.2f})'[v{i}]")
-            last = f"v{i}"
-        n = len(overlays) + 1
-        if voice.exists():
-            inputs += ["-i", str(voice)]
-            ms = int(at * 1000)
-            fc.append(f"[{n}:a]aresample=44100,aformat=channel_layouts=stereo,atempo={fit:.3f},adelay={ms}|{ms},apad,atrim=0:{D:.2f},"
-                      f"volume=1.6[a]")
-        else:
-            inputs += ["-f", "lavfi", "-t", f"{D:.2f}", "-i", "anullsrc=r=44100:cl=stereo"]
-            fc.append(f"[{n}:a]atrim=0:{D:.2f}[a]")
-        seg = tmp / f"seg_{name}.mp4"
-        _ff([*inputs, "-filter_complex", ";".join(fc), "-map", f"[{last}]", "-map", "[a]", "-t", f"{D:.2f}",
-             "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p",
-             "-c:a", "aac", "-b:a", "160k", "-ar", "44100", str(seg)])
-        segs.append(seg)
-    # 영수증 아웃트로 2.6초
-    rp = tmp / "receipt.png"
-    receipt_png(ep, rp)
-    outro = tmp / "seg_outro.mp4"
-    _ff(["-loop", "1", "-t", "2.6", "-i", str(rp), "-f", "lavfi", "-t", "2.6", "-i", "anullsrc=r=44100:cl=stereo",
-         "-vf", f"fps={FPS},format=yuv420p", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
-         "-c:a", "aac", "-b:a", "160k", "-shortest", str(outro)])
-    segs.append(outro)
-    lst = tmp / "list.txt"
-    lst.write_text("".join(f"file '{s.resolve()}'\n" for s in segs), encoding="utf-8")
+    food = next((p for p in (epdir / "refs" / "food.jpg", epdir / "refs" / "food.png") if p.exists()), None)
+    segs, lens, roles, info = [], [], [], []
+    for idx, c in enumerate(ep["clips"]):
+        seg, L, meta = build_segment(ep, c, idx, work, tmp)
+        segs.append(seg); lens.append(L); roles.append(c.get("role")); info.append(meta)
+    # 영수증 엔딩 3초(천천히 다가가는 줌)
+    rp = tmp / "receipt.jpg"
+    receipt_png(ep, food, rp)
+    outro, OL = tmp / "seg_outro.mp4", 3.2
+    _ff(["-loop", "1", "-t", f"{OL}", "-i", str(rp), "-f", "lavfi", "-t", f"{OL}", "-i", "anullsrc=r=44100:cl=stereo",
+         "-filter_complex", f"[0:v]scale=1440:2560,zoompan=z='1+0.04*it/{OL}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
+         f"d=1:s={W}x{H}:fps={FPS},setsar=1,format=yuv420p[v]", "-map", "[v]", "-map", "1:a",
+         "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-r", str(FPS), "-c:a", "aac", "-b:a", "160k",
+         "-t", f"{OL}", str(outro)])
+    segs.append(outro); lens.append(OL); roles.append("outro")
+    # 컷 사이 전환(xfade)으로 한 편에 잇는다
+    ins = []
+    for s in segs:
+        ins += ["-i", str(s)]
+    fc, vlast, alast, t = [], "0:v", "0:a", lens[0]
+    for i in range(1, len(segs)):
+        tr = TRANSITIONS.get(roles[i], "fade")
+        off = t - XF
+        fc.append(f"[{vlast}][{i}:v]xfade=transition={tr}:duration={XF}:offset={off:.3f}[vx{i}]")
+        fc.append(f"[{alast}][{i}:a]acrossfade=d={XF}[ax{i}]")
+        vlast, alast = f"vx{i}", f"ax{i}"
+        t = off + lens[i]
     final = work / "final.mp4"
-    _ff(["-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", "-movflags", "+faststart", str(final)])
-    # 점검용 장면 모음(컷마다 중간 1장 + 아웃트로)
+    _ff([*ins, "-filter_complex", ";".join(fc), "-map", f"[{vlast}]", "-map", f"[{alast}]",
+         "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-r", str(FPS),
+         "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(final)])
     total = _dur(final)
     _ff(["-i", str(final), "-vf", f"fps={len(segs)}/{total:.2f},scale=180:-2,tile={len(segs)}x1:margin=4:padding=4:color=white",
          "-frames:v", "1", str(work / "frames.jpg")])
-    log["assemble"] = {"ok": True, "sec": round(total, 2), "clips": len(segs) - 1}
+    log["assemble"] = {"ok": True, "sec": round(total, 2), "clips": len(segs) - 1, "segments": info}
     for p in tmp.iterdir():
         p.unlink()
     tmp.rmdir()
@@ -592,7 +797,8 @@ def main(path: str) -> int:
             step_voices(ep, epdir, work, log)
         character = step_character(ep, epdir, work, log, redo)
         if "keyframes" in steps:
-            step_keyframes(ep, epdir, work, log, redo, character)
+            setimg = step_set(ep, epdir, work, log, redo)
+            step_keyframes(ep, epdir, work, log, redo, character, setimg)
         if "clips" in steps:
             step_clips(ep, epdir, work, log, redo)
         if "tts" in steps:
