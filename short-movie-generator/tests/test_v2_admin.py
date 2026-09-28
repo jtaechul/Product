@@ -81,10 +81,15 @@ def test_bad_pilot_id_is_rejected(v2):
 
 
 def test_real_pilot_status_is_consistent():
-    """시범 편 status.json: 대본·스토리보드 승인 · 완성본 승인 대기 · 업로드 잠김 · 자동 검사 통과."""
+    """시범 편 status.json의 불변 규칙: 앞 단계가 승인 전이면 뒤 단계는 잠김 · 자동 검사 통과 · 클립 파일 존재.
+    (특정 순간의 단계 상태를 고정으로 적지 않는다 — 운영자가 버튼을 누를 때마다 바뀐다)"""
     st = json.loads((ROOT / "v2" / "pilots" / "bathynomus_giganteus" / "status.json").read_text(encoding="utf-8"))
-    assert [st["stages"][s]["state"] for s in admin.STAGES] == ["approved", "approved", "approved", "review", "locked"]
+    states = [st["stages"][s]["state"] for s in admin.STAGES]
+    for a, b in zip(states, states[1:]):
+        if a != "approved":
+            assert b == "locked", states
     assert st["checks"]["white_edge_px"]["ok"] and st["checks"]["loudness_lufs"]["ok"]
+    assert st["checks"].get("subtitle_font", {}).get("ok")
     for c in st["artifacts"]["video"]["clips"]:
         assert (ROOT / "v2" / "pilots" / "bathynomus_giganteus" / c["file"]).exists()
 
@@ -230,9 +235,10 @@ def test_crosscheck_sees_whole_script_and_stores_issues(real_copy):
 def test_crosscheck_failure_does_not_block(real_copy):
     def boom(prompt):
         raise RuntimeError("GEMINI_API_KEY 없음")
+    before = {s: v["state"] for s, v in admin.load_status("bathynomus_giganteus")["stages"].items()}
     st = admin.crosscheck("bathynomus_giganteus", ask=boom)
     assert "실패" in st["artifacts"]["script"]["crosscheck"]["error"]
-    assert st["stages"]["video"]["state"] == "review"                  # 다른 단계는 그대로
+    assert {s: v["state"] for s, v in st["stages"].items()} == before      # 다른 단계는 그대로
 
 
 # ── 컷 수정 방향 → 콘티 → 승인 → 영상 (운영자 확정 2026-09-28) ──
@@ -277,6 +283,7 @@ def test_recut_approve_builds_new_cut_and_reassembles(real_copy, monkeypatch):
     admin.recut_plan("bathynomus_giganteus", 8, "뱃속·물음표", min_tr=2, ask=lambda p: json.dumps(_PLAN),
                      run_images=False)
     st = admin.load_status("bathynomus_giganteus")
+    prev = next(c for c in st["artifacts"]["video"]["clips"] if c["cut"] == 8)["file"]
     for rel in ("out/14_storyboard_12/p11.jpg", "out/14_storyboard_12/p10.jpg", "out/14_storyboard_12/p08.jpg",
                 "out/14_storyboard_12/p05.jpg", "out/23_clips_v5/c08.mp4"):
         (real_copy / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -303,7 +310,7 @@ def test_recut_approve_builds_new_cut_and_reassembles(real_copy, monkeypatch):
     st = admin.load_status("bathynomus_giganteus")
     clip = next(c for c in st["artifacts"]["video"]["clips"] if c["cut"] == 8)
     assert clip["file"].endswith("_recut/c08.mp4") and (real_copy / clip["file"]).exists()
-    assert clip["history"][-1] == "out/23_clips_v5/c08.mp4"
+    assert clip["history"][-1] == prev
     assert st["artifacts"]["recut"]["8"]["state"] == "done" and called == ["bathynomus_giganteus"]
     dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
                                 str(real_copy / clip["file"])], capture_output=True, text=True).stdout)

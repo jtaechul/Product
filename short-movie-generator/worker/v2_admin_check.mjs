@@ -69,10 +69,16 @@ els = {}; await api.renderV2Episode("bathynomus_giganteus"); const ep = els.view
 res.episode_five_stages = ["stg-topic", "stg-script", "stg-storyboard", "stg-video", "stg-upload"].every(k => ep.includes(k));
 res.video_final_via_proxy = ep.includes("/api/media?u=" + encodeURIComponent("https://raw.githubusercontent.com/jtaechul/Product/claude/gemini-shorts-reels-generator-dhjfdt/short-movie-generator/v2/pilots/bathynomus_giganteus/out/24_final/bathynomus_v5.mp4"));
 res.clip_redo_buttons = (ep.match(/data-cut="/g) || []).length;
-const upload = ep.slice(ep.indexOf('id="stg-upload"'));
-res.locked_upload_has_no_buttons = !upload.includes("data-act=");
+
+{ // 영상 단계가 '승인 대기'일 때 승인 버튼이 켜지는지(실제 파일의 현재 단계와 무관하게 상태를 만들어 확인)
+  const sv = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+  sv.stages.video.state = "review"; sv.stages.upload.state = "locked";
+  statusOverride = sv; const keepEls = els; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  const ev = els.view.innerHTML; const vid0 = ev.slice(ev.indexOf('id="stg-video"'), ev.indexOf('id="stg-upload"'));
+  res.video_approve_enabled = /data-act="approve" data-stage="video">/.test(vid0);
+  const upl = ev.slice(ev.indexOf('id="stg-upload"')); res.locked_upload_has_no_buttons = !upl.includes("data-act=");
+  statusOverride = null; els = keepEls; }
 const vid = ep.slice(ep.indexOf('id="stg-video"'), ep.indexOf('id="stg-upload"'));
-res.video_approve_enabled = /data-act="approve" data-stage="video">/.test(vid);
 const scr = ep.slice(ep.indexOf('id="stg-script"'), ep.indexOf('id="stg-storyboard"'));
 res.approved_script_approve_disabled = /data-act="approve" data-stage="script" disabled/.test(scr);
 res.auto_checks_shown = vid.includes("가장자리 흰 줄") && vid.includes("통과");
