@@ -1,0 +1,43 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "conti",
+      "http": 200,
+      "file": "conti.jpg",
+      "panels": [
+        "p1.jpg",
+        "p2.jpg",
+        "p3.jpg",
+        "p4.jpg"
+      ],
+      "usage": {
+        "promptTokenCount": 1476,
+        "candidatesTokenCount": 1552,
+        "totalTokenCount": 3418,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 444
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1032
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 390,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "r09281033_c08_conti.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-28T10:34:17Z"
+}

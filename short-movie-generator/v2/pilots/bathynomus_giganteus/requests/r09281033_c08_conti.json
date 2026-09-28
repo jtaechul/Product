@@ -1,0 +1,32 @@
+{
+  "id": "r09281033_c08_conti",
+  "kind": "gen_images",
+  "purpose": "8번 컷 수정 콘티 — 뱃속이 텅 비었다는 묘사와 원인을 알 수 없다는 묘사 필요",
+  "model_preference": [
+    "gemini-3-pro-image-preview"
+  ],
+  "items": [
+    {
+      "name": "conti",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/04_creature_card_final/card_side.jpg",
+        "out/03_creature_card_eyes/card_top.jpg",
+        "out/01_fetch_refs/ref_05.jpg",
+        "out/14_storyboard_12/p11.jpg"
+      ],
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters. Shared look: handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette; everything except the giant isopod is a deliberately rough hand-made model. The giant isopod must match the attached replica and real reference images exactly: pale lavender-lilac glossy segmented armour, FLAT dark triangular compound eyes at the front corners of the head, seven pairs of thin legs, spiny fan-shaped tail plate. NEVER draw text, letters, numbers, question marks, labels or logos. No human hands or people.\nPanel 1 (top-left): Vertical 9:16 image. Handcrafted miniature diorama photography, tilt-shift shallow depth of field. A respectful, schematic cut-away model of a giant isopod (Bathynomus giganteus) made of clay and resin. The outer shell is pale lavender-lilac, while the inside reveals a clearly empty, hollow gut cavity to represent an empty stomach. Warm soft practical light. No text, no labels, no gore, no real organic parts.\nPanel 2 (top-right): Vertical 9:16 image. Handcrafted miniature diorama photography, tilt-shift shallow depth of field. The giant isopod (Bathynomus giganteus) resting peacefully on a bed of dark velvet. It has pale lavender-lilac glossy segmented armour, flat dark triangular compound eyes, and short antennae. Illuminated by a single warm, soft spotlight from above. No text, no symbols.\nPanel 3 (bottom-left): Vertical 9:16 image. Handcrafted miniature diorama photography. A tiny wooden researcher's desk with a blank open notebook and a magnifying glass under a warm desk lamp. No text.\nPanel 4 (bottom-right): Vertical 9:16 image. Handcrafted miniature diorama photography. A quiet, empty deep-sea floor made of rough sand and small pebbles, illuminated by a faint warm light.",
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ]
+      }
+    }
+  ]
+}

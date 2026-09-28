@@ -63,6 +63,11 @@
           "at": "2026-09-28T09:58:47Z",
           "kind": "error",
           "text": "8번 컷 수정 계획 실패 — HTTP Error 404: Not Found"
+        },
+        {
+          "at": "2026-09-28T10:34:17Z",
+          "kind": "recut_plan",
+          "text": "8번 컷 수정 콘티 준비 — 승인하면 영상 생성(약 $0.53)"
         }
       ]
     },
@@ -469,9 +474,50 @@
       "8": {
         "direction": "뱃속이 텅 비었다는 묘사와 원인을 알 수 없다는 묘사 필요",
         "min_transitions": 1,
-        "at": "2026-09-28T09:58:47Z",
-        "state": "error",
-        "error": "계획 실패: HTTP Error 404: Not Found"
+        "at": "2026-09-28T10:33:31Z",
+        "state": "conti_review",
+        "model": "gemini-3.1-pro-preview",
+        "plan": {
+          "summary_ko": "해부 결과 위가 텅 비어있었던 사실을 정중한 다이오라마 단면 모형으로 보여줍니다. 이후 미스터리한 죽음을 나타내는 물음표와 함께 조명이 서서히 꺼지며 암전으로 마무리됩니다.",
+          "shots": [
+            {
+              "t0": 0.0,
+              "t1": 3.2,
+              "panel": 1,
+              "motion": "still",
+              "overlay": "none",
+              "desc_ko": "텅 빈 위장을 보여주는 심해등각류의 다이오라마 단면 모형"
+            },
+            {
+              "t0": 3.2,
+              "t1": 6.0,
+              "panel": 2,
+              "motion": "omni",
+              "overlay": "question_mark",
+              "desc_ko": "어둠 속으로 서서히 사라지는 심해등각류와 물음표 오버레이"
+            }
+          ],
+          "panels": {
+            "1": "Vertical 9:16 image. Handcrafted miniature diorama photography, tilt-shift shallow depth of field. A respectful, schematic cut-away model of a giant isopod (Bathynomus giganteus) made of clay and resin. The outer shell is pale lavender-lilac, while the inside reveals a clearly empty, hollow gut cavity to represent an empty stomach. Warm soft practical light. No text, no labels, no gore, no real organic parts.",
+            "2": "Vertical 9:16 image. Handcrafted miniature diorama photography, tilt-shift shallow depth of field. The giant isopod (Bathynomus giganteus) resting peacefully on a bed of dark velvet. It has pale lavender-lilac glossy segmented armour, flat dark triangular compound eyes, and short antennae. Illuminated by a single warm, soft spotlight from above. No text, no symbols.",
+            "3": "Vertical 9:16 image. Handcrafted miniature diorama photography. A tiny wooden researcher's desk with a blank open notebook and a magnifying glass under a warm desk lamp. No text.",
+            "4": "Vertical 9:16 image. Handcrafted miniature diorama photography. A quiet, empty deep-sea floor made of rough sand and small pebbles, illuminated by a faint warm light."
+          },
+          "omni_prompts": {
+            "2": "Vertical 9:16 video, exactly 2.8 seconds, one continuous shot, no cuts. Handcrafted miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The giant isopod keeps its exact anatomy: pale lavender-lilac glossy segmented armour. TIMELINE: 0.0-1.0s The isopod specimen lies still on dark velvet under a single soft spotlight. 1.0-2.8s The spotlight dims gradually until the frame is completely black; the specimen fades into total darkness. SOUND: none. NEVER SHOW: text, letters, numbers, symbols, human hands, morphing."
+          }
+        },
+        "estimate_usd": 0.53,
+        "conti": {
+          "request": "r09281033_c08_conti",
+          "sheet": "out/r09281033_c08_conti/conti.jpg",
+          "panels": [
+            "out/r09281033_c08_conti/p1.jpg",
+            "out/r09281033_c08_conti/p2.jpg",
+            "out/r09281033_c08_conti/p3.jpg",
+            "out/r09281033_c08_conti/p4.jpg"
+          ]
+        }
       }
     }
   },
@@ -510,6 +556,11 @@
         "at": "2026-09-28T02:04:17Z",
         "what": "대사 반영 나레이션 다시 읽기",
         "usd": 0.01
+      },
+      {
+        "at": "2026-09-28T10:34:17Z",
+        "what": "8번 컷 콘티",
+        "usd": 0.134
       }
     ]
   }
