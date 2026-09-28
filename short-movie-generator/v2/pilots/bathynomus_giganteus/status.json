@@ -83,8 +83,14 @@
       "approved_at": "2026-09-28T10:58:16Z"
     },
     "upload": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-09-28T11:52:32Z",
+          "kind": "meta",
+          "text": "유튜브 제목·설명·해시태그 작성 — 확인 후 「승인 → 유튜브 업로드」"
+        }
+      ]
     }
   },
   "topic": {
@@ -483,7 +489,25 @@
       },
       "built_at": "2026-09-28T10:47:11Z"
     },
-    "upload": {},
+    "upload": {
+      "meta": {
+        "title_jp": "5年以上も絶食した深海の巨大生物ダイオウグソクムシの謎 #ダイオウグソクムシ #深海",
+        "title_ko": "5년 이상 절식한 심해의 거대 생물 대왕구족충의 수수께끼 #대왕구족충 #심해",
+        "desc_jp": "ダイオウグソクムシは、最大50センチにもなる世界最大の等脚類です。深海の底でクジラや魚の死骸を食べる「深海の掃除屋」として知られています。鳥羽水族館で飼育されていた個体は、5年以上（1869日間）もエサを食べずに生きたことで話題になりました。なぜそれほど長く絶食できたのか、その理由は今も分かっていません。\n\nチャンネル登録で、次の深海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。\n\n※映像はAIによる再現映像です（生き物の形は実際の写真を参考にしています）。\n出典:\nhttps://aquarium.co.jp/topics/id=250/\nhttps://en.wikipedia.org/wiki/Bathynomus_giganteus\nhttps://iseshima.keizai.biz/headline/1962/\nhttps://ja.wikipedia.org/wiki/ダイオウグソクムシ\nhttps://www.nikkei.com/article/DGXNASFK1404F_U4A210C1000000/\n\n#ダイオウグソクムシ #深海",
+        "desc_ko": "대왕구족충은 최대 50cm까지 자라는 세계 최대의 등각류입니다. 심해 밑바닥에서 고래나 물고기의 사체를 먹어 '심해의 청소부'로 알려져 있습니다. 도바 수족관에서 사육되던 한 개체는 5년 이상(1,869일)이나 먹이를 먹지 않고 생존해 화제가 되었습니다. 왜 그렇게 오랫동안 절식할 수 있었는지 그 이유는 아직도 밝혀지지 않았습니다.\n\n다음 심해도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.\n\n※ 영상은 AI 재현 영상입니다(생물의 형태는 실제 사진을 참고했습니다).\n출처:\nhttps://aquarium.co.jp/topics/id=250/\nhttps://en.wikipedia.org/wiki/Bathynomus_giganteus\nhttps://iseshima.keizai.biz/headline/1962/\nhttps://ja.wikipedia.org/wiki/ダイオウグソクムシ\nhttps://www.nikkei.com/article/DGXNASFK1404F_U4A210C1000000/\n\n#대왕구족충 #심해",
+        "tags_jp": [
+          "#ダイオウグソクムシ",
+          "#深海"
+        ],
+        "tags_ko": [
+          "#대왕구족충",
+          "#심해"
+        ],
+        "pinned_comment": "次に見たい深海の生き物は？",
+        "privacy": "private"
+      },
+      "meta_at": "2026-09-28T11:52:32Z"
+    },
     "recut": {
       "8": {
         "direction": "뱃속이 텅 비었다는 묘사와 원인을 알 수 없다는 묘사 필요",
