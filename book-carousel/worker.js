@@ -3534,7 +3534,11 @@ function guestOf(title, facts, spKey) {
   const any = g.life || g.size || g.indoor || g.neutered || g.breed;
   g.note = any ? `추천 손님: ${parts.join(' ')}${g.life === '전연령' ? ' (전연령)' : ''}` : '';
   // 주인공(중형 시바견)과 체급이 다른 메뉴인가 — 대사에서 솔직하게 비틀 재료
-  g.mismatch = spKey === 'dog' && ((g.size && g.size !== '중형견') || (g.breed && !/시바/.test(g.breed)));
+  // 주인공은 8개월쯤의 어린 동물이라 시니어 메뉴도 '내 나이 메뉴는 아니다'로 비튼다(노년 행세 방지).
+  const sizeOff = spKey === 'dog' && ((g.size && g.size !== '중형견') || (g.breed && !/시바/.test(g.breed)));
+  const ageOff = g.life === '시니어';
+  g.mismatch = sizeOff || ageOff;
+  g.mismatchWhat = [ageOff ? '나이' : '', sizeOff ? '체급·품종' : ''].filter(Boolean).join('·');
   return g;
 }
 
@@ -3932,8 +3936,8 @@ async function handleDinerEpisode(env, body, ctx) {
 주인공: ${sp.ko} (the ${sp.noun}) — ${hero}${note ? `\n추가 주문: ${note}` : ''}
 [가격] ${priceNote || '없음 — bill 대사에 숫자를 쓰지 마라'}
 [추천 손님 — 표기 기준] ${guest.note ? guest.note.replace('추천 손님: ', '') : '표기 없음'}${guest.mismatch ? `
-⚠️ 이 메뉴는 주인공(중형 시바견)의 체급·품종용이 아니다. order나 taste 중 한 줄에서 "내 체급 메뉴는 아니다"는 사실을
-   담담하게 인정하고 비틀어라(문장은 새로 지어라). 그래도 평가는 냉철하게 한다.` : ''}
+⚠️ 이 메뉴는 주인공(8개월쯤 어린 중형 시바견)의 ${guest.mismatchWhat}에 맞춘 메뉴가 아니다. order에서 "내 ${guest.mismatchWhat} 메뉴는 아니다"는 사실을
+   담담하게 인정하고 비틀어라(예: 어른들 메뉴를 몰래 맛보는 기분 — 문장은 새로 지어라). 주인공이 스스로 늙었다고 말하면 안 된다. 그래도 평가는 진지하게 한다.` : ''}
 [시식 감각 항목 — serve·taste 대사는 여기서 클립마다 다른 항목을 골라 쓴다] ${senses}${fl.source !== 'generic' ? `
 [실제 알맹이 모양 — 대사가 이 모양과 어긋나면 안 된다] ${foodEn}` : ''}
 [구매자 고민 — 주문(order) 대사 재료]
