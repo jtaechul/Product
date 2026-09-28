@@ -3068,8 +3068,7 @@ const VEO_SYSTEM = `당신은 반려동물 용품 인스타 릴스의 Flow(Veo) 
 7. shots에 소리·오디오에 관한 말을 한 글자도 쓰지 마라(ambient sound, no speech 등 전부).
    소리 지시가 들어가면 Flow가 생성을 거부한다. 소리는 편집에서 따로 얹는다.
 8. 사람은 얼굴을 클로즈업하지 않는다. 손·발·다리까지만 보이게 한다.
-9. 화풍은 "photorealistic 3D animated style"이다. 질감은 실사인데 비율·표정은 귀엽게
-   과장한 3D 애니메이션 중간 지대다. 시스템이 화풍 문구를 자동으로 붙이므로
+9. 화풍은 시스템이 자동으로 붙인다(강아지=실사 시바견, 고양이=실사 질감의 3D 애니).
    sceneBlock에는 화풍을 다시 쓰지 말고 장소·색감·조명만 담아라.
    다큐멘터리·야생동물 사진처럼 날것으로 가면 개가 사냥개처럼 무섭게 나온다.
    harsh shadows, high contrast, gritty, documentary, moody 같은 표현은 절대 쓰지 마라.
@@ -3182,7 +3181,7 @@ const CHARACTER_LINE = 'The puppy.';
 
 // Flow에서 주인공 캐릭터 이미지를 다시 만들 때 쓰는 프롬프트. 관리자 페이지에 그대로 노출한다.
 // 사용자가 실제로 성공한 프롬프트가 원본이고, 얼굴 귀여움(큰 머리·볼살)만 보강했다.
-const CHARACTER_SHEET_PROMPT = 'A photorealistic 3D animated style close-up of an ultra-cute Shiba Inu puppy standing naturally on all four legs, oversized round head with chubby cheeks, huge round sparkling dark brown eyes, a small playful smile with a tiny pink tongue sticking out, soft plush-like purest golden-cream and snow-white fur, absolutely no black hairs or mask, entirely natural body with no clothes no collars and no accessories, unbelievably fluffy cloud-like soft texture, soft even studio lighting, isolated clean background, 8k resolution, masterful texturing, clean 3D rendering';
+const CHARACTER_SHEET_PROMPT = 'A photorealistic photograph of a real young Shiba Inu dog about eight months old, standing naturally on all four legs in a three-quarter view, true-to-life Shiba proportions and head size, almond-shaped dark brown eyes, small triangular upright ears, curled tail over the back, warm golden-red and cream coat with white urajiro markings on the cheeks, chest and legs, absolutely no black hairs or mask, entirely natural body with no clothes no collars and no accessories, realistic fur detail, soft even natural light, plain light grey background, sharp focus, shot on a professional camera';
 
 // 고양이 주인공 캐릭터 이미지 프롬프트 — 강아지와 같은 화풍·같은 원칙(네발·맨몸).
 const CAT_SHEET_PROMPT = 'A photorealistic 3D animated style close-up of an ultra-cute kitten sitting naturally on all four legs, oversized round head with chubby cheeks, huge round sparkling eyes, a tiny pink nose and a small soft smile, soft plush-like cream and snow-white fur, entirely natural body with no clothes no collars and no accessories, unbelievably fluffy cloud-like soft texture, soft even studio lighting, isolated clean background, 8k resolution, masterful texturing, clean 3D rendering';
@@ -3200,7 +3199,8 @@ const SPECIES = {
   },
   dog: {
     ko: '강아지', noun: 'puppy', line: 'The puppy.', sheet: CHARACTER_SHEET_PROMPT, cfg: 'pdog',
-    negAnimal: 'adult dog, hunting dog, long sharp muzzle, narrow eyes, black mask or black fur markings, cat',
+    negAnimal: 'cartoon, 3D animation look, plush toy look, oversized head, huge cartoon eyes, chibi proportions, hunting dog, black mask or black fur markings, cat',
+    style: () => DOG_STYLE_TOKEN,
     match: /강아지|애견|퍼피|도그|puppy|\bdogs?\b|견/i,
   },
 };
@@ -3220,6 +3220,8 @@ function toSpecies(text, sp) {
 
 // 사용자가 실제로 성공한 화풍. 모든 장면 블록 앞에 반드시 들어간다.
 const STYLE_TOKEN = 'Photorealistic 3D animated style, soft even lighting, unbelievably fluffy cloud-like soft fur texture, 8k, masterful texturing';
+// 강아지는 실사(사용자 확정 2026-09: 덜 귀엽게, 실제 시바견처럼). 고양이는 기존 3D 애니 화풍 유지.
+const DOG_STYLE_TOKEN = 'Photorealistic live-action cinematic look, a real Shiba Inu filmed on a cinema camera, true-to-life proportions and natural fur detail, soft even lighting, shallow depth of field, 4k';
 
 // 시스템 프롬프트의 말투 견본. 모델이 이걸 그대로 베껴 쓰는 일이 잦아 서버가 감시한다.
 const WORN_LINES = [
@@ -3311,10 +3313,12 @@ async function handleVideoPrompts(env, body) {
   const spKey = speciesOf(title);
   const sp = SPECIES[spKey];
   const HERO_DEFAULT = {
-    dog: 'photorealistic 3D animated style 시바견 퍼피 — 골든크림·화이트 털, 검은 털·마스크 없음, 목줄·옷·액세서리 없음',
+    dog: '실사 시바견(8개월쯤, 실제 비율) — 골든레드·크림 털에 흰 우라지로, 검은 털·마스크 없음, 목줄·옷·액세서리 없음',
     cat: 'photorealistic 3D animated style 아기 고양이 — 크림·화이트 털, 목걸이·옷·액세서리 없음',
   };
-  const dog = String(body[sp.cfg === 'pcat' ? 'cat' : 'dog'] || '').trim() || HERO_DEFAULT[spKey] || HERO_DEFAULT.dog;
+  // 예전 기본값(3D 애니 퍼피)이 저장된 작업에서 되살아나면 새 기본값(실사 시바견)으로 바꾼다.
+  const heroIn = String(body[sp.cfg === 'pcat' ? 'cat' : 'dog'] || '').trim().replace(/^photorealistic 3D animated style 시바견 퍼피.*$/, '');
+  const dog = heroIn || HERO_DEFAULT[spKey] || HERO_DEFAULT.dog;
   const clips = Math.max(3, Math.min(10, parseInt(body.clips, 10) || 7));
 
   // 사료·간식은 '식당 에피소드' 형식으로 만든다(주인공이 가게에서 그 사료를 시켜 먹으며 속마음으로 평가).
@@ -3394,7 +3398,7 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
   }
 
   // 화풍은 모델 준수에 맡기지 않고 서버가 직접 붙인다 — 클립 간 그림체를 고정하는 핵심.
-  scene = STYLE_TOKEN + (scene ? '. ' + scene : '');
+  scene = (sp.style ? sp.style() : STYLE_TOKEN) + (scene ? '. ' + scene : '');
 
   const tone = String(out.tone || '느긋하고 뻔뻔한 꼬마 목소리').trim();
   const ROLE_KO = { problem: '문제', transition: '전환', benefit: '상품 효용', cta: '마무리' };
@@ -3661,7 +3665,7 @@ const COUPANG_DISCLOSURE = '이 포스팅은 쿠팡 파트너스 활동의 일�
 function dinerSystem(sp) {
   return `당신은 반려동물 사료·간식 리뷰 채널의 '식당 에피소드' 촬영 지시서를 쓰는 사람이다.
 주인공 ${sp.ko}(영어 호칭 "the ${sp.noun}")가 작은 가게에 혼자 들어가 그 사료를 주문해 먹으며,
-속으로만 담담하고 냉철하게 맛을 평가한다. 말은 한마디도 하지 않는다. 목소리는 나중에 따로 입힌다.
+고독한 미식가처럼 속으로 한 입 한 입 진심으로 음미하며 평가한다. 입 밖으로는 말하지 않는다. 목소리는 나중에 따로 입힌다.
 사용자는 Flow에 만들어 둔 주인공 캐릭터 이미지를 끌어다 넣고 이 지시서를 붙인다.
 
 [촬영 규칙 — 어기면 Flow가 거부하거나 캐릭터가 무너진다]
@@ -3694,34 +3698,36 @@ function dinerSystem(sp) {
 - exit: 고정된 카메라 앞에서 SET의 그 출입문으로 걸어 나가다 문턱에서 한 번 뒤돌아본다(문 밖 거리까지 따라가지 않는다).
 
 [속마음 대사(line) — 내레이션이자 자막. 둘은 같은 문장이다]
-⭐ 이 영상의 재미는 '미식가의 냉철한 감각 묘사'다. 후기 요약문을 쓰면 실패다.
-- **한국어 22자 이내**(공백 포함), 짧게 끊는다. 두 문장이면 각각 아주 짧게. 반말 독백.
-- 느낌표·감탄사·의성어 금지. 설명하지 말고 판정하고 해부한다. 끝은 "~다", "~군", "~지".
+⭐ 이 영상의 재미는 '고독한 미식가'처럼 한 입 한 입을 진심으로 음미하는 속마음이다. 후기 요약문을 쓰면 실패다.
+- 클립마다 **2~3문장, 전체 35~60자**(공백 포함). 문장은 짧게 끊되 여러 개로 이어 말한다. 반말 독백.
+- 겉은 담담한 혼잣말이지만 맛 앞에서는 진심이다. 짧은 감탄('음…', '호오', '오오', '이거다')과
+  식감 의성어('바삭', '쫀득', '사르르')를 쓸 수 있다. 단, 한 대사에 한 번까지. 느낌표는 쓰지 않는다.
 - serve·taste 대사는 **지금 이 순간 입과 코로 느끼는 것만** 쓴다:
-  첫 냄새, 알갱이 크기·모양, 씹을 때 부서지는 방식, 단단함, 기름기, 입안에 남는 뒷맛.
+  첫 냄새, 알갱이 크기·모양, 씹을 때 부서지는 방식, 단단함, 기름기, 단맛·짠맛이 오는 순서, 입안에 남는 뒷맛.
   먹은 뒤 며칠이 지나야 알 수 있는 일(변·털·몸 상태·건강 변화)은 절대 쓰지 마라. 식탁에서는 알 수 없다.
 - 사실 정보(원료·영양 성분·연령·품종 적합성)는 [확인된 정보]와 상품명에 있는 것만, **영상 전체에서 한 번까지**.
 - 병·증상이 낫는다·줄어든다 같은 효능 주장, 다른 브랜드 언급·비교는 금지.
 - 상품명·브랜드명은 말하지 않는다(메뉴판 카드가 보여준다).
-- enter 대사는 시스템이 "${DINER_OPENING}"로 고정한다. 너는 enter의 line을 비워 둬라("").
-- ⭐ order 대사 = **사료를 바꾸러 온 진짜 고민 → 결단**을 두 박자로(26자 이내). 메뉴 앞에서 인생 결정처럼 과하게 진지하다.
-  [구매자 고민]에서 하나를 골라 주인공 시점으로 던지고, 바로 짧게 결단한다.
+- ⭐ enter 대사는 **가게 앞에서 드는 생각 한 문장(20자 이내)**만 쓴다(골목·간판·냄새·오늘 하루).
+  시스템이 그 뒤에 고정 오프닝 "${DINER_OPENING}"을 붙인다. 오프닝 문장을 직접 쓰지 마라.
+- ⭐ order 대사 = **사료를 바꾸러 온 진짜 고민 → 메뉴판 앞 고민 → 결단**을 세 박자로.
+  메뉴 앞에서 인생 결정처럼 과하게 진지하다. [구매자 고민]에서 하나를 골라 주인공 시점으로 던진다.
   고민이 주어지지 않으면 이 상품 종류에 흔한 고민(입맛·원료·알갱이 크기·질림) 중 하나를 쓴다.
   몸의 증상·질병 이야기는 쓰지 마라(효능 암시가 된다).
-- ⭐ taste 대사 = **감각 한 마디 + 비유로 마무리**. 형용사만 늘어놓지 말고, 그 감각을 사물·소리·풍경·사람에 빗대 끝낸다.
-  비유는 이 주인공의 일상(창가 햇볕, 산책길, 낙엽, 빗소리, 담요 등)에서 가져온다.
-- ⭐ exit 대사 = 재방문 판정이 아니라 **혼자 먹은 한 끼에 대한 짧은 소회**(누구 눈치도 안 본 식사의 자유로움).
+- ⭐ serve 대사 = 그릇이 놓인 순간의 첫인상(생김새·첫 냄새)과 기대. 시스템이 맨 앞에 "잘 먹겠습니다."를 붙인다.
+- ⭐ taste 대사 = **세 박자**: ① 첫 느낌(감탄 한 마디 가능) → ② 식감·향을 해부하듯 자세히 → ③ 비유나 떠오르는 장면으로 마무리.
+  비유는 이 주인공의 일상(창가 햇볕, 산책길, 빗소리, 담요, 놀이터, 주인의 퇴근 발소리 등)에서 가져온다.
+  taste 클립이 여러 개면 매번 다른 감각을 다룬다(첫입 → 씹을수록 달라지는 맛 → 마지막 한 입).
+- ⭐ bill 대사 = 가격 판정과 이 한 끼의 값어치. [가격]이 주어지면 그 숫자를 그대로 쓰고, 없으면 숫자를 쓰지 마라.
+- ⭐ exit 대사 = 재방문 판정이 아니라 **혼자 먹은 한 끼에 대한 소회**. 시스템이 맨 앞에 "잘 먹었습니다."를 붙인다.
   재방문 의사는 verdict 칸에 따로 쓴다.
-- 역할별: order=고민→결단 / serve=첫 냄새와 생김새 / taste=감각+비유(클립마다 다른 감각) / bill=가격 판정 / exit=소회.
-- bill은 [가격]이 주어지면 그 숫자를 그대로 쓰고, 주어지지 않으면 숫자를 쓰지 마라.
 
-[말투 감 잡기 — 사람 음식 예시다. 말투만 보고, 문장은 절대 가져오지 마라]
-  (라멘) "국물이 먼저 온다. 짠맛이 늦게 도착한다"
-  (돈가스) "튀김옷이 조용하다. 고기가 할 말이 많군"
-  (비유) "면발이 탄탄하다. 월요일 아침 같은 결의다"
-  (계산) "이 값에 이 정직함이면 남는 장사다"
-- 소회(exit)는 예시 없이 매회 새로 쓴다. '방해받지 않았다', '말을 걸지 않았다' 같은 틀을 반복하지 마라.
-  오늘 먹은 메뉴의 인상(식감·향)이나 오늘의 날씨·기분과 엮어 이 회차만의 한 줄로 끝낸다.
+[말투의 틀 — 문장을 가져오지 말고 구조만 참고하라. 소재·어휘는 매회 새로 짓는다]
+  (첫 느낌) "음…" / "호오" + 무엇이 먼저 오는지
+  (해부) 씹을수록·혀에 닿자·삼키고 나면 + 무엇이 어떻게 변하는지
+  (비유) "이건 ~다" / "~ 같은 맛이군" — 일상의 한 장면으로 닫는다
+- 소회(exit)는 매회 새로 쓴다. '방해받지 않았다', '말을 걸지 않았다' 같은 틀을 반복하지 마라.
+  오늘 먹은 메뉴의 인상(식감·향)이나 오늘의 날씨·기분과 엮어 이 회차만의 소회로 끝낸다.
 - 비유 소재는 계절(특히 가을·낙엽)에 몰리지 않게 다양하게 고른다: 소리, 물건, 날씨, 동네 풍경, 하루의 시간대 등.
 
 반드시 JSON만 출력한다.`;
@@ -3941,7 +3947,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "shop": "오늘 들어간 가게 콘셉트 한 줄(한국어, 예: 골목 끝 작은 백반집)",
   "setBlock": "영어 35~55단어. 이 가게의 고정 세트 설계도(출입문·벽·바닥·테이블·자리·조명·소품 1개)",
   "tone": "내레이션 목소리 톤 한 줄(한국어)",
-  "clips": [ { "role": "enter", "shots": "영어 타임코드 구간", "line": "속마음 한 문장" } ],
+  "clips": [ { "role": "enter", "shots": "영어 타임코드 구간", "line": "속마음 2~3문장(35~60자). enter는 가게 앞 생각 한 문장" } ],
   "verdict": "재방문 의사 판정 한 줄(한국어)",
   "menuName": "메뉴판에 적을 메뉴 이름(한국어 4~14자). 상품명·브랜드·제품 라인명 절대 금지. [확인된 정보]와 상품명의 보편 특징(주원료·알갱이 모양이나 식감·대상) 중 2개를 조합하고 '정식', '한 그릇', '한 접시', '세트' 중 하나로 끝낸다",
   "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도. 상품명·브랜드는 절대 쓰지 않는다",
@@ -3953,7 +3959,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   try {
     raw = await callGeminiText(gk, {
       system: dinerSystem(sp), user,
-      max_tokens: Math.min(3200, 900 + roles.length * 200),
+      max_tokens: Math.min(4000, 1200 + roles.length * 280),
       timeout_ms: 50000, json: true,
     });
   } catch (e) {
@@ -3965,15 +3971,15 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     return (Array.isArray(o.clips) ? o.clips : [])
       .filter(c => String(c.role || '') !== 'enter')
       .map(c => String(c.line || '').trim())
-      .filter(l => l.length > 28 || HEALTH_CLAIM.test(l));
+      .filter(l => l.length > 75 || HEALTH_CLAIM.test(l));
   };
   const bad1 = badLines(raw);
   if (bad1.length >= 2 || bad1.includes('(JSON 오류)')) {
     try {
       const retry = await callGeminiText(gk, {
         system: dinerSystem(sp),
-        user: user + `\n\n[재작성 지시] 다음 대사가 규칙 위반이다(22자 초과 또는 몸 상태·효능 이야기). 전부 짧은 감각 묘사로 다시 써라:\n- ${bad1.join('\n- ')}`,
-        max_tokens: Math.min(3200, 900 + roles.length * 200), timeout_ms: 50000, json: true,
+        user: user + `\n\n[재작성 지시] 다음 대사가 규칙 위반이다(60자를 크게 넘거나 몸 상태·효능 이야기). 2~3문장·60자 안의 감각 묘사로 다시 써라:\n- ${bad1.join('\n- ')}`,
+        max_tokens: Math.min(4000, 1200 + roles.length * 280), timeout_ms: 50000, json: true,
       });
       if (badLines(retry).length < bad1.length) raw = retry;
     } catch { /* 재요청 실패 시 첫 결과 사용 */ }
@@ -3988,7 +3994,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     .replace(/\b(harsh shadows?|high contrast|gritty|documentary|moody|dramatic lighting)\b/gi, 'soft even lighting')
     .replace(/\s{2,}/g, ' ').replace(/^[,.\s]+|[,\s]+$/g, '').trim();
   if (!setBlock) setBlock = 'a small quiet diner with a single wooden sliding entrance door with a four-pane glass window, cream plaster walls, a warm wooden floor, a low wooden table with a round floor cushion, and soft paper lanterns';
-  const scene = STYLE_TOKEN + '. ' + setBlock;
+  const scene = (sp.style ? sp.style() : STYLE_TOKEN) + '. ' + setBlock;
 
   const foodLine = `On the table in front of the ${sp.noun}: ${foodEn}.`;
   const neg = negativeFor('', sp) + ', food packaging, pet food bag, labels or text on the bowl, spilled food, messy table, cutlery'
@@ -4019,7 +4025,16 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const clipsOut = roles.map((role, i) => {
     const c = pickClip(role, i);
     const shots = toSpecies(safeShots(normShots(String(c.shots || '').trim())), sp);
-    let line = role === 'enter' ? DINER_OPENING : scrubBanned(String(c.line || '').trim().replace(/!+/g, ''), banned);
+    let line = scrubBanned(String(c.line || '').trim().replace(/!+/g, '.'), banned);
+    // 입장: 가게 앞 생각 한 문장 + 고정 오프닝(편집에서 오프닝에 줌이 맞도록 항상 맨 끝).
+    if (role === 'enter') {
+      const pre = line.replace(/배가\s*고프다[.\s]*심각하다[.\s]*/g, '').trim();
+      line = (pre && pre.length <= 28 ? pre.replace(/[.\s]*$/, '.') + ' ' : '') + DINER_OPENING;
+    }
+    // 고정 의식 대사(사용자 확정): 첫 시식 앞 "잘 먹겠습니다." · 퇴장 앞 "잘 먹었습니다."
+    const firstEat = roles.includes('serve') ? 'serve' : 'taste';
+    if (role === firstEat && roles.indexOf(firstEat) === i && !/잘 먹겠습니다/.test(line)) line = '잘 먹겠습니다. ' + line;
+    if (role === 'exit' && !/잘 먹었습니다/.test(line)) line = '잘 먹었습니다. ' + line;
     // 가격을 모르면 계산 대사에 숫자가 들어가면 안 된다(지어낸 가격 방지).
     if (role === 'bill' && !priceNote && /\d/.test(line)) line = '계산은 조용히 끝냈다. 값은 묻지 않는 게 예의다';
     const withFood = role === 'serve' || role === 'taste' || role === 'bill';
@@ -4045,7 +4060,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     ].filter(Boolean).join(' ');
     const prompt = [
       'DURATION: 8-second single continuous shot, vertical 9:16.',
-      `STYLE: ${STYLE_TOKEN}.`,
+      `STYLE: ${sp.style ? sp.style() : STYLE_TOKEN}.`,
       `CHARACTER: ${sp.line}`,
       `SET (identical in every clip): ${setBlock.replace(/[.\s]+$/, '')}.`,
       withFood ? `FOOD: ${foodLine}` : '',
@@ -4055,7 +4070,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     ].filter(Boolean).join('\n');
     const imagePrompt = [
       'IMAGE: single still frame, vertical 9:16, sharp focus, no motion blur.',
-      `STYLE: ${STYLE_TOKEN}.`,
+      `STYLE: ${sp.style ? sp.style() : STYLE_TOKEN}.`,
       `CHARACTER: ${sp.line}`,
       `SET (identical in every clip): ${setBlock.replace(/[.\s]+$/, '')}.`,
       withFood ? `FOOD: ${foodLine}` : '',
@@ -4536,7 +4551,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
     <div class="fmt-hint" id="fmtHint"></div>
     <div class="f"><label for="pdog">강아지 주인공 설정</label>
-      <input id="pdog" type="text" value="photorealistic 3D animated style 시바견 퍼피 (검은 털 없음, 목줄·옷 없음)"></div>
+      <input id="pdog" type="text" value="실사 시바견 (8개월쯤, 검은 털 없음, 목줄·옷 없음)"></div>
     <div class="f"><label for="pcat">고양이 주인공 설정</label>
       <input id="pcat" type="text" value="photorealistic 3D animated style 아기 고양이 (크림·화이트 털, 목걸이·옷 없음)">
       <small>주인공은 상품 이름을 보고 자동으로 정해집니다(고양이 상품이면 고양이). Flow에 캐릭터 이미지를 끌어다 쓰시니 짧게만 적으세요.</small></div>

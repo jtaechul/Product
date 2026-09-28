@@ -30,17 +30,28 @@ FFMPEG = os.environ.get("FFMPEG", "ffmpeg")
 IMAGE_MODELS = ["gemini-3-pro-image-preview", "gemini-3.1-flash-image-preview", "gemini-2.5-flash-image"]
 CLIP_MODEL = "gemini-omni-1.1-flash"
 VEO_FALLBACK = "veo-3.1-lite-generate-preview"
-TTS_VOICE = {"languageCode": "ko-KR", "name": "ko-KR-Neural2-C"}   # 낮은 남성 목소리 — 담담한 독백
-TTS_RATE, TTS_PITCH = "105%", "-2st"
+# ★목소리 규칙(사용자 확정 2026-09) — 한 곳에서만 정한다: 성우 1명 고정 · 연기 톤 고정 · 속도 1.2배.
+#   Gemini 음성(사람 같은 연기)을 쓰고, 속도는 숫자 설정이 없어 만든 뒤 편집에서 정확히 1.2배로 맞춘다.
+VOICE_NAME = "Gacrux"                      # 샘플 비교 후 사용자가 고른 한 명으로 고정한다(voices 단계 참고)
+VOICE_SPEED = 1.2
+VOICE_DIRECTION = ("한국어 내레이션. 40대 남자의 낮고 차분한 속마음 독백이다. 혼자 밥을 먹으며 한 입씩 음미하는 "
+                   "'고독한 미식가' 같은 톤. 겉은 담담하지만 맛있는 순간엔 진심이 살짝 묻어난다. "
+                   "문장 사이에 짧게 숨을 고른다. 아나운서·광고 톤, 과장된 연기 금지. 아래 대사만 그대로 읽어라.")
+VOICE_SAMPLES = ["Gacrux", "Charon", "Algenib", "Orus"]   # 후보: 성숙함 · 차분한 정보형 · 거친 저음 · 단단함
+TTS_MODELS = ["gemini-2.5-pro-preview-tts", "gemini-2.5-flash-preview-tts"]
+# 예비(Gemini 음성 실패 시): 구글 기본 음성
+TTS_VOICE = {"languageCode": "ko-KR", "name": "ko-KR-Neural2-C"}
+TTS_RATE, TTS_PITCH = "120%", "-2st"
 FONT_CANDIDATES = [("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc", 1),   # index 1 = KR
                    ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", 0)]
 
 CHARACTER_PROMPTS = {
-    "dog": "A photorealistic 3D animated style full-body portrait of an ultra-cute Shiba Inu puppy standing naturally on all "
-           "four legs, three-quarter view, oversized round head with chubby cheeks, huge round sparkling dark brown eyes, "
-           "a small playful smile, soft plush-like golden-cream and snow-white fur, absolutely no black hairs or mask, "
-           "natural body with no clothes, no collar and no accessories, unbelievably fluffy soft texture, soft even studio "
-           "lighting, plain light grey background, clean 3D rendering. No text.",
+    # 실사 시바견(사용자 확정 2026-09: 덜 귀엽게, 실제 시바견처럼)
+    "dog": "A photorealistic photograph of a real young Shiba Inu dog about eight months old, full body, standing naturally "
+           "on all four legs in a three-quarter view, true-to-life Shiba proportions and head size, almond-shaped dark brown "
+           "eyes, small triangular upright ears, curled tail over the back, warm golden-red and cream coat with white urajiro "
+           "markings on the cheeks, chest and legs, absolutely no black hairs or mask, no clothes, no collar and no "
+           "accessories, realistic fur detail, soft even natural light, plain light grey background, sharp focus. No text.",
     "cat": "A photorealistic 3D animated style full-body portrait of an ultra-cute kitten standing naturally on all four legs, "
            "three-quarter view, oversized round head with chubby cheeks, huge round sparkling eyes, a tiny pink nose, soft "
            "plush-like cream and snow-white fur, natural body with no clothes, no collar and no accessories, unbelievably "
@@ -139,7 +150,7 @@ def step_character(ep, epdir, work, log, redo):
 # ---------- 2. 컷별 첫 장면 ----------
 KF_HEAD = ("Create the FIRST FRAME of one shot of a vertical 9:16 animated short film. "
            "Reference image 1 is the main character: draw exactly this {noun} (same face, fur colours, proportions and cute "
-           "style), a natural four-legged animal with no clothes, no collar and no accessories. ")
+           "look), a natural four-legged animal with no clothes, no collar and no accessories. ")
 KF_FOOD = ("Reference image {n} is the real food: draw exactly these food pieces (same shape, size, colour and texture) in a "
            "plain white bowl or plate. Never show any packaging or bag. ")
 KF_SET = ("Reference image {n} is the same restaurant from an earlier shot: keep the same room, the same single door, walls, "
@@ -282,8 +293,64 @@ def step_clips(ep, epdir, work, log, redo):
 
 
 # ---------- 4. 내레이션 ----------
-def step_tts(ep, epdir, work, log, redo):
+def _pcm_to_wav(pcm: bytes, out: Path, speed: float):
+    raw = out.with_suffix(".pcm")
+    raw.write_bytes(pcm)
+    _ff(["-f", "s16le", "-ar", "24000", "-ac", "1", "-i", str(raw), "-af", f"atempo={speed}", str(out)])
+    raw.unlink()
+
+
+def tts_gemini(text: str, out: Path, voice: str = VOICE_NAME) -> dict:
+    key = _key("GEMINI_API_KEY")
+    model = _pick_model(key, TTS_MODELS)
+    body = {"contents": [{"role": "user", "parts": [{"text": f"{VOICE_DIRECTION}\n\n대사: {text}"}]}],
+            "generationConfig": {"responseModalities": ["AUDIO"],
+                                 "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}}}}
+    for attempt in range(3):
+        code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                          {"x-goog-api-key": key, "Content-Type": "application/json"})
+        if code == 200:
+            parts = [p for c in json.loads(raw).get("candidates", []) for p in c.get("content", {}).get("parts", [])
+                     if "inlineData" in p]
+            if parts:
+                _pcm_to_wav(base64.b64decode(parts[0]["inlineData"]["data"]), out, VOICE_SPEED)
+                return {"ok": True, "model": model, "voice": voice, "sec": round(_dur(out), 2)}
+            err = "소리 없음"
+        else:
+            err = f"HTTP {code}: {raw[:200].decode('utf-8', 'replace')}"
+        time.sleep(4 * (attempt + 1))
+    return {"ok": False, "model": model, "voice": voice, "error": err}
+
+
+def tts_cloud(text: str, out: Path) -> dict:
     key = _key("GOOGLE_TTS_KEY")
+    ssml = f'<speak><prosody rate="{TTS_RATE}" pitch="{TTS_PITCH}">{text}</prosody></speak>'
+    body = {"input": {"ssml": ssml}, "voice": TTS_VOICE,
+            "audioConfig": {"audioEncoding": "LINEAR16", "sampleRateHertz": 24000}}
+    code, raw = _http("https://texttospeech.googleapis.com/v1/text:synthesize", json.dumps(body).encode(),
+                      {"x-goog-api-key": key, "Content-Type": "application/json"})
+    if code != 200:
+        return {"ok": False, "error": raw[:300].decode("utf-8", "replace")}
+    out.write_bytes(base64.b64decode(json.loads(raw)["audioContent"]))
+    return {"ok": True, "voice": "cloud-" + TTS_VOICE["name"], "sec": round(_dur(out), 2)}
+
+
+def step_voices(ep, epdir, work, log):
+    """성우 고르기용 샘플 — 같은 대사를 후보 목소리마다 1.2배속으로 읽힌다(mp3로 저장해 바로 들을 수 있게)."""
+    lines = [c["line"] for c in ep["clips"] if c.get("role") in ("order", "taste")][:2]
+    text = " ".join(lines) or ep["clips"][0]["line"]
+    res = log.setdefault("voices", {})
+    for v in VOICE_SAMPLES:
+        wav = work / f"voice_{v}.wav"
+        r = tts_gemini(text, wav, v)
+        if r["ok"]:
+            _ff(["-i", str(wav), "-b:a", "128k", str(work / f"voice_{v}.mp3")])
+            wav.unlink()
+        res[v] = r
+    log["voices_text"] = text
+
+
+def step_tts(ep, epdir, work, log, redo):
     res = log.setdefault("tts", {})
     for c in ep["clips"]:
         name = f"c{c['no']:02d}"
@@ -291,16 +358,10 @@ def step_tts(ep, epdir, work, log, redo):
         line = (c.get("line") or "").strip()
         if not line or (out.exists() and name not in redo and f"v_{name}" not in redo):
             continue
-        ssml = f'<speak><prosody rate="{TTS_RATE}" pitch="{TTS_PITCH}">{line}</prosody></speak>'
-        body = {"input": {"ssml": ssml}, "voice": TTS_VOICE,
-                "audioConfig": {"audioEncoding": "LINEAR16", "sampleRateHertz": 24000}}
-        code, raw = _http("https://texttospeech.googleapis.com/v1/text:synthesize", json.dumps(body).encode(),
-                          {"x-goog-api-key": key, "Content-Type": "application/json"})
-        if code != 200:
-            res[name] = {"ok": False, "error": raw[:300].decode("utf-8", "replace")}
-            continue
-        out.write_bytes(base64.b64decode(json.loads(raw)["audioContent"]))
-        res[name] = {"ok": True, "sec": round(_dur(out), 2)}
+        r = tts_gemini(line, out)
+        if not r["ok"]:
+            r = {"gemini": r, **tts_cloud(line, out)}
+        res[name] = r
 
 
 # ---------- 5. 조립 ----------
@@ -424,13 +485,32 @@ def step_assemble(ep, epdir, work, log):
         vd = _dur(voice) if voice.exists() else 0.0
         role = c.get("role")
         # 입장 대사는 끝의 줌과 함께, 나머지는 조금 뒤에 시작. 대사가 컷 밖으로 넘지 않게 당긴다.
-        at = (D - vd - 0.3) if role == "enter" else 0.7
+        fit = 1.0
+        if vd > D - 0.5:                    # 대사가 컷보다 길면 그 컷만 살짝 더 빠르게(잘리지 않게)
+            fit = min(1.35, vd / (D - 0.5))
+            vd = vd / fit
+        at = (D - vd - 0.3) if role == "enter" else 0.6
         at = max(0.2, min(at, D - vd - 0.15))
         overlays = []                       # (png, from, to)
-        if c.get("subtitle") or c.get("line"):
-            p = tmp / f"sub_{name}.png"
-            subtitle_png(c.get("subtitle") or c["line"], p)
-            overlays.append((p, at, min(D, at + max(vd, 1.6) + 0.35)))
+        # 자막: 대사를 문장 단위로 나눠 말하는 동안 차례로 보여준다(글자 수 비례로 시간 배분).
+        text = (c.get("subtitle") or c.get("line") or "").strip()
+        if text:
+            sents = []
+            for x in [x.strip() for x in re.split(r"(?<=[.?…])\s+", text) if x.strip()]:
+                if sents and len(sents[-1]) <= 4:          # "음…" 같은 짧은 조각은 다음 문장과 한 화면에
+                    sents[-1] = f"{sents[-1]} {x}"
+                else:
+                    sents.append(x)
+            span = max(vd, 1.6 * len(sents))
+            total_chars = sum(len(x) for x in sents) or 1
+            t = at
+            for k, sent in enumerate(sents):
+                p = tmp / f"sub_{name}_{k}.png"
+                subtitle_png(sent, p)
+                d = span * len(sent) / total_chars
+                end = min(D, t + d + (0.35 if k == len(sents) - 1 else 0))
+                overlays.append((p, t, end))
+                t += d
         card = c.get("card") or {}
         if card.get("type") == "menu" and card.get("name"):
             p = tmp / f"menu_{name}.png"
@@ -461,7 +541,7 @@ def step_assemble(ep, epdir, work, log):
         if voice.exists():
             inputs += ["-i", str(voice)]
             ms = int(at * 1000)
-            fc.append(f"[{n}:a]aresample=44100,aformat=channel_layouts=stereo,adelay={ms}|{ms},apad,atrim=0:{D:.2f},"
+            fc.append(f"[{n}:a]aresample=44100,aformat=channel_layouts=stereo,atempo={fit:.3f},adelay={ms}|{ms},apad,atrim=0:{D:.2f},"
                       f"volume=1.6[a]")
         else:
             inputs += ["-f", "lavfi", "-t", f"{D:.2f}", "-i", "anullsrc=r=44100:cl=stereo"]
@@ -508,6 +588,8 @@ def main(path: str) -> int:
     steps = req.get("steps", ["character", "keyframes", "clips", "tts", "assemble"])
     ok = True
     try:
+        if "voices" in steps:
+            step_voices(ep, epdir, work, log)
         character = step_character(ep, epdir, work, log, redo)
         if "keyframes" in steps:
             step_keyframes(ep, epdir, work, log, redo, character)
