@@ -144,7 +144,7 @@ KF_FOOD = ("Reference image {n} is the real food: draw exactly these food pieces
            "plain white bowl or plate. Never show any packaging or bag. ")
 KF_SET = ("Reference image {n} is the same restaurant from an earlier shot: keep the same room, the same single door, walls, "
           "floor, table, seat and lighting. ")
-KF_TAIL = ("\nNo text, letters, numbers, signs with writing, logos or watermarks anywhere. No humans. "
+KF_TAIL = ("\nNo text, letters, numbers, signs with writing, logos or watermarks anywhere. No humans. No banknotes, coins or cash. "
            "Full-frame image with no borders.")
 
 
@@ -253,7 +253,7 @@ def _veo(key, start: Path, prompt: str) -> bytes:
 
 CLIP_TAIL = ("\nThe attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it, "
              "and keep the character exactly as drawn.\nSOUND: none needed (it will be replaced). No dialogue. "
-             "NEVER SHOW: text, letters, numbers, logos, packaging, humans, the character changing shape, morphing objects, cuts.")
+             "NEVER SHOW: text, letters, numbers, logos, packaging, humans, banknotes or cash, the character changing shape, morphing objects, cuts.")
 
 
 def step_clips(ep, epdir, work, log, redo):
