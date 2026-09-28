@@ -3727,18 +3727,181 @@ function dinerSystem(sp) {
 반드시 JSON만 출력한다.`;
 }
 
+// ===== 실제 음식 모양(사진·웹검색 기반) =====
+// 품목별 공용 문장(foodLookOf)만 쓰면 영상 속 사료가 실제 제품과 다르다(사용자 지적 2026-09).
+// 순서: ① 상품 사진(등록 사진 + 쿠팡 파트너스 검색 사진)을 Gemini가 직접 보고 알갱이 모양을 읽는다
+//       ② 사진에 알갱이가 안 보이면 웹검색(후기·상세)으로 모양·색·크기를 찾는다
+//       ③ 둘 다 실패하면 품목별 공용 문장. 결과는 상품별로 30일 KV에 보관(같은 상품은 같은 모양).
+// 포장·로고·글자는 절대 묘사하지 않는다(상품은 영상에서 숨긴다).
+const FOOD_IMG_HOST = /^https:\/\/([\w.-]*\.)?(coupangcdn\.com|coupang\.com|pstatic\.net|naver\.net|shopping\.phinf\.naver\.net)\//;
+const GEMINI_VISION_MODELS = ['gemini-flash-latest', 'gemini-flash-lite-latest'];
+const GEMINI_IMAGE_MODELS = [GEMINI_IMAGE_MODEL, 'gemini-3-pro-image-preview', 'gemini-3.1-flash-image-preview'];
+
+function _b64(buf) {
+  const u = new Uint8Array(buf); let s = '';
+  for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+async function fetchImageInline(src) {
+  if (!FOOD_IMG_HOST.test(String(src || ''))) return null;
+  try {
+    const r = await fetch(src);
+    if (!r.ok) return null;
+    const mime = (r.headers.get('content-type') || 'image/jpeg').split(';')[0];
+    if (!/^image\/(jpeg|png|webp)$/.test(mime)) return null;
+    const buf = await r.arrayBuffer();
+    if (buf.byteLength < 2000 || buf.byteLength > 4 * 1024 * 1024) return null;
+    return { inline_data: { mime_type: mime, data: _b64(buf) } };
+  } catch { return null; }
+}
+
+// 등록 사진 + 쿠팡 파트너스 검색 결과 중 같은 상품 사진(최대 3장).
+async function foodPhotoUrls(env, title, image) {
+  const urls = [];
+  if (image) urls.push(String(image).trim());
+  if (env.COUPANG_ACCESS_KEY && env.COUPANG_SECRET_KEY) {
+    try {
+      const kw = String(title).replace(/[\[\]()]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 50);
+      const d = await coupangApi(env, 'GET', '/v2/providers/affiliate_open_api/apis/openapi/v1/products/search',
+        `keyword=${encodeURIComponent(kw)}&limit=5`);
+      const words = menuBannedWords(title).map(w => w.toLowerCase());
+      for (const p of _cpNormalize(d?.data?.productData || d?.data)) {
+        const t = p.title.toLowerCase();
+        if (p.image && (!words.length || words.some(w => t.includes(w)))) urls.push(p.image);
+      }
+    } catch { /* 쿠팡 실패는 사진 없이 진행 */ }
+  }
+  return [...new Set(urls)].filter(u => FOOD_IMG_HOST.test(u)).slice(0, 3);
+}
+
+async function callGeminiVision(apiKey, parts, max_tokens = 600) {
+  for (const model of GEMINI_VISION_MODELS) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ role: 'user', parts }],
+          generationConfig: { maxOutputTokens: max_tokens, temperature: 0.2, responseMimeType: 'application/json' } }),
+      });
+      if (res.status === 404 || res.status === 403) continue;
+      if (!res.ok) return null;
+      const d = await res.json();
+      return (d?.candidates?.[0]?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join('');
+    } catch { return null; }
+  }
+  return null;
+}
+
+// 모양 문장 정리: 포장·글자·브랜드 이야기는 지우고, 그릇 문장으로 감싼다.
+function cleanFoodLook(look, title) {
+  let t = String(look || '').replace(/["\n]/g, ' ')
+    .replace(/[^,.;]*\b(bag|package|packaging|pouch label|label|logo|brand|text|letters?|printed|box|carton)\b[^,.;]*[,.;]?/gi, ' ');
+  for (const w of menuBannedWords(title)) if (/^[a-z]/i.test(w)) t = t.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '');
+  t = t.replace(/[가-힣]+/g, '').replace(/\s{2,}/g, ' ').replace(/^[\s,.;]+|[\s,.;]+$/g, '').trim();
+  if (t.split(/\s+/).length < 5) return '';
+  if (!/\b(bowl|plate|dish|saucer)\b/i.test(t)) t = `a plain white ceramic bowl of ${t}`;
+  return t.split(/\s+/).slice(0, 45).join(' ');
+}
+
+const FOOD_LOOK_ASK = (title, base) => `이 사진들은 반려동물 먹거리 "${title}"의 판매 사진이다.
+포장지가 아니라 **먹는 알맹이 자체**(알갱이·조각·페이스트 등)가 사진 어딘가에 보이는지 확인하고,
+보이면 그 모양을 영상 AI가 똑같이 그릴 수 있게 영어로 묘사해라.
+- 모양(원형·도넛·삼각·뼈다귀·원통 등), 대략 크기(mm), 색(여러 색이면 비율), 표면(매끈·거칠·코팅·광택), 알갱이 종류가 여러 개면 전부
+- 포장·로고·글자·브랜드·사람·동물은 절대 쓰지 마라. 추측 금지 — 안 보이면 visible=false
+- 참고: 이 품목의 일반형은 "${base}"
+JSON만: {"visible": true, "look": "English 15-35 words, e.g. shape, size, color, texture, served in a plain white ceramic bowl", "where": "한국어 한 줄: 어느 사진 어디에서 봤는지"}`;
+
+async function resolveFoodLook(env, gk, title, image) {
+  const base = foodLookOf(title);
+  const key = 'food_look:' + String(title).trim().slice(0, 200);
+  if (env.PENDING_POSTS) {
+    try { const c = JSON.parse(await env.PENDING_POSTS.get(key) || 'null'); if (c && c.look && (c.source === 'photo' || !image || c.image === image)) return c; } catch {}
+  }
+  let res = null;
+  // ① 사진
+  const urls = await foodPhotoUrls(env, title, image);
+  const imgs = (await Promise.all(urls.map(fetchImageInline))).filter(Boolean);
+  if (imgs.length) {
+    try {
+      const o = extractJson(await callGeminiVision(gk, [...imgs, { text: FOOD_LOOK_ASK(title, base) }]) || '');
+      const look = o && o.visible ? cleanFoodLook(o.look, title) : '';
+      if (look) res = { look, source: 'photo', note: String(o.where || '').slice(0, 80), photos: urls.length };
+    } catch {}
+  }
+  // ② 웹검색(짧은 질문 → 정리 2단계. 긴 지시를 한 번에 주면 검색을 건너뛴다)
+  if (!res) {
+    try {
+      const g = await callGeminiGrounded(gk, { user: `"${title}" 알갱이(내용물) 모양, 크기, 색깔을 실제 구매 후기나 상세페이지에서 찾아줘.`, max_tokens: 900, timeout_ms: 40000 });
+      if (g.sources.length && g.text.trim()) {
+        const o = extractJson(await callGeminiText(gk, {
+          user: `아래 조사 내용에서 "${title}" 내용물의 모양·크기·색·표면을 영어로 옮겨라. 조사에 없는 건 쓰지 마라. 포장·브랜드 금지.
+조사:\n${g.text.slice(0, 2500)}\n\nJSON만: {"found": true, "look": "English 15-35 words, served in a plain white ceramic bowl"}`,
+          max_tokens: 300, json: true,
+        }));
+        const look = o && o.found ? cleanFoodLook(o.look, title) : '';
+        if (look) res = { look, source: 'search', note: g.sources.slice(0, 2).map(s => s.title).filter(Boolean).join(' · ').slice(0, 80) };
+      }
+    } catch {}
+  }
+  if (!res) res = { look: base, source: 'generic', note: '' };
+  res.image = image || '';
+  res.photoUrl = urls[0] || '';
+  if (env.PENDING_POSTS && res.source !== 'generic') {
+    try { await env.PENDING_POSTS.put(key, JSON.stringify(res), { expirationTtl: 30 * 24 * 3600 }); } catch {}
+  }
+  return res;
+}
+
+// Flow에 '재료(ingredient)'로 올릴 음식 참고 이미지 — 실제 상품 사진을 보고 알맹이만 그릇에 담은 사진을 만든다.
+async function handleFoodReference(env, body) {
+  const title = String(body.title || '').trim();
+  if (!title) throw new Error('상품 이름이 필요합니다.');
+  const gk = await getGeminiKey(env);
+  if (!gk) throw new Error('Gemini 키가 설정되지 않았습니다.');
+  if (await getImageUsage(env) >= DAILY_IMAGE_CAP) throw new Error(`오늘 만들 수 있는 이미지 ${DAILY_IMAGE_CAP}장을 다 썼습니다. 내일 다시 눌러주세요.`);
+  const fl = await resolveFoodLook(env, gk, title, String(body.image || '').trim());
+  const urls = fl.photoUrl ? [fl.photoUrl] : await foodPhotoUrls(env, title, body.image);
+  const imgs = (await Promise.all(urls.slice(0, 2).map(fetchImageInline))).filter(Boolean);
+  const prompt = `${imgs.length ? 'The attached photos are product photos of a pet food. Look at the actual food pieces (not the package). ' : ''}`
+    + `Create a clean photorealistic photo of only this pet food: ${fl.look}. `
+    + 'Match the real pieces exactly in shape, size, color and texture. Plain white ceramic bowl on a plain light wooden table, '
+    + 'three-quarter top-down angle, soft even daylight, shallow depth of field, the bowl fills the center of a square frame. '
+    + 'No packaging, no bag, no box, no text, no letters, no logos, no labels, no animals, no people, no hands.';
+  let lastErr = '';
+  for (const model of GEMINI_IMAGE_MODELS) {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gk}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [...imgs, { text: prompt }] }], generationConfig: { responseModalities: ['IMAGE'] } }),
+    }).catch(() => null);
+    if (!res) { lastErr = '연결 실패'; continue; }
+    if (res.status === 404 || res.status === 403) { lastErr = `${model} 사용 불가`; continue; }
+    if (!res.ok) { lastErr = `이미지 모델 오류 ${res.status}`; break; }
+    const d = await res.json();
+    const img = (d?.candidates?.[0]?.content?.parts || []).find(p => p.inlineData?.data);
+    if (!img) { lastErr = '이미지가 비어 왔습니다'; continue; }
+    await bumpImageUsage(env);
+    return { success: true, image: `data:${img.inlineData.mimeType || 'image/png'};base64,${img.inlineData.data}`,
+      foodLook: fl.look, foodLookSource: fl.source, foodLookNote: fl.note, usedPhotos: imgs.length };
+  }
+  throw new Error(`음식 참고 이미지를 만들지 못했습니다: ${lastErr}`);
+}
+
 async function handleDinerEpisode(env, body, ctx) {
   const { title, category, note, spKey, sp, hero, clips } = ctx;
   const roles = dinerRoles(clips);
   const priceNote = unitPriceNote(body.price, title);
-  const foodEn = foodLookOf(title);
+  const foodBase = foodLookOf(title);
+  const gk = await getGeminiKey(env);
+  if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
+  // 실제 상품 사진·웹검색으로 알맹이 모양을 읽는다(실패 시 품목별 공용 문장).
+  const fl = await resolveFoodLook(env, gk, title, String(body.image || '').trim()).catch(() => ({ look: foodBase, source: 'generic', note: '' }));
+  const foodEn = fl.look || foodBase;
   const facts = (Array.isArray(body.benefits) ? body.benefits : [])
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
     .filter(Boolean);
   const factsSafe = adSafeFacts(facts).slice(0, 5);
   const recentMenus = await recentMenuNames(env, title);
   const guest = guestOf(title, factsSafe, spKey);
-  const senses = senseChecklist(foodEn);
+  const senses = senseChecklist(foodBase);
   const recentLines = await recentDinerLines(env);
   const banned = menuBannedWords(title);
   // 입장 훅 재료 — 02단계에서 확인된 '사기 전 불편'. 증상 이야기는 효능 암시가 되므로 뺀다.
@@ -3753,7 +3916,8 @@ async function handleDinerEpisode(env, body, ctx) {
 [추천 손님 — 표기 기준] ${guest.note ? guest.note.replace('추천 손님: ', '') : '표기 없음'}${guest.mismatch ? `
 ⚠️ 이 메뉴는 주인공(중형 시바견)의 체급·품종용이 아니다. order나 taste 중 한 줄에서 "내 체급 메뉴는 아니다"는 사실을
    담담하게 인정하고 비틀어라(문장은 새로 지어라). 그래도 평가는 냉철하게 한다.` : ''}
-[시식 감각 항목 — serve·taste 대사는 여기서 클립마다 다른 항목을 골라 쓴다] ${senses}
+[시식 감각 항목 — serve·taste 대사는 여기서 클립마다 다른 항목을 골라 쓴다] ${senses}${fl.source !== 'generic' ? `
+[실제 알맹이 모양 — 대사가 이 모양과 어긋나면 안 된다] ${foodEn}` : ''}
 [구매자 고민 — 주문(order) 대사 재료]
 ${worries.length ? '- ' + worries.join('\n- ') : '(없음 — 이 상품 종류에 흔한 고민 하나를 골라라)'}
 [확인된 정보 — 사실은 이 안에서만]
@@ -3773,8 +3937,6 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "ytTitle": "유튜브 설명 첫 줄에 쓸 한 줄 요약 40자 이내(상품명·브랜드 금지)"
 }${recentMenus.length ? `\n최근에 쓴 메뉴 이름(겹치지 않게 다른 특징을 골라라): ${recentMenus.slice(0, 12).join(', ')}` : ''}${recentLines.length ? `\n최근 회차에서 이미 쓴 대사(말투·비유·소재가 비슷하지 않게 새로 써라):\n- ${recentLines.slice(0, 12).join('\n- ')}` : ''}`;
 
-  const gk = await getGeminiKey(env);
-  if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
   let raw;
   try {
     raw = await callGeminiText(gk, {
@@ -3924,7 +4086,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     series: DINER_SERIES, episode: epNo, opening: DINER_OPENING,
     species: spKey, speciesKo: sp.ko,
     problem: `${seriesTag} ${shop || '식당 에피소드'} · 오늘의 메뉴 「${menuName}」`,
-    shop, verdict, priceNote, menuName, foodLook: foodEn,
+    shop, verdict, priceNote, menuName, foodLook: foodEn, foodLookSource: fl.source, foodLookNote: fl.note || '',
     guestNote: guest.note, guestMismatch: !!guest.mismatch,
     sceneBlock: scene, setBlock,
     tone: String(out.tone || '낮고 담담한 독백 목소리').trim(),
@@ -4685,6 +4847,37 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     parent.appendChild(b);
     return b;
   }
+  // Flow '재료'로 올릴 음식 참고 이미지(실제 상품 사진을 보고 알맹이만 그릇에 담아 그림). 유료 이미지 1장.
+  function foodRefBox(){
+    var box=document.createElement('div'); box.className='clip';
+    var hd=document.createElement('div'); hd.className='clip-hd';
+    var nm=document.createElement('span'); nm.className='clip-no'; nm.textContent='음식 참고 이미지 (Flow 재료용)';
+    hd.appendChild(nm); box.appendChild(hd);
+    var ex=document.createElement('div'); ex.className='sub';
+    ex.textContent='실제 상품 사진을 보고 알맹이만 흰 그릇에 담은 사진을 만듭니다. 받아서 Flow에 캐릭터 이미지와 함께 올리면 영상 속 사료가 실제 제품과 같아집니다. 포장·상품명은 들어가지 않습니다.';
+    box.appendChild(ex);
+    var btn=document.createElement('button'); btn.type='button'; btn.className='btn btn-2 btn-sm'; btn.textContent='음식 참고 이미지 만들기';
+    btn.style.marginTop='8px';
+    var msg=document.createElement('div'); msg.className='sub';
+    var holder=document.createElement('div');
+    btn.addEventListener('click', function(){
+      var title=$('pt').value.trim() || $('t').value.trim();
+      btn.disabled=true; msg.textContent='만드는 중… 20~40초 걸립니다.'; holder.textContent='';
+      post('/api/food-reference',{title:title, image:$('img').value.trim()}).then(function(r){
+        btn.disabled=false;
+        if(!(r&&r.success&&r.image)){ msg.textContent=(r&&r.error)||'만들지 못했습니다.'; return; }
+        msg.textContent=r.usedPhotos?'실제 상품 사진 '+r.usedPhotos+'장을 보고 만들었습니다.':'상품 사진을 못 받아 글 묘사로만 만들었습니다. 실제와 다르면 쓰지 마세요.';
+        var im=document.createElement('img'); im.src=r.image; im.alt='음식 참고 이미지';
+        im.style.cssText='display:block;width:100%;max-width:320px;border-radius:10px;margin-top:8px';
+        var a=document.createElement('a'); a.href=r.image; a.download='food-reference.png'; a.textContent='이미지 저장하기';
+        a.className='btn btn-2 btn-sm'; a.style.cssText='display:inline-block;margin-top:8px;text-decoration:none';
+        holder.appendChild(im); holder.appendChild(a);
+      }).catch(function(e){ btn.disabled=false; msg.textContent='만들지 못했습니다: '+e.message; });
+    });
+    box.appendChild(btn); box.appendChild(msg); box.appendChild(holder);
+    return box;
+  }
+
   function renderPrompts(r){
     var out=$('pOut'); out.textContent='';
     var diner = r.format==='diner';
@@ -4693,6 +4886,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       pb.innerHTML=(diner?'<b>오늘의 에피소드</b><br>':'<b>이 영상이 다루는 문제</b><br>')+esc(r.problem)+
         (r.speciesKo?'<br><b>주인공:</b> '+esc(r.speciesKo)+' — Flow에서 '+esc(r.speciesKo)+' 캐릭터 이미지를 끌어다 쓰세요.':'')+
         (diner&&r.priceNote?'<br><b>계산서:</b> '+esc(r.priceNote):'')+
+        (diner?'<br><b>음식 모양:</b> '+({photo:'실제 상품 사진에서 읽음',search:'웹검색 후기에서 찾음',generic:'사진·후기에서 못 찾아 일반형 사용 — 상품 사진 주소를 넣고 다시 만들면 정확해집니다'}[r.foodLookSource]||'일반형')+(r.foodLookNote?' ('+esc(r.foodLookNote)+')':''):'')+
         (diner&&r.verdict?'<br><b>판정:</b> '+esc(r.verdict):'');
       out.appendChild(pb);
     }
@@ -4737,12 +4931,14 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       out.appendChild(yc);
     }
 
+    if(diner) out.appendChild(foodRefBox());
+
     var tip=document.createElement('div'); tip.className='prob';
     tip.innerHTML='<b>이미지를 먼저 만들고, 그 이미지로 영상을 뽑으세요</b><br>'+
       '클립마다 1단계 이미지 프롬프트와 2단계 영상 프롬프트가 함께 나옵니다. '+
       '스틸을 먼저 만들어 마음에 드는 장면을 고른 뒤 그 이미지에서 영상을 만들면, 강아지도 착용한 물건도 모양이 흔들리지 않습니다.'+
       (r.wearable ? '<br><b>착용 상품으로 인식했습니다.</b> 문제 클립은 맨몸, 전환 이후 클립만 착용한 모습으로 나옵니다.' : '')+
-      (diner ? '<br><b>식당 에피소드:</b> 음식 모양은 모든 클립에 같은 문장으로 고정돼 있습니다. 04단계에서 "클립에 나눠 담기"를 누르면 주문 클립엔 메뉴판, 계산 클립엔 가격 계산서가 자동으로 붙습니다. 링크 클릭을 위해 상품명·상품 사진은 영상에 넣지 않습니다(유튜브 설명란 링크 옆에만).' : '')+
+      (diner ? '<br><b>식당 에피소드:</b> 음식 모양은 실제 상품 사진·후기에서 읽어 모든 클립에 같은 문장으로 고정돼 있습니다. 위 음식 참고 이미지를 Flow에 함께 올리면 더 정확합니다. 04단계에서 "클립에 나눠 담기"를 누르면 주문 클립엔 메뉴판, 계산 클립엔 가격 계산서가 자동으로 붙습니다. 링크 클릭을 위해 상품명·상품 사진은 영상에 넣지 않습니다(유튜브 설명란 링크 옆에만).' : '')+
       '<br>소리는 넣지 않습니다. 위 내레이션 대본으로 목소리를 만들어 04단계에서 얹으세요. '+
       '제외 조건은 각 프롬프트 맨 아래 Avoid 줄에 이미 들어 있습니다.';
     out.appendChild(tip);
@@ -4791,7 +4987,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     say('pMsg','프롬프트를 짜는 중… 30초쯤 걸립니다.','wait');
     post('/api/video-prompts',{
       title:title, category:$('c').value, dog:$('pdog').value.trim(), cat:$('pcat').value.trim(),
-      price:$('pr').value, link:$('l').value.trim(),
+      price:$('pr').value, link:$('l').value.trim(), image:$('img').value.trim(),
       clips:parseInt($('pclips').value,10), note:$('pnote').value.trim(),
       pains:lastPains, benefits:lastBenefits
     }).then(function(res){
@@ -5730,6 +5926,7 @@ export default {
         }
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
         else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
+        else if (url.pathname === '/api/food-reference') result = await handleFoodReference(env, body);
         else if (url.pathname === '/api/telegram-recipients') {
           // 앱에서 텔레그램 추가 수신자(채팅 ID) 등록/삭제/조회 (터미널·대시보드 없이).
           if (request.method === 'POST') {
