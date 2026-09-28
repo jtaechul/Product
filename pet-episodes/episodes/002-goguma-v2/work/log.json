@@ -1,0 +1,68 @@
+{
+  "voices": {
+    "Gacrux": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Gacrux",
+      "sec": 13.57
+    },
+    "Charon": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Charon",
+      "sec": 13.09
+    },
+    "Algenib": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Algenib",
+      "sec": 15.13
+    },
+    "Orus": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Orus",
+      "sec": 14.53
+    }
+  },
+  "voices_text": "내 나이에 맞는 차림은 아니지만 이 깊은 단맛이 궁금해지는 순간이다. 이걸로 하지. 음. 겉은 쫀득하고 속은 부드럽게 풀려. 서랍 속에서 꺼낸 오래된 가죽 장갑처럼 유연한 감촉이군.",
+  "character": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview"
+  },
+  "keyframes": {
+    "c01": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c02": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c03": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c04": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c05": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c06": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c07": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    }
+  },
+  "last_request": {
+    "file": "01_preview.json",
+    "ran_at": "2026-09-28T13:46:09Z",
+    "ok": true
+  }
+}
