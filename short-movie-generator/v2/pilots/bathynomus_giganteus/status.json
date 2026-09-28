@@ -475,7 +475,7 @@
         "tts_id": "r09280204_tts",
         "ending": "out/17_ending/ending_bathynomus.mp4"
       },
-      "built_at": "2026-09-28T10:42:32Z"
+      "built_at": "2026-09-28T10:47:11Z"
     },
     "upload": {},
     "recut": {
@@ -532,7 +532,7 @@
     }
   },
   "checks": {
-    "at": "2026-09-28T10:42:32Z",
+    "at": "2026-09-28T10:47:11Z",
     "duration_s": 65.22,
     "white_edge_px": {
       "value": 0,
