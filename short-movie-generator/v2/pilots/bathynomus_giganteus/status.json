@@ -58,6 +58,11 @@
           "at": "2026-09-28T02:04:17Z",
           "kind": "apply_lines",
           "text": "수정한 대사 반영 — 나레이션 다시 읽기 + 재조립(영상 컷은 그대로)"
+        },
+        {
+          "at": "2026-09-28T09:58:47Z",
+          "kind": "error",
+          "text": "8번 컷 수정 계획 실패 — HTTP Error 404: Not Found"
         }
       ]
     },
@@ -459,7 +464,16 @@
       },
       "built_at": "2026-09-28T07:03:37Z"
     },
-    "upload": {}
+    "upload": {},
+    "recut": {
+      "8": {
+        "direction": "뱃속이 텅 비었다는 묘사와 원인을 알 수 없다는 묘사 필요",
+        "min_transitions": 1,
+        "at": "2026-09-28T09:58:47Z",
+        "state": "error",
+        "error": "계획 실패: HTTP Error 404: Not Found"
+      }
+    }
   },
   "checks": {
     "at": "2026-09-28T07:03:37Z",
