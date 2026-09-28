@@ -2923,7 +2923,7 @@ async function handleProductInsight(env, body) {
   const titleFeatures = featuresFromTitle(title);
 
   // (2) 웹검색 조사 — 실패해도 (1)은 남으므로 전체가 죽지 않는다.
-  let points = [], pains = [], sources = [], grounded = false, note = '', searchTrace = [];
+  let points = [], pains = [], sources = [], grounded = false, note = '', searchTrace = [], feedingRaw = [];
   const gk = await getGeminiKey(env);
   if (!gk) {
     note = 'Gemini 키가 없어 상품명 해독만 했습니다.';
@@ -2933,7 +2933,8 @@ async function handleProductInsight(env, body) {
     // 건너뛰었다(실측: 5회 중 3회 출처 0건, 검색어 0개). 짧은 질문은 거의 항상 검색한다.
     const searchQ = `"${title}" 제품의 실제 구매 후기와 사용기를 웹에서 검색해줘.
 찾은 후기에 나온 장점, 그리고 구매자들이 이 제품을 사기 전에 겪던 불편을 정리해줘.
-각 내용마다 어느 사이트의 후기인지, 그 후기가 어떤 브랜드 제품에 대한 것인지 함께 적어줘.
+각 내용마다 어느 사이트의 후기인지, 그 후기가 어떤 브랜드 제품에 대한 것인지 함께 적어줘.${isFoodProduct(category, title) ? `
+그리고 이 제품 포장지나 판매 페이지에 적힌 "체중별 하루 급여량(그램)" 표도 찾아서 숫자 그대로 적어줘.` : ''}
 찾지 못한 내용은 지어내지 말고 "찾지 못함"이라고 적어줘.`;
     const user2 = (notes) => `상품: ${title}
 품목: ${category || '반려동물 용품'}
@@ -2945,8 +2946,10 @@ ${notes}
 {
   "notFound": false,
   "points": [{"text": "특징이나 장점 한 줄", "evidence": "어느 글에서 확인했는지 + 그 글이 다루는 상품의 브랜드명을 반드시 포함"}],
-  "pains": [{"text": "이 상품을 쓰기 전에 겪던 불편 한 줄 — 즉 이 상품이 해결해 주는 문제", "evidence": "어디서 확인했는지 + 그 글이 다루는 상품의 브랜드명"}]
+  "pains": [{"text": "이 상품을 쓰기 전에 겪던 불편 한 줄 — 즉 이 상품이 해결해 주는 문제", "evidence": "어디서 확인했는지 + 그 글이 다루는 상품의 브랜드명"}],
+  "feeding": [{"weightKg": 5, "gramsPerDay": 80, "evidence": "어디서 확인했는지 + 브랜드명"}]
 }
+feeding은 메모에 **이 제품의 체중별 하루 급여량 숫자가 그대로 적혀 있을 때만** 채운다(최대 6개). 없으면 빈 배열.
 points는 최대 5개, pains는 최대 4개. 메모가 "찾지 못함"이면 notFound를 true로 하고 빈 배열로 둬라.
 evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
 
@@ -2984,9 +2987,10 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
         .map(x => ({ text: String(x.text).trim().slice(0, 120), evidence: String(x.evidence).trim().slice(0, 160) }));
       points = clean(parsed?.points).slice(0, 5);
       pains = clean(parsed?.pains).slice(0, 4);
+      feedingRaw = Array.isArray(parsed?.feeding) ? parsed.feeding : [];
       // 웹 출처가 하나도 없으면 "검색했다"고 볼 수 없다 → 검색 기반 항목을 신뢰하지 않는다.
       if (!grounded) {
-        points = []; pains = [];
+        points = []; pains = []; feedingRaw = [];
         note = '웹에서 이 상품의 후기를 확인하지 못해, 상품명에서 읽은 것만 남겼습니다.';
       }
     } catch (e) {
@@ -3007,6 +3011,13 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
     note = `검색 결과가 "${brand}" 제품을 직접 다루지 않아, 같은 품목의 일반적인 이야기로 표시했습니다.`;
   }
 
+  // 급여량: 숫자가 말이 되고, 근거에 이 상품 브랜드가 있을 때만 믿는다(다른 제품 표를 물어오는 일 방지).
+  const feeding = feedingRaw
+    .map(x => ({ weightKg: Number(x && x.weightKg), gramsPerDay: Number(x && x.gramsPerDay), evidence: String(x && x.evidence || '').trim().slice(0, 160) }))
+    .filter(x => x.weightKg >= 0.5 && x.weightKg <= 80 && x.gramsPerDay >= 5 && x.gramsPerDay <= 1500 && x.evidence)
+    .filter(x => !brand || x.evidence.includes(brand))
+    .slice(0, 6);
+
   // 추천 이유 초안은 "이 상품이라고 확신할 수 있는 것"만으로 만든다.
   const tidy = (t) => String(t || '').trim().replace(/[.。\s]+$/, '');
   const sure = [...titleFeatures.map(x => x.text), ...verified.map(x => x.text)]
@@ -3021,6 +3032,7 @@ evidence에 브랜드명을 적지 않으면 그 항목은 폐기된다.
     verified,        // 검색 결과 중 이 브랜드가 언급된 것
     general,         // 같은 품목의 일반적인 이야기 (참고용)
     pains,
+    feeding,         // 확인된 체중별 하루 급여량(식당 에피소드의 하루 비용 계산용)
     sources,
     searchTrace,
     draft: sure.length ? sure.join('. ') + '.' : '',
@@ -3196,7 +3208,7 @@ const SPECIES = {
   cat: {
     ko: '고양이', noun: 'kitten', line: 'The kitten.', sheet: CAT_SHEET_PROMPT, cfg: 'pcat',
     negAnimal: 'adult cat, feral cat, thin sharp face, narrow slit eyes, hissing, bared teeth, dog',
-    match: /고양이|캣|냥|키튼|kitten|\bcats?\b|feline/i,
+    match: /고양이|캣|냥|키튼|kitten|\bcats?\b|feline|성묘|자묘|노령묘|반려묘|실내묘/i,
   },
   dog: {
     ko: '강아지', noun: 'puppy', line: 'The puppy.', sheet: CHARACTER_SHEET_PROMPT, cfg: 'pdog',
@@ -3504,6 +3516,60 @@ function packGrams(title) {
   return g >= 10 && g <= 60000 ? g : 0;
 }
 
+// ⭐ 추천 손님(대상) — AI 추측이 아니라 상품명·확인된 정보의 표기에서 규칙으로 뽑는다.
+// 사료 선택 기준은 품종보다 '연령 × 크기 × 실내'라서 그 셋을 우선한다. 품종 전용 표기가 있으면 그것.
+function guestOf(title, facts, spKey) {
+  const t = String(title || '') + ' ' + (facts || []).join(' ');
+  const g = {};
+  if (/퍼피|puppy|주니어|자견/i.test(t)) g.life = '퍼피';
+  else if (/키튼|kitten|자묘/i.test(t)) g.life = '키튼';
+  else if (/시니어|senior|노령|\d+\s*세\s*이상/i.test(t)) g.life = '시니어';
+  else if (/전연령|올라이프|all\s?life/i.test(t)) g.life = '전연령';
+  else if (/어덜트|adult|성견|성묘/i.test(t)) g.life = '어덜트';
+  if (spKey === 'dog') {
+    if (/소형견|토이|small|미니(?!멀)/i.test(t)) g.size = '소형견';
+    else if (/대형견|라지|large|맥시|maxi/i.test(t)) g.size = '대형견';
+    else if (/중형견|medium|미디엄/i.test(t)) g.size = '중형견';
+  }
+  if (/인도어|실내|indoor/i.test(t)) g.indoor = true;
+  if (/중성화|스테럴|sterili[sz]ed/i.test(t)) g.neutered = true;
+  // '시바견 전용'에서 '시바'만 잡히지 않게, 바로 뒤의 '견'까지 붙여 표시한다.
+  const breed = BREEDS.map(([re]) => { const m = String(title || '').match(re); return m ? m[0] : ''; }).find(Boolean);
+  const breedFull = breed ? ((String(title).match(new RegExp(breed + '견?')) || [breed])[0]) : '';
+  if (breedFull) g.breed = breedFull;
+  const who = g.breed ? `${g.breed}` : (g.size || (spKey === 'cat' ? '고양이' : '강아지'));
+  const parts = [g.indoor ? '실내 생활' : '', g.neutered ? '중성화한' : '', g.life && g.life !== '전연령' ? g.life : '', who].filter(Boolean);
+  const any = g.life || g.size || g.indoor || g.neutered || g.breed;
+  g.note = any ? `추천 손님: ${parts.join(' ')}${g.life === '전연령' ? ' (전연령)' : ''}` : '';
+  // 주인공(중형 시바견)과 체급이 다른 메뉴인가 — 대사에서 솔직하게 비틀 재료
+  g.mismatch = spKey === 'dog' && ((g.size && g.size !== '중형견') || (g.breed && !/시바/.test(g.breed)));
+  return g;
+}
+
+// 식탁에서 보여줄 수 있는 감각은 제품 형태마다 다르다. 시식 대사는 이 목록에서 클립마다 다른 걸 고른다.
+function senseChecklist(foodEn) {
+  if (/lickable paste/.test(foodEn)) return '혀에 감기는 농도, 부드러운 정도, 첫 향, 그릇에 남는 정도, 뒷맛';
+  if (/wet food/.test(foodEn)) return '결(덩어리·무스), 촉촉함, 국물 양, 첫 향, 입안에 남는 기름기';
+  if (/jerky/.test(foodEn)) return '두께, 질긴 정도, 씹는 시간, 고기 결, 향';
+  if (/dental chew/.test(foodEn)) return '단단함, 씹는 시간, 부서지는 방식, 크기, 향';
+  if (/freeze-dried/.test(foodEn)) return '가벼움, 부서지는 방식, 고기 결, 입안에서 풀리는 속도, 향';
+  if (/treats|chew tablets|milk/.test(foodEn)) return '크기, 한입에 들어가는지, 바삭함·말랑함, 향, 뒷맛';
+  return '알갱이 크기와 모양, 단단함, 씹힐 때 소리, 겉면 기름 코팅, 첫 냄새, 뒷맛';
+}
+
+// 하루 비용 — 확인된 급여량이 있을 때만. 기준 체중은 추천 손님에 맞춰 고른다.
+function dailyCostNote(price, title, feeding, guest, spKey) {
+  const won = Number(price) || 0, g = packGrams(title);
+  const rows = (feeding || []).filter(x => x && x.weightKg > 0 && x.gramsPerDay > 0);
+  if (!won || !g || !rows.length) return '';
+  const target = spKey === 'cat' ? 4 : guest.size === '소형견' ? 5 : guest.size === '대형견' ? 25 : 10;
+  const row = rows.slice().sort((a, b) => Math.abs(a.weightKg - target) - Math.abs(b.weightKg - target))[0];
+  const cost = Math.round((won / g) * row.gramsPerDay / 10) * 10;
+  if (!cost) return '';
+  const kg = Number.isInteger(row.weightKg) ? row.weightKg : Math.round(row.weightKg * 10) / 10;
+  return `${kg}kg 기준 하루 약 ${cost.toLocaleString('ko-KR')}원`;
+}
+
 // 계산 장면용 단가. 항상 100g당(사용자 확정) — 한 끼가 100g 안팎이라 체감이 쉽고,
 // 가격은 수시로 바뀌니 총액이 아니라 단가만 '약'으로 보여준다. 10원 단위 반올림.
 function unitPriceNote(price, title) {
@@ -3690,6 +3756,9 @@ async function handleDinerEpisode(env, body, ctx) {
     .filter(Boolean);
   const factsSafe = adSafeFacts(facts).slice(0, 5);
   const recentMenus = await recentMenuNames(env, title);
+  const guest = guestOf(title, factsSafe, spKey);
+  const senses = senseChecklist(foodEn);
+  const dailyNote = dailyCostNote(body.price, title, body.feeding, guest, spKey);
   const recentLines = await recentDinerLines(env);
   const banned = menuBannedWords(title);
   // 입장 훅 재료 — 02단계에서 확인된 '사기 전 불편'. 증상 이야기는 효능 암시가 되므로 뺀다.
@@ -3701,6 +3770,11 @@ async function handleDinerEpisode(env, body, ctx) {
 품목: ${category || '사료·간식'}
 주인공: ${sp.ko} (the ${sp.noun}) — ${hero}${note ? `\n추가 주문: ${note}` : ''}
 [가격] ${priceNote || '없음 — bill 대사에 숫자를 쓰지 마라'}
+[추천 손님 — 표기 기준] ${guest.note ? guest.note.replace('추천 손님: ', '') : '표기 없음'}${guest.mismatch ? `
+⚠️ 이 메뉴는 주인공(중형 시바견)의 체급·품종용이 아니다. order나 taste 중 한 줄에서 "내 체급 메뉴는 아니다"는 사실을
+   담담하게 인정하고 비틀어라(문장은 새로 지어라). 그래도 평가는 냉철하게 한다.` : ''}
+[시식 감각 항목 — serve·taste 대사는 여기서 클립마다 다른 항목을 골라 쓴다] ${senses}${dailyNote ? `
+[하루 비용] ${dailyNote} — bill 대사에서 100g당 가격 대신 이걸 써도 좋다(숫자 그대로).` : ''}
 [구매자 고민 — 주문(order) 대사 재료]
 ${worries.length ? '- ' + worries.join('\n- ') : '(없음 — 이 상품 종류에 흔한 고민 하나를 골라라)'}
 [확인된 정보 — 사실은 이 안에서만]
@@ -3805,7 +3879,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     // opening: 편집기가 세 번 끊어 뒤로 빠지는 줌을 입힌다 / menu: 상품 사진 메뉴판 / bill: 100g당 가격 계산서
     const card = role === 'enter' ? { type: 'opening' }
       : role === 'order' ? { type: 'menu', name: menuName }
-      : (role === 'bill' && priceNote ? { type: 'bill', text: priceNote } : null);
+      : (role === 'bill' && priceNote ? { type: 'bill', text: priceNote, sub: dailyNote } : null);
     return { no: i + 1, role, roleKo: DINER_ROLE_KO[role], shots, line, subtitle: line, wearing: false, card, imagePrompt, prompt };
   });
 
@@ -3824,7 +3898,8 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     '',
     shop ? `가게: ${shop}` : '',
     `오늘의 메뉴: ${menuName}`,
-    priceNote ? `계산: ${priceNote} (영상 제작 시점 쿠팡 판매가 기준, 가격은 변동될 수 있습니다)` : '',
+    guest.note || '',
+    priceNote ? `계산: ${priceNote}${dailyNote ? ' · ' + dailyNote : ''} (영상 제작 시점 쿠팡 판매가·포장 표기 급여량 기준, 가격은 변동될 수 있습니다)` : '',
     verdict ? `판정: ${verdict}` : '',
     '',
     `이 메뉴의 정체: ${title}`,
@@ -3843,6 +3918,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     species: spKey, speciesKo: sp.ko,
     problem: `${seriesTag} ${shop || '식당 에피소드'} · 오늘의 메뉴 「${menuName}」`,
     shop, verdict, priceNote, menuName, foodLook: foodEn,
+    guestNote: guest.note, guestMismatch: !!guest.mismatch, dailyNote,
     sceneBlock: scene,
     tone: String(out.tone || '낮고 담담한 독백 목소리').trim(),
     wearable: '',
@@ -4422,7 +4498,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var cat=$('c').value||'';
     var el=$('fmtHint'); if(!el) return;
     if(!title){ el.textContent=''; return; }
-    var who=/고양이|캣|냥|키튼|kitten|\\bcats?\\b|feline/i.test(title)?'고양이':'강아지';
+    var who=/고양이|캣|냥|키튼|kitten|\\bcats?\\b|feline|성묘|자묘|노령묘|반려묘|실내묘/i.test(title)?'고양이':'강아지';
     var food=/사료|간식|먹거리|식품/.test(cat);
     el.innerHTML = food
       ? '<b>식당 에피소드</b>로 만듭니다 · 주인공: <b>'+who+'</b><br>가게에 들어가 이 사료를 주문해 먹으며 속마음으로 평가합니다. 주문 장면엔 메뉴판(상품명 대신 메뉴 이름), 계산 장면엔 가격 계산서, 마지막엔 영수증이 붙습니다. 상품명은 영상에 나오지 않습니다.'
@@ -4540,7 +4616,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 
 
   /* ---- 02b 상품 특징·장점 자동 분석 ---- */
-  var lastPains = [], lastBenefits = [];
+  var lastPains = [], lastBenefits = [], lastFeeding = [];
   function group(title, cls, items, withEv){
     if(!items.length) return null;
     var g=document.createElement('div'); g.className='ins-grp';
@@ -4565,12 +4641,15 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       if(!r||!r.success){ say('insMsg',(r&&r.error)||'분석하지 못했습니다.','no'); return; }
       lastPains=(r.pains||[]).map(function(x){ return x.text; });
       lastBenefits=(r.titleFeatures||[]).concat(r.verified||[]).map(function(x){ return x.text; });
+      lastFeeding=r.feeding||[];
       saveSoon();
       var out=$('insOut'); out.textContent='';
       var g1=group('상품명으로 확인된 것 (확실)','sure',r.titleFeatures||[],true); if(g1) out.appendChild(g1);
       var g2=group('후기에서 이 상품으로 확인된 것','sure',r.verified||[],true); if(g2) out.appendChild(g2);
       var g3=group('같은 품목의 일반적인 이야기 (참고)','maybe',r.general||[],true); if(g3) out.appendChild(g3);
       var g4=group('쓰기 전에 겪던 불편 (영상 소재로 쓰임)','pain',r.pains||[],false); if(g4) out.appendChild(g4);
+      var fd=(r.feeding||[]).map(function(x){ return { text: x.weightKg+'kg · 하루 '+x.gramsPerDay+'g', evidence: x.evidence }; });
+      var g5=group('확인된 급여량 (하루 비용 계산에 쓰임)','sure',fd,false); if(g5) out.appendChild(g5);
       if((r.sources||[]).length){
         var sd=document.createElement('div'); sd.className='ins-src';
         sd.appendChild(document.createTextNode('찾아본 글 '+r.sources.length+'건 · '));
@@ -4614,7 +4693,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       out.appendChild(pb);
     }
     // 04단계 편집기에 장면 카드(메뉴판·계산서) 위치를 넘긴다. 자막과 같은 순서(클립 번호)로 붙는다.
-    window.PET_EPISODE = { format: r.format||'reel', series: r.series||'', episode: r.episode||0, priceNote: r.priceNote||'', menuName: r.menuName||'',
+    window.PET_EPISODE = { format: r.format||'reel', series: r.series||'', episode: r.episode||0, priceNote: r.priceNote||'', menuName: r.menuName||'', guestNote: r.guestNote||'', dailyNote: r.dailyNote||'',
       cards: (r.clips||[]).map(function(c){ return c.card||null; }) };
     try{ document.dispatchEvent(new CustomEvent('pet-episode')); }catch(e){}
     var subs=(r.clips||[]).map(function(c){ return c.subtitle; }).filter(Boolean).join('\\n');
@@ -4710,7 +4789,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       title:title, category:$('c').value, dog:$('pdog').value.trim(), cat:$('pcat').value.trim(),
       price:$('pr').value, link:$('l').value.trim(),
       clips:parseInt($('pclips').value,10), note:$('pnote').value.trim(),
-      pains:lastPains, benefits:lastBenefits
+      pains:lastPains, benefits:lastBenefits, feeding:lastFeeding
     }).then(function(res){
       $('mk').disabled=false;
       if(res && res.success && (res.clips||[]).length){
@@ -4728,7 +4807,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var o = { fields:{} };
     SAVE_FIELDS.forEach(function(id){ var el=$(id); if(el) o.fields[id]=el.value; });
     var sc=document.getElementById('edScript'); if(sc) o.script=sc.value;
-    o.pains=lastPains; o.benefits=lastBenefits; o.result=lastResult;
+    o.pains=lastPains; o.benefits=lastBenefits; o.feeding=lastFeeding; o.result=lastResult;
     return o;
   }
   function hasWork(o){
@@ -4781,7 +4860,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       });
       var sc=document.getElementById('edScript'); if(sc) sc.value='';
       $('pOut').textContent=''; $('insOut').textContent='';
-      lastPains=[]; lastBenefits=[]; lastResult=null;
+      lastPains=[]; lastBenefits=[]; lastFeeding=[]; lastResult=null;
       $('resumeBar').hidden=true;
     });
   });
@@ -4795,7 +4874,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
         var el=$(id);
         if(el && d.fields && d.fields[id]!=null && d.fields[id]!=='') el.value=d.fields[id];
       });
-      lastPains = d.pains || []; lastBenefits = d.benefits || [];
+      lastPains = d.pains || []; lastBenefits = d.benefits || []; lastFeeding = d.feeding || [];
       if(d.result){ lastResult = d.result; renderPrompts(d.result); }
       // renderPrompts 가 자막 칸을 덮어쓰므로 저장본을 마지막에 되돌린다.
       var sc=document.getElementById('edScript');
@@ -5066,7 +5145,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       var nl=wrapFit(ctx,name,cw*0.86), ny=cy+chh*0.52+(nl.length>1?0:fs2*0.35);
       for(var i=0;i<nl.length;i++){ ctx.fillText(nl[i],w/2,ny); ny+=fs2*1.2; }
     } else if(card.type==='bill' && card.text){
-      var bw=w*0.50, bh=h*0.155, bx=w-bw-w*0.05, by=bar+h*0.035;
+      var bw=w*0.50, bh=card.sub?h*0.18:h*0.155, bx=w-bw-w*0.05, by=bar+h*0.035;
       ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=w*0.025; ctx.shadowOffsetY=h*0.004;
       ctx.fillStyle='#FFFFFF'; roundRect(ctx,bx,by,bw,bh,w*0.012); ctx.fill();
       ctx.shadowColor='transparent';
@@ -5079,6 +5158,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       ctx.fillStyle='#22282B'; ctx.font='800 '+f2+"px 'Noto Sans KR', sans-serif";
       var lines2=wrapFit(ctx,card.text,bw-pad*2), yy=by+f1*2.6+f2*1.3;
       for(var j=0;j<lines2.length;j++){ ctx.fillText(lines2[j],bx+pad,yy); yy+=f2*1.2; }
+      if(card.sub){ ctx.fillStyle='#8A6A4F'; ctx.font='700 '+Math.round(w/36)+"px 'Noto Sans KR', sans-serif"; ctx.fillText(card.sub, bx+pad, yy-f2*0.35); }
       ctx.fillStyle='#8A918D'; ctx.font='500 '+f3+"px 'Noto Sans KR', sans-serif";
       ctx.fillText('쿠팡 판매가 기준 · 변동 가능', bx+pad, by+bh-f3*1.1);
     }
@@ -5128,7 +5208,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var bar=barOf(h), a=Math.min(1,t/0.35), lift=(1-a)*h*0.02;
     ctx.fillStyle='#EFE9DF'; ctx.fillRect(0,0,w,h);
     ctx.save(); ctx.globalAlpha=a;
-    var rw=w*0.74, rh=h*0.41, rx=(w-rw)/2, ry=(h-rh)/2-h*0.02+lift, pad=rw*0.09, tooth=w*0.022;
+    var extra=(ep.dailyNote?0.03:0)+(ep.guestNote?0.045:0);
+    var rw=w*0.74, rh=h*(0.41+extra), rx=(w-rw)/2, ry=(h-rh)/2-h*0.02+lift, pad=rw*0.09, tooth=w*0.022;
     ctx.shadowColor='rgba(0,0,0,.16)'; ctx.shadowBlur=w*0.04; ctx.shadowOffsetY=h*0.006;
     ctx.fillStyle='#FFFFFF';
     ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx+rw,ry); ctx.lineTo(rx+rw,ry+rh);
@@ -5147,6 +5228,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var ml=wrapFit(ctx,ep.menuName||'오늘의 메뉴',rw-pad*2);
     for(var i=0;i<ml.length;i++){ ctx.fillText(ml[i],cx,y); y+=f3*1.3; }
     if(ep.priceNote){ y+=f2*0.4; ctx.fillStyle='#8A6A4F'; ctx.font='700 '+f3+"px 'Noto Sans KR', sans-serif"; ctx.fillText(ep.priceNote,cx,y); y+=f3*0.6; }
+    if(ep.dailyNote){ y+=f2*1.1; ctx.fillStyle='#8A6A4F'; ctx.font='600 '+f2+"px 'Noto Sans KR', sans-serif"; ctx.fillText(ep.dailyNote,cx,y); }
+    if(ep.guestNote){ y+=f2*1.7; ctx.fillStyle='#55605B'; ctx.font='600 '+f2+"px 'Noto Sans KR', sans-serif";
+      var gl=wrapFit(ctx,ep.guestNote,rw-pad*2); for(var gi=0;gi<gl.length;gi++){ ctx.fillText(gl[gi],cx,y); y+=f2*1.35; } }
     y+=f2*1.2; dash(y);
     y+=f4*1.9; ctx.fillStyle='#2F6F5E'; ctx.font='800 '+f4+"px 'Noto Sans KR', sans-serif";
     ctx.fillText('이 메뉴는', cx, y); y+=f4*1.3; ctx.fillText('프로필 링크에서', cx, y);
