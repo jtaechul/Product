@@ -444,7 +444,8 @@ def _veo(key, start: Path, prompt: str, setimg: Path | None = None) -> bytes:
 CLIP_TAIL = ("\nThe first attached image is the FIRST FRAME. The second attached image (if any) is the empty restaurant set "
              "for reference: the room, door, walls, floor, table, seat, lamp and props must stay exactly like these images "
              "for the whole clip — nothing is added, removed, moved or reshaped. Only the camera and the character move, "
-             "slowly and smoothly. The bowl and the food never change.\nSOUND: none needed (it will be replaced). No dialogue. "
+             "slowly and smoothly. The bowl and the food never change. Keep the framing of the first frame: the camera does "
+             "not pull back into a wide shot and does not cut to another angle at the end.\nSOUND: none needed (it will be replaced). No dialogue. "
              "NEVER SHOW: text, letters, numbers, logos, packaging, humans, banknotes or cash, the character changing shape, "
              "morphing objects, changing furniture, cuts.")
 
