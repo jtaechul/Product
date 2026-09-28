@@ -1,0 +1,313 @@
+{
+  "character": {
+    "ok": true,
+    "source": "characters/dog.png"
+  },
+  "set": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview"
+  },
+  "keyframes": {
+    "c01": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c02": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c03": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c04": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c05": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c06": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c07": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    }
+  },
+  "clips": {
+    "c01": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 44.2
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c02": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 34.5
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c03": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": false,
+          "error": "Omni HTTP 504: {\"error\":{\"message\":\"Deadline expired before operation could complete.\",\"code\":\"deadline_exceeded\"}}"
+        },
+        {
+          "model": "veo-lite",
+          "ok": true,
+          "wait_s": 52.5
+        }
+      ],
+      "model": "veo-lite",
+      "sec": 8.0
+    },
+    "c04": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 35.0
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c05": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 34.6
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c06": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 41.9
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c07": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 49.7
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    }
+  },
+  "tts": {
+    "c01": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.36
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 0.97
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 0.95
+        }
+      ],
+      "ok": true,
+      "sec": 5.84
+    },
+    "c02": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 2.73
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 2.84
+        }
+      ],
+      "ok": true,
+      "sec": 5.84
+    },
+    "c03": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 1.19
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.73
+        }
+      ],
+      "ok": true,
+      "sec": 5.2
+    },
+    "c04": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.58
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 2.4
+        }
+      ],
+      "ok": true,
+      "sec": 6.26
+    },
+    "c05": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 2.95
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 4.28
+        }
+      ],
+      "ok": true,
+      "sec": 7.51
+    },
+    "c06": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 4.37
+        }
+      ],
+      "ok": true,
+      "sec": 4.37
+    },
+    "c07": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 0.75
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.86
+        }
+      ],
+      "ok": true,
+      "sec": 4.89
+    }
+  },
+  "assemble": {
+    "ok": true,
+    "sec": 57.13,
+    "clips": 7,
+    "segments": [
+      {
+        "clip": "c01",
+        "len": 8.0,
+        "voice": 5.84,
+        "slow": 1.0
+      },
+      {
+        "clip": "c02",
+        "len": 8.0,
+        "voice": 5.84,
+        "slow": 1.0
+      },
+      {
+        "clip": "c03",
+        "len": 8.0,
+        "voice": 5.2,
+        "slow": 1.0
+      },
+      {
+        "clip": "c04",
+        "len": 8.0,
+        "voice": 6.26,
+        "slow": 1.0
+      },
+      {
+        "clip": "c05",
+        "len": 8.71,
+        "voice": 7.51,
+        "slow": 1.089
+      },
+      {
+        "clip": "c06",
+        "len": 8.0,
+        "voice": 4.37,
+        "slow": 1.0
+      },
+      {
+        "clip": "c07",
+        "len": 8.0,
+        "voice": 4.89,
+        "slow": 1.0
+      }
+    ]
+  },
+  "last_request": {
+    "file": "01_full.json",
+    "ran_at": "2026-09-28T15:44:37Z",
+    "ok": true
+  }
+}
