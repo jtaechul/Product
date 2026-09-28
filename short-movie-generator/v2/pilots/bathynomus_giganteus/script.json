@@ -677,7 +677,6 @@
           "tts": "おおきさは さいだい ごじゅっセンチ ちかく。とうあしるいの なかでは、せかいさいだいです。"
         }
       ],
-      "pending_edit": true,
       "verification_note": "운영자 수정 대사 — 사실 대조 재검증 필요(대본 재검증 규칙)"
     },
     {
@@ -799,22 +798,22 @@
         {
           "jp_seg": null,
           "start": 0.15,
-          "end": 1.84
+          "end": 1.841
         },
         {
           "jp_seg": null,
-          "start": 1.84,
-          "end": 2.86
+          "start": 1.841,
+          "end": 2.861
         },
         {
           "jp_seg": null,
-          "start": 2.86,
-          "end": 3.96
+          "start": 2.861,
+          "end": 3.962
         },
         {
           "jp_seg": null,
-          "start": 3.96,
-          "end": 6.92
+          "start": 3.962,
+          "end": 6.922
         }
       ]
     },
@@ -829,17 +828,17 @@
         {
           "jp_seg": null,
           "start": 0.15,
-          "end": 1.71
+          "end": 1.712
         },
         {
           "jp_seg": null,
-          "start": 1.71,
-          "end": 2.59
+          "start": 1.712,
+          "end": 2.595
         },
         {
           "jp_seg": null,
-          "start": 2.59,
-          "end": 4.36
+          "start": 2.595,
+          "end": 4.363
         }
       ]
     },
@@ -847,53 +846,53 @@
       "cut": 3,
       "sec": 6,
       "audio_from": 11.0,
-      "audio_to": 16.219,
-      "speech_s": 5.22,
+      "audio_to": 16.2,
+      "speech_s": 5.2,
       "lead": 0.15,
       "local_tps": [
         {
           "jp_seg": null,
           "start": 0.15,
-          "end": 2.63
+          "end": 2.635
         },
         {
           "jp_seg": null,
-          "start": 2.63,
-          "end": 4.09
+          "start": 2.635,
+          "end": 4.06
         },
         {
           "jp_seg": null,
-          "start": 4.09,
-          "end": 5.37
+          "start": 4.06,
+          "end": 5.35
         }
       ]
     },
     {
       "cut": 4,
       "sec": 8,
-      "audio_from": 16.219,
-      "audio_to": 22.62,
+      "audio_from": 16.2,
+      "audio_to": 22.6,
       "speech_s": 6.4,
       "lead": 0.15,
       "local_tps": [
         {
           "jp_seg": null,
           "start": 0.15,
-          "end": 0.92
+          "end": 0.925
         },
         {
           "jp_seg": null,
-          "start": 0.92,
-          "end": 2.31
+          "start": 0.925,
+          "end": 2.308
         },
         {
           "jp_seg": null,
-          "start": 2.31,
-          "end": 3.2
+          "start": 2.308,
+          "end": 3.204
         },
         {
           "jp_seg": null,
-          "start": 3.2,
+          "start": 3.204,
           "end": 6.55
         }
       ]
@@ -901,78 +900,78 @@
     {
       "cut": 5,
       "sec": 8,
-      "audio_from": 22.62,
-      "audio_to": 28.254,
+      "audio_from": 22.6,
+      "audio_to": 28.235,
       "speech_s": 5.63,
       "lead": 0.15,
       "local_tps": [
         {
           "jp_seg": null,
           "start": 0.15,
-          "end": 1.43
+          "end": 1.434
         },
         {
           "jp_seg": null,
-          "start": 1.43,
-          "end": 4.08
+          "start": 1.434,
+          "end": 4.076
         },
         {
           "jp_seg": null,
-          "start": 4.08,
-          "end": 5.78
+          "start": 4.076,
+          "end": 5.785
         }
       ]
     },
     {
       "cut": 6,
       "sec": 6,
-      "audio_from": 28.254,
-      "audio_to": 33.737,
+      "audio_from": 28.235,
+      "audio_to": 33.718,
       "speech_s": 5.48,
       "lead": 0.15,
       "local_tps": [
         {
           "jp_seg": null,
           "start": 0.15,
-          "end": 2.6
+          "end": 2.601
         },
         {
           "jp_seg": null,
-          "start": 2.6,
-          "end": 3.65
+          "start": 2.601,
+          "end": 3.654
         },
         {
           "jp_seg": null,
-          "start": 3.65,
-          "end": 5.63
+          "start": 3.654,
+          "end": 5.633
         }
       ]
     },
     {
       "cut": 7,
       "sec": 6,
-      "audio_from": 33.737,
-      "audio_to": 38.003,
+      "audio_from": 33.718,
+      "audio_to": 37.984,
       "speech_s": 4.27,
       "lead": 0.15,
       "local_tps": [
         {
           "jp_seg": null,
           "start": 0.15,
-          "end": 1.92
+          "end": 1.919
         },
         {
           "jp_seg": null,
-          "start": 1.92,
-          "end": 4.42
+          "start": 1.919,
+          "end": 4.416
         }
       ]
     },
     {
       "cut": 8,
       "sec": 6,
-      "audio_from": 38.003,
-      "audio_to": 42.483,
+      "audio_from": 37.984,
+      "audio_to": 42.464,
       "speech_s": 4.48,
       "lead": 0.15,
       "local_tps": [
@@ -984,16 +983,16 @@
         {
           "jp_seg": null,
           "start": 1.05,
-          "end": 2.42
+          "end": 2.424
         },
         {
           "jp_seg": null,
-          "start": 2.42,
-          "end": 3.17
+          "start": 2.424,
+          "end": 3.169
         },
         {
           "jp_seg": null,
-          "start": 3.17,
+          "start": 3.169,
           "end": 4.63
         }
       ]
@@ -1006,5 +1005,222 @@
     "c4": "줌인 끝 0.5초 눈이 약간 둥글게 보임 → 5.0초부터 겹눈 확대 인서트로 전환",
     "c7": "달력 종이에 인쇄 무늬(숫자처럼 보임, 작음)",
     "others": "양호 — c8은 조명이 꺼지며 어둠으로 사라짐(엔딩 연결)"
-  }
+  },
+  "superseded_timing": [
+    {
+      "at": "2026-09-28T02:04:17Z",
+      "timing": [
+        {
+          "cut": 1,
+          "sec": 8,
+          "audio_from": 0.015,
+          "audio_to": 6.787,
+          "speech_s": 6.77,
+          "lead": 0.15,
+          "local_tps": [
+            {
+              "jp_seg": null,
+              "start": 0.15,
+              "end": 1.84
+            },
+            {
+              "jp_seg": null,
+              "start": 1.84,
+              "end": 2.86
+            },
+            {
+              "jp_seg": null,
+              "start": 2.86,
+              "end": 3.96
+            },
+            {
+              "jp_seg": null,
+              "start": 3.96,
+              "end": 6.92
+            }
+          ]
+        },
+        {
+          "cut": 2,
+          "sec": 6,
+          "audio_from": 6.787,
+          "audio_to": 11.0,
+          "speech_s": 4.21,
+          "lead": 0.15,
+          "local_tps": [
+            {
+              "jp_seg": null,
+              "start": 0.15,
+              "end": 1.71
+            },
+            {
+              "jp_seg": null,
+              "start": 1.71,
+              "end": 2.59
+            },
+            {
+              "jp_seg": null,
+              "start": 2.59,
+              "end": 4.36
+            }
+          ]
+        },
+        {
+          "cut": 3,
+          "sec": 6,
+          "audio_from": 11.0,
+          "audio_to": 16.219,
+          "speech_s": 5.22,
+          "lead": 0.15,
+          "local_tps": [
+            {
+              "jp_seg": null,
+              "start": 0.15,
+              "end": 2.63
+            },
+            {
+              "jp_seg": null,
+              "start": 2.63,
+              "end": 4.09
+            },
+            {
+              "jp_seg": null,
+              "start": 4.09,
+              "end": 5.37
+            }
+          ]
+        },
+        {
+          "cut": 4,
+          "sec": 8,
+          "audio_from": 16.219,
+          "audio_to": 22.62,
+          "speech_s": 6.4,
+          "lead": 0.15,
+          "local_tps": [
+            {
+              "jp_seg": null,
+              "start": 0.15,
+              "end": 0.92
+            },
+            {
+              "jp_seg": null,
+              "start": 0.92,
+              "end": 2.31
+            },
+            {
+              "jp_seg": null,
+              "start": 2.31,
+              "end": 3.2
+            },
+            {
+              "jp_seg": null,
+              "start": 3.2,
+              "end": 6.55
+            }
+          ]
+        },
+        {
+          "cut": 5,
+          "sec": 8,
+          "audio_from": 22.62,
+          "audio_to": 28.254,
+          "speech_s": 5.63,
+          "lead": 0.15,
+          "local_tps": [
+            {
+              "jp_seg": null,
+              "start": 0.15,
+              "end": 1.43
+            },
+            {
+              "jp_seg": null,
+              "start": 1.43,
+              "end": 4.08
+            },
+            {
+              "jp_seg": null,
+              "start": 4.08,
+              "end": 5.78
+            }
+          ]
+        },
+        {
+          "cut": 6,
+          "sec": 6,
+          "audio_from": 28.254,
+          "audio_to": 33.737,
+          "speech_s": 5.48,
+          "lead": 0.15,
+          "local_tps": [
+            {
+              "jp_seg": null,
+              "start": 0.15,
+              "end": 2.6
+            },
+            {
+              "jp_seg": null,
+              "start": 2.6,
+              "end": 3.65
+            },
+            {
+              "jp_seg": null,
+              "start": 3.65,
+              "end": 5.63
+            }
+          ]
+        },
+        {
+          "cut": 7,
+          "sec": 6,
+          "audio_from": 33.737,
+          "audio_to": 38.003,
+          "speech_s": 4.27,
+          "lead": 0.15,
+          "local_tps": [
+            {
+              "jp_seg": null,
+              "start": 0.15,
+              "end": 1.92
+            },
+            {
+              "jp_seg": null,
+              "start": 1.92,
+              "end": 4.42
+            }
+          ]
+        },
+        {
+          "cut": 8,
+          "sec": 6,
+          "audio_from": 38.003,
+          "audio_to": 42.483,
+          "speech_s": 4.48,
+          "lead": 0.15,
+          "local_tps": [
+            {
+              "jp_seg": null,
+              "start": 0.15,
+              "end": 1.05
+            },
+            {
+              "jp_seg": null,
+              "start": 1.05,
+              "end": 2.42
+            },
+            {
+              "jp_seg": null,
+              "start": 2.42,
+              "end": 3.17
+            },
+            {
+              "jp_seg": null,
+              "start": 3.17,
+              "end": 4.63
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

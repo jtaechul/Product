@@ -53,6 +53,11 @@
           "at": "2026-09-28T01:00:13Z",
           "kind": "error",
           "text": "대사 반영 실패 — 나레이션 합성 오류(요청 r09280100_tts)"
+        },
+        {
+          "at": "2026-09-28T02:04:17Z",
+          "kind": "apply_lines",
+          "text": "수정한 대사 반영 — 나레이션 다시 읽기 + 재조립(영상 컷은 그대로)"
         }
       ]
     },
@@ -170,7 +175,7 @@
     },
     "script": {
       "script": "script.json",
-      "audio": "out/22_body_tts/body.wav",
+      "audio": "out/r09280204_tts/body.wav",
       "cuts": [
         {
           "cut": 1,
@@ -199,8 +204,8 @@
           "tts": "おおきさは さいだい ごじゅっセンチ ちかく。とうあしるいの なかでは、せかいさいだいです。",
           "fact": "F3,F9",
           "sec": 6,
-          "speech_s": 5.22,
-          "pending": true
+          "speech_s": 5.2,
+          "pending": false
         },
         {
           "cut": 4,
@@ -254,9 +259,7 @@
         }
       ],
       "verification": "재검증 v5 통과(사실 대조·일본어 중복 검사·표기/읽기 대조) — script.json verification_v5",
-      "pending_lines": [
-        3
-      ]
+      "pending_lines": []
     },
     "storyboard": {
       "sheet": "out/20_storyboard_v5/storyboard_v5.jpg",
@@ -332,15 +335,15 @@
       ],
       "assemble": {
         "clips_id": "23_clips_v5",
-        "tts_id": "22_body_tts",
+        "tts_id": "r09280204_tts",
         "ending": "out/17_ending/ending_bathynomus.mp4"
       },
-      "built_at": "2026-09-27T23:42:55Z"
+      "built_at": "2026-09-28T02:07:17Z"
     },
     "upload": {}
   },
   "checks": {
-    "at": "2026-09-27T23:42:55Z",
+    "at": "2026-09-28T02:07:17Z",
     "duration_s": 65.22,
     "white_edge_px": {
       "value": 0,
@@ -364,6 +367,12 @@
       "video": 5.4,
       "total": 6.9
     },
-    "spent": []
+    "spent": [
+      {
+        "at": "2026-09-28T02:04:17Z",
+        "what": "대사 반영 나레이션 다시 읽기",
+        "usd": 0.01
+      }
+    ]
   }
 }
