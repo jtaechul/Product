@@ -81,7 +81,7 @@
         {
           "model": "omni",
           "ok": true,
-          "wait_s": 35.0
+          "wait_s": 44.9
         }
       ],
       "model": "omni",
@@ -114,7 +114,7 @@
         {
           "model": "omni",
           "ok": true,
-          "wait_s": 49.7
+          "wait_s": 41.0
         }
       ],
       "model": "omni",
@@ -306,8 +306,8 @@
     ]
   },
   "last_request": {
-    "file": "02_reassemble.json",
-    "ran_at": "2026-09-28T15:53:17Z",
+    "file": "03_redo.json",
+    "ran_at": "2026-09-28T15:58:29Z",
     "ok": true
   }
 }
