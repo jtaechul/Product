@@ -165,7 +165,8 @@ KF_HEAD = ("Create the FIRST FRAME of one shot of a vertical 9:16 film. "
            "proportions), a natural four-legged animal with no clothes, no collar and no accessories. "
            "Reference image 2 is THE restaurant set: this shot happens inside exactly this room — the same door, walls, "
            "floor, the same table (same wood, shape and size) and seat, the same lamp and prop. Only the camera position "
-           "and framing change, as given in SHOT. ")
+           "and framing change, as given in SHOT. Do NOT copy the camera angle of reference image 2 — it only shows what the "
+           "room looks like; frame this shot exactly as SHOT says (close-up, overhead, low angle and so on). ")
 KF_FOOD = ("Reference image {n} is the real food: draw exactly these food pieces (same shape, size, colour and texture) in "
            "the same shallow plain white ceramic bowl. Never show any packaging or bag. ")
 KF_TAIL = ("\nNo text, letters, numbers, signs with writing, logos or watermarks anywhere. No humans. No banknotes, coins or cash. "
@@ -657,8 +658,8 @@ def receipt_png(ep, food: Path | None, out: Path):
     im.convert("RGB").save(out, quality=95)
 
 
-# 컷 사이 전환(다음 컷의 역할별). 너무 요란하지 않게 드라마식으로.
-TRANSITIONS = {"order": "fadeblack", "serve": "smoothleft", "taste": "dissolve", "bill": "smoothup",
+# 컷 사이 전환(다음 컷의 역할별). 너무 요란하지 않게 드라마식으로. dissolve는 모래알 노이즈가 생겨 쓰지 않는다.
+TRANSITIONS = {"order": "fadeblack", "serve": "smoothleft", "taste": "fade", "bill": "smoothup",
                "exit": "fadeblack", "outro": "fade"}
 XF = 0.4
 LEAD = 0.45              # 컷 시작 후 대사가 시작되기까지(초)
