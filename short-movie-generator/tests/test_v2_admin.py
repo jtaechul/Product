@@ -107,15 +107,20 @@ def test_admin_pages_render_and_buttons_dispatch():
 REAL = ROOT / "v2" / "pilots" / "bathynomus_giganteus"
 
 
+def cur_tts() -> str:
+    return json.loads((REAL / "status.json").read_text(encoding="utf-8"))["artifacts"]["video"]["assemble"]["tts_id"]
+
+
 @pytest.fixture()
 def real_copy(tmp_path, monkeypatch):
     pilots = tmp_path / "pilots"
     dst = pilots / "bathynomus_giganteus"
-    (dst / "out" / "22_body_tts").mkdir(parents=True)
+    tts = cur_tts()                                         # 지금 완성본이 쓰는 나레이션(반영할 때마다 바뀐다)
+    (dst / "out" / tts).mkdir(parents=True)
     (dst / "requests").mkdir()
     for f in ("script.json", "status.json"):
         shutil.copy(REAL / f, dst / f)
-    shutil.copy(REAL / "out/22_body_tts/body_timepoints.json", dst / "out/22_body_tts/body_timepoints.json")
+    shutil.copy(REAL / "out" / tts / "body_timepoints.json", dst / "out" / tts / "body_timepoints.json")
     monkeypatch.setattr(admin, "V2", tmp_path)
     monkeypatch.setattr(admin, "PILOTS", pilots)
     return dst
@@ -143,7 +148,7 @@ def test_edit_line_rejects_reading_with_different_chunks(real_copy):
 
 def test_timing_unchanged_audio_reproduces_current_cut_times(real_copy):
     sc = json.loads((real_copy / "script.json").read_text(encoding="utf-8"))
-    tps = json.loads((real_copy / "out/22_body_tts/body_timepoints.json").read_text(encoding="utf-8"))
+    tps = json.loads((real_copy / "out" / cur_tts() / "body_timepoints.json").read_text(encoding="utf-8"))
     timing, problems = admin.plan_timing(sc, tps)
     assert problems == []
     for a, b in zip(timing, sc["timing_v5"]):
@@ -153,7 +158,7 @@ def test_timing_unchanged_audio_reproduces_current_cut_times(real_copy):
 
 def test_apply_stops_without_touching_video_when_line_too_long(real_copy, monkeypatch):
     admin.edit_line("bathynomus_giganteus", 3, "大きさは最大50センチ近く。ダンゴムシの仲間では、世界最大です。")
-    tps = json.loads((real_copy / "out/22_body_tts/body_timepoints.json").read_text(encoding="utf-8"))
+    tps = json.loads((real_copy / "out" / cur_tts() / "body_timepoints.json").read_text(encoding="utf-8"))
     for t in tps[8:]:                          # 3번 컷(조각 7~9)의 두 번째 조각부터 밀어 3번 컷이 3초 길어졌다고 가정
         t["start"] += 3.0
         t["end"] = (t["end"] or 0) + 3.0
@@ -171,7 +176,7 @@ def test_apply_stops_without_touching_video_when_line_too_long(real_copy, monkey
     st = admin.apply_lines("bathynomus_giganteus")
     sc = json.loads((real_copy / "script.json").read_text(encoding="utf-8"))
     assert called == []                                                  # 재조립 안 함
-    assert st["artifacts"]["video"]["assemble"]["tts_id"] == "22_body_tts"   # 나레이션 교체 안 함
+    assert st["artifacts"]["video"]["assemble"]["tts_id"] == cur_tts()   # 나레이션 교체 안 함
     assert sc["timing_v5"] == json.loads((REAL / "script.json").read_text(encoding="utf-8"))["timing_v5"]
     assert any("3번 컷" in x for x in st["artifacts"]["script"]["apply_blocked"])
     assert not any(n.get("kind") == "redo_cut" for n in st["stages"]["video"]["notes"])   # 컷 재생성 안 함
