@@ -200,6 +200,7 @@ def test_line_edit_page_buttons():
     assert r["recut_plan_dispatch"][0]["action"] == "recut_plan" and r["recut_plan_dispatch"][0]["note"]["min_transitions"] == 2
     assert r["recut_approve_dispatch"] == ["recut_approve:8"]
     assert r["upload_fields"] and r["upload_no_revise_box"]
+    assert r["download_buttons"] == 2 and r["download_fetches_final"]         # 완성본 저장(영상·업로드 카드)
 
 
 # ── 검증 ①② (운영자 확정 2026-09-28): AI 교차 검사 + 근거 원문 ──

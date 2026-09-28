@@ -150,7 +150,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-28-6 (업로드: 제목·설명·해시태그 + 유튜브 업로드)";
+const BUILD="v2026-09-28-7 (완성본 영상 저장)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2463,7 +2463,7 @@ function v2stageBody(st,stage){
         (ck[k].value!=null?(' — '+esc(ck[k].value)+(u?(" "+u):"")):"")+' <span style="opacity:.6">('+esc(ck[k].rule||"")+')</span></div>').join("");
     const spent=((st.cost||{}).spent||[]).reduce((s,x)=>s+(+x.usd||0),0);
     return '<span class="lbl">완성본'+(ck.duration_s?(' ('+ck.duration_s+'초)'):'')+'</span>'+
-      '<video controls playsinline preload="metadata" src="'+v2media(pid,a.final,rev)+'#t=0.5"></video>'+
+      '<video controls playsinline preload="metadata" src="'+v2media(pid,a.final,rev)+'#t=0.5"></video>'+v2dlHTML("v")+
       (rows?'<div class="sect">자동 검사'+(ck.at?(' · '+v2when(ck.at)):'')+'</div>'+rows:'')+
       '<div class="sect">컷별 검수 — 마음에 안 드는 컷만 다시 만들기</div>'+
       '<div class="v2clips">'+(a.clips||[]).map(c=>'<div class="v2clip">'+
@@ -2482,11 +2482,11 @@ function v2stageBody(st,stage){
   }
   if(stage==="upload"){
     const m=a.meta||null, res=a.result||null;
-    if(res&&res.url)return '<div class="cfact"><span class="ok">업로드 완료</span> ('+esc(res.privacy||"")+') · <a href="'+esc(res.url)+'" target="_blank">유튜브에서 보기</a></div>'+
+    if(res&&res.url)return v2dlHTML("u")+'<div class="cfact"><span class="ok">업로드 완료</span> ('+esc(res.privacy||"")+') · <a href="'+esc(res.url)+'" target="_blank">유튜브에서 보기</a></div>'+
       '<div class="hint">고정 댓글은 유튜브 앱에서 직접 달고 고정해 주세요(유튜브가 자동 고정을 막아 둠): <b>'+esc((m&&m.pinned_comment)||"")+'</b></div>';
     if(!m)return '<div class="hint" style="margin-top:0">완성본을 승인하면 유튜브 제목·설명·해시태그를 자동으로 씁니다.</div>'+
       '<button class="btn save" id="upmeta" style="width:100%;margin-top:8px">제목·설명 AI로 쓰기 (약 $0.01)</button>';
-    return '<div class="dual" style="margin-top:4px"><div><span class="lbl">제목 (일본어 · 실제로 올라감)</span><input id="up_tj" value="'+esc(m.title_jp)+'"></div>'+
+    return v2dlHTML("u")+'<div class="dual" style="margin-top:4px"><div><span class="lbl">제목 (일본어 · 실제로 올라감)</span><input id="up_tj" value="'+esc(m.title_jp)+'"></div>'+
         '<div><span class="lbl">제목 (한국어 · 확인용)</span><input id="up_tk" value="'+esc(m.title_ko)+'"></div></div>'+
       '<div class="dual"><div><span class="lbl">설명 (일본어 · 실제로 올라감)</span><textarea id="up_dj">'+esc(m.desc_jp)+'</textarea></div>'+
         '<div><span class="lbl">설명 (한국어 · 확인용)</span><textarea id="up_dk">'+esc(m.desc_ko)+'</textarea></div></div>'+
@@ -2521,6 +2521,10 @@ function v2recutPanels(st){
       '<button class="btn save" data-rcgo="'+c.cut+'" style="width:100%;margin-top:8px">'+(rc.state==="conti_review"?"방향 고쳐 콘티 다시 만들기":"콘티 먼저 만들기")+' (약 $0.13 · 영상은 아직 안 만듦)</button></div>';
     return h;}).join("");
 }
+// ── 완성본 저장(운영자 요청 2026-09-28 · 인스타그램 등 직접 올리기용) ──
+//   아이폰: 공유 창이 열리면 「비디오 저장」 → 사진 앱에 저장. 안 되면 안내에 뜨는 직접 저장 링크.
+function v2dlHTML(k){return '<button class="btn save" data-v2dl="'+k+'" style="width:100%;margin-top:10px">완성본 영상 저장 (휴대폰 사진에 저장)</button>'+
+  '<div class="hint" id="v2dlhint-'+k+'"></div>';}
 // 미반영 대사 안내(대본·영상 카드 공용) + 반영이 막혔을 때 이유
 function v2pendingNote(a){
   const pend=(a&&a.pending_lines)||[], bl=(a&&a.apply_blocked)||[];
@@ -2659,6 +2663,12 @@ async function renderV2Episode(pid){
     if(!String(d.title_jp||"").trim()){banner("일본어 제목이 비어 있습니다.","err");return;}
     await v2do("save_meta",pid,"",JSON.stringify(d),us);
   };
+  const va=(st.artifacts||{}).video||{};
+  document.querySelectorAll("[data-v2dl]").forEach(b=>b.onclick=()=>{
+    if(!va.final){banner("아직 완성본이 없습니다.","err");return;}
+    const k=b.dataset.v2dl; b.id="v2dlbtn-"+k;
+    saveVideo(v2media(pid,va.final,va.built_at||""),(st.name_ko||pid)+".mp4",{btn:"#v2dlbtn-"+k,hint:"#v2dlhint-"+k});
+  });
   const asm=$("#v2asm");if(asm)asm.onclick=async()=>{if(confirm("완성본을 다시 조립하고 자동 검사를 돌릴까요? (무료)"))await v2do("assemble",pid,"","",asm);};
 }
 

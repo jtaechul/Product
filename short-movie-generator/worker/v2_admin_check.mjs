@@ -155,6 +155,14 @@ statusOverride = st6; els = {}; await api.renderV2Episode("bathynomus_giganteus"
 const up6 = ep6.slice(ep6.indexOf('id="stg-upload"'));
 res.upload_fields = ['id="up_tj"', 'id="up_dj"', 'id="up_dk"', 'id="up_pv"', 'id="upsave"', "#ダイオウグソクムシ"].every(x => up6.includes(x));
 res.upload_no_revise_box = !up6.includes('id="note-upload"') && up6.includes("승인 → 유튜브 업로드");
+res.download_buttons = (ep6.match(/data-v2dl="/g) || []).length;   // 영상 카드 + 업로드 카드
+{ // 저장 버튼 → 워커 프록시의 완성본 주소로 받는지(아이폰 공유 창 경로)
+  const fetched = []; const of = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { if (String(u).includes("/api/media")) { fetched.push(String(u)); return { ok: true, status: 200, blob: async () => new Blob(["x"]) }; } return of(u, o); };
+  Object.defineProperty(globalThis, "navigator", { value: { canShare: () => true, share: async () => {} }, configurable: true }); globalThis.File = class { constructor(p, n) { this.name = n; } };
+  const b = (lists["[data-v2dl]"] || [])[0]; if (b?.onclick) await b.onclick(); for (let i = 0; i < 20; i++) await Promise.resolve();
+  res.download_fetches_final = fetched.some(u => decodeURIComponent(u).includes("out/24_final/bathynomus_v5.mp4"));
+  globalThis.fetch = of; }
 statusOverride = null;
 
 els = {}; window.location.pathname = "/legacy"; api.renderHome(); res.legacy_home_renders = (els.view?.innerHTML || "").includes("쇼츠 생성 시작");
