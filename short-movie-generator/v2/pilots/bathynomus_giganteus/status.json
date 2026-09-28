@@ -185,7 +185,17 @@
           "fact": "F1",
           "sec": 8,
           "speech_s": 6.77,
-          "pending": false
+          "pending": false,
+          "facts": [
+            {
+              "id": "F1",
+              "fact": "1878년 멕시코만 해저에서 수컷이 발견(드라이 토르투가스 앞바다 어부의 그물), 1879년 A. Milne-Edwards가 기재",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/ダイオウグソクムシ",
+                "https://en.wikipedia.org/wiki/Bathynomus_giganteus"
+              ]
+            }
+          ]
         },
         {
           "cut": 2,
@@ -195,7 +205,16 @@
           "fact": "F2",
           "sec": 6,
           "speech_s": 4.21,
-          "pending": false
+          "pending": false,
+          "facts": [
+            {
+              "id": "F2",
+              "fact": "생김새는 공벌레(ダンゴムシ)를 닮았지만 분류상으로는 갯강구(フナムシ)에 가깝다",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+              ]
+            }
+          ]
         },
         {
           "cut": 3,
@@ -205,7 +224,23 @@
           "fact": "F3,F9",
           "sec": 6,
           "speech_s": 5.2,
-          "pending": false
+          "pending": false,
+          "facts": [
+            {
+              "id": "F3",
+              "fact": "몸길이 20~40cm, 최대 50cm 가까이 · 1kg 이상",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+              ]
+            },
+            {
+              "id": "F9",
+              "fact": "등각류(等脚類) 중 세계 최대 — '等脚類としては世界最大'",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+              ]
+            }
+          ]
         },
         {
           "cut": 4,
@@ -215,7 +250,24 @@
           "fact": "F1,F10",
           "sec": 8,
           "speech_s": 6.4,
-          "pending": false
+          "pending": false,
+          "facts": [
+            {
+              "id": "F1",
+              "fact": "1878년 멕시코만 해저에서 수컷이 발견(드라이 토르투가스 앞바다 어부의 그물), 1879년 A. Milne-Edwards가 기재",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/ダイオウグソクムシ",
+                "https://en.wikipedia.org/wiki/Bathynomus_giganteus"
+              ]
+            },
+            {
+              "id": "F10",
+              "fact": "머리의 검은 겹눈은 약 3,500개의 낱눈으로 이뤄짐 — '頭部の黒い複眼は約3500個の個眼から形成'",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+              ]
+            }
+          ]
         },
         {
           "cut": 5,
@@ -225,7 +277,32 @@
           "fact": "F4,F5,F11",
           "sec": 8,
           "speech_s": 5.63,
-          "pending": false
+          "pending": false,
+          "facts": [
+            {
+              "id": "F4",
+              "fact": "서식 수심 310~2,140m(서대서양·멕시코만·카리브해) — 일본 위키는 200~1,000m로 적어 출처 간 차이가 있음 → 화면 수치는 '2,000m를 넘는 곳까지'로 표현",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Bathynomus_giganteus",
+                "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+              ]
+            },
+            {
+              "id": "F5",
+              "fact": "해저에 가라앉은 큰 물고기·고래 사체, 약한 생물 등을 먹는 청소부",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/ダイオウグソクムシ",
+                "https://en.wikipedia.org/wiki/Bathynomus_giganteus"
+              ]
+            },
+            {
+              "id": "F11",
+              "fact": "'深海の掃除屋'라고 불림 · 심해 모래·진흙 바닥(砂泥地)에 서식",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/ダイオウグソクムシ"
+              ]
+            }
+          ]
         },
         {
           "cut": 6,
@@ -235,7 +312,18 @@
           "fact": "F7",
           "sec": 6,
           "speech_s": 5.48,
-          "pending": false
+          "pending": false,
+          "facts": [
+            {
+              "id": "F7",
+              "fact": "도바 수족관 No.1: 2007-09-09 입관 → 2009-01-02 전갱이(アジ) 약 50g을 먹은 뒤 먹지 않음 → 2014-02-14 사망. 절식 5년 43일(1,869일). 해부 결과 위는 비어 있었고 사인은 불명",
+              "sources": [
+                "https://www.nikkei.com/article/DGXNASFK1404F_U4A210C1000000/",
+                "https://iseshima.keizai.biz/headline/1962/",
+                "https://aquarium.co.jp/topics/id=250/"
+              ]
+            }
+          ]
         },
         {
           "cut": 7,
@@ -245,7 +333,27 @@
           "fact": "F7,F12",
           "sec": 6,
           "speech_s": 4.27,
-          "pending": false
+          "pending": false,
+          "facts": [
+            {
+              "id": "F7",
+              "fact": "도바 수족관 No.1: 2007-09-09 입관 → 2009-01-02 전갱이(アジ) 약 50g을 먹은 뒤 먹지 않음 → 2014-02-14 사망. 절식 5년 43일(1,869일). 해부 결과 위는 비어 있었고 사인은 불명",
+              "sources": [
+                "https://www.nikkei.com/article/DGXNASFK1404F_U4A210C1000000/",
+                "https://iseshima.keizai.biz/headline/1962/",
+                "https://aquarium.co.jp/topics/id=250/"
+              ]
+            },
+            {
+              "id": "F12",
+              "fact": "도바 수족관 개체가 먹은 것은 약 50g의 아지 · 절식 5년 1개월(1,869일) · 2014년 2월 사망",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/ダイオウグソクムシ",
+                "https://www.nikkei.com/article/DGXNASFK1404F_U4A210C1000000/",
+                "https://iseshima.keizai.biz/headline/1962/"
+              ]
+            }
+          ]
         },
         {
           "cut": 8,
@@ -255,7 +363,18 @@
           "fact": "F7",
           "sec": 6,
           "speech_s": 4.48,
-          "pending": false
+          "pending": false,
+          "facts": [
+            {
+              "id": "F7",
+              "fact": "도바 수족관 No.1: 2007-09-09 입관 → 2009-01-02 전갱이(アジ) 약 50g을 먹은 뒤 먹지 않음 → 2014-02-14 사망. 절식 5년 43일(1,869일). 해부 결과 위는 비어 있었고 사인은 불명",
+              "sources": [
+                "https://www.nikkei.com/article/DGXNASFK1404F_U4A210C1000000/",
+                "https://iseshima.keizai.biz/headline/1962/",
+                "https://aquarium.co.jp/topics/id=250/"
+              ]
+            }
+          ]
         }
       ],
       "verification": "재검증 v5 통과(사실 대조·일본어 중복 검사·표기/읽기 대조) — script.json verification_v5",

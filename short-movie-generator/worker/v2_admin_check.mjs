@@ -88,7 +88,12 @@ res.dispatches = dispatched.map(d => ({ wf: d.url.split("/workflows/")[1].split(
 const scr2 = ep.slice(ep.indexOf('id="stg-script"'), ep.indexOf('id="stg-storyboard"'));
 res.line_edit_buttons = (scr2.match(/data-edit="/g) || []).length;
 res.line_save_says_video_unchanged = scr2.includes("영상은 안 바뀜");
-res.no_apply_button_without_edits = !ep.includes('id="v2apply"') && ep.includes('id="v2asm"');
+{ // 미반영 대사가 없는 상태를 만들어 확인(실제 파일은 3번 컷 교정이 미반영 상태일 수 있다)
+  const st0 = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+  st0.artifacts.script.pending_lines = []; st0.artifacts.script.cuts.forEach(c => { c.pending = false; });
+  statusOverride = st0; const keep = els; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  const e0 = els.view.innerHTML; res.no_apply_button_without_edits = !e0.includes('id="v2apply"') && e0.includes('id="v2asm"');
+  statusOverride = null; els = {}; await api.renderV2Episode("bathynomus_giganteus"); }
 const d0 = dispatched.length;
 const sv = (lists["[data-saveline]"] || []).find(b => b.dataset.saveline === "3");
 els["edjp-3"] = makeEl("edjp-3"); els["edjp-3"].value = "大きさは最大50センチ近く。世界最大の仲間です。";
@@ -102,6 +107,19 @@ const stNow = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/
 stNow.artifacts.script.pending_lines = [3]; stNow.artifacts.script.cuts[2].pending = true;
 statusOverride = stNow; els = {}; await api.renderV2Episode("bathynomus_giganteus"); const ep2 = els.view.innerHTML;
 res.pending_shows_apply_and_asm = ep2.includes('id="v2apply"') && ep2.includes('id="v2asm"') && ep2.includes("아직 영상에 반영 안 된 컷: 3번");
+statusOverride = null;
+// ── 검증 ①② : 근거 원문 표시 + AI 의심 표시·제안 ──
+const scr3 = ep.slice(ep.indexOf('id="stg-script"'), ep.indexOf('id="stg-storyboard"'));
+res.fact_text_per_cut = (scr3.match(/class="v2fact"/g) || []).length;
+res.crosscheck_button = scr3.includes('id="v2cc"');
+const st3 = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+st3.artifacts.script.crosscheck = { at: "2026-09-28T00:00:00Z", issues: [{ cut: 3, type: "scope", problem_ko: "범위 착오", facts: ["F9"], suggestion_jp: "等脚類の中では、世界最大です。", suggestion_ko: "등각류 중 최대" }] };
+st3.stages.script.state = "review";
+statusOverride = st3; els = {}; await api.renderV2Episode("bathynomus_giganteus"); const ep3 = els.view.innerHTML;
+res.flag_shown = ep3.includes("AI 의심") && ep3.includes("의심 1건") && ep3.includes('data-usesug="0"');
+const sug = (lists["[data-usesug]"] || [])[0]; els["edjp-3"] = makeEl("edjp-3");
+if (sug?.onclick) sug.onclick();
+res.suggestion_fills_editor = els["edjp-3"].value === "等脚類の中では、世界最大です。";
 statusOverride = null;
 
 els = {}; window.location.pathname = "/legacy"; api.renderHome(); res.legacy_home_renders = (els.view?.innerHTML || "").includes("쇼츠 생성 시작");

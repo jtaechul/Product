@@ -19,6 +19,7 @@
   python admin.py ready <id> <stage> [메모]      # 작업 결과가 나왔음 → 승인 대기로
   python admin.py edit_line <id> <컷> '<json>'   # 컷 대사 수정(대본만 · 영상은 안 바뀜)
   python admin.py apply_lines <id>              # 수정한 대사를 영상에 반영(나레이션 다시 읽기 + 재조립만)
+  python admin.py crosscheck <id>               # AI 교차 검사(대본 전체 × 사실 전체 — 모순·범위·근거 없음)
   python admin.py topics                        # 주제 후보 목록(topics.json) 갱신
   python admin.py index                         # 편 목록(index.json) 갱신
 """
@@ -214,9 +215,96 @@ def _sync_script_artifacts(st: dict, sc: dict) -> None:
             continue
         t = tm.get(c["cut"], {})
         cuts.append({"cut": c["cut"], "jp": c["jp"], "ko": c.get("ko", ""), "tts": c["tts"], "fact": c.get("fact", ""),
-                     "sec": t.get("sec"), "speech_s": t.get("speech_s"), "pending": bool(c.get("pending_edit"))})
+                     "sec": t.get("sec"), "speech_s": t.get("speech_s"), "pending": bool(c.get("pending_edit")),
+                     "facts": facts_for(sc, c.get("fact", ""))})
     st.setdefault("artifacts", {}).setdefault("script", {})["cuts"] = cuts
     st["artifacts"]["script"]["pending_lines"] = [c["cut"] for c in cuts if c["pending"]]
+
+
+def facts_for(sc: dict, ids: str) -> list[dict]:
+    """컷이 근거로 든 F번호(예: 'F3,F9')의 원문·출처 — 관리자 페이지에서 대사 바로 옆에 보여준다(검증 ②)."""
+    by = {f["id"]: f for f in sc.get("facts", [])}
+    return [{"id": i, "fact": by[i]["fact"], "sources": by[i].get("sources", [])}
+            for i in re.findall(r"F\d+", ids or "") if i in by]
+
+
+# ── 검증 ① AI 교차 검사(운영자 확정 2026-09-28) ─────────────────────────────
+# 줄 하나를 자기 근거(F번호) 하나와만 대조하면, 대본 안의 **다른 줄·다른 사실과의 모순**을 놓친다
+# (실사고: 2번 컷 "분류상 갯강구에 가깝다" ↔ 3번 컷 "공벌레 무리 중 세계 최대" — 출처는 "등각류 전체 중 최대").
+# → 대본 전체 + 사실 전체를 한 번에 AI에게 주고 모순·근거 없음·범위 착오를 찾게 한다. 결과는 관리자 페이지에 빨간 표시.
+CROSSCHECK_MODEL = "gemini-2.5-pro"
+_CC_PROMPT = """あなたは科学ドキュメンタリーの厳格なファクトチェッカーです。
+下の「事実リスト」(出典つき)だけを根拠に、ナレーション台本の各カットを検査してください。
+特に次の3種類の誤りを探します:
+1. contradiction: 台本の中で、あるカットの主張が別のカットの主張や事実リストと矛盾している
+   (例: 「分類上はフナムシに近い」と言った後で「ダンゴムシの仲間で世界最大」と言う)
+2. scope: 比較・分類の範囲がずれている(出典は「等脚類全体で最大」なのに台本は「ダンゴムシの仲間で最大」など)
+3. unsupported: 事実リストにない数字・断定・誇張
+問題がなければ issues は空にしてください。推測で問題を作らないこと。
+出力は JSON のみ:
+{"issues":[{"cut":カット番号,"type":"contradiction|scope|unsupported","problem_ko":"무엇이 문제인지 한국어로 쉽게 1~2문장",
+"facts":["F3"],"suggestion_jp":"直した台詞(日本語)","suggestion_ko":"고친 대사(한국어)"}]}
+
+# 事実リスト
+{facts}
+
+# 台本
+{cuts}
+"""
+
+
+def _cc_parse(txt: str) -> list[dict]:
+    m = re.search(r"\{.*\}", txt or "", re.S)
+    if not m:
+        raise ValueError("JSON 없음")
+    out = []
+    for it in json.loads(m.group(0)).get("issues", []):
+        try:
+            out.append({"cut": int(it["cut"]), "type": str(it.get("type", "")), "problem_ko": str(it.get("problem_ko", "")),
+                        "facts": [str(x) for x in it.get("facts", [])],
+                        "suggestion_jp": str(it.get("suggestion_jp", "")), "suggestion_ko": str(it.get("suggestion_ko", ""))})
+        except (KeyError, ValueError, TypeError):
+            continue
+    return out
+
+
+def crosscheck(pid: str, ask=None) -> dict:
+    """대본 전체 교차 검사 → status.artifacts.script.crosscheck 에 저장. 실패해도 멈추지 않는다(결과에 오류 표시).
+    ask: 테스트용 대체 함수(prompt → 응답 텍스트)."""
+    st = load_status(pid)
+    sc = _load(_script_path(pid))
+    if not sc or not sc.get("cuts"):                        # 대본이 아직 없으면 검사할 것이 없다
+        return st
+    facts = "\n".join(f"{f['id']}: {f['fact']}" for f in sc.get("facts", []))
+    cuts = "\n".join(f"カット{c['cut']} [根拠 {c.get('fact', '')}] {c['jp']}" for c in sc["cuts"] if "tts" in c)
+    prompt = _CC_PROMPT.replace("{facts}", facts).replace("{cuts}", cuts)
+    res = {"at": _now(), "model": CROSSCHECK_MODEL}
+    try:
+        txt = (ask or _gemini_text)(prompt)
+        res["issues"] = _cc_parse(txt)
+    except Exception as e:                                   # noqa: BLE001 — 검사 실패가 제작을 막지 않게
+        res["error"] = f"AI 교차 검사 실패: {str(e)[:160]}"
+    st.setdefault("artifacts", {}).setdefault("script", {})["crosscheck"] = res
+    n = len(res.get("issues", []))
+    _note(st, "script", "crosscheck", res.get("error") or (f"AI 교차 검사: 의심 {n}건" if n else "AI 교차 검사: 문제 없음"))
+    _save(status_path(pid), st)
+    return st
+
+
+def _gemini_text(prompt: str) -> str:
+    import os
+    import urllib.request
+    key = os.environ.get("GEMINI_API_KEY", "")
+    if not key:
+        raise RuntimeError("GEMINI_API_KEY 없음")
+    body = {"contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
+    req = urllib.request.Request(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{CROSSCHECK_MODEL}:generateContent",
+        data=json.dumps(body).encode(), headers={"x-goog-api-key": key, "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=180) as r:
+        j = json.loads(r.read())
+    return "".join(p.get("text", "") for p in j["candidates"][0]["content"]["parts"])
 
 
 def edit_line(pid: str, cut: int, jp: str, ko: str = "", tts: str = "") -> dict:
@@ -241,7 +329,7 @@ def edit_line(pid: str, cut: int, jp: str, ko: str = "", tts: str = "") -> dict:
     _sync_script_artifacts(st, sc)
     _note(st, "script", "edit_line", f"{cut}번 컷 대사 수정 — 아직 영상에 반영 안 됨(「수정한 대사 영상에 반영」을 눌러야 반영)")
     _save(status_path(pid), st)
-    return st
+    return crosscheck(pid)                                  # 고친 대사도 곧바로 교차 검사
 
 
 def plan_timing(sc: dict, tps: list[dict], lead: float = 0.15) -> tuple[list[dict], list[str]]:
@@ -431,9 +519,13 @@ def main(argv: list[str]) -> int:
         st["stages"][a[1]]["state"] = "review"
         _note(st, a[1], "ready", memo(2) or "결과 준비됨 — 승인 대기")
         _save(status_path(a[0]), st)
+        if a[1] == "script":                                 # 대본이 나오면 승인 전에 자동 교차 검사
+            crosscheck(a[0])
     elif cmd == "edit_line":                                 # note = {"jp":..,"ko":..,"tts":..} (JSON)
         d = json.loads(memo(2) or "{}")
         edit_line(a[0], int(a[1]), d.get("jp", ""), d.get("ko", ""), d.get("tts", ""))
+    elif cmd == "crosscheck":
+        crosscheck(a[0])
     elif cmd == "apply_lines":
         apply_lines(a[0])
     elif cmd == "sync":                                      # 컷 목록 새로 만들기(script.json → status)

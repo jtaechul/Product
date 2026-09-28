@@ -120,6 +120,11 @@ button:disabled{opacity:.5}
 .v2edit{width:auto;margin-top:6px;padding:6px 12px;font-size:12px;min-height:36px}
 .v2ed{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#0a1018}
 .cfact.err{color:var(--rd)}
+.v2fact{font-size:12px;color:var(--gy);margin-top:4px;line-height:1.5;border-left:2px solid var(--line);padding-left:8px}
+.v2fact b{color:#c6d2da;font-weight:600}.v2fact a{color:var(--cy)}
+.v2flag{background:rgba(255,107,107,.07);border-left:3px solid var(--rd);padding-left:6px}
+.v2issue{font-size:13px;line-height:1.6;margin:8px 0;padding:8px;border:1px solid rgba(255,107,107,.4);border-radius:8px}
+.v2sug{margin-top:6px;color:var(--wt)}.v2sug small{display:block;color:var(--gy)}
 .v2cut{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(150,200,215,.08);font-size:14px;line-height:1.6}
 .v2cut b{color:var(--cy);min-width:18px}.v2cut small{display:block;color:var(--gy);font-size:12px}
 .v2clips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -142,7 +147,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-28-1 (v2 관리자: 컷별 대사 수정 · 반영 분리)";
+const BUILD="v2026-09-28-2 (대본 검증: AI 교차 검사 + 근거 원문)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2427,9 +2432,11 @@ function v2stageBody(st,stage){
     if(!a.cuts)return '<div class="hint">대본을 작성하고 있습니다. 끝나면 이 칸에 컷별 대사(일본어/한국어)와 나레이션 미리듣기가 나옵니다.</div>';
     return (a.audio?'<span class="lbl">나레이션 미리듣기 (1.33배)</span><audio controls preload="none" style="width:100%" src="'+v2media(pid,a.audio)+'"></audio>':'')+
       (a.verification?'<div class="hint">'+esc(a.verification)+'</div>':'')+
-      v2pendingNote(a)+
-      '<div class="sect">컷별 대사 — 고쳐도 영상은 자동으로 바뀌지 않습니다</div>'+a.cuts.map(c=>'<div class="v2cut"><b>'+c.cut+'</b><div style="flex:1">'+esc(c.jp)+
+      v2pendingNote(a)+v2ccBlock(a)+
+      '<div class="sect">컷별 대사 — 고쳐도 영상은 자동으로 바뀌지 않습니다</div>'+a.cuts.map(c=>'<div class="v2cut'+(v2ccCuts(a).has(c.cut)?' v2flag':'')+'"><b>'+c.cut+'</b><div style="flex:1">'+esc(c.jp)+
+        (v2ccCuts(a).has(c.cut)?' <span class="v2st fail">AI 의심</span>':'')+
         (c.pending?' <span class="v2st wait">수정됨 · 미반영</span>':'')+'<small>'+esc(c.ko)+'</small>'+
+        v2factsHTML(c)+
         '<button class="btn v2edit" data-edit="'+c.cut+'">대사 수정</button>'+
         '<div class="v2ed" id="ed-'+c.cut+'" style="display:none">'+
           '<span class="lbl">일본어 대사(화면 자막)</span><textarea id="edjp-'+c.cut+'" data-est="'+c.cut+'" style="min-height:70px">'+esc(c.jp)+'</textarea>'+
@@ -2481,6 +2488,29 @@ function v2pendingNote(a){
   return (pend.length?'<div class="cfact warn">수정했지만 아직 영상에 반영 안 된 컷: '+pend.join(", ")+'번 — 영상 제작 카드의 「수정한 대사 영상에 반영」을 눌러야 바뀝니다.</div>':'')+
     bl.map(x=>'<div class="cfact err">반영 보류: '+esc(x)+'</div>').join("");
 }
+// ── 검증 ② 근거 원문: 대사 바로 밑에 그 대사가 기댄 사실(F번호) 원문 + 출처 링크 ──
+function v2factsHTML(c){
+  const fs=c.facts||[];
+  if(!fs.length)return '<div class="v2fact">근거: '+(c.fact?esc(c.fact)+' (원문 없음)':'없음 — 확인 필요')+'</div>';
+  return fs.map(f=>'<div class="v2fact"><b>근거 '+esc(f.id)+'</b> '+esc(f.fact)+
+    ((f.sources||[]).length?' '+f.sources.map((u,i)=>'<a href="'+esc(u)+'" target="_blank">출처'+(i+1)+'</a>').join(" "):'')+'</div>').join("");
+}
+// ── 검증 ① AI 교차 검사 결과 ──
+function v2ccCuts(a){const cc=(a&&a.crosscheck)||{};return new Set((cc.issues||[]).map(x=>x.cut));}
+const CC_TYPE={contradiction:"서로 모순",scope:"범위 착오",unsupported:"근거 없음"};
+function v2ccBlock(a){
+  const cc=(a&&a.crosscheck)||null;
+  let h='<div class="sect">AI 교차 검사 — 대사끼리·사실과 어긋나는 곳 찾기</div>';
+  if(!cc)h+='<div class="cfact warn">아직 검사하지 않았습니다.</div>';
+  else if(cc.error)h+='<div class="cfact err">'+esc(cc.error)+'</div>';
+  else if(!(cc.issues||[]).length)h+='<div class="cfact"><span class="ok">문제 없음</span> · '+v2when(cc.at)+'</div>';
+  else h+='<div class="cfact err">의심 '+cc.issues.length+'건 · '+v2when(cc.at)+' — 아래 빨간 표시 컷을 근거와 비교해 보세요.</div>'+
+    cc.issues.map((x,i)=>'<div class="v2issue"><b>'+x.cut+'번 컷 · '+esc(CC_TYPE[x.type]||x.type)+'</b> '+esc(x.problem_ko)+
+      ((x.facts||[]).length?' <span style="opacity:.7">(근거 '+esc(x.facts.join(", "))+')</span>':'')+
+      (x.suggestion_jp?'<div class="v2sug">제안: '+esc(x.suggestion_jp)+'<small>'+esc(x.suggestion_ko||"")+'</small>'+
+        '<button class="btn v2edit" data-usesug="'+i+'">이 제안으로 고치기(저장 전 확인)</button></div>':'')+'</div>').join("");
+  return h+'<button class="btn v2edit" id="v2cc">AI 교차 검사 다시 하기 (약 $0.02)</button>';
+}
 // 새 대사 예상 길이(기존 대사 글자 수 대비 비례 추정 · 실제 길이는 반영 때 다시 잰다)
 function v2estimate(c,jp){
   if(!c||!c.speech_s||!c.sec)return "";
@@ -2527,7 +2557,8 @@ async function renderV2Episode(pid){
     const act=b.dataset.act, stage=b.dataset.stage, note=(($("#note-"+stage)||{}).value||"").trim();
     const lab=STG_KO[stage];
     if(act==="revise"&&!note){banner("수정 요청은 무엇을 고칠지 칸에 적어 주세요.","err");return;}
-    const msg=act==="approve"?(lab+"을(를) 승인할까요? 다음 단계가 열립니다.")
+    const nIss=stage==="script"?((((st.artifacts||{}).script||{}).crosscheck||{}).issues||[]).length:0;
+    const msg=act==="approve"?((nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):"")+lab+"을(를) 승인할까요? 다음 단계가 열립니다.")
              :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다.")
              :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다.");
     if(!confirm(msg))return;
@@ -2547,6 +2578,15 @@ async function renderV2Episode(pid){
     if(!jp){banner("대사가 비어 있습니다.","err");return;}
     if(!confirm(n+"번 컷 대사를 저장할까요? 대본만 바뀌고 영상은 그대로입니다(반영은 따로 버튼)."))return;
     if(await v2do("edit_line",pid,n,JSON.stringify({jp:jp,ko:ko,tts:tts}),b))setTimeout(()=>renderV2Episode(pid),60000);
+  });
+  const ccRes=((st.artifacts||{}).script||{}).crosscheck||{};
+  const cc=$("#v2cc");if(cc)cc.onclick=async()=>{if(confirm("대본 전체를 AI로 교차 검사할까요? (약 $0.02 · 1~2분)"))await v2do("crosscheck",pid,"","",cc);};
+  document.querySelectorAll("[data-usesug]").forEach(b=>b.onclick=()=>{
+    const x=(ccRes.issues||[])[+b.dataset.usesug];if(!x)return;
+    const e=$("#ed-"+x.cut);if(e)e.style.display="block";
+    const j=$("#edjp-"+x.cut),k=$("#edko-"+x.cut);if(j)j.value=x.suggestion_jp||"";if(k&&x.suggestion_ko)k.value=x.suggestion_ko;
+    const est=$("#est-"+x.cut),c=cutsA.find(y=>y.cut===x.cut);if(est)est.innerHTML=esc(v2estimate(c,x.suggestion_jp));
+    banner(x.cut+"번 컷 편집 칸에 AI 제안을 넣었습니다. 확인 후 「이 대사로 저장」을 누르세요.","ok");
   });
   const ap=$("#v2apply");if(ap)ap.onclick=async()=>{if(confirm("수정한 대사를 영상에 반영할까요? 나레이션을 다시 읽고 완성본을 다시 조립합니다(약 $0.01 · 영상 컷은 그대로)."))await v2do("apply_lines",pid,"","",ap);};
   const asm=$("#v2asm");if(asm)asm.onclick=async()=>{if(confirm("완성본을 다시 조립하고 자동 검사를 돌릴까요? (무료)"))await v2do("assemble",pid,"","",asm);};

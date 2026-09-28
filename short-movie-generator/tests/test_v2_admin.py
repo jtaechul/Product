@@ -184,3 +184,43 @@ def test_line_edit_page_buttons():
     assert r["line_edit_buttons"] == 8 and r["line_save_says_video_unchanged"]
     assert r["no_apply_button_without_edits"] and r["pending_shows_apply_and_asm"]
     assert r["edit_does_not_touch_video"] and r["edit_dispatch"][0]["action"] == "edit_line"
+    assert r["fact_text_per_cut"] >= 8 and r["crosscheck_button"]
+    assert r["flag_shown"] and r["suggestion_fills_editor"]
+
+
+# ── 검증 ①② (운영자 확정 2026-09-28): AI 교차 검사 + 근거 원문 ──
+def test_cut_rows_carry_fact_source_text(real_copy):
+    admin.main(["sync", "bathynomus_giganteus"])
+    c3 = admin.load_status("bathynomus_giganteus")["artifacts"]["script"]["cuts"][2]
+    assert [f["id"] for f in c3["facts"]] == ["F3", "F9"] and "等脚類" in c3["facts"][1]["fact"]
+    assert c3["facts"][0]["sources"]
+
+
+def test_crosscheck_sees_whole_script_and_stores_issues(real_copy):
+    # 사고 당시 대사로 되돌려, 검사기가 '다른 컷(2번)의 주장'과 '출처(F9)'를 함께 받는지 확인
+    sc = json.loads((real_copy / "script.json").read_text(encoding="utf-8"))
+    for c in sc["cuts"]:
+        if c.get("cut") == 3:
+            c["jp"] = "大きさは最大50センチ近く。ダンゴムシの仲間では、世界最大です。"
+    (real_copy / "script.json").write_text(json.dumps(sc, ensure_ascii=False), encoding="utf-8")
+    seen = {}
+
+    def fake_ask(prompt):
+        seen["p"] = prompt
+        return json.dumps({"issues": [{"cut": 3, "type": "scope", "problem_ko": "출처는 등각류 전체 중 최대",
+                                        "facts": ["F9"], "suggestion_jp": "等脚類の中では、世界最大です。",
+                                        "suggestion_ko": "등각류 중 세계 최대"}]})
+    st = admin.crosscheck("bathynomus_giganteus", ask=fake_ask)
+    p = seen["p"]
+    assert "フナムシ" in p and "ダンゴムシの仲間では、世界最大" in p and "等脚類" in p   # 다른 컷 + 출처 전체
+    assert "カット2" in p and "カット8" in p
+    iss = st["artifacts"]["script"]["crosscheck"]["issues"]
+    assert iss[0]["cut"] == 3 and iss[0]["type"] == "scope"
+
+
+def test_crosscheck_failure_does_not_block(real_copy):
+    def boom(prompt):
+        raise RuntimeError("GEMINI_API_KEY 없음")
+    st = admin.crosscheck("bathynomus_giganteus", ask=boom)
+    assert "실패" in st["artifacts"]["script"]["crosscheck"]["error"]
+    assert st["stages"]["video"]["state"] == "review"                  # 다른 단계는 그대로
