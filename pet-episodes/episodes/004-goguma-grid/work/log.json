@@ -1,0 +1,285 @@
+{
+  "character": {
+    "ok": true,
+    "source": "characters/dog.png"
+  },
+  "set": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview"
+  },
+  "storyboard": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview",
+    "layout": "2x4",
+    "aspect": "1:1"
+  },
+  "keyframes": {},
+  "clips": {
+    "c01": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 33.9
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c02": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 29.4
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c03": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 40.8
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c04": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 31.0
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c05": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 30.0
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c06": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 32.8
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c07": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 29.6
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    }
+  },
+  "tts": {
+    "c01": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.35
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 1.1
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 0.99
+        }
+      ],
+      "ok": true,
+      "sec": 6.0
+    },
+    "c02": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.0
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.35
+        }
+      ],
+      "ok": true,
+      "sec": 6.63
+    },
+    "c03": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 0.85
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 4.31
+        }
+      ],
+      "ok": true,
+      "sec": 5.44
+    },
+    "c04": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.1
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 2.19
+        }
+      ],
+      "ok": true,
+      "sec": 5.57
+    },
+    "c05": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.45
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.96
+        }
+      ],
+      "ok": true,
+      "sec": 7.69
+    },
+    "c06": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.93
+        }
+      ],
+      "ok": true,
+      "sec": 3.93
+    },
+    "c07": {
+      "voice": "Algenib",
+      "sents": [
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 0.8
+        },
+        {
+          "ok": true,
+          "model": "gemini-2.5-pro-preview-tts",
+          "voice": "Algenib",
+          "sec": 3.83
+        }
+      ],
+      "ok": true,
+      "sec": 4.91
+    }
+  },
+  "assemble": {
+    "ok": true,
+    "sec": 49.0,
+    "clips": 7,
+    "segments": [
+      {
+        "clip": "c01",
+        "len": 7.2,
+        "voice": 6.0,
+        "slow": 0.9
+      },
+      {
+        "clip": "c02",
+        "len": 7.83,
+        "voice": 6.63,
+        "slow": 0.979
+      },
+      {
+        "clip": "c03",
+        "len": 6.64,
+        "voice": 5.44,
+        "slow": 0.83
+      },
+      {
+        "clip": "c04",
+        "len": 6.77,
+        "voice": 5.57,
+        "slow": 0.846
+      },
+      {
+        "clip": "c05",
+        "len": 8.89,
+        "voice": 7.69,
+        "slow": 1.111
+      },
+      {
+        "clip": "c06",
+        "len": 5.13,
+        "voice": 3.93,
+        "slow": 0.641
+      },
+      {
+        "clip": "c07",
+        "len": 6.11,
+        "voice": 4.91,
+        "slow": 0.764
+      }
+    ]
+  },
+  "last_request": {
+    "file": "01_full.json",
+    "ran_at": "2026-09-28T23:13:06Z",
+    "ok": true
+  }
+}
