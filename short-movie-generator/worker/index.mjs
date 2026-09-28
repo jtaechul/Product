@@ -150,7 +150,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-28-4 (컷 수정 방향 → 콘티 → 승인 → 영상)";
+const BUILD="v2026-09-28-5 (AI 모델 자동 선택)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2494,7 +2494,7 @@ function v2recutPanels(st){
     const rc=rcs[String(c.cut)]||{}, pl=rc.plan||{}, cont=rc.conti||{}, open=rc.state&&rc.state!=="done"&&rc.state!=="cancelled";
     let h='<div class="v2rc" id="rc-'+c.cut+'" style="display:'+(open?'block':'none')+'"><b>'+c.cut+'번 컷 수정</b>'+
       (rc.state?' '+'<span class="v2st '+(rc.state==="conti_review"?"wait":rc.state==="error"?"fail":rc.state==="done"?"done":"prog")+'">'+esc(RC_ST[rc.state]||rc.state)+'</span>':'')+
-      (rc.error?'<div class="cfact err">'+esc(rc.error)+'</div>':'');
+      (rc.error?'<div class="cfact err">만들지 못했습니다 — 아래 「콘티 먼저 만들기」를 다시 눌러 주세요. (원인: '+esc(rc.error)+')</div>':'');
     if(rc.state==="conti_review"){
       h+='<div class="cfact">'+esc(pl.summary_ko||"")+'</div>'+
         (cont.sheet?'<img src="'+v2media(pid,cont.sheet)+'" loading="lazy" style="margin-top:8px">':'')+

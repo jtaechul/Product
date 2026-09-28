@@ -312,3 +312,15 @@ def test_recut_approve_builds_new_cut_and_reassembles(real_copy, monkeypatch):
 def test_recut_approve_needs_conti(real_copy):
     with pytest.raises(SystemExit):
         admin.recut_approve("bathynomus_giganteus", 8)
+
+
+def test_text_model_is_picked_from_what_the_server_offers():
+    """고정 모델 이름(gemini-2.5-pro)이 서버에서 404로 사라진 실사고 — 목록에서 고른다."""
+    L = [{"name": "models/gemini-3-pro-image-preview", "supportedGenerationMethods": ["generateContent"]},
+         {"name": "models/gemini-9-pro", "supportedGenerationMethods": ["generateContent"]},
+         {"name": "models/gemini-9-flash", "supportedGenerationMethods": ["generateContent"]},
+         {"name": "models/text-embedding-9", "supportedGenerationMethods": ["embedContent"]}]
+    assert admin.pick_text_model(L) == "gemini-9-pro"                     # 선호 목록에 없어도 pro 계열로
+    assert admin.pick_text_model(L[:1]) is None                          # 이미지 전용 모델은 고르지 않음
+    assert admin.pick_text_model(L + [{"name": "models/gemini-2.5-pro",
+                                       "supportedGenerationMethods": ["generateContent"]}]) == "gemini-2.5-pro"

@@ -245,7 +245,6 @@ def facts_for(sc: dict, ids: str) -> list[dict]:
 # 줄 하나를 자기 근거(F번호) 하나와만 대조하면, 대본 안의 **다른 줄·다른 사실과의 모순**을 놓친다
 # (실사고: 2번 컷 "분류상 갯강구에 가깝다" ↔ 3번 컷 "공벌레 무리 중 세계 최대" — 출처는 "등각류 전체 중 최대").
 # → 대본 전체 + 사실 전체를 한 번에 AI에게 주고 모순·근거 없음·범위 착오를 찾게 한다. 결과는 관리자 페이지에 빨간 표시.
-CROSSCHECK_MODEL = "gemini-2.5-pro"
 _CC_PROMPT = """あなたは科学ドキュメンタリーの厳格なファクトチェッカーです。
 下の「事実リスト」(出典つき)だけを根拠に、ナレーション台本の各カットを検査してください。
 特に次の3種類の誤りを探します:
@@ -291,9 +290,10 @@ def crosscheck(pid: str, ask=None) -> dict:
     facts = "\n".join(f"{f['id']}: {f['fact']}" for f in sc.get("facts", []))
     cuts = "\n".join(f"カット{c['cut']} [根拠 {c.get('fact', '')}] {c['jp']}" for c in sc["cuts"] if "tts" in c)
     prompt = _CC_PROMPT.replace("{facts}", facts).replace("{cuts}", cuts)
-    res = {"at": _now(), "model": CROSSCHECK_MODEL}
+    res = {"at": _now()}
     try:
         txt = (ask or _gemini_text)(prompt)
+        res["model"] = _TEXT_MODEL or "test"
         res["issues"] = _cc_parse(txt)
     except Exception as e:                                   # noqa: BLE001 — 검사 실패가 제작을 막지 않게
         res["error"] = f"AI 교차 검사 실패: {str(e)[:160]}"
@@ -304,18 +304,52 @@ def crosscheck(pid: str, ask=None) -> dict:
     return st
 
 
+TEXT_MODEL_PREFS = ["gemini-3-pro-preview", "gemini-3-pro", "gemini-3.1-pro-preview", "gemini-2.5-pro",
+                    "gemini-3-flash-preview", "gemini-2.5-flash"]
+_TEXT_MODEL = None
+
+
+def pick_text_model(names: list[dict], prefs: list[str] = TEXT_MODEL_PREFS) -> str | None:
+    """서버가 실제로 제공하는 모델 목록에서 고른다(고정 이름은 퇴역하면 404 — 실사고 2026-09-28).
+    ① 선호 목록 순서 ② 없으면 이름에 'pro'가 든 가장 최신 텍스트 모델 ③ 그다음 'flash'."""
+    ok = []
+    for m in names:
+        n = m.get("name", "").split("/")[-1]
+        if "generateContent" not in (m.get("supportedGenerationMethods") or []):
+            continue
+        if any(x in n for x in ("image", "tts", "embedding", "omni", "veo", "audio", "live", "vision", "aqa", "learnlm")):
+            continue
+        ok.append(n)
+    for n in prefs:
+        if n in ok:
+            return n
+    for tag in ("pro", "flash"):
+        c = sorted((n for n in ok if tag in n), reverse=True)
+        if c:
+            return c[0]
+    return None
+
+
 def _gemini_text(prompt: str) -> str:
     import os
     import urllib.request
+    global _TEXT_MODEL
     key = os.environ.get("GEMINI_API_KEY", "")
     if not key:
         raise RuntimeError("GEMINI_API_KEY 없음")
+    if not _TEXT_MODEL:
+        req = urllib.request.Request("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000",
+                                     headers={"x-goog-api-key": key})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            _TEXT_MODEL = pick_text_model(json.loads(r.read()).get("models", []))
+        if not _TEXT_MODEL:
+            raise RuntimeError("사용 가능한 텍스트 모델 없음")
     body = {"contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
     req = urllib.request.Request(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{CROSSCHECK_MODEL}:generateContent",
+        f"https://generativelanguage.googleapis.com/v1beta/models/{_TEXT_MODEL}:generateContent",
         data=json.dumps(body).encode(), headers={"x-goog-api-key": key, "Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=180) as r:
+    with urllib.request.urlopen(req, timeout=300) as r:
         j = json.loads(r.read())
     return "".join(p.get("text", "") for p in j["candidates"][0]["content"]["parts"])
 
@@ -424,7 +458,6 @@ def apply_lines(pid: str) -> dict:
 #   ② 2×2 **콘티 이미지 한 장**을 만든다(이미지 먼저 검토 규칙 · 약 $0.13)  → 운영자 승인 전에는 영상을 만들지 않는다
 #   ③ 승인하면 샷별로 영상(움직이는 샷=Omni, 멈춘 샷=무료 천천히 확대)을 만들어 한 컷으로 이어 붙이고 재조립한다.
 # 물음표 같은 기호는 AI 그림이 아니라 **편집에서 빨간 기호로** 얹는다(글자·기호를 AI가 그리면 뭉개짐 · 강조색 규칙).
-RECUT_MODEL = "gemini-2.5-pro"
 IMG_USD = 0.134
 _RECUT_PROMPT = """You plan a replacement for ONE cut of a Japanese science YouTube Short made in a handcrafted
 MINIATURE DIORAMA style (tilt-shift, warm practical light, rough hand-made props; the ONLY precise object is the
@@ -541,6 +574,7 @@ def recut_plan(pid: str, cut: int, direction: str, min_tr: int = 0, ask=None, ru
         _note(st, "video", "error", f"{cut}번 컷 수정 계획 실패 — {str(e)[:120]}")
         _save(status_path(pid), st)
         raise SystemExit(rc["error"])
+    rc["model"] = _TEXT_MODEL or "test"
     rc.update(plan={"summary_ko": plan.get("summary_ko", ""), "shots": shots, "panels": plan.get("panels", {}),
                     "omni_prompts": plan.get("omni_prompts", {})},
               estimate_usd=recut_estimate(shots))
@@ -579,12 +613,7 @@ def recut_plan(pid: str, cut: int, direction: str, min_tr: int = 0, ask=None, ru
 
 
 def _recut_ask(prompt: str) -> str:
-    global CROSSCHECK_MODEL
-    keep, CROSSCHECK_MODEL = CROSSCHECK_MODEL, RECUT_MODEL
-    try:
-        return _gemini_text(prompt)
-    finally:
-        CROSSCHECK_MODEL = keep
+    return _gemini_text(prompt)
 
 
 def _qmark_png(path: Path) -> Path:
