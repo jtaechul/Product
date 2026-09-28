@@ -3881,7 +3881,17 @@ async function handleFoodReference(env, body) {
     const img = (d?.candidates?.[0]?.content?.parts || []).find(p => p.inlineData?.data);
     if (!img) { lastErr = '이미지가 비어 왔습니다'; continue; }
     await bumpImageUsage(env);
-    return { success: true, image: `data:${img.inlineData.mimeType || 'image/png'};base64,${img.inlineData.data}`,
+    // 휴대폰(특히 아이폰)은 data: 주소를 '저장'하지 못한다 → KV에 7일 보관하고 진짜 파일 주소로 내려준다.
+    const mime = img.inlineData.mimeType || 'image/png';
+    const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+    let fileUrl = '';
+    if (env.PENDING_POSTS) {
+      try {
+        await env.PENDING_POSTS.put('food_ref:' + id, img.inlineData.data, { expirationTtl: 7 * 24 * 3600, metadata: { mime } });
+        fileUrl = `/api/food-reference/${id}.${/jpe?g/.test(mime) ? 'jpg' : 'png'}`;
+      } catch {}
+    }
+    return { success: true, url: fileUrl, image: fileUrl || `data:${mime};base64,${img.inlineData.data}`,
       foodLook: fl.look, foodLookSource: fl.source, foodLookNote: fl.note, usedPhotos: imgs.length };
   }
   throw new Error(`음식 참고 이미지를 만들지 못했습니다: ${lastErr}`);
@@ -4871,9 +4881,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
         msg.textContent=r.usedPhotos?'실제 상품 사진 '+r.usedPhotos+'장을 보고 만들었습니다.':'상품 사진을 못 받아 글 묘사로만 만들었습니다. 실제와 다르면 쓰지 마세요.';
         var im=document.createElement('img'); im.src=r.image; im.alt='음식 참고 이미지';
         im.style.cssText='display:block;width:100%;max-width:320px;border-radius:10px;margin-top:8px';
-        var a=document.createElement('a'); a.href=r.image; a.download='food-reference.png'; a.textContent='이미지 저장하기';
+        var a=document.createElement('a'); a.href=r.url ? r.url+'?dl=1' : r.image; a.download='food-reference.png'; a.textContent='이미지 저장하기';
         a.className='btn btn-2 btn-sm'; a.style.cssText='display:inline-block;margin-top:8px;text-decoration:none';
         holder.appendChild(im); holder.appendChild(a);
+        if(r.url){ var hint=document.createElement('div'); hint.className='sub'; hint.textContent='저장이 안 되면 사진을 길게 눌러 "사진에 저장"을 고르세요.'; holder.appendChild(hint); }
       }).catch(function(e){ btn.disabled=false; msg.textContent='만들지 못했습니다: '+e.message; });
     });
     box.appendChild(btn); box.appendChild(msg); box.appendChild(holder);
@@ -5690,6 +5701,18 @@ export default {
       }
 
       // 책 표지 프록시 — 네이버 이미지를 우리 도메인으로 받아 캔버스 CORS 오염 없이 그릴 수 있게
+      const frm = url.pathname.match(/^\/api\/food-reference\/([a-f0-9]{16})\.(png|jpg)$/);
+      if (frm && env.PENDING_POSTS) {
+        const { value, metadata } = await env.PENDING_POSTS.getWithMetadata('food_ref:' + frm[1]);
+        if (!value) return new Response('expired', { status: 404, headers: CORS });
+        const bin = Uint8Array.from(atob(value), c => c.charCodeAt(0));
+        const dl = url.searchParams.has('dl');
+        return new Response(bin, { headers: {
+          'Content-Type': (metadata && metadata.mime) || 'image/png',
+          'Content-Disposition': `${dl ? 'attachment' : 'inline'}; filename="food-reference.${frm[2]}"`,
+          'Cache-Control': 'public, max-age=604800', 'Access-Control-Allow-Origin': '*' } });
+      }
+
       if (url.pathname === '/api/cover') {
         const src = url.searchParams.get('url') || '';
         // 허용 도메인: 네이버(도서 시절) + 쿠팡(현재 상품 사진).
