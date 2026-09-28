@@ -115,6 +115,7 @@ def main(src: str, dst: str, cta_wav: str, cta_tp: str | None = None,
          recap_wav: str | None = None, recap_text: str | None = None, recap_tp: str | None = None) -> None:
     import json
     import karaoke
+    karaoke.verify_font()        # ★자막 글꼴 자가 검사(본편과 같은 규칙)
     tps = json.loads(Path(cta_tp).read_text(encoding="utf-8")) if cta_tp else None
     src_d, nar_d = _dur(src), _dur(cta_wav)
     recap = None

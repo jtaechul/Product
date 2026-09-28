@@ -14,6 +14,7 @@
 | `Pretendard-Medium.woff2` | Pretendard Medium | 한국어 본문·팩트 | SIL OFL 1.1 | github.com/orioncactus/pretendard |
 | `YujiSyuku-Regular.ttf` | Yuji Syuku | v2 공용 엔딩 손글씨(일본어 붓글씨) | SIL OFL 1.1 | Google Fonts |
 | `NotoSansJP-VF.ttf` | Noto Sans JP (가변 굵기) | v2 하단 나레이션 자막(일본어 굵은 고딕) | SIL OFL 1.1 | Google Fonts |
+| `subs/NotoSansJP-Bold.ttf` | Noto Sans JP Bold (가변 글꼴에서 굵기 700 고정본 생성 · fontTools instancer) | v2 하단 자막 번인 전용 — libass가 가변 글꼴을 이름으로 못 찾아 서버에서 네모(□)로 깨진 사고 대응 | SIL OFL 1.1 | Google Fonts(파생) |
 
 > OFL 요약: 소프트웨어/제품에 번들·임베드 가능, 서체 자체를 단독 판매만 금지.
 > 영상에 렌더된 결과물의 상업적 사용에는 제약이 없다.

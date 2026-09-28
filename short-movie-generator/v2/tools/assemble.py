@@ -133,6 +133,7 @@ def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: P
 
 def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, overrides: dict | None = None) -> None:
     """overrides: {컷번호: 클립 경로} — 관리자 페이지에서 그 컷만 다시 만든 경우 새 클립을 쓴다."""
+    karaoke.verify_font()        # ★자막 글꼴 자가 검사 — 네모(□)·빈칸이면 여기서 멈춘다(영상을 만들지 않음)
     P = Path(pilot)
     sc = json.loads((P / "script.json").read_text(encoding="utf-8"))
     cuts = {c["cut"]: c for c in sc["cuts"] if "tts" in c}

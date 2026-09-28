@@ -147,7 +147,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-28-2 (대본 검증: AI 교차 검사 + 근거 원문)";
+const BUILD="v2026-09-28-3 (자막 글꼴 자가 검사)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2455,7 +2455,7 @@ function v2stageBody(st,stage){
   if(stage==="video"){
     if(!a.final)return '<div class="hint">영상을 만들고 있습니다.</div>';
     const ck=st.checks||{};
-    const rows=[["white_edge_px","가장자리 흰 줄","px"],["loudness_lufs","음량","LUFS"],["music","음악 없음",""]]
+    const rows=[["subtitle_font","자막 글꼴",""],["white_edge_px","가장자리 흰 줄","px"],["loudness_lufs","음량","LUFS"],["music","음악 없음",""]]
       .filter(([k])=>ck[k]).map(([k,lab,u])=>'<div class="cfact"><span class="'+(ck[k].ok?"ok":"err")+'">'+(ck[k].ok?"통과":"불통과")+'</span> '+esc(lab)+
         (ck[k].value!=null?(' — '+esc(ck[k].value)+(u?(" "+u):"")):"")+' <span style="opacity:.6">('+esc(ck[k].rule||"")+')</span></div>').join("");
     const spent=((st.cost||{}).spent||[]).reduce((s,x)=>s+(+x.usd||0),0);

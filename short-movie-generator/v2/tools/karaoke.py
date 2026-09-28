@@ -12,6 +12,7 @@ v2에서 바꾼 점 하나: 조각을 **문장부호(、。？！)에서만** �
 """
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import sys
@@ -21,8 +22,13 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from src.core import narration_sync as NS  # noqa: E402
 
-FONTS_DIR = ROOT / "vendor" / "fonts"
+# ★자막 글꼴은 '굵기 고정(static) Bold' 한 개만 있는 전용 폴더에서 읽는다(운영자 확정 2026-09-28 · 실사고).
+#   가변 글꼴(NotoSansJP-VF)은 libass가 이름으로 찾지 못한다 — 내 작업 PC는 시스템 일본어 글꼴로 우연히 대체돼
+#   멀쩡해 보였고, 일본어 글꼴이 없는 GitHub 서버에서 조립하자 자막이 전부 네모(□)로 나왔다.
+#   전용 폴더에 같은 이름(Noto Sans JP)의 다른 파일을 두지 말 것(가변본이 먼저 잡히면 재발).
+FONTS_DIR = ROOT / "vendor" / "fonts" / "subs"
 FONT = "Noto Sans JP"
+FONT_FILE = FONTS_DIR / "NotoSansJP-Bold.ttf"
 _PUNCT_SPLIT = re.compile(r"(?<=[、。！？!?])")
 
 
@@ -145,6 +151,43 @@ def burn_filter(ass_path: str | Path) -> str:
     """ffmpeg 필터 문자열(우리 글꼴 폴더 사용 — 시스템에 일본어 글꼴이 없어도 된다)."""
     a = str(ass_path).replace("\\", "/").replace(":", r"\:")
     return f"subtitles='{a}':fontsdir='{FONTS_DIR}'"
+
+
+class SubtitleFontError(RuntimeError):
+    """자막 글꼴이 실제로 그려지지 않는다(네모 □·빈칸) — 조립을 멈춘다."""
+
+
+def _render_probe(ass_text: str, tmp: Path, name: str, env: dict | None) -> "object":
+    import numpy as np
+    from PIL import Image
+    a = tmp / f"{name}.ass"
+    a.write_text(ass_text, encoding="utf-8")
+    png = tmp / f"{name}.png"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "color=c=gray:s=720x1280:d=4",
+                    "-vf", burn_filter(a), "-ss", "1.0", "-frames:v", "1", str(png)], check=True, env=env)
+    return np.asarray(Image.open(png).convert("L")).astype(int)
+
+
+def verify_font(sample: str = "深海の生き物です。", env: dict | None = None) -> dict:
+    """★자막 글꼴 자가 검사 — 조립 전에 반드시 통과해야 한다(재발 방지).
+    같은 자막을 ①우리 글꼴 이름 ②일부러 없는 글꼴 이름으로 각각 그려 비교한다.
+    두 그림이 같으면 우리 글꼴이 안 잡히고 대체 글꼴(네모 □)로 그려진 것, 글자가 아예 없으면 빈칸 — 둘 다 불통과."""
+    import tempfile
+    if not FONT_FILE.exists():
+        raise SubtitleFontError(f"자막 글꼴 파일 없음: {FONT_FILE}")
+    build_ass([(sample, 0.0, 4.0)], Path(tempfile.gettempdir()) / "_probe_src.ass")   # 1.0초 = 페이드 없는 한가운데
+    src = (Path(tempfile.gettempdir()) / "_probe_src.ass").read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as td:
+        t = Path(td)
+        ours = _render_probe(src, t, "ours", env)
+        fake = _render_probe(src.replace(FONT, "NoSuchFontForProbe"), t, "fake", env)
+        ink = int((abs(ours - 128) > 40).sum())             # 회색 바탕에서 벗어난 픽셀 = 그려진 글자
+        diff = int((abs(ours - fake) > 40).sum())
+    ok = ink > 800 and diff > 400
+    res = {"ok": ok, "ink_px": ink, "diff_vs_fallback_px": diff, "font_file": FONT_FILE.name}
+    if not ok:
+        raise SubtitleFontError("자막 글꼴이 그려지지 않습니다(네모 □/빈칸) — " + json.dumps(res, ensure_ascii=False))
+    return res
 
 
 def burn(video_in: str, ass_path: str | Path, video_out: str) -> None:

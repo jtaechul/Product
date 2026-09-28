@@ -169,10 +169,21 @@ def assemble(pid: str) -> dict:
     asm = a["assemble"]
     sys.path.insert(0, str(V2 / "tools"))
     import assemble as A                                     # noqa: E402
+    import karaoke                                           # noqa: E402
     over = {int(c["cut"]): str(pilot / c["file"]) for c in a.get("clips", [])}
     dst = pilot / a["final"]
+    try:
+        font = karaoke.verify_font()                         # ★자막 글꼴이 이 서버에서 실제로 그려지는지 먼저 확인
+    except karaoke.SubtitleFontError as e:                   # 깨지면 영상을 만들지 않고, 승인 대기로도 올리지 않는다
+        st["checks"] = {"at": _now(), "subtitle_font": {"ok": False, "value": str(e)[:200],
+                                                        "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지)"}}
+        _note(st, "video", "error", "자막 글꼴 검사 불통과 — 영상을 만들지 않았습니다: " + str(e)[:160])
+        _save(status_path(pid), st)
+        raise SystemExit(str(e))
     A.main(str(pilot), asm["clips_id"], asm["tts_id"], str(pilot / asm["ending"]), str(dst), overrides=over)
     st["checks"] = auto_checks(dst, body_s=sum(float(c.get("sec") or 0) for c in a.get("clips", [])))
+    st["checks"]["subtitle_font"] = {"ok": True, "value": font["font_file"],
+                                     "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"}
     st["stages"]["video"]["state"] = "review"
     a["built_at"] = _now()
     _save(status_path(pid), st)

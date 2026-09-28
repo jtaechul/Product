@@ -457,12 +457,12 @@
         "tts_id": "r09280204_tts",
         "ending": "out/17_ending/ending_bathynomus.mp4"
       },
-      "built_at": "2026-09-28T04:29:02Z"
+      "built_at": "2026-09-28T07:03:37Z"
     },
     "upload": {}
   },
   "checks": {
-    "at": "2026-09-28T04:29:02Z",
+    "at": "2026-09-28T07:03:37Z",
     "duration_s": 65.22,
     "white_edge_px": {
       "value": 0,
@@ -477,6 +477,11 @@
     "music": {
       "ok": true,
       "rule": "음악 없음(영상 AI 오디오는 조립 때 전부 버림)"
+    },
+    "subtitle_font": {
+      "ok": true,
+      "value": "NotoSansJP-Bold.ttf",
+      "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"
     }
   },
   "cost": {
