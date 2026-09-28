@@ -138,6 +138,11 @@ def step_character(ep, epdir, work, log, redo):
     if given.exists():
         log["character"] = {"ok": True, "source": "refs/character.png"}
         return given
+    # 채널 고정 주인공(모든 회차 같은 개체) — pet-episodes/characters/<종>.png
+    fixed = Path(__file__).resolve().parent.parent / "characters" / f"{ep.get('species', 'dog')}.png"
+    if fixed.exists() and "character" not in redo:
+        log["character"] = {"ok": True, "source": f"characters/{fixed.name}"}
+        return fixed
     if out.exists() and "character" not in redo:
         return out
     r = gen_image(CHARACTER_PROMPTS.get(ep.get("species", "dog"), CHARACTER_PROMPTS["dog"]), [], out, "1:1")
