@@ -296,6 +296,18 @@ CLIP_TAIL = ("\nThe first attached image is the FIRST FRAME. The second attached
              "morphing objects, changing furniture, cuts.")
 
 
+# 역할별 동작 고정 — 시식 중에 걸어 나가거나(3차 c04), 퇴장하다 되돌아오던(3차 c07) 오류 대책
+ROLE_LOCK = {
+    "order": "The {n} stays seated on the cushion in the same spot for the whole clip.",
+    "serve": "The {n} stays at the table in the same spot for the whole clip.",
+    "taste": "The {n} stays at the table in the same spot, eating from the bowl, for the whole clip. It never walks away "
+             "and never leaves the frame. The bowl stays on the table.",
+    "bill": "The {n} stays at the table in the same spot for the whole clip.",
+    "exit": "The {n} walks away from the camera toward the door and goes out; it never turns around to walk back "
+            "toward the camera.",
+}
+
+
 def step_clips(ep, epdir, work, log, redo):
     key = _key("GEMINI_API_KEY")
     res = log.setdefault("clips", {})
@@ -304,7 +316,8 @@ def step_clips(ep, epdir, work, log, redo):
         out = work / f"{name}.mp4"
         if out.exists() and name not in redo:
             continue
-        prompt = c["prompt"] + CLIP_TAIL
+        lock = ROLE_LOCK.get(c.get("role"), "").format(n="kitten" if ep.get("species") == "cat" else "puppy")
+        prompt = c["prompt"] + (f"\nACTION LOCK: {lock}" if lock else "") + CLIP_TAIL
         rec = {"attempts": []}
         for label, fn in (("omni", _omni), ("veo-lite", _veo)):
             t0 = time.time()
