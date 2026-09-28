@@ -32,7 +32,7 @@ CLIP_MODEL = "gemini-omni-1.1-flash"
 VEO_FALLBACK = "veo-3.1-lite-generate-preview"
 # ★목소리 규칙(사용자 확정 2026-09) — 한 곳에서만 정한다: 성우 1명 고정 · 연기 톤 고정 · 속도 1.2배.
 #   Gemini 음성(사람 같은 연기)을 쓰고, 속도는 숫자 설정이 없어 만든 뒤 편집에서 정확히 1.2배로 맞춘다.
-VOICE_NAME = "Gacrux"                      # 샘플 비교 후 사용자가 고른 한 명으로 고정한다(voices 단계 참고)
+VOICE_NAME = "Algenib"                     # 사용자 확정(2026-09): 거친 저음. 바꾸지 않는다
 VOICE_SPEED = 1.2
 VOICE_DIRECTION = ("한국어 내레이션. 40대 남자의 낮고 차분한 속마음 독백이다. 혼자 밥을 먹으며 한 입씩 음미하는 "
                    "'고독한 미식가' 같은 톤. 겉은 담담하지만 맛있는 순간엔 진심이 살짝 묻어난다. "

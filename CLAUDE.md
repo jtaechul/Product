@@ -82,7 +82,7 @@
 >   + `refs/food.jpg` + `requests/*.json` 푸시 → `.github/workflows/pet-episode.yml`이 캐릭터 → 컷별 첫 장면(gemini-3-pro-image,
 >   캐릭터·실제 음식·첫 컷 가게를 참고) → 8초 영상(Omni Flash, 실패 시 Veo Lite) → 내레이션 → 조립(자막 문장 단위·메뉴판·계산서·
 >   오프닝 줌·영수증)까지 하고 `work/final.mp4`를 커밋. 다시 뽑기는 `"redo": ["c03"]`/`"kf_c03"`.
->   **목소리 규칙(사용자 확정)**: 성우 1명 고정(`VOICE_NAME`) · 연기 톤 고정(`VOICE_DIRECTION`, 고독한 미식가 독백) ·
+>   **목소리 규칙(사용자 확정)**: 성우 1명 고정(`VOICE_NAME` = **Algenib**, 거친 저음 · 사용자 확정) · 연기 톤 고정(`VOICE_DIRECTION`, 고독한 미식가 독백) ·
 >   **속도 1.2배**(`VOICE_SPEED`) — Gemini 음성(TTS), 실패 시 구글 기본 음성. 후보 비교는 `"steps": ["voices"]`.
 > - **대사 톤**: 겉은 귀여운 꼬마, 속은 이 집 주인. 인간은 관리인. 느낌표·감탄사·설명조 금지,
 >   담담한 통보체. 말투 견본을 완성 문장으로 주면 모델이 그대로 베끼므로 **'틀'로만 제시**하고,
