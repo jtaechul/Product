@@ -150,7 +150,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-28-5 (AI 모델 자동 선택)";
+const BUILD="v2026-09-28-6 (업로드: 제목·설명·해시태그 + 유튜브 업로드)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2481,8 +2481,20 @@ function v2stageBody(st,stage){
       (spent?'<div class="hint">이 편에서 재생성에 쓴 금액: 약 $'+spent.toFixed(2)+'</div>':'');
   }
   if(stage==="upload"){
-    return '<div class="hint" style="margin-top:0">완성본을 승인하면 열립니다. 유튜브 제목·설명·해시태그(일본어/한국어)를 확인하고 승인하면 업로드 + 고정 댓글 「次に見たい深海の生き物は？」을 답니다.</div>'+
-      '<div class="hint warn">현재는 승인 기록까지만 됩니다 — 제목·설명 자동 작성과 유튜브 업로드 연결은 다음 작업으로 붙입니다.</div>';
+    const m=a.meta||null, res=a.result||null;
+    if(res&&res.url)return '<div class="cfact"><span class="ok">업로드 완료</span> ('+esc(res.privacy||"")+') · <a href="'+esc(res.url)+'" target="_blank">유튜브에서 보기</a></div>'+
+      '<div class="hint">고정 댓글은 유튜브 앱에서 직접 달고 고정해 주세요(유튜브가 자동 고정을 막아 둠): <b>'+esc((m&&m.pinned_comment)||"")+'</b></div>';
+    if(!m)return '<div class="hint" style="margin-top:0">완성본을 승인하면 유튜브 제목·설명·해시태그를 자동으로 씁니다.</div>'+
+      '<button class="btn save" id="upmeta" style="width:100%;margin-top:8px">제목·설명 AI로 쓰기 (약 $0.01)</button>';
+    return '<div class="dual" style="margin-top:4px"><div><span class="lbl">제목 (일본어 · 실제로 올라감)</span><input id="up_tj" value="'+esc(m.title_jp)+'"></div>'+
+        '<div><span class="lbl">제목 (한국어 · 확인용)</span><input id="up_tk" value="'+esc(m.title_ko)+'"></div></div>'+
+      '<div class="dual"><div><span class="lbl">설명 (일본어 · 실제로 올라감)</span><textarea id="up_dj">'+esc(m.desc_jp)+'</textarea></div>'+
+        '<div><span class="lbl">설명 (한국어 · 확인용)</span><textarea id="up_dk">'+esc(m.desc_ko)+'</textarea></div></div>'+
+      '<span class="lbl">해시태그</span><div>'+(m.tags_jp||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join("")+' / '+(m.tags_ko||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join("")+'</div>'+
+      '<div class="hint">제목 끝 해시태그 2개(종명 + #深海) · #Shorts 없음 · 설명에 구독·댓글 유도, AI 재현 영상 표기, 출처가 자동으로 들어갑니다.</div>'+
+      '<span class="lbl">고정 댓글 (업로드 후 유튜브 앱에서 직접 고정)</span><input id="up_pc" value="'+esc(m.pinned_comment||"")+'">'+
+      '<span class="lbl">공개 범위</span><select id="up_pv">'+[["private","비공개(먼저 확인)"],["unlisted","일부 공개"],["public","공개"]].map(([v,l])=>'<option value="'+v+'"'+(m.privacy===v?' selected':'')+'>'+l+'</option>').join("")+'</select>'+
+      '<div class="btnrow"><button class="btn" id="upsave">수정 내용 저장</button><button class="btn warn" id="upmeta">AI로 다시 쓰기</button></div>';
   }
   return "";
 }
@@ -2557,7 +2569,12 @@ function v2stageCard(st,stage){
   }
   h+=v2stageBody(st,stage);
   if(notes.length)h+='<div class="sect">기록</div>'+notes.map(n=>'<div class="cfact">'+v2when(n.at)+' · '+esc(n.text||n.kind)+'</div>').join("");
-  if(stage!=="topic"){
+  if(stage==="upload"){
+    const up=((st.artifacts||{}).upload)||{};
+    if(!(up.result&&up.result.url))h+='<div class="v2btns" style="grid-template-columns:1fr"><button class="btn save" data-act="approve" data-stage="upload"'+(state==="review"?'':' disabled')+'>승인 → 유튜브 업로드</button></div>'+
+      (state!=="review"?'<div class="hint">제목·설명이 준비되면 누를 수 있습니다.</div>':'<div class="hint">수정했다면 먼저 「수정 내용 저장」을 누르고, 저장이 반영된 뒤(1~2분) 업로드하세요.</div>');
+  }
+  else if(stage!=="topic"){
     h+='<textarea class="v2note" id="note-'+stage+'" placeholder="수정 요청 내용(예: 2번 컷 대사를 더 쉽게)" style="min-height:70px;margin-top:12px"></textarea>'+
       '<div class="v2btns">'+
         '<button class="btn save" data-act="approve" data-stage="'+stage+'"'+(state==="review"?'':' disabled')+'>승인</button>'+
@@ -2585,6 +2602,12 @@ async function renderV2Episode(pid){
     const lab=STG_KO[stage];
     if(act==="revise"&&!note){banner("수정 요청은 무엇을 고칠지 칸에 적어 주세요.","err");return;}
     const nIss=stage==="script"?((((st.artifacts||{}).script||{}).crosscheck||{}).issues||[]).length:0;
+    if(act==="approve"&&stage==="upload"){
+      const pv=(($("#up_pv")||{}).value)||"private", pvk={private:"비공개",unlisted:"일부 공개",public:"공개"}[pv]||pv;
+      if(!confirm("유튜브에 '"+pvk+"'로 업로드할까요? (한 번 올리면 이 페이지에서 다시 올릴 수 없습니다)"))return;
+      if(await v2do("approve",pid,"upload","",b))banner("업로드를 시작했습니다. 2~5분 뒤 새로고침하면 유튜브 링크가 보입니다.","ok");
+      return;
+    }
     const msg=act==="approve"?((nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):"")+lab+"을(를) 승인할까요? 다음 단계가 열립니다.")
              :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다.")
              :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다.");
@@ -2629,6 +2652,13 @@ async function renderV2Episode(pid){
     await v2do("recut_approve",pid,n,"",b);
   });
   document.querySelectorAll("[data-rcno]").forEach(b=>b.onclick=async()=>{if(confirm(b.dataset.rcno+"번 컷 수정을 취소할까요?"))await v2do("recut_cancel",pid,b.dataset.rcno,"",b);});
+  const um=$("#upmeta");if(um)um.onclick=async()=>{if(confirm("유튜브 제목·설명을 AI로 (다시) 쓸까요? 지금 칸의 내용은 바뀝니다."))await v2do("upload_meta",pid,"","",um);};
+  const us=$("#upsave");if(us)us.onclick=async()=>{
+    const d={title_jp:($("#up_tj")||{}).value,title_ko:($("#up_tk")||{}).value,desc_jp:($("#up_dj")||{}).value,
+             desc_ko:($("#up_dk")||{}).value,pinned_comment:($("#up_pc")||{}).value,privacy:($("#up_pv")||{}).value};
+    if(!String(d.title_jp||"").trim()){banner("일본어 제목이 비어 있습니다.","err");return;}
+    await v2do("save_meta",pid,"",JSON.stringify(d),us);
+  };
   const asm=$("#v2asm");if(asm)asm.onclick=async()=>{if(confirm("완성본을 다시 조립하고 자동 검사를 돌릴까요? (무료)"))await v2do("assemble",pid,"","",asm);};
 }
 

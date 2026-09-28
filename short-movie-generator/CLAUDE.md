@@ -61,7 +61,7 @@
 - **상태 파일 하나**: 편마다 `v2/pilots/<id>/status.json`(단계 상태 locked/working/review/revise/approved · 기록 · 결과물 경로 ·
   자동 검사 · 비용). 목록 `v2/pilots/index.json`, 주제 후보 `v2/topics.json`(`admin.py topics`로 갱신).
 - **버튼 = 워크플로**: 페이지는 파일을 직접 쓰지 않는다 → `v2-admin.yml` 디스패치 → `v2/tools/admin.py`
-  (new·approve·revise·redo·ready·redo_cut·assemble·edit_line·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
+  (new·approve·revise·redo·ready·redo_cut·assemble·edit_line·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
   `v2-admin.yml`은 **main에도** 둔다(디스패치 워크플로 규칙 · 하드룰 #15③).
 - **★컷별 대사 수정(운영자 확정 2026-09-28) — 대사를 고쳐도 영상은 자동으로 바뀌지 않는다**:
   대본 카드의 컷마다 「대사 수정」 → 일본어·한국어(·읽기, 비우면 Janome 자동) 입력 → 「이 대사로 저장」(`admin.py edit_line`)은
@@ -80,8 +80,13 @@
      한 컷으로 잇고(컷 길이 그대로) 완성본을 재조립한다. 물음표 같은 기호는 **AI가 그리지 않고 편집에서 빨간 기호**로 얹는다.
   기존 「이 컷만 다시 만들기」(같은 그림·같은 지시문으로 다시 뽑기)는 그대로 둔다. 회귀: `tests/test_v2_admin.py`
   (영상 요청이 승인 전에 생기지 않는지 · 전환 부족 거부 · 승인 시 새 컷 6초 합성·재조립 · 화면 버튼).
+- **★업로드 카드(운영자 확정 2026-09-28)**: 업로드 카드에는 '수정 요청' 칸 대신 **유튜브 제목·설명(일본어=실제 업로드 / 한국어=확인용)·
+  해시태그·고정 댓글·공개 범위**가 나온다. 완성본을 승인하면 AI가 자동 작성(`upload_meta`), 운영자가 고쳐 「수정 내용 저장」(`save_meta`),
+  「승인 → 유튜브 업로드」를 눌러야만 올라간다(`youtube_upload` · 기본 **비공개** · **같은 편 두 번 업로드 금지**).
+  채널 규칙 자동 적용: 제목 끝 해시태그 정확히 2개(종명 + #深海) · #Shorts 금지 · 회사원 소재 제목 거절 · 설명에 구독+댓글 유도,
+  **AI 재현 영상 표기**, 출처. 고정 댓글은 **유튜브 API가 자동 고정을 지원하지 않아** 운영자가 앱에서 직접 달고 고정한다.
 - **아직 자동이 아닌 것(정직 표기)**: 대본 작성·스토리보드 이미지 생성은 지금은 Claude 세션이 맡고, 끝나면 `admin.py ready`로
-  '승인 대기'로 올린다. 업로드 단계는 승인 기록까지만 — 제목·설명 자동 작성·유튜브 업로드 연결은 다음 작업.
+  '승인 대기'로 올린다. 고정 댓글 달기·고정은 수동.
 - 검사: `worker/v2_admin_check.mjs`(메뉴 2개·페이지 렌더·잠금/승인 버튼·디스패치 입력·/legacy) · `tests/test_v2_admin.py`.
 
 ### ★대본 재검증 (운영자 확정 — 생략 금지)

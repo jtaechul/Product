@@ -194,6 +194,7 @@ def test_line_edit_page_buttons():
     assert r["recut_open_buttons"] == 8 and r["recut_review_shown"]
     assert r["recut_plan_dispatch"][0]["action"] == "recut_plan" and r["recut_plan_dispatch"][0]["note"]["min_transitions"] == 2
     assert r["recut_approve_dispatch"] == ["recut_approve:8"]
+    assert r["upload_fields"] and r["upload_no_revise_box"]
 
 
 # ── 검증 ①② (운영자 확정 2026-09-28): AI 교차 검사 + 근거 원문 ──
@@ -324,3 +325,50 @@ def test_text_model_is_picked_from_what_the_server_offers():
     assert admin.pick_text_model(L[:1]) is None                          # 이미지 전용 모델은 고르지 않음
     assert admin.pick_text_model(L + [{"name": "models/gemini-2.5-pro",
                                        "supportedGenerationMethods": ["generateContent"]}]) == "gemini-2.5-pro"
+
+
+# ── 업로드(운영자 확정 2026-09-28) ──
+_META = {"title_jp": "深海の掃除屋、5年絶食の謎", "title_ko": "심해의 청소부, 5년 단식의 수수께끼",
+         "desc_jp": "メキシコ湾で見つかった大きな生き物です。", "desc_ko": "멕시코만에서 발견된 큰 생물입니다."}
+
+
+def test_upload_meta_follows_channel_rules(real_copy):
+    st = admin.upload_meta("bathynomus_giganteus", ask=lambda p: json.dumps(_META))
+    m = st["artifacts"]["upload"]["meta"]
+    assert m["title_jp"].endswith("#ダイオウグソクムシ #深海") and m["title_jp"].count("#") == 2
+    assert "#shorts" not in (m["title_jp"] + m["desc_jp"]).lower()
+    assert "コメントで教えてください" in m["desc_jp"] and "チャンネル登録" in m["desc_jp"]
+    assert "AIによる再現映像" in m["desc_jp"] and "wikipedia.org" in m["desc_jp"]
+    assert m["privacy"] == "private" and m["pinned_comment"] == "次に見たい深海の生き物は？"
+
+
+def test_upload_meta_rejects_office_worker_title(real_copy):
+    bad = dict(_META, title_jp="有給ゼロの深海生活")
+    with pytest.raises(ValueError):
+        admin.upload_meta("bathynomus_giganteus", ask=lambda p: json.dumps(bad))
+
+
+def test_upload_once_and_only_on_approve(real_copy):
+    st = admin.upload_meta("bathynomus_giganteus", ask=lambda p: json.dumps(_META))
+    st["stages"]["upload"]["state"] = "review"
+    admin._save(admin.status_path("bathynomus_giganteus"), st)
+    calls = []
+
+    def fake(path, title, desc, tags=None, privacy="private"):
+        calls.append((title, privacy, tags))
+        return {"url": "https://youtu.be/TEST", "video_id": "TEST", "privacy": privacy}
+    admin.youtube_upload("bathynomus_giganteus", uploader=fake)
+    assert calls and calls[0][1] == "private" and calls[0][2] == ["ダイオウグソクムシ", "深海"]
+    with pytest.raises(SystemExit):                                          # 같은 편 두 번 금지
+        admin.youtube_upload("bathynomus_giganteus", uploader=fake)
+    assert len(calls) == 1
+    with pytest.raises(SystemExit):                                          # 업로드 뒤에는 메타 수정도 막음
+        admin.save_upload_meta("bathynomus_giganteus", {"title_jp": "x"})
+
+
+def test_save_meta_validation(real_copy):
+    admin.upload_meta("bathynomus_giganteus", ask=lambda p: json.dumps(_META))
+    with pytest.raises(SystemExit):
+        admin.save_upload_meta("bathynomus_giganteus", {"title_jp": "テスト #Shorts"})
+    st = admin.save_upload_meta("bathynomus_giganteus", {"title_jp": "新しい題名 #ダイオウグソクムシ #深海", "privacy": "public"})
+    assert st["artifacts"]["upload"]["meta"]["privacy"] == "public"

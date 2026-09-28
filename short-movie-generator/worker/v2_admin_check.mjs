@@ -140,6 +140,16 @@ res.recut_review_shown = ep5.includes('data-rcok="8"') && ep5.includes("화면 �
 const d2 = dispatched.length; const ok8 = (lists["[data-rcok]"] || []).find(b => b.dataset.rcok === "8"); if (ok8?.onclick) await ok8.onclick();
 res.recut_approve_dispatch = dispatched.slice(d2).map(d => d.body.inputs.action + ":" + d.body.inputs.stage);
 statusOverride = null;
+// ── 업로드 카드: 제목·설명·해시태그 칸 + 업로드 버튼(수정 요청 칸 없음) ──
+const st6 = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+st6.stages.video.state = "approved"; st6.stages.upload.state = "review";
+st6.artifacts.upload = { meta: { title_jp: "題 #ダイオウグソクムシ #深海", title_ko: "제목", desc_jp: "説明", desc_ko: "설명",
+  tags_jp: ["#ダイオウグソクムシ", "#深海"], tags_ko: ["#대왕구족충", "#심해"], pinned_comment: "次に見たい深海の生き物は？", privacy: "private" } };
+statusOverride = st6; els = {}; await api.renderV2Episode("bathynomus_giganteus"); const ep6 = els.view.innerHTML;
+const up6 = ep6.slice(ep6.indexOf('id="stg-upload"'));
+res.upload_fields = ['id="up_tj"', 'id="up_dj"', 'id="up_dk"', 'id="up_pv"', 'id="upsave"', "#ダイオウグソクムシ"].every(x => up6.includes(x));
+res.upload_no_revise_box = !up6.includes('id="note-upload"') && up6.includes("승인 → 유튜브 업로드");
+statusOverride = null;
 
 els = {}; window.location.pathname = "/legacy"; api.renderHome(); res.legacy_home_renders = (els.view?.innerHTML || "").includes("쇼츠 생성 시작");
 console.log(JSON.stringify(res, null, 1));

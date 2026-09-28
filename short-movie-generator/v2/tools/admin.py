@@ -82,6 +82,10 @@ def approve(pid: str, stage: str, memo: str = "") -> dict:
     s = st["stages"][stage]
     if s["state"] != "review":
         raise SystemExit(f"{STAGE_KO[stage]}은(는) 지금 승인할 수 없습니다(상태: {s['state']}) — 결과가 나온 뒤(승인 대기)에만 승인")
+    if stage == "upload":                                   # ★업로드 단계의 승인 = 실제 유튜브 업로드(실패하면 승인 안 됨)
+        youtube_upload(pid)
+        st = load_status(pid)
+        s = st["stages"][stage]
     s.update(state="approved", approved_at=_now())
     _note(st, stage, "approve", memo)
     i = STAGES.index(stage)
@@ -90,6 +94,14 @@ def approve(pid: str, stage: str, memo: str = "") -> dict:
         if nxt["state"] == "locked":
             nxt["state"] = "working"
     _save(status_path(pid), st)
+    if stage == "video":                                    # 완성본 승인 → 유튜브 제목·설명·해시태그 자동 작성
+        try:
+            upload_meta(pid)
+        except Exception as e:                               # noqa: BLE001 — 실패해도 승인은 유지, 버튼으로 다시
+            st = load_status(pid)
+            _note(st, "upload", "error", f"제목·설명 자동 작성 실패 — 「AI로 다시 쓰기」를 눌러 주세요: {str(e)[:120]}")
+            _save(status_path(pid), st)
+        st = load_status(pid)
     return st
 
 
@@ -720,6 +732,128 @@ def recut_approve(pid: str, cut: int) -> dict:
     return assemble(pid)
 
 
+# ── 업로드(운영자 확정 2026-09-28) ─────────────────────────────────────────
+# 완성본을 승인하면 유튜브 제목·설명·해시태그를 일본어/한국어로 자동 작성해 업로드 카드에 보여 주고(운영자가 고칠 수 있음),
+# 업로드 단계 「승인 → 유튜브 업로드」를 눌러야만 올라간다. 같은 편은 두 번 올리지 않는다(중복 업로드 방지).
+# 채널 규칙: 제목 끝 해시태그 정확히 2개(내용 1 + 고정 #深海) · #Shorts 금지 · 설명에 구독+댓글 유도(다음 편 소재 요청형) ·
+#            AI 재현 영상임을 밝힘 · 출처 · 회차 번호 비노출 · 회사원 소재 금지 · 사실 왜곡 금지.
+_CTA_JP = "チャンネル登録で、次の深海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。"
+_CTA_KO = "다음 심해도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요."
+_REPRO_JP = "※映像はAIによる再現映像です（生き物の形は実際の写真を参考にしています）。"
+_REPRO_KO = "※ 영상은 AI 재현 영상입니다(생물의 형태는 실제 사진을 참고했습니다)."
+PINNED_COMMENT = "次に見たい深海の生き物は？"
+_META_PROMPT = """You write YouTube Shorts metadata for a Japanese deep-sea science channel. Use ONLY the facts and narration below.
+Rules: title_jp = hook-style Japanese title, max 28 characters, mystery/awe tone, no honorific needed, no hashtags,
+no "#Shorts", no episode numbers, NO office-worker jokes (有給/残業/上司 etc.), never exaggerate beyond the facts.
+desc_jp = 3-4 short sentences in polite Japanese (です・ます), summarising the story with the concrete facts.
+title_ko / desc_ko = natural Korean versions (존댓말 for desc). Return JSON only:
+{{"title_jp":"...","title_ko":"...","desc_jp":"...","desc_ko":"..."}}
+# Species
+{name_jp} / {name_ko} / {sci}
+# Narration (by cut)
+{cuts}
+# Facts
+{facts}
+"""
+
+
+def _compose_meta(sc: dict, gen: dict) -> dict:
+    sub = sc.get("subject", {})
+    tj, tk = "#" + sub.get("jp_name", "").replace(" ", ""), "#" + sub.get("ko_name", "").replace(" ", "")
+    tags_jp, tags_ko = [tj, "#深海"], [tk, "#심해"]
+    srcs = sorted({u for f in sc.get("facts", []) for u in f.get("sources", [])})
+    def desc(body, cta, repro, tags, head):
+        return (body.strip() + "\n\n" + cta + "\n\n" + repro + "\n" + head + "\n" + "\n".join(srcs)
+                + "\n\n" + " ".join(tags)).strip()
+    return {
+        "title_jp": (gen["title_jp"].strip() + " " + " ".join(tags_jp))[:100],
+        "title_ko": (gen["title_ko"].strip() + " " + " ".join(tags_ko))[:100],
+        "desc_jp": desc(gen["desc_jp"], _CTA_JP, _REPRO_JP, tags_jp, "出典:"),
+        "desc_ko": desc(gen["desc_ko"], _CTA_KO, _REPRO_KO, tags_ko, "출처:"),
+        "tags_jp": tags_jp, "tags_ko": tags_ko, "pinned_comment": PINNED_COMMENT, "privacy": "private",
+    }
+
+
+_STALE = re.compile(r"有給|残業|定時|上司|出社|유급|야근|상사|출근|퇴근|직장인")
+
+
+def upload_meta(pid: str, ask=None) -> dict:
+    st = load_status(pid)
+    sc = _load(_script_path(pid))
+    sub = sc.get("subject", {})
+    prompt = _META_PROMPT.format(
+        name_jp=sub.get("jp_name", ""), name_ko=sub.get("ko_name", ""), sci=sub.get("scientific_name", ""),
+        cuts="\n".join(f"{c['cut']}: {c['jp']}" for c in sc["cuts"] if "tts" in c),
+        facts="\n".join(f"{f['id']}: {f['fact']}" for f in sc.get("facts", [])))
+    gen = json.loads(re.search(r"\{.*\}", (ask or _gemini_text)(prompt), re.S).group(0))
+    for k in ("title_jp", "title_ko", "desc_jp", "desc_ko"):
+        if not str(gen.get(k, "")).strip():
+            raise ValueError(f"{k} 비어 있음")
+    if _STALE.search(gen["title_jp"] + gen["title_ko"]):
+        raise ValueError("제목에 금지된 회사원 소재가 들어갔습니다 — 다시 쓰기")
+    up = st.setdefault("artifacts", {}).setdefault("upload", {})
+    keep = (up.get("meta") or {}).get("privacy", "private")
+    up["meta"] = _compose_meta(sc, gen)
+    up["meta"]["privacy"] = keep
+    up["meta_at"] = _now()
+    if st["stages"]["upload"]["state"] in ("working", "revise"):
+        st["stages"]["upload"]["state"] = "review"
+    _note(st, "upload", "meta", "유튜브 제목·설명·해시태그 작성 — 확인 후 「승인 → 유튜브 업로드」")
+    _save(status_path(pid), st)
+    return st
+
+
+def save_upload_meta(pid: str, data: dict) -> dict:
+    st = load_status(pid)
+    up = st.setdefault("artifacts", {}).setdefault("upload", {})
+    if (up.get("result") or {}).get("url"):
+        raise SystemExit("이미 업로드했습니다 — 제목·설명은 유튜브 스튜디오에서 고쳐 주세요")
+    m = up.setdefault("meta", {})
+    for k in ("title_jp", "title_ko", "desc_jp", "desc_ko", "pinned_comment", "privacy"):
+        if k in data:
+            m[k] = str(data[k]).strip()
+    if m.get("privacy") not in ("private", "unlisted", "public"):
+        m["privacy"] = "private"
+    if not m.get("title_jp") or len(m["title_jp"]) > 100:
+        raise SystemExit("제목(일본어)은 1~100자여야 합니다")
+    if "#shorts" in (m["title_jp"] + m.get("desc_jp", "")).lower():
+        raise SystemExit("#Shorts는 넣지 않습니다(채널 규칙)")
+    _note(st, "upload", "meta_edit", "운영자가 제목·설명 수정")
+    if st["stages"]["upload"]["state"] in ("working", "revise"):
+        st["stages"]["upload"]["state"] = "review"
+    _save(status_path(pid), st)
+    return st
+
+
+def youtube_upload(pid: str, uploader=None) -> dict:
+    """완성본을 유튜브에 올린다(같은 편 두 번 금지). uploader: 테스트용 대체 함수."""
+    st = load_status(pid)
+    up = st.setdefault("artifacts", {}).setdefault("upload", {})
+    if (up.get("result") or {}).get("url"):
+        raise SystemExit(f"이미 업로드했습니다: {up['result']['url']}")
+    m = up.get("meta") or {}
+    if not m.get("title_jp"):
+        raise SystemExit("제목·설명이 없습니다 — 먼저 작성하세요")
+    video = PILOTS / pid / st["artifacts"]["video"]["final"]
+    if uploader is None:
+        sys.path.insert(0, str(ROOT))
+        from src.core import youtube_upload as yt           # noqa: E402
+        if not yt.has_credentials():
+            raise SystemExit("유튜브 연결 키(YOUTUBE_*)가 없습니다")
+        uploader = yt.upload
+    tags = [t.lstrip("#") for t in m.get("tags_jp", [])]
+    try:
+        r = uploader(str(video), m["title_jp"], m.get("desc_jp", ""), tags=tags, privacy=m.get("privacy", "private"))
+    except Exception as e:                                   # noqa: BLE001
+        _note(st, "upload", "error", f"유튜브 업로드 실패: {str(e)[:160]}")
+        _save(status_path(pid), st)
+        raise SystemExit(f"유튜브 업로드 실패: {e}")
+    up["result"] = {"url": r["url"], "video_id": r.get("video_id", ""), "privacy": r.get("privacy", ""), "at": _now()}
+    _note(st, "upload", "uploaded", f"유튜브 업로드 완료({r.get('privacy', '')}): {r['url']} — 고정 댓글은 유튜브 앱에서 직접 달고 고정")
+    _save(status_path(pid), st)
+    return st
+
+
 # ── 자동 검사(완성본) ─────────────────────────────────────────────────────
 def _frame_gray(mp4: Path, t: float):
     import numpy as np
@@ -847,6 +981,10 @@ def main(argv: list[str]) -> int:
     elif cmd == "recut_cancel":
         st = load_status(a[0]); _recut_state(st, int(a[1])).update(state="cancelled", at=_now())
         _note(st, "video", "recut_cancel", f"{a[1]}번 컷 수정 취소"); _save(status_path(a[0]), st)
+    elif cmd == "upload_meta":
+        upload_meta(a[0])
+    elif cmd == "save_meta":                                 # note = {"title_jp":..,"desc_jp":..,..}
+        save_upload_meta(a[0], json.loads(memo(2) or "{}"))
     elif cmd == "crosscheck":
         crosscheck(a[0])
     elif cmd == "apply_lines":
