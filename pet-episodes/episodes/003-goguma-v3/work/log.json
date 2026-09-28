@@ -258,32 +258,32 @@
   },
   "assemble": {
     "ok": true,
-    "sec": 57.13,
+    "sec": 48.75,
     "clips": 7,
     "segments": [
       {
         "clip": "c01",
-        "len": 8.0,
+        "len": 7.04,
         "voice": 5.84,
-        "slow": 1.0
+        "slow": 0.88
       },
       {
         "clip": "c02",
-        "len": 8.0,
+        "len": 7.04,
         "voice": 5.84,
-        "slow": 1.0
+        "slow": 0.88
       },
       {
         "clip": "c03",
-        "len": 8.0,
+        "len": 6.4,
         "voice": 5.2,
-        "slow": 1.0
+        "slow": 0.8
       },
       {
         "clip": "c04",
-        "len": 8.0,
+        "len": 7.46,
         "voice": 6.26,
-        "slow": 1.0
+        "slow": 0.932
       },
       {
         "clip": "c05",
@@ -293,21 +293,21 @@
       },
       {
         "clip": "c06",
-        "len": 8.0,
+        "len": 5.57,
         "voice": 4.37,
-        "slow": 1.0
+        "slow": 0.696
       },
       {
         "clip": "c07",
-        "len": 8.0,
+        "len": 6.09,
         "voice": 4.89,
-        "slow": 1.0
+        "slow": 0.761
       }
     ]
   },
   "last_request": {
-    "file": "03_redo.json",
-    "ran_at": "2026-09-28T15:58:29Z",
+    "file": "04_trim.json",
+    "ran_at": "2026-09-28T16:01:14Z",
     "ok": true
   }
 }
