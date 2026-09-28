@@ -120,6 +120,9 @@ button:disabled{opacity:.5}
 .v2edit{width:auto;margin-top:6px;padding:6px 12px;font-size:12px;min-height:36px}
 .v2ed{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#0a1018}
 .cfact.err{color:var(--rd)}
+.v2rc{margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0a1018}
+.v2rc img{width:100%;border-radius:8px}
+.v2clip .btn+.btn{margin-top:4px}
 .v2fact{font-size:12px;color:var(--gy);margin-top:4px;line-height:1.5;border-left:2px solid var(--line);padding-left:8px}
 .v2fact b{color:#c6d2da;font-weight:600}.v2fact a{color:var(--cy)}
 .v2flag{background:rgba(255,107,107,.07);border-left:3px solid var(--rd);padding-left:6px}
@@ -147,7 +150,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-28-3 (자막 글꼴 자가 검사)";
+const BUILD="v2026-09-28-4 (컷 수정 방향 → 콘티 → 승인 → 영상)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2468,7 +2471,8 @@ function v2stageBody(st,stage){
         '<div class="cfact"><b>'+c.cut+'번 컷</b> · '+esc(c.sec)+'초'+((c.history||[]).length?(' · 재생성 '+c.history.length+'회'):'')+'</div>'+
         (c.review?'<div class="cfact'+(c.review==="양호"?'':' warn')+'">'+esc(c.review)+'</div>':'')+
         '<button class="btn warn" data-cut="'+c.cut+'" data-sec="'+esc(c.sec)+'">이 컷만 다시 만들기 (약 $'+(Number(c.sec||0)*OMNI_USD).toFixed(2)+')</button>'+
-      '</div>').join("")+'</div>'+
+        '<button class="btn" data-rcopen="'+c.cut+'">수정 방향 적고 다시 만들기</button>'+
+      '</div>').join("")+'</div>'+v2recutPanels(st)+
       ((((st.artifacts||{}).script||{}).pending_lines||[]).length?(
         '<div class="sect">수정한 대사 — 아직 영상에 반영 안 됨</div>'+v2pendingNote(st.artifacts.script)+
         '<div class="btnrow"><button class="btn save" id="v2apply" style="grid-column:1/3">수정한 대사 영상에 반영 (나레이션 다시 읽기 + 재조립 · 약 $0.01)</button></div>'+
@@ -2481,6 +2485,29 @@ function v2stageBody(st,stage){
       '<div class="hint warn">현재는 승인 기록까지만 됩니다 — 제목·설명 자동 작성과 유튜브 업로드 연결은 다음 작업으로 붙입니다.</div>';
   }
   return "";
+}
+// ── 컷 수정 방향 → 콘티 → 승인 → 영상(운영자 확정 2026-09-28) ──
+const RC_ST={planning:"계획·콘티 만드는 중",conti_review:"콘티 승인 대기",error:"실패",done:"완료",cancelled:"취소됨"};
+function v2recutPanels(st){
+  const pid=st.id, clips=((st.artifacts||{}).video||{}).clips||[], rcs=(st.artifacts||{}).recut||{};
+  return '<div class="sect">컷 수정 방향 — 적으면 콘티 먼저, 승인 후에만 영상</div>'+clips.map(c=>{
+    const rc=rcs[String(c.cut)]||{}, pl=rc.plan||{}, cont=rc.conti||{}, open=rc.state&&rc.state!=="done"&&rc.state!=="cancelled";
+    let h='<div class="v2rc" id="rc-'+c.cut+'" style="display:'+(open?'block':'none')+'"><b>'+c.cut+'번 컷 수정</b>'+
+      (rc.state?' '+'<span class="v2st '+(rc.state==="conti_review"?"wait":rc.state==="error"?"fail":rc.state==="done"?"done":"prog")+'">'+esc(RC_ST[rc.state]||rc.state)+'</span>':'')+
+      (rc.error?'<div class="cfact err">'+esc(rc.error)+'</div>':'');
+    if(rc.state==="conti_review"){
+      h+='<div class="cfact">'+esc(pl.summary_ko||"")+'</div>'+
+        (cont.sheet?'<img src="'+v2media(pid,cont.sheet)+'" loading="lazy" style="margin-top:8px">':'')+
+        '<div class="sect">샷 계획 (화면 전환 '+Math.max(0,(pl.shots||[]).length-1)+'회)</div>'+
+        (pl.shots||[]).map(x=>'<div class="cfact">'+x.t0+'~'+x.t1+'초 · '+x.panel+'번 칸 · '+(x.motion==="omni"?"움직이는 영상":"멈춘 그림 천천히 확대")+
+          (x.overlay==="question_mark"?' · 빨간 물음표':'')+' — '+esc(x.desc_ko||"")+'</div>').join("")+
+        '<div class="v2btns"><button class="btn save" data-rcok="'+c.cut+'">콘티 승인 → 영상 만들기 (약 $'+esc(Math.max(0,(rc.estimate_usd||0)-0.13).toFixed(2))+')</button>'+
+        '<button class="btn rd" data-rcno="'+c.cut+'">취소</button><span></span></div>';
+    }
+    h+='<span class="lbl">어떻게 바꾸고 싶은지</span><textarea id="rcdir-'+c.cut+'" style="min-height:80px" placeholder="예: 뱃속이 텅 비어 있었다는 묘사 + 사인을 알 수 없다는 물음표, 화면 전환 2회 이상">'+esc(rc.direction||"")+'</textarea>'+
+      '<span class="lbl">화면 전환 최소 횟수</span><select id="rcmin-'+c.cut+'">'+[0,1,2,3].map(n=>'<option value="'+n+'"'+((rc.min_transitions||0)===n?' selected':'')+'>'+n+'회</option>').join("")+'</select>'+
+      '<button class="btn save" data-rcgo="'+c.cut+'" style="width:100%;margin-top:8px">'+(rc.state==="conti_review"?"방향 고쳐 콘티 다시 만들기":"콘티 먼저 만들기")+' (약 $0.13 · 영상은 아직 안 만듦)</button></div>';
+    return h;}).join("");
 }
 // 미반영 대사 안내(대본·영상 카드 공용) + 반영이 막혔을 때 이유
 function v2pendingNote(a){
@@ -2589,6 +2616,19 @@ async function renderV2Episode(pid){
     banner(x.cut+"번 컷 편집 칸에 AI 제안을 넣었습니다. 확인 후 「이 대사로 저장」을 누르세요.","ok");
   });
   const ap=$("#v2apply");if(ap)ap.onclick=async()=>{if(confirm("수정한 대사를 영상에 반영할까요? 나레이션을 다시 읽고 완성본을 다시 조립합니다(약 $0.01 · 영상 컷은 그대로)."))await v2do("apply_lines",pid,"","",ap);};
+  document.querySelectorAll("[data-rcopen]").forEach(b=>b.onclick=()=>{const e=$("#rc-"+b.dataset.rcopen);if(e){e.style.display="block";try{e.scrollIntoView({behavior:"smooth"});}catch(_){}}});
+  document.querySelectorAll("[data-rcgo]").forEach(b=>b.onclick=async()=>{
+    const n=b.dataset.rcgo, d=(($("#rcdir-"+n)||{}).value||"").trim(), m=(($("#rcmin-"+n)||{}).value||"0");
+    if(!d){banner("어떻게 바꾸고 싶은지 적어 주세요.","err");return;}
+    if(!confirm(n+"번 컷 콘티를 만들까요? (약 $0.13 · 3~5분) 영상은 콘티를 승인한 뒤에만 만듭니다."))return;
+    if(await v2do("recut_plan",pid,n,JSON.stringify({direction:d,min_transitions:+m}),b))banner(n+"번 컷 콘티를 만드는 중입니다. 3~5분 뒤 새로고침하면 이 칸에 콘티와 샷 계획이 보입니다.","ok");
+  });
+  document.querySelectorAll("[data-rcok]").forEach(b=>b.onclick=async()=>{
+    const n=b.dataset.rcok;
+    if(!confirm(n+"번 컷 콘티를 승인하고 영상을 만들까요? 끝나면 완성본이 자동으로 다시 조립됩니다(5~10분)."))return;
+    await v2do("recut_approve",pid,n,"",b);
+  });
+  document.querySelectorAll("[data-rcno]").forEach(b=>b.onclick=async()=>{if(confirm(b.dataset.rcno+"번 컷 수정을 취소할까요?"))await v2do("recut_cancel",pid,b.dataset.rcno,"",b);});
   const asm=$("#v2asm");if(asm)asm.onclick=async()=>{if(confirm("완성본을 다시 조립하고 자동 검사를 돌릴까요? (무료)"))await v2do("assemble",pid,"","",asm);};
 }
 

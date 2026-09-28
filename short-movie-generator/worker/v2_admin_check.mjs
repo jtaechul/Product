@@ -121,6 +121,25 @@ const sug = (lists["[data-usesug]"] || [])[0]; els["edjp-3"] = makeEl("edjp-3");
 if (sug?.onclick) sug.onclick();
 res.suggestion_fills_editor = els["edjp-3"].value === "等脚類の中では、世界最大です。";
 statusOverride = null;
+// ── 컷 수정 방향 → 콘티 → 승인 ──
+els = {}; await api.renderV2Episode("bathynomus_giganteus"); const ep4 = els.view.innerHTML;
+res.recut_open_buttons = (ep4.match(/data-rcopen="/g) || []).length;
+const d1 = dispatched.length;
+els["rcdir-8"] = makeEl("rcdir-8"); els["rcdir-8"].value = "뱃속이 텅 빈 묘사 + 물음표";
+els["rcmin-8"] = makeEl("rcmin-8"); els["rcmin-8"].value = "2";
+const go8 = (lists["[data-rcgo]"] || []).find(b => b.dataset.rcgo === "8"); if (go8?.onclick) await go8.onclick();
+res.recut_plan_dispatch = dispatched.slice(d1).map(d => ({ action: d.body.inputs.action, stage: d.body.inputs.stage, note: JSON.parse(d.body.inputs.note) }));
+const st5 = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+st5.artifacts.recut = { "8": { state: "conti_review", direction: "뱃속", min_transitions: 2, estimate_usd: 0.53,
+  conti: { sheet: "out/x/conti.jpg", panels: [] }, plan: { summary_ko: "요약", shots: [
+  { t0: 0, t1: 2.2, panel: 1, motion: "omni", overlay: "none", desc_ko: "표본" },
+  { t0: 2.2, t1: 4, panel: 2, motion: "still", overlay: "none", desc_ko: "빈 위" },
+  { t0: 4, t1: 6, panel: 3, motion: "still", overlay: "question_mark", desc_ko: "물음표" }] } } };
+statusOverride = st5; els = {}; await api.renderV2Episode("bathynomus_giganteus"); const ep5 = els.view.innerHTML;
+res.recut_review_shown = ep5.includes('data-rcok="8"') && ep5.includes("화면 전환 2회") && ep5.includes("빨간 물음표") && ep5.includes("conti.jpg");
+const d2 = dispatched.length; const ok8 = (lists["[data-rcok]"] || []).find(b => b.dataset.rcok === "8"); if (ok8?.onclick) await ok8.onclick();
+res.recut_approve_dispatch = dispatched.slice(d2).map(d => d.body.inputs.action + ":" + d.body.inputs.stage);
+statusOverride = null;
 
 els = {}; window.location.pathname = "/legacy"; api.renderHome(); res.legacy_home_renders = (els.view?.innerHTML || "").includes("쇼츠 생성 시작");
 console.log(JSON.stringify(res, null, 1));

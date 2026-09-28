@@ -191,6 +191,9 @@ def test_line_edit_page_buttons():
     assert r["edit_does_not_touch_video"] and r["edit_dispatch"][0]["action"] == "edit_line"
     assert r["fact_text_per_cut"] >= 8 and r["crosscheck_button"]
     assert r["flag_shown"] and r["suggestion_fills_editor"]
+    assert r["recut_open_buttons"] == 8 and r["recut_review_shown"]
+    assert r["recut_plan_dispatch"][0]["action"] == "recut_plan" and r["recut_plan_dispatch"][0]["note"]["min_transitions"] == 2
+    assert r["recut_approve_dispatch"] == ["recut_approve:8"]
 
 
 # ── 검증 ①② (운영자 확정 2026-09-28): AI 교차 검사 + 근거 원문 ──
@@ -229,3 +232,83 @@ def test_crosscheck_failure_does_not_block(real_copy):
     st = admin.crosscheck("bathynomus_giganteus", ask=boom)
     assert "실패" in st["artifacts"]["script"]["crosscheck"]["error"]
     assert st["stages"]["video"]["state"] == "review"                  # 다른 단계는 그대로
+
+
+# ── 컷 수정 방향 → 콘티 → 승인 → 영상 (운영자 확정 2026-09-28) ──
+_PLAN = {"summary_ko": "텅 빈 뱃속을 단면 모형으로 보여 준 뒤 물음표로 끝냅니다.",
+         "shots": [{"t0": 0, "t1": 2.2, "panel": 1, "motion": "omni", "overlay": "none", "desc_ko": "표본"},
+                   {"t0": 2.2, "t1": 4.0, "panel": 2, "motion": "still", "overlay": "none", "desc_ko": "텅 빈 위 단면"},
+                   {"t0": 4.0, "t1": 6.0, "panel": 3, "motion": "still", "overlay": "question_mark", "desc_ko": "물음표"}],
+         "panels": {"1": "specimen", "2": "cut-away empty gut", "3": "dark specimen", "4": "spare"},
+         "omni_prompts": {"1": "0.0-2.2s slow push-in on the still specimen."}}
+
+
+def test_recut_plan_makes_conti_request_only(real_copy):
+    seen = {}
+
+    def ask(prompt):
+        seen["p"] = prompt
+        return json.dumps(_PLAN)
+    st = admin.recut_plan("bathynomus_giganteus", 8, "뱃속이 텅 빈 묘사 + 사인 불명 물음표", min_tr=2, ask=ask,
+                          run_images=False)
+    rc = st["artifacts"]["recut"]["8"]
+    assert rc["state"] == "conti_review" and len(rc["plan"]["shots"]) == 3
+    assert "뱃속이 텅 빈" in seen["p"] and "at least 2 scene transitions" in seen["p"].lower() and "LAST cut" in seen["p"]
+    req = json.loads((real_copy / "requests" / f"{rc['conti']['request']}.json").read_text(encoding="utf-8"))
+    it = req["items"][0]
+    assert req["kind"] == "gen_images" and it["split"]["rows"] == 2 and "NEVER draw text" in it["prompt"]
+    assert it["refs"] and it["refs"][-1] == "out/14_storyboard_12/p11.jpg"
+    assert not list((real_copy / "requests").glob("*_recut.json"))              # ★영상 요청은 아직 없다
+    assert rc["estimate_usd"] == round(0.134 + 4 * 0.10, 2)                     # 콘티 + 움직이는 샷 1개(4초)
+
+
+def test_recut_plan_rejects_too_few_transitions(real_copy):
+    one = dict(_PLAN, shots=[{"t0": 0, "t1": 6, "panel": 1, "motion": "omni", "overlay": "none"}])
+    with pytest.raises(SystemExit):
+        admin.recut_plan("bathynomus_giganteus", 8, "전환 2회", min_tr=2, ask=lambda p: json.dumps(one),
+                         run_images=False)
+    rc = admin.load_status("bathynomus_giganteus")["artifacts"]["recut"]["8"]
+    assert rc["state"] == "error" and "전환" in rc["error"]
+    assert not list((real_copy / "requests").glob("*_conti.json"))
+
+
+def test_recut_approve_builds_new_cut_and_reassembles(real_copy, monkeypatch):
+    admin.recut_plan("bathynomus_giganteus", 8, "뱃속·물음표", min_tr=2, ask=lambda p: json.dumps(_PLAN),
+                     run_images=False)
+    st = admin.load_status("bathynomus_giganteus")
+    for rel in ("out/14_storyboard_12/p11.jpg", "out/14_storyboard_12/p10.jpg", "out/14_storyboard_12/p08.jpg",
+                "out/14_storyboard_12/p05.jpg", "out/23_clips_v5/c08.mp4"):
+        (real_copy / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(REAL / rel, real_copy / rel)
+    st["artifacts"]["recut"]["8"]["conti"]["panels"] = ["out/14_storyboard_12/p11.jpg", "out/14_storyboard_12/p10.jpg",
+                                                         "out/14_storyboard_12/p08.jpg", "out/14_storyboard_12/p05.jpg"]
+    admin._save(admin.status_path("bathynomus_giganteus"), st)
+    real_run = subprocess.run
+
+    def fake_run(args, cwd=None, **k):
+        if args and str(args[-1]).endswith("_recut.json"):                     # Omni 대신 기존 클립 복사
+            req = json.loads(Path(args[-1]).read_text(encoding="utf-8"))
+            out = real_copy / "out" / req["id"]
+            out.mkdir(parents=True, exist_ok=True)
+            for it in req["items"]:
+                assert "NEVER SHOW: text" in it["prompt"] and "TIMELINE" in it["prompt"]
+                shutil.copy(real_copy / "out/23_clips_v5/c08.mp4", out / f"{it['name']}.mp4")
+            return subprocess.CompletedProcess(args, 0)
+        return real_run(args, cwd=cwd, **k)
+    monkeypatch.setattr(admin.subprocess, "run", fake_run)
+    called = []
+    monkeypatch.setattr(admin, "assemble", lambda pid: called.append(pid))
+    admin.recut_approve("bathynomus_giganteus", 8)
+    st = admin.load_status("bathynomus_giganteus")
+    clip = next(c for c in st["artifacts"]["video"]["clips"] if c["cut"] == 8)
+    assert clip["file"].endswith("_recut/c08.mp4") and (real_copy / clip["file"]).exists()
+    assert clip["history"][-1] == "out/23_clips_v5/c08.mp4"
+    assert st["artifacts"]["recut"]["8"]["state"] == "done" and called == ["bathynomus_giganteus"]
+    dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
+                                str(real_copy / clip["file"])], capture_output=True, text=True).stdout)
+    assert abs(dur - 6.0) < 0.1                                                  # 컷 길이 그대로
+
+
+def test_recut_approve_needs_conti(real_copy):
+    with pytest.raises(SystemExit):
+        admin.recut_approve("bathynomus_giganteus", 8)
