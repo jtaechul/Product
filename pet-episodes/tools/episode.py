@@ -677,6 +677,7 @@ TRANSITIONS = {"order": "fadeblack", "serve": "smoothleft", "taste": "fade", "bi
 XF = 0.4
 LEAD = 0.45              # 컷 시작 후 대사가 시작되기까지(초)
 TAIL = 0.75              # 대사가 끝난 뒤 다음 컷까지 여유(초)
+MIN_SEG = 5.0            # 대사가 짧아도 컷은 이 길이 이상
 
 
 def _zoom_expr(role, idx, L):
@@ -704,7 +705,9 @@ def build_segment(ep, c, idx, work, tmp):
     timing = json.loads(tjp.read_text(encoding="utf-8")) if tjp.exists() else []
     N = _dur(voice) if voice.exists() else 0.0
     # 컷 길이는 대사에 맞춘다: 대사가 길면 목소리를 빠르게 하지 않고 영상을 조금 늘리거나 마지막 장면을 잠시 멈춘다.
-    L = max(V, LEAD + N + TAIL)
+    # 영상 AI는 컷 끝(7~8초)으로 갈수록 흐트러진다(시식 중 사라짐·퇴장 중 되돌아옴 — 3차 실측) → 8초를 다 쓰지 않고
+    # 대사 길이만큼만 쓴다(최소 MIN_SEG초). 템포도 빨라진다.
+    L = max(MIN_SEG, LEAD + N + TAIL)
     slow = min(1.3, L / V)
     a0 = max(0.3, L - N - 0.35) if role == "enter" else LEAD   # 입장: 오프닝이 끝의 줌과 겹치게
     ins, fcs, labels = [], [], []
