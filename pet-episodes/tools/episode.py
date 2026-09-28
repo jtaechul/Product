@@ -149,7 +149,7 @@ KF_TAIL = ("\nNo text, letters, numbers, signs with writing, logos or watermarks
 
 
 def step_keyframes(ep, epdir, work, log, redo, character):
-    food = epdir / "refs" / "food.png"
+    food = next((p for p in (epdir / "refs" / "food.png", epdir / "refs" / "food.jpg") if p.exists()), epdir / "refs" / "food.png")
     noun = "kitten" if ep.get("species") == "cat" else "puppy"
     first = None
     res = log.setdefault("keyframes", {})
