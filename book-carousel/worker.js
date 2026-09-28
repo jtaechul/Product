@@ -3819,12 +3819,14 @@ async function resolveFoodLook(env, gk, title, image) {
   let res = null;
   // ① 사진
   const urls = await foodPhotoUrls(env, title, image);
-  const imgs = (await Promise.all(urls.map(fetchImageInline))).filter(Boolean);
+  const got = await Promise.all(urls.map(fetchImageInline));
+  const imgs = got.filter(Boolean);
+  const okUrls = urls.filter((u, i) => got[i]); // 실제로 받아진 사진만(등록 주소가 오류 페이지인 경우가 있다)
   if (imgs.length) {
     try {
       const o = extractJson(await callGeminiVision(gk, [...imgs, { text: FOOD_LOOK_ASK(title, base) }]) || '');
       const look = o && o.visible ? cleanFoodLook(o.look, title) : '';
-      if (look) res = { look, source: 'photo', note: String(o.where || '').slice(0, 80), photos: urls.length };
+      if (look) res = { look, source: 'photo', note: String(o.where || '').slice(0, 80), photos: imgs.length };
     } catch {}
   }
   // ② 웹검색(짧은 질문 → 정리 2단계. 긴 지시를 한 번에 주면 검색을 건너뛴다)
@@ -3844,7 +3846,7 @@ async function resolveFoodLook(env, gk, title, image) {
   }
   if (!res) res = { look: base, source: 'generic', note: '' };
   res.image = image || '';
-  res.photoUrl = urls[0] || '';
+  res.photoUrls = okUrls;
   if (env.PENDING_POSTS && res.source !== 'generic') {
     try { await env.PENDING_POSTS.put(key, JSON.stringify(res), { expirationTtl: 30 * 24 * 3600 }); } catch {}
   }
@@ -3859,7 +3861,7 @@ async function handleFoodReference(env, body) {
   if (!gk) throw new Error('Gemini 키가 설정되지 않았습니다.');
   if (await getImageUsage(env) >= DAILY_IMAGE_CAP) throw new Error(`오늘 만들 수 있는 이미지 ${DAILY_IMAGE_CAP}장을 다 썼습니다. 내일 다시 눌러주세요.`);
   const fl = await resolveFoodLook(env, gk, title, String(body.image || '').trim());
-  const urls = fl.photoUrl ? [fl.photoUrl] : await foodPhotoUrls(env, title, body.image);
+  const urls = (fl.photoUrls && fl.photoUrls.length) ? fl.photoUrls : await foodPhotoUrls(env, title, body.image);
   const imgs = (await Promise.all(urls.slice(0, 2).map(fetchImageInline))).filter(Boolean);
   const prompt = `${imgs.length ? 'The attached photos are product photos of a pet food. Look at the actual food pieces (not the package). ' : ''}`
     + `Create a clean photorealistic photo of only this pet food: ${fl.look}. `
