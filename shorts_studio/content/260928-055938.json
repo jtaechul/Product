@@ -1,0 +1,157 @@
+{
+  "id": "260928-055938",
+  "owner": "jtaechul",
+  "topic": "콩쥐팥쥐 잔혹버젼",
+  "title": "깨진 독에 담긴 얼굴",
+  "tool": "Veo (Google)",
+  "tool_note": "Veo는 소리도 함께 생성하므로 프롬프트 끝에 주변음 묘사를 넣었습니다.",
+  "mode": "어른용",
+  "channel": "어른",
+  "opening_hook": "연못 깊은 곳에 가라앉은 비단신 속에서, 왜 주인의 얼굴이 아닌 타인의 그림자가 웃고 있는가?",
+  "voice": "Charon",
+  "highlight": "붉은색",
+  "hashtags": [
+    "#콩쥐팥쥐",
+    "#전래괴담",
+    "#깨진독의대가"
+  ],
+  "logline": "깨진 독을 채우려 제 얼굴을 바친 콩쥐와, 그 비단신을 빼앗은 팥쥐에게 남은 서늘한 대가.",
+  "characters": [
+    {
+      "name": "콩쥐",
+      "role": "밑 빠진 독을 채우기 위해 자신의 얼굴을 바친 의붓딸",
+      "image_prompt": "Korean traditional folklore style, 3D animated character, hanbok, low-key moonlit lantern light, desaturated muted color palette, deep shadows, cinematic depth of field, full body, front view, standing naturally, pale exhausted 18-year-old Korean girl, wearing a faded patched light blue skirt and plain white Jeogori, damp untidy braided hair, subtle melancholy expression, bare feet resting on cold ground."
+    },
+    {
+      "name": "팥쥐",
+      "role": "콩쥐의 비단신과 운명을 빼앗으려 탐욕을 부리는 동생",
+      "image_prompt": "Korean traditional folklore style, 3D animated character, hanbok, low-key moonlit lantern light, desaturated muted color palette, deep shadows, cinematic depth of field, full body, front view, standing naturally, sharp-featured 18-year-old Korean girl, wearing a vivid dark purple hanbok skirt and yellow Jeogori, neat double braids with red ribbons, jealous envious gaze, wearing clean cloth shoes."
+    },
+    {
+      "name": "계모",
+      "role": "콩쥐에게 불가능한 과제를 주어 사지로 몰아넣는 의붓어머니",
+      "image_prompt": "Korean traditional folklore style, 3D animated character, hanbok, low-key moonlit lantern light, desaturated muted color palette, deep shadows, cinematic depth of field, full body, front view, standing naturally, stern 40-year-old Korean woman, wearing a cold dark green hanbok with tight dark grey binyo hair bun, sharp cold eyes, severe imposing stance."
+    }
+  ],
+  "cover_prompt": "A haunting dark Korean folklore scene, a large cracked ancient pottery jar sitting in a shadowy dark hanok courtyard under a cold pale moon, a fine silk shoe half-submerged in black water inside the jar, eerie mist, Korean traditional folklore style, 3D animated character style, desaturated muted color palette, deep shadows, cinematic depth of field, top third of image is simple foggy sky, no text, no letters, no title, no watermark. A desaturated color palette of slate grey, muted indigo, and dim candlelit amber under harsh moonlit shadows, atmospheric night haze, cinematic matte 3D render style. Vertical 9:16 poster composition, no text, no letters, no title, no watermark, no logo.",
+  "style_lock": "A desaturated color palette of slate grey, muted indigo, and dim candlelit amber under harsh moonlit shadows, atmospheric night haze, cinematic matte 3D render style.",
+  "scenes": [
+    {
+      "narration": "연못 속 비단신 아래, [놀라며] 왜 남의 그림자가 웃고 있을까요?",
+      "visual": "연못 속 가라앉은 신발 밑에서 낯선 그림자가 웃는 환영을 보는 팥쥐",
+      "prompt": "Close-up, slow dolly-in. Patji leans over a dark, still pond at dusk, staring down into the water. Deep beneath the murky surface lies a single traditional shoe. A distorted human silhouette with a strange smile glimmers in the watery reflection beneath the shoe. Ambient ripple sounds and low wind tone. A desaturated color palette of slate grey, muted indigo, and dim candlelit amber under harsh moonlit shadows, atmospheric night haze, cinematic matte 3D render style. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 5 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "close-up, slow dolly-in",
+      "negative": "",
+      "est_seconds": 5.2,
+      "voice_direction": "숨을 죽이고 서늘한 의문을 담아 낮은 톤으로",
+      "continuity": "어두운 연못가의 불안한 분위기를 다음 마당 씬의 음산함으로 연결",
+      "act": "도입",
+      "cast": [
+        "팥쥐"
+      ]
+    },
+    {
+      "narration": "사실 사흘 전, 계모는 독을 채우지 못하면 나가라 했습니다.",
+      "visual": "밤마당에서 계모가 콩쥐에게 깨진 독을 채우라 지시하고 들어가는 모습",
+      "prompt": "Wide establishing shot, static camera. Inside a dimly lit courtyard under night sky, Gaemo stands near the house steps, pointing sternly toward a massive cracked clay jar before walking inside. Kongji remains standing alone in the shadows beside the broken vessel. Ambient night crickets and soft wooden door shutting sound. A desaturated color palette of slate grey, muted indigo, and dim candlelit amber under harsh moonlit shadows, atmospheric night haze, cinematic matte 3D render style. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "wide establishing shot, static camera",
+      "negative": "",
+      "est_seconds": 5.6,
+      "voice_direction": "차갑고 단호하게, 억누르듯 건조한 톤으로",
+      "continuity": "마당에 홀로 남겨진 콩쥐의 절망감을 밤새 물을 긷는 노동으로 전달",
+      "act": "전개",
+      "cast": [
+        "계모",
+        "콩쥐"
+      ]
+    },
+    {
+      "narration": "그러자 밤새 길어 나른 우물물은 바닥 틈으로만 새어 듭니다.",
+      "visual": "콩쥐가 물을 부어도 깨진 독 바닥으로 끊임없이 새어나가는 검은 물",
+      "prompt": "Medium shot, pan left following movement. Kongji carries a heavy wooden bucket from a stone well and pours water into the large jar. Black water constantly trickles out through cracks at the base, spreading over the dark soil around her feet. Ambient sloshing water and distant night owl hooting. A desaturated color palette of slate grey, muted indigo, and dim candlelit amber under harsh moonlit shadows, atmospheric night haze, cinematic matte 3D render style. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "medium shot, pan left",
+      "negative": "",
+      "est_seconds": 5.8,
+      "voice_direction": "안타까움이 묻어나도록 무겁고 느릿하게",
+      "continuity": "새어나가는 물과 헛수고를 독 바닥의 묵직한 정적으로 연결",
+      "act": "전개",
+      "cast": [
+        "콩쥐"
+      ]
+    },
+    {
+      "narration": "그런데 첫 닭이 울기 직전, 제 얼굴을 바치라는 독 속의 목소리.",
+      "visual": "새벽녘 독 앞의 콩쥐와 독 안 고인 물에서 일어나는 기묘한 물결",
+      "prompt": "Low-angle shot, slow tilt-up. Kongji kneels beside the base of the jar in deep despair just before dawn. Dark murky water sits still inside the pot. Mysterious ripples form on the water surface as if reacting to an unseen presence under moonlight. Ambient early morning wind and faint rooster crowing in distance. A desaturated color palette of slate grey, muted indigo, and dim candlelit amber under harsh moonlit shadows, atmospheric night haze, cinematic matte 3D render style. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "low-angle shot, slow tilt-up",
+      "negative": "",
+      "est_seconds": 5.8,
+      "voice_direction": "비밀스럽고 서늘하게, 귀가에 대고 말하듯 낮게",
+      "continuity": "물속의 유혹을 받게 된 콩쥐의 기이한 결심 동작으로 전달",
+      "act": "위기",
+      "cast": [
+        "콩쥐"
+      ]
+    },
+    {
+      "narration": "이윽고 홀린 듯 제 이목구비를 훑어 검은 물에 쏟아부었습니다.",
+      "visual": "손으로 제 얼굴을 쓸어내려 독 속으로 무언가를 쏟아 넣는 콩쥐의 손길",
+      "prompt": "Extreme close-up on hands, rack focus. Kongji brings both hands up to sweep slowly over her own face in a trance-like motion. She then lowers her cupped hands over the jar, tilting them as if pouring invisible water into the dark vessel. Ambient eerie chime reverberation and subtle wind rustle. A desaturated color palette of slate grey, muted indigo, and dim candlelit amber under harsh moonlit shadows, atmospheric night haze, cinematic matte 3D render style. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "extreme close-up on hands, rack focus",
+      "negative": "",
+      "est_seconds": 6.1,
+      "voice_direction": "살짝 떨리는 목소리로 기괴함과 긴장감을 담아",
+      "continuity": "얼굴을 바친 기괴한 행위를 그 결과로 완성된 비단신의 등장으로 연결",
+      "act": "위기",
+      "cast": [
+        "콩쥐"
+      ]
+    },
+    {
+      "narration": "하지만 떠오른 비단신 옆에는 이목구비가 사라진 평평한 얼굴.",
+      "visual": "독 위에 떠오른 비단신과 그 옆에 얼굴 이목구비가 없이 서 있는 콩쥐",
+      "prompt": "Medium close-up, orbit camera slowly moving around. A ornate shoe floats smoothly on top of the filled jar water. Beside the jar, Kongji stands completely still, her face appearing strangely smooth and devoid of features under dim lantern light. Ambient soft water lapping sound and mysterious tone. A desaturated color palette of slate grey, muted indigo, and dim candlelit amber under harsh moonlit shadows, atmospheric night haze, cinematic matte 3D render style. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "medium close-up, orbit camera",
+      "negative": "",
+      "est_seconds": 6.1,
+      "voice_direction": "덤덤하고 dry하게, 충격적인 광경을 담담히 서술하듯",
+      "continuity": "얼굴이 사라진 콩쥐와 신발을 발견한 팥쥐의 탐욕스러운 난입으로 연결",
+      "act": "절정",
+      "cast": [
+        "콩쥐"
+      ]
+    },
+    {
+      "narration": "그 순간 팥쥐는 콩쥐를 밀쳐내고 [빠르게] 비단신을 쑤셔 넣습니다.",
+      "visual": "콩쥐를 밀치고 독에서 비단신을 빼앗아 자기 발에 억지로 신는 팥쥐",
+      "prompt": "Over-the-shoulder shot, handheld follow. Patji rushes out from behind a wooden door, violently pushing Kongji aside. Patji grabs the floating shoe from the jar and forcefully shoves her own foot into it on the muddy ground. Ambient rustling fabric, heavy breathing, and splash of water. A desaturated color palette of slate grey, muted indigo, and dim candlelit amber under harsh moonlit shadows, atmospheric night haze, cinematic matte 3D render style. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "over-the-shoulder shot, handheld follow",
+      "negative": "",
+      "est_seconds": 5.6,
+      "voice_direction": "탐욕스럽고 급박하게, 호흡을 다소 가쁘게 올려서",
+      "continuity": "강제로 신발을 신은 팥쥐의 죄악을 방 안까지 따라온 대가로 연결",
+      "act": "절정",
+      "cast": [
+        "팥쥐",
+        "콩쥐"
+      ]
+    },
+    {
+      "narration": "며칠 뒤, 방 구석으로 도망친 등 뒤로 바싹 붙어선 빈 그림자.",
+      "visual": "방구석에 구부리고 앉은 팥쥐의 등 뒤로 바싹 다가서는 얼굴 없는 빈 그림자",
+      "prompt": "Medium shot, slow dolly-out. Inside a dark room lit by a flickering oil lamp, Patji huddles in the corner. Black water spreads along the wooden floor from her foot. Directly behind her wall, a tall featureless shadow rises, standing unnaturally close to her back. Ambient creaking floorboards and rhythmic dripping sound. A desaturated color palette of slate grey, muted indigo, and dim candlelit amber under harsh moonlit shadows, atmospheric night haze, cinematic matte 3D render style. All characters keep their mouths completely closed and motionless for the entire shot, conveying everything through gesture, posture and eye expression alone. Silent pantomime performance with zero lip movement and no lip-sync. Single continuous shot of about 6 seconds. Vertical 9:16 aspect ratio.",
+      "shot": "medium shot, slow dolly-out",
+      "negative": "",
+      "est_seconds": 5.6,
+      "voice_direction": "잔잔하지만 오싹하게, 마지막 여운을 끌며 침묵으로 닫듯",
+      "continuity": "신발에서 번지는 검은 물과 등 뒤의 빈 그림자로 서늘한 대가를 완성",
+      "act": "결말",
+      "cast": [
+        "팥쥐"
+      ]
+    }
+  ],
+  "status": "scripted",
+  "created_at": "2026-09-28T05:59:38Z",
+  "video": null
+}
