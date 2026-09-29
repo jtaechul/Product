@@ -4768,21 +4768,12 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <p class="lead">주인공의 대사와 장면 설명을 한 번에 만듭니다. 사료·간식은 「한 그릇의 품격」 식당 에피소드가 됩니다.</p>
     <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
     <div class="fmt-hint" id="fmtHint"></div>
-    <details class="ref-char adv"><summary>주인공 설정 · Flow용 프롬프트 (평소엔 안 건드려도 됩니다)</summary>
+    <details class="ref-char adv"><summary>주인공 설정 (평소엔 안 건드려도 됩니다)</summary>
     <div class="f" style="margin-top:10px"><label for="pdog">강아지 주인공 설정</label>
       <input id="pdog" type="text" value="실사 시바견 (8개월쯤, 검은 털 없음, 목줄·옷 없음)"></div>
     <div class="f"><label for="pcat">고양이 주인공 설정</label>
       <input id="pcat" type="text" value="photorealistic 3D animated style 아기 고양이 (크림·화이트 털, 목걸이·옷 없음)">
-      <small>주인공은 상품 이름을 보고 자동으로 정해집니다(고양이 상품이면 고양이). Flow에 캐릭터 이미지를 끌어다 쓰시니 짧게만 적으세요.</small></div>
-    <details class="ref-char"><summary>주인공 캐릭터 이미지 만드는 프롬프트</summary>
-      <p class="lead" style="margin:8px 0">Flow에서 주인공 이미지를 새로 뽑을 때 그대로 붙여넣으세요. 둘 다 옷·목줄 없는 네발 꼬마입니다.</p>
-      <label class="sub-lb" for="charP">강아지 (시바견)</label>
-      <textarea id="charP" readonly rows="5">${CHARACTER_SHEET_PROMPT}</textarea>
-      <button class="btn btn-2 btn-sm" id="charC" type="button">강아지 프롬프트 복사</button>
-      <label class="sub-lb" for="charCatP" style="margin-top:12px">고양이</label>
-      <textarea id="charCatP" readonly rows="5">${CAT_SHEET_PROMPT}</textarea>
-      <button class="btn btn-2 btn-sm" id="charCatC" type="button">고양이 프롬프트 복사</button>
-    </details>
+      <small>주인공은 상품 이름을 보고 자동으로 정해집니다(고양이 상품이면 고양이). 영상 속 생김새는 고정 주인공 사진을 따르니 짧게만 적으세요.</small></div>
     </details>
     <div class="row">
       <div class="f" style="flex:1"><label for="pclips">클립 개수</label>
@@ -4819,6 +4810,15 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 
   <section class="box" data-view="legacy">
     <div class="box-hd"><h2>직접 이어붙이기 (예전 방식)</h2></div>
+    <details class="ref-char"><summary>Flow용 주인공 캐릭터 이미지 프롬프트(예전 방식)</summary>
+      <p class="lead" style="margin:8px 0">Flow에서 주인공 이미지를 새로 뽑을 때 그대로 붙여넣으세요. 둘 다 옷·목줄 없는 네발 꼬마입니다.</p>
+      <label class="sub-lb" for="charP">강아지 (시바견)</label>
+      <textarea id="charP" readonly rows="5">${CHARACTER_SHEET_PROMPT}</textarea>
+      <button class="btn btn-2 btn-sm" id="charC" type="button">강아지 프롬프트 복사</button>
+      <label class="sub-lb" for="charCatP" style="margin-top:12px">고양이</label>
+      <textarea id="charCatP" readonly rows="5">${CAT_SHEET_PROMPT}</textarea>
+      <button class="btn btn-2 btn-sm" id="charCatC" type="button">고양이 프롬프트 복사</button>
+    </details>
     <p class="lead">Flow에서 만든 클립을 넣으면 순서대로 이어 붙이고 자막을 새겨 릴스용 영상 한 편으로 내보냅니다. 파일은 이 기기 안에서만 처리되며 어디로도 올라가지 않습니다.</p>
 
     <div class="ed-stage">
@@ -5128,10 +5128,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   function foodRefBox(){
     var box=document.createElement('div'); box.className='clip';
     var hd=document.createElement('div'); hd.className='clip-hd';
-    var nm=document.createElement('span'); nm.className='clip-no'; nm.textContent='음식 참고 이미지 (Flow 재료용)';
+    var nm=document.createElement('span'); nm.className='clip-no'; nm.textContent='음식 참고 이미지 (미리 보기)';
     hd.appendChild(nm); box.appendChild(hd);
     var ex=document.createElement('div'); ex.className='sub';
-    ex.textContent='실제 상품 사진을 보고 알맹이만 흰 그릇에 담은 사진을 만듭니다. 받아서 Flow에 캐릭터 이미지와 함께 올리면 영상 속 사료가 실제 제품과 같아집니다. 포장·상품명은 들어가지 않습니다.';
+    ex.textContent='실제 상품 사진을 보고 알맹이만 흰 그릇에 담은 사진을 만듭니다. 영상 자동 만들기를 누르면 이 이미지를 알아서 만들어 영상에 씁니다(미리 확인용). 포장·상품명은 들어가지 않습니다.';
     box.appendChild(ex);
     var btn=document.createElement('button'); btn.type='button'; btn.className='btn btn-2 btn-sm'; btn.textContent='음식 참고 이미지 만들기';
     btn.style.marginTop='8px';
@@ -5162,7 +5162,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(r.problem){
       var pb=document.createElement('div'); pb.className='prob';
       pb.innerHTML=(diner?'<b>오늘의 에피소드</b><br>':'<b>이 영상이 다루는 문제</b><br>')+esc(r.problem)+
-        (r.speciesKo?'<br><b>주인공:</b> '+esc(r.speciesKo)+' — Flow에서 '+esc(r.speciesKo)+' 캐릭터 이미지를 끌어다 쓰세요.':'')+
+        (r.speciesKo?'<br><b>주인공:</b> '+esc(r.speciesKo)+' — 영상에는 고정 주인공 사진이 자동으로 쓰입니다.':'')+
         (diner&&r.priceNote?'<br><b>계산서:</b> '+esc(r.priceNote):'')+
         (diner?'<br><b>음식 모양:</b> '+({photo:'실제 상품 사진에서 읽음',search:'웹검색 후기에서 찾음',generic:'사진·후기에서 못 찾아 일반형 사용 — 상품 사진 주소를 넣고 다시 만들면 정확해집니다'}[r.foodLookSource]||'일반형')+(r.foodLookNote?' ('+esc(r.foodLookNote)+')':''):'')+
         (diner&&r.verdict?'<br><b>판정:</b> '+esc(r.verdict):'');
@@ -5216,7 +5216,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       '클립마다 1단계 이미지 프롬프트와 2단계 영상 프롬프트가 함께 나옵니다. '+
       '스틸을 먼저 만들어 마음에 드는 장면을 고른 뒤 그 이미지에서 영상을 만들면, 강아지도 착용한 물건도 모양이 흔들리지 않습니다.'+
       (r.wearable ? '<br><b>착용 상품으로 인식했습니다.</b> 문제 클립은 맨몸, 전환 이후 클립만 착용한 모습으로 나옵니다.' : '')+
-      (diner ? '<br><b>식당 에피소드:</b> 음식 모양은 실제 상품 사진·후기에서 읽어 모든 클립에 같은 문장으로 고정돼 있습니다. 위 음식 참고 이미지를 Flow에 함께 올리면 더 정확합니다. 04단계에서 "클립에 나눠 담기"를 누르면 주문 클립엔 메뉴판, 계산 클립엔 가격 계산서가 자동으로 붙습니다. 링크 클릭을 위해 상품명·상품 사진은 영상에 넣지 않습니다(유튜브 설명란 링크 옆에만).' : '')+
+      (diner ? '<br><b>식당 에피소드:</b> 음식 모양은 실제 상품 사진·후기에서 읽어 모든 클립에 같은 문장으로 고정돼 있습니다. 메뉴판·계산서·영수증은 영상 자동 만들기에서 알아서 붙습니다. 링크 클릭을 위해 상품명·상품 사진은 영상에 넣지 않습니다(유튜브 설명란 링크 옆에만).' : '')+
       '<br>소리는 넣지 않습니다. 위 내레이션 대본으로 목소리를 만들어 04단계에서 얹으세요. '+
       '제외 조건은 각 프롬프트 맨 아래 Avoid 줄에 이미 들어 있습니다.';
     out.appendChild(tip);
