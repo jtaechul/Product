@@ -646,6 +646,87 @@ def step_voices(ep, epdir, work, log, voices=None):
     log["voices_text"] = text
 
 
+# ---------- 시그니처 배경음악(사용자 요청 2026-09: 최소 1분) ----------
+# 구글 음악 생성 AI(Lyria RealTime, Gemini 키)로 만든다 → 저작권 걱정 없는 우리 곡. 후보를 들어보고 하나를 signature.mp3로 고정.
+BGM_SECONDS = 75
+BGM_PROMPTS = {
+    "jazz_trio": ("Mellow late-night jazz trio for a quiet solo dinner in a small neighborhood diner: brushed drums, warm "
+                  "upright bass, soft clean electric jazz guitar melody, relaxed and cozy, gentle swing, instrumental", 84),
+    "bossa_guitar": ("Laid-back acoustic nylon guitar and soft piano, gentle bossa nova groove, warm and tasteful, calm "
+                     "restaurant background music, instrumental", 90),
+    "lofi_rhodes": ("Slow lo-fi jazz with rhodes piano and muted trumpet, calm and contemplative, soft vinyl texture, "
+                    "late afternoon mood, instrumental", 76),
+}
+MUSIC_DIR = Path(__file__).resolve().parent.parent / "music"
+SIGNATURE_BGM = MUSIC_DIR / "signature.mp3"
+
+
+def _lyria(prompt: str, bpm: int, seconds: int, out: Path) -> dict:
+    import asyncio
+    from google import genai
+    from google.genai import types
+    key = _key("GEMINI_API_KEY")
+
+    async def run():
+        client = genai.Client(api_key=key, http_options={"api_version": "v1alpha"})
+        buf = bytearray()
+        target = seconds * 48000 * 2 * 2           # 48kHz · 16bit · 스테레오
+        async with client.aio.live.music.connect(model="models/lyria-realtime-exp") as session:
+            await session.set_weighted_prompts(prompts=[types.WeightedPrompt(text=prompt, weight=1.0)])
+            await session.set_music_generation_config(config=types.LiveMusicGenerationConfig(bpm=bpm, temperature=1.0))
+            await session.play()
+            async for message in session.receive():
+                sc = getattr(message, "server_content", None)
+                for ch in (getattr(sc, "audio_chunks", None) or []):
+                    buf.extend(ch.data)
+                if len(buf) >= target:
+                    break
+        return bytes(buf)
+
+    pcm = asyncio.run(asyncio.wait_for(run(), timeout=seconds * 4 + 60))
+    raw = out.with_suffix(".pcm")
+    raw.write_bytes(pcm)
+    _ff(["-f", "s16le", "-ar", "48000", "-ac", "2", "-i", str(raw), "-af",
+         f"afade=t=in:d=2,afade=t=out:st={seconds - 4}:d=4,loudnorm=I=-18:TP=-2", "-b:a", "192k", str(out)])
+    raw.unlink()
+    return {"ok": True, "sec": round(_dur(out), 1)}
+
+
+def step_bgm(work, log, names=None):
+    res = log.setdefault("bgm", {})
+    for name in (names or list(BGM_PROMPTS)):
+        prompt, bpm = BGM_PROMPTS[name]
+        out = work / f"bgm_{name}.mp3"
+        try:
+            res[name] = _lyria(prompt, bpm, BGM_SECONDS, out)
+        except Exception as e:  # noqa: BLE001
+            res[name] = {"ok": False, "error": str(e)[:300]}
+
+
+def step_ig_probe(log):
+    """어느 인스타 계정에 올릴 수 있는 토큰인지 확인만 한다(발행 없음). 토큰 값은 기록하지 않는다."""
+    tok = os.environ.get("IG_ACCESS_TOKEN", "").strip()
+    if not tok:
+        log["ig_probe"] = {"ok": False, "error": "IG_ACCESS_TOKEN 없음"}
+        return
+    out = {}
+    for label, url, params in (("instagram", "https://graph.instagram.com/me", "fields=user_id,username"),
+                               ("facebook_pages", "https://graph.facebook.com/v21.0/me/accounts",
+                                "fields=instagram_business_account%7Bid,username%7D")):
+        code, raw = _http(f"{url}?{params}&access_token={tok}", timeout=30)
+        try:
+            j = json.loads(raw)
+        except Exception:  # noqa: BLE001
+            j = {}
+        if label == "instagram":
+            out[label] = {"http": code, "username": j.get("username"), "error": (j.get("error") or {}).get("message")}
+        else:
+            out[label] = {"http": code, "accounts": [((p.get("instagram_business_account") or {}).get("username"))
+                                                     for p in j.get("data", [])],
+                          "error": (j.get("error") or {}).get("message")}
+    log["ig_probe"] = out
+
+
 def split_sentences(text: str) -> list[str]:
     """대사를 자막·낭독 단위 문장으로. "음…" 같은 짧은 조각은 다음 문장과 붙인다."""
     out = []
@@ -826,12 +907,17 @@ def title_png(series, epno, out: Path):
     _shadowed((W, H), draw, blur=8, alpha=170).save(out)
 
 
-def _seal(dr, x, y, s, text="품격"):
-    """붉은 낙관(도장) — 이모지 대신 직접 그린 도형."""
-    dr.rounded_rectangle([x, y, x + s, y + s], radius=6, fill=SEAL + (235,))
-    f = _f(SERIF_XB, int(s * 0.36))
-    for i, ch in enumerate(text):
-        dr.text((x + (s - f.getlength(ch)) / 2, y + s * 0.10 + i * s * 0.42), ch, font=f, fill=(255, 240, 230, 255))
+def _seal(dr, x_right, y, h, text="품격"):
+    """붉은 낙관 — 가로로 긴 빨간 박스에 글자 한 줄(사용자 지시 2026-09). 이모지 대신 직접 그린 도형.
+    x_right = 박스 오른쪽 끝, y = 위쪽, h = 높이. 너비는 글자 길이에 맞춘다."""
+    f = _f(SERIF_XB, int(h * 0.56))
+    tw = f.getlength(text)
+    w = tw + h * 0.7
+    x = x_right - w
+    dr.rounded_rectangle([x, y, x_right, y + h], radius=int(h * 0.14), fill=SEAL + (238,))
+    dr.rounded_rectangle([x + 4, y + 4, x_right - 4, y + h - 4], radius=int(h * 0.1), outline=(255, 226, 214, 150), width=1)
+    a, d = f.getmetrics()
+    dr.text((x + (w - tw) / 2, y + (h - a - d) / 2 + 1), text, font=f, fill=(255, 244, 236, 255))
 
 
 def menu_png(name, out: Path):
@@ -857,7 +943,7 @@ def menu_png(name, out: Path):
         top = y0 + 128 + (32 if len(lines) == 1 else 0)
         for i, ln in enumerate(lines):
             dr.text(((W - fn.getlength(ln)) / 2, top + i * int(fsz * 1.32)), ln, font=fn, fill=INK + (255,))
-        _seal(dr, x0 + bw - 84, y0 + 30, 50)          # 오른쪽 위 모서리(메뉴 이름과 겹치지 않게)
+        _seal(dr, x0 + bw - 30, y0 + 30, 40)          # 오른쪽 위 모서리(메뉴 이름과 겹치지 않게)
     _shadowed((W, H), draw, blur=14, alpha=140, offset=(0, 10)).save(out)
 
 
@@ -943,7 +1029,7 @@ def receipt_png(ep, food: Path | None, out: Path):
     c("이 메뉴는", fl, ph - 160)
     c("프로필 링크에서", fl, ph - 100)
     if seal_y:                                       # 붉은 '완식' 낙관 — 음식 사진 오른쪽 아래 모서리에 찍는다
-        _seal(ImageDraw.Draw(paper), pw - 128, seal_y, 78, "완식")
+        _seal(ImageDraw.Draw(paper), pw - 66, seal_y + 14, 52, "완식")
     paper = paper.rotate(-1.5, resample=Image.BICUBIC, expand=True)
     sh = Image.new("RGBA", paper.size, (0, 0, 0, 0))
     sh.putalpha(paper.split()[3].point(lambda v: v * 150 // 255).filter(ImageFilter.GaussianBlur(16)))
@@ -1089,10 +1175,23 @@ def step_assemble(ep, epdir, work, log):
     _ff([*ins, "-filter_complex", ";".join(fc), "-map", f"[{vlast}]", "-map", f"[{alast}]",
          "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-r", str(FPS),
          "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(final)])
+    if SIGNATURE_BGM.exists():                            # 시그니처 배경음악: 작게 깔고, 목소리가 나오면 자동으로 더 줄인다
+        T = _dur(final)
+        mixed = work / "final_bgm.mp4"
+        _ff(["-i", str(final), "-stream_loop", "-1", "-i", str(SIGNATURE_BGM), "-filter_complex",
+             f"[0:a]asplit=2[v1][v2];[1:a]aresample=44100,atrim=0:{T:.2f},volume=0.22,"
+             f"afade=t=in:d=1.5,afade=t=out:st={max(0, T - 2.5):.2f}:d=2.5[m];"
+             f"[m][v1]sidechaincompress=threshold=0.02:ratio=6:attack=30:release=500[md];"
+             f"[v2][md]amix=inputs=2:duration=first:normalize=0[a]",
+             "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k",
+             "-movflags", "+faststart", str(mixed)])
+        mixed.replace(final)
+        log.setdefault("assemble", {})["bgm"] = SIGNATURE_BGM.name
     total = _dur(final)
     _ff(["-i", str(final), "-vf", f"fps={len(segs)}/{total:.2f},scale=180:-2,tile={len(segs)}x1:margin=4:padding=4:color=white",
          "-frames:v", "1", str(work / "frames.jpg")])
-    log["assemble"] = {"ok": True, "sec": round(total, 2), "clips": len(segs) - 1, "segments": info}
+    log["assemble"] = {**log.get("assemble", {}), "ok": True, "sec": round(total, 2), "clips": len(segs) - 1,
+                       "segments": info}
     for p in tmp.iterdir():
         p.unlink()
     tmp.rmdir()
@@ -1102,7 +1201,8 @@ def main(path: str) -> int:
     rp = Path(path)
     req = json.loads(rp.read_text(encoding="utf-8"))
     epdir = rp.parent.parent
-    ep = json.loads((epdir / "episode.json").read_text(encoding="utf-8"))
+    epf = epdir / "episode.json"
+    ep = json.loads(epf.read_text(encoding="utf-8")) if epf.exists() else {"clips": []}
     work = epdir / "work"
     work.mkdir(exist_ok=True)
     logp = work / "log.json"
@@ -1113,6 +1213,12 @@ def main(path: str) -> int:
     steps = req.get("steps", ["character", "keyframes", "clips", "tts", "assemble"])
     ok = True
     try:
+        if "bgm" in steps:
+            step_bgm(work, log, req.get("bgm"))
+        if "ig_probe" in steps:
+            step_ig_probe(log)
+        if not ep["clips"]:
+            raise StopIteration
         if "voices" in steps:
             step_voices(ep, epdir, work, log, req.get("voices"))
         character = step_character(ep, epdir, work, log, redo)
@@ -1128,6 +1234,8 @@ def main(path: str) -> int:
             step_tts(ep, epdir, work, log, redo)
         if "assemble" in steps:
             step_assemble(ep, epdir, work, log)
+    except StopIteration:
+        pass
     except Exception as e:  # noqa: BLE001
         log["error"] = str(e)[:500]
         ok = False

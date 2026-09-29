@@ -18,6 +18,8 @@ jobs:
       # 스텝의 if 에서는 secrets 컨텍스트를 직접 읽을 수 없기 때문.
       HAS_COUPANG: ${{ secrets.COUPANG_ACCESS_KEY != '' && secrets.COUPANG_SECRET_KEY != '' }}
       HAS_GEMINI: ${{ secrets.GEMINI_API_KEY != '' }}
+      # 관리자 페이지 '영상 자동 만들기' 버튼이 GitHub에 제작 요청을 올릴 때 쓰는 키(심해 대시보드와 같은 키 재사용)
+      HAS_GH_PAT: ${{ secrets.DASHBOARD_GH_PAT != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -53,6 +55,14 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: printf '%s' "$GEMINI_API_KEY" | npx --yes wrangler@3.90.0 secret put GEMINI_API_KEY
+
+      - name: GitHub 키 등록 (영상 자동 제작 버튼용)
+        if: env.HAS_GH_PAT == 'true'
+        working-directory: book-carousel
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          GH_PAT: ${{ secrets.DASHBOARD_GH_PAT }}
+        run: printf '%s' "$GH_PAT" | npx --yes wrangler@3.90.0 secret put GH_PAT
 
       - name: 쿠팡 키 미설정 안내
         if: env.HAS_COUPANG != 'true'

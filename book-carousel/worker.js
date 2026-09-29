@@ -5893,6 +5893,7 @@ export default {
             hasPendingPosts: !!env.PENDING_POSTS,
             pendingPostsType: env.PENDING_POSTS ? typeof env.PENDING_POSTS : 'undefined',
             hasInstagramToken: !!env.INSTAGRAM_ACCESS_TOKEN,
+            hasGithubToken: !!env.GH_PAT,
             hasGeminiKey: !!env.GEMINI_API_KEY,
             hasNaverId: !!env.NAVER_CLIENT_ID,
             hasNaverSecret: !!env.NAVER_CLIENT_SECRET,
