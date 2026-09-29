@@ -31,8 +31,191 @@
     "source": "characters/dog.png"
   },
   "last_request": {
-    "file": "01_voices.json",
-    "ran_at": "2026-09-29T00:24:41Z",
+    "file": "02_full.json",
+    "ran_at": "2026-09-29T00:38:24Z",
     "ok": true
+  },
+  "set": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview"
+  },
+  "storyboard": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview",
+    "layout": "2x4",
+    "aspect": "1:1"
+  },
+  "keyframes": {},
+  "clips": {
+    "c01": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 33.8
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c02": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 28.0
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c03": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 31.3
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c04": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 33.8
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c05": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 38.2
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c06": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 45.3
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    },
+    "c07": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 28.4
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0
+    }
+  },
+  "tts": {
+    "c01": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 8.44
+    },
+    "c02": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 6.79
+    },
+    "c03": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 6.1
+    },
+    "c04": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 7.66
+    },
+    "c05": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 8.16
+    },
+    "c06": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 5.9
+    },
+    "c07": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 6.52
+    }
+  },
+  "assemble": {
+    "ok": true,
+    "sec": 58.42,
+    "clips": 7,
+    "segments": [
+      {
+        "clip": "c01",
+        "len": 9.64,
+        "voice": 8.44,
+        "slow": 1.205
+      },
+      {
+        "clip": "c02",
+        "len": 7.99,
+        "voice": 6.79,
+        "slow": 0.999
+      },
+      {
+        "clip": "c03",
+        "len": 7.3,
+        "voice": 6.1,
+        "slow": 0.912
+      },
+      {
+        "clip": "c04",
+        "len": 8.86,
+        "voice": 7.66,
+        "slow": 1.107
+      },
+      {
+        "clip": "c05",
+        "len": 9.36,
+        "voice": 8.16,
+        "slow": 1.17
+      },
+      {
+        "clip": "c06",
+        "len": 7.1,
+        "voice": 5.9,
+        "slow": 0.888
+      },
+      {
+        "clip": "c07",
+        "len": 7.72,
+        "voice": 6.52,
+        "slow": 0.965
+      }
+    ]
   }
 }
