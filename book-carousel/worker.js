@@ -3966,6 +3966,7 @@ async function handleFoodReference(env, body) {
         fileUrl = `/api/food-reference/${id}.${/jpe?g/.test(mime) ? 'jpg' : 'png'}`;
       } catch {}
     }
+    if (body._internal) return { success: true, _data: img.inlineData.data, _mime: mime, foodLook: fl.look };
     return { success: true, url: fileUrl, image: fileUrl || `data:${mime};base64,${img.inlineData.data}`,
       foodLook: fl.look, foodLookSource: fl.source, foodLookNote: fl.note, usedPhotos: imgs.length };
   }
@@ -4487,6 +4488,17 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 .msg.ok{display:block;background:rgba(47,111,94,.08);border:1px solid var(--brand);color:var(--brand-ink)}
 .msg.no{display:block;background:rgba(192,80,63,.07);border:1px solid var(--crit);color:var(--crit)}
 .msg.wait{display:block;background:#F2F5F3;border:1px solid var(--line);color:var(--sub)}
+.ep{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px;background:#fff}
+.ep-hd{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.ep-st{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.ep-st.running{background:#FFF3DC;color:#8A5A00}.ep-st.done{background:rgba(47,111,94,.1);color:var(--brand)}
+.ep-st.failed{background:rgba(192,80,63,.1);color:var(--crit)}.ep-st.empty{background:#F2F5F3;color:var(--sub)}
+.ep-sub{font-size:12px;color:var(--sub);margin:4px 0 8px}
+.ep video{width:100%;max-width:300px;display:block;margin:8px auto;border-radius:10px;background:#000;aspect-ratio:9/16}
+.ep-act{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ep-act a{text-decoration:none}
+.ep-act select{font-size:12.5px;padding:7px;border-radius:9px;border:1px solid var(--line)}
+.ep-err{font-size:12px;color:var(--crit);margin-top:6px;word-break:break-all}
 .finds{display:flex;flex-direction:column;gap:9px;margin-top:14px;max-height:460px;overflow-y:auto}
 .find{display:flex;gap:11px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px}
 .find img{width:52px;height:52px;border-radius:8px;object-fit:cover;background:#EDEFEC;flex:none}
@@ -4659,7 +4671,20 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   </section>
 
   <section class="box">
-    <div class="box-hd"><span class="step">04</span><h2>영상 이어붙이기</h2></div>
+    <div class="box-hd"><span class="step">04</span><h2>영상 자동 만들기</h2></div>
+    <p class="lead">03단계에서 만든 대본으로 영상을 처음부터 끝까지 자동으로 만듭니다. 장면 그림 → 8초 영상 → 목소리 → 자막·메뉴판·영수증·배경음악까지 넣은 완성본이 나옵니다.</p>
+    <div class="note">한 편에 30~60분쯤 걸립니다. 창을 닫아도 계속 만들어지고, 다시 들어오면 아래 목록에서 확인할 수 있습니다. 음식 참고 사진 1장과 영상 AI 비용이 듭니다.</div>
+    <button class="btn btn-wide" id="epGo" type="button">영상 자동 만들기</button>
+    <div class="msg" id="epMsg"></div>
+    <div class="row" style="justify-content:space-between;align-items:center;margin-top:18px">
+      <b style="font-size:14px">만든 영상</b>
+      <button class="btn btn-2 btn-sm" id="epRefresh" type="button" style="flex:0 0 auto">새로고침</button>
+    </div>
+    <div id="epList"><p class="muted">불러오는 중…</p></div>
+  </section>
+
+  <section class="box">
+    <div class="box-hd"><span class="step">05</span><h2>직접 이어붙이기 (선택)</h2></div>
     <p class="lead">Flow에서 만든 클립을 넣으면 순서대로 이어 붙이고 자막을 새겨 릴스용 영상 한 편으로 내보냅니다. 파일은 이 기기 안에서만 처리되며 어디로도 올라가지 않습니다.</p>
 
     <div class="ed-stage">
@@ -4719,7 +4744,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <label class="ed-toggle" for="edCards" id="edCardsWrap" hidden>
       <input type="checkbox" id="edCards" checked>
       <span class="ed-box" aria-hidden="true"></span>
-      <span class="ed-tt">식당 장면 연출 넣기<small>입장 클립엔 세 번 끊어 빠지는 줌, 주문 클립엔 메뉴판(상품명 대신 메뉴 이름), 계산 클립엔 가격 계산서가 붙습니다</small></span>
+      <span class="ed-tt">식당 장면 연출 넣기<small>입장 클립엔 "심각하다"에 맞춰 부드럽게 빠지는 줌, 주문 클립엔 메뉴판(상품명 대신 메뉴 이름), 계산 클립엔 가격 계산서가 붙습니다</small></span>
     </label>
 
     <label class="ed-toggle" for="edOutro">
@@ -4746,7 +4771,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   </section>
 
   <section class="box">
-    <div class="box-hd"><span class="step">05</span><h2>등록된 상품</h2></div>
+    <div class="box-hd"><span class="step">06</span><h2>등록된 상품</h2></div>
     <div id="list"><p class="muted">불러오는 중…</p></div>
   </section>
 </main>
@@ -5114,6 +5139,83 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       } else say('pMsg',(res&&res.error)||'프롬프트를 만들지 못했습니다.','no');
     }).catch(function(e){ $('mk').disabled=false; say('pMsg','만들지 못했습니다: '+e.message,'no'); });
   });
+
+  /* ---- 04 영상 자동 만들기 ---- */
+  var EP_STATE={running:'만드는 중',done:'완성',failed:'실패',empty:'대기'};
+  var epTimer=null;
+  function epEl(tag,cls,text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+  function epBtn(text,fn,main){ var b=epEl('button','btn btn-sm'+(main?'':' btn-2'),text); b.type='button'; b.addEventListener('click',fn); return b; }
+  function epAsk(id,kind,extra,okText){
+    var p={id:id,kind:kind}; for(var k in (extra||{})) p[k]=extra[k];
+    say('epMsg','요청을 올리는 중…','wait');
+    post('/api/episode/request',p).then(function(r){
+      if(r&&r.success){ say('epMsg',okText,'ok'); setTimeout(loadEpisodes,1500); }
+      else say('epMsg',(r&&r.error)||'요청하지 못했습니다.','no');
+    }).catch(function(e){ say('epMsg','요청하지 못했습니다: '+e.message,'no'); });
+  }
+  function renderEpisode(e){
+    var d=epEl('div','ep');
+    var hd=epEl('div','ep-hd');
+    hd.appendChild(epEl('span','', (e.episode?'제'+e.episode+'화 · ':'')+(e.menu||e.id)));
+    hd.appendChild(epEl('span','ep-st '+e.state, EP_STATE[e.state]||e.state));
+    d.appendChild(hd);
+    var sub=[e.title, e.sec?Math.round(e.sec)+'초':'', e.ranAt?stampKo(e.ranAt):''].filter(Boolean).join(' · ');
+    d.appendChild(epEl('div','ep-sub',sub));
+    if(e.state==='running') d.appendChild(epEl('div','ep-sub','지금 만드는 중입니다. 끝나면 이 자리에 영상이 나옵니다(자동 새로고침).'));
+    if(e.error) d.appendChild(epEl('div','ep-err','실패 이유: '+e.error));
+    if(e.hasVideo){
+      var v=document.createElement('video'); v.controls=true; v.playsInline=true; v.preload='metadata';
+      v.src='/api/episode/video?id='+encodeURIComponent(e.id)+'&t='+encodeURIComponent(e.ranAt||'');
+      d.appendChild(v);
+    }
+    if(e.ig&&e.ig.ok){
+      var a=epEl('a','', '인스타에 올라간 게시물 보기'); a.href=e.ig.permalink||'#'; a.target='_blank'; a.rel='noopener';
+      a.style.fontSize='13px'; d.appendChild(a);
+    } else if(e.ig&&e.ig.error){ d.appendChild(epEl('div','ep-err','인스타 올리기 실패: '+e.ig.error)); }
+    var act=epEl('div','ep-act');
+    if(e.state!=='running'){
+      if(e.hasVideo){
+        var dl=epEl('a','btn btn-sm btn-2','저장하기'); dl.href='/api/episode/video?dl=1&id='+encodeURIComponent(e.id); act.appendChild(dl);
+        if(!(e.ig&&e.ig.ok)) act.appendChild(epBtn('인스타에 올리기',function(){
+          if(!confirm('이 영상을 인스타그램 릴스로 바로 올립니다. 올린 뒤에는 인스타 앱에서만 지울 수 있습니다. 올릴까요?')) return;
+          epAsk(e.id,'publish',{}, '인스타에 올리는 중입니다. 5~10분 뒤 새로고침하면 게시물 링크가 나옵니다.');
+        },true));
+      }
+      act.appendChild(epBtn('다시 조립',function(){ epAsk(e.id,'assemble',{}, '다시 조립합니다. 5분쯤 걸립니다.'); }));
+      if(e.cuts&&e.cuts.length){
+        var sel=epEl('select');
+        e.cuts.forEach(function(c){ var o=epEl('option','',c.no.replace('c','')+'번 컷 · '+(c.line||c.role).slice(0,18)); o.value=c.no; sel.appendChild(o); });
+        act.appendChild(sel);
+        act.appendChild(epBtn('이 컷 영상만 다시',function(){ epAsk(e.id,'redo',{cuts:[sel.value]}, sel.value.replace('c','')+'번 컷 영상을 다시 뽑습니다. 15분쯤 걸립니다.'); }));
+        act.appendChild(epBtn('장면 그림부터 다시',function(){ epAsk(e.id,'redo',{cuts:[sel.value],scene:true}, sel.value.replace('c','')+'번 컷을 장면 그림부터 다시 만듭니다. 20분쯤 걸립니다.'); }));
+      }
+    }
+    d.appendChild(act);
+    return d;
+  }
+  function loadEpisodes(){
+    post('/api/episode/list',{}).then(function(r){
+      var box=$('epList'); box.textContent='';
+      if(!r||!r.success){ box.appendChild(epEl('p','muted',(r&&r.error)||'목록을 못 불러왔습니다.')); return; }
+      if(!r.episodes.length){ box.appendChild(epEl('p','muted','아직 만든 영상이 없습니다.')); return; }
+      r.episodes.forEach(function(e){ box.appendChild(renderEpisode(e)); });
+      clearTimeout(epTimer);
+      if(r.episodes.some(function(e){ return e.state==='running'; })) epTimer=setTimeout(loadEpisodes,60000);
+    }).catch(function(e){ $('epList').textContent='목록을 못 불러왔습니다: '+e.message; });
+  }
+  $('epRefresh').addEventListener('click',loadEpisodes);
+  $('epGo').addEventListener('click',function(){
+    if(!lastResult||!(lastResult.clips||[]).length){ say('epMsg','먼저 03단계에서 "프롬프트 만들기"로 대본을 만들어 주세요.','no'); return; }
+    if(lastResult.format!=='diner'){ say('epMsg','자동 제작은 사료·간식(식당 에피소드)만 됩니다. 이 상품은 05단계에서 직접 이어붙여 주세요.','no'); return; }
+    if(!confirm('이 대본으로 영상을 자동으로 만듭니다(30~60분, 유료 AI 사용). 시작할까요?')) return;
+    $('epGo').disabled=true; say('epMsg','제작 요청을 올리는 중… (음식 참고 사진을 먼저 만들어 30초쯤 걸립니다)','wait');
+    post('/api/episode/start',{episode:lastResult, title:$('pt').value.trim()||$('t').value.trim(), image:$('img').value.trim(), link:$('l').value.trim()}).then(function(r){
+      $('epGo').disabled=false;
+      if(r&&r.success){ say('epMsg','제작을 시작했습니다. 30~60분 뒤 아래 목록에서 영상을 확인하세요.'+(r.foodRef?'':' (음식 참고 사진은 못 만들어 상품 설명으로만 그립니다'+(r.foodErr?': '+r.foodErr:'')+')'),'ok'); setTimeout(loadEpisodes,2000); }
+      else say('epMsg',(r&&r.error)||'시작하지 못했습니다.','no');
+    }).catch(function(e){ $('epGo').disabled=false; say('epMsg','시작하지 못했습니다: '+e.message,'no'); });
+  });
+  loadEpisodes();
 
 
   /* ---- 작업 자동 저장 (서버에 보관 → 다른 기기에서도 이어짐) ---- */
@@ -5790,6 +5892,134 @@ async function handleShopPage(env) {
   });
 }
 
+// ===== 영상 자동 제작(관리자 '영상 자동 만들기') =====
+// 워커가 GitHub 저장소에 요청 파일을 올리면(GH_PAT) pet-episode 워크플로가 영상을 만들어 저장소에 되돌려 커밋한다.
+// 저장소가 공개라 완성본은 raw 주소로 볼 수 있다(재생은 아래 프록시로 video/mp4 형식을 붙여 준다).
+const EP_REPO = 'jtaechul/Product';
+const EP_BRANCH = 'claude/book-carousel-auto-upload-xpwihz';
+const EP_ROOT = 'pet-episodes/episodes';
+const EP_ID_RE = /^[0-9a-z][0-9a-z-]{2,60}$/;
+
+async function gh(env, path, init = {}) {
+  if (!env.GH_PAT) throw new Error('GitHub 키(GH_PAT)가 워커에 없습니다. 저장소 시크릿 DASHBOARD_GH_PAT를 넣고 다시 배포하세요.');
+  const res = await fetch(`https://api.github.com/repos/${EP_REPO}${path}`, { ...init, headers: {
+    Authorization: `Bearer ${env.GH_PAT}`, Accept: 'application/vnd.github+json',
+    'User-Agent': 'book-carousel-worker', 'X-GitHub-Api-Version': '2022-11-28', ...(init.headers || {}) } });
+  const txt = await res.text();
+  let j = null; try { j = JSON.parse(txt); } catch {}
+  return { status: res.status, ok: res.ok, json: j };
+}
+
+function b64utf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+async function ghPut(env, path, b64, message) {
+  const cur = await gh(env, `/contents/${path}?ref=${encodeURIComponent(EP_BRANCH)}`);
+  const r = await gh(env, `/contents/${path}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, content: b64, branch: EP_BRANCH, ...(cur.ok && cur.json?.sha ? { sha: cur.json.sha } : {}) }) });
+  if (!r.ok) throw new Error(`GitHub 저장 실패(${r.status}): ${r.json?.message || ''}`);
+  return r.json;
+}
+
+async function ghText(env, path) {
+  const r = await gh(env, `/contents/${path}?ref=${encodeURIComponent(EP_BRANCH)}`);
+  if (!r.ok || !r.json?.content) return null;
+  const bin = atob(String(r.json.content).replace(/\n/g, ''));
+  return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+}
+
+// 새 편 시작: 대본(episode.json) + 음식 참고 사진 + 제작 요청을 올린다.
+async function handleEpisodeStart(env, body) {
+  const ep = body.episode;
+  if (!ep || !Array.isArray(ep.clips) || !ep.clips.length) throw new Error('먼저 03단계에서 대본(프롬프트)을 만들어 주세요.');
+  if (ep.format !== 'diner') throw new Error('자동 제작은 사료·간식 식당 에피소드만 됩니다.');
+  const kst = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(2, 10).replace(/-/g, '');
+  const id = `${kst}-ep${String(ep.episode || '').replace(/\D/g, '') || 'x'}-${crypto.randomUUID().slice(0, 4)}`;
+  const dir = `${EP_ROOT}/${id}`;
+  // 음식 참고 사진: 실제 상품 사진을 보고 알맹이만 그릇에 담은 이미지(유료 1장, 일일 상한 공유)
+  let food = null, foodErr = '';
+  try {
+    const fr = await handleFoodReference(env, { title: body.title, image: body.image, _internal: true });
+    food = fr._data ? fr : null;
+  } catch (e) { foodErr = e.message; }
+  await ghPut(env, `${dir}/episode.json`, b64utf8(JSON.stringify({ ...ep, product: { title: body.title || '', link: body.link || '' } }, null, 2)),
+    `pet: ${id} 대본`);
+  if (food) await ghPut(env, `${dir}/refs/food.${/jpe?g/.test(food._mime) ? 'jpg' : 'png'}`, food._data, `pet: ${id} 음식 참고 사진`);
+  await ghPut(env, `${dir}/requests/01_full.json`, b64utf8(JSON.stringify({ id, steps: ['character', 'keyframes', 'clips', 'tts', 'assemble'] })),
+    `pet: ${id} 영상 제작 요청`);
+  await env.PENDING_POSTS?.put(`ep_meta:${id}`, JSON.stringify({ title: body.title || '', menu: ep.menuName || '', episode: ep.episode || '', at: Date.now() }));
+  return { success: true, id, foodRef: !!food, foodErr };
+}
+
+// 같은 편에 추가 요청: 다시 조립·컷 다시 뽑기·인스타 올리기
+async function handleEpisodeRequest(env, body) {
+  const id = String(body.id || '');
+  if (!EP_ID_RE.test(id)) throw new Error('편 이름이 올바르지 않습니다.');
+  const kind = String(body.kind || '');
+  let req;
+  if (kind === 'assemble') req = { steps: ['assemble'] };
+  else if (kind === 'redo') {
+    const cuts = (Array.isArray(body.cuts) ? body.cuts : []).map(String).filter(c => /^c\d{2}$/.test(c)).slice(0, 4);
+    if (!cuts.length) throw new Error('다시 뽑을 컷을 골라 주세요.');
+    req = { steps: ['keyframes', 'clips', 'tts', 'assemble'], redo: cuts.map(c => (body.scene ? 'kf_' : '') + c) };
+  } else if (kind === 'publish') {
+    const log = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/work/log.json`)) || '{}');
+    if (!log.assemble?.ok) throw new Error('아직 영상이 완성되지 않았습니다.');
+    if (log.ig_publish?.media_id) throw new Error('이미 인스타에 올린 편입니다.');
+    req = { steps: ['publish'] };
+  } else throw new Error('알 수 없는 요청입니다.');
+  const list = await gh(env, `/contents/${EP_ROOT}/${id}/requests?ref=${encodeURIComponent(EP_BRANCH)}`);
+  const n = (Array.isArray(list.json) ? list.json.length : 0) + 1;
+  const name = `${String(n).padStart(2, '0')}_${kind}.json`;
+  await ghPut(env, `${EP_ROOT}/${id}/requests/${name}`, b64utf8(JSON.stringify({ id, ...req })), `pet: ${id} ${kind} 요청`);
+  return { success: true, id, request: name };
+}
+
+// 편 목록과 진행 상태(최근 것부터)
+async function handleEpisodeList(env, body) {
+  const r = await gh(env, `/contents/${EP_ROOT}?ref=${encodeURIComponent(EP_BRANCH)}`);
+  if (!r.ok) throw new Error(`편 목록을 못 읽었습니다(${r.status}).`);
+  const want = body.id ? [String(body.id)] : null;
+  const dirs = (r.json || []).filter(x => x.type === 'dir' && /^\d/.test(x.name) && !/^000-/.test(x.name)).map(x => x.name)
+    .filter(n => !want || want.includes(n)).sort().reverse().slice(0, 8);
+  const eps = await Promise.all(dirs.map(async id => {
+    const [logTxt, reqs, epTxt] = await Promise.all([
+      ghText(env, `${EP_ROOT}/${id}/work/log.json`),
+      gh(env, `/contents/${EP_ROOT}/${id}/requests?ref=${encodeURIComponent(EP_BRANCH)}`),
+      ghText(env, `${EP_ROOT}/${id}/episode.json`)]);
+    let log = {}; try { log = JSON.parse(logTxt || '{}'); } catch {}
+    let ep = {}; try { ep = JSON.parse(epTxt || '{}'); } catch {}
+    const names = (Array.isArray(reqs.json) ? reqs.json.map(x => x.name) : []).sort();
+    const latest = names[names.length - 1] || '';
+    const done = log.last_request?.file === latest;
+    const state = !latest ? 'empty' : !done ? 'running' : log.last_request?.ok ? 'done' : 'failed';
+    return { id, state, request: latest, title: ep.product?.title || '', menu: ep.menuName || '', episode: ep.episode || '',
+      cuts: (ep.clips || []).map((c, i) => ({ no: `c${String(i + 1).padStart(2, '0')}`, role: c.role || '', line: c.line || '' })),
+      sec: log.assemble?.sec || 0, hasVideo: !!log.assemble?.ok, error: done && !log.last_request?.ok ? String(log.error || '').slice(0, 300) : '',
+      ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null };
+  }));
+  return { success: true, episodes: eps };
+}
+
+// 완성 영상 재생·저장 — 저장소 raw 파일을 video/mp4로 흘려준다(구간 요청 지원, 휴대폰 재생용).
+async function handleEpisodeVideo(env, url, request) {
+  const id = url.searchParams.get('id') || '';
+  if (!EP_ID_RE.test(id)) return new Response('bad id', { status: 400, headers: CORS });
+  const v = (url.searchParams.get('v') || EP_BRANCH).replace(/[^\w./-]/g, '');
+  const src = `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/work/${url.searchParams.has('frames') ? 'frames.jpg' : 'final.mp4'}`;
+  const range = request.headers.get('Range');
+  const r = await fetch(src, { headers: range ? { Range: range } : {} });
+  if (!r.ok && r.status !== 206) return new Response('not found', { status: 404, headers: CORS });
+  const h = new Headers({ 'Access-Control-Allow-Origin': '*', 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=300',
+    'Content-Type': url.searchParams.has('frames') ? 'image/jpeg' : 'video/mp4' });
+  for (const k of ['Content-Length', 'Content-Range', 'ETag']) if (r.headers.get(k)) h.set(k, r.headers.get(k));
+  if (url.searchParams.has('dl')) h.set('Content-Disposition', `attachment; filename="${id}.mp4"`);
+  return new Response(r.body, { status: r.status, headers: h });
+}
+
 // ===== 메인 라우터 =====
 export default {
   async fetch(request, env, ctx) {
@@ -5817,6 +6047,8 @@ export default {
           'Content-Disposition': `${dl ? 'attachment' : 'inline'}; filename="food-reference.${frm[2]}"`,
           'Cache-Control': 'public, max-age=604800', 'Access-Control-Allow-Origin': '*' } });
       }
+
+      if (url.pathname === '/api/episode/video') return await handleEpisodeVideo(env, url, request);
 
       if (url.pathname === '/api/cover') {
         const src = url.searchParams.get('url') || '';
@@ -6058,6 +6290,9 @@ export default {
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
         else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
         else if (url.pathname === '/api/food-reference') result = await handleFoodReference(env, body);
+        else if (url.pathname === '/api/episode/start') result = await handleEpisodeStart(env, body);
+        else if (url.pathname === '/api/episode/request') result = await handleEpisodeRequest(env, body);
+        else if (url.pathname === '/api/episode/list') result = await handleEpisodeList(env, body);
         else if (url.pathname === '/api/telegram-recipients') {
           // 앱에서 텔레그램 추가 수신자(채팅 ID) 등록/삭제/조회 (터미널·대시보드 없이).
           if (request.method === 'POST') {
