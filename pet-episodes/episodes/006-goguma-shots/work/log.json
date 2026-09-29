@@ -171,14 +171,14 @@
   },
   "assemble": {
     "ok": true,
-    "sec": 50.54,
+    "sec": 51.71,
     "clips": 8,
     "segments": [
       {
         "clip": "c01",
         "len": 6.36,
         "voice": 5.16,
-        "slow": 0.795
+        "slow": 1.0
       },
       {
         "clip": "c02",
@@ -190,13 +190,15 @@
         "clip": "c03",
         "len": 5.0,
         "voice": 3.79,
-        "slow": 0.625
+        "slow": 1.0
       },
       {
         "clip": "c04",
-        "len": 8.58,
+        "len": 9.78,
         "voice": 7.38,
-        "slow": 1.073
+        "slow": 1.073,
+        "freeze_at": 4.54,
+        "hook": "사람 간식 얼굴을 한 강아지 간식"
       },
       {
         "clip": "c05",
@@ -208,21 +210,21 @@
         "clip": "c06",
         "len": 5.16,
         "voice": 3.96,
-        "slow": 0.645
+        "slow": 1.0
       },
       {
         "clip": "c07",
         "len": 5.78,
         "voice": 4.58,
-        "slow": 0.723
+        "slow": 1.0
       }
     ],
     "bgm": "signature.mp3",
     "hook": 0.5
   },
   "last_request": {
-    "file": "05_hook.json",
-    "ran_at": "2026-09-29T09:18:24Z",
+    "file": "06_freeze_hook.json",
+    "ran_at": "2026-09-29T10:25:14Z",
     "ok": true
   },
   "ig_probe": {
