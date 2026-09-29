@@ -683,6 +683,16 @@ def _balanced(text, font, width):
     return lines
 
 
+def _fit_lines(text, path, size, width, max_lines=2, min_size=26):
+    """글이 max_lines 줄 안에 다 들어가도록 글자 크기를 줄인다(메뉴 이름 끝이 잘리던 문제 — 5차 실측)."""
+    while True:
+        f = _f(path, size)
+        lines = _balanced(text, f, width)
+        if len(lines) <= max_lines or size <= min_size:
+            return f, lines[:max_lines], size
+        size -= 2
+
+
 def _shadowed(size, draw_fn, blur=6, alpha=150, offset=(0, 4)):
     """글자·카드에 부드러운 그림자를 깐다(검은 상자 대신)."""
     from PIL import ImageFilter
@@ -741,8 +751,8 @@ def menu_png(name, out: Path):
     """오늘의 메뉴 — 한지 느낌 크림색 종이 + 이중 테두리 + 명조 + 붉은 낙관. 메뉴 이름만(상품명·사진 금지)."""
     bw, bh = 560, 300
     x0, y0 = (W - bw) // 2, 150
-    ft, fn = _f(SERIF_B, 28), _f(SERIF_XB, 50)
-    lines = _balanced(name, fn, bw - 120)[:2]
+    ft = _f(SERIF_B, 28)
+    fn, lines, fsz = _fit_lines(name, SERIF_XB, 50, bw - 120)
 
     def draw(dr, shadow):
         if shadow:
@@ -759,8 +769,8 @@ def menu_png(name, out: Path):
         dr.polygon([(cx, cy - 6), (cx + 6, cy), (cx, cy + 6), (cx - 6, cy)], fill=(150, 120, 90, 255))
         top = y0 + 128 + (32 if len(lines) == 1 else 0)
         for i, ln in enumerate(lines):
-            dr.text(((W - fn.getlength(ln)) / 2, top + i * 66), ln, font=fn, fill=INK + (255,))
-        _seal(dr, x0 + bw - 76, y0 + bh - 96, 56)
+            dr.text(((W - fn.getlength(ln)) / 2, top + i * int(fsz * 1.32)), ln, font=fn, fill=INK + (255,))
+        _seal(dr, x0 + bw - 84, y0 + 30, 50)          # 오른쪽 위 모서리(메뉴 이름과 겹치지 않게)
     _shadowed((W, H), draw, blur=14, alpha=140, offset=(0, 10)).save(out)
 
 
@@ -811,9 +821,10 @@ def receipt_png(ep, food: Path | None, out: Path):
         paper.paste(ph_img, (60, y), m)
         seal_y = y + 250 - 60
         y += 270
-    for ln in _balanced(ep.get("menuName", ""), fx, pw - 80)[:2]:
+    fx, mlines, fxs = _fit_lines(ep.get("menuName", ""), SERIF_XB, 38, pw - 80)
+    for ln in mlines:
         c(ln, fx, y)
-        y += 50
+        y += int(fxs * 1.3)
     y += 14
     dots(y)
     y += 22
