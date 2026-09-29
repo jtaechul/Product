@@ -4452,7 +4452,11 @@ body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,
 .hd h1{font-family:'Gothic A1',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:5px}
 .hd p{font-size:12.5px;color:#BEDCD2}
 .hd nav{margin-top:11px;display:flex;gap:14px;flex-wrap:wrap}
-.hd nav a{color:#fff;font-size:12.5px;text-decoration:underline}
+.hd p a{color:#fff;text-decoration:underline}
+.tabs{display:flex;gap:6px;margin-top:14px}
+.tabs a{flex:1;text-align:center;color:#DCEDE7;font-size:14px;font-weight:700;padding:10px 4px;border-radius:10px;background:rgba(255,255,255,.1);text-decoration:none}
+.tabs a.on{background:#fff;color:var(--brand)}
+.view-off{display:none!important}
 main{max-width:660px;margin:0 auto;padding:22px 16px 0;display:flex;flex-direction:column;gap:20px}
 .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
 .box-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
@@ -4494,11 +4498,18 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 .ep-st.running{background:#FFF3DC;color:#8A5A00}.ep-st.done{background:rgba(47,111,94,.1);color:var(--brand)}
 .ep-st.failed{background:rgba(192,80,63,.1);color:var(--crit)}.ep-st.empty{background:#F2F5F3;color:var(--sub)}
 .ep-sub{font-size:12px;color:var(--sub);margin:4px 0 8px}
-.ep video{width:100%;max-width:300px;display:block;margin:8px auto;border-radius:10px;background:#000;aspect-ratio:9/16}
+.ep video,#epDetail video{width:100%;max-width:300px;display:block;margin:8px auto;border-radius:10px;background:#000;aspect-ratio:9/16}
 .ep-act{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .ep-act a{text-decoration:none}
 .ep-act select{font-size:12.5px;padding:7px;border-radius:9px;border:1px solid var(--line)}
 .ep-err{font-size:12px;color:var(--crit);margin-top:6px;word-break:break-all}
+.ep-card{display:block;color:inherit;text-decoration:none}
+.ep-card:active{background:#F4F6F4}
+.ep-big{font-size:17px;margin-top:6px}
+.ep-back{display:inline-block;font-size:13px;color:var(--brand);font-weight:700;text-decoration:none;margin-bottom:4px}
+.ep-lines{margin:10px 0 0 18px;font-size:13px;line-height:1.7;color:var(--ink)}
+.ep-lines li{margin-bottom:6px}
+#epDetail .ref-char{margin-top:12px}
 .finds{display:flex;flex-direction:column;gap:9px;margin-top:14px;max-height:460px;overflow-y:auto}
 .find{display:flex;gap:11px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px}
 .find img{width:52px;height:52px;border-radius:8px;object-fit:cover;background:#EDEFEC;flex:none}
@@ -4584,20 +4595,22 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 </head>
 <body>
 <header class="hd"><div class="hd-in">
-  <h1>상품 등록 · 영상 준비</h1>
-  <p>쿠팡에서 잘 팔리는 상품을 찾아 등록하고, 영상 프롬프트까지 여기서 뽑습니다.</p>
-  <nav>
-    <a href="/shop" target="_blank">판매 페이지 보기</a>
+  <h1>「한 그릇의 품격」 관리자</h1>
+  <p>상품을 고르고 대본을 만들면 영상이 자동으로 만들어집니다. <a href="/shop" target="_blank">판매 페이지 보기</a></p>
+  <nav class="tabs">
+    <a href="#new" data-tab="new">새 영상</a>
+    <a href="#list" data-tab="list">영상 목록</a>
+    <a href="#products" data-tab="products">상품 관리</a>
   </nav>
 </div></header>
 <main>
-  <div class="resume" id="resumeBar" hidden>
+  <div class="resume" id="resumeBar" data-view="new" hidden>
     <span id="resumeTxt">이어서 작업 중</span>
     <button class="btn btn-2 btn-sm" id="resumeNew" type="button" style="flex:none">새로 시작</button>
   </div>
 
-  <section class="box">
-    <div class="box-hd"><span class="step">01</span><h2>쿠팡에서 상품 찾기</h2></div>
+  <section class="box" data-view="new">
+    <div class="box-hd"><span class="step">01</span><h2>상품 고르기</h2></div>
     <p class="lead">반려동물 카테고리에서 실제로 많이 팔린 순서대로 불러옵니다. 마음에 드는 상품의 "이 상품 쓰기"를 누르면 이름·사진·구매 링크가 아래 칸에 자동으로 채워집니다.</p>
     <div class="row" style="margin-bottom:10px">
       <button class="btn btn-2 btn-sm" id="best" type="button">잘 팔리는 순서로 불러오기</button>
@@ -4610,8 +4623,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="finds" id="finds"></div>
   </section>
 
-  <section class="box">
-    <div class="box-hd"><span class="step">02</span><h2>판매 페이지에 올리기</h2></div>
+  <section class="box" data-view="new">
+    <div class="box-hd"><span class="step">02</span><h2>상품 정보</h2></div>
     <p class="lead">위에서 상품을 고르면 대부분 자동으로 채워집니다. 추천 이유만 직접 적어주세요.</p>
     <div class="f"><label for="t">상품 이름</label><input id="t" type="text" placeholder="브리더랩 저알러지 연어 사료 2kg"></div>
     <div class="f"><label for="b">브랜드</label><input id="b" type="text" placeholder="브리더랩"></div>
@@ -4639,13 +4652,13 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="msg" id="msg"></div>
   </section>
 
-  <section class="box">
-    <div class="box-hd"><span class="step">03</span><h2>영상 프롬프트 만들기</h2></div>
-    <p class="lead">Google Flow에 그대로 붙여넣을 영어 프롬프트와, 영상에 새길 한글 자막을 한 번에 뽑습니다.</p>
-    <div class="note">AI 영상은 실제 상품 포장을 그리지 못합니다. 그래서 영상은 <b>그 상품이 필요해지는 상황</b>만 보여주고, 상품 연결은 자막과 프로필 링크가 맡습니다.</div>
+  <section class="box" data-view="new">
+    <div class="box-hd"><span class="step">03</span><h2>대본 만들기</h2></div>
+    <p class="lead">주인공의 대사와 장면 설명을 한 번에 만듭니다. 사료·간식은 「한 그릇의 품격」 식당 에피소드가 됩니다.</p>
     <div class="f"><label for="pt">어떤 상품의 영상인가요</label><input id="pt" type="text" placeholder="위에서 상품을 고르면 자동으로 들어옵니다"></div>
     <div class="fmt-hint" id="fmtHint"></div>
-    <div class="f"><label for="pdog">강아지 주인공 설정</label>
+    <details class="ref-char adv"><summary>주인공 설정 · Flow용 프롬프트 (평소엔 안 건드려도 됩니다)</summary>
+    <div class="f" style="margin-top:10px"><label for="pdog">강아지 주인공 설정</label>
       <input id="pdog" type="text" value="실사 시바견 (8개월쯤, 검은 털 없음, 목줄·옷 없음)"></div>
     <div class="f"><label for="pcat">고양이 주인공 설정</label>
       <input id="pcat" type="text" value="photorealistic 3D animated style 아기 고양이 (크림·화이트 털, 목걸이·옷 없음)">
@@ -4659,32 +4672,42 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       <textarea id="charCatP" readonly rows="5">${CAT_SHEET_PROMPT}</textarea>
       <button class="btn btn-2 btn-sm" id="charCatC" type="button">고양이 프롬프트 복사</button>
     </details>
+    </details>
     <div class="row">
       <div class="f" style="flex:1"><label for="pclips">클립 개수</label>
         <select id="pclips"><option>5</option><option selected>7</option><option>9</option></select></div>
       <div class="f" style="flex:2"><label for="pnote">추가 주문 (선택)</label>
         <input id="pnote" type="text" placeholder="예: 겨울 산책 상황으로"></div>
     </div>
-    <button class="btn btn-wide" id="mk" type="button">프롬프트 만들기</button>
+    <button class="btn btn-wide" id="mk" type="button">대본 만들기</button>
     <div class="msg" id="pMsg"></div>
-    <div id="pOut" style="margin-top:16px"></div>
+    <details class="ref-char" id="pOutWrap" hidden><summary>대본·장면 설명 자세히 보기</summary>
+      <div id="pOut" style="margin-top:12px"></div>
+    </details>
   </section>
 
-  <section class="box">
-    <div class="box-hd"><span class="step">04</span><h2>영상 자동 만들기</h2></div>
-    <p class="lead">03단계에서 만든 대본으로 영상을 처음부터 끝까지 자동으로 만듭니다. 장면 그림 → 8초 영상 → 목소리 → 자막·메뉴판·영수증·배경음악까지 넣은 완성본이 나옵니다.</p>
-    <div class="note">한 편에 30~60분쯤 걸립니다. 창을 닫아도 계속 만들어지고, 다시 들어오면 아래 목록에서 확인할 수 있습니다. 음식 참고 사진 1장과 영상 AI 비용이 듭니다.</div>
+  <section class="box" data-view="new">
+    <div class="box-hd"><span class="step">04</span><h2>영상 만들기</h2></div>
+    <p class="lead">대본으로 장면 그림 → 8초 영상 → 목소리 → 자막·메뉴판·영수증·배경음악까지 넣은 완성본을 자동으로 만듭니다. 한 편에 30~60분, 창을 닫아도 계속 만들어집니다.</p>
     <button class="btn btn-wide" id="epGo" type="button">영상 자동 만들기</button>
     <div class="msg" id="epMsg"></div>
-    <div class="row" style="justify-content:space-between;align-items:center;margin-top:18px">
-      <b style="font-size:14px">만든 영상</b>
-      <button class="btn btn-2 btn-sm" id="epRefresh" type="button" style="flex:0 0 auto">새로고침</button>
-    </div>
+  </section>
+
+  <section class="box" data-view="list">
+    <div class="box-hd" style="justify-content:space-between;align-items:center"><h2>영상 목록</h2>
+      <button class="btn btn-2 btn-sm" id="epRefresh" type="button" style="flex:0 0 auto">새로고침</button></div>
+    <div class="msg" id="epListMsg"></div>
     <div id="epList"><p class="muted">불러오는 중…</p></div>
   </section>
 
-  <section class="box">
-    <div class="box-hd"><span class="step">05</span><h2>직접 이어붙이기 (선택)</h2></div>
+  <section class="box" data-view="ep">
+    <a class="ep-back" href="#list">목록으로</a>
+    <div class="msg" id="epDMsg"></div>
+    <div id="epDetail"><p class="muted">불러오는 중…</p></div>
+  </section>
+
+  <section class="box" data-view="legacy">
+    <div class="box-hd"><h2>직접 이어붙이기 (예전 방식)</h2></div>
     <p class="lead">Flow에서 만든 클립을 넣으면 순서대로 이어 붙이고 자막을 새겨 릴스용 영상 한 편으로 내보냅니다. 파일은 이 기기 안에서만 처리되며 어디로도 올라가지 않습니다.</p>
 
     <div class="ed-stage">
@@ -4770,10 +4793,12 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <a class="ed-out" id="edOut" hidden>완성된 영상 내려받기</a>
   </section>
 
-  <section class="box">
-    <div class="box-hd"><span class="step">06</span><h2>등록된 상품</h2></div>
+  <section class="box" data-view="products">
+    <div class="box-hd"><h2>등록된 상품</h2></div>
+    <p class="lead">판매 페이지에 올라간 상품입니다. 새 상품은 '새 영상'의 02단계에서 "상품 등록하기"로 올립니다.</p>
     <div id="list"><p class="muted">불러오는 중…</p></div>
   </section>
+  <p class="muted" data-view="products" style="text-align:center;font-size:12px"><a href="#legacy" style="color:var(--sub)">예전 직접 편집기 열기 (Flow 클립 이어붙이기)</a></p>
 </main>
 <script>
 (function(){
@@ -5135,87 +5160,127 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     }).then(function(res){
       $('mk').disabled=false;
       if(res && res.success && (res.clips||[]).length){
-        hide('pMsg'); lastResult=res; renderPrompts(res); saveSoon();
+        lastResult=res; renderPrompts(res); $('pOutWrap').hidden=false; saveSoon();
+        say('pMsg', res.format==='diner' ? '대본이 준비됐습니다. 아래 04단계 "영상 자동 만들기"를 누르세요.' : '대본이 준비됐습니다. 이 상품은 식당 에피소드가 아니라 자동 제작은 안 되고, 상품 관리 아래 예전 편집기로 만들 수 있습니다.','ok');
       } else say('pMsg',(res&&res.error)||'프롬프트를 만들지 못했습니다.','no');
     }).catch(function(e){ $('mk').disabled=false; say('pMsg','만들지 못했습니다: '+e.message,'no'); });
   });
 
-  /* ---- 04 영상 자동 만들기 ---- */
+  /* ---- 메뉴(새 영상 · 영상 목록 · 상품 관리) + 영상 자동 만들기 ---- */
   var EP_STATE={running:'만드는 중',done:'완성',failed:'실패',empty:'대기'};
   var epTimer=null;
   function epEl(tag,cls,text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
   function epBtn(text,fn,main){ var b=epEl('button','btn btn-sm'+(main?'':' btn-2'),text); b.type='button'; b.addEventListener('click',fn); return b; }
+  function epTitle(e){ return (e.episode?'제'+e.episode+'화 · ':'')+(e.menu||e.id); }
+  function epSub(e){ return [e.title, e.sec?Math.round(e.sec)+'초':'', e.ranAt?stampKo(e.ranAt):''].filter(Boolean).join(' · '); }
+  function curView(){ var h=(location.hash||'').replace('#',''); var v=h.split('/')[0]||'new';
+    return ['new','list','products','legacy','ep'].indexOf(v)<0 ? {v:'new'} : {v:v, id:decodeURIComponent(h.split('/')[1]||'')}; }
+  function showView(){
+    var cv=curView();
+    document.querySelectorAll('[data-view]').forEach(function(el){ el.classList.toggle('view-off', el.getAttribute('data-view')!==cv.v); });
+    document.querySelectorAll('[data-tab]').forEach(function(a){ a.classList.toggle('on', a.getAttribute('data-tab')===(cv.v==='ep'?'list':cv.v)); });
+    clearTimeout(epTimer);
+    if(cv.v==='list') loadEpisodes();
+    if(cv.v==='ep') loadEpisode(cv.id);
+    window.scrollTo(0,0);
+  }
   function epAsk(id,kind,extra,okText){
     var p={id:id,kind:kind}; for(var k in (extra||{})) p[k]=extra[k];
-    say('epMsg','요청을 올리는 중…','wait');
+    say('epDMsg','요청을 올리는 중…','wait');
     post('/api/episode/request',p).then(function(r){
-      if(r&&r.success){ say('epMsg',okText,'ok'); setTimeout(loadEpisodes,1500); }
-      else say('epMsg',(r&&r.error)||'요청하지 못했습니다.','no');
-    }).catch(function(e){ say('epMsg','요청하지 못했습니다: '+e.message,'no'); });
+      if(r&&r.success){ say('epDMsg',okText,'ok'); setTimeout(function(){ loadEpisode(id); },1500); }
+      else say('epDMsg',(r&&r.error)||'요청하지 못했습니다.','no');
+    }).catch(function(e){ say('epDMsg','요청하지 못했습니다: '+e.message,'no'); });
   }
-  function renderEpisode(e){
-    var d=epEl('div','ep');
-    var hd=epEl('div','ep-hd');
-    hd.appendChild(epEl('span','', (e.episode?'제'+e.episode+'화 · ':'')+(e.menu||e.id)));
-    hd.appendChild(epEl('span','ep-st '+e.state, EP_STATE[e.state]||e.state));
-    d.appendChild(hd);
-    var sub=[e.title, e.sec?Math.round(e.sec)+'초':'', e.ranAt?stampKo(e.ranAt):''].filter(Boolean).join(' · ');
-    d.appendChild(epEl('div','ep-sub',sub));
-    if(e.state==='running') d.appendChild(epEl('div','ep-sub','지금 만드는 중입니다. 끝나면 이 자리에 영상이 나옵니다(자동 새로고침).'));
+  function renderCard(e){
+    var a=epEl('a','ep ep-card'); a.href='#ep/'+encodeURIComponent(e.id);
+    var hd=epEl('div','ep-hd'); hd.appendChild(epEl('span','',epTitle(e))); hd.appendChild(epEl('span','ep-st '+e.state, EP_STATE[e.state]||e.state));
+    a.appendChild(hd); a.appendChild(epEl('div','ep-sub',epSub(e)+((e.ig&&e.ig.ok)?' · 인스타 올림':'')));
+    return a;
+  }
+  function loadEpisodes(){
+    post('/api/episode/list',{}).then(function(r){
+      var box=$('epList'); box.textContent='';
+      if(!r||!r.success){ box.appendChild(epEl('p','muted',(r&&r.error)||'목록을 못 불러왔습니다.')); return; }
+      if(!r.episodes.length){ box.appendChild(epEl('p','muted','아직 만든 영상이 없습니다. "새 영상"에서 시작하세요.')); return; }
+      r.episodes.forEach(function(e){ box.appendChild(renderCard(e)); });
+      if(r.episodes.some(function(e){ return e.state==='running'; }))
+        epTimer=setTimeout(function(){ if(curView().v==='list') loadEpisodes(); },60000);
+    }).catch(function(e){ $('epList').textContent='목록을 못 불러왔습니다: '+e.message; });
+  }
+  function renderDetail(e){
+    var d=epEl('div','');
+    var hd=epEl('div','ep-hd ep-big'); hd.appendChild(epEl('span','',epTitle(e))); hd.appendChild(epEl('span','ep-st '+e.state, EP_STATE[e.state]||e.state));
+    d.appendChild(hd); d.appendChild(epEl('div','ep-sub',epSub(e)));
+    if(e.state==='running') d.appendChild(epEl('div','note','지금 만드는 중입니다. 끝나면 이 화면에 영상이 나옵니다(1분마다 자동 확인).'));
     if(e.error) d.appendChild(epEl('div','ep-err','실패 이유: '+e.error));
     if(e.hasVideo){
       var v=document.createElement('video'); v.controls=true; v.playsInline=true; v.preload='metadata';
       v.src='/api/episode/video?id='+encodeURIComponent(e.id)+'&t='+encodeURIComponent(e.ranAt||'');
       d.appendChild(v);
     }
-    if(e.ig&&e.ig.ok){
-      var a=epEl('a','', '인스타에 올라간 게시물 보기'); a.href=e.ig.permalink||'#'; a.target='_blank'; a.rel='noopener';
-      a.style.fontSize='13px'; d.appendChild(a);
-    } else if(e.ig&&e.ig.error){ d.appendChild(epEl('div','ep-err','인스타 올리기 실패: '+e.ig.error)); }
     var act=epEl('div','ep-act');
-    if(e.state!=='running'){
-      if(e.hasVideo){
-        var dl=epEl('a','btn btn-sm btn-2','저장하기'); dl.href='/api/episode/video?dl=1&id='+encodeURIComponent(e.id); act.appendChild(dl);
-        if(!(e.ig&&e.ig.ok)) act.appendChild(epBtn('인스타에 올리기',function(){
-          if(!confirm('이 영상을 인스타그램 릴스로 바로 올립니다. 올린 뒤에는 인스타 앱에서만 지울 수 있습니다. 올릴까요?')) return;
-          epAsk(e.id,'publish',{}, '인스타에 올리는 중입니다. 5~10분 뒤 새로고침하면 게시물 링크가 나옵니다.');
-        },true));
-      }
-      act.appendChild(epBtn('다시 조립',function(){ epAsk(e.id,'assemble',{}, '다시 조립합니다. 5분쯤 걸립니다.'); }));
-      if(e.cuts&&e.cuts.length){
-        var sel=epEl('select');
-        e.cuts.forEach(function(c){ var o=epEl('option','',c.no.replace('c','')+'번 컷 · '+(c.line||c.role).slice(0,18)); o.value=c.no; sel.appendChild(o); });
-        act.appendChild(sel);
-        act.appendChild(epBtn('이 컷 영상만 다시',function(){ epAsk(e.id,'redo',{cuts:[sel.value]}, sel.value.replace('c','')+'번 컷 영상을 다시 뽑습니다. 15분쯤 걸립니다.'); }));
-        act.appendChild(epBtn('장면 그림부터 다시',function(){ epAsk(e.id,'redo',{cuts:[sel.value],scene:true}, sel.value.replace('c','')+'번 컷을 장면 그림부터 다시 만듭니다. 20분쯤 걸립니다.'); }));
-      }
+    if(e.hasVideo && e.state!=='running'){
+      var dl=epEl('a','btn btn-sm btn-2','저장하기'); dl.href='/api/episode/video?dl=1&id='+encodeURIComponent(e.id); act.appendChild(dl);
+      if(e.ig&&e.ig.ok){
+        var ig=epEl('a','btn btn-sm','인스타 게시물 보기'); ig.href=e.ig.permalink||'#'; ig.target='_blank'; ig.rel='noopener'; act.appendChild(ig);
+      } else act.appendChild(epBtn('인스타에 올리기',function(){
+        if(!confirm('이 영상을 인스타그램 릴스로 바로 올립니다. 올린 뒤에는 인스타 앱에서만 지울 수 있습니다. 올릴까요?')) return;
+        epAsk(e.id,'publish',{}, '인스타에 올리는 중입니다. 5~10분 뒤 이 화면에 게시물 링크가 나옵니다.');
+      },true));
     }
     d.appendChild(act);
+    if(e.ig&&!e.ig.ok&&e.ig.error) d.appendChild(epEl('div','ep-err','인스타 올리기 실패: '+e.ig.error));
+    if(e.cuts&&e.cuts.length){
+      var sc=epEl('details','ref-char'); sc.appendChild(epEl('summary','','대사 보기 ('+e.cuts.length+'컷)'));
+      var ol=epEl('ol','ep-lines'); e.cuts.forEach(function(c){ ol.appendChild(epEl('li','',c.line||c.role)); }); sc.appendChild(ol);
+      d.appendChild(sc);
+    }
+    if(e.state!=='running'){
+      var fx=epEl('details','ref-char'); fx.appendChild(epEl('summary','','고치기 (다시 조립 · 컷 다시 뽑기)'));
+      var fa=epEl('div','ep-act');
+      fa.appendChild(epBtn('다시 조립',function(){ epAsk(e.id,'assemble',{}, '다시 조립합니다. 5분쯤 걸립니다.'); }));
+      fx.appendChild(fa);
+      if(e.cuts&&e.cuts.length){
+        var fb=epEl('div','ep-act'); var sel=epEl('select');
+        e.cuts.forEach(function(c){ var o=epEl('option','',c.no.replace('c','')+'번 컷 · '+(c.line||c.role).slice(0,18)); o.value=c.no; sel.appendChild(o); });
+        fb.appendChild(sel);
+        fb.appendChild(epBtn('이 컷 영상만 다시',function(){ epAsk(e.id,'redo',{cuts:[sel.value]}, sel.value.replace('c','')+'번 컷 영상을 다시 뽑습니다. 15분쯤 걸립니다.'); }));
+        fb.appendChild(epBtn('장면 그림부터 다시',function(){ epAsk(e.id,'redo',{cuts:[sel.value],scene:true}, sel.value.replace('c','')+'번 컷을 장면 그림부터 다시 만듭니다. 20분쯤 걸립니다.'); }));
+        fx.appendChild(fb);
+      }
+      d.appendChild(fx);
+    }
     return d;
   }
-  function loadEpisodes(){
-    post('/api/episode/list',{}).then(function(r){
-      var box=$('epList'); box.textContent='';
-      if(!r||!r.success){ box.appendChild(epEl('p','muted',(r&&r.error)||'목록을 못 불러왔습니다.')); return; }
-      if(!r.episodes.length){ box.appendChild(epEl('p','muted','아직 만든 영상이 없습니다.')); return; }
-      r.episodes.forEach(function(e){ box.appendChild(renderEpisode(e)); });
+  function loadEpisode(id){
+    post('/api/episode/list',{id:id}).then(function(r){
+      var box=$('epDetail'); box.textContent='';
+      var e=r&&r.success&&r.episodes[0];
+      if(!e){ box.appendChild(epEl('p','muted',(r&&r.error)||'이 영상을 찾지 못했습니다.')); return; }
+      box.appendChild(renderDetail(e));
       clearTimeout(epTimer);
-      if(r.episodes.some(function(e){ return e.state==='running'; })) epTimer=setTimeout(loadEpisodes,60000);
-    }).catch(function(e){ $('epList').textContent='목록을 못 불러왔습니다: '+e.message; });
+      if(e.state==='running') epTimer=setTimeout(function(){ var cv=curView(); if(cv.v==='ep'&&cv.id===id) loadEpisode(id); },60000);
+    }).catch(function(e){ $('epDetail').textContent='불러오지 못했습니다: '+e.message; });
   }
   $('epRefresh').addEventListener('click',loadEpisodes);
   $('epGo').addEventListener('click',function(){
-    if(!lastResult||!(lastResult.clips||[]).length){ say('epMsg','먼저 03단계에서 "프롬프트 만들기"로 대본을 만들어 주세요.','no'); return; }
-    if(lastResult.format!=='diner'){ say('epMsg','자동 제작은 사료·간식(식당 에피소드)만 됩니다. 이 상품은 05단계에서 직접 이어붙여 주세요.','no'); return; }
+    if(!lastResult||!(lastResult.clips||[]).length){ say('epMsg','먼저 03단계에서 "대본 만들기"를 눌러 주세요.','no'); return; }
+    if(lastResult.format!=='diner'){ say('epMsg','자동 제작은 사료·간식(식당 에피소드)만 됩니다.','no'); return; }
     if(!confirm('이 대본으로 영상을 자동으로 만듭니다(30~60분, 유료 AI 사용). 시작할까요?')) return;
     $('epGo').disabled=true; say('epMsg','제작 요청을 올리는 중… (음식 참고 사진을 먼저 만들어 30초쯤 걸립니다)','wait');
     post('/api/episode/start',{episode:lastResult, title:$('pt').value.trim()||$('t').value.trim(), image:$('img').value.trim(), link:$('l').value.trim()}).then(function(r){
       $('epGo').disabled=false;
-      if(r&&r.success){ say('epMsg','제작을 시작했습니다. 30~60분 뒤 아래 목록에서 영상을 확인하세요.'+(r.foodRef?'':' (음식 참고 사진은 못 만들어 상품 설명으로만 그립니다'+(r.foodErr?': '+r.foodErr:'')+')'),'ok'); setTimeout(loadEpisodes,2000); }
+      if(r&&r.success){
+        hide('epMsg');
+        say('epListMsg','제작을 시작했습니다. 30~60분 뒤 완성됩니다.'+(r.foodRef?'':' (음식 참고 사진은 못 만들어 상품 설명으로만 그립니다'+(r.foodErr?': '+r.foodErr:'')+')'),'ok');
+        location.hash='#list';
+      }
       else say('epMsg',(r&&r.error)||'시작하지 못했습니다.','no');
     }).catch(function(e){ $('epGo').disabled=false; say('epMsg','시작하지 못했습니다: '+e.message,'no'); });
   });
-  loadEpisodes();
+  window.addEventListener('hashchange',showView);
+  showView();
 
 
   /* ---- 작업 자동 저장 (서버에 보관 → 다른 기기에서도 이어짐) ---- */
@@ -5984,7 +6049,7 @@ async function handleEpisodeList(env, body) {
   if (!r.ok) throw new Error(`편 목록을 못 읽었습니다(${r.status}).`);
   const want = body.id ? [String(body.id)] : null;
   const dirs = (r.json || []).filter(x => x.type === 'dir' && /^\d/.test(x.name) && !/^000-/.test(x.name)).map(x => x.name)
-    .filter(n => !want || want.includes(n)).sort().reverse().slice(0, 8);
+    .filter(n => want ? want.includes(n) : !/^00[1-5]-/.test(n)).sort().reverse().slice(0, 12);  // 001~005 = 시험 제작분(목록에서 숨김)
   const eps = await Promise.all(dirs.map(async id => {
     const [logTxt, reqs, epTxt] = await Promise.all([
       ghText(env, `${EP_ROOT}/${id}/work/log.json`),
