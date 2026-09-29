@@ -1054,7 +1054,8 @@ def bill_png(text, out: Path):
     _shadowed((W, H), draw, blur=12, alpha=130, offset=(0, 8)).save(out)
 
 
-COVER_HOOK = ("배가 고프다.", "심각하다.")                # 표지 큰 글씨 = 시리즈 고정 오프닝(채널 간판 문장)
+COVER_HOOK = ("배가 고프다.", "심각하다.")
+HOOK_SEC = 0.5                                             # 영상 맨 앞에 표지를 보여 주는 시간(초)                # 표지 큰 글씨 = 시리즈 고정 오프닝(채널 간판 문장)
 
 
 def _cover_bg(ep, work):
@@ -1325,6 +1326,16 @@ def step_assemble(ep, epdir, work, log):
     tmp.mkdir(exist_ok=True)
     food = next((p for p in (epdir / "refs" / "food.jpg", epdir / "refs" / "food.png") if p.exists()), None)
     segs, lens, roles, info = [], [], [], []
+    # 맨 앞 후킹 표지(사용자 확정 2026-09): 표지를 먼저 만들고 0.5초 보여 준 뒤 입장 컷으로 넘어간다.
+    step_cover(ep, work, log)
+    cover = work / "cover.jpg"
+    if cover.exists():
+        hook, HL = tmp / "seg_hook.mp4", HOOK_SEC + XF          # 전환(XF)에 먹히는 만큼 더해 실제로 0.5초가 보이게
+        _ff(["-loop", "1", "-t", f"{HL}", "-i", str(cover), "-f", "lavfi", "-t", f"{HL}", "-i", "anullsrc=r=44100:cl=stereo",
+             "-filter_complex", f"[0:v]scale={W}:{H},setsar=1,fps={FPS},format=yuv420p[v]", "-map", "[v]", "-map", "1:a",
+             "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-r", str(FPS), "-c:a", "aac", "-b:a", "160k",
+             "-ar", "44100", "-t", f"{HL}", str(hook)])
+        segs.append(hook); lens.append(HL); roles.append("hook")
     for idx, c in enumerate(ep["clips"]):
         seg, L, meta = build_segment(ep, c, idx, work, tmp)
         segs.append(seg); lens.append(L); roles.append(c.get("role")); info.append(meta)
@@ -1370,8 +1381,7 @@ def step_assemble(ep, epdir, work, log):
     _ff(["-i", str(final), "-vf", f"fps={len(segs)}/{total:.2f},scale=180:-2,tile={len(segs)}x1:margin=4:padding=4:color=white",
          "-frames:v", "1", str(work / "frames.jpg")])
     log["assemble"] = {**log.get("assemble", {}), "ok": True, "sec": round(total, 2), "clips": len(segs) - 1,
-                       "segments": info}
-    step_cover(ep, work, log)
+                       "segments": info, "hook": HOOK_SEC if (work / "cover.jpg").exists() else 0}
     for p in tmp.iterdir():
         p.unlink()
     tmp.rmdir()

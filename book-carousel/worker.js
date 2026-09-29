@@ -3468,6 +3468,8 @@ clips는 정확히 ${clips}개. transition 1개, benefit 1~2개, cta 1개를 반
 
 // 구매 후기에 흔한 '먹이고 나서 몸이 좋아졌다'류는 광고 문구로 쓰면 사료관리법·표시광고 위반 소지가 있다
 // (질병·증상의 예방·개선 효능 표시 금지). 영상 대본 재료에서는 빼고, 02단계 화면에는 그대로 보여준다.
+// 효능 주장(낫게 했다·좋아졌다) — 운영자 사연으로 고민 단어를 허용할 때도 이것만은 막는다.
+const CURE_CLAIM = /치료|개선|완화|예방|면역|나았|나아졌|좋아졌|멈췄|사라졌|해결|효과/;
 const HEALTH_CLAIM = /구토|설사|변비|변\s?냄새|변을|변이|피부|털\s?(빠짐|날림)|눈물\s?자국|치석|구취|입\s?냄새|알러지|알레르기|관절|비만|질병|치료|개선|완화|예방|면역|증상/;
 function adSafeFacts(list) { return (list || []).filter(x => !HEALTH_CLAIM.test(String(x))); }
 
@@ -3782,7 +3784,8 @@ function dinerSystem(sp) {
 - ⭐ order 대사 = **사료를 바꾸러 온 진짜 고민 → 메뉴판 앞 고민 → 결단**을 세 박자로.
   메뉴 앞에서 인생 결정처럼 과하게 진지하다. [구매자 고민]에서 하나를 골라 주인공 시점으로 던진다.
   고민이 주어지지 않으면 이 상품 종류에 흔한 고민(입맛·원료·알갱이 크기·질림) 중 하나를 쓴다.
-  몸의 증상·질병 이야기는 쓰지 마라(효능 암시가 된다).
+  몸의 증상·질병 이야기는 쓰지 마라(효능 암시가 된다). 단 운영자 추가 주문에 사연(예: 배탈로 놀림받던 일)이 있으면
+  그 사연만은 order에서 '가게에 온 이유'로 말해도 된다 — 메뉴가 그걸 낫게 한다는 말은 여전히 금지.
 - ⭐ serve 대사 = 그릇이 놓인 순간의 첫인상(생김새·첫 냄새)과 기대. 시스템이 맨 앞에 "잘 먹겠습니다."를 붙인다.
 - ⭐ taste 대사 = **세 박자**: ① 첫 느낌(감탄 한 마디 가능) → ② 식감·향을 해부하듯 자세히 → ③ 비유나 떠오르는 장면으로 마무리.
   비유는 이 주인공의 일상(창가 햇볕, 산책길, 빗소리, 담요, 놀이터, 주인의 퇴근 발소리 등)에서 가져온다.
@@ -3982,6 +3985,8 @@ ${note}
 → 아래 고정 규칙(오프닝·장면 순서·상품명/브랜드 금지·효능 금지·대사 길이)과 부딪히지 않는 범위에서 반드시 반영하라.
   대사·가게·장면 중 시청자가 알아챌 수 있는 곳에 드러나야 한다(한 컷 이상).
   어떻게 반영했는지 JSON "noteApplied"에 한국어 한 줄로 적어라. 규칙 때문에 못 넣은 부분이 있으면 그 이유도 적어라.
+  사연·고민(예: 배탈·설사로 놀림받던 일)은 order 대사에 '이 가게에 온 이유(고민)'로 넣어라. enter는 고정 오프닝+당기는 메뉴라 넣지 마라.
+  이때도 이 메뉴가 그 문제를 낫게 했다·좋아졌다·멈췄다는 말은 절대 금지(효능 주장). 고민만 말하고, 평가는 맛·식감으로만.
 
 `;
 }
@@ -4068,12 +4073,20 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     throw new Error(`프롬프트를 만들지 못했습니다: ${e.message}`);
   }
   // 대사가 길거나(22자 기준, 여유 4자) 식탁에서 알 수 없는 몸 상태 이야기가 섞이면 1회만 다시 묻는다.
+  // 운영자 추가 주문에 든 고민 단어(예: 설사)는 order 대사에서 '고민'으로 말하는 것만 허용한다(효능 주장은 계속 금지).
+  const noteHealth = note ? (note.match(new RegExp(HEALTH_CLAIM.source, 'g')) || []) : [];
+  const healthBad = (role, l) => {
+    if (CURE_CLAIM.test(l)) return true;
+    if (!HEALTH_CLAIM.test(l)) return false;
+    if (role !== 'order' || !noteHealth.length) return true;
+    return (l.match(new RegExp(HEALTH_CLAIM.source, 'g')) || []).some(w => !noteHealth.includes(w));
+  };
   const badLines = (txt) => {
     let o; try { o = extractJson(txt); } catch { return ['(JSON 오류)']; }
     return (Array.isArray(o.clips) ? o.clips : [])
       .filter(c => String(c.role || '') !== 'enter')
-      .map(c => String(c.line || '').trim())
-      .filter(l => l.length > 75 || HEALTH_CLAIM.test(l));
+      .filter(c => { const l = String(c.line || '').trim(); return l.length > 80 || healthBad(String(c.role || ''), l); })
+      .map(c => String(c.line || '').trim());
   };
   const bad1 = badLines(raw);
   if (bad1.length >= 2 || bad1.includes('(JSON 오류)')) {
