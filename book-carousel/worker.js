@@ -4257,7 +4257,18 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   // 후킹 문구(사용자 확정 2026-09): 후보 여러 개 중 조건(28자 이하·효능·배변·상품명 없음)을 통과한 첫 번째를 쓴다.
   const hookOk = (h) => h && h.length <= 28 && !HEALTH_CLAIM.test(h) && !CURE_CLAIM.test(h) && !/이 메뉴/.test(h);
   const hookClean = (h) => noGunHook(scrubBanned(String(h || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'), banned)).replace(/[.\s]+$/, '');
-  const hookCands = [out.hookLine, ...(Array.isArray(out.hookLines) ? out.hookLines : [])].map(hookClean);
+  // 긴 대본 지시 안에서는 후킹이 맛 묘사로 흐른다(실측) → 후킹만 짧은 지시로 한 번 더 뽑아 앞에 둔다.
+  const hookFocused = await callGeminiText(gk, {
+    system: '너는 인스타 릴스 첫 화면 카피라이터다. JSON만 출력.',
+    user: `강아지 사료·간식 먹방 릴스 맨 앞에 크게 뜰 후킹 문구 5개.
+상품 사실(이 중 하나를 반드시 넣어 다른 간식엔 못 쓰는 문장으로): ${[menuName, (fl.look || '').split(',')[0], guest.note, priceNote, ...factsSafe.slice(0, 3)].filter(Boolean).join(' / ').slice(0, 500)}
+조건: 사건·반전 구조 — 결과를 먼저 던지고 이유는 숨긴다. 주인과 강아지가 서로 몰래 먹고 뺏고 들키는 식의 짧은 사건.
+확정된 스타일 예(문장은 베끼지 말고 새로): "주인 몰래 먹으려다 주인한테 뺏긴 고구마"
+맛·식감 묘사 금지, 일반론 금지, 효능·건강·배변 금지, 상품명·브랜드 금지, 느낌표 금지, 말끝 ~군 금지, 각 24자 이하.
+{"hooks": ["...", "...", "...", "...", "..."]}`,
+    max_tokens: 400, timeout_ms: 20000, json: true,
+  }).then(t => { try { return extractJson(t).hooks || []; } catch { return []; } }).catch(() => []);
+  const hookCands = [...(Array.isArray(hookFocused) ? hookFocused : []), out.hookLine, ...(Array.isArray(out.hookLines) ? out.hookLines : [])].map(hookClean);
   let hookLine = hookCands.find(hookOk) || '';
   if (!hookLine) {
     const tex = ((Array.isArray(out.tasteNotes) ? out.tasteNotes : []).find(x => x && /식감/.test(String(x.k || ''))) || {}).v;
