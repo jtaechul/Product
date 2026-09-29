@@ -19,7 +19,7 @@ jobs:
       HAS_COUPANG: ${{ secrets.COUPANG_ACCESS_KEY != '' && secrets.COUPANG_SECRET_KEY != '' }}
       HAS_GEMINI: ${{ secrets.GEMINI_API_KEY != '' }}
       # 관리자 페이지 '영상 자동 만들기' 버튼이 GitHub에 제작 요청을 올릴 때 쓰는 키(심해 대시보드와 같은 키 재사용)
-      HAS_GH_PAT: ${{ secrets.DASHBOARD_GH_PAT != '' }}
+      HAS_GH_PAT: ${{ secrets.DASHBOARD_GH_PAT != '' || secrets.MOVIEGEN_ADMIN_GH_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -61,8 +61,12 @@ jobs:
         working-directory: book-carousel
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          GH_PAT: ${{ secrets.DASHBOARD_GH_PAT }}
+          GH_PAT: ${{ secrets.DASHBOARD_GH_PAT || secrets.MOVIEGEN_ADMIN_GH_TOKEN }}
         run: printf '%s' "$GH_PAT" | npx --yes wrangler@3.90.0 secret put GH_PAT
+
+      - name: GitHub 키 미설정 안내
+        if: env.HAS_GH_PAT != 'true'
+        run: echo "::warning::DASHBOARD_GH_PAT / MOVIEGEN_ADMIN_GH_TOKEN 둘 다 비어 있어 관리자 페이지의 '영상 자동 만들기'가 꺼진 채 배포됩니다."
 
       - name: 쿠팡 키 미설정 안내
         if: env.HAS_COUPANG != 'true'

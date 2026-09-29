@@ -703,28 +703,114 @@ def step_bgm(work, log, names=None):
             res[name] = {"ok": False, "error": str(e)[:300]}
 
 
+ROOT = Path(__file__).resolve().parents[2]     # 저장소 맨 위
+IG_RAW_BASE = "https://raw.githubusercontent.com/jtaechul/Product/claude/book-carousel-auto-upload-xpwihz"
+COUPANG_NOTE = "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다."
+
+
+def _ig_token():
+    """시크릿에 따옴표·줄바꿈·'Bearer '가 섞여 들어가도 읽히게 정리한다. 값은 기록하지 않는다."""
+    t = os.environ.get("IG_ACCESS_TOKEN", "").strip().strip('"').strip("'").strip()
+    if t.lower().startswith("bearer "):
+        t = t[7:].strip()
+    return "".join(t.split())
+
+
+def _ig_get(url, params):
+    from urllib.parse import urlencode
+    code, raw = _http(f"{url}?{urlencode(params)}", timeout=30)
+    try:
+        return code, json.loads(raw)
+    except Exception:  # noqa: BLE001
+        return code, {}
+
+
+def _ig_account(tok):
+    """(API 주소, IG 사용자 ID, 계정 이름, 진단). 신 인스타 로그인 → 페이스북 페이지 연결 순으로 찾는다."""
+    diag = {"token_kind": ("instagram_login(IGAA)" if tok.startswith("IG") else
+                           "facebook(EAA)" if tok.startswith("EAA") else "알 수 없음"), "token_len": len(tok)}
+    code, j = _ig_get("https://graph.instagram.com/me", {"fields": "user_id,username", "access_token": tok})
+    diag["instagram"] = {"http": code, "error": (j.get("error") or {}).get("message")}
+    uid = str(j.get("user_id") or j.get("id") or "") if code == 200 else ""
+    if uid:
+        return "https://graph.instagram.com", uid, j.get("username", ""), diag
+    code, j = _ig_get("https://graph.facebook.com/v21.0/me/accounts",
+                      {"fields": "instagram_business_account{id,username}", "access_token": tok})
+    diag["facebook_pages"] = {"http": code, "error": (j.get("error") or {}).get("message")}
+    for pg in j.get("data", []) if code == 200 else []:
+        iba = pg.get("instagram_business_account") or {}
+        if iba.get("id"):
+            return "https://graph.facebook.com/v21.0", str(iba["id"]), iba.get("username", ""), diag
+    return None, None, None, diag
+
+
 def step_ig_probe(log):
     """어느 인스타 계정에 올릴 수 있는 토큰인지 확인만 한다(발행 없음). 토큰 값은 기록하지 않는다."""
-    tok = os.environ.get("IG_ACCESS_TOKEN", "").strip()
+    tok = _ig_token()
     if not tok:
         log["ig_probe"] = {"ok": False, "error": "IG_ACCESS_TOKEN 없음"}
         return
-    out = {}
-    for label, url, params in (("instagram", "https://graph.instagram.com/me", "fields=user_id,username"),
-                               ("facebook_pages", "https://graph.facebook.com/v21.0/me/accounts",
-                                "fields=instagram_business_account%7Bid,username%7D")):
-        code, raw = _http(f"{url}?{params}&access_token={tok}", timeout=30)
-        try:
-            j = json.loads(raw)
-        except Exception:  # noqa: BLE001
-            j = {}
-        if label == "instagram":
-            out[label] = {"http": code, "username": j.get("username"), "error": (j.get("error") or {}).get("message")}
-        else:
-            out[label] = {"http": code, "accounts": [((p.get("instagram_business_account") or {}).get("username"))
-                                                     for p in j.get("data", [])],
-                          "error": (j.get("error") or {}).get("message")}
-    log["ig_probe"] = out
+    base, uid, name, diag = _ig_account(tok)
+    log["ig_probe"] = {"ok": bool(uid), "username": name, "api": base, **diag,
+                       "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+
+
+def ig_caption(ep):
+    """인스타 캡션: 모델이 쓴 캡션 + 해시태그, 쿠팡 파트너스 고지는 없으면 반드시 붙인다(법적 요구)."""
+    cap = str(ep.get("caption") or "").strip()
+    tags = " ".join(t for t in (ep.get("hashtags") or []) if t and t not in cap)
+    if tags:
+        cap = f"{cap}\n\n{tags}"
+    if "쿠팡 파트너스" not in cap:
+        cap = f"{cap}\n\n{COUPANG_NOTE}"
+    return cap[:2150]
+
+
+def step_ig_publish(ep, epdir, work, log, force=False):
+    """완성된 final.mp4(공개 저장소 raw 주소)를 인스타 릴스로 올린다. 같은 편은 한 번만(force로만 다시)."""
+    if log.get("ig_publish", {}).get("media_id") and not force:
+        return
+    final = work / "final.mp4"
+    if not final.exists():
+        raise RuntimeError("final.mp4 없음 — 먼저 영상을 완성하세요")
+    tok = _ig_token()
+    if not tok:
+        raise RuntimeError("IG_ACCESS_TOKEN 없음")
+    base, uid, name, diag = _ig_account(tok)
+    if not uid:
+        log["ig_publish"] = {"ok": False, "error": "토큰으로 인스타 계정을 못 찾음(만료·권한)", **diag}
+        raise RuntimeError("인스타 토큰이 유효하지 않음(만료 가능) — log.json의 ig_publish 참고")
+    video_url = f"{IG_RAW_BASE}/{final.resolve().relative_to(ROOT).as_posix()}"
+    from urllib.parse import urlencode
+    body = urlencode({"media_type": "REELS", "video_url": video_url, "caption": ig_caption(ep),
+                      "share_to_feed": "true", "access_token": tok}).encode()
+    code, raw = _http(f"{base}/{uid}/media", data=body, timeout=60)
+    j = json.loads(raw or b"{}")
+    cid = str(j.get("id") or "")
+    if not cid:
+        log["ig_publish"] = {"ok": False, "step": "container", "http": code,
+                             "error": (j.get("error") or {}).get("message")}
+        raise RuntimeError(f"릴스 컨테이너 생성 실패({code})")
+    status = ""
+    for _ in range(60):                                   # 인스타가 영상을 가져가 처리할 때까지(최대 10분)
+        time.sleep(10)
+        _, st = _ig_get(f"{base}/{cid}", {"fields": "status_code,status", "access_token": tok})
+        status = st.get("status_code", "")
+        if status in ("FINISHED", "ERROR", "EXPIRED"):
+            break
+    if status != "FINISHED":
+        log["ig_publish"] = {"ok": False, "step": "processing", "status": status}
+        raise RuntimeError(f"인스타 영상 처리 실패({status})")
+    code, raw = _http(f"{base}/{uid}/media_publish", data=urlencode({"creation_id": cid, "access_token": tok}).encode(),
+                      timeout=60)
+    j = json.loads(raw or b"{}")
+    mid = str(j.get("id") or "")
+    if not mid:
+        log["ig_publish"] = {"ok": False, "step": "publish", "http": code, "error": (j.get("error") or {}).get("message")}
+        raise RuntimeError(f"릴스 발행 실패({code})")
+    _, pl = _ig_get(f"{base}/{mid}", {"fields": "permalink", "access_token": tok})
+    log["ig_publish"] = {"ok": True, "media_id": mid, "username": name, "permalink": pl.get("permalink"),
+                         "published_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
 
 
 def split_sentences(text: str) -> list[str]:
@@ -1234,6 +1320,8 @@ def main(path: str) -> int:
             step_tts(ep, epdir, work, log, redo)
         if "assemble" in steps:
             step_assemble(ep, epdir, work, log)
+        if "publish" in steps:                                   # 인스타 릴스 발행(완성본이 커밋된 뒤 별도 요청으로)
+            step_ig_publish(ep, epdir, work, log, bool(req.get("force_publish")))
     except StopIteration:
         pass
     except Exception as e:  # noqa: BLE001
