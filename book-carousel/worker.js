@@ -6225,6 +6225,8 @@ async function makeCheckedFoodRef(env, title, image) {
     try { fr = await handleFoodReference(env, { title, image, _internal: true, fix }); } catch (e) { lastErr = e.message; continue; }
     if (!fr || !fr._data) continue;
     const photos = (fr._photos || []).slice(0, 2);
+    // 실제 상품 사진이 없으면 영상을 만드는 의미가 없다(사용자 확정 2026-09) → 제작을 시작하지 않는다
+    if (!photos.length) throw new Error('실제 상품 사진을 받지 못해 영상 제작을 시작하지 않았습니다. 02단계 "상품 사진 주소"에 쿠팡 상품 사진이 들어 있는지 확인하고 다시 눌러 주세요.');
     let score = null, diffs = '실제 상품 사진을 받지 못해 비교하지 못했습니다.', nextFix = '';
     if (photos.length) {
       try {
