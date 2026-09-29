@@ -171,8 +171,8 @@
   },
   "assemble": {
     "ok": true,
-    "sec": 50.04,
-    "clips": 7,
+    "sec": 50.54,
+    "clips": 8,
     "segments": [
       {
         "clip": "c01",
@@ -217,11 +217,12 @@
         "slow": 0.723
       }
     ],
-    "bgm": "signature.mp3"
+    "bgm": "signature.mp3",
+    "hook": 0.5
   },
   "last_request": {
-    "file": "04_seal_bgm.json",
-    "ran_at": "2026-09-29T05:48:04Z",
+    "file": "05_hook.json",
+    "ran_at": "2026-09-29T09:18:24Z",
     "ok": true
   },
   "ig_probe": {
