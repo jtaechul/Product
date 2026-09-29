@@ -1,0 +1,9 @@
+{
+  "food": "food.png",
+  "product": "product.jpg",
+  "score": 72,
+  "diffs": "생성된 이미지는 표면에 흰 분말감이 과하게 표현되어 실물보다 덜 투명하고 윤기가 적습니다.",
+  "tries": 1,
+  "pass": true,
+  "at": "2026-09-29T15:10:06.844Z"
+}
