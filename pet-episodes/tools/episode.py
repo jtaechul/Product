@@ -1132,7 +1132,12 @@ def cover_png(ep, work, out: Path):
     img.alpha_composite(shade)
     epno = str(ep.get("episode") or "").strip()
     fser, fep = _f(SERIF_XB, 50), _f(SERIF_B, 38)
-    fhook = _f(SUB_FONT, 150)
+    # 표지 큰 글씨 = 대본의 후킹 문구(제품 특징을 비튼 한 줄, 사용자 확정 2026-09). 없으면 시리즈 오프닝.
+    hook = str(ep.get("hookLine") or "").strip()
+    if hook:
+        fhook, hook_lines, hook_size = _fit_lines(hook, SUB_FONT, 130, CW - 160, max_lines=2, min_size=84)
+    else:
+        fhook, hook_lines, hook_size = _f(SUB_FONT, 150), list(COVER_HOOK), 150
     menu = str(ep.get("menuName") or "").strip()
 
     def draw(dr, shadow):
@@ -1144,8 +1149,8 @@ def cover_png(ep, work, out: Path):
         if epno:
             dr.text((x + w + 26, y + 10), f"제{epno}화", font=fep, fill=col if shadow else (236, 206, 150, 255))
         dr.line([x, y + 76, x + 250, y + 76], fill=col if shadow else (226, 190, 120, 255), width=3)
-        for i, ln in enumerate(COVER_HOOK):
-            yy = y + 118 + i * 172
+        for i, ln in enumerate(hook_lines):
+            yy = y + 118 + i * int(hook_size * 1.15)
             if shadow:
                 dr.text((x, yy), ln, font=fhook, fill=col, stroke_width=10, stroke_fill=col)
             else:
@@ -1281,6 +1286,51 @@ def _overlay_input(png: Path, L: float, a: float, b: float, fade=0.25):
             f"format=rgba,fade=in:st={max(0, a):.2f}:d={fade}:alpha=1,fade=out:st={max(0, b - fade):.2f}:d={fade}:alpha=1")
 
 
+FREEZE_SEC = 1.2      # 첫 한입 멈춤 길이(초) — 사용자 확정 2026-09: 3번 '첫 한입 멈춤' 후킹
+
+
+def hook_png(text, out: Path):
+    """첫 한입 멈춤 문구 — 화면 가운데 굵은 흰 글씨 두 줄까지(외곽선+그림자). 상품명·효능은 대본 단계에서 이미 걸렀다."""
+    f, lines, fs = _fit_lines(text, SUB_FONT, 86, W - 110, max_lines=2, min_size=56)
+    lh = int(fs * 1.28)
+    y0 = int(H * 0.40) - lh * len(lines) // 2
+
+    def draw(dr, shadow):
+        for i, ln in enumerate(lines):
+            x = (W - f.getlength(ln)) / 2
+            if shadow:
+                dr.text((x, y0 + i * lh), ln, font=f, fill=(0, 0, 0, 255), stroke_width=10, stroke_fill=(0, 0, 0, 255))
+            else:
+                dr.text((x, y0 + i * lh), ln, font=f, fill=(255, 255, 255, 255), stroke_width=4, stroke_fill=(20, 14, 10, 240))
+        if not shadow:                                   # 문구 위아래 가는 금색 선 두 줄(드라마 자막 느낌)
+            dr.line([W * 0.3, y0 - 26, W * 0.7, y0 - 26], fill=(226, 190, 120, 230), width=2)
+            dr.line([W * 0.3, y0 + len(lines) * lh + 18, W * 0.7, y0 + len(lines) * lh + 18], fill=(226, 190, 120, 230), width=2)
+    _shadowed((W, H), draw, blur=10, alpha=170, offset=(0, 5)).save(out)
+
+
+def freeze_hook(seg: Path, L: float, tF: float, text: str, tmp: Path, name: str):
+    """세그먼트를 tF에서 멈추고(소리도 멈춤) FREEZE_SEC 동안 큰 후킹 문구를 띄운 뒤 이어서 재생한다.
+    멈춤 동안 아주 천천히 다가가는 줌(1.0→1.03, 계단 없음)으로 화면이 죽어 보이지 않게 한다."""
+    frame, hp, out = tmp / f"freeze_{name}.png", tmp / f"hook_{name}.png", tmp / f"seg_{name}_hook.mp4"
+    _ff(["-ss", f"{tF:.3f}", "-i", str(seg), "-frames:v", "1", str(frame)])
+    hook_png(text, hp)
+    N = int(round(FREEZE_SEC * FPS))
+    norm_v = f"fps={FPS},scale={W}:{H},setsar=1,format=yuv420p"
+    norm_a = "aformat=sample_rates=44100:channel_layouts=stereo"
+    fc = (f"[0:v]trim=0:{tF:.3f},setpts=PTS-STARTPTS,{norm_v}[va];[0:a]atrim=0:{tF:.3f},asetpts=PTS-STARTPTS,{norm_a}[aa];"
+          f"[0:v]trim=start={tF:.3f},setpts=PTS-STARTPTS,{norm_v}[vb];[0:a]atrim=start={tF:.3f},asetpts=PTS-STARTPTS,{norm_a}[ab];"
+          f"[1:v]scale=1440:2560,zoompan=z='1+0.03*on/{N}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={N}:s={W}x{H}:fps={FPS},"
+          f"eq=brightness=-0.06:saturation=0.8,{norm_v}[fz0];"
+          f"[2:v]format=rgba,fade=t=in:st=0:d=0.12:alpha=1[tx];[fz0][tx]overlay=0:0:shortest=1,{norm_v}[fz];"
+          f"[3:a]atrim=0:{FREEZE_SEC},{norm_a}[az];"
+          f"[va][aa][fz][az][vb][ab]concat=n=3:v=1:a=1[v][a]")
+    _ff(["-i", str(seg), "-loop", "1", "-t", f"{FREEZE_SEC}", "-i", str(frame), "-loop", "1", "-t", f"{FREEZE_SEC}", "-i", str(hp),
+         "-f", "lavfi", "-t", f"{FREEZE_SEC}", "-i", "anullsrc=r=44100:cl=stereo", "-filter_complex", fc,
+         "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
+         "-r", str(FPS), "-c:a", "aac", "-b:a", "160k", "-ar", "44100", str(out)])
+    return out, L + FREEZE_SEC
+
+
 def build_segment(ep, c, idx, work, tmp):
     name = f"c{c['no']:02d}"
     src = work / f"{name}.mp4"
@@ -1342,7 +1392,16 @@ def build_segment(ep, c, idx, work, tmp):
     _ff([*ins, "-filter_complex", ";".join(fcs), "-map", f"[{last}]", "-map", "[a]", "-t", f"{L:.2f}",
          "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-r", str(FPS),
          "-c:a", "aac", "-b:a", "160k", "-ar", "44100", str(seg)])
-    return seg, L, {"clip": name, "len": round(L, 2), "voice": round(N, 2), "slow": round(slow, 3)}
+    meta = {"clip": name, "len": round(L, 2), "voice": round(N, 2), "slow": round(slow, 3)}
+    # 첫 한입 멈춤(사용자 확정 2026-09): 첫 시식 컷에서 첫 문장(첫 느낌)이 끝난 직후 화면·소리를 멈추고 후킹 문구를 크게 띄운다.
+    first_taste = next((i for i, x in enumerate(ep["clips"]) if x.get("role") == "taste"), -1)
+    hook_text = str(ep.get("hookLine") or "").strip()
+    if idx == first_taste and hook_text and timing:
+        k = 1 if len(timing) > 1 and timing[0]["text"].startswith("잘 먹겠습니다") else 0
+        tF = min(max(1.0, a0 + timing[k]["end"] + 0.2), L - 0.8)   # 첫 문장 자막이 완전히 사라진 뒤(자막은 end+0.18까지)
+        seg, L = freeze_hook(seg, L, tF, hook_text, tmp, name)
+        meta.update({"freeze_at": round(tF, 2), "hook": hook_text, "len": round(L, 2)})
+    return seg, L, meta
 
 
 def step_assemble(ep, epdir, work, log):
