@@ -3939,9 +3939,14 @@ async function handleFoodReference(env, body) {
   const gk = await getGeminiKey(env);
   if (!gk) throw new Error('Gemini 키가 설정되지 않았습니다.');
   if (await getImageUsage(env) >= DAILY_IMAGE_CAP) throw new Error(`오늘 만들 수 있는 이미지 ${DAILY_IMAGE_CAP}장을 다 썼습니다. 내일 다시 눌러주세요.`);
-  const fl = await resolveFoodLook(env, gk, title, String(body.image || '').trim());
-  const urls = (fl.photoUrls && fl.photoUrls.length) ? fl.photoUrls : await foodPhotoUrls(env, title, body.image);
-  const imgs = (await Promise.all(urls.slice(0, 2).map(fetchImageInline))).filter(Boolean);
+  // 자동 제작(뒤 작업)은 사진·모양 문장을 한 번만 받아 넘겨준다 — 시도마다 다시 받으면 외부 호출 한도(50개)를 넘는다
+  let fl, imgs;
+  if (body._internal && Array.isArray(body._photos) && body._look) { fl = { look: body._look, source: 'photo', note: '' }; imgs = body._photos; }
+  else {
+    fl = await resolveFoodLook(env, gk, title, String(body.image || '').trim());
+    const urls = (fl.photoUrls && fl.photoUrls.length) ? fl.photoUrls : await foodPhotoUrls(env, title, body.image);
+    imgs = (await Promise.all(urls.slice(0, 2).map(fetchImageInline))).filter(Boolean);
+  }
   const prompt = `${imgs.length ? 'The attached photos are product photos of a pet food. Look at the actual food pieces (not the package). ' : ''}`
     + `Create a clean photorealistic photo of only this pet food: ${fl.look}. `
     + 'Match the real pieces exactly in shape, size, color and texture. Plain white ceramic bowl on a plain light wooden table, '
@@ -3961,6 +3966,7 @@ async function handleFoodReference(env, body) {
     const img = (d?.candidates?.[0]?.content?.parts || []).find(p => p.inlineData?.data);
     if (!img) { lastErr = '이미지가 비어 왔습니다'; continue; }
     await bumpImageUsage(env);
+    if (body._internal) return { success: true, _data: img.inlineData.data, _mime: img.inlineData.mimeType || 'image/png', foodLook: fl.look, _photos: imgs };
     // 휴대폰(특히 아이폰)은 data: 주소를 '저장'하지 못한다 → KV에 7일 보관하고 진짜 파일 주소로 내려준다.
     const mime = img.inlineData.mimeType || 'image/png';
     const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
@@ -3971,7 +3977,6 @@ async function handleFoodReference(env, body) {
         fileUrl = `/api/food-reference/${id}.${/jpe?g/.test(mime) ? 'jpg' : 'png'}`;
       } catch {}
     }
-    if (body._internal) return { success: true, _data: img.inlineData.data, _mime: mime, foodLook: fl.look, _photos: imgs };
     return { success: true, url: fileUrl, image: fileUrl || `data:${mime};base64,${img.inlineData.data}`,
       foodLook: fl.look, foodLookSource: fl.source, foodLookNote: fl.note, usedPhotos: imgs.length };
   }
@@ -4796,7 +4801,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 
   <section class="box" data-view="new">
     <div class="box-hd"><span class="step">04</span><h2>영상 만들기</h2></div>
-    <p class="lead">대본으로 장면 그림 → 8초 영상 → 목소리 → 자막·메뉴판·영수증·배경음악까지 넣은 완성본을 자동으로 만듭니다. 한 편에 30~60분, 창을 닫아도 계속 만들어집니다.</p>
+    <p class="lead">대본으로 장면 그림 → 컷별 4~8초 영상 → 목소리 → 자막·메뉴판·영수증·배경음악까지 넣은 완성본을 자동으로 만듭니다. 한 편에 30~60분, 창을 닫아도 계속 만들어집니다.</p>
     <button class="btn btn-wide" id="epGo" type="button">영상 자동 만들기</button>
     <div class="msg" id="epMsg"></div>
   </section>
@@ -5482,7 +5487,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
             location.hash = x.id ? '#ep/'+encodeURIComponent(x.id) : '#list'; return;
           }
           if(st&&(st.status==='failed'||st.status==='missing')){ $('epGo').disabled=false; say('epMsg',st.error||'시작하지 못했습니다.','no'); return; }
-          say('epMsg','음식 참고 이미지를 만들고 실제 상품 사진과 비교하는 중… '+sec+'초 (보통 1~3분, 화면을 꺼도 서버에서 계속됩니다)','wait');
+          say('epMsg','음식 참고 이미지를 만들고 실제 상품 사진과 비교하는 중… '+sec+'초'+(st&&st.note?' · '+st.note:'')+' (보통 1~3분, 화면을 꺼도 서버에서 계속됩니다)','wait');
           setTimeout(poll,5000);
         }).catch(function(){ fails++; setTimeout(poll,Math.min(15000,5000+fails*2000)); });
       })();
@@ -6217,68 +6222,154 @@ async function ghText(env, path) {
 // 음식 참고 이미지 — 영상 자동 만들기 때 무조건 만들고(사용자 확정 2026-09), 실제 상품 사진과 Gemini가 나란히 비교해 채점한다.
 // 70점 미만이면 틀린 점을 고쳐 다시(최대 3번 중 가장 높은 것). 끝내 못 만들면 영상 제작을 시작하지 않는다.
 const FOOD_PASS = 70;
-async function makeCheckedFoodRef(env, title, image) {
+const FOOD_TRIES = 3;
+const NO_PHOTO_MSG = '실제 상품 사진을 받지 못해 영상 제작을 시작하지 않았습니다. 02단계 "상품 사진 주소"에 쿠팡 상품 사진이 들어 있는지 확인하고 다시 눌러 주세요.';
+
+// ⚠️ 무료 요금제는 서버 한 번 실행에 외부 호출(사진·AI·GitHub)이 50개까지다(2026-09 "Too many subrequests" 사고:
+// 음식 이미지 3번 시도 + GitHub 파일마다 읽기·쓰기를 한 번에 하다 넘쳐, 대본·사진만 올라가고 제작 요청이 빠졌다).
+// → 일을 '준비 · 한 번 시도 · 저장' 단계로 나누고, 한 실행에서는 예산 안의 단계만 한다(나머지는 다음 크론 1분 뒤).
+// 무거운 중간 결과(사진 base64)는 KV ep_food:<작업>에 둔다.
+const FOOD_STEP_COST = { prep: 20, try: 8, commit: 12 };   // 한 단계가 쓸 수 있는 외부 호출 수(모델 후보를 다 도는 최악 기준)
+const FOOD_STEP_BUDGET = 40;
+
+// 준비: 모양 문장(캐시) + 실제 상품 사진 2장을 한 번만 받는다. 사진이 없으면 제작 시작 안 함(사용자 확정 2026-09).
+async function foodPrep(env, title, image) {
+  if (!title) throw new Error('상품 이름이 없어 음식 참고 이미지를 만들 수 없습니다.');
   const gk = await getGeminiKey(env);
-  let best = null, fix = '', lastErr = '';
-  for (let k = 0; k < 3; k++) {
-    let fr;
-    try { fr = await handleFoodReference(env, { title, image, _internal: true, fix }); } catch (e) { lastErr = e.message; continue; }
-    if (!fr || !fr._data) continue;
-    const photos = (fr._photos || []).slice(0, 2);
-    // 실제 상품 사진이 없으면 영상을 만드는 의미가 없다(사용자 확정 2026-09) → 제작을 시작하지 않는다
-    if (!photos.length) throw new Error('실제 상품 사진을 받지 못해 영상 제작을 시작하지 않았습니다. 02단계 "상품 사진 주소"에 쿠팡 상품 사진이 들어 있는지 확인하고 다시 눌러 주세요.');
-    let score = null, diffs = '실제 상품 사진을 받지 못해 비교하지 못했습니다.', nextFix = '';
-    if (photos.length) {
-      try {
-        const o = extractJson(await callGeminiVision(gk, [...photos, { inline_data: { mime_type: fr._mime, data: fr._data } },
-          { text: `앞의 ${photos.length}장은 실제 상품 사진, 마지막 1장은 AI가 만든 '그릇에 담긴 내용물' 사진이다. 포장·배경·그릇은 무시하고 `
-            + `내용물(알갱이·조각)만 비교해 모양·크기 비율·색·표면 질감이 얼마나 같은지 0~100점으로 채점하라. 사진에서 내용물이 안 보이면 보이는 단서로 추정한다.\n`
-            + `JSON만: {"score": 0, "diffs": "다른 점 한국어 한 줄(같으면 '거의 같음')", "fix": "English one sentence: what to change to match the real pieces"}` }]) || '');
-        score = Math.max(0, Math.min(100, Math.round(Number(o.score) || 0)));
-        diffs = String(o.diffs || '').slice(0, 120); nextFix = String(o.fix || '').slice(0, 300);
-      } catch { diffs = '비교 채점에 실패했습니다.'; }
+  if (!gk) throw new Error('Gemini 키가 설정되지 않았습니다.');
+  const fl = await resolveFoodLook(env, gk, title, image).catch(() => ({ look: foodLookOf(title), photoUrls: [] }));
+  const urls = (fl.photoUrls && fl.photoUrls.length) ? fl.photoUrls : await foodPhotoUrls(env, title, image);
+  const photos = (await Promise.all(urls.slice(0, 2).map(fetchImageInline))).filter(Boolean);
+  if (!photos.length) throw new Error(NO_PHOTO_MSG);
+  return { title, image, look: fl.look || foodLookOf(title), photos, k: 0, fix: '', best: null, lastErr: '' };
+}
+
+// 한 번 시도: 음식 이미지 1장 만들고 실제 사진과 채점. 합격이거나 3번 다 하면 done.
+async function foodTry(env, fs) {
+  const gk = await getGeminiKey(env);
+  fs.k += 1;
+  let fr = null;
+  try { fr = await handleFoodReference(env, { title: fs.title, image: fs.image, _internal: true, fix: fs.fix, _photos: fs.photos, _look: fs.look }); }
+  catch (e) { fs.lastErr = e.message; }
+  if (fr && fr._data) {
+    let score = null, diffs = '비교 채점에 실패했습니다.', nextFix = '';
+    try {
+      const o = extractJson(await callGeminiVision(gk, [...fs.photos, { inline_data: { mime_type: fr._mime, data: fr._data } },
+        { text: `앞의 ${fs.photos.length}장은 실제 상품 사진, 마지막 1장은 AI가 만든 '그릇에 담긴 내용물' 사진이다. 포장·배경·그릇은 무시하고 `
+          + `내용물(알갱이·조각)만 비교해 모양·크기 비율·색·표면 질감이 얼마나 같은지 0~100점으로 채점하라. 사진에서 내용물이 안 보이면 보이는 단서로 추정한다.\n`
+          + `JSON만: {"score": 0, "diffs": "다른 점 한국어 한 줄(같으면 '거의 같음')", "fix": "English one sentence: what to change to match the real pieces"}` }]) || '');
+      score = Math.max(0, Math.min(100, Math.round(Number(o.score) || 0)));
+      diffs = String(o.diffs || '').slice(0, 120); nextFix = String(o.fix || '').slice(0, 300);
+    } catch {}
+    const cur = { data: fr._data, mime: fr._mime, score, diffs, tries: fs.k };
+    if (!fs.best || (score ?? -1) > (fs.best.score ?? -1)) fs.best = cur;
+    if (score !== null && score >= FOOD_PASS) return true;
+    fs.fix = nextFix || fs.fix;
+  }
+  if (fs.k >= FOOD_TRIES) {
+    if (!fs.best) throw new Error(`음식 참고 이미지를 만들지 못해 영상 제작을 시작하지 않았습니다. 잠시 뒤 다시 눌러 주세요.${fs.lastErr ? ' (' + fs.lastErr + ')' : ''}`);
+    return true;
+  }
+  return false;
+}
+
+// GitHub에 여러 파일을 커밋 한 번으로 올린다(Git Data API). 파일마다 읽기+쓰기를 하던 방식은 호출이 두 배라 한도를 넘었다.
+// files: [{ path, b64 } | { path, text } | { path, del: true }]
+async function ghCommit(env, files, message) {
+  const tree = [];
+  for (const f of files) {
+    if (f.del) tree.push({ path: f.path, mode: '100644', type: 'blob', sha: null });
+    else if (f.text != null) tree.push({ path: f.path, mode: '100644', type: 'blob', content: f.text });
+    else {
+      const b = await gh(env, '/git/blobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: f.b64, encoding: 'base64' }) });
+      if (!b.ok) throw new Error(`GitHub 저장 실패(${b.status}): ${b.json?.message || ''}`);
+      tree.push({ path: f.path, mode: '100644', type: 'blob', sha: b.json.sha });
     }
-    const cur = { data: fr._data, mime: fr._mime, score, diffs, tries: k + 1, product: photos[0] ? photos[0].inline_data : null };
-    if (!best || (score ?? -1) > (best.score ?? -1)) best = cur;
-    if (score === null || score >= FOOD_PASS) break;       // 비교할 사진이 없거나 합격이면 끝
-    fix = nextFix || fix;
   }
-  if (!best) throw new Error(`음식 참고 이미지를 만들지 못해 영상 제작을 시작하지 않았습니다. 잠시 뒤 다시 눌러 주세요.${lastErr ? ' (' + lastErr + ')' : ''}`);
-  return best;
+  for (let t = 0; t < 2; t++) {                      // 그사이 제작 결과가 커밋되면(앞서감) 한 번 더
+    const ref = await gh(env, `/git/ref/heads/${EP_BRANCH}`);
+    const head = ref.json?.object?.sha; if (!head) throw new Error(`GitHub 브랜치를 못 읽었습니다(${ref.status}).`);
+    const base = await gh(env, `/git/commits/${head}`);
+    const tr = await gh(env, '/git/trees', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ base_tree: base.json?.tree?.sha, tree }) });
+    if (!tr.ok) throw new Error(`GitHub 저장 실패(${tr.status}): ${tr.json?.message || ''}`);
+    const cm = await gh(env, '/git/commits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message, tree: tr.json.sha, parents: [head] }) });
+    if (!cm.ok) throw new Error(`GitHub 저장 실패(${cm.status}): ${cm.json?.message || ''}`);
+    const up = await gh(env, `/git/refs/heads/${EP_BRANCH}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sha: cm.json.sha }) });
+    if (up.ok) return cm.json.sha;
+    if (up.status !== 422) throw new Error(`GitHub 저장 실패(${up.status}): ${up.json?.message || ''}`);
+  }
+  throw new Error('GitHub 저장이 다른 커밋과 겹쳤습니다. 잠시 뒤 다시 눌러 주세요.');
 }
 
-async function commitFoodRef(env, dir, id, food) {
+// 음식 사진·실제 상품 사진·비교 결과를 커밋 파일 목록으로. old = 지울 예전 음식 사진 이름(다른 확장자가 남으면 단계마다 다른 걸 집는다).
+function foodFiles(dir, fs, old) {
+  const food = fs.best;
   const fname = `food.${/jpe?g/.test(food.mime) ? 'jpg' : 'png'}`;
-  await ghPut(env, `${dir}/refs/${fname}`, food.data, `pet: ${id} 음식 참고 사진(${food.score ?? '비교 없음'}점)`);
-  // 다른 확장자의 예전 음식 사진이 남으면 단계마다 다른 걸 집는다 → 지운다
-  await ghDelete(env, `${dir}/refs/${fname === 'food.png' ? 'food.jpg' : 'food.png'}`, `pet: ${id} 예전 음식 사진 정리`).catch(() => false);
-  let product = '';
-  if (food.product && food.product.data) {
-    product = `product.${/png/.test(food.product.mime_type) ? 'png' : /webp/.test(food.product.mime_type) ? 'webp' : 'jpg'}`;
-    await ghPut(env, `${dir}/refs/${product}`, food.product.data, `pet: ${id} 실제 상품 사진(비교용)`);
-  }
+  const p = fs.photos[0] && fs.photos[0].inline_data;
+  const product = p ? `product.${/png/.test(p.mime_type) ? 'png' : /webp/.test(p.mime_type) ? 'webp' : 'jpg'}` : '';
   const check = { food: fname, product, score: food.score, diffs: food.diffs, tries: food.tries, pass: food.score === null ? null : food.score >= FOOD_PASS, at: new Date().toISOString() };
-  await ghPut(env, `${dir}/refs/food_check.json`, b64utf8(JSON.stringify(check, null, 2)), `pet: ${id} 음식 이미지 비교 결과`);
-  return check;
+  const files = [{ path: `${dir}/refs/${fname}`, b64: food.data }];
+  if (p) files.push({ path: `${dir}/refs/${product}`, b64: p.data });
+  files.push({ path: `${dir}/refs/food_check.json`, text: JSON.stringify(check, null, 2) });
+  for (const o of old || []) if (o !== fname && o !== product) files.push({ path: `${dir}/refs/${o}`, del: true });
+  return { files, check };
 }
 
-// 새 편 시작: 대본(episode.json) + 음식 참고 사진 + 제작 요청을 올린다.
-async function handleEpisodeStart(env, body) {
+// 뒤 작업(새 편 시작·음식 이미지 다시): 예산 안에서 단계를 진행한다. 끝나면 { done: 결과 }, 아니면 { next: 작업 상태 }.
+async function runFoodJob(env, jid, job) {
+  const body = job.body || {};
+  const key = 'ep_food:' + jid;
+  let fs = await env.PENDING_POSTS.get(key, 'json').catch(() => null);
+  let stage = job.stage || 'prep', spent = 0;
+  const save = () => env.PENDING_POSTS.put(key, JSON.stringify(fs), { expirationTtl: VP_JOB_TTL });
+  while (spent + FOOD_STEP_COST[stage] <= FOOD_STEP_BUDGET) {
+    spent += FOOD_STEP_COST[stage];
+    if (stage === 'prep') {
+      let title = body.title, image = body.image || '';
+      if (job.kind === 'food-redo') {
+        const ep = JSON.parse((await ghText(env, `${EP_ROOT}/${body.id}/episode.json`)) || '{}');
+        title = ep.product?.title; image = ep.product?.image || '';
+        if (!title) throw new Error('이 편에는 상품 정보가 없어 다시 만들 수 없습니다.');
+      } else {
+        const ep = body.episode;
+        if (!ep || !Array.isArray(ep.clips) || !ep.clips.length) throw new Error('먼저 03단계에서 대본(프롬프트)을 만들어 주세요.');
+        if (ep.format !== 'diner') throw new Error('자동 제작은 사료·간식 식당 에피소드만 됩니다.');
+      }
+      fs = await foodPrep(env, title, image);
+      stage = 'try';
+    } else if (stage === 'try') {
+      if (await foodTry(env, fs)) stage = 'commit';
+    } else {
+      const res = job.kind === 'food-redo' ? await commitFoodRedo(env, body.id, fs) : await commitEpisodeStart(env, body, fs);
+      await env.PENDING_POSTS.delete(key).catch(() => {});
+      return { done: res };
+    }
+  }
+  await save();
+  return { next: { stage, stageNote: stage === 'try' ? `음식 이미지 ${fs.k}번째 결과 ${fs.best?.score ?? '-'}점` : stage === 'commit' ? '저장 준비' : '' } };
+}
+
+// 새 편: 대본 + 음식·상품 사진 + 비교 결과 + 제작 요청을 '커밋 한 번'으로 올린다(요청이 빠진 반쪽 편이 생기지 않게).
+async function commitEpisodeStart(env, body, fs) {
   const ep = body.episode;
-  if (!ep || !Array.isArray(ep.clips) || !ep.clips.length) throw new Error('먼저 03단계에서 대본(프롬프트)을 만들어 주세요.');
-  if (ep.format !== 'diner') throw new Error('자동 제작은 사료·간식 식당 에피소드만 됩니다.');
   const kst = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(2, 10).replace(/-/g, '');
   const id = `${kst}-ep${String(ep.episode || '').replace(/\D/g, '') || 'x'}-${crypto.randomUUID().slice(0, 4)}`;
   const dir = `${EP_ROOT}/${id}`;
-  // 음식 참고 사진은 무조건 먼저 만든다(실패하면 제작 시작 안 함 — 비싼 영상 비용을 헛쓰지 않게).
-  const food = await makeCheckedFoodRef(env, body.title, body.image);
-  await ghPut(env, `${dir}/episode.json`, b64utf8(JSON.stringify({ ...ep, product: { title: body.title || '', link: body.link || '', image: body.image || '' } }, null, 2)),
-    `pet: ${id} 대본`);
-  const check = await commitFoodRef(env, dir, id, food);
-  await ghPut(env, `${dir}/requests/01_full.json`, b64utf8(JSON.stringify({ id, steps: ['character', 'keyframes', 'clips', 'tts', 'assemble'] })),
-    `pet: ${id} 영상 제작 요청`);
-  await env.PENDING_POSTS?.put(`ep_meta:${id}`, JSON.stringify({ title: body.title || '', menu: ep.menuName || '', episode: ep.episode || '', at: Date.now() }));
+  const { files, check } = foodFiles(dir, fs, []);
+  files.unshift({ path: `${dir}/episode.json`, text: JSON.stringify({ ...ep, product: { title: body.title || '', link: body.link || '', image: body.image || '' } }, null, 2) });
+  files.push({ path: `${dir}/requests/01_full.json`, text: JSON.stringify({ id, steps: ['character', 'keyframes', 'clips', 'tts', 'assemble'] }) });
+  await ghCommit(env, files, `pet: ${id} 대본·음식 참고 사진(${check.score ?? '비교 없음'}점)·영상 제작 요청`);
+  await env.PENDING_POSTS.put(`ep_meta:${id}`, JSON.stringify({ title: body.title || '', menu: ep.menuName || '', episode: ep.episode || '', at: Date.now() }));
   return { success: true, id, foodRef: true, foodScore: check.score, foodDiffs: check.diffs };
+}
+
+async function commitFoodRedo(env, id, fs) {
+  const dir = `${EP_ROOT}/${id}`;
+  const cur = await gh(env, `/contents/${dir}/refs?ref=${encodeURIComponent(EP_BRANCH)}`);
+  const old = (Array.isArray(cur.json) ? cur.json.map(x => x.name) : []).filter(n => /^(food|product)\.(png|jpg|webp)$/.test(n));
+  const { files, check } = foodFiles(dir, fs, old);
+  await ghCommit(env, files, `pet: ${id} 음식 참고 사진 다시(${check.score ?? '비교 없음'}점)`);
+  return { success: true, id, food: check };
 }
 
 // 같은 편에 추가 요청: 다시 조립·컷 다시 뽑기·인스타 올리기
@@ -6302,12 +6393,6 @@ async function handleEpisodeRequest(env, body) {
     await vpJobSet(env, jid, { status: 'queued', kind: 'food-redo', body: { id }, createdAt: Date.now() });
     await vpJobIndex(env, jid, true);
     return { success: true, id, job: jid };
-  } else if (kind === 'food-now') {                    // 음식 참고 이미지 다시 만들기(다음 '장면 그림부터 다시'부터 적용)
-    const ep = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/episode.json`)) || '{}');
-    const title = ep.product?.title; if (!title) throw new Error('이 편에는 상품 정보가 없어 다시 만들 수 없습니다.');
-    const food = await makeCheckedFoodRef(env, title, ep.product?.image || '');
-    const check = await commitFoodRef(env, `${EP_ROOT}/${id}`, id, food);
-    return { success: true, id, food: check };
   } else throw new Error('알 수 없는 요청입니다.');
   const list = await gh(env, `/contents/${EP_ROOT}/${id}/requests?ref=${encodeURIComponent(EP_BRANCH)}`);
   const n = (Array.isArray(list.json) ? list.json.length : 0) + 1;
@@ -6392,9 +6477,13 @@ async function runVpJob(env, id) {
   if (!job || job.status === 'done' || job.status === 'failed') return;
   await vpJobSet(env, id, { status: 'running', startedAt: Date.now(), tries: (job.tries || 0) + 1 });
   try {
-    const result = job.kind === 'episode-start' ? await handleEpisodeStart(env, job.body || {})
-      : job.kind === 'food-redo' ? await handleEpisodeRequest(env, { id: (job.body || {}).id, kind: 'food-now' })
-      : await handleVideoPrompts(env, job.body || {});
+    let result;
+    if (job.kind === 'episode-start' || job.kind === 'food-redo') {
+      // 단계형 작업: 이번 실행 예산만큼 하고, 남으면 다음 크론(1분 뒤)이 이어서 한다
+      const r = await runFoodJob(env, id, job);
+      if (r.next) { await vpJobSet(env, id, { status: 'queued', createdAt: 0, tries: 0, ...r.next }); return; }
+      result = r.done;
+    } else result = await handleVideoPrompts(env, job.body || {});
     await vpJobSet(env, id, { status: 'done', result, body: null });
   } catch (e) {
     await vpJobSet(env, id, { status: 'failed', error: String(e && e.message || e).slice(0, 300), body: null });
@@ -6413,14 +6502,17 @@ async function vpJobIndex(env, id, add) {
 async function runVpJobs(env) {
   if (!env.PENDING_POSTS) return;
   const ids = (await env.PENDING_POSTS.get('vp_jobs_open', 'json').catch(() => null)) || [];
-  for (const id of ids.slice(0, 3)) {
+  // 한 실행에 작업 하나만(여러 개를 한꺼번에 돌리면 외부 호출 한도 50개를 넘는다 — 2026-09 사고)
+  let ran = 0;
+  for (const id of ids.slice(0, 5)) {
+    if (ran >= 1) break;
     const job = await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null);
     if (!job || job.status === 'done' || job.status === 'failed') { await vpJobIndex(env, id, false); continue; }
     const stale = job.status === 'queued' ? Date.now() - (job.createdAt || 0) > 15 * 1000   // 화면의 '바로 만들기'가 안 왔으면
       : Date.now() - (job.startedAt || 0) > VP_STALE_MS;
     if (!stale) continue;
     if ((job.tries || 0) >= 3) { await vpJobSet(env, id, { status: 'failed', error: '세 번 시도했지만 만들지 못했습니다. 잠시 뒤 다시 눌러 주세요.', body: null }); await vpJobIndex(env, id, false); continue; }
-    await runVpJob(env, id);
+    await runVpJob(env, id); ran++;
   }
 }
 
@@ -6705,14 +6797,14 @@ export default {
           // 결과는 저장소에 남고 화면은 상태 확인으로 받는다. 끊겨서 서버도 멈추면 크론이 이어서 만든다.
           const id = String(body.id || '').replace(/[^a-f0-9]/g, '');
           const job = id ? await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null) : null;
-          if (job && job.status === 'queued') await runVpJob(env, id);
+          if (job && job.status === 'queued' && !job.kind) await runVpJob(env, id);   // 영상 시작 작업은 크론만(단계형)
           result = { success: true };
         }
         else if (url.pathname === '/api/video-prompts-status') {
           const id = String(body.id || url.searchParams.get('id') || '').replace(/[^a-f0-9]/g, '');
           const job = id ? await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null) : null;
           if (!job) result = { success: false, status: 'missing', error: '작업을 찾지 못했습니다(1시간이 지났거나 잘못된 번호).' };
-          else result = { success: true, status: job.status, result: job.status === 'done' ? job.result : undefined, error: job.error || '' };
+          else result = { success: true, status: job.status, result: job.status === 'done' ? job.result : undefined, error: job.error || '', note: job.stageNote || '' };
         }
         else if (url.pathname === '/api/food-reference') result = await handleFoodReference(env, body);
         else if (url.pathname === '/api/episode/start') {
