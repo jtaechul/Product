@@ -961,16 +961,29 @@ TAIL = 0.75              # 대사가 끝난 뒤 다음 컷까지 여유(초)
 MIN_SEG = 5.0            # 대사가 짧아도 컷은 이 길이 이상
 
 
+ZOOM_OPEN, ZOOM_PULL = 1.22, 1.6   # 입장: 가까이(1.22배)에서 "심각하다"와 함께 1.6초 동안 부드럽게 빠진다
+
+
 def _zoom_expr(role, idx, L, tz=None):
-    """컷 안의 카메라 느낌(편집): 천천히 밀고 들어가거나 빠지는 줌을 번갈아.
-    입장은 오프닝 "심각하다"(tz초)에 맞춰 세 번 끊어 빠지는 줌 — 가까이 → 한 칸씩 뒤로 → 이후 천천히 밀기."""
+    """컷 안의 카메라 느낌(편집). ⛔ 화면 크기를 한 번에 툭 바꾸는 계단식 줌 금지(사용자 지적 2026-09: 뚝뚝 끊겨 보임) —
+    모든 줌은 연속으로 부드럽게 변한다. 입장은 "심각하다"(tz초)에 맞춰 천천히 멈추듯 빠지는 줌(ease-out) 한 번."""
     if role == "enter":
         tz = max(0.4, tz if tz is not None else 1.2)
-        return (f"if(lt(it,{tz:.2f}),1.45,if(lt(it,{tz + 0.35:.2f}),1.28,if(lt(it,{tz + 0.7:.2f}),1.13,"
-                f"1+0.05*(it-{tz + 0.7:.2f})/{max(0.5, L - tz - 0.7):.2f})))")
+        p = f"min(1,max(0,(it-{tz:.2f})/{ZOOM_PULL}))"
+        return f"{ZOOM_OPEN}-{ZOOM_OPEN - 1:.2f}*pow({p},2)*(3-2*{p})"
     if idx % 2:                                       # 편집 줌은 아주 약하게(구도 변화는 컷 설계가 맡는다)
         return f"1.04-0.04*it/{L:.2f}"
     return f"1+0.04*it/{L:.2f}"
+
+
+def _check_smooth(expr: str, L: float, fps: int = FPS, max_step: float = 0.02):
+    """⛔ 재발 방지: 줌이 한 프레임에 max_step(2%) 넘게 변하면(=계단식 점프) 조립을 멈춘다."""
+    prev = None
+    for k in range(int(L * fps) + 1):
+        z = eval(expr, {"min": min, "max": max, "pow": pow, "it": k / fps})   # noqa: S307 — 우리가 만든 수식만 평가
+        if prev is not None and abs(z - prev) > max_step:
+            raise RuntimeError(f"줌이 {k / fps:.2f}초에 {prev:.3f}→{z:.3f}로 튐(계단식 줌 금지 규칙)")
+        prev = z
 
 
 def _overlay_input(png: Path, L: float, a: float, b: float, fade=0.25):
@@ -997,6 +1010,7 @@ def build_segment(ep, c, idx, work, tmp):
     ins += ["-i", str(src)]
     tz = a0 + timing[1]["start"] if role == "enter" and len(timing) > 1 else None   # "심각하다" 시작 시각
     z = _zoom_expr(role, idx, L, tz)
+    _check_smooth(z, L)
     fcs.append(f"[0:v]setpts={slow:.4f}*PTS,scale=1440:2560:force_original_aspect_ratio=increase,crop=1440:2560,"
                f"tpad=stop_mode=clone:stop_duration=3,trim=0:{L:.2f},setpts=PTS-STARTPTS,fps={FPS},"
                f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={W}x{H}:fps={FPS},setsar=1[v0]")

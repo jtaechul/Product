@@ -5415,14 +5415,14 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
     ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
   }
-  var OPEN_STEPS=[1.45,1.28,1.13,1.0], OPEN_TAIL=1.2;
+  // ⛔ 계단식(툭툭 끊기는) 줌 금지(사용자 지적 2026-09). 가까이서 시작해 "심각하다" 즈음 1.6초 동안 부드럽게 빠진다(천천히 시작·천천히 멈춤).
+  var OPEN_Z=1.22, OPEN_PULL=1.6;
   function openingZoom(card,t,dur){
     if(!st.cards || !card || card.type!=='opening' || !dur) return 1;
-    // 오프닝("배가 고프다. 심각하다")이 컷 맨 앞으로 옮겨져(사용자 확정 2026-09) 줌도 앞쪽 "심각하다" 즈음에 끊어 빠진다.
-    var start=Math.min(1.4, dur*0.3);
-    if(t<start) return OPEN_STEPS[0];
-    var k=Math.min(OPEN_STEPS.length-1, 1+Math.floor((t-start)/(OPEN_TAIL/(OPEN_STEPS.length-1))));
-    return OPEN_STEPS[k];
+    var start=Math.min(1.1, dur*0.25);
+    if(t<start) return OPEN_Z;
+    var p=Math.min(1,(t-start)/OPEN_PULL);
+    return OPEN_Z-(OPEN_Z-1)*p*p*(3-2*p);
   }
   function drawCoverZoom(ctx,src,w,h,z){
     if(z<=1.001){ drawCover(ctx,src,w,h); return; }
