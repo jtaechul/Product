@@ -3331,9 +3331,9 @@ async function handleVideoPrompts(env, body) {
   const pains = pick(body.pains).slice(0, 4);
   const benefits = adSafeFacts(pick(body.benefits)).slice(0, 5);
 
-  const user = `상품: ${title}
+  const user = `${noteBlock(note)}상품: ${title}
 품목: ${category || '반려동물 용품'}
-주인공: ${dog}${spKey !== 'dog' ? `\n(주인공은 ${sp.ko}다. 규칙의 "the puppy"·"강아지"는 전부 "the ${sp.noun}"·"${sp.ko}"로 바꿔 읽어라.)` : ''}${note ? `\n추가 주문: ${note}` : ''}${pains.length ? `\n\n[확인된 견주 불편 — 이 중에서 문제를 고를 것]\n- ${pains.join('\n- ')}` : ''}${benefits.length ? `\n\n[확인된 상품 장점 — benefit 클립은 이 중에서만 쓸 것]\n- ${benefits.join('\n- ')}` : ''}
+주인공: ${dog}${spKey !== 'dog' ? `\n(주인공은 ${sp.ko}다. 규칙의 "the puppy"·"강아지"는 전부 "the ${sp.noun}"·"${sp.ko}"로 바꿔 읽어라.)` : ''}${pains.length ? `\n\n[확인된 견주 불편 — 이 중에서 문제를 고를 것]\n- ${pains.join('\n- ')}` : ''}${benefits.length ? `\n\n[확인된 상품 장점 — benefit 클립은 이 중에서만 쓸 것]\n- ${benefits.join('\n- ')}` : ''}
 
 ${clips}개 클립짜리 릴스 촬영 지시서를 써라. 아래 JSON만 출력:
 {
@@ -3973,6 +3973,35 @@ async function handleFoodReference(env, body) {
   throw new Error(`음식 참고 이미지를 만들지 못했습니다: ${lastErr}`);
 }
 
+// 운영자 '추가 주문'(03단계) — 참고용 한 줄이 아니라 가급적 반영할 요청(사용자 확정 2026-09).
+// 고정 규칙(오프닝·장면 순서·상품명 금지·효능 금지·대사 길이)은 여전히 우선한다.
+function noteBlock(note) {
+  if (!note) return '';
+  return `[최우선 요청 — 운영자 추가 주문]
+${note}
+→ 아래 고정 규칙(오프닝·장면 순서·상품명/브랜드 금지·효능 금지·대사 길이)과 부딪히지 않는 범위에서 반드시 반영하라.
+  대사·가게·장면 중 시청자가 알아챌 수 있는 곳에 드러나야 한다(한 컷 이상).
+  어떻게 반영했는지 JSON "noteApplied"에 한국어 한 줄로 적어라. 규칙 때문에 못 넣은 부분이 있으면 그 이유도 적어라.
+
+`;
+}
+
+// 대본에 추가 주문이 실제로 드러났는지 가볍게 확인한다. 확인 호출이 실패하면 막지 않는다(true).
+async function noteReflected(gk, note, out) {
+  if (!note) return { ok: true };
+  const clips = (Array.isArray(out && out.clips) ? out.clips : []).map((c, i) => `${i + 1}. ${String(c && c.line || '')} / ${String(c && c.shots || '').slice(0, 160)}`);
+  try {
+    const raw = await callGeminiText(gk, {
+      system: '너는 대본 검수자다. 운영자의 추가 주문이 대본에 실제로 드러났는지만 판정한다. JSON만 출력.',
+      user: `추가 주문: ${note}\n\n가게: ${String(out && out.shop || '')}\n세트: ${String(out && out.setBlock || '').slice(0, 300)}\n대본:\n${clips.join('\n')}\n\n` +
+        '주문 내용이 대사·가게·장면 중 한 곳 이상에 시청자가 알아챌 만큼 드러났으면 ok=true. 흔적만 있거나 빠졌으면 false.\n{"ok": true, "why": "한 줄"}',
+      max_tokens: 200, timeout_ms: 15000, json: true,
+    });
+    const j = extractJson(raw);
+    return { ok: j.ok !== false, why: String(j.why || '') };
+  } catch { return { ok: true }; }
+}
+
 async function handleDinerEpisode(env, body, ctx) {
   const { title, category, note, spKey, sp, hero, clips } = ctx;
   const roles = dinerRoles(clips);
@@ -3997,9 +4026,9 @@ async function handleDinerEpisode(env, body, ctx) {
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
     .filter(Boolean)).slice(0, 4);
 
-  const user = `상품: ${title}
+  const user = `${noteBlock(note)}상품: ${title}
 품목: ${category || '사료·간식'}
-주인공: ${sp.ko} (the ${sp.noun}) — ${hero}${note ? `\n추가 주문: ${note}` : ''}
+주인공: ${sp.ko} (the ${sp.noun}) — ${hero}
 [가격] ${priceNote || '없음 — bill 대사에 숫자를 쓰지 마라'}
 [추천 손님 — 표기 기준] ${guest.note ? guest.note.replace('추천 손님: ', '') : '표기 없음'}${guest.mismatch ? `
 ⚠️ 이 메뉴는 주인공(8개월쯤 어린 중형 시바견)의 ${guest.mismatchWhat}에 맞춘 메뉴가 아니다. order에서 "내 ${guest.mismatchWhat} 메뉴는 아니다"는 사실을
@@ -4024,7 +4053,8 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "menuName": "메뉴판에 적을 메뉴 이름(한국어 4~14자). 상품명·브랜드·제품 라인명 절대 금지. [확인된 정보]와 상품명의 보편 특징(주원료·알갱이 모양이나 식감·대상) 중 2개를 조합하고 '정식', '한 그릇', '한 접시', '세트' 중 하나로 끝낸다",
   "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도. 상품명·브랜드는 절대 쓰지 않는다",
   "hashtags": ["#태그1", "#태그2", "#태그3"],
-  "ytTitle": "유튜브 설명 첫 줄에 쓸 한 줄 요약 40자 이내(상품명·브랜드 금지)"
+  "ytTitle": "유튜브 설명 첫 줄에 쓸 한 줄 요약 40자 이내(상품명·브랜드 금지)"${note ? `,
+  "noteApplied": "추가 주문을 어디에 어떻게 반영했는지 한국어 한 줄"` : ''}
 }${recentMenus.length ? `\n최근에 쓴 메뉴 이름(겹치지 않게 다른 특징을 골라라): ${recentMenus.slice(0, 12).join(', ')}` : ''}${recentLines.length ? `\n최근 회차에서 이미 쓴 대사(말투·비유·소재가 비슷하지 않게 새로 써라):\n- ${recentLines.slice(0, 12).join('\n- ')}` : ''}`;
 
   let raw;
@@ -4055,6 +4085,26 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
       });
       if (badLines(retry).length < bad1.length) raw = retry;
     } catch { /* 재요청 실패 시 첫 결과 사용 */ }
+  }
+
+  // 추가 주문이 대본에 안 드러났으면 1회만 다시 쓴다(가급적 반영 — 사용자 확정 2026-09).
+  let noteCheck = { ok: true };
+  if (note) {
+    try { noteCheck = await noteReflected(gk, note, extractJson(raw)); } catch { noteCheck = { ok: true }; }
+    if (!noteCheck.ok) {
+      try {
+        const retry = await callGeminiText(gk, {
+          system: dinerSystem(sp),
+          user: user + `\n\n[재작성 지시] 운영자 추가 주문 "${note}"이 대본에 드러나지 않았다(${noteCheck.why || '반영 흔적 없음'}). 고정 규칙은 지키면서 대사·가게·장면에 분명히 반영해 다시 써라.`,
+          max_tokens: Math.min(4000, 1200 + roles.length * 280), timeout_ms: 50000, json: true,
+        });
+        const o2 = extractJson(retry);
+        if (Array.isArray(o2.clips) && o2.clips.length && badLines(retry).length <= Math.max(1, badLines(raw).length)) {
+          raw = retry;
+          noteCheck = await noteReflected(gk, note, o2);
+        }
+      } catch { /* 재작성 실패 시 첫 결과 사용 */ }
+    }
   }
 
   const out = extractJson(raw);
@@ -4211,6 +4261,8 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     negativePrompt: neg,
     caption, hashtags: tags,
     youtube: { title: ytTitle, description: ytDescription },
+    note: note || '', noteApplied: note ? scrubBanned(String(out.noteApplied || '').trim(), banned).slice(0, 120) : '',
+    noteOk: note ? !!noteCheck.ok : true,
     clips: clipsOut,
   };
 }
@@ -5168,7 +5220,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       $('mk').disabled=false;
       if(res && res.success && (res.clips||[]).length){
         lastResult=res; renderPrompts(res); $('pOutWrap').hidden=false; saveSoon();
-        say('pMsg', res.format==='diner' ? '대본이 준비됐습니다. 아래 04단계 "영상 자동 만들기"를 누르세요.' : '대본이 준비됐습니다. 이 상품은 식당 에피소드가 아니라 자동 제작은 안 되고, 상품 관리 아래 예전 편집기로 만들 수 있습니다.','ok');
+        var nm = res.note ? (res.noteOk ? ' 추가 주문 반영: '+(res.noteApplied||'반영됨') : ' 추가 주문이 규칙과 부딪혀 일부만 반영됐을 수 있습니다'+(res.noteApplied?' ('+res.noteApplied+')':'')+'. 대본을 확인해 주세요.') : '';
+        say('pMsg', res.format==='diner' ? '대본이 준비됐습니다. 아래 04단계 "영상 자동 만들기"를 누르세요.'+nm : '대본이 준비됐습니다. 이 상품은 식당 에피소드가 아니라 자동 제작은 안 되고, 상품 관리 아래 예전 편집기로 만들 수 있습니다.','ok');
       } else say('pMsg',(res&&res.error)||'프롬프트를 만들지 못했습니다.','no');
     }).catch(function(e){ $('mk').disabled=false; say('pMsg','만들지 못했습니다: '+e.message,'no'); });
   });
