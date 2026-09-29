@@ -4062,7 +4062,8 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도. 상품명·브랜드는 절대 쓰지 않는다",
   "hashtags": ["#태그1", "#태그2", "#태그3"],
   "ytTitle": "유튜브 설명 첫 줄에 쓸 한 줄 요약 40자 이내(상품명·브랜드 금지)",
-  "hookLine": "영상 맨 앞 후킹 구간에 크게 뜰 한 줄(한국어, 공백 포함 12~24자). ⭐필수 두 가지: ① 사건·반전 구조 — 결과를 먼저 던지고 이유는 숨긴다(주인과 강아지가 서로 뺏는 사건처럼 보는 사람이 '뭐? 왜?' 하게). ② 이 상품만의 사실 하나(원료·알갱이 모양·크기·대상·만드는 방식)를 반드시 넣어 다른 간식엔 못 쓰는 문장으로. 맛 묘사·일반론 금지. 틀(베끼지 말 것): '[주인/강아지]가 [뜻밖의 행동]한 [상품 사실]' / '[상품 사실]인데, [뜻밖의 사건]'. 시크하고 유머러스하게. 효능·건강·배변 약속 금지, 상품명·브랜드 금지, 느낌표 금지, 말끝 ~군 금지"${note ? `,
+  "hookLines": ["후보1", "후보2", "후보3"],
+  "hookLine": "hookLines 중 가장 센 것 하나. 각 후보는 영상 맨 앞 후킹 구간에 크게 뜰 한 줄(한국어, ⚠️공백 포함 24자 이하 — 넘으면 버려진다. 수식어를 빼고 사건만 남겨라). ⭐필수 두 가지: ① 사건·반전 구조 — 결과를 먼저 던지고 이유는 숨긴다(주인과 강아지가 서로 뺏는 사건처럼 보는 사람이 '뭐? 왜?' 하게). ② 이 상품만의 사실 하나(원료·알갱이 모양·크기·대상·만드는 방식)를 반드시 넣어 다른 간식엔 못 쓰는 문장으로. 맛 묘사·일반론 금지. 틀(베끼지 말 것): '[주인/강아지]가 [뜻밖의 행동]한 [상품 사실]' / '[상품 사실]인데, [뜻밖의 사건]'. 시크하고 유머러스하게. 효능·건강·배변 약속 금지, 상품명·브랜드 금지, 느낌표 금지, 말끝 ~군 금지"${note ? `,
   "noteApplied": "추가 주문을 어디에 어떻게 반영했는지 한국어 한 줄"` : ''}
 }${recentMenus.length ? `\n최근에 쓴 메뉴 이름(겹치지 않게 다른 특징을 골라라): ${recentMenus.slice(0, 12).join(', ')}` : ''}${recentLines.length ? `\n최근 회차에서 이미 쓴 대사(말투·비유·소재가 비슷하지 않게 새로 써라):\n- ${recentLines.slice(0, 12).join('\n- ')}` : ''}`;
 
@@ -4253,10 +4254,14 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const shop = String(out.shop || '').trim();
   const verdict = scrubBanned(String(out.verdict || '').trim(), banned);
   // 첫 한입 후킹 문구(사용자 확정 2026-09): 제품 특징을 비튼 한 줄. 효능·배변·건강 약속이나 너무 긴 문구는 버리고 식감으로 대신한다.
-  let hookLine = noGunHook(scrubBanned(String(out.hookLine || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'), banned));
-  if (!hookLine || hookLine.length > 34 || HEALTH_CLAIM.test(hookLine) || CURE_CLAIM.test(hookLine) || /이 메뉴/.test(hookLine)) {
+  // 후킹 문구(사용자 확정 2026-09): 후보 여러 개 중 조건(28자 이하·효능·배변·상품명 없음)을 통과한 첫 번째를 쓴다.
+  const hookOk = (h) => h && h.length <= 28 && !HEALTH_CLAIM.test(h) && !CURE_CLAIM.test(h) && !/이 메뉴/.test(h);
+  const hookClean = (h) => noGunHook(scrubBanned(String(h || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'), banned)).replace(/[.\s]+$/, '');
+  const hookCands = [out.hookLine, ...(Array.isArray(out.hookLines) ? out.hookLines : [])].map(hookClean);
+  let hookLine = hookCands.find(hookOk) || '';
+  if (!hookLine) {
     const tex = ((Array.isArray(out.tasteNotes) ? out.tasteNotes : []).find(x => x && /식감/.test(String(x.k || ''))) || {}).v;
-    hookLine = tex && !HEALTH_CLAIM.test(String(tex)) ? `${String(tex).trim()}, 이건 반칙이다.` : '…이 한 알, 반칙이다.';
+    hookLine = tex && !HEALTH_CLAIM.test(String(tex)) ? `${String(tex).trim()}, 이건 반칙이다` : '주인도 탐낸 한 그릇';
   }
   const ytHook = scrubBanned(String(out.ytTitle || '').trim(), banned);
   // 제목에도 상품명 대신 메뉴 이름. 상품명은 설명란의 링크 바로 옆에만 둔다.
@@ -4296,7 +4301,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     negativePrompt: neg,
     caption, hashtags: tags,
     youtube: { title: ytTitle, description: ytDescription },
-    hookLine, hookRaw: String(out.hookLine || '').slice(0, 60),
+    hookLine, hookRaw: hookCands.filter(Boolean).join(' / ').slice(0, 200),
     note: note || '', noteApplied: note ? scrubBanned(String(out.noteApplied || '').trim(), banned).slice(0, 120) : '',
     noteOk: note ? !!noteCheck.ok : true,
     clips: clipsOut,
