@@ -1513,6 +1513,9 @@ def main(path: str) -> int:
             step_voices(ep, epdir, work, log, req.get("voices"))
         character = step_character(ep, epdir, work, log, redo)
         if "keyframes" in steps:
+            # 음식 참고 이미지는 필수(사용자 확정 2026-09) — 없으면 비싼 그림·영상 단계를 시작하지 않는다
+            if not any((epdir / "refs" / f).exists() for f in ("food.png", "food.jpg")):
+                raise RuntimeError("음식 참고 이미지(refs/food.*)가 없어 제작을 멈췄습니다 — 관리자 영상 상세의 '음식 이미지 다시 만들기'를 먼저 누르세요")
             setimg = step_set(ep, epdir, work, log, redo)
             if req.get("storyboard", True):                     # 기본: 격자 한 장(사용자 확정 2026-09)
                 step_storyboard(ep, epdir, work, log, redo, character, setimg)

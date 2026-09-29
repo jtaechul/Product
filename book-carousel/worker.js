@@ -3946,7 +3946,8 @@ async function handleFoodReference(env, body) {
     + `Create a clean photorealistic photo of only this pet food: ${fl.look}. `
     + 'Match the real pieces exactly in shape, size, color and texture. Plain white ceramic bowl on a plain light wooden table, '
     + 'three-quarter top-down angle, soft even daylight, shallow depth of field, the bowl fills the center of a square frame. '
-    + 'No packaging, no bag, no box, no text, no letters, no logos, no labels, no animals, no people, no hands.';
+    + 'No packaging, no bag, no box, no text, no letters, no logos, no labels, no animals, no people, no hands.'
+    + (body.fix ? ` Corrections from comparing with the real product photos: ${String(body.fix).slice(0, 400)}` : '');
   let lastErr = '';
   for (const model of GEMINI_IMAGE_MODELS) {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gk}`, {
@@ -3970,7 +3971,7 @@ async function handleFoodReference(env, body) {
         fileUrl = `/api/food-reference/${id}.${/jpe?g/.test(mime) ? 'jpg' : 'png'}`;
       } catch {}
     }
-    if (body._internal) return { success: true, _data: img.inlineData.data, _mime: mime, foodLook: fl.look };
+    if (body._internal) return { success: true, _data: img.inlineData.data, _mime: mime, foodLook: fl.look, _photos: imgs };
     return { success: true, url: fileUrl, image: fileUrl || `data:${mime};base64,${img.inlineData.data}`,
       foodLook: fl.look, foodLookSource: fl.source, foodLookNote: fl.note, usedPhotos: imgs.length };
   }
@@ -4614,6 +4615,11 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 .ep-lines{margin:10px 0 0 18px;font-size:13px;line-height:1.7;color:var(--ink)}
 .ep-lines li{margin-bottom:6px}
 #epDetail .ref-char{margin-top:12px}
+.ep-food{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:14px}
+.ep-food-row{display:flex;gap:8px;margin:6px 0}
+.ep-food-cell{flex:1;text-align:center}
+.ep-food-cell img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;background:#EDEFEC;display:block}
+.ep-food-none{aspect-ratio:1/1;border-radius:10px;background:#EDEFEC;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--sub)}
 .ep-cover{margin-top:14px;text-align:center}
 .ep-cover img{width:100%;max-width:220px;display:block;margin:6px auto 8px;border-radius:10px;aspect-ratio:9/16;object-fit:cover;background:#EDEFEC}
 .ep-cover .ep-sub{margin-top:8px;text-align:left}
@@ -5374,6 +5380,22 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       cv.appendChild(epEl('div','ep-sub','인스타에 직접 올릴 때 "커버 수정 → 카메라 롤에서 추가"로 이 사진을 고르세요. 자동 올리기는 이 표지를 알아서 씁니다.'));
       d.appendChild(cv);
     }
+    if(e.foodCheck){
+      var fc=e.foodCheck, fb2=epEl('div','ep-food');
+      fb2.appendChild(epEl('div','ep-post-hd','음식 참고 이미지 확인 (실제 상품 ↔ 영상에 쓴 음식)'));
+      var row=epEl('div','ep-food-row');
+      function fimg(ref,label){ var w=epEl('div','ep-food-cell'); if(ref){ var im=document.createElement('img'); im.loading='lazy'; im.alt=label;
+        im.src='/api/episode/video?id='+encodeURIComponent(e.id)+'&ref='+encodeURIComponent(ref)+'&t='+encodeURIComponent(fc.at||''); w.appendChild(im);} else w.appendChild(epEl('div','ep-food-none','사진 없음'));
+        w.appendChild(epEl('div','ep-sub',label)); return w; }
+      row.appendChild(fimg(fc.product,'실제 상품 사진')); row.appendChild(fimg(fc.food,'영상에 쓴 음식'));
+      fb2.appendChild(row);
+      var sc=fc.score==null?'실물 사진이 없어 비교하지 못함':('닮은 정도 '+fc.score+'점'+(fc.pass?' · 합격':' · 기준(70점) 미달'));
+      fb2.appendChild(epEl('div', fc.pass===false?'ep-err':'ep-sub', sc+(fc.diffs?' — '+fc.diffs:'')+(fc.tries>1?' ('+fc.tries+'번 만들어 가장 비슷한 것 사용)':'')));
+      if(e.state!=='running') fb2.appendChild(epBtn('음식 이미지 다시 만들기',function(){
+        epAsk(e.id,'food',{}, '음식 이미지를 다시 만들고 있습니다(1~3분). 끝나면 이 화면에서 새로고침하세요. 영상에 반영하려면 그 뒤 "장면 그림부터 다시"를 누르세요.');
+      }));
+      d.appendChild(fb2);
+    }
     var act=epEl('div','ep-act');
     if(e.hasVideo && e.state!=='running'){
       var dl=epEl('a','btn btn-sm btn-2','저장하기'); dl.href='/api/episode/video?dl=1&id='+encodeURIComponent(e.id); act.appendChild(dl);
@@ -5450,13 +5472,23 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(!confirm('이 대본으로 영상을 자동으로 만듭니다(30~60분, 유료 AI 사용). 시작할까요?')) return;
     $('epGo').disabled=true; say('epMsg','제작 요청을 올리는 중… (음식 참고 사진을 먼저 만들어 30초쯤 걸립니다)','wait');
     post('/api/episode/start',{episode:lastResult, title:$('pt').value.trim()||$('t').value.trim(), image:$('img').value.trim(), link:$('l').value.trim()}).then(function(r){
-      $('epGo').disabled=false;
-      if(r&&r.success){
-        hide('epMsg');
-        say('epListMsg','제작을 시작했습니다. 30~60분 뒤 완성됩니다.'+(r.foodRef?'':' (음식 참고 사진은 못 만들어 상품 설명으로만 그립니다'+(r.foodErr?': '+r.foodErr:'')+')'),'ok');
-        location.hash='#list';
-      }
-      else say('epMsg',(r&&r.error)||'시작하지 못했습니다.','no');
+      if(!r||!r.job){ $('epGo').disabled=false; say('epMsg',(r&&r.error)||'시작하지 못했습니다.','no'); return; }
+      var t0=Date.now(), fails=0;
+      (function poll(){
+        var sec=Math.round((Date.now()-t0)/1000);
+        if(sec>900){ $('epGo').disabled=false; say('epMsg','15분이 지나도 시작되지 않았습니다. 다시 눌러 주세요.','no'); return; }
+        post('/api/video-prompts-status',{id:r.job}).then(function(st){
+          fails=0;
+          if(st&&st.status==='done'){
+            var x=st.result||{}; $('epGo').disabled=false; hide('epMsg');
+            say('epListMsg','제작을 시작했습니다. 30~60분 뒤 완성됩니다. 음식 참고 이미지: '+(x.foodScore==null?'실물 비교 없음':('실물과 '+x.foodScore+'점'))+(x.foodDiffs?' · '+x.foodDiffs:''),'ok');
+            location.hash = x.id ? '#ep/'+encodeURIComponent(x.id) : '#list'; return;
+          }
+          if(st&&(st.status==='failed'||st.status==='missing')){ $('epGo').disabled=false; say('epMsg',st.error||'시작하지 못했습니다.','no'); return; }
+          say('epMsg','음식 참고 이미지를 만들고 실제 상품 사진과 비교하는 중… '+sec+'초 (보통 1~3분, 화면을 꺼도 서버에서 계속됩니다)','wait');
+          setTimeout(poll,5000);
+        }).catch(function(){ fails++; setTimeout(poll,Math.min(15000,5000+fails*2000)); });
+      })();
     }).catch(function(e){ $('epGo').disabled=false; say('epMsg','시작하지 못했습니다: '+e.message,'no'); });
   });
   window.addEventListener('hashchange',showView);
@@ -6176,6 +6208,50 @@ async function ghText(env, path) {
   return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
 }
 
+// 음식 참고 이미지 — 영상 자동 만들기 때 무조건 만들고(사용자 확정 2026-09), 실제 상품 사진과 Gemini가 나란히 비교해 채점한다.
+// 70점 미만이면 틀린 점을 고쳐 다시(최대 3번 중 가장 높은 것). 끝내 못 만들면 영상 제작을 시작하지 않는다.
+const FOOD_PASS = 70;
+async function makeCheckedFoodRef(env, title, image) {
+  const gk = await getGeminiKey(env);
+  let best = null, fix = '', lastErr = '';
+  for (let k = 0; k < 3; k++) {
+    let fr;
+    try { fr = await handleFoodReference(env, { title, image, _internal: true, fix }); } catch (e) { lastErr = e.message; continue; }
+    if (!fr || !fr._data) continue;
+    const photos = (fr._photos || []).slice(0, 2);
+    let score = null, diffs = '실제 상품 사진을 받지 못해 비교하지 못했습니다.', nextFix = '';
+    if (photos.length) {
+      try {
+        const o = extractJson(await callGeminiVision(gk, [...photos, { inline_data: { mime_type: fr._mime, data: fr._data } },
+          { text: `앞의 ${photos.length}장은 실제 상품 사진, 마지막 1장은 AI가 만든 '그릇에 담긴 내용물' 사진이다. 포장·배경·그릇은 무시하고 `
+            + `내용물(알갱이·조각)만 비교해 모양·크기 비율·색·표면 질감이 얼마나 같은지 0~100점으로 채점하라. 사진에서 내용물이 안 보이면 보이는 단서로 추정한다.\n`
+            + `JSON만: {"score": 0, "diffs": "다른 점 한국어 한 줄(같으면 '거의 같음')", "fix": "English one sentence: what to change to match the real pieces"}` }]) || '');
+        score = Math.max(0, Math.min(100, Math.round(Number(o.score) || 0)));
+        diffs = String(o.diffs || '').slice(0, 120); nextFix = String(o.fix || '').slice(0, 300);
+      } catch { diffs = '비교 채점에 실패했습니다.'; }
+    }
+    const cur = { data: fr._data, mime: fr._mime, score, diffs, tries: k + 1, product: photos[0] ? photos[0].inline_data : null };
+    if (!best || (score ?? -1) > (best.score ?? -1)) best = cur;
+    if (score === null || score >= FOOD_PASS) break;       // 비교할 사진이 없거나 합격이면 끝
+    fix = nextFix || fix;
+  }
+  if (!best) throw new Error(`음식 참고 이미지를 만들지 못해 영상 제작을 시작하지 않았습니다. 잠시 뒤 다시 눌러 주세요.${lastErr ? ' (' + lastErr + ')' : ''}`);
+  return best;
+}
+
+async function commitFoodRef(env, dir, id, food) {
+  const fname = `food.${/jpe?g/.test(food.mime) ? 'jpg' : 'png'}`;
+  await ghPut(env, `${dir}/refs/${fname}`, food.data, `pet: ${id} 음식 참고 사진(${food.score ?? '비교 없음'}점)`);
+  let product = '';
+  if (food.product && food.product.data) {
+    product = `product.${/png/.test(food.product.mime_type) ? 'png' : /webp/.test(food.product.mime_type) ? 'webp' : 'jpg'}`;
+    await ghPut(env, `${dir}/refs/${product}`, food.product.data, `pet: ${id} 실제 상품 사진(비교용)`);
+  }
+  const check = { food: fname, product, score: food.score, diffs: food.diffs, tries: food.tries, pass: food.score === null ? null : food.score >= FOOD_PASS, at: new Date().toISOString() };
+  await ghPut(env, `${dir}/refs/food_check.json`, b64utf8(JSON.stringify(check, null, 2)), `pet: ${id} 음식 이미지 비교 결과`);
+  return check;
+}
+
 // 새 편 시작: 대본(episode.json) + 음식 참고 사진 + 제작 요청을 올린다.
 async function handleEpisodeStart(env, body) {
   const ep = body.episode;
@@ -6184,19 +6260,15 @@ async function handleEpisodeStart(env, body) {
   const kst = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(2, 10).replace(/-/g, '');
   const id = `${kst}-ep${String(ep.episode || '').replace(/\D/g, '') || 'x'}-${crypto.randomUUID().slice(0, 4)}`;
   const dir = `${EP_ROOT}/${id}`;
-  // 음식 참고 사진: 실제 상품 사진을 보고 알맹이만 그릇에 담은 이미지(유료 1장, 일일 상한 공유)
-  let food = null, foodErr = '';
-  try {
-    const fr = await handleFoodReference(env, { title: body.title, image: body.image, _internal: true });
-    food = fr._data ? fr : null;
-  } catch (e) { foodErr = e.message; }
-  await ghPut(env, `${dir}/episode.json`, b64utf8(JSON.stringify({ ...ep, product: { title: body.title || '', link: body.link || '' } }, null, 2)),
+  // 음식 참고 사진은 무조건 먼저 만든다(실패하면 제작 시작 안 함 — 비싼 영상 비용을 헛쓰지 않게).
+  const food = await makeCheckedFoodRef(env, body.title, body.image);
+  await ghPut(env, `${dir}/episode.json`, b64utf8(JSON.stringify({ ...ep, product: { title: body.title || '', link: body.link || '', image: body.image || '' } }, null, 2)),
     `pet: ${id} 대본`);
-  if (food) await ghPut(env, `${dir}/refs/food.${/jpe?g/.test(food._mime) ? 'jpg' : 'png'}`, food._data, `pet: ${id} 음식 참고 사진`);
+  const check = await commitFoodRef(env, dir, id, food);
   await ghPut(env, `${dir}/requests/01_full.json`, b64utf8(JSON.stringify({ id, steps: ['character', 'keyframes', 'clips', 'tts', 'assemble'] })),
     `pet: ${id} 영상 제작 요청`);
   await env.PENDING_POSTS?.put(`ep_meta:${id}`, JSON.stringify({ title: body.title || '', menu: ep.menuName || '', episode: ep.episode || '', at: Date.now() }));
-  return { success: true, id, foodRef: !!food, foodErr };
+  return { success: true, id, foodRef: true, foodScore: check.score, foodDiffs: check.diffs };
 }
 
 // 같은 편에 추가 요청: 다시 조립·컷 다시 뽑기·인스타 올리기
@@ -6215,6 +6287,17 @@ async function handleEpisodeRequest(env, body) {
     if (!log.assemble?.ok) throw new Error('아직 영상이 완성되지 않았습니다.');
     if (log.ig_publish?.media_id) throw new Error('이미 인스타에 올린 편입니다.');
     req = { steps: ['publish'] };
+  } else if (kind === 'food') {                        // 오래 걸려서(1~3분) 뒤에서 처리 → 화면은 목록 새로고침으로 확인
+    const jid = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+    await vpJobSet(env, jid, { status: 'queued', kind: 'food-redo', body: { id }, createdAt: Date.now() });
+    await vpJobIndex(env, jid, true);
+    return { success: true, id, job: jid };
+  } else if (kind === 'food-now') {                    // 음식 참고 이미지 다시 만들기(다음 '장면 그림부터 다시'부터 적용)
+    const ep = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/episode.json`)) || '{}');
+    const title = ep.product?.title; if (!title) throw new Error('이 편에는 상품 정보가 없어 다시 만들 수 없습니다.');
+    const food = await makeCheckedFoodRef(env, title, ep.product?.image || '');
+    const check = await commitFoodRef(env, `${EP_ROOT}/${id}`, id, food);
+    return { success: true, id, food: check };
   } else throw new Error('알 수 없는 요청입니다.');
   const list = await gh(env, `/contents/${EP_ROOT}/${id}/requests?ref=${encodeURIComponent(EP_BRANCH)}`);
   const n = (Array.isArray(list.json) ? list.json.length : 0) + 1;
@@ -6248,13 +6331,15 @@ async function handleEpisodeList(env, body) {
     let log = {}; try { log = JSON.parse(logTxt || '{}'); } catch {}
     let ep = {}; try { ep = JSON.parse(epTxt || '{}'); } catch {}
     const names = (Array.isArray(reqs.json) ? reqs.json.map(x => x.name) : []).sort();
+    let foodCheck = null;
+    if (want) { try { foodCheck = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/refs/food_check.json`)) || 'null'); } catch {} }
     const latest = names[names.length - 1] || '';
     const done = log.last_request?.file === latest;
     const state = !latest ? 'empty' : !done ? 'running' : log.last_request?.ok ? 'done' : 'failed';
     return { id, state, request: latest, title: ep.product?.title || '', menu: ep.menuName || '', episode: ep.episode || '',
       cuts: (ep.clips || []).map((c, i) => ({ no: `c${String(i + 1).padStart(2, '0')}`, role: c.role || '', line: c.line || '' })),
       sec: log.assemble?.sec || 0, hasVideo: !!log.assemble?.ok, error: done && !log.last_request?.ok ? String(log.error || '').slice(0, 300) : '',
-      ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null, post: postTextOf(ep), hasCover: !!log.cover };
+      ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null, post: postTextOf(ep), hasCover: !!log.cover, foodCheck };
   }));
   return { success: true, episodes: eps };
 }
@@ -6264,13 +6349,15 @@ async function handleEpisodeVideo(env, url, request) {
   const id = url.searchParams.get('id') || '';
   if (!EP_ID_RE.test(id)) return new Response('bad id', { status: 400, headers: CORS });
   const v = (url.searchParams.get('v') || EP_BRANCH).replace(/[^\w./-]/g, '');
-  const kind = url.searchParams.has('cover') ? 'cover' : url.searchParams.has('frames') ? 'frames' : 'video';
-  const src = `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/work/${{ cover: 'cover.jpg', frames: 'frames.jpg', video: 'final.mp4' }[kind]}`;
+  const ref = (url.searchParams.get('ref') || '').match(/^(food|product)\.(png|jpg|webp)$/);
+  const kind = ref ? 'ref' : url.searchParams.has('cover') ? 'cover' : url.searchParams.has('frames') ? 'frames' : 'video';
+  const src = ref ? `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/refs/${ref[0]}`
+    : `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/work/${{ cover: 'cover.jpg', frames: 'frames.jpg', video: 'final.mp4' }[kind]}`;
   const range = request.headers.get('Range');
   const r = await fetch(src, { headers: range ? { Range: range } : {} });
   if (!r.ok && r.status !== 206) return new Response('not found', { status: 404, headers: CORS });
   const h = new Headers({ 'Access-Control-Allow-Origin': '*', 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=300',
-    'Content-Type': kind === 'video' ? 'video/mp4' : 'image/jpeg' });
+    'Content-Type': kind === 'video' ? 'video/mp4' : ref ? ({ png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' })[ref[2]] : 'image/jpeg' });
   for (const k of ['Content-Length', 'Content-Range', 'ETag']) if (r.headers.get(k)) h.set(k, r.headers.get(k));
   if (url.searchParams.has('dl')) h.set('Content-Disposition', `attachment; filename="${id}${kind === 'cover' ? '-cover.jpg' : '.mp4'}"`);
   return new Response(r.body, { status: r.status, headers: h });
@@ -6295,7 +6382,9 @@ async function runVpJob(env, id) {
   if (!job || job.status === 'done' || job.status === 'failed') return;
   await vpJobSet(env, id, { status: 'running', startedAt: Date.now(), tries: (job.tries || 0) + 1 });
   try {
-    const result = await handleVideoPrompts(env, job.body || {});
+    const result = job.kind === 'episode-start' ? await handleEpisodeStart(env, job.body || {})
+      : job.kind === 'food-redo' ? await handleEpisodeRequest(env, { id: (job.body || {}).id, kind: 'food-now' })
+      : await handleVideoPrompts(env, job.body || {});
     await vpJobSet(env, id, { status: 'done', result, body: null });
   } catch (e) {
     await vpJobSet(env, id, { status: 'failed', error: String(e && e.message || e).slice(0, 300), body: null });
@@ -6616,7 +6705,13 @@ export default {
           else result = { success: true, status: job.status, result: job.status === 'done' ? job.result : undefined, error: job.error || '' };
         }
         else if (url.pathname === '/api/food-reference') result = await handleFoodReference(env, body);
-        else if (url.pathname === '/api/episode/start') result = await handleEpisodeStart(env, body);
+        else if (url.pathname === '/api/episode/start') {
+          // 음식 이미지 생성·비교(최대 3번)까지 1~2분 걸릴 수 있어 대본처럼 뒤에서 처리한다(휴대폰 Load failed 방지).
+          const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+          await vpJobSet(env, id, { status: 'queued', kind: 'episode-start', body, createdAt: Date.now() });
+          await vpJobIndex(env, id, true);
+          result = { success: true, job: id };
+        }
         else if (url.pathname === '/api/episode/request') result = await handleEpisodeRequest(env, body);
         else if (url.pathname === '/api/episode/list') result = await handleEpisodeList(env, body);
         else if (url.pathname === '/api/telegram-recipients') {

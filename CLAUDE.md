@@ -53,6 +53,11 @@
   GitHub에 `episode.json`·`refs/food.*`·`requests/01_full.json`을 커밋(워커 시크릿 `GH_PAT` = 저장소 시크릿 `DASHBOARD_GH_PAT` 또는
   `MOVIEGEN_ADMIN_GH_TOKEN`) → pet-episode 워크플로가 제작. 목록·상태 `/api/episode/list`, 재생·저장 `/api/episode/video`(raw를 video/mp4로),
   다시 조립·컷 다시 뽑기·인스타 올리기 `/api/episode/request`(인스타는 확인창 + 편당 1회).
+- **⭐ 음식 참고 이미지는 필수 + 실물 비교(사용자 확정 2026-09, 심해 프로젝트의 원본 대조 방식 참고)**: '영상 자동 만들기'를 누르면 서버가 뒤에서
+  (`/api/episode/start` → 작업 번호, 크론 처리) `makeCheckedFoodRef`로 음식 참고 이미지를 **무조건** 만들고, Gemini가 실제 상품 사진과 나란히 보고
+  내용물의 모양·크기·색·질감을 0~100점 채점한다. `FOOD_PASS`(70점) 미만이면 틀린 점(`fix`)을 넣어 다시 만든다(최대 3번, 가장 높은 것 사용).
+  끝내 못 만들면 **제작을 시작하지 않는다**. `refs/food.*`·`refs/product.*`·`refs/food_check.json`(점수·다른 점)을 커밋하고,
+  영상 상세에 '실제 상품 ↔ 영상에 쓴 음식'을 나란히 보여 주며 '음식 이미지 다시 만들기'(요청 kind `food`)를 둔다. 파이프라인도 음식 이미지가 없으면 멈춘다.
 - **릴스 편집기(직접 이어붙이기)**: `/manage` 05단계에 통합(클립 이어붙이기 + 한글 자막 + 위아래 검은 띠 +
 >   마지막 2.6초 상품 사진 아웃트로 + mp4 내보내기). ffmpeg 없이 canvas + MediaRecorder로 처리한다.
 >   쿠팡 이미지는 canvas 오염을 피하려 반드시 `/api/cover?url=` 동일출처 프록시를 거친다.
