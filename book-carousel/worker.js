@@ -3745,8 +3745,9 @@ function dinerSystem(sp) {
 - 사실 정보(원료·영양 성분·연령·품종 적합성)는 [확인된 정보]와 상품명에 있는 것만, **영상 전체에서 한 번까지**.
 - 병·증상이 낫는다·줄어든다 같은 효능 주장, 다른 브랜드 언급·비교는 금지.
 - 상품명·브랜드명은 말하지 않는다(메뉴판 카드가 보여준다).
-- ⭐ enter 대사는 **가게 앞에서 드는 생각 한 문장(20자 이내)**만 쓴다(골목·간판·냄새·오늘 하루).
-  시스템이 그 뒤에 고정 오프닝 "${DINER_OPENING}"을 붙인다. 오프닝 문장을 직접 쓰지 마라.
+- ⭐ enter 대사 = **오늘 무엇이 당기는지** 한두 문장(15~40자). 시스템이 맨 앞에 고정 오프닝 "${DINER_OPENING}"을 붙이므로
+  그 뒤에 이어지는 생각이다(오프닝 문장은 직접 쓰지 마라). 틀: "오늘은 왠지 ~한 ~가 당기는데." / "~한 게 먹고 싶다. 어디 보자."
+  이 메뉴의 식감·맛 특징(말랑함, 바삭함, 고소함 등)이나 표기상 대상(시니어용 등)을 자연스럽게 담아 '당긴다'로 끝낸다.
 - ⭐ order 대사 = **사료를 바꾸러 온 진짜 고민 → 메뉴판 앞 고민 → 결단**을 세 박자로.
   메뉴 앞에서 인생 결정처럼 과하게 진지하다. [구매자 고민]에서 하나를 골라 주인공 시점으로 던진다.
   고민이 주어지지 않으면 이 상품 종류에 흔한 고민(입맛·원료·알갱이 크기·질림) 중 하나를 쓴다.
@@ -3985,7 +3986,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "shop": "오늘 들어간 가게 콘셉트 한 줄(한국어, 예: 골목 끝 작은 백반집)",
   "setBlock": "영어 35~55단어. 이 가게의 고정 세트 설계도(출입문·벽·바닥·테이블·자리·조명·소품 1개)",
   "tone": "내레이션 목소리 톤 한 줄(한국어)",
-  "clips": [ { "role": "enter", "shots": "영어 타임코드 구간", "line": "속마음 2~3문장(35~60자). enter는 가게 앞 생각 한 문장" } ],
+  "clips": [ { "role": "enter", "shots": "영어 타임코드 구간", "line": "속마음 2~3문장(35~60자). enter는 오늘 당기는 메뉴 한두 문장(오프닝은 시스템이 붙임)" } ],
   "verdict": "재방문 의사 판정 한 줄(한국어)",
   "tasteNotes": [ { "k": "식감", "v": "한국어 2~8자" }, { "k": "향", "v": "..." }, { "k": "맛", "v": "..." }, { "k": "한줄평", "v": "한국어 16자 이내" } ],
   "menuName": "메뉴판에 적을 메뉴 이름(한국어 4~14자). 상품명·브랜드·제품 라인명 절대 금지. [확인된 정보]와 상품명의 보편 특징(주원료·알갱이 모양이나 식감·대상) 중 2개를 조합하고 '정식', '한 그릇', '한 접시', '세트' 중 하나로 끝낸다",
@@ -4065,10 +4066,10 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     const c = pickClip(role, i);
     const shots = toSpecies(safeShots(normShots(String(c.shots || '').trim())), sp);
     let line = scrubBanned(String(c.line || '').trim().replace(/!+/g, '.'), banned);
-    // 입장: 가게 앞 생각 한 문장 + 고정 오프닝(편집에서 오프닝에 줌이 맞도록 항상 맨 끝).
+    // 입장(사용자 확정 2026-09): 고정 오프닝이 먼저 → 오늘 당기는 메뉴로 잇는다. 편집의 끊어 빠지는 줌은 "심각하다"에 맞춘다.
     if (role === 'enter') {
       const pre = line.replace(/배가\s*고프다[.\s]*심각하다[.\s]*/g, '').trim();
-      line = (pre && pre.length <= 28 ? pre.replace(/[.\s]*$/, '.') + ' ' : '') + DINER_OPENING;
+      line = `${DINER_OPENING}.` + (pre && pre.length <= 48 ? ' ' + pre.replace(/[.\s]*$/, '.') : '');
     }
     // 고정 의식 대사(사용자 확정): 첫 시식 앞 "잘 먹겠습니다." · 퇴장 앞 "잘 먹었습니다."
     const firstEat = roles.includes('serve') ? 'serve' : 'taste';
@@ -5387,7 +5388,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   var OPEN_STEPS=[1.45,1.28,1.13,1.0], OPEN_TAIL=1.2;
   function openingZoom(card,t,dur){
     if(!st.cards || !card || card.type!=='opening' || !dur) return 1;
-    var start=Math.max(0,dur-OPEN_TAIL);
+    // 오프닝("배가 고프다. 심각하다")이 컷 맨 앞으로 옮겨져(사용자 확정 2026-09) 줌도 앞쪽 "심각하다" 즈음에 끊어 빠진다.
+    var start=Math.min(1.4, dur*0.3);
     if(t<start) return OPEN_STEPS[0];
     var k=Math.min(OPEN_STEPS.length-1, 1+Math.floor((t-start)/(OPEN_TAIL/(OPEN_STEPS.length-1))));
     return OPEN_STEPS[k];

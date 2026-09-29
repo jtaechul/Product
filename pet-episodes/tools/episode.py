@@ -34,10 +34,15 @@ VEO_FALLBACK = "veo-3.1-lite-generate-preview"
 #   Gemini 음성(사람 같은 연기)을 쓰고, 속도는 숫자 설정이 없어 만든 뒤 편집에서 정확히 1.2배로 맞춘다.
 VOICE_NAME = "Algenib"                     # 사용자 확정(2026-09): 거친 저음. 바꾸지 않는다
 VOICE_SPEED = 1.2
-VOICE_DIRECTION = ("한국어 내레이션. 40대 남자의 낮고 차분한 속마음 독백이다. 혼자 밥을 먹으며 한 입씩 음미하는 "
-                   "'고독한 미식가' 같은 톤. 겉은 담담하지만 맛있는 순간엔 진심이 살짝 묻어난다. "
-                   "문장 사이에 짧게 숨을 고른다. 아나운서·광고 톤, 과장된 연기 금지. 아래 대사만 그대로 읽어라.")
-VOICE_SAMPLES = ["Gacrux", "Charon", "Algenib", "Orus"]   # 후보: 성숙함 · 차분한 정보형 · 거친 저음 · 단단함
+# 연기 지시(사용자 확정 2026-09: 더 '고독한 미식가'답게, 조곤조곤한 독백으로). 모든 컷에 글자 하나 안 바꾸고 똑같이 준다.
+VOICE_DIRECTION = ("[연기 지시] 한국어. 드라마 '고독한 미식가'의 속마음 내레이션처럼 읽는다. 40대 남자가 혼자 밥을 먹으며 "
+                   "마음속으로 중얼거리는 독백이다. 마이크에 가까이 대고 낮고 조용한 목소리로, 조곤조곤 속삭이듯 말한다. "
+                   "소리를 크게 내지 않고, 문장 끝은 부드럽게 내려놓는다. 맛을 음미하는 대목에서는 아주 살짝 감탄이 묻어나되 "
+                   "들뜨지 않는다. 문장 사이에는 짧게 숨을 고른다. 아나운서·광고·동화 구연 톤과 과장된 연기는 금지. "
+                   "처음부터 끝까지 같은 사람, 같은 톤, 같은 거리감을 유지한다. 아래 대사만 그대로 읽어라.")
+VOICE_PITCH_ST = -1.0      # 음높이(반음). 음수면 더 낮게 — 사용자 요청 '조금 더 낮은 톤'
+# 후보 비교(사용자 요청 2026-09: Algenib보다 낮고 조곤조곤한 목소리 3개): 숨결 섞인 저음 · 부드러운 저음 · 차분하고 고른 톤
+VOICE_SAMPLES = ["Enceladus", "Algieba", "Schedar"]
 TTS_MODELS = ["gemini-2.5-pro-preview-tts", "gemini-2.5-flash-preview-tts"]
 # 예비(Gemini 음성 실패 시): 구글 기본 음성
 TTS_VOICE = {"languageCode": "ko-KR", "name": "ko-KR-Neural2-C"}
@@ -491,13 +496,15 @@ def step_clips(ep, epdir, work, log, redo):
 
 
 # ---------- 4. 내레이션 ----------
-def _pcm_to_wav(pcm: bytes, out: Path, speed: float):
+def _pcm_to_wav(pcm: bytes, out: Path, speed: float, pitch_st: float = VOICE_PITCH_ST):
     raw = out.with_suffix(".pcm")
     raw.write_bytes(pcm)
-    # 앞뒤 무음은 잘라 낸다(문장을 이어 붙일 때 간격이 제멋대로 벌어지지 않게) → 정확히 speed배속
+    # 앞뒤 무음 제거 → 음높이만 pitch_st 반음 낮추고(길이 유지) → 정확히 speed배속
     trim = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse,"
             "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.08,areverse")
-    _ff(["-f", "s16le", "-ar", "24000", "-ac", "1", "-i", str(raw), "-af", f"{trim},atempo={speed}", str(out)])
+    r = 2 ** (pitch_st / 12)
+    pitch = f"asetrate={24000 * r:.1f},aresample=24000," if abs(pitch_st) > 0.01 else ""
+    _ff(["-f", "s16le", "-ar", "24000", "-ac", "1", "-i", str(raw), "-af", f"{trim},{pitch}atempo={speed / r:.4f}", str(out)])
     raw.unlink()
 
 
@@ -536,12 +543,13 @@ def tts_cloud(text: str, out: Path) -> dict:
     return {"ok": True, "voice": "cloud-" + TTS_VOICE["name"], "sec": round(_dur(out), 2)}
 
 
-def step_voices(ep, epdir, work, log):
-    """성우 고르기용 샘플 — 같은 대사를 후보 목소리마다 1.2배속으로 읽힌다(mp3로 저장해 바로 들을 수 있게)."""
-    lines = [c["line"] for c in ep["clips"] if c.get("role") in ("order", "taste")][:2]
+def step_voices(ep, epdir, work, log, voices=None):
+    """성우 고르기용 샘플 — 같은 대사(입장+첫 시식)를 후보 목소리마다 같은 연기 지시·음높이·1.2배속으로 읽힌다."""
+    lines = [c["line"] for c in ep["clips"] if c.get("role") == "enter"][:1]
+    lines += [c["line"] for c in ep["clips"] if c.get("role") == "taste"][:1]
     text = " ".join(lines) or ep["clips"][0]["line"]
     res = log.setdefault("voices", {})
-    for v in VOICE_SAMPLES:
+    for v in (voices or VOICE_SAMPLES):
         wav = work / f"voice_{v}.wav"
         r = tts_gemini(text, wav, v)
         if r["ok"]:
@@ -565,8 +573,46 @@ def split_sentences(text: str) -> list[str]:
 SENT_GAP = 0.28          # 문장 사이 숨 고르기(초)
 
 
+def _sentence_times(wav: Path, sents: list[str]) -> list[dict]:
+    """컷 전체를 한 번에 녹음한 뒤(톤이 문장마다 흔들리지 않게), 문장 사이 쉼(무음)을 찾아 문장별 시작·끝을 잰다.
+    쉼이 모자라면 글자 수 비례로 나눈다."""
+    D = _dur(wav)
+    if len(sents) <= 1:
+        return [{"text": sents[0] if sents else "", "start": 0.0, "end": round(D, 3)}]
+    r = subprocess.run([FFMPEG, "-i", str(wav), "-af", "silencedetect=noise=-38dB:d=0.12", "-f", "null", "-"],
+                       capture_output=True, text=True)
+    st = [float(x) for x in re.findall(r"silence_start: ([\d.]+)", r.stderr)]
+    en = [float(x) for x in re.findall(r"silence_end: ([\d.]+)", r.stderr)]
+    gaps = [(e - s_, s_, e) for s_, e in zip(st, en) if 0.15 < s_ and e < D - 0.1]
+    need = len(sents) - 1
+    tot = sum(len(x) for x in sents)
+    guess, acc = [], 0                                 # 글자 수 비례로 예상한 경계 위치
+    for x in sents[:-1]:
+        acc += len(x)
+        guess.append(D * acc / tot)
+    cuts = []
+    for g in guess:                                   # 예상 위치에 가장 가까운 쉼을 하나씩 짝짓는다
+        cand = [c for c in gaps if c not in cuts]
+        if not cand:
+            break
+        best = min(cand, key=lambda c: abs((c[1] + c[2]) / 2 - g) - c[0])
+        if abs((best[1] + best[2]) / 2 - g) < D * 0.25:
+            cuts.append(best)
+    if len(cuts) == need:
+        cuts.sort(key=lambda c: c[1])
+        bounds = [0.0] + [c[1] for c in cuts]
+        ends = [c[1] for c in cuts] + [D]
+        starts = [0.0] + [c[2] for c in cuts]
+        return [{"text": t, "start": round(a_, 3), "end": round(b_, 3)} for t, a_, b_ in zip(sents, starts, ends)]
+    out, t0 = [], 0.0
+    for t, g in zip(sents, guess + [D]):
+        out.append({"text": t, "start": round(t0, 3), "end": round(g, 3)})
+        t0 = g
+    return out
+
+
 def step_tts(ep, epdir, work, log, redo):
-    """문장마다 따로 읽혀 이어 붙인다 → 각 문장이 몇 초에 시작·끝나는지 정확히 안다(자막을 말에 딱 맞추기 위해)."""
+    """컷 대사 전체를 한 번에 녹음한다(문장마다 따로 녹음하면 톤이 조금씩 달라짐 — 사용자 지적 2026-09)."""
     res = log.setdefault("tts", {})
     for c in ep["clips"]:
         name = f"c{c['no']:02d}"
@@ -574,32 +620,13 @@ def step_tts(ep, epdir, work, log, redo):
         line = (c.get("line") or "").strip()
         if not line or (out.exists() and tj.exists() and name not in redo and f"v_{name}" not in redo):
             continue
-        parts, timing, t, rec = [], [], 0.0, {"voice": VOICE_NAME, "sents": []}
-        for k, sent in enumerate(split_sentences(line)):
-            p = work / f"v_{name}_{k}.wav"
-            r = tts_gemini(sent, p)
-            if not r["ok"]:
-                r = {"gemini": r, **tts_cloud(sent, p)}
-            rec["sents"].append(r)
-            if not p.exists():
-                continue
-            d = _dur(p)
-            timing.append({"text": sent, "start": round(t, 3), "end": round(t + d, 3)})
-            parts.append(p)
-            t += d + SENT_GAP
-        if not parts:
-            res[name] = {**rec, "ok": False}
-            continue
-        ins, fc = [], []
-        for i, p in enumerate(parts):
-            ins += ["-i", str(p)]
-            fc.append(f"[{i}:a]aresample=24000,aformat=channel_layouts=mono,apad=pad_dur={SENT_GAP if i < len(parts) - 1 else 0}[s{i}]")
-        fc.append("".join(f"[s{i}]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=0:a=1[a]")
-        _ff([*ins, "-filter_complex", ";".join(fc), "-map", "[a]", str(out)])
-        tj.write_text(json.dumps(timing, ensure_ascii=False, indent=1), encoding="utf-8")
-        for p in parts:
-            p.unlink()
-        res[name] = {**rec, "ok": True, "sec": round(_dur(out), 2)}
+        r = tts_gemini(line, out)
+        if not r["ok"]:
+            r = {"gemini": r, **tts_cloud(line, out)}
+        if out.exists():
+            tj.write_text(json.dumps(_sentence_times(out, split_sentences(line)), ensure_ascii=False, indent=1),
+                          encoding="utf-8")
+        res[name] = r
 
 
 # ---------- 5. 조립 ----------
@@ -836,11 +863,13 @@ TAIL = 0.75              # 대사가 끝난 뒤 다음 컷까지 여유(초)
 MIN_SEG = 5.0            # 대사가 짧아도 컷은 이 길이 이상
 
 
-def _zoom_expr(role, idx, L):
-    """컷 안의 카메라 느낌(편집): 천천히 밀고 들어가거나 빠지는 줌을 번갈아. 입장은 끝에서 세 번 끊어 빠지는 줌."""
+def _zoom_expr(role, idx, L, tz=None):
+    """컷 안의 카메라 느낌(편집): 천천히 밀고 들어가거나 빠지는 줌을 번갈아.
+    입장은 오프닝 "심각하다"(tz초)에 맞춰 세 번 끊어 빠지는 줌 — 가까이 → 한 칸씩 뒤로 → 이후 천천히 밀기."""
     if role == "enter":
-        return (f"if(lt(it,{L - 1.2:.2f}),1+0.05*it/{L:.2f},if(lt(it,{L - 0.8:.2f}),1.45,"
-                f"if(lt(it,{L - 0.4:.2f}),1.28,1.13)))")
+        tz = max(0.4, tz if tz is not None else 1.2)
+        return (f"if(lt(it,{tz:.2f}),1.45,if(lt(it,{tz + 0.35:.2f}),1.28,if(lt(it,{tz + 0.7:.2f}),1.13,"
+                f"1+0.05*(it-{tz + 0.7:.2f})/{max(0.5, L - tz - 0.7):.2f})))")
     if idx % 2:
         return f"1.10-0.10*it/{L:.2f}"
     return f"1+0.09*it/{L:.2f}"
@@ -865,10 +894,11 @@ def build_segment(ep, c, idx, work, tmp):
     # 대사 길이만큼만 쓴다(최소 MIN_SEG초). 템포도 빨라진다.
     L = max(MIN_SEG, LEAD + N + TAIL)
     slow = min(1.3, L / V)
-    a0 = max(0.3, L - N - 0.35) if role == "enter" else LEAD   # 입장: 오프닝이 끝의 줌과 겹치게
+    a0 = LEAD                                                    # 입장도 오프닝으로 바로 시작(사용자 확정 2026-09)
     ins, fcs, labels = [], [], []
     ins += ["-i", str(src)]
-    z = _zoom_expr(role, idx, L)
+    tz = a0 + timing[1]["start"] if role == "enter" and len(timing) > 1 else None   # "심각하다" 시작 시각
+    z = _zoom_expr(role, idx, L, tz)
     fcs.append(f"[0:v]setpts={slow:.4f}*PTS,scale=1440:2560:force_original_aspect_ratio=increase,crop=1440:2560,"
                f"tpad=stop_mode=clone:stop_duration=3,trim=0:{L:.2f},setpts=PTS-STARTPTS,fps={FPS},"
                f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={W}x{H}:fps={FPS},setsar=1[v0]")
@@ -972,7 +1002,7 @@ def main(path: str) -> int:
     ok = True
     try:
         if "voices" in steps:
-            step_voices(ep, epdir, work, log)
+            step_voices(ep, epdir, work, log, req.get("voices"))
         character = step_character(ep, epdir, work, log, redo)
         if "keyframes" in steps:
             setimg = step_set(ep, epdir, work, log, redo)
