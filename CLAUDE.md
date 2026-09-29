@@ -39,7 +39,8 @@
 >   **쿠팡 파트너스 수수료 고지 문구는 페이지 하단에 반드시 유지**(법적 요구).
 > - **상품 등록**: `/manage` — `generateManageHTML`. 기존 `/api/add-book-to-catalog`,
 >   `/api/delete-book`, `/api/shop-catalog`(=`/api/book-catalog`) 엔드포인트를 그대로 쓴다.
-> - **⭐ 영상 자동 만들기(2026-09)**: `/manage` 04단계. 03단계 대본(`lastResult`) → `/api/episode/start`가 음식 참고 사진을 만들고
+> - **⭐ 관리자 메뉴(사용자 확정 2026-09, 심해 v2 관리자 참고)**: `/manage`는 위쪽 메뉴 3개 — **새 영상**(`#new`: 01 상품 고르기·02 상품 정보·03 대본 만들기·04 영상 만들기) · **영상 목록**(`#list`: 상태 카드만) · **상품 관리**(`#products`). 한 편을 누르면 상세(`#ep/<id>`: 재생·저장·인스타, 접힌 '고치기'). 예전 직접 편집기는 `#legacy`로만 보관, 시험분 001~005는 목록에서 숨김. 한 페이지에 다시 쌓지 않는다.
+- **⭐ 영상 자동 만들기(2026-09)**: `/manage` 새 영상 04단계. 03단계 대본(`lastResult`) → `/api/episode/start`가 음식 참고 사진을 만들고
   GitHub에 `episode.json`·`refs/food.*`·`requests/01_full.json`을 커밋(워커 시크릿 `GH_PAT` = 저장소 시크릿 `DASHBOARD_GH_PAT` 또는
   `MOVIEGEN_ADMIN_GH_TOKEN`) → pet-episode 워크플로가 제작. 목록·상태 `/api/episode/list`, 재생·저장 `/api/episode/video`(raw를 video/mp4로),
   다시 조립·컷 다시 뽑기·인스타 올리기 `/api/episode/request`(인스타는 확인창 + 편당 1회).
