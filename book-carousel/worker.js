@@ -5058,10 +5058,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       $('go').disabled=false;
       if(res && res.success){
         say('msg','No.'+res.bookNumber+' 로 등록했습니다.','ok');
-        lastResult=null; post('/api/work-state',{action:'clear'}).catch(function(){});
-        $('resumeBar').hidden=true;
-        ['t','b','img','w','l'].forEach(function(i){ $(i).value=''; });
-        load();
+        load();                                            // 등록해도 상품 정보·대본은 그대로 둔다(예전엔 지워서 대본이 사라졌다)
       } else say('msg',(res&&res.error)||'등록하지 못했습니다.','no');
     }).catch(function(e){ $('go').disabled=false; say('msg','등록하지 못했습니다: '+e.message,'no'); });
   });
@@ -5571,7 +5568,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
         if(el && d.fields && d.fields[id]!=null && d.fields[id]!=='') el.value=d.fields[id];
       });
       lastPains = d.pains || []; lastBenefits = d.benefits || [];
-      if(d.result){ lastResult = d.result; renderPrompts(d.result); }
+      if(d.result){ lastResult = d.result; renderPrompts(d.result); $('pOutWrap').hidden=false;   // 접힌 칸이 숨겨진 채라 대본이 사라진 것처럼 보였다
+        say('pMsg','저장해 둔 대본을 불러왔습니다. 아래 04단계 "영상 자동 만들기"를 누르면 됩니다.','ok'); }
       // renderPrompts 가 자막 칸을 덮어쓰므로 저장본을 마지막에 되돌린다.
       var sc=document.getElementById('edScript');
       if(sc && d.script) sc.value = d.script;
