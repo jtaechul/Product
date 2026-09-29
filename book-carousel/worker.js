@@ -6315,6 +6315,14 @@ function foodFiles(dir, fs, old) {
   return { files, check };
 }
 
+// 상품별 음식 이미지 보관(사용자 지시 2026-09: 같은 상품으로 다시 눌러도 이미지 비용을 또 쓰지 않는다).
+// 새로 만드는 건 처음 한 번과 '음식 이미지 다시 만들기'(food-redo)뿐. 90일 보관.
+const foodCacheKey = (title) => 'food_ref_cache:' + String(title || '').trim().slice(0, 200);
+async function foodCacheSet(env, title, best) {
+  if (!title || !best || !best.data) return;
+  try { await env.PENDING_POSTS.put(foodCacheKey(title), JSON.stringify(best), { expirationTtl: 90 * 24 * 3600 }); } catch {}
+}
+
 // 뒤 작업(새 편 시작·음식 이미지 다시): 예산 안에서 단계를 진행한다. 끝나면 { done: 결과 }, 아니면 { next: 작업 상태 }.
 async function runFoodJob(env, jid, job) {
   const body = job.body || {};
@@ -6337,8 +6345,12 @@ async function runFoodJob(env, jid, job) {
       }
       fs = await foodPrep(env, title, image);
       stage = 'try';
+      if (job.kind !== 'food-redo') {                  // 같은 상품으로 만든 적 있으면 그대로 쓴다(이미지 비용 0)
+        const c = await env.PENDING_POSTS.get(foodCacheKey(title), 'json').catch(() => null);
+        if (c && c.data) { fs.best = { ...c, reused: true }; stage = 'commit'; }
+      }
     } else if (stage === 'try') {
-      if (await foodTry(env, fs)) stage = 'commit';
+      if (await foodTry(env, fs)) { stage = 'commit'; await foodCacheSet(env, fs.title, fs.best); }
     } else {
       const res = job.kind === 'food-redo' ? await commitFoodRedo(env, body.id, fs) : await commitEpisodeStart(env, body, fs);
       await env.PENDING_POSTS.delete(key).catch(() => {});
@@ -6807,6 +6819,19 @@ export default {
           else result = { success: true, status: job.status, result: job.status === 'done' ? job.result : undefined, error: job.error || '', note: job.stageNote || '' };
         }
         else if (url.pathname === '/api/food-reference') result = await handleFoodReference(env, body);
+        else if (url.pathname === '/api/food-cache-seed') {
+          // 예전에 만든 음식 이미지(저장소 기록의 한 커밋)를 상품별 보관함에 넣는다 — 이미 돈 쓴 이미지를 다시 쓰기 위함
+          const sha = String(body.sha || '').replace(/[^0-9a-f]/g, ''), dir = String(body.dir || '');
+          if (!sha || !EP_ID_RE.test(dir)) throw new Error('sha·dir가 필요합니다.');
+          const raw = (f) => fetch(`https://raw.githubusercontent.com/${EP_REPO}/${sha}/${EP_ROOT}/${dir}/${f}`);
+          const ep = await (await raw('episode.json')).json();
+          const chk = await (await raw('refs/food_check.json')).json();
+          const img = await raw('refs/' + chk.food);
+          if (!img.ok) throw new Error('이미지를 못 받았습니다.');
+          const best = { data: _b64(await img.arrayBuffer()), mime: chk.food.endsWith('png') ? 'image/png' : 'image/jpeg', score: chk.score, diffs: chk.diffs, tries: chk.tries };
+          await foodCacheSet(env, ep.product?.title, best);
+          result = { success: true, title: ep.product?.title, score: chk.score };
+        }
         else if (url.pathname === '/api/episode/start') {
           // 음식 이미지 생성·비교(최대 3번)까지 1~2분 걸릴 수 있어 대본처럼 뒤에서 처리한다(휴대폰 Load failed 방지).
           const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
