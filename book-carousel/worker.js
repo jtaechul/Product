@@ -5250,7 +5250,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       if(r && r.status==='done') return vpShow(r.result);
       if(r && r.status==='failed') return vpShow({success:false,error:'대본을 만들지 못했습니다: '+(r.error||'')});
       if(r && r.status==='missing') return vpShow({success:false,error:r.error});
-      say('pMsg','대본을 만드는 중… '+sec+'초 (보통 40초~1분, 화면을 꺼도 계속 만들어집니다)','wait');
+      say('pMsg','대본을 만드는 중… '+sec+'초 (보통 1~2분, 화면을 꺼도 서버에서 계속 만들어집니다)','wait');
       vpTimer=setTimeout(function(){ vpPoll(id,t0); },4000);
     }).catch(function(){
       vpFails++;                                    // 통신이 잠깐 끊겨도 기다린다
@@ -6248,9 +6248,10 @@ async function handleEpisodeVideo(env, url, request) {
 
 // ===== 대본 만들기 — 뒤에서 만들고 화면은 몇 초마다 확인(사용자 지시 2026-09) =====
 // 휴대폰이 40초~1분 넘게 요청을 붙잡고 있으면 화면 꺼짐·앱 전환·통신 흔들림에 "Load failed"가 났다.
-// 요청은 곧바로 작업 번호만 돌려주고, 만들기는 뒤에서(waitUntil) 한다. 뒤 작업이 중간에 끊기면 매분 크론이 이어서 다시 만든다.
+// 요청은 곧바로 작업 번호만 돌려주고, 만들기는 매분 크론이 한다(보통 1~2분). waitUntil은 응답 뒤 30초에 끊겨
+// 45초짜리 대본이 중간에 죽고 다시 만들어져 비용이 두 번 들었다(실측 250초) → 쓰지 않는다.
 const VP_JOB_TTL = 3600;
-const VP_STALE_MS = 150 * 1000;
+const VP_STALE_MS = 180 * 1000;                     // 크론 실행이 이만큼 멈춰 있으면 죽은 것으로 보고 다시
 
 async function vpJobSet(env, id, patch) {
   const cur = (await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null)) || {};
@@ -6283,10 +6284,10 @@ async function vpJobIndex(env, id, add) {
 async function runVpJobs(env) {
   if (!env.PENDING_POSTS) return;
   const ids = (await env.PENDING_POSTS.get('vp_jobs_open', 'json').catch(() => null)) || [];
-  for (const id of ids.slice(0, 2)) {
+  for (const id of ids.slice(0, 3)) {
     const job = await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null);
     if (!job || job.status === 'done' || job.status === 'failed') { await vpJobIndex(env, id, false); continue; }
-    const stale = job.status === 'queued' ? Date.now() - (job.updatedAt || 0) > 20 * 1000 : Date.now() - (job.startedAt || 0) > VP_STALE_MS;
+    const stale = job.status === 'queued' || Date.now() - (job.startedAt || 0) > VP_STALE_MS;
     if (!stale) continue;
     if ((job.tries || 0) >= 3) { await vpJobSet(env, id, { status: 'failed', error: '세 번 시도했지만 만들지 못했습니다. 잠시 뒤 다시 눌러 주세요.', body: null }); await vpJobIndex(env, id, false); continue; }
     await runVpJob(env, id);
@@ -6566,8 +6567,7 @@ export default {
           if (!env.PENDING_POSTS) throw new Error('저장소가 없습니다.');
           const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
           await vpJobSet(env, id, { status: 'queued', body, createdAt: Date.now() });
-          await vpJobIndex(env, id, true);
-          ctx.waitUntil(runVpJob(env, id));
+          await vpJobIndex(env, id, true);          // 만들기는 매분 크론이 맡는다(waitUntil은 30초에 끊겨 두 번 돈다 — 실측 250초)
           result = { success: true, id };
         }
         else if (url.pathname === '/api/video-prompts-status') {
