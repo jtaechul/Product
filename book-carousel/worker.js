@@ -4596,7 +4596,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 <body>
 <header class="hd"><div class="hd-in">
   <h1>「한 그릇의 품격」 관리자</h1>
-  <p>상품을 고르고 대본을 만들면 영상이 자동으로 만들어집니다. <a href="/shop" target="_blank">판매 페이지 보기</a></p>
+  <p>상품을 고르고 대본을 만들면 영상이 자동으로 만들어집니다. <a href="https://banryeotem.jtaechul.workers.dev" target="_blank">판매 페이지 보기</a> · 인스타 프로필 링크: banryeotem.jtaechul.workers.dev</p>
   <nav class="tabs">
     <a href="#new" data-tab="new">새 영상</a>
     <a href="#list" data-tab="list">영상 목록</a>

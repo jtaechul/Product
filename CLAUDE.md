@@ -33,6 +33,7 @@
 > **Google Flow(Veo)로 만든 짧은 클립을 이어 붙인 릴스**로 간다.
 >
 > - **판매 페이지**: 워커가 직접 서빙. `/shop`(정식) · `/books`(옛 주소 별칭) — `generateShopHTML`.
+>   **인스타 프로필 링크 = [판매 페이지 전용 주소](https://banryeotem.jtaechul.workers.dev)**(사용자 요청 2026-09: 주소에 book-carousel이 보이지 않게). `book-carousel/shop-link` 작은 워커가 서비스 바인딩으로 본체 `/shop`만 보여 준다(관리자·API는 이 주소로 안 열림). 배포는 같은 워크플로.
 >   데이터는 KV `book_catalog`를 그대로 재사용하되 의미만 바뀐다:
 >   `title`=상품명, `author`=브랜드, `category`=품목, `coreMessage`=추천 이유, `cover`=상품 사진, `coupangLink`=쿠팡 파트너스 링크.
 >   상점 이름·문구는 `SHOP_NAME` / `SHOP_TAGLINE` 한 줄로 바꾼다. 품목 색은 `SHOP_CATS`.

@@ -56,6 +56,12 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: printf '%s' "$GEMINI_API_KEY" | npx --yes wrangler@3.90.0 secret put GEMINI_API_KEY
 
+      - name: 판매 페이지 전용 주소 배포 (banryeotem)
+        working-directory: book-carousel/shop-link
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: npx --yes wrangler@3.90.0 deploy
+
       - name: GitHub 키 등록 (영상 자동 제작 버튼용)
         if: env.HAS_GH_PAT == 'true'
         working-directory: book-carousel
