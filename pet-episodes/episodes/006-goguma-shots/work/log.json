@@ -142,13 +142,13 @@
       "ok": true,
       "model": "gemini-2.5-pro-preview-tts",
       "voice": "Enceladus",
-      "sec": 3.79
+      "sec": 4.57
     },
     "c04": {
       "ok": true,
       "model": "gemini-2.5-pro-preview-tts",
       "voice": "Enceladus",
-      "sec": 7.38
+      "sec": 7.32
     },
     "c05": {
       "ok": true,
@@ -171,60 +171,134 @@
   },
   "assemble": {
     "ok": true,
-    "sec": 51.71,
+    "sec": 54.71,
     "clips": 8,
     "segments": [
       {
         "clip": "c01",
         "len": 6.36,
         "voice": 5.16,
-        "slow": 1.0
+        "slow": 1.0,
+        "sents": [
+          [
+            0.45,
+            1.23
+          ],
+          [
+            1.57,
+            2.19
+          ],
+          [
+            2.85,
+            5.61
+          ]
+        ]
       },
       {
         "clip": "c02",
         "len": 9.68,
         "voice": 8.48,
-        "slow": 1.21
+        "slow": 1.21,
+        "sents": [
+          [
+            0.45,
+            5.02
+          ],
+          [
+            5.81,
+            8.93
+          ]
+        ]
       },
       {
         "clip": "c03",
-        "len": 5.0,
-        "voice": 3.79,
-        "slow": 1.0
+        "len": 5.77,
+        "voice": 4.57,
+        "slow": 1.0,
+        "sents": [
+          [
+            0.45,
+            1.36
+          ],
+          [
+            2.23,
+            5.02
+          ]
+        ]
       },
       {
         "clip": "c04",
-        "len": 9.78,
-        "voice": 7.38,
-        "slow": 1.073,
-        "freeze_at": 4.54,
-        "hook": "사람 간식 얼굴을 한 강아지 간식"
+        "len": 8.52,
+        "voice": 7.32,
+        "slow": 1.065,
+        "sents": [
+          [
+            0.45,
+            4.22
+          ],
+          [
+            5.05,
+            7.77
+          ]
+        ]
       },
       {
         "clip": "c05",
         "len": 9.04,
         "voice": 7.84,
-        "slow": 1.13
+        "slow": 1.13,
+        "sents": [
+          [
+            0.45,
+            4.07
+          ],
+          [
+            4.89,
+            8.29
+          ]
+        ]
       },
       {
         "clip": "c06",
         "len": 5.16,
         "voice": 3.96,
-        "slow": 1.0
+        "slow": 1.0,
+        "sents": [
+          [
+            0.45,
+            4.41
+          ]
+        ]
       },
       {
         "clip": "c07",
         "len": 5.78,
         "voice": 4.58,
-        "slow": 1.0
+        "slow": 1.0,
+        "sents": [
+          [
+            0.45,
+            1.42
+          ],
+          [
+            1.85,
+            5.03
+          ]
+        ]
       }
     ],
     "bgm": "signature.mp3",
-    "hook": 0.5
+    "hook": {
+      "from": "taste",
+      "clip": "c04",
+      "start": 0.2,
+      "len": 4.37,
+      "text": "주인 몰래 먹으려다 주인한테 뺏긴 고구마"
+    }
   },
   "last_request": {
-    "file": "06_freeze_hook.json",
-    "ran_at": "2026-09-29T10:25:14Z",
+    "file": "07_hook_intro.json",
+    "ran_at": "2026-09-29T13:21:36Z",
     "ok": true
   },
   "ig_probe": {
