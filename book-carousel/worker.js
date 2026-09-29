@@ -3745,7 +3745,7 @@ function dinerSystem(sp) {
 - 사실 정보(원료·영양 성분·연령·품종 적합성)는 [확인된 정보]와 상품명에 있는 것만, **영상 전체에서 한 번까지**.
 - 병·증상이 낫는다·줄어든다 같은 효능 주장, 다른 브랜드 언급·비교는 금지.
 - 상품명·브랜드명은 말하지 않는다(메뉴판 카드가 보여준다).
-- ⭐ enter 대사 = **오늘 무엇이 당기는지** 한두 문장(15~40자). 시스템이 맨 앞에 고정 오프닝 "${DINER_OPENING}"을 붙이므로
+- ⭐ enter 대사 = **오늘 무엇이 당기는지** 한두 문장(15~40자). **비워 두지 마라.** 시스템이 맨 앞에 고정 오프닝 "${DINER_OPENING}"을 붙이므로
   그 뒤에 이어지는 생각이다(오프닝 문장은 직접 쓰지 마라). 틀: "오늘은 왠지 ~한 ~가 당기는데." / "~한 게 먹고 싶다. 어디 보자."
   이 메뉴의 식감·맛 특징(말랑함, 바삭함, 고소함 등)이나 표기상 대상(시니어용 등)을 자연스럽게 담아 '당긴다'로 끝낸다.
 - ⭐ order 대사 = **사료를 바꾸러 온 진짜 고민 → 메뉴판 앞 고민 → 결단**을 세 박자로.
@@ -4069,7 +4069,14 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     // 입장(사용자 확정 2026-09): 고정 오프닝이 먼저 → 오늘 당기는 메뉴로 잇는다. 편집의 끊어 빠지는 줌은 "심각하다"에 맞춘다.
     if (role === 'enter') {
       const pre = line.replace(/배가\s*고프다[.\s]*심각하다[.\s]*/g, '').trim();
-      line = `${DINER_OPENING}.` + (pre && pre.length <= 48 ? ' ' + pre.replace(/[.\s]*$/, '.') : '');
+      let crave = pre && pre.length <= 48 ? pre.replace(/[.\s]*$/, '.') : '';
+      if (!crave) {                                  // 모델이 비워 두면 메뉴 이름으로 '오늘 당기는 것'을 만든다
+        const dish = String(menuName || '').replace(/\s*(한\s*그릇|한\s*접시|정식|세트)\s*$/, '').trim() || '따뜻한 한 그릇';
+        const last = dish.charCodeAt(dish.length - 1);
+        const ga = (last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28) ? '이' : '가';
+        crave = `오늘은 왠지 ${dish}${ga} 당기는데.`;
+      }
+      line = `${DINER_OPENING}. ${crave}`;
     }
     // 고정 의식 대사(사용자 확정): 첫 시식 앞 "잘 먹겠습니다." · 퇴장 앞 "잘 먹었습니다."
     const firstEat = roles.includes('serve') ? 'serve' : 'taste';
