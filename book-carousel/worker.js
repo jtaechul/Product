@@ -4059,7 +4059,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도. 상품명·브랜드는 절대 쓰지 않는다",
   "hashtags": ["#태그1", "#태그2", "#태그3"],
   "ytTitle": "유튜브 설명 첫 줄에 쓸 한 줄 요약 40자 이내(상품명·브랜드 금지)",
-  "hookLine": "첫 한입에서 화면이 멈추며 크게 뜰 한 줄(한국어 8~18자). 이 제품만의 특징·신박함(원료·알갱이 모양·식감·가격·대상)을 시크하고 유머러스하게 비튼 사실형 문장. 보는 사람이 '어? 왜?' 하고 멈추게. 효능·건강·배변 약속 금지, 상품명·브랜드 금지, 느낌표 금지"${note ? `,
+  "hookLine": "첫 한입에서 화면이 멈추며 크게 뜰 한 줄(한국어 8~20자). 목적은 인지부조화 — 보는 사람이 '어? 그게 왜?' 하고 멈추게. 맛 묘사(고소하다·쫀득하다)만으로 쓰지 마라. 이 제품의 사실 하나(원료·알갱이 모양·크기·가격·대상·만드는 방식)를 사람 세계의 뜻밖의 것과 맞붙이거나, 강아지가 할 리 없는 진지한 판정으로 비튼다. 틀(그대로 베끼지 말 것): '[사실]인데 [뜻밖의 비교]' / '[사람 세계 물건]보다 [사실]' / '[사실]. 이건 [과한 판정]'. 시크하고 유머러스하게. 효능·건강·배변 약속 금지, 상품명·브랜드 금지, 느낌표 금지"${note ? `,
   "noteApplied": "추가 주문을 어디에 어떻게 반영했는지 한국어 한 줄"` : ''}
 }${recentMenus.length ? `\n최근에 쓴 메뉴 이름(겹치지 않게 다른 특징을 골라라): ${recentMenus.slice(0, 12).join(', ')}` : ''}${recentLines.length ? `\n최근 회차에서 이미 쓴 대사(말투·비유·소재가 비슷하지 않게 새로 써라):\n- ${recentLines.slice(0, 12).join('\n- ')}` : ''}`;
 
@@ -4249,7 +4249,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const verdict = scrubBanned(String(out.verdict || '').trim(), banned);
   // 첫 한입 후킹 문구(사용자 확정 2026-09): 제품 특징을 비튼 한 줄. 효능·배변·건강 약속이나 너무 긴 문구는 버리고 식감으로 대신한다.
   let hookLine = scrubBanned(String(out.hookLine || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'), banned);
-  if (!hookLine || hookLine.length > 22 || HEALTH_CLAIM.test(hookLine) || CURE_CLAIM.test(hookLine) || /이 메뉴/.test(hookLine)) {
+  if (!hookLine || hookLine.length > 24 || HEALTH_CLAIM.test(hookLine) || CURE_CLAIM.test(hookLine) || /이 메뉴/.test(hookLine)) {
     const tex = ((Array.isArray(out.tasteNotes) ? out.tasteNotes : []).find(x => x && /식감/.test(String(x.k || ''))) || {}).v;
     hookLine = tex && !HEALTH_CLAIM.test(String(tex)) ? `${String(tex).trim()}, 이건 반칙이다.` : '…이 한 알, 반칙이다.';
   }
