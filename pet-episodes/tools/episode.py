@@ -782,8 +782,12 @@ def step_ig_publish(ep, epdir, work, log, force=False):
         raise RuntimeError("인스타 토큰이 유효하지 않음(만료 가능) — log.json의 ig_publish 참고")
     video_url = f"{IG_RAW_BASE}/{final.resolve().relative_to(ROOT).as_posix()}"
     from urllib.parse import urlencode
-    body = urlencode({"media_type": "REELS", "video_url": video_url, "caption": ig_caption(ep),
-                      "share_to_feed": "true", "access_token": tok}).encode()
+    params = {"media_type": "REELS", "video_url": video_url, "caption": ig_caption(ep),
+              "share_to_feed": "true", "access_token": tok}
+    cover = work / "cover.jpg"
+    if cover.exists():                                    # 표지(후킹 이미지)를 릴스 커버로
+        params["cover_url"] = f"{IG_RAW_BASE}/{cover.resolve().relative_to(ROOT).as_posix()}"
+    body = urlencode(params).encode()
     code, raw = _http(f"{base}/{uid}/media", data=body, timeout=60)
     j = json.loads(raw or b"{}")
     cid = str(j.get("id") or "")
@@ -1050,6 +1054,95 @@ def bill_png(text, out: Path):
     _shadowed((W, H), draw, blur=12, alpha=130, offset=(0, 8)).save(out)
 
 
+COVER_HOOK = ("배가 고프다.", "심각하다.")                # 표지 큰 글씨 = 시리즈 고정 오프닝(채널 간판 문장)
+
+
+def _cover_bg(ep, work):
+    """표지 배경: 첫 시식 컷(먹는 순간 클로즈업)이 가장 입맛을 당긴다. 없으면 서빙·주문 컷."""
+    order = ["taste", "serve", "order", "enter"]
+    for role in order:
+        for c in ep.get("clips", []):
+            if c.get("role") == role:
+                kf = work / f"kf_c{c['no']:02d}.png"
+                if kf.exists():
+                    return kf
+    return None
+
+
+def step_cover(ep, work, log):
+    """릴스 표지(후킹 이미지) — 조립할 때마다 같이 만든다. 비용 없음(이미 있는 장면 그림 + 글자)."""
+    try:
+        out = cover_png(ep, work, work / "cover.jpg")
+        log["cover"] = out.name if out else ""
+    except Exception as e:  # noqa: BLE001
+        log["cover"] = ""
+        log["cover_error"] = str(e)[:200]
+
+
+def cover_png(ep, work, out: Path):
+    """릴스 표지(후킹 이미지) 1080x1920. 인스타 격자는 가운데 3:4만 보여 주므로 글자는 위아래 12.5% 안쪽에만 둔다.
+    상품명·포장은 넣지 않는다(메뉴 이름만)."""
+    from PIL import ImageFilter
+    CW, CH = 1080, 1920
+    src = _cover_bg(ep, work)
+    if not src:
+        return None
+    bg = Image.open(src).convert("RGB")
+    s = max(CW / bg.width, CH / bg.height)
+    bg = bg.resize((round(bg.width * s), round(bg.height * s)), Image.LANCZOS)
+    bg = bg.crop(((bg.width - CW) // 2, (bg.height - CH) // 2, (bg.width - CW) // 2 + CW, (bg.height - CH) // 2 + CH))
+    img = bg.convert("RGBA")
+    # 위·아래 어둡게(글자가 읽히게), 가운데는 그대로
+    grad = Image.new("L", (1, CH))
+    for y in range(CH):
+        t = y / CH
+        a = 0
+        if t < 0.46:
+            a = int(215 * (1 - t / 0.46) ** 1.3)
+        elif t > 0.66:
+            a = int(225 * ((t - 0.66) / 0.34) ** 1.2)
+        grad.putpixel((0, y), a)
+    shade = Image.new("RGBA", (CW, CH), (12, 8, 6, 255))
+    shade.putalpha(grad.resize((CW, CH)))
+    img.alpha_composite(shade)
+    epno = str(ep.get("episode") or "").strip()
+    fser, fep = _f(SERIF_XB, 50), _f(SERIF_B, 38)
+    fhook = _f(SUB_FONT, 150)
+    menu = str(ep.get("menuName") or "").strip()
+
+    def draw(dr, shadow):
+        col = (0, 0, 0, 255)
+        x, y = 80, 270                                   # 3:4 안전 영역(위 240px) 바로 아래
+        head = f"{ep.get('series') or '한 그릇의 품격'}"
+        dr.text((x, y), head, font=fser, fill=col if shadow else (255, 248, 236, 255))
+        w = fser.getlength(head)
+        if epno:
+            dr.text((x + w + 26, y + 10), f"제{epno}화", font=fep, fill=col if shadow else (236, 206, 150, 255))
+        dr.line([x, y + 76, x + 250, y + 76], fill=col if shadow else (226, 190, 120, 255), width=3)
+        for i, ln in enumerate(COVER_HOOK):
+            yy = y + 118 + i * 172
+            if shadow:
+                dr.text((x, yy), ln, font=fhook, fill=col, stroke_width=10, stroke_fill=col)
+            else:
+                dr.text((x, yy), ln, font=fhook, fill=(255, 255, 255, 255), stroke_width=3, stroke_fill=(20, 14, 10, 230))
+        if menu and not shadow:
+            fm, lines, fs = _fit_lines(f"「{menu}」", SERIF_XB, 64, CW - 160, max_lines=2, min_size=40)
+            lh = int(fs * 1.34)
+            yb = 1560 - len(lines) * lh                   # 3:4 안전 영역(아래 1680px) 안쪽
+            lab = "오 늘 의   메 뉴"
+            dr.text(((CW - fep.getlength(lab)) / 2, yb - 62), lab, font=fep, fill=(236, 206, 150, 255))
+            for i, ln in enumerate(lines):
+                dr.text(((CW - fm.getlength(ln)) / 2, yb + i * lh), ln, font=fm, fill=(255, 246, 232, 255),
+                        stroke_width=2, stroke_fill=(20, 14, 10, 200))
+            sf = _f(SERIF_XB, int(58 * 0.56))
+            sw = sf.getlength("품격") + 58 * 0.7
+            _seal(dr, (CW + sw) / 2, yb + len(lines) * lh + 18, 58, "품격")
+    layer = _shadowed((CW, CH), draw, blur=10, alpha=160, offset=(0, 5))
+    img.alpha_composite(layer)
+    img.convert("RGB").save(out, "JPEG", quality=92)
+    return out
+
+
 def receipt_png(ep, food: Path | None, out: Path):
     """영수증 엔딩 — 음식 사진(그릇에 담긴 알맹이, 포장 없음) + 맛 평가 + 메뉴·가격·추천 손님 + 프로필 링크."""
     from PIL import ImageFilter, ImageOps
@@ -1278,6 +1371,7 @@ def step_assemble(ep, epdir, work, log):
          "-frames:v", "1", str(work / "frames.jpg")])
     log["assemble"] = {**log.get("assemble", {}), "ok": True, "sec": round(total, 2), "clips": len(segs) - 1,
                        "segments": info}
+    step_cover(ep, work, log)
     for p in tmp.iterdir():
         p.unlink()
     tmp.rmdir()
@@ -1320,6 +1414,8 @@ def main(path: str) -> int:
             step_tts(ep, epdir, work, log, redo)
         if "assemble" in steps:
             step_assemble(ep, epdir, work, log)
+        elif "cover" in steps:
+            step_cover(ep, work, log)
         if "publish" in steps:                                   # 인스타 릴스 발행(완성본이 커밋된 뒤 별도 요청으로)
             step_ig_publish(ep, epdir, work, log, bool(req.get("force_publish")))
     except StopIteration:

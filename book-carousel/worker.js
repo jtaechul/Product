@@ -4510,6 +4510,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 .ep-lines{margin:10px 0 0 18px;font-size:13px;line-height:1.7;color:var(--ink)}
 .ep-lines li{margin-bottom:6px}
 #epDetail .ref-char{margin-top:12px}
+.ep-cover{margin-top:14px;text-align:center}
+.ep-cover img{width:100%;max-width:220px;display:block;margin:6px auto 8px;border-radius:10px;aspect-ratio:9/16;object-fit:cover;background:#EDEFEC}
+.ep-cover .ep-sub{margin-top:8px;text-align:left}
 .ep-post{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:14px;background:#FAFBF9}
 .ep-post-hd{font-size:13.5px;font-weight:700;margin-bottom:6px}
 .ep-post-lb{font-size:12px;font-weight:700;color:var(--sub);margin:10px 0 4px}
@@ -5222,6 +5225,17 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       var v=document.createElement('video'); v.controls=true; v.playsInline=true; v.preload='metadata';
       v.src='/api/episode/video?id='+encodeURIComponent(e.id)+'&t='+encodeURIComponent(e.ranAt||'');
       d.appendChild(v);
+    }
+    if(e.hasCover){
+      var cv=epEl('div','ep-cover');
+      cv.appendChild(epEl('div','ep-post-hd','표지(후킹 이미지)'));
+      var im=document.createElement('img'); im.alt='표지'; im.loading='lazy';
+      im.src='/api/episode/video?cover=1&id='+encodeURIComponent(e.id)+'&t='+encodeURIComponent(e.ranAt||'');
+      cv.appendChild(im);
+      var cd=epEl('a','btn btn-sm btn-2','표지 저장하기'); cd.href='/api/episode/video?cover=1&dl=1&id='+encodeURIComponent(e.id);
+      cv.appendChild(cd);
+      cv.appendChild(epEl('div','ep-sub','인스타에 직접 올릴 때 "커버 수정 → 카메라 롤에서 추가"로 이 사진을 고르세요. 자동 올리기는 이 표지를 알아서 씁니다.'));
+      d.appendChild(cv);
     }
     var act=epEl('div','ep-act');
     if(e.hasVideo && e.state!=='running'){
@@ -6103,7 +6117,7 @@ async function handleEpisodeList(env, body) {
     return { id, state, request: latest, title: ep.product?.title || '', menu: ep.menuName || '', episode: ep.episode || '',
       cuts: (ep.clips || []).map((c, i) => ({ no: `c${String(i + 1).padStart(2, '0')}`, role: c.role || '', line: c.line || '' })),
       sec: log.assemble?.sec || 0, hasVideo: !!log.assemble?.ok, error: done && !log.last_request?.ok ? String(log.error || '').slice(0, 300) : '',
-      ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null, post: postTextOf(ep) };
+      ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null, post: postTextOf(ep), hasCover: !!log.cover };
   }));
   return { success: true, episodes: eps };
 }
@@ -6113,14 +6127,15 @@ async function handleEpisodeVideo(env, url, request) {
   const id = url.searchParams.get('id') || '';
   if (!EP_ID_RE.test(id)) return new Response('bad id', { status: 400, headers: CORS });
   const v = (url.searchParams.get('v') || EP_BRANCH).replace(/[^\w./-]/g, '');
-  const src = `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/work/${url.searchParams.has('frames') ? 'frames.jpg' : 'final.mp4'}`;
+  const kind = url.searchParams.has('cover') ? 'cover' : url.searchParams.has('frames') ? 'frames' : 'video';
+  const src = `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/work/${{ cover: 'cover.jpg', frames: 'frames.jpg', video: 'final.mp4' }[kind]}`;
   const range = request.headers.get('Range');
   const r = await fetch(src, { headers: range ? { Range: range } : {} });
   if (!r.ok && r.status !== 206) return new Response('not found', { status: 404, headers: CORS });
   const h = new Headers({ 'Access-Control-Allow-Origin': '*', 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=300',
-    'Content-Type': url.searchParams.has('frames') ? 'image/jpeg' : 'video/mp4' });
+    'Content-Type': kind === 'video' ? 'video/mp4' : 'image/jpeg' });
   for (const k of ['Content-Length', 'Content-Range', 'ETag']) if (r.headers.get(k)) h.set(k, r.headers.get(k));
-  if (url.searchParams.has('dl')) h.set('Content-Disposition', `attachment; filename="${id}.mp4"`);
+  if (url.searchParams.has('dl')) h.set('Content-Disposition', `attachment; filename="${id}${kind === 'cover' ? '-cover.jpg' : '.mp4'}"`);
   return new Response(r.body, { status: r.status, headers: h });
 }
 
