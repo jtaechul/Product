@@ -5250,7 +5250,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       if(r && r.status==='done') return vpShow(r.result);
       if(r && r.status==='failed') return vpShow({success:false,error:'대본을 만들지 못했습니다: '+(r.error||'')});
       if(r && r.status==='missing') return vpShow({success:false,error:r.error});
-      say('pMsg','대본을 만드는 중… '+sec+'초 (보통 1~2분, 화면을 꺼도 서버에서 계속 만들어집니다)','wait');
+      say('pMsg','대본을 만드는 중… '+sec+'초 (보통 40초~1분, 화면을 꺼도 서버에서 이어서 만들어집니다)','wait');
       vpTimer=setTimeout(function(){ vpPoll(id,t0); },4000);
     }).catch(function(){
       vpFails++;                                    // 통신이 잠깐 끊겨도 기다린다
@@ -5272,6 +5272,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       if(!r || !r.id){ $('mk').disabled=false; say('pMsg',(r&&r.error)||'시작하지 못했습니다.','no'); return; }
       var t0=Date.now();
       try{ localStorage.setItem('vp_job', JSON.stringify({id:r.id,t0:t0})); }catch(e){}
+      post('/api/video-prompts-run',{id:r.id}).catch(function(){});   // 바로 만들기(끊겨도 괜찮음 — 결과는 상태 확인으로)
       vpPoll(r.id,t0);
     }).catch(function(e){ $('mk').disabled=false; say('pMsg','시작하지 못했습니다(연결 문제): '+e.message+' — 다시 눌러 주세요.','no'); });
   });
@@ -6251,7 +6252,7 @@ async function handleEpisodeVideo(env, url, request) {
 // 요청은 곧바로 작업 번호만 돌려주고, 만들기는 매분 크론이 한다(보통 1~2분). waitUntil은 응답 뒤 30초에 끊겨
 // 45초짜리 대본이 중간에 죽고 다시 만들어져 비용이 두 번 들었다(실측 250초) → 쓰지 않는다.
 const VP_JOB_TTL = 3600;
-const VP_STALE_MS = 180 * 1000;                     // 크론 실행이 이만큼 멈춰 있으면 죽은 것으로 보고 다시
+const VP_STALE_MS = 150 * 1000;                     // 크론 실행이 이만큼 멈춰 있으면 죽은 것으로 보고 다시
 
 async function vpJobSet(env, id, patch) {
   const cur = (await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null)) || {};
@@ -6287,7 +6288,8 @@ async function runVpJobs(env) {
   for (const id of ids.slice(0, 3)) {
     const job = await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null);
     if (!job || job.status === 'done' || job.status === 'failed') { await vpJobIndex(env, id, false); continue; }
-    const stale = job.status === 'queued' || Date.now() - (job.startedAt || 0) > VP_STALE_MS;
+    const stale = job.status === 'queued' ? Date.now() - (job.createdAt || 0) > 15 * 1000   // 화면의 '바로 만들기'가 안 왔으면
+      : Date.now() - (job.startedAt || 0) > VP_STALE_MS;
     if (!stale) continue;
     if ((job.tries || 0) >= 3) { await vpJobSet(env, id, { status: 'failed', error: '세 번 시도했지만 만들지 못했습니다. 잠시 뒤 다시 눌러 주세요.', body: null }); await vpJobIndex(env, id, false); continue; }
     await runVpJob(env, id);
@@ -6569,6 +6571,14 @@ export default {
           await vpJobSet(env, id, { status: 'queued', body, createdAt: Date.now() });
           await vpJobIndex(env, id, true);          // 만들기는 매분 크론이 맡는다(waitUntil은 30초에 끊겨 두 번 돈다 — 실측 250초)
           result = { success: true, id };
+        }
+        else if (url.pathname === '/api/video-prompts-run') {
+          // 화면이 작업 번호를 받은 직후 따로 부르는 '바로 만들기'. 이 요청이 끝까지 붙잡혀 있어야 해서 휴대폰이 끊을 수 있지만,
+          // 결과는 저장소에 남고 화면은 상태 확인으로 받는다. 끊겨서 서버도 멈추면 크론이 이어서 만든다.
+          const id = String(body.id || '').replace(/[^a-f0-9]/g, '');
+          const job = id ? await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null) : null;
+          if (job && job.status === 'queued') await runVpJob(env, id);
+          result = { success: true };
         }
         else if (url.pathname === '/api/video-prompts-status') {
           const id = String(body.id || url.searchParams.get('id') || '').replace(/[^a-f0-9]/g, '');
