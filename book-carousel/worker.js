@@ -5229,25 +5229,56 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       cap.appendChild(cp); out.appendChild(cap);
     }
   }
+  /* 대본은 서버가 뒤에서 만들고, 화면은 몇 초마다 결과만 확인한다(휴대폰 "Load failed" 방지 — 사용자 지시 2026-09).
+     확인 중 통신이 잠깐 끊겨도 실패로 보지 않고 계속 확인한다. 페이지를 다시 열어도 진행 중인 작업을 이어서 기다린다. */
+  var vpTimer=null, vpFails=0;
+  function vpShow(res){
+    $('mk').disabled=false;
+    try{ localStorage.removeItem('vp_job'); }catch(e){}
+    if(res && res.success!==false && (res.clips||[]).length){
+      lastResult=res; renderPrompts(res); $('pOutWrap').hidden=false; saveSoon();
+      var nm = res.note ? (res.noteOk ? ' 추가 주문 반영: '+(res.noteApplied||'반영됨') : ' 추가 주문이 규칙과 부딪혀 일부만 반영됐을 수 있습니다'+(res.noteApplied?' ('+res.noteApplied+')':'')+'. 대본을 확인해 주세요.') : '';
+      say('pMsg', res.format==='diner' ? '대본이 준비됐습니다. 아래 04단계 "영상 자동 만들기"를 누르세요.'+nm : '대본이 준비됐습니다. 이 상품은 식당 에피소드가 아니라 자동 제작은 안 되고, 상품 관리 아래 예전 편집기로 만들 수 있습니다.','ok');
+    } else say('pMsg',(res&&res.error)||'대본을 만들지 못했습니다.','no');
+  }
+  function vpPoll(id, t0){
+    clearTimeout(vpTimer);
+    var sec=Math.round((Date.now()-t0)/1000);
+    if(sec>600){ $('mk').disabled=false; say('pMsg','10분이 지나도 끝나지 않았습니다. 다시 눌러 주세요.','no'); try{ localStorage.removeItem('vp_job'); }catch(e){} return; }
+    post('/api/video-prompts-status',{id:id}).then(function(r){
+      vpFails=0;
+      if(r && r.status==='done') return vpShow(r.result);
+      if(r && r.status==='failed') return vpShow({success:false,error:'대본을 만들지 못했습니다: '+(r.error||'')});
+      if(r && r.status==='missing') return vpShow({success:false,error:r.error});
+      say('pMsg','대본을 만드는 중… '+sec+'초 (보통 40초~1분, 화면을 꺼도 계속 만들어집니다)','wait');
+      vpTimer=setTimeout(function(){ vpPoll(id,t0); },4000);
+    }).catch(function(){
+      vpFails++;                                    // 통신이 잠깐 끊겨도 기다린다
+      say('pMsg','대본을 만드는 중… '+sec+'초 (연결 다시 확인 중)','wait');
+      vpTimer=setTimeout(function(){ vpPoll(id,t0); },Math.min(15000,4000+vpFails*2000));
+    });
+  }
   $('mk').addEventListener('click', function(){
     var title=$('pt').value.trim() || $('t').value.trim();
     if(!title){ say('pMsg','어떤 상품의 영상인지 적어주세요.','no'); return; }
     $('mk').disabled=true; $('pOut').textContent='';
-    say('pMsg','프롬프트를 짜는 중… 30초쯤 걸립니다.','wait');
-    post('/api/video-prompts',{
+    say('pMsg','대본 만들기를 시작합니다…','wait');
+    post('/api/video-prompts-job',{
       title:title, category:$('c').value, dog:$('pdog').value.trim(), cat:$('pcat').value.trim(),
       price:$('pr').value, link:$('l').value.trim(), image:$('img').value.trim(),
       clips:parseInt($('pclips').value,10), note:$('pnote').value.trim(),
       pains:lastPains, benefits:lastBenefits
-    }).then(function(res){
-      $('mk').disabled=false;
-      if(res && res.success && (res.clips||[]).length){
-        lastResult=res; renderPrompts(res); $('pOutWrap').hidden=false; saveSoon();
-        var nm = res.note ? (res.noteOk ? ' 추가 주문 반영: '+(res.noteApplied||'반영됨') : ' 추가 주문이 규칙과 부딪혀 일부만 반영됐을 수 있습니다'+(res.noteApplied?' ('+res.noteApplied+')':'')+'. 대본을 확인해 주세요.') : '';
-        say('pMsg', res.format==='diner' ? '대본이 준비됐습니다. 아래 04단계 "영상 자동 만들기"를 누르세요.'+nm : '대본이 준비됐습니다. 이 상품은 식당 에피소드가 아니라 자동 제작은 안 되고, 상품 관리 아래 예전 편집기로 만들 수 있습니다.','ok');
-      } else say('pMsg',(res&&res.error)||'프롬프트를 만들지 못했습니다.','no');
-    }).catch(function(e){ $('mk').disabled=false; say('pMsg','만들지 못했습니다: '+e.message,'no'); });
+    }).then(function(r){
+      if(!r || !r.id){ $('mk').disabled=false; say('pMsg',(r&&r.error)||'시작하지 못했습니다.','no'); return; }
+      var t0=Date.now();
+      try{ localStorage.setItem('vp_job', JSON.stringify({id:r.id,t0:t0})); }catch(e){}
+      vpPoll(r.id,t0);
+    }).catch(function(e){ $('mk').disabled=false; say('pMsg','시작하지 못했습니다(연결 문제): '+e.message+' — 다시 눌러 주세요.','no'); });
   });
+  try{                                              // 페이지를 다시 열었을 때 진행 중이던 대본을 이어서 기다린다
+    var vj=JSON.parse(localStorage.getItem('vp_job')||'null');
+    if(vj && vj.id && Date.now()-vj.t0 < 600000){ $('mk').disabled=true; vpPoll(vj.id, vj.t0); }
+  }catch(e){}
 
   /* ---- 메뉴(새 영상 · 영상 목록 · 상품 관리) + 영상 자동 만들기 ---- */
   var EP_STATE={running:'만드는 중',done:'완성',failed:'실패',empty:'대기'};
@@ -6215,6 +6246,53 @@ async function handleEpisodeVideo(env, url, request) {
   return new Response(r.body, { status: r.status, headers: h });
 }
 
+// ===== 대본 만들기 — 뒤에서 만들고 화면은 몇 초마다 확인(사용자 지시 2026-09) =====
+// 휴대폰이 40초~1분 넘게 요청을 붙잡고 있으면 화면 꺼짐·앱 전환·통신 흔들림에 "Load failed"가 났다.
+// 요청은 곧바로 작업 번호만 돌려주고, 만들기는 뒤에서(waitUntil) 한다. 뒤 작업이 중간에 끊기면 매분 크론이 이어서 다시 만든다.
+const VP_JOB_TTL = 3600;
+const VP_STALE_MS = 150 * 1000;
+
+async function vpJobSet(env, id, patch) {
+  const cur = (await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null)) || {};
+  const next = { ...cur, ...patch, updatedAt: Date.now() };
+  await env.PENDING_POSTS.put('vp_job:' + id, JSON.stringify(next), { expirationTtl: VP_JOB_TTL });
+  return next;
+}
+
+async function runVpJob(env, id) {
+  const job = await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null);
+  if (!job || job.status === 'done' || job.status === 'failed') return;
+  await vpJobSet(env, id, { status: 'running', startedAt: Date.now(), tries: (job.tries || 0) + 1 });
+  try {
+    const result = await handleVideoPrompts(env, job.body || {});
+    await vpJobSet(env, id, { status: 'done', result, body: null });
+  } catch (e) {
+    await vpJobSet(env, id, { status: 'failed', error: String(e && e.message || e).slice(0, 300), body: null });
+  }
+  await vpJobIndex(env, id, false);
+}
+
+async function vpJobIndex(env, id, add) {
+  let ids = (await env.PENDING_POSTS.get('vp_jobs_open', 'json').catch(() => null)) || [];
+  ids = ids.filter(x => x !== id);
+  if (add) ids.push(id);
+  await env.PENDING_POSTS.put('vp_jobs_open', JSON.stringify(ids.slice(-20)));
+}
+
+// 크론(매분): 뒤 작업이 죽은(오래 멈춘) 대본을 이어서 만든다.
+async function runVpJobs(env) {
+  if (!env.PENDING_POSTS) return;
+  const ids = (await env.PENDING_POSTS.get('vp_jobs_open', 'json').catch(() => null)) || [];
+  for (const id of ids.slice(0, 2)) {
+    const job = await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null);
+    if (!job || job.status === 'done' || job.status === 'failed') { await vpJobIndex(env, id, false); continue; }
+    const stale = job.status === 'queued' ? Date.now() - (job.updatedAt || 0) > 20 * 1000 : Date.now() - (job.startedAt || 0) > VP_STALE_MS;
+    if (!stale) continue;
+    if ((job.tries || 0) >= 3) { await vpJobSet(env, id, { status: 'failed', error: '세 번 시도했지만 만들지 못했습니다. 잠시 뒤 다시 눌러 주세요.', body: null }); await vpJobIndex(env, id, false); continue; }
+    await runVpJob(env, id);
+  }
+}
+
 // ===== 메인 라우터 =====
 export default {
   async fetch(request, env, ctx) {
@@ -6484,6 +6562,20 @@ export default {
         }
         else if (url.pathname === '/api/product-insight') result = await handleProductInsight(env, body);
         else if (url.pathname === '/api/video-prompts') result = await handleVideoPrompts(env, body);
+        else if (url.pathname === '/api/video-prompts-job') {
+          if (!env.PENDING_POSTS) throw new Error('저장소가 없습니다.');
+          const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+          await vpJobSet(env, id, { status: 'queued', body, createdAt: Date.now() });
+          await vpJobIndex(env, id, true);
+          ctx.waitUntil(runVpJob(env, id));
+          result = { success: true, id };
+        }
+        else if (url.pathname === '/api/video-prompts-status') {
+          const id = String(body.id || url.searchParams.get('id') || '').replace(/[^a-f0-9]/g, '');
+          const job = id ? await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null) : null;
+          if (!job) result = { success: false, status: 'missing', error: '작업을 찾지 못했습니다(1시간이 지났거나 잘못된 번호).' };
+          else result = { success: true, status: job.status, result: job.status === 'done' ? job.result : undefined, error: job.error || '' };
+        }
         else if (url.pathname === '/api/food-reference') result = await handleFoodReference(env, body);
         else if (url.pathname === '/api/episode/start') result = await handleEpisodeStart(env, body);
         else if (url.pathname === '/api/episode/request') result = await handleEpisodeRequest(env, body);
@@ -6607,6 +6699,7 @@ export default {
       ctx.waitUntil(runDailyAuto(env, 'morning'));
     } else {
       ctx.waitUntil(runScheduled(env));
+      ctx.waitUntil(runVpJobs(env));
     }
   },
 };
