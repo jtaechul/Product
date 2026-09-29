@@ -1,0 +1,226 @@
+{
+  "character": {
+    "ok": true,
+    "source": "characters/dog.png"
+  },
+  "set": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview"
+  },
+  "storyboard": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview",
+    "layout": "2x4",
+    "aspect": "1:1"
+  },
+  "keyframes": {},
+  "adjacent": {
+    "c02": {
+      "diff": 51.3
+    },
+    "c03": {
+      "diff": 42.6
+    },
+    "c04": {
+      "diff": 43.4
+    },
+    "c05": {
+      "diff": 49.3
+    },
+    "c06": {
+      "diff": 56.5
+    },
+    "c07": {
+      "diff": 70.4
+    }
+  },
+  "clips": {
+    "c01": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 26.1
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 36.7
+    },
+    "c02": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": false,
+          "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input. If you think this was an error, [send feedback](https://ai.google.dev/gemini-api/docs/troubleshooting).\",\"code\":\"content_blocked\"}}"
+        },
+        {
+          "model": "veo-lite",
+          "ok": true,
+          "wait_s": 42.2
+        }
+      ],
+      "model": "veo-lite",
+      "sec": 8.0,
+      "drift": 49.8
+    },
+    "c03": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 36.0
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 57.4
+    },
+    "c04": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 29.8
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 60.7
+    },
+    "c05": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 30.8
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 52.1
+    },
+    "c06": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 35.5
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 64.0
+    },
+    "c07": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 38.6
+        }
+      ],
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 29.4
+    }
+  },
+  "tts": {
+    "c01": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 5.16
+    },
+    "c02": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 8.48
+    },
+    "c03": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 3.79
+    },
+    "c04": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 7.38
+    },
+    "c05": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 7.84
+    },
+    "c06": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 3.96
+    },
+    "c07": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 4.58
+    }
+  },
+  "assemble": {
+    "ok": true,
+    "sec": 50.04,
+    "clips": 7,
+    "segments": [
+      {
+        "clip": "c01",
+        "len": 6.36,
+        "voice": 5.16,
+        "slow": 0.795
+      },
+      {
+        "clip": "c02",
+        "len": 9.68,
+        "voice": 8.48,
+        "slow": 1.21
+      },
+      {
+        "clip": "c03",
+        "len": 5.0,
+        "voice": 3.79,
+        "slow": 0.625
+      },
+      {
+        "clip": "c04",
+        "len": 8.58,
+        "voice": 7.38,
+        "slow": 1.073
+      },
+      {
+        "clip": "c05",
+        "len": 9.04,
+        "voice": 7.84,
+        "slow": 1.13
+      },
+      {
+        "clip": "c06",
+        "len": 5.16,
+        "voice": 3.96,
+        "slow": 0.645
+      },
+      {
+        "clip": "c07",
+        "len": 5.78,
+        "voice": 4.58,
+        "slow": 0.723
+      }
+    ]
+  },
+  "last_request": {
+    "file": "01_full.json",
+    "ran_at": "2026-09-29T01:34:54Z",
+    "ok": true
+  }
+}
