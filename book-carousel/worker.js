@@ -6201,6 +6201,14 @@ async function ghPut(env, path, b64, message) {
   return r.json;
 }
 
+async function ghDelete(env, path, message) {
+  const cur = await gh(env, `/contents/${path}?ref=${encodeURIComponent(EP_BRANCH)}`);
+  if (!cur.ok || !cur.json?.sha) return false;
+  const r = await gh(env, `/contents/${path}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, sha: cur.json.sha, branch: EP_BRANCH }) });
+  return r.ok;
+}
+
 async function ghText(env, path) {
   const r = await gh(env, `/contents/${path}?ref=${encodeURIComponent(EP_BRANCH)}`);
   if (!r.ok || !r.json?.content) return null;
@@ -6242,6 +6250,8 @@ async function makeCheckedFoodRef(env, title, image) {
 async function commitFoodRef(env, dir, id, food) {
   const fname = `food.${/jpe?g/.test(food.mime) ? 'jpg' : 'png'}`;
   await ghPut(env, `${dir}/refs/${fname}`, food.data, `pet: ${id} 음식 참고 사진(${food.score ?? '비교 없음'}점)`);
+  // 다른 확장자의 예전 음식 사진이 남으면 단계마다 다른 걸 집는다 → 지운다
+  await ghDelete(env, `${dir}/refs/${fname === 'food.png' ? 'food.jpg' : 'food.png'}`, `pet: ${id} 예전 음식 사진 정리`).catch(() => false);
   let product = '';
   if (food.product && food.product.data) {
     product = `product.${/png/.test(food.product.mime_type) ? 'png' : /webp/.test(food.product.mime_type) ? 'webp' : 'jpg'}`;
