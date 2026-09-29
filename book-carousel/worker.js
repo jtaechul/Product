@@ -4255,7 +4255,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const verdict = scrubBanned(String(out.verdict || '').trim(), banned);
   // 첫 한입 후킹 문구(사용자 확정 2026-09): 제품 특징을 비튼 한 줄. 효능·배변·건강 약속이나 너무 긴 문구는 버리고 식감으로 대신한다.
   // 후킹 문구(사용자 확정 2026-09): 후보 여러 개 중 조건(28자 이하·효능·배변·상품명 없음)을 통과한 첫 번째를 쓴다.
-  const hookOk = (h) => h && h.length <= 28 && !HEALTH_CLAIM.test(h) && !CURE_CLAIM.test(h) && !/이 메뉴/.test(h);
+  const hookOk = (h) => h && h.length <= 30 && !HEALTH_CLAIM.test(h) && !CURE_CLAIM.test(h) && !/이 메뉴/.test(h);
   const hookClean = (h) => noGunHook(scrubBanned(String(h || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'), banned)).replace(/[.\s]+$/, '');
   // 긴 대본 지시 안에서는 후킹이 맛 묘사로 흐른다(실측) → 후킹만 짧은 지시로 한 번 더 뽑아 앞에 둔다.
   const hookFocused = await callGeminiText(gk, {
