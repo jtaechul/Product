@@ -4510,6 +4510,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 .ep-lines{margin:10px 0 0 18px;font-size:13px;line-height:1.7;color:var(--ink)}
 .ep-lines li{margin-bottom:6px}
 #epDetail .ref-char{margin-top:12px}
+.ep-post{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:14px;background:#FAFBF9}
+.ep-post-hd{font-size:13.5px;font-weight:700;margin-bottom:6px}
+.ep-post-lb{font-size:12px;font-weight:700;color:var(--sub);margin:10px 0 4px}
+.ep-post-ta{font-size:13px;line-height:1.6;margin-bottom:6px;background:#fff}
 .finds{display:flex;flex-direction:column;gap:9px;margin-top:14px;max-height:460px;overflow-y:auto}
 .find{display:flex;gap:11px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px}
 .find img{width:52px;height:52px;border-radius:8px;object-fit:cover;background:#EDEFEC;flex:none}
@@ -5231,6 +5235,31 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     }
     d.appendChild(act);
     if(e.ig&&!e.ig.ok&&e.ig.error) d.appendChild(epEl('div','ep-err','인스타 올리기 실패: '+e.ig.error));
+    if(e.post&&(e.post.caption||e.post.hashtags)){
+      var pb=epEl('div','ep-post');
+      pb.appendChild(epEl('div','ep-post-hd','인스타 게시물 글 (직접 올릴 때 복사해서 붙여넣기)'));
+      function field(label,text,rows){
+        if(!text) return;
+        var lb=epEl('div','ep-post-lb',label); pb.appendChild(lb);
+        var ta=epEl('textarea','ep-post-ta'); ta.readOnly=true; ta.value=text; ta.rows=rows; pb.appendChild(ta);
+        var b=epBtn(label+' 복사',function(){ copy(text,b); }); pb.appendChild(b);
+      }
+      field('본문',e.post.caption,8);
+      field('해시태그',e.post.hashtags,2);
+      var all=[e.post.caption,e.post.hashtags].filter(Boolean).join('\\n\\n');
+      var ab=epBtn('본문+해시태그 한 번에 복사',function(){ copy(all,ab); },true); ab.style.marginTop='10px'; pb.appendChild(ab);
+      if(e.post.ytTitle){
+        var yd=epEl('details','ref-char'); yd.appendChild(epEl('summary','','유튜브 쇼츠 제목·설명'));
+        var yb=epEl('div',''); yd.appendChild(yb);
+        [['제목',e.post.ytTitle,2],['설명',e.post.ytDesc,6]].forEach(function(f){
+          if(!f[1]) return; yb.appendChild(epEl('div','ep-post-lb',f[0]));
+          var t=epEl('textarea','ep-post-ta'); t.readOnly=true; t.value=f[1]; t.rows=f[2]; yb.appendChild(t);
+          var bb=epBtn(f[0]+' 복사',function(){ copy(f[1],bb); }); yb.appendChild(bb);
+        });
+        pb.appendChild(yd);
+      }
+      d.appendChild(pb);
+    }
     if(e.cuts&&e.cuts.length){
       var sc=epEl('details','ref-char'); sc.appendChild(epEl('summary','','대사 보기 ('+e.cuts.length+'컷)'));
       var ol=epEl('ol','ep-lines'); e.cuts.forEach(function(c){ ol.appendChild(epEl('li','',c.line||c.role)); }); sc.appendChild(ol);
@@ -6043,6 +6072,16 @@ async function handleEpisodeRequest(env, body) {
   return { success: true, id, request: name };
 }
 
+// 인스타·유튜브에 직접 올릴 때 복사할 글(본문·해시태그). 쿠팡 파트너스 고지는 본문에 반드시 들어간다(법적 요구).
+function postTextOf(ep) {
+  let caption = String(ep.caption || '').trim();
+  if (caption && !caption.includes('쿠팡 파트너스')) caption += `\n\n${COUPANG_DISCLOSURE}`;
+  const hashtags = (Array.isArray(ep.hashtags) ? ep.hashtags : []).map(t => String(t).trim()).filter(Boolean)
+    .map(t => (t.startsWith('#') ? t : '#' + t)).filter(t => !caption.includes(t)).join(' ');
+  const yt = ep.youtube || {};
+  return { caption, hashtags, ytTitle: String(yt.title || ''), ytDesc: String(yt.description || '') };
+}
+
 // 편 목록과 진행 상태(최근 것부터)
 async function handleEpisodeList(env, body) {
   const r = await gh(env, `/contents/${EP_ROOT}?ref=${encodeURIComponent(EP_BRANCH)}`);
@@ -6064,7 +6103,7 @@ async function handleEpisodeList(env, body) {
     return { id, state, request: latest, title: ep.product?.title || '', menu: ep.menuName || '', episode: ep.episode || '',
       cuts: (ep.clips || []).map((c, i) => ({ no: `c${String(i + 1).padStart(2, '0')}`, role: c.role || '', line: c.line || '' })),
       sec: log.assemble?.sec || 0, hasVideo: !!log.assemble?.ok, error: done && !log.last_request?.ok ? String(log.error || '').slice(0, 300) : '',
-      ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null };
+      ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null, post: postTextOf(ep) };
   }));
   return { success: true, episodes: eps };
 }
