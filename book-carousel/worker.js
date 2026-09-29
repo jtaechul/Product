@@ -4249,7 +4249,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const verdict = scrubBanned(String(out.verdict || '').trim(), banned);
   // 첫 한입 후킹 문구(사용자 확정 2026-09): 제품 특징을 비튼 한 줄. 효능·배변·건강 약속이나 너무 긴 문구는 버리고 식감으로 대신한다.
   let hookLine = scrubBanned(String(out.hookLine || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'), banned);
-  if (!hookLine || hookLine.length > 30 || HEALTH_CLAIM.test(hookLine) || CURE_CLAIM.test(hookLine) || /이 메뉴/.test(hookLine)) {
+  if (!hookLine || hookLine.length > 34 || HEALTH_CLAIM.test(hookLine) || CURE_CLAIM.test(hookLine) || /이 메뉴/.test(hookLine)) {
     const tex = ((Array.isArray(out.tasteNotes) ? out.tasteNotes : []).find(x => x && /식감/.test(String(x.k || ''))) || {}).v;
     hookLine = tex && !HEALTH_CLAIM.test(String(tex)) ? `${String(tex).trim()}, 이건 반칙이다.` : '…이 한 알, 반칙이다.';
   }
