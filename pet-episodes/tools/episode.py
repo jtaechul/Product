@@ -476,14 +476,14 @@ def _omni(key, start: Path, prompt: str, setimg: Path | None = None) -> bytes:
     return vid
 
 
-def _veo(key, start: Path, prompt: str, setimg: Path | None = None) -> bytes:
+def _veo(key, start: Path, prompt: str, setimg: Path | None = None, secs: int = 8) -> bytes:
     from google import genai
     from google.genai import types
     client = genai.Client(api_key=key)
     op = client.models.generate_videos(
         model=VEO_FALLBACK, prompt=prompt,
         image=types.Image(image_bytes=start.read_bytes(), mime_type="image/png"),
-        config=types.GenerateVideosConfig(aspect_ratio="9:16", resolution="720p", duration_seconds=8, number_of_videos=1))
+        config=types.GenerateVideosConfig(aspect_ratio="9:16", resolution="720p", duration_seconds=int(secs), number_of_videos=1))
     t0 = time.time()
     while not op.done:
         if time.time() - t0 > 900:
@@ -544,6 +544,29 @@ def clip_drift(clip: Path, first: Path, work: Path):
         return None
 
 
+CLIP_CHOICES = (4, 6, 8)      # 영상 AI에 주문할 길이(초). 대사 길이에 맞춰 고른다(사용자 확정 2026-09: 8초 고정 폐기)
+CLIP_STRETCH = 1.25           # 대사가 조금 길면 영상을 이만큼까지 늘려 맞춘다(build_segment의 1.3배 안쪽)
+
+
+def clip_seconds(work, name):
+    """녹음(v_cXX.wav)이 있으면 컷 길이(앞뒤 여유 포함)를 재서 4·6·8초 중 가장 짧은 걸 고른다. 녹음이 없으면 8초."""
+    voice = work / f"v_{name}.wav"
+    if not voice.exists():
+        return 8
+    L = max(MIN_SEG, LEAD + _dur(voice) + TAIL)
+    return next((d for d in CLIP_CHOICES if d * CLIP_STRETCH >= L), CLIP_CHOICES[-1])
+
+
+def fit_prompt(prompt, d):
+    """클립 프롬프트의 '8-second'와 [0-4s]·[4-8s] 시간 표시를 d초에 맞게 바꾼다. Omni는 길이를 이 시간 표시로 알아듣는다."""
+    k = d / 8.0
+    fmt = lambda x: (f"{x:.1f}".rstrip("0").rstrip("."))
+    prompt = re.sub(r"\b8-second\b", f"{d}-second", prompt)
+    prompt = re.sub(r"\b8 seconds\b", f"{d} seconds", prompt)
+    return re.sub(r"\[(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)s\]",
+                  lambda m: f"[{fmt(float(m.group(1)) * k)}-{fmt(float(m.group(2)) * k)}s]", prompt)
+
+
 def step_clips(ep, epdir, work, log, redo):
     key = _key("GEMINI_API_KEY")
     res = log.setdefault("clips", {})
@@ -554,10 +577,11 @@ def step_clips(ep, epdir, work, log, redo):
             continue
         lock = ROLE_LOCK.get(c.get("role"), "").format(n="kitten" if ep.get("species") == "cat" else "puppy")
         props = bowl_state([x.get("role") for x in ep["clips"]], ep["clips"].index(c))
-        prompt = (c["prompt"] + (f"\nACTION LOCK: {lock}" if lock else "")
+        secs = clip_seconds(work, name)
+        prompt = (fit_prompt(c["prompt"], secs) + (f"\nACTION LOCK: {lock}" if lock else "")
                   + (f"\nPROPS (for the whole clip — nothing appears or disappears): {props}" if props else "") + CLIP_TAIL)
-        rec = {"attempts": []}
-        for label, fn in (("omni", _omni), ("veo-lite", _veo)):
+        rec = {"attempts": [], "target_s": secs}
+        for label, fn in (("omni", _omni), ("veo-lite", lambda k, st, p, si: _veo(k, st, p, si, secs))):
             t0 = time.time()
             try:
                 # ⚠️ 세트 원본(빈 가게 사진)은 영상 AI에 넣지 않는다 — 컷 끝에서 그 사진으로 되돌아가며
@@ -1270,7 +1294,7 @@ def build_segment(ep, c, idx, work, tmp):
     # 영상 AI는 컷 끝(7~8초)으로 갈수록 흐트러진다(시식 중 사라짐·퇴장 중 되돌아옴 — 3차 실측) → 8초를 다 쓰지 않고
     # 대사 길이만큼만 쓴다(최소 MIN_SEG초). 템포도 빨라진다.
     L = max(MIN_SEG, LEAD + N + TAIL)
-    slow = min(1.3, L / V)
+    slow = min(1.3, max(1.0, L / V))                            # 짧으면 자르기만(빨리 감지 않음), 길면 최대 1.3배 늘림
     a0 = LEAD                                                    # 입장도 오프닝으로 바로 시작(사용자 확정 2026-09)
     ins, fcs, labels = [], [], []
     ins += ["-i", str(src)]
@@ -1418,10 +1442,11 @@ def main(path: str) -> int:
                 step_storyboard(ep, epdir, work, log, redo, character, setimg)
             step_keyframes(ep, epdir, work, log, redo, character, setimg)   # 빠진 칸·redo 칸만 개별로
             check_adjacent(ep, work, log, redo, character, setimg, epdir)  # 이웃 컷 구도가 같으면 그 칸만 다시
-        if "clips" in steps:
-            step_clips(ep, epdir, work, log, redo)
+        # 녹음을 먼저 한다 — 컷마다 대사 길이를 재서 영상 AI에 4·6·8초 중 맞는 길이로 주문하기 위해(비용·흐트러짐 감소)
         if "tts" in steps:
             step_tts(ep, epdir, work, log, redo)
+        if "clips" in steps:
+            step_clips(ep, epdir, work, log, redo)
         if "assemble" in steps:
             step_assemble(ep, epdir, work, log)
         elif "cover" in steps:

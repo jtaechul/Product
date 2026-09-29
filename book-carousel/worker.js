@@ -4157,6 +4157,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   await rememberMenuName(env, menuName, title);
   await rememberDinerLines(env, list.filter(c => /^(taste|exit)$/.test(String(c && c.role || ''))).map(c => String(c.line || '').trim()));
 
+  let enterExtra = '';                                  // 입장 대사에 섞여 온 사연 — 고정 오프닝 때문에 지우지 않고 주문 대사 앞으로 옮긴다
   const clipsOut = roles.map((role, i) => {
     const c = pickClip(role, i);
     const shots = toSpecies(safeShots(normShots(String(c.shots || '').trim())), sp);
@@ -4165,6 +4166,14 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     if (role === 'enter') {
       const pre = line.replace(/배가\s*고프다[.\s]*심각하다[.\s]*/g, '').trim();
       let crave = pre && pre.length <= 48 ? pre.replace(/[.\s]*$/, '.') : '';
+      if (!crave && pre && note) {                   // 길면(추가 주문 사연이 섞인 경우) '당기는' 문장만 입장에 두고 나머지는 주문으로
+        const sents = pre.split(/(?<=[.?…])\s+/).map(x => x.trim()).filter(Boolean);
+        const k = sents.findIndex(x => /당기|먹고 싶|끌리/.test(x));
+        if (k >= 0 && sents[k].length <= 48) {
+          crave = sents[k].replace(/[.\s]*$/, '.');
+          enterExtra = sents.filter((_, j) => j !== k).join(' ');
+        } else enterExtra = pre;
+      }
       if (!crave) {                                  // 모델이 비워 두면 메뉴 이름으로 '오늘 당기는 것'을 만든다
         const dish = String(menuName || '').replace(/\s*(한\s*그릇|한\s*접시|정식|세트)\s*$/, '').trim() || '따뜻한 한 그릇';
         const last = dish.charCodeAt(dish.length - 1);
@@ -4173,6 +4182,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
       }
       line = `${DINER_OPENING}. ${crave}`;
     }
+    if (role === 'order' && enterExtra && !line.includes(enterExtra.slice(0, 12))) { line = `${enterExtra.replace(/[.\s]*$/, '.')} ${line}`; enterExtra = ''; }
     // 고정 의식 대사(사용자 확정): 첫 시식 앞 "잘 먹겠습니다." · 퇴장 앞 "잘 먹었습니다."
     const firstEat = roles.includes('serve') ? 'serve' : 'taste';
     if (role === firstEat && roles.indexOf(firstEat) === i && !/잘 먹겠습니다/.test(line)) line = '잘 먹겠습니다. ' + line;
