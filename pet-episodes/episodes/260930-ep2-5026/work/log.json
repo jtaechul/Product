@@ -1,0 +1,318 @@
+{
+  "character": {
+    "ok": true,
+    "source": "characters/dog.png"
+  },
+  "set": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview"
+  },
+  "storyboard": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview",
+    "layout": "2x4",
+    "aspect": "1:1"
+  },
+  "keyframes": {},
+  "adjacent": {
+    "c02": {
+      "diff": 29.3
+    },
+    "c03": {
+      "diff": 36.7
+    },
+    "c04": {
+      "diff": 50.2
+    },
+    "c05": {
+      "diff": 51.0
+    },
+    "c06": {
+      "diff": 67.2
+    },
+    "c07": {
+      "diff": 64.7
+    }
+  },
+  "tts": {
+    "c01": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 7.81
+    },
+    "c02": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 8.19
+    },
+    "c03": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 7.55
+    },
+    "c04": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 8.16
+    },
+    "c05": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 7.91
+    },
+    "c06": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 4.76
+    },
+    "c07": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 4.8
+    }
+  },
+  "clips": {
+    "c01": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 27.9
+        }
+      ],
+      "target_s": 8,
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 19.6
+    },
+    "c02": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 26.4
+        }
+      ],
+      "target_s": 8,
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 24.9
+    },
+    "c03": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 31.0
+        }
+      ],
+      "target_s": 8,
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 41.1
+    },
+    "c04": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 29.9
+        }
+      ],
+      "target_s": 8,
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 47.6
+    },
+    "c05": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 27.4
+        }
+      ],
+      "target_s": 8,
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 48.7
+    },
+    "c06": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 26.4
+        }
+      ],
+      "target_s": 6,
+      "model": "omni",
+      "sec": 6.02,
+      "drift": null
+    },
+    "c07": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 24.3
+        }
+      ],
+      "target_s": 6,
+      "model": "omni",
+      "sec": 6.02,
+      "drift": null
+    }
+  },
+  "assemble": {
+    "bgm": "signature.mp3",
+    "ok": true,
+    "sec": 62.13,
+    "clips": 8,
+    "segments": [
+      {
+        "clip": "c01",
+        "len": 9.01,
+        "voice": 7.81,
+        "slow": 1.126,
+        "sents": [
+          [
+            0.45,
+            1.26
+          ],
+          [
+            1.63,
+            2.33
+          ],
+          [
+            2.6,
+            6.35
+          ],
+          [
+            7.37,
+            8.26
+          ]
+        ]
+      },
+      {
+        "clip": "c02",
+        "len": 9.39,
+        "voice": 8.19,
+        "slow": 1.174,
+        "sents": [
+          [
+            0.45,
+            3.15
+          ],
+          [
+            3.75,
+            7.21
+          ],
+          [
+            7.95,
+            8.64
+          ]
+        ]
+      },
+      {
+        "clip": "c03",
+        "len": 8.75,
+        "voice": 7.55,
+        "slow": 1.094,
+        "sents": [
+          [
+            0.45,
+            1.87
+          ],
+          [
+            3.3,
+            4.82
+          ],
+          [
+            6.29,
+            8.0
+          ]
+        ]
+      },
+      {
+        "clip": "c04",
+        "len": 9.36,
+        "voice": 8.16,
+        "slow": 1.17,
+        "sents": [
+          [
+            0.45,
+            4.73
+          ],
+          [
+            5.23,
+            8.61
+          ]
+        ]
+      },
+      {
+        "clip": "c05",
+        "len": 9.11,
+        "voice": 7.91,
+        "slow": 1.139,
+        "sents": [
+          [
+            0.45,
+            4.35
+          ],
+          [
+            5.24,
+            8.36
+          ]
+        ]
+      },
+      {
+        "clip": "c06",
+        "len": 5.96,
+        "voice": 4.76,
+        "slow": 1.0,
+        "sents": [
+          [
+            0.45,
+            5.21
+          ]
+        ]
+      },
+      {
+        "clip": "c07",
+        "len": 6.0,
+        "voice": 4.8,
+        "slow": 1.0,
+        "sents": [
+          [
+            0.45,
+            1.28
+          ],
+          [
+            1.87,
+            5.25
+          ]
+        ]
+      }
+    ],
+    "hook": {
+      "from": "taste",
+      "clip": "c04",
+      "start": 0.2,
+      "len": 4.5,
+      "text": "100g에 1460원짜리 사료를 몰래 먹다 들켰다"
+    }
+  },
+  "last_request": {
+    "file": "01_full.json",
+    "ran_at": "2026-09-29T23:22:00Z",
+    "ok": true
+  }
+}
