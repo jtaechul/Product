@@ -3617,6 +3617,14 @@ function dinerShotPlan(roles) {
 function dinerShot(roles, i) { return (dinerShotPlan(roles)[i] || {}).t || ''; }
 // 그릇은 음식 참고 이미지와 같은 것 하나로 통일(컷마다 접시·그릇이 바뀌던 문제).
 const DINER_VESSEL = 'a shallow plain white ceramic bowl';
+// 글자 수로 자를 때 단어 중간에서 끊지 않는다(영수증 한줄평이 "…단맛"→"…단"으로 잘린 사고, 6차 실측).
+function cutWords(text, max) {
+  const t = String(text || '').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const sp = cut.lastIndexOf(' ');
+  return (sp > max * 0.5 ? cut.slice(0, sp) : cut).trim();
+}
 function inVessel(look) {
   const t = String(look || '')
     .replace(/,?\s*(served|placed|arranged|piled|heaped)?\s*(on|in)\s+(a|an|the)\s+[^,.;]*\b(bowl|plate|dish|saucer)\b[^,.;]*/gi, '')
@@ -4192,7 +4200,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     species: spKey, speciesKo: sp.ko,
     problem: `${seriesTag} ${shop || '식당 에피소드'} · 오늘의 메뉴 「${menuName}」`,
     tasteNotes: (Array.isArray(out.tasteNotes) ? out.tasteNotes : [])
-      .map(x => ({ k: String(x && x.k || '').trim().slice(0, 6), v: scrubBanned(String(x && x.v || '').trim(), banned).replace(/!+/g, '').slice(0, 18) }))
+      .map(x => ({ k: String(x && x.k || '').trim().slice(0, 6), v: cutWords(scrubBanned(String(x && x.v || '').trim(), banned).replace(/!+/g, ''), 30) }))
       .filter(x => x.k && x.v && !HEALTH_CLAIM.test(x.v)).slice(0, 4),
     shop, verdict, priceNote, menuName, foodLook: foodEn, foodLookSource: fl.source, foodLookNote: fl.note || '',
     guestNote: guest.note, guestMismatch: !!guest.mismatch,
