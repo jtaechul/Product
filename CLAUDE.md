@@ -39,7 +39,11 @@
 >   **쿠팡 파트너스 수수료 고지 문구는 페이지 하단에 반드시 유지**(법적 요구).
 > - **상품 등록**: `/manage` — `generateManageHTML`. 기존 `/api/add-book-to-catalog`,
 >   `/api/delete-book`, `/api/shop-catalog`(=`/api/book-catalog`) 엔드포인트를 그대로 쓴다.
-> - **릴스 편집기**: `/manage` 04단계에 통합(클립 이어붙이기 + 한글 자막 + 위아래 검은 띠 +
+> - **⭐ 영상 자동 만들기(2026-09)**: `/manage` 04단계. 03단계 대본(`lastResult`) → `/api/episode/start`가 음식 참고 사진을 만들고
+  GitHub에 `episode.json`·`refs/food.*`·`requests/01_full.json`을 커밋(워커 시크릿 `GH_PAT` = 저장소 시크릿 `DASHBOARD_GH_PAT` 또는
+  `MOVIEGEN_ADMIN_GH_TOKEN`) → pet-episode 워크플로가 제작. 목록·상태 `/api/episode/list`, 재생·저장 `/api/episode/video`(raw를 video/mp4로),
+  다시 조립·컷 다시 뽑기·인스타 올리기 `/api/episode/request`(인스타는 확인창 + 편당 1회).
+- **릴스 편집기(직접 이어붙이기)**: `/manage` 05단계에 통합(클립 이어붙이기 + 한글 자막 + 위아래 검은 띠 +
 >   마지막 2.6초 상품 사진 아웃트로 + mp4 내보내기). ffmpeg 없이 canvas + MediaRecorder로 처리한다.
 >   쿠팡 이미지는 canvas 오염을 피하려 반드시 `/api/cover?url=` 동일출처 프록시를 거친다.
 > - **⭐ 주인공 캐릭터(2026-09 확정)**: **옷·목줄 없는 네발 시바견**.
