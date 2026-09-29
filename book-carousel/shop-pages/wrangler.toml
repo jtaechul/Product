@@ -1,0 +1,9 @@
+# 인스타 프로필 링크용 판매 페이지 주소 — https://banryeotem.pages.dev (계정 이름 jtaechul이 주소에 안 붙는다).
+# Cloudflare Pages가 _worker.js로 본체(book-carousel)의 /shop만 서비스 바인딩으로 불러 보여 준다.
+name = "banryeotem"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-09-23"
+
+[[services]]
+binding = "MAIN"
+service = "book-carousel"

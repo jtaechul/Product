@@ -62,6 +62,21 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: npx --yes wrangler@3.90.0 deploy
 
+      - name: 판매 페이지 공개 주소 배포 (pages.dev — 주소에 계정 이름 없음)
+        working-directory: book-carousel/shop-pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          for NAME in banryeotem oneul-banryeotem banryeotem-shop; do
+            npx --yes wrangler@3.90.0 pages project create "$NAME" --production-branch=main >/dev/null 2>&1 || true
+            if npx --yes wrangler@3.90.0 pages deploy dist --project-name "$NAME" --branch=main --commit-dirty=true; then
+              echo "### 판매 페이지 공개 주소: https://${NAME}.pages.dev" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "::warning::'${NAME}' 배포 실패 — 다음 이름으로 재시도"
+          done
+          echo "::warning::pages.dev 배포 실패 — CF_API_TOKEN에 Cloudflare Pages 편집 권한이 있는지 확인"
+
       - name: GitHub 키 등록 (영상 자동 제작 버튼용)
         if: env.HAS_GH_PAT == 'true'
         working-directory: book-carousel
