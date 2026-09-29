@@ -4291,7 +4291,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     negativePrompt: neg,
     caption, hashtags: tags,
     youtube: { title: ytTitle, description: ytDescription },
-    hookLine,
+    hookLine, hookRaw: String(out.hookLine || '').slice(0, 60),
     note: note || '', noteApplied: note ? scrubBanned(String(out.noteApplied || '').trim(), banned).slice(0, 120) : '',
     noteOk: note ? !!noteCheck.ok : true,
     clips: clipsOut,
