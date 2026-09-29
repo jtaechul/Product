@@ -302,6 +302,9 @@ GRID_HEAD = ("Create ONE image that is a clean grid of {n} separate, equal-sized
              "Reference image 2 is the restaurant set: every panel happens inside exactly this room — the same single door, "
              "walls, floor, the same table (same wood, shape, size and position), the same seat cushion, the same lamp and "
              "prop, the same lighting. Do not copy its camera angle; frame each panel as its SHOT says.\n"
+             "Neighbouring panels must never share the same framing: each panel changes BOTH the shot size (wide, medium, "
+             "close-up, macro) and the camera direction (front, side, overhead, low, high, from behind) from the panel "
+             "before it.\n"
              "{food}"
              "Shared look for all panels: {style}\n"
              "In every panel keep the upper quarter calm and uncluttered for captions. No text, letters, numbers, signs "
@@ -343,7 +346,51 @@ def step_storyboard(ep, epdir, work, log, redo, character, setimg):
     split_grid(grid, rows, cols, names, work)
 
 
-def step_keyframes(ep, epdir, work, log, redo, character, setimg):
+def _look_sig(p: Path):
+    from PIL import ImageFilter
+    im = Image.open(p).convert("L").resize((36, 64)).filter(ImageFilter.GaussianBlur(1.5))
+    px = list(im.getdata())
+    m = sum(px) / len(px)
+    return [x - m for x in px]
+
+
+def look_diff(a: Path, b: Path) -> float:
+    """두 화면이 얼마나 다른가(밝기 차이는 빼고 구도·형태 차이만). 실측: 같은 와이드 구도 3~5, 다른 구도 30~70."""
+    x, y = _look_sig(a), _look_sig(b)
+    return sum(abs(i - j) for i, j in zip(x, y)) / len(x)
+
+
+SAME_LOOK = 20.0      # 이보다 작으면 '같은 구도'로 본다
+
+
+def check_adjacent(ep, work, log, redo, character, setimg, epdir):
+    """격자를 자른 뒤 이웃 컷끼리 비교해 너무 비슷한 칸은 그 칸만 다른 구도로 다시 그린다(사용자 지적 2026-09: 같은 구도가 이어지면 끊겨 보임).
+    비용 상한: 한 편에 최대 2칸."""
+    clips = ep["clips"]
+    res = log.setdefault("adjacent", {})
+    redrawn = 0
+    for i in range(1, len(clips)):
+        a, b = work / f"kf_c{clips[i - 1]['no']:02d}.png", work / f"kf_c{clips[i]['no']:02d}.png"
+        if not (a.exists() and b.exists()):
+            continue
+        d = round(look_diff(a, b), 1)
+        name = f"c{clips[i]['no']:02d}"
+        res[name] = {"diff": d}
+        if d < SAME_LOOK and redrawn < 2:
+            res[name]["redrawn"] = True
+            b.unlink()
+            redo.add(f"kf_{name}")
+            redrawn += 1
+    if redrawn:
+        step_keyframes(ep, epdir, work, log, redo, character, setimg, avoid_same=True)
+        for i in range(1, len(clips)):
+            name = f"c{clips[i]['no']:02d}"
+            a, b = work / f"kf_c{clips[i - 1]['no']:02d}.png", work / f"{'kf_' + name}.png"
+            if res.get(name, {}).get("redrawn") and a.exists() and b.exists():
+                res[name]["after"] = round(look_diff(a, b), 1)
+
+
+def step_keyframes(ep, epdir, work, log, redo, character, setimg, avoid_same=False):
     food = next((p for p in (epdir / "refs" / "food.png", epdir / "refs" / "food.jpg") if p.exists()), epdir / "refs" / "food.png")
     noun = "kitten" if ep.get("species") == "cat" else "puppy"
     res = log.setdefault("keyframes", {})
@@ -362,6 +409,13 @@ def step_keyframes(ep, epdir, work, log, redo, character, setimg):
             refs.append(grid)
             text += f"Reference image {len(refs)} is the storyboard of the other shots: match its look exactly. "
         props = bowl_state(roles, ep["clips"].index(c))
+        k = ep["clips"].index(c)
+        if avoid_same and k > 0:                              # 앞 컷과 같은 구도로 나왔던 칸: 앞 컷을 보여 주고 '다르게'를 못 박는다
+            prev = work / f"kf_c{ep['clips'][k - 1]['no']:02d}.png"
+            if prev.exists():
+                refs.append(prev)
+                text += (f"Reference image {len(refs)} is the PREVIOUS shot. This shot must look clearly different from it: "
+                         f"a different shot size and a different camera angle, exactly as SHOT says. ")
         r = gen_image(text + "\n\nSHOT DESCRIPTION:\n" + c["imagePrompt"] + f"\nPROPS: {props}" + KF_TAIL, refs, out)
         res[name] = r
     missing = [f"c{c['no']:02d}" for c in ep["clips"] if not (work / f"kf_c{c['no']:02d}.png").exists()]
@@ -446,9 +500,8 @@ def _veo(key, start: Path, prompt: str, setimg: Path | None = None) -> bytes:
     return tmp.read_bytes()
 
 
-CLIP_TAIL = ("\nThe first attached image is the FIRST FRAME. The second attached image (if any) is the empty restaurant set "
-             "for reference: the room, door, walls, floor, table, seat, lamp and props must stay exactly like these images "
-             "for the whole clip — nothing is added, removed, moved or reshaped. Only the camera and the character move, "
+CLIP_TAIL = ("\nThe attached image is the FIRST FRAME: the room, door, walls, floor, table, seat, lamp and props must stay "
+             "exactly like it for the whole clip — nothing is added, removed, moved or reshaped. Only the camera and the character move, "
              "slowly and smoothly. The bowl and the food never change. Keep the framing of the first frame: the camera does "
              "not pull back into a wide shot and does not cut to another angle at the end.\nSOUND: none needed (it will be replaced). No dialogue. "
              "NEVER SHOW: text, letters, numbers, logos, packaging, humans, banknotes or cash, the character changing shape, "
@@ -467,6 +520,30 @@ ROLE_LOCK = {
 }
 
 
+SET_CONVERGE = 8.0   # 컷 화면이 빈 가게 세트 사진과 이만큼 비슷해지면 '세트 사진으로 흘러간 것'(5차 실측: 1~6)
+
+
+def clip_drift(clip: Path, first: Path, work: Path):
+    """컷 뒤쪽(4~7.8초)이 빈 가게 세트 사진으로 흘러갔는지 — 가장 비슷한 순간의 차이값(작을수록 세트 사진과 같음)."""
+    setimg = work / "set.png"
+    if not setimg.exists():
+        return None
+    try:
+        best = None
+        D = _dur(clip)
+        for t in (4.0, 5.0, 6.0, 7.0, D - 0.2):
+            if t >= D:
+                continue
+            p = work / f"_drift_{clip.stem}.png"
+            _ff(["-ss", f"{t:.2f}", "-i", str(clip), "-frames:v", "1", "-vf", "scale=720:1280", str(p)])
+            d = look_diff(setimg, p)
+            p.unlink()
+            best = d if best is None else min(best, d)
+        return None if best is None else round(best, 1)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def step_clips(ep, epdir, work, log, redo):
     key = _key("GEMINI_API_KEY")
     res = log.setdefault("clips", {})
@@ -483,9 +560,19 @@ def step_clips(ep, epdir, work, log, redo):
         for label, fn in (("omni", _omni), ("veo-lite", _veo)):
             t0 = time.time()
             try:
-                out.write_bytes(fn(key, work / f"kf_{name}.png", prompt, work / "set.png"))
+                # ⚠️ 세트 원본(빈 가게 사진)은 영상 AI에 넣지 않는다 — 컷 끝에서 그 사진으로 되돌아가며
+                #    강아지가 사라지고 와이드로 빠지는 끊김이 생겼다(5차 실측). 배경 통일은 격자 첫 장면이 맡는다.
+                out.write_bytes(fn(key, work / f"kf_{name}.png", prompt, None))
                 rec["attempts"].append({"model": label, "ok": True, "wait_s": round(time.time() - t0, 1)})
                 rec["model"], rec["sec"] = label, round(_dur(out), 2)
+                # 컷 뒤쪽이 첫 장면과 전혀 다른 화면(강아지가 사라진 빈 방·와이드로 빠짐)으로 흘렀는지 검사 → 1회만 다시 뽑기
+                drift = clip_drift(out, work / f"kf_{name}.png", work)
+                rec["drift"] = drift
+                if drift is not None and drift < SET_CONVERGE and not rec.get("redrawn"):
+                    rec["redrawn"] = True
+                    rec["attempts"].append({"model": label, "note": f"뒤쪽이 빈 가게 사진으로 흘러감({drift}) → 다시 뽑기"})
+                    out.write_bytes(fn(key, work / f"kf_{name}.png", prompt, None))
+                    rec["drift_after"] = clip_drift(out, work / f"kf_{name}.png", work)
                 break
             except Exception as e:  # noqa: BLE001
                 rec["attempts"].append({"model": label, "ok": False, "error": str(e)[:300]})
@@ -881,9 +968,9 @@ def _zoom_expr(role, idx, L, tz=None):
         tz = max(0.4, tz if tz is not None else 1.2)
         return (f"if(lt(it,{tz:.2f}),1.45,if(lt(it,{tz + 0.35:.2f}),1.28,if(lt(it,{tz + 0.7:.2f}),1.13,"
                 f"1+0.05*(it-{tz + 0.7:.2f})/{max(0.5, L - tz - 0.7):.2f})))")
-    if idx % 2:
-        return f"1.10-0.10*it/{L:.2f}"
-    return f"1+0.09*it/{L:.2f}"
+    if idx % 2:                                       # 편집 줌은 아주 약하게(구도 변화는 컷 설계가 맡는다)
+        return f"1.04-0.04*it/{L:.2f}"
+    return f"1+0.04*it/{L:.2f}"
 
 
 def _overlay_input(png: Path, L: float, a: float, b: float, fade=0.25):
@@ -1020,6 +1107,7 @@ def main(path: str) -> int:
             if req.get("storyboard", True):                     # 기본: 격자 한 장(사용자 확정 2026-09)
                 step_storyboard(ep, epdir, work, log, redo, character, setimg)
             step_keyframes(ep, epdir, work, log, redo, character, setimg)   # 빠진 칸·redo 칸만 개별로
+            check_adjacent(ep, work, log, redo, character, setimg, epdir)  # 이웃 컷 구도가 같으면 그 칸만 다시
         if "clips" in steps:
             step_clips(ep, epdir, work, log, redo)
         if "tts" in steps:

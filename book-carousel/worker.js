@@ -3571,27 +3571,50 @@ function dinerRoles(n) {
   return ['enter', 'order', 'serve', 'taste', 'taste', 'taste', 'taste', 'bill', 'exit'];
 }
 const DINER_ROLE_KO = { enter: '입장', order: '주문', serve: '서빙', taste: '시식', bill: '계산', exit: '퇴장' };
-// 컷마다 구도·카메라를 다르게(사용자 확정 2026-09: "너무 단순하다"). 움직임은 한 방향 한 번만 — 크게 움직이면 배경이 무너진다.
+// 컷마다 구도·카메라를 다르게(사용자 확정 2026-09). ⭐ 이웃한 두 컷은 화면 크기(s)와 방향(a)이 **둘 다** 달라야 한다 —
+// 같은 구도가 이어지면 컷이 끊겨 보인다(사용자 지적). 역할별 후보 중 앞 컷과 둘 다 다른 첫 후보를 고른다.
+// 움직임은 한 방향 한 번만(크게 움직이면 배경이 무너진다).
 const DINER_SHOTS = {
-  enter: 'Wide establishing shot from inside the diner at knee height, locked-off camera',
-  order: 'Low-angle medium shot from beside the table, slow gentle push-in toward the face',
-  serve: 'High overhead top-down shot of the table and the dish, very slow descending crane',
-  taste: [
-    'Extreme close-up macro in side profile at mouth level, slow lateral slide',
-    'Medium close-up from the front across the table, slow pull-back',
-    'Three-quarter close-up from behind the shoulder looking at the dish, slow small arc',
-    'Close-up at table height with shallow depth of field, slow rack focus from dish to face',
+  enter: [
+    { s: 'wide', a: 'front', t: 'Wide establishing shot from inside the diner at knee height facing the door, locked-off camera' },
   ],
-  bill: 'Medium side shot at table height, slow dolly-in',
-  exit: 'Wide locked-off shot from behind the table toward the door',
+  order: [
+    { s: 'close', a: 'low', t: 'Low-angle close-up of the face from below table height with the wall behind, slow gentle push-in' },
+    { s: 'medium', a: 'side', t: 'Medium side shot at seat height, locked-off camera' },
+  ],
+  serve: [
+    { s: 'medium', a: 'overhead', t: 'High overhead top-down shot of the table as the bowl is set down, very slow descending crane' },
+    { s: 'close', a: 'high', t: 'High-angle close-up looking down at the bowl and the face, locked-off camera' },
+  ],
+  taste: [
+    { s: 'macro', a: 'side', t: 'Extreme close-up macro in side profile at mouth level, slow lateral slide' },
+    { s: 'medium', a: 'front', t: 'Medium shot from the front across the table with the whole face and the bowl in frame, locked-off camera' },
+    { s: 'close', a: 'behind', t: 'Close-up over the shoulder from behind looking down at the bowl, slow small arc' },
+    { s: 'macro', a: 'overhead', t: 'Macro top-down shot of the bowl and the snout, locked-off camera' },
+    { s: 'close', a: 'low', t: 'Low-angle close-up at table height with shallow depth of field, slow rack focus from the bowl to the face' },
+  ],
+  bill: [
+    { s: 'close', a: 'high', t: 'High-angle close-up looking down at the small tray and the face, slow dolly-in' },
+    { s: 'medium', a: 'side', t: 'Medium side shot at table height, locked-off camera' },
+  ],
+  exit: [
+    { s: 'wide', a: 'behind', t: 'Wide locked-off shot from behind the table toward the door' },
+    { s: 'wide', a: 'side', t: 'Wide locked-off side shot of the room with the door at one edge' },
+  ],
 };
-function dinerShot(roles, i) {
-  const r = roles[i];
-  const v = DINER_SHOTS[r];
-  if (!Array.isArray(v)) return v || '';
-  const k = roles.slice(0, i).filter(x => x === r).length;
-  return v[k % v.length];
+function dinerShotPlan(roles) {
+  const plan = [], used = new Set();
+  roles.forEach((r, i) => {
+    const pool = DINER_SHOTS[r] || [{ s: 'medium', a: 'front', t: 'Medium shot, locked-off camera' }];
+    const prev = plan[i - 1];
+    const ok = (x) => !prev || (x.s !== prev.s && x.a !== prev.a);
+    const pick = pool.find(x => ok(x) && !used.has(x.t)) || pool.find(ok) || pool.find(x => !used.has(x.t)) || pool[0];
+    used.add(pick.t);
+    plan.push(pick);
+  });
+  return plan;
 }
+function dinerShot(roles, i) { return (dinerShotPlan(roles)[i] || {}).t || ''; }
 // 그릇은 음식 참고 이미지와 같은 것 하나로 통일(컷마다 접시·그릇이 바뀌던 문제).
 const DINER_VESSEL = 'a shallow plain white ceramic bowl';
 function inVessel(look) {
@@ -4131,7 +4154,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     const card = role === 'enter' ? { type: 'opening' }
       : role === 'order' ? { type: 'menu', name: menuName }
       : (role === 'bill' && priceNote ? { type: 'bill', text: priceNote } : null);
-    return { no: i + 1, role, roleKo: DINER_ROLE_KO[role], shot: dinerShot(roles, i), shots, line, subtitle: line, wearing: false, card, imagePrompt, prompt };
+    return { no: i + 1, role, roleKo: DINER_ROLE_KO[role], shot: dinerShot(roles, i), shotKind: (({ s: sz, a: an }) => ({ size: sz, angle: an }))(dinerShotPlan(roles)[i] || {}), shots, line, subtitle: line, wearing: false, card, imagePrompt, prompt };
   });
 
   const tags = (Array.isArray(out.hashtags) ? out.hashtags : []).slice(0, 3);
