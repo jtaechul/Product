@@ -1,0 +1,38 @@
+{
+  "voices": {
+    "Enceladus": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 15.27
+    },
+    "Algieba": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Algieba",
+      "sec": 14.01
+    },
+    "Schedar": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Schedar",
+      "sec": 13.49
+    },
+    "Algenib": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Algenib",
+      "sec": 16.56
+    }
+  },
+  "voices_text": "배가 고프다. 심각하다. 오늘은 시니어 메뉴를 엿보는 날이야. 말랑한 고구마 한 조각이 당기는데. 음. 잇몸에 부드럽게 감기며 쫀득하게 씹혀. 가을 소풍 가방 속에서 꺼낸 간식 같은 식감이야.",
+  "character": {
+    "ok": true,
+    "source": "characters/dog.png"
+  },
+  "last_request": {
+    "file": "01_voices.json",
+    "ran_at": "2026-09-29T00:24:41Z",
+    "ok": true
+  }
+}
