@@ -975,6 +975,14 @@ def _fit_lines(text, path, size, width, max_lines=2, min_size=26):
         size -= 2
 
 
+def _fit_2or3(text, path, size, width, min2, min3):
+    """두 줄에 들어가면 두 줄(한 단어만 남는 셋째 줄 방지), 안 되면 세 줄."""
+    f, lines, fs = _fit_lines(text, path, size, width, max_lines=2, min_size=min2)
+    if len(_balanced(text, f, width)) <= 2:
+        return f, lines, fs
+    return _fit_lines(text, path, size, width, max_lines=3, min_size=min3)
+
+
 def _shadowed(size, draw_fn, blur=6, alpha=150, offset=(0, 4)):
     """글자·카드에 부드러운 그림자를 깐다(검은 상자 대신)."""
     from PIL import ImageFilter
@@ -1135,7 +1143,7 @@ def cover_png(ep, work, out: Path):
     # 표지 큰 글씨 = 대본의 후킹 문구(제품 특징을 비튼 한 줄, 사용자 확정 2026-09). 없으면 시리즈 오프닝.
     hook = str(ep.get("hookLine") or "").strip()
     if hook:
-        fhook, hook_lines, hook_size = _fit_lines(hook, SUB_FONT, 130, CW - 160, max_lines=2, min_size=84)
+        fhook, hook_lines, hook_size = _fit_2or3(hook, SUB_FONT, 130, CW - 160, 74, 74)
     else:
         fhook, hook_lines, hook_size = _f(SUB_FONT, 150), list(COVER_HOOK), 150
     menu = str(ep.get("menuName") or "").strip()
@@ -1291,7 +1299,7 @@ FREEZE_SEC = 1.2      # 첫 한입 멈춤 길이(초) — 사용자 확정 2026-
 
 def hook_png(text, out: Path):
     """첫 한입 멈춤 문구 — 화면 가운데 굵은 흰 글씨 두 줄까지(외곽선+그림자). 상품명·효능은 대본 단계에서 이미 걸렀다."""
-    f, lines, fs = _fit_lines(text, SUB_FONT, 86, W - 110, max_lines=2, min_size=56)
+    f, lines, fs = _fit_2or3(text, SUB_FONT, 86, W - 110, 58, 54)
     lh = int(fs * 1.28)
     y0 = int(H * 0.40) - lh * len(lines) // 2
 
