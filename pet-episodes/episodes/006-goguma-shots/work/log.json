@@ -216,11 +216,28 @@
         "voice": 4.58,
         "slow": 0.723
       }
-    ]
+    ],
+    "bgm": "signature.mp3"
   },
   "last_request": {
-    "file": "03_receipt_fix.json",
-    "ran_at": "2026-09-29T05:15:44Z",
+    "file": "04_seal_bgm.json",
+    "ran_at": "2026-09-29T05:48:04Z",
     "ok": true
+  },
+  "ig_probe": {
+    "ok": false,
+    "username": null,
+    "api": null,
+    "token_kind": "facebook(EAA)",
+    "token_len": 192,
+    "instagram": {
+      "http": 400,
+      "error": "Invalid OAuth access token - Cannot parse access token"
+    },
+    "facebook_pages": {
+      "http": 400,
+      "error": "Error validating access token: Session has expired on Saturday, 05-Sep-26 10:13:02 PDT. The current time is Monday, 28-Sep-26 22:46:58 PDT."
+    },
+    "checked_at": "2026-09-29T05:46:58Z"
   }
 }
