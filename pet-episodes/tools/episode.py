@@ -893,13 +893,21 @@ def _sentence_times(wav: Path, sents: list[str]) -> list[dict]:
     return out
 
 
+def no_gun(t: str) -> str:
+    """말끝 '~군'을 '~네'로(적시는군→적시네, 좋군→좋네, 뒷맛이로군→뒷맛이다)."""
+    t = re.sub(r"이로군(?=[.…,?\s]|$)", "이다", t)
+    t = re.sub(r"로군(?=[.…,?\s]|$)", "다", t)
+    t = re.sub(r"는군(?=[.…,?\s]|$)", "네", t)
+    return re.sub(r"([가-힣])군(?=[.…,?\s]|$)", lambda m: m.group(0) if m.group(1) in "장해공육국아" else m.group(1) + "네", t)
+
+
 def step_tts(ep, epdir, work, log, redo):
     """컷 대사 전체를 한 번에 녹음한다(문장마다 따로 녹음하면 톤이 조금씩 달라짐 — 사용자 지적 2026-09)."""
     res = log.setdefault("tts", {})
     for c in ep["clips"]:
         name = f"c{c['no']:02d}"
         out, tj = work / f"v_{name}.wav", work / f"v_{name}.json"
-        line = (c.get("line") or "").strip()
+        line = no_gun((c.get("line") or "").strip())      # 말끝 '~군' 금지(사용자 확정 2026-09) — 새로 녹음할 때만 적용해 자막·목소리가 어긋나지 않게
         if not line or (out.exists() and tj.exists() and name not in redo and f"v_{name}" not in redo):
             continue
         r = tts_gemini(line, out)
@@ -1087,7 +1095,6 @@ def bill_png(text, out: Path):
 
 
 COVER_HOOK = ("배가 고프다.", "심각하다.")
-HOOK_SEC = 0.5                                             # 영상 맨 앞에 표지를 보여 주는 시간(초)                # 표지 큰 글씨 = 시리즈 고정 오프닝(채널 간판 문장)
 
 
 def _cover_bg(ep, work):
@@ -1294,14 +1301,18 @@ def _overlay_input(png: Path, L: float, a: float, b: float, fade=0.25):
             f"format=rgba,fade=in:st={max(0, a):.2f}:d={fade}:alpha=1,fade=out:st={max(0, b - fade):.2f}:d={fade}:alpha=1")
 
 
-FREEZE_SEC = 1.2      # 첫 한입 멈춤 길이(초) — 사용자 확정 2026-09: 3번 '첫 한입 멈춤' 후킹
+# ⭐ 맨 앞 후킹 구간(사용자 확정 2026-09, 핵심 규칙): 본편 중 가장 후킹이 될 장면(기본: 첫 시식 컷의 첫 느낌 문장)을
+#   원본 그대로(목소리·자막 포함) 2~3.5초 떼어 맨 앞에 먼저 틀고, 화면 중간보다 조금 위에 후킹 문구(hookLine)를 크게 얹는다.
+#   이어서 입장("배가 고프다. 심각하다.")부터 본편이 원래대로 흐른다. 본편 안에서는 멈춤·큰 문구 없음(일반 자막만).
+#   정지 표지를 앞에 붙이거나 본편을 멈추는 방식은 폐기. 인스타 커버는 이 후킹 구간의 한 장면(문구 포함)을 쓴다.
+HOOK_MIN, HOOK_MAX = 2.0, 4.5
 
 
 def hook_png(text, out: Path):
     """첫 한입 멈춤 문구 — 화면 가운데 굵은 흰 글씨 두 줄까지(외곽선+그림자). 상품명·효능은 대본 단계에서 이미 걸렀다."""
     f, lines, fs = _fit_2or3(text, SUB_FONT, 86, W - 110, 58, 54)
     lh = int(fs * 1.28)
-    y0 = int(H * 0.40) - lh * len(lines) // 2
+    y0 = int(H * 0.33) - lh * len(lines) // 2          # 화면 중간보다 조금 위(사용자 확정)
 
     def draw(dr, shadow):
         for i, ln in enumerate(lines):
@@ -1316,27 +1327,37 @@ def hook_png(text, out: Path):
     _shadowed((W, H), draw, blur=10, alpha=170, offset=(0, 5)).save(out)
 
 
-def freeze_hook(seg: Path, L: float, tF: float, text: str, tmp: Path, name: str):
-    """세그먼트를 tF에서 멈추고(소리도 멈춤) FREEZE_SEC 동안 큰 후킹 문구를 띄운 뒤 이어서 재생한다.
-    멈춤 동안 아주 천천히 다가가는 줌(1.0→1.03, 계단 없음)으로 화면이 죽어 보이지 않게 한다."""
-    frame, hp, out = tmp / f"freeze_{name}.png", tmp / f"hook_{name}.png", tmp / f"seg_{name}_hook.mp4"
-    _ff(["-ss", f"{tF:.3f}", "-i", str(seg), "-frames:v", "1", str(frame)])
+def hook_intro(ep, segs, roles, info, tmp, work):
+    """후킹 구간 세그먼트를 만든다. (경로, 길이, 정보) 또는 None."""
+    text = str(ep.get("hookLine") or "").strip()
+    if not text:
+        return None
+    want = str(ep.get("hookRole") or "taste")
+    k = next((i for i, r in enumerate(roles) if r == want), next((i for i, r in enumerate(roles) if r == "taste"), -1))
+    if k < 0:
+        return None
+    src, sents = segs[k], info[k].get("sents") or []
+    L = _dur(src)
+    j = 1 if len(sents) > 1 and (ep["clips"][k].get("line") or "").startswith("잘 먹겠습니다") else 0
+    if sents:
+        ws = max(0.0, sents[j][0] - 0.25)
+        we = min(L, max(sents[j][1] + 0.35, ws + HOOK_MIN))
+    else:
+        ws, we = 0.0, min(L, 3.0)
+    we = min(we, ws + HOOK_MAX)
+    hp, out = tmp / "hook_text.png", tmp / "seg_hook.mp4"
     hook_png(text, hp)
-    N = int(round(FREEZE_SEC * FPS))
-    norm_v = f"fps={FPS},scale={W}:{H},setsar=1,format=yuv420p"
-    norm_a = "aformat=sample_rates=44100:channel_layouts=stereo"
-    fc = (f"[0:v]trim=0:{tF:.3f},setpts=PTS-STARTPTS,{norm_v}[va];[0:a]atrim=0:{tF:.3f},asetpts=PTS-STARTPTS,{norm_a}[aa];"
-          f"[0:v]trim=start={tF:.3f},setpts=PTS-STARTPTS,{norm_v}[vb];[0:a]atrim=start={tF:.3f},asetpts=PTS-STARTPTS,{norm_a}[ab];"
-          f"[1:v]scale=1440:2560,zoompan=z='1+0.03*on/{N}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={N}:s={W}x{H}:fps={FPS},"
-          f"eq=brightness=-0.06:saturation=0.8,{norm_v}[fz0];"
-          f"[2:v]format=rgba,fade=t=in:st=0:d=0.12:alpha=1[tx];[fz0][tx]overlay=0:0:shortest=1,{norm_v}[fz];"
-          f"[3:a]atrim=0:{FREEZE_SEC},{norm_a}[az];"
-          f"[va][aa][fz][az][vb][ab]concat=n=3:v=1:a=1[v][a]")
-    _ff(["-i", str(seg), "-loop", "1", "-t", f"{FREEZE_SEC}", "-i", str(frame), "-loop", "1", "-t", f"{FREEZE_SEC}", "-i", str(hp),
-         "-f", "lavfi", "-t", f"{FREEZE_SEC}", "-i", "anullsrc=r=44100:cl=stereo", "-filter_complex", fc,
-         "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
-         "-r", str(FPS), "-c:a", "aac", "-b:a", "160k", "-ar", "44100", str(out)])
-    return out, L + FREEZE_SEC
+    HL = we - ws
+    _ff(["-ss", f"{ws:.3f}", "-t", f"{HL:.3f}", "-i", str(src), "-loop", "1", "-t", f"{HL:.3f}", "-i", str(hp),
+         "-filter_complex", f"[1:v]format=rgba,fade=t=in:st=0:d=0.15:alpha=1[t];[0:v][t]overlay=0:0:shortest=1,"
+         f"fps={FPS},setsar=1,format=yuv420p[v];[0:a]aformat=sample_rates=44100:channel_layouts=stereo[a]",
+         "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-r", str(FPS),
+         "-c:a", "aac", "-b:a", "160k", "-ar", "44100", str(out)])
+    # 인스타 커버 = 후킹 구간의 한 장면(문구 포함) — 따로 만들지 않는다(사용자 확정 2026-09)
+    _ff(["-ss", f"{min(HL * 0.6, HL - 0.1):.3f}", "-i", str(out), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos",
+         "-q:v", "2", str(work / "cover.jpg")])
+    return out, HL, {"from": ep["clips"][k].get("role"), "clip": info[k].get("clip"), "start": round(ws, 2),
+                     "len": round(HL, 2), "text": text}
 
 
 def build_segment(ep, c, idx, work, tmp):
@@ -1401,14 +1422,7 @@ def build_segment(ep, c, idx, work, tmp):
          "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-r", str(FPS),
          "-c:a", "aac", "-b:a", "160k", "-ar", "44100", str(seg)])
     meta = {"clip": name, "len": round(L, 2), "voice": round(N, 2), "slow": round(slow, 3)}
-    # 첫 한입 멈춤(사용자 확정 2026-09): 첫 시식 컷에서 첫 문장(첫 느낌)이 끝난 직후 화면·소리를 멈추고 후킹 문구를 크게 띄운다.
-    first_taste = next((i for i, x in enumerate(ep["clips"]) if x.get("role") == "taste"), -1)
-    hook_text = str(ep.get("hookLine") or "").strip()
-    if idx == first_taste and hook_text and timing:
-        k = 1 if len(timing) > 1 and timing[0]["text"].startswith("잘 먹겠습니다") else 0
-        tF = min(max(1.0, a0 + timing[k]["end"] + 0.2), L - 0.8)   # 첫 문장 자막이 완전히 사라진 뒤(자막은 end+0.18까지)
-        seg, L = freeze_hook(seg, L, tF, hook_text, tmp, name)
-        meta.update({"freeze_at": round(tF, 2), "hook": hook_text, "len": round(L, 2)})
+    meta["sents"] = [[round(a0 + t["start"], 2), round(a0 + t["end"], 2)] for t in timing]   # 맨 앞 후킹 구간 고를 때 쓴다
     return seg, L, meta
 
 
@@ -1417,19 +1431,14 @@ def step_assemble(ep, epdir, work, log):
     tmp.mkdir(exist_ok=True)
     food = next((p for p in (epdir / "refs" / "food.jpg", epdir / "refs" / "food.png") if p.exists()), None)
     segs, lens, roles, info = [], [], [], []
-    # 맨 앞 후킹 표지(사용자 확정 2026-09): 표지를 먼저 만들고 0.5초 보여 준 뒤 입장 컷으로 넘어간다.
-    step_cover(ep, work, log)
-    cover = work / "cover.jpg"
-    if cover.exists():
-        hook, HL = tmp / "seg_hook.mp4", HOOK_SEC + XF          # 전환(XF)에 먹히는 만큼 더해 실제로 0.5초가 보이게
-        _ff(["-loop", "1", "-t", f"{HL}", "-i", str(cover), "-f", "lavfi", "-t", f"{HL}", "-i", "anullsrc=r=44100:cl=stereo",
-             "-filter_complex", f"[0:v]scale={W}:{H},setsar=1,fps={FPS},format=yuv420p[v]", "-map", "[v]", "-map", "1:a",
-             "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-r", str(FPS), "-c:a", "aac", "-b:a", "160k",
-             "-ar", "44100", "-t", f"{HL}", str(hook)])
-        segs.append(hook); lens.append(HL); roles.append("hook")
     for idx, c in enumerate(ep["clips"]):
         seg, L, meta = build_segment(ep, c, idx, work, tmp)
         segs.append(seg); lens.append(L); roles.append(c.get("role")); info.append(meta)
+    hook = hook_intro(ep, segs, roles, info, tmp, work)       # 맨 앞 후킹 구간(본편 장면 + 큰 문구)
+    if hook:
+        segs.insert(0, hook[0]); lens.insert(0, hook[1]); roles.insert(0, "hook")
+    else:
+        step_cover(ep, work, log)                             # 후킹 문구가 없을 때만 예전 방식 표지
     # 영수증 엔딩 3초(천천히 다가가는 줌)
     rp = tmp / "receipt.jpg"
     receipt_png(ep, food, rp)
@@ -1472,7 +1481,7 @@ def step_assemble(ep, epdir, work, log):
     _ff(["-i", str(final), "-vf", f"fps={len(segs)}/{total:.2f},scale=180:-2,tile={len(segs)}x1:margin=4:padding=4:color=white",
          "-frames:v", "1", str(work / "frames.jpg")])
     log["assemble"] = {**log.get("assemble", {}), "ok": True, "sec": round(total, 2), "clips": len(segs) - 1,
-                       "segments": info, "hook": HOOK_SEC if (work / "cover.jpg").exists() else 0}
+                       "segments": info, "hook": hook[2] if hook else None}
     for p in tmp.iterdir():
         p.unlink()
     tmp.rmdir()

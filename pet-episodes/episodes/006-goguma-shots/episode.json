@@ -99,7 +99,7 @@
         "angle": "overhead"
       },
       "shots": "0:00-0:03 A human hand places a plain white ceramic bowl on the walnut table → 0:03-0:08 Lean close to the bowl and gently sniff the surface with a twitching nose",
-      "line": "잘 먹겠습니다. 은은한 단내가 콧끝을 조용히 적시는군.",
+      "line": "잘 먹겠습니다. 은은한 단내가 콧끝을 조용히 적시네.",
       "subtitle": "잘 먹겠습니다. 은은한 단내가 콧끝을 조용히 적시는군.",
       "wearing": false,
       "card": null,
@@ -116,7 +116,7 @@
         "angle": "side"
       },
       "shots": "0:00-0:03 Take a stick with the teeth and pull it slightly → 0:03-0:08 Slowly slide the head sideways while chewing with half-closed eyes",
-      "line": "음. 길쭉한 두께가 한입에 알맞게 들어온다. 씹을수록 이에 닿는 결이 유연하게 풀리는군.",
+      "line": "음. 길쭉한 두께가 한입에 알맞게 들어온다. 씹을수록 이에 닿는 결이 유연하게 풀리네.",
       "subtitle": "음. 길쭉한 두께가 한입에 알맞게 들어온다. 씹을수록 이에 닿는 결이 유연하게 풀리는군.",
       "wearing": false,
       "card": null,
@@ -175,5 +175,5 @@
       "prompt": "DURATION: 8-second single continuous shot, vertical 9:16.\nSTYLE: Photorealistic live-action cinematic look, a real Shiba Inu filmed on a cinema camera, true-to-life proportions and natural fur detail, soft even lighting, shallow depth of field, 4k.\nCHARACTER: The puppy.\nSET (identical in every clip): A heavy wooden door made of dark oak with a small round glass peephole and a brass handle, off-white plastered walls, dark polished wooden floorboards, a low walnut coffee table, a woven straw floor cushion, a warm ceramic pendant lamp hanging low, and a single potted fern on the corner shelf.\nSHOT: Wide locked-off shot from behind the table toward the door.\nCAMERA & ACTION: [0-5s] Turn around and walk steadily toward the oak door → [5-8s] Stop at the threshold and look back over the shoulder once before stepping out\nCONSTRAINTS: Single unified composition, one continuous take with no cuts or transitions. The set is locked: the door, walls, windows, floor, table and seat keep exactly the same shape, material, color and position for the entire clip. The entrance door is the single door described in SET; its shape, size, frame and window pattern never change. The camera stays locked-off or moves slowly in one direction while the door is in frame. The puppy stays a natural four-legged animal throughout.\nAvoid: cartoon, 3D animation look, plush toy look, oversized head, huge cartoon eyes, chibi proportions, hunting dog, black mask or black fur markings, cat, standing upright on two legs, anthropomorphic pose, collar, harness, chest support, vest, leash, strap, clothes, accessories, harsh shadows, high contrast, documentary or wildlife photo look, gritty, visible skin pores, flat 2D cartoon, anime, sketch, plastic skin, waxy fur, human face, human skin, deformed paws, extra limbs, on-screen text, subtitles, watermark, product packaging, brand logo, blurry, low quality, oversaturated, food packaging, pet food bag, labels or text on the bowl, spilled food, messy table, cutlery, morphing door, changing door shape, warping walls, shifting background, changing architecture, melting objects, split screen, divided frame, collage, multiple panels, jump cut."
     }
   ],
-  "hookLine": "사람 간식 얼굴을 한 강아지 간식"
+  "hookLine": "주인 몰래 먹으려다 주인한테 뺏긴 고구마"
 }

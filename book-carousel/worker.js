@@ -3772,6 +3772,7 @@ function dinerSystem(sp) {
 - 클립마다 **2~3문장, 전체 35~60자**(공백 포함). 문장은 짧게 끊되 여러 개로 이어 말한다. 반말 독백.
 - 겉은 담담한 혼잣말이지만 맛 앞에서는 진심이다. 짧은 감탄('음…', '호오', '오오', '이거다')과
   식감 의성어('바삭', '쫀득', '사르르')를 쓸 수 있다. 단, 한 대사에 한 번까지. 느낌표는 쓰지 않는다.
+- ⛔ 말끝 '~군'('적시는군', '좋군', '이로군')은 절대 쓰지 않는다(사용자 확정 2026-09). '~다', '~네', '~지', '~어'로 끝낸다.
 - serve·taste 대사는 **지금 이 순간 입과 코로 느끼는 것만** 쓴다:
   첫 냄새, 알갱이 크기·모양, 씹을 때 부서지는 방식, 단단함, 기름기, 단맛·짠맛이 오는 순서, 입안에 남는 뒷맛.
   먹은 뒤 며칠이 지나야 알 수 있는 일(변·털·몸 상태·건강 변화)은 절대 쓰지 마라. 식탁에서는 알 수 없다.
@@ -4007,6 +4008,8 @@ async function noteReflected(gk, note, out) {
   } catch { return { ok: true }; }
 }
 
+const noGunHook = (t) => String(t || '').replace(/이로군(?=[.…,?\s]|$)/g, '이다').replace(/로군(?=[.…,?\s]|$)/g, '다').replace(/는군(?=[.…,?\s]|$)/g, '네').replace(/([가-힣])군(?=[.…,?\s]|$)/g, (m, p1) => (/[장해공육국아]$/.test(p1) ? m : p1 + '네'));
+
 async function handleDinerEpisode(env, body, ctx) {
   const { title, category, note, spKey, sp, hero, clips } = ctx;
   const roles = dinerRoles(clips);
@@ -4059,7 +4062,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도. 상품명·브랜드는 절대 쓰지 않는다",
   "hashtags": ["#태그1", "#태그2", "#태그3"],
   "ytTitle": "유튜브 설명 첫 줄에 쓸 한 줄 요약 40자 이내(상품명·브랜드 금지)",
-  "hookLine": "첫 한입에서 화면이 멈추며 크게 뜰 한 줄(한국어, 공백 포함 12~24자 — 길면 화면에서 잘린다). 목적은 인지부조화 — 보는 사람이 '어? 그게 왜?' 하고 멈추게. 맛 묘사(고소하다·쫀득하다)만으로 쓰지 마라. 이 제품의 사실 하나(원료·알갱이 모양·크기·가격·대상·만드는 방식)를 사람 세계의 뜻밖의 것과 맞붙이거나, 강아지가 할 리 없는 진지한 판정으로 비튼다. 틀(그대로 베끼지 말 것): '[사실]인데 [뜻밖의 비교]' / '[사람 세계 물건]보다 [사실]' / '[사실]. 이건 [과한 판정]'. 시크하고 유머러스하게. 효능·건강·배변 약속 금지, 상품명·브랜드 금지, 느낌표 금지"${note ? `,
+  "hookLine": "영상 맨 앞 후킹 구간에 크게 뜰 한 줄(한국어, 공백 포함 12~24자). ⭐필수 두 가지: ① 사건·반전 구조 — 결과를 먼저 던지고 이유는 숨긴다(주인과 강아지가 서로 뺏는 사건처럼 보는 사람이 '뭐? 왜?' 하게). ② 이 상품만의 사실 하나(원료·알갱이 모양·크기·대상·만드는 방식)를 반드시 넣어 다른 간식엔 못 쓰는 문장으로. 맛 묘사·일반론 금지. 틀(베끼지 말 것): '[주인/강아지]가 [뜻밖의 행동]한 [상품 사실]' / '[상품 사실]인데, [뜻밖의 사건]'. 시크하고 유머러스하게. 효능·건강·배변 약속 금지, 상품명·브랜드 금지, 느낌표 금지, 말끝 ~군 금지"${note ? `,
   "noteApplied": "추가 주문을 어디에 어떻게 반영했는지 한국어 한 줄"` : ''}
 }${recentMenus.length ? `\n최근에 쓴 메뉴 이름(겹치지 않게 다른 특징을 골라라): ${recentMenus.slice(0, 12).join(', ')}` : ''}${recentLines.length ? `\n최근 회차에서 이미 쓴 대사(말투·비유·소재가 비슷하지 않게 새로 써라):\n- ${recentLines.slice(0, 12).join('\n- ')}` : ''}`;
 
@@ -4158,11 +4161,13 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   await rememberMenuName(env, menuName, title);
   await rememberDinerLines(env, list.filter(c => /^(taste|exit)$/.test(String(c && c.role || ''))).map(c => String(c.line || '').trim()));
 
+  // 말끝 '~군' 금지(사용자 확정 2026-09): 모델이 어겨도 '~네'로 바꾼다(적시는군→적시네, 좋군→좋네).
+  const noGun = (t) => String(t || '').replace(/이로군(?=[.…,?\s]|$)/g, '이다').replace(/로군(?=[.…,?\s]|$)/g, '다').replace(/는군(?=[.…,?\s]|$)/g, '네').replace(/([가-힣])군(?=[.…,?\s]|$)/g, (m, p1) => (/[장해공육국아]$/.test(p1) ? m : p1 + '네'));
   let enterExtra = '';                                  // 입장 대사에 섞여 온 사연 — 고정 오프닝 때문에 지우지 않고 주문 대사 앞으로 옮긴다
   const clipsOut = roles.map((role, i) => {
     const c = pickClip(role, i);
     const shots = toSpecies(safeShots(normShots(String(c.shots || '').trim())), sp);
-    let line = scrubBanned(String(c.line || '').trim().replace(/!+/g, '.'), banned);
+    let line = noGun(scrubBanned(String(c.line || '').trim().replace(/!+/g, '.'), banned));
     // 입장(사용자 확정 2026-09): 고정 오프닝이 먼저 → 오늘 당기는 메뉴로 잇는다. 편집의 끊어 빠지는 줌은 "심각하다"에 맞춘다.
     if (role === 'enter') {
       const pre = line.replace(/배가\s*고프다[.\s]*심각하다[.\s]*/g, '').trim();
@@ -4248,7 +4253,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const shop = String(out.shop || '').trim();
   const verdict = scrubBanned(String(out.verdict || '').trim(), banned);
   // 첫 한입 후킹 문구(사용자 확정 2026-09): 제품 특징을 비튼 한 줄. 효능·배변·건강 약속이나 너무 긴 문구는 버리고 식감으로 대신한다.
-  let hookLine = scrubBanned(String(out.hookLine || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'), banned);
+  let hookLine = noGunHook(scrubBanned(String(out.hookLine || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'), banned));
   if (!hookLine || hookLine.length > 34 || HEALTH_CLAIM.test(hookLine) || CURE_CLAIM.test(hookLine) || /이 메뉴/.test(hookLine)) {
     const tex = ((Array.isArray(out.tasteNotes) ? out.tasteNotes : []).find(x => x && /식감/.test(String(x.k || ''))) || {}).v;
     hookLine = tex && !HEALTH_CLAIM.test(String(tex)) ? `${String(tex).trim()}, 이건 반칙이다.` : '…이 한 알, 반칙이다.';
