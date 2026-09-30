@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-30-2 (시작할 수 있는 종 사진·한글명)";
+const BUILD="v2026-09-30-3 (대본 자동 작성 · 실제로 돌 때만 작업 중 표시)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2346,6 +2346,38 @@ const OMNI_USD=0.10;   // Omni Flash 720p 초당 약 $0.10
 function v2media(pid,rel,rev){return rel?prox(V2_RAW+pid+"/"+rel+(rev?("?v="+encodeURIComponent(rev)):"")):"";}
 async function v2json(path){const t=await fetchRaw(path,true);try{return JSON.parse(t);}catch(e){return null;}}
 function v2badge(state){return '<span class="v2st '+(ST_CLS[state]||"")+'">'+esc(ST_KO[state]||state)+'</span>';}
+// ★'작업 중'은 **실제로 자동 작업이 돌고 있을 때만** 보여 준다(실사고 2026-09-30: 대본 단계가 '작업 중'인데 아무것도 안 돌았음).
+//   status.json 의 jobs[단계] 기록(워크플로가 작업 전 '진행 중'을 먼저 커밋 · 끝나면 완료/실패)으로 판단한다.
+const V2_AUTO={script:true};                       // 자동 작업이 있는 단계(나머지는 아직 Claude 대화에서 요청해야 함)
+const V2_JOB_STALE_MIN=25;
+function v2job(job,stage,state){
+  if(state!=="working"&&state!=="revise")return {kind:"none"};
+  const j=job||null;
+  if(j&&j.status==="running"){
+    const age=(Date.now()-Date.parse(j.at||0))/60000;
+    return age<V2_JOB_STALE_MIN?{kind:"running",job:j}:{kind:"stale",job:j};
+  }
+  if(j&&j.status==="failed")return {kind:"failed",job:j};
+  return {kind:V2_AUTO[stage]?"idle":"manual",job:j};
+}
+function v2badgeJob(state,jb){
+  if(jb.kind==="running")return '<span class="v2st prog">작업 중</span>';
+  if(jb.kind==="failed")return '<span class="v2st fail">실패</span>';
+  if(jb.kind==="stale")return '<span class="v2st fail">멈춤</span>';
+  if(jb.kind==="idle")return '<span class="v2st wait">시작 안 됨</span>';
+  if(jb.kind==="manual")return '<span class="v2st wait">'+(state==="revise"?"수정 요청됨 · 대화 요청 필요":"대화 요청 필요")+'</span>';
+  return v2badge(state);
+}
+function v2retryBtn(stage,lab){return V2_AUTO[stage]?'<button class="btn save" data-act="write_script" data-stage="'+stage+'" style="width:100%;margin-top:8px">'+lab+' (약 $0.05 · 3~6분)</button>':'';}
+function v2jobHTML(stage,jb){
+  if(jb.kind==="running")return '<div class="hint" style="margin-top:6px"><span class="ok">자동 작업이 실제로 돌고 있습니다</span> — '+esc(jb.job.text||"")+
+    ' (시작 '+v2when(jb.job.at)+' · 보통 3~6분). 끝나면 새로고침하세요.</div>';
+  if(jb.kind==="failed")return '<div class="hint" style="margin-top:6px"><span class="err">자동 작업 실패</span> — '+esc(jb.job.text||"")+'</div>'+v2retryBtn(stage,"다시 시도");
+  if(jb.kind==="stale")return '<div class="hint" style="margin-top:6px"><span class="err">작업이 '+V2_JOB_STALE_MIN+'분 넘게 끝나지 않았습니다(멈춘 것으로 보입니다)</span> — 시작 '+v2when(jb.job.at)+'</div>'+v2retryBtn(stage,"다시 시도");
+  if(jb.kind==="idle")return '<div class="hint" style="margin-top:6px"><span class="err">지금 돌고 있는 작업이 없습니다.</span> 아래 버튼을 누르면 AI가 출처에서 사실을 모아 대본을 씁니다.</div>'+v2retryBtn(stage,"대본 자동 작성 시작");
+  if(jb.kind==="manual")return '<div class="hint" style="margin-top:6px"><span class="err">이 단계는 아직 자동으로 만들어지지 않습니다.</span> 지금은 Claude 대화에서 「'+esc(STG_KO[stage].slice(3))+' 만들어」라고 요청해야 시작됩니다(돌고 있는 작업 없음).</div>';
+  return "";
+}
 function v2when(iso){return iso?esc(String(iso).slice(0,16).replace("T"," ")):"";}
 function v2tokbox(){
   if(SERVER)return "";
@@ -2382,7 +2414,7 @@ async function renderV2List(){
   const idx=await v2json(V2P+"/index.json");
   const items=(idx&&Array.isArray(idx.items))?idx.items:[];
   const groups=[["승인 대기 — 확인해 주세요",x=>x.state==="review"],
-                ["작업 중",x=>x.state==="working"||x.state==="revise"],
+                ["제작 중인 편",x=>x.state==="working"||x.state==="revise"],
                 ["완성",x=>x.stage==="done"]];
   let html='<div class="banner" id="msg"></div>';
   html+='<div class="card"><span class="lbl">영상 목록</span>'+
@@ -2393,7 +2425,7 @@ async function renderV2List(){
     html+='<div class="card"><span class="lbl">'+esc(title)+' ('+g.length+')</span>'+
       (g.length?g.map(x=>'<a class="clitem" href="/v/'+encodeURIComponent(x.id)+'">'+
         '<span class="nm">'+esc(x.name_ko||x.id)+'<small><i>'+esc(x.sci||"")+'</i></small></span>'+
-        '<span class="t">'+(x.stage==="done"?"":esc(STG_KO[x.stage]||x.stage)+" · ")+v2badge(x.state)+'</span></a>').join("")
+        '<span class="t">'+(x.stage==="done"?"":esc(STG_KO[x.stage]||x.stage)+" · ")+v2badgeJob(x.state,v2job(x.job,x.stage,x.state))+'</span></a>').join("")
         :'<div class="hint" style="margin-top:0">없음</div>')+'</div>';
   });
   html+=v2tokbox();
@@ -2444,7 +2476,7 @@ function v2stageBody(st,stage){
         :(st.topic&&st.topic.facts||[]).map(f=>'<div class="cfact">· '+esc(f)+'</div>').join(""));
   }
   if(stage==="script"){
-    if(!a.cuts)return '<div class="hint">대본을 작성하고 있습니다. 끝나면 이 칸에 컷별 대사(일본어/한국어)와 나레이션 미리듣기가 나옵니다.</div>';
+    if(!a.cuts)return '<div class="hint">대본이 나오면 이 칸에 컷별 대사(일본어/한국어)·근거 원문·나레이션 미리듣기가 나옵니다.</div>';
     return (a.audio?'<span class="lbl">나레이션 미리듣기 (1.33배)</span><audio controls preload="none" style="width:100%" src="'+v2media(pid,a.audio)+'"></audio>':'')+
       (a.verification?'<div class="hint">'+esc(a.verification)+'</div>':'')+
       v2pendingNote(a)+v2ccBlock(a)+
@@ -2462,13 +2494,13 @@ function v2stageBody(st,stage){
         '</div></div></div>').join("");
   }
   if(stage==="storyboard"){
-    if(!a.sheet)return '<div class="hint">스토리보드 이미지를 만들고 있습니다.</div>';
+    if(!a.sheet)return '<div class="hint">스토리보드 이미지가 나오면 이 칸에 보입니다.</div>';
     return '<span class="lbl">콘티(컷별 시작 이미지)</span><img src="'+v2media(pid,a.sheet)+'" loading="lazy">'+
       ((a.card||[]).length?'<span class="lbl" style="margin-top:14px">생물 카드 · 실사 대조</span><div class="postscroll">'+a.card.map(p=>'<img src="'+v2media(pid,p)+'" loading="lazy">').join("")+'</div>':'')+
       ((a.macro||[]).length?'<span class="lbl" style="margin-top:14px">특징 줌인 확대 이미지</span><div class="postscroll">'+a.macro.map(p=>'<img src="'+v2media(pid,p)+'" loading="lazy">').join("")+'</div>':'');
   }
   if(stage==="video"){
-    if(!a.final)return '<div class="hint">영상을 만들고 있습니다.</div>';
+    if(!a.final)return '<div class="hint">완성본이 나오면 이 칸에 보입니다.</div>';
     const ck=st.checks||{};
     const rows=[["subtitle_font","자막 글꼴",""],["white_edge_px","가장자리 흰 줄","px"],["loudness_lufs","음량","LUFS"],["music","음악 없음",""]]
       .filter(([k])=>ck[k]).map(([k,lab,u])=>'<div class="cfact"><span class="'+(ck[k].ok?"ok":"err")+'">'+(ck[k].ok?"통과":"불통과")+'</span> '+esc(lab)+
@@ -2563,7 +2595,8 @@ function v2factsHTML(c){
   const fs=c.facts||[];
   if(!fs.length)return '<div class="v2fact">근거: '+(c.fact?esc(c.fact)+' (원문 없음)':'없음 — 확인 필요')+'</div>';
   return fs.map(f=>'<div class="v2fact"><b>근거 '+esc(f.id)+'</b> '+esc(f.fact)+
-    ((f.sources||[]).length?' '+f.sources.map((u,i)=>'<a href="'+esc(u)+'" target="_blank">출처'+(i+1)+'</a>').join(" "):'')+'</div>').join("");
+    ((f.sources||[]).length?' '+f.sources.map((u,i)=>'<a href="'+esc(u)+'" target="_blank">출처'+(i+1)+'</a>').join(" "):(f.source_title?' <span style="opacity:.7">('+esc(f.source_title)+')</span>':''))+
+    (f.quote?'<div style="opacity:.65;font-size:11px;margin-top:2px">원문: '+esc(f.quote)+'</div>':'')+'</div>').join("");
 }
 // ── 검증 ① AI 교차 검사 결과 ──
 function v2ccCuts(a){const cc=(a&&a.crosscheck)||{};return new Set((cc.issues||[]).map(x=>x.cut));}
@@ -2589,16 +2622,17 @@ function v2estimate(c,jp){
 }
 function v2stageCard(st,stage){
   const s=(st.stages||{})[stage]||{state:"locked"}, state=s.state, locked=state==="locked";
+  const jb=v2job((st.jobs||{})[stage],stage,state);
   const est=((st.cost||{}).estimate||{})[stage];
   const notes=(s.notes||[]).slice(-3).reverse();
   let h='<div class="card v2stage'+(locked?' v2locked':'')+'" id="stg-'+stage+'">'+
     '<div class="v2head"><span class="v2title">'+esc(STG_KO[stage])+'</span>'+
-    (GATE_KO[stage]?'<span class="v2gate">'+esc(GATE_KO[stage])+'</span>':'')+v2badge(state)+'</div>';
+    (GATE_KO[stage]?'<span class="v2gate">'+esc(GATE_KO[stage])+'</span>':'')+v2badgeJob(state,jb)+'</div>';
   if(locked){
     h+='<div class="hint" style="margin-top:6px">앞 단계를 승인하면 열립니다.'+(est?(' (예상 비용 약 $'+est+')'):'')+'</div></div>';
     return h;
   }
-  h+=v2stageBody(st,stage);
+  h+=v2jobHTML(stage,jb)+v2stageBody(st,stage);
   if(notes.length)h+='<div class="sect">기록</div>'+notes.map(n=>'<div class="cfact">'+v2when(n.at)+' · '+esc(n.text||n.kind)+'</div>').join("");
   if(stage==="upload"){
     const up=((st.artifacts||{}).upload)||{};
@@ -2641,9 +2675,15 @@ async function renderV2Episode(pid){
       if(await v2do("approve",pid,"upload",JSON.stringify(d),b))banner("업로드를 시작했습니다. 2~5분 뒤 새로고침하면 유튜브 링크가 보입니다.","ok");
       return;
     }
+    if(act==="write_script"){
+      if(!confirm("AI가 출처(위키백과 등)에서 사실을 모아 대본을 씁니다. 출처 원문으로 확인된 사실만 쓰고, 검사·나레이션 미리듣기까지 합니다(약 $0.05 · 3~6분)."))return;
+      if(await v2do("write_script",pid,"script","",b))banner("대본 자동 작성을 시작했습니다. 1분 안에 '작업 중'으로 바뀌고, 3~6분 뒤 새로고침하면 대본이 보입니다.","ok");
+      return;
+    }
+    const auto=!!V2_AUTO[stage];
     const msg=act==="approve"?((nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):"")+lab+"을(를) 승인할까요? 다음 단계가 열립니다.")
-             :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다.")
-             :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다.");
+             :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 요청대로 대본을 고쳐 씁니다(약 $0.05 · 3~6분).":" (이 단계는 아직 자동 반영이 없어 기록만 됩니다 — Claude 대화에서 반영을 요청하세요.)"))
+             :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 출처부터 다시 모아 새 대본을 씁니다(약 $0.05 · 3~6분).":" (이 단계는 아직 자동 반영이 없어 기록만 됩니다 — Claude 대화에서 요청하세요.)"));
     if(!confirm(msg))return;
     if(await v2do(act,pid,stage,note,b))setTimeout(()=>renderV2Episode(pid),60000);
   });

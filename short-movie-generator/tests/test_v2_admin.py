@@ -436,3 +436,115 @@ def test_topics_have_photo_and_korean_name():
     assert ready and all(t.get("photo") and t["photo"]["url"].startswith("https://") for t in ready)
     assert all(re.search(r"[가-힣]", t["name_ko"]) for t in ready)
     assert all(t["ko_official"] or t["id"] in admin.KO_GROUP for t in ready)
+
+
+# ── 대본 자동 작성(실사고 2026-09-30: '작업 중'인데 실제로 아무것도 안 돌던 문제) ──────────
+_EN_TXT = ("The testfish (Testus fishus) is a deep-sea fish. It was discovered in 1977 by the submersible Alvin "
+           "near the Galapagos Rift. It lives at depths of 2000 to 3000 metres. Adults reach 30 cm in length. "
+           "It glows blue when disturbed. It feeds on marine snow drifting down from above. " * 2)
+
+
+def _fake_wiki(url):
+    if "en.wikipedia" in url and "Testus" in url:
+        return {"query": {"pages": {"1": {"title": "Testfish", "fullurl": "https://en.wikipedia.org/wiki/Testfish",
+                                         "extract": _EN_TXT, "langlinks": [{"lang": "ja", "*": "テストウオ"}]}}}}
+    if "ja.wikipedia" in url and "%E3%83%86" in url:          # テストウオ
+        return {"query": {"pages": {"2": {"title": "テストウオ", "fullurl": "https://ja.wikipedia.org/wiki/テストウオ",
+                                         "extract": "テストウオは深海魚である。1977年に潜水艇アルビンが発見した。" * 10}}}}
+    return {"query": {"pages": {"-1": {"missing": ""}}}}
+
+
+_FACTS = {"facts": [
+    {"fact_ko": "1977년 잠수정 앨빈이 갈라파고스 열곡 근처에서 발견", "fact_jp": "1977年、潜水艇アルビンがガラパゴス地溝の近くで発見",
+     "quote": "It was discovered in 1977 by the submersible Alvin near the Galapagos Rift.", "src": "S1"},
+    {"fact_ko": "수심 2000~3000m에 산다", "fact_jp": "水深2000〜3000メートルにすむ", "quote": "It lives at depths of 2000 to 3000 metres.", "src": "S1"},
+    {"fact_ko": "다 자라면 30cm", "fact_jp": "成体は30センチ", "quote": "Adults reach 30 cm in length.", "src": "S1"},
+    {"fact_ko": "건드리면 파랗게 빛난다", "fact_jp": "刺激を受けると青く光る", "quote": "It glows blue when disturbed.", "src": "S1"},
+    {"fact_ko": "마린 스노를 먹는다", "fact_jp": "マリンスノーを食べる", "quote": "It feeds on marine snow drifting down from above.", "src": "S1"},
+    {"fact_ko": "지어낸 사실", "fact_jp": "作り話", "quote": "It can live for 500 years.", "src": "S1"},   # 원문에 없음 → 버림
+]}
+_GOOD = [("1977年、潜水艇アルビンが深海で見つけた魚がいます。", "F1"), ("それが、このテストウオです。", "F1"),
+         ("すんでいるのは水深2000メートルより深い海。", "F2"), ("大きさは30センチほどになります。", "F3"),
+         ("刺激を受けると、体が青く光ります。", "F4"), ("食べるのは、上から降ってくるマリンスノー。", "F5"),
+         ("光の届かない世界で、静かに暮らしています。", "F2"), ("今日も暗い海の底で、青い光がまたたきます。", "F4")]
+
+
+def _fake_ai(bad_first=False):
+    calls = {"script": 0}
+    def ask(p):
+        if "science fact extractor" in p:
+            return json.dumps(_FACTS)
+        if "構成作家" in p:
+            calls["script"] += 1
+            cuts = [{"cut": i + 1, "jp": jp, "ko": "한국어 번역 " + str(i + 1), "fact": f, "scene_ko": "장면", "annotation": ""}
+                    for i, (jp, f) in enumerate(_GOOD)]
+            if bad_first and calls["script"] == 1:
+                cuts[3]["jp"] = "大きさは50センチにもなります。"      # 사실에 없는 숫자 → 코드 검사에서 걸려 다시 쓰게
+            return json.dumps({"cuts": cuts})
+        return json.dumps({"issues": []})                    # 교차 검사
+    return ask, calls
+
+
+def test_write_script_real_job_moves_script_to_review(v2):
+    admin.new_pilot("test_fish")
+    ask, calls = _fake_ai(bad_first=True)
+    st = admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    assert states("test_fish")[1] == "review"                 # 실제로 대본이 생겨 '승인 대기'
+    assert st["jobs"]["script"]["status"] == "done"
+    sc = json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))
+    assert len(sc["cuts"]) == 8 and all(c["tts"] and c["sec"] in (4, 6, 8, 10) for c in sc["cuts"])
+    assert sc["subject"]["jp_name"] == "テストウオ"
+    assert len(sc["facts"]) == 5 and sc["generated"]["facts_dropped"] == 1      # 원문에 없는 '500년'은 버림
+    assert all(f["sources"] == ["https://en.wikipedia.org/wiki/Testfish"] for f in sc["facts"])
+    assert calls["script"] == 2                              # 사실에 없는 숫자(50) → 한 번 더 쓰게 함
+    assert "50" not in sc["cuts"][3]["jp"]
+    a = st["artifacts"]["script"]
+    assert len(a["cuts"]) == 8 and a["cuts"][0]["facts"][0]["id"] == "F1" and a["crosscheck"]["issues"] == []
+
+
+def test_write_script_failure_is_not_left_as_working(v2):
+    admin.new_pilot("test_fish")
+    with pytest.raises(SystemExit):
+        admin.write_script("test_fish", ask=lambda p: "{}", get=lambda u: {"query": {"pages": {}}}, tts=False)
+    st = admin.load_status("test_fish")
+    assert st["jobs"]["script"]["status"] == "failed" and "실패" in st["jobs"]["script"]["text"]
+
+
+def test_job_fail_marks_running_job(v2):
+    admin.new_pilot("test_fish")
+    admin.main(["job_start", "test_fish", "script"])
+    assert admin.load_status("test_fish")["jobs"]["script"]["status"] == "running"
+    idx = json.loads((v2 / "pilots" / "index.json").read_text(encoding="utf-8"))
+    assert idx["items"][0]["job"]["status"] == "running"      # 목록 화면도 실제 작업 여부를 안다
+    admin.main(["job_fail", "test_fish", "write_script"])
+    assert admin.load_status("test_fish")["jobs"]["script"]["status"] == "failed"
+
+
+def test_validate_script_rules():
+    facts = [{"id": "F1", "fact": "수심 2000m", "fact_jp": "", "quote": "2000 m"}]
+    ok = [{"cut": i, "jp": "水深2000メートルの海にすんでいます。", "ko": "한국어", "fact": "F1"} for i in range(1, 9)]
+    assert admin.validate_script(ok, facts) == []
+    bad = [dict(c) for c in ok]
+    bad[0]["jp"] = "チャンネル登録してね、水深2000メートル。"
+    bad[1]["fact"] = "F9"
+    bad[2]["jp"] = "水深9000メートルの海にすんでいます。"
+    p = " ".join(admin.validate_script(bad[:7], facts))
+    assert "カット数" in p and "呼びかけ" in p and "F9" in p and "9000" in p
+
+
+def test_script_revise_rewrites_with_same_verified_facts(v2):
+    admin.new_pilot("test_fish")
+    ask, _ = _fake_ai()
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    admin.revise("test_fish", "script", "1번 컷을 더 짧게")
+    seen = {}
+    def ask2(p):
+        if "science fact extractor" in p:
+            raise AssertionError("수정 요청은 사실을 다시 뽑지 않는다")
+        if "構成作家" in p:
+            seen["fb"] = "1번 컷을 더 짧게" in p
+        return ask(p)
+    admin.write_script("test_fish", "1번 컷을 더 짧게", ask=ask2, get=lambda u: 1 / 0, tts=False)
+    sc = json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))
+    assert seen["fb"] and len(sc["facts"]) == 5 and len(sc["previous_scripts"]) == 1
+    assert states("test_fish")[1] == "review"

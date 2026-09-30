@@ -56,6 +56,28 @@ const res = {};
 // 새 영상: 시작할 수 있는 종 카드에 사진 + 한글명(운영자 확정 2026-09-30)
 { const keepEls = els; els = {}; await api.renderV2New(); const nw2 = els.view.innerHTML; els = keepEls;
   res.new_cards_have_photo = (nw2.match(/<img class="cthumb"/g) || []).length >= 10 && /정식 한글명 없음/.test(nw2); }
+// ★'작업 중'은 실제 작업이 돌 때만(실사고 2026-09-30) — 기록 없음 / 진행 중 / 실패 / 멈춤 / 자동 없음 단계
+{ const keepEls = els;
+  const base = { id: "t", name_ko: "시험", sci: "T t", stages: { topic: { state: "approved", notes: [] }, script: { state: "working", notes: [] },
+    storyboard: { state: "locked", notes: [] }, video: { state: "locked", notes: [] }, upload: { state: "locked", notes: [] } }, artifacts: {} };
+  const render = async (st) => { statusOverride = st; els = {}; await api.renderV2Episode("t"); return els.view.innerHTML; };
+  const idle = await render(base);
+  const run = await render({ ...base, jobs: { script: { stage: "script", status: "running", at: new Date().toISOString(), text: "대본 자동 작성 중" } } });
+  const fail = await render({ ...base, jobs: { script: { stage: "script", status: "failed", at: new Date().toISOString(), text: "대본 자동 작성 실패: X" } } });
+  const stale = await render({ ...base, jobs: { script: { stage: "script", status: "running", at: "2026-01-01T00:00:00Z" } } });
+  const sb = await render({ ...base, stages: { ...base.stages, script: { state: "approved", notes: [] }, storyboard: { state: "working", notes: [] } } });
+  res.honest_idle_not_working = !/v2st prog">작업 중/.test(idle) && /시작 안 됨/.test(idle) && /data-act="write_script"/.test(idle) && !/작성하고 있습니다/.test(idle);
+  res.honest_running = /v2st prog">작업 중/.test(run) && /실제로 돌고 있습니다/.test(run) && !/data-act="write_script"/.test(run);
+  res.honest_failed = /v2st fail">실패/.test(fail) && /다시 시도/.test(fail) && /data-act="write_script"/.test(fail);
+  res.honest_stale = /v2st fail">멈춤/.test(stale) && /다시 시도/.test(stale);
+  res.honest_manual_stage = /대화 요청 필요/.test(sb) && !/v2st prog">작업 중/.test(sb) && !/이미지를 만들고 있습니다/.test(sb);
+  // 「다시 시도」 → v2-admin.yml 에 write_script 로 디스패치되는지
+  await render({ ...base, jobs: { script: { stage: "script", status: "failed", at: new Date().toISOString(), text: "X" } } });
+  const wb = (lists['[data-act]'] || []).find(b => b.dataset.act === "write_script");
+  const n0 = dispatched.length; if (wb && wb.onclick) await wb.onclick();
+  const d = dispatched[n0];
+  res.retry_dispatches_write_script = !!(d && d.body.inputs.action === "write_script" && d.body.inputs.pilot === "t");
+  statusOverride = null; els = keepEls; }
 // 아이폰 화면 넘침 방지(2026-09-28 실사고: 긴 URL·일본어가 카드 밖으로 밀려 나감)
 res.mobile_no_overflow = /html\{-webkit-text-size-adjust:100%/.test(html) && /\.v2copytxt\{[^}]*min-width:0[^}]*overflow-wrap:anywhere/.test(html)
   && /@media \(max-width:520px\)\{\.dual\{grid-template-columns:1fr\}\}/.test(html);
@@ -64,7 +86,7 @@ res.nav_two_menus = /<div class="nav" id="nav"><a href="\/" data-p="v2list">영�
 
 await api.renderV2List(); const list = els.view.innerHTML;
 res.list_has_pilot = list.includes("/v/bathynomus_giganteus") && list.includes("대왕구족충");
-res.list_groups = list.includes("승인 대기") && list.includes("작업 중") && list.includes("완성");
+res.list_groups = list.includes("승인 대기") && list.includes("제작 중인 편") && list.includes("완성");
 
 els = {}; await api.renderV2New(); const nw = els.view.innerHTML;
 res.new_lists_ready_topics = (nw.match(/data-new="/g) || []).length;

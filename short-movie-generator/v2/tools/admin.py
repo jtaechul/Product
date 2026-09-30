@@ -16,6 +16,9 @@
   python admin.py redo    <id> <stage> [메모]   # 단계 전체 다시 하기 요청
   python admin.py redo_cut <id> <컷번호> [메모]  # 그 컷만 영상 재생성(유료) → 재조립까지
   python admin.py assemble <id>                 # 완성본 다시 조립 + 자동 검사
+  python admin.py write_script <id> [수정 요청]  # 대본 자동 작성(출처 → 원문 확인된 사실 → 대본 → 검사 → 미리듣기 → 승인 대기)
+  python admin.py job_start <id> <stage> [설명]  # 자동 작업 '진행 중' 기록(워크플로가 긴 작업 전에 먼저 커밋)
+  python admin.py job_fail <id> <action>        # 워크플로가 중간에 죽으면 진행 중 기록을 '실패'로
   python admin.py ready <id> <stage> [메모]      # 작업 결과가 나왔음 → 승인 대기로
   python admin.py edit_line <id> <컷> '<json>'   # 컷 대사 수정(대본만 · 영상은 안 바뀜)
   python admin.py apply_lines <id>              # 수정한 대사를 영상에 반영(나레이션 다시 읽기 + 재조립만)
@@ -252,7 +255,9 @@ def _sync_script_artifacts(st: dict, sc: dict) -> None:
 def facts_for(sc: dict, ids: str) -> list[dict]:
     """컷이 근거로 든 F번호(예: 'F3,F9')의 원문·출처 — 관리자 페이지에서 대사 바로 옆에 보여준다(검증 ②)."""
     by = {f["id"]: f for f in sc.get("facts", [])}
-    return [{"id": i, "fact": by[i]["fact"], "sources": by[i].get("sources", [])}
+    return [{"id": i, "fact": by[i]["fact"], "sources": by[i].get("sources", []),
+             **({"quote": by[i]["quote"]} if by[i].get("quote") else {}),
+             **({"source_title": by[i]["source_title"]} if by[i].get("source_title") else {})}
             for i in re.findall(r"F\d+", ids or "") if i in by]
 
 
@@ -345,7 +350,7 @@ def pick_text_model(names: list[dict], prefs: list[str] = TEXT_MODEL_PREFS) -> s
     return None
 
 
-def _gemini_text(prompt: str) -> str:
+def _gemini_text(prompt: str, temperature: float = 0) -> str:
     import os
     import urllib.request
     global _TEXT_MODEL
@@ -360,7 +365,7 @@ def _gemini_text(prompt: str) -> str:
         if not _TEXT_MODEL:
             raise RuntimeError("사용 가능한 텍스트 모델 없음")
     body = {"contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
+            "generationConfig": {"temperature": temperature, "responseMimeType": "application/json"}}
     req = urllib.request.Request(
         f"https://generativelanguage.googleapis.com/v1beta/models/{_TEXT_MODEL}:generateContent",
         data=json.dumps(body).encode(), headers={"x-goog-api-key": key, "Content-Type": "application/json"})
@@ -906,6 +911,342 @@ def auto_checks(mp4: Path, body_s: float = 0.0, step: float = 0.25) -> dict:
     }
 
 
+# ── ② 대본 자동 작성(운영자 지적 2026-09-30 · 실사고) ──────────────────────────────
+# 실사고: 새 편을 시작하면 대본 단계가 '작업 중'으로 바뀌고 화면엔 "대본을 작성하고 있습니다"가 떴지만, **실제로 대본을
+#   쓰는 자동 작업이 없었다**(대본은 Claude 세션이 손으로 쓰던 시절의 상태값만 남음) → 아무 일도 안 일어나는데 '작업 중'.
+# 고침: 「이 종으로 시작」·대본 「수정 요청」·「다시 하기」가 실제로 아래 작업을 돌린다(v2-admin.yml → write_script).
+#   ① 출처 수집: 위키백과(영어·일본어) 본문 + v1 종 자료 — 주소가 남는 출처만
+#   ② 사실 추출(AI) → **출처 원문 인용이 실제 본문에 그대로 있는 사실만** 채택(F번호) — 날조 차단
+#   ③ 대본(AI, 처음부터 일본어) → 코드 검사(8컷 · 근거 F번호 · 사실에 없는 숫자 금지 · 길이 · 호소 문구 금지) → 불통과면 고쳐 쓰게 재시도
+#   ④ 읽기(히라가나) 자동 → 나레이션 미리듣기(TTS · 약 $0.01) → 컷 길이(짝수 초) 계산
+#   ⑤ AI 교차 검사 → '승인 대기'.  실패하면 '작업 중'으로 두지 않고 **실패 이유 + 다시 시도 버튼**을 남긴다(job 기록).
+WIKI_UA = "shorts-admin/1.0 (v2 script writer; github.com/jtaechul/Product)"
+SCRIPT_CUTS = 8
+SPEECH_CPS = 8.5                                            # 낭독문(히라가나) 글자/초 — 120% 속도 실측(시범편 8.0~9.6)
+SPEECH_MAX_S = 47.0                                         # 나레이션 합계 상한(컷 여유 포함 약 54초가 되게)
+JOB_STALE_MIN = 25                                          # 이보다 오래 '진행 중'이면 멈춘 것으로 본다(페이지 표시)
+_CTA_WORDS = re.compile(r"チャンネル登録|高評価|コメント|フォロー|登録して|구독|댓글|좋아요")
+
+
+def set_job(pid: str, stage: str, status: str, text: str = "", action: str = "") -> dict:
+    """자동 작업 기록 — 페이지는 이 기록이 있을 때만 '진행 중'을 보여 준다(없거나 실패면 사실대로)."""
+    st = load_status(pid)
+    job = {"stage": stage, "status": status, "at": _now(), "action": action}
+    if text:
+        job["text"] = text
+    st.setdefault("jobs", {})[stage] = job
+    if status == "failed":
+        _note(st, stage, "error", text)
+    _save(status_path(pid), st)
+    return st
+
+
+def job_fail(pid: str, action: str, text: str = "") -> None:
+    """워크플로가 도중에 죽었을 때(if: failure()) — 진행 중으로 남은 작업을 '실패'로 바꾼다."""
+    try:
+        st = load_status(pid)
+    except SystemExit:
+        return
+    for stage, job in (st.get("jobs") or {}).items():
+        if job.get("status") == "running":
+            set_job(pid, stage, "failed", text or f"자동 작업이 중간에 멈췄습니다({action}) — 「다시 시도」를 눌러 주세요", action)
+
+
+def _wiki_get(url: str, get=None):
+    import urllib.request
+    if get:
+        return get(url)
+    req = urllib.request.Request(url, headers={"User-Agent": WIKI_UA})
+    for i in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except Exception as e:                               # noqa: BLE001 — 429 등은 잠시 쉬고 재시도
+            if i == 3:
+                raise
+            print(f"[wiki] 재시도 {i + 1}: {e}")
+            time.sleep(3 * (i + 1))
+
+
+def _wiki_article(lang: str, titles: list[str], get=None) -> dict | None:
+    import urllib.parse
+    for t in [x for x in titles if x]:
+        q = urllib.parse.urlencode({"action": "query", "prop": "extracts|langlinks|info", "explaintext": 1,
+                                    "redirects": 1, "lllang": "ja", "inprop": "url", "titles": t, "format": "json"})
+        d = _wiki_get(f"https://{lang}.wikipedia.org/w/api.php?{q}", get)
+        for p in ((d or {}).get("query") or {}).get("pages", {}).values():
+            txt = (p.get("extract") or "").strip()
+            if "missing" in p or len(txt) < 200:
+                continue
+            ja = next((ll.get("*") for ll in p.get("langlinks") or [] if ll.get("lang") == "ja"), None)
+            return {"title": p.get("title", t), "url": p.get("fullurl") or f"https://{lang}.wikipedia.org/wiki/{t}",
+                    "text": txt[:14000], "ja_title": ja}
+    return None
+
+
+def gather_sources(topic: dict, sp: dict | None = None, get=None) -> tuple[list[dict], str | None]:
+    """출처 문서 목록([{id,url,title,text}])과 일본어 이름(일본어 위키 제목 · 없으면 None)."""
+    sci = topic.get("sci", "")
+    genus = sci.split()[0] if " " in sci else ""
+    docs, ja_name = [], None
+    def safe(lang, titles):                                  # 한쪽 위키가 막혀도(429 등) 다른 출처로 계속
+        try:
+            return _wiki_article(lang, titles, get)
+        except Exception as e:                               # noqa: BLE001
+            print(f"[wiki] {lang} 실패: {e}")
+            return None
+    en = safe("en", [sci, topic.get("name_en", ""), genus])
+    if en:
+        docs.append({"url": en["url"], "title": "Wikipedia(en) " + en["title"], "text": en["text"]})
+    ja = safe("ja", [en.get("ja_title") if en else None, sci])
+    if ja:
+        docs.append({"url": ja["url"], "title": "Wikipedia(ja) " + ja["title"], "text": ja["text"]})
+        ja_name = re.sub(r"\s*[(（].*$", "", ja["title"]).strip() or None
+    sp = sp or {}
+    base = [f for f in sp.get("fun_facts") or [] if f]
+    for k, lab in (("depth_range_m", "서식 수심(m)"), ("distribution", "분포"), ("habitat", "서식지")):
+        if sp.get(k):
+            base.append(f"{lab}: {sp[k]}")
+    if sp.get("diet"):
+        base.append("먹이: " + ", ".join(sp["diet"]))
+    if base:                                                 # v1 에서 모아 둔 종 자료(출처 이름만 있음 — 주소 없음)
+        docs.append({"url": "", "title": "v1 종 자료(" + " · ".join(sp.get("sources") or ["출처 이름 없음"]) + ")",
+                     "text": "\n".join(base)})
+    for i, d in enumerate(docs, 1):
+        d["id"] = f"S{i}"
+    return docs, ja_name
+
+
+_FACT_PROMPT = """You are a strict science fact extractor. From the SOURCE DOCUMENTS below ONLY, extract up to 14 facts about
+the deep-sea animal {sci} ({name_en}) that would make a gripping 50-second story. Prefer: discovery events (year, place,
+people, expedition), records, size with units, depth, how it moves/eats/defends, surprising traits, famous incidents.
+Rules: every fact MUST be supported by a verbatim quote copied EXACTLY from one document (same characters, max 220 chars,
+no ellipsis, no paraphrase). If a document talks about a whole genus/family, say so in the fact (scope!). Never add knowledge
+that is not in the documents.
+Return JSON only: {{"facts":[{{"fact_ko":"한국어 한 문장","fact_jp":"日本語で一文","quote":"exact quote","src":"S1"}}]}}
+
+# SOURCE DOCUMENTS
+{docs}
+"""
+
+_SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作家です。深海生物「{name}」のYouTubeショート(縦型・約54秒)の
+ナレーション台本を、最初から日本語で書いてください(翻訳調は禁止)。映像は手作りのミニチュア・ジオラマで再現します。
+# 厳守ルール
+- ちょうど{n}カット。1カット=1〜2文、日本語で18〜44文字。全体で300文字以内。
+- 下の「事実リスト」にあることだけを書く。リストにない数字・年・地名・人名・断定・誇張は書かない。
+  各カットに根拠の事実番号を付ける(例 "F2,F5")。出典どうしで数値が違えば広い方を断定しない。
+- 数字は何の数字か分かるように書く(「水深5000メートル」「体長25センチ」)。数字は算用数字で。
+- 1カット目: 思わず手が止まる場面や問いから始める。発見の年・場所・人の出来事が事実リストにあれば、そこから物語として始める。
+- 前提から親切に。専門用語はやさしく言い換える。
+- 同じ単語・言い回しを何度も繰り返さない。文末も単調にしない。
+- {n}カット目: 余韻のある締め(画面は暗闇に消えていく)。「チャンネル登録」「コメント」などの呼びかけは書かない(共通エンディングが別にある)。
+- 呼び名: {name_rule}
+{feedback}
+# 出力(JSONのみ)
+{{"cuts":[{{"cut":1,"jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
+"scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄)","annotation":"画面の赤い注釈(短く・数字は事実どおり・なければ空)"}}]}}
+
+# 事実リスト
+{facts}
+"""
+
+
+def _norm(s: str) -> str:
+    import unicodedata
+    s = unicodedata.normalize("NFKC", s or "").lower()
+    return re.sub(r"[\s​\"'“”‘’「」『』]", "", s)
+
+
+def ground_facts(raw: list[dict], docs: list[dict]) -> tuple[list[dict], int]:
+    """AI가 뽑은 사실 중 **인용문이 실제 출처 본문에 그대로 있는 것만** F번호를 붙여 채택. (채택 목록, 버린 수)"""
+    by = {d["id"]: d for d in docs}
+    out, dropped, seen = [], 0, set()
+    for f in raw or []:
+        d = by.get(str(f.get("src", "")).strip())
+        q = str(f.get("quote", "")).strip()
+        if not d or len(_norm(q)) < 8 or "..." in q or "…" in q or _norm(q) not in _norm(d["text"]) or q in seen:
+            dropped += 1
+            continue
+        seen.add(q)
+        out.append({"id": f"F{len(out) + 1}", "fact": str(f.get("fact_ko", "")).strip(), "fact_jp": str(f.get("fact_jp", "")).strip(),
+                    "quote": q, "sources": [d["url"]] if d["url"] else [], "source_title": d["title"]})
+    return out, dropped
+
+
+def estimate_speech(tts: str) -> float:
+    return round(len(re.sub(r"\s", "", tts or "")) / SPEECH_CPS, 2)
+
+
+def _nums(s: str) -> set[str]:
+    return set(re.findall(r"\d+(?:\.\d+)?", (s or "").replace(",", "").replace("，", "")))
+
+
+def validate_script(cuts: list[dict], facts: list[dict]) -> list[str]:
+    """대본 코드 검사 — 불통과 이유 목록(비면 통과). AI에게 그대로 돌려줘 고쳐 쓰게 한다."""
+    by = {f["id"]: f for f in facts}
+    probs = []
+    if len(cuts) != SCRIPT_CUTS:
+        probs.append(f"カット数が{len(cuts)}です。ちょうど{SCRIPT_CUTS}カットにしてください。")
+    total = 0
+    for i, c in enumerate(cuts, 1):
+        jp, ko = str(c.get("jp", "")), str(c.get("ko", ""))
+        ids = re.findall(r"F\d+", str(c.get("fact", "")))
+        if not ids or any(x not in by for x in ids):
+            probs.append(f"カット{i}: 根拠の事実番号がない/存在しない番号です({c.get('fact')})。")
+        if re.search(r"[가-힣]", jp) or not re.search(r"[ぁ-んァ-ン一-龥]", jp):
+            probs.append(f"カット{i}: 日本語の台詞になっていません。")
+        if not re.search(r"[가-힣]", ko):
+            probs.append(f"カット{i}: 韓国語訳(ko)がありません。")
+        if not 12 <= len(jp) <= 50:
+            probs.append(f"カット{i}: {len(jp)}文字です。18〜44文字にしてください。")
+        if _CTA_WORDS.search(jp):
+            probs.append(f"カット{i}: 呼びかけ(登録・コメント等)は書かないでください。")
+        allowed = set().union(*[_nums(by[x]["fact"] + " " + by[x].get("fact_jp", "") + " " + by[x]["quote"]) for x in ids if x in by]) if ids else set()
+        bad = sorted((_nums(jp) | _nums(str(c.get("annotation", "")))) - allowed)
+        if bad:
+            probs.append(f"カット{i}: 根拠の事実にない数字 {', '.join(bad)} があります。事実どおりにするか削ってください。")
+        total += estimate_speech(auto_reading(jp)) if jp else 0
+    if total > SPEECH_MAX_S:
+        probs.append(f"全体が長すぎます(約{total:.0f}秒)。合計{SPEECH_MAX_S:.0f}秒以内(約300文字以内)に短くしてください。")
+    return probs
+
+
+def _json_obj(txt: str) -> dict:
+    m = re.search(r"\{.*\}", txt or "", re.S)
+    if not m:
+        raise ValueError("AI 응답에 JSON 없음")
+    return json.loads(m.group(0))
+
+
+def _species_data(topic: dict) -> dict:
+    try:
+        sys.path.insert(0, str(ROOT))
+        from src.categories.deep_sea import data             # noqa: E402
+        return data.SPECIES.get(topic.get("key", ""), {}) or {}
+    except Exception:                                        # noqa: BLE001
+        return {}
+
+
+def first_timing(cuts: list[dict], tps: list[dict] | None, lead: float = 0.15) -> tuple[list[dict], list[str]]:
+    """새 대본의 컷 길이 = (앞 여백 + 나레이션 + 여유 0.6초)를 짝수 초(4/6/8/10)로 올림. tps 가 없으면 글자 수로 추정."""
+    timing, probs, i = [], [], 0
+    for c in cuts:
+        n = len(_chunks(c["jp"]))
+        if tps:
+            seg = tps[i:i + n]
+            nxt = tps[i + n]["start"] if i + n < len(tps) else (seg[-1]["end"] or seg[-1]["start"])
+            a0, a1 = seg[0]["start"], nxt
+            speech = round(a1 - a0, 2)
+            loc = [{"jp_seg": None, "start": round(t["start"] - a0 + lead, 3), "end": round((t["end"] or a1) - a0 + lead, 3)} for t in seg]
+        else:
+            a0 = a1 = None
+            speech, loc = estimate_speech(c["tts"]), []
+        need = lead + speech + MARGIN_S
+        if need > 10:
+            probs.append(f"{c['cut']}번 컷: 나레이션 {speech:.1f}초 — 한 컷(최대 10초)에 너무 깁니다. 대사를 줄이세요")
+        sec = _even_up(min(need, 10))
+        timing.append({"cut": c["cut"], "sec": sec, "audio_from": a0, "audio_to": a1, "speech_s": speech, "lead": lead,
+                       "local_tps": loc})
+        i += n
+    return timing, probs
+
+
+def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = True) -> dict:
+    """대본 자동 작성(①~⑤). ask/get: 테스트용 대체(AI 응답·웹 요청). tts=False 면 미리듣기 없이 글자 수로 길이 추정."""
+    st = load_status(pid)
+    topic = st.get("topic") or {}
+    ask_facts = ask or _gemini_text                          # 사실 추출은 온도 0(그대로 옮기기)
+    ask_script = ask or (lambda p: _gemini_text(p, temperature=0.7))   # 대본은 약간의 문장력
+    set_job(pid, "script", "running", "대본 자동 작성 중 — 출처 수집 → 사실 추출 → 대본 → 검증 → 미리듣기", "write_script")
+    try:
+        old = _load(_script_path(pid)) or {}
+        keep_facts = bool(feedback) and old.get("facts") and old.get("generated")
+        if keep_facts:                                       # 수정 요청: 이미 검증한 사실은 그대로, 대본만 고쳐 쓴다
+            facts, docs, ja_name = old["facts"], old.get("source_docs", []), (old.get("subject") or {}).get("jp_name")
+            dropped = 0
+        else:
+            docs, ja_name = gather_sources(topic, _species_data(topic), get)
+            if not docs:
+                raise RuntimeError("출처 문서를 하나도 찾지 못했습니다(위키백과·종 자료 없음)")
+            dtxt = "\n\n".join(f"[{d['id']}] {d['title']} {d['url']}\n{d['text']}" for d in docs)
+            raw = _json_obj(ask_facts(_FACT_PROMPT.format(sci=topic.get("sci", ""), name_en=topic.get("name_en", ""), docs=dtxt)))
+            facts, dropped = ground_facts(raw.get("facts") or [], docs)
+            if len(facts) < 4:
+                raise RuntimeError(f"출처 원문으로 확인된 사실이 {len(facts)}개뿐입니다(버린 것 {dropped}개) — 대본을 쓸 수 없습니다")
+        name = ja_name or topic.get("name_en") or topic.get("sci", "")
+        name_rule = (f"和名「{ja_name}」を使う。" if ja_name else
+                     f"和名がないので、事実リストにある呼び名(英名「{topic.get('name_en', '')}」の直訳など)か「この生き物」と呼ぶ。和名を作らない。")
+        ftxt = "\n".join(f"{f['id']}: {f.get('fact_jp') or f['fact']}(出典原文: {f.get('quote', '')})" for f in facts)
+        fb, cuts, probs = "", [], []
+        if feedback:
+            prev = "\n".join(f"カット{c['cut']}: {c['jp']}" for c in old.get("cuts", []) if c.get("jp"))
+            fb = f"# 運営者の修正依頼(必ず反映)\n{feedback}\n# 前の台本\n{prev}\n"
+        for attempt in range(3):
+            cuts = (_json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt)))
+                    .get("cuts") or [])
+            probs = validate_script(cuts, facts)
+            if not probs:
+                break
+            fb = (fb + "\n" if feedback else "") + "# 前回の台本の問題点(必ず直す)\n" + "\n".join("- " + p for p in probs) + "\n"
+        if probs:
+            raise RuntimeError("대본 검사를 3번 모두 통과하지 못했습니다: " + " / ".join(probs[:4]))
+        out = []
+        for i, c in enumerate(cuts, 1):
+            jp = str(c["jp"]).strip()
+            out.append({"cut": i, "jp": jp, "ko": str(c.get("ko", "")).strip(), "tts": auto_reading(jp),
+                        "fact": ",".join(re.findall(r"F\d+", str(c.get("fact", "")))),
+                        "scene_ko": str(c.get("scene_ko", "")).strip(), "annotation": str(c.get("annotation", "")).strip()})
+        sc = {"episode": pid, "subject": {"scientific_name": topic.get("sci", ""), "jp_name": ja_name or "",
+                                          "ko_name": st.get("name_ko", "")},
+              "facts": facts, "source_docs": [{k: d[k] for k in ("id", "url", "title")} for d in docs],
+              "cuts": out, "timing_rule": "컷 길이 = (앞 여백 0.15초 + 나레이션 + 여유 0.6초)를 짝수 초로 올림",
+              "generated": {"at": _now(), "model": _TEXT_MODEL or "test", "feedback": feedback, "facts_dropped": dropped}}
+        if old.get("cuts"):                                 # 이전 대본은 지우지 않고 보관
+            sc["previous_scripts"] = (old.get("previous_scripts") or []) + [
+                {"at": _now(), "script": {k: v for k, v in old.items() if k != "previous_scripts"}}]
+        # ④ 나레이션 미리듣기 + 컷 길이
+        tps, audio, tts_err = None, None, ""
+        if tts:
+            rid = f"r{time.strftime('%m%d%H%M', time.gmtime())}_script_tts"
+            req = {"id": rid, "kind": "gen_tts", "purpose": "대본 자동 작성 — 나레이션 미리듣기 + 컷 길이 계산",
+                   "items": [{"name": "body", "jp": "".join(c["jp"] for c in out), "segments": [s for c in out for s in _chunks(c["tts"])]}]}
+            rp = PILOTS / pid / "requests" / f"{rid}.json"
+            _save(rp, req)
+            r = subprocess.run([sys.executable, str(V2 / "tools" / "run_request.py"), str(rp)], cwd=str(ROOT))
+            tpf = PILOTS / pid / "out" / rid / "body_timepoints.json"
+            if r.returncode == 0 and tpf.exists():
+                tps, audio = _load(tpf), f"out/{rid}/body.wav"
+            else:
+                tts_err = "나레이션 미리듣기 실패(TTS) — 컷 길이는 글자 수로 추정"
+        timing, tprobs = first_timing(out, tps)
+        sc["timing_v5"] = timing
+        sc["total_sec"] = sum(t["sec"] for t in timing)
+        for c, t in zip(out, timing):
+            c["sec"], c["speech_s"] = t["sec"], t["speech_s"]
+        _save(_script_path(pid), sc)
+        st = load_status(pid)
+        _sync_script_artifacts(st, sc)
+        a = st["artifacts"]["script"]
+        a.pop("crosscheck", None)
+        if audio:
+            a["audio"] = audio
+        a["verification"] = (f"자동 작성 · 출처 {len(docs)}곳 · 원문 인용이 확인된 사실 {len(facts)}개(확인 안 된 {dropped}개 버림) · "
+                             f"코드 검사 통과 · 예상 길이 {sc['total_sec']}초" + (f" · {tts_err}" if tts_err else "")
+                             + (" · " + " / ".join(tprobs) if tprobs else ""))
+        st.setdefault("artifacts", {})["topic"] = {"facts": facts}
+        st.setdefault("cost", {}).setdefault("spent", []).append({"at": _now(), "what": "대본 자동 작성(AI+나레이션)", "usd": 0.05})
+        _note(st, "script", "auto", "대본 자동 작성 완료" + (" (수정 요청 반영)" if feedback else ""))
+        _save(status_path(pid), st)
+        crosscheck(pid, ask=ask)                            # ⑤ 교차 검사(실패해도 멈추지 않음)
+        st = load_status(pid)
+        st["stages"]["script"]["state"] = "review"
+        _save(status_path(pid), st)
+        return set_job(pid, "script", "done", "대본 자동 작성 완료 — 승인 대기", "write_script")
+    except Exception as e:                                   # noqa: BLE001 — '작업 중'으로 남기지 않는다
+        set_job(pid, "script", "failed", f"대본 자동 작성 실패: {str(e)[:220]} — 「다시 시도」를 눌러 주세요", "write_script")
+        raise SystemExit(f"대본 자동 작성 실패: {e}")
+
+
 # ── 목록 파일 ─────────────────────────────────────────────────────────────
 def build_index() -> dict:
     items = []
@@ -916,7 +1257,7 @@ def build_index() -> dict:
         cur = next((s for s in STAGES if st["stages"][s]["state"] != "approved"), "done")
         items.append({"id": st["id"], "name_ko": st.get("name_ko", ""), "sci": st.get("sci", ""),
                       "stage": cur, "state": st["stages"][cur]["state"] if cur != "done" else "approved",
-                      "created": st.get("created", "")})
+                      "job": (st.get("jobs") or {}).get(cur), "created": st.get("created", "")})
     idx = {"updated": _now(), "items": items}
     _save(PILOTS / "index.json", idx)
     return idx
@@ -1033,6 +1374,12 @@ def main(argv: list[str]) -> int:
         revise(a[0], a[1], memo(2) or "다시 하기 요청", kind=cmd)
     elif cmd == "redo_cut":
         redo_cut(a[0], int(a[1]), memo(2))
+    elif cmd == "write_script":                              # 대본 자동 작성(메모가 있으면 '수정 요청'으로 반영)
+        write_script(a[0], memo(1))
+    elif cmd == "job_start":                                 # 워크플로가 긴 작업 전에 '진행 중'을 먼저 커밋
+        set_job(a[0], a[1], "running", memo(2) or "자동 작업 시작", "job_start")
+    elif cmd == "job_fail":                                  # 워크플로가 도중에 죽었을 때
+        job_fail(a[0], a[1] if len(a) > 1 else "")
     elif cmd == "ready":                                     # 작업(대본·이미지 등)이 끝나 결과가 나왔을 때
         st = load_status(a[0])
         if st["stages"][a[1]]["state"] == "locked":
