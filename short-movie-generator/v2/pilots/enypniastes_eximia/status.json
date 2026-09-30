@@ -42,7 +42,7 @@
       "approved_at": "2026-09-30T12:59:02Z"
     },
     "storyboard": {
-      "state": "review",
+      "state": "approved",
       "notes": [
         {
           "at": "2026-09-30T13:56:17Z",
@@ -53,11 +53,17 @@
           "at": "2026-09-30T14:31:34Z",
           "kind": "auto",
           "text": "스토리보드 자동 작성 완료 — 승인 대기"
+        },
+        {
+          "at": "2026-09-30T14:41:00Z",
+          "kind": "approve",
+          "text": ""
         }
-      ]
+      ],
+      "approved_at": "2026-09-30T14:41:00Z"
     },
     "video": {
-      "state": "locked",
+      "state": "working",
       "notes": []
     },
     "upload": {
@@ -603,6 +609,13 @@
       "at": "2026-09-30T14:31:34Z",
       "action": "write_storyboard",
       "text": "스토리보드 자동 작성 완료 — 승인 대기"
+    },
+    "video": {
+      "stage": "video",
+      "status": "running",
+      "at": "2026-09-30T14:41:00Z",
+      "action": "job_start",
+      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
     }
   },
   "cost": {
