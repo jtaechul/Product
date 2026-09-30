@@ -91,13 +91,42 @@ def _fit_font(text: str, size: int, max_w: int) -> ImageFont.FreeTypeFont:
     return _font(size)
 
 
+def _wrap_lines(text: str, f: ImageFont.FreeTypeFont, max_w: int) -> list[str]:
+    """「、」에서 먼저 나누고(쉼표는 화면에 안 찍음), 그래도 넘치는 덩어리는 **글자 수를 고르게** 나눈다
+    (앞줄만 꽉 채우고 뒷줄에 한두 글자가 남는 모양 방지)."""
+    import math
+    out = []
+    for part in [x.strip() for x in text.split("、") if x.strip()]:
+        n = len(part)
+        k = 1
+        while k < 4 and max(f.getlength(part[i * math.ceil(n / k):(i + 1) * math.ceil(n / k)]) for i in range(k)) > max_w:
+            k += 1
+        step = math.ceil(n / k)
+        out += [part[i * step:(i + 1) * step] for i in range(k) if part[i * step:(i + 1) * step]]
+    return out
+
+
+HOOK_FONT = 128                # 후킹 글자 크기(운영자 지시 2026-09-30: 예전 64 → 2배 · 화면을 크게 덮게)
+
+
 def hook_png(question: str, out: Path) -> Path:
-    """후킹 질문 — 화면 가운데 위쪽, **빨간 글자만**(칩·자막 없음 · 운영자 확정). 어두운 테두리로 가독성."""
+    """후킹 질문 — 화면 가운데 위쪽을 크게 덮는 **빨간 글자만**(칩·자막 없음 · 운영자 확정).
+    글자 128px, 「、」에서 줄을 나눠 2~3줄. 어두운 테두리로 가독성."""
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    f = _fit_font(question, 64, W - 80)
-    tw = f.getlength(question)
-    ImageDraw.Draw(im).text((int((W - tw) / 2), int(H * 0.36)), question, font=f, fill=RED + (255,),
-                            stroke_width=5, stroke_fill=(0, 0, 0, 220))
+    size, max_w = HOOK_FONT, W - 60
+    while True:
+        f = _font(size)
+        lines = _wrap_lines(question, f, max_w)
+        if (len(lines) <= 3 and all(f.getlength(x) <= max_w for x in lines)) or size <= 72:
+            break
+        size -= 4
+    a, d = f.getmetrics()
+    lh = int((a + d) * 1.08)
+    y = int(H * 0.38 - lh * len(lines) / 2)
+    dr = ImageDraw.Draw(im)
+    for ln in lines:
+        dr.text((int((W - f.getlength(ln)) / 2), y), ln, font=f, fill=RED + (255,), stroke_width=8, stroke_fill=(0, 0, 0, 230))
+        y += lh
     im.save(out)
     return out
 
