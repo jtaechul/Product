@@ -43,6 +43,29 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
 
+      # ★실사고 2026-09-30: 버튼(11:14:58) → '진행 중' 기록(11:16:08)까지 70초 동안 페이지가 "돌고 있는 작업이 없습니다"를 보였다
+      #   (ffmpeg·pip 설치를 먼저 하느라). → 설치 **전에** 상태를 바꾸고 '진행 중'을 커밋한다(표준 라이브러리만 쓰는 명령이라 설치 불필요).
+      - name: 진행 중 먼저 기록
+        env:
+          IN_ACTION: ${{ inputs.action }}
+          IN_PILOT: ${{ inputs.pilot }}
+          IN_STAGE: ${{ inputs.stage }}
+          IN_NOTE: ${{ inputs.note }}
+        run: |
+          set -e
+          SCRIPT_JOB=""
+          case "$IN_ACTION" in
+            new)          python3 v2/tools/admin.py new "$IN_PILOT"; SCRIPT_JOB=1 ;;
+            write_script) SCRIPT_JOB=1 ;;
+            revise|redo)  if [ "$IN_STAGE" = "script" ]; then
+                            python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE"; SCRIPT_JOB=1
+                          fi ;;
+          esac
+          if [ -n "$SCRIPT_JOB" ]; then
+            python3 v2/tools/admin.py job_start "$IN_PILOT" script "대본 자동 작성 중 — 준비 → 출처 수집 → 사실 추출 → 대본 → 검증 → 미리듣기"
+            bash v2/tools/ci_commit.sh "chore(v2): 대본 자동 작성 시작 $IN_PILOT [skip ci]"
+          fi
+
       - name: 준비
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
@@ -61,33 +84,16 @@ jobs:
           IN_NOTE: ${{ inputs.note }}
         run: |
           set -e
-          # ★긴 작업(대본 자동 작성) 전에 '진행 중' 기록을 먼저 커밋한다 → 페이지는 실제로 돌 때만 '작업 중'을 보여 준다
-          #   (실사고 2026-09-30: 새 편 시작 후 대본 단계가 '작업 중'인데 실제로 대본을 쓰는 작업이 없었음)
-          commit_push() {
-            git add v2/pilots v2/topics.json v2/topic_media.json || true
-            if git diff --cached --quiet; then return 0; fi
-            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "$1"
-            for i in 1 2 3 4 5; do
-              git pull -q --rebase origin "$GITHUB_REF_NAME" && git push -q origin HEAD:"$GITHUB_REF_NAME" && return 0
-              sleep $((i*3))
-            done
-            return 1
-          }
-          write_script() {                       # $1 = 수정 요청 메모(없으면 새로 쓰기)
-            python3 v2/tools/admin.py job_start "$IN_PILOT" script "대본 자동 작성 중 — 출처 수집 → 사실 추출 → 대본 → 검증 → 미리듣기"
-            commit_push "chore(v2): 대본 자동 작성 시작 $IN_PILOT [skip ci]"
-            python3 v2/tools/admin.py write_script "$IN_PILOT" "$1"
-          }
           case "$IN_ACTION" in
-            new)                        python3 v2/tools/admin.py new "$IN_PILOT"; write_script "" ;;
-            write_script)               write_script "$IN_NOTE" ;;
+            new)                        python3 v2/tools/admin.py write_script "$IN_PILOT" ;;      # 새 편 생성·진행 중 기록은 앞 단계에서
+            write_script)               python3 v2/tools/admin.py write_script "$IN_PILOT" "$IN_NOTE" ;;
             assemble|apply_lines|sync|crosscheck|upload_meta) python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" ;;
             topics)                     python3 v2/tools/admin.py topics ;;
             revise|redo)
-                                        python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE"
-                                        if [ "$IN_STAGE" = "script" ]; then     # 대본 수정 요청·다시 하기 = 실제로 다시 쓴다
-                                          if [ "$IN_ACTION" = "revise" ]; then write_script "$IN_NOTE"; else write_script ""; fi
-                                        fi ;;
+                                        if [ "$IN_STAGE" = "script" ]; then     # 대본 수정 요청·다시 하기 = 실제로 다시 쓴다(상태는 앞 단계에서 바꿈)
+                                          if [ "$IN_ACTION" = "revise" ]; then python3 v2/tools/admin.py write_script "$IN_PILOT" "$IN_NOTE"
+                                          else python3 v2/tools/admin.py write_script "$IN_PILOT"; fi
+                                        else python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE"; fi ;;
             approve|ready|redo_cut|edit_line|recut_plan|recut_approve|recut_cancel|save_meta)
                                         python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
             *) echo "모르는 동작: $IN_ACTION"; exit 1 ;;
