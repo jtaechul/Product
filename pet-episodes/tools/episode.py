@@ -1464,7 +1464,9 @@ def step_assemble(ep, epdir, work, log):
     _ff([*ins, "-filter_complex", ";".join(fc), "-map", f"[{vlast}]", "-map", f"[{alast}]",
          "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-r", str(FPS),
          "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(final)])
-    if SIGNATURE_BGM.exists():                            # 시그니처 배경음악: 작게 깔고, 목소리가 나오면 자동으로 더 줄인다
+    # 배경음악은 영상에 넣지 않는다(사용자 지시 2026-09: 음악이 섞이면 인스타 '릴스 번역'이 막힘 → 음악은 인스타 앱에서 따로 얹는다).
+    # 예전처럼 섞으려면 요청에 "bgm_mix": true (ep["_bgm_mix"]).
+    if SIGNATURE_BGM.exists() and ep.get("_bgm_mix"):     # 시그니처 배경음악: 작게 깔고, 목소리가 나오면 자동으로 더 줄인다
         T = _dur(final)
         mixed = work / "final_bgm.mp4"
         _ff(["-i", str(final), "-stream_loop", "-1", "-i", str(SIGNATURE_BGM), "-filter_complex",
@@ -1492,6 +1494,7 @@ def main(path: str) -> int:
     epdir = rp.parent.parent
     epf = epdir / "episode.json"
     ep = json.loads(epf.read_text(encoding="utf-8")) if epf.exists() else {"clips": []}
+    ep["_bgm_mix"] = bool(req.get("bgm_mix"))                # 기본: 배경음악 없이(릴스 번역용)
     work = epdir / "work"
     work.mkdir(exist_ok=True)
     logp = work / "log.json"
