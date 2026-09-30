@@ -64,7 +64,7 @@
       "ok": true,
       "model": "gemini-2.5-pro-preview-tts",
       "voice": "Enceladus",
-      "sec": 5.93
+      "sec": 7.49
     },
     "c04": {
       "ok": true,
@@ -192,7 +192,7 @@
   "assemble": {
     "bgm": "signature.mp3",
     "ok": true,
-    "sec": 61.0,
+    "sec": 62.54,
     "clips": 8,
     "segments": [
       {
@@ -241,21 +241,21 @@
       },
       {
         "clip": "c03",
-        "len": 7.13,
-        "voice": 5.93,
-        "slow": 1.184,
+        "len": 8.69,
+        "voice": 7.49,
+        "slow": 1.3,
         "sents": [
           [
             0.45,
-            1.34
+            1.26
           ],
           [
-            2.16,
-            3.62
+            2.45,
+            4.94
           ],
           [
-            4.8,
-            6.38
+            6.04,
+            7.94
           ]
         ]
       },
@@ -333,8 +333,8 @@
     }
   },
   "last_request": {
-    "file": "04_food_cuts.json",
-    "ran_at": "2026-09-30T09:59:54Z",
+    "file": "05_c03_line.json",
+    "ran_at": "2026-09-30T10:03:22Z",
     "ok": true
   }
 }
