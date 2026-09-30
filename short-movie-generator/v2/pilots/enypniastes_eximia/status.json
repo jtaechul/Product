@@ -64,7 +64,18 @@
     },
     "video": {
       "state": "working",
-      "notes": []
+      "notes": [
+        {
+          "at": "2026-09-30T14:50:01Z",
+          "kind": "auto",
+          "text": "영상 컷 준비 완료 — 조립 + 자동 검사"
+        },
+        {
+          "at": "2026-09-30T14:50:17Z",
+          "kind": "error",
+          "text": "영상 자동 제작 실패: Command '['ffmpeg', '-y', '-loglevel', 'error', '-loop', '1', '-i', '/home/runner/work/Product/Product/short-movie-generator/v2/pilots/enypniastes_eximia/out/19_eye_macro/eye_macro.jpg', '-vf', \"scale=1440:2560:force_ori — 「다시 시도」를 눌러 주세요"
+        }
+      ]
     },
     "upload": {
       "state": "locked",
@@ -329,7 +340,7 @@
         }
       ],
       "pending_lines": [],
-      "audio": "out/r09301117_script_tts/body.wav",
+      "audio": "out/r0930144517_tts/body.wav",
       "verification": "자동 작성 · 출처 2곳 · 원문 인용이 확인된 사실 14개(확인 안 된 0개 버림) · 코드 검사 통과 · 예상 길이 62초",
       "crosscheck": {
         "at": "2026-09-30T11:17:42Z",
@@ -354,7 +365,8 @@
         "question_ko": "빛나는 피부를 던져 버리는 이 생물은?",
         "answer_jp": "首なしチキンモンスター",
         "answer_ko": "머리없는닭괴물"
-      }
+      },
+      "tts_id": "r0930144517_tts"
     },
     "topic": {
       "facts": [
@@ -592,6 +604,57 @@
           "desc": "Rear view, miniature diorama. The creature is dim and receding into deep, pitch-black darkness. Through its highly translucent skin, a distinct internal tubular intestine filled with dark food is clearly visible. Soft, fading practical light, tilt-shift with focus falling off. The entire upper quarter is a pure, uncluttered black void."
         }
       ]
+    },
+    "video": {
+      "clips_request": "r0930144548_clips",
+      "clips": [
+        {
+          "cut": 1,
+          "file": "out/r0930144548_clips/c01.mp4",
+          "sec": 6
+        },
+        {
+          "cut": 2,
+          "file": "out/r0930144548_clips/c02.mp4",
+          "sec": 8
+        },
+        {
+          "cut": 3,
+          "file": "out/r0930144548_clips/c03.mp4",
+          "sec": 8
+        },
+        {
+          "cut": 4,
+          "file": "out/r0930144548_clips/c04.mp4",
+          "sec": 8
+        },
+        {
+          "cut": 5,
+          "file": "out/r0930144548_clips/c05.mp4",
+          "sec": 8
+        },
+        {
+          "cut": 6,
+          "file": "out/r0930144548_clips/c06.mp4",
+          "sec": 8
+        },
+        {
+          "cut": 7,
+          "file": "out/r0930144548_clips/c07.mp4",
+          "sec": 8
+        },
+        {
+          "cut": 8,
+          "file": "out/r0930144548_clips/c08.mp4",
+          "sec": 8
+        }
+      ],
+      "final": "out/r0930145001_final/final.mp4",
+      "assemble": {
+        "clips_id": "r0930144548_clips",
+        "tts_id": "r0930144517_tts",
+        "ending": ""
+      }
     }
   },
   "checks": {},
@@ -612,10 +675,10 @@
     },
     "video": {
       "stage": "video",
-      "status": "running",
-      "at": "2026-09-30T14:41:00Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "failed",
+      "at": "2026-09-30T14:50:17Z",
+      "action": "make_video",
+      "text": "영상 자동 제작 실패: Command '['ffmpeg', '-y', '-loglevel', 'error', '-loop', '1', '-i', '/home/runner/work/Product/Product/short-movie-generator/v2/pilots/enypniastes_eximia/out/19_eye_macro/eye_macro.jpg', '-vf', \"scale=1440:2560:force_ori — 「다시 시도」를 눌러 주세요"
     }
   },
   "cost": {
@@ -634,6 +697,11 @@
         "at": "2026-09-30T14:31:34Z",
         "what": "콘티 격자 2장",
         "usd": 0.268
+      },
+      {
+        "at": "2026-09-30T14:50:01Z",
+        "what": "영상 컷 8개 생성",
+        "usd": 6.2
       }
     ]
   }

@@ -446,7 +446,7 @@
       ]
     }
   ],
-  "total_sec": 66,
+  "total_sec": 66.0,
   "hook": {
     "cut": 7,
     "at": 3.0,
