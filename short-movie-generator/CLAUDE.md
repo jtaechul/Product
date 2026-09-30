@@ -126,8 +126,12 @@
     키가 필요해 '버튼 실행' 단계). 페이지 배지·버튼은 `V2_AUTO`/`V2_ACT`(script·storyboard·video 모두 자동).
   - 회귀: `tests/test_v2_admin.py`(`test_write_storyboard_*`·`test_storyboard_revise_*`·`test_make_video_*` — 가짜 실행기로 파일까지) ·
     `v2_admin_check.mjs`(video_idle_has_make_video·storyboard_shows_card_check·storyboard_approve_dispatches).
-- **아직 자동이 아닌 것(정직 표기)**: 고정 댓글 달기·고정은 수동. 특징 줌인 매크로 인서트(`assemble.INSERTS`)는 시범편 전용 값이라
-  새 편엔 적용되지 않는다(추후 자동화).
+- **★실패해도 만든 컷은 다시 사지 않는다(운영자 지시 2026-09-30 "돈이 자꾸 샌다")**: 영상 컷은 `artifacts.video.clips`에 파일로
+  남고, `make_video` 재시도는 **없는/실패한 컷만** 만든다. 조립만 실패한 경우(실사고: 시범편 전용 매크로 인서트 `assemble.INSERTS`를
+  파일이 없는 새 편에 적용해 ffmpeg 실패 · 컷 8개 $6.2는 이미 생성됨)는 `assemble`만 다시 돌리면 되고 **비용 0** — 페이지의
+  「다시 시도」도 컷이 다 있으면 "무료 · 조립·검사만"으로 표시. 인서트는 `insert_for`가 **파일이 있을 때만** 적용하고 새 편은
+  script.json 컷의 `insert{file,at,cx,cy,r}`로 지정한다. 회귀: `test_build_cut_without_pilot_macro_insert`.
+- **아직 자동이 아닌 것(정직 표기)**: 고정 댓글 달기·고정은 수동. 특징 줌인 매크로 인서트 자동 생성은 추후.
 - 검사: `worker/v2_admin_check.mjs`(메뉴 2개·페이지 렌더·잠금/승인 버튼·디스패치 입력·/legacy) · `tests/test_v2_admin.py`.
 
 ### ★대본 재검증 (운영자 확정 — 생략 금지)

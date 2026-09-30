@@ -205,6 +205,7 @@ def assemble(pid: str) -> dict:
         raise SystemExit(str(e))
     sc = _load(_script_path(pid)) or {}
     ending = "" if sc.get("hook") else str(pilot / asm["ending"])   # ★후킹 편은 공용 엔딩 대신 [후킹][본편][정답 카드]
+    dst.parent.mkdir(parents=True, exist_ok=True)           # 빈 폴더는 git에 안 남아 로컬 재조립 때 없을 수 있다(실측 ffmpeg 254)
     A.main(str(pilot), asm["clips_id"], asm["tts_id"], ending, str(dst), overrides=over)
     st = load_status(pid)
     a = st["artifacts"]["video"]

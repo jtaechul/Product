@@ -777,3 +777,11 @@ def test_workflow_has_secrets_and_setup():
     for a in ("write_script", "write_storyboard", "make_video", "edit_hook", "recut_approve", "upload_meta", "save_meta"):
         assert a in run2, a
     assert steps["실패 기록"].get("if") == "failure()" and steps["결과 커밋"].get("if") == "always()"
+
+
+def test_build_cut_without_pilot_macro_insert(tmp_path):
+    """실사고 2026-09-30: 시범편 전용 매크로 인서트(컷 4)를 파일이 없는 새 편에도 적용해 ffmpeg가 죽었다 → 파일 없으면 건너뛴다."""
+    import assemble as A
+    clip = tmp_path / "c04.mp4"; _tiny_clip(clip, 4, "green")
+    out = A.build_cut(tmp_path, clip, 4, 4, None, tmp_path, {"cut": 4, "jp": "x"})
+    assert out.exists() and A.insert_for(tmp_path, 4, {}) is None

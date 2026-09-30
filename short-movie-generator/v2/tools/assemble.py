@@ -31,7 +31,19 @@ ANSWER_S = 2.0                 # 정답 카드 길이(초)
 NAVY = (8, 18, 30)
 
 # 특징 줌인 인서트: 컷 번호 → (인서트 이미지, 시작 초, 빨간 원 중심 x,y(0~1), 반지름(0~1))
+# ★시범편(대왕구족충) 전용 값 — 그 파일이 있는 편에만 적용한다(실사고 2026-09-30: 머리없는닭괴물 편 조립이 없는 파일로
+#   ffmpeg 실패 → 영상 8컷($6.2)을 만들어 놓고 완성본이 안 나옴). 새 편은 script.json 컷의 "insert" 항목으로 지정한다.
 INSERTS = {4: ("out/19_eye_macro/eye_macro.jpg", 5.0, (0.40, 0.50), 0.36)}
+
+
+def insert_for(pilot: Path, n: int, cut: dict | None) -> tuple | None:
+    """이 컷의 확대 인서트(없으면 None): script.json 컷의 insert{file,at,cx,cy,r} 우선, 없으면 시범편 상수(파일이 있을 때만)."""
+    ins = (cut or {}).get("insert")
+    if ins and (pilot / ins["file"]).exists():
+        return (ins["file"], float(ins.get("at", 0)), (float(ins.get("cx", 0.5)), float(ins.get("cy", 0.5))), float(ins.get("r", 0.3)))
+    if n in INSERTS and (pilot / INSERTS[n][0]).exists():
+        return INSERTS[n]
+    return None
 
 
 def _run(args: list[str]) -> None:
@@ -232,7 +244,7 @@ def _place_slices(src: Path, slices: list[tuple], total: float, out: Path) -> No
         w.writeframes(stereo.tobytes())
 
 
-def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: Path) -> Path:
+def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: Path, cut: dict | None = None) -> Path:
     """한 컷: 9:16 맞춤 · 무음 · 길이 맞춤(짧으면 마지막 장면 유지) · 인서트·주석."""
     base = t / f"cut{n}_base.mp4"
     # ★좌우 가장자리 12px씩 여유 크롭(약 3% 확대) — 시작 이미지의 흰 격자 테두리가 영상 첫머리에
@@ -242,8 +254,9 @@ def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: P
           f"tpad=stop_mode=clone:stop_duration={sec}", "-t", f"{sec}", "-an", "-c:v", "libx264", "-crf", "16",
           "-pix_fmt", "yuv420p", str(base)])
     cur = base
-    if n in INSERTS:                                   # 특징 줌인 — 매크로 인서트(천천히 확대) + 빨간 원
-        img, at, (cx, cy), r = INSERTS[n]
+    ins = insert_for(pilot, n, cut)
+    if ins:                                            # 특징 줌인 — 매크로 인서트(천천히 확대) + 빨간 원
+        img, at, (cx, cy), r = ins
         ins = t / f"cut{n}_ins.mp4"
         frames = int((sec - at) * FPS)
         _run(["-loop", "1", "-i", str(pilot / img), "-vf",
@@ -282,7 +295,7 @@ def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, override
         for tm in timing:
             n, sec = tm["cut"], float(tm["sec"])
             clip = Path((overrides or {}).get(n) or P / "out" / clips_id / f"c{n:02d}.mp4")
-            parts.append(build_cut(P, clip, sec, n, cuts[n].get("annotation"), t))
+            parts.append(build_cut(P, clip, sec, n, cuts[n].get("annotation"), t, cuts[n]))
             starts.append(acc)
             acc += sec
         body_len = acc

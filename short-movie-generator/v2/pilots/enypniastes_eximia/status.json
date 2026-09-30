@@ -63,7 +63,7 @@
       "approved_at": "2026-09-30T14:41:00Z"
     },
     "video": {
-      "state": "working",
+      "state": "review",
       "notes": [
         {
           "at": "2026-09-30T14:50:01Z",
@@ -654,10 +654,33 @@
         "clips_id": "r0930144548_clips",
         "tts_id": "r0930144517_tts",
         "ending": ""
-      }
+      },
+      "built_at": "2026-09-30T15:11:13Z"
     }
   },
-  "checks": {},
+  "checks": {
+    "at": "2026-09-30T15:11:13Z",
+    "duration_s": 66.04,
+    "white_edge_px": {
+      "value": 0,
+      "ok": true,
+      "rule": "좌우 가장자리 흰 줄 0px"
+    },
+    "loudness_lufs": {
+      "value": -16.2,
+      "ok": true,
+      "rule": "-16 LUFS ±1"
+    },
+    "music": {
+      "ok": true,
+      "rule": "음악 없음(영상 AI 오디오는 조립 때 전부 버림)"
+    },
+    "subtitle_font": {
+      "ok": true,
+      "value": "NotoSansJP-Bold.ttf",
+      "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"
+    }
+  },
   "jobs": {
     "script": {
       "stage": "script",
@@ -675,10 +698,10 @@
     },
     "video": {
       "stage": "video",
-      "status": "failed",
-      "at": "2026-09-30T14:50:17Z",
+      "status": "done",
+      "at": "2026-09-30T15:11:13Z",
       "action": "make_video",
-      "text": "영상 자동 제작 실패: Command '['ffmpeg', '-y', '-loglevel', 'error', '-loop', '1', '-i', '/home/runner/work/Product/Product/short-movie-generator/v2/pilots/enypniastes_eximia/out/19_eye_macro/eye_macro.jpg', '-vf', \"scale=1440:2560:force_ori — 「다시 시도」를 눌러 주세요"
+      "text": "영상 자동 제작 완료 — 승인 대기(조립은 무료로 완료)"
     }
   },
   "cost": {

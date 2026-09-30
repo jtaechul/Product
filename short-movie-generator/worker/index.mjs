@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-30-6 (승인하면 스토리보드·영상이 실제로 자동 제작)";
+const BUILD="v2026-09-30-7 (컷이 있으면 다시 시도는 무료 표시)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2352,6 +2352,8 @@ const V2_AUTO={script:true,storyboard:true,video:true};   // 자동 작업이 �
 const V2_ACT={script:"write_script",storyboard:"write_storyboard",video:"make_video"};
 const V2_ACTS=new Set(Object.values(V2_ACT));
 function v2cost(stage,st){const e=((st||{}).cost||{}).estimate||{};
+  if(stage==="video"){const v=((st||{}).artifacts||{}).video||{}, n=(((st||{}).artifacts||{}).script||{}).cuts||[];
+    if((v.clips||[]).length&&n.length&&v.clips.length>=n.length)return "무료 · 컷은 이미 있음 · 조립·검사만 다시";}
   return stage==="script"?"약 $0.05 · 3~6분":stage==="storyboard"?"약 $"+(e.storyboard||0.6)+" · 5~10분":"약 $"+(e.video||"5~6")+" · 10~20분";}
 const V2_IDLE_TXT={script:"아래 버튼을 누르면 AI가 출처에서 사실을 모아 대본을 씁니다.",
   storyboard:"아래 버튼을 누르면 실사 참조로 생물 카드를 만들고 실사와 대조한 뒤 8컷 콘티를 그립니다.",
