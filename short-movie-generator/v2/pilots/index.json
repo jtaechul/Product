@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-30T14:50:17Z",
+  "updated": "2026-09-30T15:47:37Z",
   "items": [
     {
       "id": "bathynomus_giganteus",
@@ -14,15 +14,9 @@
       "id": "enypniastes_eximia",
       "name_ko": "머리없는닭괴물",
       "sci": "Enypniastes eximia",
-      "stage": "video",
-      "state": "working",
-      "job": {
-        "stage": "video",
-        "status": "failed",
-        "at": "2026-09-30T14:50:17Z",
-        "action": "make_video",
-        "text": "영상 자동 제작 실패: Command '['ffmpeg', '-y', '-loglevel', 'error', '-loop', '1', '-i', '/home/runner/work/Product/Product/short-movie-generator/v2/pilots/enypniastes_eximia/out/19_eye_macro/eye_macro.jpg', '-vf', \"scale=1440:2560:force_ori — 「다시 시도」를 눌러 주세요"
-      },
+      "stage": "upload",
+      "state": "review",
+      "job": null,
       "created": "2026-09-30T09:44:09Z"
     }
   ]
