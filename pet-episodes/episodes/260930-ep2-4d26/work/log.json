@@ -1,0 +1,323 @@
+{
+  "character": {
+    "ok": true,
+    "source": "characters/dog.png"
+  },
+  "set": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview"
+  },
+  "storyboard": {
+    "ok": true,
+    "model": "gemini-3-pro-image-preview",
+    "layout": "2x4",
+    "aspect": "1:1"
+  },
+  "keyframes": {},
+  "adjacent": {
+    "c02": {
+      "diff": 36.6
+    },
+    "c03": {
+      "diff": 27.6
+    },
+    "c04": {
+      "diff": 38.8
+    },
+    "c05": {
+      "diff": 42.5
+    },
+    "c06": {
+      "diff": 52.8
+    },
+    "c07": {
+      "diff": 62.4
+    }
+  },
+  "tts": {
+    "c01": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 7.02
+    },
+    "c02": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 7.62
+    },
+    "c03": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 5.74
+    },
+    "c04": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 8.4
+    },
+    "c05": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 7.73
+    },
+    "c06": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 4.96
+    },
+    "c07": {
+      "ok": true,
+      "model": "gemini-2.5-pro-preview-tts",
+      "voice": "Enceladus",
+      "sec": 5.97
+    }
+  },
+  "clips": {
+    "c01": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 28.2
+        }
+      ],
+      "target_s": 8,
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 52.2
+    },
+    "c02": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 30.3
+        }
+      ],
+      "target_s": 8,
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 44.6
+    },
+    "c03": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 28.9
+        }
+      ],
+      "target_s": 6,
+      "model": "omni",
+      "sec": 6.02,
+      "drift": null
+    },
+    "c04": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 29.0
+        }
+      ],
+      "target_s": 8,
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 51.3
+    },
+    "c05": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 27.7
+        }
+      ],
+      "target_s": 8,
+      "model": "omni",
+      "sec": 8.0,
+      "drift": 49.3
+    },
+    "c06": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": true,
+          "wait_s": 30.1
+        }
+      ],
+      "target_s": 6,
+      "model": "omni",
+      "sec": 6.02,
+      "drift": null
+    },
+    "c07": {
+      "attempts": [
+        {
+          "model": "omni",
+          "ok": false,
+          "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}"
+        },
+        {
+          "model": "veo-lite",
+          "ok": true,
+          "wait_s": 42.7
+        }
+      ],
+      "target_s": 6,
+      "model": "veo-lite",
+      "sec": 6.0,
+      "drift": 61.1
+    }
+  },
+  "assemble": {
+    "bgm": "signature.mp3",
+    "ok": true,
+    "sec": 60.38,
+    "clips": 8,
+    "segments": [
+      {
+        "clip": "c01",
+        "len": 8.22,
+        "voice": 7.02,
+        "slow": 1.027,
+        "sents": [
+          [
+            0.45,
+            1.46
+          ],
+          [
+            1.72,
+            2.47
+          ],
+          [
+            3.16,
+            6.3
+          ],
+          [
+            6.69,
+            7.47
+          ]
+        ]
+      },
+      {
+        "clip": "c02",
+        "len": 8.82,
+        "voice": 7.62,
+        "slow": 1.103,
+        "sents": [
+          [
+            0.45,
+            2.85
+          ],
+          [
+            3.54,
+            6.46
+          ],
+          [
+            7.21,
+            8.07
+          ]
+        ]
+      },
+      {
+        "clip": "c03",
+        "len": 6.94,
+        "voice": 5.74,
+        "slow": 1.153,
+        "sents": [
+          [
+            0.45,
+            1.65
+          ],
+          [
+            2.09,
+            3.48
+          ],
+          [
+            4.33,
+            6.19
+          ]
+        ]
+      },
+      {
+        "clip": "c04",
+        "len": 9.6,
+        "voice": 8.4,
+        "slow": 1.2,
+        "sents": [
+          [
+            0.45,
+            4.89
+          ],
+          [
+            5.49,
+            8.85
+          ]
+        ]
+      },
+      {
+        "clip": "c05",
+        "len": 8.93,
+        "voice": 7.73,
+        "slow": 1.116,
+        "sents": [
+          [
+            0.45,
+            4.55
+          ],
+          [
+            5.17,
+            8.18
+          ]
+        ]
+      },
+      {
+        "clip": "c06",
+        "len": 6.16,
+        "voice": 4.96,
+        "slow": 1.023,
+        "sents": [
+          [
+            0.45,
+            5.41
+          ]
+        ]
+      },
+      {
+        "clip": "c07",
+        "len": 7.17,
+        "voice": 5.97,
+        "slow": 1.195,
+        "sents": [
+          [
+            0.45,
+            1.59
+          ],
+          [
+            2.62,
+            6.42
+          ]
+        ]
+      }
+    ],
+    "hook": {
+      "from": "taste",
+      "clip": "c04",
+      "start": 0.2,
+      "len": 4.5,
+      "text": "100g에 1460원짜리 사료를 몰래 먹다 들켰다"
+    }
+  },
+  "last_request": {
+    "file": "01_full.json",
+    "ran_at": "2026-09-30T00:51:44Z",
+    "ok": true
+  }
+}
