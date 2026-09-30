@@ -1,9 +1,10 @@
 {
+  "look": "a shallow plain white ceramic bowl of A plain white ceramic bowl filled with small rounded-triangular brown dry dog kibbles, about 8-10mm in size, featuring a matte and slightly textured surface",
   "food": "food.png",
   "product": "product.jpg",
-  "score": 67,
-  "diffs": "포장에 실제 알갱이 형태가 노출되지 않아 정확한 대조는 어려우나 보편적인 원형 알갱이로 무난히 구현됨",
+  "score": 73,
+  "diffs": "알갱이 형태와 색상이 전반적으로 일치하나 생성본의 표면이 미세하게 더 매끄럽고 둥글림",
   "tries": 1,
-  "pass": false,
-  "at": "2026-09-29T23:13:15.901Z"
+  "pass": true,
+  "at": "2026-09-30T09:52:25.241Z"
 }
