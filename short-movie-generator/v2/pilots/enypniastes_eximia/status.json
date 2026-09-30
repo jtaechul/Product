@@ -16,7 +16,7 @@
       "approved_at": "2026-09-30T09:44:09Z"
     },
     "script": {
-      "state": "review",
+      "state": "approved",
       "notes": [
         {
           "at": "2026-09-30T11:17:42Z",
@@ -32,11 +32,17 @@
           "at": "2026-09-30T12:01:53Z",
           "kind": "hook",
           "text": "후킹 추가(운영자 확정 2026-09-30): 7번 컷 발췌 + 정답 카드 · 공용 엔딩 제거"
+        },
+        {
+          "at": "2026-09-30T12:59:02Z",
+          "kind": "approve",
+          "text": ""
         }
-      ]
+      ],
+      "approved_at": "2026-09-30T12:59:02Z"
     },
     "storyboard": {
-      "state": "locked",
+      "state": "working",
       "notes": []
     },
     "video": {

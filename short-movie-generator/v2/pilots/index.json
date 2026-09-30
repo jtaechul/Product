@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-30T11:18:14Z",
+  "updated": "2026-09-30T12:59:02Z",
   "items": [
     {
       "id": "bathynomus_giganteus",
@@ -14,15 +14,9 @@
       "id": "enypniastes_eximia",
       "name_ko": "머리없는닭괴물",
       "sci": "Enypniastes eximia",
-      "stage": "script",
-      "state": "review",
-      "job": {
-        "stage": "script",
-        "status": "done",
-        "at": "2026-09-30T11:18:14Z",
-        "action": "write_script",
-        "text": "대본 자동 작성 완료 — 승인 대기"
-      },
+      "stage": "storyboard",
+      "state": "working",
+      "job": null,
       "created": "2026-09-30T09:44:09Z"
     }
   ]
