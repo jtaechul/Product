@@ -922,7 +922,66 @@ def build_index() -> dict:
     return idx
 
 
-def build_topics() -> dict:
+# ── 주제 카드 사진·한글명(운영자 확정 2026-09-30: '시작할 수 있는 종' 이름 옆에 이미지와 한글명) ──────
+# 사진은 iNaturalist 종 대표 사진 중 **자유 라이선스(퍼블릭 도메인·CC)** 만 쓴다(저작권 표시 그대로 보관).
+# 한 번 찾은 결과는 topic_media.json 에 캐시해, 매번 외부에 묻지 않는다(찾지 못해도 주제 목록은 그대로 만든다).
+TOPIC_MEDIA = V2 / "topic_media.json"
+_FREE_LIC = {"cc0", "pd", "cc-by", "cc-by-sa", "cc-by-nc", "cc-by-nc-sa", "cc-by-nd", "cc-by-nc-nd"}
+# 정식 한글 종명이 없는 종 = 지어내지 않고, 확실한 상위 무리 이름으로만 적는다(화면에 '정식 한글명 없음' 표기).
+KO_GROUP = {
+    "chaunax_stigmaeus": "아귀목 심해어",
+    "grimpoteuthis_discoveryi": "덤보문어의 한 종",
+    "pannychia_moseleyi": "심해 해삼의 한 종",
+}
+
+
+def _get_json(url: str, timeout: int = 20):
+    import urllib.request
+    req = urllib.request.Request(url, headers={"User-Agent": "shorts-admin/1.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def fetch_topic_photo(sci: str, get=None) -> dict | None:
+    """학명으로 iNaturalist 분류군을 찾아, 자유 라이선스 대표 사진 1장을 돌려준다. 없으면 None."""
+    import urllib.parse
+    get = get or _get_json
+    name = re.sub(r"\s+(sp|spp)\.?$", "", sci.strip(), flags=re.I)
+    q = urllib.parse.quote(name)
+    res = (get("https://api.inaturalist.org/v1/taxa?per_page=10&q=" + q).get("results") or []) + \
+        (get("https://api.inaturalist.org/v1/taxa/autocomplete?per_page=10&q=" + q).get("results") or [])
+    # 학명이 바뀐 종(예: 넓적문어)은 옛 이름이 matched_term 으로 걸린 '현재 이름' 분류군을 쓴다(같은 생물).
+    hit = next((t for t in res if (t.get("name") or "").lower() == name.lower()), None) or \
+        next((t for t in res if t.get("is_active", True) and (t.get("matched_term") or "").lower() == name.lower()), None)
+    if not hit:
+        return None
+    full = (get("https://api.inaturalist.org/v1/taxa/%d" % hit["id"]).get("results") or [hit])[0]
+    photos = [tp.get("photo") or {} for tp in full.get("taxon_photos") or []] or [full.get("default_photo") or {}]
+    for ph in photos:
+        if (ph.get("license_code") or "").lower() in _FREE_LIC and ph.get("medium_url"):
+            return {"url": ph["medium_url"], "credit": ph.get("attribution") or "", "license": ph["license_code"],
+                    "page": "https://www.inaturalist.org/taxa/%d" % hit["id"]}
+    return None
+
+
+def _topic_media(items: list[dict], fetch=None) -> dict:
+    cache = _load(TOPIC_MEDIA, {}) or {}
+    changed = False
+    for t in items:
+        if t["id"] in cache:
+            continue
+        try:
+            cache[t["id"]] = {"photo": (fetch or fetch_topic_photo)(t["sci"]), "at": _now()}
+            changed = True
+            time.sleep(1)                                   # 외부 사이트 예의(요청 간격)
+        except Exception as e:                              # 네트워크가 없어도 목록은 만든다(다음에 다시 시도)
+            print(f"[topics] 사진 찾기 실패 {t['id']}: {e}")
+    if changed:
+        _save(TOPIC_MEDIA, cache)
+    return cache
+
+
+def build_topics(fetch=None) -> dict:
     """주제 후보 = v1에서 이미 사실(출처 포함)을 모아 둔 심해 종 중 **한 편 = 한 대상** 기준을 통과한 종.
     사진 장수·이야기거리(발견 사건·연도)는 자동으로 판정하지 못한다 → 화면에 '시작 후 확인'으로 정직하게 표시."""
     sys.path.insert(0, str(ROOT))
@@ -939,16 +998,20 @@ def build_topics() -> dict:
         ok_subject = SQ.is_specific_enough(sci, sp.get("common_name_en", ""))
         depth = str(sp.get("depth_range_m") or "")
         ko = sp.get("common_name_ko") or ""
-        if re.fullmatch(r"[A-Za-z .\-]+", ko or ""):        # 한국어 이름이 없으면 영문명을 그대로 쓰지 않고 학명
-            ko = sci
+        ko_official = bool(ko) and not re.fullmatch(r"[A-Za-z .\-]+", ko)
+        if not ko_official:                                 # 정식 한글명이 없으면 지어내지 않고 상위 무리 이름 또는 학명
+            ko = KO_GROUP.get(pid) or sci
         out.append({
-            "id": pid, "key": key, "name_ko": ko, "name_en": sp.get("common_name_en", ""), "sci": sci,
+            "id": pid, "key": key, "name_ko": ko, "ko_official": ko_official, "name_en": sp.get("common_name_en", ""), "sci": sci,
             "depth_m": depth, "facts_n": len(facts), "facts": facts[:3], "sources": sp.get("sources") or [],
             "checks": {"한 편 = 한 대상": ok_subject, "사실 3개 이상": len(facts) >= 3, "서식 수심": bool(depth)},
             "ready": ok_subject and len(facts) >= 3 and bool(depth),
             "in_progress": pid in have,
         })
     out.sort(key=lambda t: (not t["ready"], t["in_progress"], t["name_ko"]))
+    media = _topic_media(out, fetch)
+    for t in out:
+        t["photo"] = (media.get(t["id"]) or {}).get("photo")
     res = {"updated": _now(), "topics": out}
     _save(V2 / "topics.json", res)
     return res

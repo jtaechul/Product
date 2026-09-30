@@ -1,0 +1,329 @@
+{
+  "grimpoteuthis": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14194593/medium.jpg",
+      "credit": "NOAA Okeanos Explorer, no known copyright restrictions (public domain)",
+      "license": "pd",
+      "page": "https://www.inaturalist.org/taxa/82228"
+    },
+    "at": "2026-09-30T08:03:19Z"
+  },
+  "grimpoteuthis_discoveryi": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14194696/medium.jpg",
+      "credit": "Mike Vecchione, NOAA, no known copyright restrictions (public domain)",
+      "license": "pd",
+      "page": "https://www.inaturalist.org/taxa/432439"
+    },
+    "at": "2026-09-30T08:03:21Z"
+  },
+  "enypniastes_eximia": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/42219981/medium.jpg",
+      "credit": "(c) NOAA Ocean Exploration & Research, some rights reserved (CC BY-SA)",
+      "license": "cc-by-sa",
+      "page": "https://www.inaturalist.org/taxa/901109"
+    },
+    "at": "2026-09-30T08:03:23Z"
+  },
+  "graneledone_boreopacifica": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14144215/medium.jpg",
+      "credit": "(c) Ocean Networks Canada, some rights reserved (CC BY-NC-SA)",
+      "license": "cc-by-nc-sa",
+      "page": "https://www.inaturalist.org/taxa/569523"
+    },
+    "at": "2026-09-30T08:03:25Z"
+  },
+  "lithodidae": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/6245963/medium.jpg",
+      "credit": "(c) Ondřej Radosta, some rights reserved (CC BY-NC), uploaded by Ondřej Radosta",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/47397"
+    },
+    "at": "2026-09-30T08:03:27Z"
+  },
+  "pannychia_moseleyi": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11270463/medium.jpg",
+      "credit": "(c) Jackson W.F. Chu, some rights reserved (CC BY-NC-SA), uploaded by Jackson W.F. Chu",
+      "license": "cc-by-nc-sa",
+      "page": "https://www.inaturalist.org/taxa/255828"
+    },
+    "at": "2026-09-30T08:03:29Z"
+  },
+  "crossota_sp": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/26057584/medium.jpg",
+      "credit": "(c) Jian Rzeszewicz, some rights reserved (CC BY-NC), uploaded by Jian Rzeszewicz",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/247164"
+    },
+    "at": "2026-09-30T08:03:33Z"
+  },
+  "chaunax_stigmaeus": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/593101494/medium.jpg",
+      "credit": "NOAA Photo Library, no known copyright restrictions (public domain)",
+      "license": "pd",
+      "page": "https://www.inaturalist.org/taxa/450448"
+    },
+    "at": "2026-09-30T08:03:35Z"
+  },
+  "megalodicopia_hians": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/21879693/medium.jpg",
+      "credit": "(c) 2009 California Academy of Sciences, some rights reserved (CC BY-NC-SA)",
+      "license": "cc-by-nc-sa",
+      "page": "https://www.inaturalist.org/taxa/706663"
+    },
+    "at": "2026-09-30T08:03:37Z"
+  },
+  "ophidiidae": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/66869/medium.jpg",
+      "credit": "(c) David R, some rights reserved (CC BY-NC), uploaded by David R",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/85466"
+    },
+    "at": "2026-09-30T08:03:39Z"
+  },
+  "actinoscyphia_aurelia": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/422701779/medium.jpg",
+      "credit": "\nImage courtesy of Aquapix and Expedition to the Deep Slope 2007, NOAA-OE, no known copyright restrictions (public domain)",
+      "license": "pd",
+      "page": "https://www.inaturalist.org/taxa/1521695"
+    },
+    "at": "2026-09-30T08:03:41Z"
+  },
+  "bathynomus_giganteus": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/59005870/medium.jpeg",
+      "credit": "(c) craigjhowe, some rights reserved (CC BY-NC-ND)",
+      "license": "cc-by-nc-nd",
+      "page": "https://www.inaturalist.org/taxa/571229"
+    },
+    "at": "2026-09-30T08:03:43Z"
+  },
+  "coelorinchus_caelorhincus": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/593119509/medium.jpg",
+      "credit": "(c) MARC MARTIN SOLA, bazı hakları saklıdır (CC BY-NC), yükleyen: MARC MARTIN SOLA",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/120709"
+    },
+    "at": "2026-09-30T08:03:45Z"
+  },
+  "ridgeia_piscesae": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/364577378/medium.jpg",
+      "credit": "(c) Ocean Networks Canada, some rights reserved (CC BY-NC), uploaded by Ocean Networks Canada",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/1544414"
+    },
+    "at": "2026-09-30T08:03:52Z"
+  },
+  "rimicaris_exoculata": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/164714717/medium.jpeg",
+      "credit": "(c) \n\nLaura Flamme, some rights reserved (CC BY)",
+      "license": "cc-by",
+      "page": "https://www.inaturalist.org/taxa/867838"
+    },
+    "at": "2026-09-30T08:03:54Z"
+  },
+  "spectrunculus_grandis": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/348142236/medium.jpg",
+      "credit": "(c) Fisheries and Oceans Canada, some rights reserved (CC BY-NC), uploaded by Fisheries and Oceans Canada",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/231272"
+    },
+    "at": "2026-09-30T08:03:56Z"
+  },
+  "ipnopidae": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/75492169/medium.jpg",
+      "credit": "\nLLophelia II 2010: Oil Seeps and Deep Reefs, no known copyright restrictions (public domain)",
+      "license": "pd",
+      "page": "https://www.inaturalist.org/taxa/85841"
+    },
+    "at": "2026-09-30T08:03:58Z"
+  },
+  "liparidae": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/113324795/medium.jpeg",
+      "credit": "(c) Sara Thiebaud, some rights reserved (CC BY-NC), uploaded by Sara Thiebaud",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/49032"
+    },
+    "at": "2026-09-30T08:04:00Z"
+  },
+  "mitsukurina_owstoni": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/181897375/medium.jpg",
+      "credit": "(c) Ken Graham, some rights reserved (CC BY-NC), uploaded by Ken Graham",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/105913"
+    },
+    "at": "2026-09-30T08:04:02Z"
+  },
+  "macrouridae": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/165426675/medium.jpg",
+      "credit": "(c) NOAA Ocean Exploration & Research, bazı hakları saklıdır (CC BY-SA)",
+      "license": "cc-by-sa",
+      "page": "https://www.inaturalist.org/taxa/85881"
+    },
+    "at": "2026-09-30T08:04:04Z"
+  },
+  "pycnogonida": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/78907506/medium.jpg",
+      "credit": "(c) Adam, some rights reserved (CC BY-NC), uploaded by Adam",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/47825"
+    },
+    "at": "2026-09-30T08:04:07Z"
+  },
+  "crinoidea": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/57574570/medium.jpeg",
+      "credit": "(c) Frédéric Ducarme, some rights reserved (CC BY-NC-ND), uploaded by Frédéric Ducarme",
+      "license": "cc-by-nc-nd",
+      "page": "https://www.inaturalist.org/taxa/51245"
+    },
+    "at": "2026-09-30T08:04:09Z"
+  },
+  "bathynomus": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/107720168/medium.jpg",
+      "credit": "(c) NOAA Ocean Exploration & Research, some rights reserved (CC BY-SA)",
+      "license": "cc-by-sa",
+      "page": "https://www.inaturalist.org/taxa/538387"
+    },
+    "at": "2026-09-30T08:04:11Z"
+  },
+  "asteroidea": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/162318518/medium.jpg",
+      "credit": "(c) Hans Hillewaert, some rights reserved (CC BY-SA)",
+      "license": "cc-by-sa",
+      "page": "https://www.inaturalist.org/taxa/47668"
+    },
+    "at": "2026-09-30T08:04:13Z"
+  },
+  "cranchiidae": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/210486256/medium.jpg",
+      "credit": "(c) mbartick, some rights reserved (CC BY-NC)",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/245317"
+    },
+    "at": "2026-09-30T08:04:19Z"
+  },
+  "ctenophora": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/161528780/medium.jpg",
+      "credit": "(c) Neil McDaniel, some rights reserved (CC BY-NC), uploaded by Neil McDaniel",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/51508"
+    },
+    "at": "2026-09-30T08:04:21Z"
+  },
+  "chimaeriformes": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/12499725/medium.jpg",
+      "credit": "(c) Viktor V. Grøtan, some rights reserved (CC BY), uploaded by Viktor V. Grøtan",
+      "license": "cc-by",
+      "page": "https://www.inaturalist.org/taxa/60451"
+    },
+    "at": "2026-09-30T08:04:24Z"
+  },
+  "porifera": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/117290419/medium.jpg",
+      "credit": "(c) Kerry Lewis, some rights reserved (CC BY-NC), uploaded by Kerry Lewis",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/48824"
+    },
+    "at": "2026-09-30T08:04:26Z"
+  },
+  "rajidae": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/25578840/medium.jpg",
+      "credit": "(c) Tatiana Antokhina, some rights reserved (CC BY-NC), uploaded by Tatiana Antokhina",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/48408"
+    },
+    "at": "2026-09-30T08:04:28Z"
+  },
+  "vampyroteuthis_infernalis": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/239331193/medium.jpg",
+      "credit": "\nInternet Archive Book Images, no known copyright restrictions (public domain)",
+      "license": "pd",
+      "page": "https://www.inaturalist.org/taxa/253737"
+    },
+    "at": "2026-09-30T08:04:30Z"
+  },
+  "opisthoteuthis_californiana": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14168334/medium.jpg",
+      "credit": "Ed Bowlby, NOAA/Olympic Coast NMS; NOAA/OAR/Office of Ocean Exploration, no known copyright restrictions (public domain)",
+      "license": "pd",
+      "page": "https://www.inaturalist.org/taxa/1638978"
+    },
+    "at": "2026-09-30T08:05:10Z"
+  },
+  "umbellula_sp": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11270471/medium.jpg",
+      "credit": "(c) Jackson W.F. Chu, some rights reserved (CC BY-NC-SA), uploaded by Jackson W.F. Chu",
+      "license": "cc-by-nc-sa",
+      "page": "https://www.inaturalist.org/taxa/459934"
+    },
+    "at": "2026-09-30T08:05:13Z"
+  },
+  "duobrachium_sparksae": {
+    "photo": null,
+    "at": "2026-09-30T08:05:15Z"
+  },
+  "paralomis_diomedeae": {
+    "photo": null,
+    "at": "2026-09-30T08:05:17Z"
+  },
+  "peltospira_smaragdina": {
+    "photo": null,
+    "at": "2026-09-30T08:05:19Z"
+  },
+  "teuthida": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/2476996/medium.jpg",
+      "credit": "(c) Athila Bertoncini Andrade, some rights reserved (CC BY-NC), uploaded by Athila Bertoncini Andrade",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/246133"
+    },
+    "at": "2026-09-30T08:05:22Z"
+  },
+  "selachimorpha": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11193947/medium.jpg",
+      "credit": "(c) Erik Schlögl, some rights reserved (CC BY-NC), uploaded by Erik Schlögl",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/47273"
+    },
+    "at": "2026-09-30T08:05:24Z"
+  },
+  "aphyonidae": {
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/487581/medium.jpg",
+      "credit": "(c) Put30, bazı hakları saklıdır (CC BY-SA)",
+      "license": "cc-by-sa",
+      "page": "https://www.inaturalist.org/taxa/47390"
+    },
+    "at": "2026-09-30T08:05:27Z"
+  }
+}

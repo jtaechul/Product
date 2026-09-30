@@ -6,6 +6,7 @@
 - 화면: 메뉴 두 개('영상 목록'·'새 영상')만, 예전 화면은 /legacy 등으로 보존(worker/v2_admin_check.mjs).
 """
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -409,3 +410,29 @@ def test_upload_uses_values_on_screen_even_without_save(real_copy):
     assert got == {"title": "画面の題名 #ダイオウグソクムシ #深海", "privacy": "public", "category": "28"}
     st = admin.load_status("bathynomus_giganteus")
     assert st["stages"]["upload"]["state"] == "approved" and st["artifacts"]["upload"]["result"]["category"] == "28"
+
+
+def test_topic_photo_free_license_and_renamed_species():
+    """주제 카드 사진: 학명이 바뀐 종도 찾고(옛 이름=matched_term), 자유 라이선스 사진만 고른다."""
+    def fake(url):
+        if "/taxa/autocomplete" in url:
+            return {"results": []}
+        if "/taxa?" in url:
+            return {"results": [{"id": 7, "name": "Insigniteuthis albatrossi", "is_active": True,
+                                 "matched_term": "Opisthoteuthis californiana"}]}
+        return {"results": [{"id": 7, "taxon_photos": [
+            {"photo": {"license_code": None, "medium_url": "https://x/nolicense.jpg"}},
+            {"photo": {"license_code": "pd", "medium_url": "https://x/free.jpg", "attribution": "NOAA"}}]}]}
+    ph = admin.fetch_topic_photo("Opisthoteuthis californiana", get=fake)
+    assert ph["url"] == "https://x/free.jpg" and ph["license"] == "pd" and ph["page"].endswith("/taxa/7")
+    none = admin.fetch_topic_photo("Nope nope", get=lambda u: {"results": []})
+    assert none is None
+
+
+def test_topics_have_photo_and_korean_name():
+    """시작할 수 있는 종은 사진과 한글명(정식이 없으면 상위 무리 이름 + 표시)을 가진다(지어내지 않음)."""
+    tp = json.loads((admin.V2 / "topics.json").read_text(encoding="utf-8"))["topics"]
+    ready = [t for t in tp if t["ready"]]
+    assert ready and all(t.get("photo") and t["photo"]["url"].startswith("https://") for t in ready)
+    assert all(re.search(r"[가-힣]", t["name_ko"]) for t in ready)
+    assert all(t["ko_official"] or t["id"] in admin.KO_GROUP for t in ready)

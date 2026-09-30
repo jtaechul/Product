@@ -1,85 +1,11 @@
 {
-  "updated": "2026-09-27T23:34:15Z",
+  "updated": "2026-09-30T08:05:28Z",
   "topics": [
-    {
-      "id": "chaunax_stigmaeus",
-      "key": "chaunax stigmaeus",
-      "name_ko": "Chaunax stigmaeus",
-      "name_en": "Redeye gaper",
-      "sci": "Chaunax stigmaeus",
-      "depth_m": "90-730",
-      "facts_n": 5,
-      "facts": [
-        "The redeye gaper, Chaunax stigmaeus, is a sedentary species of anglerfish in the family Chaunacidae.",
-        "It is native to deep waters in the western North Atlantic from the Georges Bank off New England southward to the Blake Plateau off South Carolina.",
-        "The species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Chaunax stigmaeus dorsal view2.jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
-      },
-      "ready": true,
-      "in_progress": false
-    },
-    {
-      "id": "grimpoteuthis_discoveryi",
-      "key": "grimpoteuthis discoveryi",
-      "name_ko": "Grimpoteuthis discoveryi",
-      "name_en": "Dumbo octopus",
-      "sci": "Grimpoteuthis discoveryi",
-      "depth_m": "2600-4870",
-      "facts_n": 3,
-      "facts": [
-        "Grimpoteuthis discoveryi is a small species of octopus known from more than 50 specimens.",
-        "It was described in 2003, but specimens have been found as early as 1910.",
-        "The type species was found at  49°35'N, 14°01'W, southwest of Ireland."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Grimpoteuthis discoveryi.jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
-      },
-      "ready": true,
-      "in_progress": false
-    },
-    {
-      "id": "pannychia_moseleyi",
-      "key": "pannychia moseleyi",
-      "name_ko": "Pannychia moseleyi",
-      "name_en": "Pannychia moseleyi",
-      "sci": "Pannychia moseleyi",
-      "depth_m": "400",
-      "facts_n": 4,
-      "facts": [
-        "Pannychia moseleyi  is a sea cucumber in the family Laetmogonidae.",
-        "It was first described by Johan Hjalmar Théel in 1882.",
-        "It can be up to 200 mm long and 40 mm wide."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Solaster feeding on Pannychia moseleyi.jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
-      },
-      "ready": true,
-      "in_progress": false
-    },
     {
       "id": "opisthoteuthis_californiana",
       "key": "opisthoteuthis californiana",
       "name_ko": "넓적문어",
+      "ko_official": true,
       "name_en": "Flapjack octopus",
       "sci": "Opisthoteuthis californiana",
       "depth_m": "200-1500",
@@ -99,12 +25,19 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14168334/medium.jpg",
+        "credit": "Ed Bowlby, NOAA/Olympic Coast NMS; NOAA/OAR/Office of Ocean Exploration, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/1638978"
+      }
     },
     {
       "id": "grimpoteuthis",
       "key": "dumbo octopus",
       "name_ko": "덤보문어",
+      "ko_official": true,
       "name_en": "Dumbo octopus",
       "sci": "Grimpoteuthis spp.",
       "depth_m": "1000-4000",
@@ -125,12 +58,51 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14194593/medium.jpg",
+        "credit": "NOAA Okeanos Explorer, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/82228"
+      }
+    },
+    {
+      "id": "grimpoteuthis_discoveryi",
+      "key": "grimpoteuthis discoveryi",
+      "name_ko": "덤보문어의 한 종",
+      "ko_official": false,
+      "name_en": "Dumbo octopus",
+      "sci": "Grimpoteuthis discoveryi",
+      "depth_m": "2600-4870",
+      "facts_n": 3,
+      "facts": [
+        "Grimpoteuthis discoveryi is a small species of octopus known from more than 50 specimens.",
+        "It was described in 2003, but specimens have been found as early as 1910.",
+        "The type species was found at  49°35'N, 14°01'W, southwest of Ireland."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Grimpoteuthis discoveryi.jpg)"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "사실 3개 이상": true,
+        "서식 수심": true
+      },
+      "ready": true,
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14194696/medium.jpg",
+        "credit": "Mike Vecchione, NOAA, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/432439"
+      }
     },
     {
       "id": "enypniastes_eximia",
       "key": "enypniastes eximia",
       "name_ko": "머리없는닭괴물",
+      "ko_official": true,
       "name_en": "Headless chicken monster",
       "sci": "Enypniastes eximia",
       "depth_m": "500-6000",
@@ -150,12 +122,19 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/42219981/medium.jpg",
+        "credit": "(c) NOAA Ocean Exploration & Research, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/901109"
+      }
     },
     {
       "id": "graneledone_boreopacifica",
       "key": "graneledone boreopacifica",
       "name_ko": "북태평양심해문어",
+      "ko_official": true,
       "name_en": "Deep-sea octopus",
       "sci": "Graneledone boreopacifica",
       "depth_m": "1000-2600",
@@ -175,12 +154,19 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14144215/medium.jpg",
+        "credit": "(c) Ocean Networks Canada, some rights reserved (CC BY-NC-SA)",
+        "license": "cc-by-nc-sa",
+        "page": "https://www.inaturalist.org/taxa/569523"
+      }
     },
     {
       "id": "lithodidae",
       "key": "king crab",
       "name_ko": "심해 킹크랩(리소드과)",
+      "ko_official": true,
       "name_en": "Lithodid king crab",
       "sci": "Lithodidae",
       "depth_m": "200-2000",
@@ -200,12 +186,51 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/6245963/medium.jpg",
+        "credit": "(c) Ondřej Radosta, some rights reserved (CC BY-NC), uploaded by Ondřej Radosta",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/47397"
+      }
+    },
+    {
+      "id": "pannychia_moseleyi",
+      "key": "pannychia moseleyi",
+      "name_ko": "심해 해삼의 한 종",
+      "ko_official": false,
+      "name_en": "Pannychia moseleyi",
+      "sci": "Pannychia moseleyi",
+      "depth_m": "400",
+      "facts_n": 4,
+      "facts": [
+        "Pannychia moseleyi  is a sea cucumber in the family Laetmogonidae.",
+        "It was first described by Johan Hjalmar Théel in 1882.",
+        "It can be up to 200 mm long and 40 mm wide."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Solaster feeding on Pannychia moseleyi.jpg)"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "사실 3개 이상": true,
+        "서식 수심": true
+      },
+      "ready": true,
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11270463/medium.jpg",
+        "credit": "(c) Jackson W.F. Chu, some rights reserved (CC BY-NC-SA), uploaded by Jackson W.F. Chu",
+        "license": "cc-by-nc-sa",
+        "page": "https://www.inaturalist.org/taxa/255828"
+      }
     },
     {
       "id": "umbellula_sp",
       "key": "umbellula sp.",
       "name_ko": "심해바다조름",
+      "ko_official": true,
       "name_en": "Deep-sea sea pen",
       "sci": "Umbellula sp.",
       "depth_m": "100-6000",
@@ -225,12 +250,19 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11270471/medium.jpg",
+        "credit": "(c) Jackson W.F. Chu, some rights reserved (CC BY-NC-SA), uploaded by Jackson W.F. Chu",
+        "license": "cc-by-nc-sa",
+        "page": "https://www.inaturalist.org/taxa/459934"
+      }
     },
     {
       "id": "crossota_sp",
       "key": "crossota sp.",
       "name_ko": "심해붉은해파리",
+      "ko_official": true,
       "name_en": "Deep-sea red medusa",
       "sci": "Crossota sp.",
       "depth_m": "1000-4000",
@@ -249,12 +281,51 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/26057584/medium.jpg",
+        "credit": "(c) Jian Rzeszewicz, some rights reserved (CC BY-NC), uploaded by Jian Rzeszewicz",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/247164"
+      }
+    },
+    {
+      "id": "chaunax_stigmaeus",
+      "key": "chaunax stigmaeus",
+      "name_ko": "아귀목 심해어",
+      "ko_official": false,
+      "name_en": "Redeye gaper",
+      "sci": "Chaunax stigmaeus",
+      "depth_m": "90-730",
+      "facts_n": 5,
+      "facts": [
+        "The redeye gaper, Chaunax stigmaeus, is a sedentary species of anglerfish in the family Chaunacidae.",
+        "It is native to deep waters in the western North Atlantic from the Georges Bank off New England southward to the Blake Plateau off South Carolina.",
+        "The species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Chaunax stigmaeus dorsal view2.jpg)"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "사실 3개 이상": true,
+        "서식 수심": true
+      },
+      "ready": true,
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/593101494/medium.jpg",
+        "credit": "NOAA Photo Library, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/450448"
+      }
     },
     {
       "id": "megalodicopia_hians",
       "key": "megalodicopia hians",
       "name_ko": "육식멍게",
+      "ko_official": true,
       "name_en": "Predatory tunicate",
       "sci": "Megalodicopia hians",
       "depth_m": "200-1100",
@@ -274,12 +345,19 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/21879693/medium.jpg",
+        "credit": "(c) 2009 California Academy of Sciences, some rights reserved (CC BY-NC-SA)",
+        "license": "cc-by-nc-sa",
+        "page": "https://www.inaturalist.org/taxa/706663"
+      }
     },
     {
       "id": "ophidiidae",
       "key": "ophidiidae",
       "name_ko": "첨치과",
+      "ko_official": true,
       "name_en": "Ophidiidae",
       "sci": "Ophidiidae",
       "depth_m": "370",
@@ -296,12 +374,19 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/66869/medium.jpg",
+        "credit": "(c) David R, some rights reserved (CC BY-NC), uploaded by David R",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/85466"
+      }
     },
     {
       "id": "actinoscyphia_aurelia",
       "key": "actinoscyphia aurelia",
       "name_ko": "파리지옥말미잘",
+      "ko_official": true,
       "name_en": "Venus flytrap anemone",
       "sci": "Actinoscyphia aurelia",
       "depth_m": "1000-1600",
@@ -321,12 +406,19 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/422701779/medium.jpg",
+        "credit": "\nImage courtesy of Aquapix and Expedition to the Deep Slope 2007, NOAA-OE, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/1521695"
+      }
     },
     {
       "id": "bathynomus_giganteus",
       "key": "bathynomus giganteus",
       "name_ko": "대왕등각류",
+      "ko_official": true,
       "name_en": "Giant isopod",
       "sci": "Bathynomus giganteus",
       "depth_m": "170-2140",
@@ -346,12 +438,19 @@
         "서식 수심": true
       },
       "ready": true,
-      "in_progress": true
+      "in_progress": true,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/59005870/medium.jpeg",
+        "credit": "(c) craigjhowe, some rights reserved (CC BY-NC-ND)",
+        "license": "cc-by-nc-nd",
+        "page": "https://www.inaturalist.org/taxa/571229"
+      }
     },
     {
       "id": "coelorinchus_caelorhincus",
       "key": "coelorinchus caelorhincus",
       "name_ko": "Coelorinchus caelorhincus",
+      "ko_official": false,
       "name_en": "Coelorinchus caelorhincus",
       "sci": "Coelorinchus caelorhincus",
       "depth_m": "90-1485",
@@ -370,12 +469,19 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/593119509/medium.jpg",
+        "credit": "(c) MARC MARTIN SOLA, bazı hakları saklıdır (CC BY-NC), yükleyen: MARC MARTIN SOLA",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/120709"
+      }
     },
     {
       "id": "duobrachium_sparksae",
       "key": "duobrachium sparksae",
       "name_ko": "Duobrachium sparksae",
+      "ko_official": false,
       "name_en": "Duobrachium sparksae",
       "sci": "Duobrachium sparksae",
       "depth_m": "3910",
@@ -394,12 +500,14 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": null
     },
     {
       "id": "paralomis_diomedeae",
       "key": "paralomis diomedeae",
       "name_ko": "Paralomis diomedeae",
+      "ko_official": false,
       "name_en": "Paralomis diomedeae",
       "sci": "Paralomis diomedeae",
       "depth_m": "680-935",
@@ -418,12 +526,14 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": null
     },
     {
       "id": "peltospira_smaragdina",
       "key": "peltospira smaragdina",
       "name_ko": "Peltospira smaragdina",
+      "ko_official": false,
       "name_en": "Peltospira smaragdina",
       "sci": "Peltospira smaragdina",
       "depth_m": "870-3520",
@@ -441,12 +551,14 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": null
     },
     {
       "id": "ridgeia_piscesae",
       "key": "ridgeia piscesae",
       "name_ko": "Ridgeia piscesae",
+      "ko_official": false,
       "name_en": "Ridgeia piscesae",
       "sci": "Ridgeia piscesae",
       "depth_m": "2190",
@@ -465,12 +577,19 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/364577378/medium.jpg",
+        "credit": "(c) Ocean Networks Canada, some rights reserved (CC BY-NC), uploaded by Ocean Networks Canada",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/1544414"
+      }
     },
     {
       "id": "rimicaris_exoculata",
       "key": "rimicaris exoculata",
       "name_ko": "Rimicaris exoculata",
+      "ko_official": false,
       "name_en": "vent shrimp",
       "sci": "Rimicaris exoculata",
       "depth_m": "",
@@ -490,12 +609,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/164714717/medium.jpeg",
+        "credit": "(c) \n\nLaura Flamme, some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/867838"
+      }
     },
     {
       "id": "spectrunculus_grandis",
       "key": "spectrunculus grandis",
       "name_ko": "Spectrunculus grandis",
+      "ko_official": false,
       "name_en": "Spectrunculus grandis",
       "sci": "Spectrunculus grandis",
       "depth_m": "1000-6000",
@@ -513,12 +639,19 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/348142236/medium.jpg",
+        "credit": "(c) Fisheries and Oceans Canada, some rights reserved (CC BY-NC), uploaded by Fisheries and Oceans Canada",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/231272"
+      }
     },
     {
       "id": "ipnopidae",
       "key": "ipnopidae",
       "name_ko": "긴촉수매퉁이과",
+      "ko_official": true,
       "name_en": "Ipnopidae",
       "sci": "Ipnopidae",
       "depth_m": "",
@@ -536,12 +669,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/75492169/medium.jpg",
+        "credit": "\nLLophelia II 2010: Oil Seeps and Deep Reefs, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/85841"
+      }
     },
     {
       "id": "liparidae",
       "key": "liparidae",
       "name_ko": "꼼치과",
+      "ko_official": true,
       "name_en": "Liparidae",
       "sci": "Liparidae",
       "depth_m": "300",
@@ -556,12 +696,19 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/113324795/medium.jpeg",
+        "credit": "(c) Sara Thiebaud, some rights reserved (CC BY-NC), uploaded by Sara Thiebaud",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/49032"
+      }
     },
     {
       "id": "mitsukurina_owstoni",
       "key": "mitsukurina owstoni",
       "name_ko": "마귀상어",
+      "ko_official": true,
       "name_en": "goblin shark",
       "sci": "Mitsukurina owstoni",
       "depth_m": "100-2000",
@@ -579,12 +726,19 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/181897375/medium.jpg",
+        "credit": "(c) Ken Graham, some rights reserved (CC BY-NC), uploaded by Ken Graham",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/105913"
+      }
     },
     {
       "id": "macrouridae",
       "key": "macrouridae",
       "name_ko": "민태과",
+      "ko_official": true,
       "name_en": "Macrouridae",
       "sci": "Macrouridae",
       "depth_m": "100-6000",
@@ -602,12 +756,19 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/165426675/medium.jpg",
+        "credit": "(c) NOAA Ocean Exploration & Research, bazı hakları saklıdır (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/85881"
+      }
     },
     {
       "id": "pycnogonida",
       "key": "pycnogonida",
       "name_ko": "바다거미목",
+      "ko_official": true,
       "name_en": "Pycnogonida",
       "sci": "Pycnogonida",
       "depth_m": "",
@@ -626,12 +787,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/78907506/medium.jpg",
+        "credit": "(c) Adam, some rights reserved (CC BY-NC), uploaded by Adam",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/47825"
+      }
     },
     {
       "id": "crinoidea",
       "key": "crinoidea",
       "name_ko": "바다나리",
+      "ko_official": true,
       "name_en": "Crinoidea",
       "sci": "Crinoidea",
       "depth_m": "6000-9000",
@@ -649,12 +817,19 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/57574570/medium.jpeg",
+        "credit": "(c) Frédéric Ducarme, some rights reserved (CC BY-NC-ND), uploaded by Frédéric Ducarme",
+        "license": "cc-by-nc-nd",
+        "page": "https://www.inaturalist.org/taxa/51245"
+      }
     },
     {
       "id": "bathynomus",
       "key": "bathynomus",
       "name_ko": "바티노무스속",
+      "ko_official": true,
       "name_en": "Bathynomus",
       "sci": "Bathynomus",
       "depth_m": "",
@@ -674,12 +849,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/107720168/medium.jpg",
+        "credit": "(c) NOAA Ocean Exploration & Research, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/538387"
+      }
     },
     {
       "id": "asteroidea",
       "key": "asteroidea",
       "name_ko": "불가사리류",
+      "ko_official": true,
       "name_en": "starfish",
       "sci": "Asteroidea",
       "depth_m": "",
@@ -695,12 +877,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/162318518/medium.jpg",
+        "credit": "(c) Hans Hillewaert, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/47668"
+      }
     },
     {
       "id": "teuthida",
       "key": "teuthida",
       "name_ko": "살오징어목",
+      "ko_official": true,
       "name_en": "Teuthida",
       "sci": "Teuthida",
       "depth_m": "",
@@ -715,12 +904,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/2476996/medium.jpg",
+        "credit": "(c) Athila Bertoncini Andrade, some rights reserved (CC BY-NC), uploaded by Athila Bertoncini Andrade",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/246133"
+      }
     },
     {
       "id": "selachimorpha",
       "key": "selachimorpha",
       "name_ko": "상어",
+      "ko_official": true,
       "name_en": "shark",
       "sci": "Selachimorpha",
       "depth_m": "",
@@ -736,12 +932,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11193947/medium.jpg",
+        "credit": "(c) Erik Schlögl, some rights reserved (CC BY-NC), uploaded by Erik Schlögl",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/47273"
+      }
     },
     {
       "id": "aphyonidae",
       "key": "aphyonidae",
       "name_ko": "아피오누스과",
+      "ko_official": true,
       "name_en": "Aphyonidae",
       "sci": "Aphyonidae",
       "depth_m": "",
@@ -756,12 +959,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/487581/medium.jpg",
+        "credit": "(c) Put30, bazı hakları saklıdır (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/47390"
+      }
     },
     {
       "id": "cranchiidae",
       "key": "cranchiidae",
       "name_ko": "악어가죽주머니오징어과",
+      "ko_official": true,
       "name_en": "Cranchiidae",
       "sci": "Cranchiidae",
       "depth_m": "",
@@ -781,12 +991,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/210486256/medium.jpg",
+        "credit": "(c) mbartick, some rights reserved (CC BY-NC)",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/245317"
+      }
     },
     {
       "id": "ctenophora",
       "key": "ctenophora",
       "name_ko": "유즐동물",
+      "ko_official": true,
       "name_en": "Ctenophora",
       "sci": "Ctenophora",
       "depth_m": "",
@@ -801,12 +1018,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/161528780/medium.jpg",
+        "credit": "(c) Neil McDaniel, some rights reserved (CC BY-NC), uploaded by Neil McDaniel",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/51508"
+      }
     },
     {
       "id": "chimaeriformes",
       "key": "chimaeriformes",
       "name_ko": "은상어목",
+      "ko_official": true,
       "name_en": "Chimaeriformes",
       "sci": "Chimaeriformes",
       "depth_m": "220",
@@ -824,12 +1048,19 @@
         "서식 수심": true
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/12499725/medium.jpg",
+        "credit": "(c) Viktor V. Grøtan, some rights reserved (CC BY), uploaded by Viktor V. Grøtan",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/60451"
+      }
     },
     {
       "id": "porifera",
       "key": "porifera",
       "name_ko": "해면동물",
+      "ko_official": true,
       "name_en": "Porifera",
       "sci": "Porifera",
       "depth_m": "",
@@ -845,12 +1076,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/117290419/medium.jpg",
+        "credit": "(c) Kerry Lewis, some rights reserved (CC BY-NC), uploaded by Kerry Lewis",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/48824"
+      }
     },
     {
       "id": "rajidae",
       "key": "rajidae",
       "name_ko": "홍어과",
+      "ko_official": true,
       "name_en": "Rajidae",
       "sci": "Rajidae",
       "depth_m": "",
@@ -866,12 +1104,19 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/25578840/medium.jpg",
+        "credit": "(c) Tatiana Antokhina, some rights reserved (CC BY-NC), uploaded by Tatiana Antokhina",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/48408"
+      }
     },
     {
       "id": "vampyroteuthis_infernalis",
       "key": "vampyroteuthis infernalis",
       "name_ko": "흡혈오징어",
+      "ko_official": true,
       "name_en": "Vampire squid",
       "sci": "Vampyroteuthis infernalis",
       "depth_m": "",
@@ -891,7 +1136,13 @@
         "서식 수심": false
       },
       "ready": false,
-      "in_progress": false
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/239331193/medium.jpg",
+        "credit": "\nInternet Archive Book Images, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/253737"
+      }
     }
   ]
 }

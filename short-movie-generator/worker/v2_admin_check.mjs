@@ -53,6 +53,9 @@ globalThis.fetch = async (url, opts) => {
 const api = new Function(js.replace(/\ninit\(\);\s*$/, "\n") +
   "\n; return { renderV2List, renderV2New, renderV2Episode, renderHome };").call(null);
 const res = {};
+// 새 영상: 시작할 수 있는 종 카드에 사진 + 한글명(운영자 확정 2026-09-30)
+{ const keepEls = els; els = {}; await api.renderV2New(); const nw2 = els.view.innerHTML; els = keepEls;
+  res.new_cards_have_photo = (nw2.match(/<img class="cthumb"/g) || []).length >= 10 && /정식 한글명 없음/.test(nw2); }
 // 아이폰 화면 넘침 방지(2026-09-28 실사고: 긴 URL·일본어가 카드 밖으로 밀려 나감)
 res.mobile_no_overflow = /html\{-webkit-text-size-adjust:100%/.test(html) && /\.v2copytxt\{[^}]*min-width:0[^}]*overflow-wrap:anywhere/.test(html)
   && /@media \(max-width:520px\)\{\.dual\{grid-template-columns:1fr\}\}/.test(html);

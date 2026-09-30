@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-30-1 (실사 사진 1장이면 제작 가능)";
+const BUILD="v2026-09-30-2 (시작할 수 있는 종 사진·한글명)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2406,8 +2406,14 @@ async function renderV2New(){
   const tp=await v2json("short-movie-generator/v2/topics.json");
   const all=(tp&&Array.isArray(tp.topics))?tp.topics:[];
   const ready=all.filter(t=>t.ready&&!t.in_progress), notReady=all.filter(t=>!t.ready&&!t.in_progress);
-  const card=t=>'<div class="ccard"><div class="cbody">'+
-      '<div class="ctitle">'+esc(t.name_ko)+'</div><div class="cmeta"><i>'+esc(t.sci)+'</i>'+(t.depth_m?(' · 수심 '+esc(t.depth_m)+'m'):'')+'</div>'+
+  // 이름 옆에 사진(자유 라이선스 실사 · 출처 표기) + 한글명(정식 한글명이 없으면 상위 무리 이름 + '정식 한글명 없음')
+  const thumb=t=>t.photo&&t.photo.url
+      ?'<a href="'+esc(t.photo.page||t.photo.url)+'" target="_blank" rel="noopener" style="flex:none"><img class="cthumb" loading="lazy" referrerpolicy="no-referrer" src="'+esc(t.photo.url)+'" alt="'+esc(t.name_ko)+'"></a>'
+      :'<div class="cthumb noimg">사진 없음</div>';
+  const card=t=>'<div class="ccard">'+thumb(t)+'<div class="cbody">'+
+      '<div class="ctitle">'+esc(t.name_ko)+(t.ko_official===false?' <span style="font-size:11px;font-weight:400;color:var(--am)">(정식 한글명 없음)</span>':'')+'</div>'+
+      '<div class="cmeta"><i>'+esc(t.sci)+'</i>'+(t.depth_m?(' · 수심 '+esc(t.depth_m)+'m'):'')+'</div>'+
+      (t.photo&&t.photo.credit?'<div class="cfact" style="font-size:10px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">사진: '+esc(t.photo.credit)+'</div>':'')+
       (t.facts||[]).map(f=>'<div class="cfact">· '+esc(f)+'</div>').join("")+
       '<div class="cfact">'+Object.entries(t.checks||{}).map(([k,v])=>'<span class="'+(v?"ok":"err")+'">'+(v?"통과":"미달")+' '+esc(k)+'</span>').join(" · ")+'</div>'+
       '<div class="cfact warn">실사 사진 1장 이상 · 이야기거리(발견 사건·연도)는 시작 후 대본 단계에서 확인합니다.</div>'+
