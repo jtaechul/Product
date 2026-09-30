@@ -74,7 +74,7 @@ jobs:
           IN_PILOT: ${{ inputs.pilot }}
           IN_STAGE: ${{ inputs.stage }}
         run: |
-          git add v2/pilots v2/topics.json || true
+          git add v2/pilots v2/topics.json v2/topic_media.json || true
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
