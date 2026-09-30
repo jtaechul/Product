@@ -408,6 +408,8 @@ def step_keyframes(ep, epdir, work, log, redo, character, setimg, avoid_same=Fal
         if grid.exists():                                      # 격자가 있으면 화풍·소품 기준으로 함께 참고
             refs.append(grid)
             text += f"Reference image {len(refs)} is the storyboard of the other shots: match its look exactly. "
+            if food in refs:                                   # 음식 모양은 격자보다 음식 참고 사진이 우선(격자 속 음식이 틀렸을 수 있다 — 2화 둥근 알갱이 사고)
+                text += "For the food pieces in the bowl, follow the real food reference image, not the storyboard. "
         props = bowl_state(roles, ep["clips"].index(c))
         k = ep["clips"].index(c)
         if avoid_same and k > 0:                              # 앞 컷과 같은 구도로 나왔던 칸: 앞 컷을 보여 주고 '다르게'를 못 박는다

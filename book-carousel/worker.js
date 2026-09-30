@@ -3919,6 +3919,13 @@ const FOOD_LOOK_ASK = (title, base) => `이 사진들은 반려동물 먹거리 
 - 참고: 이 품목의 일반형은 "${base}"
 JSON만: {"visible": true, "look": "English 15-35 words, e.g. shape, size, color, texture, served in a plain white ceramic bowl", "where": "한국어 한 줄: 어느 사진 어디에서 봤는지"}`;
 
+// 알갱이 사진(사용자 확정 2026-09: 쿠팡 사진이 포장뿐이라 둥근 알갱이로 잘못 만든 사고 — 실제 세모 알갱이).
+// 운영자가 02단계에서 올린 '알맹이가 보이는 사진'을 상품별로 KV kibble_photo:<상품명>(90일)에 두고 모양 읽기·채점의 기준으로 쓴다.
+const kibbleKey = (title) => 'kibble_photo:' + String(title || '').trim().slice(0, 200);
+async function getKibblePhoto(env, title) {
+  try { const k = await env.PENDING_POSTS.get(kibbleKey(title), 'json'); return k && k.data ? { inline_data: { mime_type: k.mime || 'image/jpeg', data: k.data } } : null; } catch { return null; }
+}
+
 async function resolveFoodLook(env, gk, title, image) {
   const base = foodLookOf(title);
   const key = 'food_look:' + String(title).trim().slice(0, 200);
@@ -3929,7 +3936,8 @@ async function resolveFoodLook(env, gk, title, image) {
   // ① 사진
   const urls = await foodPhotoUrls(env, title, image);
   const got = await Promise.all(urls.map(fetchImageInline));
-  const imgs = got.filter(Boolean);
+  const kib = await getKibblePhoto(env, title);
+  const imgs = [...(kib ? [kib] : []), ...got.filter(Boolean)];
   const okUrls = urls.filter((u, i) => got[i]); // 실제로 받아진 사진만(등록 주소가 오류 페이지인 경우가 있다)
   if (imgs.length) {
     try {
@@ -4794,6 +4802,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     </div>
     <div class="f"><label for="img">상품 사진 주소</label><input id="img" type="url" placeholder="https://...jpg">
       <small>쿠팡에서 불러온 상품은 자동으로 들어갑니다.</small></div>
+    <div class="f"><label for="kib">알갱이 사진</label><input id="kib" type="file" accept="image/*">
+      <small id="kibMsg">사료 알맹이가 보이는 사진(후기·상세페이지 캡처도 됨). 쿠팡 사진이 포장뿐이면 이 사진이 없을 때 영상을 만들지 않습니다.</small></div>
     <div class="f"><label for="w">추천 이유</label>
       <textarea id="w" placeholder="알러지로 긁던 아이가 2주 만에 확 줄었어요. 단일 단백질이라 속도 편합니다."></textarea></div>
     <div class="row" style="margin-bottom:13px">
@@ -5540,6 +5550,24 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 
   /* ---- 작업 자동 저장 (서버에 보관 → 다른 기기에서도 이어짐) ---- */
   var SAVE_FIELDS = ['t','b','c','img','w','l','pr','pt','pdog','pcat','pclips','pnote'];
+  // 알갱이 사진: 휴대폰 사진을 1024px JPEG로 줄여 상품별로 서버에 둔다
+  function kibTitle(){ return ($('pt')&&$('pt').value.trim())||$('t').value.trim(); }
+  function kibCheck(){ var t=kibTitle(); if(!t) return;
+    post('/api/kibble-photo',{title:t,get:true}).then(function(r){ if(r&&r.has) $('kibMsg').textContent='이 상품의 알갱이 사진이 올라가 있습니다. 바꾸려면 새로 고르세요.'; }).catch(function(){}); }
+  $('kib').addEventListener('change',function(){
+    var f=this.files&&this.files[0], t=kibTitle(); if(!f) return;
+    if(!t){ $('kibMsg').textContent='먼저 상품 이름을 넣어 주세요.'; return; }
+    $('kibMsg').textContent='올리는 중…';
+    var img=new Image(); img.onload=function(){
+      var k=Math.min(1,1024/Math.max(img.width,img.height)), cv=document.createElement('canvas');
+      cv.width=Math.round(img.width*k); cv.height=Math.round(img.height*k); cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      post('/api/kibble-photo',{title:t,data:cv.toDataURL('image/jpeg',0.88),mime:'image/jpeg'}).then(function(r){
+        $('kibMsg').textContent=(r&&r.success)?'알갱이 사진을 올렸습니다. 대본·음식 이미지가 이 사진 기준으로 만들어집니다.':((r&&r.error)||'올리지 못했습니다.');
+      }).catch(function(e){ $('kibMsg').textContent='올리지 못했습니다: '+e.message; });
+      URL.revokeObjectURL(img.src);
+    }; img.src=URL.createObjectURL(f);
+  });
+  $('t').addEventListener('change',kibCheck); setTimeout(kibCheck,1500);
   var lastResult = null, saveTimer = null, restoring = false;
 
   function collectWork(){
@@ -6264,6 +6292,7 @@ async function ghText(env, path) {
 // 70점 미만이면 틀린 점을 고쳐 다시(최대 3번 중 가장 높은 것). 끝내 못 만들면 영상 제작을 시작하지 않는다.
 const FOOD_PASS = 70;
 const FOOD_TRIES = 3;
+const NO_KIBBLE_MSG = '상품 사진에 사료 알맹이가 보이지 않아(포장 사진뿐) 영상 제작을 시작하지 않았습니다. 02단계 "알갱이 사진"에 알맹이가 보이는 사진(후기·상세 캡처도 됨)을 올리고 다시 눌러 주세요.';
 const NO_PHOTO_MSG = '실제 상품 사진을 받지 못해 영상 제작을 시작하지 않았습니다. 02단계 "상품 사진 주소"에 쿠팡 상품 사진이 들어 있는지 확인하고 다시 눌러 주세요.';
 
 // ⚠️ 무료 요금제는 서버 한 번 실행에 외부 호출(사진·AI·GitHub)이 50개까지다(2026-09 "Too many subrequests" 사고:
@@ -6278,11 +6307,15 @@ async function foodPrep(env, title, image) {
   if (!title) throw new Error('상품 이름이 없어 음식 참고 이미지를 만들 수 없습니다.');
   const gk = await getGeminiKey(env);
   if (!gk) throw new Error('Gemini 키가 설정되지 않았습니다.');
-  const fl = await resolveFoodLook(env, gk, title, image).catch(() => ({ look: foodLookOf(title), photoUrls: [] }));
+  const fl = await resolveFoodLook(env, gk, title, image).catch(() => ({ look: foodLookOf(title), photoUrls: [], source: 'generic' }));
+  const kib = await getKibblePhoto(env, title);
   const urls = (fl.photoUrls && fl.photoUrls.length) ? fl.photoUrls : await foodPhotoUrls(env, title, image);
-  const photos = (await Promise.all(urls.slice(0, 2).map(fetchImageInline))).filter(Boolean);
+  const shop = (await Promise.all(urls.slice(0, kib ? 1 : 2).map(fetchImageInline))).filter(Boolean);
+  const photos = [...(kib ? [kib] : []), ...shop];
   if (!photos.length) throw new Error(NO_PHOTO_MSG);
-  return { title, image, look: fl.look || foodLookOf(title), photos, k: 0, fix: '', best: null, lastErr: '' };
+  // 사진 어디에도 알맹이가 안 보이면(포장 사진뿐) 공용 문장으로 지어내지 않고 멈춘다(사용자 확정 2026-09)
+  if (fl.source !== 'photo') throw new Error(NO_KIBBLE_MSG);
+  return { title, image, look: fl.look, photos, k: 0, fix: '', best: null, lastErr: '' };
 }
 
 // 한 번 시도: 음식 이미지 1장 만들고 실제 사진과 채점. 합격이거나 3번 다 하면 done.
@@ -6297,7 +6330,7 @@ async function foodTry(env, fs) {
     try {
       const o = extractJson(await callGeminiVision(gk, [...fs.photos, { inline_data: { mime_type: fr._mime, data: fr._data } },
         { text: `앞의 ${fs.photos.length}장은 실제 상품 사진, 마지막 1장은 AI가 만든 '그릇에 담긴 내용물' 사진이다. 포장·배경·그릇은 무시하고 `
-          + `내용물(알갱이·조각)만 비교해 모양·크기 비율·색·표면 질감이 얼마나 같은지 0~100점으로 채점하라. 사진에서 내용물이 안 보이면 보이는 단서로 추정한다.\n`
+          + `내용물(알갱이·조각)만 비교해 모양·크기 비율·색·표면 질감이 얼마나 같은지 0~100점으로 채점하라. 내용물이 보이는 사진만 기준으로 삼고, 어느 사진에도 내용물이 안 보이면 score는 0으로 하고 diffs에 '비교 불가'라고 적어라.\n`
           + `JSON만: {"score": 0, "diffs": "다른 점 한국어 한 줄(같으면 '거의 같음')", "fix": "English one sentence: what to change to match the real pieces"}` }]) || '');
       score = Math.max(0, Math.min(100, Math.round(Number(o.score) || 0)));
       diffs = String(o.diffs || '').slice(0, 120); nextFix = String(o.fix || '').slice(0, 300);
@@ -6348,7 +6381,7 @@ function foodFiles(dir, fs, old) {
   const fname = `food.${/jpe?g/.test(food.mime) ? 'jpg' : 'png'}`;
   const p = fs.photos[0] && fs.photos[0].inline_data;
   const product = p ? `product.${/png/.test(p.mime_type) ? 'png' : /webp/.test(p.mime_type) ? 'webp' : 'jpg'}` : '';
-  const check = { food: fname, product, score: food.score, diffs: food.diffs, tries: food.tries, pass: food.score === null ? null : food.score >= FOOD_PASS, at: new Date().toISOString() };
+  const check = { look: fs.look, food: fname, product, score: food.score, diffs: food.diffs, tries: food.tries, pass: food.score === null ? null : food.score >= FOOD_PASS, at: new Date().toISOString() };
   const files = [{ path: `${dir}/refs/${fname}`, b64: food.data }];
   if (p) files.push({ path: `${dir}/refs/${product}`, b64: p.data });
   files.push({ path: `${dir}/refs/food_check.json`, text: JSON.stringify(check, null, 2) });
@@ -6870,6 +6903,20 @@ export default {
           else result = { success: true, status: job.status, result: job.status === 'done' ? job.result : undefined, error: job.error || '', note: job.stageNote || '' };
         }
         else if (url.pathname === '/api/food-reference') result = await handleFoodReference(env, body);
+        else if (url.pathname === '/api/kibble-photo') {
+          // 02단계 '알갱이 사진' — 올리면 그 상품의 모양 문장·음식 이미지 보관본을 지워 새 사진 기준으로 다시 만든다
+          const t = String(body.title || '').trim();
+          if (!t) throw new Error('상품 이름이 필요합니다.');
+          if (body.get) { const k = await env.PENDING_POSTS.get(kibbleKey(t), 'json').catch(() => null); result = { success: true, has: !!(k && k.data), at: k && k.at }; }
+          else {
+            const data = String(body.data || '').replace(/^data:[^,]+,/, '');
+            if (data.length < 2000 || data.length > 3 * 1024 * 1024) throw new Error('사진 크기가 알맞지 않습니다(너무 작거나 큼).');
+            await env.PENDING_POSTS.put(kibbleKey(t), JSON.stringify({ data, mime: /png/.test(body.mime || '') ? 'image/png' : 'image/jpeg', at: Date.now() }), { expirationTtl: 90 * 24 * 3600 });
+            await env.PENDING_POSTS.delete('food_look:' + t.slice(0, 200)).catch(() => {});
+            await env.PENDING_POSTS.delete(foodCacheKey(t)).catch(() => {});
+            result = { success: true, has: true };
+          }
+        }
         else if (url.pathname === '/api/food-cache-seed') {
           // 예전에 만든 음식 이미지(저장소 기록의 한 커밋)를 상품별 보관함에 넣는다 — 이미 돈 쓴 이미지를 다시 쓰기 위함
           const sha = String(body.sha || '').replace(/[^0-9a-f]/g, ''), dir = String(body.dir || '');
