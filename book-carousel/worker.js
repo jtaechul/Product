@@ -3630,7 +3630,7 @@ function cutWords(text, max) {
 function inVessel(look) {
   const t = String(look || '')
     .replace(/,?\s*(served|placed|arranged|piled|heaped)?\s*(on|in)\s+(a|an|the)\s+[^,.;]*\b(bowl|plate|dish|saucer)\b[^,.;]*/gi, '')
-    .replace(/^(a|an)\s+[^,.;]*\b(bowl|plate|dish|saucer)\b\s+of\s+/i, '')
+    .replace(/^(a|an)\s+[^,.;]*\b(bowl|plate|dish|saucer)\b\s+(of|filled with|full of|containing|with)\s+/i, '')
     .replace(/^(a|an)\s+single\s+/i, '').replace(/[\s,.;]+$/, '').trim();
   return `${DINER_VESSEL} of ${t}`;
 }
