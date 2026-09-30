@@ -71,6 +71,18 @@ const res = {};
   res.honest_failed = /v2st fail">실패/.test(fail) && /다시 시도/.test(fail) && /data-act="write_script"/.test(fail);
   res.honest_stale = /v2st fail">멈춤/.test(stale) && /다시 시도/.test(stale);
   res.honest_manual_stage = /대화 요청 필요/.test(sb) && !/v2st prog">작업 중/.test(sb) && !/이미지를 만들고 있습니다/.test(sb);
+  // 버튼 직후(서버 기록 전) = '시작 중'(실사고: 70초 동안 "돌고 있는 작업이 없습니다") · GitHub 진행 중 실행이 보이면 '작업 중'
+  const ls = globalThis.localStorage.getItem;
+  globalThis.localStorage.getItem = k => (k === "v2req:t" ? JSON.stringify({ stage: "script", at: new Date().toISOString() }) : ls(k));
+  const starting = await render(base);
+  res.pressed_shows_starting = /v2st prog">시작 중/.test(starting) && /요청을 보냈습니다/.test(starting) && !/돌고 있는 작업이 없습니다/.test(starting);
+  globalThis.localStorage.getItem = ls;
+  const f0 = globalThis.fetch;
+  globalThis.fetch = async (url, o) => String(url).includes("/runs?") ? { ok: true, status: 200, json: async () => ({ workflow_runs: [
+    { status: "in_progress", display_title: "v2 write_script t script", html_url: "https://github.com/x/runs/1", created_at: new Date().toISOString() }] }) } : f0(url, o);
+  const live = await render(base);
+  res.live_run_shows_working = /v2st prog">작업 중/.test(live) && /진행 상황 보기/.test(live);
+  globalThis.fetch = f0;
   // 「다시 시도」 → v2-admin.yml 에 write_script 로 디스패치되는지
   await render({ ...base, jobs: { script: { stage: "script", status: "failed", at: new Date().toISOString(), text: "X" } } });
   const wb = (lists['[data-act]'] || []).find(b => b.dataset.act === "write_script");

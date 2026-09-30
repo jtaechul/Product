@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-30-3 (대본 자동 작성 · 실제로 돌 때만 작업 중 표시)";
+const BUILD="v2026-09-30-4 (버튼 직후 시작 중 표시 · 자동 새로 고침)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2350,9 +2350,31 @@ function v2badge(state){return '<span class="v2st '+(ST_CLS[state]||"")+'">'+esc
 //   status.json 의 jobs[단계] 기록(워크플로가 작업 전 '진행 중'을 먼저 커밋 · 끝나면 완료/실패)으로 판단한다.
 const V2_AUTO={script:true};                       // 자동 작업이 있는 단계(나머지는 아직 Claude 대화에서 요청해야 함)
 const V2_JOB_STALE_MIN=25;
-function v2job(job,stage,state){
-  if(state!=="working"&&state!=="revise")return {kind:"none"};
+// ★버튼을 누른 뒤 서버가 '진행 중'을 기록하기까지 틈(실사고 2026-09-30: 70초 동안 "돌고 있는 작업이 없습니다")을 메운다:
+//   ① 누른 시각을 이 기기에 기억(v2req) ② 토큰이 있으면 GitHub 실행 목록에서 이 편의 대기/진행 중 실행을 직접 확인(V2_LIVE)
+const V2_REQ_MIN=4;
+let V2_LIVE={};                                    // pid → 진행 중 실행(html_url 등)
+function v2reqGet(pid){try{const r=JSON.parse(localStorage.getItem("v2req:"+pid)||"null");return r&&((Date.now()-Date.parse(r.at))/60000<V2_REQ_MIN)?r:null;}catch(e){return null;}}
+function v2reqSet(pid,stage){try{localStorage.setItem("v2req:"+pid,JSON.stringify({stage:stage,at:new Date().toISOString()}));}catch(e){}}
+async function v2liveRuns(){
+  V2_LIVE={};
+  if(!authReady())return;
+  try{const r=await fetchT(API+"/actions/workflows/"+V2_WF+"/runs?per_page=15",{headers:headers(true)},6000);
+    const j=await r.json();
+    (j.workflow_runs||[]).filter(x=>x.status!=="completed").forEach(x=>{
+      const m=String(x.display_title||"").match(/^v2 (\\S+) (\\S+)/);if(m&&!V2_LIVE[m[2]])V2_LIVE[m[2]]={action:m[1],url:x.html_url,status:x.status,at:x.created_at};});
+  }catch(e){}
+}
+function v2job(job,stage,state,pid){
+  const live=pid&&V2_LIVE[pid], req=pid&&v2reqGet(pid);
   const j=job||null;
+  const fresh=j&&req&&Date.parse(j.at||0)>=Date.parse(req.at)-5000;     // 누른 뒤에 생긴 기록인가
+  if(V2_AUTO[stage]&&(state==="working"||state==="revise"||(req&&req.stage===stage))){
+    if(j&&j.status==="running"&&(!req||fresh))return (Date.now()-Date.parse(j.at||0))/60000<V2_JOB_STALE_MIN?{kind:"running",job:j,live:live}:{kind:"stale",job:j};
+    if(live)return {kind:"running",job:{text:live.status==="queued"?"서버 대기열에 있습니다":"서버가 작업 중입니다",at:live.at},live:live};
+    if(req&&req.stage===stage&&!fresh)return {kind:"starting",job:{at:req.at}};
+  }
+  if(state!=="working"&&state!=="revise")return {kind:"none"};
   if(j&&j.status==="running"){
     const age=(Date.now()-Date.parse(j.at||0))/60000;
     return age<V2_JOB_STALE_MIN?{kind:"running",job:j}:{kind:"stale",job:j};
@@ -2362,6 +2384,7 @@ function v2job(job,stage,state){
 }
 function v2badgeJob(state,jb){
   if(jb.kind==="running")return '<span class="v2st prog">작업 중</span>';
+  if(jb.kind==="starting")return '<span class="v2st prog">시작 중</span>';
   if(jb.kind==="failed")return '<span class="v2st fail">실패</span>';
   if(jb.kind==="stale")return '<span class="v2st fail">멈춤</span>';
   if(jb.kind==="idle")return '<span class="v2st wait">시작 안 됨</span>';
@@ -2371,7 +2394,8 @@ function v2badgeJob(state,jb){
 function v2retryBtn(stage,lab){return V2_AUTO[stage]?'<button class="btn save" data-act="write_script" data-stage="'+stage+'" style="width:100%;margin-top:8px">'+lab+' (약 $0.05 · 3~6분)</button>':'';}
 function v2jobHTML(stage,jb){
   if(jb.kind==="running")return '<div class="hint" style="margin-top:6px"><span class="ok">자동 작업이 실제로 돌고 있습니다</span> — '+esc(jb.job.text||"")+
-    ' (시작 '+v2when(jb.job.at)+' · 보통 3~6분). 끝나면 새로고침하세요.</div>';
+    ' (시작 '+v2when(jb.job.at)+' · 보통 3~6분)'+(jb.live&&jb.live.url?' · <a href="'+esc(jb.live.url)+'" target="_blank">진행 상황 보기</a>':'')+'. 이 화면은 자동으로 새로 고쳐집니다.</div>';
+  if(jb.kind==="starting")return '<div class="hint" style="margin-top:6px"><span class="ok">요청을 보냈습니다</span> — 서버가 작업을 시작하는 중입니다(보통 30초 안). 이 화면은 자동으로 새로 고쳐집니다.</div>';
   if(jb.kind==="failed")return '<div class="hint" style="margin-top:6px"><span class="err">자동 작업 실패</span> — '+esc(jb.job.text||"")+'</div>'+v2retryBtn(stage,"다시 시도");
   if(jb.kind==="stale")return '<div class="hint" style="margin-top:6px"><span class="err">작업이 '+V2_JOB_STALE_MIN+'분 넘게 끝나지 않았습니다(멈춘 것으로 보입니다)</span> — 시작 '+v2when(jb.job.at)+'</div>'+v2retryBtn(stage,"다시 시도");
   if(jb.kind==="idle")return '<div class="hint" style="margin-top:6px"><span class="err">지금 돌고 있는 작업이 없습니다.</span> 아래 버튼을 누르면 AI가 출처에서 사실을 모아 대본을 씁니다.</div>'+v2retryBtn(stage,"대본 자동 작성 시작");
@@ -2425,7 +2449,7 @@ async function renderV2List(){
     html+='<div class="card"><span class="lbl">'+esc(title)+' ('+g.length+')</span>'+
       (g.length?g.map(x=>'<a class="clitem" href="/v/'+encodeURIComponent(x.id)+'">'+
         '<span class="nm">'+esc(x.name_ko||x.id)+'<small><i>'+esc(x.sci||"")+'</i></small></span>'+
-        '<span class="t">'+(x.stage==="done"?"":esc(STG_KO[x.stage]||x.stage)+" · ")+v2badgeJob(x.state,v2job(x.job,x.stage,x.state))+'</span></a>').join("")
+        '<span class="t">'+(x.stage==="done"?"":esc(STG_KO[x.stage]||x.stage)+" · ")+v2badgeJob(x.state,v2job(x.job,x.stage,x.state,x.id))+'</span></a>').join("")
         :'<div class="hint" style="margin-top:0">없음</div>')+'</div>';
   });
   html+=v2tokbox();
@@ -2461,7 +2485,7 @@ async function renderV2New(){
   document.querySelectorAll("[data-new]").forEach(b=>b.onclick=async()=>{
     const id=b.dataset.new;const t=all.find(x=>x.id===id)||{};
     if(!confirm((t.name_ko||id)+" 으로 새 영상을 시작할까요?"))return;
-    if(await v2do("new",id,"","",b))setTimeout(()=>{location.href="/v/"+encodeURIComponent(id);},2500);
+    if(await v2do("new",id,"","",b)){v2reqSet(id,"script");setTimeout(()=>{location.href="/v/"+encodeURIComponent(id);},1500);}
   });
 }
 
@@ -2622,7 +2646,7 @@ function v2estimate(c,jp){
 }
 function v2stageCard(st,stage){
   const s=(st.stages||{})[stage]||{state:"locked"}, state=s.state, locked=state==="locked";
-  const jb=v2job((st.jobs||{})[stage],stage,state);
+  const jb=v2job((st.jobs||{})[stage],stage,state,st.id);
   const est=((st.cost||{}).estimate||{})[stage];
   const notes=(s.notes||[]).slice(-3).reverse();
   let h='<div class="card v2stage'+(locked?' v2locked':'')+'" id="stg-'+stage+'">'+
@@ -2653,8 +2677,16 @@ function v2stageCard(st,stage){
 }
 async function renderV2Episode(pid){
   view().innerHTML='<div class="banner" id="msg"></div><a class="back" href="/">← 영상 목록</a><div class="card"><div class="hint">불러오는 중…</div></div>';
-  const st=await v2json(V2P+"/"+pid+"/status.json");
-  if(!st||!st.stages){view().innerHTML='<a class="back" href="/">← 영상 목록</a><div class="card"><div class="hint">이 편을 찾지 못했습니다. 방금 시작했다면 1~2분 뒤 새로고침하세요.</div></div>';return;}
+  const [st]=await Promise.all([v2json(V2P+"/"+pid+"/status.json"),v2liveRuns()]);
+  clearTimeout(window.__v2poll);
+  if(!st||!st.stages){
+    const starting=v2reqGet(pid)||V2_LIVE[pid];
+    view().innerHTML='<a class="back" href="/">← 영상 목록</a><div class="card"><div class="hint">'+(starting
+      ?'<span class="ok">새 편을 만드는 중입니다</span> — 서버가 시작하는 중(보통 30초). 이 화면은 자동으로 새로 고쳐집니다.'
+      :'이 편을 찾지 못했습니다.')+'</div></div>';
+    if(starting)window.__v2poll=setTimeout(()=>{if(location.pathname==="/v/"+pid)renderV2Episode(pid);},10000);
+    return;
+  }
   const cur=STG.find(s=>st.stages[s].state!=="approved")||"upload";
   let html='<div class="banner" id="msg"></div><a class="back" href="/">← 영상 목록</a>'+
     '<div class="card"><div class="ctitle" style="font-size:18px">'+esc(st.name_ko)+'</div><div class="cmeta"><i>'+esc(st.sci)+'</i></div>'+
@@ -2662,6 +2694,9 @@ async function renderV2Episode(pid){
   STG.forEach(s=>{html+=v2stageCard(st,s);});
   html+=v2tokbox();
   view().innerHTML=html;v2bindTok();
+  // 작업이 도는 중(또는 막 요청함)이면 15초마다 저절로 새로 읽는다 — 운영자가 새로고침을 안 눌러도 결과가 뜨게
+  const busy=STG.some(s=>{const k=v2job((st.jobs||{})[s],s,st.stages[s].state,pid).kind;return k==="running"||k==="starting";});
+  if(busy)window.__v2poll=setTimeout(()=>{if(location.pathname==="/v/"+pid)renderV2Episode(pid);},15000);
   document.querySelectorAll("[data-act]").forEach(b=>b.onclick=async()=>{
     const act=b.dataset.act, stage=b.dataset.stage, note=(($("#note-"+stage)||{}).value||"").trim();
     const lab=STG_KO[stage];
@@ -2677,7 +2712,7 @@ async function renderV2Episode(pid){
     }
     if(act==="write_script"){
       if(!confirm("AI가 출처(위키백과 등)에서 사실을 모아 대본을 씁니다. 출처 원문으로 확인된 사실만 쓰고, 검사·나레이션 미리듣기까지 합니다(약 $0.05 · 3~6분)."))return;
-      if(await v2do("write_script",pid,"script","",b))banner("대본 자동 작성을 시작했습니다. 1분 안에 '작업 중'으로 바뀌고, 3~6분 뒤 새로고침하면 대본이 보입니다.","ok");
+      if(await v2do("write_script",pid,"script","",b)){v2reqSet(pid,"script");renderV2Episode(pid);}
       return;
     }
     const auto=!!V2_AUTO[stage];
@@ -2685,7 +2720,10 @@ async function renderV2Episode(pid){
              :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 요청대로 대본을 고쳐 씁니다(약 $0.05 · 3~6분).":" (이 단계는 아직 자동 반영이 없어 기록만 됩니다 — Claude 대화에서 반영을 요청하세요.)"))
              :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 출처부터 다시 모아 새 대본을 씁니다(약 $0.05 · 3~6분).":" (이 단계는 아직 자동 반영이 없어 기록만 됩니다 — Claude 대화에서 요청하세요.)"));
     if(!confirm(msg))return;
-    if(await v2do(act,pid,stage,note,b))setTimeout(()=>renderV2Episode(pid),60000);
+    if(await v2do(act,pid,stage,note,b)){
+      if(auto&&act!=="approve"){v2reqSet(pid,stage);renderV2Episode(pid);}
+      else setTimeout(()=>renderV2Episode(pid),60000);
+    }
   });
   document.querySelectorAll("[data-cut]").forEach(b=>b.onclick=async()=>{
     const cut=b.dataset.cut, usd=(Number(b.dataset.sec||0)*OMNI_USD).toFixed(2), note=(($("#note-video")||{}).value||"").trim();
