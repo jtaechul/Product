@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-30T13:56:17Z",
+  "updated": "2026-09-30T14:20:28Z",
   "items": [
     {
       "id": "bathynomus_giganteus",
@@ -18,10 +18,10 @@
       "state": "working",
       "job": {
         "stage": "storyboard",
-        "status": "failed",
-        "at": "2026-09-30T13:56:17Z",
-        "action": "write_storyboard",
-        "text": "스토리보드 자동 작성 실패: GEMINI_API_KEY 없음 — 「다시 시도」를 눌러 주세요"
+        "status": "running",
+        "at": "2026-09-30T14:20:28Z",
+        "action": "job_start",
+        "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
       },
       "created": "2026-09-30T09:44:09Z"
     }
