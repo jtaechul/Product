@@ -3685,6 +3685,26 @@ function scrubBanned(text, banned) {
 }
 const MENU_INGREDIENTS = ['고구마', '단호박', '치즈', '닭고기', '연어', '소고기', '오리', '양고기', '참치', '북어', '황태', '칠면조', '흰살생선', '가다랑어', '닭'];
 // 모델이 이름을 못 지었거나 상품명이 섞였을 때 쓰는 보편 이름
+// 알갱이 모양 말은 실제로 확인된 모양일 때만(사용자 지적 2026-09: 2화 제목 '세모형'은 근거 없이 AI가 지어냈고 영상 음식은 둥근 알갱이였다).
+// 확인된 모양 문장(foodEn, 영어)에 없는 모양 낱말은 메뉴 이름·대사·후킹·캡션에서 지운다.
+const SHAPE_WORDS = [
+  [/세모(?:난|꼴|형|모양)?|삼각(?:형|뿔|모양)?/g, /triang/i],
+  [/동그란|동글동글한?|둥근|원형|원반형?|동전 모양/g, /round|circ|disc|coin|sphere|ball/i],
+  [/도넛(?:형|모양)?|링(?:형| 모양)/g, /donut|doughnut|ring/i],
+  [/뼈다귀(?:형|모양)?|뼈 모양/g, /bone/i],
+  [/하트(?:형|모양)?/g, /heart/i],
+  [/별(?:형| 모양|모양)/g, /\bstar/i],
+  [/십자(?:형|모양)?|클로버(?:형|모양)?/g, /cross|clover|x-shape/i],
+  [/네모(?:난|형|모양)?|사각(?:형|모양)?|정육면체/g, /square|cube|rectang/i],
+  [/원통(?:형|모양)?|막대(?:형|모양)?|스틱형/g, /cylind|stick|rod|tube/i],
+  [/타원(?:형|모양)?|알약(?:형|모양)/g, /oval|ellip|pill/i],
+];
+function shapeGuard(text, foodEn) {
+  let t = String(text || '');
+  for (const [ko, en] of SHAPE_WORDS) if (!en.test(String(foodEn || ''))) t = t.replace(ko, '');
+  return t.replace(/\s{2,}/g, ' ').replace(/\s+([.,…?])/g, '$1').trim();
+}
+
 function fallbackMenuName(title, spKey) {
   const t = String(title || '');
   const ing = MENU_INGREDIENTS.find(x => t.includes(x));
@@ -4026,6 +4046,9 @@ async function handleDinerEpisode(env, body, ctx) {
   // 실제 상품 사진·웹검색으로 알맹이 모양을 읽는다(실패 시 품목별 공용 문장).
   const fl = await resolveFoodLook(env, gk, title, String(body.image || '').trim()).catch(() => ({ look: foodBase, source: 'generic', note: '' }));
   const foodEn = inVessel(fl.look || foodBase);
+  // 확인된 모양(사진·검색)만 말할 수 있다 — 공용 문장(generic)이면 모양 낱말은 전부 지운다
+  const shapeRef = fl.source === 'generic' ? '' : foodEn;
+  const scrubAll = (t) => shapeGuard(scrubBanned(t, banned), shapeRef);
   const facts = (Array.isArray(body.benefits) ? body.benefits : [])
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
     .filter(Boolean);
@@ -4048,7 +4071,8 @@ async function handleDinerEpisode(env, body, ctx) {
 ⚠️ 이 메뉴는 주인공(8개월쯤 어린 중형 시바견)의 ${guest.mismatchWhat}에 맞춘 메뉴가 아니다. order에서 "내 ${guest.mismatchWhat} 메뉴는 아니다"는 사실을
    담담하게 인정하고 비틀어라(예: 어른들 메뉴를 몰래 맛보는 기분 — 문장은 새로 지어라). 주인공이 스스로 늙었다고 말하면 안 된다. 그래도 평가는 진지하게 한다.` : ''}
 [시식 감각 항목 — serve·taste 대사는 여기서 클립마다 다른 항목을 골라 쓴다] ${senses}${fl.source !== 'generic' ? `
-[실제 알맹이 모양 — 대사가 이 모양과 어긋나면 안 된다] ${foodEn}` : ''}
+[실제 알맹이 모양 — 대사가 이 모양과 어긋나면 안 된다] ${foodEn}` : `
+[알갱이 모양] 확인 안 됨 — 세모·동그란·뼈다귀 같은 모양 말은 메뉴 이름·대사·후킹·캡션 어디에도 쓰지 마라(지어내면 영상 음식과 어긋난다)`}
 [구매자 고민 — 주문(order) 대사 재료]
 ${worries.length ? '- ' + worries.join('\n- ') : '(없음 — 이 상품 종류에 흔한 고민 하나를 골라라)'}
 [확인된 정보 — 사실은 이 안에서만]
@@ -4064,7 +4088,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   "clips": [ { "role": "enter", "shots": "영어 타임코드 구간", "line": "속마음 2~3문장(35~60자). enter는 오늘 당기는 메뉴 한두 문장(오프닝은 시스템이 붙임)" } ],
   "verdict": "재방문 의사 판정 한 줄(한국어)",
   "tasteNotes": [ { "k": "식감", "v": "한국어 2~8자" }, { "k": "향", "v": "..." }, { "k": "맛", "v": "..." }, { "k": "한줄평", "v": "한국어 16자 이내" } ],
-  "menuName": "메뉴판에 적을 메뉴 이름(한국어 4~14자). 상품명·브랜드·제품 라인명 절대 금지. [확인된 정보]와 상품명의 보편 특징(주원료·알갱이 모양이나 식감·대상) 중 2개를 조합하고 '정식', '한 그릇', '한 접시', '세트' 중 하나로 끝낸다",
+  "menuName": "메뉴판에 적을 메뉴 이름(한국어 4~14자). 상품명·브랜드·제품 라인명 절대 금지. [확인된 정보]와 상품명의 보편 특징(주원료·식감·대상, 알갱이 모양은 [실제 알갱이 모양]이 주어졌을 때만) 중 2개를 조합하고 '정식', '한 그릇', '한 접시', '세트' 중 하나로 끝낸다",
   "caption": "인스타 캡션: 한줄평 첫 줄 + 식감·가격 2줄 + 저장 유도 + 프로필 링크 유도. 상품명·브랜드는 절대 쓰지 않는다",
   "hashtags": ["#태그1", "#태그2", "#태그3"],
   "ytTitle": "유튜브 설명 첫 줄에 쓸 한 줄 요약 40자 이내(상품명·브랜드 금지)",
@@ -4155,7 +4179,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     if (k < 0) return {};
     used.add(k); return list[k] || {};
   };
-  let menuName = String(out.menuName || '').trim().replace(/["'「」]/g, '').slice(0, 20);
+  let menuName = shapeGuard(String(out.menuName || '').trim().replace(/["'「」]/g, ''), shapeRef).slice(0, 20);
   if (!menuName || hasBanned(menuName, banned)) menuName = fallbackMenuName(title, spKey);
   // 최근 회차와 이름이 같으면 상품명의 보편 특징(전연령·실내·대용량 등)을 앞에 붙여 구분한다.
   if (recentMenus.includes(menuName)) {
@@ -4174,7 +4198,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const clipsOut = roles.map((role, i) => {
     const c = pickClip(role, i);
     const shots = toSpecies(safeShots(normShots(String(c.shots || '').trim())), sp);
-    let line = noGun(scrubBanned(String(c.line || '').trim().replace(/!+/g, '.'), banned));
+    let line = noGun(scrubAll(String(c.line || '').trim().replace(/!+/g, '.')));
     // 입장(사용자 확정 2026-09): 고정 오프닝이 먼저 → 오늘 당기는 메뉴로 잇는다. 편집의 끊어 빠지는 줌은 "심각하다"에 맞춘다.
     if (role === 'enter') {
       const pre = line.replace(/배가\s*고프다[.\s]*심각하다[.\s]*/g, '').trim();
@@ -4255,14 +4279,14 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const tags = (Array.isArray(out.hashtags) ? out.hashtags : []).slice(0, 3);
   const epNo = await dinerEpisodeNo(env, title);
   const seriesTag = `[${DINER_SERIES}${epNo ? ' #' + epNo : ''}]`;
-  const caption = [seriesTag, scrubBanned(String(out.caption || '').trim(), banned), COUPANG_DISCLOSURE].filter(Boolean).join('\n\n');
+  const caption = [seriesTag, scrubAll(String(out.caption || '').trim()), COUPANG_DISCLOSURE].filter(Boolean).join('\n\n');
   const link = String(body.link || '').trim();
   const shop = String(out.shop || '').trim();
-  const verdict = scrubBanned(String(out.verdict || '').trim(), banned);
+  const verdict = scrubAll(String(out.verdict || '').trim());
   // 첫 한입 후킹 문구(사용자 확정 2026-09): 제품 특징을 비튼 한 줄. 효능·배변·건강 약속이나 너무 긴 문구는 버리고 식감으로 대신한다.
   // 후킹 문구(사용자 확정 2026-09): 후보 여러 개 중 조건(28자 이하·효능·배변·상품명 없음)을 통과한 첫 번째를 쓴다.
   const hookOk = (h) => h && h.length <= 30 && !HEALTH_CLAIM.test(h) && !CURE_CLAIM.test(h) && !/이 메뉴/.test(h);
-  const hookClean = (h) => noGunHook(scrubBanned(String(h || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'), banned)).replace(/[.\s]+$/, '');
+  const hookClean = (h) => noGunHook(scrubAll(String(h || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'))).replace(/[.\s]+$/, '');
   // 긴 대본 지시 안에서는 후킹이 맛 묘사로 흐른다(실측) → 후킹만 짧은 지시로 한 번 더 뽑아 앞에 둔다.
   const hookFocused = await callGeminiText(gk, {
     system: '너는 인스타 릴스 첫 화면 카피라이터다. JSON만 출력.',
@@ -4280,7 +4304,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     const tex = ((Array.isArray(out.tasteNotes) ? out.tasteNotes : []).find(x => x && /식감/.test(String(x.k || ''))) || {}).v;
     hookLine = tex && !HEALTH_CLAIM.test(String(tex)) ? `${String(tex).trim()}, 이건 반칙이다` : '주인도 탐낸 한 그릇';
   }
-  const ytHook = scrubBanned(String(out.ytTitle || '').trim(), banned);
+  const ytHook = scrubAll(String(out.ytTitle || '').trim());
   // 제목에도 상품명 대신 메뉴 이름. 상품명은 설명란의 링크 바로 옆에만 둔다.
   const ytTitle = `[${DINER_SERIES}]${epNo ? ' #' + epNo : ''} ${menuName}`.slice(0, 100);
   const ytDescription = [
@@ -4308,7 +4332,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     species: spKey, speciesKo: sp.ko,
     problem: `${seriesTag} ${shop || '식당 에피소드'} · 오늘의 메뉴 「${menuName}」`,
     tasteNotes: (Array.isArray(out.tasteNotes) ? out.tasteNotes : [])
-      .map(x => ({ k: String(x && x.k || '').trim().slice(0, 6), v: cutWords(scrubBanned(String(x && x.v || '').trim(), banned).replace(/!+/g, ''), 30) }))
+      .map(x => ({ k: String(x && x.k || '').trim().slice(0, 6), v: cutWords(scrubAll(String(x && x.v || '').trim()).replace(/!+/g, ''), 30) }))
       .filter(x => x.k && x.v && !HEALTH_CLAIM.test(x.v)).slice(0, 4),
     shop, verdict, priceNote, menuName, foodLook: foodEn, foodLookSource: fl.source, foodLookNote: fl.note || '',
     guestNote: guest.note, guestMismatch: !!guest.mismatch,
@@ -4319,7 +4343,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     caption, hashtags: tags,
     youtube: { title: ytTitle, description: ytDescription },
     hookLine, hookRaw: hookCands.filter(Boolean).join(' / ').slice(0, 200),
-    note: note || '', noteApplied: note ? scrubBanned(String(out.noteApplied || '').trim(), banned).slice(0, 120) : '',
+    note: note || '', noteApplied: note ? scrubAll(String(out.noteApplied || '').trim()).slice(0, 120) : '',
     noteOk: note ? !!noteCheck.ok : true,
     clips: clipsOut,
   };
@@ -5473,7 +5497,13 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(lastResult.format!=='diner'){ say('epMsg','자동 제작은 사료·간식(식당 에피소드)만 됩니다.','no'); return; }
     if(!confirm('이 대본으로 영상을 자동으로 만듭니다(30~60분, 유료 AI 사용). 시작할까요?')) return;
     $('epGo').disabled=true; say('epMsg','제작 요청을 올리는 중… (음식 참고 사진을 먼저 만들어 30초쯤 걸립니다)','wait');
-    post('/api/episode/start',{episode:lastResult, title:$('pt').value.trim()||$('t').value.trim(), image:$('img').value.trim(), link:$('l').value.trim()}).then(function(r){
+    var startBody={episode:lastResult, title:$('pt').value.trim()||$('t').value.trim(), image:$('img').value.trim(), link:$('l').value.trim()};
+    (function start(){ post('/api/episode/start',startBody).then(function(r){
+      if(r&&r.dup){
+        var dupId=r.dup.id;
+        if(confirm('이 대본으로 이미 만든 영상'+(dupId?'':'(만드는 중)')+'이 있습니다. 같은 영상을 한 편 더 만들면 비용이 다시 듭니다.\\n\\n[확인] 그래도 한 편 더 만들기 / [취소] 만든 영상 보기')){ startBody.force=true; start(); return; }
+        $('epGo').disabled=false; hide('epMsg'); location.hash = dupId ? '#ep/'+encodeURIComponent(dupId) : '#list'; return;
+      }
       if(!r||!r.job){ $('epGo').disabled=false; say('epMsg',(r&&r.error)||'시작하지 못했습니다.','no'); return; }
       var t0=Date.now(), fails=0;
       (function poll(){
@@ -5491,7 +5521,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
           setTimeout(poll,5000);
         }).catch(function(){ fails++; setTimeout(poll,Math.min(15000,5000+fails*2000)); });
       })();
-    }).catch(function(e){ $('epGo').disabled=false; say('epMsg','시작하지 못했습니다: '+e.message,'no'); });
+    }).catch(function(e){ $('epGo').disabled=false; say('epMsg','시작하지 못했습니다: '+e.message,'no'); }); })();
   });
   window.addEventListener('hashchange',showView);
   showView();
@@ -6352,7 +6382,7 @@ async function runFoodJob(env, jid, job) {
     } else if (stage === 'try') {
       if (await foodTry(env, fs)) { stage = 'commit'; await foodCacheSet(env, fs.title, fs.best); }
     } else {
-      const res = job.kind === 'food-redo' ? await commitFoodRedo(env, body.id, fs) : await commitEpisodeStart(env, body, fs);
+      const res = job.kind === 'food-redo' ? await commitFoodRedo(env, body.id, fs) : await commitEpisodeStart(env, body, fs, jid);
       await env.PENDING_POSTS.delete(key).catch(() => {});
       return { done: res };
     }
@@ -6361,16 +6391,25 @@ async function runFoodJob(env, jid, job) {
   return { next: { stage, stageNote: stage === 'try' ? `음식 이미지 ${fs.k}번째 결과 ${fs.best?.score ?? '-'}점` : stage === 'commit' ? '저장 준비' : '' } };
 }
 
+async function scriptPrint(ep) {
+  if (!ep || !Array.isArray(ep.clips)) return '';
+  const src = JSON.stringify([ep.menuName || '', ...ep.clips.map(c => String(c && c.line || ''))]);
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(src));
+  return [...new Uint8Array(h)].slice(0, 12).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // 새 편: 대본 + 음식·상품 사진 + 비교 결과 + 제작 요청을 '커밋 한 번'으로 올린다(요청이 빠진 반쪽 편이 생기지 않게).
-async function commitEpisodeStart(env, body, fs) {
+async function commitEpisodeStart(env, body, fs, jid) {
   const ep = body.episode;
   const kst = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(2, 10).replace(/-/g, '');
-  const id = `${kst}-ep${String(ep.episode || '').replace(/\D/g, '') || 'x'}-${crypto.randomUUID().slice(0, 4)}`;
+  // 편 이름은 작업 번호에서 만든다 — 저장 직후 서버가 끊겨 다시 돌아도 같은 편에 덮어써서 편이 둘로 늘지 않는다
+  const id = `${kst}-ep${String(ep.episode || '').replace(/\D/g, '') || 'x'}-${String(jid || crypto.randomUUID()).replace(/-/g, '').slice(0, 4)}`;
   const dir = `${EP_ROOT}/${id}`;
   const { files, check } = foodFiles(dir, fs, []);
   files.unshift({ path: `${dir}/episode.json`, text: JSON.stringify({ ...ep, product: { title: body.title || '', link: body.link || '', image: body.image || '' } }, null, 2) });
   files.push({ path: `${dir}/requests/01_full.json`, text: JSON.stringify({ id, steps: ['character', 'keyframes', 'clips', 'tts', 'assemble'] }) });
   await ghCommit(env, files, `pet: ${id} 대본·음식 참고 사진(${check.score ?? '비교 없음'}점)·영상 제작 요청`);
+  if (body._fp) await env.PENDING_POSTS.put('ep_dup:' + body._fp, JSON.stringify({ id, at: Date.now() }), { expirationTtl: 90 * 24 * 3600 });
   await env.PENDING_POSTS.put(`ep_meta:${id}`, JSON.stringify({ title: body.title || '', menu: ep.menuName || '', episode: ep.episode || '', at: Date.now() }));
   return { success: true, id, foodRef: true, foodScore: check.score, foodDiffs: check.diffs };
 }
@@ -6498,6 +6537,7 @@ async function runVpJob(env, id) {
     } else result = await handleVideoPrompts(env, job.body || {});
     await vpJobSet(env, id, { status: 'done', result, body: null });
   } catch (e) {
+    if (job.body && job.body._fp) await env.PENDING_POSTS.delete('ep_dup:' + job.body._fp).catch(() => {});   // 실패한 시작은 다시 누를 수 있게
     await vpJobSet(env, id, { status: 'failed', error: String(e && e.message || e).slice(0, 300), body: null });
   }
   await vpJobIndex(env, id, false);
@@ -6834,10 +6874,19 @@ export default {
         }
         else if (url.pathname === '/api/episode/start') {
           // 음식 이미지 생성·비교(최대 3번)까지 1~2분 걸릴 수 있어 대본처럼 뒤에서 처리한다(휴대폰 Load failed 방지).
+          // 같은 대본으로 두 번 시작 금지(2026-09 사고: 2화가 1시간 반 간격으로 두 번 눌려 영상 비용이 두 배).
+          // 대본 지문(대사·메뉴 이름)으로 기억해 두고, 이미 있으면 확인창에서 '한 편 더'를 고른 때(force)만 다시 만든다.
+          const fp = await scriptPrint(body.episode);
+          const prev = fp && !body.force ? await env.PENDING_POSTS.get('ep_dup:' + fp, 'json').catch(() => null) : null;
+          if (prev) { result = { success: false, dup: prev, error: '이 대본으로 이미 영상을 만들었거나 만드는 중입니다.' }; }
+          else {
           const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+          body._fp = fp;
+          if (fp) await env.PENDING_POSTS.put('ep_dup:' + fp, JSON.stringify({ job: id, at: Date.now() }), { expirationTtl: 90 * 24 * 3600 });
           await vpJobSet(env, id, { status: 'queued', kind: 'episode-start', body, createdAt: Date.now() });
           await vpJobIndex(env, id, true);
           result = { success: true, job: id };
+          }
         }
         else if (url.pathname === '/api/episode/request') result = await handleEpisodeRequest(env, body);
         else if (url.pathname === '/api/episode/list') result = await handleEpisodeList(env, body);
