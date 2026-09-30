@@ -587,7 +587,8 @@ def _silent_wav(path, sec):
 
 
 def test_assemble_hook_and_answer_replace_shared_ending(tmp_path):
-    """실제 ffmpeg 조립: [후킹 2초][본편 4+4초][정답 2초] = 12초 · 공용 엔딩은 붙지 않는다 · 맨 앞은 그 컷의 화면(빨강)."""
+    """실제 ffmpeg 조립: [후킹 2초][본편: 컷은 나레이션 끝+0.6초에서 잘라 3.25+3.25초][정답 2초] = 10.5초 · 공용 엔딩 없음 · 맨 앞은 그 컷 화면(빨강).
+    (운영자 확정 2026-09-30 핵심 규칙: 영상 컷이 4초여도 나레이션 2.5초면 0.15+2.5+0.6=3.25초만 쓴다 — 무음 구간 최소화)"""
     import assemble as A
     P = tmp_path / "p"; (P / "out" / "clips").mkdir(parents=True); (P / "out" / "tts").mkdir(parents=True)
     _tiny_clip(P / "out" / "clips" / "c01.mp4", 4, "blue"); _tiny_clip(P / "out" / "clips" / "c02.mp4", 4, "red")
@@ -595,14 +596,14 @@ def test_assemble_hook_and_answer_replace_shared_ending(tmp_path):
     tps = lambda: [{"jp_seg": None, "start": 0.15, "end": 2.5}]
     sc = {"subject": {"scientific_name": "Testus fishus"}, "hook": {"cut": 2, "at": 1.0, "question_jp": "赤くなる、この生き物は？", "answer_jp": "テストウオ"},
           "cuts": [{"cut": 1, "jp": "こんにちは。", "tts": "こんにちは。", "sec": 4}, {"cut": 2, "jp": "さようなら。", "tts": "さようなら。", "sec": 4}],
-          "timing_v5": [{"cut": 1, "sec": 4, "audio_from": 0.0, "audio_to": 2.5, "lead": 0.15, "local_tps": tps()},
-                        {"cut": 2, "sec": 4, "audio_from": 2.5, "audio_to": 5.0, "lead": 0.15, "local_tps": tps()}]}
+          "timing_v5": [{"cut": 1, "sec": 4, "audio_from": 0.0, "audio_to": 2.5, "speech_s": 2.5, "lead": 0.15, "local_tps": tps()},
+                        {"cut": 2, "sec": 4, "audio_from": 2.5, "audio_to": 5.0, "speech_s": 2.5, "lead": 0.15, "local_tps": tps()}]}
     (P / "script.json").write_text(json.dumps(sc, ensure_ascii=False), encoding="utf-8")
     dst = tmp_path / "final.mp4"
     A.main(str(P), "clips", "tts", "", str(dst))
     dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(dst)],
                                capture_output=True, text=True).stdout)
-    assert abs(dur - 12.0) < 0.3
+    assert abs(dur - 10.5) < 0.3
     from PIL import Image
     def frame(t):
         f = tmp_path / f"f{t}.png"
@@ -610,8 +611,10 @@ def test_assemble_hook_and_answer_replace_shared_ending(tmp_path):
         return Image.open(f).convert("RGB")
     r, g, b = frame(0.1).resize((1, 1)).getpixel((0, 0))
     assert r > 150 and g < 80 and b < 80                     # 후킹 = 2번 컷(빨강) 화면을 그대로 발췌
-    r, g, b = frame(11.5).resize((1, 1)).getpixel((0, 0))
-    assert r < 60 and g < 60 and b < 80                      # 정답 카드 = 어두운 남색 바탕
+    r, g, b = frame(10.2).resize((1, 1)).getpixel((0, 0))
+    assert r < 90 and g < 90 and b < 110                     # 정답 카드 = 어두운 배경(마지막 화면 흐림 + 남색)
+    r, g, b = frame(6.0).resize((1, 1)).getpixel((0, 0))
+    assert r > 150 and g < 80                                # 8.5초가 아니라 5.25초부터 이미 2번 컷(빨강) — 1번 컷이 잘렸다
     assert not (tmp_path / "end.mp4").exists()
 
 

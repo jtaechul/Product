@@ -28,6 +28,8 @@ RED = (220, 38, 38)
 EDGE = 12                      # 좌우 가장자리 여유 크롭(px)
 HOOK_S = 2.0                   # 후킹 발췌 길이(초)
 ANSWER_S = 2.0                 # 정답 카드 길이(초)
+TAIL_S = 0.6                   # ★컷은 나레이션 끝 + 0.6초에서 자른다(운영자 확정 2026-09-30 · 핵심 규칙: 무음 구간 최소화)
+FADE_S = 0.6                   # 마지막 컷 끝 어둠으로 페이드(자르면서 사라지는 퇴장 연출 보전)
 NAVY = (8, 18, 30)
 
 # 특징 줌인 인서트: 컷 번호 → (인서트 이미지, 시작 초, 빨간 원 중심 x,y(0~1), 반지름(0~1))
@@ -159,38 +161,97 @@ def _italic(im: Image.Image) -> Image.Image:
     return im.transform((w + int(h * k), h), Image.AFFINE, (1, k, -int(h * k), 0, 1, 0), resample=Image.BICUBIC)
 
 
-def answer_png(question: str, answer: str, sci: str, out: Path) -> Path:
-    """정답 카드 — 질문(작게) → 「正解：〇〇」(빨강) → 학명(이탤릭) → 작은 구독 배지. 어두운 남색 바탕."""
-    im = Image.new("RGBA", (W, H), NAVY + (255,))
+def answer_png(question: str, answer: str, sci: str, out: Path, bg: Path | None = None, portrait: Path | None = None) -> Path:
+    """정답 카드(운영자 지시 2026-09-30 디자인 개선): 본편 마지막 화면을 어둡게·흐리게 깐 배경 위에
+    작은 빨간 「正解」 라벨 → 큰 흰 이름 → 학명(이탤릭) → 가는 선 → 「チャンネル登録」 배지. 질문은 위쪽에 작게."""
+    from PIL import ImageFilter
+    if bg and Path(bg).exists():
+        im = Image.open(bg).convert("RGB").resize((W, H)).filter(ImageFilter.GaussianBlur(10))
+        im = Image.blend(im, Image.new("RGB", (W, H), NAVY), 0.62).convert("RGBA")
+    else:
+        im = Image.new("RGBA", (W, H), NAVY + (255,))
+    # 가운데를 살짝 밝히는 비네트(위아래는 더 어둡게)
+    vig = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(vig).ellipse([-W * 0.3, H * 0.15, W * 1.3, H * 0.85], fill=90)
+    vig = vig.filter(ImageFilter.GaussianBlur(120))
+    im.alpha_composite(Image.merge("RGBA", (*Image.new("RGB", (W, H), (40, 70, 95)).split(), vig)))
     dr = ImageDraw.Draw(im)
-    y = int(H * 0.30)
+    # 생물 카드 초상(둥근 창 · 얇은 흰 테) — 있으면 위에 크게
+    top = int(H * 0.20)
+    if portrait and Path(portrait).exists():
+        R_ = 150
+        pim = Image.open(portrait).convert("RGB")
+        side = min(pim.size)
+        pim = pim.crop(((pim.width - side) // 2, (pim.height - side) // 2, (pim.width + side) // 2, (pim.height + side) // 2)).resize((2 * R_, 2 * R_))
+        mask = Image.new("L", (2 * R_, 2 * R_), 0)
+        ImageDraw.Draw(mask).ellipse([0, 0, 2 * R_ - 1, 2 * R_ - 1], fill=255)
+        cx, cy = W // 2, top + R_
+        dr.ellipse([cx - R_ - 5, cy - R_ - 5, cx + R_ + 5, cy + R_ + 5], fill=(255, 255, 255, 235))
+        im.paste(pim, (cx - R_, cy - R_), mask)
+        dr = ImageDraw.Draw(im)
+        top = cy + R_ + 40
+    else:
+        top = int(H * 0.30)
+    # 질문(작게)
     if question:
-        f = _fit_font(question, 38, W - 120)
-        dr.text((int((W - f.getlength(question)) / 2), y), question, font=f, fill=(200, 205, 215, 255))
-        y += 90
-    ans = "正解：" + answer
-    f = _fit_font(ans, 72, W - 80)
-    dr.text((int((W - f.getlength(ans)) / 2), y), ans, font=f, fill=RED + (255,), stroke_width=3, stroke_fill=(0, 0, 0, 200))
-    y += 120
+        f = _fit_font(question, 32, W - 120)
+        dr.text((int((W - f.getlength(question)) / 2), top), question, font=f, fill=(170, 185, 200, 255))
+        top += 60
+    # 「正解」 빨간 라벨
+    lab = "正解"
+    f = _font(30)
+    tw = f.getlength(lab)
+    a, d = f.getmetrics()
+    x0, y0 = int((W - tw) / 2) - 18, top
+    dr.rounded_rectangle([x0, y0, x0 + tw + 36, y0 + a + d + 10], radius=8, fill=RED + (255,))
+    dr.text((x0 + 18, y0 + 5), lab, font=f, fill=(255, 255, 255, 255))
+    # 이름(크게 · 흰색 · 부드러운 그림자)
+    y = y0 + a + d + 34
+    f = _fit_font(answer, 84, W - 80)
+    tw = f.getlength(answer)
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(sh).text((int((W - tw) / 2) + 4, y + 6), answer, font=f, fill=(0, 0, 0, 160))
+    im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(8)))
+    dr = ImageDraw.Draw(im)
+    dr.text((int((W - tw) / 2), y), answer, font=f, fill=(255, 255, 255, 255))
+    a2, d2 = f.getmetrics()
+    y += a2 + d2 + 18
     if sci:
         sci = sci[:1].upper() + sci[1:]
         f = _fit_font(sci, 34, W - 160)
         tw = int(f.getlength(sci))
         a, d = f.getmetrics()
         lay = Image.new("RGBA", (tw + 20, a + d + 10), (0, 0, 0, 0))
-        ImageDraw.Draw(lay).text((10, 5), sci, font=f, fill=(225, 230, 240, 255))
+        ImageDraw.Draw(lay).text((10, 5), sci, font=f, fill=(205, 215, 230, 255))
         lay = _italic(lay)
         im.alpha_composite(lay, (int((W - lay.width) / 2), y))
-        y += 80
+        y += a + d + 40
+    dr = ImageDraw.Draw(im)
+    dr.line([(W // 2 - 60, y), (W // 2 + 60, y)], fill=(200, 60, 60, 220), width=3)
+    # 구독 배지(흰 알약 + 빨간 점)
     pill = "チャンネル登録"
-    f = _font(28)
+    f = _font(30)
     tw = f.getlength(pill)
     a, d = f.getmetrics()
-    x0, y0 = int((W - tw) / 2) - 22, int(H * 0.80)
-    dr.rounded_rectangle([x0, y0, x0 + tw + 44, y0 + a + d + 16], radius=24, fill=(255, 255, 255, 235))
-    dr.text((x0 + 22, y0 + 8), pill, font=f, fill=NAVY + (255,))
+    x0, y0 = int((W - tw - 24) / 2) - 26, int(H * 0.78)
+    dr.rounded_rectangle([x0, y0, x0 + tw + 76, y0 + a + d + 22], radius=30, fill=(255, 255, 255, 240))
+    dr.ellipse([x0 + 22, y0 + (a + d + 22) // 2 - 8, x0 + 38, y0 + (a + d + 22) // 2 + 8], fill=RED + (255,))
+    dr.text((x0 + 52, y0 + 11), pill, font=f, fill=NAVY + (255,))
     im.save(out)
     return out
+
+
+def _portrait(pilot: Path) -> Path | None:
+    """정답 카드 초상 = 생물 카드(creature_card.json use_as_reference 첫 장 · 없으면 None)."""
+    try:
+        cc = json.loads((pilot / "creature_card.json").read_text(encoding="utf-8"))
+        for r in cc.get("use_as_reference", []):
+            p = pilot / r["file"]
+            if p.exists() and "ref_" not in p.name:
+                return p
+    except Exception:  # noqa: BLE001
+        pass
+    return None
 
 
 def _silent_video(src_v: Path, out: Path, sec: float, fade_in: float = 0.0) -> Path:
@@ -216,8 +277,8 @@ def build_hook(clip: Path, at: float, question: str, t: Path) -> Path:
     return _silent_video(ov, t / "hook.mp4", HOOK_S)
 
 
-def build_answer(question: str, answer: str, sci: str, t: Path) -> Path:
-    png = answer_png(question, answer, sci, t / "answer.png")
+def build_answer(question: str, answer: str, sci: str, t: Path, bg: Path | None = None, portrait: Path | None = None) -> Path:
+    png = answer_png(question, answer, sci, t / "answer.png", bg=bg, portrait=portrait)
     raw = t / "answer_raw.mp4"
     _run(["-loop", "1", "-i", str(png), "-t", f"{ANSWER_S}", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", str(raw)])
     return _silent_video(raw, t / "answer.mp4", ANSWER_S, fade_in=0.4)
@@ -244,18 +305,19 @@ def _place_slices(src: Path, slices: list[tuple], total: float, out: Path) -> No
         w.writeframes(stereo.tobytes())
 
 
-def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: Path, cut: dict | None = None) -> Path:
-    """한 컷: 9:16 맞춤 · 무음 · 길이 맞춤(짧으면 마지막 장면 유지) · 인서트·주석."""
+def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: Path, cut: dict | None = None,
+              fade_out: bool = False) -> Path:
+    """한 컷: 9:16 맞춤 · 무음 · 길이 맞춤(sec = 실제로 쓰는 길이 · 짧으면 마지막 장면 유지) · 인서트·주석 · (마지막 컷) 페이드아웃."""
     base = t / f"cut{n}_base.mp4"
     # ★좌우 가장자리 12px씩 여유 크롭(약 3% 확대) — 시작 이미지의 흰 격자 테두리가 영상 첫머리에
     #   흰 선으로 남는 사고 방지(실측 최대 9px). 모든 컷에 같게 적용해 컷끼리 크기 차이가 없다.
     _run(["-i", str(clip), "-vf", f"scale={W + 2 * EDGE}:{(H + 2 * EDGE * H // W) // 2 * 2}:force_original_aspect_ratio=increase,"
           f"crop={W}:{H},setsar=1,fps={FPS},"
-          f"tpad=stop_mode=clone:stop_duration={sec}", "-t", f"{sec}", "-an", "-c:v", "libx264", "-crf", "16",
-          "-pix_fmt", "yuv420p", str(base)])
+          f"tpad=stop_mode=clone:stop_duration={sec}" + (f",fade=t=out:st={max(0.0, sec - FADE_S):.2f}:d={FADE_S}" if fade_out else ""),
+          "-t", f"{sec}", "-an", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(base)])
     cur = base
     ins = insert_for(pilot, n, cut)
-    if ins:                                            # 특징 줌인 — 매크로 인서트(천천히 확대) + 빨간 원
+    if ins and sec > ins[1] + 0.5:                     # 특징 줌인 — 매크로 인서트(천천히 확대) + 빨간 원(잘린 길이 안에 들어갈 때만)
         img, at, (cx, cy), r = ins
         ins = t / f"cut{n}_ins.mp4"
         frames = int((sec - at) * FPS)
@@ -292,12 +354,17 @@ def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, override
         t = Path(td)
         # ① 컷별 영상
         parts, starts, acc = [], [], 0.0
+        last_n = timing[-1]["cut"]
         for tm in timing:
             n, sec = tm["cut"], float(tm["sec"])
+            # ★핵심 규칙(운영자 확정 2026-09-30): 컷은 나레이션 끝 + 0.6초에서 자른다 — 영상은 짝수 초로 만들어도
+            #   남는 무음 구간을 화면에 남기지 않는다(실사고: 편당 14초 무음). 마지막 컷은 끝을 어둠으로 페이드.
+            use = round(min(sec, float(tm.get("lead", 0.15)) + float(tm.get("speech_s") or sec) + TAIL_S), 2)
+            tm["use_sec"] = use
             clip = Path((overrides or {}).get(n) or P / "out" / clips_id / f"c{n:02d}.mp4")
-            parts.append(build_cut(P, clip, sec, n, cuts[n].get("annotation"), t, cuts[n]))
+            parts.append(build_cut(P, clip, use, n, cuts[n].get("annotation"), t, cuts[n], fade_out=(n == last_n)))
             starts.append(acc)
-            acc += sec
+            acc += use
         body_len = acc
         (t / "list.txt").write_text("".join(f"file '{p}'\n" for p in parts))
         _run(["-f", "concat", "-safe", "0", "-i", str(t / "list.txt"), "-c", "copy", str(t / "body_v.mp4")])
@@ -327,8 +394,11 @@ def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, override
             n = int(hook["cut"])
             clip = Path((overrides or {}).get(n) or P / "out" / clips_id / f"c{n:02d}.mp4")
             at = max(0.0, min(float(hook.get("at") or 0.0), max(0.0, float(cuts[n].get("sec") or 0) - HOOK_S)))
+            lastf = t / "last_frame.jpg"
+            _run(["-sseof", "-0.3", "-i", str(t / "body_v.mp4"), "-frames:v", "1", "-q:v", "2", str(lastf)])
             segs = [build_hook(clip, at, hook["question_jp"], t), t / "body.mp4",
-                    build_answer(hook.get("question_jp", ""), hook["answer_jp"], sc.get("subject", {}).get("scientific_name", ""), t)]
+                    build_answer(hook.get("question_jp", ""), hook["answer_jp"], sc.get("subject", {}).get("scientific_name", ""), t,
+                                 bg=lastf if lastf.exists() else None, portrait=_portrait(P))]
         elif ending:
             _run(["-i", ending, "-vf", f"scale={W}:{H},setsar=1,fps={FPS}",
                   "-af", "loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000", "-c:v", "libx264", "-crf", "18",

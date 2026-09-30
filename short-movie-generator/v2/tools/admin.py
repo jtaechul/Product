@@ -210,7 +210,10 @@ def assemble(pid: str) -> dict:
     st = load_status(pid)
     a = st["artifacts"]["video"]
     st["artifacts"].get("script", {}).pop("hook_pending", None)
-    st["checks"] = auto_checks(dst, body_s=sum(float(c.get("sec") or 0) for c in a.get("clips", [])))
+    tmv = (sc.get("timing_v5") or [])
+    body_s = sum(min(float(t["sec"]), float(t.get("lead", 0.15)) + float(t.get("speech_s") or t["sec"]) + A.TAIL_S) for t in tmv) \
+        or sum(float(c.get("sec") or 0) for c in a.get("clips", []))
+    st["checks"] = auto_checks(dst, body_s=body_s)
     st["checks"]["subtitle_font"] = {"ok": True, "value": font["font_file"],
                                      "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"}
     st["stages"]["video"]["state"] = "review"
@@ -1094,6 +1097,7 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
 - hook(冒頭2秒の引き): 台本の中で**いちばん驚く場面のカット番号**を選び、その場面を見せながら出す短い問い
   「〇〇する、この生き物は？」(8〜22文字・「？」で終わる・答えの名前は入れない・事実リストにある行動だけ)。
   answer_jp は最後の「正解：〇〇」に入れる呼び名(台本で使った呼び名と同じ)。
+  ★正体当てなので、その呼び名(answer_jp)は**カット1・2には出さず**、3カット目以降で初めて明かす(冒頭で答えを言わない)。
 {feedback}
 # 出力(JSONのみ)
 {{"cuts":[{{"cut":1,"jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
@@ -1185,6 +1189,8 @@ def validate_hook(hook: dict | None, cuts: list[dict], facts: list[dict]) -> lis
         probs.append("hook.answer_jp(正解の呼び名)が空か長すぎます。")
     if a and a in q:
         probs.append("hook.question_jp に答えの名前が入っています(答えは最後に見せる)。")
+    if a and any(a in str(c.get("jp", "")) for c in cuts[:2]):
+        probs.append(f"呼び名「{a}」がカット1〜2に出ています。正体当てなので3カット目以降で初めて明かしてください。")
     allowed = set().union(*[_nums(f["fact"] + " " + f.get("fact_jp", "") + " " + f.get("quote", "")) for f in facts]) if facts else set()
     bad = sorted(_nums(q) - allowed)
     if bad:

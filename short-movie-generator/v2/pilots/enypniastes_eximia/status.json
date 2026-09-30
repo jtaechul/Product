@@ -655,12 +655,12 @@
         "tts_id": "r0930144517_tts",
         "ending": ""
       },
-      "built_at": "2026-09-30T15:11:13Z"
+      "built_at": "2026-09-30T15:39:24Z"
     }
   },
   "checks": {
-    "at": "2026-09-30T15:11:13Z",
-    "duration_s": 66.04,
+    "at": "2026-09-30T15:39:24Z",
+    "duration_s": 56.68,
     "white_edge_px": {
       "value": 0,
       "ok": true,
