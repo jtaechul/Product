@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-30-4 (버튼 직후 시작 중 표시 · 자동 새로 고침)";
+const BUILD="v2026-09-30-5 (후킹 2초 + 정답 카드 · 공용 엔딩 제거)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2503,7 +2503,7 @@ function v2stageBody(st,stage){
     if(!a.cuts)return '<div class="hint">대본이 나오면 이 칸에 컷별 대사(일본어/한국어)·근거 원문·나레이션 미리듣기가 나옵니다.</div>';
     return (a.audio?'<span class="lbl">나레이션 미리듣기 (1.33배)</span><audio controls preload="none" style="width:100%" src="'+v2media(pid,a.audio)+'"></audio>':'')+
       (a.verification?'<div class="hint">'+esc(a.verification)+'</div>':'')+
-      v2pendingNote(a)+v2ccBlock(a)+
+      v2pendingNote(a)+v2ccBlock(a)+v2hookHTML(a)+
       '<div class="sect">컷별 대사 — 고쳐도 영상은 자동으로 바뀌지 않습니다</div>'+a.cuts.map(c=>'<div class="v2cut'+(v2ccCuts(a).has(c.cut)?' v2flag':'')+'"><b>'+c.cut+'</b><div style="flex:1">'+esc(c.jp)+
         (v2ccCuts(a).has(c.cut)?' <span class="v2st fail">AI 의심</span>':'')+
         (c.pending?' <span class="v2st wait">수정됨 · 미반영</span>':'')+'<small>'+esc(c.ko)+'</small>'+
@@ -2621,6 +2621,26 @@ function v2factsHTML(c){
   return fs.map(f=>'<div class="v2fact"><b>근거 '+esc(f.id)+'</b> '+esc(f.fact)+
     ((f.sources||[]).length?' '+f.sources.map((u,i)=>'<a href="'+esc(u)+'" target="_blank">출처'+(i+1)+'</a>').join(" "):(f.source_title?' <span style="opacity:.7">('+esc(f.source_title)+')</span>':''))+
     (f.quote?'<div style="opacity:.65;font-size:11px;margin-top:2px">원문: '+esc(f.quote)+'</div>':'')+'</div>').join("");
+}
+// ── 후킹 2초 + 정답 카드(운영자 확정 2026-09-30 · 공용 엔딩 대체) ──
+function v2hookHTML(a){
+  const h=a.hook;if(!h)return "";
+  const cuts=a.cuts||[];
+  return '<div class="sect">맨 앞 2초 후킹 + 마지막 정답 카드 — 공용 엔딩 대신</div>'+
+    '<div class="cfact">발췌: <b>'+esc(h.cut)+'번 컷</b> '+esc(h.at==null?"":h.at)+'초부터 2초(본편 그대로 · 추가 비용 없음)</div>'+
+    '<div class="cfact">질문(빨간 글자 · 자막·나레이션 없음): <b style="color:var(--rd)">'+esc(h.question_jp||"")+'</b> <small>'+esc(h.question_ko||"")+'</small></div>'+
+    '<div class="cfact">정답 카드: <b>正解：'+esc(h.answer_jp||"")+'</b> <small>'+esc(h.answer_ko||"")+'</small> + 학명 + 구독 배지</div>'+
+    (a.hook_pending?'<div class="cfact warn">수정됨 · 영상엔 아직 미반영 — 영상 카드의 「완성본 다시 조립」을 누르면 반영(무료)</div>':'')+
+    '<button class="btn v2edit" id="hkopen">후킹 수정</button>'+
+    '<div class="v2ed" id="hked" style="display:none">'+
+      '<span class="lbl">발췌할 컷</span><select id="hk_cut">'+cuts.map(c=>'<option value="'+c.cut+'"'+(String(c.cut)===String(h.cut)?' selected':'')+'>'+c.cut+'번 · '+esc(c.sec||"")+'초 · '+esc(String(c.ko||"").slice(0,22))+'</option>').join("")+'</select>'+
+      '<span class="lbl">발췌 시작(초) — 그 컷 안에서</span><input id="hk_at" type="number" step="0.5" min="0" value="'+esc(h.at==null?"":h.at)+'">'+
+      '<span class="lbl">질문(일본어 · 8~22자 · 「？」로 끝 · 정답 이름 넣지 않기)</span><input id="hk_qj" value="'+esc(h.question_jp||"")+'">'+
+      '<span class="lbl">질문(한국어 · 확인용)</span><input id="hk_qk" value="'+esc(h.question_ko||"")+'">'+
+      '<span class="lbl">정답 이름(일본어)</span><input id="hk_aj" value="'+esc(h.answer_jp||"")+'">'+
+      '<span class="lbl">정답 이름(한국어 · 확인용)</span><input id="hk_ak" value="'+esc(h.answer_ko||"")+'">'+
+      '<button class="btn save" id="hksave" style="width:100%;margin-top:8px">후킹 저장 (영상은 다시 조립할 때 반영)</button>'+
+    '</div>';
 }
 // ── 검증 ① AI 교차 검사 결과 ──
 function v2ccCuts(a){const cc=(a&&a.crosscheck)||{};return new Set((cc.issues||[]).map(x=>x.cut));}
@@ -2741,6 +2761,13 @@ async function renderV2Episode(pid){
     if(await v2do("edit_line",pid,n,JSON.stringify({jp:jp,ko:ko,tts:tts}),b))setTimeout(()=>renderV2Episode(pid),60000);
   });
   const ccRes=((st.artifacts||{}).script||{}).crosscheck||{};
+  const ho=$("#hkopen");if(ho)ho.onclick=()=>{const e=$("#hked");e.style.display=e.style.display==="none"?"block":"none";};
+  const hs=$("#hksave");if(hs)hs.onclick=async()=>{
+    const d={cut:($("#hk_cut")||{}).value,at:($("#hk_at")||{}).value,question_jp:(($("#hk_qj")||{}).value||"").trim(),question_ko:(($("#hk_qk")||{}).value||"").trim(),
+             answer_jp:(($("#hk_aj")||{}).value||"").trim(),answer_ko:(($("#hk_ak")||{}).value||"").trim()};
+    if(!d.question_jp||!d.answer_jp){banner("질문과 정답 이름을 채워 주세요.","err");return;}
+    if(await v2do("edit_hook",pid,"_",JSON.stringify(d),hs))setTimeout(()=>renderV2Episode(pid),60000);
+  };
   const cc=$("#v2cc");if(cc)cc.onclick=async()=>{if(confirm("대본 전체를 AI로 교차 검사할까요? (약 $0.02 · 1~2분)"))await v2do("crosscheck",pid,"","",cc);};
   document.querySelectorAll("[data-usesug]").forEach(b=>b.onclick=()=>{
     const x=(ccRes.issues||[])[+b.dataset.usesug];if(!x)return;

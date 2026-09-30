@@ -1,9 +1,12 @@
-"""v2 완성본 조립 — 본편 컷 + 나레이션 + 카라오케 자막 + 빨간 주석 + 「再現映像」 + 특징 줌인 인서트 + 공용 엔딩.
+"""v2 완성본 조립 — [후킹 2초] + 본편 컷(나레이션 + 카라오케 자막 + 빨간 주석 + 「再現映像」 + 특징 줌인 인서트) + [정답 카드].
 
 규칙(CLAUDE.md v2): 영상은 정상 속도(컷 길이 = 나레이션 + 여유, 짝수 초) · 영상 AI 오디오는 전부 버림(음악 금지) ·
 나레이션 -16 LUFS · 자막은 v1과 같은 카라오케식 하단(karaoke.py) · 주석은 강조색 빨강 하나 · 「再現映像」 표기.
+★후킹·정답 카드(운영자 확정 2026-09-30): script.json 에 `hook`이 있으면 공용 엔딩 대신
+  ① 맨 앞 — 본편의 가장 놀라운 2초를 그대로 발췌(새로 만들지 않음 · 비용 0) + 빨간 질문 글자만(자막·나레이션 없음)
+  ② 맨 뒤 — 「正解：〇〇」 + 종명·학명 + 작은 구독 배지 카드 2초. 공용 댓글 유도 엔딩(약 10초)은 붙이지 않는다.
 
-사용: python assemble.py <pilot 폴더> <클립 요청 id> <나레이션 요청 id> <엔딩 mp4> <출력 mp4>
+사용: python assemble.py <pilot 폴더> <클립 요청 id> <나레이션 요청 id> <엔딩 mp4 또는 ''> <출력 mp4>
 """
 from __future__ import annotations
 
@@ -23,6 +26,9 @@ ROOT = Path(__file__).resolve().parents[2]
 FONT_BOLD = ROOT / "vendor" / "fonts" / "NotoSansJP-VF.ttf"
 RED = (220, 38, 38)
 EDGE = 12                      # 좌우 가장자리 여유 크롭(px)
+HOOK_S = 2.0                   # 후킹 발췌 길이(초)
+ANSWER_S = 2.0                 # 정답 카드 길이(초)
+NAVY = (8, 18, 30)
 
 # 특징 줌인 인서트: 컷 번호 → (인서트 이미지, 시작 초, 빨간 원 중심 x,y(0~1), 반지름(0~1))
 INSERTS = {4: ("out/19_eye_macro/eye_macro.jpg", 5.0, (0.40, 0.50), 0.36)}
@@ -74,6 +80,97 @@ def circle_png(cx: float, cy: float, r: float, out: Path) -> Path:
                                outline=RED + (255,), width=8)
     im.save(out)
     return out
+
+
+def _fit_font(text: str, size: int, max_w: int) -> ImageFont.FreeTypeFont:
+    while size > 24:
+        f = _font(size)
+        if f.getlength(text) <= max_w:
+            return f
+        size -= 2
+    return _font(size)
+
+
+def hook_png(question: str, out: Path) -> Path:
+    """후킹 질문 — 화면 가운데 위쪽, **빨간 글자만**(칩·자막 없음 · 운영자 확정). 어두운 테두리로 가독성."""
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    f = _fit_font(question, 64, W - 80)
+    tw = f.getlength(question)
+    ImageDraw.Draw(im).text((int((W - tw) / 2), int(H * 0.36)), question, font=f, fill=RED + (255,),
+                            stroke_width=5, stroke_fill=(0, 0, 0, 220))
+    im.save(out)
+    return out
+
+
+def _italic(im: Image.Image) -> Image.Image:
+    """학명은 이탤릭(하드룰) — 이탤릭 글꼴이 없어 글자 그림을 살짝 기울인다."""
+    w, h = im.size
+    k = 0.2
+    return im.transform((w + int(h * k), h), Image.AFFINE, (1, k, -int(h * k), 0, 1, 0), resample=Image.BICUBIC)
+
+
+def answer_png(question: str, answer: str, sci: str, out: Path) -> Path:
+    """정답 카드 — 질문(작게) → 「正解：〇〇」(빨강) → 학명(이탤릭) → 작은 구독 배지. 어두운 남색 바탕."""
+    im = Image.new("RGBA", (W, H), NAVY + (255,))
+    dr = ImageDraw.Draw(im)
+    y = int(H * 0.30)
+    if question:
+        f = _fit_font(question, 38, W - 120)
+        dr.text((int((W - f.getlength(question)) / 2), y), question, font=f, fill=(200, 205, 215, 255))
+        y += 90
+    ans = "正解：" + answer
+    f = _fit_font(ans, 72, W - 80)
+    dr.text((int((W - f.getlength(ans)) / 2), y), ans, font=f, fill=RED + (255,), stroke_width=3, stroke_fill=(0, 0, 0, 200))
+    y += 120
+    if sci:
+        sci = sci[:1].upper() + sci[1:]
+        f = _fit_font(sci, 34, W - 160)
+        tw = int(f.getlength(sci))
+        a, d = f.getmetrics()
+        lay = Image.new("RGBA", (tw + 20, a + d + 10), (0, 0, 0, 0))
+        ImageDraw.Draw(lay).text((10, 5), sci, font=f, fill=(225, 230, 240, 255))
+        lay = _italic(lay)
+        im.alpha_composite(lay, (int((W - lay.width) / 2), y))
+        y += 80
+    pill = "チャンネル登録"
+    f = _font(28)
+    tw = f.getlength(pill)
+    a, d = f.getmetrics()
+    x0, y0 = int((W - tw) / 2) - 22, int(H * 0.80)
+    dr.rounded_rectangle([x0, y0, x0 + tw + 44, y0 + a + d + 16], radius=24, fill=(255, 255, 255, 235))
+    dr.text((x0 + 22, y0 + 8), pill, font=f, fill=NAVY + (255,))
+    im.save(out)
+    return out
+
+
+def _silent_video(src_v: Path, out: Path, sec: float, fade_in: float = 0.0) -> Path:
+    """무음(스테레오 48k) 트랙을 붙인 mp4 — 본편과 concat 할 수 있는 같은 규격."""
+    vf = f"fps={FPS},setsar=1" + (f",fade=t=in:st=0:d={fade_in}" if fade_in else "")
+    _run(["-i", str(src_v), "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-vf", vf, "-shortest",
+          "-t", f"{sec}", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
+          "-ar", "48000", str(out)])
+    return out
+
+
+def build_hook(clip: Path, at: float, question: str, t: Path) -> Path:
+    """후킹 2초: 본편 컷(clip)의 at초부터 HOOK_S초를 그대로 발췌 + 빨간 질문 글자(0.2초부터). 자막·나레이션 없음."""
+    ex = t / "hook_ex.mp4"
+    _run(["-ss", f"{at:.2f}", "-i", str(clip), "-vf",
+          f"scale={W + 2 * EDGE}:{(H + 2 * EDGE * H // W) // 2 * 2}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1,fps={FPS},"
+          f"tpad=stop_mode=clone:stop_duration={HOOK_S}", "-t", f"{HOOK_S}", "-an", "-c:v", "libx264", "-crf", "16",
+          "-pix_fmt", "yuv420p", str(ex)])
+    lab = hook_png(question, t / "hook_q.png")
+    ov = t / "hook_v.mp4"
+    _run(["-i", str(ex), "-i", str(lab), "-filter_complex", "[0:v][1:v]overlay=0:0:enable='gte(t,0.2)'[v]",
+          "-map", "[v]", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(ov)])
+    return _silent_video(ov, t / "hook.mp4", HOOK_S)
+
+
+def build_answer(question: str, answer: str, sci: str, t: Path) -> Path:
+    png = answer_png(question, answer, sci, t / "answer.png")
+    raw = t / "answer_raw.mp4"
+    _run(["-loop", "1", "-i", str(png), "-t", f"{ANSWER_S}", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", str(raw)])
+    return _silent_video(raw, t / "answer.mp4", ANSWER_S, fade_in=0.4)
 
 
 def _place_slices(src: Path, slices: list[tuple], total: float, out: Path) -> None:
@@ -132,7 +229,8 @@ def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: P
 
 
 def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, overrides: dict | None = None) -> None:
-    """overrides: {컷번호: 클립 경로} — 관리자 페이지에서 그 컷만 다시 만든 경우 새 클립을 쓴다."""
+    """overrides: {컷번호: 클립 경로} — 관리자 페이지에서 그 컷만 다시 만든 경우 새 클립을 쓴다.
+    ending: 예전 공용 엔딩 mp4(script.json 에 hook 이 없는 옛 편에만 쓰임 · '' 이면 안 붙임)."""
     karaoke.verify_font()        # ★자막 글꼴 자가 검사 — 네모(□)·빈칸이면 여기서 멈춘다(영상을 만들지 않음)
     P = Path(pilot)
     sc = json.loads((P / "script.json").read_text(encoding="utf-8"))
@@ -171,12 +269,26 @@ def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, override
               f"[0:v][1:v]overlay=0:0,{karaoke.burn_filter(t / 'body.ass')}[v]", "-map", "[v]", "-map", "2:a",
               "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
               "-t", f"{body_len}", str(t / "body.mp4")])
-        # ④ 공용 엔딩 연결(같은 규격으로 맞춘 뒤 이어 붙임)
-        _run(["-i", ending, "-vf", f"scale={W}:{H},setsar=1,fps={FPS}",
-              "-af", "loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000", "-c:v", "libx264", "-crf", "18",
-              "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", str(t / "end.mp4")])
-        _run(["-i", str(t / "body.mp4"), "-i", str(t / "end.mp4"), "-filter_complex",
-              "[0:v][0:a][1:v][1:a]concat=n=2:v=1:a=1[v][a]", "-map", "[v]", "-map", "[a]",
+        # ④ 앞뒤 연결 — 후킹(hook)이 있으면 [후킹 2초][본편][정답 카드 2초], 없으면 예전 공용 엔딩(주어진 경우만)
+        hook = sc.get("hook") or None
+        segs = [t / "body.mp4"]
+        if hook:
+            n = int(hook["cut"])
+            clip = Path((overrides or {}).get(n) or P / "out" / clips_id / f"c{n:02d}.mp4")
+            at = max(0.0, min(float(hook.get("at") or 0.0), max(0.0, float(cuts[n].get("sec") or 0) - HOOK_S)))
+            segs = [build_hook(clip, at, hook["question_jp"], t), t / "body.mp4",
+                    build_answer(hook.get("question_jp", ""), hook["answer_jp"], sc.get("subject", {}).get("scientific_name", ""), t)]
+        elif ending:
+            _run(["-i", ending, "-vf", f"scale={W}:{H},setsar=1,fps={FPS}",
+                  "-af", "loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000", "-c:v", "libx264", "-crf", "18",
+                  "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", str(t / "end.mp4")])
+            segs.append(t / "end.mp4")
+        if len(segs) == 1:
+            _run(["-i", str(segs[0]), "-c", "copy", dst])
+            return
+        ins = [x for p in segs for x in ("-i", str(p))]
+        fc = "".join(f"[{i}:v][{i}:a]" for i in range(len(segs))) + f"concat=n={len(segs)}:v=1:a=1[v][a]"
+        _run([*ins, "-filter_complex", fc, "-map", "[v]", "-map", "[a]",
               "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", dst])
 
 

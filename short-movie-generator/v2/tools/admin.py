@@ -22,6 +22,7 @@
   python admin.py ready <id> <stage> [메모]      # 작업 결과가 나왔음 → 승인 대기로
   python admin.py edit_line <id> <컷> '<json>'   # 컷 대사 수정(대본만 · 영상은 안 바뀜)
   python admin.py apply_lines <id>              # 수정한 대사를 영상에 반영(나레이션 다시 읽기 + 재조립만)
+  python admin.py edit_hook <id> _ '<json>'     # 후킹 질문·정답·발췌 컷 수정(대본만 · 영상은 재조립 때 반영)
   python admin.py crosscheck <id>               # AI 교차 검사(대본 전체 × 사실 전체 — 모순·범위·근거 없음)
   python admin.py recut_plan <id> <컷> '<json>'  # 컷 수정 방향 → 샷 계획 + 콘티(영상은 안 만듦)
   python admin.py recut_approve <id> <컷>        # 콘티 승인 → 샷별 영상 → 한 컷 합성 → 재조립
@@ -200,7 +201,12 @@ def assemble(pid: str) -> dict:
         _note(st, "video", "error", "자막 글꼴 검사 불통과 — 영상을 만들지 않았습니다: " + str(e)[:160])
         _save(status_path(pid), st)
         raise SystemExit(str(e))
-    A.main(str(pilot), asm["clips_id"], asm["tts_id"], str(pilot / asm["ending"]), str(dst), overrides=over)
+    sc = _load(_script_path(pid)) or {}
+    ending = "" if sc.get("hook") else str(pilot / asm["ending"])   # ★후킹 편은 공용 엔딩 대신 [후킹][본편][정답 카드]
+    A.main(str(pilot), asm["clips_id"], asm["tts_id"], ending, str(dst), overrides=over)
+    st = load_status(pid)
+    a = st["artifacts"]["video"]
+    st["artifacts"].get("script", {}).pop("hook_pending", None)
     st["checks"] = auto_checks(dst, body_s=sum(float(c.get("sec") or 0) for c in a.get("clips", [])))
     st["checks"]["subtitle_font"] = {"ok": True, "value": font["font_file"],
                                      "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"}
@@ -250,6 +256,7 @@ def _sync_script_artifacts(st: dict, sc: dict) -> None:
                      "facts": facts_for(sc, c.get("fact", ""))})
     st.setdefault("artifacts", {}).setdefault("script", {})["cuts"] = cuts
     st["artifacts"]["script"]["pending_lines"] = [c["cut"] for c in cuts if c["pending"]]
+    st["artifacts"]["script"]["hook"] = sc.get("hook")
 
 
 def facts_for(sc: dict, ids: str) -> list[dict]:
@@ -397,6 +404,38 @@ def edit_line(pid: str, cut: int, jp: str, ko: str = "", tts: str = "") -> dict:
     _note(st, "script", "edit_line", f"{cut}번 컷 대사 수정 — 아직 영상에 반영 안 됨(「수정한 대사 영상에 반영」을 눌러야 반영)")
     _save(status_path(pid), st)
     return crosscheck(pid)                                  # 고친 대사도 곧바로 교차 검사
+
+
+def edit_hook(pid: str, data: dict) -> dict:
+    """후킹 질문·정답·발췌 컷/시작 초 수정 — script.json 만 고친다(영상은 「완성본 다시 조립」을 눌러야 바뀜 · 무료)."""
+    st = load_status(pid)
+    sc = _load(_script_path(pid))
+    if not sc or not sc.get("hook"):
+        raise SystemExit("후킹 정보가 없는 대본입니다")
+    hk = dict(sc["hook"])
+    cuts = [c for c in sc["cuts"] if "tts" in c]
+    for k in ("question_jp", "question_ko", "answer_jp", "answer_ko"):
+        if k in data and str(data[k]).strip():
+            hk[k] = str(data[k]).strip()
+    if data.get("cut"):
+        hk["cut"] = int(data["cut"])
+    if data.get("at") not in (None, ""):
+        hk["at"] = round(float(data["at"]), 2)
+    probs = validate_hook(hk, cuts, sc.get("facts", []))
+    if probs:
+        raise SystemExit("후킹 검사 불통과: " + " / ".join(probs))
+    sec = float(cuts[int(hk["cut"]) - 1].get("sec") or 0)
+    hk["at"] = round(max(0.0, min(float(hk.get("at") or 0.0), max(0.0, sec - HOOK_S))), 2)
+    sc.setdefault("hook_history", []).append({"at": _now(), "hook": sc["hook"]})
+    sc["hook"] = hk
+    _save(_script_path(pid), sc)
+    _sync_script_artifacts(st, sc)
+    if (st["artifacts"].get("video") or {}).get("final"):
+        st["artifacts"]["script"]["hook_pending"] = True         # 영상엔 아직 미반영 — 재조립 필요
+        _note(st, "video", "hook", "후킹·정답 문구 수정됨 — 「완성본 다시 조립」을 누르면 반영(무료)")
+    _note(st, "script", "hook", f"후킹 수정: {hk['cut']}번 컷 {hk['at']}초 「{hk['question_jp']}」 → 正解 {hk['answer_jp']}")
+    _save(status_path(pid), st)
+    return st
 
 
 def plan_timing(sc: dict, tps: list[dict], lead: float = 0.15) -> tuple[list[dict], list[str]]:
@@ -922,6 +961,7 @@ def auto_checks(mp4: Path, body_s: float = 0.0, step: float = 0.25) -> dict:
 #   ⑤ AI 교차 검사 → '승인 대기'.  실패하면 '작업 중'으로 두지 않고 **실패 이유 + 다시 시도 버튼**을 남긴다(job 기록).
 WIKI_UA = "shorts-admin/1.0 (v2 script writer; github.com/jtaechul/Product)"
 SCRIPT_CUTS = 8
+HOOK_S, ANSWER_S = 2.0, 2.0                                 # 후킹 발췌 2초 · 정답 카드 2초(assemble.py 와 같은 값)
 SPEECH_CPS = 8.5                                            # 낭독문(히라가나) 글자/초 — 120% 속도 실측(시범편 8.0~9.6)
 SPEECH_MAX_S = 47.0                                         # 나레이션 합계 상한(컷 여유 포함 약 54초가 되게)
 JOB_STALE_MIN = 25                                          # 이보다 오래 '진행 중'이면 멈춘 것으로 본다(페이지 표시)
@@ -1041,10 +1081,14 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
 - 同じ単語・言い回しを何度も繰り返さない。文末も単調にしない。
 - {n}カット目: 余韻のある締め(画面は暗闇に消えていく)。「チャンネル登録」「コメント」などの呼びかけは書かない(共通エンディングが別にある)。
 - 呼び名: {name_rule}
+- hook(冒頭2秒の引き): 台本の中で**いちばん驚く場面のカット番号**を選び、その場面を見せながら出す短い問い
+  「〇〇する、この生き物は？」(8〜22文字・「？」で終わる・答えの名前は入れない・事実リストにある行動だけ)。
+  answer_jp は最後の「正解：〇〇」に入れる呼び名(台本で使った呼び名と同じ)。
 {feedback}
 # 出力(JSONのみ)
 {{"cuts":[{{"cut":1,"jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
-"scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄)","annotation":"画面の赤い注釈(短く・数字は事実どおり・なければ空)"}}]}}
+"scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄)","annotation":"画面の赤い注釈(短く・数字は事実どおり・なければ空)"}}],
+"hook":{{"cut":3,"question_jp":"皮を脱ぎ捨てる、この生き物は？","question_ko":"한국어 번역","answer_jp":"呼び名","answer_ko":"한국어 이름"}}}}
 
 # 事実リスト
 {facts}
@@ -1108,6 +1152,33 @@ def validate_script(cuts: list[dict], facts: list[dict]) -> list[str]:
         total += estimate_speech(auto_reading(jp)) if jp else 0
     if total > SPEECH_MAX_S:
         probs.append(f"全体が長すぎます(約{total:.0f}秒)。合計{SPEECH_MAX_S:.0f}秒以内(約300文字以内)に短くしてください。")
+    return probs
+
+
+def validate_hook(hook: dict | None, cuts: list[dict], facts: list[dict]) -> list[str]:
+    """후킹(맨 앞 2초 질문 + 마지막 정답) 코드 검사 — 불통과 이유 목록."""
+    if not isinstance(hook, dict):
+        return ["hook(冒頭の問い)がありません。cuts と一緒に hook を出してください。"]
+    probs = []
+    q, a = str(hook.get("question_jp", "")).strip(), str(hook.get("answer_jp", "")).strip()
+    try:
+        cut = int(hook.get("cut", 0))
+    except (TypeError, ValueError):
+        cut = 0
+    if not 1 <= cut <= max(1, len(cuts)):
+        probs.append(f"hook.cut={hook.get('cut')} は存在しないカット番号です。")
+    if not 8 <= len(q) <= 24 or not q.endswith(("？", "?")):
+        probs.append(f"hook.question_jp「{q}」は8〜22文字で「？」で終わる問いにしてください。")
+    if _CTA_WORDS.search(q):
+        probs.append("hook.question_jp に呼びかけ(登録・コメント等)を入れないでください。")
+    if not a or len(a) > 24:
+        probs.append("hook.answer_jp(正解の呼び名)が空か長すぎます。")
+    if a and a in q:
+        probs.append("hook.question_jp に答えの名前が入っています(答えは最後に見せる)。")
+    allowed = set().union(*[_nums(f["fact"] + " " + f.get("fact_jp", "") + " " + f.get("quote", "")) for f in facts]) if facts else set()
+    bad = sorted(_nums(q) - allowed)
+    if bad:
+        probs.append(f"hook.question_jp に根拠の事実にない数字 {', '.join(bad)} があります。")
     return probs
 
 
@@ -1181,10 +1252,11 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
         if feedback:
             prev = "\n".join(f"カット{c['cut']}: {c['jp']}" for c in old.get("cuts", []) if c.get("jp"))
             fb = f"# 運営者の修正依頼(必ず反映)\n{feedback}\n# 前の台本\n{prev}\n"
+        hook = None
         for attempt in range(3):
-            cuts = (_json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt)))
-                    .get("cuts") or [])
-            probs = validate_script(cuts, facts)
+            gen = _json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt)))
+            cuts, hook = gen.get("cuts") or [], gen.get("hook")
+            probs = validate_script(cuts, facts) + validate_hook(hook, cuts, facts)
             if not probs:
                 break
             fb = (fb + "\n" if feedback else "") + "# 前回の台本の問題点(必ず直す)\n" + "\n".join("- " + p for p in probs) + "\n"
@@ -1196,8 +1268,13 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
             out.append({"cut": i, "jp": jp, "ko": str(c.get("ko", "")).strip(), "tts": auto_reading(jp),
                         "fact": ",".join(re.findall(r"F\d+", str(c.get("fact", "")))),
                         "scene_ko": str(c.get("scene_ko", "")).strip(), "annotation": str(c.get("annotation", "")).strip()})
+        hk_cut = int(hook["cut"])
         sc = {"episode": pid, "subject": {"scientific_name": topic.get("sci", ""), "jp_name": ja_name or "",
                                           "ko_name": st.get("name_ko", "")},
+              # ★후킹(운영자 확정 2026-09-30): 맨 앞 2초 = 본편 hk_cut 컷에서 그대로 발췌 + 빨간 질문 · 맨 뒤 = 정답 카드
+              "hook": {"cut": hk_cut, "at": None, "question_jp": str(hook["question_jp"]).strip(),
+                       "question_ko": str(hook.get("question_ko", "")).strip(), "answer_jp": str(hook["answer_jp"]).strip(),
+                       "answer_ko": str(hook.get("answer_ko", "")).strip()},
               "facts": facts, "source_docs": [{k: d[k] for k in ("id", "url", "title")} for d in docs],
               "cuts": out, "timing_rule": "컷 길이 = (앞 여백 0.15초 + 나레이션 + 여유 0.6초)를 짝수 초로 올림",
               "generated": {"at": _now(), "model": _TEXT_MODEL or "test", "feedback": feedback, "facts_dropped": dropped}}
@@ -1223,6 +1300,9 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
         sc["total_sec"] = sum(t["sec"] for t in timing)
         for c, t in zip(out, timing):
             c["sec"], c["speech_s"] = t["sec"], t["speech_s"]
+        hsec = float(out[hk_cut - 1]["sec"])
+        sc["hook"]["at"] = round(max(0.0, hsec / 2 - HOOK_S / 2), 2)      # 발췌 시작 = 컷 한가운데 2초(운영자가 고칠 수 있음)
+        sc["total_sec"] = sc["total_sec"] + HOOK_S + ANSWER_S
         _save(_script_path(pid), sc)
         st = load_status(pid)
         _sync_script_artifacts(st, sc)
@@ -1392,6 +1472,8 @@ def main(argv: list[str]) -> int:
     elif cmd == "edit_line":                                 # note = {"jp":..,"ko":..,"tts":..} (JSON)
         d = json.loads(memo(2) or "{}")
         edit_line(a[0], int(a[1]), d.get("jp", ""), d.get("ko", ""), d.get("tts", ""))
+    elif cmd == "edit_hook":                                 # note = {"cut":..,"at":..,"question_jp":..,"answer_jp":..} (JSON)
+        edit_hook(a[0], json.loads(memo(2)))
     elif cmd == "recut_plan":                                # note = {"direction":..,"min_transitions":..}
         d = json.loads(memo(2) or "{}")
         recut_plan(a[0], int(a[1]), d.get("direction", ""), int(d.get("min_transitions") or 0))

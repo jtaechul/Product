@@ -480,7 +480,9 @@ def _fake_ai(bad_first=False):
                     for i, (jp, f) in enumerate(_GOOD)]
             if bad_first and calls["script"] == 1:
                 cuts[3]["jp"] = "大きさは50センチにもなります。"      # 사실에 없는 숫자 → 코드 검사에서 걸려 다시 쓰게
-            return json.dumps({"cuts": cuts})
+            hook = {"cut": 5, "question_jp": "青く光る、この生き物は？", "question_ko": "파랗게 빛나는 이 생물은?",
+                    "answer_jp": "テストウオ", "answer_ko": "시험어"}
+            return json.dumps({"cuts": cuts, "hook": hook})
         return json.dumps({"issues": []})                    # 교차 검사
     return ask, calls
 
@@ -500,6 +502,8 @@ def test_write_script_real_job_moves_script_to_review(v2):
     assert "50" not in sc["cuts"][3]["jp"]
     a = st["artifacts"]["script"]
     assert len(a["cuts"]) == 8 and a["cuts"][0]["facts"][0]["id"] == "F1" and a["crosscheck"]["issues"] == []
+    assert sc["hook"]["cut"] == 5 and sc["hook"]["at"] is not None and a["hook"]["answer_jp"] == "テストウオ"
+    assert sc["total_sec"] == sum(c["sec"] for c in sc["cuts"]) + 4      # 후킹 2초 + 정답 카드 2초
 
 
 def test_write_script_failure_is_not_left_as_working(v2):
@@ -548,3 +552,64 @@ def test_script_revise_rewrites_with_same_verified_facts(v2):
     sc = json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))
     assert seen["fb"] and len(sc["facts"]) == 5 and len(sc["previous_scripts"]) == 1
     assert states("test_fish")[1] == "review"
+
+
+# ── 후킹 2초 + 정답 카드(운영자 확정 2026-09-30 · 공용 엔딩 대체) ─────────────────────
+def test_validate_hook_rules():
+    cuts = [{"cut": i, "jp": "x"} for i in range(1, 9)]
+    facts = [{"id": "F1", "fact": "수심 500m", "fact_jp": "", "quote": "500 m"}]
+    assert admin.validate_hook({"cut": 3, "question_jp": "皮を脱ぎ捨てる、この生き物は？", "answer_jp": "ユメナマコ"}, cuts, facts) == []
+    p = " ".join(admin.validate_hook({"cut": 9, "question_jp": "ユメナマコは9000メートルにいる？", "answer_jp": "ユメナマコ"}, cuts, facts))
+    assert "存在しない" in p and "答えの名前" in p and "9000" in p
+    assert admin.validate_hook(None, cuts, facts)
+
+
+def test_edit_hook_changes_script_only(v2):
+    admin.new_pilot("test_fish")
+    ask, _ = _fake_ai()
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    admin.main(["edit_hook", "test_fish", "_", json.dumps({"cut": 4, "at": 99, "question_jp": "30センチの、この魚は？", "answer_jp": "テストウオ"})])
+    sc = json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))
+    assert sc["hook"]["cut"] == 4 and sc["hook"]["question_jp"] == "30センチの、この魚は？"
+    assert sc["hook"]["at"] <= sc["cuts"][3]["sec"] - 2 and len(sc["hook_history"]) == 1     # 시작 초는 컷 안으로
+    with pytest.raises(SystemExit):                                                     # 정답 이름이 질문에 들어가면 거절
+        admin.edit_hook("test_fish", {"question_jp": "テストウオは何をする？"})
+
+
+def _tiny_clip(path, sec, color):
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", f"color=c={color}:s=720x1280:r=24:d={sec}",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", str(path)], check=True)
+
+
+def _silent_wav(path, sec):
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", f"sine=frequency=440:duration={sec}",
+                    "-ac", "1", "-ar", "24000", str(path)], check=True)
+
+
+def test_assemble_hook_and_answer_replace_shared_ending(tmp_path):
+    """실제 ffmpeg 조립: [후킹 2초][본편 4+4초][정답 2초] = 12초 · 공용 엔딩은 붙지 않는다 · 맨 앞은 그 컷의 화면(빨강)."""
+    import assemble as A
+    P = tmp_path / "p"; (P / "out" / "clips").mkdir(parents=True); (P / "out" / "tts").mkdir(parents=True)
+    _tiny_clip(P / "out" / "clips" / "c01.mp4", 4, "blue"); _tiny_clip(P / "out" / "clips" / "c02.mp4", 4, "red")
+    _silent_wav(P / "out" / "tts" / "body.wav", 6)
+    tps = lambda: [{"jp_seg": None, "start": 0.15, "end": 2.5}]
+    sc = {"subject": {"scientific_name": "Testus fishus"}, "hook": {"cut": 2, "at": 1.0, "question_jp": "赤くなる、この生き物は？", "answer_jp": "テストウオ"},
+          "cuts": [{"cut": 1, "jp": "こんにちは。", "tts": "こんにちは。", "sec": 4}, {"cut": 2, "jp": "さようなら。", "tts": "さようなら。", "sec": 4}],
+          "timing_v5": [{"cut": 1, "sec": 4, "audio_from": 0.0, "audio_to": 2.5, "lead": 0.15, "local_tps": tps()},
+                        {"cut": 2, "sec": 4, "audio_from": 2.5, "audio_to": 5.0, "lead": 0.15, "local_tps": tps()}]}
+    (P / "script.json").write_text(json.dumps(sc, ensure_ascii=False), encoding="utf-8")
+    dst = tmp_path / "final.mp4"
+    A.main(str(P), "clips", "tts", "", str(dst))
+    dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(dst)],
+                               capture_output=True, text=True).stdout)
+    assert abs(dur - 12.0) < 0.3
+    from PIL import Image
+    def frame(t):
+        f = tmp_path / f"f{t}.png"
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", str(t), "-i", str(dst), "-frames:v", "1", str(f)], check=True)
+        return Image.open(f).convert("RGB")
+    r, g, b = frame(0.1).resize((1, 1)).getpixel((0, 0))
+    assert r > 150 and g < 80 and b < 80                     # 후킹 = 2번 컷(빨강) 화면을 그대로 발췌
+    r, g, b = frame(11.5).resize((1, 1)).getpixel((0, 0))
+    assert r < 60 and g < 60 and b < 80                      # 정답 카드 = 어두운 남색 바탕
+    assert not (tmp_path / "end.mp4").exists()

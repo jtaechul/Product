@@ -430,5 +430,13 @@
       ]
     }
   ],
-  "total_sec": 62
+  "total_sec": 66,
+  "hook": {
+    "cut": 7,
+    "at": 3.0,
+    "question_jp": "光る皮を投げ捨てる、この生き物は？",
+    "question_ko": "빛나는 피부를 던져 버리는 이 생물은?",
+    "answer_jp": "首なしチキンモンスター",
+    "answer_ko": "머리없는닭괴물"
+  }
 }

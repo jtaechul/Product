@@ -90,6 +90,19 @@ const res = {};
   const d = dispatched[n0];
   res.retry_dispatches_write_script = !!(d && d.body.inputs.action === "write_script" && d.body.inputs.pilot === "t");
   statusOverride = null; els = keepEls; }
+// 후킹 2초 + 정답 카드(운영자 확정 2026-09-30): 대본 카드에 발췌 컷·빨간 질문·정답이 보이고 「후킹 저장」이 edit_hook 으로 간다
+{ const keepEls = els;
+  const st = { id: "t", name_ko: "시험", sci: "T t", stages: { topic: { state: "approved", notes: [] }, script: { state: "review", notes: [] },
+    storyboard: { state: "locked", notes: [] }, video: { state: "locked", notes: [] }, upload: { state: "locked", notes: [] } },
+    artifacts: { script: { cuts: [{ cut: 1, jp: "a", ko: "가", sec: 4, facts: [] }, { cut: 2, jp: "b", ko: "나", sec: 6, facts: [] }],
+      hook: { cut: 2, at: 1.5, question_jp: "赤くなる、この生き物は？", question_ko: "붉어지는 이 생물은?", answer_jp: "テストウオ", answer_ko: "시험어" } } } };
+  statusOverride = st; els = {}; await api.renderV2Episode("t"); const h = els.view.innerHTML;
+  res.hook_block_shown = /맨 앞 2초 후킹/.test(h) && /赤くなる、この生き物は？/.test(h) && /正解：テストウオ/.test(h) && /공용 엔딩 대신/.test(h);
+  const n0 = dispatched.length; el("hk_cut").value = "1"; el("hk_at").value = "0.5"; el("hk_qj").value = "赤くなる、この生き物は？"; el("hk_aj").value = "テストウオ";
+  if (el("hksave").onclick) await el("hksave").onclick();
+  const d = dispatched[n0];
+  res.hook_save_dispatches_edit_hook = !!(d && d.body.inputs.action === "edit_hook" && JSON.parse(d.body.inputs.note).cut === "1");
+  statusOverride = null; els = keepEls; }
 // 아이폰 화면 넘침 방지(2026-09-28 실사고: 긴 URL·일본어가 카드 밖으로 밀려 나감)
 res.mobile_no_overflow = /html\{-webkit-text-size-adjust:100%/.test(html) && /\.v2copytxt\{[^}]*min-width:0[^}]*overflow-wrap:anywhere/.test(html)
   && /@media \(max-width:520px\)\{\.dual\{grid-template-columns:1fr\}\}/.test(html);
