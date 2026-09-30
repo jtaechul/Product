@@ -121,11 +121,20 @@ def hook_png(question: str, out: Path) -> Path:
             break
         size -= 4
     a, d = f.getmetrics()
-    lh = int((a + d) * 1.08)
+    lh = int((a + d) * 1.05)
     y = int(H * 0.38 - lh * len(lines) / 2)
+    # 운영자 선택(2026-09-30 비교 시안 'NOW'): 빨간 글자 + 흰 테두리 + 부드러운 검은 그림자
+    from PIL import ImageFilter
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(sh)
+    yy = y
+    for ln in lines:
+        sd.text((int((W - f.getlength(ln)) / 2) + 6, yy + 8), ln, font=f, fill=(0, 0, 0, 170), stroke_width=10, stroke_fill=(0, 0, 0, 170))
+        yy += lh
+    im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(6)))
     dr = ImageDraw.Draw(im)
     for ln in lines:
-        dr.text((int((W - f.getlength(ln)) / 2), y), ln, font=f, fill=RED + (255,), stroke_width=8, stroke_fill=(0, 0, 0, 230))
+        dr.text((int((W - f.getlength(ln)) / 2), y), ln, font=f, fill=(225, 32, 32, 255), stroke_width=7, stroke_fill=(255, 255, 255, 255))
         y += lh
     im.save(out)
     return out
