@@ -13,22 +13,35 @@
     "layout": "2x4",
     "aspect": "1:1"
   },
-  "keyframes": {},
+  "keyframes": {
+    "c03": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c04": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    },
+    "c05": {
+      "ok": true,
+      "model": "gemini-3-pro-image-preview"
+    }
+  },
   "adjacent": {
     "c02": {
       "diff": 29.3
     },
     "c03": {
-      "diff": 36.7
+      "diff": 35.7
     },
     "c04": {
-      "diff": 50.2
+      "diff": 35.7
     },
     "c05": {
-      "diff": 51.0
+      "diff": 31.3
     },
     "c06": {
-      "diff": 67.2
+      "diff": 71.1
     },
     "c07": {
       "diff": 64.7
@@ -51,19 +64,19 @@
       "ok": true,
       "model": "gemini-2.5-pro-preview-tts",
       "voice": "Enceladus",
-      "sec": 7.55
+      "sec": 5.93
     },
     "c04": {
       "ok": true,
       "model": "gemini-2.5-pro-preview-tts",
       "voice": "Enceladus",
-      "sec": 8.16
+      "sec": 8.68
     },
     "c05": {
       "ok": true,
       "model": "gemini-2.5-pro-preview-tts",
       "voice": "Enceladus",
-      "sec": 7.91
+      "sec": 7.89
     },
     "c06": {
       "ok": true,
@@ -110,39 +123,44 @@
         {
           "model": "omni",
           "ok": true,
-          "wait_s": 31.0
+          "wait_s": 38.5
         }
       ],
-      "target_s": 8,
+      "target_s": 6,
       "model": "omni",
-      "sec": 8.0,
-      "drift": 41.1
+      "sec": 6.02,
+      "drift": null
     },
     "c04": {
       "attempts": [
         {
           "model": "omni",
+          "ok": false,
+          "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}"
+        },
+        {
+          "model": "veo-lite",
           "ok": true,
-          "wait_s": 29.9
+          "wait_s": 41.9
         }
       ],
       "target_s": 8,
-      "model": "omni",
+      "model": "veo-lite",
       "sec": 8.0,
-      "drift": 47.6
+      "drift": 30.5
     },
     "c05": {
       "attempts": [
         {
           "model": "omni",
           "ok": true,
-          "wait_s": 27.4
+          "wait_s": 35.8
         }
       ],
       "target_s": 8,
       "model": "omni",
       "sec": 8.0,
-      "drift": 48.7
+      "drift": 24.3
     },
     "c06": {
       "attempts": [
@@ -174,7 +192,7 @@
   "assemble": {
     "bgm": "signature.mp3",
     "ok": true,
-    "sec": 62.13,
+    "sec": 61.0,
     "clips": 8,
     "segments": [
       {
@@ -223,53 +241,53 @@
       },
       {
         "clip": "c03",
-        "len": 8.75,
-        "voice": 7.55,
-        "slow": 1.094,
+        "len": 7.13,
+        "voice": 5.93,
+        "slow": 1.184,
         "sents": [
           [
             0.45,
-            1.87
+            1.34
           ],
           [
-            3.3,
-            4.82
+            2.16,
+            3.62
           ],
           [
-            6.29,
-            8.0
+            4.8,
+            6.38
           ]
         ]
       },
       {
         "clip": "c04",
-        "len": 9.36,
-        "voice": 8.16,
-        "slow": 1.17,
+        "len": 9.88,
+        "voice": 8.68,
+        "slow": 1.235,
         "sents": [
           [
             0.45,
-            4.73
+            5.13
           ],
           [
-            5.23,
-            8.61
+            6.08,
+            9.13
           ]
         ]
       },
       {
         "clip": "c05",
-        "len": 9.11,
-        "voice": 7.91,
-        "slow": 1.139,
+        "len": 9.09,
+        "voice": 7.89,
+        "slow": 1.136,
         "sents": [
           [
             0.45,
-            4.35
+            4.38
           ],
           [
-            5.24,
-            8.36
+            5.4,
+            8.34
           ]
         ]
       },
@@ -315,8 +333,8 @@
     }
   },
   "last_request": {
-    "file": "03_noprice.json",
-    "ran_at": "2026-09-30T08:04:47Z",
+    "file": "04_food_cuts.json",
+    "ran_at": "2026-09-30T09:59:54Z",
     "ok": true
   }
 }
