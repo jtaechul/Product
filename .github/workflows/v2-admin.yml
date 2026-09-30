@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "new | approve | revise | redo | ready | redo_cut | assemble | topics | edit_line | apply_lines | crosscheck | recut_plan | recut_approve | recut_cancel | upload_meta | save_meta | write_script | edit_hook"
+        description: "new | approve | revise | redo | ready | redo_cut | assemble | topics | edit_line | apply_lines | crosscheck | recut_plan | recut_approve | recut_cancel | upload_meta | save_meta | write_script | write_storyboard | make_video | edit_hook"
         required: true
       pilot:
         description: "편 id (예: bathynomus_giganteus)"
@@ -53,49 +53,27 @@ jobs:
           IN_NOTE: ${{ inputs.note }}
         run: |
           set -e
-          SCRIPT_JOB=""
+          JOB=""
           case "$IN_ACTION" in
-            new)          python3 v2/tools/admin.py new "$IN_PILOT"; SCRIPT_JOB=1 ;;
-            write_script) SCRIPT_JOB=1 ;;
-            revise|redo)  if [ "$IN_STAGE" = "script" ]; then
-                            python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE"; SCRIPT_JOB=1
-                          fi ;;
-          esac
-          if [ -n "$SCRIPT_JOB" ]; then
-            python3 v2/tools/admin.py job_start "$IN_PILOT" script "대본 자동 작성 중 — 준비 → 출처 수집 → 사실 추출 → 대본 → 검증 → 미리듣기"
-            bash v2/tools/ci_commit.sh "chore(v2): 대본 자동 작성 시작 $IN_PILOT [skip ci]"
-          fi
-
-      - name: 준비
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
-          pip install -q Pillow numpy google-genai janome google-auth google-auth-oauthlib google-api-python-client
-
-      - name: 버튼 실행
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GOOGLE_TTS_KEY: ${{ secrets.GOOGLE_TTS_KEY }}
-          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
-          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          IN_ACTION: ${{ inputs.action }}
-          IN_PILOT: ${{ inputs.pilot }}
-          IN_STAGE: ${{ inputs.stage }}
-          IN_NOTE: ${{ inputs.note }}
-        run: |
-          set -e
-          case "$IN_ACTION" in
-            new)                        python3 v2/tools/admin.py write_script "$IN_PILOT" ;;      # 새 편 생성·진행 중 기록은 앞 단계에서
-            write_script)               python3 v2/tools/admin.py write_script "$IN_PILOT" "$IN_NOTE" ;;
+            new|write_script)  python3 v2/tools/admin.py write_script "$IN_PILOT" "$IN_NOTE" ;;
+            write_storyboard)  python3 v2/tools/admin.py write_storyboard "$IN_PILOT" "$IN_NOTE" ;;
+            make_video)        python3 v2/tools/admin.py make_video "$IN_PILOT" "$IN_NOTE" ;;
+            approve)           case "$IN_STAGE" in           # 승인 자체는 앞 단계에서 끝났고, 여기서 다음 단계를 실제로 만든다
+                                 script)     python3 v2/tools/admin.py write_storyboard "$IN_PILOT" ;;
+                                 storyboard) python3 v2/tools/admin.py make_video "$IN_PILOT" ;;
+                                 *)          python3 v2/tools/admin.py approve "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
+                               esac ;;
+            revise|redo)       M=""; [ "$IN_ACTION" = "revise" ] && M="$IN_NOTE"
+                               case "$IN_STAGE" in           # 수정 요청·다시 하기 = 그 단계를 실제로 다시 만든다
+                                 script)     python3 v2/tools/admin.py write_script "$IN_PILOT" "$M" ;;
+                                 storyboard) python3 v2/tools/admin.py write_storyboard "$IN_PILOT" "$M" ;;
+                                 video)      python3 v2/tools/admin.py make_video "$IN_PILOT" "$M" ;;
+                                 *)          python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
+                               esac ;;
             assemble|apply_lines|sync|crosscheck|upload_meta) python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" ;;
-            topics)                     python3 v2/tools/admin.py topics ;;
-            revise|redo)
-                                        if [ "$IN_STAGE" = "script" ]; then     # 대본 수정 요청·다시 하기 = 실제로 다시 쓴다(상태는 앞 단계에서 바꿈)
-                                          if [ "$IN_ACTION" = "revise" ]; then python3 v2/tools/admin.py write_script "$IN_PILOT" "$IN_NOTE"
-                                          else python3 v2/tools/admin.py write_script "$IN_PILOT"; fi
-                                        else python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE"; fi ;;
-            approve|ready|redo_cut|edit_line|edit_hook|recut_plan|recut_approve|recut_cancel|save_meta)
-                                        python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
+            topics)            python3 v2/tools/admin.py topics ;;
+            ready|redo_cut|edit_line|edit_hook|recut_plan|recut_approve|recut_cancel|save_meta)
+                               python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
             *) echo "모르는 동작: $IN_ACTION"; exit 1 ;;
           esac
 
