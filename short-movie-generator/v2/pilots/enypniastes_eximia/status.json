@@ -65,5 +65,14 @@
     }
   },
   "artifacts": {},
-  "checks": {}
+  "checks": {},
+  "jobs": {
+    "script": {
+      "stage": "script",
+      "status": "running",
+      "at": "2026-09-30T11:16:08Z",
+      "action": "job_start",
+      "text": "대본 자동 작성 중 — 출처 수집 → 사실 추출 → 대본 → 검증 → 미리듣기"
+    }
+  }
 }
