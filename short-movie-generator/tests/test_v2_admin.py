@@ -758,3 +758,20 @@ def test_make_video_failed_cut_is_recorded_and_retry_only_redoes_missing(v2, mon
     monkeypatch.setattr(admin, "_RUN_REQUEST", counting)
     admin.make_video("test_fish", ask=_fake_vision)
     assert seen == [["c05"]]                                   # 성공한 7컷은 다시 만들지 않는다(과금 방지)
+
+
+def test_workflow_has_secrets_and_setup():
+    """v2-admin.yml 구조 검사(실사고 run #14: 편집 실수로 '버튼 실행' 단계의 env(키)와 '준비' 단계가 지워져 GEMINI_API_KEY 없음으로 실패)."""
+    import yaml
+    d = yaml.safe_load((ROOT.parent / ".github" / "workflows" / "v2-admin.yml").read_text(encoding="utf-8"))
+    steps = {s.get("name"): s for s in d["jobs"]["run"]["steps"] if s.get("name")}
+    assert list(steps) == ["진행 중 먼저 기록", "준비", "버튼 실행", "실패 기록", "결과 커밋"]
+    env = steps["버튼 실행"]["env"]
+    for k in ("GEMINI_API_KEY", "GOOGLE_TTS_KEY", "YOUTUBE_REFRESH_TOKEN", "IN_ACTION", "IN_PILOT", "IN_STAGE", "IN_NOTE"):
+        assert k in env, k
+    assert "ffmpeg" in steps["준비"]["run"] and "janome" in steps["준비"]["run"]
+    run1, run2 = steps["진행 중 먼저 기록"]["run"], steps["버튼 실행"]["run"]
+    assert "job_start" in run1 and "ci_commit.sh" in run1 and "write_storyboard" not in run1.split("JOB=storyboard")[0]
+    for a in ("write_script", "write_storyboard", "make_video", "edit_hook", "recut_approve", "upload_meta", "save_meta"):
+        assert a in run2, a
+    assert steps["실패 기록"].get("if") == "failure()" and steps["결과 커밋"].get("if") == "always()"
