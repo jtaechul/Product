@@ -1,0 +1,53 @@
+{
+  "id": "r0930143046_sb",
+  "kind": "gen_images",
+  "purpose": "8컷 콘티(자동) — 컷별 시작 이미지 · 2×2 격자",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "grid1",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/r0930142908_card/card_side.jpg",
+        "out/r0930142908_card/card_top.jpg",
+        "out/r0930142850_refs/ref_00.jpg"
+      ],
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described below. Shared look for all panels: handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette; everything except the creature is a deliberately rough, simple, hand-made model (chunky clay, wood, foam, paper textures). The creature must match the attached replica and real reference images exactly and be identical in every panel: The model requires a single, soft, gelatinous, and translucent body, tapering from a rounded, convex anterior to a pointed rear. The color should be bright pink to reddish-brown. Crucially, it has no head, no eyes, and no bones. The anterior end features a large, flared, veil-like webbed membrane used for swimming. On the underside, include a circular mouth surrounded by short, branched feeding tentacles. Because the skin is highly translucent, a distinct internal tubular intestine must be visible through the body wall. The surface should appear smooth and fleshy, lacking any segments or armor. Must not have any fish head, eyes, skeleton, bones, legs, hard shell, or resemble an octopus or jellyfish. Never place the creature next to boats, people or furniture that would make it look giant. Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, logos, watermarks. No human hands or real people anywhere.\nPanel 1 (top-left): Wide shot, handcrafted miniature diorama. A deep sea setting with a muted grey-green painted paper backdrop. A precise, translucent bright pink gelatinous creature with a rounded anterior and pointed rear drifts gracefully. Tilt-shift photography, shallow depth of field, warm soft practical lighting. The upper quarter is an uncluttered, calm dark void.\nPanel 2 (top-right): Extreme close-up, cross-section diorama box. Focus on the creature's smooth, fleshy anterior. The precise model highlights the complete absence of a head, eyes, or bones, showing only soft translucent pink tissue and a distinct internal tubular intestine. Muted grey-green foam surroundings. Tilt-shift. The upper quarter is clean and empty.\nPanel 3 (bottom-left): Front-diagonal angle, miniature diorama. The creature swims through open water. Focus on the large, flared, veil-like webbed membrane at its anterior, actively pushing back like oars. Suspended in a muted brown-green water column made of layered paper. Tilt-shift, shallow depth of field. The upper quarter is an empty calm gradient.\nPanel 4 (bottom-right): Mid-shot, miniature diorama. Two precise creature models swimming side-by-side: one small bright pink model and one larger reddish-brown model. Both feature smooth translucent skin and visible internal intestines. Muted grey-green background. Soft practical lighting, shallow depth of field. The upper quarter is calm and uncluttered.",
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "p01",
+          "p02",
+          "p03",
+          "p04"
+        ]
+      }
+    },
+    {
+      "name": "grid2",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/r0930142908_card/card_side.jpg",
+        "out/r0930142908_card/card_top.jpg",
+        "out/r0930142850_refs/ref_00.jpg"
+      ],
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described below. Shared look for all panels: handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical lighting, muted grey-green and brown palette; everything except the creature is a deliberately rough, simple, hand-made model (chunky clay, wood, foam, paper textures). The creature must match the attached replica and real reference images exactly and be identical in every panel: The model requires a single, soft, gelatinous, and translucent body, tapering from a rounded, convex anterior to a pointed rear. The color should be bright pink to reddish-brown. Crucially, it has no head, no eyes, and no bones. The anterior end features a large, flared, veil-like webbed membrane used for swimming. On the underside, include a circular mouth surrounded by short, branched feeding tentacles. Because the skin is highly translucent, a distinct internal tubular intestine must be visible through the body wall. The surface should appear smooth and fleshy, lacking any segments or armor. Must not have any fish head, eyes, skeleton, bones, legs, hard shell, or resemble an octopus or jellyfish. Never place the creature next to boats, people or furniture that would make it look giant. Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, logos, watermarks. No human hands or real people anywhere.\nPanel 1 (top-left): Low angle close-up, miniature diorama. The creature rests on a seabed made of chunky clay and coarse sand. Focus on the underside: a circular mouth surrounded by short, branched feeding tentacles actively pushing rough clay detritus into the mouth. Warm practical lighting. The upper quarter is dark, calm, and empty.\nPanel 2 (top-right): High angle, miniature diorama. The creature rapidly swims upward, away from the chunky clay seabed. A dynamic cloud of rough cotton-wool sand dust kicks up beneath its pointed rear. The anterior webbed membrane is flared for upward thrust. Tilt-shift, shallow depth of field. The upper quarter is calm uncluttered dark water.\nPanel 3 (bottom-left): Striking Dutch angle, highly dynamic composition, miniature diorama. A rough, chunky clay deep-sea fish model lunges from the shadows. The precise translucent reddish-brown creature darts away, leaving behind a brightly glowing, bioluminescent piece of shed skin floating as a decoy right in front of the predator. Dramatic practical lighting. The upper quarter is clean dark space.\nPanel 4 (bottom-right): Rear view, miniature diorama. The creature is dim and receding into deep, pitch-black darkness. Through its highly translucent skin, a distinct internal tubular intestine filled with dark food is clearly visible. Soft, fading practical light, tilt-shift with focus falling off. The entire upper quarter is a pure, uncluttered black void.",
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "p05",
+          "p06",
+          "p07",
+          "p08"
+        ]
+      }
+    }
+  ]
+}

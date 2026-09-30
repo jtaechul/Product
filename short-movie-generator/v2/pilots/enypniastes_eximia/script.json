@@ -161,7 +161,9 @@
       "scene_ko": "캄캄한 심해 배경 속, 기묘한 형태의 해삼 미니어처가 천천히 떠오르는 모습.",
       "annotation": "首なしチキンモンスター",
       "sec": 6,
-      "speech_s": 5.25
+      "speech_s": 5.25,
+      "keyframe": "out/r0930143046_sb/p01.jpg",
+      "panel_desc": "Wide shot, handcrafted miniature diorama. A deep sea setting with a muted grey-green painted paper backdrop. A precise, translucent bright pink gelatinous creature with a rounded anterior and pointed rear drifts gracefully. Tilt-shift photography, shallow depth of field, warm soft practical lighting. The upper quarter is an uncluttered, calm dark void."
     },
     {
       "cut": 2,
@@ -172,7 +174,9 @@
       "scene_ko": "해삼 내부를 보여주듯 투명한 재질의 미니어처로 머리와 뼈가 없음을 강조하는 연출.",
       "annotation": "体長11〜25cm",
       "sec": 8,
-      "speech_s": 5.75
+      "speech_s": 5.75,
+      "keyframe": "out/r0930143046_sb/p02.jpg",
+      "panel_desc": "Extreme close-up, cross-section diorama box. Focus on the creature's smooth, fleshy anterior. The precise model highlights the complete absence of a head, eyes, or bones, showing only soft translucent pink tissue and a distinct internal tubular intestine. Muted grey-green foam surroundings. Tilt-shift. The upper quarter is clean and empty."
     },
     {
       "cut": 3,
@@ -183,7 +187,9 @@
       "scene_ko": "앞쪽 막을 펄럭이며 물속을 유영하는 모습을 스톱모션으로 표현한 디오라마.",
       "annotation": "前方の膜で泳ぐ",
       "sec": 8,
-      "speech_s": 5.3
+      "speech_s": 5.3,
+      "keyframe": "out/r0930143046_sb/p03.jpg",
+      "panel_desc": "Front-diagonal angle, miniature diorama. The creature swims through open water. Focus on the large, flared, veil-like webbed membrane at its anterior, actively pushing back like oars. Suspended in a muted brown-green water column made of layered paper. Tilt-shift, shallow depth of field. The upper quarter is an empty calm gradient."
     },
     {
       "cut": 4,
@@ -194,7 +200,9 @@
       "scene_ko": "밝은 분홍색의 작은 개체와 적갈색의 큰 개체 미니어처가 나란히 헤엄치는 장면.",
       "annotation": "小さいとピンク、大きいと赤褐色",
       "sec": 8,
-      "speech_s": 6.06
+      "speech_s": 6.06,
+      "keyframe": "out/r0930143046_sb/p04.jpg",
+      "panel_desc": "Mid-shot, miniature diorama. Two precise creature models swimming side-by-side: one small bright pink model and one larger reddish-brown model. Both feature smooth translucent skin and visible internal intestines. Muted grey-green background. Soft practical lighting, shallow depth of field. The upper quarter is calm and uncluttered."
     },
     {
       "cut": 5,
@@ -205,7 +213,9 @@
       "scene_ko": "해저 지형 디오라마로 내려와 촉수를 바쁘게 움직여 먹이를 먹는 모습.",
       "annotation": "食事の時だけ海底へ",
       "sec": 8,
-      "speech_s": 6.39
+      "speech_s": 6.39,
+      "keyframe": "out/r0930143046_sb/p05.jpg",
+      "panel_desc": "Low angle close-up, miniature diorama. The creature rests on a seabed made of chunky clay and coarse sand. Focus on the underside: a circular mouth surrounded by short, branched feeding tentacles actively pushing rough clay detritus into the mouth. Warm practical lighting. The upper quarter is dark, calm, and empty."
     },
     {
       "cut": 6,
@@ -216,7 +226,9 @@
       "scene_ko": "모래바람을 일으키며 순식간에 먹이를 먹고 다시 위로 헤엄쳐 올라가는 연출.",
       "annotation": "最長64秒",
       "sec": 8,
-      "speech_s": 6.65
+      "speech_s": 6.65,
+      "keyframe": "out/r0930143046_sb/p06.jpg",
+      "panel_desc": "High angle, miniature diorama. The creature rapidly swims upward, away from the chunky clay seabed. A dynamic cloud of rough cotton-wool sand dust kicks up beneath its pointed rear. The anterior webbed membrane is flared for upward thrust. Tilt-shift, shallow depth of field. The upper quarter is calm uncluttered dark water."
     },
     {
       "cut": 7,
@@ -227,7 +239,9 @@
       "scene_ko": "포식자 모형이 다가오자, 반짝이는 껍질 부품을 떼어 던지고 도망치는 스톱모션.",
       "annotation": "光る皮膚をおとりとして投げる",
       "sec": 8,
-      "speech_s": 5.36
+      "speech_s": 5.36,
+      "keyframe": "out/r0930143046_sb/p07.jpg",
+      "panel_desc": "Striking Dutch angle, highly dynamic composition, miniature diorama. A rough, chunky clay deep-sea fish model lunges from the shadows. The precise translucent reddish-brown creature darts away, leaving behind a brightly glowing, bioluminescent piece of shed skin floating as a decoy right in front of the predator. Dramatic practical lighting. The upper quarter is clean dark space."
     },
     {
       "cut": 8,
@@ -238,7 +252,9 @@
       "scene_ko": "몸속에 먹이가 가득 찬 채로 캄캄한 심해 디오라마 너머로 천천히 사라지는 뒷모습.",
       "annotation": "水深500〜6000mの深海",
       "sec": 8,
-      "speech_s": 5.91
+      "speech_s": 5.91,
+      "keyframe": "out/r0930143046_sb/p08.jpg",
+      "panel_desc": "Rear view, miniature diorama. The creature is dim and receding into deep, pitch-black darkness. Through its highly translucent skin, a distinct internal tubular intestine filled with dark food is clearly visible. Soft, fading practical light, tilt-shift with focus falling off. The entire upper quarter is a pure, uncluttered black void."
     }
   ],
   "timing_rule": "컷 길이 = (앞 여백 0.15초 + 나레이션 + 여유 0.6초)를 짝수 초로 올림",
@@ -438,5 +454,12 @@
     "question_ko": "빛나는 피부를 던져 버리는 이 생물은?",
     "answer_jp": "首なしチキンモンスター",
     "answer_ko": "머리없는닭괴물"
-  }
+  },
+  "storyboard_history": [
+    {
+      "at": "2026-09-30T14:31:34Z",
+      "rid": "r0930143046_sb",
+      "feedback": ""
+    }
+  ]
 }

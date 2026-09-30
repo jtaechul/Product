@@ -1,0 +1,31 @@
+{
+  "id": "r0930142908_card",
+  "kind": "gen_images",
+  "purpose": "생물 카드(자동) — 이후 콘티·영상의 형태 기준",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "card_side",
+      "aspect": "1:1",
+      "refs": [
+        "out/r0930142850_refs/ref_00.jpg",
+        "out/r0930142850_refs/ref_01.jpg",
+        "out/r0930142850_refs/ref_02.jpg"
+      ],
+      "prompt": "A single hand-crafted museum-grade miniature replica of Enypniastes eximia, photographed as a macro studio shot. The creature must be extremely detailed and anatomically faithful to the attached real reference photos: The model requires a single, soft, gelatinous, and translucent body, tapering from a rounded, convex anterior to a pointed rear. The color should be bright pink to reddish-brown. Crucially, it has no head, no eyes, and no bones. The anterior end features a large, flared, veil-like webbed membrane used for swimming. On the underside, include a circular mouth surrounded by short, branched feeding tentacles. Because the skin is highly translucent, a distinct internal tubular intestine must be visible through the body wall. The surface should appear smooth and fleshy, lacking any segments or armor. Resin figure with subtle hand-painted texture, shallow depth of field (tilt-shift macro), warm soft studio light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans. Must not have any fish head, eyes, skeleton, bones, legs, hard shell, or resemble an octopus or jellyfish. View: three-quarter side view of the whole body."
+    },
+    {
+      "name": "card_top",
+      "aspect": "1:1",
+      "refs": [
+        "out/r0930142850_refs/ref_00.jpg",
+        "out/r0930142850_refs/ref_01.jpg",
+        "out/r0930142850_refs/ref_02.jpg"
+      ],
+      "prompt": "A single hand-crafted museum-grade miniature replica of Enypniastes eximia, photographed as a macro studio shot. The creature must be extremely detailed and anatomically faithful to the attached real reference photos: The model requires a single, soft, gelatinous, and translucent body, tapering from a rounded, convex anterior to a pointed rear. The color should be bright pink to reddish-brown. Crucially, it has no head, no eyes, and no bones. The anterior end features a large, flared, veil-like webbed membrane used for swimming. On the underside, include a circular mouth surrounded by short, branched feeding tentacles. Because the skin is highly translucent, a distinct internal tubular intestine must be visible through the body wall. The surface should appear smooth and fleshy, lacking any segments or armor. Resin figure with subtle hand-painted texture, shallow depth of field (tilt-shift macro), warm soft studio light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans. Must not have any fish head, eyes, skeleton, bones, legs, hard shell, or resemble an octopus or jellyfish. View: straight top-down view of the whole body."
+    }
+  ]
+}

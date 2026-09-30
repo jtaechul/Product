@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-30T14:20:28Z",
+  "updated": "2026-09-30T14:31:34Z",
   "items": [
     {
       "id": "bathynomus_giganteus",
@@ -15,13 +15,13 @@
       "name_ko": "머리없는닭괴물",
       "sci": "Enypniastes eximia",
       "stage": "storyboard",
-      "state": "working",
+      "state": "review",
       "job": {
         "stage": "storyboard",
-        "status": "running",
-        "at": "2026-09-30T14:20:28Z",
-        "action": "job_start",
-        "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+        "status": "done",
+        "at": "2026-09-30T14:31:34Z",
+        "action": "write_storyboard",
+        "text": "스토리보드 자동 작성 완료 — 승인 대기"
       },
       "created": "2026-09-30T09:44:09Z"
     }

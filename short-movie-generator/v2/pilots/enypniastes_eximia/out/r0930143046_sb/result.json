@@ -1,0 +1,77 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "grid1",
+      "http": 200,
+      "file": "grid1.jpg",
+      "panels": [
+        "p01.jpg",
+        "p02.jpg",
+        "p03.jpg",
+        "p04.jpg"
+      ],
+      "usage": {
+        "promptTokenCount": 1433,
+        "candidatesTokenCount": 1562,
+        "totalTokenCount": 3586,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 659
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 774
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 591,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "grid2",
+      "http": 200,
+      "file": "grid2.jpg",
+      "panels": [
+        "p05.jpg",
+        "p06.jpg",
+        "p07.jpg",
+        "p08.jpg"
+      ],
+      "usage": {
+        "promptTokenCount": 1426,
+        "candidatesTokenCount": 1548,
+        "totalTokenCount": 3297,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 652
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 774
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 323,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "r0930143046_sb.json",
+  "kind": "gen_images",
+  "ran_at": "2026-09-30T14:31:34Z"
+}
