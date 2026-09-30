@@ -8,7 +8,7 @@
   - 에피소드 폴더에는 episode.json(관리자 페이지 '프롬프트 만들기' 결과)과 refs/food.png(음식 참고 이미지)가 있다.
   - 결과는 work/에 쌓이고, 이미 있는 결과는 다시 만들지 않는다(비용 절약). 다시 뽑을 컷은 redo에 적는다.
 보안: 키는 환경변수(GEMINI_API_KEY, GOOGLE_TTS_KEY)로만 받고 출력하지 않는다.
-규칙(book-carousel CLAUDE.md): 상품명·포장은 영상에 넣지 않는다 · 가격은 100g당만 · 영상 AI 소리는 버린다.
+규칙(book-carousel CLAUDE.md): 상품명·포장·가격은 영상에 넣지 않는다(가격은 사용자 지시 2026-09로 전면 금지) · 영상 AI 소리는 버린다.
 """
 from __future__ import annotations
 
@@ -1242,10 +1242,7 @@ def receipt_png(ep, food: Path | None, out: Path):
         for ln in _balanced(f"“{one}”", fm, pw - 90)[:2]:
             c(ln, fm, y, (80, 60, 44))
             y += 42
-    if ep.get("priceNote"):
-        y += 8
-        c(ep["priceNote"], fm, y)
-        y += 44
+    # 영수증에 가격은 넣지 않는다(사용자 지시 2026-09: 가격은 무조건 뺀다)
     if ep.get("guestNote"):
         c(ep["guestNote"], fs, y + 4, (120, 104, 88))
         y += 40
@@ -1393,7 +1390,7 @@ def build_segment(ep, c, idx, work, tmp):
         p = tmp / f"menu_{name}.png"
         menu_png(card["name"], p)
         ov.append((p, 0.5, L - 0.2, 0.35))
-    elif card.get("type") == "bill" and card.get("text"):
+    elif False and card.get("type") == "bill":        # 가격 계산서 카드 폐지(사용자 지시 2026-09: 가격은 무조건 뺀다)
         p = tmp / f"bill_{name}.png"
         bill_png(card["text"], p)
         ov.append((p, 0.5, L - 0.2, 0.35))

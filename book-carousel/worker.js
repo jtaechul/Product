@@ -3699,6 +3699,16 @@ const SHAPE_WORDS = [
   [/원통(?:형|모양)?|막대(?:형|모양)?|스틱형/g, /cylind|stick|rod|tube/i],
   [/타원(?:형|모양)?|알약(?:형|모양)/g, /oval|ellip|pill/i],
 ];
+// 가격 문장은 통째로 지운다(사용자 지시 2026-09: 가격은 무조건 뺀다).
+const PRICE_RE = /\d[\d,]*\s*원|원짜리|\d+\s*(g|그램|그람|kg|킬로)\s*(당|에)|가격|가성비|값이\s*(싸|비싸|저렴)|저렴|비싸/;
+function noPrice(text) {
+  const t = String(text || '');
+  if (!PRICE_RE.test(t)) return t;
+  return t.split('\n').map(ln => (!PRICE_RE.test(ln) ? ln
+    : ln.split(/(?<=[.?…,])\s+/).filter(x => !PRICE_RE.test(x)).join(' ').replace(/[,\s]+$/, '').trim()))
+    .filter((ln, i, a) => ln.trim() || (i > 0 && a[i - 1].trim())).join('\n').trim();
+}
+
 function shapeGuard(text, foodEn) {
   let t = String(text || '');
   for (const [ko, en] of SHAPE_WORDS) if (!en.test(String(foodEn || ''))) t = t.replace(ko, '');
@@ -3784,7 +3794,7 @@ function dinerSystem(sp) {
   편집에서 화면 위쪽에 상품 사진 메뉴판이 겹쳐지니 주인공은 화면 아래쪽 절반에 둔다.
 - serve: 사람의 손이 그릇을 앞에 내려놓는다. 주인공이 먼저 냄새를 맡는다.
 - taste: 먹는 장면. 매크로·클로즈업·씹다 멈춤·다시 한 입 등 클립마다 카메라를 다르게.
-- bill: 사람의 손이 작은 쟁반에 계산서를 놓고 주인공이 그것을 지긋이 본다. 편집에서 위쪽에 계산서 카드가 겹쳐지니 주인공은 아래쪽에 둔다.
+- bill: 사람의 손이 작은 쟁반에 계산서를 놓고 주인공이 그것을 지긋이 본다.
 - exit: 고정된 카메라 앞에서 SET의 그 출입문으로 걸어 나가다 문턱에서 한 번 뒤돌아본다(문 밖 거리까지 따라가지 않는다).
 
 [속마음 대사(line) — 내레이션이자 자막. 둘은 같은 문장이다]
@@ -3811,7 +3821,7 @@ function dinerSystem(sp) {
 - ⭐ taste 대사 = **세 박자**: ① 첫 느낌(감탄 한 마디 가능) → ② 식감·향을 해부하듯 자세히 → ③ 비유나 떠오르는 장면으로 마무리.
   비유는 이 주인공의 일상(창가 햇볕, 산책길, 빗소리, 담요, 놀이터, 주인의 퇴근 발소리 등)에서 가져온다.
   taste 클립이 여러 개면 매번 다른 감각을 다룬다(첫입 → 씹을수록 달라지는 맛 → 마지막 한 입).
-- ⭐ bill 대사 = 가격 판정과 이 한 끼의 값어치. [가격]이 주어지면 그 숫자를 그대로 쓰고, 없으면 숫자를 쓰지 마라.
+- ⭐ bill 대사 = 이 한 끼를 마치며 계산서를 받아 든 소회. 가격·숫자·원·g당·싸다·비싸다 같은 돈 이야기는 절대 쓰지 마라(가격은 영상 어디에도 넣지 않는다).
 - ⭐ exit 대사 = 재방문 판정이 아니라 **혼자 먹은 한 끼에 대한 소회**. 시스템이 맨 앞에 "잘 먹었습니다."를 붙인다.
   재방문 의사는 verdict 칸에 따로 쓴다.
 
@@ -4039,7 +4049,8 @@ const noGunHook = (t) => String(t || '').replace(/이로군(?=[.…,?\s]|$)/g, '
 async function handleDinerEpisode(env, body, ctx) {
   const { title, category, note, spKey, sp, hero, clips } = ctx;
   const roles = dinerRoles(clips);
-  const priceNote = unitPriceNote(body.price, title);
+  // 가격은 영상·캡션·설명 어디에도 넣지 않는다(사용자 지시 2026-09: "전혀 안 맞아" — 판매가·중량 계산이 실제와 어긋났다). 되살리지 않는다.
+  const priceNote = '';
   const foodBase = foodLookOf(title);
   const gk = await getGeminiKey(env);
   if (!gk) throw new Error('Gemini 키가 설정되지 않아 프롬프트를 만들 수 없습니다.');
@@ -4048,7 +4059,7 @@ async function handleDinerEpisode(env, body, ctx) {
   const foodEn = inVessel(fl.look || foodBase);
   // 확인된 모양(사진·검색)만 말할 수 있다 — 공용 문장(generic)이면 모양 낱말은 전부 지운다
   const shapeRef = fl.source === 'generic' ? '' : foodEn;
-  const scrubAll = (t) => shapeGuard(scrubBanned(t, banned), shapeRef);
+  const scrubAll = (t) => noPrice(shapeGuard(scrubBanned(t, banned), shapeRef));
   const facts = (Array.isArray(body.benefits) ? body.benefits : [])
     .map(x => String(typeof x === 'string' ? x : (x && x.text) || '').trim())
     .filter(Boolean);
@@ -4066,7 +4077,7 @@ async function handleDinerEpisode(env, body, ctx) {
   const user = `${noteBlock(note)}상품: ${title}
 품목: ${category || '사료·간식'}
 주인공: ${sp.ko} (the ${sp.noun}) — ${hero}
-[가격] ${priceNote || '없음 — bill 대사에 숫자를 쓰지 마라'}
+[가격] 금지 — 대사·후킹·캡션 어디에도 가격·숫자·원 이야기를 쓰지 마라
 [추천 손님 — 표기 기준] ${guest.note ? guest.note.replace('추천 손님: ', '') : '표기 없음'}${guest.mismatch ? `
 ⚠️ 이 메뉴는 주인공(8개월쯤 어린 중형 시바견)의 ${guest.mismatchWhat}에 맞춘 메뉴가 아니다. order에서 "내 ${guest.mismatchWhat} 메뉴는 아니다"는 사실을
    담담하게 인정하고 비틀어라(예: 어른들 메뉴를 몰래 맛보는 기분 — 문장은 새로 지어라). 주인공이 스스로 늙었다고 말하면 안 된다. 그래도 평가는 진지하게 한다.` : ''}
@@ -4225,7 +4236,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
     if (role === firstEat && roles.indexOf(firstEat) === i && !/잘 먹겠습니다/.test(line)) line = '잘 먹겠습니다. ' + line;
     if (role === 'exit' && !/잘 먹었습니다/.test(line)) line = '잘 먹었습니다. ' + line;
     // 가격을 모르면 계산 대사에 숫자가 들어가면 안 된다(지어낸 가격 방지).
-    if (role === 'bill' && !priceNote && /\d/.test(line)) line = '계산은 조용히 끝냈다. 값은 묻지 않는 게 예의다';
+    if (role === 'bill' && (/\d/.test(line) || !line)) line = '계산서는 조용히 내려앉았다. 좋은 한 끼에 값을 따지는 건 예의가 아니다';
     const withFood = role === 'serve' || role === 'taste' || role === 'bill';
     const firstMoment = (shots.split(/(?=\d:\d{2}-\d:\d{2})/)[0] || shots)
       .replace(/^\s*\d:\d{2}-\d:\d{2}\s*/, '')
@@ -4285,7 +4296,7 @@ ${factsSafe.length ? '- ' + factsSafe.join('\n- ') : '(없음 — 원료·영양
   const verdict = scrubAll(String(out.verdict || '').trim());
   // 첫 한입 후킹 문구(사용자 확정 2026-09): 제품 특징을 비튼 한 줄. 효능·배변·건강 약속이나 너무 긴 문구는 버리고 식감으로 대신한다.
   // 후킹 문구(사용자 확정 2026-09): 후보 여러 개 중 조건(28자 이하·효능·배변·상품명 없음)을 통과한 첫 번째를 쓴다.
-  const hookOk = (h) => h && h.length <= 30 && !HEALTH_CLAIM.test(h) && !CURE_CLAIM.test(h) && !/이 메뉴/.test(h);
+  const hookOk = (h) => h && h.length <= 30 && !HEALTH_CLAIM.test(h) && !CURE_CLAIM.test(h) && !/이 메뉴/.test(h) && !PRICE_RE.test(h);
   const hookClean = (h) => noGunHook(scrubAll(String(h || '').trim().replace(/["'「」]/g, '').replace(/!+/g, '.'))).replace(/[.\s]+$/, '');
   // 긴 대본 지시 안에서는 후킹이 맛 묘사로 흐른다(실측) → 후킹만 짧은 지시로 한 번 더 뽑아 앞에 둔다.
   const hookFocused = await callGeminiText(gk, {
@@ -6454,12 +6465,12 @@ async function handleEpisodeRequest(env, body) {
 
 // 인스타·유튜브에 직접 올릴 때 복사할 글(본문·해시태그). 쿠팡 파트너스 고지는 본문에 반드시 들어간다(법적 요구).
 function postTextOf(ep) {
-  let caption = String(ep.caption || '').trim();
+  let caption = noPrice(String(ep.caption || '').trim());          // 예전 편에 남은 가격 문장도 빼고 보여 준다
   if (caption && !caption.includes('쿠팡 파트너스')) caption += `\n\n${COUPANG_DISCLOSURE}`;
   const hashtags = (Array.isArray(ep.hashtags) ? ep.hashtags : []).map(t => String(t).trim()).filter(Boolean)
     .map(t => (t.startsWith('#') ? t : '#' + t)).filter(t => !caption.includes(t)).join(' ');
   const yt = ep.youtube || {};
-  return { caption, hashtags, ytTitle: String(yt.title || ''), ytDesc: String(yt.description || '') };
+  return { caption, hashtags, ytTitle: String(yt.title || ''), ytDesc: noPrice(String(yt.description || '')) };
 }
 
 // 편 목록과 진행 상태(최근 것부터)
