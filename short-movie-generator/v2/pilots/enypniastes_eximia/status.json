@@ -43,7 +43,13 @@
     },
     "storyboard": {
       "state": "working",
-      "notes": []
+      "notes": [
+        {
+          "at": "2026-09-30T13:56:17Z",
+          "kind": "error",
+          "text": "스토리보드 자동 작성 실패: GEMINI_API_KEY 없음 — 「다시 시도」를 눌러 주세요"
+        }
+      ]
     },
     "video": {
       "state": "locked",
@@ -484,6 +490,13 @@
       "at": "2026-09-30T11:18:14Z",
       "action": "write_script",
       "text": "대본 자동 작성 완료 — 승인 대기"
+    },
+    "storyboard": {
+      "stage": "storyboard",
+      "status": "failed",
+      "at": "2026-09-30T13:56:17Z",
+      "action": "write_storyboard",
+      "text": "스토리보드 자동 작성 실패: GEMINI_API_KEY 없음 — 「다시 시도」를 눌러 주세요"
     }
   },
   "cost": {

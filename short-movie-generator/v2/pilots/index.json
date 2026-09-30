@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-30T13:01:07Z",
+  "updated": "2026-09-30T13:56:17Z",
   "items": [
     {
       "id": "bathynomus_giganteus",
@@ -16,7 +16,13 @@
       "sci": "Enypniastes eximia",
       "stage": "storyboard",
       "state": "working",
-      "job": null,
+      "job": {
+        "stage": "storyboard",
+        "status": "failed",
+        "at": "2026-09-30T13:56:17Z",
+        "action": "write_storyboard",
+        "text": "스토리보드 자동 작성 실패: GEMINI_API_KEY 없음 — 「다시 시도」를 눌러 주세요"
+      },
       "created": "2026-09-30T09:44:09Z"
     }
   ]
