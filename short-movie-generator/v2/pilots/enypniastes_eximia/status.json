@@ -84,14 +84,30 @@
       "approved_at": "2026-09-30T15:46:57Z"
     },
     "upload": {
-      "state": "review",
+      "state": "approved",
       "notes": [
         {
           "at": "2026-09-30T15:47:37Z",
           "kind": "meta",
           "text": "유튜브 제목·설명·해시태그 작성 — 확인 후 「승인 → 유튜브 업로드」"
+        },
+        {
+          "at": "2026-09-30T22:35:04Z",
+          "kind": "meta_edit",
+          "text": "운영자가 제목·설명 수정"
+        },
+        {
+          "at": "2026-09-30T22:35:06Z",
+          "kind": "uploaded",
+          "text": "유튜브 업로드 완료(public): https://youtu.be/vII53e5dIfU — 고정 댓글은 유튜브 앱에서 직접 달고 고정"
+        },
+        {
+          "at": "2026-09-30T22:35:06Z",
+          "kind": "approve",
+          "text": ""
         }
-      ]
+      ],
+      "approved_at": "2026-09-30T22:35:06Z"
     }
   },
   "topic": {
@@ -684,10 +700,17 @@
           "#심해"
         ],
         "pinned_comment": "次に見たい深海の生き物は？",
-        "privacy": "private",
+        "privacy": "public",
         "category": "15"
       },
-      "meta_at": "2026-09-30T15:47:37Z"
+      "meta_at": "2026-09-30T15:47:37Z",
+      "result": {
+        "url": "https://youtu.be/vII53e5dIfU",
+        "video_id": "vII53e5dIfU",
+        "privacy": "public",
+        "category": "15",
+        "at": "2026-09-30T22:35:06Z"
+      }
     }
   },
   "checks": {
