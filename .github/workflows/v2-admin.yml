@@ -55,6 +55,44 @@ jobs:
           set -e
           JOB=""
           case "$IN_ACTION" in
+            new)             python3 v2/tools/admin.py new "$IN_PILOT"; JOB=script ;;
+            write_script)    JOB=script ;;
+            write_storyboard) JOB=storyboard ;;
+            make_video)      JOB=video ;;
+            approve)         case "$IN_STAGE" in           # 대본 승인 → 스토리보드 자동 · 콘티 승인 → 영상 자동(운영자 지시 2026-09-30)
+                               script)     python3 v2/tools/admin.py approve "$IN_PILOT" script "$IN_NOTE"; JOB=storyboard ;;
+                               storyboard) python3 v2/tools/admin.py approve "$IN_PILOT" storyboard "$IN_NOTE"; JOB=video ;;
+                             esac ;;                        # video·upload 승인은 키가 필요해 '버튼 실행' 단계에서
+            revise|redo)     case "$IN_STAGE" in
+                               script|storyboard|video) python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE"; JOB="$IN_STAGE" ;;
+                             esac ;;
+          esac
+          if [ -n "$JOB" ]; then
+            python3 v2/tools/admin.py job_start "$IN_PILOT" "$JOB" "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+            bash v2/tools/ci_commit.sh "chore(v2): 자동 작업 시작 $JOB $IN_PILOT [skip ci]"
+          fi
+
+      - name: 준비
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          pip install -q Pillow numpy google-genai janome google-auth google-auth-oauthlib google-api-python-client
+
+      # ★이 단계에만 API 키가 있다(실사고 2026-09-30 run #14: 편집 실수로 이 단계 머리(env)가 지워져 "GEMINI_API_KEY 없음"으로 실패)
+      #   → tests/test_v2_admin.py::test_workflow_has_secrets_and_setup 이 워크플로 구조를 검사한다.
+      - name: 버튼 실행
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_TTS_KEY: ${{ secrets.GOOGLE_TTS_KEY }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          IN_ACTION: ${{ inputs.action }}
+          IN_PILOT: ${{ inputs.pilot }}
+          IN_STAGE: ${{ inputs.stage }}
+          IN_NOTE: ${{ inputs.note }}
+        run: |
+          set -e
+          case "$IN_ACTION" in
             new|write_script)  python3 v2/tools/admin.py write_script "$IN_PILOT" "$IN_NOTE" ;;
             write_storyboard)  python3 v2/tools/admin.py write_storyboard "$IN_PILOT" "$IN_NOTE" ;;
             make_video)        python3 v2/tools/admin.py make_video "$IN_PILOT" "$IN_NOTE" ;;
