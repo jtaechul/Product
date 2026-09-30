@@ -16,8 +16,19 @@
       "approved_at": "2026-09-30T09:44:09Z"
     },
     "script": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-09-30T11:17:42Z",
+          "kind": "auto",
+          "text": "대본 자동 작성 완료"
+        },
+        {
+          "at": "2026-09-30T11:18:14Z",
+          "kind": "crosscheck",
+          "text": "AI 교차 검사: 의심 1건"
+        }
+      ]
     },
     "storyboard": {
       "state": "locked",
@@ -64,15 +75,405 @@
       "page": "https://www.inaturalist.org/taxa/901109"
     }
   },
-  "artifacts": {},
+  "artifacts": {
+    "script": {
+      "cuts": [
+        {
+          "cut": 1,
+          "jp": "「首なしチキンモンスター」と呼ばれる、深海を漂う生き物をご存知ですか。",
+          "ko": "\"머리 없는 치킨 몬스터\"라고 불리며 심해를 떠다니는 생물을 아시나요?",
+          "tts": "「くびなしちきんもんすたー」とよばれる、しんかいをただよういきものをごぞんじですか。",
+          "fact": "F1,F6",
+          "sec": 6,
+          "speech_s": 5.25,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F1",
+              "fact": "독특한 외모 때문에 이 종은 머리 없는 닭 물고기, 머리 없는 닭 괴물, 스페인 무용수 등으로 불립니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Enypniastes"
+              ],
+              "quote": "Due to its unique appearance, the species has been dubbed the headless chicken fish, headless chicken monster, and the Spanish dancer.",
+              "source_title": "Wikipedia(en) Enypniastes"
+            },
+            {
+              "id": "F6",
+              "fact": "이들은 수심 500미터에서 6,000미터 사이의 심해에 서식합니다.",
+              "sources": [],
+              "quote": "서식 수심(m): 500-6000",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            }
+          ]
+        },
+        {
+          "cut": 2,
+          "jp": "実は、頭も目も骨もないナマコです。大きさは11から25センチメートルほど。",
+          "ko": "사실 머리도, 눈도, 뼈도 없는 해삼입니다. 크기는 11에서 25센티미터 정도죠.",
+          "tts": "じつは、あたまもめもほねもないなまこです。おおきさは11から25せんちめーとるほど。",
+          "fact": "F2,F3",
+          "sec": 8,
+          "speech_s": 5.75,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F2",
+              "fact": "이 생물은 머리, 눈, 뼈가 전혀 없는 심해 해삼입니다.",
+              "sources": [],
+              "quote": "머리·눈·뼈가 없는 심해 해삼이다",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            },
+            {
+              "id": "F3",
+              "fact": "이 해삼의 크기는 11에서 25센티미터에 이릅니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Enypniastes"
+              ],
+              "quote": "The sea cucumber ranges in size from 11 to 25 centimeters (4.3 to 9.8 in).",
+              "source_title": "Wikipedia(en) Enypniastes"
+            }
+          ]
+        },
+        {
+          "cut": 3,
+          "jp": "多くのナマコと違い、前方の膜をオールのように動かして海中を泳ぎます。",
+          "ko": "대부분의 해삼과 달리, 앞쪽의 막을 노처럼 움직여 바닷속을 헤엄칩니다.",
+          "tts": "おおくのなまことちがい、ぜんぽうのまくをおーるのようにうごかしてかいちゅうをおよぎます。",
+          "fact": "F7,F13",
+          "sec": 8,
+          "speech_s": 5.3,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F7",
+              "fact": "대부분의 해삼과 달리 해저를 기어 다니지 않고 물속을 헤엄칩니다.",
+              "sources": [],
+              "quote": "대부분의 해삼과 달리 해저를 기지 않고 유영한다",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            },
+            {
+              "id": "F13",
+              "fact": "이들은 앞쪽의 막을 노 젓듯이 움직여 이동하는 방식을 사용합니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Enypniastes"
+              ],
+              "quote": "The first is that they move their anterior veil in a rowing motion.",
+              "source_title": "Wikipedia(en) Enypniastes"
+            }
+          ]
+        },
+        {
+          "cut": 4,
+          "jp": "半透明な体は、小さいうちは明るいピンク色、大きくなると赤褐色になります。",
+          "ko": "반투명한 몸은 어릴 때는 밝은 분홍색, 커지면 적갈색이 됩니다.",
+          "tts": "はんとうめいなからだは、ちいさいうちはあかるいぴんくいろ、おおきくなるとせきかっしょくになります。",
+          "fact": "F4,F5",
+          "sec": 8,
+          "speech_s": 6.06,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F4",
+              "fact": "가장 뚜렷한 특징은 크기에 따라 달라지는 색상인데, 작은 개체는 밝은 분홍색이고 큰 개체는 적갈색을 띱니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Enypniastes"
+              ],
+              "quote": "Its most distinct feature is its coloring, which is dictated by size: small Enypniastes are a bright pink, and larger individuals are a more reddish-brown color.",
+              "source_title": "Wikipedia(en) Enypniastes"
+            },
+            {
+              "id": "F5",
+              "fact": "또한 몸이 반투명하여 특히 먹이를 먹은 후에는 장이 몸을 통해 비쳐 보입니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Enypniastes"
+              ],
+              "quote": "It is also semi-transparent, and its intestine can be seen through its body, especially after feeding.",
+              "source_title": "Wikipedia(en) Enypniastes"
+            }
+          ]
+        },
+        {
+          "cut": 5,
+          "jp": "普段は水中にいますが、食事の時だけ海底に降り、触手で食べ物を口に押し込みます。",
+          "ko": "평소에는 물속에 있지만 식사 때만 해저로 내려와, 촉수로 먹이를 입에 밀어 넣습니다.",
+          "tts": "ふだんはすいちゅうにいますが、しょくじのときだけかいていにふり、しょくしゅでたべものをくちにおしこみます。",
+          "fact": "F8,F10",
+          "sec": 8,
+          "speech_s": 6.39,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F8",
+              "fact": "이들은 대부분의 시간을 물속에서 보내며, 오직 먹이를 먹을 때만 해저에 내려앉습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Enypniastes"
+              ],
+              "quote": "They spend most of their time in the water column, touching down on the seafloor only to eat.",
+              "source_title": "Wikipedia(en) Enypniastes"
+            },
+            {
+              "id": "F10",
+              "fact": "이들은 촉수를 이용해 먹이를 입으로 밀어 넣어 섭취합니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Enypniastes"
+              ],
+              "quote": "They feed by pushing food into their mouths with their tentacles.",
+              "source_title": "Wikipedia(en) Enypniastes"
+            }
+          ]
+        },
+        {
+          "cut": 6,
+          "jp": "海底にいるのは最長でも64秒。素早く食事を済ませ、再び水中へ戻ります。",
+          "ko": "해저에 머무는 시간은 길어야 64초. 재빠르게 식사를 마치고 다시 물속으로 돌아갑니다.",
+          "tts": "かいていにいるのはさいちょうでも64びょう。すばやくしょくじをすませ、ふたたびすいちゅうへもどります。",
+          "fact": "F8,F9",
+          "sec": 8,
+          "speech_s": 6.65,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F8",
+              "fact": "이들은 대부분의 시간을 물속에서 보내며, 오직 먹이를 먹을 때만 해저에 내려앉습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Enypniastes"
+              ],
+              "quote": "They spend most of their time in the water column, touching down on the seafloor only to eat.",
+              "source_title": "Wikipedia(en) Enypniastes"
+            },
+            {
+              "id": "F9",
+              "fact": "이들은 매우 빠르게 먹이를 먹으며, 해저에 머무는 시간은 기껏해야 64초에 불과합니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Enypniastes"
+              ],
+              "quote": "They feed very quickly, staying on the seafloor for at most sixty four seconds.",
+              "source_title": "Wikipedia(en) Enypniastes"
+            }
+          ]
+        },
+        {
+          "cut": 7,
+          "jp": "敵に襲われると、光る皮膚を脱ぎ捨てておとりとして投げる驚きの技も持ちます。",
+          "ko": "적의 공격을 받으면 빛나는 피부를 벗어 미끼로 던지는 놀라운 기술도 가졌습니다.",
+          "tts": "てきにおそわれると、ひかるひふをぬぎすてておとりとしてなげるおどろきのわざももちます。",
+          "fact": "F11",
+          "sec": 8,
+          "speech_s": 5.36,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F11",
+              "fact": "위협을 받으면 빛나는 피부를 벗어 미끼로 던지는 방어 행동을 합니다.",
+              "sources": [],
+              "quote": "위협을 받으면 빛나는 피부를 벗어 미끼로 던진다",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            }
+          ]
+        },
+        {
+          "cut": 8,
+          "jp": "食後は腸が透けて見える姿で、水深500メートルより深い暗闇に消えていきます。",
+          "ko": "식후에는 장이 비쳐 보이는 모습으로 수심 500미터보다 깊은 어둠 속으로 사라집니다.",
+          "tts": "しょくごはちょうがすけてみえるすがたで、すいしん500めーとるよりふかいくらやみにきえていきます。",
+          "fact": "F5,F6",
+          "sec": 8,
+          "speech_s": 5.91,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F5",
+              "fact": "또한 몸이 반투명하여 특히 먹이를 먹은 후에는 장이 몸을 통해 비쳐 보입니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Enypniastes"
+              ],
+              "quote": "It is also semi-transparent, and its intestine can be seen through its body, especially after feeding.",
+              "source_title": "Wikipedia(en) Enypniastes"
+            },
+            {
+              "id": "F6",
+              "fact": "이들은 수심 500미터에서 6,000미터 사이의 심해에 서식합니다.",
+              "sources": [],
+              "quote": "서식 수심(m): 500-6000",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            }
+          ]
+        }
+      ],
+      "pending_lines": [],
+      "audio": "out/r09301117_script_tts/body.wav",
+      "verification": "자동 작성 · 출처 2곳 · 원문 인용이 확인된 사실 14개(확인 안 된 0개 버림) · 코드 검사 통과 · 예상 길이 62초",
+      "crosscheck": {
+        "at": "2026-09-30T11:17:42Z",
+        "model": "gemini-3.1-pro-preview",
+        "issues": [
+          {
+            "cut": 8,
+            "type": "scope",
+            "problem_ko": "사실 목록에 따르면 서식 수심은 500미터에서 6,000미터 사이인데, 대본에서는 '500미터보다 깊은'이라고만 언급하여 최대 수심 범위가 누락되었습니다.",
+            "facts": [
+              "F6"
+            ],
+            "suggestion_jp": "食後は腸が透けて見える姿で、水深500メートルから6000メートルの深海に消えていきます。",
+            "suggestion_ko": "식후에는 장이 비쳐 보이는 모습으로, 수심 500미터에서 6000미터 사이의 심해로 사라집니다."
+          }
+        ]
+      }
+    },
+    "topic": {
+      "facts": [
+        {
+          "id": "F1",
+          "fact": "독특한 외모 때문에 이 종은 머리 없는 닭 물고기, 머리 없는 닭 괴물, 스페인 무용수 등으로 불립니다.",
+          "fact_jp": "そのユニークな外見から、この種は首なしチキンフィッシュ、首なしチキンモンスター、スパニッシュダンサーなどと呼ばれています。",
+          "quote": "Due to its unique appearance, the species has been dubbed the headless chicken fish, headless chicken monster, and the Spanish dancer.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Enypniastes"
+          ],
+          "source_title": "Wikipedia(en) Enypniastes"
+        },
+        {
+          "id": "F2",
+          "fact": "이 생물은 머리, 눈, 뼈가 전혀 없는 심해 해삼입니다.",
+          "fact_jp": "この生物は頭、目、骨が全くない深海ナマコです。",
+          "quote": "머리·눈·뼈가 없는 심해 해삼이다",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F3",
+          "fact": "이 해삼의 크기는 11에서 25센티미터에 이릅니다.",
+          "fact_jp": "このナマコの大きさは11から25センチメートルに及びます。",
+          "quote": "The sea cucumber ranges in size from 11 to 25 centimeters (4.3 to 9.8 in).",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Enypniastes"
+          ],
+          "source_title": "Wikipedia(en) Enypniastes"
+        },
+        {
+          "id": "F4",
+          "fact": "가장 뚜렷한 특징은 크기에 따라 달라지는 색상인데, 작은 개체는 밝은 분홍색이고 큰 개체는 적갈색을 띱니다.",
+          "fact_jp": "最も顕著な特徴は大きさに左右される体色で、小さな個体は明るいピンク色、大きな個体は赤褐色をしています。",
+          "quote": "Its most distinct feature is its coloring, which is dictated by size: small Enypniastes are a bright pink, and larger individuals are a more reddish-brown color.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Enypniastes"
+          ],
+          "source_title": "Wikipedia(en) Enypniastes"
+        },
+        {
+          "id": "F5",
+          "fact": "또한 몸이 반투명하여 특히 먹이를 먹은 후에는 장이 몸을 통해 비쳐 보입니다.",
+          "fact_jp": "また半透明であり、特に摂食後は体を通して腸が透けて見えます。",
+          "quote": "It is also semi-transparent, and its intestine can be seen through its body, especially after feeding.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Enypniastes"
+          ],
+          "source_title": "Wikipedia(en) Enypniastes"
+        },
+        {
+          "id": "F6",
+          "fact": "이들은 수심 500미터에서 6,000미터 사이의 심해에 서식합니다.",
+          "fact_jp": "これらは水深500メートルから6000メートルの深海に生息しています。",
+          "quote": "서식 수심(m): 500-6000",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F7",
+          "fact": "대부분의 해삼과 달리 해저를 기어 다니지 않고 물속을 헤엄칩니다.",
+          "fact_jp": "ほとんどのナマコとは異なり、海底を這わずに水中を泳ぎます。",
+          "quote": "대부분의 해삼과 달리 해저를 기지 않고 유영한다",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F8",
+          "fact": "이들은 대부분의 시간을 물속에서 보내며, 오직 먹이를 먹을 때만 해저에 내려앉습니다.",
+          "fact_jp": "彼らはほとんどの時間を水中で過ごし、食事の時だけ海底に降り立ちます。",
+          "quote": "They spend most of their time in the water column, touching down on the seafloor only to eat.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Enypniastes"
+          ],
+          "source_title": "Wikipedia(en) Enypniastes"
+        },
+        {
+          "id": "F9",
+          "fact": "이들은 매우 빠르게 먹이를 먹으며, 해저에 머무는 시간은 기껏해야 64초에 불과합니다.",
+          "fact_jp": "彼らは非常に素早く摂食し、海底に留まる時間は長くても64秒です。",
+          "quote": "They feed very quickly, staying on the seafloor for at most sixty four seconds.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Enypniastes"
+          ],
+          "source_title": "Wikipedia(en) Enypniastes"
+        },
+        {
+          "id": "F10",
+          "fact": "이들은 촉수를 이용해 먹이를 입으로 밀어 넣어 섭취합니다.",
+          "fact_jp": "彼らは触手を使って食べ物を口に押し込んで摂食します。",
+          "quote": "They feed by pushing food into their mouths with their tentacles.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Enypniastes"
+          ],
+          "source_title": "Wikipedia(en) Enypniastes"
+        },
+        {
+          "id": "F11",
+          "fact": "위협을 받으면 빛나는 피부를 벗어 미끼로 던지는 방어 행동을 합니다.",
+          "fact_jp": "脅威を受けると、光る皮膚を脱ぎ捨てておとりとして投げます。",
+          "quote": "위협을 받으면 빛나는 피부를 벗어 미끼로 던진다",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F12",
+          "fact": "이 속의 생물들은 둥글고 볼록한 몸통, 갈라진 촉수, 큰 앞쪽 돛을 가지고 있으며 생물 발광을 할 수도 있습니다.",
+          "fact_jp": "この属の生物は丸く膨らんだ体、分岐した触手、大きな前方の帆を持ち、生物発光することもあります。",
+          "quote": "The Enypniastes have a round bulbous body, bifurcated tentacles, and a large anterior sail. They can also be bioluminescent.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Enypniastes"
+          ],
+          "source_title": "Wikipedia(en) Enypniastes"
+        },
+        {
+          "id": "F13",
+          "fact": "이들은 앞쪽의 막을 노 젓듯이 움직여 이동하는 방식을 사용합니다.",
+          "fact_jp": "彼らは前方の膜をオールを漕ぐように動かして移動する方法を使います。",
+          "quote": "The first is that they move their anterior veil in a rowing motion.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Enypniastes"
+          ],
+          "source_title": "Wikipedia(en) Enypniastes"
+        },
+        {
+          "id": "F14",
+          "fact": "해류가 있을 때는 촉수를 이용해 해류를 따라 자신을 끌어당기며 이동하기도 합니다.",
+          "fact_jp": "水流がある場合、触手を使って水流に沿って自身を引っ張るように移動することもあります。",
+          "quote": "The second is that when there is a current, the organism will use their tentacles to pull themselves down current.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Enypniastes"
+          ],
+          "source_title": "Wikipedia(en) Enypniastes"
+        }
+      ]
+    }
+  },
   "checks": {},
   "jobs": {
     "script": {
       "stage": "script",
-      "status": "running",
-      "at": "2026-09-30T11:16:08Z",
-      "action": "job_start",
-      "text": "대본 자동 작성 중 — 출처 수집 → 사실 추출 → 대본 → 검증 → 미리듣기"
+      "status": "done",
+      "at": "2026-09-30T11:18:14Z",
+      "action": "write_script",
+      "text": "대본 자동 작성 완료 — 승인 대기"
     }
+  },
+  "cost": {
+    "spent": [
+      {
+        "at": "2026-09-30T11:17:42Z",
+        "what": "대본 자동 작성(AI+나레이션)",
+        "usd": 0.05
+      }
+    ]
   }
 }
