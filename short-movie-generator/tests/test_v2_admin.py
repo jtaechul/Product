@@ -771,7 +771,9 @@ def test_workflow_has_secrets_and_setup():
         assert k in env, k
     assert "ffmpeg" in steps["준비"]["run"] and "janome" in steps["준비"]["run"]
     run1, run2 = steps["진행 중 먼저 기록"]["run"], steps["버튼 실행"]["run"]
-    assert "job_start" in run1 and "ci_commit.sh" in run1 and "write_storyboard" not in run1.split("JOB=storyboard")[0]
+    assert "job_start" in run1 and "ci_commit.sh" in run1
+    for a in ("write_script", "write_storyboard", "make_video"):           # 키가 없는 첫 단계에서 유료 작업을 돌리면 안 된다
+        assert f"admin.py {a}" not in run1, a
     for a in ("write_script", "write_storyboard", "make_video", "edit_hook", "recut_approve", "upload_meta", "save_meta"):
         assert a in run2, a
     assert steps["실패 기록"].get("if") == "failure()" and steps["결과 커밋"].get("if") == "always()"
