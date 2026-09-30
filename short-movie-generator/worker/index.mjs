@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-28-9 (아이폰 화면 넘침 수정)";
+const BUILD="v2026-09-30-1 (실사 사진 1장이면 제작 가능)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2410,7 +2410,7 @@ async function renderV2New(){
       '<div class="ctitle">'+esc(t.name_ko)+'</div><div class="cmeta"><i>'+esc(t.sci)+'</i>'+(t.depth_m?(' · 수심 '+esc(t.depth_m)+'m'):'')+'</div>'+
       (t.facts||[]).map(f=>'<div class="cfact">· '+esc(f)+'</div>').join("")+
       '<div class="cfact">'+Object.entries(t.checks||{}).map(([k,v])=>'<span class="'+(v?"ok":"err")+'">'+(v?"통과":"미달")+' '+esc(k)+'</span>').join(" · ")+'</div>'+
-      '<div class="cfact warn">실사 사진 2장 이상 · 이야기거리(발견 사건·연도)는 시작 후 대본 단계에서 확인합니다.</div>'+
+      '<div class="cfact warn">실사 사진 1장 이상 · 이야기거리(발견 사건·연도)는 시작 후 대본 단계에서 확인합니다.</div>'+
       (t.ready?'<button class="cgo" data-new="'+esc(t.id)+'">이 종으로 시작</button>':'')+
     '</div></div>';
   let html='<div class="banner" id="msg"></div><a class="back" href="/">← 영상 목록</a>'+
