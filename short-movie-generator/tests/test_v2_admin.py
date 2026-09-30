@@ -343,7 +343,9 @@ def test_text_model_is_picked_from_what_the_server_offers():
 
 # ── 업로드(운영자 확정 2026-09-28) ──
 _META = {"title_jp": "深海の掃除屋、5年絶食の謎", "title_ko": "심해의 청소부, 5년 단식의 수수께끼",
-         "desc_jp": "メキシコ湾で見つかった大きな生き物です。", "desc_ko": "멕시코만에서 발견된 큰 생물입니다."}
+         "desc_jp": "メキシコ湾で見つかった大きな生き物です。", "desc_ko": "멕시코만에서 발견된 큰 생물입니다.",
+         "tags_jp": ["#ダンゴムシ", "#絶食", "#深海の謎", "#雑学", "#生き物", "#Shorts", "#深海", "#海の生き物", "#水族館", "#ドキュメンタリー"],
+         "tags_ko": ["#등각류", "#단식", "#심해의비밀", "#잡학", "#생물", "#바다생물", "#수족관", "#다큐멘터리"]}
 
 
 def test_upload_meta_follows_channel_rules(real_copy):
@@ -351,6 +353,11 @@ def test_upload_meta_follows_channel_rules(real_copy):
     m = st["artifacts"]["upload"]["meta"]
     assert m["title_jp"].endswith("#ダイオウグソクムシ #深海") and m["title_jp"].count("#") == 2
     assert "#shorts" not in (m["title_jp"] + m["desc_jp"]).lower()
+    # 설명·키워드 해시태그(운영자 지시 2026-09-30): 종명 + 공통 3개 + AI 분석 태그, 중복·#Shorts 제거, 15개 이내
+    assert m["tags_jp"][:4] == ["#ダイオウグソクムシ", "#深海", "#海洋生物", "#深海生物"] and 10 <= len(m["tags_jp"]) <= 15
+    assert "#絶食" in m["tags_jp"] and "#Shorts" not in m["tags_jp"] and m["tags_jp"].count("#深海") == 1
+    assert m["tags_ko"][:4] == ["#대왕구족충", "#심해", "#해양생물", "#심해생물"] and "#단식" in m["tags_ko"]
+    assert m["desc_jp"].rstrip().endswith(" ".join(m["tags_jp"]))
     assert "コメントで教えてください" in m["desc_jp"] and "チャンネル登録" in m["desc_jp"]
     assert "AIによる再現映像" in m["desc_jp"] and "wikipedia.org" in m["desc_jp"]
     assert m["privacy"] == "private" and m["pinned_comment"] == "次に見たい深海の生き物は？"
@@ -372,7 +379,7 @@ def test_upload_once_and_only_on_approve(real_copy):
         calls.append((title, privacy, tags))
         return {"url": "https://youtu.be/TEST", "video_id": "TEST", "privacy": privacy}
     admin.youtube_upload("bathynomus_giganteus", uploader=fake)
-    assert calls and calls[0][1] == "private" and calls[0][2] == ["ダイオウグソクムシ", "深海"]
+    assert calls and calls[0][1] == "private" and calls[0][2][:2] == ["ダイオウグソクムシ", "深海"] and len(calls[0][2]) >= 10
     with pytest.raises(SystemExit):                                          # 같은 편 두 번 금지
         admin.youtube_upload("bathynomus_giganteus", uploader=fake)
     assert len(calls) == 1
@@ -788,3 +795,13 @@ def test_build_cut_without_pilot_macro_insert(tmp_path):
     clip = tmp_path / "c04.mp4"; _tiny_clip(clip, 4, "green")
     out = A.build_cut(tmp_path, clip, 4, 4, None, tmp_path, {"cut": 4, "jp": "x"})
     assert out.exists() and A.insert_for(tmp_path, 4, {}) is None
+
+
+def test_species_tag_never_empty_without_japanese_name():
+    """실사고 2026-09-30: 和名이 없는 머리없는닭괴물 편 제목이 「… # #深海」로 올라감 → 후킹 정답 이름으로 채운다."""
+    sc = {"subject": {"scientific_name": "Enypniastes eximia", "jp_name": "", "ko_name": "머리없는닭괴물"},
+          "hook": {"answer_jp": "首なしチキンモンスター", "answer_ko": "머리없는닭괴물"}}
+    assert admin.species_tags(sc) == ("#首なしチキンモンスター", "#머리없는닭괴물")
+    assert admin.species_tags({"subject": {"scientific_name": "Testus fishus"}}) == ("#Testusfishus", "#Testusfishus")
+    m = admin._compose_meta(sc, {"title_jp": "題", "title_ko": "제", "desc_jp": "説明", "desc_ko": "설명", "tags_jp": ["#ナマコ"], "tags_ko": ["#해삼"]})
+    assert m["title_jp"] == "題 #首なしチキンモンスター #深海" and "#ナマコ" in m["tags_jp"] and "#" not in m["tags_jp"][0][1:]

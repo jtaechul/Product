@@ -806,8 +806,13 @@ _META_PROMPT = """You write YouTube Shorts metadata for a Japanese deep-sea scie
 Rules: title_jp = hook-style Japanese title, max 28 characters, mystery/awe tone, no honorific needed, no hashtags,
 no "#Shorts", no episode numbers, NO office-worker jokes (有給/残業/上司 etc.), never exaggerate beyond the facts.
 desc_jp = 3-4 short sentences in polite Japanese (です・ます), summarising the story with the concrete facts.
-title_ko / desc_ko = natural Korean versions (존댓말 for desc). Return JSON only:
-{{"title_jp":"...","title_ko":"...","desc_jp":"...","desc_ko":"..."}}
+title_ko / desc_ko = natural Korean versions (존댓말 for desc).
+tags_jp / tags_ko = 8-12 SEO hashtags each, analysed from THIS story: the animal's group (e.g. #ナマコ), its notable behaviours
+and traits actually in the narration (e.g. #発光 #脱皮), habitat words (#深海生物 #海の生き物), genre words (#雑学 #生き物 #自然
+#ドキュメンタリー), curiosity words (#深海の謎). Korean list = same idea in Korean (#해삼 #발광 #심해생물 #잡학 ...).
+Each tag starts with #, no spaces inside, no #Shorts, no episode numbers, nothing the facts do not support.
+Return JSON only:
+{{"title_jp":"...","title_ko":"...","desc_jp":"...","desc_ko":"...","tags_jp":["#..."],"tags_ko":["#..."]}}
 # Species
 {name_jp} / {name_ko} / {sci}
 # Narration (by cut)
@@ -817,17 +822,47 @@ title_ko / desc_ko = natural Korean versions (존댓말 for desc). Return JSON o
 """
 
 
-def _compose_meta(sc: dict, gen: dict) -> dict:
+CORE_TAGS_JP = ["#深海", "#海洋生物", "#深海生物"]        # 채널 공통 태그(하드룰: #深海·#海洋生物 항상)
+CORE_TAGS_KO = ["#심해", "#해양생물", "#심해생물"]
+MAX_TAGS = 15
+
+
+def _tag_ok(t: str) -> bool:
+    t = t.strip()
+    return t.startswith("#") and 2 <= len(t) <= 24 and " " not in t and "shorts" not in t.lower() and not re.search(r"#\d+$", t)
+
+
+def _merge_tags(head: list[str], core: list[str], ai: list) -> list[str]:
+    out = []
+    for t in list(head) + list(core) + [str(x) for x in (ai or [])]:
+        t = t.strip()
+        if _tag_ok(t) and t.lower() not in {x.lower() for x in out}:
+            out.append(t)
+    return out[:MAX_TAGS]
+
+
+def species_tags(sc: dict) -> tuple[str, str]:
+    """종명 태그(일본어·한국어). 실사고 2026-09-30: 和名이 없는 종은 '#'만 붙어 제목이 「… # #深海」가 됐다
+    → 和名 → 후킹 정답 이름 → 학명 순으로 반드시 채운다."""
     sub = sc.get("subject", {})
-    tj, tk = "#" + sub.get("jp_name", "").replace(" ", ""), "#" + sub.get("ko_name", "").replace(" ", "")
-    tags_jp, tags_ko = [tj, "#深海"], [tk, "#심해"]
+    hk = sc.get("hook") or {}
+    jp = (sub.get("jp_name") or hk.get("answer_jp") or sub.get("scientific_name") or "").replace(" ", "")
+    ko = (sub.get("ko_name") or hk.get("answer_ko") or sub.get("scientific_name") or "").replace(" ", "")
+    return "#" + jp, "#" + ko
+
+
+def _compose_meta(sc: dict, gen: dict) -> dict:
+    tj, tk = species_tags(sc)
+    title_jp_tags, title_ko_tags = [tj, "#深海"], [tk, "#심해"]                       # 제목 끝 2개(채널 규칙)
+    tags_jp = _merge_tags([tj], CORE_TAGS_JP, gen.get("tags_jp"))                   # 설명·유튜브 키워드용 8~15개
+    tags_ko = _merge_tags([tk], CORE_TAGS_KO, gen.get("tags_ko"))
     srcs = sorted({u for f in sc.get("facts", []) for u in f.get("sources", [])})
     def desc(body, cta, repro, tags, head):
         return (body.strip() + "\n\n" + cta + "\n\n" + repro + "\n" + head + "\n" + "\n".join(srcs)
                 + "\n\n" + " ".join(tags)).strip()
     return {
-        "title_jp": (gen["title_jp"].strip() + " " + " ".join(tags_jp))[:100],
-        "title_ko": (gen["title_ko"].strip() + " " + " ".join(tags_ko))[:100],
+        "title_jp": (gen["title_jp"].strip() + " " + " ".join(title_jp_tags))[:100],
+        "title_ko": (gen["title_ko"].strip() + " " + " ".join(title_ko_tags))[:100],
         "desc_jp": desc(gen["desc_jp"], _CTA_JP, _REPRO_JP, tags_jp, "出典:"),
         "desc_ko": desc(gen["desc_ko"], _CTA_KO, _REPRO_KO, tags_ko, "출처:"),
         "tags_jp": tags_jp, "tags_ko": tags_ko, "pinned_comment": PINNED_COMMENT, "privacy": "private", "category": "15",
