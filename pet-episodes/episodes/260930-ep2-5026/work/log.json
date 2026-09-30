@@ -69,7 +69,7 @@
       "ok": true,
       "model": "gemini-2.5-pro-preview-tts",
       "voice": "Enceladus",
-      "sec": 4.76
+      "sec": 4.77
     },
     "c07": {
       "ok": true,
@@ -275,13 +275,17 @@
       },
       {
         "clip": "c06",
-        "len": 5.96,
-        "voice": 4.76,
+        "len": 5.97,
+        "voice": 4.77,
         "slow": 1.0,
         "sents": [
           [
             0.45,
-            5.21
+            2.19
+          ],
+          [
+            2.99,
+            5.22
           ]
         ]
       },
@@ -307,12 +311,12 @@
       "clip": "c04",
       "start": 0.2,
       "len": 4.5,
-      "text": "100g에 1460원짜리 사료를 몰래 먹다 들켰다"
+      "text": "닭과 연어 사료를 혼자 먹으려다 뺏겼다"
     }
   },
   "last_request": {
-    "file": "02_assemble.json",
-    "ran_at": "2026-09-30T07:59:32Z",
+    "file": "03_noprice.json",
+    "ran_at": "2026-09-30T08:04:47Z",
     "ok": true
   }
 }
