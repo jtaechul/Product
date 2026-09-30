@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-30-5 (후킹 2초 + 정답 카드 · 공용 엔딩 제거)";
+const BUILD="v2026-09-30-6 (승인하면 스토리보드·영상이 실제로 자동 제작)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2348,7 +2348,14 @@ async function v2json(path){const t=await fetchRaw(path,true);try{return JSON.pa
 function v2badge(state){return '<span class="v2st '+(ST_CLS[state]||"")+'">'+esc(ST_KO[state]||state)+'</span>';}
 // ★'작업 중'은 **실제로 자동 작업이 돌고 있을 때만** 보여 준다(실사고 2026-09-30: 대본 단계가 '작업 중'인데 아무것도 안 돌았음).
 //   status.json 의 jobs[단계] 기록(워크플로가 작업 전 '진행 중'을 먼저 커밋 · 끝나면 완료/실패)으로 판단한다.
-const V2_AUTO={script:true};                       // 자동 작업이 있는 단계(나머지는 아직 Claude 대화에서 요청해야 함)
+const V2_AUTO={script:true,storyboard:true,video:true};   // 자동 작업이 있는 단계(운영자 지시 2026-09-30: 승인하면 다음 단계가 실제로 만들어진다)
+const V2_ACT={script:"write_script",storyboard:"write_storyboard",video:"make_video"};
+const V2_ACTS=new Set(Object.values(V2_ACT));
+function v2cost(stage,st){const e=((st||{}).cost||{}).estimate||{};
+  return stage==="script"?"약 $0.05 · 3~6분":stage==="storyboard"?"약 $"+(e.storyboard||0.6)+" · 5~10분":"약 $"+(e.video||"5~6")+" · 10~20분";}
+const V2_IDLE_TXT={script:"아래 버튼을 누르면 AI가 출처에서 사실을 모아 대본을 씁니다.",
+  storyboard:"아래 버튼을 누르면 실사 참조로 생물 카드를 만들고 실사와 대조한 뒤 8컷 콘티를 그립니다.",
+  video:"아래 버튼을 누르면 컷별 지시문을 쓰고 Omni로 8컷을 만들어 조립·자동 검사까지 합니다(유료)."};
 const V2_JOB_STALE_MIN=25;
 // ★버튼을 누른 뒤 서버가 '진행 중'을 기록하기까지 틈(실사고 2026-09-30: 70초 동안 "돌고 있는 작업이 없습니다")을 메운다:
 //   ① 누른 시각을 이 기기에 기억(v2req) ② 토큰이 있으면 GitHub 실행 목록에서 이 편의 대기/진행 중 실행을 직접 확인(V2_LIVE)
@@ -2391,15 +2398,16 @@ function v2badgeJob(state,jb){
   if(jb.kind==="manual")return '<span class="v2st wait">'+(state==="revise"?"수정 요청됨 · 대화 요청 필요":"대화 요청 필요")+'</span>';
   return v2badge(state);
 }
-function v2retryBtn(stage,lab){return V2_AUTO[stage]?'<button class="btn save" data-act="write_script" data-stage="'+stage+'" style="width:100%;margin-top:8px">'+lab+' (약 $0.05 · 3~6분)</button>':'';}
+let V2_ST_FOR_COST=null;
+function v2retryBtn(stage,lab){return V2_AUTO[stage]?'<button class="btn save" data-act="'+V2_ACT[stage]+'" data-stage="'+stage+'" style="width:100%;margin-top:8px">'+lab+' ('+v2cost(stage,V2_ST_FOR_COST)+')</button>':'';}
 function v2jobHTML(stage,jb){
   if(jb.kind==="running")return '<div class="hint" style="margin-top:6px"><span class="ok">자동 작업이 실제로 돌고 있습니다</span> — '+esc(jb.job.text||"")+
     ' (시작 '+v2when(jb.job.at)+' · 보통 3~6분)'+(jb.live&&jb.live.url?' · <a href="'+esc(jb.live.url)+'" target="_blank">진행 상황 보기</a>':'')+'. 이 화면은 자동으로 새로 고쳐집니다.</div>';
   if(jb.kind==="starting")return '<div class="hint" style="margin-top:6px"><span class="ok">요청을 보냈습니다</span> — 서버가 작업을 시작하는 중입니다(보통 30초 안). 이 화면은 자동으로 새로 고쳐집니다.</div>';
   if(jb.kind==="failed")return '<div class="hint" style="margin-top:6px"><span class="err">자동 작업 실패</span> — '+esc(jb.job.text||"")+'</div>'+v2retryBtn(stage,"다시 시도");
   if(jb.kind==="stale")return '<div class="hint" style="margin-top:6px"><span class="err">작업이 '+V2_JOB_STALE_MIN+'분 넘게 끝나지 않았습니다(멈춘 것으로 보입니다)</span> — 시작 '+v2when(jb.job.at)+'</div>'+v2retryBtn(stage,"다시 시도");
-  if(jb.kind==="idle")return '<div class="hint" style="margin-top:6px"><span class="err">지금 돌고 있는 작업이 없습니다.</span> 아래 버튼을 누르면 AI가 출처에서 사실을 모아 대본을 씁니다.</div>'+v2retryBtn(stage,"대본 자동 작성 시작");
-  if(jb.kind==="manual")return '<div class="hint" style="margin-top:6px"><span class="err">이 단계는 아직 자동으로 만들어지지 않습니다.</span> 지금은 Claude 대화에서 「'+esc(STG_KO[stage].slice(3))+' 만들어」라고 요청해야 시작됩니다(돌고 있는 작업 없음).</div>';
+  if(jb.kind==="idle")return '<div class="hint" style="margin-top:6px"><span class="err">지금 돌고 있는 작업이 없습니다.</span> '+esc(V2_IDLE_TXT[stage]||"")+'</div>'+v2retryBtn(stage,esc(STG_KO[stage].slice(3))+" 자동 시작");
+  if(jb.kind==="manual")return '<div class="hint" style="margin-top:6px"><span class="err">이 단계는 아직 자동으로 만들어지지 않습니다.</span> Claude 대화에서 요청해야 합니다.</div>';
   return "";
 }
 function v2when(iso){return iso?esc(String(iso).slice(0,16).replace("T"," ")):"";}
@@ -2519,7 +2527,14 @@ function v2stageBody(st,stage){
   }
   if(stage==="storyboard"){
     if(!a.sheet)return '<div class="hint">스토리보드 이미지가 나오면 이 칸에 보입니다.</div>';
+    const chk=(a.card_check||{}), items=chk.items||[];
     return '<span class="lbl">콘티(컷별 시작 이미지)</span><img src="'+v2media(pid,a.sheet)+'" loading="lazy">'+
+      ((a.panels||[]).length?'<div class="sect">컷별 화면 설명</div>'+a.panels.map(p=>'<div class="cfact"><b>'+p.cut+'</b> '+esc(p.desc||"")+'</div>').join(""):'')+
+      (a.compare?'<span class="lbl" style="margin-top:14px">생물 카드 ↔ 실사 대조 시트</span><img src="'+v2media(pid,a.compare)+'" loading="lazy">':'')+
+      (items.length?'<div class="sect">해부학 체크리스트 (AI 실사 대조)</div>'+items.map(i=>'<div class="cfact"><span class="'+(i.verdict==="pass"?"ok":i.verdict==="fail"?"err":"")+'">'+
+        (i.verdict==="pass"?"통과":i.verdict==="fail"?"불통과":"확인 불가")+'</span> '+esc(i.item)+(i.note_ko?' <span style="opacity:.7">— '+esc(i.note_ko)+'</span>':'')+'</div>').join("")
+        +(items.some(i=>i.verdict==="fail")?'<div class="cfact warn">불통과 항목이 있습니다 — 「수정 요청」에 "카드: …"라고 적으면 생물 카드부터 다시 만듭니다.</div>':''):
+        (chk.error?'<div class="cfact warn">'+esc(chk.error)+'</div>':''))+
       ((a.card||[]).length?'<span class="lbl" style="margin-top:14px">생물 카드 · 실사 대조</span><div class="postscroll">'+a.card.map(p=>'<img src="'+v2media(pid,p)+'" loading="lazy">').join("")+'</div>':'')+
       ((a.macro||[]).length?'<span class="lbl" style="margin-top:14px">특징 줌인 확대 이미지</span><div class="postscroll">'+a.macro.map(p=>'<img src="'+v2media(pid,p)+'" loading="lazy">').join("")+'</div>':'');
   }
@@ -2666,7 +2681,7 @@ function v2estimate(c,jp){
 }
 function v2stageCard(st,stage){
   const s=(st.stages||{})[stage]||{state:"locked"}, state=s.state, locked=state==="locked";
-  const jb=v2job((st.jobs||{})[stage],stage,state,st.id);
+  const jb=v2job((st.jobs||{})[stage],stage,state,st.id);V2_ST_FOR_COST=st;
   const est=((st.cost||{}).estimate||{})[stage];
   const notes=(s.notes||[]).slice(-3).reverse();
   let h='<div class="card v2stage'+(locked?' v2locked':'')+'" id="stg-'+stage+'">'+
@@ -2730,18 +2745,23 @@ async function renderV2Episode(pid){
       if(await v2do("approve",pid,"upload",JSON.stringify(d),b))banner("업로드를 시작했습니다. 2~5분 뒤 새로고침하면 유튜브 링크가 보입니다.","ok");
       return;
     }
-    if(act==="write_script"){
-      if(!confirm("AI가 출처(위키백과 등)에서 사실을 모아 대본을 씁니다. 출처 원문으로 확인된 사실만 쓰고, 검사·나레이션 미리듣기까지 합니다(약 $0.05 · 3~6분)."))return;
-      if(await v2do("write_script",pid,"script","",b)){v2reqSet(pid,"script");renderV2Episode(pid);}
+    if(V2_ACTS.has(act)){
+      const m={write_script:"AI가 출처(위키백과 등)에서 사실을 모아 대본을 씁니다. 출처 원문으로 확인된 사실만 쓰고, 검사·나레이션 미리듣기까지 합니다",
+               write_storyboard:"실사 참조로 생물 카드를 만들고 실사와 대조한 뒤 8컷 콘티를 그립니다",
+               make_video:"컷별 지시문을 쓰고 Omni로 컷을 만들어 조립·자동 검사까지 합니다. 유료입니다"}[act];
+      if(!confirm(m+" ("+v2cost(stage,st)+")."))return;
+      if(await v2do(act,pid,stage,"",b)){v2reqSet(pid,stage);renderV2Episode(pid);}
       return;
     }
-    const auto=!!V2_AUTO[stage];
-    const msg=act==="approve"?((nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):"")+lab+"을(를) 승인할까요? 다음 단계가 열립니다.")
-             :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 요청대로 대본을 고쳐 씁니다(약 $0.05 · 3~6분).":" (이 단계는 아직 자동 반영이 없어 기록만 됩니다 — Claude 대화에서 반영을 요청하세요.)"))
-             :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 출처부터 다시 모아 새 대본을 씁니다(약 $0.05 · 3~6분).":" (이 단계는 아직 자동 반영이 없어 기록만 됩니다 — Claude 대화에서 요청하세요.)"));
+    const auto=!!V2_AUTO[stage], nextS=STG[STG.indexOf(stage)+1];
+    const nextTxt=(act==="approve"&&nextS&&V2_AUTO[nextS])?(" 바로 이어서 "+STG_KO[nextS].slice(3)+"이(가) 자동으로 만들어집니다("+v2cost(nextS,st)+")."):"";
+    const msg=act==="approve"?((nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):"")+lab+"을(를) 승인할까요?"+nextTxt)
+             :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 요청대로 다시 만듭니다("+v2cost(stage,st)+")."+(stage==="video"?" 메모에 '3번 컷'처럼 번호를 적으면 그 컷만 다시 만듭니다(그만큼만 과금).":""):""))
+             :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 처음부터 다시 만듭니다("+v2cost(stage,st)+")."+(stage==="video"?" 8컷 전부 다시 생성해 비용이 큽니다.":""):""));
     if(!confirm(msg))return;
     if(await v2do(act,pid,stage,note,b)){
-      if(auto&&act!=="approve"){v2reqSet(pid,stage);renderV2Episode(pid);}
+      const js=(act==="approve")?nextS:stage;
+      if(js&&V2_AUTO[js]){v2reqSet(pid,js);renderV2Episode(pid);}
       else setTimeout(()=>renderV2Episode(pid),60000);
     }
   });

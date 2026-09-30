@@ -61,7 +61,7 @@
 - **상태 파일 하나**: 편마다 `v2/pilots/<id>/status.json`(단계 상태 locked/working/review/revise/approved · 기록 · 결과물 경로 ·
   자동 검사 · 비용). 목록 `v2/pilots/index.json`, 주제 후보 `v2/topics.json`(`admin.py topics`로 갱신).
 - **버튼 = 워크플로**: 페이지는 파일을 직접 쓰지 않는다 → `v2-admin.yml` 디스패치 → `v2/tools/admin.py`
-  (new·write_script·approve·revise·redo·ready·redo_cut·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
+  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
   `v2-admin.yml`은 **main에도** 둔다(디스패치 워크플로 규칙 · 하드룰 #15③).
 - **★컷별 대사 수정(운영자 확정 2026-09-28) — 대사를 고쳐도 영상은 자동으로 바뀌지 않는다**:
   대본 카드의 컷마다 「대사 수정」 → 일본어·한국어(·읽기, 비우면 Janome 자동) 입력 → 「이 대사로 저장」(`admin.py edit_line`)은
@@ -110,8 +110,24 @@
   ④ 읽기(히라가나) 자동 → 나레이션 미리듣기(TTS) → 컷 길이(앞 여백+나레이션+0.6초 → 짝수 초)
   ⑤ AI 교차 검사 → '승인 대기'. 대사 옆에 근거 사실 + **출처 원문 인용**을 보여 준다. 수정 요청은 검증된 사실은 그대로 두고 대본만 고친다.
   이전 대본은 `previous_scripts`에 통째로 보관. 회귀: `tests/test_v2_admin.py`(write_script·job·validate) · `worker/v2_admin_check.mjs`(honest_*).
-- **아직 자동이 아닌 것(정직 표기)**: 스토리보드 이미지·영상 제작 시작은 지금은 Claude 대화에서 요청해야 한다(페이지에 「대화 요청 필요」로 표시).
-  고정 댓글 달기·고정은 수동.
+- **★승인하면 다음 단계가 실제로 만들어진다(운영자 지시 2026-09-30 · 실사고 "대본 승인했는데 왜 안 넘어가")**: 예전엔 대본을
+  승인해도 스토리보드·영상은 Claude 대화에서 손으로 만들어야 해서 페이지에선 아무 일도 안 일어났다. 이제 승인 관문마다 자동 실행:
+  - **대본 승인 → `admin.py write_storyboard`(약 $0.6)**: ① 참조 실사(주제 사진 + iNaturalist 자유 라이선스 최대 4장 · `download_refs`)
+    ② AI 비전이 실사를 보고 형태 설명·금지 특징·해부학 체크리스트를 씀(`_DESC_PROMPT` · v1 종 자료 `appearance`가 있으면 함께)
+    ③ 생물 카드 2장(옆·위 · `_CARD_PROMPT_HEAD`) ④ **실사 대조**: AI 비전이 체크리스트 항목별 통과/불통과/확인 불가를 판정해
+    페이지에 표시(판정은 기록만 — 운영자가 승인/수정 요청으로 결정 · 「수정 요청」에 "카드: …"를 적으면 카드부터 다시)
+    ⑤ 8컷 콘티 계획(AI · `_SB_PROMPT` · 무대 다양화·크기 소품 금지·글자 금지·마지막 컷 어둠·후킹 컷 강조) → 2×2 격자 2장
+    (`_GRID_HEAD_GENERIC` · 칸 분할) → 시트 → `script.json` 컷에 `keyframe`·`panel_desc` → '승인 대기'. `creature_card.json`에 형태·체크리스트·대조 결과.
+  - **콘티 승인 → `admin.py make_video`(초당 $0.10 · 8컷 약 $5~6)**: 나레이션이 없으면 먼저 합성(`_ensure_tts`) → AI가 컷별
+    **초 단위 타임라인 지시문**(`_VID_PROMPT` · 나레이션 조각 시각에 전환 · 마지막 컷 어둠) → `gen_omni` 8컷(시작 이미지 = 콘티 칸)
+    → `assemble`(후킹·정답 카드) → 자동 검사 → '승인 대기'. **실패한 컷이 있으면 성공한 컷은 보관하고 「다시 시도」는 실패 컷만**
+    다시 만든다(과금 방지). 「수정 요청」 메모에 **'N번'**이 있으면 그 컷만 다시 만들고, 「다시 하기」는 8컷 전부(확인창이 비용 경고).
+  - 워크플로: `approve`는 script/storyboard일 때 첫 단계에서 승인 + '진행 중' 기록을 커밋한 뒤 다음 단계를 만든다(video·upload 승인은
+    키가 필요해 '버튼 실행' 단계). 페이지 배지·버튼은 `V2_AUTO`/`V2_ACT`(script·storyboard·video 모두 자동).
+  - 회귀: `tests/test_v2_admin.py`(`test_write_storyboard_*`·`test_storyboard_revise_*`·`test_make_video_*` — 가짜 실행기로 파일까지) ·
+    `v2_admin_check.mjs`(video_idle_has_make_video·storyboard_shows_card_check·storyboard_approve_dispatches).
+- **아직 자동이 아닌 것(정직 표기)**: 고정 댓글 달기·고정은 수동. 특징 줌인 매크로 인서트(`assemble.INSERTS`)는 시범편 전용 값이라
+  새 편엔 적용되지 않는다(추후 자동화).
 - 검사: `worker/v2_admin_check.mjs`(메뉴 2개·페이지 렌더·잠금/승인 버튼·디스패치 입력·/legacy) · `tests/test_v2_admin.py`.
 
 ### ★대본 재검증 (운영자 확정 — 생략 금지)

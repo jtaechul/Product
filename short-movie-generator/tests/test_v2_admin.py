@@ -613,3 +613,148 @@ def test_assemble_hook_and_answer_replace_shared_ending(tmp_path):
     r, g, b = frame(11.5).resize((1, 1)).getpixel((0, 0))
     assert r < 60 and g < 60 and b < 80                      # 정답 카드 = 어두운 남색 바탕
     assert not (tmp_path / "end.mp4").exists()
+
+
+# ── ③ 스토리보드 자동 · ④ 영상 자동(운영자 지시 2026-09-30: 승인하면 다음 단계가 실제로 만들어진다) ──────────
+def _fake_runner(tmp_root):
+    """run_request.py 대신: 요청 kind 별로 가짜 결과 파일을 만든다(이미지·격자 칸·영상·나레이션)."""
+    from PIL import Image
+    def run(rp):
+        req = json.loads(Path(rp).read_text(encoding="utf-8"))
+        out = Path(rp).parent.parent / "out" / req["id"]; out.mkdir(parents=True, exist_ok=True)
+        items = []
+        for it in req.get("items", []):
+            if req["kind"] == "gen_images":
+                Image.new("RGB", (400, 700), (90, 90, 120)).save(out / f"{it['name']}.jpg")
+                rec = {"name": it["name"], "file": f"{it['name']}.jpg"}
+                if it.get("split"):
+                    rec["panels"] = []
+                    for n in it["split"]["names"]:
+                        if n:
+                            Image.new("RGB", (360, 640), (40, 60, 90)).save(out / f"{n}.jpg"); rec["panels"].append(f"{n}.jpg")
+                items.append(rec)
+            elif req["kind"] == "gen_omni":
+                _tiny_clip(out / f"{it['name']}.mp4", it.get("sec", 4), "gray")
+                items.append({"name": it["name"], "file": f"{it['name']}.mp4"})
+            elif req["kind"] == "gen_tts":
+                _silent_wav(out / "body.wav", 30)
+                segs = it["segments"]
+                (out / "body_timepoints.json").write_text(json.dumps([{"seg": s, "start": round(i * 3.0, 2), "end": round(i * 3.0 + 2.5, 2)} for i, s in enumerate(segs)]))
+                items.append({"name": "body", "file": "body.wav"})
+        (out / "result.json").write_text(json.dumps({"ok": True, "items": items}, ensure_ascii=False))
+        return 0
+    return run
+
+
+def _fake_vision(p, images=None):
+    if "model maker" in p:
+        return json.dumps({"anatomy": "A translucent reddish swimming sea cucumber with a veil-like webbed fin, no head, no eyes, no bones, soft gelatinous body about 25 cm long.",
+                           "forbidden": "no fish head, no eyes, no legs", "size_note": "", "checklist_ko": ["머리 없음", "눈 없음", "베일 같은 막", "반투명 붉은색"]})
+    if "Compare the attached" in p:
+        return json.dumps({"items": [{"item": "머리 없음", "verdict": "pass", "note_ko": "좋음"}, {"item": "눈 없음", "verdict": "unknown", "note_ko": ""}]})
+    if "storyboard artist" in p:
+        return json.dumps({"panels": {str(i): f"Panel {i}: miniature deep-sea set, the creature drifts, camera three-quarter, warm practical light." for i in range(1, 9)}})
+    if "per-second TIMELINE" in p:
+        return json.dumps({"prompts": {str(i): f"0.0-2.0s slow dolly toward the creature; 2.0-4.0s it undulates its veil and drifts left, camera holds. cut {i}" for i in range(1, 9)}})
+    return json.dumps({"issues": []})
+
+
+def _fake_fetch(url, fn):
+    from PIL import Image
+    Image.new("RGB", (300, 300), (200, 80, 80)).save(fn)
+
+
+def _prep_pilot(v2, monkeypatch):
+    admin.new_pilot("test_fish")
+    ask, _ = _fake_ai()
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    admin.main(["ready", "test_fish", "script"]); admin.approve("test_fish", "script")
+    st = admin.load_status("test_fish"); st["topic"]["photo"] = {"url": "https://x/p.jpg", "credit": "c", "license": "pd"}
+    admin._save(admin.status_path("test_fish"), st)
+    monkeypatch.setattr(admin, "_RUN_REQUEST", _fake_runner(v2))
+
+
+def test_write_storyboard_reaches_review_with_card_check_and_8_panels(v2, monkeypatch):
+    _prep_pilot(v2, monkeypatch)
+    assert states("test_fish")[2] == "working"
+    st = admin.write_storyboard("test_fish", ask=_fake_vision, get=lambda u: {"results": []}, fetch=_fake_fetch)
+    assert states("test_fish")[2] == "review" and st["jobs"]["storyboard"]["status"] == "done"
+    a = st["artifacts"]["storyboard"]
+    assert len(a["panels"]) == 8 and a["sheet"] and (v2 / "pilots" / "test_fish" / a["sheet"]).exists()
+    assert a["card_check"]["items"][0]["verdict"] == "pass" and len(a["card"]) == 3
+    sc = json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))
+    assert all(c["keyframe"].endswith(f"p{c['cut']:02d}.jpg") for c in sc["cuts"])
+    cc = json.loads((v2 / "pilots" / "test_fish" / "creature_card.json").read_text(encoding="utf-8"))
+    assert "no head" in cc["anatomy"] and len(cc["use_as_reference"]) == 3
+    reqs = sorted(p.name for p in (v2 / "pilots" / "test_fish" / "requests").iterdir())
+    assert any("_card" in r for r in reqs) and any("_sb" in r for r in reqs)
+
+
+def test_storyboard_revise_keeps_card_unless_asked(v2, monkeypatch):
+    _prep_pilot(v2, monkeypatch)
+    admin.write_storyboard("test_fish", ask=_fake_vision, get=lambda u: {"results": []}, fetch=_fake_fetch)
+    n0 = len(list((v2 / "pilots" / "test_fish" / "requests").iterdir()))
+    admin.revise("test_fish", "storyboard", "3번 컷을 더 어둡게")
+    seen = {}
+    def ask2(p, images=None):
+        if "storyboard artist" in p:
+            seen["fb"] = "3번 컷을 더 어둡게" in p
+        return _fake_vision(p, images)
+    admin.write_storyboard("test_fish", "3번 컷을 더 어둡게", ask=ask2, get=lambda u: {"results": []}, fetch=_fake_fetch)
+    assert seen["fb"] and len(list((v2 / "pilots" / "test_fish" / "requests").iterdir())) == n0 + 1     # 카드 요청 없이 콘티만
+    assert states("test_fish")[2] == "review"
+
+
+def test_make_video_generates_clips_then_assembles(v2, monkeypatch):
+    _prep_pilot(v2, monkeypatch)
+    admin.write_storyboard("test_fish", ask=_fake_vision, get=lambda u: {"results": []}, fetch=_fake_fetch)
+    admin.approve("test_fish", "storyboard")
+    called = []
+    def fake_assemble(pid):
+        st = admin.load_status(pid); st["stages"]["video"]["state"] = "review"; admin._save(admin.status_path(pid), st); called.append(pid)
+    monkeypatch.setattr(admin, "assemble", fake_assemble)
+    st = admin.make_video("test_fish", ask=_fake_vision)
+    assert called == ["test_fish"] and st["jobs"]["video"]["status"] == "done" and states("test_fish")[3] == "review"
+    v = st["artifacts"]["video"]
+    assert len(v["clips"]) == 8 and v["assemble"]["ending"] == "" and v["assemble"]["tts_id"] == st["artifacts"]["script"]["tts_id"]
+    assert all((v2 / "pilots" / "test_fish" / c["file"]).exists() for c in v["clips"])
+    spent = [x for x in st["cost"]["spent"] if "영상 컷" in x["what"]]
+    assert spent and spent[0]["usd"] > 0
+    # 수정 요청 '3번 컷' → 그 컷만 다시 만든다(다른 컷 파일은 그대로)
+    admin.revise("test_fish", "video", "3번 컷 배경을 더 어둡게")
+    before = {c["cut"]: c["file"] for c in v["clips"]}
+    st = admin.make_video("test_fish", "3번 컷 배경을 더 어둡게", ask=_fake_vision)
+    after = {c["cut"]: c["file"] for c in st["artifacts"]["video"]["clips"]}
+    assert after[3] != before[3] and all(after[k] == before[k] for k in before if k != 3)
+
+
+def test_make_video_failed_cut_is_recorded_and_retry_only_redoes_missing(v2, monkeypatch):
+    _prep_pilot(v2, monkeypatch)
+    admin.write_storyboard("test_fish", ask=_fake_vision, get=lambda u: {"results": []}, fetch=_fake_fetch)
+    admin.approve("test_fish", "storyboard")
+    base = _fake_runner(v2)
+    def flaky(rp):
+        rc = base(rp)
+        req = json.loads(Path(rp).read_text(encoding="utf-8"))
+        if req["kind"] == "gen_omni" and any(it["name"] == "c05" for it in req["items"]) and not flaky.done:
+            flaky.done = True
+            out = Path(rp).parent.parent / "out" / req["id"]
+            res = json.loads((out / "result.json").read_text()); res["items"] = [i for i in res["items"] if i["name"] != "c05"]
+            (out / "result.json").write_text(json.dumps(res)); return 1
+        return rc
+    flaky.done = False
+    monkeypatch.setattr(admin, "_RUN_REQUEST", flaky)
+    monkeypatch.setattr(admin, "assemble", lambda pid: None)
+    with pytest.raises(SystemExit):
+        admin.make_video("test_fish", ask=_fake_vision)
+    st = admin.load_status("test_fish")
+    assert st["jobs"]["video"]["status"] == "failed" and "[5]" in st["jobs"]["video"]["text"] and len(st["artifacts"]["video"]["clips"]) == 7
+    seen = []
+    def counting(rp):
+        req = json.loads(Path(rp).read_text(encoding="utf-8"))
+        if req["kind"] == "gen_omni":
+            seen.append([it["name"] for it in req["items"]])
+        return base(rp)
+    monkeypatch.setattr(admin, "_RUN_REQUEST", counting)
+    admin.make_video("test_fish", ask=_fake_vision)
+    assert seen == [["c05"]]                                   # 성공한 7컷은 다시 만들지 않는다(과금 방지)

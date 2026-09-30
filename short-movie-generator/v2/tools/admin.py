@@ -17,6 +17,8 @@
   python admin.py redo_cut <id> <컷번호> [메모]  # 그 컷만 영상 재생성(유료) → 재조립까지
   python admin.py assemble <id>                 # 완성본 다시 조립 + 자동 검사
   python admin.py write_script <id> [수정 요청]  # 대본 자동 작성(출처 → 원문 확인된 사실 → 대본 → 검사 → 미리듣기 → 승인 대기)
+  python admin.py write_storyboard <id> [수정 요청]  # 스토리보드 자동(참조 실사 → 생물 카드 → 실사 대조 → 콘티 격자 → 승인 대기)
+  python admin.py make_video <id> [수정 요청]    # 영상 자동(컷별 지시문 → Omni → 조립 → 검사 → 승인 대기 · 'N번'이면 그 컷만)
   python admin.py job_start <id> <stage> [설명]  # 자동 작업 '진행 중' 기록(워크플로가 긴 작업 전에 먼저 커밋)
   python admin.py job_fail <id> <action>        # 워크플로가 중간에 죽으면 진행 중 기록을 '실패'로
   python admin.py ready <id> <stage> [메모]      # 작업 결과가 나왔음 → 승인 대기로
@@ -357,7 +359,9 @@ def pick_text_model(names: list[dict], prefs: list[str] = TEXT_MODEL_PREFS) -> s
     return None
 
 
-def _gemini_text(prompt: str, temperature: float = 0) -> str:
+def _gemini_text(prompt: str, temperature: float = 0, images: list | None = None) -> str:
+    """images: 이미지 파일 경로 목록(비전 — 참조 실사·생물 카드 대조)."""
+    import base64
     import os
     import urllib.request
     global _TEXT_MODEL
@@ -371,7 +375,12 @@ def _gemini_text(prompt: str, temperature: float = 0) -> str:
             _TEXT_MODEL = pick_text_model(json.loads(r.read()).get("models", []))
         if not _TEXT_MODEL:
             raise RuntimeError("사용 가능한 텍스트 모델 없음")
-    body = {"contents": [{"parts": [{"text": prompt}]}],
+    parts = [{"text": prompt}]
+    for im in images or []:
+        im = Path(im)
+        parts.append({"inline_data": {"mime_type": "image/png" if im.suffix.lower() == ".png" else "image/jpeg",
+                                      "data": base64.b64encode(im.read_bytes()).decode()}})
+    body = {"contents": [{"parts": parts}],
             "generationConfig": {"temperature": temperature, "responseMimeType": "application/json"}}
     req = urllib.request.Request(
         f"https://generativelanguage.googleapis.com/v1beta/models/{_TEXT_MODEL}:generateContent",
@@ -1309,7 +1318,9 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
         a = st["artifacts"]["script"]
         a.pop("crosscheck", None)
         if audio:
-            a["audio"] = audio
+            a["audio"], a["tts_id"] = audio, rid
+        st.setdefault("cost", {})["estimate"] = {"script": 0.05, "storyboard": round(IMG_USD * 4, 2),
+                                                  "video": round(sum(t["sec"] for t in timing) * OMNI_USD_PER_SEC, 2)}
         a["verification"] = (f"자동 작성 · 출처 {len(docs)}곳 · 원문 인용이 확인된 사실 {len(facts)}개(확인 안 된 {dropped}개 버림) · "
                              f"코드 검사 통과 · 예상 길이 {sc['total_sec']}초" + (f" · {tts_err}" if tts_err else "")
                              + (" · " + " / ".join(tprobs) if tprobs else ""))
@@ -1325,6 +1336,403 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
     except Exception as e:                                   # noqa: BLE001 — '작업 중'으로 남기지 않는다
         set_job(pid, "script", "failed", f"대본 자동 작성 실패: {str(e)[:220]} — 「다시 시도」를 눌러 주세요", "write_script")
         raise SystemExit(f"대본 자동 작성 실패: {e}")
+
+
+# ── ③ 스토리보드 자동 · ④ 영상 자동(운영자 지시 2026-09-30 "다음으로 안 넘어간다" · 실사고) ────────────────
+# 실사고: 대본을 승인해도 스토리보드·영상은 Claude 대화에서 손으로 만들어야 해서, 관리자 페이지에서는 아무 일도
+#   일어나지 않았다. → 승인 관문마다 다음 단계가 **실제로 자동 실행**된다:
+#   대본 승인 → write_storyboard(참조 실사 → 생물 카드 → 실사 대조(비전) → 8컷 콘티 격자 2장 → 승인 대기 · 약 $0.6)
+#   콘티 승인 → make_video(컷별 초 단위 Omni 지시문(AI) → Omni Flash 8컷 → 조립(후킹·정답 카드) → 자동 검사 → 승인 대기 · 초당 $0.10)
+#   수정 요청·다시 하기도 같은 함수를 메모와 함께 다시 돌린다(영상은 메모에 'N번' 컷이 있으면 그 컷만 다시 만든다 — 비용 절약).
+STAGE_ACTION = {"script": "write_script", "storyboard": "write_storyboard", "video": "make_video"}
+_MINI_STYLE = ("handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical "
+               "lighting, muted grey-green and brown palette; everything except the creature is a deliberately rough, simple, "
+               "hand-made model (chunky clay, wood, foam, paper textures)")
+_RUN_REQUEST = None                                          # 테스트용 대체(요청 파일 경로 → 반환코드)
+
+
+def _run_request(rp: Path) -> int:
+    if _RUN_REQUEST:
+        return _RUN_REQUEST(rp)
+    return subprocess.run([sys.executable, str(V2 / "tools" / "run_request.py"), str(rp)], cwd=str(ROOT)).returncode
+
+
+_RID_LAST = [""]
+
+
+def _rid(tag: str) -> str:
+    """요청 id — 같은 초에 두 번 만들어도 겹치지 않게(실측: 연속 요청이 같은 id로 덮어씀)."""
+    base = f"r{time.strftime('%m%d%H%M%S', time.gmtime())}"
+    if base <= _RID_LAST[0]:
+        base = _RID_LAST[0] + "x"
+    _RID_LAST[0] = base
+    return f"{base}_{tag}"
+
+
+def _tile(files: list[Path], out: Path, cols: int, w: int = 360) -> Path | None:
+    """여러 이미지를 한 장으로(운영자 검토용). 실패해도 제작을 막지 않는다."""
+    try:
+        from PIL import Image
+        ims = [Image.open(f).convert("RGB") for f in files]
+        ims = [im.resize((w, int(im.height * w / im.width))) for im in ims]
+        h = max(im.height for im in ims)
+        rows = (len(ims) + cols - 1) // cols
+        sheet = Image.new("RGB", (cols * (w + 8) + 8, rows * (h + 8) + 8), "white")
+        for i, im in enumerate(ims):
+            sheet.paste(im, (8 + (i % cols) * (w + 8), 8 + (i // cols) * (h + 8)))
+        out.parent.mkdir(parents=True, exist_ok=True)
+        sheet.save(out, quality=88)
+        return out
+    except Exception as e:                                   # noqa: BLE001
+        print(f"[sheet] 실패: {e}")
+        return None
+
+
+def download_refs(pid: str, topic: dict, get=None, fetch=None) -> list[dict]:
+    """참조 실사(자유 라이선스만): 주제 카드 사진 + iNaturalist 분류군 대표 사진 최대 4장 → out/<rid>/ref_NN.jpg."""
+    import urllib.request
+    rid = _rid("refs")
+    out = PILOTS / pid / "out" / rid
+    out.mkdir(parents=True, exist_ok=True)
+    cands = []
+    ph = topic.get("photo") or {}
+    if ph.get("url"):
+        cands.append(ph)
+    try:
+        import urllib.parse
+        get = get or _get_json
+        name = re.sub(r"\s+(sp|spp)\.?$", "", topic.get("sci", "").strip(), flags=re.I)
+        d = get("https://api.inaturalist.org/v1/taxa?per_page=5&q=" + urllib.parse.quote(name))
+        hit = next((t for t in d.get("results") or [] if (t.get("name") or "").lower() == name.lower()), None)
+        if hit:
+            full = (get("https://api.inaturalist.org/v1/taxa/%d" % hit["id"]).get("results") or [hit])[0]
+            for tp in full.get("taxon_photos") or []:
+                p = tp.get("photo") or {}
+                if (p.get("license_code") or "").lower() in _FREE_LIC and p.get("medium_url"):
+                    cands.append({"url": p["medium_url"], "credit": p.get("attribution") or "", "license": p["license_code"]})
+    except Exception as e:                                   # noqa: BLE001
+        print(f"[refs] iNaturalist 실패: {e}")
+    refs, seen = [], set()
+    for c in cands:
+        if c["url"] in seen or len(refs) >= 4:
+            continue
+        seen.add(c["url"])
+        try:
+            fn = out / f"ref_{len(refs):02d}.jpg"
+            if fetch:
+                fetch(c["url"], fn)
+            else:
+                req = urllib.request.Request(c["url"], headers={"User-Agent": WIKI_UA})
+                with urllib.request.urlopen(req, timeout=60) as r:
+                    fn.write_bytes(r.read())
+            refs.append({"file": f"out/{rid}/{fn.name}", "credit": c.get("credit", ""), "license": c.get("license", "")})
+        except Exception as e:                               # noqa: BLE001
+            print(f"[refs] 내려받기 실패 {c['url']}: {e}")
+    _save(out / "refs.json", refs)
+    return refs
+
+
+_DESC_PROMPT = """You are a museum model maker's consultant. Look at the attached real photographs of the deep-sea animal
+{sci} ({name_en}) and the verified facts below. Describe ONLY what the photographs and facts show (never invent features).
+Return JSON only:
+{{"anatomy":"precise English description, 60-110 words, for building an anatomically faithful miniature replica: overall body
+shape and proportions, colour and surface texture, segments/armour, appendages (legs, arms, fins, tentacles — count if visible),
+head, eyes (shape, position; say 'no eyes' if none), tail/rear, notable structures",
+ "forbidden":"English, one line: features this animal must NOT have (e.g. 'no fish head, no bulging eyes, no extra legs')",
+ "size_note":"English, one short line about real size from the facts, or empty",
+ "checklist_ko":["해부학 확인 항목 5~8개 (한국어, 각 한 줄: 몸 비율·마디 수·다리 수·눈 모양/위치·꼬리 형태·색 등)"]}}
+# Facts
+{facts}
+{extra}
+"""
+
+_SB_PROMPT = """You are the storyboard artist of a Japanese science YouTube Short made as a handcrafted MINIATURE DIORAMA
+({style}). The creature is the ONLY precise object; its anatomy is fixed: {anatomy}
+Plan ONE storyboard panel (the first frame of the video clip) for EACH of the {n} cuts below. HARD RULES:
+- Each panel is a different stage or camera angle; never two consecutive cuts on the same set; cross-section "box" sets at most 2.
+- Show exactly what that cut's narration says; do not invent facts. When the narration mentions a body part, frame that part close.
+- Never place the creature next to boats, people, furniture or other props that would make it look giant; no size-misleading props.
+- NEVER text, letters, numbers, labels, arrows, logos in the image. No real human hands or people. No other animals unless the
+  narration says so. Keep the upper quarter of every panel calm and uncluttered (captions go there).
+- The LAST cut's panel: the creature is already dim and receding into deep darkness (the video will fade to black).
+- Cut {hook_cut} is used as the 2-second opening hook — make it the most striking, dynamic composition.
+{feedback}
+Return JSON only: {{"panels":{{"1":"English description of panel 1 (set, camera angle, creature pose, light, props)", "2":"..."}}}}
+# Cuts (Japanese narration / Korean / scene idea / seconds)
+{cuts}
+# Facts
+{facts}
+"""
+
+_VID_PROMPT = """You write per-second TIMELINE video prompts (English) for Gemini Omni Flash, one per cut, for a Japanese science
+YouTube Short in a handcrafted MINIATURE DIORAMA style ({style}). The attached storyboard panel is each cut's FIRST FRAME.
+The creature's anatomy is fixed and must never change: {anatomy}
+HARD RULES for every cut:
+- One continuous shot, exactly the cut's duration. Split it into 2-4 time ranges "0.0–2.0s ..." and for EACH range state
+  camera position/move, what the creature does, what is and is not visible. Put visual changes at the narration boundaries given.
+- Motion must be concrete (what moves from where to where). Slow, observational camera; no fast pans, no morphing.
+- Never invent facts beyond the narration. No text, letters, numbers, symbols, logos. No real human hands or people.
+- Cut {last}: the creature drifts away into deep darkness and the frame goes almost black by the end (episode ending).
+{feedback}
+Return JSON only: {{"prompts":{{"1":"TIMELINE text for cut 1","2":"..."}}}}
+# Cuts (seconds / narration JP / KO / narration chunk timings / panel description)
+{cuts}
+"""
+
+_CARD_PROMPT_HEAD = ("A single hand-crafted museum-grade miniature replica of {sci}, photographed as a macro studio shot. "
+                     "The creature must be extremely detailed and anatomically faithful to the attached real reference photos: "
+                     "{anatomy} Resin figure with subtle hand-painted texture, shallow depth of field (tilt-shift macro), warm soft "
+                     "studio light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. "
+                     "No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, "
+                     "no split screen, no extra animals, no humans. {forbidden} View: {view}.")
+
+_CHECK_PROMPT = """Compare the attached images: the FIRST {nc} are handcrafted replica renders of {sci}; the rest are REAL photographs.
+For each checklist item decide whether the replica matches the real animal. Be strict but judge only what is visible;
+if the real photos do not show that part, mark "unknown". Return JSON only:
+{{"items":[{{"item":"checklist text","verdict":"pass|fail|unknown","note_ko":"한국어 한 줄"}}]}}
+# Checklist
+{checklist}
+"""
+
+
+def _ask_vision(prompt: str, images: list[Path], ask=None) -> str:
+    if ask:
+        return ask(prompt, images) if _accepts_images(ask) else ask(prompt)
+    return _gemini_text(prompt, images=images)
+
+
+def _accepts_images(fn) -> bool:
+    import inspect
+    try:
+        return len(inspect.signature(fn).parameters) >= 2
+    except (TypeError, ValueError):
+        return False
+
+
+def write_storyboard(pid: str, feedback: str = "", ask=None, get=None, fetch=None) -> dict:
+    """③ 스토리보드 자동: 참조 실사 → 생물 카드(2장) → 실사 대조(비전 체크리스트) → 8컷 콘티(2×2 격자 2장) → 승인 대기."""
+    st = load_status(pid)
+    topic = st.get("topic") or {}
+    sc = _load(_script_path(pid))
+    if not sc or not sc.get("cuts"):
+        raise SystemExit("대본이 없습니다 — 대본 단계를 먼저 끝내세요")
+    pilot = PILOTS / pid
+    set_job(pid, "storyboard", "running", "스토리보드 자동 작성 중 — 참조 실사 → 생물 카드 → 실사 대조 → 8컷 콘티", "write_storyboard")
+    try:
+        cuts = [c for c in sc["cuts"] if "tts" in c]
+        ftxt = "\n".join(f"{f['id']}: {f['fact']}" for f in sc.get("facts", []))
+        cc = _load(pilot / "creature_card.json") or {}
+        redo_card = not cc.get("anatomy") or not feedback or "카드" in feedback
+        if redo_card:
+            refs = download_refs(pid, topic, get=get, fetch=fetch)
+            if not refs:
+                raise RuntimeError("참조 실사를 한 장도 받지 못했습니다(자유 라이선스 사진 없음) — 이 종은 생물 카드를 만들 수 없습니다")
+            sp = _species_data(topic)
+            extra = ""
+            if sp.get("appearance"):
+                extra = "# Curated notes (trusted)\n" + sp["appearance"] + "\n" + (sp.get("anatomy_lock") or "") + "\nForbidden: " + (sp.get("forbidden_features") or "")
+            desc = _json_obj(_ask_vision(_DESC_PROMPT.format(sci=topic.get("sci", ""), name_en=topic.get("name_en", ""), facts=ftxt, extra=extra),
+                                         [pilot / r["file"] for r in refs], ask))
+            anatomy, forbidden = str(desc.get("anatomy", "")).strip(), str(desc.get("forbidden", "")).strip()
+            checklist = [str(x) for x in desc.get("checklist_ko") or []][:8]
+            if len(anatomy) < 40:
+                raise RuntimeError("생물 형태 설명을 만들지 못했습니다")
+            rid = _rid("card")
+            items = [{"name": n, "aspect": "1:1", "refs": [r["file"] for r in refs][:3],
+                      "prompt": _CARD_PROMPT_HEAD.format(sci=topic.get("sci", ""), anatomy=anatomy, forbidden=forbidden, view=v)}
+                     for n, v in (("card_side", "three-quarter side view of the whole body"), ("card_top", "straight top-down view of the whole body"))]
+            rp = pilot / "requests" / f"{rid}.json"
+            _save(rp, {"id": rid, "kind": "gen_images", "purpose": "생물 카드(자동) — 이후 콘티·영상의 형태 기준",
+                       "model_preference": ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"], "items": items})
+            if _run_request(rp) != 0:
+                raise RuntimeError(f"생물 카드 이미지 생성 실패(요청 {rid})")
+            res = _load(pilot / "out" / rid / "result.json") or {}
+            cards = [f"out/{rid}/{it['file']}" for it in res.get("items", []) if it.get("file")]
+            if not cards:
+                raise RuntimeError("생물 카드 이미지가 비어 있습니다")
+            # 실사 대조(비전 체크리스트) — 판정은 기록만(운영자가 승인/수정 요청으로 결정)
+            check = {"items": [], "error": ""}
+            try:
+                chk = _json_obj(_ask_vision(_CHECK_PROMPT.format(nc=len(cards), sci=topic.get("sci", ""), checklist="\n".join("- " + x for x in checklist)),
+                                            [pilot / c for c in cards] + [pilot / r["file"] for r in refs], ask))
+                check["items"] = [{"item": str(i.get("item", "")), "verdict": str(i.get("verdict", "unknown")), "note_ko": str(i.get("note_ko", ""))}
+                                  for i in chk.get("items") or []]
+            except Exception as e:                           # noqa: BLE001
+                check["error"] = f"실사 대조 검사 실패: {str(e)[:120]}"
+            compare = _tile([pilot / c for c in cards] + [pilot / r["file"] for r in refs][:2], pilot / "out" / rid / "compare.jpg", cols=2)
+            cc = {"status": "자동 생성(운영자 승인 대기)", "at": _now(), "anatomy": anatomy, "forbidden": forbidden,
+                  "checklist": checklist, "check": check, "refs": refs,
+                  "use_as_reference": [{"file": c, "role": "생물 카드(자동)"} for c in cards] + [{"file": refs[0]["file"], "role": "실사 기준"}],
+                  "compare": f"out/{rid}/compare.jpg" if compare else None}
+            _save(pilot / "creature_card.json", cc)
+            st = load_status(pid)
+            st.setdefault("cost", {}).setdefault("spent", []).append({"at": _now(), "what": "생물 카드 2장", "usd": round(IMG_USD * 2, 3)})
+            _save(status_path(pid), st)
+        anatomy = cc["anatomy"]
+        refs_for = [r["file"] for r in cc.get("use_as_reference", [])][:3]
+        # 8컷 콘티 계획(AI) → 2×2 격자 2장
+        hook_cut = int((sc.get("hook") or {}).get("cut") or 1)
+        ctxt = "\n".join(f"Cut {c['cut']} ({c.get('sec', '')}s): JP「{c['jp']}」 / KO「{c.get('ko', '')}」 / scene: {c.get('scene_ko', '')}" for c in cuts)
+        fb = f"# Operator's revision request (must apply)\n{feedback}\n" if feedback else ""
+        plan = _json_obj((ask if ask else (lambda p: _gemini_text(p, temperature=0.5)))(
+            _SB_PROMPT.format(style=_MINI_STYLE, anatomy=anatomy, n=len(cuts), hook_cut=hook_cut, feedback=fb, cuts=ctxt, facts=ftxt)))
+        panels = {int(k): str(v) for k, v in (plan.get("panels") or {}).items() if str(k).isdigit()}
+        missing = [c["cut"] for c in cuts if c["cut"] not in panels or len(panels[c["cut"]]) < 20]
+        if missing:
+            raise RuntimeError(f"콘티 설명이 빠진 컷: {missing}")
+        rid = _rid("sb")
+        head = _GRID_HEAD_GENERIC.format(style=_MINI_STYLE, anatomy=anatomy, forbidden=cc.get("forbidden", ""))
+        items = []
+        for g in range(0, len(cuts), 4):
+            grp = cuts[g:g + 4]
+            names = [f"p{c['cut']:02d}" for c in grp] + [""] * (4 - len(grp))
+            body = "\n".join(f"Panel {i + 1} ({pos}): {panels[c['cut']]}" for i, (c, pos) in enumerate(zip(grp, ("top-left", "top-right", "bottom-left", "bottom-right"))))
+            items.append({"name": f"grid{g // 4 + 1}", "aspect": "9:16", "size": "2K", "refs": refs_for, "prompt": head + body,
+                          "split": {"rows": 2, "cols": 2, "names": names}})
+        rp = pilot / "requests" / f"{rid}.json"
+        _save(rp, {"id": rid, "kind": "gen_images", "purpose": "8컷 콘티(자동) — 컷별 시작 이미지 · 2×2 격자",
+                   "model_preference": ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"], "items": items})
+        if _run_request(rp) != 0:
+            raise RuntimeError(f"콘티 이미지 생성 실패(요청 {rid})")
+        pfiles = []
+        for c in cuts:
+            f = pilot / "out" / rid / f"p{c['cut']:02d}.jpg"
+            if not f.exists():
+                raise RuntimeError(f"{c['cut']}번 컷 콘티 칸이 없습니다(격자 분할 실패)")
+            pfiles.append(f)
+            c["keyframe"] = f"out/{rid}/{f.name}"
+            c["panel_desc"] = panels[c["cut"]]
+        sheet = _tile(pfiles, pilot / "out" / rid / "storyboard.jpg", cols=4)
+        sc.setdefault("storyboard_history", []).append({"at": _now(), "rid": rid, "feedback": feedback})
+        _save(_script_path(pid), sc)
+        st = load_status(pid)
+        st["artifacts"]["storyboard"] = {"sheet": f"out/{rid}/storyboard.jpg" if sheet else None, "request": rid,
+                                         "card": [r["file"] for r in cc.get("use_as_reference", [])],
+                                         "compare": cc.get("compare"), "card_check": cc.get("check"), "checklist": cc.get("checklist"),
+                                         "panels": [{"cut": c["cut"], "file": c["keyframe"], "desc": c["panel_desc"]} for c in cuts]}
+        st["cost"].setdefault("spent", []).append({"at": _now(), "what": "콘티 격자 2장", "usd": round(IMG_USD * len(items), 3)})
+        st["stages"]["storyboard"]["state"] = "review"
+        _note(st, "storyboard", "auto", "스토리보드 자동 작성 완료 — 승인 대기" + (" (수정 요청 반영)" if feedback else ""))
+        _save(status_path(pid), st)
+        return set_job(pid, "storyboard", "done", "스토리보드 자동 작성 완료 — 승인 대기", "write_storyboard")
+    except Exception as e:                                   # noqa: BLE001
+        set_job(pid, "storyboard", "failed", f"스토리보드 자동 작성 실패: {str(e)[:220]} — 「다시 시도」를 눌러 주세요", "write_storyboard")
+        raise SystemExit(f"스토리보드 자동 작성 실패: {e}")
+
+
+_GRID_HEAD_GENERIC = ("Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin "
+                      "plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described "
+                      "below. Shared look for all panels: {style}. The creature must match the attached replica and real reference images "
+                      "exactly and be identical in every panel: {anatomy} {forbidden} Never place the creature next to boats, people or "
+                      "furniture that would make it look giant. Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, "
+                      "letters, numbers, labels, arrows, logos, watermarks. No human hands or real people anywhere.\n")
+
+
+def _ensure_tts(pid: str, sc: dict) -> str:
+    """영상 조립에 쓸 나레이션(전체 한 번에 합성) — 대본 단계에서 만든 것이 있으면 그대로, 없으면 지금 합성."""
+    st = load_status(pid)
+    tid = (st.get("artifacts", {}).get("script") or {}).get("tts_id")
+    pilot = PILOTS / pid
+    if tid and (pilot / "out" / tid / "body_timepoints.json").exists():
+        return tid
+    cuts = [c for c in sc["cuts"] if "tts" in c]
+    rid = _rid("tts")
+    rp = pilot / "requests" / f"{rid}.json"
+    _save(rp, {"id": rid, "kind": "gen_tts", "purpose": "본편 나레이션 — 대본 전체 한 번에 합성(자동)",
+               "cut_map": [{"cut": c["cut"], "n": len(_chunks(c["jp"]))} for c in cuts],
+               "items": [{"name": "body", "jp": "".join(c["jp"] for c in cuts), "segments": [s for c in cuts for s in _chunks(c["tts"])]}]})
+    tpf = pilot / "out" / rid / "body_timepoints.json"
+    if _run_request(rp) != 0 or not tpf.exists():
+        raise RuntimeError(f"나레이션 합성 실패(요청 {rid})")
+    timing, probs = first_timing(cuts, _load(tpf))
+    if probs:
+        raise RuntimeError("나레이션이 컷에 안 들어갑니다: " + " / ".join(probs))
+    sc["timing_v5"] = timing
+    for c, t in zip(cuts, timing):
+        c["sec"], c["speech_s"] = t["sec"], t["speech_s"]
+    sc["total_sec"] = sum(t["sec"] for t in timing) + HOOK_S + ANSWER_S
+    _save(_script_path(pid), sc)
+    st = load_status(pid)
+    st["artifacts"].setdefault("script", {}).update(tts_id=rid, audio=f"out/{rid}/body.wav")
+    _sync_script_artifacts(st, sc)
+    _save(status_path(pid), st)
+    return rid
+
+
+def make_video(pid: str, feedback: str = "", ask=None) -> dict:
+    """④ 영상 자동: 컷별 초 단위 Omni 지시문(AI) → Omni Flash 생성(메모에 'N번' 컷이 있으면 그 컷만) → 조립 → 자동 검사 → 승인 대기."""
+    st = load_status(pid)
+    sc = _load(_script_path(pid))
+    pilot = PILOTS / pid
+    cuts = [c for c in (sc or {}).get("cuts", []) if "tts" in c]
+    if not cuts or any(not c.get("keyframe") for c in cuts):
+        raise SystemExit("콘티(컷별 시작 이미지)가 없습니다 — 스토리보드 단계를 먼저 끝내세요")
+    only = sorted({int(x) for x in re.findall(r"(\d+)\s*번", feedback or "")} & {c["cut"] for c in cuts}) if feedback else []
+    set_job(pid, "video", "running", ("수정 컷 다시 만드는 중: " + ",".join(map(str, only)) + "번" if only else "영상 자동 제작 중 — 컷별 지시문 → Omni Flash 8컷 → 조립 → 자동 검사"), "make_video")
+    try:
+        tts_id = _ensure_tts(pid, sc)
+        sc = _load(_script_path(pid))
+        cuts = [c for c in sc["cuts"] if "tts" in c]
+        tm = {t["cut"]: t for t in sc["timing_v5"]}
+        cc = _load(pilot / "creature_card.json") or {}
+        anatomy = cc.get("anatomy") or ""
+        old = (st["artifacts"].get("video") or {})
+        prev_clips = {int(c["cut"]): c["file"] for c in old.get("clips", []) if (pilot / c["file"]).exists()}
+        targets = [c for c in cuts if (not only and c["cut"] not in prev_clips) or (only and c["cut"] in only)] if (only or prev_clips) else cuts
+        if not targets and not prev_clips:
+            targets = cuts
+        if targets:
+            def chunks_txt(c):
+                segs = _chunks(c["jp"])
+                tps = tm[c["cut"]].get("local_tps") or []
+                return "; ".join(f"{t['start']:.1f}-{t['end']:.1f}s「{s}」" for s, t in zip(segs, tps)) if tps else "(no timing)"
+            ctxt = "\n".join(f"Cut {c['cut']} ({tm[c['cut']]['sec']}s): JP「{c['jp']}」 / KO「{c.get('ko', '')}」 / narration: {chunks_txt(c)} / panel: {c.get('panel_desc', '')}"
+                             for c in targets)
+            fb = f"# Operator's revision request (must apply)\n{feedback}\n" if feedback else ""
+            plan = _json_obj((ask if ask else (lambda p: _gemini_text(p, temperature=0.4)))(
+                _VID_PROMPT.format(style=_MINI_STYLE, anatomy=anatomy, last=cuts[-1]["cut"], feedback=fb, cuts=ctxt)))
+            prompts = {int(k): str(v) for k, v in (plan.get("prompts") or {}).items() if str(k).isdigit()}
+            miss = [c["cut"] for c in targets if len(prompts.get(c["cut"], "")) < 40]
+            if miss:
+                raise RuntimeError(f"영상 지시문이 빠진 컷: {miss}")
+            rid = _rid("clips")
+            items = [{"name": f"c{c['cut']:02d}", "start": c["keyframe"], "sec": tm[c["cut"]]["sec"],
+                      "prompt": _OMNI_HEAD.format(dur=tm[c["cut"]]["sec"]) + anatomy + "\n\nTIMELINE\n" + prompts[c["cut"]] + _OMNI_TAIL}
+                     for c in targets]
+            rp = pilot / "requests" / f"{rid}.json"
+            _save(rp, {"id": rid, "kind": "gen_omni", "model": "gemini-omni-1.1-flash", "resolution": "720p",
+                       "purpose": "본편 컷 자동 생성(Omni Flash · 초 단위 지시문)" + (f" — {','.join(map(str, only))}번만" if only else ""), "items": items})
+            _run_request(rp)
+            res = _load(pilot / "out" / rid / "result.json") or {}
+            got = {it["name"]: it["file"] for it in res.get("items", []) if it.get("file")}
+            failed = [c["cut"] for c in targets if f"c{c['cut']:02d}" not in got]
+            for c in targets:
+                key = f"c{c['cut']:02d}"
+                if key in got:
+                    prev_clips[c["cut"]] = f"out/{rid}/{got[key]}"
+            spent = sum(float(tm[c["cut"]]["sec"]) * OMNI_USD_PER_SEC for c in targets if c["cut"] not in failed)
+            st = load_status(pid)
+            st.setdefault("cost", {}).setdefault("spent", []).append({"at": _now(), "what": f"영상 컷 {len(targets) - len(failed)}개 생성", "usd": round(spent, 2)})
+            st["artifacts"]["video"] = {**old, "clips_request": rid,
+                                        "clips": [{"cut": c["cut"], "file": prev_clips[c["cut"]], "sec": tm[c["cut"]]["sec"]} for c in cuts if c["cut"] in prev_clips]}
+            _save(status_path(pid), st)
+            if failed:
+                raise RuntimeError(f"영상 생성 실패 컷: {failed} (성공한 컷은 보관 — 「다시 시도」는 실패 컷만 다시 만듭니다)")
+        st = load_status(pid)
+        fin = _rid("final")
+        (pilot / "out" / fin).mkdir(parents=True, exist_ok=True)
+        st["artifacts"]["video"].update(final=f"out/{fin}/final.mp4",
+                                        assemble={"clips_id": st["artifacts"]["video"]["clips_request"], "tts_id": tts_id, "ending": ""})
+        _note(st, "video", "auto", "영상 컷 준비 완료 — 조립 + 자동 검사")
+        _save(status_path(pid), st)
+        assemble(pid)
+        return set_job(pid, "video", "done", "영상 자동 제작 완료 — 승인 대기", "make_video")
+    except SystemExit as e:
+        set_job(pid, "video", "failed", f"영상 자동 제작 실패: {str(e)[:220]} — 「다시 시도」를 눌러 주세요", "make_video")
+        raise
+    except Exception as e:                                   # noqa: BLE001
+        set_job(pid, "video", "failed", f"영상 자동 제작 실패: {str(e)[:220]} — 「다시 시도」를 눌러 주세요", "make_video")
+        raise SystemExit(f"영상 자동 제작 실패: {e}")
 
 
 # ── 목록 파일 ─────────────────────────────────────────────────────────────
@@ -1456,6 +1864,10 @@ def main(argv: list[str]) -> int:
         redo_cut(a[0], int(a[1]), memo(2))
     elif cmd == "write_script":                              # 대본 자동 작성(메모가 있으면 '수정 요청'으로 반영)
         write_script(a[0], memo(1))
+    elif cmd == "write_storyboard":                          # 스토리보드 자동(메모 = 수정 요청)
+        write_storyboard(a[0], memo(1))
+    elif cmd == "make_video":                                # 영상 자동(메모에 'N번'이 있으면 그 컷만)
+        make_video(a[0], memo(1))
     elif cmd == "job_start":                                 # 워크플로가 긴 작업 전에 '진행 중'을 먼저 커밋
         set_job(a[0], a[1], "running", memo(2) or "자동 작업 시작", "job_start")
     elif cmd == "job_fail":                                  # 워크플로가 도중에 죽었을 때

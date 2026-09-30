@@ -70,7 +70,19 @@ const res = {};
   res.honest_running = /v2st prog">작업 중/.test(run) && /실제로 돌고 있습니다/.test(run) && !/data-act="write_script"/.test(run);
   res.honest_failed = /v2st fail">실패/.test(fail) && /다시 시도/.test(fail) && /data-act="write_script"/.test(fail);
   res.honest_stale = /v2st fail">멈춤/.test(stale) && /다시 시도/.test(stale);
-  res.honest_manual_stage = /대화 요청 필요/.test(sb) && !/v2st prog">작업 중/.test(sb) && !/이미지를 만들고 있습니다/.test(sb);
+  // 스토리보드·영상도 자동(2026-09-30): 기록이 없으면 '시작 안 됨' + 그 단계 자동 시작 버튼(write_storyboard / make_video)
+  res.honest_manual_stage = /시작 안 됨/.test(sb) && /data-act="write_storyboard"/.test(sb) && !/v2st prog">작업 중/.test(sb) && !/이미지를 만들고 있습니다/.test(sb);
+  const vd = await render({ ...base, stages: { ...base.stages, script: { state: "approved", notes: [] }, storyboard: { state: "approved", notes: [] }, video: { state: "working", notes: [] } },
+    cost: { estimate: { video: 5.4 } } });
+  res.video_idle_has_make_video = /data-act="make_video"/.test(vd) && /\$5\.4/.test(vd);
+  const sbr = await render({ ...base, stages: { ...base.stages, script: { state: "approved", notes: [] }, storyboard: { state: "review", notes: [] } },
+    artifacts: { storyboard: { sheet: "out/x/storyboard.jpg", compare: "out/x/compare.jpg", panels: [{ cut: 1, file: "out/x/p01.jpg", desc: "panel one" }],
+      card_check: { items: [{ item: "머리 없음", verdict: "pass", note_ko: "좋음" }, { item: "다리 수", verdict: "fail", note_ko: "6개" }] } } } });
+  res.storyboard_shows_card_check = /해부학 체크리스트/.test(sbr) && /통과<\/span> 머리 없음/.test(sbr) && /불통과<\/span> 다리 수/.test(sbr) && /대조 시트/.test(sbr) && /panel one/.test(sbr);
+  // 스토리보드 승인 → approve 디스패치(다음 단계 영상은 서버가 이어서 만든다)
+  const apb = (lists['[data-act]'] || []).find(b => b.dataset.act === "approve" && b.dataset.stage === "storyboard");
+  const n1 = dispatched.length; if (apb && apb.onclick) await apb.onclick();
+  res.storyboard_approve_dispatches = !!(dispatched[n1] && dispatched[n1].body.inputs.action === "approve" && dispatched[n1].body.inputs.stage === "storyboard");
   // 버튼 직후(서버 기록 전) = '시작 중'(실사고: 70초 동안 "돌고 있는 작업이 없습니다") · GitHub 진행 중 실행이 보이면 '작업 중'
   const ls = globalThis.localStorage.getItem;
   globalThis.localStorage.getItem = k => (k === "v2req:t" ? JSON.stringify({ stage: "script", at: new Date().toISOString() }) : ls(k));
