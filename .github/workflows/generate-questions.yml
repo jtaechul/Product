@@ -89,6 +89,13 @@ jobs:
             echo "::error::(Environment secrets 에 넣으면 이 작업에서 보이지 않습니다)"
             exit 1
           fi
+          # Anthropic 이 막히면(크레딧 바닥 등) gen-questions.mjs 가 같은 주문을 Gemini 로 다시 만든다.
+          # 예비 열쇠가 있는지만 알린다(값은 찍지 않는다).
+          if [ -n "$ANTHROPIC_API_KEY" ] && [ -n "$GEMINI_API_KEY" ]; then
+            echo "예비 열쇠: GEMINI_API_KEY 있음 — Anthropic 이 막히면 Gemini 로 대신 만듭니다"
+          elif [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "::warning::예비 열쇠(GEMINI_API_KEY)가 없어 Anthropic 이 막히면 문항을 만들지 못합니다"
+          fi
           shopt -s nullglob
           REQS=(requests/gen-*.json)
           if [ ${#REQS[@]} -gt 0 ]; then
@@ -159,7 +166,7 @@ jobs:
         if: ${{ steps.gen.outputs.failed != '' && steps.gen.outputs.failed != '0' }}
         run: |
           if [ "${{ steps.gen.outputs.credit }}" = "1" ]; then
-            echo "::error::Anthropic API 크레딧이 바닥나 문항을 만들지 못했습니다. 충전하면 다음 밤부터 저절로 다시 만듭니다."
+            echo "::error::Anthropic API 크레딧이 바닥났고 예비 엔진(Gemini)으로도 만들지 못했습니다. 위 기록에서 Gemini 쪽 까닭을 확인하세요(크레딧을 충전해도 다음 밤부터 다시 만듭니다)."
           fi
           echo "::error::문제 만들기 주문 ${{ steps.gen.outputs.failed }}건이 실패했습니다 — 위 'Generate drafts' 기록에 까닭이 있습니다."
           exit 1

@@ -12,7 +12,8 @@
 //   또는 node tools/gen-questions.mjs --part R3 --count 5 [--tag RS.infer]
 //                                                          [--difficulty 3] [--note "..."]
 // 열쇠는 둘 중 아무거나: ANTHROPIC_API_KEY(권장) 또는 GEMINI_API_KEY.
-// 둘 다 있으면 Anthropic 을 쓴다. GEN_ENGINE=gemini 로 강제할 수 있다.
+// 둘 다 있으면 Anthropic 을 쓰고, Anthropic 이 막히면(크레딧 바닥 등) Gemini 로 대신 만든다.
+// GEN_ENGINE=gemini 로 강제할 수 있다(그때는 엔진을 바꾸지 않는다).
 
 import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -206,7 +207,7 @@ async function askAnthropic() {
     else if (e instanceof Anthropic.RateLimitError) console.error('요청이 몰렸습니다 — 잠시 뒤 다시 실행해 주세요');
     else if (e instanceof Anthropic.APIError) console.error(`AI 호출 실패 (${e.status}): ${e.message}`);
     else console.error(`AI 호출 실패: ${e.message}`);
-    process.exit(1);
+    return null;   // 끝낼지 Gemini 로 넘길지는 부르는 쪽이 정한다
   }
 }
 
@@ -265,8 +266,22 @@ if (DRY) {
   process.exit(0);
 }
 
-if (ENGINE === 'anthropic') console.log('엔진: anthropic');
-const text = ENGINE === 'anthropic' ? await askAnthropic() : await askGemini();
+// Anthropic 이 막히면(크레딧 바닥·열쇠 문제·일시 장애) 같은 주문을 Gemini 로 다시 만든다.
+// 2026-09-20~30 크레딧이 바닥난 열흘 동안 매일 밤 한 문항도 못 만들었다 — Gemini 열쇠가 있었는데도.
+// 어느 엔진이 만들든 아래 검사(민감 소재·해설 길이·근거·판박이)는 똑같이 걸린다.
+// GEN_ENGINE 으로 엔진을 못박았으면 바꾸지 않는다(엔진을 시험할 때 섞이지 않게).
+let text;
+if (ENGINE === 'anthropic') {
+  console.log('엔진: anthropic');
+  text = await askAnthropic();
+  if (text === null) {
+    if (!GEMINI_KEY || process.env.GEN_ENGINE) process.exit(1);
+    console.log('Anthropic 이 막혀 Gemini 로 대신 만듭니다');
+    text = await askGemini();
+  }
+} else {
+  text = await askGemini();
+}
 
 // 앞뒤에 말이 붙어 나와도 배열만 건져낸다
 const start = text.indexOf('[');
