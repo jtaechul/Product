@@ -7306,5 +7306,233 @@
     ],
     "status": "active",
     "tmp_id": "R3-0102"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "KIDS SPACE CAMP\nDate: August 10 - August 12\nPlace: Starry Sky Center\nDay 1: Learn about the planets and stars.\nDay 2: Build a model rocket and fly it in the park.\nDay 3: Meet a real astronaut and ask questions.\n* Please bring a warm jacket because it gets cold at night.",
+      "translation_ko": "어린이 우주 캠프\n날짜: 8월 10일 - 8월 12일\n장소: 별빛 센터\n첫째 날: 행성과 별에 대해 배우기.\n둘째 날: 모형 로켓을 만들고 공원에서 날려보기.\n셋째 날: 진짜 우주비행사를 만나고 질문하기.\n* 밤에는 추워지니까 따뜻한 겉옷을 가져오세요."
+    },
+    "questions": [
+      {
+        "stem": "What will the children do on Day 2?",
+        "choices": [
+          "Meet an astronaut",
+          "Build a model rocket",
+          "Learn about planets",
+          "Buy a warm jacket"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "둘째 날(Day 2)에는 모형 로켓을 만든다고 안내문에 나와 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "Day 2: Build a model rocket and fly it in the park.",
+        "why_not": {
+          "0": "우주비행사는 셋째 날에 만나요",
+          "2": "행성에 대해서는 첫째 날에 배워요",
+          "3": "재킷은 사는 게 아니라 챙겨 오는 거예요"
+        },
+        "key_expr": {
+          "en": "build a model rocket",
+          "ko": "모형 로켓을 만들다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.swap",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "What should the children bring to the camp?",
+        "choices": [
+          "A warm jacket",
+          "A telescope",
+          "A science book",
+          "A model rocket"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "밤에 추워지니까 따뜻한 재킷을 가져오라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.daily"
+        ],
+        "evidence": "Please bring a warm jacket because it gets cold at night.",
+        "why_not": {
+          "1": "망원경 이야기는 나오지 않았어요",
+          "2": "과학 책을 가져오라는 말은 없어요",
+          "3": "로켓은 캠프에서 만들 거예요"
+        },
+        "key_expr": {
+          "en": "bring a warm jacket",
+          "ko": "따뜻한 재킷을 가져오다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0103"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "[Text Message]\nN: Hello. This is Fast Box Delivery.\nN: Your package arrived at 2:00 p.m. today.\nN: I left the box next to the front door.\nN: Inside the box are the watercolor paints and brushes you ordered.\nN: Thank you for using our service.",
+      "translation_ko": "[문자 메시지]\n안내: 안녕하세요. 패스트 박스 택배입니다.\n안내: 고객님의 소포가 오늘 오후 2시에 도착했습니다.\n안내: 상자는 현관문 옆에 두었습니다.\n안내: 상자 안에는 고객님이 주문하신 수채화 물감과 붓이 들어 있습니다.\n안내: 저희 서비스를 이용해 주셔서 감사합니다."
+    },
+    "questions": [
+      {
+        "stem": "What time did the package arrive?",
+        "choices": [
+          "10:00 a.m.",
+          "12:00 p.m.",
+          "2:00 p.m.",
+          "4:00 p.m."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "문자 메시지에서 소포가 오늘 오후 2시에 도착했다고 알려주었어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.shopping"
+        ],
+        "evidence": "Your package arrived at 2:00 p.m. today.",
+        "why_not": {
+          "0": "10시라는 말은 없어요",
+          "1": "12시라는 말은 없어요",
+          "3": "4시라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "package arrived",
+          "ko": "소포가 도착했다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where is the box now?",
+        "choices": [
+          "At the security office",
+          "In the delivery truck",
+          "Inside the mailbox",
+          "Next to the front door"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "택배 기사님이 상자를 현관문 옆에 두었다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.daily"
+        ],
+        "evidence": "I left the box next to the front door.",
+        "why_not": {
+          "0": "경비실에 두지 않았어요",
+          "1": "배달 트럭에 남아있지 않아요",
+          "2": "우편함 안이 아니에요"
+        },
+        "key_expr": {
+          "en": "next to the front door",
+          "ko": "현관문 옆에"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0104"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "TOWN TOY HOSPITAL\nDo you want to help children? Join our Toy Hospital!\nWe fix broken toys and give them to children's centers.\nWhen: Every Saturday, 10:00 a.m. - 12:00 p.m.\nWhere: Room 302, Hope Community Center\nYou don't need any special skills. We will teach you how to use the tools.",
+      "translation_ko": "동네 장난감 병원\n어린이들을 돕고 싶나요? 장난감 병원과 함께하세요!\n우리는 고장 난 장난감을 고쳐서 어린이 센터에 줍니다.\n시간: 매주 토요일 오전 10시 - 낮 12시\n장소: 희망 주민 센터 302호\n특별한 기술은 없어도 됩니다. 도구를 사용하는 방법을 우리가 가르쳐 줄 거예요."
+    },
+    "questions": [
+      {
+        "stem": "What do people do at the Toy Hospital?",
+        "choices": [
+          "Sell old toys",
+          "Buy new toys",
+          "Fix broken toys",
+          "Make toys with wood"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "안내문에 고장 난 장난감을 고친다(fix broken toys)고 적혀 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "We fix broken toys and give them to children's centers.",
+        "why_not": {
+          "0": "장난감을 파는 곳이 아니에요",
+          "1": "새 장난감을 사는 곳이 아니에요",
+          "3": "나무로 장난감을 만든다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "fix broken toys",
+          "ko": "고장 난 장난감을 고치다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where do they meet?",
+        "choices": [
+          "At a children's center",
+          "At Room 302, Hope Community Center",
+          "At a toy shop",
+          "At a hospital for animals"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "모이는 장소(Where)는 희망 주민 센터 302호라고 나와 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.daily"
+        ],
+        "evidence": "Where: Room 302, Hope Community Center",
+        "why_not": {
+          "0": "어린이 센터는 장난감을 보내주는 곳이에요",
+          "2": "장난감 가게가 아니에요",
+          "3": "동물 병원이 아니에요"
+        },
+        "key_expr": {
+          "en": "community center",
+          "ko": "주민 센터"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0105"
   }
 ]
