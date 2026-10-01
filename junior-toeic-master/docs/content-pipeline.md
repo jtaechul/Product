@@ -640,6 +640,26 @@ M1 검수용으로 만들 때 그대로 `status IN ('active','draft')` 를 내�
 → **규칙: 아이에게 문항을 내보내는 API를 새로 만들면 반드시 `status = 'active'` 를 건다.**
 복습처럼 '예전에 저장해 둔 문항 번호'를 다시 꺼내는 곳이 가장 빠뜨리기 쉽다.
 
+#### 사진이 붙은 AI 초안 6개 중 5개가 문장과 어긋났다 — 자동 출제를 끈 것이 옳았다
+
+체인을 연결하자마자 L1-0021~0026에 사진이 붙었다. 정답 컷을 눈으로 보니(7-1절 2번):
+
+| 문항 | 문장 | 정답 사진 | 처리 |
+|---|---|---|---|
+| 0021 | A boy is washing the dishes. | 아이가 싱크대에서 설거지 | 그대로 |
+| 0022 | Students are eating lunch in the school cafeteria. | **사람 없는 빈 식당** | 문장을 단순하게("Children are eating lunch."), 정답 컷 다시 받기 |
+| 0023 | Two children are flying a kite in the park. | **아이 셋, 연이 안 보임** | 수를 빼고 연이 보이는 사진으로("A kite is flying in the sky.") |
+| 0024 | A man is waiting for the bus … | **여자** | 사진에 맞춰 문장을 고침("A woman is waiting at the bus stop.") |
+| 0025 | A cook is putting a pizza into the oven. | **그림(사진 아님)** | "A pizza is in the oven." + 정답 컷 다시 받기(avoid: drawing·sketch) |
+| 0026 | A nurse is checking a girl's temperature. | **할아버지 환자** | 사진에 맞춰 문장을 고침("… a man's temperature.") |
+
+AI 는 문장을 먼저 쓰기 때문에 7-1절의 함정(문장 → 사진 순서)에 **구조적으로** 빠진다.
+그래서 AI 가 만든 L1 은 사진이 붙은 뒤 **정답 컷을 보고 문장을 맞추는 검수가 필수**다 —
+4컷이 모였다고 저절로 출제하던 예전 동작이었다면 다섯 개가 그대로 아이에게 나갔다.
+
+자동 검사(`checkL1Sentence`)도 0024를 놓쳤다. 태그를 **글자 단위**로 찾아서 `woman` 안의 `man`이
+걸렸기 때문이다. 이제 **낱말 단위**로 맞춘다(복수형 `girls`→`girl`, `men`→`man`은 인정).
+
 ## 11. 한글 해석 (`translation_ko`) — 정답 화면의 '무슨 이야기였나'
 
 테스터 아이가 문제를 틀렸을 때, 해설만으로는 아무것도 남지 않는 경우가 있다. **정작 지문을

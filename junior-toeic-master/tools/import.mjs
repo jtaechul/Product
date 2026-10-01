@@ -94,8 +94,8 @@ function gateOnMedia(ctx, part, status, audioUrl, imageUrls) {
 const PERSON_WORDS = {
   boy: ['boy'], boys: ['boys', 'boy'],
   girl: ['girl'], girls: ['girls', 'girl'],
-  man: ['man'], men: ['men', 'man'],
-  woman: ['woman'], women: ['women', 'woman'],
+  man: ['man', 'men'], men: ['men', 'man'],
+  woman: ['woman', 'women'], women: ['women', 'woman'],
   child: ['child', 'kid', 'boy', 'girl', 'toddler'],
   children: ['children', 'kids', 'boys', 'girls'],
 };
@@ -103,9 +103,13 @@ function checkL1Sentence(ctx, script, tags) {
   if (!script || !tags) return;              // 사진을 아직 안 받았으면 검사할 게 없다
   const low = ` ${String(script).toLowerCase().replace(/[^a-z ]/g, ' ')} `;
   const tagLow = String(tags).toLowerCase();
+  // 태그는 낱말 단위로 맞춘다. 글자 단위로 찾으면 'woman' 안의 'man' 이 걸려서,
+  // "A man is waiting" 문장에 여자 사진이 붙은 것을 그냥 통과시켰다(2026-10-01 L1-0024).
+  const tagWords = new Set(tagLow.split(/[^a-z]+/).filter(Boolean));
+  const hasTag = (t) => tagWords.has(t) || tagWords.has(`${t}s`);   // girl ← girls 도 인정
   for (const [word, ok] of Object.entries(PERSON_WORDS)) {
     if (!low.includes(` ${word} `)) continue;
-    if (ok.some((t) => tagLow.includes(t))) continue;
+    if (ok.some(hasTag)) continue;
     warn(`${ctx}: 읽어 주는 문장은 "${word}"라고 하는데 정답 사진에는 그런 사람이 없습니다`
        + ` (사진 태그: ${tagLow.split(',').slice(0, 6).join(',')}…)`);
   }
