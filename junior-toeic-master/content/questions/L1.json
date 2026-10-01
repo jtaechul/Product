@@ -2039,41 +2039,40 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'eating lunch'는 점심을 먹는다는 말이에요. 아이들이 밥을 먹고 있는 사진이 정답이에요.",
-    "difficulty_label": 2,
+    "explanation_ko": "'is eating'은 먹고 있다는 말이에요. 아이가 무언가를 먹고 있는 사진이 정답이에요.",
+    "difficulty_label": 1,
     "tags": [
       "LS.photo",
       "V.school"
     ],
     "accent": "UK",
-    "tts_script": "Children are eating lunch.",
+    "tts_script": "A child is eating.",
     "choice_image_prompts": [
-      "Children eating lunch together at a table",
+      "A child eating at a table",
       "Students studying at desks in a classroom",
       "Children running on a school playground",
       "A teacher writing on a whiteboard in front of students"
     ],
     "status": "draft",
-    "evidence": "eating lunch",
+    "evidence": "is eating",
     "why_not": {
       "1": "교실에서 공부하는 사진이에요",
       "2": "놀이터에서 노는 사진이에요",
       "3": "선생님이 앞에서 가르치는 사진이에요"
     },
     "key_expr": {
-      "en": "eat lunch",
-      "ko": "점심을 먹다"
+      "en": "eat",
+      "ko": "먹다"
     },
     "choice_image_queries": [
       {
-        "q": "children eating lunch",
+        "q": "child eating table",
         "need": [
-          "children",
-          "lunch"
+          "child",
+          "eating"
         ],
         "prefer": [
-          "eating",
-          "school"
+          "lunch"
         ],
         "avoid": [
           "restaurant",
@@ -2123,7 +2122,7 @@
       "2": "P.other",
       "3": "P.other"
     },
-    "translation_ko": "아이들이 점심을 먹고 있어요.",
+    "translation_ko": "아이가 먹고 있어요.",
     "tmp_id": "L1-0022"
   },
   {
