@@ -1,0 +1,80 @@
+{
+  "1": {
+    "shot": "wide",
+    "set_edge": true,
+    "props": [
+      "open cardboard box",
+      "crumpled blue cellophane",
+      "cotton-wool marine snow"
+    ],
+    "desc": "A high-angle tilt-shift shot of an open cardboard box resting on a wooden worktable, serving as a miniature deep-sea stage. Inside, the Headless Chicken Monster figurine (bright pink, translucent, rounded anterior, pointed rear) is suspended by a visible fine thread above crumpled dark blue cellophane water. Cotton-wool marine snow hangs on threads. The box edge and table are visible. The upper quarter is empty dark cardboard. Warm desk lamp lighting."
+  },
+  "2": {
+    "shot": "close",
+    "set_edge": true,
+    "props": [
+      "green cutting mat",
+      "blank wooden ruler",
+      "blank yellow pencil"
+    ],
+    "desc": "A close-up tilt-shift shot looking down at the creature resting on a green cutting mat next to a blank wooden ruler and a blank pencil, showing its true scale. The highly detailed, satin-painted figurine emphasizes its lack of a head or eyes, showcasing a smooth, fleshy, translucent pink body where the internal tubular intestine is clearly visible. The upper quarter is the uncluttered wooden table surface."
+  },
+  "3": {
+    "shot": "wide",
+    "set_edge": true,
+    "props": [
+      "wooden display box",
+      "bent wire",
+      "crumpled cellophane"
+    ],
+    "desc": "A wide shot of a small, open wooden display box painted blue inside. The creature figurine is dynamically posed in mid-swim, supported by a visible bent wire, with its large, flared, veil-like webbed membrane fully extended forward like an oar. Crumpled blue cellophane forms the water around it. The rim of the wooden box and the table are visible. The upper quarter is calm blue painted wood."
+  },
+  "4": {
+    "shot": "medium",
+    "set_edge": false,
+    "props": [
+      "felt rocks",
+      "cotton-wool marine snow"
+    ],
+    "desc": "A medium shot inside a handcrafted miniature ocean set. Two accurately sculpted figurines of the creature swim side-by-side: a small one painted bright pink, and a larger one painted reddish-brown. They have translucent, gelatinous-looking bodies with faint brush textures. Felt rocks and suspended cotton-wool marine snow fill the background. The upper quarter is a smooth, uncluttered blue backdrop."
+  },
+  "5": {
+    "shot": "close",
+    "set_edge": false,
+    "props": [
+      "clay seabed with fingerprints",
+      "tiny clay food particles",
+      "paper-cut kelp"
+    ],
+    "desc": "A close-up shot of the creature's underside as it rests on a chunky clay seabed with visible fingerprints. The focus is on its circular mouth surrounded by short, branched feeding tentacles, which are pushing tiny clay food particles into the mouth. The body is translucent reddish-brown. Paper-cut kelp sits in the background. The upper quarter is dark, calm water."
+  },
+  "6": {
+    "shot": "wide",
+    "set_edge": true,
+    "props": [
+      "cotton-wool sand cloud",
+      "blank clay hourglass",
+      "cross-section wooden box"
+    ],
+    "desc": "A wide shot of a cross-section wooden box set on a desk, showing both the seabed and the water column above. The creature is swimming rapidly upwards, leaving a thick cloud of cotton-wool sand on the clay seabed. A tiny, blank clay hourglass sits on the table next to the box to symbolize the short mealtime. The upper quarter is the uncluttered top of the box."
+  },
+  "7": {
+    "shot": "wide",
+    "set_edge": true,
+    "props": [
+      "clay predator fish",
+      "LED fairy lights",
+      "hot-glue shed skin decoy"
+    ],
+    "desc": "The most striking, dynamic wide shot for the opening hook. On a wooden worktable lit dramatically by a warm desk lamp, the creature figurine darts away from a chunky clay deep-sea predator fish. The creature has just shed a glowing decoy—a piece of translucent hot-glue skin embedded with tiny, brightly glowing LED fairy lights. The table edge is visible. The upper quarter is dark and empty."
+  },
+  "8": {
+    "shot": "wide",
+    "set_edge": false,
+    "props": [
+      "black painted cardboard backdrop",
+      "cotton-wool marine snow"
+    ],
+    "desc": "A wide shot of the miniature set fading into deep darkness. The creature figurine is seen from behind, receding into the shadows of a black painted cardboard backdrop with visible seams. Its translucent body reveals a tubular intestine packed with dark clay food. The desk lamp is turned away, leaving the scene dim. Cotton-wool marine snow hangs sparsely. The upper quarter is pure black cardboard."
+  }
+}
