@@ -423,7 +423,26 @@ const authHeaders = () => (auth ? { Authorization: `Bearer ${auth.token}` } : {}
 
 async function ensureTodaySet() {
   const owner = auth?.user?.id || 'guest';
-  if (store.set && store.setDate === todayKey() && store.setUser === owner) return store.set;
+  const sameDay = store.set && store.setDate === todayKey();
+
+  // ⚠ 오늘 세트가 이미 있으면 '주인'이 달라졌다고 버리지 않는다.
+  //
+  // 풀던 도중 로그인이 풀리면 owner 가 guest 로 바뀐다. 예전엔 그걸 다른 사람으로 보고
+  // 세트를 **새로 받으면서 setIdx 를 0 으로** 밀었다 — 아이 입장에서는 풀던 문제까지
+  // 바뀐 채 '처음부터'가 된다(2026-09-28 제보). 로그인이 풀린 것뿐인데 오늘 한 일이
+  // 통째로 사라지는 건 어떤 이유로도 말이 안 된다.
+  //
+  // 세트를 새로 받아야 하는 건 **로그인된 다른 아이로 바뀐 경우(형제 전환)** 뿐이다.
+  // 로그인↔로그아웃 사이의 변화는 같은 아이이므로 그대로 이어 간다.
+  const switchedChild = sameDay && store.setUser !== owner
+    && store.setUser !== 'guest' && owner !== 'guest';
+  if (sameDay && !switchedChild) {
+    // 주인 표시는 지금 상태로 맞춰 둔다. 안 맞춰 두면 홈에 올 때마다 여기로 다시 들어와
+    // 매번 세트를 새로 받는다(로그아웃 직후에 실제로 그랬다).
+    if (store.setUser !== owner) { store.setUser = owner; save(); }
+    return store.set;
+  }
+
   let data;
   if (auth) {
     // 서버가 복습+약점+신규 슬롯으로 개인 세트를 만든다 (기기 바꿔도 같은 세트)
@@ -443,7 +462,10 @@ async function ensureTodaySet() {
   }
   store.set = data;
   store.setDate = todayKey();
-  store.setUser = owner;
+  // 위 /api/today 가 401 이면 saveAuth(null) 로 로그인이 풀렸을 수 있다. 그때 맨 위에서
+  // 구한 owner(옛 아이디)를 적어 두면, 다음 홈 진입 때 guest 와 어긋나 또 새로 받는다.
+  // 지금 상태를 다시 보고 적는다.
+  store.setUser = auth?.user?.id || 'guest';
   store.setIdx = 0;
   save();
   return data;
