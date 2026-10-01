@@ -68,9 +68,11 @@ export async function composeDailySet(db, user, today) {
       db.prepare(`SELECT id, part, rating, passage_id FROM questions WHERE status = 'active'`).all(),
       db.prepare('SELECT question_id, tag_id FROM question_tags').all(),
       db.prepare('SELECT tag_id, rating, attempts FROM user_tag_skills WHERE user_id = ?1').bind(user.id).all(),
-      db.prepare(`SELECT question_id FROM review_queue
-                   WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2
-                   ORDER BY due_at LIMIT ?3`).bind(user.id, today, slots.review).all(),
+      // 출제 중인 문항만 센다 — 내린 문항이 앞자리를 차지하면 LIMIT 에 걸려
+      // 정작 복습할 문항이 그날 세트에서 빠진다(아래 bankBy 가 내린 문항을 거르기 때문)
+      db.prepare(`SELECT r.question_id FROM review_queue r JOIN questions q ON q.id = r.question_id
+                   WHERE r.user_id = ?1 AND r.graduated_at IS NULL AND r.due_at <= ?2 AND q.status = 'active'
+                   ORDER BY r.due_at LIMIT ?3`).bind(user.id, today, slots.review).all(),
       db.prepare(`SELECT DISTINCT question_id FROM answers
                    WHERE user_id = ?1 AND answered_at >= ?2`)
         // 무반복 기준선은 서버의 현재 시각이 아니라 넘겨받은 '오늘'(KST 날짜)에서 센다.

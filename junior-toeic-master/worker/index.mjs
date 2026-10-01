@@ -181,9 +181,10 @@ app.get('/api/me', requireAuth, async (c) => {
     `SELECT COUNT(*) AS answered, COALESCE(SUM(is_correct), 0) AS correct
        FROM answers WHERE user_id = ?1`
   ).bind(u.id).first();
+  // 복습 대기 수는 '실제로 복습 화면에 나올 수'와 같아야 한다 — 내린 문항은 세지 않는다
   const due = await c.env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM review_queue
-      WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2`
+    `SELECT COUNT(*) AS n FROM review_queue r JOIN questions q ON q.id = r.question_id
+      WHERE r.user_id = ?1 AND r.graduated_at IS NULL AND r.due_at <= ?2 AND q.status = 'active'`
   ).bind(u.id, kstDate()).first();
   const climb = await computeClimb(c.env.DB, u);
   // 오늘의 세트를 몇 개까지 풀었나 — **서버가 정답이다.**
@@ -417,12 +418,15 @@ app.get('/api/records', requireAuth, async (c) => {
 });
 
 // 로그인 학생의 오답 복습 목록 — 오늘까지 도래한 SRS 큐 (오래된 순)
+// ⚠ 출제 중(active)인 문항만 다시 낸다. 예전엔 큐에 든 문항을 상태와 무관하게 내보내서,
+//   검수 전 초안이나 고장 나서 내린 문항을 한 번 틀리면 복습으로 계속 돌아왔다
+//   (2026-09 신고: 사진 없는 L1 복사본이 복습에서도 나왔다).
 app.get('/api/review', requireAuth, async (c) => {
   const u = c.get('user');
   const { results } = await c.env.DB.prepare(
-    `SELECT question_id, box, due_at FROM review_queue
-      WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2
-      ORDER BY due_at LIMIT 50`
+    `SELECT r.question_id, r.box, r.due_at FROM review_queue r JOIN questions q ON q.id = r.question_id
+      WHERE r.user_id = ?1 AND r.graduated_at IS NULL AND r.due_at <= ?2 AND q.status = 'active'
+      ORDER BY r.due_at LIMIT 50`
   ).bind(u.id, kstDate()).all();
   const { questions, passages } = await hydrate(c.env.DB, results.map((r) => r.question_id));
   const boxBy = Object.fromEntries(results.map((r) => [r.question_id, r.box]));
@@ -1815,7 +1819,11 @@ app.get('/api/parts', async (c) => {
   return c.json({ parts: results });
 });
 
-// 문항 열람 (M1: 검수·풀어보기용) — 정답·해설 미포함
+// 연습장(파트 골라 풀기) — 정답·해설·스크립트 미포함
+// ⚠ 출제 중(active)인 문항만 낸다. M1 검수용으로 만들 때는 초안(draft)도 같이 보여 줬는데,
+//   그대로 아이 앱의 연습장이 되면서 검수 전 문항이 아이에게 나갔다. 2026-09 신고 —
+//   L1 연습장 38문항 중 18개가 사진 없는 문항이었다(배포 사고로 남은 복사본 12 +
+//   사진을 아직 못 받은 AI 초안 6). 초안은 관리자 화면 미리보기로만 본다.
 app.get('/api/questions', async (c) => {
   const part = c.req.query('part') || '';
   if (!PART_RE.test(part)) {
@@ -1824,11 +1832,10 @@ app.get('/api/questions', async (c) => {
   const limit = Math.min(parseInt(c.req.query('limit') || '60', 10) || 60, 100);
 
   const { results: rows } = await c.env.DB.prepare(
-    // script는 M1 검수 화면의 "음원 준비 전 스크립트 열람"용 — M2 학생용 API에서는 제외한다
     `SELECT id, passage_id, section, part, stem, choices, difficulty_label,
-            audio_url, image_url, accent, script, status
+            audio_url, image_url, accent, status
        FROM questions
-      WHERE part = ?1 AND status IN ('active', 'draft')
+      WHERE part = ?1 AND status = 'active'
       ORDER BY id
       LIMIT ?2`
   ).bind(part, limit).all();

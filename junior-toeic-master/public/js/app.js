@@ -1155,7 +1155,8 @@ async function showParts() {
     const card = (code) => {
       const p = byCode[code];
       const info = PART_INFO[code];
-      const count = p ? p.total : 0;
+      // 실제로 풀 수 있는(출제 중인) 문항 수 — total 은 준비 중·내린 문항까지 센다
+      const count = p ? p.active : 0;
       return `<button class="part-card" data-part="${code}" ${count ? '' : 'disabled'}>
         <span class="part-code">${code}</span>
         <span class="part-name">${info.name}</span>
