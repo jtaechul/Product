@@ -73,6 +73,7 @@ jobs:
       # 열쇠는 둘 중 아무거나 있으면 된다 — 이미 음원 제작에 쓰는 Gemini 키가 있으면
       # 새로 등록할 것 없이 그대로 쓰인다. 값은 절대 찍지 않고 '있다/없다'만 알린다.
       - name: Generate drafts
+        id: gen
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_JUMPLISH || secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_JUMPLISH || secrets.GEMINI_API_KEY }}
@@ -93,15 +94,23 @@ jobs:
           if [ ${#REQS[@]} -gt 0 ]; then
             echo "주문서 ${#REQS[@]}건을 처리합니다"
             FAILED=0
+            CREDIT=0
             for f in "${REQS[@]}"; do
               echo "── $f"
               cat "$f"
               # 한 건이 실패해도 나머지는 만든다. 처리한 주문서는 성공·실패와 무관하게 지운다 —
               # 남겨 두면 다음 푸시 때 같은 주문이 또 돌아 문항이 중복으로 쌓인다.
-              node tools/gen-questions.mjs --request "$f" || { echo "::warning::$f 처리 실패"; FAILED=$((FAILED+1)); }
-              rm -f "$f"
+              node tools/gen-questions.mjs --request "$f" 2>&1 | tee gen.log
+              if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+                echo "::warning::$f 처리 실패"; FAILED=$((FAILED+1))
+                if grep -q "credit balance is too low" gen.log; then CREDIT=1; fi
+              fi
+              rm -f "$f" gen.log
             done
             if [ "$FAILED" -gt 0 ]; then echo "::warning::주문 ${FAILED}건이 실패했습니다"; fi
+            # 아래 'Fail if any order failed' 가 읽는다 — 성공분 커밋은 먼저 끝내고 나서 실패로 표시한다
+            echo "failed=$FAILED" >> "$GITHUB_OUTPUT"
+            echo "credit=$CREDIT" >> "$GITHUB_OUTPUT"
           else
             echo "주문서가 없어 입력값으로 한 건 만듭니다"
             node tools/gen-questions.mjs \
@@ -140,6 +149,19 @@ jobs:
             sleep $((5 * i))
           done
           echo "::error::푸시를 5번 시도했지만 실패했습니다"
+          exit 1
+
+      # 주문이 하나라도 실패하면 작업을 '실패'로 표시한다(빨간 X + 실패 메일).
+      # 예전엔 경고만 찍고 '성공'으로 끝났다. 그래서 Anthropic 크레딧이 바닥난 뒤
+      # (2026-09-20~30) 매일 밤 주문이 한 문항도 못 만들었는데 열흘 넘게 아무도 몰랐다.
+      # 성공한 주문의 초안은 위에서 이미 커밋했으므로, 여기서 실패해도 잃는 것은 없다.
+      - name: Fail if any order failed
+        if: ${{ steps.gen.outputs.failed != '' && steps.gen.outputs.failed != '0' }}
+        run: |
+          if [ "${{ steps.gen.outputs.credit }}" = "1" ]; then
+            echo "::error::Anthropic API 크레딧이 바닥나 문항을 만들지 못했습니다. 충전하면 다음 밤부터 저절로 다시 만듭니다."
+          fi
+          echo "::error::문제 만들기 주문 ${{ steps.gen.outputs.failed }}건이 실패했습니다 — 위 'Generate drafts' 기록에 까닭이 있습니다."
           exit 1
 
   # 듣기 문항이면 음원이 있어야 출제할 수 있다. 러너가 GITHUB_TOKEN 으로 한 푸시는
