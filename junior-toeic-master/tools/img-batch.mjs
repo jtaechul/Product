@@ -9,7 +9,11 @@
 //  1) 반드시 node tools/import.mjs 를 먼저 실행 (ULID 매핑 생성)
 //  2) 산출: public/img/l1/{question_id}-{0..3}.jpg (이미 있으면 건너뜀 — 재실행 안전)
 //           content/l1-photos.json (어떤 사진을 썼는지 출처 기록 — 사람이 눈으로 검수)
-//  3) 한 문항의 4컷이 모두 갖춰지면 content/questions/L1.json 의 status를 active로 올린다
+//  3) 출제 여부(status)는 건드리지 않는다. 사진이 4컷 다 있어야 나가는 건 import.mjs 가 막고,
+//     실제로 내보내는 건 관리자가 미리보기로 사진을 보고 '출제 시작'을 눌러야 한다.
+//     ⚠ 예전엔 4컷이 모이면 여기서 active 로 올렸다. 사진 수집을 AI 문항 생성 뒤에 잇고 보니
+//       그러면 아무도 안 본 AI 초안이 사진만 붙은 채 바로 아이에게 나간다(태그 검사로 고른
+//       사진이 엉뚱할 수도 있다). 그래서 올리는 일은 사람 몫으로 돌렸다(2026-10-01).
 //
 // ⭐ 엉뚱한 사진 차단: 검색 결과를 그냥 쓰지 않는다. 사진에 붙은 태그를 보고
 //    need(반드시 있어야 할 말)를 모두 갖고 avoid(있으면 안 되는 말)가 하나도 없는
@@ -112,10 +116,12 @@ if (!existsSync(markerPath) || readFileSync(markerPath, 'utf8').trim() !== SOURC
   writeFileSync(markerPath, SOURCE + '\n');
 }
 
-let made = 0, skipped = 0, failed = 0, changed = false;
+let made = 0, skipped = 0, failed = 0;
 
 outer:
 for (const it of items) {
+  // 내린 문항은 사진을 받지 않는다 — 받아도 쓰이지 않고 픽사베이 호출만 는다
+  if (it.status === 'retired') continue;
   const qid = idmap[`q:${it.tmp_id}`];
   if (!qid) { console.error(`${it.tmp_id}: idmap에 없음 — import.mjs 먼저 실행`); failed += 4; continue; }
   const queries = it.choice_image_queries;
@@ -123,11 +129,10 @@ for (const it of items) {
     console.error(`${it.tmp_id}: choice_image_queries 4개 필요`); failed += 4; continue;
   }
 
-  let ok = 0;
   for (let i = 0; i < 4; i++) {
     if (LIMIT && made >= LIMIT) break outer;
     const file = join(OUT_DIR, `${qid}-${i}.jpg`);
-    if (existsSync(file) && statSync(file).size > 5000) { ok++; skipped++; continue; }
+    if (existsSync(file) && statSync(file).size > 5000) { skipped++; continue; }
     try {
       const hit = await findPhoto(queries[i]);
       if (!hit) throw new Error(`조건에 맞는 사진 없음 (검색어 "${queries[i].q}")`);
@@ -141,7 +146,7 @@ for (const it of items) {
         tmp_id: `${it.tmp_id}#${i}`, query: queries[i].q, tags: hit.tags,
         pixabay_id: hit.id, page: hit.pageURL, by: hit.user,
       };
-      made++; ok++;
+      made++;
       console.log(`${it.tmp_id}#${i} ← ${hit.tags} (${hit.pageURL})`);
       await sleep(DELAY);
     } catch (e) {
@@ -149,13 +154,8 @@ for (const it of items) {
       console.error(`실패 ${it.tmp_id}#${i}: ${e.message}`);
     }
   }
-  // 4컷이 모두 갖춰진 문항만 공개(active) — 일부만 있으면 draft 유지
-  const want = ok === 4 ? 'active' : 'draft';
-  if (it.status !== want) { it.status = want; changed = true; }
 }
 
 writeFileSync(photoPath, JSON.stringify(photos, null, 2) + '\n');
-if (changed) writeFileSync(l1Path, JSON.stringify(items, null, 2) + '\n');
-console.log(`\n완료 — 새로 받음 ${made}컷, 건너뜀 ${skipped}컷, 실패 ${failed}컷` +
-  (changed ? ' / L1.json status 갱신됨' : ''));
+console.log(`\n완료 — 새로 받음 ${made}컷, 건너뜀 ${skipped}컷, 실패 ${failed}컷`);
 if (failed) { console.log('실패분은 검색어를 손보고 다시 실행하면 이어서 받습니다.'); process.exit(1); }

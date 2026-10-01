@@ -153,10 +153,20 @@ jobs:
     uses: ./.github/workflows/generate-tts.yml
     secrets: inherit
 
-  # 음원 단계가 끝난 뒤 배포한다. 음원이 새로 생겼으면 그쪽에서 이미 배포하지만,
+  # 사진 고르기(L1)는 보기 사진 4컷이 있어야 출제할 수 있다. 음원과 같은 이유로 직접 부른다.
+  # 이게 없어서 AI 가 만든 L1 초안이 사진 없이 쌓이기만 했다(2026-09-19 6개).
+  # L1 이 아니면 받을 사진이 없어 금방 끝난다. 사진은 붙이기만 하고 출제는 관리자가 한다.
+  # 음원 단계 뒤에 돌린다 — 둘 다 같은 브랜치에 커밋하므로 겹치지 않게 차례로.
+  photos:
+    needs: [generate, audio]
+    if: ${{ !cancelled() && needs.generate.outputs.pushed == 'true' }}
+    uses: ./.github/workflows/generate-l1-images.yml
+    secrets: inherit
+
+  # 음원·사진 단계가 끝난 뒤 배포한다. 새로 생겼으면 그쪽에서 이미 배포하지만,
   # 읽기만 만들어진 경우엔 여기서만 배포가 일어난다(중복 배포는 concurrency 로 합쳐진다).
   deploy:
-    needs: [generate, audio]
+    needs: [generate, audio, photos]
     if: ${{ !cancelled() && needs.generate.outputs.pushed == 'true' }}
     uses: ./.github/workflows/deploy-jumplish.yml
     secrets: inherit
