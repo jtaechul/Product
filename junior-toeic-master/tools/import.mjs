@@ -370,6 +370,14 @@ for (const it of questions) {
   );
 }
 const qIds = questions.map((x) => q(x.id)).join(', ');
+// ⚠ 원고에 없는 문항은 내린다(retired). 지우지는 않는다 — 아이들의 풀이 기록이 그 문항을 가리킨다.
+// 원고가 기준인데 upsert 는 원고에 있는 행만 고치고, 원고에서 사라진 행은 그대로 남겨 왔다.
+// 2026-08-11 배포 러너가 L1 12문항에 커밋 안 된 번호(ULID)를 새로 지어 넣는 바람에, 그 뒤로
+// 아무도 고치지 않는 사진·소리 없는 복사본 12개가 DB에 남아 연습장으로 아이에게 나갔다.
+// 원고에 있는 파트만 대상으로 한다(파일이 통째로 빠진 실수로 한 파트가 다 내려가지 않게).
+// 잘못 내려가도 다음 배포에서 위 upsert 가 원고의 status 로 되돌리므로 스스로 복구된다.
+const contentParts = [...new Set(questions.map((x) => x.part))].map(q).join(', ');
+sql.push(`UPDATE questions SET status = 'retired' WHERE status <> 'retired' AND part IN (${contentParts}) AND id NOT IN (${qIds});`);
 sql.push(`DELETE FROM question_tags WHERE question_id IN (${qIds});`);
 for (const qt of qTags) {
   sql.push(`INSERT OR IGNORE INTO question_tags (question_id, tag_id) VALUES (${q(qt.question_id)}, ${q(qt.tag_id)});`);
@@ -377,6 +385,11 @@ for (const qt of qTags) {
 
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(join(OUT_DIR, 'seed.sql'), sql.join('\n') + '\n');
+// 위 '원고에 없는 문항 내림'이 실제로 몇 개를 건드릴지 — 배포 로그에 파트·상태별 개수만 남긴다
+// (운영 DB를 밖에서 들여다볼 길이 없어서, 이게 결과를 확인할 유일한 창이다)
+writeFileSync(join(OUT_DIR, 'orphans.sql'),
+  `SELECT part, status, COUNT(*) AS n FROM questions WHERE status <> 'retired' AND part IN (${contentParts}) `
+  + `AND id NOT IN (${qIds}) GROUP BY part, status;\n`);
 writeFileSync(IDMAP_PATH, JSON.stringify(idmap, null, 2) + '\n');
 console.log(`\nseed.sql 생성 완료 (${sql.length} 문장) → tools/out/seed.sql`);
 console.log('적용(로컬): npx wrangler d1 execute jumplish-db --local --file tools/out/seed.sql');
