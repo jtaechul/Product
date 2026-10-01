@@ -1667,7 +1667,7 @@
       "I came by bike."
     ],
     "answer_idx": 1,
-    "explanation_ko": "'~하는 게 어때?'라는 제안이에요. 좋다고 답하고 시간을 물으면 자연스러워요.",
+    "explanation_ko": "'Why don't you ~?'는 이유를 묻는 말이 아니라 '~하는 게 어때?'라는 제안이에요. 좋다고 답하고 시간을 물으면 자연스러워요.",
     "difficulty_label": 3,
     "tags": [
       "LS.qr",

@@ -1934,7 +1934,7 @@
       "cleaning"
     ],
     "answer_idx": 2,
-    "explanation_ko": "창문은 스스로 닦지 못해요. 누군가 닦아 준다는 뜻으로 are cleaned를 써요.",
+    "explanation_ko": "창문은 스스로 닦지 못하고 누가 닦아 줘요. 이럴 땐 are와 cleaned를 함께 써서 '닦인다'를 만들어요.",
     "difficulty_label": 4,
     "tags": [
       "G.passive",
@@ -1947,7 +1947,7 @@
     "why_not": {
       "0": "창문이 직접 닦는다는 말이 돼요",
       "1": "여럿인데 모양이 맞지 않아요",
-      "3": "혼자서는 문장을 만들 수 없어요"
+      "3": "are 없이 cleaning만으로는 문장이 끝나지 않아요"
     },
     "key_expr": {
       "en": "are cleaned",
