@@ -1958,7 +1958,7 @@
       "A boy washing dishes at a kitchen sink",
       "A boy putting plates on a dining table"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "washing the dishes",
     "why_not": {
       "0": "빗자루로 바닥을 쓰는 사진이에요",
@@ -2053,7 +2053,7 @@
       "Children running on a school playground",
       "A teacher writing on a whiteboard in front of students"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "is eating",
     "why_not": {
       "1": "교실에서 공부하는 사진이에요",
@@ -2151,7 +2151,7 @@
       "Children throwing a ball to each other in a grassy field",
       "A colourful kite flying high in the blue sky"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A kite is flying in the sky",
     "why_not": {
       "0": "비눗방울을 부는 사진이에요",
@@ -2250,7 +2250,7 @@
       "A man sitting inside a moving train",
       "A man walking across a crosswalk"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "waiting at the bus stop",
     "why_not": {
       "0": "남자가 차를 운전하는 사진이에요",
@@ -2344,7 +2344,7 @@
       "A family eating pizza together at a table",
       "A pizza baking inside a hot wood-fired oven"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "in the oven",
     "why_not": {
       "0": "채소를 써는 사진이에요",
@@ -2444,7 +2444,7 @@
       "A girl drinking water from a cup",
       "A doctor writing on a clipboard at a desk"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "checking a man's temperature",
     "why_not": {
       "1": "치과에서 이를 닦는 사진이에요",

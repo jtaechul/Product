@@ -3123,7 +3123,7 @@
       },
       "translation_ko": "남: 실례합니다, 펭귄 먹이 주기는 몇 시에 시작하나요?\n여: 2시에 시작해요. 15분 전까지 펭귄 구역에 오셔야 해요.\n남: 알겠습니다. 펭귄에게 줄 물고기는 어디서 살 수 있나요?\n여: 저기 있는 자판기에서 뽑으실 수 있어요. 현금만 가능해요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What time does the penguin feeding start?",
@@ -3204,7 +3204,7 @@
       },
       "translation_ko": "여: 아빠, 저 미술 시간에 쓸 노란색 종이가 필요해요.\n남: 아빠가 이따가 슈퍼마켓에 갈 건데. 거기서 찾아볼 수 있어.\n여: 고마워요. 그리고 파란색 물감도 다 썼어요.\n남: 알았어. 메모지에 적어서 식탁 위에 올려두렴."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does the woman need the yellow paper?",
@@ -3285,7 +3285,7 @@
       },
       "translation_ko": "남: 제 운동화가 너무 더러워요. 내일 체육 대회가 있거든요.\n여: 내가 벌써 세탁기에 넣었어. 곧 끝날 거야.\n남: 다행이네요. 내일 아침까지 마를까요?\n여: 그럼, 내가 오늘 밤에 건조기에 넣어 둘게."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What event does the man have tomorrow?",
@@ -3366,7 +3366,7 @@
       },
       "translation_ko": "남: 방과 후에 로봇 동아리 모임에 올 거니?\n여: 오늘은 못 가. 치과에 가야 하거든.\n남: 아, 그렇구나. 내가 대신 필기해 줄까?\n여: 그래 주면 정말 좋지. 정말 고마워!"
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why can't the girl go to the club meeting?",
@@ -3447,7 +3447,7 @@
       },
       "translation_ko": "남: 안녕하세요. 찾는 걸 도와드릴까요?\n여: 네, 두꺼운 파란색 공책을 찾고 있어요.\n남: 지금 그 크기로는 초록색이랑 빨간색밖에 없어요.\n여: 흠, 그럼 초록색으로 할게요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What color notebook did the woman want at first?",
@@ -3528,7 +3528,7 @@
       },
       "translation_ko": "남: 엄마, 오늘 밤 후식으로 과일 샐러드를 만들어도 될까요?\n여: 그럼. 사과는 좀 있는데, 과일이 더 필요하네.\n남: 제가 지금 시장에 다녀올게요. 뭘 사 올까요?\n여: 바나나 한 송이랑 포도 좀 사다 주렴."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What are they going to make?",
