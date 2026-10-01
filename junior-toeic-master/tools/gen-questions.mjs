@@ -211,12 +211,39 @@ async function askAnthropic() {
   }
 }
 
+// 이 열쇠로 지금 실제로 쓸 수 있는 글쓰기 모델 — 나은 것부터 (새 버전 · pro → flash → 나머지)
+async function listGeminiModels() {
+  try {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', {
+      headers: { 'x-goog-api-key': GEMINI_KEY },
+    });
+    if (!res.ok) return [];
+    const { models = [] } = await res.json();
+    const rank = (n) => {
+      const v = parseFloat((/gemini-(\d+(?:\.\d+)?)/.exec(n) || [])[1] || '0');
+      return v * 10 + (/-pro/.test(n) ? 5 : /-flash(?!-lite)/.test(n) ? 3 : 1);
+    };
+    return models
+      .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map((m) => String(m.name).replace(/^models\//, ''))
+      .filter((n) => /^gemini-/.test(n) && !/tts|image|embed|live|audio|aqa|robotics|computer/.test(n))
+      .sort((a, b) => rank(b) - rank(a));
+  } catch { return []; }
+}
+
 async function askGemini() {
   // SDK 없이 REST 로 부른다 — 배치 도구라 의존성을 하나라도 덜 얹는 편이 낫고,
   // 음원 배치(tts-batch.mjs)도 같은 방식이라 저장소 안에서 하는 방법이 하나로 유지된다.
-  const models = [process.env.GEN_MODEL || 'gemini-2.5-pro', 'gemini-2.5-flash'];
+  // ⚠ 모델 이름은 자주 바뀐다. 2026-10-01 gemini-2.5-pro 가 "새 사용자에게는 더 이상 제공하지 않음"(404)
+  //   으로 막혀, 크레딧이 바닥난 Anthropic 대신 쓰려던 예비 엔진까지 멈췄다. 그래서 정해 둔 후보가
+  //   모두 '그 모델을 못 쓴다'고 하면, 이 열쇠로 실제로 쓸 수 있는 모델 목록을 받아 가장 나은 것부터 쓴다.
+  const fixed = [process.env.GEN_MODEL, 'gemini-3.1-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash']
+    .filter(Boolean);
+  const tried = new Set();
   let lastErr = '';
-  for (const model of models) {
+  // 한 모델을 불러 본다 — 글을 받으면 그 글, '그 모델을 못 쓴다'면 'model', 그 밖의 실패면 'stop'
+  const attempt = async (model) => {
+    tried.add(model);
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     const res = await fetch(url, {
       method: 'POST',
@@ -234,18 +261,37 @@ async function askGemini() {
         console.error('AI가 이 주문을 거절했습니다. 주문 내용을 바꿔 다시 시도해 주세요.');
         process.exit(1);
       }
-      const text = (cand?.content?.parts ?? []).map((p) => p.text ?? '').join('');
-      if (text.trim()) { console.log(`엔진: gemini (${model})`); return text; }
+      const text = (cand?.content?.parts ?? []).map((x) => x.text ?? '').join('');
+      if (text.trim()) { console.log(`엔진: gemini (${model})`); return { text }; }
       lastErr = `${model}: 빈 응답`;
-      continue;
+      return 'model';
     }
     const body = (await res.text()).slice(0, 300);
     lastErr = `${model}: ${res.status} ${body}`;
     // 다음 후보로 넘어가는 건 '그 모델을 못 쓴다'고 할 때뿐이다.
     // 열쇠가 틀렸거나 한도를 넘은 경우는 모델을 바꿔도 똑같아서, 한 번 더 부르면
     // 시간만 쓰고 로그에는 엉뚱한 모델 이름이 남아 원인을 찾기 어려워진다.
-    const modelProblem = /not found|not supported|is not available|unsupported|NOT_FOUND/i.test(body);
-    if (!modelProblem) break;
+    // (본문은 300자로 잘라 보므로 'NOT_FOUND' 상태값이 잘려 나갈 수 있다 — 404 자체를 본다)
+    const modelProblem = res.status === 404
+      || /not found|not supported|not available|no longer available|unsupported|NOT_FOUND/i.test(body);
+    if (modelProblem) console.log(`  ${model}: 쓸 수 없는 모델 — 다음 후보로`);
+    return modelProblem ? 'model' : 'stop';
+  };
+
+  let r;
+  for (const model of fixed) {
+    r = await attempt(model);
+    if (r?.text) return r.text;
+    if (r === 'stop') break;
+  }
+  if (r === 'model') {
+    const listed = (await listGeminiModels()).filter((m) => !tried.has(m)).slice(0, 3);
+    if (listed.length) console.log(`  이 열쇠로 쓸 수 있는 모델에서 고릅니다: ${listed.join(', ')}`);
+    for (const model of listed) {
+      r = await attempt(model);
+      if (r?.text) return r.text;
+      if (r === 'stop') break;
+    }
   }
   console.error(`Gemini 호출 실패 — ${lastErr}`);
   if (/API_KEY|API key/i.test(lastErr)) console.error('GEMINI_API_KEY 가 올바른지 확인해 주세요.');
