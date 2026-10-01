@@ -2039,26 +2039,26 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'eating lunch'는 점심을 먹는다는 말이에요. 급식실에서 밥을 먹는 사진이 정답이에요.",
+    "explanation_ko": "'eating lunch'는 점심을 먹는다는 말이에요. 아이들이 밥을 먹고 있는 사진이 정답이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.school"
     ],
     "accent": "UK",
-    "tts_script": "Students are eating lunch in the school cafeteria.",
+    "tts_script": "Children are eating lunch.",
     "choice_image_prompts": [
-      "Students eating lunch with trays at long tables in a school cafeteria",
+      "Children eating lunch together at a table",
       "Students studying at desks in a classroom",
       "Children running on a school playground",
       "A teacher writing on a whiteboard in front of students"
     ],
     "status": "draft",
-    "evidence": "eating lunch in the school cafeteria",
+    "evidence": "eating lunch",
     "why_not": {
       "1": "교실에서 공부하는 사진이에요",
-      "2": "운동장에서 뛰는 사진이에요",
-      "3": "선생님이 칠판에 쓰는 사진이에요"
+      "2": "놀이터에서 노는 사진이에요",
+      "3": "선생님이 앞에서 가르치는 사진이에요"
     },
     "key_expr": {
       "en": "eat lunch",
@@ -2066,15 +2066,20 @@
     },
     "choice_image_queries": [
       {
-        "q": "students eating lunch school cafeteria trays",
+        "q": "children eating lunch",
         "need": [
-          "cafeteria",
-          "eating"
+          "children",
+          "lunch"
         ],
         "prefer": [
-          "students"
+          "eating",
+          "school"
         ],
-        "avoid": []
+        "avoid": [
+          "restaurant",
+          "birthday",
+          "cake"
+        ]
       },
       {
         "q": "students studying classroom desks",
@@ -2118,7 +2123,7 @@
       "2": "P.other",
       "3": "P.other"
     },
-    "translation_ko": "학생들이 학교 급식실에서 점심을 먹고 있어요.",
+    "translation_ko": "아이들이 점심을 먹고 있어요.",
     "tmp_id": "L1-0022"
   },
   {
@@ -2133,30 +2138,30 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'flying a kite'는 연을 날린다는 뜻이에요. 아이 둘이 연을 날리는 사진을 고르면 돼요.",
-    "difficulty_label": 3,
+    "explanation_ko": "'kite'는 연이에요. 하늘에 연이 떠 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "AU",
-    "tts_script": "Two children are flying a kite in the park.",
+    "tts_script": "A kite is flying in the sky.",
     "choice_image_prompts": [
       "Children blowing soap bubbles in a park",
       "A child going down a playground slide",
       "Children throwing a ball to each other in a grassy field",
-      "Two children flying a colourful kite in a park"
+      "A colourful kite flying high in the blue sky"
     ],
     "status": "draft",
-    "evidence": "flying a kite in the park",
+    "evidence": "A kite is flying in the sky",
     "why_not": {
       "0": "비눗방울을 부는 사진이에요",
-      "1": "미끄럼틀을 타는 사진이에요",
-      "2": "공을 던지는 사진이에요"
+      "1": "놀이터 미끄럼틀 사진이에요",
+      "2": "아이들이 공을 차는 사진이에요"
     },
     "key_expr": {
-      "en": "fly a kite",
-      "ko": "연을 날리다"
+      "en": "a kite is flying",
+      "ko": "연이 날고 있다"
     },
     "choice_image_queries": [
       {
@@ -2196,15 +2201,20 @@
         ]
       },
       {
-        "q": "two children flying kite park",
+        "q": "kite flying sky",
         "need": [
-          "kite"
+          "kite",
+          "sky"
         ],
         "prefer": [
-          "children",
-          "park"
+          "flying"
         ],
-        "avoid": []
+        "avoid": [
+          "surf",
+          "bird",
+          "raptor",
+          "paraglid"
+        ]
       }
     ],
     "miss_type": {
@@ -2212,7 +2222,7 @@
       "1": "P.other",
       "2": "P.other"
     },
-    "translation_ko": "두 아이가 공원에서 연을 날리고 있어요.",
+    "translation_ko": "연이 하늘을 날고 있어요.",
     "tmp_id": "L1-0023"
   },
   {
@@ -2227,30 +2237,30 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'waiting for the bus'는 버스를 기다린다는 뜻이에요. 정류장에 서 있는 사진이 정답이에요.",
+    "explanation_ko": "'waiting at the bus stop'은 버스 정류장에서 기다린다는 뜻이에요. 정류장에 서 있는 여자 사진이 정답이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.travel"
     ],
     "accent": "US",
-    "tts_script": "A man is waiting for the bus at the bus stop.",
+    "tts_script": "A woman is waiting at the bus stop.",
     "choice_image_prompts": [
       "A man driving a car on a road",
-      "A man standing with a bag beside a bus stop sign",
+      "A woman standing at a bus stop looking at her phone",
       "A man sitting inside a moving train",
       "A man walking across a crosswalk"
     ],
     "status": "draft",
-    "evidence": "waiting for the bus at the bus stop",
+    "evidence": "waiting at the bus stop",
     "why_not": {
-      "0": "차를 운전하는 사진이에요",
-      "2": "기차 안에 앉아 있는 사진이에요",
+      "0": "남자가 차를 운전하는 사진이에요",
+      "2": "남자가 기차역에 앉아 있는 사진이에요",
       "3": "횡단보도를 건너는 사진이에요"
     },
     "key_expr": {
-      "en": "wait for the bus",
-      "ko": "버스를 기다리다"
+      "en": "wait at the bus stop",
+      "ko": "버스 정류장에서 기다리다"
     },
     "choice_image_queries": [
       {
@@ -2266,13 +2276,13 @@
         ]
       },
       {
-        "q": "man waiting at bus stop sign",
+        "q": "woman waiting bus stop",
         "need": [
           "bus stop"
         ],
         "prefer": [
           "waiting",
-          "man"
+          "woman"
         ],
         "avoid": []
       },
@@ -2306,7 +2316,7 @@
       "2": "M.swap",
       "3": "P.other"
     },
-    "translation_ko": "한 남자가 버스 정류장에서 버스를 기다리고 있어요.",
+    "translation_ko": "한 여자가 버스 정류장에서 기다리고 있어요.",
     "tmp_id": "L1-0024"
   },
   {
@@ -2321,30 +2331,30 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'putting a pizza into the oven'은 피자를 오븐에 넣는다는 뜻이에요. 먹는 사진이 아니에요.",
-    "difficulty_label": 3,
+    "explanation_ko": "'in the oven'은 오븐 안이라는 뜻이에요. 피자가 오븐 안에 들어 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.food"
     ],
     "accent": "UK",
-    "tts_script": "A cook is putting a pizza into the oven.",
+    "tts_script": "A pizza is in the oven.",
     "choice_image_prompts": [
       "A cook chopping vegetables on a cutting board",
       "A waiter carrying plates to a table",
       "A family eating pizza together at a table",
-      "A cook sliding a pizza into a hot oven"
+      "A pizza baking inside a hot wood-fired oven"
     ],
     "status": "draft",
-    "evidence": "putting a pizza into the oven",
+    "evidence": "in the oven",
     "why_not": {
       "0": "채소를 써는 사진이에요",
-      "1": "접시를 나르는 사진이에요",
-      "2": "피자를 먹고 있는 사진이에요"
+      "1": "식당 앞 거리 사진이에요",
+      "2": "피자가 오븐이 아니라 접시 위에 있어요"
     },
     "key_expr": {
-      "en": "put a pizza into the oven",
-      "ko": "피자를 오븐에 넣다"
+      "en": "in the oven",
+      "ko": "오븐 안에"
     },
     "choice_image_queries": [
       {
@@ -2385,15 +2395,20 @@
         ]
       },
       {
-        "q": "chef putting pizza into oven",
+        "q": "pizza wood fired oven",
         "need": [
           "pizza",
           "oven"
         ],
         "prefer": [
-          "chef"
+          "fire"
         ],
-        "avoid": []
+        "avoid": [
+          "drawing",
+          "sketch",
+          "painting",
+          "illustration"
+        ]
       }
     ],
     "miss_type": {
@@ -2401,7 +2416,7 @@
       "1": "P.other",
       "2": "A.echo"
     },
-    "translation_ko": "요리사가 피자를 오븐에 넣고 있어요.",
+    "translation_ko": "피자가 오븐 안에 있어요.",
     "tmp_id": "L1-0025"
   },
   {
@@ -2416,25 +2431,25 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'checking her temperature'는 열을 재 본다는 말이에요. 체온계를 대고 있는 사진이 정답이에요.",
+    "explanation_ko": "'checking a man's temperature'는 남자의 열을 재 본다는 말이에요. 체온계를 대고 있는 사진이 정답이에요.",
     "difficulty_label": 3,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "AU",
-    "tts_script": "A nurse is checking a girl's temperature.",
+    "tts_script": "A nurse is checking a man's temperature.",
     "choice_image_prompts": [
-      "A nurse holding a thermometer to a girl's forehead in a clinic",
+      "A nurse holding a thermometer to a man's forehead in a hospital",
       "A dentist looking at a boy's teeth",
       "A girl drinking water from a cup",
       "A doctor writing on a clipboard at a desk"
     ],
     "status": "draft",
-    "evidence": "checking a girl's temperature",
+    "evidence": "checking a man's temperature",
     "why_not": {
-      "1": "치과에서 이를 보는 사진이에요",
-      "2": "물을 마시는 사진이에요",
+      "1": "치과에서 이를 닦는 사진이에요",
+      "2": "코코아 잔 사진이에요",
       "3": "열을 재지 않고 적고만 있어요"
     },
     "key_expr": {
@@ -2443,13 +2458,13 @@
     },
     "choice_image_queries": [
       {
-        "q": "nurse thermometer child forehead clinic",
+        "q": "nurse thermometer man patient",
         "need": [
           "thermometer"
         ],
         "prefer": [
           "nurse",
-          "child"
+          "patient"
         ],
         "avoid": []
       },
@@ -2495,7 +2510,7 @@
       "2": "P.other",
       "3": "G.clue"
     },
-    "translation_ko": "간호사가 여자아이의 열을 재고 있어요.",
+    "translation_ko": "간호사가 남자의 열을 재고 있어요.",
     "tmp_id": "L1-0026"
   }
 ]
