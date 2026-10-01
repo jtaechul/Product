@@ -663,7 +663,10 @@ def _fake_vision(p, images=None):
     if "Compare the attached" in p:
         return json.dumps({"items": [{"item": "머리 없음", "verdict": "pass", "note_ko": "좋음"}, {"item": "눈 없음", "verdict": "unknown", "note_ko": ""}]})
     if "storyboard artist" in p:
-        return json.dumps({"panels": {str(i): f"Panel {i}: miniature deep-sea set, the creature drifts, camera three-quarter, warm practical light." for i in range(1, 9)}})
+        shots = ["wide", "wide", "close", "wide", "medium", "wide", "wide", "close"]
+        return json.dumps({"panels": {str(i): {"shot": shots[i - 1], "set_edge": i % 2 == 1, "props": ["paper waves", "clay scientist"],
+                                               "desc": f"Panel {i}: tabletop diorama box on a wooden desk, the creature small in the frame, desk lamp."}
+                                      for i in range(1, 9)}})
     if "per-second TIMELINE" in p:
         return json.dumps({"prompts": {str(i): f"0.0-2.0s slow dolly toward the creature; 2.0-4.0s it undulates its veil and drifts left, camera holds. cut {i}" for i in range(1, 9)}})
     return json.dumps({"issues": []})
@@ -805,3 +808,55 @@ def test_species_tag_never_empty_without_japanese_name():
     assert admin.species_tags({"subject": {"scientific_name": "Testus fishus"}}) == ("#Testusfishus", "#Testusfishus")
     m = admin._compose_meta(sc, {"title_jp": "題", "title_ko": "제", "desc_jp": "説明", "desc_ko": "설명", "tags_jp": ["#ナマコ"], "tags_ko": ["#해삼"]})
     assert m["title_jp"] == "題 #首なしチキンモンスター #深海" and "#ナマコ" in m["tags_jp"] and "#" not in m["tags_jp"][0][1:]
+
+
+# ── 미니어처 세계관 규칙(운영자 승인 2026-10-01 · 실사고: 자동 콘티가 빈 배경 + 생물 접사만 그림) ──────────────
+def _plan(shots, edges=4, props=2):
+    return {i + 1: {"shot": sh, "set_edge": i < edges, "props": ["felt", "paper"][:props], "desc": "x" * 50} for i, sh in enumerate(shots)}
+
+
+def test_validate_storyboard_plan_miniature_rules():
+    cuts = [{"cut": i} for i in range(1, 9)]
+    ok = _plan(["wide"] * 5 + ["medium", "close", "close"])
+    assert admin.validate_storyboard_plan(ok, cuts) == []
+    p = " ".join(admin.validate_storyboard_plan(_plan(["close"] * 6 + ["wide"] * 2, edges=2, props=1), cuts))   # 이번 편 같은 접사 위주
+    assert "WIDE" in p and "CLOSE" in p and "edge" in p and "2 hand-made props" in p
+
+
+def test_plan_storyboard_retries_until_miniature_rules_pass():
+    sc = {"cuts": [{"cut": i, "jp": "x", "tts": "x", "sec": 6} for i in range(1, 9)], "facts": [], "hook": {"cut": 3}}
+    seen = []
+    def ask(p):
+        seen.append(p)
+        if len(seen) == 1:                                    # 첫 계획: 접사만 → 거절
+            return json.dumps({"panels": {str(k): v for k, v in _plan(["close"] * 8).items()}})
+        return json.dumps({"panels": {str(k): v for k, v in _plan(["wide"] * 6 + ["close", "medium"]).items()}})
+    panels = admin.plan_storyboard(sc, {"anatomy": "a soft pink sea cucumber"}, ask=ask)
+    assert len(seen) == 2 and "Problems in your previous plan" in seen[1] and panels[1]["shot"] == "wide"
+    assert "TABLETOP" in seen[0] and "STORY PROPS" in seen[0] and "at least 5 WIDE" in seen[0]
+
+
+def test_grid_items_add_style_refs_and_generic_creature(v2):
+    style = v2 / "pilots" / "_shared" / "style"; style.mkdir(parents=True)
+    for f in admin.STYLE_REFS:
+        (style / Path(f).name).write_bytes(b"x")
+    cuts = [{"cut": i} for i in range(1, 9)]
+    items = admin._grid_items(cuts, _plan(["wide"] * 8), {"anatomy": "a soft pink sea cucumber", "use_as_reference": [{"file": "out/c/card.jpg"}]})
+    assert len(items) == 2 and items[0]["refs"] == ["out/c/card.jpg"] + admin.STYLE_REFS
+    assert "STYLE REFERENCES: the LAST 2" in items[0]["prompt"] and "isopod" not in items[0]["prompt"].lower()
+    assert "isopod" not in admin._OMNI_HEAD.lower() and "isopod" not in admin._OMNI_TAIL.lower()   # 다른 종 지시문에 대왕구족충 금지
+
+
+def test_storyboard_trial_does_not_touch_status(v2, monkeypatch):
+    _prep_pilot(v2, monkeypatch)
+    admin.write_storyboard("test_fish", ask=_fake_vision, get=lambda u: {"results": []}, fetch=_fake_fetch)
+    before = (v2 / "pilots" / "test_fish" / "status.json").read_text(encoding="utf-8")
+    from PIL import Image
+    def gen(req, pilot, out):
+        for n in req["items"][0]["split"]["names"]:
+            Image.new("RGB", (360, 640), (200, 150, 90)).save(out / f"{n}.jpg")
+        return {"ok": True}
+    out = v2 / "pilots" / "test_fish" / "out" / "trial"
+    res = admin.storyboard_trial("test_fish", out=out, ask=_fake_vision, gen=gen)
+    assert res["ok"] and (out / "compare_old_new.jpg").exists() and (out / "plan.json").exists()
+    assert (v2 / "pilots" / "test_fish" / "status.json").read_text(encoding="utf-8") == before

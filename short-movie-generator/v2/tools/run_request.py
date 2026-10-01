@@ -7,6 +7,7 @@
 지원 kind
 - fetch_refs : 라이선스 통과 실사 영상에서 참조 프레임을 균등 추출(비용 0)
 - gen_images : Gemini 이미지 모델로 이미지 생성(유료). 항목마다 참조 이미지 첨부 가능
+- sb_trial   : 미니어처 규칙 시험 콘티 — AI 계획 + 격자 1장(약 $0.14) + 지금 콘티와 비교(상태는 안 바꿈)
 
 보안: 키는 환경변수로만 받고 절대 출력하지 않는다(헤더로만 전달).
 """
@@ -452,13 +453,22 @@ def gen_tts(req: dict, pilot: Path, out: Path) -> dict:
     return {"ok": all("file" in r for r in results), "items": results}
 
 
+def sb_trial(req: dict, pilot: Path, out: Path) -> dict:
+    """미니어처 규칙 시험 콘티(운영자 승인 2026-10-01): 새 규칙으로 AI가 콘티를 계획 → 격자 1장(4칸)만 그림 →
+    지금 콘티와 비교 이미지. 편의 상태(status.json)는 바꾸지 않는다(결과는 out/<요청id>/ 에만)."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import admin                                             # noqa: E402
+    return admin.storyboard_trial(pilot.name, tuple(req.get("cuts", [1, 2, 3, 4])), out=out)
+
+
 def main(path: str) -> int:
     rp = Path(path)
     req = json.loads(rp.read_text(encoding="utf-8"))
     pilot = rp.parent.parent
     out = pilot / "out" / req["id"]
     out.mkdir(parents=True, exist_ok=True)
-    fn = {"fetch_refs": fetch_refs, "gen_images": gen_images, "gen_video": gen_video, "gen_omni": gen_omni, "gen_tts": gen_tts}[req["kind"]]
+    fn = {"fetch_refs": fetch_refs, "gen_images": gen_images, "gen_video": gen_video, "gen_omni": gen_omni, "gen_tts": gen_tts,
+          "sb_trial": sb_trial}[req["kind"]]
     res = fn(req, pilot, out)
     res.update({"request": rp.name, "kind": req["kind"], "ran_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
     (out / "result.json").write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")

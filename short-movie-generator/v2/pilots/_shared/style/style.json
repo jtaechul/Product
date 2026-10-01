@@ -1,0 +1,16 @@
+{
+  "purpose": "콘티 화풍 참고(운영자 승인 2026-10-01) — 시범편 승인 콘티 중 대왕구족충이 보이지 않는 부분만",
+  "files": [
+    {
+      "file": "style_desk_chart.jpg",
+      "from": "bathynomus_giganteus/out/14_storyboard_12/p01.jpg",
+      "shows": "탁상 위 해도·촛불·나침반·점토 어부 배(수제 소품·책상 모서리·따뜻한 조명)"
+    },
+    {
+      "file": "style_ocean_block.jpg",
+      "from": "bathynomus_giganteus/out/14_storyboard_12/p06.jpg (아래쪽 생물 부분 잘라냄)",
+      "shows": "수심 단면 블록 디오라마(바다를 물건처럼 만든 세트)"
+    }
+  ],
+  "rule": "화풍(세트·재료·조명·구도)만 따라 하고, 그 안의 동물·물건을 그대로 베끼지 않는다"
+}

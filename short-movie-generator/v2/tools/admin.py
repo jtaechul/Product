@@ -567,12 +567,12 @@ _GRID_HEAD = ("Create ONE image that is a clean 2x2 grid of FOUR separate, equal
               "real reference images exactly: pale lavender-lilac glossy segmented armour, FLAT dark triangular compound eyes "
               "at the front corners of the head, seven pairs of thin legs, spiny fan-shaped tail plate. "
               "NEVER draw text, letters, numbers, question marks, labels or logos. No human hands or people.\n")
-_OMNI_HEAD = ("Vertical 9:16 video, exactly {dur} seconds, one continuous shot, no cuts. Handcrafted miniature diorama "
+_OMNI_HEAD = ("Vertical 9:16 video, exactly {dur} seconds, one continuous shot, no cuts. Handcrafted tabletop miniature diorama "
               "photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: "
-              "keep every object's shape, size, colour and position consistent with it. The giant isopod (whenever visible) "
+              "keep every object's shape, size, colour and position consistent with it. The main creature (whenever visible) "
               "keeps its exact anatomy and size.\n")
 _OMNI_TAIL = ("\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, symbols, "
-              "labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the isopod growing, "
+              "labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the main creature growing, "
               "shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker.")
 
 
@@ -1387,9 +1387,17 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
 #   콘티 승인 → make_video(컷별 초 단위 Omni 지시문(AI) → Omni Flash 8컷 → 조립(후킹·정답 카드) → 자동 검사 → 승인 대기 · 초당 $0.10)
 #   수정 요청·다시 하기도 같은 함수를 메모와 함께 다시 돌린다(영상은 메모에 'N번' 컷이 있으면 그 컷만 다시 만든다 — 비용 절약).
 STAGE_ACTION = {"script": "write_script", "storyboard": "write_storyboard", "video": "make_video"}
-_MINI_STYLE = ("handcrafted miniature / scale-model photography, strong tilt-shift shallow depth of field, warm soft practical "
-               "lighting, muted grey-green and brown palette; everything except the creature is a deliberately rough, simple, "
-               "hand-made model (chunky clay, wood, foam, paper textures)")
+# ★미니어처 세계관(운영자 승인 2026-10-01 · 실사고: 자동 콘티가 '빈 배경 + 생물 접사'만 그려 아기자기한 맛이 사라짐)
+_MINI_STYLE = ("a handcrafted TABLETOP miniature diorama shot like toy / scale-model photography: the whole world is a small "
+               "hand-made set built on a wooden worktable or inside an open cardboard or wooden display box, lit by a warm desk "
+               "lamp; strong tilt-shift with shallow depth of field and a slightly high camera looking down onto the set; every "
+               "prop and the seabed are cute, chunky and visibly hand-made (felt, cotton-wool marine snow hanging on fine threads, "
+               "crumpled blue cellophane water, painted cardboard backdrops with visible seams, paper-cut rocks and kelp, clay "
+               "with fingerprints, bent wire, tiny LED fairy-light bulbs for any glow); muted warm palette")
+_MINI_CREATURE = ("the creature is the ONLY precise object: an accurately sculpted, hand-painted collectible figurine with satin "
+                  "paint and faint brush texture, with exactly the real anatomy, proportions and colours")
+STYLE_REFS = ["../_shared/style/style_desk_chart.jpg", "../_shared/style/style_ocean_block.jpg"]   # 시범편 승인 콘티(생물 안 보이는 부분)
+SB_WIDE_RATIO, SB_CLOSE_RATIO = 5 / 8, 2 / 8                 # 8컷 중 넓은 세트 샷 5컷 이상 · 접사 2컷 이하
 _RUN_REQUEST = None                                          # 테스트용 대체(요청 파일 경로 → 반환코드)
 
 
@@ -1488,23 +1496,129 @@ head, eyes (shape, position; say 'no eyes' if none), tail/rear, notable structur
 {extra}
 """
 
-_SB_PROMPT = """You are the storyboard artist of a Japanese science YouTube Short made as a handcrafted MINIATURE DIORAMA
-({style}). The creature is the ONLY precise object; its anatomy is fixed: {anatomy}
+_SB_PROMPT = """You are the storyboard artist of a Japanese science YouTube Short made as {style}.
+{creature}. Its anatomy is fixed: {anatomy}
+Real size of the creature: {size_note}
 Plan ONE storyboard panel (the first frame of the video clip) for EACH of the {n} cuts below. HARD RULES:
-- Each panel is a different stage or camera angle; never two consecutive cuts on the same set; cross-section "box" sets at most 2.
-- Show exactly what that cut's narration says; do not invent facts. When the narration mentions a body part, frame that part close.
-- Never place the creature next to boats, people, furniture or other props that would make it look giant; no size-misleading props.
-- NEVER text, letters, numbers, labels, arrows, logos in the image. No real human hands or people. No other animals unless the
-  narration says so. Keep the upper quarter of every panel calm and uncluttered (captions go there).
+- WORLD: every panel is part of that hand-made tabletop world. In at least half of the panels the EDGE of the set is visible
+  (table edge, box wall, backdrop seam, desk lamp, cutting mat, pencil or notebook next to the set).
+- STORY PROPS: act out each cut's narration with tiny hand-made props and painted clay figurines (research ship on paper waves,
+  toy submarine/ROV, clay scientists at a little desk, specimen jar, sketchbook, aquarium, sea chart, calendar ...). Each panel
+  uses at least 2 hand-made props or set materials. Props are welcome — this is what makes the miniature charming.
+- SCALE: clay figurines, boats and vehicles either appear in a panel WITHOUT the creature, or the creature is shown at its true
+  size relative to them (never giant).
+- SHOTS: at least {min_wide} WIDE set shots (the creature at most one third of the frame, the surrounding set clearly visible),
+  at most {max_close} CLOSE shots (only when the narration names a body part); the rest MEDIUM. No two consecutive cuts on the same
+  set; cross-section "box" sets at most 2.
+- Show exactly what that cut's narration says; do not invent facts.
+- NEVER text, letters, numbers, labels, arrows, logos in the image. Painted clay figurines are fine; never real human hands or
+  people. No other animals unless the narration says so. Keep the upper quarter of every panel calm and uncluttered (captions).
 - The LAST cut's panel: the creature is already dim and receding into deep darkness (the video will fade to black).
 - Cut {hook_cut} is used as the 2-second opening hook — make it the most striking, dynamic composition.
 {feedback}
-Return JSON only: {{"panels":{{"1":"English description of panel 1 (set, camera angle, creature pose, light, props)", "2":"..."}}}}
+Return JSON only: {{"panels":{{"1":{{"shot":"wide|medium|close","set_edge":true,"props":["prop 1","prop 2"],
+"desc":"English description of panel 1: set, camera angle, creature pose and size in frame, props, light"}}, "2":{{...}}}}}}
 # Cuts (Japanese narration / Korean / scene idea / seconds)
 {cuts}
 # Facts
 {facts}
 """
+
+
+def validate_storyboard_plan(panels: dict, cuts: list[dict]) -> list[str]:
+    """콘티 계획 코드 검사(운영자 승인 2026-10-01 미니어처 규칙) — 불통과 이유(영어 · AI에게 그대로 돌려줌)."""
+    import math
+    n = len(cuts)
+    probs = []
+    for c in cuts:
+        p = panels.get(c["cut"])
+        if not isinstance(p, dict) or len(str(p.get("desc", ""))) < 40:
+            probs.append(f"Cut {c['cut']}: missing or too short panel description.")
+            continue
+        if p.get("shot") not in ("wide", "medium", "close"):
+            probs.append(f"Cut {c['cut']}: shot must be wide, medium or close.")
+        if len([x for x in p.get("props") or [] if str(x).strip()]) < 2:
+            probs.append(f"Cut {c['cut']}: list at least 2 hand-made props or set materials.")
+    shots = [(panels.get(c["cut"]) or {}).get("shot") for c in cuts]
+    min_wide, max_close = math.ceil(n * SB_WIDE_RATIO), max(1, round(n * SB_CLOSE_RATIO))
+    if shots.count("wide") < min_wide:
+        probs.append(f"Only {shots.count('wide')} WIDE set shots — make at least {min_wide} of the {n} panels wide tabletop shots.")
+    if shots.count("close") > max_close:
+        probs.append(f"{shots.count('close')} CLOSE shots — at most {max_close}; turn the others into wide or medium set shots.")
+    edges = sum(1 for c in cuts if (panels.get(c["cut"]) or {}).get("set_edge") is True)
+    if edges < math.ceil(n / 2):
+        probs.append(f"The set edge is visible in only {edges} panels — show it in at least {math.ceil(n / 2)}.")
+    return probs
+
+
+def plan_storyboard(sc: dict, cc: dict, feedback: str = "", ask=None) -> dict:
+    """AI 콘티 계획 → 코드 검사 → 불통과면 이유를 돌려주고 최대 3번 다시. 반환 {컷: {shot,set_edge,props,desc}}."""
+    import math
+    cuts = [c for c in sc["cuts"] if "tts" in c]
+    ftxt = "\n".join(f"{f['id']}: {f['fact']}" for f in sc.get("facts", []))
+    hook_cut = int((sc.get("hook") or {}).get("cut") or 1)
+    ctxt = "\n".join(f"Cut {c['cut']} ({c.get('sec', '')}s): JP「{c['jp']}」 / KO「{c.get('ko', '')}」 / scene: {c.get('scene_ko', '')}" for c in cuts)
+    base_fb = f"# Operator's revision request (must apply)\n{feedback}\n" if feedback else ""
+    fb, panels, probs = base_fb, {}, []
+    ask = ask or (lambda p: _gemini_text(p, temperature=0.5))
+    for _ in range(3):
+        plan = _json_obj(ask(_SB_PROMPT.format(style=_MINI_STYLE, creature=_MINI_CREATURE, anatomy=cc.get("anatomy", ""),
+                                               size_note=cc.get("size_note") or "see the facts", n=len(cuts),
+                                               min_wide=math.ceil(len(cuts) * SB_WIDE_RATIO), max_close=max(1, round(len(cuts) * SB_CLOSE_RATIO)),
+                                               hook_cut=hook_cut, feedback=fb, cuts=ctxt, facts=ftxt)))
+        panels = {}
+        for k, v in (plan.get("panels") or {}).items():
+            if str(k).isdigit():
+                panels[int(k)] = v if isinstance(v, dict) else {"desc": str(v)}
+        probs = validate_storyboard_plan(panels, cuts)
+        if not probs:
+            return panels
+        fb = base_fb + "# Problems in your previous plan (fix all)\n" + "\n".join("- " + p for p in probs) + "\n"
+    raise RuntimeError("콘티 계획이 미니어처 규칙 검사를 3번 모두 통과하지 못했습니다: " + " / ".join(probs[:3]))
+
+
+def _grid_items(cuts: list[dict], panels: dict, cc: dict) -> list[dict]:
+    """2×2 격자 요청 항목(4컷씩). 참고 이미지 = 생물 카드·실사(앞) + 시범편 화풍 참고(뒤 · 있는 것만)."""
+    refs = [r["file"] for r in cc.get("use_as_reference", [])][:3]
+    style = [r for r in STYLE_REFS if (PILOTS / "_shared" / "style" / Path(r).name).exists()]
+    head = _GRID_HEAD_GENERIC.format(style=_MINI_STYLE, creature=_MINI_CREATURE, anatomy=cc.get("anatomy", ""),
+                                     forbidden=cc.get("forbidden", ""), ns=len(style))
+    items = []
+    for g in range(0, len(cuts), 4):
+        grp = cuts[g:g + 4]
+        names = [f"p{c['cut']:02d}" for c in grp] + [""] * (4 - len(grp))
+        body = "\n".join(f"Panel {i + 1} ({pos}, {panels[c['cut']].get('shot', 'wide')} shot): {panels[c['cut']]['desc']} "
+                         f"Hand-made props: {', '.join(map(str, panels[c['cut']].get('props') or []))}."
+                         for i, (c, pos) in enumerate(zip(grp, ("top-left", "top-right", "bottom-left", "bottom-right"))))
+        items.append({"name": f"grid{g // 4 + 1}", "aspect": "9:16", "size": "2K", "refs": refs + style, "prompt": head + body,
+                      "split": {"rows": 2, "cols": 2, "names": names}})
+    return items
+
+
+def storyboard_trial(pid: str, cut_ids=(1, 2, 3, 4), out: Path | None = None, ask=None, gen=None) -> dict:
+    """미니어처 규칙 시험(운영자 승인 2026-10-01): 상태는 바꾸지 않고, 새 규칙으로 콘티를 계획해 격자 1장(4칸)만 그린 뒤
+    지금 콘티와 나란히 비교 이미지를 만든다. gen: 테스트용 이미지 생성 대체(req, pilot, out) → 결과 dict."""
+    pilot = PILOTS / pid
+    sc, cc = _load(_script_path(pid)), _load(pilot / "creature_card.json") or {}
+    st = load_status(pid)
+    out = Path(out or pilot / "out" / _rid("sb_trial"))
+    out.mkdir(parents=True, exist_ok=True)
+    panels = plan_storyboard(sc, cc, ask=ask)
+    _save(out / "plan.json", {str(k): v for k, v in panels.items()})
+    cuts = [c for c in sc["cuts"] if "tts" in c and c["cut"] in cut_ids][:4]
+    item = _grid_items(cuts, panels, cc)[0]
+    if gen is None:
+        sys.path.insert(0, str(V2 / "tools"))
+        import run_request as RR                                 # noqa: E402
+        gen = RR.gen_images
+    res = gen({"items": [item], "model_preference": ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"]}, pilot, out)
+    new = [out / f"p{c['cut']:02d}.jpg" for c in cuts]
+    old = {p["cut"]: pilot / p["file"] for p in (st.get("artifacts", {}).get("storyboard") or {}).get("panels", [])}
+    if all(f.exists() for f in new):
+        _tile([old[c["cut"]] for c in cuts if c["cut"] in old] + new, out / "compare_old_new.jpg", cols=len(cuts))
+    return {"ok": bool(res.get("ok")) and all(f.exists() for f in new), "panels": {str(k): v for k, v in panels.items()},
+            "image": res, "compare": "compare_old_new.jpg"}
+
 
 _VID_PROMPT = """You write per-second TIMELINE video prompts (English) for Gemini Omni Flash, one per cut, for a Japanese science
 YouTube Short in a handcrafted MINIATURE DIORAMA style ({style}). The attached storyboard panel is each cut's FIRST FRAME.
@@ -1513,6 +1627,8 @@ HARD RULES for every cut:
 - One continuous shot, exactly the cut's duration. Split it into 2-4 time ranges "0.0–2.0s ..." and for EACH range state
   camera position/move, what the creature does, what is and is not visible. Put visual changes at the narration boundaries given.
 - Motion must be concrete (what moves from where to where). Slow, observational camera; no fast pans, no morphing.
+- Keep the hand-made tabletop set visible and the camera at miniature scale (slightly high angle, tilt-shift); never push into a
+  realistic macro of the creature. Set pieces may move gently (paper waves rock, cotton marine snow drifts, fairy lights twinkle).
 - Never invent facts beyond the narration. No text, letters, numbers, symbols, logos. No real human hands or people.
 - Cut {last}: the creature drifts away into deep darkness and the frame goes almost black by the end (episode ending).
 {feedback}
@@ -1521,10 +1637,11 @@ Return JSON only: {{"prompts":{{"1":"TIMELINE text for cut 1","2":"..."}}}}
 {cuts}
 """
 
-_CARD_PROMPT_HEAD = ("A single hand-crafted museum-grade miniature replica of {sci}, photographed as a macro studio shot. "
-                     "The creature must be extremely detailed and anatomically faithful to the attached real reference photos: "
-                     "{anatomy} Resin figure with subtle hand-painted texture, shallow depth of field (tilt-shift macro), warm soft "
-                     "studio light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. "
+_CARD_PROMPT_HEAD = ("A single accurately sculpted, hand-painted collectible miniature figurine of {sci}, photographed as a macro "
+                     "studio shot. Shape, proportions and colour pattern must be anatomically faithful to the attached real reference "
+                     "photos: {anatomy} Satin hand-painted finish with faint brush texture — clearly a crafted figure, not a slick "
+                     "living animal (운영자 승인 2026-10-01). Shallow depth of field (tilt-shift macro), warm desk-lamp light, plain "
+                     "neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. "
                      "No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, "
                      "no split screen, no extra animals, no humans. {forbidden} View: {view}.")
 
@@ -1603,6 +1720,7 @@ def write_storyboard(pid: str, feedback: str = "", ask=None, get=None, fetch=Non
                 check["error"] = f"실사 대조 검사 실패: {str(e)[:120]}"
             compare = _tile([pilot / c for c in cards] + [pilot / r["file"] for r in refs][:2], pilot / "out" / rid / "compare.jpg", cols=2)
             cc = {"status": "자동 생성(운영자 승인 대기)", "at": _now(), "anatomy": anatomy, "forbidden": forbidden,
+                  "size_note": str(desc.get("size_note", "")).strip(),
                   "checklist": checklist, "check": check, "refs": refs,
                   "use_as_reference": [{"file": c, "role": "생물 카드(자동)"} for c in cards] + [{"file": refs[0]["file"], "role": "실사 기준"}],
                   "compare": f"out/{rid}/compare.jpg" if compare else None}
@@ -1610,27 +1728,10 @@ def write_storyboard(pid: str, feedback: str = "", ask=None, get=None, fetch=Non
             st = load_status(pid)
             st.setdefault("cost", {}).setdefault("spent", []).append({"at": _now(), "what": "생물 카드 2장", "usd": round(IMG_USD * 2, 3)})
             _save(status_path(pid), st)
-        anatomy = cc["anatomy"]
-        refs_for = [r["file"] for r in cc.get("use_as_reference", [])][:3]
-        # 8컷 콘티 계획(AI) → 2×2 격자 2장
-        hook_cut = int((sc.get("hook") or {}).get("cut") or 1)
-        ctxt = "\n".join(f"Cut {c['cut']} ({c.get('sec', '')}s): JP「{c['jp']}」 / KO「{c.get('ko', '')}」 / scene: {c.get('scene_ko', '')}" for c in cuts)
-        fb = f"# Operator's revision request (must apply)\n{feedback}\n" if feedback else ""
-        plan = _json_obj((ask if ask else (lambda p: _gemini_text(p, temperature=0.5)))(
-            _SB_PROMPT.format(style=_MINI_STYLE, anatomy=anatomy, n=len(cuts), hook_cut=hook_cut, feedback=fb, cuts=ctxt, facts=ftxt)))
-        panels = {int(k): str(v) for k, v in (plan.get("panels") or {}).items() if str(k).isdigit()}
-        missing = [c["cut"] for c in cuts if c["cut"] not in panels or len(panels[c["cut"]]) < 20]
-        if missing:
-            raise RuntimeError(f"콘티 설명이 빠진 컷: {missing}")
+        # 8컷 콘티 계획(AI · 미니어처 규칙 코드 검사) → 2×2 격자 2장(시범편 화풍 참고 포함)
+        panels = plan_storyboard(sc, cc, feedback, ask=ask)
         rid = _rid("sb")
-        head = _GRID_HEAD_GENERIC.format(style=_MINI_STYLE, anatomy=anatomy, forbidden=cc.get("forbidden", ""))
-        items = []
-        for g in range(0, len(cuts), 4):
-            grp = cuts[g:g + 4]
-            names = [f"p{c['cut']:02d}" for c in grp] + [""] * (4 - len(grp))
-            body = "\n".join(f"Panel {i + 1} ({pos}): {panels[c['cut']]}" for i, (c, pos) in enumerate(zip(grp, ("top-left", "top-right", "bottom-left", "bottom-right"))))
-            items.append({"name": f"grid{g // 4 + 1}", "aspect": "9:16", "size": "2K", "refs": refs_for, "prompt": head + body,
-                          "split": {"rows": 2, "cols": 2, "names": names}})
+        items = _grid_items(cuts, panels, cc)
         rp = pilot / "requests" / f"{rid}.json"
         _save(rp, {"id": rid, "kind": "gen_images", "purpose": "8컷 콘티(자동) — 컷별 시작 이미지 · 2×2 격자",
                    "model_preference": ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"], "items": items})
@@ -1643,7 +1744,8 @@ def write_storyboard(pid: str, feedback: str = "", ask=None, get=None, fetch=Non
                 raise RuntimeError(f"{c['cut']}번 컷 콘티 칸이 없습니다(격자 분할 실패)")
             pfiles.append(f)
             c["keyframe"] = f"out/{rid}/{f.name}"
-            c["panel_desc"] = panels[c["cut"]]
+            c["panel_desc"] = panels[c["cut"]]["desc"]
+            c["panel_shot"] = panels[c["cut"]].get("shot", "")
         sheet = _tile(pfiles, pilot / "out" / rid / "storyboard.jpg", cols=4)
         sc.setdefault("storyboard_history", []).append({"at": _now(), "rid": rid, "feedback": feedback})
         _save(_script_path(pid), sc)
@@ -1651,7 +1753,8 @@ def write_storyboard(pid: str, feedback: str = "", ask=None, get=None, fetch=Non
         st["artifacts"]["storyboard"] = {"sheet": f"out/{rid}/storyboard.jpg" if sheet else None, "request": rid,
                                          "card": [r["file"] for r in cc.get("use_as_reference", [])],
                                          "compare": cc.get("compare"), "card_check": cc.get("check"), "checklist": cc.get("checklist"),
-                                         "panels": [{"cut": c["cut"], "file": c["keyframe"], "desc": c["panel_desc"]} for c in cuts]}
+                                         "panels": [{"cut": c["cut"], "file": c["keyframe"], "desc": c["panel_desc"],
+                                                     "shot": c.get("panel_shot", "")} for c in cuts]}
         st["cost"].setdefault("spent", []).append({"at": _now(), "what": "콘티 격자 2장", "usd": round(IMG_USD * len(items), 3)})
         st["stages"]["storyboard"]["state"] = "review"
         _note(st, "storyboard", "auto", "스토리보드 자동 작성 완료 — 승인 대기" + (" (수정 요청 반영)" if feedback else ""))
@@ -1664,10 +1767,13 @@ def write_storyboard(pid: str, feedback: str = "", ask=None, get=None, fetch=Non
 
 _GRID_HEAD_GENERIC = ("Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin "
                       "plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described "
-                      "below. Shared look for all panels: {style}. The creature must match the attached replica and real reference images "
-                      "exactly and be identical in every panel: {anatomy} {forbidden} Never place the creature next to boats, people or "
-                      "furniture that would make it look giant. Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, "
-                      "letters, numbers, labels, arrows, logos, watermarks. No human hands or real people anywhere.\n")
+                      "below. Shared look for all panels: {style}. {creature}. It must match the attached replica (creature card) and "
+                      "real reference photo exactly and be identical in every panel: {anatomy} {forbidden} "
+                      "STYLE REFERENCES: the LAST {ns} attached images come from another episode of the same series — copy ONLY their "
+                      "hand-made tabletop-diorama look (set building, materials, desk-lamp light, tilt-shift, camera height); never copy "
+                      "their animal, map or objects literally. Clay figurines, boats and vehicles never make the creature look giant. "
+                      "Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, "
+                      "logos, watermarks. Painted clay figurines are allowed; never real human hands or people.\n")
 
 
 def _ensure_tts(pid: str, sc: dict) -> str:
