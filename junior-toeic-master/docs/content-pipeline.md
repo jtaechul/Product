@@ -630,6 +630,10 @@ M1 검수용으로 만들 때 그대로 `status IN ('active','draft')` 를 내�
 2. `import.mjs` 가 **원고에 없는 DB 행을 retired 로 내린다** (지우지 않는다 — 풀이 기록이 가리킨다).
    원고에 있는 파트만 대상이라 파일이 통째로 빠지는 실수에도 한 파트가 다 내려가지 않고,
    잘못 내려가도 다음 배포의 upsert 가 원고의 status 로 되돌린다.
+   배포 로그가 내릴 개수를 파트·상태별로 찍는다. 첫 배포(2026-10-01)에서 실제로 내린 것은
+   **L1 draft 12 · L3 draft 17 · L4 draft 16 = 45개** — L1 복사본 말고도 원고에서 사라진
+   대화·담화 듣기 초안이 33개 더 있었다(연습장에 소리 없는 듣기로 나갔을 수 있다).
+   바로 다음 배포의 로그는 "원고에 없어 내릴 문항: 없음".
 3. `deploy-jumplish.yml` 도 `import.mjs` 가 새 ULID를 지으면 **배포를 멈춘다** (음원·사진 워크플로와 같은 검사).
 4. `generate-questions.yml` → `generate-l1-images.yml` 체인 추가 (`workflow_call` + `ref: ${{ github.ref_name }}` — 10-10).
 5. `img-batch.mjs` 는 **사진만 붙이고 status 를 바꾸지 않는다.** 예전엔 4컷이 모이면 active 로 올렸는데,
