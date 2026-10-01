@@ -7534,5 +7534,461 @@
     ],
     "status": "draft",
     "tmp_id": "R3-0105"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SCHOOL ART SHOW\nOur school is having an Art Show next week! You can see beautiful paintings by students. The show will be in the Main Hall from Wednesday to Friday. On Friday, there will be a special sticker vote. You can put a sticker next to your favorite painting. The winner will get a prize. Come and enjoy the art!",
+      "translation_ko": "학교 미술 전시회\n우리 학교에서 다음 주에 미술 전시회를 엽니다! 학생들이 그린 아름다운 그림들을 볼 수 있어요. 전시회는 수요일부터 금요일까지 중앙 홀에서 열립니다. 금요일에는 특별한 스티커 투표가 있을 거예요. 가장 마음에 드는 그림 옆에 스티커를 붙일 수 있어요. 1등을 한 사람은 상을 받을 거예요. 와서 미술을 즐기세요!"
+    },
+    "questions": [
+      {
+        "stem": "Where will the Art Show be?",
+        "choices": [
+          "In the school yard",
+          "In the Main Hall",
+          "In the art room",
+          "In the gym"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "전시회는 중앙 홀에서 열린다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "The show will be in the Main Hall from Wednesday to Friday.",
+        "why_not": {
+          "0": "운동장 이야기는 없어요",
+          "2": "미술실이 아니라 중앙 홀이에요",
+          "3": "체육관 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "in the Main Hall",
+          "ko": "중앙 홀에서"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can students do on Friday?",
+        "choices": [
+          "Draw a new picture",
+          "Meet a famous painter",
+          "Vote for a painting",
+          "Buy an art book"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "금요일에는 마음에 드는 그림에 스티커를 붙여서 투표할 수 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "On Friday, there will be a special sticker vote.",
+        "why_not": {
+          "0": "새 그림을 그린다는 말은 없어요",
+          "1": "유명한 화가 이야기는 안 나와요",
+          "3": "책을 산다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "sticker vote",
+          "ko": "스티커 투표"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0106"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "To: Bike Club Members\nFrom: Kevin\nSubject: This Saturday's Ride\nHi everyone,\nThis Saturday, we are going to ride our bikes at River Park. Please meet in front of the big fountain at 9:00 a.m. Do not forget to bring your helmet and some water. We will ride for about two hours and then have a picnic. See you all on Saturday!",
+      "translation_ko": "받는 사람: 자전거 동아리 회원들\n보낸 사람: 케빈\n제목: 이번 주 토요일 자전거 모임\n모두 안녕,\n이번 주 토요일에 우리는 강변 공원에서 자전거를 탈 거야. 아침 9시에 큰 분수대 앞에서 모여 줘. 헬멧과 마실 물을 가져오는 것을 잊지 마. 우리는 약 2시간 동안 자전거를 타고 나서 소풍을 즐길 거야. 모두 토요일에 보자!"
+    },
+    "questions": [
+      {
+        "stem": "Where will the club members meet?",
+        "choices": [
+          "In front of the fountain",
+          "At the school gate",
+          "Inside the bike shop",
+          "Under the bridge"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아침 9시에 큰 분수대 앞에서 만나자고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "Please meet in front of the big fountain at 9:00 a.m.",
+        "why_not": {
+          "1": "학교 교문 이야기는 없어요",
+          "2": "자전거 가게 안이 아니에요",
+          "3": "다리 아래 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "in front of",
+          "ko": "~의 앞에"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should the members bring?",
+        "choices": [
+          "A camera and a map",
+          "Some snacks and a mat",
+          "A jacket and gloves",
+          "A helmet and water"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "헬멧과 물을 가져오는 것을 잊지 말라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "Do not forget to bring your helmet and some water.",
+        "why_not": {
+          "0": "카메라와 지도 이야기는 안 나와요",
+          "1": "간식과 돗자리 이야기는 없어요",
+          "2": "재킷과 장갑 이야기는 안 했어요"
+        },
+        "key_expr": {
+          "en": "Do not forget to",
+          "ko": "~하는 것을 잊지 마"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0107"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SUNSHINE BAKERY - Special Holiday Cakes\nAre you looking for a cake for the winter holiday? We are taking orders for our special strawberry cakes. If you order by December 20, you will get a 10% discount. You can order by calling us or visiting our shop. We do not take orders on our website.",
+      "translation_ko": "선샤인 베이커리 - 특별한 겨울 케이크\n겨울 방학을 위한 케이크를 찾고 있나요? 우리는 특별한 딸기 케이크 주문을 받고 있습니다. 12월 20일까지 주문하면 10% 할인을 받을 수 있어요. 우리에게 전화를 걸거나 가게에 찾아와서 주문할 수 있어요. 웹사이트에서는 주문을 받지 않습니다."
+    },
+    "questions": [
+      {
+        "stem": "What will happen if you order by December 20?",
+        "choices": [
+          "You will get a free cookie.",
+          "You will get free delivery.",
+          "You will get a discount.",
+          "You will get a bigger cake."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "12월 20일까지 주문하면 10% 할인을 받는다고 나와 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.shopping"
+        ],
+        "evidence": "If you order by December 20, you will get a 10% discount.",
+        "why_not": {
+          "0": "무료 쿠키를 준다는 말은 없어요",
+          "1": "무료 배달 이야기는 안 나와요",
+          "3": "더 큰 케이크를 준다는 게 아니에요"
+        },
+        "key_expr": {
+          "en": "get a discount",
+          "ko": "할인을 받다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "How can you NOT order a cake?",
+        "choices": [
+          "On the website",
+          "By calling the shop",
+          "By visiting the shop",
+          "On the phone"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "가게 웹사이트에서는 주문을 받지 않는다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.shopping"
+        ],
+        "evidence": "We do not take orders on our website.",
+        "why_not": {
+          "1": "전화를 걸어서 주문할 수 있어요",
+          "2": "가게에 와서 주문할 수 있어요",
+          "3": "전화 주문은 가능해요"
+        },
+        "key_expr": {
+          "en": "take orders",
+          "ko": "주문을 받다"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0108"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "CITY ROBOT EXPO\nDate: November 12 to 14\nPlace: Star Hall\nTickets: 5,000 won for students, 10,000 won for adults.\nCome and see the future! You can play games with robots and watch robot dances. Do not bring food or drinks inside.",
+      "translation_ko": "도시 로봇 엑스포\n날짜: 11월 12일 ~ 14일\n장소: 스타 홀\n표: 학생 5,000원, 어른 10,000원.\n미래를 보러 오세요! 로봇과 게임도 하고 로봇 춤도 볼 수 있어요. 안으로 음식이나 음료수를 가져오지 마세요."
+    },
+    "questions": [
+      {
+        "stem": "How much is the ticket for a student?",
+        "choices": [
+          "5,000 won",
+          "10,000 won",
+          "12,000 won",
+          "14,000 won"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "학생 표는 5,000원이라고 안내문에 쓰여 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.shopping"
+        ],
+        "evidence": "5,000 won for students",
+        "why_not": {
+          "1": "어른 표 값이에요",
+          "2": "날짜 숫자에서 가져왔어요",
+          "3": "날짜 숫자에서 가져왔어요"
+        },
+        "key_expr": {
+          "en": "for students",
+          "ko": "학생을 위한"
+        },
+        "miss_type": {
+          "1": "M.number",
+          "2": "M.number",
+          "3": "M.number"
+        }
+      },
+      {
+        "stem": "What can you NOT do at the expo?",
+        "choices": [
+          "Watch robot dances",
+          "Play games with robots",
+          "Eat snacks inside",
+          "See the future"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "안으로 음식이나 음료수를 가져오지 말라고 했으니 간식을 먹을 수 없어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "Do not bring food or drinks inside.",
+        "why_not": {
+          "0": "로봇 춤을 볼 수 있어요",
+          "1": "로봇과 게임을 할 수 있어요",
+          "3": "미래를 보러 오라고 했어요"
+        },
+        "key_expr": {
+          "en": "bring food or drinks",
+          "ko": "음식이나 음료수를 가져오다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0109"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Join the Table Tennis Club!\nDo you like sports? We play table tennis every Tuesday and Thursday at 4:00 p.m.\nPlace: School Gym on the second floor.\nYou do not need your own paddle. We have many paddles for members.\nSign up at the school office by this Friday!",
+      "translation_ko": "탁구 동아리에 가입하세요!\n운동을 좋아하나요? 우리는 매주 화요일과 목요일 오후 4시에 탁구를 칩니다.\n장소: 2층 학교 체육관.\n자기 탁구채가 없어도 돼요. 회원을 위한 탁구채가 많이 있습니다.\n이번 주 금요일까지 학교 행정실에서 신청하세요!"
+    },
+    "questions": [
+      {
+        "stem": "When does the club meet?",
+        "choices": [
+          "Monday and Wednesday",
+          "Tuesday and Thursday",
+          "Wednesday and Friday",
+          "Thursday and Saturday"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "매주 화요일과 목요일 오후 4시에 모인다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "every Tuesday and Thursday",
+        "why_not": {
+          "0": "다른 요일이에요",
+          "2": "금요일은 신청 마감일이에요",
+          "3": "토요일은 모이지 않아요"
+        },
+        "key_expr": {
+          "en": "every Tuesday and Thursday",
+          "ko": "매주 화요일과 목요일"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where can students sign up?",
+        "choices": [
+          "At the gym",
+          "In the classroom",
+          "At the school office",
+          "On the second floor"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "이번 주 금요일까지 학교 행정실(school office)에서 신청하라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "Sign up at the school office",
+        "why_not": {
+          "0": "탁구를 치는 장소예요",
+          "1": "교실은 나오지 않았어요",
+          "3": "체육관이 있는 층수예요"
+        },
+        "key_expr": {
+          "en": "sign up",
+          "ko": "신청하다, 가입하다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0110"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "How to make a Tomato Cheese Omelet\n1. Wash two tomatoes and cut them into small pieces.\n2. Break three eggs in a bowl and mix them with a little salt.\n3. Cook the eggs in a hot pan for one minute.\n4. Put the tomatoes and cheese on the eggs.\n5. Fold the omelet in half and enjoy it on a plate!",
+      "translation_ko": "토마토 치즈 오믈렛 만드는 법\n1. 토마토 두 개를 씻어서 작게 자르세요.\n2. 그릇에 계란 세 개를 깨고 소금을 조금 넣어 섞으세요.\n3. 뜨거운 프라이팬에 계란을 1분 동안 익히세요.\n4. 계란 위에 토마토와 치즈를 올리세요.\n5. 오믈렛을 반으로 접고 접시에 담아 맛있게 드세요!"
+    },
+    "questions": [
+      {
+        "stem": "How many eggs do you need for this omelet?",
+        "choices": [
+          "One",
+          "Two",
+          "Three",
+          "Four"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "요리법 2번에서 계란 세 개(three eggs)를 깬다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.food"
+        ],
+        "evidence": "Break three eggs in a bowl",
+        "why_not": {
+          "0": "프라이팬에 익히는 시간(1분)이에요",
+          "1": "토마토 개수예요",
+          "3": "이 숫자는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "break eggs",
+          "ko": "계란을 깨다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What do you mix with the eggs in the bowl?",
+        "choices": [
+          "Tomatoes",
+          "Cheese",
+          "Salt",
+          "Water"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "그릇에 계란을 깨고 소금(salt)을 조금 넣어 섞으라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.food"
+        ],
+        "evidence": "mix them with a little salt",
+        "why_not": {
+          "0": "토마토는 나중에 올려요",
+          "1": "치즈도 나중에 올려요",
+          "3": "물은 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "mix them with",
+          "ko": "~와 함께 섞다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0111"
   }
 ]
