@@ -2511,5 +2511,619 @@
     },
     "translation_ko": "간호사가 남자의 열을 재고 있어요.",
     "tmp_id": "L1-0026"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'choosing a book'은 책을 고른다는 뜻이에요. 책꽂이에서 책을 찾는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "A boy is choosing a book from the shelf.",
+    "choice_image_prompts": [
+      "A boy standing in a library, looking at books on a shelf and reaching for one",
+      "A boy sitting on a chair with a book on his face, sleeping",
+      "A boy typing on a computer in a library",
+      "A boy wearing a backpack, walking out the library door"
+    ],
+    "status": "draft",
+    "evidence": "choosing a book",
+    "why_not": {
+      "1": "책을 얼굴에 덮고 자는 사진이에요",
+      "2": "컴퓨터를 하고 있는 사진이에요",
+      "3": "가방을 메고 걸어 나가는 사진이에요"
+    },
+    "key_expr": {
+      "en": "choose a book",
+      "ko": "책을 고르다"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boy library choosing book shelf",
+        "need": [
+          "boy",
+          "book",
+          "shelf"
+        ],
+        "prefer": [
+          "library"
+        ],
+        "avoid": [
+          "computer",
+          "sleeping"
+        ]
+      },
+      {
+        "q": "boy sleeping library book face",
+        "need": [
+          "sleeping"
+        ],
+        "prefer": [
+          "book"
+        ],
+        "avoid": [
+          "shelf",
+          "standing"
+        ]
+      },
+      {
+        "q": "boy typing computer library",
+        "need": [
+          "computer"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "shelf",
+          "book"
+        ]
+      },
+      {
+        "q": "boy backpack walking door",
+        "need": [
+          "backpack",
+          "walking"
+        ],
+        "prefer": [
+          "door"
+        ],
+        "avoid": [
+          "reading"
+        ]
+      }
+    ],
+    "translation_ko": "한 소년이 책꽂이에서 책을 고르고 있어요.",
+    "tmp_id": "L1-0027"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'playing badminton'은 배드민턴을 친다는 뜻이에요. 라켓을 들고 있는 사진을 골라보세요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Two children are playing badminton in the park.",
+    "choice_image_prompts": [
+      "Two children kicking a soccer ball on the grass in a park",
+      "Two children playing badminton with rackets in a park",
+      "Two children sitting on a park bench, drinking water",
+      "Two children riding bicycles on a path in a park"
+    ],
+    "status": "draft",
+    "evidence": "playing badminton",
+    "why_not": {
+      "0": "축구공을 차고 있는 사진이에요",
+      "2": "벤치에 앉아 물을 마시는 사진이에요",
+      "3": "자전거를 타고 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "play badminton",
+      "ko": "배드민턴을 치다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "children soccer ball grass",
+        "need": [
+          "soccer",
+          "children"
+        ],
+        "prefer": [
+          "grass"
+        ],
+        "avoid": [
+          "badminton",
+          "racket"
+        ]
+      },
+      {
+        "q": "children playing badminton park",
+        "need": [
+          "badminton",
+          "racket"
+        ],
+        "prefer": [
+          "park"
+        ],
+        "avoid": [
+          "soccer",
+          "bicycle"
+        ]
+      },
+      {
+        "q": "children sitting bench drinking water",
+        "need": [
+          "bench",
+          "drinking"
+        ],
+        "prefer": [
+          "water"
+        ],
+        "avoid": [
+          "badminton",
+          "playing"
+        ]
+      },
+      {
+        "q": "children riding bicycles park",
+        "need": [
+          "bicycle"
+        ],
+        "prefer": [
+          "park"
+        ],
+        "avoid": [
+          "badminton",
+          "ball"
+        ]
+      }
+    ],
+    "translation_ko": "두 아이가 공원에서 배드민턴을 치고 있어요.",
+    "tmp_id": "L1-0028"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'vase of flowers'는 꽃병을 뜻해요. 탁자 위에 꽃이 담긴 병이 있는 사진이 정답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "A vase of flowers is sitting on the table.",
+    "choice_image_prompts": [
+      "A basket full of apples sitting on a wooden table",
+      "A cup of hot coffee sitting on a table",
+      "A vase full of beautiful flowers sitting on a table",
+      "A stack of empty plates sitting on a table"
+    ],
+    "status": "draft",
+    "evidence": "A vase of flowers",
+    "why_not": {
+      "0": "사과가 담긴 바구니 사진이에요",
+      "1": "따뜻한 커피 잔이 놓인 사진이에요",
+      "3": "빈 접시들이 쌓여 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "vase of flowers",
+      "ko": "꽃병"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "basket apples wooden table",
+        "need": [
+          "basket",
+          "apples"
+        ],
+        "prefer": [
+          "table"
+        ],
+        "avoid": [
+          "flowers",
+          "vase"
+        ]
+      },
+      {
+        "q": "cup hot coffee table",
+        "need": [
+          "cup",
+          "coffee"
+        ],
+        "prefer": [
+          "table"
+        ],
+        "avoid": [
+          "flowers",
+          "vase"
+        ]
+      },
+      {
+        "q": "vase flowers table",
+        "need": [
+          "vase",
+          "flowers"
+        ],
+        "prefer": [
+          "table"
+        ],
+        "avoid": [
+          "basket",
+          "cup"
+        ]
+      },
+      {
+        "q": "stack empty plates table",
+        "need": [
+          "plates",
+          "stack"
+        ],
+        "prefer": [
+          "table"
+        ],
+        "avoid": [
+          "flowers",
+          "food"
+        ]
+      }
+    ],
+    "translation_ko": "꽃병이 탁자 위에 놓여 있어요.",
+    "tmp_id": "L1-0029"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'writing'은 글씨를 쓴다는 뜻이고 'board'는 칠판이에요. 선생님이 칠판에 글을 쓰는 사진을 찾으세요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "A teacher is writing on the board.",
+    "choice_image_prompts": [
+      "A teacher handing out books to students in a classroom",
+      "A teacher sitting at a desk, grading papers",
+      "A teacher erasing the chalkboard with an eraser",
+      "A teacher standing and writing words on the chalkboard"
+    ],
+    "status": "draft",
+    "evidence": "writing on the board",
+    "why_not": {
+      "0": "학생들에게 책을 나눠주는 사진이에요",
+      "1": "책상에 앉아 채점하는 사진이에요",
+      "2": "칠판을 지우개로 지우는 사진이에요"
+    },
+    "key_expr": {
+      "en": "write on the board",
+      "ko": "칠판에 쓰다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "teacher handing out books students",
+        "need": [
+          "teacher",
+          "books"
+        ],
+        "prefer": [
+          "students"
+        ],
+        "avoid": [
+          "board",
+          "writing"
+        ]
+      },
+      {
+        "q": "teacher sitting desk grading papers",
+        "need": [
+          "desk",
+          "papers"
+        ],
+        "prefer": [
+          "sitting"
+        ],
+        "avoid": [
+          "board",
+          "standing"
+        ]
+      },
+      {
+        "q": "teacher erasing chalkboard",
+        "need": [
+          "teacher",
+          "erasing"
+        ],
+        "prefer": [
+          "chalkboard"
+        ],
+        "avoid": [
+          "writing"
+        ]
+      },
+      {
+        "q": "teacher writing chalkboard classroom",
+        "need": [
+          "teacher",
+          "writing",
+          "board"
+        ],
+        "prefer": [
+          "chalkboard"
+        ],
+        "avoid": [
+          "erasing",
+          "desk"
+        ]
+      }
+    ],
+    "translation_ko": "선생님이 칠판에 글씨를 쓰고 있어요.",
+    "tmp_id": "L1-0030"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'taking a picture'는 사진을 찍는다는 뜻이에요. 카메라를 들고 찍는 모습을 찾으면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "A girl is taking a picture with a camera.",
+    "choice_image_prompts": [
+      "A girl painting a picture on a canvas in a park",
+      "A girl holding a camera to her eye, taking a picture",
+      "A girl looking through binoculars at a bird",
+      "A girl talking on a smartphone while walking"
+    ],
+    "status": "draft",
+    "evidence": "taking a picture",
+    "why_not": {
+      "0": "붓으로 그림을 그리는 사진이에요",
+      "2": "망원경으로 새를 보는 사진이에요",
+      "3": "휴대폰으로 통화하는 사진이에요"
+    },
+    "key_expr": {
+      "en": "take a picture",
+      "ko": "사진을 찍다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "girl painting canvas park",
+        "need": [
+          "painting",
+          "canvas"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": [
+          "camera",
+          "picture"
+        ]
+      },
+      {
+        "q": "girl taking picture camera",
+        "need": [
+          "camera",
+          "picture"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": [
+          "painting",
+          "phone"
+        ]
+      },
+      {
+        "q": "girl looking binoculars bird",
+        "need": [
+          "binoculars"
+        ],
+        "prefer": [
+          "bird"
+        ],
+        "avoid": [
+          "camera",
+          "picture"
+        ]
+      },
+      {
+        "q": "girl talking smartphone walking",
+        "need": [
+          "smartphone",
+          "talking"
+        ],
+        "prefer": [
+          "walking"
+        ],
+        "avoid": [
+          "camera"
+        ]
+      }
+    ],
+    "translation_ko": "한 소녀가 카메라로 사진을 찍고 있어요.",
+    "tmp_id": "L1-0031"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "벤치에 앉아서(sitting on a bench) 아이스크림을 먹는(eating ice cream) 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "A boy is sitting on a bench eating ice cream.",
+    "choice_image_prompts": [
+      "A boy sitting on a park bench eating a hamburger",
+      "A boy standing in front of an ice cream shop looking at the menu",
+      "A boy sitting on a park bench eating an ice cream cone",
+      "A boy lying down on a park bench taking a nap"
+    ],
+    "status": "draft",
+    "evidence": "sitting on a bench eating ice cream",
+    "why_not": {
+      "0": "햄버거를 먹고 있는 사진이에요",
+      "1": "가게 앞에 서서 메뉴를 보는 사진이에요",
+      "3": "벤치에 누워서 낮잠을 자는 사진이에요"
+    },
+    "key_expr": {
+      "en": "eat ice cream",
+      "ko": "아이스크림을 먹다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boy sitting bench eating hamburger",
+        "need": [
+          "boy",
+          "hamburger"
+        ],
+        "prefer": [
+          "bench"
+        ],
+        "avoid": [
+          "ice cream",
+          "sleeping"
+        ]
+      },
+      {
+        "q": "boy standing ice cream shop menu",
+        "need": [
+          "standing",
+          "menu"
+        ],
+        "prefer": [
+          "shop"
+        ],
+        "avoid": [
+          "bench",
+          "eating"
+        ]
+      },
+      {
+        "q": "boy sitting bench eating ice cream",
+        "need": [
+          "boy",
+          "ice cream",
+          "bench"
+        ],
+        "prefer": [
+          "eating"
+        ],
+        "avoid": [
+          "hamburger",
+          "sleeping"
+        ]
+      },
+      {
+        "q": "boy lying bench taking nap",
+        "need": [
+          "lying",
+          "nap"
+        ],
+        "prefer": [
+          "bench"
+        ],
+        "avoid": [
+          "eating",
+          "ice cream"
+        ]
+      }
+    ],
+    "translation_ko": "한 소년이 벤치에 앉아 아이스크림을 먹고 있어요.",
+    "tmp_id": "L1-0032"
   }
 ]

@@ -2374,5 +2374,221 @@
     },
     "translation_ko": "나 체육복 가져오는 걸 깜빡했어.",
     "tmp_id": "L2-0066"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's a nice room.",
+      "In room 302.",
+      "Math is my favorite."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'Which classroom'은 '어느 교실'인지 물어보는 말이라서 '302호'가 정답이에요. 'Math'는 과목 이름이라 오답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Which classroom is our next class in?",
+    "status": "draft",
+    "evidence": "Which classroom",
+    "why_not": {
+      "0": "교실에 대한 딴소리예요",
+      "2": "질문과 다르게 과목을 대답했어요"
+    },
+    "key_expr": {
+      "en": "Which classroom",
+      "ko": "어느 교실"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "다음 수업은 어느 교실에서 해?",
+    "tmp_id": "L2-0067"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I bought a new dog.",
+      "It was a long walk.",
+      "No, I'll do it after lunch."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'walk the dog'는 '강아지를 산책시키다'라는 뜻이에요. 산책을 시켰는지 물었으니 '점심 먹고 할 거야'라는 대답이 잘 어울려요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Did you walk the dog this morning?",
+    "status": "draft",
+    "evidence": "walk the dog",
+    "why_not": {
+      "0": "들린 개(dog) 낱말에 낚였어요",
+      "1": "들린 걷기(walk) 낱말에 낚였어요"
+    },
+    "key_expr": {
+      "en": "walk the dog",
+      "ko": "강아지를 산책시키다"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "A.echo"
+    },
+    "translation_ko": "오늘 아침에 강아지 산책시켰어?",
+    "tmp_id": "L2-0068"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "You can buy it online.",
+      "The concert was great.",
+      "No, I don't have a ticket."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'How can I~'는 '어떻게 ~할 수 있어?' 하고 방법을 묻는 말이에요. 티켓을 온라인으로 살 수 있다는 대답이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "How can I book a ticket for the concert?",
+    "status": "draft",
+    "evidence": "How can I",
+    "why_not": {
+      "1": "들린 콘서트 낱말에 낚였어요",
+      "2": "방법을 물었는데 아니오로 답했어요"
+    },
+    "key_expr": {
+      "en": "How can I ~?",
+      "ko": "내가 어떻게 ~할 수 있어?"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "A.yesno"
+    },
+    "translation_ko": "콘서트 티켓은 어떻게 예매할 수 있어?",
+    "tmp_id": "L2-0069"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "We are going to New York.",
+      "By taxi, I think.",
+      "Around 3 o'clock."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'What time'은 시간을 묻는 말이에요. 3시쯤이라고 말한 대답이 정답이에요. 목적지나 교통수단을 말하면 어울리지 않아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.travel"
+    ],
+    "accent": "US",
+    "tts_script": "What time should we leave for the airport?",
+    "status": "draft",
+    "evidence": "What time",
+    "why_not": {
+      "0": "시간이 아니라 장소를 말했어요",
+      "1": "시간이 아니라 수단을 말했어요"
+    },
+    "key_expr": {
+      "en": "What time ~?",
+      "ko": "몇 시에 ~해?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "우리 공항으로 몇 시에 출발해야 해?",
+    "tmp_id": "L2-0070"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I'm reading a book.",
+      "Science is the best.",
+      "Yes, I like school."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'What is your favorite~'은 제일 좋아하는 것을 묻는 말이에요. 과목(subject)을 물었으니 과학이 좋다는 대답이 알맞아요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "What is your favorite subject?",
+    "status": "draft",
+    "evidence": "favorite subject",
+    "why_not": {
+      "0": "질문과 상관없는 딴소리예요",
+      "2": "무엇인지 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "favorite subject",
+      "ko": "제일 좋아하는 과목"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "A.yesno"
+    },
+    "translation_ko": "네가 제일 좋아하는 과목은 뭐야?",
+    "tmp_id": "L2-0071"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "No, not yet.",
+      "I bought some shoes.",
+      "The street is very long."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'Have you been to~'는 '~에 가봤어?' 하고 경험을 묻는 말이에요. 아직 안 가봤다고 말한 'No, not yet.'이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "Have you been to the new bakery on Main Street?",
+    "status": "draft",
+    "evidence": "Have you been to",
+    "why_not": {
+      "1": "빵집에 대한 대답이 아니에요",
+      "2": "들린 거리(street) 낱말에 낚였어요"
+    },
+    "key_expr": {
+      "en": "Have you been to ~?",
+      "ko": "~에 가본 적 있어?"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "A.echo"
+    },
+    "translation_ko": "메인 거리에 있는 새 빵집 가봤어?",
+    "tmp_id": "L2-0072"
   }
 ]

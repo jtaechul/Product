@@ -3594,5 +3594,494 @@
       }
     ],
     "tmp_id": "L3-0044"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Welcome to the Star Cinema. How can I help you?\nM: Hi. I'd like two tickets for the space movie at three o'clock.\nW: I'm sorry, that movie is all sold out. We have seats for the five o'clock show.\nM: Oh, that's too late for us. We'll just come back tomorrow.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 스타 영화관에 오신 것을 환영합니다. 무엇을 도와드릴까요?\n남: 안녕하세요. 3시 우주 영화 표 두 장 사고 싶어요.\n여: 죄송하지만, 그 영화는 모두 매진되었습니다. 5시 영화는 자리가 있습니다.\n남: 아, 그건 저희에게 너무 늦네요. 그냥 내일 다시 올게요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Where are the speakers?",
+        "choices": [
+          "At a library",
+          "At a cinema",
+          "At a park",
+          "At a bank"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여자가 영화관(Cinema)에 온 것을 환영한다고 말했으므로 영화관에 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Welcome to the Star Cinema.",
+        "why_not": {
+          "0": "책이나 도서관 이야기는 없었어요",
+          "2": "공원 이야기는 나오지 않았어요",
+          "3": "은행과 관련된 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "cinema",
+          "ko": "영화관"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why is the man coming back tomorrow?",
+        "choices": [
+          "He forgot his money",
+          "He is very tired",
+          "He needs to meet a friend",
+          "The movie is sold out"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "보고 싶은 3시 영화가 모두 매진되었고, 5시는 너무 늦어서 내일 온다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "I'm sorry, that movie is all sold out.",
+        "why_not": {
+          "0": "돈을 잊어버렸다는 말은 없어요",
+          "1": "피곤하다는 말은 안 나왔어요",
+          "2": "친구를 만난다는 내용은 없었어요"
+        },
+        "key_expr": {
+          "en": "sold out",
+          "ko": "매진된"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0045"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Good morning. I'm here to pick up some medicine for my cat, Bella.\nW: Hello. Let me look at her chart. Oh, the doctor wants to see her first.\nM: Really? But she just had a checkup last month.\nW: Yes, but this medicine is strong. The doctor needs to weigh her again.",
+      "accent": "AU",
+      "tts_voices": {
+        "M": "male",
+        "W": "female"
+      },
+      "translation_ko": "남: 좋은 아침입니다. 제 고양이 벨라의 약을 가지러 왔어요.\n여: 안녕하세요. 차트를 확인해 볼게요. 아, 의사 선생님이 고양이를 먼저 보고 싶어 하세요.\n남: 정말요? 하지만 지난달에 막 건강 검진을 받았는데요.\n여: 네, 하지만 이 약은 독하거든요. 선생님이 고양이 몸무게를 다시 재야 해요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What are the speakers mainly talking about?",
+        "choices": [
+          "Buying a new cat",
+          "Getting medicine for a cat",
+          "Washing a pet dog",
+          "Cleaning the animal clinic"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "남자는 고양이가 먹을 약을 받으러 왔다고 말했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "I'm here to pick up some medicine for my cat",
+        "why_not": {
+          "0": "고양이를 새로 사는 게 아니에요",
+          "2": "강아지를 씻기는 이야기가 아니에요",
+          "3": "병원 청소 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "pick up some medicine",
+          "ko": "약을 가지러 오다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why does the doctor need to see the cat again?",
+        "choices": [
+          "To weigh her",
+          "To give her food",
+          "To brush her teeth",
+          "To take a picture"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "약이 독해서 의사 선생님이 고양이 몸무게를 다시 재봐야 한다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "The doctor needs to weigh her again.",
+        "why_not": {
+          "1": "먹이를 준다는 말은 없었어요",
+          "2": "이를 닦아준다는 내용은 안 나왔어요",
+          "3": "사진을 찍는다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "weigh",
+          "ko": "몸무게를 재다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0046"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Good morning. Are you ready to check out of your room?\nM: Yes. Here is my room key. We had a great stay.\nW: I'm glad to hear that. Would you like me to call a taxi to the airport?\nM: No, thank you. My friend is driving us there.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 좋은 아침입니다. 방을 체크아웃하실 준비가 되셨나요?\n남: 네. 여기 제 방 열쇠가 있습니다. 아주 잘 머물다 가요.\n여: 다행이네요. 공항으로 가는 택시를 불러 드릴까요?\n남: 아니요, 괜찮습니다. 제 친구가 차로 데려다줄 거예요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Where is this conversation taking place?",
+        "choices": [
+          "At an airport",
+          "At a taxi stand",
+          "At a friend's house",
+          "At a hotel"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "방을 다 쓰고 체크아웃하면서 열쇠를 돌려주는 상황이므로 호텔이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.travel"
+        ],
+        "evidence": "Are you ready to check out of your room?",
+        "why_not": {
+          "0": "공항으로 갈 예정이지 공항은 아니에요",
+          "1": "택시 승강장 이야기는 아니에요",
+          "2": "친구 집에서 일어난 대화가 아니에요"
+        },
+        "key_expr": {
+          "en": "check out",
+          "ko": "체크아웃하다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      },
+      {
+        "stem": "How will the man go to the airport?",
+        "choices": [
+          "By walking",
+          "By taking a bus",
+          "By riding with a friend",
+          "By calling a taxi"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "남자는 친구가 차로 공항에 태워다 줄 거라고 대답했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "My friend is driving us there.",
+        "why_not": {
+          "0": "걸어간다는 말은 없었어요",
+          "1": "버스를 탄다는 내용은 안 나왔어요",
+          "3": "여자가 택시를 물어봤지만 거절했어요"
+        },
+        "key_expr": {
+          "en": "driving us there",
+          "ko": "우리를 그곳에 태워다주다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L3-0047"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Mom, where should we put our tent? Next to the river?\nW: No, it gets too cold near the water at night. Let's set it up under those big trees.\nM: Good idea. The trees will give us some shade tomorrow morning.\nW: Exactly. Can you help me carry the bags from the car?",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 엄마, 우리 텐트를 어디에 칠까요? 강 옆에요?\n여: 아니, 밤에는 물 근처가 너무 춥단다. 저 큰 나무들 아래에 설치하자.\n남: 좋은 생각이에요. 내일 아침에 나무들이 그늘을 만들어 줄 거예요.\n여: 맞아. 차에서 가방 옮기는 것 좀 도와줄래?"
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What are the boy and his mom mainly talking about?",
+        "choices": [
+          "Washing their car",
+          "Swimming in the river",
+          "Finding a place for the tent",
+          "Planting a big tree"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "어디에 텐트를 칠지 묻고 정하는 내용이 중심이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "where should we put our tent?",
+        "why_not": {
+          "0": "차는 가방을 꺼내는 곳이에요",
+          "1": "강이 나오지만 수영 이야기는 없어요",
+          "3": "나무가 나오지만 심는 것은 아니에요"
+        },
+        "key_expr": {
+          "en": "put our tent",
+          "ko": "우리 텐트를 치다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Why do they decide to stay under the trees?",
+        "choices": [
+          "The river is too cold at night.",
+          "They want to hide from the rain.",
+          "The car is parked there.",
+          "They want to catch some fish."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "밤에 물 근처는 너무 춥다고 하면서 나무 아래로 가자고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail",
+          "V.leisure"
+        ],
+        "evidence": "it gets too cold near the water at night. Let's set it up under those big trees.",
+        "why_not": {
+          "1": "비가 온다는 말은 없었어요",
+          "2": "차를 거기에 세웠다는 말은 없어요",
+          "3": "물고기를 잡는다는 말은 안 나왔어요"
+        },
+        "key_expr": {
+          "en": "too cold near the water",
+          "ko": "물 근처는 너무 추운"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0048"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: The school sports day is next Friday. Which game are you joining, David?\nM: I want to run in the relay race. What about you, Sarah?\nW: I'm going to play dodgeball with my classmates. We practice every afternoon.\nM: That sounds fun. Let's do our best and win some prizes!",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 학교 체육대회가 다음 주 금요일이야. 데이비드, 넌 어떤 경기에 참가하니?\n남: 나는 이어달리기에서 달리고 싶어. 사라, 넌 어때?\n여: 나는 반 친구들이랑 피구 경기를 할 거야. 우리는 매일 오후에 연습해.\n남: 재밌겠다. 우리 최선을 다해서 상품을 좀 타자!"
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What are the speakers mainly discussing?",
+        "choices": [
+          "Buying new running shoes",
+          "Watching a soccer match",
+          "Doing math homework",
+          "Joining games for sports day"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "체육대회에서 어떤 경기에 참가할지 서로 묻고 답하고 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "The school sports day is next Friday. Which game are you joining",
+        "why_not": {
+          "0": "신발 이야기는 나오지 않았어요",
+          "1": "축구를 본다는 말은 없어요",
+          "2": "숙제 이야기는 안 나왔어요"
+        },
+        "key_expr": {
+          "en": "sports day",
+          "ko": "체육대회"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does the girl plan to do for the event?",
+        "choices": [
+          "Buy a prize",
+          "Play dodgeball",
+          "Run in a race",
+          "Practice soccer"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여자는 반 친구들과 피구를 할 거라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "I'm going to play dodgeball with my classmates.",
+        "why_not": {
+          "0": "상품을 사는 게 아니라 타자고 했어요",
+          "2": "달리기는 남자가 할 경기예요",
+          "3": "축구가 아니라 피구를 연습해요"
+        },
+        "key_expr": {
+          "en": "play dodgeball",
+          "ko": "피구를 하다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0049"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Hello, I'm looking for a warm bed for my cat. Winter is coming.\nW: We have these round beds over here. They are very soft and comfortable.\nM: Oh, my cat will love this green one. I'll take it.\nW: Great choice. I'll put it in a bag for you.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 안녕하세요, 우리 고양이가 쓸 따뜻한 침대를 찾고 있어요. 겨울이 오고 있거든요.\n여: 이쪽에 둥근 침대들이 있어요. 아주 부드럽고 편안하답니다.\n남: 오, 우리 고양이가 이 초록색을 좋아하겠네요. 이걸로 살게요.\n여: 좋은 선택이세요. 가방에 넣어 드릴게요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the man doing in the shop?",
+        "choices": [
+          "Buying a bed for his cat",
+          "Looking for a lost pet",
+          "Selling a green bag",
+          "Getting winter clothes"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "남자는 고양이가 쓸 따뜻한 침대를 찾아서 사고 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.shopping",
+          "V.daily"
+        ],
+        "evidence": "I'm looking for a warm bed for my cat.",
+        "why_not": {
+          "1": "잃어버린 동물을 찾는 게 아니에요",
+          "2": "가방은 여자가 침대를 담아 주는 곳이에요",
+          "3": "겨울이 온다고 했지 옷을 사는 건 아니에요"
+        },
+        "key_expr": {
+          "en": "looking for a warm bed",
+          "ko": "따뜻한 침대를 찾는 중"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Why does the man want a warm bed?",
+        "choices": [
+          "His cat is very sick.",
+          "His old bag is broken.",
+          "He wants to sleep well.",
+          "The weather is getting cold."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "겨울이 오고 있어서 따뜻한 침대가 필요하다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.infer"
+        ],
+        "evidence": "Winter is coming.",
+        "why_not": {
+          "0": "고양이가 아프다는 말은 없었어요",
+          "1": "가방이 망가진 게 아니에요",
+          "2": "남자가 자려는 게 아니에요"
+        },
+        "key_expr": {
+          "en": "Winter is coming.",
+          "ko": "겨울이 오고 있어요."
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L3-0050"
   }
 ]
