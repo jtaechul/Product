@@ -13,12 +13,18 @@
     ],
     "ok": true,
     "sec": 5.0,
-    "mode_used": "edit"
+    "mode_used": "edit",
+    "human_check": [
+      {
+        "human": false,
+        "where": ""
+      }
+    ]
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Request blocked due to safety violations (harmful content). Please modify your input and retry.\",\"code\":\"Unable to show the generated video. The video was filtered out because it violated Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\"}}",
   "last_request": {
-    "file": "10_dog_crowd.json",
-    "ran_at": "2026-10-03T12:19:23Z",
+    "file": "11_paws_fix.json",
+    "ran_at": "2026-10-03T12:31:55Z",
     "ok": true
   }
 }
