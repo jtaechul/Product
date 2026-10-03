@@ -18,6 +18,8 @@ jobs:
       # 스텝의 if 에서는 secrets 컨텍스트를 직접 읽을 수 없기 때문.
       HAS_COUPANG: ${{ secrets.COUPANG_ACCESS_KEY != '' && secrets.COUPANG_SECRET_KEY != '' }}
       HAS_GEMINI: ${{ secrets.GEMINI_API_KEY != '' }}
+      # 관리자 '인기 영상' 메뉴의 유튜브 인기 쇼츠 목록용(구글 클라우드 API 키, YouTube Data API v3)
+      HAS_YOUTUBE: ${{ secrets.YOUTUBE_API_KEY != '' }}
       # 관리자 페이지 '영상 자동 만들기' 버튼이 GitHub에 제작 요청을 올릴 때 쓰는 키(심해 대시보드와 같은 키 재사용)
       HAS_GH_PAT: ${{ secrets.DASHBOARD_GH_PAT != '' || secrets.MOVIEGEN_ADMIN_GH_TOKEN != '' }}
     steps:
@@ -55,6 +57,14 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: printf '%s' "$GEMINI_API_KEY" | npx --yes wrangler@3.90.0 secret put GEMINI_API_KEY
+
+      - name: 유튜브 키 갱신 (GitHub 시크릿에 있을 때만)
+        if: env.HAS_YOUTUBE == 'true'
+        working-directory: book-carousel
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: printf '%s' "$YOUTUBE_API_KEY" | npx --yes wrangler@3.90.0 secret put YOUTUBE_API_KEY
 
       - name: 판매 페이지 전용 주소 배포 (banryeotem)
         working-directory: book-carousel/shop-link

@@ -6812,8 +6812,8 @@ function isoSec(d) {
 }
 
 function ytErrMsg(err) {
-  if (/blocked|not been used|disabled|API_KEY_SERVICE_BLOCKED|accessNotConfigured/i.test(err))
-    return '유튜브 인기 영상을 가져올 열쇠가 막혀 있습니다. 구글 클라우드에서 "YouTube Data API v3"를 켜거나 유튜브용 키(YOUTUBE_API_KEY)를 넣어야 합니다. (' + err.slice(0, 120) + ')';
+  if (/blocked|not been used|disabled|API_KEY_SERVICE_BLOCKED|accessNotConfigured|not supported|OAuth2/i.test(err))
+    return '유튜브 인기 영상을 가져올 유튜브용 키가 아직 없습니다. 구글 클라우드에서 "YouTube Data API v3" 키를 만들어 GitHub 시크릿 YOUTUBE_API_KEY에 넣어 주세요. 그동안 다른 곳에서 본 영상은 파일만 올리면 리메이크할 수 있습니다. (' + err.slice(0, 120) + ')';
   if (/quota/i.test(err)) return '오늘 유튜브 조회 한도를 다 썼습니다. 내일 다시 눌러 주세요.';
   return '유튜브 인기 영상을 가져오지 못했습니다: ' + String(err).slice(0, 160);
 }
