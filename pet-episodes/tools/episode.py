@@ -1996,6 +1996,238 @@ def step_drink(work, log, cfg):
     res["ok"] = True
     res["preview_sec"] = _dur(work / "preview.mp4")
 
+# ---------- 인기 영상 리메이크 + 상품 광고 (사용자 확정 2026-10) ----------
+# 원본(사장님이 올린 남의 영상)은 워커 KV에서 서명 주소로 받아 쓰고 저장소에는 절대 남기지 않는다.
+# 시험 = 첫 구간만 → 사장님 확인 → 본편 = 나머지 구간(시험 구간 재사용) + 상품 끝 장면 + 느끼한 내레이션 + 광고 문구. 노래는 넣지 않는다.
+REMAKE_WORKER = "https://book-carousel.jtaechul.workers.dev"
+REMAKE_MAX_SEC = 40.0          # 원본은 앞 40초까지만(한 편 5달러 한도 안)
+REMAKE_SEG = 9.5               # Omni 편집은 한 번에 10초까지
+REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(2026-10)
+REMAKE_SWAP = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, "
+               "every movement and its timing, camera, background, lights): {swap}. Every replaced head is the Shiba Inu from "
+               "image 1. Paws are thick furry dog paws - no human fingers, nails or bare skin anywhere. Remove any watermark or "
+               "on-screen text.")
+REMAKE_SWAP_DEFAULT = ("1) replace the main person's head with the head of the Shiba Inu from image 1; 2) replace their two hands "
+                       "with furry Shiba front paws; 3) replace their two feet with furry Shiba hind paws; 4) replace every other "
+                       "person with a real dog of various breeds")
+REMAKE_END_START = ("Image 1 is the last frame of the previous shot: keep exactly this Shiba Inu (face, fur, outfit) and this place "
+                    "and lighting. Image 2 is the real product. Create one photorealistic vertical 9:16 frame: {ending} The product "
+                    "from image 2 is clearly visible and in focus right next to the dog, looking exactly like the real product "
+                    "(same shape, colours and label layout). Front legs are furry Shiba legs with paws - no human hands, fingers or "
+                    "skin anywhere. No other added text, no people.")
+REMAKE_END_PROMPT = ("DURATION: 4 seconds. Image 1 is the first frame. {ending} The product stays where it is and never changes "
+                     "shape or label. Same place and lighting, camera almost fixed. Photorealistic. Furry dog legs and paws only - "
+                     "no human hands, fingers or skin. No added text.")
+
+
+def _remake_spend(res: dict, usd: float, what: str, cap: float):
+    """돈이 드는 호출 직전에 부른다. 한도를 넘으면 그 호출을 하지 않고 멈춘다(사용자 확정: 편당 5달러)."""
+    spent = float(res.get("spent", 0))
+    if spent + usd > cap + 1e-6:
+        raise RuntimeError(f"비용 한도 ${cap:.0f}를 넘게 돼 멈췄습니다(지금까지 약 ${spent:.2f}, 다음 '{what}' 약 ${usd:.2f})")
+    res["spent"] = round(spent + usd, 3)
+    res.setdefault("ledger", []).append({"what": what, "usd": round(usd, 3)})
+
+
+def _remake_src(ep_id: str, work: Path) -> Path:
+    import hashlib
+    import hmac
+    sig = hmac.new(_key("GEMINI_API_KEY").encode(), f"remake:{ep_id}".encode(), hashlib.sha256).hexdigest()
+    st, raw = _http(f"{REMAKE_WORKER}/api/remake/src?id={ep_id}&sig={sig}", None, {}, timeout=300)
+    if st != 200 or len(raw) < 10000:
+        raise RuntimeError(f"원본 영상을 받지 못했습니다(HTTP {st}). 7일이 지나 지워졌으면 처음부터 다시 올려 주세요.")
+    src = work / "_src_in.mp4"
+    src.write_bytes(raw)
+    ref = work / "_src.mp4"                               # 앞 40초, 소리 없이, 세로 720 이하로 정리
+    _ff(["-i", str(src), "-t", f"{REMAKE_MAX_SEC}", "-an", "-vf", "scale=-2:'min(1280,ih)',fps=24,setsar=1,format=yuv420p",
+         "-c:v", "libx264", "-crf", "20", str(ref)])
+    src.unlink(missing_ok=True)
+    return ref
+
+
+def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res: dict, cap: float, h: int) -> Path:
+    out = work / f"rm_seg{i + 1}.mp4"
+    piece = work / f"_rm_piece{i + 1}.mp4"
+    _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "20", str(piece)])
+    img = {"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}
+    tries = []
+    for attempt in range(2):                               # 사람 손이 보이면 한도 안에서 한 번만 다시
+        _remake_spend(res, REMAKE_COST["omni_sec"] * seg, f"구간{i + 1} 바꾸기", cap)
+        vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()}
+        body = {"model": CLIP_MODEL, "input": [vid, img, {"type": "text", "text": prompt}],
+                "response_format": {"type": "video", "resolution": "720p"},
+                "generation_config": {"video_config": {"task": "edit"}}}
+        rawo = work / f"_rm_raw{i + 1}_{attempt}.mp4"
+        rawo.write_bytes(_omni_run(key, body))
+        _remake_spend(res, REMAKE_COST["check"] * 3, f"구간{i + 1} 사람 손 검사", cap)
+        chk = _human_parts(rawo, work)
+        tries.append((rawo, chk))
+        if chk.get("human") is False:
+            break
+        if float(res.get("spent", 0)) + REMAKE_COST["omni_sec"] * seg > cap - 0.8:   # 끝 장면 몫은 남겨 둔다
+            break
+        prompt = prompt + " Double-check every frame: only furry dog paws, never a human hand, finger or bare skin."
+    best = next((t for t in tries if t[1].get("human") is False), tries[-1])
+    got = _dur(best[0])
+    k = seg / got if got else 1.0                         # 원본 구간과 같은 길이로(박자 유지)
+    _ff(["-i", str(best[0]), "-an", "-vf", f"setpts=PTS*{k:.5f},scale=-2:{h},fps=24,setsar=1,format=yuv420p",
+         "-t", f"{seg:.3f}", "-c:v", "libx264", "-crf", "23", str(out)])
+    res.setdefault("segs", {})[f"seg{i + 1}"] = {"human": best[1].get("human"), "where": best[1].get("where", ""), "tries": len(tries)}
+    return out
+
+
+def _copy_png(big: str, sub: str, out: Path, W=720, H=1280):
+    """광고 문구: 화면 아래쪽(얼굴을 가리지 않게, 사용자 지적 2026-10) + 아래만 살짝 어둡게."""
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    dr = ImageDraw.Draw(im)
+    dr.rectangle([0, int(H * 0.60), W, H], fill=(0, 0, 0, 90))
+    fb, fs = _f(SUB_FONT, 60), _f(SUB_FONT, 30)
+    y = int(H * 0.645)
+    for ln in [x for x in big.splitlines() if x.strip()][:2]:
+        w = fb.getlength(ln)
+        dr.text(((W - w) / 2, y), ln, font=fb, fill="white", stroke_width=5, stroke_fill="black")
+        y += 78
+    y += 10
+    for ln in [x for x in sub.splitlines() if x.strip()][:2]:
+        w = fs.getlength(ln)
+        dr.text(((W - w) / 2, y), ln, font=fs, fill=(255, 214, 10), stroke_width=3, stroke_fill="black")
+        y += 42
+    im.save(out)
+
+
+def _cta_png(out: Path, W=720, H=1280):
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    dr = ImageDraw.Draw(im)
+    f = _f(SUB_FONT, 32)
+    t = "구매는 프로필 링크에서"
+    dr.text(((W - f.getlength(t)) / 2, int(H * 0.905)), t, font=f, fill="white", stroke_width=3, stroke_fill="black")
+    im.save(out)
+
+
+def step_remake(ep, epdir, work, log, req):
+    import math
+    res = log.setdefault("remake", {})
+    rm = ep.get("remake") or {}
+    cap = float(rm.get("cap", 5))
+    mode = (req.get("remake") or {}).get("mode", "test")
+    key = _key("GEMINI_API_KEY")
+    W, H = 360, 640                                       # 360p(사용자 확정)
+    prompt = REMAKE_SWAP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "))
+    try:
+        ref = _remake_src(epdir.name, work)
+        L = _dur(ref)
+        n = max(1, math.ceil(L / REMAKE_SEG))
+        seg = L / n
+        res.update({"src_sec": round(L, 2), "segments": n})
+        # 1) 시험: 첫 구간(본편에 그대로 쓴다)
+        s1 = work / "rm_seg1.mp4"
+        if not s1.exists():
+            _remake_seg(key, ref, 0, seg, prompt, work, res, cap, H)
+            _ff(["-i", str(s1), "-c", "copy", "-movflags", "+faststart", str(work / "test.mp4")])
+        first = res.get("segs", {}).get("seg1", {})
+        res["test"] = {"ok": True, "human": first.get("human"), "where": first.get("where", "")}
+        res["est_full"] = round(REMAKE_COST["omni_sec"] * seg * (n - 1) + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * 4
+                                + REMAKE_COST["check"] * 3 * n + REMAKE_COST["tts"], 2)
+        if mode != "full":
+            return
+        # 본편 전체 예상이 한도를 넘으면 시작하지 않는다
+        if float(res.get("spent", 0)) + res["est_full"] > cap:
+            raise RuntimeError(f"본편 예상 비용(약 ${res['est_full']:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다. 더 짧은 원본으로 다시 해 주세요.")
+        segs = []
+        for i in range(n):
+            o = work / f"rm_seg{i + 1}.mp4"
+            if not o.exists():
+                _remake_seg(key, ref, i, seg, prompt, work, res, cap, H)
+            segs.append(o)
+        body_v = work / "remake.mp4"
+        ins = []
+        for o in segs:
+            ins += ["-i", str(o)]
+        _ff([*ins, "-filter_complex", "".join(f"[{i}:v]" for i in range(n)) + f"concat=n={n}:v=1:a=0,format=yuv420p[v]",
+             "-map", "[v]", "-c:v", "libx264", "-crf", "23", str(body_v)])
+        # 2) 끝 장면: 마지막 프레임 + 실제 상품 사진 → 첫 장면 → 4초
+        last = work / "_rm_last.png"
+        _ff(["-sseof", "-0.1", "-i", str(body_v), "-frames:v", "1", str(last)])
+        prod = work / "_product.jpg"
+        purl = (ep.get("product") or {}).get("image", "")
+        st, img = _http(purl, None, {}, timeout=60) if purl else (0, b"")
+        if st != 200 or len(img) < 1000:
+            raise RuntimeError("상품 사진을 받지 못했습니다 — 상품을 다시 골라 주세요(사진 없이 만든 광고는 의미 없음)")
+        prod.write_bytes(img)
+        ending = (rm.get("ending") or "The Shiba Inu happily uses and enjoys the product.").rstrip(". ") + "."
+        start = work / "rm_end_start.png"
+        if not start.exists():
+            _remake_spend(res, REMAKE_COST["image"], "끝 장면 그림", cap)
+            r = gen_image(REMAKE_END_START.format(ending=ending), [last, prod], start, "9:16")
+            if not r.get("ok"):
+                raise RuntimeError(f"끝 장면 그림 실패: {r.get('error')}")
+        end_v = work / "rm_end.mp4"
+        if not end_v.exists():
+            tries = []
+            for attempt in range(2):
+                _remake_spend(res, REMAKE_COST["omni_sec"] * 4, "끝 장면 영상", cap)
+                body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(start)},
+                                                       {"type": "text", "text": REMAKE_END_PROMPT.format(ending=ending)}],
+                        "response_format": {"type": "video", "resolution": "720p", "aspect_ratio": "9:16"},
+                        "generation_config": {"video_config": {"task": "image_to_video"}}}
+                raw = work / f"_rm_end_raw{attempt}.mp4"
+                raw.write_bytes(_omni_run(key, body))
+                _remake_spend(res, REMAKE_COST["check"] * 3, "끝 장면 사람 손 검사", cap)
+                chk = _human_parts(raw, work)
+                tries.append((raw, chk))
+                if chk.get("human") is False or float(res.get("spent", 0)) + REMAKE_COST["omni_sec"] * 4 > cap:
+                    break
+            best = next((t for t in tries if t[1].get("human") is False), tries[-1])
+            res["end_check"] = best[1]
+            _norm(best[0], end_v, H)
+        # 3) 느끼한 내레이션(Enceladus, 1.3배 — 사용자 확정 2026-10)
+        vo = work / "rm_vo.wav"
+        if not vo.exists():
+            _remake_spend(res, REMAKE_COST["tts"], "내레이션", cap)
+            model = _pick_model(key, TTS_MODELS)
+            body = {"contents": [{"role": "user", "parts": [{"text": f"{VO_DIRECTION}\n\n대사: {rm.get('vo', '')}"}]}],
+                    "generationConfig": {"responseModalities": ["AUDIO"],
+                                         "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": VOICE_NAME}}}}}
+            code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                              {"x-goog-api-key": key, "Content-Type": "application/json"})
+            parts = [p for c in json.loads(raw).get("candidates", []) for p in c.get("content", {}).get("parts", [])
+                     if "inlineData" in p] if code == 200 else []
+            if not parts:
+                raise RuntimeError(f"내레이션 녹음 실패(HTTP {code})")
+            _pcm_to_wav(base64.b64decode(parts[0]["inlineData"]["data"]), vo, 1.3)
+        # 4) 조립: 리메이크 → (흰 번쩍) 끝 장면(느리게 + 마지막 장면 멈춤) + 문구 + 내레이션. 노래 없음
+        Lb, vl = _dur(body_v), _dur(vo)
+        t0 = max(0.0, Lb - 0.25)                          # 내레이션은 끝 장면 직전부터
+        dd = round(max(4.0, t0 + vl + 0.6 - Lb), 2)        # 끝 장면 길이
+        cta_at = max(0.5, t0 + vl - 1.3 - Lb)
+        copy_png, cta_png = work / "_copy.png", work / "_cta.png"
+        _copy_png(rm.get("big", ""), rm.get("sub", ""), copy_png)
+        _cta_png(cta_png)
+        tot = round(Lb + dd, 2)
+        fit = f"scale={W}:{H}:force_original_aspect_ratio=decrease,pad={W}:{H}:(ow-iw)/2:(oh-ih)/2"   # 원본이 9:16이 아니어도 이어 붙게
+        V = (f"[0:v]{fit},fps=24,setsar=1,format=yuv420p[a];"
+             f"[1:v]{fit},setpts=1.6*PTS,fps=24,tpad=stop_mode=clone:stop_duration=20,trim=duration={dd},setpts=PTS-STARTPTS,"
+             f"setsar=1,format=yuv420p,fade=t=in:st=0:d=0.25:color=white[b0];"
+             f"[2:v]scale={W}:{H},format=rgba,trim=duration={dd},fade=t=in:st=0:d=0.3:alpha=1[t];[b0][t]overlay=(W-w)/2:0[b1];"
+             f"[3:v]scale={W}:{H},format=rgba,trim=duration={dd},fade=t=in:st={cta_at:.2f}:d=0.25:alpha=1[c];[b1][c]overlay=(W-w)/2:0[b];"
+             f"[a][b]concat=n=2:v=1:a=0,format=yuv420p[v];"
+             f"[4:a]volume=1.8,adelay={int(t0 * 1000)}:all=1,apad,atrim=0:{tot},alimiter=limit=0.95[aud]")
+        final = work / "final.mp4"
+        _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo),
+             "-filter_complex", V, "-map", "[v]", "-map", "[aud]", "-c:v", "libx264", "-crf", "22", "-c:a", "aac", "-b:a", "128k",
+             "-movflags", "+faststart", str(final)])
+        _ff(["-ss", f"{Lb + min(dd - 0.3, 2.5):.2f}", "-i", str(final), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos",
+             "-q:v", "3", str(work / "cover.jpg")])
+        log["cover"] = "work/cover.jpg"
+        log["assemble"] = {"ok": True, "sec": round(_dur(final), 2), "note": "리메이크(노래 없음 — 인스타 앱에서 얹기)"}
+        res["full"] = {"ok": True}
+    finally:                                              # 남의 원본·중간 파일은 성공·실패와 관계없이 저장소에 남기지 않는다
+        for f in work.glob("_*"):
+            f.unlink(missing_ok=True)
+        for f in work.glob("rm_seg*_raw*"):
+            f.unlink(missing_ok=True)
+
+
 def main(path: str) -> int:
     rp = Path(path)
     req = json.loads(rp.read_text(encoding="utf-8"))
@@ -2025,6 +2257,8 @@ def main(path: str) -> int:
                     f.unlink(missing_ok=True)
         if "vo" in steps:
             step_vo(work, log, req.get("vo") or {})
+        if "remake" in steps:
+            step_remake(ep, epdir, work, log, req)
         if "swap" in steps:
             try:
                 step_swap(work, log, req.get("swap") or {})

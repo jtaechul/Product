@@ -4765,6 +4765,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   <nav class="tabs">
     <a href="#new" data-tab="new">새 영상</a>
     <a href="#list" data-tab="list">영상 목록</a>
+    <a href="#trend" data-tab="trend">인기 영상</a>
     <a href="#products" data-tab="products">상품 관리</a>
   </nav>
 </div></header>
@@ -4849,6 +4850,42 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <p class="lead">대본으로 장면 그림 → 컷별 4~8초 영상 → 목소리 → 자막·메뉴판·영수증·배경음악까지 넣은 완성본을 자동으로 만듭니다. 한 편에 30~60분, 창을 닫아도 계속 만들어집니다.</p>
     <button class="btn btn-wide" id="epGo" type="button">영상 자동 만들기</button>
     <div class="msg" id="epMsg"></div>
+  </section>
+
+  <section class="box" data-view="trend">
+    <div class="box-hd"><span class="step">01</span><h2>인기 쇼츠 고르기</h2></div>
+    <p class="lead">최근 7일 유튜브 쇼츠 중 시간당 조회수가 빠르게 오르는 순서입니다. "분석"을 누르면 AI가 영상을 보고 우리 시바견으로 바꾸기 좋은지 점수를 매깁니다.</p>
+    <div class="row"><button class="btn btn-2 btn-sm" id="trLoad" type="button">불러오기</button><button class="btn btn-2 btn-sm" id="trRefresh" type="button">새로 찾기</button></div>
+    <div class="msg" id="trMsg"></div>
+    <div class="finds" id="trList"></div>
+  </section>
+  <section class="box" data-view="trend">
+    <div class="box-hd"><span class="step">02</span><h2>원본 영상 올리기</h2></div>
+    <p class="lead" id="trPicked">위에서 "이걸로 리메이크"를 누르세요. 다른 곳(틱톡·인스타)에서 본 영상도 파일만 있으면 됩니다.</p>
+    <div class="f"><label for="trFile">원본 영상 파일 (휴대폰에 저장한 영상, 100MB까지 · 앞 40초까지만 씁니다)</label><input id="trFile" type="file" accept="video/*"></div>
+  </section>
+  <section class="box" data-view="trend">
+    <div class="box-hd"><span class="step">03</span><h2>홍보할 상품</h2></div>
+    <div class="row" id="trIdeas"></div>
+    <div class="row"><input class="grow2" id="trKw" type="text" placeholder="쿠팡에서 상품 찾기"><button class="btn btn-2 btn-sm" id="trSearch" type="button" style="flex:0 0 78px">찾기</button></div>
+    <div class="msg" id="trPMsg"></div>
+    <div class="finds" id="trFinds"></div>
+  </section>
+  <section class="box" data-view="trend">
+    <div class="box-hd"><span class="step">04</span><h2>광고 문구 · 내레이션</h2></div>
+    <p class="lead">AI가 초안을 쓰고, 마음대로 고칠 수 있습니다. 쓴 그대로 영상에 들어갑니다.</p>
+    <button class="btn btn-2 btn-sm" id="trCopyGo" type="button">문구 만들기</button>
+    <div class="f"><label for="trBig">큰 문구 (두 줄)</label><textarea id="trBig" rows="2"></textarea></div>
+    <div class="f"><label for="trSub">작은 문구 (두 줄)</label><textarea id="trSub" rows="2"></textarea></div>
+    <div class="f"><label for="trVo">느끼한 내레이션</label><textarea id="trVo" rows="3"></textarea></div>
+    <div class="f"><label for="trEnd">끝 장면 동작 (영어, AI 영상 지시)</label><textarea id="trEnd" rows="2"></textarea></div>
+    <div class="msg" id="trCMsg"></div>
+  </section>
+  <section class="box" data-view="trend">
+    <div class="box-hd"><span class="step">05</span><h2>시험본 만들기</h2></div>
+    <p class="lead">먼저 앞부분 한 구간(10초 안쪽)만 바꿔 봅니다(약 1달러). 보고 마음에 들면 영상 상세에서 "본편 만들기"를 누르세요. 시험 구간은 본편에 그대로 쓰여 돈이 두 번 들지 않습니다. 한 편 최대 5달러, 넘을 것 같으면 멈춥니다. 노래는 넣지 않습니다(인스타 앱에서 얹기).</p>
+    <button class="btn btn-wide" id="trGo" type="button">시험본 만들기</button>
+    <div class="msg" id="trGoMsg"></div>
   </section>
 
   <section class="box" data-view="list">
@@ -5371,7 +5408,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   function epTitle(e){ return (e.episode?'제'+e.episode+'화 · ':'')+(e.menu||e.id); }
   function epSub(e){ return [e.title, e.sec?Math.round(e.sec)+'초':'', e.ranAt?stampKo(e.ranAt):''].filter(Boolean).join(' · '); }
   function curView(){ var h=(location.hash||'').replace('#',''); var v=h.split('/')[0]||'new';
-    return ['new','list','products','legacy','ep'].indexOf(v)<0 ? {v:'new'} : {v:v, id:decodeURIComponent(h.split('/')[1]||'')}; }
+    return ['new','list','products','legacy','ep','trend'].indexOf(v)<0 ? {v:'new'} : {v:v, id:decodeURIComponent(h.split('/')[1]||'')}; }
   function showView(){
     var cv=curView();
     document.querySelectorAll('[data-view]').forEach(function(el){ el.classList.toggle('view-off', el.getAttribute('data-view')!==cv.v); });
@@ -5456,6 +5493,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       },true));
     }
     d.appendChild(act);
+    if(e.kind==='remake') d.appendChild(remakeBox(e));
     if(e.product&&e.product.title) d.appendChild(shopBox(e));
     if(e.ig&&!e.ig.ok&&e.ig.error) d.appendChild(epEl('div','ep-err','인스타 올리기 실패: '+e.ig.error));
     if(e.post&&(e.post.caption||e.post.hashtags)){
@@ -5532,6 +5570,115 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var sh=epEl('a','btn btn-sm btn-2','판매 페이지 열기'); sh.href='https://banryeotem.pages.dev'; sh.target='_blank'; sh.rel='noopener'; b.appendChild(sh);
     return b;
   }
+  /* ---- 인기 영상 리메이크 (사용자 확정 2026-10) ---- */
+  var tr={video:null, analysis:null, product:null};
+  function trNum(n){ n=Number(n)||0; return n>=10000?(Math.round(n/1000)/10)+'만':n.toLocaleString('ko-KR'); }
+  function trLoad(refresh){
+    say('trMsg','유튜브에서 불러오는 중…','wait'); $('trList').textContent='';
+    post('/api/trend/list',{refresh:!!refresh}).then(function(r){
+      if(!r||!r.success){ say('trMsg',(r&&r.error)||'불러오지 못했습니다.','no'); return; }
+      hide('trMsg');
+      r.items.forEach(function(v){
+        var d=epEl('div','find'); d.style.flexWrap='wrap';
+        var im=document.createElement('img'); im.src=v.thumb; im.alt=''; im.loading='lazy';
+        var t=epEl('div','t'); t.appendChild(epEl('div','n',v.title));
+        t.appendChild(epEl('div','m','조회 '+trNum(v.views)+' · 시간당 '+trNum(v.perHour)+' · '+v.sec+'초 · '+v.channel));
+        var an=epEl('div','ep-sub',''); an.style.flexBasis='100%';
+        var yt=epEl('a','btn btn-2 btn-sm','보기'); yt.href='https://www.youtube.com/shorts/'+v.id; yt.target='_blank'; yt.rel='noopener'; yt.style.flex='none';
+        var ab=epBtn('분석',function(){
+          ab.disabled=true; an.textContent='AI가 영상을 보는 중… (20~40초)';
+          post('/api/trend/analyze',{id:v.id,title:v.title}).then(function(x){
+            ab.disabled=false;
+            if(!x||!x.success){ an.textContent=(x&&x.error)||'분석하지 못했습니다.'; return; }
+            var a=x.analysis; v._a=a;
+            an.textContent='리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:'')+' · 어울리는 상품: '+a.productIdeas.map(function(p){return p.keyword;}).join(', ');
+          }).catch(function(e){ ab.disabled=false; an.textContent='분석하지 못했습니다: '+e.message; });
+        });
+        ab.style.flex='none';
+        var pick=epBtn('이걸로 리메이크',function(){
+          if(!v._a){ alert('먼저 "분석"을 눌러 주세요.'); return; }
+          tr.video=v; tr.analysis=v._a;
+          $('trPicked').textContent='고른 영상: '+v.title+' (리메이크 '+v._a.remakeScore+'점). 이 영상을 휴대폰에 저장해 아래에 올려 주세요.';
+          var box=$('trIdeas'); box.textContent='';
+          v._a.productIdeas.forEach(function(p){ box.appendChild(epBtn(p.keyword,function(){ $('trKw').value=p.keyword; trSearch(); })); });
+          $('trFile').scrollIntoView({behavior:'smooth',block:'center'});
+        },true);
+        pick.style.flex='none';
+        d.appendChild(im); d.appendChild(t); d.appendChild(yt); d.appendChild(ab); d.appendChild(pick); d.appendChild(an);
+        $('trList').appendChild(d);
+      });
+    }).catch(function(e){ say('trMsg','불러오지 못했습니다: '+e.message,'no'); });
+  }
+  function trSearch(){
+    var kw=$('trKw').value.trim(); if(!kw) return;
+    say('trPMsg','쿠팡에서 찾는 중…','wait'); $('trFinds').textContent='';
+    post('/api/coupang/search',{keyword:kw,limit:10}).then(function(r){
+      if(!r||!r.success){ say('trPMsg',(r&&r.error)||'찾지 못했습니다.','no'); return; }
+      hide('trPMsg');
+      (r.products||[]).forEach(function(p){
+        var d=epEl('div','find'); var im=document.createElement('img'); if(p.image) im.src='/api/cover?url='+encodeURIComponent(p.image); im.alt='';
+        var t=epEl('div','t'); t.appendChild(epEl('div','n',p.title));
+        var b=epBtn('이 상품 쓰기',function(){ tr.product={title:p.title,link:p.link,image:p.image||'',category:guessCat(p.title)}; say('trPMsg','상품: '+p.title+' (구매 링크와 판매 페이지 등록은 자동)','ok'); },true);
+        b.style.flex='none'; d.appendChild(im); d.appendChild(t); d.appendChild(b); $('trFinds').appendChild(d);
+      });
+    }).catch(function(e){ say('trPMsg','찾지 못했습니다: '+e.message,'no'); });
+  }
+  $('trLoad').addEventListener('click',function(){ trLoad(false); });
+  $('trRefresh').addEventListener('click',function(){ trLoad(true); });
+  $('trSearch').addEventListener('click',trSearch);
+  $('trCopyGo').addEventListener('click',function(){
+    if(!tr.analysis||!tr.product){ say('trCMsg','영상(01)과 상품(03)을 먼저 골라 주세요.','no'); return; }
+    say('trCMsg','문구를 쓰는 중…','wait');
+    post('/api/remake/copy',{analysis:tr.analysis,product:tr.product}).then(function(r){
+      if(!r||!r.success){ say('trCMsg',(r&&r.error)||'만들지 못했습니다.','no'); return; }
+      $('trBig').value=r.copy.big; $('trSub').value=r.copy.sub; $('trVo').value=r.copy.vo; $('trEnd').value=r.copy.ending; hide('trCMsg');
+    }).catch(function(e){ say('trCMsg','만들지 못했습니다: '+e.message,'no'); });
+  });
+  $('trGo').addEventListener('click',function(){
+    var f=$('trFile').files&&$('trFile').files[0];
+    if(!tr.analysis){ say('trGoMsg','01에서 영상을 분석하고 골라 주세요.','no'); return; }
+    if(!f){ say('trGoMsg','02에 원본 영상 파일을 올려 주세요.','no'); return; }
+    if(!tr.product){ say('trGoMsg','03에서 상품을 골라 주세요.','no'); return; }
+    var copy={big:$('trBig').value.trim(),sub:$('trSub').value.trim(),vo:$('trVo').value.trim(),ending:$('trEnd').value.trim()};
+    if(!copy.big||!copy.vo){ say('trGoMsg','04 문구와 내레이션을 채워 주세요.','no'); return; }
+    if(!confirm('시험본(앞 구간 하나)을 만듭니다. 약 1달러가 들고 15~25분 걸립니다. 시작할까요?')) return;
+    $('trGo').disabled=true; say('trGoMsg','원본을 올리는 중…','wait');
+    post('/api/remake/start',{size:f.size}).then(function(s){
+      if(!s||!s.success) throw new Error((s&&s.error)||'시작하지 못했습니다.');
+      var n=0;
+      function next(){
+        if(n>=s.chunks) return post('/api/remake/commit',{id:s.id,video:tr.video,analysis:tr.analysis,product:tr.product,copy:copy});
+        say('trGoMsg','원본을 올리는 중… '+Math.round(n/s.chunks*100)+'%','wait');
+        return fetch('/api/remake/upload?id='+encodeURIComponent(s.id)+'&n='+n,{method:'POST',body:f.slice(n*s.chunkSize,(n+1)*s.chunkSize)})
+          .then(function(r){return r.json();}).then(function(u){ if(!u||!u.success) throw new Error((u&&u.error)||'올리지 못했습니다.'); n++; return next(); });
+      }
+      return next();
+    }).then(function(c){
+      $('trGo').disabled=false;
+      if(!c||!c.success) throw new Error((c&&c.error)||'시작하지 못했습니다.');
+      say('trGoMsg','시험본 제작을 시작했습니다. 영상 목록에서 확인하세요.','ok');
+      location.hash='#ep/'+encodeURIComponent(c.id);
+    }).catch(function(e){ $('trGo').disabled=false; say('trGoMsg',e.message,'no'); });
+  });
+  // 영상 상세: 리메이크 편은 시험본·비용·본편 만들기
+  function remakeBox(e){
+    var m=e.remake||{}, b=epEl('div','ep-post');
+    b.appendChild(epEl('div','ep-post-hd','인기 영상 리메이크'));
+    if(m.source&&m.source.youtube){ var a=epEl('a','',m.source.title||'원본 보기'); a.href=m.source.youtube; a.target='_blank'; a.rel='noopener'; b.appendChild(a); }
+    b.appendChild(epEl('div','ep-sub','지금까지 쓴 비용 약 $'+(Number(m.spent)||0).toFixed(2)+' / 한도 $'+(m.cap||5)+(m.est_full?' · 본편 예상 추가 $'+Number(m.est_full).toFixed(2):'')));
+    if(m.test&&m.test.ok){
+      b.appendChild(epEl('div','ep-post-lb','시험본 (앞 구간)'));
+      var v=document.createElement('video'); v.controls=true; v.playsInline=true; v.preload='metadata';
+      v.src='/api/episode/video?test=1&id='+encodeURIComponent(e.id)+'&t='+encodeURIComponent(e.ranAt||''); b.appendChild(v);
+      if(m.test.human) b.appendChild(epEl('div','ep-err','검사: 사람 손·맨살이 보일 수 있음 — '+(m.test.where||'')));
+      else b.appendChild(epEl('div','ep-sub','검사: 사람 손·맨살 없음'));
+      if(!(m.full&&m.full.ok)&&e.state!=='running') b.appendChild(epBtn('좋아요, 본편 만들기',function(){
+        epAsk(e.id,'remake_full',{}, '본편을 만들고 있습니다(20~40분). 끝나면 이 화면에 완성 영상이 나옵니다.');
+      },true));
+    }
+    return b;
+  }
+
   function loadEpisode(id){
     post('/api/episode/list',{id:id}).then(function(r){
       var box=$('epDetail'); box.textContent='';
@@ -6513,6 +6660,10 @@ async function handleEpisodeRequest(env, body) {
     if (!log.assemble?.ok) throw new Error('아직 영상이 완성되지 않았습니다.');
     if (log.ig_publish?.media_id) throw new Error('이미 인스타에 올린 편입니다.');
     req = { steps: ['publish'] };
+  } else if (kind === 'remake_full') {
+    const log = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/work/log.json`)) || '{}');
+    if (!log.remake?.test?.ok) throw new Error('시험본이 아직 없습니다.');
+    req = { steps: ['remake'], remake: { mode: 'full' } };
   } else if (kind === 'food') {                        // 오래 걸려서(1~3분) 뒤에서 처리 → 화면은 목록 새로고침으로 확인
     const jid = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
     await vpJobSet(env, jid, { status: 'queued', kind: 'food-redo', body: { id }, createdAt: Date.now() });
@@ -6560,7 +6711,8 @@ async function handleEpisodeList(env, body) {
       cuts: (ep.clips || []).map((c, i) => ({ no: `c${String(i + 1).padStart(2, '0')}`, role: c.role || '', line: c.line || '' })),
       sec: log.assemble?.sec || 0, hasVideo: !!log.assemble?.ok, error: done && !log.last_request?.ok ? String(log.error || '').slice(0, 300) : '',
       ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null, post: postTextOf(ep), hasCover: !!log.cover, foodCheck,
-      product: ep.product || null, kind: ep.kind || '' };
+      product: ep.product || null, kind: ep.kind || '',
+      remake: ep.kind === 'remake' ? { ...(ep.remake || {}), ...(log.remake || {}), source: ep.source || null } : null };
   }));
   return { success: true, episodes: eps };
 }
@@ -6571,14 +6723,14 @@ async function handleEpisodeVideo(env, url, request) {
   if (!EP_ID_RE.test(id)) return new Response('bad id', { status: 400, headers: CORS });
   const v = (url.searchParams.get('v') || EP_BRANCH).replace(/[^\w./-]/g, '');
   const ref = (url.searchParams.get('ref') || '').match(/^(food|product)\.(png|jpg|webp)$/);
-  const kind = ref ? 'ref' : url.searchParams.has('cover') ? 'cover' : url.searchParams.has('frames') ? 'frames' : 'video';
+  const kind = ref ? 'ref' : url.searchParams.has('cover') ? 'cover' : url.searchParams.has('frames') ? 'frames' : url.searchParams.has('test') ? 'test' : 'video';
   const src = ref ? `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/refs/${ref[0]}`
-    : `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/work/${{ cover: 'cover.jpg', frames: 'frames.jpg', video: 'final.mp4' }[kind]}`;
+    : `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/work/${{ cover: 'cover.jpg', frames: 'frames.jpg', video: 'final.mp4', test: 'test.mp4' }[kind]}`;
   const range = request.headers.get('Range');
   const r = await fetch(src, { headers: range ? { Range: range } : {} });
   if (!r.ok && r.status !== 206) return new Response('not found', { status: 404, headers: CORS });
   const h = new Headers({ 'Access-Control-Allow-Origin': '*', 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=300',
-    'Content-Type': kind === 'video' ? 'video/mp4' : ref ? ({ png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' })[ref[2]] : 'image/jpeg' });
+    'Content-Type': (kind === 'video' || kind === 'test') ? 'video/mp4' : ref ? ({ png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' })[ref[2]] : 'image/jpeg' });
   for (const k of ['Content-Length', 'Content-Range', 'ETag']) if (r.headers.get(k)) h.set(k, r.headers.get(k));
   if (url.searchParams.has('dl')) h.set('Content-Disposition', `attachment; filename="${id}${kind === 'cover' ? '-cover.jpg' : '.mp4'}"`);
   return new Response(r.body, { status: r.status, headers: h });
@@ -6643,6 +6795,188 @@ async function runVpJobs(env) {
   }
 }
 
+// ===== 인기 영상 리메이크 + 상품 광고 (사용자 확정 2026-10) =====
+// 흐름: 유튜브 인기 쇼츠 후보(자동) → Gemini 분석 → 사장님이 고르고 원본 파일을 직접 올림 → 상품·광고 문구 →
+//       시험(첫 구간만) → 사장님 확인 → 본편(나머지 구간 + 상품 끝 장면 + 느끼한 내레이션). 노래는 넣지 않는다(인스타 앱에서).
+// 원본 영상은 남의 것이라 공개 저장소에 올리지 않는다 → KV에 7일만 조각으로 두고, 제작 워크플로가 서명 주소로 받아 간다.
+const TREND_QUERIES = ['#shorts 챌린지', '#shorts 밈', '#shorts 댄스', '강아지 #shorts', '고양이 #shorts'];
+const REMAKE_CAP_USD = 5;                          // 한 편 최대 비용(사용자 확정 2026-10)
+const REMAKE_CHUNK = 5 * 1024 * 1024;              // 원본 올리기 조각 크기(KV 한 값 25MB 제한 안쪽)
+const REMAKE_MAX_CHUNKS = 20;                      // 최대 100MB
+const REMAKE_TTL = 7 * 24 * 3600;
+const kstYmd = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(2, 10).replace(/-/g, '');
+
+function isoSec(d) {
+  const m = String(d || '').match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  return m ? (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0) : 0;
+}
+
+function ytErrMsg(err) {
+  if (/blocked|not been used|disabled|API_KEY_SERVICE_BLOCKED|accessNotConfigured/i.test(err))
+    return '유튜브 인기 영상을 가져올 열쇠가 막혀 있습니다. 구글 클라우드에서 "YouTube Data API v3"를 켜거나 유튜브용 키(YOUTUBE_API_KEY)를 넣어야 합니다. (' + err.slice(0, 120) + ')';
+  if (/quota/i.test(err)) return '오늘 유튜브 조회 한도를 다 썼습니다. 내일 다시 눌러 주세요.';
+  return '유튜브 인기 영상을 가져오지 못했습니다: ' + String(err).slice(0, 160);
+}
+
+async function handleTrendList(env, body) {
+  const ck = 'trend_list:' + kstYmd();
+  if (!body.refresh) { const c = await env.PENDING_POSTS.get(ck, 'json').catch(() => null); if (c) return { success: true, ...c, cached: true }; }
+  const key = env.YOUTUBE_API_KEY || await getGeminiKey(env);
+  if (!key) throw new Error('유튜브 키가 없습니다.');
+  const after = new Date(Date.now() - 7 * 864e5).toISOString();
+  const ids = new Set(); let err = '';
+  for (const q of TREND_QUERIES) {
+    const r = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&type=video&videoDuration=short&order=viewCount&regionCode=KR&relevanceLanguage=ko&maxResults=15&publishedAfter=${encodeURIComponent(after)}&q=${encodeURIComponent(q)}&key=${key}`);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { err = j?.error?.message || ('HTTP ' + r.status); if (r.status === 403 || r.status === 400) break; continue; }
+    for (const it of j.items || []) if (it.id?.videoId) ids.add(it.id.videoId);
+  }
+  if (!ids.size) throw new Error(ytErrMsg(err || '결과 없음'));
+  const v = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${[...ids].slice(0, 50).join(',')}&key=${key}`);
+  const vj = await v.json().catch(() => ({}));
+  if (!v.ok) throw new Error(ytErrMsg(vj?.error?.message || ('HTTP ' + v.status)));
+  const now = Date.now();
+  const items = (vj.items || []).map(x => {
+    const views = +x.statistics?.viewCount || 0, hrs = Math.max(1, (now - Date.parse(x.snippet.publishedAt)) / 36e5);
+    return { id: x.id, title: x.snippet.title, channel: x.snippet.channelTitle, thumb: x.snippet.thumbnails?.high?.url || x.snippet.thumbnails?.medium?.url || '',
+      views, likes: +x.statistics?.likeCount || 0, hours: Math.round(hrs), perHour: Math.round(views / hrs), sec: isoSec(x.contentDetails?.duration) };
+  }).filter(x => x.sec > 0 && x.sec <= 90).sort((a, b) => b.perHour - a.perHour).slice(0, 30);   // 급상승 = 시간당 조회수
+  const out = { items, at: new Date().toISOString() };
+  await env.PENDING_POSTS.put(ck, JSON.stringify(out), { expirationTtl: 2 * 24 * 3600 });
+  return { success: true, ...out };
+}
+
+const TREND_ASK = (title) => `이 유튜브 쇼츠("${title}")를 끝까지 보고, 우리 채널 주인공(실사 시바견)으로 리메이크할 수 있는지 판단하라.
+리메이크 방식은 하나뿐이다: 원본 영상을 그대로 두고 등장 인물의 머리·손·발만 시바견으로 바꾸고, 주변 사람은 전부 개로 바꾼다(동작·카메라·배경은 원본 그대로).
+그래서 점수는 "머리·손발만 바꿔도 웃기거나 눈길을 끄는가, 사람이 너무 많거나 손을 클로즈업하거나 글자가 핵심이면 감점"으로 매긴다.
+JSON만:
+{"meme":"무슨 밈·장면인지 한국어 1~2문장","music":"노래 제목 - 가수(모르면 빈칸)","moves":"동작·구성 한국어 한 줄",
+ "remakeScore":0,"why":"점수 이유 한국어 한 줄","risk":"주의할 점 한국어 한 줄(사람 손 클로즈업·글자 위주 등)",
+ "swap":"English numbered list of ONLY what to replace, e.g. 1) replace the dancer's head with the head of the Shiba Inu from image 1; 2) replace the dancer's two hands with furry Shiba front paws; 3) replace the dancer's two feet with furry Shiba hind paws; 4) replace every other person with a real dog of various breeds",
+ "productIdeas":[{"keyword":"쿠팡 검색어(반려견 용품)","why":"이 밈과 이어지는 이유 한 줄"}]}
+productIdeas는 3개. 영상 끝에 주인공이 그 상품을 쓰는 장면으로 자연스럽게 이어질 반려견 용품(예: 춤 뒤 → 강아지 이온음료).`;
+
+async function handleTrendAnalyze(env, body) {
+  const id = String(body.id || '').replace(/[^\w-]/g, '').slice(0, 20);
+  if (!id) throw new Error('영상 번호가 없습니다.');
+  const ck = 'trend_an:' + id;
+  if (!body.refresh) { const c = await env.PENDING_POSTS.get(ck, 'json').catch(() => null); if (c) return { success: true, analysis: c, cached: true }; }
+  const key = await getGeminiKey(env);
+  if (!key) throw new Error('Gemini 키가 없습니다.');
+  let last = '';
+  for (const model of ['gemini-flash-latest', 'gemini-pro-latest']) {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ file_data: { file_uri: `https://www.youtube.com/watch?v=${id}` } }, { text: TREND_ASK(String(body.title || '')) }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 3000, responseMimeType: 'application/json' } }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { last = d?.error?.message || ('HTTP ' + r.status); continue; }
+    try {
+      const o = extractJson((d?.candidates?.[0]?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join(''));
+      const a = { meme: String(o.meme || ''), music: String(o.music || ''), moves: String(o.moves || ''), why: String(o.why || ''), risk: String(o.risk || ''),
+        remakeScore: Math.max(0, Math.min(100, Math.round(Number(o.remakeScore) || 0))), swap: String(o.swap || '').slice(0, 900),
+        productIdeas: (Array.isArray(o.productIdeas) ? o.productIdeas : []).slice(0, 4).map(p => ({ keyword: String(p.keyword || ''), why: String(p.why || '') })).filter(p => p.keyword),
+        at: new Date().toISOString() };
+      await env.PENDING_POSTS.put(ck, JSON.stringify(a), { expirationTtl: 30 * 24 * 3600 });
+      return { success: true, analysis: a };
+    } catch (e) { last = e.message; }
+  }
+  throw new Error('영상을 분석하지 못했습니다: ' + last);
+}
+
+// 상품을 고르면 광고 문구·내레이션·끝 장면을 쓴다. 사장님이 그대로 고칠 수 있다(임의로 빼지 않는다).
+async function handleRemakeCopy(env, body) {
+  const a = body.analysis || {}, p = body.product || {};
+  if (!p.title) throw new Error('상품을 먼저 골라 주세요.');
+  const key = await getGeminiKey(env);
+  const ask = `반려견 광고 영상의 마지막 장면 문구를 써라. 앞부분은 "${a.meme || ''}" 밈을 실사 시바견이 따라 하는 영상이고, 끝에서 시바견이 이 상품을 쓴다: "${p.title}".
+- big: 화면 큰 문구 2줄(줄바꿈 \\n), 각 줄 12자 이내, 시청자 강아지에게 말을 거는 훅(예: "당신의 강아지도\\n갈증을 느낍니다")
+- sub: 작은 문구 2줄(\\n), 상품이 주는 이점을 구체적으로(예: "춤추며 빠져나간 수분과 전해질\\n강아지 전용 이온음료로 빠르게 채워주세요")
+- vo: 부담스러울 만큼 느끼한 남자 내레이션 3~4문장, 짧게. '...'로 뜸. 마지막 문장은 반드시 "프로필 링크에서."
+- ending: English one sentence — what the Shiba Inu does with the product in the final 4-second shot (it must clearly use/enjoy the product, product visible)
+상품명·브랜드명·가격·숫자 금액은 어디에도 쓰지 마라(품목 이름은 된다: 예 "강아지 전용 이온음료").
+JSON만: {"big":"","sub":"","vo":"","ending":""}`;
+  const t = await callGeminiText(key, { system: '광고 카피라이터. JSON만 출력.', user: ask, max_tokens: 800, json: true }).catch(e => { throw new Error('문구를 만들지 못했습니다: ' + e.message); });
+  const o = extractJson(typeof t === 'string' ? t : (t?.text || ''));
+  const banned = menuBannedWords(p.title);
+  const clean = (s) => noPrice(scrubBanned(String(s || ''), banned)).trim();
+  return { success: true, copy: { big: clean(o.big), sub: clean(o.sub), vo: clean(o.vo), ending: String(o.ending || '').slice(0, 400) } };
+}
+
+async function remakeSig(env, id) {
+  const key = await getGeminiKey(env);
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const s = await crypto.subtle.sign('HMAC', k, new TextEncoder().encode('remake:' + id));
+  return [...new Uint8Array(s)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 1) 편 번호 받기 → 2) 원본 조각 올리기 → 3) 확정(커밋 + 시험 요청)
+async function handleRemakeStart(env, body) {
+  const size = Number(body.size) || 0;
+  if (!size) throw new Error('원본 영상 파일을 골라 주세요.');
+  const chunks = Math.ceil(size / REMAKE_CHUNK);
+  if (chunks > REMAKE_MAX_CHUNKS) throw new Error('원본 영상이 너무 큽니다(100MB까지). 앞부분만 잘라 올려 주세요.');
+  const id = `${kstYmd()}-remake-${crypto.randomUUID().replace(/-/g, '').slice(0, 4)}`;
+  await env.PENDING_POSTS.put('remake_meta:' + id, JSON.stringify({ chunks, size, at: Date.now() }), { expirationTtl: REMAKE_TTL });
+  return { success: true, id, chunks, chunkSize: REMAKE_CHUNK };
+}
+
+async function handleRemakeUpload(env, url, request) {
+  const id = url.searchParams.get('id') || '', n = parseInt(url.searchParams.get('n'), 10);
+  const meta = EP_ID_RE.test(id) ? await env.PENDING_POSTS.get('remake_meta:' + id, 'json').catch(() => null) : null;
+  if (!meta || !(n >= 0 && n < meta.chunks)) return Response.json({ success: false, error: '올리기 정보가 없습니다. 처음부터 다시 해 주세요.' }, { headers: CORS });
+  const buf = await request.arrayBuffer();
+  if (!buf.byteLength || buf.byteLength > REMAKE_CHUNK + 1024) return Response.json({ success: false, error: '조각 크기가 맞지 않습니다.' }, { headers: CORS });
+  await env.PENDING_POSTS.put(`remake_src:${id}:${n}`, buf, { expirationTtl: REMAKE_TTL });
+  return Response.json({ success: true, n }, { headers: CORS });
+}
+
+async function handleRemakeSrc(env, url) {
+  const id = url.searchParams.get('id') || '';
+  if (!EP_ID_RE.test(id) || url.searchParams.get('sig') !== await remakeSig(env, id)) return new Response('forbidden', { status: 403, headers: CORS });
+  const meta = await env.PENDING_POSTS.get('remake_meta:' + id, 'json').catch(() => null);
+  if (!meta) return new Response('expired', { status: 404, headers: CORS });
+  const parts = [];
+  for (let n = 0; n < meta.chunks; n++) {
+    const b = await env.PENDING_POSTS.get(`remake_src:${id}:${n}`, 'arrayBuffer');
+    if (!b) return new Response('missing chunk', { status: 404, headers: CORS });
+    parts.push(new Uint8Array(b));
+  }
+  return new Response(new Blob(parts), { headers: { 'Content-Type': 'video/mp4', 'Cache-Control': 'no-store' } });
+}
+
+async function handleRemakeCommit(env, body) {
+  const id = String(body.id || '');
+  const meta = EP_ID_RE.test(id) ? await env.PENDING_POSTS.get('remake_meta:' + id, 'json').catch(() => null) : null;
+  if (!meta) throw new Error('원본 올리기 정보가 없습니다. 처음부터 다시 해 주세요.');
+  for (let n = 0; n < meta.chunks; n++) if (!(await env.PENDING_POSTS.get(`remake_src:${id}:${n}`, 'stream'))) throw new Error(`원본 ${n + 1}번째 조각이 올라가지 않았습니다. 다시 올려 주세요.`);
+  const p = body.product || {}, c = body.copy || {}, v = body.video || {}, a = body.analysis || {};
+  if (!p.title || !p.link) throw new Error('상품과 쿠팡 링크를 정해 주세요.');
+  if (!c.big || !c.vo) throw new Error('광고 문구와 내레이션을 채워 주세요.');
+  const ep = { kind: 'remake', menuName: `리메이크 · ${String(v.title || a.meme || '').slice(0, 28)}`, clips: [],
+    source: { youtube: v.id ? `https://www.youtube.com/watch?v=${v.id}` : '', title: v.title || '', music: a.music || '' },
+    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cap: REMAKE_CAP_USD },
+    caption: `${String(c.big).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
+    hashtags: ['#시바견', '#강아지', '#밈'],
+    product: { title: p.title, brand: p.brand || '', category: p.category || '기타', reason: String(c.sub || '').replace(/\n/g, ' '), link: p.link, image: p.image || '' } };
+  const dir = `${EP_ROOT}/${id}`;
+  await ghCommit(env, [
+    { path: `${dir}/episode.json`, text: JSON.stringify(ep, null, 2) },
+    { path: `${dir}/requests/01_remake_test.json`, text: JSON.stringify({ id, steps: ['remake'], remake: { mode: 'test' } }) },
+  ], `pet: ${id} 인기 영상 리메이크 시험 요청`);
+  await env.PENDING_POSTS.put(`ep_meta:${id}`, JSON.stringify({ title: p.title, menu: ep.menuName, at: Date.now() }));
+  // 홍보 상품은 판매 페이지(인스타 프로필 링크)에 바로 올린다 — 같은 이름이 있으면 그 번호에 덮어쓴다
+  let shopNo = null;
+  try {
+    const cat = (await env.PENDING_POSTS.get('book_catalog', 'json').catch(() => null)) || [];
+    shopNo = (cat.find(b => b.title === p.title) || {}).number || await reserveBookNumber(env);
+    await addBookToCatalog(env, { bookInfo: { title: p.title, author: p.brand || '', category: p.category || '기타', coreMessage: ep.product.reason },
+      bookNumber: shopNo, pipelineId: null, coupangLink: p.link, cover: p.image || '' });
+  } catch {}
+  return { success: true, id, shopNo };
+}
+
 // ===== 메인 라우터 =====
 export default {
   async fetch(request, env, ctx) {
@@ -6700,6 +7034,9 @@ export default {
           return new Response('error', { status: 502, headers: CORS });
         }
       }
+
+      if (url.pathname === '/api/remake/upload') return await handleRemakeUpload(env, url, request);
+      if (url.pathname === '/api/remake/src') return await handleRemakeSrc(env, url);
 
       // instagram-webhook은 GET/POST 모두 처리 + raw request 필요 → body 파싱 전에 분기
       if (url.pathname === '/api/instagram-webhook') {
@@ -6979,6 +7316,11 @@ export default {
           }
         }
         else if (url.pathname === '/api/episode/request') result = await handleEpisodeRequest(env, body);
+        else if (url.pathname === '/api/trend/list') result = await handleTrendList(env, body);
+        else if (url.pathname === '/api/trend/analyze') result = await handleTrendAnalyze(env, body);
+        else if (url.pathname === '/api/remake/copy') result = await handleRemakeCopy(env, body);
+        else if (url.pathname === '/api/remake/start') result = await handleRemakeStart(env, body);
+        else if (url.pathname === '/api/remake/commit') result = await handleRemakeCommit(env, body);
         else if (url.pathname === '/api/episode/list') result = await handleEpisodeList(env, body);
         else if (url.pathname === '/api/telegram-recipients') {
           // 앱에서 텔레그램 추가 수신자(채팅 ID) 등록/삭제/조회 (터미널·대시보드 없이).
