@@ -11,13 +11,13 @@
         "ok": true
       }
     ],
-    "ok": "start_only",
+    "ok": true,
     "sec": 5.0
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Request blocked due to safety violations (harmful content). Please modify your input and retry.\",\"code\":\"Unable to show the generated video. The video was filtered out because it violated Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\"}}",
   "last_request": {
-    "file": "06_outfit_start.json",
-    "ran_at": "2026-10-03T12:00:16Z",
+    "file": "07_outfit_dance.json",
+    "ran_at": "2026-10-03T12:02:26Z",
     "ok": true
   }
 }
