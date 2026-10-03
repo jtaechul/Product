@@ -8,7 +8,7 @@
       {
         "task": "edit",
         "res": "720p",
-        "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}"
+        "ok": true
       }
     ],
     "ok": true,
@@ -16,15 +16,15 @@
     "mode_used": "edit",
     "human_check": [
       {
-        "human": false,
-        "where": ""
+        "human": true,
+        "where": "bottom: bare human feet and toes visible beneath the pants cuffs of the central figure on the platform"
       }
     ]
   },
-  "error": "Omni가 춤 영상 참고 입력을 받지 않았습니다",
+  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}",
   "last_request": {
-    "file": "17_no_humans.json",
-    "ran_at": "2026-10-03T13:06:27Z",
+    "file": "18_no_humans2.json",
+    "ran_at": "2026-10-03T13:09:24Z",
     "ok": false
   },
   "drink": {
