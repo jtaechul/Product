@@ -1693,10 +1693,12 @@ def step_dance(work, log, cfg):
 
 # ---------- 춤 밈 끝 장면: 무대에서 내려와 펫 이온음료를 음미(사용자 확정 2026-10) ----------
 # 병은 AI가 그리지 않는다(글자가 뭉개짐) → 쿠팡 실제 상품 사진에서 병 하나를 잘라 장면에 붙이고 병 전체를 흐림 처리한다.
-BRIDGE_PROMPT = ("Continue this exact video seamlessly for 3 more seconds in the same night scene, same lighting, same dog crowd: the "
+BRIDGE_PROMPT = ("DURATION: 3 seconds. Image 1 is the first frame (the end of the dance) - continue seamlessly in the same night scene, same lighting, same dog crowd: the "
                  "Shiba Inu in the striped polo, wide trousers and sunglasses finishes its last dance move, hops down from the "
                  "platform and walks on its hind legs to a small round wooden bar table at the side of the yard, then stops in front "
-                 "of it. The dog's front legs stay thick furry Shiba legs with paws - never human hands, fingers or bare skin. "
+                 "of it. While walking it keeps its front legs relaxed close to its chest. The dog's front legs stay thick, fully "
+                 "furry orange-and-cream Shiba legs with round paws coming out of the short sleeves - never human arms, hands, "
+                 "fingers or bare skin. "
                  "Its hind feet under the trouser hems are furry dog paws, never bare human feet. "
                  "The crowd is only dogs, no raised human arms or hands anywhere in the background. Camera follows smoothly. "
                  "Photorealistic. No text, no humans.")
@@ -1747,26 +1749,27 @@ def step_drink(work, log, cfg):
     # 1) 연결: 춤 영상을 이어 늘려 내려와 테이블까지 걸어가게(같은 밤 장면)
     bridge = work / "bridge.mp4"
     if not bridge.exists() or "bridge" in cfg.get("redo", []):
-        vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(dance.read_bytes()).decode()}
-        body = {"model": CLIP_MODEL, "input": [vid, {"type": "text", "text": BRIDGE_PROMPT}],
-                "response_format": {"type": "video", "resolution": "720p"},
-                "generation_config": {"video_config": {"task": "extend"}}}
-        raw = work / "_bridge_raw.mp4"
-        raw.write_bytes(_omni_run(key, body))
-        d_dance, d_raw = _dur(dance), _dur(raw)
-        res["bridge_raw_sec"] = d_raw
-        # 연장 결과가 원본을 포함해 오면 뒷부분(새로 생긴 구간)만 쓴다
-        tail = work / "_bridge_tail.mp4"
-        if d_raw > d_dance + 1.0:
-            _ff(["-ss", f"{d_dance:.2f}", "-i", str(raw), "-an", "-c:v", "libx264", "-crf", "20", str(tail)])
+        # 연장(extend)은 원본의 사람 팔 느낌까지 끌고 와서(2026-10 실측 2회 불합격) → 춤 마지막 장면을 첫 장면으로 새로 만든다
+        first = work / "_dance_last.png"
+        _ff(["-sseof", "-0.1", "-i", str(dance), "-frames:v", "1", str(first)])
+        tail = work / "_bridge_raw.mp4"
+        res["bridge_check"] = []
+        fix = ""
+        for attempt in range(2):
+            body = {"model": CLIP_MODEL,
+                    "input": [{"type": "image", **_b64img(first)}, {"type": "text", "text": BRIDGE_PROMPT + fix}],
+                    "response_format": {"type": "video", "resolution": "720p", "aspect_ratio": "9:16"},
+                    "generation_config": {"video_config": {"task": "image_to_video"}}}
+            tail.write_bytes(_omni_run(key, body))
+            chk = _human_parts(tail, work)
+            res["bridge_check"].append(chk)
+            if not chk.get("human"):
+                break
+            fix = f" The previous attempt wrongly showed human body parts ({chk.get('where', '')}); this time the arms must be furry Shiba legs."
         else:
-            raw.replace(tail)
-        chk = _human_parts(tail, work)
-        res["bridge_check"] = chk
-        if chk.get("human"):
-            raise RuntimeError(f"연결 장면에 사람 손·맨살: {chk.get('where', '')}")
+            raise RuntimeError(f"연결 장면에 사람 손·맨살(2회): {chk.get('where', '')}")
         _norm(tail, bridge, H)
-        for f in (raw, tail):
+        for f in (first, tail):
             f.unlink(missing_ok=True)
     # 2) 테이블 첫 장면: 연결 장면 마지막 프레임 + 실제 병 사진
     last = work / "_bridge_last.png"
