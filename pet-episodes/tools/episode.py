@@ -1497,7 +1497,7 @@ DANCE_START = ("Reference image 1 is our character: a real Shiba Inu (keep exact
                "platform above a cheering crowd at a night outdoor courtyard party, both front legs spread wide to the sides like the "
                "dancer's starting pose, strings of warm bulb lights overhead, a strong red stage light from the front, an old building "
                "facade behind, people in the crowd raising phones (backs of heads, no clear faces). Full body of the dog visible, "
-               "centred, same camera distance and angle as reference image 2. The human dancer from reference image 2 must NOT appear. "
+               "centred, same camera distance and angle as reference image 2. Natural thick fluffy cream-white fur fully covers the belly and groin area (family-friendly, nothing anatomical visible), tail curled up behind. The human dancer from reference image 2 must NOT appear. "
                "No text, no logos, no watermark.")
 DANCE_PROMPT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference: the Shiba Inu in image 1 performs "
                 "exactly the same dance as the dancer in the video, beat for beat — Tecktonik / electro dance: fast arm sweeps, "
@@ -1545,6 +1545,11 @@ def step_dance(work, log, cfg):
     if st != 200 or len(raw) < 10000:
         raise RuntimeError(f"참고 춤 영상을 못 받았습니다(HTTP {st})")
     ref.write_bytes(raw)
+    if cfg.get("crop"):                                     # 춤추는 사람만 남기고 관객 얼굴을 줄인다(안전 필터 대책)
+        cropped = work / "_ref_crop.mp4"
+        _ff(["-i", str(ref), "-an", "-vf", f"crop={cfg['crop']},scale=360:640,format=yuv420p", "-c:v", "libx264", "-crf", "24", str(cropped)])
+        cropped.replace(ref)
+        raw = ref.read_bytes()
     first = work / "_ref_first.jpg"
     _ff(["-i", str(ref), "-frames:v", "1", str(first)])
     start = work / "dance_start.png"
@@ -1557,7 +1562,7 @@ def step_dance(work, log, cfg):
     img = {"type": "image", **_b64img(start)}
     txt = {"type": "text", "text": DANCE_PROMPT}
     tries = []
-    for task, res_ in (("video_to_video", "480p"), ("video_to_video", "720p"), ("reference_to_video", "720p"), ("image_to_video", "720p")):
+    for task, res_ in (("reference_to_video", "720p"),):    # Omni가 받는 task: text_to_video·image_to_video·reference_to_video·edit·extend
         body = {"model": CLIP_MODEL, "input": [img, vid, txt],
                 "response_format": {"type": "video", "resolution": res_, "aspect_ratio": "9:16"},
                 "generation_config": {"video_config": {"task": task}}}
@@ -1567,7 +1572,7 @@ def step_dance(work, log, cfg):
             break
         except Exception as e:  # noqa: BLE001
             tries.append({"task": task, "res": res_, "error": str(e)[:300]})
-            if "HTTP 4" not in str(e):                     # 요청 형식 오류가 아니면(생성 실패) 더 돌리지 않는다 — 비용 보호
+            if "HTTP 4" not in str(e) or "safety" in str(e):   # 생성 실패·안전 차단이면 더 돌리지 않는다 — 비용 보호
                 res["tries"] = tries
                 raise
     else:
@@ -1611,7 +1616,11 @@ def main(path: str) -> int:
         if "ig_probe" in steps:
             step_ig_probe(log)
         if "dance" in steps:
-            step_dance(work, log, req.get("dance") or {})
+            try:
+                step_dance(work, log, req.get("dance") or {})
+            finally:                                         # 남의 영상(참고 춤)은 성공·실패와 관계없이 저장소에 남기지 않는다
+                for f in work.glob("_ref*"):
+                    f.unlink(missing_ok=True)
         if not ep["clips"]:
             raise StopIteration
         if "voices" in steps:
