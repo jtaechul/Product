@@ -1,0 +1,36 @@
+[
+  { "code": "SEC.LC", "name_ko": "듣기 전체", "section": "LC", "part": null, "exam_weight": 0 },
+  { "code": "SEC.RC", "name_ko": "읽기 전체", "section": "RC", "part": null, "exam_weight": 0 },
+
+  { "code": "G.tense", "name_ko": "시제", "section": "RC", "part": null, "exam_weight": 1.2 },
+  { "code": "G.agreement", "name_ko": "주어-동사 수일치", "section": "RC", "part": null, "exam_weight": 1.0 },
+  { "code": "G.pos", "name_ko": "품사 자리", "section": "RC", "part": null, "exam_weight": 1.0 },
+  { "code": "G.prep", "name_ko": "전치사", "section": "RC", "part": null, "exam_weight": 1.0 },
+  { "code": "G.conj", "name_ko": "접속사·연결어", "section": "RC", "part": null, "exam_weight": 0.8 },
+  { "code": "G.pronoun", "name_ko": "대명사", "section": "RC", "part": null, "exam_weight": 0.6 },
+  { "code": "G.modal", "name_ko": "조동사", "section": "RC", "part": null, "exam_weight": 0.6 },
+  { "code": "G.compare", "name_ko": "비교 표현", "section": "RC", "part": null, "exam_weight": 0.5 },
+  { "code": "G.toinf", "name_ko": "to부정사·동명사", "section": "RC", "part": null, "exam_weight": 0.6 },
+  { "code": "G.passive", "name_ko": "수동태 기초", "section": "RC", "part": null, "exam_weight": 0.4 },
+
+  { "code": "V.daily", "name_ko": "일상생활 어휘", "section": "ALL", "part": null, "exam_weight": 1.0 },
+  { "code": "V.school", "name_ko": "학교·수업 어휘", "section": "ALL", "part": null, "exam_weight": 0.9 },
+  { "code": "V.travel", "name_ko": "여행·교통 어휘", "section": "ALL", "part": null, "exam_weight": 0.7 },
+  { "code": "V.food", "name_ko": "음식·주문 어휘", "section": "ALL", "part": null, "exam_weight": 0.7 },
+  { "code": "V.shopping", "name_ko": "쇼핑·가격 어휘", "section": "ALL", "part": null, "exam_weight": 0.6 },
+  { "code": "V.work", "name_ko": "직장·업무 기초 어휘", "section": "ALL", "part": null, "exam_weight": 0.5 },
+  { "code": "V.leisure", "name_ko": "취미·여가 어휘", "section": "ALL", "part": null, "exam_weight": 0.6 },
+
+  { "code": "LS.photo", "name_ko": "사진 상황 파악", "section": "LC", "part": "L1", "exam_weight": 0.6 },
+  { "code": "LS.qr", "name_ko": "질문 의도 파악", "section": "LC", "part": "L2", "exam_weight": 2.0 },
+  { "code": "LS.detail", "name_ko": "세부 정보 듣기", "section": "LC", "part": null, "exam_weight": 1.5 },
+  { "code": "LS.gist", "name_ko": "주제·목적 파악(듣기)", "section": "LC", "part": null, "exam_weight": 1.2 },
+  { "code": "LS.infer", "name_ko": "화자 의도 추론", "section": "LC", "part": null, "exam_weight": 0.8 },
+  { "code": "LS.accent", "name_ko": "발음 변형 적응", "section": "LC", "part": null, "exam_weight": 0.3 },
+
+  { "code": "RS.scan", "name_ko": "정보 찾기", "section": "RC", "part": null, "exam_weight": 1.4 },
+  { "code": "RS.gist", "name_ko": "글의 목적·주제", "section": "RC", "part": null, "exam_weight": 1.2 },
+  { "code": "RS.context", "name_ko": "문맥 완성", "section": "RC", "part": null, "exam_weight": 1.0 },
+  { "code": "RS.vocab", "name_ko": "문맥 속 어휘", "section": "RC", "part": null, "exam_weight": 0.8 },
+  { "code": "RS.infer", "name_ko": "추론(읽기)", "section": "RC", "part": null, "exam_weight": 0.9 }
+]

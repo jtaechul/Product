@@ -1,0 +1,10 @@
+[
+  { "code": "first-steps", "name_ko": "첫걸음", "description": "진단 테스트를 완료했어요", "icon": null },
+  { "code": "streak-7", "name_ko": "7일의 약속", "description": "7일 연속으로 공부했어요", "icon": null },
+  { "code": "streak-30", "name_ko": "한 달의 기적", "description": "30일 연속으로 공부했어요", "icon": null },
+  { "code": "perfect-set", "name_ko": "퍼펙트!", "description": "오늘의 학습을 모두 맞혔어요", "icon": null },
+  { "code": "review-master", "name_ko": "복습왕", "description": "틀린 문제 20개를 완전히 정복했어요", "icon": null },
+  { "code": "hundred-club", "name_ko": "100문제 클럽", "description": "문제를 100개 넘게 풀었어요", "icon": null },
+  { "code": "lc-explorer", "name_ko": "듣기 탐험가", "description": "듣기 4개 파트를 모두 10문제 이상 풀었어요", "icon": null },
+  { "code": "rc-explorer", "name_ko": "읽기 탐험가", "description": "읽기 3개 파트를 모두 10문제 이상 풀었어요", "icon": null }
+]
