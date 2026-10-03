@@ -4083,5 +4083,492 @@
       }
     ],
     "tmp_id": "L3-0050"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: My bean plant looks sick today. Its leaves are turning yellow.\nM: Oh, did you give it too much water?\nW: I watered it every day this week. I thought it needed a lot.\nM: The science teacher said twice a week is enough. Let's put it by the sunny window.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 내 콩 식물이 오늘 아파 보여. 잎이 노랗게 변하고 있어.\n남: 아, 물을 너무 많이 준 거 아니야?\n여: 이번 주에 매일 물을 줬어. 물이 많이 필요한 줄 알았거든.\n남: 과학 선생님이 일주일에 두 번이면 충분하다고 하셨어. 햇볕이 잘 드는 창가에 두자."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What does the man mean when he says \"The science teacher said twice a week is enough\"?",
+        "choices": [
+          "The science class is on Tuesday and Thursday",
+          "The woman gave the plant too much water",
+          "They should water the plant tomorrow",
+          "The teacher will give them a new plant"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "일주일에 두 번이면 되는데 여자가 매일 물을 줬으니, 물을 너무 많이 주었다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "The science teacher said twice a week is enough.",
+        "why_not": {
+          "0": "수업이 일주일에 두 번이라는 말이 아니에요",
+          "2": "내일 물을 줘야 한다는 말은 없어요",
+          "3": "새 식물을 준다는 내용은 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "twice a week",
+          "ko": "일주일에 두 번"
+        },
+        "miss_type": {
+          "0": "A.echo",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will they probably do with the plant?",
+        "choices": [
+          "Give it some more water",
+          "Take it to the science room",
+          "Move it to a sunny place",
+          "Throw it in the bin"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "남자가 햇볕이 드는 창가에 두자고 제안했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "Let's put it by the sunny window.",
+        "why_not": {
+          "0": "물은 이미 너무 많이 줬어요",
+          "1": "과학실로 가져간다는 말은 없어요",
+          "3": "쓰레기통에 버린다는 말은 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "sunny window",
+          "ko": "햇볕이 잘 드는 창문"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0051"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Come on, Buster. It's time for our afternoon walk!\nW: Wait, you shouldn't take him out now. The ground is too hot for his paws.\nM: Really? But he's been waiting by the door all day.\nW: Why don't you play with him in the living room until the sun goes down?",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 가자, 버스터. 오후 산책할 시간이야!\n여: 잠깐만, 지금 데리고 나가면 안 돼. 강아지 발바닥에 닿기에 땅이 너무 뜨거워.\n남: 정말? 하지만 하루 종일 문 앞에서 기다렸는걸.\n여: 해가 질 때까지 거실에서 강아지랑 놀아 주는 건 어때?"
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What does the woman mean when she says \"The ground is too hot for his paws\"?",
+        "choices": [
+          "Buster needs to take a warm bath",
+          "They should walk faster on the ground",
+          "Buster needs to wear his winter shoes",
+          "It is not safe to walk outside right now"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "땅이 너무 뜨거워서 발바닥이 다칠 수 있으니, 지금 밖에서 걷는 건 위험하다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "The ground is too hot for his paws.",
+        "why_not": {
+          "0": "목욕 이야기는 나오지 않았어요",
+          "1": "빨리 걸어야 한다는 뜻이 아니에요",
+          "2": "겨울 신발 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "too hot",
+          "ko": "너무 뜨거운"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does the woman suggest the man do?",
+        "choices": [
+          "Play with the dog inside",
+          "Walk the dog in the park",
+          "Give the dog some cold water",
+          "Wait by the door with the dog"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "여자가 해가 질 때까지 거실 안에서 강아지와 놀아 주라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "Why don't you play with him in the living room until the sun goes down?",
+        "why_not": {
+          "1": "밖에서 걷지 말라고 했어요",
+          "2": "차가운 물 이야기는 없었어요",
+          "3": "문가에서 기다리는 건 강아지 혼자 한 일이에요"
+        },
+        "key_expr": {
+          "en": "until the sun goes down",
+          "ko": "해가 질 때까지"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L3-0052"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Mom, can we have pancakes for breakfast?\nW: I'd love to, but the milk carton is almost empty.\nM: Can we use water instead? I saw it on a cooking show.\nW: Hmm, they might not taste as good. I can quickly run to the shop next door.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 엄마, 우리 아침으로 팬케이크 먹어도 돼요?\n여: 그러고 싶지만, 우유갑이 거의 비어 있네.\n남: 대신 물을 써도 될까요? 요리 프로그램에서 봤어요.\n여: 음, 그러면 맛이 별로 없을 텐데. 엄마가 금방 옆 가게에 다녀올게."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What does the woman mean when she says \"the milk carton is almost empty\"?",
+        "choices": [
+          "The man needs to drink his milk",
+          "She will make a different breakfast",
+          "She does not have enough milk for pancakes",
+          "The milk in the carton tastes very bad"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "우유갑이 거의 비어 있다는 말은 팬케이크를 만들 우유가 모자라다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.food"
+        ],
+        "evidence": "I'd love to, but the milk carton is almost empty.",
+        "why_not": {
+          "0": "아들에게 우유를 마시라는 뜻이 아니에요",
+          "1": "다른 아침을 만든다는 말은 없었어요",
+          "3": "우유 맛이 나쁘다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "almost empty",
+          "ko": "거의 비어 있는"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will the woman probably do next?",
+        "choices": [
+          "Watch a cooking show",
+          "Buy some milk",
+          "Drink a glass of water",
+          "Eat at a restaurant"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "맛있는 팬케이크를 만들기 위해 엄마가 옆 가게에 다녀오겠다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail",
+          "V.shopping"
+        ],
+        "evidence": "I can quickly run to the shop next door.",
+        "why_not": {
+          "0": "요리 프로그램은 아들이 본 거예요",
+          "2": "물을 마신다는 이야기는 없었어요",
+          "3": "식당에 간다는 말은 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "run to the shop",
+          "ko": "가게에 다녀오다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0053"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Minho, the music class is over. Can you help me clean up?\nM: Sure, Ms. Kim. Should I close the piano?\nW: Yes, please. And put those recorders in the green box.\nM: Okay. Do you want me to push the chairs under the desks, too?\nW: I can do that. You should hurry to your next class.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 민호야, 음악 수업이 끝났단다. 정리하는 것 좀 도와줄래?\n남: 네, 김 선생님. 피아노 뚜껑을 닫을까요?\n여: 그래, 부탁할게. 그리고 저 리코더들을 초록색 상자에 넣어주렴.\n남: 알겠습니다. 의자들도 책상 밑으로 밀어 넣을까요?\n여: 그건 내가 할게. 너는 다음 수업에 늦지 않게 어서 가렴."
+    },
+    "questions": [
+      {
+        "stem": "What will the boy probably do next?",
+        "choices": [
+          "Push the chairs under the desks",
+          "Close the classroom window",
+          "Play the piano for the teacher",
+          "Put the recorders in the box"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "선생님이 피아노 뚜껑을 닫고 리코더를 상자에 넣어 달라고 부탁했어요. 그래서 남학생이 이어서 할 일이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "Yes, please. And put those recorders in the green box.",
+        "why_not": {
+          "0": "의자는 선생님이 직접 넣겠다고 하셨어요",
+          "1": "창문 이야기는 나오지 않았어요",
+          "2": "피아노는 연주하는 게 아니라 뚜껑을 닫아요"
+        },
+        "key_expr": {
+          "en": "put the recorders in",
+          "ko": "리코더를 넣다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.opposite"
+        }
+      },
+      {
+        "stem": "What does the woman mean when she says \"You should hurry to your next class\"?",
+        "choices": [
+          "She is late for her class",
+          "The boy can leave now",
+          "The boy must clean faster",
+          "She wants him to push the chairs"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "의자는 선생님이 치울 테니 남학생은 다음 수업에 늦지 않게 어서 가라는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "LS.gist"
+        ],
+        "evidence": "I can do that. You should hurry to your next class.",
+        "why_not": {
+          "0": "남학생이 수업에 늦지 않게 배려하는 거예요",
+          "2": "빨리 청소하라고 재촉하는 게 아니에요",
+          "3": "의자는 선생님이 치우겠다고 했어요"
+        },
+        "key_expr": {
+          "en": "hurry to your next class",
+          "ko": "다음 수업으로 서둘러 가다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "W.meaning",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L3-0054"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Look at these two photos. Which one should I enter in the school contest?\nM: The beach photo and the mountain photo. I like the beach one. It looks cool.\nW: But the beach photo is a bit dark. The leaves in the mountain photo are very bright.\nM: Then why don't you choose the mountain photo? You seem to like it more.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 이 두 사진 좀 봐. 어떤 걸 학교 대회에 낼까?\n남: 해변 사진이랑 산 사진이네. 나는 해변 사진이 좋아. 시원해 보여.\n여: 하지만 해변 사진은 좀 어두워. 산 사진에 있는 나뭇잎들은 아주 밝거든.\n남: 그럼 산 사진을 고르는 게 어때? 네가 그걸 더 마음에 들어 하는 것 같은데."
+    },
+    "questions": [
+      {
+        "stem": "What does the woman think about the beach photo?",
+        "choices": [
+          "It looks too hot",
+          "It has pretty leaves",
+          "It is not bright enough",
+          "It is better than the mountain photo"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "여자는 해변 사진이 조금 어둡다고 말했어요. 그래서 충분히 밝지 않다고 생각하는 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "But the beach photo is a bit dark.",
+        "why_not": {
+          "0": "해변 사진은 시원해 보인다고 했어요",
+          "1": "예쁜 나뭇잎은 산 사진에 있어요",
+          "3": "여자는 산 사진을 더 마음에 들어 해요"
+        },
+        "key_expr": {
+          "en": "a bit dark",
+          "ko": "조금 어두운"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.swap",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "Which photo will the woman probably choose for the contest?",
+        "choices": [
+          "The mountain photo",
+          "The beach photo",
+          "The school photo",
+          "The leaf photo"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "산 사진이 밝고 예뻐서 여자가 더 마음에 들어 하니까 대회에 낼 사진으로 고를 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.gist"
+        ],
+        "evidence": "Then why don't you choose the mountain photo? You seem to like it more.",
+        "why_not": {
+          "1": "해변 사진은 어둡다고 했어요",
+          "2": "학교 대회지만 학교를 찍은 사진은 아니에요",
+          "3": "잎사귀는 산 사진 속에 있는 부분이에요"
+        },
+        "key_expr": {
+          "en": "enter in the contest",
+          "ko": "대회에 출품하다"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L3-0055"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Oh no, I can't find the key to the broadcasting room.\nW: Did you check the inside pocket of your backpack?\nM: I checked everywhere. I should go tell the teacher in the office.\nW: Wait, look at that shiny thing on the floor. I think you dropped it.",
+      "accent": "AU",
+      "tts_voices": {
+        "M": "male",
+        "W": "female"
+      },
+      "translation_ko": "남: 아차, 방송반 열쇠를 못 찾겠어.\n여: 가방 안쪽 주머니는 확인해 봤어?\n남: 다 찾아봤어. 사무실에 가서 선생님께 말씀드려야겠어.\n여: 잠깐, 저기 바닥에 반짝이는 것 좀 봐. 네가 떨어뜨린 것 같아."
+    },
+    "questions": [
+      {
+        "stem": "What is the boy's problem?",
+        "choices": [
+          "He lost his backpack",
+          "He is late for his club",
+          "He broke the window",
+          "He cannot open the door"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "방송반 열쇠를 찾을 수 없어서 문을 열지 못하고 있는 상황이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "Oh no, I can't find the key to the broadcasting room.",
+        "why_not": {
+          "0": "가방 안을 찾아보았을 뿐이에요",
+          "1": "동아리에 늦었다는 말은 없어요",
+          "2": "창문 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "can't find the key",
+          "ko": "열쇠를 찾을 수 없다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What did the woman probably find on the floor?",
+        "choices": [
+          "A shiny coin",
+          "The room key",
+          "The boy's phone",
+          "A teacher's pen"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "남학생이 열쇠를 찾고 있었는데, 여학생이 바닥에서 반짝이는 것을 발견했어요. 그것은 잃어버린 열쇠일 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "Wait, look at that shiny thing on the floor. I think you dropped it.",
+        "why_not": {
+          "0": "동전이라는 말은 나오지 않았어요",
+          "2": "휴대폰을 떨어뜨린 게 아니에요",
+          "3": "선생님의 펜 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "shiny thing",
+          "ko": "반짝이는 것"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L3-0056"
   }
 ]

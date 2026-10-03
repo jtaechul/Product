@@ -7990,5 +7990,469 @@
     ],
     "status": "active",
     "tmp_id": "R3-0111"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Welcome to Blue Ocean Aquarium!\nToday at 2:00 p.m., you can feed the sea turtles.\nPlease wash your hands before you touch the food.\nDo not tap on the glass because it scares the turtles.\nYou can buy special turtle food at the gift shop for 3 dollars.",
+      "translation_ko": "블루 오션 아쿠아리움에 오신 것을 환영합니다!\n오늘 오후 2시에 바다거북에게 먹이를 줄 수 있습니다.\n먹이를 만지기 전에 손을 씻어 주세요.\n거북이들이 놀라니 유리를 두드리지 마세요.\n기념품 가게에서 3달러에 특별한 거북이 먹이를 살 수 있습니다."
+    },
+    "questions": [
+      {
+        "stem": "What can we guess about the sea turtles?",
+        "choices": [
+          "They only eat fish.",
+          "They dislike the sound on the glass.",
+          "They sleep at 2:00 p.m.",
+          "They live in the gift shop."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "유리를 두드리면 거북이가 놀란다고 했으니, 유리를 두드리는 소리를 싫어한다는 것을 알 수 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "Do not tap on the glass because it scares the turtles.",
+        "why_not": {
+          "0": "물고기만 먹는다는 말은 없어요",
+          "2": "오후 2시는 먹이를 주는 시간이에요",
+          "3": "기념품 가게는 먹이를 파는 곳이에요"
+        },
+        "key_expr": {
+          "en": "scare the turtles",
+          "ko": "거북이를 놀라게 하다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What should visitors do before they feed the turtles?",
+        "choices": [
+          "Buy a camera.",
+          "Tap on the glass.",
+          "Clean their hands.",
+          "Put on warm gloves."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "거북이 먹이를 만지기 전에 손을 씻어서 깨끗하게 하라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "Please wash your hands before you touch the food.",
+        "why_not": {
+          "0": "사진기 이야기는 없어요",
+          "1": "유리를 두드리면 안 돼요",
+          "3": "장갑을 끼라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "wash your hands",
+          "ko": "손을 씻다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "R3-0112",
+    "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Dad: Sam, did you pack your sleeping bag for the camping trip with Uncle Tom?\nSam: Yes, Dad. I also put my warm jacket in the bag. It gets cold at night.\nDad: Good. What about the tent?\nSam: Uncle Tom said he will bring his big blue tent. He has two of them.\nDad: Perfect. Have fun this weekend!",
+      "translation_ko": "아빠: 샘, 톰 삼촌이랑 캠핑 갈 때 쓸 침낭은 챙겼니?\n샘: 네, 아빠. 가방에 따뜻한 겉옷도 넣었어요. 밤에는 춥거든요.\n아빠: 잘했어. 텐트는 어떡하고?\n샘: 톰 삼촌이 커다란 파란색 텐트를 가져오신대요. 텐트가 두 개 있으시거든요.\n아빠: 완벽하구나. 이번 주말에 재밌게 놀다 와!"
+    },
+    "questions": [
+      {
+        "stem": "What is true about Sam's camping trip?",
+        "choices": [
+          "He doesn't need to bring a tent.",
+          "He is going to buy a sleeping bag today.",
+          "His dad is going with him.",
+          "He will sleep in a yellow tent."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "삼촌이 텐트를 가져오신다고 했으니 샘은 직접 텐트를 챙길 필요가 없어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "Uncle Tom said he will bring his big blue tent.",
+        "why_not": {
+          "1": "침낭은 이미 가방에 챙겼어요",
+          "2": "아빠는 캠핑에 함께 가지 않아요",
+          "3": "삼촌이 가져오는 텐트는 파란색이에요"
+        },
+        "key_expr": {
+          "en": "bring a tent",
+          "ko": "텐트를 가져오다"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why did Sam pack a warm jacket?",
+        "choices": [
+          "Because it is raining right now.",
+          "To look nice in pictures.",
+          "To give the jacket to his uncle.",
+          "Because the night air will be cold."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "밤이 되면 추워지기 때문에 따뜻한 겉옷을 가방에 넣었다고 샘이 말했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "I also put my warm jacket in the bag. It gets cold at night.",
+        "why_not": {
+          "0": "비가 온다는 말은 지문에 없어요",
+          "1": "사진을 예쁘게 찍는다는 말은 없어요",
+          "2": "삼촌에게 옷을 준다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "get cold at night",
+          "ko": "밤에 추워지다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "R3-0113",
+    "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "To: Emma\nFrom: Lisa\nSubject: My Piano Concert\nHi Emma,\nI am playing the piano in a concert this Saturday afternoon.\nI practiced the song for two months. I was very nervous last week, but now I feel ready.\nThe concert starts at 4:00 p.m. at the town hall.\nMy mom made some special cookies for my friends. I hope you can come!",
+      "translation_ko": "받는 사람: 엠마\n보내는 사람: 리사\n제목: 나의 피아노 연주회\n안녕 엠마,\n나는 이번 주 토요일 오후에 연주회에서 피아노를 쳐.\n나는 이 곡을 두 달 동안 연습했어. 지난주에는 아주 떨렸지만, 지금은 준비가 된 것 같아.\n연주회는 오후 4시에 마을 회관에서 시작해.\n우리 엄마가 내 친구들을 위해 특별한 과자를 만드셨어. 네가 올 수 있으면 좋겠어!"
+    },
+    "questions": [
+      {
+        "stem": "How does Lisa feel about the concert now?",
+        "choices": [
+          "She is too scared to play.",
+          "She feels ready to play.",
+          "She is angry at her mom.",
+          "She is sad because Emma is busy."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "리사는 지난주에는 떨렸지만 지금은 피아노를 칠 준비가 잘 된 기분이라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "I was very nervous last week, but now I feel ready.",
+        "why_not": {
+          "0": "지난주에는 무서웠지만 지금은 괜찮아요",
+          "2": "엄마에게 화가 나지 않았어요",
+          "3": "엠마가 바쁘다는 말은 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "feel ready",
+          "ko": "준비된 기분이다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will happen if Emma goes to the concert?",
+        "choices": [
+          "She will play the piano with Lisa.",
+          "She will pay for the concert ticket.",
+          "She will help make cookies.",
+          "She can enjoy some special cookies."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "리사의 엄마가 친구들을 위해 특별한 과자를 만드셨으니, 엠마가 연주회에 가면 그걸 먹을 수 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "My mom made some special cookies for my friends.",
+        "why_not": {
+          "0": "연주회에서 피아노는 리사가 쳐요",
+          "1": "표를 돈 주고 사야 한다는 말은 없어요",
+          "2": "과자는 엄마가 이미 다 만드셨어요"
+        },
+        "key_expr": {
+          "en": "play the piano",
+          "ko": "피아노를 치다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "R3-0114",
+    "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "TOWN POST OFFICE\nWe are fixing the roof of our building this weekend. So, the post office will not open on Saturday and Sunday. If you need to send a letter, please drop it in the red box outside. We will open again on Monday morning.",
+      "translation_ko": "마을 우체국\n이번 주말에 우리 건물 지붕을 고칩니다. 그래서 토요일과 일요일에는 우체국 문을 열지 않습니다. 편지를 보내야 한다면, 밖에 있는 빨간 우체통에 넣어 주세요. 월요일 아침에 다시 문을 엽니다."
+    },
+    "questions": [
+      {
+        "stem": "What can we guess about the post office building?",
+        "choices": [
+          "The roof is broken right now.",
+          "The red box outside is broken.",
+          "It will be painted on Monday.",
+          "It is a brand new building."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "이번 주말에 지붕을 고친다고 했으니, 지금 지붕이 망가져 있다는 것을 알 수 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.daily"
+        ],
+        "evidence": "We are fixing the roof of our building this weekend.",
+        "why_not": {
+          "1": "고장 난 건 빨간 우체통이 아니에요",
+          "2": "월요일에 페인트칠을 한다는 말은 없어요",
+          "3": "새 건물이라는 말은 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "fix the roof",
+          "ko": "지붕을 고치다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will happen on Monday morning?",
+        "choices": [
+          "Workers will start fixing the roof.",
+          "The post office will close early.",
+          "People can go inside the post office again.",
+          "People must take the red box away."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "월요일 아침에 다시 문을 연다고 했으니, 사람들이 우체국 안으로 다시 들어갈 수 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "RS.scan"
+        ],
+        "evidence": "We will open again on Monday morning.",
+        "why_not": {
+          "0": "지붕은 주말에 고친다고 했어요",
+          "1": "일찍 문을 닫는다는 말은 없어요",
+          "3": "우체통을 치워야 한다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "open again",
+          "ko": "다시 문을 열다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0115"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "RIVER PARK BIKE RENTAL\nYou can rent a bike for 5,000 won an hour. You must wear a helmet. We have free helmets for children under 10. Please return your bike before 6:00 p.m. If you are late, you must pay extra money.",
+      "translation_ko": "강변 공원 자전거 대여소\n한 시간에 5,000원으로 자전거를 빌릴 수 있습니다. 헬멧을 꼭 써야 합니다. 10살 미만 어린이를 위한 무료 헬멧이 있습니다. 오후 6시 전까지 자전거를 돌려주세요. 늦으면 돈을 더 내야 합니다."
+    },
+    "questions": [
+      {
+        "stem": "What can we guess about an 8-year-old child?",
+        "choices": [
+          "The child must return the bike at 7:00 p.m.",
+          "The child can borrow a helmet for free.",
+          "The child cannot ride a bike here.",
+          "The child does not need to wear a helmet."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "10살 미만 어린이는 무료로 헬멧을 빌릴 수 있다고 했어요. 8살은 10살 미만이므로 무료예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.leisure"
+        ],
+        "evidence": "We have free helmets for children under 10.",
+        "why_not": {
+          "0": "자전거는 오후 6시 전에 돌려줘야 해요",
+          "2": "8살이 자전거를 못 탄다는 말은 없어요",
+          "3": "누구나 헬멧을 꼭 써야 한다고 했어요"
+        },
+        "key_expr": {
+          "en": "free for children",
+          "ko": "어린이는 무료인"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What can be inferred if you return the bike at 6:30 p.m.?",
+        "choices": [
+          "You will get a free helmet.",
+          "You will get your money back.",
+          "You cannot rent a bike again.",
+          "You will have to pay extra money."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "오후 6시 전에 돌려주지 않고 늦으면 돈을 더 내야 한다고 했어요. 6시 반은 늦은 시간이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.shopping"
+        ],
+        "evidence": "If you are late, you must pay extra money.",
+        "why_not": {
+          "0": "헬멧 무료는 어린이를 위한 거예요",
+          "1": "돈을 돌려받는다는 말은 없어요",
+          "2": "다시 빌릴 수 없다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "pay extra money",
+          "ko": "돈을 더 내다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0116"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Minho,\nI went to the supermarket to buy things for dinner. It is very hot today, so please water the plants on the balcony. I will be back before 5 p.m. Let's make spaghetti together!\n- Mom",
+      "translation_ko": "민호야,\n저녁 식사거리를 사러 슈퍼마켓에 갔단다. 오늘 날씨가 아주 더우니 발코니에 있는 식물들에게 물을 주렴. 오후 5시 전에는 돌아올게. 같이 스파게티 만들자!\n- 엄마가"
+    },
+    "questions": [
+      {
+        "stem": "What can we guess from this message?",
+        "choices": [
+          "Minho went to the supermarket.",
+          "Minho and his mom will eat spaghetti tonight.",
+          "Mom is making spaghetti now.",
+          "The plants on the balcony are dead."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "엄마가 같이 스파게티를 만들자고 했으니, 오늘 저녁에 두 사람이 스파게티를 먹을 거라는 걸 알 수 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.food"
+        ],
+        "evidence": "Let's make spaghetti together!",
+        "why_not": {
+          "0": "슈퍼마켓에 간 사람은 엄마예요",
+          "2": "엄마는 아직 슈퍼마켓에 있어요",
+          "3": "식물들이 죽었다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "make spaghetti together",
+          "ko": "같이 스파게티를 만들다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0117"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "CITY ART MUSEUM\nWelcome to our museum! You can take pictures of the paintings, but please do not use a flash. Also, do not bring food or drinks into the building. You can eat your snacks on the benches outside.",
+      "translation_ko": "시립 미술관\n우리 미술관에 오신 것을 환영합니다! 그림 사진을 찍어도 되지만, 플래시는 사용하지 마세요. 또한, 건물 안으로 음식이나 음료를 가져오지 마세요. 간식은 밖에 있는 벤치에서 드실 수 있습니다."
+    },
+    "questions": [
+      {
+        "stem": "What can be inferred from the rules?",
+        "choices": [
+          "Visitors cannot take any pictures.",
+          "There is no place to sit outside.",
+          "The museum sells snacks inside.",
+          "People must eat their food outside."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "건물 안으로 음식을 가져올 수 없고 밖에서 먹을 수 있다고 했으니, 음식은 밖에서 먹어야 해요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.leisure"
+        ],
+        "evidence": "You can eat your snacks on the benches outside.",
+        "why_not": {
+          "0": "사진을 찍어도 된다고 했어요",
+          "1": "밖에 간식을 먹을 수 있는 벤치가 있어요",
+          "2": "안에서 간식을 판다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "eat snacks on the benches",
+          "ko": "벤치에서 간식을 먹다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0118"
   }
 ]
