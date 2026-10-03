@@ -4681,6 +4681,13 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 .find .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .find .n{font-size:13px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .find .m{font-size:11.5px;color:var(--sub);font-variant-numeric:tabular-nums}
+/* 인기 영상 카드: 위 = 썸네일+제목, 아래 = 버튼 줄(휴대폰에서 제목이 세로로 찌그러지지 않게) */
+.trc{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px 11px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px}
+.trc img{width:64px;height:86px;border-radius:8px;object-fit:cover;background:#EDEFEC}
+.trc .t{min-width:0;display:flex;flex-direction:column;gap:3px}
+.trc .acts{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:8px}
+.trc .acts .btn{width:100%;margin:0}
+.trc .an{grid-column:1/-1}
 .rk{color:var(--amber);font-weight:700}
 .rocket{color:var(--brand);font-weight:700}
 .item{display:flex;gap:11px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
@@ -5580,7 +5587,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       if(!r||!r.success){ say('trMsg',(r&&r.error)||'불러오지 못했습니다.','no'); return; }
       hide('trMsg');
       r.items.forEach(function(v){
-        var d=epEl('div','find'); d.style.flexWrap='wrap';
+        var d=epEl('div','trc');
         var im=document.createElement('img'); im.src=v.thumb; im.alt=''; im.loading='lazy';
         var t=epEl('div','t'); t.appendChild(epEl('div','n',v.title));
         t.appendChild(epEl('div','m','조회 '+trNum(v.views)+' · 시간당 '+trNum(v.perHour)+' · '+v.sec+'초 · '+v.channel));
@@ -5605,7 +5612,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
           $('trFile').scrollIntoView({behavior:'smooth',block:'center'});
         },true);
         pick.style.flex='none';
-        d.appendChild(im); d.appendChild(t); d.appendChild(yt); d.appendChild(ab); d.appendChild(pick); d.appendChild(an);
+        var acts=epEl('div','acts'); acts.appendChild(yt); acts.appendChild(ab); acts.appendChild(pick); an.className='ep-sub an';
+        d.appendChild(im); d.appendChild(t); d.appendChild(acts); d.appendChild(an);
         $('trList').appendChild(d);
       });
     }).catch(function(e){ say('trMsg','불러오지 못했습니다: '+e.message,'no'); });
