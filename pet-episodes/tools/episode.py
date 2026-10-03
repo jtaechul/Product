@@ -1689,84 +1689,134 @@ def step_dance(work, log, cfg):
 
 # ---------- 춤 밈 끝 장면: 무대에서 내려와 펫 이온음료를 음미(사용자 확정 2026-10) ----------
 # 병은 AI가 그리지 않는다(글자가 뭉개짐) → 쿠팡 실제 상품 사진에서 병 하나를 잘라 장면에 붙이고 병 전체를 흐림 처리한다.
-DRINK_START = ("Reference image 1 shows our Shiba Inu character in its party outfit (striped short-sleeve polo, wide light trousers, "
-               "dark sunglasses) - keep exactly this dog and outfit. Create one photorealistic vertical 9:16 frame at the same night "
-               "courtyard party (warm string lights, wooden fence, old building behind, a few happy dogs of other breeds in the "
-               "blurred background): the Shiba has come down from the stage and now stands on ALL FOUR legs on the floor, head "
-               "lowered, lapping from a shallow clear glass bowl of clear liquid on the floor, eyes half closed in bliss, tail "
-               "curled up. Its front legs are thick furry Shiba legs with paws - no human hands or skin anywhere. Camera at dog "
-               "eye level, the dog fills the right two thirds of the frame; leave the lower-left quarter of the floor empty and "
-               "uncluttered (a product will be placed there later). No bottles, no text, no logos, no humans.")
-DRINK_PROMPT = ("DURATION: 4 seconds. Image 1 is the first frame. The Shiba Inu stays on all four legs and happily laps the clear "
-                "drink from the bowl, little splashes, ears relaxed, eyes half closed savouring it, then lifts its head and licks "
-                "its lips with a satisfied look, tail wagging. Same dog, outfit and party background; camera locked-off, gentle "
-                "handheld feel. Photorealistic. Furry dog legs and paws only - no human hands, fingers or skin. No text, no bottles, "
-                "no extra objects appearing.")
+BRIDGE_PROMPT = ("Continue this exact video seamlessly for 3 more seconds in the same night scene, same lighting, same dog crowd: the "
+                 "Shiba Inu in the striped polo, wide trousers and sunglasses finishes its last dance move, hops down from the "
+                 "platform and walks on its hind legs to a small round wooden bar table at the side of the yard, then stops in front "
+                 "of it. The dog's front legs stay thick furry Shiba legs with paws - never human hands, fingers or bare skin. "
+                 "Camera follows smoothly. Photorealistic. No text, no humans.")
+DRINK_START = ("Image 1 is the last frame of the previous shot (keep exactly this Shiba Inu, its outfit - striped short-sleeve polo, "
+               "wide light trousers, dark sunglasses - and this night courtyard party lighting: warm string lights, red stage glow, "
+               "dogs of other breeds in the background). Image 2 is the real product bottle. Create one photorealistic vertical 9:16 "
+               "frame: the Shiba stands on its hind legs at a small round wooden bar table at the side of the party, both furry "
+               "front paws resting on the table edge, lowering its head to lap from a shallow clear glass bowl of clear drink on the "
+               "table. The bottle from image 2 stands on the same table just behind and beside the bowl, naturally placed with a "
+               "soft reflection, clearly out of focus because the camera focuses on the dog (shallow depth of field, creamy "
+               "bokeh). Camera at table height, medium close shot, the dog's face sharp. Front legs are furry Shiba legs with paws - "
+               "no human hands, fingers or skin anywhere. No readable text anywhere.")
+DRINK_PROMPT = ("DURATION: 4 seconds. Image 1 is the first frame. The Shiba Inu laps the clear drink from the bowl on the bar table "
+                "with relish, little splashes, eyes half closed savouring it, then lifts its head, licks its lips with a deeply "
+                "satisfied look and gives a tiny happy shimmy. The bottle stays where it is, out of focus, never moving or changing. "
+                "Same night lighting and dogs in the background; camera fixed with shallow depth of field on the dog. Photorealistic. "
+                "Furry dog legs and paws only - no human hands, fingers or skin. No text.")
+BOTTLE_BOX = ('Find the drink bottle in this image. JSON only: {"found": true, "x0": 0.0, "y0": 0.0, "x1": 0.0, "y1": 0.0} '
+              "as fractions of image width/height (x0,y0 = top-left, x1,y1 = bottom-right), covering the whole bottle including the cap.")
 
 
-def _bottle_cutout(src: Path, out: Path, index: int = 0, count: int = 4):
-    """여러 병이 나란히 찍힌 흰 배경 상품 사진에서 병 하나를 잘라 흰 배경을 투명하게."""
-    im = Image.open(src).convert("RGB")
-    w, h = im.size
-    x0, x1 = int(w * index / count), int(w * (index + 1) / count)
-    im = im.crop((x0, 0, x1, h))
-    px = im.load()
-    W, H = im.size
-    cols = [x for x in range(W) if any(sum(px[x, y]) < 720 for y in range(0, H, 4))]
-    rows = [y for y in range(H) if any(sum(px[x, y]) < 720 for x in range(0, W, 4))]
-    if cols and rows:
-        im = im.crop((cols[0], rows[0], cols[-1] + 1, rows[-1] + 1))
-    rgba = im.convert("RGBA")
-    data = [(r, g, b, 0 if r > 242 and g > 242 and b > 242 else 255) for r, g, b, _ in rgba.getdata()]
-    rgba.putdata(data)
-    rgba.save(out)
+def _vision_json(img: Path, prompt: str) -> dict:
+    key = _key("GEMINI_API_KEY")
+    body = {"contents": [{"role": "user", "parts": [{"inline_data": _b64img(img)}, {"text": prompt}]}],
+            "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
+    for model in ("gemini-flash-latest", "gemini-pro-latest"):
+        st, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                        {"x-goog-api-key": key, "Content-Type": "application/json"})
+        if st == 200:
+            try:
+                t = "".join(p.get("text", "") for p in json.loads(raw)["candidates"][0]["content"]["parts"])
+                return json.loads(t[t.find("{"):t.rfind("}") + 1])
+            except Exception:  # noqa: BLE001
+                pass
+    return {}
+
+
+def _norm(src: Path, out: Path, h: int):
+    _ff(["-i", str(src), "-an", "-vf", f"scale=-2:{h},fps=24,setsar=1,format=yuv420p", "-c:v", "libx264", "-crf", "24", str(out)])
 
 
 def step_drink(work, log, cfg):
+    """춤 → 무대에서 내려와 바 테이블로(연장) → 테이블에서 펫 이온음료를 음미. 병은 장면 안 테이블 위에 두고 아웃포커스 + 병 영역 추가 흐림."""
     res = log.setdefault("drink", {})
     key = _key("GEMINI_API_KEY")
+    H = int(cfg.get("out_h", 640))
+    dance = work / "dance.mp4"
+    # 1) 연결: 춤 영상을 이어 늘려 내려와 테이블까지 걸어가게(같은 밤 장면)
+    bridge = work / "bridge.mp4"
+    if not bridge.exists() or "bridge" in cfg.get("redo", []):
+        vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(dance.read_bytes()).decode()}
+        body = {"model": CLIP_MODEL, "input": [vid, {"type": "text", "text": BRIDGE_PROMPT}],
+                "response_format": {"type": "video", "resolution": "720p"},
+                "generation_config": {"video_config": {"task": "extend"}}}
+        raw = work / "_bridge_raw.mp4"
+        raw.write_bytes(_omni_run(key, body))
+        d_dance, d_raw = _dur(dance), _dur(raw)
+        res["bridge_raw_sec"] = d_raw
+        # 연장 결과가 원본을 포함해 오면 뒷부분(새로 생긴 구간)만 쓴다
+        tail = work / "_bridge_tail.mp4"
+        if d_raw > d_dance + 1.0:
+            _ff(["-ss", f"{d_dance:.2f}", "-i", str(raw), "-an", "-c:v", "libx264", "-crf", "20", str(tail)])
+        else:
+            raw.replace(tail)
+        chk = _human_parts(tail, work)
+        res["bridge_check"] = chk
+        if chk.get("human"):
+            raise RuntimeError(f"연결 장면에 사람 손·맨살: {chk.get('where', '')}")
+        _norm(tail, bridge, H)
+        for f in (raw, tail):
+            f.unlink(missing_ok=True)
+    # 2) 테이블 첫 장면: 연결 장면 마지막 프레임 + 실제 병 사진
+    last = work / "_bridge_last.png"
+    _ff(["-sseof", "-0.1", "-i", str(bridge), "-frames:v", "1", str(last)])
+    st, img = _http(cfg["bottle_url"], None, {}, timeout=60)
+    if st != 200:
+        raise RuntimeError(f"상품 사진을 못 받았습니다(HTTP {st})")
+    bottle = work / "_bottle.jpg"
+    bottle.write_bytes(img)
     start = work / "drink_start.png"
     if not start.exists() or "start" in cfg.get("redo", []):
-        r = gen_image(DRINK_START, [work / "dance_start.png"], start, "9:16")
+        r = gen_image(DRINK_START, [last, bottle], start, "9:16")
         res["start"] = r
         if not r.get("ok"):
             raise RuntimeError(f"음료 첫 장면 실패: {r.get('error')}")
-    raw = work / "_drink_raw.mp4"
-    if not (work / "drink.mp4").exists() or "video" in cfg.get("redo", []):
+    # 3) 음미 영상
+    plain = work / "drink_plain.mp4"
+    if not plain.exists() or "video" in cfg.get("redo", []):
         body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(start)}, {"type": "text", "text": DRINK_PROMPT}],
                 "response_format": {"type": "video", "resolution": "720p", "aspect_ratio": "9:16"},
                 "generation_config": {"video_config": {"task": "image_to_video"}}}
+        raw = work / "_drink_raw.mp4"
         raw.write_bytes(_omni_run(key, body))
         chk = _human_parts(raw, work)
         res["human_check"] = chk
         if chk.get("human"):
-            raise RuntimeError(f"음료 장면에 사람 손·맨살이 섞여 버렸습니다: {chk.get('where', '')}")
-        h = int(cfg.get("out_h", 640))
-        _ff(["-i", str(raw), "-an", "-vf", f"scale=-2:{h},format=yuv420p", "-c:v", "libx264", "-crf", "24", str(work / "drink_plain.mp4")])
+            raise RuntimeError(f"음료 장면에 사람 손·맨살: {chk.get('where', '')}")
+        _norm(raw, plain, H)
         raw.unlink(missing_ok=True)
-    # 실제 상품 병을 왼쪽 아래에 세우고 병 전체를 흐림 처리
-    st, img = _http(cfg["bottle_url"], None, {}, timeout=60)
-    if st != 200:
-        raise RuntimeError(f"상품 사진을 못 받았습니다(HTTP {st})")
-    src = work / "_bottle_src.jpg"
-    src.write_bytes(img)
-    cut = work / "_bottle.png"
-    _bottle_cutout(src, cut, int(cfg.get("bottle_index", 0)), int(cfg.get("bottle_count", 4)))
-    plain = work / "drink_plain.mp4"
-    H = int(cfg.get("out_h", 640))
-    bh = int(H * 0.40)
-    blur = int(cfg.get("blur", 10))
-    _ff(["-i", str(plain), "-loop", "1", "-i", str(cut), "-filter_complex",
-         f"[1:v]scale=-2:{bh},format=rgba,gblur=sigma={blur}[b];[0:v][b]overlay=x=W*0.05:y=H-h-H*0.06:shortest=1,format=yuv420p[v]",
-         "-map", "[v]", "-c:v", "libx264", "-crf", "24", "-movflags", "+faststart", str(work / "drink.mp4")])
-    for f in (src, cut):
+    # 4) 병 글자가 읽히지 않게: 병 자리를 찾아 그 영역만 한 번 더 흐림(아웃포커스는 장면에서 이미)
+    box = _vision_json(start, BOTTLE_BOX)
+    res["bottle_box"] = box
+    out = work / "drink.mp4"
+    if box.get("found"):
+        m = 0.04
+        x0, y0 = max(0.0, float(box["x0"]) - m), max(0.0, float(box["y0"]) - m)
+        x1, y1 = min(1.0, float(box["x1"]) + m), min(1.0, float(box["y1"]) + m)
+        _ff(["-i", str(plain), "-filter_complex",
+             f"[0:v]split[a][b];[b]crop=iw*{x1 - x0:.3f}:ih*{y1 - y0:.3f}:iw*{x0:.3f}:ih*{y0:.3f},gblur=sigma={int(cfg.get('blur', 8))}[c];"
+             f"[a][c]overlay=W*{x0:.3f}:H*{y0:.3f},format=yuv420p[v]",
+             "-map", "[v]", "-c:v", "libx264", "-crf", "24", str(out)])
+    else:
+        _ff(["-i", str(plain), "-c", "copy", str(out)])        # 병을 못 찾으면 아웃포커스만
+    for f in (last, bottle):
         f.unlink(missing_ok=True)
-    # 미리보기: 춤 → 음료(소리 없음 — 노래는 인스타에서 붙인다)
-    if (work / "dance.mp4").exists():
-        _ff(["-i", str(work / "dance.mp4"), "-i", str(work / "drink.mp4"), "-filter_complex",
-             f"[0:v]scale=-2:{H},fps=24,setsar=1[a];[1:v]scale=-2:{H},fps=24,setsar=1[b];[a][b]concat=n=2:v=1:a=0,format=yuv420p[v]",
-             "-map", "[v]", "-c:v", "libx264", "-crf", "24", "-movflags", "+faststart", str(work / "preview.mp4")])
+    # 5) 미리보기: 춤 → 연결 → 음료(소리 없음, 노래는 인스타에서)
+    parts = [dance, bridge, out]
+    ins = []
+    for p_ in parts:
+        ins += ["-i", str(p_)]
+    fc = ";".join(f"[{i}:v]scale=-2:{H},fps=24,setsar=1[v{i}]" for i in range(len(parts)))
+    fc += ";" + "".join(f"[v{i}]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=1:a=0,format=yuv420p[v]"
+    _ff([*ins, "-filter_complex", fc, "-map", "[v]", "-c:v", "libx264", "-crf", "24", "-movflags", "+faststart",
+         str(work / "preview.mp4")])
     res["ok"] = True
+    res["preview_sec"] = _dur(work / "preview.mp4")
 
 def main(path: str) -> int:
     rp = Path(path)
