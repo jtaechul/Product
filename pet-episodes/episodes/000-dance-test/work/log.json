@@ -21,11 +21,11 @@
       }
     ]
   },
-  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Request blocked due to safety violations (harmful content). Please modify your input and retry.\",\"code\":\"Unable to show the generated video. The video was filtered out because it violated Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\"}}",
+  "error": "연결 장면에 사람 손·맨살: Raised arms in the audience background and the central Shiba's hands",
   "last_request": {
-    "file": "12_drink.json",
-    "ran_at": "2026-10-03T12:36:35Z",
-    "ok": true
+    "file": "13_bridge_drink.json",
+    "ran_at": "2026-10-03T12:48:17Z",
+    "ok": false
   },
   "drink": {
     "start": {
@@ -36,6 +36,11 @@
       "human": false,
       "where": ""
     },
-    "ok": true
+    "ok": true,
+    "bridge_raw_sec": 8.0,
+    "bridge_check": {
+      "human": true,
+      "where": "Raised arms in the audience background and the central Shiba's hands"
+    }
   }
 }
