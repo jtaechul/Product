@@ -25,10 +25,10 @@
       }
     ]
   },
-  "error": "연결 장면에 사람 손·맨살: The anthropomorphic dancing Shiba Inu has visible bare, skin-toned human arms and hands extending from its short-sleeved polo shirt across multiple frames.",
+  "error": "연결 장면에 사람 손·맨살(2회): Top row frames (1-3) show bare human arms and hands extending from the striped shirt sleeves.",
   "last_request": {
-    "file": "14_fix_all.json",
-    "ran_at": "2026-10-03T12:54:31Z",
+    "file": "15_bridge2.json",
+    "ran_at": "2026-10-03T12:57:21Z",
     "ok": false
   },
   "drink": {
@@ -42,9 +42,15 @@
     },
     "ok": true,
     "bridge_raw_sec": 8.0,
-    "bridge_check": {
-      "human": true,
-      "where": "The anthropomorphic dancing Shiba Inu has visible bare, skin-toned human arms and hands extending from its short-sleeved polo shirt across multiple frames."
-    }
+    "bridge_check": [
+      {
+        "human": true,
+        "where": "Dancing Shiba's exposed arms and hands across multiple frames"
+      },
+      {
+        "human": true,
+        "where": "Top row frames (1-3) show bare human arms and hands extending from the striped shirt sleeves."
+      }
+    ]
   }
 }
