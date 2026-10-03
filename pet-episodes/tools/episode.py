@@ -1496,7 +1496,8 @@ DANCE_START = ("Reference image 1 is our character: a real Shiba Inu (keep exact
                "Create one photorealistic vertical 9:16 frame: the Shiba Inu stands upright on its two hind legs behind a black DJ booth "
                "on a raised stage above a cheering crowd at a night outdoor courtyard party. The booth's solid front panel hides "
                "everything below the dog's waist, so only the chest, both front legs and the head are visible above it. Both front legs "
-               "spread wide to the sides like the dancer's starting pose. Strings of warm bulb lights overhead, a strong red stage light "
+               "spread wide to the sides like the dancer's starting pose (exactly TWO front legs in total, one on each side, "
+               "each attached at the shoulder - no extra paws or limbs anywhere). Strings of warm bulb lights overhead, a strong red stage light "
                "from the front, an old building facade behind, people in the crowd raising phones (backs of heads, no clear faces). "
                "Dog seen from the waist up above the booth, centred, similar camera distance and angle to reference image 2. "
                "The human dancer from reference image 2 must NOT appear. No text, no logos, no watermark.")
