@@ -17,14 +17,18 @@
     "human_check": [
       {
         "human": true,
-        "where": "bottom: bare human feet and toes visible beneath the pants cuffs of the central figure on the platform"
+        "where": "bottom: Dancing figure's bare feet/toes appearing under the pants cuffs on the platform"
+      },
+      {
+        "human": true,
+        "where": "full: Foreground audience heads showing human hair parted in the middle / bottom: Bare human feet with toes visible beneath the dancer's pants in the top row, and human hair on the head in the lower foreground."
       }
     ]
   },
-  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}",
+  "error": "사람 손·맨살이 섞여 나와 결과를 버렸습니다: full: Foreground audience heads showing human hair parted in the middle / bottom: Bare human feet with toes visible beneath the dancer's pants in the top row, and human hair on the head in the lower foreground.",
   "last_request": {
-    "file": "18_no_humans2.json",
-    "ran_at": "2026-10-03T13:09:24Z",
+    "file": "19_sneakers.json",
+    "ran_at": "2026-10-03T13:14:18Z",
     "ok": false
   },
   "drink": {
