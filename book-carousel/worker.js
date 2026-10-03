@@ -6906,7 +6906,8 @@ async function handleTrendList(env, body) {
       ko: lang.startsWith('ko') || hasHangul(x.snippet.title) || hasHangul(x.snippet.channelTitle), desc: String(x.snippet.description || '').slice(0, 120) };
   }).filter(x => x.sec > 0 && x.sec <= 90 && (region !== 'kr' || x.ko))   // 한국: 한국어 제목·음성만
     .sort((a, b) => b.perHour - a.perHour).slice(0, 40);
-  const dbg = { ids: ids.size, fetched: (vj.items || []).length, kept: items.length };
+  const dbg = { ids: ids.size, fetched: (vj.items || []).length, kept: items.length,
+    sample: (vj.items || []).slice(0, 6).map(x => [x.snippet.title.slice(0, 30), isoSec(x.contentDetails?.duration), x.snippet.defaultAudioLanguage || '']) };
   // 따라 하기 쉬운 밈·챌린지만 남기고(easy 50점 이상), 그 안에서 시간당 조회수 순
   try {
     const gk = await getGeminiKey(env);
