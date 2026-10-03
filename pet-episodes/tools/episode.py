@@ -1715,6 +1715,73 @@ def step_dance(work, log, cfg):
 
 
 
+
+def step_dance_full(work, log, cfg):
+    """원본 춤 전체(약 20초)를 줄이지 않고 4구간으로 나눠 만든다(사용자 확정 2026-10: 노래 박자·시간 준수).
+    구간마다 원본의 같은 시간대를 동작 참고로 주고, 첫 장면은 앞 구간의 마지막 장면(첫 구간은 dance_start.png).
+    결과는 구간마다 원본과 똑같은 길이로 맞춰 이어 붙인다 → 원본 노래와 박자가 맞는다. 주인공만 신경 쓰고 배경 변화는 허용."""
+    res = log.setdefault("dance_full", {})
+    key = _key("GEMINI_API_KEY")
+    H = int(cfg.get("out_h", 1280))
+    ref = work / "_ref_full.mp4"
+    st, raw = _http(cfg["video_url"], None, {}, timeout=180)
+    if st != 200 or len(raw) < 10000:
+        raise RuntimeError(f"참고 춤 영상을 못 받았습니다(HTTP {st})")
+    ref.write_bytes(raw)
+    L = _dur(ref)
+    n = int(cfg.get("segments", 4))
+    seg = L / n
+    res.update({"ref_sec": L, "segments": n, "seg_sec": round(seg, 3), "parts": res.get("parts", {})})
+    start = work / "dance_start.png"
+    mb = float(cfg.get("mask_bottom", 0.2))
+    outs = []
+    for i in range(n):
+        out = work / f"dance_seg{i + 1}.mp4"
+        outs.append(out)
+        if out.exists() and f"seg{i + 1}" not in cfg.get("redo", []) and "all" not in cfg.get("redo", []):
+            continue
+        piece = work / f"_ref_seg{i + 1}.mp4"
+        vf = f"crop={cfg.get('crop', '300:533:30:80')},scale=360:640" + (f",drawbox=x=0:y=ih*{1 - mb:.2f}:w=iw:h=ih*{mb:.2f}:color=black@0.92:t=fill" if mb else "")
+        _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-vf", vf + ",format=yuv420p",
+             "-c:v", "libx264", "-crf", "22", str(piece)])
+        first = start if i == 0 else work / f"_seg{i}_last.png"
+        if i > 0:
+            _ff(["-sseof", "-0.05", "-i", str(outs[i - 1]), "-frames:v", "1", str(first)])
+        prompt = DANCE_STRICT.replace("DURATION: 5 seconds.", f"DURATION: {seg:.1f} seconds.")
+        if i > 0:
+            prompt += " Image 1 is where the previous part ended: continue from exactly this pose and look."
+        vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()}
+        part = {"checks": []}
+        rawo = work / f"_seg{i + 1}_raw.mp4"
+        for attempt in range(2):
+            extra = "" if attempt == 0 else " Double-check every frame: furry front legs with paws, white sneakers, only dogs in the audience."
+            body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(first)}, vid, {"type": "text", "text": prompt + extra}],
+                    "response_format": {"type": "video", "resolution": "720p", "aspect_ratio": "9:16"},
+                    "generation_config": {"video_config": {"task": "reference_to_video"}}}
+            rawo.write_bytes(_omni_run(key, body))
+            chk = _human_parts(rawo, work)
+            part["checks"].append(chk)
+            if chk.get("human") is False:
+                break
+        else:
+            res["parts"][f"seg{i + 1}"] = part
+            raise RuntimeError(f"{i + 1}구간에 사람 흔적(2회): {chk.get('where', '')}")
+        got = _dur(rawo)
+        part["gen_sec"] = got
+        k = seg / got if got else 1.0                         # 원본과 똑같은 길이로(노래 박자 유지)
+        _ff(["-i", str(rawo), "-an", "-vf", f"setpts=PTS*{k:.5f},scale=-2:{H},fps=24,setsar=1,format=yuv420p",
+             "-t", f"{seg:.3f}", "-c:v", "libx264", "-crf", "20", str(out)])
+        res["parts"][f"seg{i + 1}"] = part
+        for f in (piece, rawo):
+            f.unlink(missing_ok=True)
+    ins = []
+    for o in outs:
+        ins += ["-i", str(o)]
+    fc = "".join(f"[{i}:v]" for i in range(n)) + f"concat=n={n}:v=1:a=0,format=yuv420p[v]"
+    _ff([*ins, "-filter_complex", fc, "-map", "[v]", "-c:v", "libx264", "-crf", "20", "-movflags", "+faststart", str(work / "dance.mp4")])
+    res["ok"] = True
+    res["sec"] = _dur(work / "dance.mp4")
+
 # ---------- 춤 밈 끝 장면: 무대에서 내려와 펫 이온음료를 음미(사용자 확정 2026-10) ----------
 # 병은 AI가 그리지 않는다(글자가 뭉개짐) → 쿠팡 실제 상품 사진에서 병 하나를 잘라 장면에 붙이고 병 전체를 흐림 처리한다.
 BRIDGE_PROMPT = ("DURATION: 3 seconds. Image 1 is the first frame (the end of the dance) - continue seamlessly in the same night scene, same lighting, same dog crowd: the "
@@ -1877,6 +1944,12 @@ def main(path: str) -> int:
                 step_dance(work, log, req.get("dance") or {})
             finally:                                         # 남의 영상(참고 춤)은 성공·실패와 관계없이 저장소에 남기지 않는다
                 for f in work.glob("_ref*"):
+                    f.unlink(missing_ok=True)
+        if "dance_full" in steps:
+            try:
+                step_dance_full(work, log, req.get("dance_full") or {})
+            finally:
+                for f in work.glob("_*"):
                     f.unlink(missing_ok=True)
         if "drink" in steps:
             try:

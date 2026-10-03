@@ -1,0 +1,27 @@
+{
+ "id": "000-dance-test",
+ "steps": [
+  "dance_full",
+  "drink"
+ ],
+ "dance_full": {
+  "video_url": "https://d2jqrm6oza8nb6.cloudfront.net/datasets/ac000bd6-fa02-4e6e-af64-72d1e0900819.mp4?_jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlIYXNoIjoiMzdjMjhkNzczNTNjZjFlNCIsImJ1Y2tldCI6InJ1bndheS1kYXRhc2V0cyIsInN0YWdlIjoicHJvZCIsImV4cCI6MTc5MTIwMjY3OX0.zWmWXGpAcj3CYti3xlLZpIehhrv2TTypHqsTdiOFtl8",
+  "segments": 4,
+  "crop": "300:533:30:80",
+  "mask_bottom": 0.2,
+  "out_h": 1280,
+  "redo": [
+   "all"
+  ]
+ },
+ "drink": {
+  "bottle_url": "https://ads-partners.coupang.com/image1/qSr7S89-s-otEREbqZ75RlnIA3-MRb0qGDatxdLmoA3WBqzQnKNra5u408IxrIVbNjKM65x-WIsFFruPG7kFFahaM_GkrACd-ICc3LCAmWjby1HYZWnfr9erKJMeEeCBzVmiUx6inRcgos_aHkD3EDLEVa2yFxTaO-SqtETdliEv1nIxDTdX5dcSBR8WLn9hlnaiclxpgQDgCptehuLs8NGBybl3ZpEyc0bGBOooH6MF378D0Jp4gDUR2x_eYN0bFse41mQDzTbCFU0tr2ogF1fSgycOQZqWSDklnlpPhiwX7o3xtTE72mfuyAXDSatHkW1fdMGX-ngj76tAkknMWvZY2y70dnjllUl1XDPBMLWfoZMHffQS6NaV3fojg7ioZMbANgFumjzPVYxPQVqBEhtRWWEB-AT0PL-HZo3O1IXnmBMP1xE1j_faroyd8SdLgzndN0L9mjrIEmrQD0Y1wiyGBKleLdS3gveh0108k-4clsQN7J-9SApKvck4g8rSgEYoxQ3x5t_rEQ1jChnbAO9uGVJLLa1auQCsXbsNApYlpXs=",
+  "blur": 8,
+  "out_h": 1280,
+  "redo": [
+   "bridge",
+   "start",
+   "video"
+  ]
+ }
+}
