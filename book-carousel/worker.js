@@ -4856,6 +4856,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="box-hd"><span class="step">01</span><h2>인기 쇼츠 고르기</h2></div>
     <p class="lead">최근 7일 유튜브 쇼츠 중 시간당 조회수가 빠르게 오르는 순서입니다. "분석"을 누르면 AI가 영상을 보고 우리 시바견으로 바꾸기 좋은지 점수를 매깁니다.</p>
     <div class="row"><button class="btn btn-2 btn-sm" id="trLoad" type="button">불러오기</button><button class="btn btn-2 btn-sm" id="trRefresh" type="button">새로 찾기</button></div>
+    <div class="row" style="margin-top:10px"><input class="grow2" id="trUrl" type="text" placeholder="또는 유튜브 영상 링크 붙여넣기"><button class="btn btn-2 btn-sm" id="trUrlGo" type="button" style="flex:0 0 78px">분석</button></div>
     <div class="msg" id="trMsg"></div>
     <div class="finds" id="trList"></div>
   </section>
@@ -5623,20 +5624,36 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       });
     }).catch(function(e){ say('trPMsg','찾지 못했습니다: '+e.message,'no'); });
   }
+  function trPick(v,a){
+    tr.video=v; tr.analysis=a;
+    $('trPicked').textContent='고른 영상: '+v.title+' (리메이크 '+a.remakeScore+'점). 이 영상을 휴대폰에 저장해 아래에 올려 주세요.';
+    var box=$('trIdeas'); box.textContent='';
+    a.productIdeas.forEach(function(p){ box.appendChild(epBtn(p.keyword,function(){ $('trKw').value=p.keyword; trSearch(); })); });
+  }
+  $('trUrlGo').addEventListener('click',function(){
+    var u=$('trUrl').value.trim(), m=u.match(/(?:shorts[/]|v=|youtu[.]be[/])([A-Za-z0-9_-]{6,})/);
+    if(!m){ say('trMsg','유튜브 영상 링크를 넣어 주세요.','no'); return; }
+    say('trMsg','AI가 영상을 보는 중… (20~40초)','wait');
+    post('/api/trend/analyze',{id:m[1],title:''}).then(function(x){
+      if(!x||!x.success){ say('trMsg',(x&&x.error)||'분석하지 못했습니다.','no'); return; }
+      var a=x.analysis; trPick({id:m[1],title:a.meme.slice(0,40)},a);
+      say('trMsg','리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:''),'ok');
+    }).catch(function(e){ say('trMsg','분석하지 못했습니다: '+e.message,'no'); });
+  });
   $('trLoad').addEventListener('click',function(){ trLoad(false); });
   $('trRefresh').addEventListener('click',function(){ trLoad(true); });
   $('trSearch').addEventListener('click',trSearch);
   $('trCopyGo').addEventListener('click',function(){
-    if(!tr.analysis||!tr.product){ say('trCMsg','영상(01)과 상품(03)을 먼저 골라 주세요.','no'); return; }
+    if(!tr.product){ say('trCMsg','상품(03)을 먼저 골라 주세요.','no'); return; }
     say('trCMsg','문구를 쓰는 중…','wait');
-    post('/api/remake/copy',{analysis:tr.analysis,product:tr.product}).then(function(r){
+    post('/api/remake/copy',{analysis:tr.analysis||{},product:tr.product}).then(function(r){
       if(!r||!r.success){ say('trCMsg',(r&&r.error)||'만들지 못했습니다.','no'); return; }
       $('trBig').value=r.copy.big; $('trSub').value=r.copy.sub; $('trVo').value=r.copy.vo; $('trEnd').value=r.copy.ending; hide('trCMsg');
     }).catch(function(e){ say('trCMsg','만들지 못했습니다: '+e.message,'no'); });
   });
   $('trGo').addEventListener('click',function(){
     var f=$('trFile').files&&$('trFile').files[0];
-    if(!tr.analysis){ say('trGoMsg','01에서 영상을 분석하고 골라 주세요.','no'); return; }
+    if(!tr.analysis){ tr.analysis={meme:'',swap:'',productIdeas:[],remakeScore:0}; tr.video={id:'',title:(f&&f.name)||'직접 올린 영상'}; }
     if(!f){ say('trGoMsg','02에 원본 영상 파일을 올려 주세요.','no'); return; }
     if(!tr.product){ say('trGoMsg','03에서 상품을 골라 주세요.','no'); return; }
     var copy={big:$('trBig').value.trim(),sub:$('trSub').value.trim(),vo:$('trVo').value.trim(),ending:$('trEnd').value.trim()};
