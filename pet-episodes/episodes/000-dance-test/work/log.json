@@ -6,31 +6,16 @@
     },
     "tries": [
       {
-        "task": "video_to_video",
-        "res": "480p",
-        "error": "Omni HTTP 400: {\"error\":{\"message\":\"The value 'video_to_video' is not supported for 'generation_config.video_config.task'. Supported values: 'text_to_video', 'image_to_video', 'reference_to_video', 'edit', 'extend'.\",\"code\":\"invalid_request\"}}"
-      },
-      {
-        "task": "video_to_video",
-        "res": "720p",
-        "error": "Omni HTTP 400: {\"error\":{\"message\":\"The value 'video_to_video' is not supported for 'generation_config.video_config.task'. Supported values: 'text_to_video', 'image_to_video', 'reference_to_video', 'edit', 'extend'.\",\"code\":\"invalid_request\"}}"
-      },
-      {
         "task": "reference_to_video",
-        "res": "720p",
-        "error": "Omni HTTP 400: {\"error\":{\"message\":\"Request blocked due to safety violations (harmful content). Please modify your input and retry.\",\"code\":\"Unable to show the generated video. The video was filtered out because it violated Google's [Generative AI Prohibited Use policy](https://policies.google.com/t"
-      },
-      {
-        "task": "image_to_video",
         "res": "720p",
         "error": "Omni HTTP 400: {\"error\":{\"message\":\"Request blocked due to safety violations (harmful content). Please modify your input and retry.\",\"code\":\"Unable to show the generated video. The video was filtered out because it violated Google's [Generative AI Prohibited Use policy](https://policies.google.com/t"
       }
     ]
   },
-  "error": "Omni가 춤 영상 참고 입력을 받지 않았습니다",
+  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Request blocked due to safety violations (harmful content). Please modify your input and retry.\",\"code\":\"Unable to show the generated video. The video was filtered out because it violated Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\"}}",
   "last_request": {
-    "file": "01_dance.json",
-    "ran_at": "2026-10-03T11:25:05Z",
+    "file": "02_dance.json",
+    "ran_at": "2026-10-03T11:30:27Z",
     "ok": false
   }
 }
