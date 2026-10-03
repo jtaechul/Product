@@ -1491,22 +1491,24 @@ def step_assemble(ep, epdir, work, log):
 # ---------- 춤 밈 시험(사용자 요청 2026-10): 참고 춤 영상의 동작을 시바견(두 발 서기 허용 — 이 형식만 예외)에 옮긴다 ----------
 # 요청: {"id": "000-dance-test", "steps": ["dance"], "dance": {"video_url": "<비공개 임시 주소>", "out_h": 640}}
 # 참고 영상은 남의 영상이라 저장소에 올리지 않는다(임시 주소에서 받아 쓰고 버린다). 결과는 360p로 줄여 비용·용량을 아낀다.
-DANCE_START = ("Reference image 1 is our character: a real Shiba Inu (keep exactly this face, fur colour and proportions; no clothes, "
-               "no collar, no accessories, no sunglasses). Reference image 2 is only a composition reference from a dance video. "
-               "Create one photorealistic vertical 9:16 frame: the Shiba Inu stands upright on its two hind legs behind a black DJ booth "
-               "on a raised stage above a cheering crowd at a night outdoor courtyard party. The booth's solid front panel hides "
-               "everything below the dog's waist, so only the chest, both front legs and the head are visible above it. Both front legs "
-               "spread wide to the sides like the dancer's starting pose (exactly TWO front legs in total, one on each side, "
-               "each attached at the shoulder - no extra paws or limbs anywhere). Strings of warm bulb lights overhead, a strong red stage light "
-               "from the front, an old building facade behind, people in the crowd raising phones (backs of heads, no clear faces). "
-               "Dog seen from the waist up above the booth, centred, similar camera distance and angle to reference image 2. "
-               "The human dancer from reference image 2 must NOT appear. No text, no logos, no watermark.")
+DANCE_START = ("Reference image 1 is our character: a real Shiba Inu (keep exactly this face, fur colour and body proportions). "
+               "Reference image 2 is only a composition reference from a dance video. Create one photorealistic vertical 9:16 frame: "
+               "the Shiba Inu stands upright on its two hind legs on a raised wooden platform above a cheering crowd at a night outdoor "
+               "courtyard party, full body visible from ears to feet, centred, same camera distance and angle as reference image 2. "
+               "The dog wears the dancer's outfit: a short-sleeve horizontal-striped polo shirt (white, navy and beige stripes), "
+               "loose wide-leg light trousers that fully cover its legs and lower body down to the paws, and small dark sunglasses. "
+               "Exactly two front legs coming out of the sleeves, spread wide to the sides like the dancer's starting pose; tail "
+               "curled out over the waistband. Strings of warm bulb lights overhead, a strong red stage light from the front, an old "
+               "building facade behind, people in the crowd raising phones (backs of heads, no clear faces). The human dancer from "
+               "reference image 2 must NOT appear. No text, no logos, no watermark.")
 DANCE_PROMPT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference: the Shiba Inu in image 1 performs "
-                "the same dance as the dancer in the video, beat for beat - Tecktonik / electro dance: fast arm sweeps, front legs "
-                "whipping around its head and chest, wide arm spreads, quick paw flicks, small bounces - while standing upright on its "
-                "two hind legs behind the DJ booth the whole time; the booth's front panel always hides everything below the waist. "
-                "Keep the dog's face, fur and size identical to image 1, keep the same party background, red light and cheering crowd; "
-                "camera locked-off with a slight handheld feel. Photorealistic. No human dancer, no text, no extra dogs, no morphing.")
+                "the same dance as the dancer in the video, beat for beat and just as big and sharp - Tecktonik / electro dance: fast "
+                "full arm sweeps, front legs whipping around its head and chest, wide arm spreads, quick paw flicks, knee bounces and "
+                "small steps - standing upright on its two hind legs on the platform the whole time, full body in frame. Keep the dog's "
+                "face, fur, size and outfit (striped polo, wide trousers, sunglasses) identical to image 1, keep the same party "
+                "background, red light and cheering crowd; camera locked-off with a slight handheld feel. Photorealistic. Exactly two "
+                "front legs. No human dancer, no text, no extra dogs, no morphing.")
+
 DANCE_TEXT = ("DURATION: 5 seconds. Image 1 is the first frame. The Shiba Inu does a fast Tecktonik / electro dance to a 132 BPM "
               "club beat while standing upright on its two hind legs behind the DJ booth (the booth always hides everything below "
               "the waist): [0-1s] both front legs held wide open to the sides, bouncing to the beat; [1-2s] both front legs swing "
