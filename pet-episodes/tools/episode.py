@@ -1592,12 +1592,13 @@ def step_dance(work, log, cfg):
     tries = []
     plans = [("reference_to_video", [img, vid, txt])]
     if cfg.get("mode") == "edit":                            # 원본 영상을 편집해 댄서만 바꾼다 → 동작·박자 그대로(1순위), 막히면 강한 지시로
-        plans = [("edit", [vid, img, {"type": "text", "text": DANCE_EDIT}]),
-                 ("reference_to_video", [img, vid, {"type": "text", "text": DANCE_STRICT}])]
+        plans = [("edit", [vid, img, {"type": "text", "text": DANCE_EDIT}])]
+        if not cfg.get("edit_only"):
+            plans.append(("reference_to_video", [img, vid, {"type": "text", "text": DANCE_STRICT}]))
     for task, inputs in plans:                               # Omni가 받는 task: text_to_video·image_to_video·reference_to_video·edit·extend
         res_ = "720p"
-        body = {"model": CLIP_MODEL, "input": inputs,
-                "response_format": {"type": "video", "resolution": res_, "aspect_ratio": "9:16"},
+        rf = {"type": "video", "resolution": res_} if task == "edit" else {"type": "video", "resolution": res_, "aspect_ratio": "9:16"}
+        body = {"model": CLIP_MODEL, "input": inputs, "response_format": rf,      # edit은 화면비를 정할 수 없다(원본 비율 유지)
                 "generation_config": {"video_config": {"task": task}}}
         try:
             data = _omni_run(key, body)
