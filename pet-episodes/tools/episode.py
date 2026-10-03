@@ -1521,7 +1521,10 @@ DANCE_EDIT = ("Edit this video: replace the human dancer with the Shiba Inu from
               "orange-and-cream Shiba fur all the way down, ending in round dog paws with toe pads and short claws; the legs stay thick and fully furry like a real Shiba's legs at every "
               "angle, never smooth, skin-coloured or hairless. NEVER human "
               "arms, hands, fingers, thumbs, nails or bare skin on the Shiba or on any dog, in any frame - when the dancer points "
-              "or spreads fingers, the dog just extends a furry paw. No human body parts anywhere in the video.")
+              "or spreads fingers, the dog just extends a furry paw. No human body parts anywhere in the video: the "
+              "original crowd's raised human arms and hands must disappear completely - the crowd dogs cheer with dog ears, wagging "
+              "tails and bouncing, any raised limb is clearly a short furry dog leg with a paw. The Shiba's feet are furry dog paws "
+              "under the trouser hems, never bare human feet.")
 DANCE_STRICT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference. MOTION FIDELITY IS THE TOP PRIORITY: "
                 "the Shiba Inu must copy the dancer's movement EXACTLY, frame by frame and beat for beat - the same arm (front leg) "
                 "positions, angles, heights (raise them fully above the head when the dancer does), speed and timing, the same leg "
@@ -1570,7 +1573,7 @@ def _omni_run(key, body) -> bytes:
 
 
 HUMAN_CHECK = ("These are frames from an AI video where every character must be a dog. Look very carefully at every paw, leg "
-               "and hand-like shape (especially the dancing Shiba's front legs). Is there ANY human body part - human hand, "
+               "and hand-like shape (especially the dancing Shiba's front legs and feet) and the whole background crowd. Is there ANY human body part - human hand, "
                "fingers, thumb, fingernails, bare human skin, human arm, or a smooth hairless skin-coloured arm that looks human rather than a furry dog leg - in ANY frame? "
                'JSON only: {"human": true, "where": "short English description of which frame/where, empty if none"}')
 
@@ -1578,7 +1581,8 @@ HUMAN_CHECK = ("These are frames from an AI video where every character must be 
 def _human_parts(video: Path, work: Path) -> dict:
     """완성 영상에 사람 손·손가락·맨살이 섞였는지 AI가 장면을 모아 검사한다(사용자 지적 2026-10: 시바 앞발 끝에 사람 손)."""
     sheet = work / "_check.jpg"
-    _ff(["-i", str(video), "-vf", "fps=3,scale=240:-2,tile=5x3", "-frames:v", "1", "-q:v", "3", str(sheet)])
+    fps = max(0.5, 10 / max(1.0, _dur(video)))              # 영상 길이와 관계없이 10장, 크게(작으면 배경 사람 팔을 놓친다)
+    _ff(["-i", str(video), "-vf", f"fps={fps:.3f},scale=400:-2,tile=5x2", "-frames:v", "1", "-q:v", "3", str(sheet)])
     key = _key("GEMINI_API_KEY")
     body = {"contents": [{"role": "user", "parts": [{"inline_data": _b64img(sheet)}, {"text": HUMAN_CHECK}]}],
             "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
@@ -1693,7 +1697,9 @@ BRIDGE_PROMPT = ("Continue this exact video seamlessly for 3 more seconds in the
                  "Shiba Inu in the striped polo, wide trousers and sunglasses finishes its last dance move, hops down from the "
                  "platform and walks on its hind legs to a small round wooden bar table at the side of the yard, then stops in front "
                  "of it. The dog's front legs stay thick furry Shiba legs with paws - never human hands, fingers or bare skin. "
-                 "Camera follows smoothly. Photorealistic. No text, no humans.")
+                 "Its hind feet under the trouser hems are furry dog paws, never bare human feet. "
+                 "The crowd is only dogs, no raised human arms or hands anywhere in the background. Camera follows smoothly. "
+                 "Photorealistic. No text, no humans.")
 DRINK_START = ("Image 1 is the last frame of the previous shot (keep exactly this Shiba Inu, its outfit - striped short-sleeve polo, "
                "wide light trousers, dark sunglasses - and this night courtyard party lighting: warm string lights, red stage glow, "
                "dogs of other breeds in the background). Image 2 is the real product bottle. Create one photorealistic vertical 9:16 "
@@ -1839,13 +1845,17 @@ def main(path: str) -> int:
             step_bgm(work, log, req.get("bgm"))
         if "ig_probe" in steps:
             step_ig_probe(log)
-        if "drink" in steps:
-            step_drink(work, log, req.get("drink") or {})
         if "dance" in steps:
             try:
                 step_dance(work, log, req.get("dance") or {})
             finally:                                         # 남의 영상(참고 춤)은 성공·실패와 관계없이 저장소에 남기지 않는다
                 for f in work.glob("_ref*"):
+                    f.unlink(missing_ok=True)
+        if "drink" in steps:
+            try:
+                step_drink(work, log, req.get("drink") or {})
+            finally:                                         # 실패해도 중간 파일은 남기지 않는다
+                for f in work.glob("_*"):
                     f.unlink(missing_ok=True)
         if not ep["clips"]:
             raise StopIteration
