@@ -27,11 +27,11 @@
       }
     ]
   },
-  "error": "사람 손·맨살이 섞여 나와 결과를 버렸습니다: full: Foreground audience heads showing human hair parted in the middle / bottom: Bare human feet with toes visible beneath the dancer's pants in the top row, and human hair on the head in the lower foreground.",
+  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Edited video duration (20.625s) exceeds maximum supported source video duration (10s).\",\"code\":\"invalid_request\"}}",
   "last_request": {
-    "file": "22_strict_all.json",
-    "ran_at": "2026-10-03T13:23:39Z",
-    "ok": true
+    "file": "24_swap.json",
+    "ran_at": "2026-10-03T13:33:17Z",
+    "ok": false
   },
   "drink": {
     "start": {
@@ -58,5 +58,6 @@
       "y1": 0.545
     },
     "preview_sec": 12.0
-  }
+  },
+  "swap": {}
 }
