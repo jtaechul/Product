@@ -1500,7 +1500,7 @@ DANCE_START = ("Reference image 1 is our character: a real Shiba Inu (keep exact
                "and small dark sunglasses. No arm or leg skin is visible at all - only big fluffy orange-and-cream Shiba front paws "
                "stick out of the sleeve cuffs. Exactly two front legs coming out of the sleeves, spread wide to the sides like the dancer's starting pose; tail "
                "curled out over the waistband. Strings of warm bulb lights overhead, a strong red stage light from the front, an old "
-               "building facade behind, the whole audience is dogs of many breeds (corgis, poodles, retrievers, huskies) cheering, some holding up phones in their paws; only dogs, no people at all. The human dancer from "
+               "building facade behind, the whole audience is dogs of many breeds (corgis, poodles, retrievers, huskies) cheering with open mouths and wagging tails; only dogs, no people, no phones, no hands of any kind. The human dancer from "
                "reference image 2 must NOT appear. No text, no logos, no watermark.")
 DANCE_PROMPT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference: the Shiba Inu in image 1 performs "
                 "the same dance as the dancer in the video, beat for beat and just as big and sharp - Tecktonik / electro dance: fast "
@@ -1622,10 +1622,18 @@ def step_dance(work, log, cfg):
     _ff(["-i", str(ref), "-frames:v", "1", str(first)])
     start = work / "dance_start.png"
     if not start.exists() or "start" in cfg.get("redo", []):
-        r = gen_image(DANCE_START, [ROOT / "pet-episodes" / "characters" / "dog.png", first], start, "9:16")
-        res["start"] = r
-        if not r.get("ok"):
-            raise RuntimeError(f"첫 장면 실패: {r.get('error')}")
+        res["start_check"] = []
+        for attempt in range(3):                             # 첫 장면 그림도 사람 흔적 검사(불합격이면 그림만 다시 — 영상 비용 전에)
+            r = gen_image(DANCE_START, [ROOT / "pet-episodes" / "characters" / "dog.png", first], start, "9:16")
+            res["start"] = r
+            if not r.get("ok"):
+                raise RuntimeError(f"첫 장면 실패: {r.get('error')}")
+            c = _vision_json(start, HUMAN_CHECK)
+            res["start_check"].append(c)
+            if c and c.get("human") is False:
+                break
+        else:
+            raise RuntimeError(f"첫 장면에 사람 흔적(3회): {c.get('where', '') if c else '검사 실패'}")
     if cfg.get("only_start"):                                # 첫 장면만 먼저 확인(영상 비용 전에)
         res["ok"] = "start_only"
         return
