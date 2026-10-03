@@ -11,7 +11,7 @@
         "ok": true
       }
     ],
-    "ok": true,
+    "ok": "start_only",
     "sec": 5.0,
     "mode_used": "edit",
     "human_check": [
@@ -27,9 +27,9 @@
   },
   "error": "사람 손·맨살이 섞여 나와 결과를 버렸습니다: full: Foreground audience heads showing human hair parted in the middle / bottom: Bare human feet with toes visible beneath the dancer's pants in the top row, and human hair on the head in the lower foreground.",
   "last_request": {
-    "file": "19_sneakers.json",
-    "ran_at": "2026-10-03T13:14:18Z",
-    "ok": false
+    "file": "20_strict_start.json",
+    "ran_at": "2026-10-03T13:16:32Z",
+    "ok": true
   },
   "drink": {
     "start": {
