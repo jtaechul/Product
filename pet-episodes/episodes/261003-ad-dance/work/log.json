@@ -2,12 +2,12 @@
   "assemble": {
     "ok": true,
     "sec": 28.6,
-    "note": "로컬 조립(노래 없음, 내레이션 Enceladus 필요한 부분만 1.3배)"
+    "note": "로컬 조립(배경음악 포함 — 사용자 요청, 릴스 번역 불필요) · 내레이션 Enceladus 1.3배"
   },
   "cover": "work/cover.jpg",
   "last_request": {
     "file": "01_ad.json",
-    "ran_at": "2026-10-03T14:04:04Z",
+    "ran_at": "2026-10-03T14:10:13Z",
     "ok": true
   }
 }
