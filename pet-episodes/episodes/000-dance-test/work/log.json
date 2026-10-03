@@ -8,7 +8,7 @@
       {
         "task": "edit",
         "res": "720p",
-        "ok": true
+        "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}"
       }
     ],
     "ok": true,
@@ -21,11 +21,11 @@
       }
     ]
   },
-  "error": "연결 장면에 사람 손·맨살(2회): Top row frames (1-3) show bare human arms and hands extending from the striped shirt sleeves.",
+  "error": "Omni가 춤 영상 참고 입력을 받지 않았습니다",
   "last_request": {
-    "file": "16_longsleeve.json",
-    "ran_at": "2026-10-03T13:03:01Z",
-    "ok": true
+    "file": "17_no_humans.json",
+    "ran_at": "2026-10-03T13:06:27Z",
+    "ok": false
   },
   "drink": {
     "start": {
