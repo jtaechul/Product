@@ -4861,8 +4861,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 
   <section class="box" data-view="trend">
     <div class="box-hd"><span class="step">01</span><h2>인기 쇼츠 고르기</h2></div>
-    <p class="lead">최근 7일 유튜브 쇼츠 중 시간당 조회수가 빠르게 오르는 순서입니다. "분석"을 누르면 AI가 영상을 보고 우리 시바견으로 바꾸기 좋은지 점수를 매깁니다.</p>
-    <div class="row"><button class="btn btn-2 btn-sm" id="trLoad" type="button">불러오기</button><button class="btn btn-2 btn-sm" id="trRefresh" type="button">새로 찾기</button></div>
+    <p class="lead">최근 7일 유튜브 쇼츠 중 따라 하기 쉬운 밈·챌린지·패러디만 골라, 시간당 조회수가 빠르게 오르는 순서로 보여 줍니다. "분석"을 누르면 AI가 영상을 보고 우리 시바견으로 바꾸기 좋은지 점수를 매깁니다.</p>
+    <div class="row"><select id="trRegion" style="flex:0 0 112px"><option value="kr">한국 영상</option><option value="world">전 세계</option></select><button class="btn btn-2 btn-sm" id="trLoad" type="button">불러오기</button><button class="btn btn-2 btn-sm" id="trRefresh" type="button">새로 찾기</button></div>
     <div class="row" style="margin-top:10px"><input class="grow2" id="trUrl" type="text" placeholder="또는 유튜브 영상 링크 붙여넣기"><button class="btn btn-2 btn-sm" id="trUrlGo" type="button" style="flex:0 0 78px">분석</button></div>
     <div class="msg" id="trMsg"></div>
     <div class="finds" id="trList"></div>
@@ -5583,14 +5583,14 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   function trNum(n){ n=Number(n)||0; return n>=10000?(Math.round(n/1000)/10)+'만':n.toLocaleString('ko-KR'); }
   function trLoad(refresh){
     say('trMsg','유튜브에서 불러오는 중…','wait'); $('trList').textContent='';
-    post('/api/trend/list',{refresh:!!refresh}).then(function(r){
+    post('/api/trend/list',{refresh:!!refresh,region:$('trRegion').value}).then(function(r){
       if(!r||!r.success){ say('trMsg',(r&&r.error)||'불러오지 못했습니다.','no'); return; }
       hide('trMsg');
       r.items.forEach(function(v){
         var d=epEl('div','trc');
         var im=document.createElement('img'); im.src=v.thumb; im.alt=''; im.loading='lazy';
         var t=epEl('div','t'); t.appendChild(epEl('div','n',v.title));
-        t.appendChild(epEl('div','m','조회 '+trNum(v.views)+' · 시간당 '+trNum(v.perHour)+' · '+v.sec+'초 · '+v.channel));
+        t.appendChild(epEl('div','m',(v.kind&&v.kind!=='기타'?v.kind+' · 따라하기 '+v.easy+'점 · ':'')+'조회 '+trNum(v.views)+' · 시간당 '+trNum(v.perHour)+' · '+v.sec+'초 · '+v.channel));
         var an=epEl('div','ep-sub',''); an.style.flexBasis='100%';
         var yt=epEl('a','btn btn-2 btn-sm','보기'); yt.href='https://www.youtube.com/shorts/'+v.id; yt.target='_blank'; yt.rel='noopener'; yt.style.flex='none';
         var ab=epBtn('분석',function(){
@@ -5648,6 +5648,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       say('trMsg','리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:''),'ok');
     }).catch(function(e){ say('trMsg','분석하지 못했습니다: '+e.message,'no'); });
   });
+  try{ var rg=localStorage.getItem('trRegion'); if(rg) $('trRegion').value=rg; }catch(e){}
+  $('trRegion').addEventListener('change',function(){ try{ localStorage.setItem('trRegion',this.value); }catch(e){} trLoad(false); });
   $('trLoad').addEventListener('click',function(){ trLoad(false); });
   $('trRefresh').addEventListener('click',function(){ trLoad(true); });
   $('trSearch').addEventListener('click',trSearch);
@@ -6845,7 +6847,19 @@ async function runVpJobs(env) {
 // 흐름: 유튜브 인기 쇼츠 후보(자동) → Gemini 분석 → 사장님이 고르고 원본 파일을 직접 올림 → 상품·광고 문구 →
 //       시험(첫 구간만) → 사장님 확인 → 본편(나머지 구간 + 상품 끝 장면 + 느끼한 내레이션). 노래는 넣지 않는다(인스타 앱에서).
 // 원본 영상은 남의 것이라 공개 저장소에 올리지 않는다 → KV에 7일만 조각으로 두고, 제작 워크플로가 서명 주소로 받아 간다.
-const TREND_QUERIES = ['#shorts 챌린지', '#shorts 밈', '#shorts 댄스', '강아지 #shorts', '고양이 #shorts'];
+// 따라 하기 쉬운 밈·챌린지·패러디 위주(사용자 지적 2026-10: 일반 인기 영상은 따라 하기 어려움). 지역은 화면에서 고른다.
+const TREND_QUERIES = {
+  kr: ['챌린지 #shorts', '밈 #shorts', '패러디 #shorts', '댄스챌린지', '요즘 유행 밈', '따라하기 챌린지'],
+  world: ['#challenge #shorts', '#meme #shorts', '#trend #shorts', '#dancechallenge', '#parody #shorts', '#viral trend'],
+};
+const hasHangul = (t) => /[가-힣]/.test(String(t || ''));
+// 제목·설명만 보고 '머리·손발만 개로 바꿔도 되는 따라 하기 쉬운 형식'인지 한 번에 채점(Gemini 텍스트 1회, 아주 쌈)
+const TREND_RANK = (rows) => `아래는 유튜브 쇼츠 목록이다. 각 영상이 "누구나 따라 하는 밈·챌린지·패러디 형식"인지, 그리고
+등장인물의 머리·손·발만 강아지로 바꾸는 방식으로 리메이크하기 쉬운지 0~100점으로 매겨라.
+가산: 정해진 동작·대사·포맷이 있는 챌린지/밈/패러디, 1~2명이 주인공, 동작이 크고 분명함.
+감점: 스포츠 경기·묘기·요리·제품 리뷰·브이로그·뉴스·게임 화면, 사람 손 클로즈업, 글자가 핵심, 등장인물이 매우 많음.
+JSON만: {"items":[{"i":0,"kind":"챌린지|밈|패러디|댄스|기타","easy":0}]}
+${rows.map((r, i) => `${i}. ${r.title} / ${r.desc}`).join('\n')}`;
 const REMAKE_CAP_USD = 5;                          // 한 편 최대 비용(사용자 확정 2026-10)
 const REMAKE_CHUNK = 5 * 1024 * 1024;              // 원본 올리기 조각 크기(KV 한 값 25MB 제한 안쪽)
 const REMAKE_MAX_CHUNKS = 20;                      // 최대 100MB
@@ -6865,14 +6879,16 @@ function ytErrMsg(err) {
 }
 
 async function handleTrendList(env, body) {
-  const ck = 'trend_list:' + kstYmd();
+  const region = body.region === 'world' ? 'world' : 'kr';
+  const ck = `trend_list:${region}:${kstYmd()}`;
   if (!body.refresh) { const c = await env.PENDING_POSTS.get(ck, 'json').catch(() => null); if (c) return { success: true, ...c, cached: true }; }
   const key = env.YOUTUBE_API_KEY || await getGeminiKey(env);
   if (!key) throw new Error('유튜브 키가 없습니다.');
   const after = new Date(Date.now() - 7 * 864e5).toISOString();
   const ids = new Set(); let err = '';
-  for (const q of TREND_QUERIES) {
-    const r = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&type=video&videoDuration=short&order=viewCount&regionCode=KR&relevanceLanguage=ko&maxResults=15&publishedAfter=${encodeURIComponent(after)}&q=${encodeURIComponent(q)}&key=${key}`);
+  const loc = region === 'kr' ? '&regionCode=KR&relevanceLanguage=ko' : '';
+  for (const q of TREND_QUERIES[region]) {
+    const r = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&type=video&videoDuration=short&order=viewCount${loc}&maxResults=20&publishedAfter=${encodeURIComponent(after)}&q=${encodeURIComponent(q)}&key=${key}`);
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { err = j?.error?.message || ('HTTP ' + r.status); if (r.status === 403 || r.status === 400) break; continue; }
     for (const it of j.items || []) if (it.id?.videoId) ids.add(it.id.videoId);
@@ -6882,11 +6898,23 @@ async function handleTrendList(env, body) {
   const vj = await v.json().catch(() => ({}));
   if (!v.ok) throw new Error(ytErrMsg(vj?.error?.message || ('HTTP ' + v.status)));
   const now = Date.now();
-  const items = (vj.items || []).map(x => {
+  let items = (vj.items || []).map(x => {
     const views = +x.statistics?.viewCount || 0, hrs = Math.max(1, (now - Date.parse(x.snippet.publishedAt)) / 36e5);
+    const lang = String(x.snippet.defaultAudioLanguage || x.snippet.defaultLanguage || '');
     return { id: x.id, title: x.snippet.title, channel: x.snippet.channelTitle, thumb: x.snippet.thumbnails?.high?.url || x.snippet.thumbnails?.medium?.url || '',
-      views, likes: +x.statistics?.likeCount || 0, hours: Math.round(hrs), perHour: Math.round(views / hrs), sec: isoSec(x.contentDetails?.duration) };
-  }).filter(x => x.sec > 0 && x.sec <= 90).sort((a, b) => b.perHour - a.perHour).slice(0, 30);   // 급상승 = 시간당 조회수
+      views, likes: +x.statistics?.likeCount || 0, hours: Math.round(hrs), perHour: Math.round(views / hrs), sec: isoSec(x.contentDetails?.duration),
+      ko: lang.startsWith('ko') || hasHangul(x.snippet.title) || hasHangul(x.snippet.channelTitle), desc: String(x.snippet.description || '').slice(0, 120) };
+  }).filter(x => x.sec > 0 && x.sec <= 90 && (region !== 'kr' || x.ko))   // 한국: 한국어 제목·음성만
+    .sort((a, b) => b.perHour - a.perHour).slice(0, 40);
+  // 따라 하기 쉬운 밈·챌린지만 남기고(easy 50점 이상), 그 안에서 시간당 조회수 순
+  try {
+    const gk = await getGeminiKey(env);
+    const o = extractJson(await callGeminiText(gk, { system: 'JSON만 출력.', user: TREND_RANK(items), max_tokens: 2500, json: true }));
+    for (const r of o.items || []) if (items[r.i]) { items[r.i].kind = String(r.kind || ''); items[r.i].easy = Math.round(Number(r.easy) || 0); }
+    const easy = items.filter(x => (x.easy || 0) >= 50 && x.kind !== '기타');
+    if (easy.length >= 5) items = easy;
+  } catch {}
+  items = items.slice(0, 30).map(({ desc, ...x }) => x);
   const out = { items, at: new Date().toISOString() };
   await env.PENDING_POSTS.put(ck, JSON.stringify(out), { expirationTtl: 2 * 24 * 3600 });
   return { success: true, ...out };
