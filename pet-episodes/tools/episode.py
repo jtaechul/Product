@@ -1495,9 +1495,10 @@ DANCE_START = ("Reference image 1 is our character: a real Shiba Inu (keep exact
                "Reference image 2 is only a composition reference from a dance video. Create one photorealistic vertical 9:16 frame: "
                "the Shiba Inu stands upright on its two hind legs on a raised wooden platform above a cheering crowd at a night outdoor "
                "courtyard party, full body visible from ears to feet, centred, same camera distance and angle as reference image 2. "
-               "The dog wears the dancer's outfit: a short-sleeve horizontal-striped polo shirt (white, navy and beige stripes), "
-               "loose wide-leg light trousers that fully cover its legs and lower body down to the paws, and small dark sunglasses. "
-               "Exactly two front legs coming out of the sleeves, spread wide to the sides like the dancer's starting pose; tail "
+               "The dog wears the dancer's outfit in a LONG-SLEEVE version: a horizontal-striped collared shirt (white, navy and beige "
+               "stripes) whose sleeves reach all the way down to the wrists, loose wide-leg light trousers whose hems cover the feet, "
+               "and small dark sunglasses. No arm or leg skin is visible at all - only big fluffy orange-and-cream Shiba paws stick "
+               "out of the sleeve cuffs and trouser hems. Exactly two front legs coming out of the sleeves, spread wide to the sides like the dancer's starting pose; tail "
                "curled out over the waistband. Strings of warm bulb lights overhead, a strong red stage light from the front, an old "
                "building facade behind, people in the crowd raising phones (backs of heads, no clear faces). The human dancer from "
                "reference image 2 must NOT appear. No text, no logos, no watermark.")
@@ -1509,8 +1510,9 @@ DANCE_PROMPT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is t
                 "background, red light and cheering crowd; camera locked-off with a slight handheld feel. Photorealistic. Exactly two "
                 "front legs. No human dancer, no text, no extra dogs, no morphing.")
 
-DANCE_EDIT = ("Edit this video: replace the human dancer with the Shiba Inu from image 1 (same face, fur, striped short-sleeve polo, "
-              "wide light trousers and dark sunglasses as in image 1). The dog must copy the dancer's movement EXACTLY, frame by frame: "
+DANCE_EDIT = ("Edit this video: replace the human dancer with the Shiba Inu from image 1 (same face, fur, LONG-SLEEVE striped shirt "
+              "with sleeves down to the wrists, wide light trousers covering the feet and dark sunglasses as in image 1 - the "
+              "dancer's bare forearms are fully covered by the long sleeves; only fluffy dog paws stick out of the cuffs). The dog must copy the dancer's movement EXACTLY, frame by frame: "
               "the same arm (front leg) positions, angles, heights, speed and timing, the same leg steps, knee bounces and body turns. "
               "Motion fidelity is the top priority - stretch or distort the dog's limbs if needed to match every pose. Also replace EVERY person "
               "in the crowd with real dogs of many different breeds (corgis, poodles, retrievers, dachshunds, pugs, huskies...), "
@@ -1694,15 +1696,15 @@ def step_dance(work, log, cfg):
 # ---------- 춤 밈 끝 장면: 무대에서 내려와 펫 이온음료를 음미(사용자 확정 2026-10) ----------
 # 병은 AI가 그리지 않는다(글자가 뭉개짐) → 쿠팡 실제 상품 사진에서 병 하나를 잘라 장면에 붙이고 병 전체를 흐림 처리한다.
 BRIDGE_PROMPT = ("DURATION: 3 seconds. Image 1 is the first frame (the end of the dance) - continue seamlessly in the same night scene, same lighting, same dog crowd: the "
-                 "Shiba Inu in the striped polo, wide trousers and sunglasses finishes its last dance move, hops down from the "
+                 "Shiba Inu in the long-sleeve striped shirt, wide trousers and sunglasses finishes its last dance move, hops down from the "
                  "platform and walks on its hind legs to a small round wooden bar table at the side of the yard, then stops in front "
                  "of it. While walking it keeps its front legs relaxed close to its chest. The dog's front legs stay thick, fully "
-                 "furry orange-and-cream Shiba legs with round paws coming out of the short sleeves - never human arms, hands, "
+                 "furry orange-and-cream Shiba legs with round paws coming out of the long sleeve cuffs - never human arms, hands, "
                  "fingers or bare skin. "
                  "Its hind feet under the trouser hems are furry dog paws, never bare human feet. "
                  "The crowd is only dogs, no raised human arms or hands anywhere in the background. Camera follows smoothly. "
                  "Photorealistic. No text, no humans.")
-DRINK_START = ("Image 1 is the last frame of the previous shot (keep exactly this Shiba Inu, its outfit - striped short-sleeve polo, "
+DRINK_START = ("Image 1 is the last frame of the previous shot (keep exactly this Shiba Inu, its outfit - long-sleeve striped shirt, "
                "wide light trousers, dark sunglasses - and this night courtyard party lighting: warm string lights, red stage glow, "
                "dogs of other breeds in the background). Image 2 is the real product bottle. Create one photorealistic vertical 9:16 "
                "frame: the Shiba stands on its hind legs at a small round wooden bar table at the side of the party, both furry "
