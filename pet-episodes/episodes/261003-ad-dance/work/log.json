@@ -6,8 +6,23 @@
   },
   "cover": "work/cover.jpg",
   "last_request": {
-    "file": "01_ad.json",
-    "ran_at": "2026-10-03T14:10:13Z",
-    "ok": true
-  }
+    "file": "02_publish.json",
+    "ran_at": "2026-10-03T14:23:15Z",
+    "ok": false
+  },
+  "ig_publish": {
+    "ok": false,
+    "error": "토큰으로 인스타 계정을 못 찾음(만료·권한)",
+    "token_kind": "facebook(EAA)",
+    "token_len": 192,
+    "instagram": {
+      "http": 400,
+      "error": "Invalid OAuth access token - Cannot parse access token"
+    },
+    "facebook_pages": {
+      "http": 400,
+      "error": "Error validating access token: Session has expired on Saturday, 05-Sep-26 10:13:02 PDT. The current time is Saturday, 03-Oct-26 07:23:15 PDT."
+    }
+  },
+  "error": "인스타 토큰이 유효하지 않음(만료 가능) — log.json의 ig_publish 참고"
 }
