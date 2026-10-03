@@ -1518,7 +1518,8 @@ DANCE_EDIT = ("Edit this video: replace the human dancer with the Shiba Inu from
               "to film - no humans anywhere in the video. Keep the camera, framing, string lights, building, red stage light and "
               "timing exactly as in the video. Remove any watermark or text. Photorealistic dog, "
               "exactly two front legs. CRITICAL ANATOMY: the dancer's arms become the Shiba's own FRONT LEGS - covered in "
-              "orange-and-cream Shiba fur all the way down, ending in round dog paws with toe pads and short claws. NEVER human "
+              "orange-and-cream Shiba fur all the way down, ending in round dog paws with toe pads and short claws; the legs stay thick and fully furry like a real Shiba's legs at every "
+              "angle, never smooth, skin-coloured or hairless. NEVER human "
               "arms, hands, fingers, thumbs, nails or bare skin on the Shiba or on any dog, in any frame - when the dancer points "
               "or spreads fingers, the dog just extends a furry paw. No human body parts anywhere in the video.")
 DANCE_STRICT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference. MOTION FIDELITY IS THE TOP PRIORITY: "
@@ -1570,7 +1571,7 @@ def _omni_run(key, body) -> bytes:
 
 HUMAN_CHECK = ("These are frames from an AI video where every character must be a dog. Look very carefully at every paw, leg "
                "and hand-like shape (especially the dancing Shiba's front legs). Is there ANY human body part - human hand, "
-               "fingers, thumb, fingernails, bare human skin, human arm - in ANY frame? "
+               "fingers, thumb, fingernails, bare human skin, human arm, or a smooth hairless skin-coloured arm that looks human rather than a furry dog leg - in ANY frame? "
                'JSON only: {"human": true, "where": "short English description of which frame/where, empty if none"}')
 
 
@@ -1685,6 +1686,88 @@ def step_dance(work, log, cfg):
     res["sec"] = _dur(work / "dance.mp4")
 
 
+
+# ---------- 춤 밈 끝 장면: 무대에서 내려와 펫 이온음료를 음미(사용자 확정 2026-10) ----------
+# 병은 AI가 그리지 않는다(글자가 뭉개짐) → 쿠팡 실제 상품 사진에서 병 하나를 잘라 장면에 붙이고 병 전체를 흐림 처리한다.
+DRINK_START = ("Reference image 1 shows our Shiba Inu character in its party outfit (striped short-sleeve polo, wide light trousers, "
+               "dark sunglasses) - keep exactly this dog and outfit. Create one photorealistic vertical 9:16 frame at the same night "
+               "courtyard party (warm string lights, wooden fence, old building behind, a few happy dogs of other breeds in the "
+               "blurred background): the Shiba has come down from the stage and now stands on ALL FOUR legs on the floor, head "
+               "lowered, lapping from a shallow clear glass bowl of clear liquid on the floor, eyes half closed in bliss, tail "
+               "curled up. Its front legs are thick furry Shiba legs with paws - no human hands or skin anywhere. Camera at dog "
+               "eye level, the dog fills the right two thirds of the frame; leave the lower-left quarter of the floor empty and "
+               "uncluttered (a product will be placed there later). No bottles, no text, no logos, no humans.")
+DRINK_PROMPT = ("DURATION: 4 seconds. Image 1 is the first frame. The Shiba Inu stays on all four legs and happily laps the clear "
+                "drink from the bowl, little splashes, ears relaxed, eyes half closed savouring it, then lifts its head and licks "
+                "its lips with a satisfied look, tail wagging. Same dog, outfit and party background; camera locked-off, gentle "
+                "handheld feel. Photorealistic. Furry dog legs and paws only - no human hands, fingers or skin. No text, no bottles, "
+                "no extra objects appearing.")
+
+
+def _bottle_cutout(src: Path, out: Path, index: int = 0, count: int = 4):
+    """여러 병이 나란히 찍힌 흰 배경 상품 사진에서 병 하나를 잘라 흰 배경을 투명하게."""
+    im = Image.open(src).convert("RGB")
+    w, h = im.size
+    x0, x1 = int(w * index / count), int(w * (index + 1) / count)
+    im = im.crop((x0, 0, x1, h))
+    px = im.load()
+    W, H = im.size
+    cols = [x for x in range(W) if any(sum(px[x, y]) < 720 for y in range(0, H, 4))]
+    rows = [y for y in range(H) if any(sum(px[x, y]) < 720 for x in range(0, W, 4))]
+    if cols and rows:
+        im = im.crop((cols[0], rows[0], cols[-1] + 1, rows[-1] + 1))
+    rgba = im.convert("RGBA")
+    data = [(r, g, b, 0 if r > 242 and g > 242 and b > 242 else 255) for r, g, b, _ in rgba.getdata()]
+    rgba.putdata(data)
+    rgba.save(out)
+
+
+def step_drink(work, log, cfg):
+    res = log.setdefault("drink", {})
+    key = _key("GEMINI_API_KEY")
+    start = work / "drink_start.png"
+    if not start.exists() or "start" in cfg.get("redo", []):
+        r = gen_image(DRINK_START, [work / "dance_start.png"], start, "9:16")
+        res["start"] = r
+        if not r.get("ok"):
+            raise RuntimeError(f"음료 첫 장면 실패: {r.get('error')}")
+    raw = work / "_drink_raw.mp4"
+    if not (work / "drink.mp4").exists() or "video" in cfg.get("redo", []):
+        body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(start)}, {"type": "text", "text": DRINK_PROMPT}],
+                "response_format": {"type": "video", "resolution": "720p", "aspect_ratio": "9:16"},
+                "generation_config": {"video_config": {"task": "image_to_video"}}}
+        raw.write_bytes(_omni_run(key, body))
+        chk = _human_parts(raw, work)
+        res["human_check"] = chk
+        if chk.get("human"):
+            raise RuntimeError(f"음료 장면에 사람 손·맨살이 섞여 버렸습니다: {chk.get('where', '')}")
+        h = int(cfg.get("out_h", 640))
+        _ff(["-i", str(raw), "-an", "-vf", f"scale=-2:{h},format=yuv420p", "-c:v", "libx264", "-crf", "24", str(work / "drink_plain.mp4")])
+        raw.unlink(missing_ok=True)
+    # 실제 상품 병을 왼쪽 아래에 세우고 병 전체를 흐림 처리
+    st, img = _http(cfg["bottle_url"], None, {}, timeout=60)
+    if st != 200:
+        raise RuntimeError(f"상품 사진을 못 받았습니다(HTTP {st})")
+    src = work / "_bottle_src.jpg"
+    src.write_bytes(img)
+    cut = work / "_bottle.png"
+    _bottle_cutout(src, cut, int(cfg.get("bottle_index", 0)), int(cfg.get("bottle_count", 4)))
+    plain = work / "drink_plain.mp4"
+    H = int(cfg.get("out_h", 640))
+    bh = int(H * 0.40)
+    blur = int(cfg.get("blur", 10))
+    _ff(["-i", str(plain), "-loop", "1", "-i", str(cut), "-filter_complex",
+         f"[1:v]scale=-2:{bh},format=rgba,gblur=sigma={blur}[b];[0:v][b]overlay=x=W*0.05:y=H-h-H*0.06:shortest=1,format=yuv420p[v]",
+         "-map", "[v]", "-c:v", "libx264", "-crf", "24", "-movflags", "+faststart", str(work / "drink.mp4")])
+    for f in (src, cut):
+        f.unlink(missing_ok=True)
+    # 미리보기: 춤 → 음료(소리 없음 — 노래는 인스타에서 붙인다)
+    if (work / "dance.mp4").exists():
+        _ff(["-i", str(work / "dance.mp4"), "-i", str(work / "drink.mp4"), "-filter_complex",
+             f"[0:v]scale=-2:{H},fps=24,setsar=1[a];[1:v]scale=-2:{H},fps=24,setsar=1[b];[a][b]concat=n=2:v=1:a=0,format=yuv420p[v]",
+             "-map", "[v]", "-c:v", "libx264", "-crf", "24", "-movflags", "+faststart", str(work / "preview.mp4")])
+    res["ok"] = True
+
 def main(path: str) -> int:
     rp = Path(path)
     req = json.loads(rp.read_text(encoding="utf-8"))
@@ -1706,6 +1789,8 @@ def main(path: str) -> int:
             step_bgm(work, log, req.get("bgm"))
         if "ig_probe" in steps:
             step_ig_probe(log)
+        if "drink" in steps:
+            step_drink(work, log, req.get("drink") or {})
         if "dance" in steps:
             try:
                 step_dance(work, log, req.get("dance") or {})
