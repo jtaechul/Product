@@ -6,22 +6,18 @@
     },
     "tries": [
       {
-        "task": "edit",
+        "task": "reference_to_video",
         "res": "720p",
         "ok": true
       }
     ],
-    "ok": "start_only",
+    "ok": true,
     "sec": 5.0,
-    "mode_used": "edit",
+    "mode_used": "reference_to_video",
     "human_check": [
       {
-        "human": true,
-        "where": "bottom: Dancing figure's bare feet/toes appearing under the pants cuffs on the platform"
-      },
-      {
-        "human": true,
-        "where": "full: Foreground audience heads showing human hair parted in the middle / bottom: Bare human feet with toes visible beneath the dancer's pants in the top row, and human hair on the head in the lower foreground."
+        "human": false,
+        "where": ""
       }
     ],
     "start_check": [
@@ -33,8 +29,8 @@
   },
   "error": "사람 손·맨살이 섞여 나와 결과를 버렸습니다: full: Foreground audience heads showing human hair parted in the middle / bottom: Bare human feet with toes visible beneath the dancer's pants in the top row, and human hair on the head in the lower foreground.",
   "last_request": {
-    "file": "21_strict_start2.json",
-    "ran_at": "2026-10-03T13:18:36Z",
+    "file": "22_strict_all.json",
+    "ran_at": "2026-10-03T13:23:39Z",
     "ok": true
   },
   "drink": {
@@ -50,20 +46,16 @@
     "bridge_raw_sec": 8.0,
     "bridge_check": [
       {
-        "human": true,
-        "where": "Frames 1-3, bottom foreground showing the backs of human heads with parted hair watching the performance."
-      },
-      {
         "human": false,
         "where": ""
       }
     ],
     "bottle_box": {
       "found": true,
-      "x0": 0.791,
-      "y0": 0.215,
-      "x1": 1.0,
-      "y1": 0.58
+      "x0": 0.719,
+      "y0": 0.318,
+      "x1": 0.862,
+      "y1": 0.545
     },
     "preview_sec": 12.0
   }
