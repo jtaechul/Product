@@ -5444,8 +5444,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       d.appendChild(fb2);
     }
     var act=epEl('div','ep-act');
+    if(e.hasVideo){                                    // 저장하기는 다른 요청(인스타 올리기 등)이 도는 중에도 항상 보인다
+      var dl=epEl('a','btn btn-sm','영상 저장하기'); dl.href='/api/episode/video?dl=1&id='+encodeURIComponent(e.id); act.appendChild(dl);
+    }
     if(e.hasVideo && e.state!=='running'){
-      var dl=epEl('a','btn btn-sm btn-2','저장하기'); dl.href='/api/episode/video?dl=1&id='+encodeURIComponent(e.id); act.appendChild(dl);
       if(e.ig&&e.ig.ok){
         var ig=epEl('a','btn btn-sm','인스타 게시물 보기'); ig.href=e.ig.permalink||'#'; ig.target='_blank'; ig.rel='noopener'; act.appendChild(ig);
       } else act.appendChild(epBtn('인스타에 올리기',function(){
