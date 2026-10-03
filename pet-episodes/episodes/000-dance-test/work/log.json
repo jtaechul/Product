@@ -16,10 +16,6 @@
     "mode_used": "edit",
     "human_check": [
       {
-        "human": true,
-        "where": "Bottom right frame, the Shiba's outstretched arms and hands resemble bare human limbs."
-      },
-      {
         "human": false,
         "where": ""
       }
@@ -27,9 +23,9 @@
   },
   "error": "연결 장면에 사람 손·맨살(2회): Top row frames (1-3) show bare human arms and hands extending from the striped shirt sleeves.",
   "last_request": {
-    "file": "15_bridge2.json",
-    "ran_at": "2026-10-03T12:57:21Z",
-    "ok": false
+    "file": "16_longsleeve.json",
+    "ran_at": "2026-10-03T13:03:01Z",
+    "ok": true
   },
   "drink": {
     "start": {
@@ -45,12 +41,20 @@
     "bridge_check": [
       {
         "human": true,
-        "where": "Dancing Shiba's exposed arms and hands across multiple frames"
+        "where": "Frames 1-3, bottom foreground showing the backs of human heads with parted hair watching the performance."
       },
       {
-        "human": true,
-        "where": "Top row frames (1-3) show bare human arms and hands extending from the striped shirt sleeves."
+        "human": false,
+        "where": ""
       }
-    ]
+    ],
+    "bottle_box": {
+      "found": true,
+      "x0": 0.791,
+      "y0": 0.215,
+      "x1": 1.0,
+      "y1": 0.58
+    },
+    "preview_sec": 12.0
   }
 }
