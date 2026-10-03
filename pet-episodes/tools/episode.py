@@ -2006,7 +2006,21 @@ REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 
 REMAKE_SWAP = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, "
                "every movement and its timing, camera, background, lights): {swap}. Every replaced head is the Shiba Inu from "
                "image 1. Paws are thick furry dog paws - no human fingers, nails or bare skin anywhere. Remove any watermark or "
-               "on-screen text.")
+               "on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting "
+               "direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, "
+               "nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar "
+               "and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no "
+               "flicker, morphing or changing markings.")
+# 구간 사이 같은 개로: 앞 구간 마지막 장면을 두 번째 참고 이미지로(사용자 지적 2026-10: 합성 품질을 더 높게)
+REMAKE_PREV = (" Image 2 is how this Shiba looked at the end of the previous part of the same video: keep it identical (same face, "
+               "fur colour and markings, eyes, accessories).")
+# 합성 품질 채점: 사람 손 검사와 별도로 이음새·크기·조명·깜빡임을 본다. 기준 미달이면 한도 안에서 한 번 다시
+REMAKE_QUALITY = ("These frames come from an AI edit where a person's head, hands and feet were replaced with a Shiba Inu's. Judge "
+                  "ONLY the compositing quality: seam or halo where fur meets neck/collar/sleeves, head size and position natural for "
+                  "the body, lighting and colour matching the scene, the dog looking identical across frames (no flicker/morphing), "
+                  "smeared or melted body parts. JSON only: {\"score\": 0, \"issues\": \"short English, empty if fine\"} (0-100, 100 = "
+                  "looks like real footage).")
+REMAKE_QPASS = 70
 REMAKE_SWAP_DEFAULT = ("1) replace the main person's head with the head of the Shiba Inu from image 1; 2) replace their two hands "
                        "with furry Shiba front paws; 3) replace their two feet with furry Shiba hind paws; 4) replace every other "
                        "person with a real dog of various breeds")
@@ -2048,31 +2062,60 @@ def _remake_src(ep_id: str, work: Path) -> Path:
 def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res: dict, cap: float, h: int) -> Path:
     out = work / f"rm_seg{i + 1}.mp4"
     piece = work / f"_rm_piece{i + 1}.mp4"
-    _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "20", str(piece)])
-    img = {"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}
+    _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "16", str(piece)])
+    inputs = [{"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}]
+    prev = work / f"rm_seg{i}.mp4"
+    if i > 0 and prev.exists():                            # 앞 구간과 같은 개로 이어지게
+        last = work / f"_rm_prev{i}.png"
+        _ff(["-sseof", "-0.05", "-i", str(work / f"_rm_hi{i}.mp4" if (work / f"_rm_hi{i}.mp4").exists() else prev),
+             "-frames:v", "1", str(last)])
+        inputs.append({"type": "image", **_b64img(last)})
+        prompt = prompt + REMAKE_PREV
     tries = []
-    for attempt in range(2):                               # 사람 손이 보이면 한도 안에서 한 번만 다시
+    res_name = "1080p"                                     # 같은 값(초당)이라 더 큰 화면으로 만들어 줄인다 — 털·이음새가 더 깔끔
+    for attempt in range(2):                               # 사람 손이 보이거나 합성이 어색하면 한도 안에서 한 번만 다시
         _remake_spend(res, REMAKE_COST["omni_sec"] * seg, f"구간{i + 1} 바꾸기", cap)
         vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()}
-        body = {"model": CLIP_MODEL, "input": [vid, img, {"type": "text", "text": prompt}],
-                "response_format": {"type": "video", "resolution": "720p"},
-                "generation_config": {"video_config": {"task": "edit"}}}
         rawo = work / f"_rm_raw{i + 1}_{attempt}.mp4"
-        rawo.write_bytes(_omni_run(key, body))
-        _remake_spend(res, REMAKE_COST["check"] * 3, f"구간{i + 1} 사람 손 검사", cap)
+        for rn in (res_name, "720p"):
+            body = {"model": CLIP_MODEL, "input": [vid, *inputs, {"type": "text", "text": prompt}],
+                    "response_format": {"type": "video", "resolution": rn},
+                    "generation_config": {"video_config": {"task": "edit"}}}
+            try:
+                rawo.write_bytes(_omni_run(key, body))
+                res_name = rn
+                break
+            except RuntimeError as e:
+                if rn == "720p" or "HTTP 400" not in str(e):   # 1080p를 안 받으면 720p로(요금 미발생 400)
+                    raise
+        _remake_spend(res, REMAKE_COST["check"] * 4, f"구간{i + 1} 검사", cap)
         chk = _human_parts(rawo, work)
-        tries.append((rawo, chk))
-        if chk.get("human") is False:
+        sheet = work / f"_rm_q{i + 1}.jpg"
+        d = max(1.0, _dur(rawo))
+        _ff(["-i", str(rawo), "-vf", f"fps={8 / d:.3f},scale=480:-2,tile=4x2", "-frames:v", "1", "-q:v", "3", str(sheet)])
+        q = _vision_json(sheet, REMAKE_QUALITY)
+        sheet.unlink(missing_ok=True)
+        score = int(q.get("score", 0) or 0) if q else None
+        tries.append((rawo, chk, score, (q or {}).get("issues", "")))
+        good = chk.get("human") is False and (score is None or score >= REMAKE_QPASS)
+        if good or float(res.get("spent", 0)) + REMAKE_COST["omni_sec"] * seg > cap - 0.8:   # 끝 장면 몫은 남겨 둔다
             break
-        if float(res.get("spent", 0)) + REMAKE_COST["omni_sec"] * seg > cap - 0.8:   # 끝 장면 몫은 남겨 둔다
-            break
-        prompt = prompt + " Double-check every frame: only furry dog paws, never a human hand, finger or bare skin."
-    best = next((t for t in tries if t[1].get("human") is False), tries[-1])
+        fix = []
+        if chk.get("human") is not False:
+            fix.append("only furry dog paws, never a human hand, finger or bare skin")
+        if score is not None and score < REMAKE_QPASS and tries[-1][3]:
+            fix.append("fix these compositing problems: " + str(tries[-1][3])[:200])
+        prompt = prompt + " Double-check every frame: " + "; ".join(fix) + "."
+    # 사람 손 없는 것 중 합성 점수가 가장 높은 것
+    best = sorted(tries, key=lambda t: (t[1].get("human") is False, t[2] or 0), reverse=True)[0]
     got = _dur(best[0])
     k = seg / got if got else 1.0                         # 원본 구간과 같은 길이로(박자 유지)
-    _ff(["-i", str(best[0]), "-an", "-vf", f"setpts=PTS*{k:.5f},scale=-2:{h},fps=24,setsar=1,format=yuv420p",
-         "-t", f"{seg:.3f}", "-c:v", "libx264", "-crf", "23", str(out)])
-    res.setdefault("segs", {})[f"seg{i + 1}"] = {"human": best[1].get("human"), "where": best[1].get("where", ""), "tries": len(tries)}
+    hi = work / f"_rm_hi{i + 1}.mp4"                      # 다음 구간 참고용 큰 화면(커밋 안 함)
+    _ff(["-i", str(best[0]), "-an", "-vf", f"setpts=PTS*{k:.5f}", "-t", f"{seg:.3f}", "-c:v", "libx264", "-crf", "18", str(hi)])
+    _ff(["-i", str(hi), "-an", "-vf", f"scale=-2:{h}:flags=lanczos,unsharp=3:3:0.4,fps=24,setsar=1,format=yuv420p",
+         "-c:v", "libx264", "-crf", "19", "-preset", "slow", str(out)])
+    res.setdefault("segs", {})[f"seg{i + 1}"] = {"human": best[1].get("human"), "where": best[1].get("where", ""),
+                                                 "quality": best[2], "issues": best[3], "tries": len(tries), "res": res_name}
     return out
 
 
@@ -2125,9 +2168,10 @@ def step_remake(ep, epdir, work, log, req):
             _remake_seg(key, ref, 0, seg, prompt, work, res, cap, H)
             _ff(["-i", str(s1), "-c", "copy", "-movflags", "+faststart", str(work / "test.mp4")])
         first = res.get("segs", {}).get("seg1", {})
-        res["test"] = {"ok": True, "human": first.get("human"), "where": first.get("where", "")}
+        res["test"] = {"ok": True, "human": first.get("human"), "where": first.get("where", ""),
+                       "quality": first.get("quality"), "issues": first.get("issues", "")}
         res["est_full"] = round(REMAKE_COST["omni_sec"] * seg * (n - 1) + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * 4
-                                + REMAKE_COST["check"] * 3 * n + REMAKE_COST["tts"], 2)
+                                + REMAKE_COST["check"] * 4 * n + REMAKE_COST["tts"], 2)
         if mode != "full":
             return
         # 본편 전체 예상이 한도를 넘으면 시작하지 않는다

@@ -4884,7 +4884,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   </section>
   <section class="box" data-view="trend">
     <div class="box-hd"><span class="step">05</span><h2>시험본 만들기</h2></div>
-    <p class="lead">먼저 앞부분 한 구간(10초 안쪽)만 바꿔 봅니다(약 1달러). 보고 마음에 들면 영상 상세에서 "본편 만들기"를 누르세요. 시험 구간은 본편에 그대로 쓰여 돈이 두 번 들지 않습니다. 한 편 최대 5달러, 넘을 것 같으면 멈춥니다. 노래는 넣지 않습니다(인스타 앱에서 얹기).</p>
+    <p class="lead">먼저 앞부분 한 구간(10초 안쪽)만 바꿔 봅니다(약 1달러, 합성이 어색하거나 사람 손이 보이면 한 번 더 만들어 최대 약 1.5달러). 보고 마음에 들면 영상 상세에서 "본편 만들기"를 누르세요. 시험 구간은 본편에 그대로 쓰여 돈이 두 번 들지 않습니다. 한 편 최대 5달러, 넘을 것 같으면 멈춥니다. 노래는 넣지 않습니다(인스타 앱에서 얹기).</p>
     <button class="btn btn-wide" id="trGo" type="button">시험본 만들기</button>
     <div class="msg" id="trGoMsg"></div>
   </section>
@@ -5658,7 +5658,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(!tr.product){ say('trGoMsg','03에서 상품을 골라 주세요.','no'); return; }
     var copy={big:$('trBig').value.trim(),sub:$('trSub').value.trim(),vo:$('trVo').value.trim(),ending:$('trEnd').value.trim()};
     if(!copy.big||!copy.vo){ say('trGoMsg','04 문구와 내레이션을 채워 주세요.','no'); return; }
-    if(!confirm('시험본(앞 구간 하나)을 만듭니다. 약 1달러가 들고 15~25분 걸립니다. 시작할까요?')) return;
+    if(!confirm('시험본(앞 구간 하나)을 만듭니다. 약 1~1.5달러가 들고 15~30분 걸립니다. 시작할까요?')) return;
     $('trGo').disabled=true; say('trGoMsg','원본을 올리는 중…','wait');
     post('/api/remake/start',{size:f.size}).then(function(s){
       if(!s||!s.success) throw new Error((s&&s.error)||'시작하지 못했습니다.');
@@ -5689,6 +5689,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       v.src='/api/episode/video?test=1&id='+encodeURIComponent(e.id)+'&t='+encodeURIComponent(e.ranAt||''); b.appendChild(v);
       if(m.test.human) b.appendChild(epEl('div','ep-err','검사: 사람 손·맨살이 보일 수 있음 — '+(m.test.where||'')));
       else b.appendChild(epEl('div','ep-sub','검사: 사람 손·맨살 없음'));
+      if(m.test.quality!=null) b.appendChild(epEl('div', m.test.quality>=70?'ep-sub':'ep-err','합성 자연스러움 '+m.test.quality+'점'+(m.test.issues?' — '+m.test.issues:'')));
       if(!(m.full&&m.full.ok)&&e.state!=='running') b.appendChild(epBtn('좋아요, 본편 만들기',function(){
         epAsk(e.id,'remake_full',{}, '본편을 만들고 있습니다(20~40분). 끝나면 이 화면에 완성 영상이 나옵니다.');
       },true));
