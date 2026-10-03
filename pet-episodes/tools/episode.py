@@ -1782,6 +1782,35 @@ def step_dance_full(work, log, cfg):
     res["ok"] = True
     res["sec"] = _dur(work / "dance.mp4")
 
+
+# ---------- 원본 춤 영상에서 머리·손·발·관객만 바꾸기(사용자 지시 2026-10: 다른 건 아무것도 바꾸지 말 것, 360p, 1회) ----------
+SWAP_PROMPT = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (the dancer's body, "
+               "clothes, every movement, timing, camera, background, lights): 1) replace the dancer's head with the head of the "
+               "Shiba Inu from image 1 (keep the sunglasses); 2) replace the dancer's two hands with furry Shiba front paws; "
+               "3) replace the dancer's two feet with furry Shiba hind paws; 4) replace every person in the audience with a real dog "
+               "of various breeds. Remove the watermark text.")
+
+
+def step_swap(work, log, cfg):
+    res = log.setdefault("swap", {})
+    key = _key("GEMINI_API_KEY")
+    ref = work / "_ref_full.mp4"
+    st, raw = _http(cfg["video_url"], None, {}, timeout=180)
+    if st != 200 or len(raw) < 10000:
+        raise RuntimeError(f"원본 춤 영상을 못 받았습니다(HTTP {st})")
+    ref.write_bytes(raw)
+    img = {"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}
+    vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(raw).decode()}
+    body = {"model": CLIP_MODEL, "input": [vid, img, {"type": "text", "text": SWAP_PROMPT}],
+            "response_format": {"type": "video", "resolution": "720p"},
+            "generation_config": {"video_config": {"task": "edit"}}}
+    out = work / "_swap_raw.mp4"
+    out.write_bytes(_omni_run(key, body))                    # 1회만(재시도 없음 — 사용자 지시)
+    h = int(cfg.get("out_h", 640))
+    _ff(["-i", str(out), "-an", "-vf", f"scale=-2:{h},format=yuv420p", "-c:v", "libx264", "-crf", "23",
+         "-movflags", "+faststart", str(work / "swap.mp4")])
+    res.update({"ok": True, "src_sec": _dur(ref), "sec": _dur(work / "swap.mp4")})
+
 # ---------- 춤 밈 끝 장면: 무대에서 내려와 펫 이온음료를 음미(사용자 확정 2026-10) ----------
 # 병은 AI가 그리지 않는다(글자가 뭉개짐) → 쿠팡 실제 상품 사진에서 병 하나를 잘라 장면에 붙이고 병 전체를 흐림 처리한다.
 BRIDGE_PROMPT = ("DURATION: 3 seconds. Image 1 is the first frame (the end of the dance) - continue seamlessly in the same night scene, same lighting, same dog crowd: the "
@@ -1944,6 +1973,12 @@ def main(path: str) -> int:
                 step_dance(work, log, req.get("dance") or {})
             finally:                                         # 남의 영상(참고 춤)은 성공·실패와 관계없이 저장소에 남기지 않는다
                 for f in work.glob("_ref*"):
+                    f.unlink(missing_ok=True)
+        if "swap" in steps:
+            try:
+                step_swap(work, log, req.get("swap") or {})
+            finally:
+                for f in work.glob("_*"):
                     f.unlink(missing_ok=True)
         if "dance_full" in steps:
             try:
