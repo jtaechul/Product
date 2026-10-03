@@ -1,8 +1,8 @@
 {
   "assemble": {
     "ok": true,
-    "sec": 29.2,
-    "note": "로컬 조립(노래 없음, 내레이션만)"
+    "sec": 28.6,
+    "note": "로컬 조립(노래 없음, 내레이션 Enceladus 필요한 부분만 1.3배)"
   },
   "cover": "work/cover.jpg",
   "last_request": {
