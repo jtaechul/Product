@@ -4686,7 +4686,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
 .trc img{width:64px;height:86px;border-radius:8px;object-fit:cover;background:#EDEFEC}
 .trc .t{min-width:0;display:flex;flex-direction:column;gap:3px}
 .trc .acts{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:8px}
-.trc .acts .btn{width:100%;margin:0}
+.trc .acts .btn{width:100%;margin:0;display:flex;align-items:center;justify-content:center;text-decoration:none}
 .trc .an{grid-column:1/-1}
 .rk{color:var(--amber);font-weight:700}
 .rocket{color:var(--brand);font-weight:700}
