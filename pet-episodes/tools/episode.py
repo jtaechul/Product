@@ -1512,8 +1512,11 @@ DANCE_PROMPT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is t
 DANCE_EDIT = ("Edit this video: replace the human dancer with the Shiba Inu from image 1 (same face, fur, striped short-sleeve polo, "
               "wide light trousers and dark sunglasses as in image 1). The dog must copy the dancer's movement EXACTLY, frame by frame: "
               "the same arm (front leg) positions, angles, heights, speed and timing, the same leg steps, knee bounces and body turns. "
-              "Motion fidelity is the top priority - stretch or distort the dog's limbs if needed to match every pose. Keep the camera, "
-              "framing, background, lights and crowd exactly as in the video. Remove any watermark or text. Photorealistic dog, "
+              "Motion fidelity is the top priority - stretch or distort the dog's limbs if needed to match every pose. Also replace EVERY person "
+              "in the crowd with real dogs of many different breeds (corgis, poodles, retrievers, dachshunds, pugs, huskies...), "
+              "cheering and bouncing to the beat, some standing on their hind legs with front paws raised, a few holding up phones "
+              "to film - no humans anywhere in the video. Keep the camera, framing, string lights, building, red stage light and "
+              "timing exactly as in the video. Remove any watermark or text. Photorealistic dog, "
               "exactly two front legs, no human dancer left in the frame.")
 DANCE_STRICT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference. MOTION FIDELITY IS THE TOP PRIORITY: "
                 "the Shiba Inu must copy the dancer's movement EXACTLY, frame by frame and beat for beat - the same arm (front leg) "
