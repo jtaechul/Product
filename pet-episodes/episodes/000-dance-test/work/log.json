@@ -16,15 +16,19 @@
     "mode_used": "edit",
     "human_check": [
       {
+        "human": true,
+        "where": "Bottom right frame, the Shiba's outstretched arms and hands resemble bare human limbs."
+      },
+      {
         "human": false,
         "where": ""
       }
     ]
   },
-  "error": "연결 장면에 사람 손·맨살: Raised arms in the audience background and the central Shiba's hands",
+  "error": "연결 장면에 사람 손·맨살: The anthropomorphic dancing Shiba Inu has visible bare, skin-toned human arms and hands extending from its short-sleeved polo shirt across multiple frames.",
   "last_request": {
-    "file": "13_bridge_drink.json",
-    "ran_at": "2026-10-03T12:48:17Z",
+    "file": "14_fix_all.json",
+    "ran_at": "2026-10-03T12:54:31Z",
     "ok": false
   },
   "drink": {
@@ -40,7 +44,7 @@
     "bridge_raw_sec": 8.0,
     "bridge_check": {
       "human": true,
-      "where": "Raised arms in the audience background and the central Shiba's hands"
+      "where": "The anthropomorphic dancing Shiba Inu has visible bare, skin-toned human arms and hands extending from its short-sleeved polo shirt across multiple frames."
     }
   }
 }
