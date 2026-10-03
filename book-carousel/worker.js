@@ -5519,7 +5519,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       btn.disabled=true; msg.textContent='올리는 중…';
       fetch('/api/shop-catalog').then(function(r){return r.json();}).catch(function(){return [];}).then(function(rows){
         var same=(Array.isArray(rows)?rows:[]).filter(function(x){ return x&&x.title===p.title; })[0];
-        var cover=p.image||(location.origin+'/api/episode/video?id='+encodeURIComponent(e.id)+'&ref=product.jpg');
+        var cover=p.image||('https://raw.githubusercontent.com/${EP_REPO}/${EP_BRANCH}/pet-episodes/episodes/'+e.id+'/refs/product.jpg');  // 워커 자기 주소는 사진 프록시가 못 받는다
         return post('/api/add-book-to-catalog',{ bookNumber: same?same.number:undefined,
           bookInfo:{title:p.title,author:p.brand||'',category:p.category||'기타',coreMessage:p.reason||'',cover:cover}, cover:cover, coupangLink:link });
       }).then(function(r){
@@ -6680,7 +6680,8 @@ export default {
         const okHost = /^https:\/\/[\w.-]*pstatic\.net\//.test(src)
           || /^https:\/\/[\w.-]*(naver|nstatic)\.[\w.]+\//.test(src)
           || /^https:\/\/[\w.-]*coupangcdn\.com\//.test(src)
-          || /^https:\/\/[\w.-]*coupang\.com\//.test(src);
+          || /^https:\/\/[\w.-]*coupang\.com\//.test(src)
+          || src.startsWith(`https://raw.githubusercontent.com/${EP_REPO}/`);   // 영상 편의 실제 상품 사진(저장소)
         if (!okHost) {
           return new Response('bad url', { status: 400, headers: CORS });
         }
