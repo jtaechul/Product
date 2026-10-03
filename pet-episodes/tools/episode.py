@@ -1488,6 +1488,107 @@ def step_assemble(ep, epdir, work, log):
     tmp.rmdir()
 
 
+# ---------- 춤 밈 시험(사용자 요청 2026-10): 참고 춤 영상의 동작을 시바견(두 발 서기 허용 — 이 형식만 예외)에 옮긴다 ----------
+# 요청: {"id": "000-dance-test", "steps": ["dance"], "dance": {"video_url": "<비공개 임시 주소>", "out_h": 640}}
+# 참고 영상은 남의 영상이라 저장소에 올리지 않는다(임시 주소에서 받아 쓰고 버린다). 결과는 360p로 줄여 비용·용량을 아낀다.
+DANCE_START = ("Reference image 1 is our character: a real Shiba Inu (keep exactly this face, fur colour and proportions; no clothes, "
+               "no collar, no accessories, no sunglasses). Reference image 2 is only a composition reference from a dance video. "
+               "Create one photorealistic vertical 9:16 frame: the Shiba Inu stands upright on its two hind legs on a raised wooden "
+               "platform above a cheering crowd at a night outdoor courtyard party, both front legs spread wide to the sides like the "
+               "dancer's starting pose, strings of warm bulb lights overhead, a strong red stage light from the front, an old building "
+               "facade behind, people in the crowd raising phones (backs of heads, no clear faces). Full body of the dog visible, "
+               "centred, same camera distance and angle as reference image 2. The human dancer from reference image 2 must NOT appear. "
+               "No text, no logos, no watermark.")
+DANCE_PROMPT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference: the Shiba Inu in image 1 performs "
+                "exactly the same dance as the dancer in the video, beat for beat — Tecktonik / electro dance: fast arm sweeps, "
+                "front legs whipping around its head and chest, wide arm spreads, quick wrist-like paw flicks, small bounces — while "
+                "standing upright on its two hind legs on the platform the whole time. Keep the dog's face, fur and size identical to "
+                "image 1, keep the same party background, red light and cheering crowd; camera locked-off, slight handheld feel. "
+                "Photorealistic. No human dancer, no text, no extra dogs, no morphing.")
+
+
+def _omni_run(key, body) -> bytes:
+    hdr = {"x-goog-api-key": key, "Content-Type": "application/json"}
+    t0 = time.time()
+    st, raw = _http(f"{API}/interactions", json.dumps(body).encode(), hdr, timeout=900)
+    if st != 200:
+        raise RuntimeError(f"Omni HTTP {st}: {raw[:400].decode('utf-8', 'replace')}")
+    j = json.loads(raw)
+    while not _find_video(j) and j.get("id") and str(j.get("status", "")).lower() in ("in_progress", "pending", "running", "queued"):
+        if time.time() - t0 > 900:
+            raise TimeoutError("Omni 15분 초과")
+        time.sleep(10)
+        st, raw = _http(f"{API}/interactions/{j['id']}", None, hdr)
+        j = json.loads(raw) if st == 200 else j
+    v = _find_video(j)
+    if not v:
+        raise RuntimeError(f"Omni 영상 없음: {json.dumps(j)[:300]}")
+    if v.get("data"):
+        return base64.b64decode(v["data"])
+    fid = str(v["uri"]).rstrip("/").split("/")[-1]
+    for _ in range(90):
+        st, raw = _http(f"{API}/files/{fid}", None, hdr)
+        if st == 200 and json.loads(raw).get("state") == "ACTIVE":
+            break
+        time.sleep(5)
+    st, vid = _http(f"{API}/files/{fid}:download?alt=media", None, hdr)
+    if st != 200:
+        raise RuntimeError(f"Omni 다운로드 실패 HTTP {st}")
+    return vid
+
+
+def step_dance(work, log, cfg):
+    res = log.setdefault("dance", {})
+    key = _key("GEMINI_API_KEY")
+    ref = work / "_ref.mp4"
+    st, raw = _http(cfg["video_url"], None, {}, timeout=120)
+    if st != 200 or len(raw) < 10000:
+        raise RuntimeError(f"참고 춤 영상을 못 받았습니다(HTTP {st})")
+    ref.write_bytes(raw)
+    first = work / "_ref_first.jpg"
+    _ff(["-i", str(ref), "-frames:v", "1", str(first)])
+    start = work / "dance_start.png"
+    if not start.exists() or "start" in cfg.get("redo", []):
+        r = gen_image(DANCE_START, [ROOT / "pet-episodes" / "characters" / "dog.png", first], start, "9:16")
+        res["start"] = r
+        if not r.get("ok"):
+            raise RuntimeError(f"첫 장면 실패: {r.get('error')}")
+    vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(raw).decode()}
+    img = {"type": "image", **_b64img(start)}
+    txt = {"type": "text", "text": DANCE_PROMPT}
+    tries = []
+    for task, res_ in (("video_to_video", "480p"), ("video_to_video", "720p"), ("reference_to_video", "720p"), ("image_to_video", "720p")):
+        body = {"model": CLIP_MODEL, "input": [img, vid, txt],
+                "response_format": {"type": "video", "resolution": res_, "aspect_ratio": "9:16"},
+                "generation_config": {"video_config": {"task": task}}}
+        try:
+            data = _omni_run(key, body)
+            tries.append({"task": task, "res": res_, "ok": True})
+            break
+        except Exception as e:  # noqa: BLE001
+            tries.append({"task": task, "res": res_, "error": str(e)[:300]})
+            if "HTTP 4" not in str(e):                     # 요청 형식 오류가 아니면(생성 실패) 더 돌리지 않는다 — 비용 보호
+                res["tries"] = tries
+                raise
+    else:
+        res["tries"] = tries
+        raise RuntimeError("Omni가 춤 영상 참고 입력을 받지 않았습니다")
+    res["tries"] = tries
+    raw_out = work / "_dance_raw.mp4"
+    raw_out.write_bytes(data)
+    h = int(cfg.get("out_h", 640))
+    _ff(["-i", str(raw_out), "-an", "-vf", f"scale=-2:{h},format=yuv420p", "-c:v", "libx264", "-crf", "24",
+         "-movflags", "+faststart", str(work / "dance.mp4")])
+    # 비교본: 왼쪽 원본 동작(작게) · 오른쪽 우리 시바(360p) — 동작이 따라갔는지 확인용
+    _ff(["-i", str(ref), "-i", str(work / "dance.mp4"), "-filter_complex",
+         f"[0:v]scale=-2:{h},fps=24[a];[1:v]scale=-2:{h},fps=24[b];[a][b]hstack=inputs=2:shortest=1,format=yuv420p[v]",
+         "-map", "[v]", "-c:v", "libx264", "-crf", "26", "-movflags", "+faststart", str(work / "dance_compare.mp4")])
+    for f in (ref, first, raw_out):
+        f.unlink(missing_ok=True)
+    res["ok"] = True
+    res["sec"] = _dur(work / "dance.mp4")
+
+
 def main(path: str) -> int:
     rp = Path(path)
     req = json.loads(rp.read_text(encoding="utf-8"))
@@ -1509,6 +1610,8 @@ def main(path: str) -> int:
             step_bgm(work, log, req.get("bgm"))
         if "ig_probe" in steps:
             step_ig_probe(log)
+        if "dance" in steps:
+            step_dance(work, log, req.get("dance") or {})
         if not ep["clips"]:
             raise StopIteration
         if "voices" in steps:
