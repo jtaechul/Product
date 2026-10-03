@@ -1611,10 +1611,7 @@ def step_dance(work, log, cfg):
     h = int(cfg.get("out_h", 640))
     _ff(["-i", str(raw_out), "-an", "-vf", f"scale=-2:{h},format=yuv420p", "-c:v", "libx264", "-crf", "24",
          "-movflags", "+faststart", str(work / "dance.mp4")])
-    # 비교본: 왼쪽 원본 동작(작게) · 오른쪽 우리 시바(360p) — 동작이 따라갔는지 확인용
-    _ff(["-i", str(ref), "-i", str(work / "dance.mp4"), "-filter_complex",
-         f"[0:v]scale=-2:{h},fps=24[a];[1:v]scale=-2:{h},fps=24[b];[a][b]hstack=inputs=2:shortest=1,format=yuv420p[v]",
-         "-map", "[v]", "-c:v", "libx264", "-crf", "26", "-movflags", "+faststart", str(work / "dance_compare.mp4")])
+    # 원본과 나란히 놓은 비교본은 남의 영상이 들어가므로 저장소에서 만들지 않는다(필요하면 로컬에서 만든다)
     for f in (ref, first, raw_out):
         f.unlink(missing_ok=True)
     res["ok"] = True
