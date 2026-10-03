@@ -6906,6 +6906,7 @@ async function handleTrendList(env, body) {
       ko: lang.startsWith('ko') || hasHangul(x.snippet.title) || hasHangul(x.snippet.channelTitle), desc: String(x.snippet.description || '').slice(0, 120) };
   }).filter(x => x.sec > 0 && x.sec <= 90 && (region !== 'kr' || x.ko))   // 한국: 한국어 제목·음성만
     .sort((a, b) => b.perHour - a.perHour).slice(0, 40);
+  const dbg = { ids: ids.size, fetched: (vj.items || []).length, kept: items.length };
   // 따라 하기 쉬운 밈·챌린지만 남기고(easy 50점 이상), 그 안에서 시간당 조회수 순
   try {
     const gk = await getGeminiKey(env);
@@ -6915,7 +6916,7 @@ async function handleTrendList(env, body) {
     if (easy.length >= 5) items = easy;
   } catch {}
   items = items.slice(0, 30).map(({ desc, ...x }) => x);
-  const out = { items, at: new Date().toISOString() };
+  const out = { items, at: new Date().toISOString(), dbg };
   await env.PENDING_POSTS.put(ck, JSON.stringify(out), { expirationTtl: 2 * 24 * 3600 });
   return { success: true, ...out };
 }
