@@ -1496,11 +1496,11 @@ DANCE_START = ("Reference image 1 is our character: a real Shiba Inu (keep exact
                "the Shiba Inu stands upright on its two hind legs on a raised wooden platform above a cheering crowd at a night outdoor "
                "courtyard party, full body visible from ears to feet, centred, same camera distance and angle as reference image 2. "
                "The dog wears the dancer's outfit in a LONG-SLEEVE version: a horizontal-striped collared shirt (white, navy and beige "
-               "stripes) whose sleeves reach all the way down to the wrists, loose wide-leg light trousers whose hems cover the feet, "
-               "and small dark sunglasses. No arm or leg skin is visible at all - only big fluffy orange-and-cream Shiba paws stick "
-               "out of the sleeve cuffs and trouser hems. Exactly two front legs coming out of the sleeves, spread wide to the sides like the dancer's starting pose; tail "
+               "stripes) whose sleeves reach all the way down to the wrists, loose wide-leg light trousers, chunky white sneakers on its hind paws, "
+               "and small dark sunglasses. No arm or leg skin is visible at all - only big fluffy orange-and-cream Shiba front paws "
+               "stick out of the sleeve cuffs. Exactly two front legs coming out of the sleeves, spread wide to the sides like the dancer's starting pose; tail "
                "curled out over the waistband. Strings of warm bulb lights overhead, a strong red stage light from the front, an old "
-               "building facade behind, people in the crowd raising phones (backs of heads, no clear faces). The human dancer from "
+               "building facade behind, the whole audience is dogs of many breeds (corgis, poodles, retrievers, huskies) cheering, some holding up phones in their paws; only dogs, no people at all. The human dancer from "
                "reference image 2 must NOT appear. No text, no logos, no watermark.")
 DANCE_PROMPT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference: the Shiba Inu in image 1 performs "
                 "the same dance as the dancer in the video, beat for beat and just as big and sharp - Tecktonik / electro dance: fast "
@@ -1533,8 +1533,9 @@ DANCE_STRICT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is t
                 "the Shiba Inu must copy the dancer's movement EXACTLY, frame by frame and beat for beat - the same arm (front leg) "
                 "positions, angles, heights (raise them fully above the head when the dancer does), speed and timing, the same leg "
                 "steps, knee bounces and body turns. Stretch or distort the dog's limbs if needed to hit every pose; do not tone the "
-                "moves down. Keep the dog's face, fur and outfit (striped polo, wide trousers, sunglasses) identical to image 1, same "
-                "party background, strong red stage light and cheering crowd; camera locked-off. Photorealistic. Exactly two front "
+                "moves down. Keep the dog's face, fur and outfit (long-sleeve striped shirt, wide trousers, white sneakers, sunglasses) "
+                "identical to image 1, the same all-dog cheering audience and party background, strong red stage light; camera "
+                "locked-off. Front legs stay fully furry with paws. Photorealistic. Exactly two front "
                 "legs. No human dancer, no text, no extra dogs.")
 DANCE_TEXT = ("DURATION: 5 seconds. Image 1 is the first frame. The Shiba Inu does a fast Tecktonik / electro dance to a 132 BPM "
               "club beat while standing upright on its two hind legs behind the DJ booth (the booth always hides everything below "
@@ -1633,6 +1634,8 @@ def step_dance(work, log, cfg):
     txt = {"type": "text", "text": DANCE_PROMPT}
     tries = []
     plans = [("reference_to_video", [img, vid, txt])]
+    if cfg.get("mode") == "strict":                          # 우리 첫 장면에서 출발해 동작만 따라 함(원본 사람 흔적이 남지 않음)
+        plans = [("reference_to_video", [img, vid, {"type": "text", "text": DANCE_STRICT}])]
     if cfg.get("mode") == "edit":                            # 원본 영상을 편집해 댄서만 바꾼다 → 동작·박자 그대로(1순위), 막히면 강한 지시로
         plans = [("edit", [vid, img, {"type": "text", "text": DANCE_EDIT}])]
         if not cfg.get("edit_only"):
@@ -1674,6 +1677,14 @@ def step_dance(work, log, cfg):
     raw_out.write_bytes(data)
     chk = _human_parts(raw_out, work)
     res["human_check"] = [chk]
+    if chk.get("human") is not False and cfg.get("mode") == "strict":    # 사람 흔적이면 1회만 다시
+        body = {"model": CLIP_MODEL, "input": [img, vid, {"type": "text", "text": DANCE_STRICT + " Double-check every frame: furry front legs with paws, white sneakers, only dogs in the audience."}],
+                "response_format": {"type": "video", "resolution": "720p", "aspect_ratio": "9:16"},
+                "generation_config": {"video_config": {"task": "reference_to_video"}}}
+        data = _omni_run(key, body)
+        raw_out.write_bytes(data)
+        chk = _human_parts(raw_out, work)
+        res["human_check"].append(chk)
     if chk.get("human") is not False and cfg.get("mode") == "edit":      # 사람 손이 섞였으면 그 자리를 짚어 1회만 다시
         fix = {"type": "text", "text": DANCE_EDIT + " Double-check every frame: the Shiba's front legs are furry with paws, "
                                                    "its feet are in white sneakers, and every audience member is a dog."}   # 검사 문구(사람 신체 낱말)를 그대로 넣으면 입력 차단됨
