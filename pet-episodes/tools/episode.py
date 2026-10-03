@@ -1493,18 +1493,19 @@ def step_assemble(ep, epdir, work, log):
 # 참고 영상은 남의 영상이라 저장소에 올리지 않는다(임시 주소에서 받아 쓰고 버린다). 결과는 360p로 줄여 비용·용량을 아낀다.
 DANCE_START = ("Reference image 1 is our character: a real Shiba Inu (keep exactly this face, fur colour and proportions; no clothes, "
                "no collar, no accessories, no sunglasses). Reference image 2 is only a composition reference from a dance video. "
-               "Create one photorealistic vertical 9:16 frame: the Shiba Inu stands upright on its two hind legs on a raised wooden "
-               "platform above a cheering crowd at a night outdoor courtyard party, both front legs spread wide to the sides like the "
-               "dancer's starting pose, strings of warm bulb lights overhead, a strong red stage light from the front, an old building "
-               "facade behind, people in the crowd raising phones (backs of heads, no clear faces). Full body of the dog visible, "
-               "centred, same camera distance and angle as reference image 2. Natural thick fluffy cream-white fur fully covers the belly and groin area (family-friendly, nothing anatomical visible), tail curled up behind. The human dancer from reference image 2 must NOT appear. "
-               "No text, no logos, no watermark.")
+               "Create one photorealistic vertical 9:16 frame: the Shiba Inu stands upright on its two hind legs behind a black DJ booth "
+               "on a raised stage above a cheering crowd at a night outdoor courtyard party. The booth's solid front panel hides "
+               "everything below the dog's waist, so only the chest, both front legs and the head are visible above it. Both front legs "
+               "spread wide to the sides like the dancer's starting pose. Strings of warm bulb lights overhead, a strong red stage light "
+               "from the front, an old building facade behind, people in the crowd raising phones (backs of heads, no clear faces). "
+               "Dog seen from the waist up above the booth, centred, similar camera distance and angle to reference image 2. "
+               "The human dancer from reference image 2 must NOT appear. No text, no logos, no watermark.")
 DANCE_PROMPT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference: the Shiba Inu in image 1 performs "
-                "exactly the same dance as the dancer in the video, beat for beat — Tecktonik / electro dance: fast arm sweeps, "
-                "front legs whipping around its head and chest, wide arm spreads, quick wrist-like paw flicks, small bounces — while "
-                "standing upright on its two hind legs on the platform the whole time. Keep the dog's face, fur and size identical to "
-                "image 1, keep the same party background, red light and cheering crowd; camera locked-off, slight handheld feel. "
-                "Photorealistic. No human dancer, no text, no extra dogs, no morphing.")
+                "the same dance as the dancer in the video, beat for beat - Tecktonik / electro dance: fast arm sweeps, front legs "
+                "whipping around its head and chest, wide arm spreads, quick paw flicks, small bounces - while standing upright on its "
+                "two hind legs behind the DJ booth the whole time; the booth's front panel always hides everything below the waist. "
+                "Keep the dog's face, fur and size identical to image 1, keep the same party background, red light and cheering crowd; "
+                "camera locked-off with a slight handheld feel. Photorealistic. No human dancer, no text, no extra dogs, no morphing.")
 
 
 def _omni_run(key, body) -> bytes:
@@ -1558,6 +1559,9 @@ def step_dance(work, log, cfg):
         res["start"] = r
         if not r.get("ok"):
             raise RuntimeError(f"첫 장면 실패: {r.get('error')}")
+    if cfg.get("only_start"):                                # 첫 장면만 먼저 확인(영상 비용 전에)
+        res["ok"] = "start_only"
+        return
     vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(raw).decode()}
     img = {"type": "image", **_b64img(start)}
     txt = {"type": "text", "text": DANCE_PROMPT}
