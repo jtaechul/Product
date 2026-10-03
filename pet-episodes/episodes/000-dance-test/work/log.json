@@ -15,8 +15,8 @@
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Request blocked due to safety violations (harmful content). Please modify your input and retry.\",\"code\":\"Unable to show the generated video. The video was filtered out because it violated Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\"}}",
   "last_request": {
-    "file": "03_start.json",
-    "ran_at": "2026-10-03T11:42:39Z",
+    "file": "04_start.json",
+    "ran_at": "2026-10-03T11:44:58Z",
     "ok": true
   }
 }
