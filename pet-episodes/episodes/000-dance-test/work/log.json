@@ -29,9 +29,9 @@
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Edited video duration (20.625s) exceeds maximum supported source video duration (10s).\",\"code\":\"invalid_request\"}}",
   "last_request": {
-    "file": "24_swap.json",
-    "ran_at": "2026-10-03T13:33:17Z",
-    "ok": false
+    "file": "25_swap3.json",
+    "ran_at": "2026-10-03T13:38:31Z",
+    "ok": true
   },
   "drink": {
     "start": {
@@ -59,5 +59,19 @@
     },
     "preview_sec": 12.0
   },
-  "swap": {}
+  "swap": {
+    "seg1": {
+      "gen_sec": 7.02
+    },
+    "seg2": {
+      "gen_sec": 7.02
+    },
+    "seg3": {
+      "gen_sec": 6.85
+    },
+    "ok": true,
+    "src_sec": 20.67,
+    "segments": 3,
+    "sec": 20.63
+  }
 }
