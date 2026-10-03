@@ -2022,6 +2022,61 @@ REMAKE_QUALITY = ("These frames come from an AI edit where a person's head, hand
                   "smeared or melted body parts. JSON only: {\"score\": 0, \"issues\": \"short English, empty if fine\"} (0-100, 100 = "
                   "looks like real footage).")
 REMAKE_QPASS = 70
+# 스토리보드(사용자 제안 2026-10: 시험 영상 대신 그림으로 먼저 확인 — 한 장 약 0.15달러, 시험 영상 약 1달러).
+# 원본에서 6장면(각 구간 첫 장면 + 중간)을 뽑아 3x2 격자 한 장으로 강아지 합성 → 확인받으면 영상 AI가 구간마다 그 첫 장면을 기준으로 삼는다.
+BOARD_COLS, BOARD_ROWS, BOARD_CW, BOARD_CH = 3, 2, 360, 640
+REMAKE_BOARD = ("Image 1 is a 3x2 grid of six frames taken from one video (each panel is a separate moment; dark bars are only "
+                "padding). Edit ALL six panels the same way and keep the grid layout, panel sizes and everything else exactly as "
+                "it is (bodies, clothes, poses, background, lights, camera framing): {swap}. Every replaced head is the Shiba Inu "
+                "from image 2 (same face, fur colour and markings) - the same dog in every panel. Paws are thick furry dog paws - "
+                "no human fingers, nails or bare skin anywhere. Match each panel's lighting, shadows and focus so it looks like real "
+                "footage, with no seams at the neck, sleeves or trouser hems. Remove any watermark or on-screen text; add no text.")
+REMAKE_BOARD_REF = (" Image {n} is the approved storyboard for the FIRST FRAME of this clip: the first frame must look exactly like "
+                    "it (same dog head, paws and background dogs), then follow the original motion.")
+
+
+def _board_times(L: float, n: int, seg: float) -> list[float]:
+    t = [round(i * seg + 0.05, 2) for i in range(n)]            # 칸 1~n = 구간 첫 장면(영상 AI 기준 그림)
+    extra = [round(i * seg + seg / 2, 2) for i in range(n)]
+    for x in extra:
+        if len(t) >= BOARD_COLS * BOARD_ROWS:
+            break
+        t.append(x)
+    while len(t) < BOARD_COLS * BOARD_ROWS:
+        t.append(round(L * len(t) / (BOARD_COLS * BOARD_ROWS), 2))
+    return t
+
+
+def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path, res: dict, cap: float):
+    W0, H0 = BOARD_CW * BOARD_COLS, BOARD_CH * BOARD_ROWS
+    fit = f"scale={BOARD_CW}:{BOARD_CH}:force_original_aspect_ratio=decrease,pad={BOARD_CW}:{BOARD_CH}:(ow-iw)/2:(oh-ih)/2"
+    cells = []
+    for k, t in enumerate(_board_times(L, n, seg)):
+        c = work / f"_bcell{k}.png"
+        _ff(["-ss", f"{min(t, L - 0.1):.2f}", "-i", str(ref), "-frames:v", "1", "-vf", fit, str(c)])
+        cells.append(c)
+    tile = Image.new("RGB", (W0, int(W0 * 5 / 4)), (0, 0, 0))   # 4:5에 맞춰 아래만 검은 여백
+    for k, c in enumerate(cells):
+        tile.paste(Image.open(c).convert("RGB"), ((k % BOARD_COLS) * BOARD_CW, (k // BOARD_COLS) * BOARD_CH))
+    src_tile = work / "_board_src.png"
+    tile.save(src_tile)
+    _remake_spend(res, REMAKE_COST["image"], "스토리보드 그림", cap)
+    out = work / "_board_out.png"
+    r = gen_image(REMAKE_BOARD.format(swap=swap), [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, "4:5", "2K")
+    if not r.get("ok"):
+        raise RuntimeError(f"스토리보드 그림 실패: {r.get('error')}")
+    im = Image.open(out).convert("RGB")
+    k = im.size[0] / W0
+    im.save(work / "board.jpg", quality=88)
+    frames = []
+    for i in range(BOARD_COLS * BOARD_ROWS):
+        x, y = (i % BOARD_COLS) * BOARD_CW * k, (i // BOARD_COLS) * BOARD_CH * k
+        f = work / f"board_{i + 1:02d}.jpg"
+        im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
+        frames.append(f)
+    _remake_spend(res, REMAKE_COST["check"], "스토리보드 사람 손 검사", cap)
+    chk = _vision_json(work / "board.jpg", HUMAN_CHECK) or {}
+    return {"ok": True, "human": chk.get("human"), "where": chk.get("where", ""), "panels": len(frames)}
 REMAKE_SWAP_DEFAULT = ("1) replace the main person's head with the head of the Shiba Inu from image 1; 2) replace their two hands "
                        "with furry Shiba front paws; 3) replace their two feet with furry Shiba hind paws; 4) replace every other "
                        "person with a real dog of various breeds")
@@ -2072,6 +2127,10 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
              "-frames:v", "1", str(last)])
         inputs.append({"type": "image", **_b64img(last)})
         prompt = prompt + REMAKE_PREV
+    board = work / f"board_{i + 1:02d}.jpg"
+    if board.exists():                                     # 확인받은 스토리보드 첫 장면에 맞춘다
+        inputs.append({"type": "image", **_b64img(board)})
+        prompt = prompt + REMAKE_BOARD_REF.format(n=len(inputs))
     tries = []
     res_name = REMAKE_RES
     for attempt in range(2):                               # 사람 손이 보이거나 합성이 어색하면 한도 안에서 한 번만 다시
@@ -2156,14 +2215,28 @@ def step_remake(ep, epdir, work, log, req):
         n = max(1, math.ceil(L / REMAKE_SEG))
         seg = L / n
         res.update({"src_sec": round(L, 2), "segments": n})
-        # 1) 시험: 첫 구간(본편에 그대로 쓴다)
+        est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * 4
+                        + REMAKE_COST["check"] * 4 * n + REMAKE_COST["tts"], 2)
+        if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
+            if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
+                res["board"] = _remake_board(ref, L, n, seg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
+            res["est_full"] = est_all
+            if float(res.get("spent", 0)) + est_all > cap:
+                res["board"]["over"] = True
+            return
+        if mode == "full" and not (work / "rm_seg1.mp4").exists():
+            if float(res.get("spent", 0)) + est_all > cap:
+                raise RuntimeError(f"영상 예상 비용(약 ${est_all:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다. 더 짧은 원본으로 다시 해 주세요.")
+        # 1) 시험(예전 방식): 첫 구간(본편에 그대로 쓴다)
         s1 = work / "rm_seg1.mp4"
         if not s1.exists():
             _remake_seg(key, ref, 0, seg, prompt, work, res, cap, H)
-            _ff(["-i", str(s1), "-c", "copy", "-movflags", "+faststart", str(work / "test.mp4")])
+            if mode == "test":
+                _ff(["-i", str(s1), "-c", "copy", "-movflags", "+faststart", str(work / "test.mp4")])
         first = res.get("segs", {}).get("seg1", {})
-        res["test"] = {"ok": True, "human": first.get("human"), "where": first.get("where", ""),
-                       "quality": first.get("quality"), "issues": first.get("issues", "")}
+        if mode == "test":
+            res["test"] = {"ok": True, "human": first.get("human"), "where": first.get("where", ""),
+                           "quality": first.get("quality"), "issues": first.get("issues", "")}
         res["est_full"] = round(REMAKE_COST["omni_sec"] * seg * (n - 1) + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * 4
                                 + REMAKE_COST["check"] * 4 * n + REMAKE_COST["tts"], 2)
         if mode != "full":

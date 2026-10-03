@@ -4883,9 +4883,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="msg" id="trCMsg"></div>
   </section>
   <section class="box" data-view="trend">
-    <div class="box-hd"><span class="step">05</span><h2>시험본 만들기</h2></div>
-    <p class="lead">먼저 앞부분 한 구간(10초 안쪽)만 바꿔 봅니다(약 1달러, 합성이 어색하거나 사람 손이 보이면 한 번 더 만들어 최대 약 1.5달러). 보고 마음에 들면 영상 상세에서 "본편 만들기"를 누르세요. 시험 구간은 본편에 그대로 쓰여 돈이 두 번 들지 않습니다. 한 편 최대 5달러, 넘을 것 같으면 멈춥니다. 노래는 넣지 않습니다(인스타 앱에서 얹기).</p>
-    <button class="btn btn-wide" id="trGo" type="button">시험본 만들기</button>
+    <div class="box-hd"><span class="step">05</span><h2>스토리보드 만들기</h2></div>
+    <p class="lead">영상을 만들기 전에 원본에서 6장면을 뽑아 우리 시바견으로 바꾼 그림 한 장을 먼저 만듭니다(약 0.16달러, 5~10분). 영상 상세에서 그림을 보고 마음에 들면 "영상 만들기"를 누르세요. 영상은 이 그림을 기준으로 만듭니다. 한 편 최대 5달러, 넘을 것 같으면 멈춥니다. 노래는 넣지 않습니다(인스타 앱에서 얹기).</p>
+    <button class="btn btn-wide" id="trGo" type="button">스토리보드 만들기</button>
     <div class="msg" id="trGoMsg"></div>
   </section>
 
@@ -5658,7 +5658,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(!tr.product){ say('trGoMsg','03에서 상품을 골라 주세요.','no'); return; }
     var copy={big:$('trBig').value.trim(),sub:$('trSub').value.trim(),vo:$('trVo').value.trim(),ending:$('trEnd').value.trim()};
     if(!copy.big||!copy.vo){ say('trGoMsg','04 문구와 내레이션을 채워 주세요.','no'); return; }
-    if(!confirm('시험본(앞 구간 하나)을 만듭니다. 약 1~1.5달러가 들고 15~30분 걸립니다. 시작할까요?')) return;
+    if(!confirm('스토리보드 그림을 만듭니다(약 0.16달러, 5~10분). 시작할까요?')) return;
     $('trGo').disabled=true; say('trGoMsg','원본을 올리는 중…','wait');
     post('/api/remake/start',{size:f.size}).then(function(s){
       if(!s||!s.success) throw new Error((s&&s.error)||'시작하지 못했습니다.');
@@ -5673,7 +5673,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     }).then(function(c){
       $('trGo').disabled=false;
       if(!c||!c.success) throw new Error((c&&c.error)||'시작하지 못했습니다.');
-      say('trGoMsg','시험본 제작을 시작했습니다. 영상 목록에서 확인하세요.','ok');
+      say('trGoMsg','스토리보드를 만들기 시작했습니다. 영상 상세에서 확인하세요.','ok');
       location.hash='#ep/'+encodeURIComponent(c.id);
     }).catch(function(e){ $('trGo').disabled=false; say('trGoMsg',e.message,'no'); });
   });
@@ -5683,6 +5683,23 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     b.appendChild(epEl('div','ep-post-hd','인기 영상 리메이크'));
     if(m.source&&m.source.youtube){ var a=epEl('a','',m.source.title||'원본 보기'); a.href=m.source.youtube; a.target='_blank'; a.rel='noopener'; b.appendChild(a); }
     b.appendChild(epEl('div','ep-sub','지금까지 쓴 비용 약 $'+(Number(m.spent)||0).toFixed(2)+' / 한도 $'+(m.cap||5)+(m.est_full?' · 본편 예상 추가 $'+Number(m.est_full).toFixed(2):'')));
+    if(m.board&&m.board.ok){
+      b.appendChild(epEl('div','ep-post-lb','스토리보드 (영상에서 뽑은 6장면을 강아지로 바꾼 그림 — 영상은 이 그림을 기준으로 만듭니다)'));
+      var bi=document.createElement('img'); bi.alt='스토리보드'; bi.style.width='100%'; bi.style.borderRadius='10px';
+      bi.src='/api/episode/video?board=1&id='+encodeURIComponent(e.id)+'&t='+encodeURIComponent(e.ranAt||''); b.appendChild(bi);
+      if(m.board.human) b.appendChild(epEl('div','ep-err','검사: 사람 손·맨살이 보일 수 있음 — '+(m.board.where||'')));
+      if(m.board.over) b.appendChild(epEl('div','ep-err','영상 예상 비용이 한도(5달러)를 넘습니다. 더 짧은 원본으로 다시 해 주세요.'));
+      if(!e.hasVideo&&e.state!=='running'){
+        if(!m.board.over) b.appendChild(epBtn('좋아요, 영상 만들기 (예상 약 $'+Number(m.est_full||0).toFixed(2)+')',function(){
+          if(!confirm('이 스토리보드대로 영상을 만듭니다. 예상 약 $'+Number(m.est_full||0).toFixed(2)+', 30~50분 걸립니다. 시작할까요?')) return;
+          epAsk(e.id,'remake_full',{}, '영상을 만들고 있습니다(30~50분). 끝나면 이 화면에 완성 영상이 나옵니다.');
+        },true));
+        b.appendChild(epBtn('스토리보드 다시 그리기 (약 $0.16)',function(){
+          if(!confirm('스토리보드를 다시 그립니다(약 0.16달러, 5~10분). 할까요?')) return;
+          epAsk(e.id,'remake_board',{}, '스토리보드를 다시 그리고 있습니다(5~10분).');
+        }));
+      }
+    }
     if(m.test&&m.test.ok){
       b.appendChild(epEl('div','ep-post-lb','시험본 (앞 구간)'));
       var v=document.createElement('video'); v.controls=true; v.playsInline=true; v.preload='metadata';
@@ -6680,8 +6697,11 @@ async function handleEpisodeRequest(env, body) {
     req = { steps: ['publish'] };
   } else if (kind === 'remake_full') {
     const log = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/work/log.json`)) || '{}');
-    if (!log.remake?.test?.ok) throw new Error('시험본이 아직 없습니다.');
+    if (!log.remake?.board?.ok && !log.remake?.test?.ok) throw new Error('스토리보드가 아직 없습니다.');
+    if (log.assemble?.ok) throw new Error('이미 영상을 만들었습니다.');
     req = { steps: ['remake'], remake: { mode: 'full' } };
+  } else if (kind === 'remake_board') {
+    req = { steps: ['remake'], remake: { mode: 'board', redo: true } };
   } else if (kind === 'food') {                        // 오래 걸려서(1~3분) 뒤에서 처리 → 화면은 목록 새로고침으로 확인
     const jid = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
     await vpJobSet(env, jid, { status: 'queued', kind: 'food-redo', body: { id }, createdAt: Date.now() });
@@ -6741,9 +6761,9 @@ async function handleEpisodeVideo(env, url, request) {
   if (!EP_ID_RE.test(id)) return new Response('bad id', { status: 400, headers: CORS });
   const v = (url.searchParams.get('v') || EP_BRANCH).replace(/[^\w./-]/g, '');
   const ref = (url.searchParams.get('ref') || '').match(/^(food|product)\.(png|jpg|webp)$/);
-  const kind = ref ? 'ref' : url.searchParams.has('cover') ? 'cover' : url.searchParams.has('frames') ? 'frames' : url.searchParams.has('test') ? 'test' : 'video';
+  const kind = ref ? 'ref' : url.searchParams.has('cover') ? 'cover' : url.searchParams.has('frames') ? 'frames' : url.searchParams.has('test') ? 'test' : url.searchParams.has('board') ? 'board' : 'video';
   const src = ref ? `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/refs/${ref[0]}`
-    : `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/work/${{ cover: 'cover.jpg', frames: 'frames.jpg', video: 'final.mp4', test: 'test.mp4' }[kind]}`;
+    : `https://raw.githubusercontent.com/${EP_REPO}/${v}/${EP_ROOT}/${id}/work/${{ cover: 'cover.jpg', frames: 'frames.jpg', video: 'final.mp4', test: 'test.mp4', board: 'board.jpg' }[kind]}`;
   const range = request.headers.get('Range');
   const r = await fetch(src, { headers: range ? { Range: range } : {} });
   if (!r.ok && r.status !== 206) return new Response('not found', { status: 404, headers: CORS });
@@ -6981,8 +7001,8 @@ async function handleRemakeCommit(env, body) {
   const dir = `${EP_ROOT}/${id}`;
   await ghCommit(env, [
     { path: `${dir}/episode.json`, text: JSON.stringify(ep, null, 2) },
-    { path: `${dir}/requests/01_remake_test.json`, text: JSON.stringify({ id, steps: ['remake'], remake: { mode: 'test' } }) },
-  ], `pet: ${id} 인기 영상 리메이크 시험 요청`);
+    { path: `${dir}/requests/01_remake_board.json`, text: JSON.stringify({ id, steps: ['remake'], remake: { mode: 'board' } }) },
+  ], `pet: ${id} 인기 영상 리메이크 스토리보드 요청`);
   await env.PENDING_POSTS.put(`ep_meta:${id}`, JSON.stringify({ title: p.title, menu: ep.menuName, at: Date.now() }));
   // 홍보 상품은 판매 페이지(인스타 프로필 링크)에 바로 올린다 — 같은 이름이 있으면 그 번호에 덮어쓴다
   let shopNo = null;
