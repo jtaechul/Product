@@ -1792,6 +1792,8 @@ SWAP_PROMPT = ("Edit this video. Change ONLY these things and keep absolutely ev
 
 
 def step_swap(work, log, cfg):
+    """편집은 한 번에 10초까지(Omni 제한) → 원본을 같은 길이 구간으로 나눠 같은 지시로 바꾸고 그대로 이어 붙인다(시간·박자 원본 그대로)."""
+    import math
     res = log.setdefault("swap", {})
     key = _key("GEMINI_API_KEY")
     ref = work / "_ref_full.mp4"
@@ -1799,17 +1801,36 @@ def step_swap(work, log, cfg):
     if st != 200 or len(raw) < 10000:
         raise RuntimeError(f"원본 춤 영상을 못 받았습니다(HTTP {st})")
     ref.write_bytes(raw)
+    L = _dur(ref)
+    n = max(1, math.ceil(L / 9.5))
+    seg = L / n
     img = {"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}
-    vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(raw).decode()}
-    body = {"model": CLIP_MODEL, "input": [vid, img, {"type": "text", "text": SWAP_PROMPT}],
-            "response_format": {"type": "video", "resolution": "720p"},
-            "generation_config": {"video_config": {"task": "edit"}}}
-    out = work / "_swap_raw.mp4"
-    out.write_bytes(_omni_run(key, body))                    # 1회만(재시도 없음 — 사용자 지시)
     h = int(cfg.get("out_h", 640))
-    _ff(["-i", str(out), "-an", "-vf", f"scale=-2:{h},format=yuv420p", "-c:v", "libx264", "-crf", "23",
-         "-movflags", "+faststart", str(work / "swap.mp4")])
-    res.update({"ok": True, "src_sec": _dur(ref), "sec": _dur(work / "swap.mp4")})
+    outs = []
+    for i in range(n):
+        out = work / f"swap_seg{i + 1}.mp4"
+        outs.append(out)
+        if out.exists():                                     # 이미 만든 구간은 다시 만들지 않는다(비용)
+            continue
+        piece = work / f"_ref_seg{i + 1}.mp4"
+        _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "20", str(piece)])
+        vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()}
+        body = {"model": CLIP_MODEL, "input": [vid, img, {"type": "text", "text": SWAP_PROMPT}],
+                "response_format": {"type": "video", "resolution": "720p"},
+                "generation_config": {"video_config": {"task": "edit"}}}
+        rawo = work / f"_swap_raw{i + 1}.mp4"
+        rawo.write_bytes(_omni_run(key, body))               # 구간마다 1회만(재시도 없음 — 사용자 지시)
+        got = _dur(rawo)
+        k = seg / got if got else 1.0                         # 원본 구간과 같은 길이로(박자 유지)
+        _ff(["-i", str(rawo), "-an", "-vf", f"setpts=PTS*{k:.5f},scale=-2:{h},fps=24,setsar=1,format=yuv420p",
+             "-t", f"{seg:.3f}", "-c:v", "libx264", "-crf", "23", str(out)])
+        res[f"seg{i + 1}"] = {"gen_sec": got}
+    ins = []
+    for o in outs:
+        ins += ["-i", str(o)]
+    fc = "".join(f"[{i}:v]" for i in range(n)) + f"concat=n={n}:v=1:a=0,format=yuv420p[v]"
+    _ff([*ins, "-filter_complex", fc, "-map", "[v]", "-c:v", "libx264", "-crf", "23", "-movflags", "+faststart", str(work / "swap.mp4")])
+    res.update({"ok": True, "src_sec": L, "segments": n, "sec": _dur(work / "swap.mp4")})
 
 # ---------- 춤 밈 끝 장면: 무대에서 내려와 펫 이온음료를 음미(사용자 확정 2026-10) ----------
 # 병은 AI가 그리지 않는다(글자가 뭉개짐) → 쿠팡 실제 상품 사진에서 병 하나를 잘라 장면에 붙이고 병 전체를 흐림 처리한다.

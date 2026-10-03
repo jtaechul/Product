@@ -1,0 +1,10 @@
+{
+ "id": "000-dance-test",
+ "steps": [
+  "swap"
+ ],
+ "swap": {
+  "video_url": "https://d2jqrm6oza8nb6.cloudfront.net/datasets/ac000bd6-fa02-4e6e-af64-72d1e0900819.mp4?_jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlIYXNoIjoiMzdjMjhkNzczNTNjZjFlNCIsImJ1Y2tldCI6InJ1bndheS1kYXRhc2V0cyIsInN0YWdlIjoicHJvZCIsImV4cCI6MTc5MTIwMjY3OX0.zWmWXGpAcj3CYti3xlLZpIehhrv2TTypHqsTdiOFtl8",
+  "out_h": 640
+ }
+}
