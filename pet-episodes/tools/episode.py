@@ -1509,6 +1509,19 @@ DANCE_PROMPT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is t
                 "background, red light and cheering crowd; camera locked-off with a slight handheld feel. Photorealistic. Exactly two "
                 "front legs. No human dancer, no text, no extra dogs, no morphing.")
 
+DANCE_EDIT = ("Edit this video: replace the human dancer with the Shiba Inu from image 1 (same face, fur, striped short-sleeve polo, "
+              "wide light trousers and dark sunglasses as in image 1). The dog must copy the dancer's movement EXACTLY, frame by frame: "
+              "the same arm (front leg) positions, angles, heights, speed and timing, the same leg steps, knee bounces and body turns. "
+              "Motion fidelity is the top priority - stretch or distort the dog's limbs if needed to match every pose. Keep the camera, "
+              "framing, background, lights and crowd exactly as in the video. Remove any watermark or text. Photorealistic dog, "
+              "exactly two front legs, no human dancer left in the frame.")
+DANCE_STRICT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference. MOTION FIDELITY IS THE TOP PRIORITY: "
+                "the Shiba Inu must copy the dancer's movement EXACTLY, frame by frame and beat for beat - the same arm (front leg) "
+                "positions, angles, heights (raise them fully above the head when the dancer does), speed and timing, the same leg "
+                "steps, knee bounces and body turns. Stretch or distort the dog's limbs if needed to hit every pose; do not tone the "
+                "moves down. Keep the dog's face, fur and outfit (striped polo, wide trousers, sunglasses) identical to image 1, same "
+                "party background, strong red stage light and cheering crowd; camera locked-off. Photorealistic. Exactly two front "
+                "legs. No human dancer, no text, no extra dogs.")
 DANCE_TEXT = ("DURATION: 5 seconds. Image 1 is the first frame. The Shiba Inu does a fast Tecktonik / electro dance to a 132 BPM "
               "club beat while standing upright on its two hind legs behind the DJ booth (the booth always hides everything below "
               "the waist): [0-1s] both front legs held wide open to the sides, bouncing to the beat; [1-2s] both front legs swing "
@@ -1577,13 +1590,19 @@ def step_dance(work, log, cfg):
     img = {"type": "image", **_b64img(start)}
     txt = {"type": "text", "text": DANCE_PROMPT}
     tries = []
-    for task, res_ in (("reference_to_video", "720p"),):    # Omni가 받는 task: text_to_video·image_to_video·reference_to_video·edit·extend
-        body = {"model": CLIP_MODEL, "input": [img, vid, txt],
+    plans = [("reference_to_video", [img, vid, txt])]
+    if cfg.get("mode") == "edit":                            # 원본 영상을 편집해 댄서만 바꾼다 → 동작·박자 그대로(1순위), 막히면 강한 지시로
+        plans = [("edit", [vid, img, {"type": "text", "text": DANCE_EDIT}]),
+                 ("reference_to_video", [img, vid, {"type": "text", "text": DANCE_STRICT}])]
+    for task, inputs in plans:                               # Omni가 받는 task: text_to_video·image_to_video·reference_to_video·edit·extend
+        res_ = "720p"
+        body = {"model": CLIP_MODEL, "input": inputs,
                 "response_format": {"type": "video", "resolution": res_, "aspect_ratio": "9:16"},
                 "generation_config": {"video_config": {"task": task}}}
         try:
             data = _omni_run(key, body)
             tries.append({"task": task, "res": res_, "ok": True})
+            res["mode_used"] = task
             break
         except Exception as e:  # noqa: BLE001
             tries.append({"task": task, "res": res_, "error": str(e)[:300]})
@@ -1599,6 +1618,8 @@ def step_dance(work, log, cfg):
                     tries.append({"task": "image_to_video(text)", "error": str(e2)[:300]})
                     res["tries"] = tries
                     raise
+            if task == "edit":                               # 편집이 안 되면 다음 방법으로(1회)
+                continue
             if "HTTP 4" not in str(e) or "safety" in str(e):   # 생성 실패·안전 차단이면 더 돌리지 않는다 — 비용 보호
                 res["tries"] = tries
                 raise
