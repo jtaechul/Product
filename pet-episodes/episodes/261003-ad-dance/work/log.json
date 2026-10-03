@@ -1,0 +1,13 @@
+{
+  "assemble": {
+    "ok": true,
+    "sec": 29.2,
+    "note": "로컬 조립(노래 없음, 내레이션만)"
+  },
+  "cover": "work/cover.jpg",
+  "last_request": {
+    "file": "01_ad.json",
+    "ran_at": "2026-10-03T13:55:55Z",
+    "ok": true
+  }
+}
