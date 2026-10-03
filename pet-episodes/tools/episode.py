@@ -1507,6 +1507,14 @@ DANCE_PROMPT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is t
                 "two hind legs behind the DJ booth the whole time; the booth's front panel always hides everything below the waist. "
                 "Keep the dog's face, fur and size identical to image 1, keep the same party background, red light and cheering crowd; "
                 "camera locked-off with a slight handheld feel. Photorealistic. No human dancer, no text, no extra dogs, no morphing.")
+DANCE_TEXT = ("DURATION: 5 seconds. Image 1 is the first frame. The Shiba Inu does a fast Tecktonik / electro dance to a 132 BPM "
+              "club beat while standing upright on its two hind legs behind the DJ booth (the booth always hides everything below "
+              "the waist): [0-1s] both front legs held wide open to the sides, bouncing to the beat; [1-2s] both front legs swing "
+              "up over the head and clap twice; [2-3s] one front leg whips across in front of its face, then the other; [3-4s] quick "
+              "paw flicks circling around the head and chest; [4-5s] a big diagonal sweep of one front leg out to the side with a "
+              "proud head tilt. Sharp, snappy, on every beat. Same face, fur and size as image 1, same party background, red light "
+              "and cheering crowd filming with phones; camera locked-off with a slight handheld feel. Photorealistic. Exactly two "
+              "front legs. No human dancer, no text, no extra dogs, no morphing.")
 
 
 def _omni_run(key, body) -> bytes:
@@ -1577,6 +1585,18 @@ def step_dance(work, log, cfg):
             break
         except Exception as e:  # noqa: BLE001
             tries.append({"task": task, "res": res_, "error": str(e)[:300]})
+            if "safety" in str(e) and cfg.get("text_fallback"):   # 실제 사람 영상 참고가 막히면 → 동작을 글로 설명해 1회만
+                body = {"model": CLIP_MODEL, "input": [img, {"type": "text", "text": DANCE_TEXT}],
+                        "response_format": {"type": "video", "resolution": "720p", "aspect_ratio": "9:16"},
+                        "generation_config": {"video_config": {"task": "image_to_video"}}}
+                try:
+                    data = _omni_run(key, body)
+                    tries.append({"task": "image_to_video(text)", "ok": True})
+                    break
+                except Exception as e2:  # noqa: BLE001
+                    tries.append({"task": "image_to_video(text)", "error": str(e2)[:300]})
+                    res["tries"] = tries
+                    raise
             if "HTTP 4" not in str(e) or "safety" in str(e):   # 생성 실패·안전 차단이면 더 돌리지 않는다 — 비용 보호
                 res["tries"] = tries
                 raise

@@ -1,0 +1,13 @@
+{
+ "id": "000-dance-test",
+ "steps": [
+  "dance"
+ ],
+ "dance": {
+  "video_url": "https://d2jqrm6oza8nb6.cloudfront.net/datasets/93ff0a2f-8be0-4202-b08f-ab01327bd579.mp4?_jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlIYXNoIjoiM2RkMzM3YjM0NTkzOGYyOCIsImJ1Y2tldCI6InJ1bndheS1kYXRhc2V0cyIsInN0YWdlIjoicHJvZCIsImV4cCI6MTc5MTE3ODkzMX0.KbNA2-Llv1ZtjnT2neF4GmTZX2tv9iAIYWaAmoErwkw",
+  "out_h": 640,
+  "crop": "252:448:54:130",
+  "redo": [],
+  "text_fallback": true
+ }
+}
