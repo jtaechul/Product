@@ -2002,7 +2002,8 @@ def step_drink(work, log, cfg):
 REMAKE_WORKER = "https://book-carousel.jtaechul.workers.dev"
 REMAKE_MAX_SEC = 40.0          # 원본은 앞 40초까지만(한 편 5달러 한도 안)
 REMAKE_SEG = 9.5               # Omni 편집은 한 번에 10초까지
-REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(2026-10)
+REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
+REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
 REMAKE_SWAP = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, "
                "every movement and its timing, camera, background, lights): {swap}. Every replaced head is the Shiba Inu from "
                "image 1. Paws are thick furry dog paws - no human fingers, nails or bare skin anywhere. Remove any watermark or "
@@ -2072,22 +2073,15 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
         inputs.append({"type": "image", **_b64img(last)})
         prompt = prompt + REMAKE_PREV
     tries = []
-    res_name = "1080p"                                     # 같은 값(초당)이라 더 큰 화면으로 만들어 줄인다 — 털·이음새가 더 깔끔
+    res_name = REMAKE_RES
     for attempt in range(2):                               # 사람 손이 보이거나 합성이 어색하면 한도 안에서 한 번만 다시
         _remake_spend(res, REMAKE_COST["omni_sec"] * seg, f"구간{i + 1} 바꾸기", cap)
         vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()}
         rawo = work / f"_rm_raw{i + 1}_{attempt}.mp4"
-        for rn in (res_name, "720p"):
-            body = {"model": CLIP_MODEL, "input": [vid, *inputs, {"type": "text", "text": prompt}],
-                    "response_format": {"type": "video", "resolution": rn},
-                    "generation_config": {"video_config": {"task": "edit"}}}
-            try:
-                rawo.write_bytes(_omni_run(key, body))
-                res_name = rn
-                break
-            except RuntimeError as e:
-                if rn == "720p" or "HTTP 400" not in str(e):   # 1080p를 안 받으면 720p로(요금 미발생 400)
-                    raise
+        body = {"model": CLIP_MODEL, "input": [vid, *inputs, {"type": "text", "text": prompt}],
+                "response_format": {"type": "video", "resolution": REMAKE_RES},
+                "generation_config": {"video_config": {"task": "edit"}}}
+        rawo.write_bytes(_omni_run(key, body))
         _remake_spend(res, REMAKE_COST["check"] * 4, f"구간{i + 1} 검사", cap)
         chk = _human_parts(rawo, work)
         sheet = work / f"_rm_q{i + 1}.jpg"
@@ -2110,7 +2104,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     best = sorted(tries, key=lambda t: (t[1].get("human") is False, t[2] or 0), reverse=True)[0]
     got = _dur(best[0])
     k = seg / got if got else 1.0                         # 원본 구간과 같은 길이로(박자 유지)
-    hi = work / f"_rm_hi{i + 1}.mp4"                      # 다음 구간 참고용 큰 화면(커밋 안 함)
+    hi = work / f"_rm_hi{i + 1}.mp4"                      # 다음 구간 참고용(커밋 안 함)
     _ff(["-i", str(best[0]), "-an", "-vf", f"setpts=PTS*{k:.5f}", "-t", f"{seg:.3f}", "-c:v", "libx264", "-crf", "18", str(hi)])
     _ff(["-i", str(hi), "-an", "-vf", f"scale=-2:{h}:flags=lanczos,unsharp=3:3:0.4,fps=24,setsar=1,format=yuv420p",
          "-c:v", "libx264", "-crf", "19", "-preset", "slow", str(out)])
@@ -2212,7 +2206,7 @@ def step_remake(ep, epdir, work, log, req):
                 _remake_spend(res, REMAKE_COST["omni_sec"] * 4, "끝 장면 영상", cap)
                 body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(start)},
                                                        {"type": "text", "text": REMAKE_END_PROMPT.format(ending=ending)}],
-                        "response_format": {"type": "video", "resolution": "720p", "aspect_ratio": "9:16"},
+                        "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
                         "generation_config": {"video_config": {"task": "image_to_video"}}}
                 raw = work / f"_rm_end_raw{attempt}.mp4"
                 raw.write_bytes(_omni_run(key, body))
