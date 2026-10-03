@@ -1526,9 +1526,9 @@ DANCE_EDIT = ("Edit this video: replace the human dancer with the Shiba Inu from
               "or spreads fingers, the dog just extends a furry paw. No human body parts anywhere in the video: the "
               "original crowd's raised human arms and hands must disappear completely - the crowd dogs cheer with dog ears, wagging "
               "tails and bouncing, any raised limb is clearly a short furry dog leg with a paw. The dark foreground at the bottom of the frame "
-              "is the front row of the dog audience (dog ears and furry heads seen from behind) - never the back of a human head, "
-              "human hair or a human hand holding a phone; any phone in the crowd is held by a dog's paw. The Shiba's trouser hems "
-              "reach the floor and cover its feet completely, only furry paw tips may peek out - never bare human feet or toes.")
+              "is the front row of the audience: furry dog heads and pointed dog ears seen from behind. Any phone in the crowd is "
+              "held between a dog's two furry paws. The Shiba's trouser hems reach the floor and cover its feet completely; only "
+              "fluffy paw tips peek out.")
 DANCE_STRICT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference. MOTION FIDELITY IS THE TOP PRIORITY: "
                 "the Shiba Inu must copy the dancer's movement EXACTLY, frame by frame and beat for beat - the same arm (front leg) "
                 "positions, angles, heights (raise them fully above the head when the dancer does), speed and timing, the same leg "
