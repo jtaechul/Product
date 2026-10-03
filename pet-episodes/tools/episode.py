@@ -1527,8 +1527,8 @@ DANCE_EDIT = ("Edit this video: replace the human dancer with the Shiba Inu from
               "original crowd's raised human arms and hands must disappear completely - the crowd dogs cheer with dog ears, wagging "
               "tails and bouncing, any raised limb is clearly a short furry dog leg with a paw. The dark foreground at the bottom of the frame "
               "is the front row of the audience: furry dog heads and pointed dog ears seen from behind. Any phone in the crowd is "
-              "held between a dog's two furry paws. The Shiba's trouser hems reach the floor and cover its feet completely; only "
-              "fluffy paw tips peek out.")
+              "held between a dog's two furry paws. The Shiba wears chunky white sneakers on its hind "
+              "paws, under long trouser hems that reach the sneakers.")
 DANCE_STRICT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference. MOTION FIDELITY IS THE TOP PRIORITY: "
                 "the Shiba Inu must copy the dancer's movement EXACTLY, frame by frame and beat for beat - the same arm (front leg) "
                 "positions, angles, heights (raise them fully above the head when the dancer does), speed and timing, the same leg "
@@ -1675,8 +1675,8 @@ def step_dance(work, log, cfg):
     chk = _human_parts(raw_out, work)
     res["human_check"] = [chk]
     if chk.get("human") is not False and cfg.get("mode") == "edit":      # 사람 손이 섞였으면 그 자리를 짚어 1회만 다시
-        fix = {"type": "text", "text": DANCE_EDIT + f" The previous attempt wrongly showed human body parts ({chk.get('where', '')}); "
-                                                   "make those furry Shiba paws this time."}
+        fix = {"type": "text", "text": DANCE_EDIT + " Double-check every frame: the Shiba's front legs are furry with paws, "
+                                                   "its feet are in white sneakers, and every audience member is a dog."}   # 검사 문구(사람 신체 낱말)를 그대로 넣으면 입력 차단됨
         body = {"model": CLIP_MODEL, "input": [vid, img, fix], "response_format": {"type": "video", "resolution": "720p"},
                 "generation_config": {"video_config": {"task": "edit"}}}
         data = _omni_run(key, body)
@@ -1704,7 +1704,7 @@ BRIDGE_PROMPT = ("DURATION: 3 seconds. Image 1 is the first frame (the end of th
                  "of it. While walking it keeps its front legs relaxed close to its chest. The dog's front legs stay thick, fully "
                  "furry orange-and-cream Shiba legs with round paws coming out of the long sleeve cuffs - never human arms, hands, "
                  "fingers or bare skin. "
-                 "Its hind feet under the trouser hems are furry dog paws, never bare human feet. "
+                 "It wears chunky white sneakers on its hind paws under the trouser hems. "
                  "The crowd is only dogs, no raised human arms or hands anywhere in the background. Camera follows smoothly. "
                  "Photorealistic. No text, no humans.")
 DRINK_START = ("Image 1 is the last frame of the previous shot (keep exactly this Shiba Inu, its outfit - long-sleeve striped shirt, "
@@ -1770,7 +1770,7 @@ def step_drink(work, log, cfg):
             res["bridge_check"].append(chk)
             if chk.get("human") is False:
                 break
-            fix = f" The previous attempt wrongly showed human body parts ({chk.get('where', '')}); this time the arms must be furry Shiba legs."
+            fix = " Double-check every frame: furry Shiba front legs with paws, white sneakers on the hind paws, and only dogs in the background."
         else:
             raise RuntimeError(f"연결 장면에 사람 손·맨살(2회): {chk.get('where', '')}")
         _norm(tail, bridge, H)
