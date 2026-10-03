@@ -2044,6 +2044,8 @@ def main(path: str) -> int:
                 for f in work.glob("_*"):
                     f.unlink(missing_ok=True)
         if not ep["clips"]:
+            if "publish" in steps:                               # 직접 조립한 광고 편(컷 없음)도 인스타에 올릴 수 있게
+                step_ig_publish(ep, epdir, work, log, bool(req.get("force_publish")))
             raise StopIteration
         if "voices" in steps:
             step_voices(ep, epdir, work, log, req.get("voices"))

@@ -5454,6 +5454,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       },true));
     }
     d.appendChild(act);
+    if(e.product&&e.product.title) d.appendChild(shopBox(e));
     if(e.ig&&!e.ig.ok&&e.ig.error) d.appendChild(epEl('div','ep-err','인스타 올리기 실패: '+e.ig.error));
     if(e.post&&(e.post.caption||e.post.hashtags)){
       var pb=epEl('div','ep-post');
@@ -5501,6 +5502,33 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       d.appendChild(fx);
     }
     return d;
+  }
+  // 영상 속 상품을 판매 페이지(인스타 프로필 링크)에 올리기 — 같은 이름이 이미 있으면 그 번호에 덮어써서 두 번 생기지 않는다
+  function shopBox(e){
+    var p=e.product, b=epEl('div','ep-post');
+    b.appendChild(epEl('div','ep-post-hd','구매 링크 (인스타 프로필 링크의 판매 페이지)'));
+    b.appendChild(epEl('div','ep-sub','상품: '+p.title));
+    var inp=epEl('input',''); inp.type='url'; inp.placeholder='쿠팡 파트너스 링크(https://link.coupang.com/...)'; inp.value=p.link||'';
+    inp.style.width='100%'; inp.style.margin='6px 0'; b.appendChild(inp);
+    var msg=epEl('div','ep-sub','');
+    var btn=epBtn('판매 페이지에 올리기',function(){
+      var link=inp.value.trim();
+      if(link.indexOf("http")!==0){ msg.textContent='쿠팡 파트너스 링크를 넣어 주세요.'; return; }
+      btn.disabled=true; msg.textContent='올리는 중…';
+      fetch('/api/shop-catalog').then(function(r){return r.json();}).catch(function(){return [];}).then(function(rows){
+        var same=(Array.isArray(rows)?rows:[]).filter(function(x){ return x&&x.title===p.title; })[0];
+        var cover=p.image||(location.origin+'/api/episode/video?id='+encodeURIComponent(e.id)+'&ref=product.jpg');
+        return post('/api/add-book-to-catalog',{ bookNumber: same?same.number:undefined,
+          bookInfo:{title:p.title,author:p.brand||'',category:p.category||'기타',coreMessage:p.reason||'',cover:cover}, cover:cover, coupangLink:link });
+      }).then(function(r){
+        btn.disabled=false;
+        if(r&&r.success){ msg.textContent='판매 페이지에 올렸습니다(No.'+r.bookNumber+'). 인스타 프로필 링크에서 바로 보입니다.'; }
+        else msg.textContent=(r&&r.error)||'올리지 못했습니다.';
+      }).catch(function(err){ btn.disabled=false; msg.textContent='올리지 못했습니다: '+err.message; });
+    },true);
+    b.appendChild(btn); b.appendChild(msg);
+    var sh=epEl('a','btn btn-sm btn-2','판매 페이지 열기'); sh.href='https://banryeotem.pages.dev'; sh.target='_blank'; sh.rel='noopener'; b.appendChild(sh);
+    return b;
   }
   function loadEpisode(id){
     post('/api/episode/list',{id:id}).then(function(r){
@@ -6529,7 +6557,8 @@ async function handleEpisodeList(env, body) {
     return { id, state, request: latest, title: ep.product?.title || '', menu: ep.menuName || '', episode: ep.episode || '',
       cuts: (ep.clips || []).map((c, i) => ({ no: `c${String(i + 1).padStart(2, '0')}`, role: c.role || '', line: c.line || '' })),
       sec: log.assemble?.sec || 0, hasVideo: !!log.assemble?.ok, error: done && !log.last_request?.ok ? String(log.error || '').slice(0, 300) : '',
-      ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null, post: postTextOf(ep), hasCover: !!log.cover, foodCheck };
+      ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null, post: postTextOf(ep), hasCover: !!log.cover, foodCheck,
+      product: ep.product || null, kind: ep.kind || '' };
   }));
   return { success: true, episodes: eps };
 }
