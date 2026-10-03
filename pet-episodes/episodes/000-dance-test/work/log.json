@@ -8,22 +8,17 @@
       {
         "task": "edit",
         "res": "720p",
-        "error": "Omni HTTP 400: {\"error\":{\"message\":\"Aspect ratio cannot be set in response format for edit task.\",\"code\":\"invalid_request\"}}"
-      },
-      {
-        "task": "reference_to_video",
-        "res": "720p",
         "ok": true
       }
     ],
     "ok": true,
     "sec": 5.0,
-    "mode_used": "reference_to_video"
+    "mode_used": "edit"
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Request blocked due to safety violations (harmful content). Please modify your input and retry.\",\"code\":\"Unable to show the generated video. The video was filtered out because it violated Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\"}}",
   "last_request": {
-    "file": "08_edit_dance.json",
-    "ran_at": "2026-10-03T12:11:58Z",
+    "file": "09_edit_only.json",
+    "ran_at": "2026-10-03T12:15:24Z",
     "ok": true
   }
 }
