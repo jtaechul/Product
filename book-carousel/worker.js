@@ -6849,7 +6849,7 @@ async function runVpJobs(env) {
 // 원본 영상은 남의 것이라 공개 저장소에 올리지 않는다 → KV에 7일만 조각으로 두고, 제작 워크플로가 서명 주소로 받아 간다.
 // 따라 하기 쉬운 밈·챌린지·패러디 위주(사용자 지적 2026-10: 일반 인기 영상은 따라 하기 어려움). 지역은 화면에서 고른다.
 const TREND_QUERIES = {
-  kr: ['챌린지 #shorts', '밈 #shorts', '패러디 #shorts', '댄스챌린지', '요즘 유행 밈', '따라하기 챌린지'],
+  kr: ['챌린지 따라하기', '요즘 유행 챌린지', '댄스챌린지', '아이돌 챌린지', '유행 밈 쇼츠', '패러디 쇼츠'],
   world: ['#challenge #shorts', '#meme #shorts', '#trend #shorts', '#dancechallenge', '#parody #shorts', '#viral trend'],
 };
 const hasHangul = (t) => /[가-힣]/.test(String(t || ''));
@@ -6888,15 +6888,20 @@ async function handleTrendList(env, body) {
   const ids = new Set(); let err = '';
   const loc = region === 'kr' ? '&regionCode=KR&relevanceLanguage=ko' : '';
   for (const q of TREND_QUERIES[region]) {
-    const r = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&type=video&videoDuration=short&order=viewCount${loc}&maxResults=20&publishedAfter=${encodeURIComponent(after)}&q=${encodeURIComponent(q)}&key=${key}`);
+    const r = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&type=video&videoDuration=short&order=viewCount${loc}&maxResults=50&publishedAfter=${encodeURIComponent(after)}&q=${encodeURIComponent(q)}&key=${key}`);
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { err = j?.error?.message || ('HTTP ' + r.status); if (r.status === 403 || r.status === 400) break; continue; }
     for (const it of j.items || []) if (it.id?.videoId) ids.add(it.id.videoId);
   }
   if (!ids.size) throw new Error(ytErrMsg(err || '결과 없음'));
-  const v = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${[...ids].slice(0, 50).join(',')}&key=${key}`);
-  const vj = await v.json().catch(() => ({}));
-  if (!v.ok) throw new Error(ytErrMsg(vj?.error?.message || ('HTTP ' + v.status)));
+  // 검색 결과가 지역과 상관없이 섞여 와서(실측: 한국 지정해도 해외 챌린지 위주) 후보를 넉넉히 받아 언어로 거른다
+  const all = [...ids].slice(0, 300), vj = { items: [] };
+  for (let i = 0; i < all.length; i += 50) {
+    const v = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${all.slice(i, i + 50).join(',')}&key=${key}`);
+    const j = await v.json().catch(() => ({}));
+    if (!v.ok) throw new Error(ytErrMsg(j?.error?.message || ('HTTP ' + v.status)));
+    vj.items.push(...(j.items || []));
+  }
   const now = Date.now();
   let items = (vj.items || []).map(x => {
     const views = +x.statistics?.viewCount || 0, hrs = Math.max(1, (now - Date.parse(x.snippet.publishedAt)) / 36e5);
@@ -6906,8 +6911,7 @@ async function handleTrendList(env, body) {
       ko: lang.startsWith('ko') || hasHangul(x.snippet.title) || hasHangul(x.snippet.channelTitle), desc: String(x.snippet.description || '').slice(0, 120) };
   }).filter(x => x.sec > 0 && x.sec <= 90 && (region !== 'kr' || x.ko))   // 한국: 한국어 제목·음성만
     .sort((a, b) => b.perHour - a.perHour).slice(0, 40);
-  const dbg = { ids: ids.size, fetched: (vj.items || []).length, kept: items.length,
-    sample: (vj.items || []).slice(0, 6).map(x => [x.snippet.title.slice(0, 30), isoSec(x.contentDetails?.duration), x.snippet.defaultAudioLanguage || '']) };
+  const dbg = { ids: ids.size, fetched: vj.items.length, kept: items.length };
   // 따라 하기 쉬운 밈·챌린지만 남기고(easy 50점 이상), 그 안에서 시간당 조회수 순
   try {
     const gk = await getGeminiKey(env);
