@@ -1525,8 +1525,10 @@ DANCE_EDIT = ("Edit this video: replace the human dancer with the Shiba Inu from
               "arms, hands, fingers, thumbs, nails or bare skin on the Shiba or on any dog, in any frame - when the dancer points "
               "or spreads fingers, the dog just extends a furry paw. No human body parts anywhere in the video: the "
               "original crowd's raised human arms and hands must disappear completely - the crowd dogs cheer with dog ears, wagging "
-              "tails and bouncing, any raised limb is clearly a short furry dog leg with a paw. The Shiba's feet are furry dog paws "
-              "under the trouser hems, never bare human feet.")
+              "tails and bouncing, any raised limb is clearly a short furry dog leg with a paw. The dark foreground at the bottom of the frame "
+              "is the front row of the dog audience (dog ears and furry heads seen from behind) - never the back of a human head, "
+              "human hair or a human hand holding a phone; any phone in the crowd is held by a dog's paw. The Shiba's trouser hems "
+              "reach the floor and cover its feet completely, only furry paw tips may peek out - never bare human feet or toes.")
 DANCE_STRICT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference. MOTION FIDELITY IS THE TOP PRIORITY: "
                 "the Shiba Inu must copy the dancer's movement EXACTLY, frame by frame and beat for beat - the same arm (front leg) "
                 "positions, angles, heights (raise them fully above the head when the dancer does), speed and timing, the same leg "
@@ -1576,30 +1578,29 @@ def _omni_run(key, body) -> bytes:
 
 HUMAN_CHECK = ("These are frames from an AI video where every character must be a dog. Look very carefully at every paw, leg "
                "and hand-like shape (especially the dancing Shiba's front legs and feet) and the whole background crowd. Is there ANY human body part - human hand, "
-               "fingers, thumb, fingernails, bare human skin, human arm, or a smooth hairless skin-coloured arm that looks human rather than a furry dog leg - in ANY frame? "
+               "fingers, thumb, fingernails, bare human feet or toes, the back of a human head or human hair, bare human skin, human arm, or a smooth hairless skin-coloured arm that looks human rather than a furry dog leg - in ANY frame? "
                'JSON only: {"human": true, "where": "short English description of which frame/where, empty if none"}')
 
 
 def _human_parts(video: Path, work: Path) -> dict:
-    """완성 영상에 사람 손·손가락·맨살이 섞였는지 AI가 장면을 모아 검사한다(사용자 지적 2026-10: 시바 앞발 끝에 사람 손)."""
-    sheet = work / "_check.jpg"
-    fps = max(0.5, 10 / max(1.0, _dur(video)))              # 영상 길이와 관계없이 10장, 크게(작으면 배경 사람 팔을 놓친다)
-    _ff(["-i", str(video), "-vf", f"fps={fps:.3f},scale=400:-2,tile=5x2", "-frames:v", "1", "-q:v", "3", str(sheet)])
-    key = _key("GEMINI_API_KEY")
-    body = {"contents": [{"role": "user", "parts": [{"inline_data": _b64img(sheet)}, {"text": HUMAN_CHECK}]}],
-            "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
-    for model in ("gemini-flash-latest", "gemini-pro-latest"):
-        st, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
-                        {"x-goog-api-key": key, "Content-Type": "application/json"})
-        if st == 200:
-            try:
-                t = "".join(p.get("text", "") for p in json.loads(raw)["candidates"][0]["content"]["parts"])
-                sheet.unlink(missing_ok=True)
-                return json.loads(t[t.find("{"):t.rfind("}") + 1])
-            except Exception:  # noqa: BLE001
-                pass
-    sheet.unlink(missing_ok=True)
-    return {"human": None, "where": "검사 실패"}
+    """완성 영상에 사람 손·손가락·맨발·뒤통수가 섞였는지 AI가 검사한다(사용자 지적 2026-10).
+    전체 화면만 보면 가장자리·맨 앞줄을 놓친다(실측) → 전체 10장 + 아래쪽 절반 확대 + 가운데 인물 확대를 따로 본다."""
+    d = max(1.0, _dur(video))
+    views = {"full": f"fps={10 / d:.3f},scale=400:-2,tile=5x2",
+             "bottom": f"fps={6 / d:.3f},crop=iw:ih*0.5:0:ih*0.5,scale=480:-2,tile=3x2",
+             "center": f"fps={6 / d:.3f},crop=iw*0.6:ih*0.7:iw*0.2:ih*0.15,scale=360:-2,tile=3x2"}
+    found = []
+    for name, vf in views.items():
+        sheet = work / f"_check_{name}.jpg"
+        _ff(["-i", str(video), "-vf", vf, "-frames:v", "1", "-q:v", "3", str(sheet)])
+        r = _vision_json(sheet, HUMAN_CHECK)
+        sheet.unlink(missing_ok=True)
+        if not r:
+            return {"human": None, "where": f"검사 실패({name})"}
+        if r.get("human"):
+            found.append(f"{name}: {r.get('where', '')}")
+    return {"human": bool(found), "where": " / ".join(found)}
+
 
 def step_dance(work, log, cfg):
     res = log.setdefault("dance", {})
@@ -1611,7 +1612,9 @@ def step_dance(work, log, cfg):
     ref.write_bytes(raw)
     if cfg.get("crop"):                                     # 춤추는 사람만 남기고 관객 얼굴을 줄인다(안전 필터 대책)
         cropped = work / "_ref_crop.mp4"
-        _ff(["-i", str(ref), "-an", "-vf", f"crop={cfg['crop']},scale=360:640,format=yuv420p", "-c:v", "libx264", "-crf", "24", str(cropped)])
+        mb = float(cfg.get("mask_bottom", 0))                # 맨 앞줄 관객(뒤통수·휴대폰 든 손)을 어둡게 지워 편집이 사람을 남기지 않게
+        vf = f"crop={cfg['crop']},scale=360:640" + (f",drawbox=x=0:y=ih*{1 - mb:.2f}:w=iw:h=ih*{mb:.2f}:color=black@0.92:t=fill" if mb else "")
+        _ff(["-i", str(ref), "-an", "-vf", vf + ",format=yuv420p", "-c:v", "libx264", "-crf", "24", str(cropped)])
         cropped.replace(ref)
         raw = ref.read_bytes()
     first = work / "_ref_first.jpg"
@@ -1671,7 +1674,7 @@ def step_dance(work, log, cfg):
     raw_out.write_bytes(data)
     chk = _human_parts(raw_out, work)
     res["human_check"] = [chk]
-    if chk.get("human") and cfg.get("mode") == "edit":      # 사람 손이 섞였으면 그 자리를 짚어 1회만 다시
+    if chk.get("human") is not False and cfg.get("mode") == "edit":      # 사람 손이 섞였으면 그 자리를 짚어 1회만 다시
         fix = {"type": "text", "text": DANCE_EDIT + f" The previous attempt wrongly showed human body parts ({chk.get('where', '')}); "
                                                    "make those furry Shiba paws this time."}
         body = {"model": CLIP_MODEL, "input": [vid, img, fix], "response_format": {"type": "video", "resolution": "720p"},
@@ -1680,7 +1683,7 @@ def step_dance(work, log, cfg):
         raw_out.write_bytes(data)
         chk = _human_parts(raw_out, work)
         res["human_check"].append(chk)
-    if chk.get("human"):
+    if chk.get("human") is not False:
         raise RuntimeError(f"사람 손·맨살이 섞여 나와 결과를 버렸습니다: {chk.get('where', '')}")
     h = int(cfg.get("out_h", 640))
     _ff(["-i", str(raw_out), "-an", "-vf", f"scale=-2:{h},format=yuv420p", "-c:v", "libx264", "-crf", "24",
@@ -1765,7 +1768,7 @@ def step_drink(work, log, cfg):
             tail.write_bytes(_omni_run(key, body))
             chk = _human_parts(tail, work)
             res["bridge_check"].append(chk)
-            if not chk.get("human"):
+            if chk.get("human") is False:
                 break
             fix = f" The previous attempt wrongly showed human body parts ({chk.get('where', '')}); this time the arms must be furry Shiba legs."
         else:
@@ -1797,7 +1800,7 @@ def step_drink(work, log, cfg):
         raw.write_bytes(_omni_run(key, body))
         chk = _human_parts(raw, work)
         res["human_check"] = chk
-        if chk.get("human"):
+        if chk.get("human") is not False:
             raise RuntimeError(f"음료 장면에 사람 손·맨살: {chk.get('where', '')}")
         _norm(raw, plain, H)
         raw.unlink(missing_ok=True)
