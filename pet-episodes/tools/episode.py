@@ -1517,7 +1517,10 @@ DANCE_EDIT = ("Edit this video: replace the human dancer with the Shiba Inu from
               "cheering and bouncing to the beat, some standing on their hind legs with front paws raised, a few holding up phones "
               "to film - no humans anywhere in the video. Keep the camera, framing, string lights, building, red stage light and "
               "timing exactly as in the video. Remove any watermark or text. Photorealistic dog, "
-              "exactly two front legs, no human dancer left in the frame.")
+              "exactly two front legs. CRITICAL ANATOMY: the dancer's arms become the Shiba's own FRONT LEGS - covered in "
+              "orange-and-cream Shiba fur all the way down, ending in round dog paws with toe pads and short claws. NEVER human "
+              "arms, hands, fingers, thumbs, nails or bare skin on the Shiba or on any dog, in any frame - when the dancer points "
+              "or spreads fingers, the dog just extends a furry paw. No human body parts anywhere in the video.")
 DANCE_STRICT = ("DURATION: 5 seconds. Image 1 is the first frame. The video is the motion reference. MOTION FIDELITY IS THE TOP PRIORITY: "
                 "the Shiba Inu must copy the dancer's movement EXACTLY, frame by frame and beat for beat - the same arm (front leg) "
                 "positions, angles, heights (raise them fully above the head when the dancer does), speed and timing, the same leg "
@@ -1564,6 +1567,32 @@ def _omni_run(key, body) -> bytes:
         raise RuntimeError(f"Omni 다운로드 실패 HTTP {st}")
     return vid
 
+
+HUMAN_CHECK = ("These are frames from an AI video where every character must be a dog. Look very carefully at every paw, leg "
+               "and hand-like shape (especially the dancing Shiba's front legs). Is there ANY human body part - human hand, "
+               "fingers, thumb, fingernails, bare human skin, human arm - in ANY frame? "
+               'JSON only: {"human": true, "where": "short English description of which frame/where, empty if none"}')
+
+
+def _human_parts(video: Path, work: Path) -> dict:
+    """완성 영상에 사람 손·손가락·맨살이 섞였는지 AI가 장면을 모아 검사한다(사용자 지적 2026-10: 시바 앞발 끝에 사람 손)."""
+    sheet = work / "_check.jpg"
+    _ff(["-i", str(video), "-vf", "fps=3,scale=240:-2,tile=5x3", "-frames:v", "1", "-q:v", "3", str(sheet)])
+    key = _key("GEMINI_API_KEY")
+    body = {"contents": [{"role": "user", "parts": [{"inline_data": _b64img(sheet)}, {"text": HUMAN_CHECK}]}],
+            "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
+    for model in ("gemini-flash-latest", "gemini-pro-latest"):
+        st, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                        {"x-goog-api-key": key, "Content-Type": "application/json"})
+        if st == 200:
+            try:
+                t = "".join(p.get("text", "") for p in json.loads(raw)["candidates"][0]["content"]["parts"])
+                sheet.unlink(missing_ok=True)
+                return json.loads(t[t.find("{"):t.rfind("}") + 1])
+            except Exception:  # noqa: BLE001
+                pass
+    sheet.unlink(missing_ok=True)
+    return {"human": None, "where": "검사 실패"}
 
 def step_dance(work, log, cfg):
     res = log.setdefault("dance", {})
@@ -1633,6 +1662,19 @@ def step_dance(work, log, cfg):
     res["tries"] = tries
     raw_out = work / "_dance_raw.mp4"
     raw_out.write_bytes(data)
+    chk = _human_parts(raw_out, work)
+    res["human_check"] = [chk]
+    if chk.get("human") and cfg.get("mode") == "edit":      # 사람 손이 섞였으면 그 자리를 짚어 1회만 다시
+        fix = {"type": "text", "text": DANCE_EDIT + f" The previous attempt wrongly showed human body parts ({chk.get('where', '')}); "
+                                                   "make those furry Shiba paws this time."}
+        body = {"model": CLIP_MODEL, "input": [vid, img, fix], "response_format": {"type": "video", "resolution": "720p"},
+                "generation_config": {"video_config": {"task": "edit"}}}
+        data = _omni_run(key, body)
+        raw_out.write_bytes(data)
+        chk = _human_parts(raw_out, work)
+        res["human_check"].append(chk)
+    if chk.get("human"):
+        raise RuntimeError(f"사람 손·맨살이 섞여 나와 결과를 버렸습니다: {chk.get('where', '')}")
     h = int(cfg.get("out_h", 640))
     _ff(["-i", str(raw_out), "-an", "-vf", f"scale=-2:{h},format=yuv420p", "-c:v", "libx264", "-crf", "24",
          "-movflags", "+faststart", str(work / "dance.mp4")])
