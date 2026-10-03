@@ -1783,6 +1783,34 @@ def step_dance_full(work, log, cfg):
     res["sec"] = _dur(work / "dance.mp4")
 
 
+
+# ---------- 춤 밈 광고 내레이션(사용자 요청 2026-10: 느끼하고 부담스럽게) ----------
+VO_DIRECTION = ("[연기 지시] 한국어 광고 내레이션. 부담스러울 만큼 느끼하고 끈적한 목소리로 읽는다 — 심야 라디오 DJ가 "
+                "마이크에 바짝 붙어 속삭이듯, 숨을 길게 섞고, 단어 끝을 늘이며, 자기 목소리에 취한 듯 느릿하고 달콤하게. "
+                "'...'에서는 뜸을 들이고, '후우~'는 진짜 한숨처럼. 과장해도 좋다.")
+VO_TEXT = ("당신의 강아지도오... 갈증을... 느낍니다. 후우~ 신나게 춤춘 뒤엔... 강아지 전용, 이온음료... 한 모금. "
+           "구매는요... 프로필 링크에서.")
+
+
+def step_vo(work, log, cfg):
+    res = log.setdefault("vo", {})
+    key = _key("GEMINI_API_KEY")
+    model = _pick_model(key, TTS_MODELS)
+    for voice in cfg.get("voices", ["Enceladus", "Algieba"]):
+        out = work / f"vo_{voice}.wav"
+        body = {"contents": [{"role": "user", "parts": [{"text": f"{VO_DIRECTION}\n\n대사: {cfg.get('text', VO_TEXT)}"}]}],
+                "generationConfig": {"responseModalities": ["AUDIO"],
+                                     "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}}}}
+        code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                          {"x-goog-api-key": key, "Content-Type": "application/json"})
+        parts = [p for c in json.loads(raw).get("candidates", []) for p in c.get("content", {}).get("parts", [])
+                 if "inlineData" in p] if code == 200 else []
+        if not parts:
+            res[voice] = {"ok": False, "error": f"HTTP {code}: {raw[:200].decode('utf-8', 'replace')}"}
+            continue
+        _pcm_to_wav(base64.b64decode(parts[0]["inlineData"]["data"]), out, float(cfg.get("speed", 1.0)))
+        res[voice] = {"ok": True, "sec": round(_dur(out), 2)}
+
 # ---------- 원본 춤 영상에서 머리·손·발·관객만 바꾸기(사용자 지시 2026-10: 다른 건 아무것도 바꾸지 말 것, 360p, 1회) ----------
 SWAP_PROMPT = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (the dancer's body, "
                "clothes, every movement, timing, camera, background, lights): 1) replace the dancer's head with the head of the "
@@ -1995,6 +2023,8 @@ def main(path: str) -> int:
             finally:                                         # 남의 영상(참고 춤)은 성공·실패와 관계없이 저장소에 남기지 않는다
                 for f in work.glob("_ref*"):
                     f.unlink(missing_ok=True)
+        if "vo" in steps:
+            step_vo(work, log, req.get("vo") or {})
         if "swap" in steps:
             try:
                 step_swap(work, log, req.get("swap") or {})

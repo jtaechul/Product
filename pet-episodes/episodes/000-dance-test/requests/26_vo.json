@@ -1,0 +1,13 @@
+{
+ "id": "000-dance-test",
+ "steps": [
+  "vo"
+ ],
+ "vo": {
+  "voices": [
+   "Enceladus",
+   "Algieba"
+  ],
+  "speed": 1.0
+ }
+}
