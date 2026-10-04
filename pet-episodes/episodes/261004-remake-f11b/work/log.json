@@ -1,6 +1,6 @@
 {
   "remake": {
-    "spent": 2.648,
+    "spent": 4.276,
     "ledger": [
       {
         "what": "잘라낼 장면 찾기",
@@ -41,6 +41,18 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 0.804
+      },
+      {
+        "what": "구간2 바꾸기",
+        "usd": 0.804
+      },
+      {
+        "what": "내레이션",
+        "usd": 0.02
       }
     ],
     "cut": {
@@ -55,10 +67,9 @@
     "segments": 2,
     "board": {
       "ok": true,
-      "panels": 6,
-      "wait": true
+      "panels": 6
     },
-    "est_full": 2.18,
+    "est_full": 1.37,
     "fixes": [
       {
         "parts": [
@@ -107,14 +118,14 @@
     }
   },
   "last_request": {
-    "file": "05_remake_full.json",
-    "ran_at": "2026-10-04T09:47:39Z",
+    "file": "06_remake_full.json",
+    "ran_at": "2026-10-04T09:52:41Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
-    "sec": 32.25,
+    "sec": 21.83,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
