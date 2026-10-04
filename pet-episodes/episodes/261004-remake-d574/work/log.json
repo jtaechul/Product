@@ -15,17 +15,36 @@
       {
         "what": "구간1 차단됨(요금 없음)",
         "usd": -0.501
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 0.501
+      },
+      {
+        "what": "구간1 실제 인물 거절 → 얼굴 가리고 다시(요금 없음)",
+        "usd": 0
+      },
+      {
+        "what": "구간1 차단됨(요금 없음)",
+        "usd": -0.501
       }
     ],
     "board": {
       "ok": true,
       "panels": 6
     },
-    "est_full": 1.57
+    "est_full": 1.57,
+    "mask_faces": true,
+    "masked": {
+      "seg1": {
+        "frames": 121,
+        "with_face": 121
+      }
+    }
   },
   "last_request": {
-    "file": "02_remake_full.json",
-    "ran_at": "2026-10-04T10:53:11Z",
+    "file": "03_remake_full.json",
+    "ran_at": "2026-10-04T11:11:55Z",
     "ok": false
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: Sorry, we can't create videos with real people's names or likenesses. Please remove the reference and try again.\",\"code\":\"content_blocked\"}}"
