@@ -2215,7 +2215,7 @@ FACE_MODEL = Path(__file__).resolve().parents[1] / "models" / "face_detection_yu
 LIKENESS_RE = re.compile(r"real people|likeness|celebrit|public figure", re.I)
 
 
-def _mask_faces(src: Path, out: Path) -> dict:
+def _mask_faces(src: Path, out: Path, grow: float = 1.0) -> dict:
     """원본 속 실제 사람 얼굴을 머리카락까지 크게 모자이크한다(2026-10 사고: SNL 원본을 구글이 '실제 인물의 얼굴'이라며 거절).
     어차피 머리는 시바견으로 바뀌므로 얼굴을 가려도 결과는 같다. 얼굴을 놓친 몇 프레임은 앞 위치를 이어서 가린다."""
     import cv2
@@ -2236,7 +2236,8 @@ def _mask_faces(src: Path, out: Path) -> dict:
         now = []
         for f in (faces if faces is not None else []):
             x, y, bw, bh = (float(v) / sc for v in f[:4])
-            now.append((x - bw * 0.6, y - bh * 0.75, bw * 2.2, bh * 2.1))   # 머리카락·귀까지
+            gw, gh = bw * 2.2 * grow, bh * 2.1 * grow                    # 머리카락·귀까지(grow로 더 크게)
+            now.append((x + bw / 2 - gw / 2, y + bh * 0.3 - gh * 0.5, gw, gh))
         hit += bool(now)
         most = max(most, len(now))
 
@@ -2261,33 +2262,43 @@ def _mask_faces(src: Path, out: Path) -> dict:
     return {"frames": frames, "with_face": hit, "max_faces": most}
 
 
-def _remake_probe(key, ref: Path, prompt: str, work: Path, res: dict, cap: float) -> list:
-    """어떤 입력 때문에 '실제 인물' 거절이 나는지 1초 조각으로 차례로 시험한다. 결과(통과/거절)만 log에 남긴다(원본·조각은 커밋 안 함)."""
+def _remake_probe(key, ref: Path, prompt: str, work: Path, res: dict, cap: float, cases=None) -> list:
+    """어떤 입력 때문에 '실제 인물' 거절이 나는지 1초 조각으로 차례로 시험한다(거절은 무료, 통과하면 거기서 멈춤). 결과만 log에 남긴다."""
     raw = work / "_probe.mp4"
     _ff(["-ss", "0", "-t", "1.0", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "18", str(raw)])
-    masked = work / "_probe_m.mp4"
-    mk = _mask_faces(raw, masked)
+    vids = {"mask": work / "_probe_m.mp4", "mask_strong": work / "_probe_ms.mp4"}
+    out = [{"mask": _mask_faces(raw, vids["mask"]), "mask_strong": _mask_faces(raw, vids["mask_strong"], 1.6)}]
     dog = {"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}
     board = work / "board_01.jpg"
-    cases = [("가린 영상 + 글", masked, []), ("가린 영상 + 강아지 사진", masked, [dog])]
-    if board.exists():
-        cases.append(("가린 영상 + 강아지 + 스토리보드", masked, [dog, {"type": "image", **_b64img(board)}]))
-    out = [{"mask": mk}]
-    for name, vid, imgs in cases:
-        body = {"model": CLIP_MODEL, "input": [{"type": "video", "mime_type": "video/mp4",
-                                                "data": base64.b64encode(vid.read_bytes()).decode()}, *imgs,
-                                               {"type": "text", "text": prompt}],
-                "response_format": {"type": "video", "resolution": REMAKE_RES},
-                "generation_config": {"video_config": {"task": "edit"}}}
-        _remake_spend(res, REMAKE_COST["omni_sec"] * 1.0, f"원인 찾기: {name}", cap)
+    neutral = "Edit this video: turn every person's head into a cartoon-free realistic Shiba Inu dog head and their hands into furry paws. Keep the motion."
+    cases = cases or [["mask", "swap", 0], ["mask", "neutral", 0], ["mask_strong", "neutral", 0], ["board", "i2v", 0]]
+    for vk, tk, _ in cases:
+        name = f"{vk}+{tk}"
+        if vk == "board":
+            if not board.exists():
+                continue
+            body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(board)}, {"type": "text", "text":
+                    "DURATION: 4 seconds. Image 1 is the first frame (a storyboard panel; use only the picture area, ignore black bars). "
+                    "The characters keep dancing with the same energy, natural motion, photorealistic, camera almost fixed."}],
+                    "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
+                    "generation_config": {"video_config": {"task": "image_to_video"}}}
+            usd = REMAKE_COST["omni_sec"] * 4
+        else:
+            body = {"model": CLIP_MODEL, "input": [{"type": "video", "mime_type": "video/mp4",
+                                                    "data": base64.b64encode(vids[vk].read_bytes()).decode()}, dog,
+                                                   {"type": "text", "text": prompt if tk == "swap" else neutral}],
+                    "response_format": {"type": "video", "resolution": REMAKE_RES},
+                    "generation_config": {"video_config": {"task": "edit"}}}
+            usd = REMAKE_COST["omni_sec"] * 1.0
+        _remake_spend(res, usd, f"원인 찾기: {name}", cap)
         try:
             _omni_run(key, body)
             out.append({"case": name, "ok": True})
             break                                         # 통과하면 더 보내지 않는다(돈 절약)
         except RuntimeError as e:
             if "HTTP 400" in str(e):
-                res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"], 3)
-            out.append({"case": name, "ok": False, "err": str(e)[:160]})
+                res["spent"] = round(float(res.get("spent", 0)) - usd, 3)
+            out.append({"case": name, "ok": False, "err": str(e)[:120]})
     return out
 
 
@@ -2439,7 +2450,7 @@ def step_remake(ep, epdir, work, log, req):
         est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * 4
                         + REMAKE_COST["tts"], 2)
         if mode == "probe":                               # 거절 원인 찾기: 1초짜리로 넣는 것을 바꿔 가며 보낸다(통과하면 1초에 0.1달러)
-            res["probe"] = _remake_probe(key, ref, prompt, work, res, cap)
+            res["probe"] = _remake_probe(key, ref, prompt, work, res, cap, (req.get("remake") or {}).get("cases"))
             return
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
