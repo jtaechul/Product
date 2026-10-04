@@ -2,7 +2,7 @@
   "remake": {
     "lipsync": true,
     "src_sec": 22.18,
-    "segments": 3,
+    "segments": 1,
     "spent": 2.377,
     "ledger": [
       {
@@ -24,6 +24,14 @@
       {
         "what": "문구 위치 고르기",
         "usd": 0.01
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 2.218
+      },
+      {
+        "what": "구간1 차단됨(요금 없음)",
+        "usd": -2.218
       }
     ],
     "board": {
@@ -68,17 +76,32 @@
     },
     "full": {
       "ok": true
-    }
+    },
+    "allow_i2v": false,
+    "one_shot": true,
+    "vertical": {
+      "mode": "extend",
+      "src": "720x720"
+    },
+    "fixes": [
+      {
+        "parts": [
+          "body"
+        ],
+        "at": "2026-10-04T11:38:15Z"
+      }
+    ]
   },
   "last_request": {
-    "file": "02_remake_full.json",
-    "ran_at": "2026-10-04T11:36:18Z",
-    "ok": true
+    "file": "03_remake_full.json",
+    "ran_at": "2026-10-04T11:38:28Z",
+    "ok": false
   },
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
     "sec": 27.17,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
-  }
+  },
+  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Aspect ratio cannot be set in response format for edit task.\",\"code\":\"invalid_request\"}}"
 }
