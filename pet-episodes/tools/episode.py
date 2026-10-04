@@ -2031,11 +2031,10 @@ REMAKE_MAX_SEC = 40.0          # 원본은 앞 40초까지만(한 편 5달러 �
 REMAKE_SEG = 9.5               # Omni 편집은 한 번에 10초까지
 REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
 REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
-# 개는 한 마리만(사용자 지적 2026-10 헬기 편: 찍는 사람의 손·무릎이 발로 바뀌어 시바견이 두 마리처럼 보임)
-REMAKE_ONE_DOG = ("NO EXTRA ANIMALS: only the people named in the edit list change, and each of them becomes exactly one complete "
-                  "animal - their own legs, knees and feet seen at the frame edges stay attached to that same body in the same "
-                  "outfit. A hand, arm, knee or phone of anyone else who is only partly visible at the frame edges (for example "
-                  "the person filming) is replaced by the background behind it, so no extra dog or loose paw appears.")
+# 동물 수 = 원본 등장인물 수(사용자 확정 2026-10: "한 마리만" 규칙 대신 대전제 하나 — 한 명이면 한 마리, 여럿이면 대략 그 수)
+REMAKE_ONE_DOG = ("SAME HEADCOUNT: the number of animals in every frame matches the number of people in the original frame - "
+                  "one person becomes exactly one animal, never two. Body parts of a person seen at the frame edges belong "
+                  "to that same animal and stay attached to it.")
 REMAKE_SWAP = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, "
                "every movement and its timing, camera, background, lights): {swap}. Every replaced head is the Shiba Inu from "
                "image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a "
