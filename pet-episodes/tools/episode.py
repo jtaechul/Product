@@ -926,6 +926,7 @@ def step_tts(ep, epdir, work, log, redo):
 
 # ---------- 5. 조립 ----------
 FONT_DIR = Path(__file__).resolve().parent.parent / "fonts"
+SFX_DIR = Path(__file__).resolve().parent.parent / "sfx"           # 효과음(우리가 만든 것만)
 SUB_FONT = FONT_DIR / "Pretendard-ExtraBold.otf"        # 자막: 굵고 깔끔한 고딕(배경 상자 없이 글자만)
 SERIF_XB = FONT_DIR / "NanumMyeongjo-ExtraBold.ttf"     # 제목·메뉴판·영수증: 식당 간판 같은 명조
 SERIF_B = FONT_DIR / "NanumMyeongjo-Bold.ttf"
@@ -2385,7 +2386,10 @@ def step_remake(ep, epdir, work, log, req):
         # 4) 조립: 리메이크 → (흰 번쩍) 끝 장면(느리게 + 마지막 장면 멈춤) + 문구 + 내레이션. 노래 없음
         Lb, vl = _dur(body_v), _dur(vo)
         t0 = max(0.0, Lb - 0.25)                          # 내레이션은 끝 장면 직전부터
-        dd = round(max(4.0, t0 + vl + 0.6 - Lb), 2)        # 끝 장면 길이
+        whimper = SFX_DIR / "whimper.mp3"                  # 프로필 링크 말할 때 강아지 낑낑 소리(사용자 요청 2026-10)
+        use_wh = rm.get("whimper", True) and whimper.exists()
+        wh_at = t0 + vl - 0.9                             # 마지막 말('프로필 링크에서') 끝자락에 겹쳐 시작
+        dd = round(max(4.0, t0 + vl + 0.6 - Lb, (wh_at + _dur(whimper) + 0.4 - Lb) if use_wh else 0), 2)   # 끝 장면 길이
         cta_at = max(0.5, t0 + vl - 1.3 - Lb)
         copy_png, cta_png = work / "_copy.png", work / "_cta.png"
         place = rm.get("copy_place") or (res.get("copy_place") or {}).get("place")
@@ -2405,15 +2409,21 @@ def step_remake(ep, epdir, work, log, req):
              f"[3:v]scale={W}:{H},format=rgba,trim=duration={dd},fade=t=in:st={cta_at:.2f}:d=0.25:alpha=1[c];[b1][c]overlay=(W-w)/2:0[b];"
              f"[a][b]concat=n=2:v=1:a=0,format=yuv420p[v];"
              f"[4:a]volume=1.8,adelay={int(t0 * 1000)}:all=1,apad,atrim=0:{tot}[vo0];")
+        wh_in = ["-i", str(whimper)] if use_wh else []
+        if use_wh:
+            V += f"[5:a]volume=1.0,adelay={int(wh_at * 1000)}:all=1,apad,atrim=0:{tot}[wh0];[vo0][wh0]amix=inputs=2:normalize=0:duration=first[vo0w];"
+            vo_lbl, nxt = "[vo0w]", 6
+        else:
+            vo_lbl, nxt = "[vo0]", 5
         src_in = []
         if rm.get("keep_audio", True) and _has_audio(ref):   # 원본 소리(발차기 소리 등)를 앞부분에 깔고, 내레이션이 나오면 끈다
             src_in = ["-i", str(ref)]
-            V += (f"[5:a]atrim=0:{Lb:.2f},asetpts=PTS-STARTPTS,afade=t=out:st={max(0.0, t0 - 0.3):.2f}:d=0.3,apad,atrim=0:{tot}[src0];"
-                  f"[src0][vo0]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.95[aud]")
+            V += (f"[{nxt}:a]atrim=0:{Lb:.2f},asetpts=PTS-STARTPTS,afade=t=out:st={max(0.0, t0 - 0.3):.2f}:d=0.3,apad,atrim=0:{tot}[src0];"
+                  f"[src0]{vo_lbl}amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.95[aud]")
         else:
-            V += "[vo0]alimiter=limit=0.95[aud]"
+            V += f"{vo_lbl}alimiter=limit=0.95[aud]"
         final = work / "final.mp4"
-        _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo), *src_in,
+        _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo), *wh_in, *src_in,
              "-filter_complex", V, "-map", "[v]", "-map", "[aud]", "-c:v", "libx264", "-crf", "22", "-c:a", "aac", "-b:a", "128k",
              "-movflags", "+faststart", str(final)])
         _ff(["-ss", f"{Lb + min(dd - 0.3, 2.5):.2f}", "-i", str(final), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos",
