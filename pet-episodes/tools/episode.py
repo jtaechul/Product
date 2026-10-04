@@ -2414,9 +2414,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     _remake_spend(res, REMAKE_COST["omni_sec"] * seg, f"구간{i + 1} 바꾸기", cap)
     vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()}
     rawo = work / f"_rm_raw{i + 1}.mp4"
-    rf = {"type": "video", "resolution": REMAKE_RES}
-    if res.get("vertical"):                               # 위아래를 이어 그려 진짜 세로로
-        rf["aspect_ratio"] = "9:16"
+    rf = {"type": "video", "resolution": REMAKE_RES}      # ⚠️ 편집(edit)은 aspect_ratio를 받지 않는다(400 실측) — 세로는 넣는 영상을 9:16 틀로 만들어 맞춘다
     body = {"model": CLIP_MODEL, "input": [vid, *inputs, {"type": "text", "text": prompt}],
             "response_format": rf, "generation_config": {"video_config": {"task": "edit"}}}
     def _send(piece_path: Path):
