@@ -1,0 +1,23 @@
+{
+  "remake": {
+    "src_sec": 10.03,
+    "segments": 2,
+    "spent": 0.15,
+    "ledger": [
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
+      }
+    ],
+    "board": {
+      "ok": true,
+      "panels": 6
+    },
+    "est_full": 1.57
+  },
+  "last_request": {
+    "file": "01_remake_board.json",
+    "ran_at": "2026-10-04T10:34:47Z",
+    "ok": true
+  }
+}
