@@ -1805,6 +1805,9 @@ def step_dance_full(work, log, cfg):
 VO_DIRECTION = ("[연기 지시] 한국어 광고 내레이션. 부담스러울 만큼 느끼하고 끈적한 목소리로 읽는다 — 심야 라디오 DJ가 "
                 "마이크에 바짝 붙어 속삭이듯, 숨을 길게 섞고, 단어 끝을 늘이며, 자기 목소리에 취한 듯 느릿하고 달콤하게. "
                 "'...'에서는 뜸을 들이고, '후우~'는 진짜 한숨처럼. 과장해도 좋다.")
+# 리메이크 내레이션은 짧고 빠르게(사용자 지적 2026-10 헬기 편: 어설프고 너무 길다) — 뜸은 짧게, 1.45배
+VO_PACE = "단, 뜸은 아주 짧게 하고 전체를 빠르고 리듬감 있게 읽는다. 마지막 '구매는 프로필 링크에서'는 또박또박 빠르게."
+REMAKE_VO_SPEED = 1.45
 VO_TEXT = ("당신의 강아지도오... 갈증을... 느낍니다. 후우~ 신나게 춤춘 뒤엔... 강아지 전용, 이온음료... 한 모금. "
            "구매는요... 프로필 링크에서.")
 
@@ -2021,10 +2024,12 @@ REMAKE_MAX_SEC = 40.0          # 원본은 앞 40초까지만(한 편 5달러 �
 REMAKE_SEG = 9.5               # Omni 편집은 한 번에 10초까지
 REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
 REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
+# 개는 한 마리만(사용자 지적 2026-10 헬기 편: 찍는 사람의 손·무릎이 발로 바뀌어 시바견이 두 마리처럼 보임)
+REMAKE_ONE_DOG = ("ONE DOG ONLY: the main person is the only one who becomes a Shiba, so there is exactly one Shiba in the shot. Their own legs, knees and feet seen at the frame edges stay attached to that same dog's body in the same outfit. A hand, arm, knee or phone of anyone else who is only partly visible at the frame edges (for example the person filming) is replaced by the cabin or background behind it, so no second Shiba or extra paw appears.")
 REMAKE_SWAP = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, "
                "every movement and its timing, camera, background, lights): {swap}. Every replaced head is the Shiba Inu from "
                "image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a "
-               "round Shiba paw (sleeves and trousers stay as they are). Remove any watermark or "
+               "round Shiba paw (sleeves and trousers stay as they are). " + REMAKE_ONE_DOG + " Remove any watermark or "
                "on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting "
                "direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, "
                "nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar "
@@ -2047,7 +2052,7 @@ REMAKE_BOARD = ("Image 1 is a 3x2 grid of six frames taken from one video (each 
                 "padding). Edit ALL six panels the same way and keep the grid layout, panel sizes and everything else exactly as "
                 "it is (bodies, clothes, poses, background, lights, camera framing): {swap}. Every replaced head is the Shiba Inu "
                 "from image 2 (same face, fur colour and markings) - the same dog in every panel; "
-                "every visible arm, leg, hand and foot is a thick, fully furry Shiba leg with a round paw. Match each panel's lighting, shadows and focus so it looks like real "
+                "every visible arm, leg, hand and foot is a thick, fully furry Shiba leg with a round paw. " + REMAKE_ONE_DOG + " Match each panel's lighting, shadows and focus so it looks like real "
                 "footage, with no seams at the neck, sleeves or trouser hems. Remove any watermark or on-screen text; add no text.")
 REMAKE_BOARD_REF = (" Image {n} is the approved storyboard for the FIRST FRAME of this clip: the first frame must look exactly like "
                     "it (same dog head, paws and background dogs), then follow the original motion.")
@@ -2343,6 +2348,12 @@ def step_remake(ep, epdir, work, log, req):
             res.setdefault("fixes", []).append({"parts": redo, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
             res["board"] = _remake_board(ref, L, n, seg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
+            # 새로 그린 스토리보드는 확인받은 뒤에 영상으로(사용자 지적 2026-10 헬기 편: 확인 안 한 그림에 개가 두 마리 → 영상도 두 마리)
+            res["est_full"] = est_all
+            res["board"]["wait"] = True
+            return
+        if mode == "full" and isinstance(res.get("board"), dict):
+            res["board"].pop("wait", None)                # 확인받은 스토리보드로 진행
         if mode == "full" and not (work / "rm_seg1.mp4").exists():
             if float(res.get("spent", 0)) + est_all > cap:
                 raise RuntimeError(f"영상 예상 비용(약 ${est_all:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다. 더 짧은 원본으로 다시 해 주세요.")
@@ -2412,7 +2423,7 @@ def step_remake(ep, epdir, work, log, req):
         if not vo.exists():
             _remake_spend(res, REMAKE_COST["tts"], "내레이션", cap)
             model = _pick_model(key, TTS_MODELS)
-            body = {"contents": [{"role": "user", "parts": [{"text": f"{VO_DIRECTION}\n\n대사: {rm.get('vo', '')}"}]}],
+            body = {"contents": [{"role": "user", "parts": [{"text": f"{VO_DIRECTION} {VO_PACE}\n\n대사: {rm.get('vo', '')}"}]}],
                     "generationConfig": {"responseModalities": ["AUDIO"],
                                          "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": VOICE_NAME}}}}}
             code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
@@ -2421,7 +2432,7 @@ def step_remake(ep, epdir, work, log, req):
                      if "inlineData" in p] if code == 200 else []
             if not parts:
                 raise RuntimeError(f"내레이션 녹음 실패(HTTP {code})")
-            _pcm_to_wav(base64.b64decode(parts[0]["inlineData"]["data"]), vo, 1.3)
+            _pcm_to_wav(base64.b64decode(parts[0]["inlineData"]["data"]), vo, float(rm.get("vo_speed", REMAKE_VO_SPEED)))
         # 4) 조립: 리메이크 → (흰 번쩍) 끝 장면(느리게 + 마지막 장면 멈춤) + 문구 + 내레이션. 노래 없음
         Lb, vl = _dur(body_v), _dur(vo)
         # 강아지 낑낑 소리는 실패 직후 광고 화면이 시작될 때(사용자 지시 2026-10) → 내레이션은 낑낑 소리가 끝난 뒤

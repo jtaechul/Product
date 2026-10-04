@@ -5743,7 +5743,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       bi.src='/api/episode/video?board=1&id='+encodeURIComponent(e.id)+'&t='+encodeURIComponent(e.ranAt||''); b.appendChild(bi);
       if(m.board.human) b.appendChild(epEl('div','ep-err','검사: 사람 손·맨살이 보일 수 있음 — '+(m.board.where||'')));
       if(m.board.over) b.appendChild(epEl('div','ep-err','영상 예상 비용이 한도(5달러)를 넘습니다. 더 짧은 원본으로 다시 해 주세요.'));
-      if(!e.hasVideo&&e.state!=='running'){
+      if((!e.hasVideo||m.board.wait)&&e.state!=='running'){
+        if(m.board.wait&&e.hasVideo) b.appendChild(epEl('div','ep-err','수정용 새 스토리보드입니다. 강아지가 한 마리인지 확인하고 눌러 주세요.'));
         if(!m.board.over) b.appendChild(epBtn('좋아요, 영상 만들기 (예상 약 $'+Number(m.est_full||0).toFixed(2)+')',function(){
           if(!confirm('이 스토리보드대로 영상을 만듭니다. 예상 약 $'+Number(m.est_full||0).toFixed(2)+', 30~50분 걸립니다. 시작할까요?')) return;
           epAsk(e.id,'remake_full',{}, '영상을 만들고 있습니다(30~50분). 끝나면 이 화면에 완성 영상이 나옵니다.');
@@ -7156,14 +7157,12 @@ async function handleTrendAnalyzeFile(env, body) {
 }
 
 // 상품을 고르면 광고 문구·내레이션·끝 장면을 쓴다. 사장님이 그대로 고칠 수 있다(임의로 빼지 않는다).
-// 내레이션 마지막 구매 안내에 주어를 붙인다(사용자 지시 2026-10: "프로필 링크에서."만 있으면 주어가 없어 어색)
+// 내레이션 끝 구매 안내는 짧게 "구매는 프로필 링크에서."(사용자 지시 2026-10: "관련 제품 구매는..."은 너무 길다, 주어 없는 "프로필 링크에서."도 금지)
 function voCta(vo) {
   const t = String(vo || '').trim();
   const i = t.lastIndexOf('프로필');
-  if (i < 0) return (t ? t + ' ' : '') + '관련 제품 구매는... 프로필 링크에서.';
-  const before = t.slice(0, i).replace(/[\s.…]+$/, '');
-  if (/(구매|사려면|주문|만나려면)[가-힣]{0,3}$/.test(before)) return t;     // 이미 주어가 있으면 그대로
-  return (before ? before + '... ' : '') + '관련 제품 구매는... 프로필 링크에서.';
+  const before = (i < 0 ? t : t.slice(0, i)).replace(/(관련\s*제품\s*)?(구매|사려면|주문|만나려면)[가-힣]{0,3}[\s.…]*$/, '').replace(/[\s.…]+$/, '');
+  return (before ? before + '. ' : '') + '구매는 프로필 링크에서.';
 }
 
 // 리메이크 문구는 브랜드만 뺀다 — 상품명 속 '관절·영양·이온음료' 같은 보통 낱말까지 지우면 문장이 망가진다(2026-10 실측: "아픈 이 메뉴는")
@@ -7183,7 +7182,7 @@ async function handleRemakeCopy(env, body) {
   const ask = `반려견 광고 영상의 마지막 장면 문구를 써라. 앞부분은 "${a.meme || ''}" 밈을 실사 시바견이 따라 하는 영상이고, 끝에서 시바견이 이 상품을 쓴다: "${p.title}".
 - big: 화면 큰 문구 2줄(줄바꿈 \\n), 각 줄 12자 이내, 시청자 강아지에게 말을 거는 훅(예: "당신의 강아지도\\n갈증을 느낍니다")
 - sub: 작은 문구 2줄(\\n), 상품이 주는 이점을 구체적으로(예: "춤추며 빠져나간 수분과 전해질\\n강아지 전용 이온음료로 빠르게 채워주세요")
-- vo: 부담스러울 만큼 느끼한 남자 내레이션 3~4문장, 짧게. '...'로 뜸. 마지막 문장은 반드시 주어가 있는 구매 안내 "관련 제품 구매는... 프로필 링크에서."(또는 "구매는... 프로필 링크를 참고하세요.") — 주어 없이 "프로필 링크에서."만 쓰지 마라
+- vo: 느끼한 남자 내레이션, 짧은 말 3~4마디로 전체 25자 안팎(읽으면 5초 안쪽). '...' 뜸은 한 번만. 마지막은 반드시 짧게 "구매는 프로필 링크에서." — "관련 제품 구매는"처럼 길게 쓰지 말고, 주어 없이 "프로필 링크에서."만 쓰지도 마라
 - ending: English one sentence — what the Shiba Inu does with the product in the final 4-second shot (it must clearly use/enjoy the product, product visible)
 - hashtags: ${HASHTAG_RULE}
 - whimper: 앞부분이 강아지가 넘어지거나 부딪히거나 실패해 아파하는 장면이면 true(광고 화면 시작에 낑낑 소리), 그 밖(신나는 장면·놀라운 장면 등)이면 false
