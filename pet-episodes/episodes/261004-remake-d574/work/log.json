@@ -7,6 +7,14 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 0.501
+      },
+      {
+        "what": "구간1 차단됨(요금 없음)",
+        "usd": -0.501
       }
     ],
     "board": {
@@ -16,8 +24,9 @@
     "est_full": 1.57
   },
   "last_request": {
-    "file": "01_remake_board.json",
-    "ran_at": "2026-10-04T10:34:47Z",
-    "ok": true
-  }
+    "file": "02_remake_full.json",
+    "ran_at": "2026-10-04T10:53:11Z",
+    "ok": false
+  },
+  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: Sorry, we can't create videos with real people's names or likenesses. Please remove the reference and try again.\",\"code\":\"content_blocked\"}}"
 }
