@@ -1,9 +1,53 @@
 {
-  "remake": {},
-  "error": "원본 영상을 받지 못했습니다(HTTP 403). 7일이 지나 지워졌으면 처음부터 다시 올려 주세요.",
+  "remake": {
+    "spent": 1.976,
+    "ledger": [
+      {
+        "what": "잘라낼 장면 찾기",
+        "usd": 0.01
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
+      },
+      {
+        "what": "스토리보드 사람 손 검사",
+        "usd": 0.01
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 0.883
+      },
+      {
+        "what": "구간1 검사",
+        "usd": 0.04
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 0.883
+      }
+    ],
+    "cut": {
+      "text": "발차기에 실패한 뒤 사람이 기괴하게 웃는 필터 얼굴이 나오는 끝부분 장면 전부",
+      "found": true,
+      "start": 9.0,
+      "end": 10.0,
+      "what": "A bizarrely smiling filtered face appears after the failed kick",
+      "kept_sec": 8.83
+    },
+    "src_sec": 8.83,
+    "segments": 1,
+    "board": {
+      "ok": true,
+      "human": false,
+      "where": "",
+      "panels": 6
+    }
+  },
+  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be submitted. The prompt contains sensitive words that violate Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\",\"code\":\"content_blocked\"}}",
   "last_request": {
-    "file": "01_remake_board.json",
-    "ran_at": "2026-10-04T07:32:14Z",
+    "file": "02_remake_full.json",
+    "ran_at": "2026-10-04T07:40:52Z",
     "ok": false
   }
 }
