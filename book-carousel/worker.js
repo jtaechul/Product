@@ -6763,7 +6763,7 @@ JSON만: {"parts":["ending"],"swap":"","ending":"","vo":"","big":"","sub":"","su
   const cost = FIX_PART_COST(Number(log.remake?.src_sec) || 20);
   const est = Math.round(parts.reduce((t, x) => t + (cost[x] || 0), 0) * 100) / 100;
   const pick = (k) => String(o[k] || '').trim();
-  return { parts, swap: pick('swap'), ending: pick('ending'), vo: noPrice(pick('vo')), big: noPrice(pick('big')), sub: noPrice(pick('sub')),
+  return { parts, swap: pick('swap'), ending: pick('ending'), vo: pick('vo') ? voCta(noPrice(pick('vo'))) : '', big: noPrice(pick('big')), sub: noPrice(pick('sub')),
     summary: pick('summary'), est, spent: Number(log.remake?.spent) || 0, note: String(note).slice(0, 300) };
 }
 
@@ -7077,6 +7077,16 @@ async function handleTrendAnalyze(env, body) {
 }
 
 // 상품을 고르면 광고 문구·내레이션·끝 장면을 쓴다. 사장님이 그대로 고칠 수 있다(임의로 빼지 않는다).
+// 내레이션 마지막 구매 안내에 주어를 붙인다(사용자 지시 2026-10: "프로필 링크에서."만 있으면 주어가 없어 어색)
+function voCta(vo) {
+  const t = String(vo || '').trim();
+  const i = t.lastIndexOf('프로필');
+  if (i < 0) return (t ? t + ' ' : '') + '관련 제품 구매는... 프로필 링크에서.';
+  const before = t.slice(0, i).replace(/[\s.…]+$/, '');
+  if (/(구매|사려면|주문|만나려면)[가-힣]{0,3}$/.test(before)) return t;     // 이미 주어가 있으면 그대로
+  return (before ? before + '... ' : '') + '관련 제품 구매는... 프로필 링크에서.';
+}
+
 async function handleRemakeCopy(env, body) {
   const a = body.analysis || {}, p = body.product || {};
   if (!p.title) throw new Error('상품을 먼저 골라 주세요.');
@@ -7084,7 +7094,7 @@ async function handleRemakeCopy(env, body) {
   const ask = `반려견 광고 영상의 마지막 장면 문구를 써라. 앞부분은 "${a.meme || ''}" 밈을 실사 시바견이 따라 하는 영상이고, 끝에서 시바견이 이 상품을 쓴다: "${p.title}".
 - big: 화면 큰 문구 2줄(줄바꿈 \\n), 각 줄 12자 이내, 시청자 강아지에게 말을 거는 훅(예: "당신의 강아지도\\n갈증을 느낍니다")
 - sub: 작은 문구 2줄(\\n), 상품이 주는 이점을 구체적으로(예: "춤추며 빠져나간 수분과 전해질\\n강아지 전용 이온음료로 빠르게 채워주세요")
-- vo: 부담스러울 만큼 느끼한 남자 내레이션 3~4문장, 짧게. '...'로 뜸. 마지막 문장은 반드시 "프로필 링크에서."
+- vo: 부담스러울 만큼 느끼한 남자 내레이션 3~4문장, 짧게. '...'로 뜸. 마지막 문장은 반드시 주어가 있는 구매 안내 "관련 제품 구매는... 프로필 링크에서."(또는 "구매는... 프로필 링크를 참고하세요.") — 주어 없이 "프로필 링크에서."만 쓰지 마라
 - ending: English one sentence — what the Shiba Inu does with the product in the final 4-second shot (it must clearly use/enjoy the product, product visible)
 - hashtags: ${HASHTAG_RULE}
 상품명·브랜드명·가격·숫자 금액은 어디에도 쓰지 마라(품목 이름은 된다: 예 "강아지 전용 이온음료").
@@ -7093,7 +7103,7 @@ JSON만: {"big":"","sub":"","vo":"","ending":"","hashtags":["#..."]}`;
   const o = extractJson(typeof t === 'string' ? t : (t?.text || ''));
   const banned = menuBannedWords(p.title);
   const clean = (s) => noPrice(scrubBanned(String(s || ''), banned)).trim();
-  return { success: true, copy: { big: clean(o.big), sub: clean(o.sub), vo: clean(o.vo), ending: String(o.ending || '').slice(0, 400),
+  return { success: true, copy: { big: clean(o.big), sub: clean(o.sub), vo: voCta(clean(o.vo)), ending: String(o.ending || '').slice(0, 400),
     hashtags: cleanHashtags(o.hashtags, banned) } };
 }
 
