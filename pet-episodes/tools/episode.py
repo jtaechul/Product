@@ -2211,6 +2211,52 @@ def _remake_cut(ref: Path, cut: str, work: Path, res: dict, cap: float) -> Path:
     return out
 
 
+FACE_MODEL = Path(__file__).resolve().parents[1] / "models" / "face_detection_yunet_2023mar.onnx"   # OpenCV YuNet(MIT), 230KB
+LIKENESS_RE = re.compile(r"real people|likeness|celebrit|public figure", re.I)
+
+
+def _mask_faces(src: Path, out: Path) -> dict:
+    """원본 속 실제 사람 얼굴을 머리카락까지 크게 모자이크한다(2026-10 사고: SNL 원본을 구글이 '실제 인물의 얼굴'이라며 거절).
+    어차피 머리는 시바견으로 바뀌므로 얼굴을 가려도 결과는 같다. 얼굴을 놓친 몇 프레임은 앞 위치를 이어서 가린다."""
+    import cv2
+    cap = cv2.VideoCapture(str(src))
+    fps = cap.get(cv2.CAP_PROP_FPS) or 24.0
+    w, h = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    sc = min(1.0, 640.0 / max(w, h))
+    det = cv2.FaceDetectorYN.create(str(FACE_MODEL), "", (int(w * sc), int(h * sc)), 0.5, 0.3, 50)
+    tmp = out.with_suffix(".raw.mp4")
+    vw = cv2.VideoWriter(str(tmp), cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+    hold, frames, hit = [], 0, 0
+    while True:
+        ok, fr = cap.read()
+        if not ok:
+            break
+        frames += 1
+        _, faces = det.detect(cv2.resize(fr, (int(w * sc), int(h * sc))))
+        now = []
+        for f in (faces if faces is not None else []):
+            x, y, bw, bh = (float(v) / sc for v in f[:4])
+            now.append((x - bw * 0.6, y - bh * 0.75, bw * 2.2, bh * 2.1))   # 머리카락·귀까지
+        hit += bool(now)
+        hold = [(b, 0) for b in now] + [(b, a + 1) for b, a in hold if a < 8 and not now]
+        for (x, y, bw, bh), _ in hold:
+            x0, y0 = max(0, int(x)), max(0, int(y))
+            x1, y1 = min(w, int(x + bw)), min(h, int(y + bh))
+            if x1 - x0 < 4 or y1 - y0 < 4:
+                continue
+            roi = fr[y0:y1, x0:x1]
+            small = cv2.resize(roi, (max(1, (x1 - x0) // 14), max(1, (y1 - y0) // 14)), interpolation=cv2.INTER_LINEAR)
+            fr[y0:y1, x0:x1] = cv2.GaussianBlur(cv2.resize(small, (x1 - x0, y1 - y0), interpolation=cv2.INTER_NEAREST), (0, 0), 3)
+        vw.write(fr)
+    cap.release()
+    vw.release()
+    if not frames:
+        raise RuntimeError(f"얼굴 가리기: 영상을 읽지 못했습니다({src.name})")
+    _ff(["-i", str(tmp), "-an", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(out)])
+    tmp.unlink(missing_ok=True)
+    return {"frames": frames, "with_face": hit}
+
+
 def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res: dict, cap: float, h: int) -> Path:
     out = work / f"rm_seg{i + 1}.mp4"
     piece = work / f"_rm_piece{i + 1}.mp4"
@@ -2236,8 +2282,28 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     body = {"model": CLIP_MODEL, "input": [vid, *inputs, {"type": "text", "text": prompt}],
             "response_format": {"type": "video", "resolution": REMAKE_RES},
             "generation_config": {"video_config": {"task": "edit"}}}
-    try:
+    def _send(piece_path: Path):
+        v = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece_path.read_bytes()).decode()}
+        body["input"][0] = v
         rawo.write_bytes(_omni_run(key, body))
+
+    if res.get("mask_faces"):                             # 앞 구간에서 '실제 인물' 거절을 받았으면 처음부터 가린다
+        masked = work / f"_rm_piece{i + 1}_m.mp4"
+        res.setdefault("masked", {})[f"seg{i + 1}"] = _mask_faces(piece, masked)
+        piece = masked
+    try:
+        try:
+            _send(piece)
+        except RuntimeError as e:
+            # 실제 인물 얼굴이라 거절(요금 없음) → 얼굴을 모자이크해 한 번만 다시 보낸다(사용자 지시 2026-10: 실패 재발 방지)
+            if "HTTP 400" in str(e) and LIKENESS_RE.search(str(e)) and not res.get("mask_faces"):
+                res["mask_faces"] = True
+                res.setdefault("ledger", []).append({"what": f"구간{i + 1} 실제 인물 거절 → 얼굴 가리고 다시(요금 없음)", "usd": 0})
+                masked = work / f"_rm_piece{i + 1}_m.mp4"
+                res.setdefault("masked", {})[f"seg{i + 1}"] = _mask_faces(piece, masked)
+                _send(masked)
+            else:
+                raise
     except RuntimeError as e:
         if "HTTP 400" in str(e):                          # 막힌 요청은 요금 없음 → 장부에서 되돌린다
             res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)

@@ -28,7 +28,7 @@ jobs:
       - name: 도구 설치
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-noto-cjk >/dev/null
-          pip install -q Pillow google-genai
+          pip install -q Pillow google-genai opencv-python-headless
 
       - name: 바뀐 요청 실행
         env:
