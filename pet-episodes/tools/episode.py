@@ -2031,6 +2031,9 @@ REMAKE_MAX_SEC = 40.0          # 원본은 앞 40초까지만(한 편 5달러 �
 REMAKE_SEG = 9.5               # Omni 편집은 한 번에 10초까지
 REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
 REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
+REMAKE_LIPSYNC = (" LIP SYNC: each dog's mouth opens, closes and shapes exactly like the original person's mouth in every frame "
+                  "(they are rapping), so the mouth movement stays perfectly in sync with the original audio; keep the jaw and "
+                  "head timing frame-accurate.")
 # 동물 수 = 원본 등장인물 수(사용자 확정 2026-10: "한 마리만" 규칙 대신 대전제 하나 — 한 명이면 한 마리, 여럿이면 대략 그 수)
 REMAKE_ONE_DOG = ("SAME HEADCOUNT: the number of animals in every frame matches the number of people in the original frame - "
                   "one person becomes exactly one animal, never two. Body parts of a person seen at the frame edges belong "
@@ -2359,7 +2362,7 @@ def _remake_seg_i2v(key, ref: Path, i: int, seg: float, work: Path, res: dict, c
 
 
 def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res: dict, cap: float, h: int) -> Path:
-    if res.get("i2v_fallback"):                           # 이 편은 원본을 넣으면 거절됨 → 스토리보드로 만든다
+    if res.get("i2v_fallback") and not res.get("lipsync"):   # 이 편은 원본을 넣으면 거절됨 → 스토리보드로 만든다
         return _remake_seg_i2v(key, ref, i, seg, work, res, cap, h)
     out = work / f"rm_seg{i + 1}.mp4"
     piece = work / f"_rm_piece{i + 1}.mp4"
@@ -2399,6 +2402,9 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
             _send(piece)
         except RuntimeError as e:
             # 실제 인물 얼굴이라 거절(요금 없음) → 얼굴을 모자이크해 한 번만 다시 보낸다(사용자 지시 2026-10: 실패 재발 방지)
+            if "HTTP 400" in str(e) and LIKENESS_RE.search(str(e)) and res.get("lipsync"):
+                raise RuntimeError("입모양을 맞춰야 하는 편인데 원본이 '실제 인물'로 거절됐습니다(요금 없음). 얼굴을 가리거나 그림으로 "
+                                   "만들면 입모양이 사라져 멈췄습니다. 다른 원본을 쓰거나 입모양 맞추기를 끄고 다시 해 주세요. 원문: " + str(e)[:160])
             if "HTTP 400" in str(e) and LIKENESS_RE.search(str(e)) and not res.get("mask_faces"):
                 res["mask_faces"] = True
                 res.setdefault("ledger", []).append({"what": f"구간{i + 1} 실제 인물 거절 → 얼굴 가리고 다시(요금 없음)", "usd": 0})
@@ -2415,7 +2421,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
                                                              "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
                     else:
                         raise
-            elif "HTTP 400" in str(e) and LIKENESS_RE.search(str(e)):   # 이미 가린 영상인데도 거절 → 스토리보드로
+            elif "HTTP 400" in str(e) and LIKENESS_RE.search(str(e)) and not res.get("lipsync"):   # 이미 가린 영상인데도 거절 → 스토리보드로
                 res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
                 res["i2v_fallback"] = True
                 res.setdefault("ledger", []).append({"what": f"구간{i + 1} 가려도 거절 → 스토리보드로 만들기(요금 없음)",
@@ -2514,6 +2520,9 @@ def step_remake(ep, epdir, work, log, req):
     key = _key("GEMINI_API_KEY")
     W, H = 360, 640                                       # 360p(사용자 확정)
     prompt = REMAKE_SWAP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "))
+    res["lipsync"] = bool(rm.get("lipsync"))
+    if res["lipsync"]:                                    # 노래·랩 원본: 개 입이 원래 입모양 그대로 열리고 닫혀 소리와 맞게(사용자 요청 2026-10)
+        prompt += REMAKE_LIPSYNC
     try:
         ref = _remake_src(epdir.name, work)
         if (rm.get("cut") or "").strip():
