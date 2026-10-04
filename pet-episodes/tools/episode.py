@@ -1807,7 +1807,7 @@ VO_DIRECTION = ("[연기 지시] 한국어 광고 내레이션. 부담스러울 
                 "'...'에서는 뜸을 들이고, '후우~'는 진짜 한숨처럼. 과장해도 좋다.")
 # 리메이크 내레이션은 짧고 빠르게(사용자 지적 2026-10 헬기 편: 어설프고 너무 길다) — 뜸은 짧게, 1.45배
 VO_PACE = "단, 뜸은 아주 짧게 하고 전체를 빠르고 리듬감 있게 읽는다. 마지막 '구매는 프로필 링크에서'는 또박또박 빠르게."
-REMAKE_VO_SPEED = 1.45
+REMAKE_VO_SPEED = 1.3   # 1.45는 발음이 뭉개짐(사용자 지적 2026-10) → 1.3
 VO_TEXT = ("당신의 강아지도오... 갈증을... 느낍니다. 후우~ 신나게 춤춘 뒤엔... 강아지 전용, 이온음료... 한 모금. "
            "구매는요... 프로필 링크에서.")
 
@@ -2497,10 +2497,12 @@ def step_remake(ep, epdir, work, log, req):
             V += f"{''.join(mix)}amix=inputs={len(mix)}:normalize=0:duration=first,alimiter=limit=0.97[aud]"
         else:
             V += f"{vo_lbl}alimiter=limit=0.97[aud]"
+        # 말소리 또렷하게(사용자 지적 2026-10 헬기 편: 목소리·발음이 잘 안 들림) — 웅웅거리는 저음은 줄이고 발음 대역(3~5kHz)을 올린다, -9 LUFS
         # 내레이션은 고르게 눌러 준 뒤 영상에서 가장 큰 소리(원본 발차기 등, 실측 약 -12.7 LUFS)보다 크게(-10 LUFS, 최고점 -1) 맞춘 파일을 따로 만든다(사용자 지적 2026-10: 성우 목소리가 너무 작음).
         # ⚠️ 한 그래프 안에서 loudnorm 뒤에 adelay를 걸면 지연이 무시돼 내레이션이 통째로 빠진다(실측) → 파일로 먼저 만든다
         vo_loud = work / "_vo_loud.wav"
-        _ff(["-i", str(vo), "-af", "acompressor=threshold=-24dB:ratio=3.5:attack=5:release=90:makeup=3,loudnorm=I=-10:TP=-1.0:LRA=6,aresample=48000",
+        _ff(["-i", str(vo), "-af", "highpass=f=90,equalizer=f=220:t=q:w=1:g=-3,equalizer=f=3000:t=q:w=1.2:g=5,equalizer=f=5500:t=q:w=1:g=2,"
+             "acompressor=threshold=-24dB:ratio=3.5:attack=5:release=90:makeup=3,loudnorm=I=-9:TP=-1.0:LRA=6,aresample=48000",
              str(vo_loud)])
         final = work / "final.mp4"
         _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo_loud), *wh_in, *src_in, *sfx_in,
