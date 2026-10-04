@@ -167,11 +167,19 @@
     },
     "full": {
       "ok": true
-    }
+    },
+    "fixes": [
+      {
+        "parts": [
+          "copy"
+        ],
+        "at": "2026-10-04T11:25:58Z"
+      }
+    ]
   },
   "last_request": {
-    "file": "06_remake_full.json",
-    "ran_at": "2026-10-04T11:23:39Z",
+    "file": "07_remake_full.json",
+    "ran_at": "2026-10-04T11:26:10Z",
     "ok": true
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: Sorry, we can't create videos with real people's names or likenesses. Please remove the reference and try again.\",\"code\":\"content_blocked\"}}",
