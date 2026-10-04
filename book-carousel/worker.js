@@ -5737,6 +5737,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     b.appendChild(epEl('div','ep-post-hd','인기 영상 리메이크'));
     if(m.source&&m.source.youtube){ var a=epEl('a','',m.source.title||'원본 보기'); a.href=m.source.youtube; a.target='_blank'; a.rel='noopener'; b.appendChild(a); }
     b.appendChild(epEl('div','ep-sub','지금까지 쓴 비용 약 $'+(Number(m.spent)||0).toFixed(2)+' / 한도 $'+(m.cap||5)+(m.est_full?' · 본편 예상 추가 $'+Number(m.est_full).toFixed(2):'')));
+    if(m.pick) b.appendChild(epEl('div','ep-sub','본편 구간(AI가 고른 가장 웃긴 '+Math.round((m.pick.end||0)-(m.pick.start||0))+'초): 원본 '+Number(m.pick.start||0).toFixed(1)+'~'+Number(m.pick.end||0).toFixed(1)+'초'+(m.pick.why?' · '+m.pick.why:'')+' — 바꾸려면 아래 수정 요청에 "원본 ○~○초로"라고 적어 주세요'));
     if(m.board&&m.board.ok){
       b.appendChild(epEl('div','ep-post-lb','스토리보드 (영상에서 뽑은 6장면을 강아지로 바꾼 그림 — 영상은 이 그림을 기준으로 만듭니다)'));
       var bi=document.createElement('img'); bi.alt='스토리보드'; bi.style.width='100%'; bi.style.borderRadius='10px';
@@ -6779,17 +6780,22 @@ async function remakeFixPlan(env, id, note) {
 - vo(내레이션): ${rm.vo || ''}
 - big(큰 문구): ${rm.big || ''}
 - sub(작은 문구): ${rm.sub || ''}
+- 본편 구간(원본에서 쓴 부분): ${log.remake?.pick ? `${log.remake.pick.start}~${log.remake.pick.end}초` : '처음부터'} (원본 길이 약 ${Number(log.remake?.src_full_sec || 0) || '?'}초)
+본편 구간을 바꿔 달라는 요청이면 window에 [시작초, 끝초](10초 이하)를 넣고 parts에 "segs"를 넣어라. 아니면 window는 [].
 요청을 반영하려면 어느 부분을 다시 만들어야 하는지 고르고, 바뀌는 칸만 새로 써라. 바뀌지 않는 칸은 빈 문자열.
 parts: "segs"(앞부분 영상), "ending"(끝 장면), "vo"(내레이션), "copy"(화면 문구만) 중 필요한 것만. 돈이 드는 segs·ending은 꼭 필요할 때만.
 영어 지시문에는 human, hand, finger, skin, nail 같은 사람 몸 낱말을 쓰지 마라(구글이 막는다). 가격·상품명은 쓰지 마라.
-JSON만: {"parts":["ending"],"swap":"","ending":"","vo":"","big":"","sub":"","summary":"무엇을 어떻게 바꾸는지 한국어 한 줄"}`;
+JSON만: {"parts":["ending"],"window":[],"swap":"","ending":"","vo":"","big":"","sub":"","summary":"무엇을 어떻게 바꾸는지 한국어 한 줄"}`;
   const o = extractJson(await callGeminiText(key, { system: 'JSON만 출력.', user: ask, max_tokens: 1200, json: true }));
   const parts = (Array.isArray(o.parts) ? o.parts : []).filter(x => ['segs', 'ending', 'vo', 'copy'].includes(x));
   if (!parts.length) parts.push('copy');
   const cost = FIX_PART_COST(Number(log.remake?.src_sec) || 20);
   const est = Math.round(parts.reduce((t, x) => t + (cost[x] || 0), 0) * 100) / 100;
   const pick = (k) => String(o[k] || '').trim();
-  return { parts, swap: pick('swap'), ending: pick('ending'), vo: pick('vo') ? voCta(noPrice(pick('vo'))) : '', big: noPrice(pick('big')), sub: noPrice(pick('sub')),
+  const w = Array.isArray(o.window) && o.window.length === 2 && o.window.every(x => Number.isFinite(Number(x))) && Number(o.window[1]) > Number(o.window[0])
+    ? [Number(o.window[0]), Math.min(Number(o.window[1]), Number(o.window[0]) + 10)] : null;
+  if (w && !parts.includes('segs')) parts.push('segs');
+  return { parts, window: w, swap: pick('swap'), ending: pick('ending'), vo: pick('vo') ? voCta(noPrice(pick('vo'))) : '', big: noPrice(pick('big')), sub: noPrice(pick('sub')),
     summary: pick('summary'), est, spent: Number(log.remake?.spent) || 0, note: String(note).slice(0, 300) };
 }
 
@@ -6797,6 +6803,7 @@ async function remakeFixCommit(env, id, plan) {
   const ep = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/episode.json`)) || '{}');
   const rm = ep.remake = ep.remake || {};
   for (const k of ['swap', 'ending', 'vo', 'big', 'sub']) if (String(plan[k] || '').trim()) rm[k] = String(plan[k]).trim();
+  if (Array.isArray(plan.window) && plan.window.length === 2) rm.window = plan.window.map(Number);   // 본편 구간 바꾸기
   if (plan.big || plan.sub) ep.caption = `${String(rm.big).replace(/\n/g, ' ')}\n\n${String(rm.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`;
   // 사장님이 확인창에서 비용을 보고 누른 수정이라 한도를 그만큼 올려 준다
   rm.cap = Math.max(Number(rm.cap) || REMAKE_CAP_USD, (Number(plan.spent) || 0) + (Number(plan.est) || 0) + 0.3);
