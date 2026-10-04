@@ -2426,7 +2426,7 @@ def step_remake(ep, epdir, work, log, req):
         Lb, vl = _dur(body_v), _dur(vo)
         # 강아지 낑낑 소리는 실패 직후 광고 화면이 시작될 때(사용자 지시 2026-10) → 내레이션은 낑낑 소리가 끝난 뒤
         whimper = SFX_DIR / "whimper.mp3"
-        use_wh = rm.get("whimper", True) and whimper.exists()
+        use_wh = rm.get("whimper") is True and whimper.exists()   # 장면에 맞을 때만(사용자 지적 2026-10: 부딪힌 게 아니면 필요 없음)
         wh_at = Lb + 0.15
         t0 = (wh_at + _dur(whimper) + 0.1) if use_wh else max(0.0, Lb - 0.25)
         dd = round(max(4.0, t0 + vl + 0.6 - Lb), 2)        # 끝 장면 길이

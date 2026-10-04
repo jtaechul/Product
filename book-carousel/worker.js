@@ -4907,6 +4907,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="f"><label for="trVo">느끼한 내레이션</label><textarea id="trVo" rows="3"></textarea></div>
     <div class="f"><label for="trEnd">끝 장면 동작 (영어, AI 영상 지시)</label><textarea id="trEnd" rows="2"></textarea></div>
     <div class="f"><label for="trTags">해시태그 (상품을 사려는 사람이 검색할 말, 띄어쓰기로 구분)</label><input id="trTags" type="text" placeholder="#강아지관절영양제 #노견관절케어"></div>
+    <div class="f"><label style="display:flex;gap:8px;align-items:center"><input id="trWhimper" type="checkbox" style="width:auto"> 광고 화면 시작에 강아지 낑낑 소리 넣기 (부딪히거나 실패해 아파하는 장면일 때만)</label></div>
     <div class="f"><label for="trCut">원본에서 잘라낼 장면 (선택, 예: 끝에 기괴하게 웃는 장면)</label><input id="trCut" type="text" placeholder="비우면 원본 그대로"></div>
     <div class="msg" id="trCMsg"></div>
   </section>
@@ -5679,7 +5680,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     say('trCMsg','문구를 쓰는 중…','wait');
     post('/api/remake/copy',{analysis:tr.analysis||{},product:tr.product}).then(function(r){
       if(!r||!r.success){ say('trCMsg',(r&&r.error)||'만들지 못했습니다.','no'); return; }
-      $('trBig').value=r.copy.big; $('trSub').value=r.copy.sub; $('trVo').value=r.copy.vo; $('trEnd').value=r.copy.ending; $('trTags').value=(r.copy.hashtags||[]).join(' '); hide('trCMsg');
+      $('trBig').value=r.copy.big; $('trSub').value=r.copy.sub; $('trVo').value=r.copy.vo; $('trEnd').value=r.copy.ending; $('trTags').value=(r.copy.hashtags||[]).join(' '); $('trWhimper').checked=!!r.copy.whimper; hide('trCMsg');
     }).catch(function(e){ say('trCMsg','만들지 못했습니다: '+e.message,'no'); });
   });
   // 원본 올리기(한 번 올린 파일은 다시 올리지 않는다 — 분석·제작 공용)
@@ -5717,7 +5718,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(!tr.analysis){ tr.analysis={meme:'',swap:'',productIdeas:[],remakeScore:0}; tr.video={id:'',title:(f&&f.name)||'직접 올린 영상'}; }
     if(!f){ say('trGoMsg','02에 원본 영상 파일을 올려 주세요.','no'); return; }
     if(!tr.product){ say('trGoMsg','03에서 상품을 골라 주세요.','no'); return; }
-    var copy={big:$('trBig').value.trim(),sub:$('trSub').value.trim(),vo:$('trVo').value.trim(),ending:$('trEnd').value.trim(),cut:$('trCut').value.trim(),hashtags:$('trTags').value.trim().split(/ +/).filter(Boolean)};
+    var copy={big:$('trBig').value.trim(),sub:$('trSub').value.trim(),vo:$('trVo').value.trim(),ending:$('trEnd').value.trim(),cut:$('trCut').value.trim(),hashtags:$('trTags').value.trim().split(/ +/).filter(Boolean),whimper:$('trWhimper').checked};
     if(!copy.big||!copy.vo){ say('trGoMsg','04 문구와 내레이션을 채워 주세요.','no'); return; }
     if(!confirm('스토리보드 그림을 만듭니다(약 0.16달러, 5~10분). 시작할까요?')) return;
     $('trGo').disabled=true; say('trGoMsg','원본을 올리는 중…','wait');
@@ -7185,14 +7186,15 @@ async function handleRemakeCopy(env, body) {
 - vo: 부담스러울 만큼 느끼한 남자 내레이션 3~4문장, 짧게. '...'로 뜸. 마지막 문장은 반드시 주어가 있는 구매 안내 "관련 제품 구매는... 프로필 링크에서."(또는 "구매는... 프로필 링크를 참고하세요.") — 주어 없이 "프로필 링크에서."만 쓰지 마라
 - ending: English one sentence — what the Shiba Inu does with the product in the final 4-second shot (it must clearly use/enjoy the product, product visible)
 - hashtags: ${HASHTAG_RULE}
+- whimper: 앞부분이 강아지가 넘어지거나 부딪히거나 실패해 아파하는 장면이면 true(광고 화면 시작에 낑낑 소리), 그 밖(신나는 장면·놀라운 장면 등)이면 false
 상품명·브랜드명·가격·숫자 금액은 어디에도 쓰지 마라(품목 이름은 된다: 예 "강아지 전용 이온음료").
-JSON만: {"big":"","sub":"","vo":"","ending":"","hashtags":["#..."]}`;
+JSON만: {"big":"","sub":"","vo":"","ending":"","hashtags":["#..."],"whimper":false}`;
   const t = await callGeminiText(key, { system: '광고 카피라이터. JSON만 출력.', user: ask, max_tokens: 800, json: true }).catch(e => { throw new Error('문구를 만들지 못했습니다: ' + e.message); });
   const o = extractJson(typeof t === 'string' ? t : (t?.text || ''));
   const banned = remakeBanned(p.title);
   const clean = (s) => noPrice(scrubBanned(String(s || ''), banned).replace(/이 메뉴/g, '이 제품')).trim();
   return { success: true, copy: { big: clean(o.big), sub: clean(o.sub), vo: voCta(clean(o.vo)), ending: String(o.ending || '').slice(0, 400),
-    hashtags: cleanHashtags(o.hashtags, banned) } };
+    hashtags: cleanHashtags(o.hashtags, banned), whimper: o.whimper === true } };
 }
 
 async function remakeSig(env, id) {
@@ -7247,7 +7249,7 @@ async function handleRemakeCommit(env, body) {
   if (!c.big || !c.vo) throw new Error('광고 문구와 내레이션을 채워 주세요.');
   const ep = { kind: 'remake', menuName: `리메이크 · ${String(v.title || a.meme || '').slice(0, 28)}`, clips: [],
     source: { youtube: v.id ? `https://www.youtube.com/watch?v=${v.id}` : '', title: v.title || '', music: a.music || '' },
-    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), cap: REMAKE_CAP_USD },
+    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, cap: REMAKE_CAP_USD },
     caption: `${String(c.big).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
     hashtags: cleanHashtags(Array.isArray(c.hashtags) ? c.hashtags : String(c.hashtags || '').split(/\s+/), remakeBanned(p.title)),
     product: { title: p.title, brand: p.brand || '', category: p.category || '기타', reason: String(c.sub || '').replace(/\n/g, ' '), link: p.link, image: p.image || '' } };
