@@ -1,6 +1,6 @@
 {
   "remake": {
-    "spent": 0.16,
+    "spent": 2.498,
     "ledger": [
       {
         "what": "잘라낼 장면 찾기",
@@ -9,6 +9,34 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 0.804
+      },
+      {
+        "what": "구간2 바꾸기",
+        "usd": 0.804
+      },
+      {
+        "what": "끝 장면 그림",
+        "usd": 0.15
+      },
+      {
+        "what": "끝 장면 영상",
+        "usd": 0.4
+      },
+      {
+        "what": "내레이션",
+        "usd": 0.02
+      },
+      {
+        "what": "문구 위치 고르기",
+        "usd": 0.01
       }
     ],
     "cut": {
@@ -25,11 +53,50 @@
       "ok": true,
       "panels": 6
     },
-    "est_full": 2.18
+    "est_full": 1.37,
+    "fixes": [
+      {
+        "parts": [
+          "segs"
+        ],
+        "at": "2026-10-04T09:34:18Z"
+      }
+    ],
+    "segs": {
+      "seg1": {
+        "human": null,
+        "where": "",
+        "quality": null,
+        "issues": "",
+        "tries": 1,
+        "res": "360p"
+      },
+      "seg2": {
+        "human": null,
+        "where": "",
+        "quality": null,
+        "issues": "",
+        "tries": 1,
+        "res": "360p"
+      }
+    },
+    "copy_place": {
+      "place": "top",
+      "why": "The top area contains mostly the car interior roof, whereas the bottom contains the snack bowl, product packaging, and t"
+    },
+    "full": {
+      "ok": true
+    }
   },
   "last_request": {
-    "file": "01_remake_board.json",
-    "ran_at": "2026-10-04T09:32:45Z",
+    "file": "03_remake_full.json",
+    "ran_at": "2026-10-04T09:38:15Z",
     "ok": true
+  },
+  "cover": "work/cover.jpg",
+  "assemble": {
+    "ok": true,
+    "sec": 32.25,
+    "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
