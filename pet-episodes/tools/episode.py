@@ -2678,7 +2678,10 @@ def step_remake(ep, epdir, work, log, req):
             vo_lbl, nxt = "[vo0]", 5
         src_in, mix = [], [vo_lbl]
         if rm.get("keep_audio", True) and _has_audio(ref):   # 원본 소리(발차기 소리 등)를 앞부분에 깔고, 내레이션이 나오면 끈다
-            src_in = ["-i", str(ref)]
+            # 원본 소리 크기를 보통 크기(-14 LUFS)로 맞춘 파일을 먼저 만든다(사용자 지시 2026-10 랩 편: 소리는 그대로 살려야 — 원본이 -25로 작았음)
+            src_a = work / "_src_audio.wav"
+            _ff(["-i", str(ref), "-vn", "-af", f"loudnorm=I={float(rm.get('src_lufs', -14))}:TP=-1.5:LRA=11,aresample=48000", str(src_a)])
+            src_in = ["-i", str(src_a)]
             V += (f"[{nxt}:a]atrim=0:{Lb:.2f},asetpts=PTS-STARTPTS,volume={float(rm.get('src_vol', 1.0)):.2f},"
                   f"afade=t=out:st={max(0.0, t0 - 0.3):.2f}:d=0.3,apad,atrim=0:{tot}[src0];")
             mix.append("[src0]")
