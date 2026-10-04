@@ -2302,7 +2302,65 @@ def _remake_probe(key, ref: Path, prompt: str, work: Path, res: dict, cap: float
     return out
 
 
+MOTION_ASK = ("Describe only the body movement in this short clip so an animator can recreate it: who moves, which direction, "
+              "arm/leg moves, rhythm, camera movement. 2-3 short English sentences. Never name or identify anyone, do not "
+              "describe faces. Return JSON {\"motion\": \"...\"}.")
+REMAKE_I2V = ("DURATION: {d} seconds. Image 1 is the first frame: keep exactly these characters (dog heads, outfits), this place, "
+              "lighting and framing. Motion: {motion} Photorealistic, natural continuous motion, camera as described, no cuts, "
+              "no added text, the same number of characters as in image 1.")
+
+
+def _crop_bars(src: Path, out: Path) -> Path:
+    """스토리보드 칸의 검은 여백을 잘라 그림 부분만 남긴다."""
+    from PIL import Image
+    im = Image.open(src).convert("RGB")
+    box = im.point(lambda v: 255 if v > 24 else 0).convert("L").getbbox() or (0, 0, im.width, im.height)
+    im.crop(box).save(out)
+    return out
+
+
+def _remake_seg_i2v(key, ref: Path, i: int, seg: float, work: Path, res: dict, cap: float, h: int) -> Path:
+    """원본 영상을 넣으면 거절되는 경우(실제 유명인 — 얼굴을 가려도 거절, 2026-10 SNL 랩 편 실측): 확인받은 스토리보드 칸을 첫 장면으로
+    원본 구간의 동작을 글로 옮겨 영상을 만든다. 원본 소리·길이는 그대로 맞춘다. 동작은 원본과 똑같지 않을 수 있다."""
+    out = work / f"rm_seg{i + 1}.mp4"
+    piece = work / f"_rm_piece{i + 1}.mp4"
+    if not piece.exists():
+        _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "18", str(piece)])
+    board = work / f"board_{i + 1:02d}.jpg"
+    if not board.exists():
+        raise RuntimeError("원본이 거절돼 스토리보드로 만들어야 하는데 스토리보드 칸이 없습니다")
+    first = _crop_bars(board, work / f"_rm_first{i + 1}.png")
+    _remake_spend(res, REMAKE_COST["check"], f"구간{i + 1} 동작 글로 옮기기", cap)
+    motion = str((_video_json(piece, MOTION_ASK) or {}).get("motion", "")).strip() or \
+        "They keep dancing to the beat with the same energy, small steps and arm swings; the camera stays almost fixed."
+    from PIL import Image
+    fw, fh = Image.open(first).size
+    d = 4 if seg <= 4.2 else 6 if seg <= 6.2 else 8
+    usd = REMAKE_COST["omni_sec"] * d
+    _remake_spend(res, usd, f"구간{i + 1} 스토리보드로 만들기({d}초)", cap)
+    body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(first)},
+                                           {"type": "text", "text": REMAKE_I2V.format(d=d, motion=motion)}],
+            "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "16:9" if fw > fh else "9:16"},
+            "generation_config": {"video_config": {"task": "image_to_video"}}}
+    rawo = work / f"_rm_raw{i + 1}.mp4"
+    try:
+        rawo.write_bytes(_omni_run(key, body))
+    except RuntimeError as e:
+        if "HTTP 400" in str(e):
+            res["spent"] = round(float(res.get("spent", 0)) - usd, 3)
+            res.setdefault("ledger", []).append({"what": f"구간{i + 1} 차단됨(요금 없음)", "usd": -round(usd, 3)})
+        raise
+    got = _dur(rawo)
+    k = seg / got if got else 1.0                         # 원본 구간 길이에 맞춘다(소리와 박자)
+    _ff(["-i", str(rawo), "-an", "-vf", f"setpts=PTS*{k:.5f},scale=-2:{h}:flags=lanczos,fps=24,setsar=1,format=yuv420p",
+         "-t", f"{seg:.3f}", "-c:v", "libx264", "-crf", "19", str(out)])
+    res.setdefault("segs", {})[f"seg{i + 1}"] = {"mode": "storyboard_i2v", "motion": motion[:200], "sec": d}
+    return out
+
+
 def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res: dict, cap: float, h: int) -> Path:
+    if res.get("i2v_fallback"):                           # 이 편은 원본을 넣으면 거절됨 → 스토리보드로 만든다
+        return _remake_seg_i2v(key, ref, i, seg, work, res, cap, h)
     out = work / f"rm_seg{i + 1}.mp4"
     piece = work / f"_rm_piece{i + 1}.mp4"
     _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "16", str(piece)])
@@ -2334,7 +2392,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
 
     if res.get("mask_faces"):                             # 앞 구간에서 '실제 인물' 거절을 받았으면 처음부터 가린다
         masked = work / f"_rm_piece{i + 1}_m.mp4"
-        res.setdefault("masked", {})[f"seg{i + 1}"] = _mask_faces(piece, masked)
+        res.setdefault("masked", {})[f"seg{i + 1}"] = _mask_faces(piece, masked, 1.6)
         piece = masked
     try:
         try:
@@ -2345,8 +2403,23 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
                 res["mask_faces"] = True
                 res.setdefault("ledger", []).append({"what": f"구간{i + 1} 실제 인물 거절 → 얼굴 가리고 다시(요금 없음)", "usd": 0})
                 masked = work / f"_rm_piece{i + 1}_m.mp4"
-                res.setdefault("masked", {})[f"seg{i + 1}"] = _mask_faces(piece, masked)
-                _send(masked)
+                res.setdefault("masked", {})[f"seg{i + 1}"] = _mask_faces(piece, masked, 1.6)
+                try:
+                    _send(masked)
+                except RuntimeError as e2:
+                    if "HTTP 400" in str(e2) and LIKENESS_RE.search(str(e2)):
+                        # 가려도 거절(유명인 영상) → 이번 구간 요금은 되돌리고 스토리보드로 만든다. 다음 구간도 같은 방식
+                        res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
+                        res["i2v_fallback"] = True
+                        res.setdefault("ledger", []).append({"what": f"구간{i + 1} 가려도 거절 → 스토리보드로 만들기(요금 없음)",
+                                                             "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
+                    else:
+                        raise
+            elif "HTTP 400" in str(e) and LIKENESS_RE.search(str(e)):   # 이미 가린 영상인데도 거절 → 스토리보드로
+                res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
+                res["i2v_fallback"] = True
+                res.setdefault("ledger", []).append({"what": f"구간{i + 1} 가려도 거절 → 스토리보드로 만들기(요금 없음)",
+                                                     "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
             else:
                 raise
     except RuntimeError as e:
@@ -2354,6 +2427,8 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
             res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
             res.setdefault("ledger", []).append({"what": f"구간{i + 1} 차단됨(요금 없음)", "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
         raise
+    if res.get("i2v_fallback"):                           # 위에서 가려도 거절됨(요금은 이미 되돌림) → 스토리보드로
+        return _remake_seg_i2v(key, ref, i, seg, work, res, cap, h)
     best = (rawo, {}, None, "")
     tries = [best]
     got = _dur(best[0])
