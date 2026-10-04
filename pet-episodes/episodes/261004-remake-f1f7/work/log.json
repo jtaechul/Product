@@ -1,6 +1,6 @@
 {
   "remake": {
-    "spent": 3.539,
+    "spent": 3.549,
     "ledger": [
       {
         "what": "잘라낼 장면 찾기",
@@ -61,6 +61,10 @@
       {
         "what": "내레이션",
         "usd": 0.02
+      },
+      {
+        "what": "문구 위치 고르기",
+        "usd": 0.01
       }
     ],
     "cut": {
@@ -89,25 +93,37 @@
         "res": "360p"
       }
     },
-    "est_full": 0.61,
+    "est_full": 0.57,
     "end_check": {
       "human": false,
       "where": ""
     },
     "full": {
       "ok": true
+    },
+    "fixes": [
+      {
+        "parts": [
+          "copy"
+        ],
+        "at": "2026-10-04T07:58:49Z"
+      }
+    ],
+    "copy_place": {
+      "place": "top",
+      "why": "The bottom area contains the dog's paws, ice pack, towel, and the product pouch, whereas the top only contains a wall ha"
     }
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be submitted. The prompt contains sensitive words that violate Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\",\"code\":\"content_blocked\"}}",
   "last_request": {
-    "file": "03_remake_full.json",
-    "ran_at": "2026-10-04T07:47:35Z",
+    "file": "04_remake_fix.json",
+    "ran_at": "2026-10-04T07:58:59Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
     "sec": 17.88,
-    "note": "리메이크(노래 없음 — 인스타 앱에서 얹기)"
+    "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
