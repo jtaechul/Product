@@ -27,6 +27,18 @@
       {
         "what": "구간1 차단됨(요금 없음)",
         "usd": -0.501
+      },
+      {
+        "what": "원인 찾기: 가린 영상 + 글",
+        "usd": 0.1
+      },
+      {
+        "what": "원인 찾기: 가린 영상 + 강아지 사진",
+        "usd": 0.1
+      },
+      {
+        "what": "원인 찾기: 가린 영상 + 강아지 + 스토리보드",
+        "usd": 0.1
       }
     ],
     "board": {
@@ -40,12 +52,36 @@
         "frames": 121,
         "with_face": 121
       }
-    }
+    },
+    "probe": [
+      {
+        "mask": {
+          "frames": 24,
+          "with_face": 24,
+          "max_faces": 3
+        }
+      },
+      {
+        "case": "가린 영상 + 글",
+        "ok": false,
+        "err": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: Sorry, we can't create videos with real people's names or likenesses. Please remove the reference and try aga"
+      },
+      {
+        "case": "가린 영상 + 강아지 사진",
+        "ok": false,
+        "err": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: Sorry, we can't create videos with real people's names or likenesses. Please remove the reference and try aga"
+      },
+      {
+        "case": "가린 영상 + 강아지 + 스토리보드",
+        "ok": false,
+        "err": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: Sorry, we can't create videos with real people's names or likenesses. Please remove the reference and try aga"
+      }
+    ]
   },
   "last_request": {
-    "file": "03_remake_full.json",
-    "ran_at": "2026-10-04T11:11:55Z",
-    "ok": false
+    "file": "04_remake_probe.json",
+    "ran_at": "2026-10-04T11:14:57Z",
+    "ok": true
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: Sorry, we can't create videos with real people's names or likenesses. Please remove the reference and try again.\",\"code\":\"content_blocked\"}}"
 }
