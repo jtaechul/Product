@@ -2235,25 +2235,45 @@ COPY_SPOT = ("This is the final shot of an ad. Big text (about 30% of the frame 
 
 
 def _copy_png(big: str, sub: str, out: Path, W=720, H=1280, place: str = "bottom"):
-    """광고 문구: 끝 장면에서 강아지·들고 있는 것·상품을 가리지 않는 쪽(위/아래)에 둔다(사용자 지적 2026-10: 냉찜질이 글씨에 가림)."""
+    """광고 문구: 끝 장면에서 강아지·들고 있는 것·상품을 가리지 않는 쪽(위/아래)에 둔다(사용자 지적 2026-10: 냉찜질이 글씨에 가림).
+    배경은 딱딱한 반투명 상자 대신 가장자리에서 서서히 사라지는 그라데이션 + 글씨 그림자(사용자 지적 2026-10: 상자가 인위적)."""
+    from PIL import ImageFilter
+    band = int(H * 0.42)
+    grad = Image.new("L", (1, band))
+    for yy in range(band):                                 # 가장자리 쪽 진하고(최대 45%) 안쪽으로 부드럽게 0
+        t = 1 - yy / band
+        grad.putpixel((0, yy), int(115 * t * t))
+    grad = grad.resize((W, band))
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    dr = ImageDraw.Draw(im)
-    fb, fs = _f(SUB_FONT, 60), _f(SUB_FONT, 30)
+    shade = Image.new("RGBA", (W, band), (0, 0, 0, 255))
     if place == "top":
-        dr.rectangle([0, 0, W, int(H * 0.36)], fill=(0, 0, 0, 90))
+        shade.putalpha(grad)
+        im.paste(shade, (0, 0))
         y = int(H * 0.06)
     else:
-        dr.rectangle([0, int(H * 0.60), W, H], fill=(0, 0, 0, 90))
+        shade.putalpha(grad.transpose(Image.FLIP_TOP_BOTTOM))
+        im.paste(shade, (0, H - band))
         y = int(H * 0.645)
-    for ln in [x for x in big.splitlines() if x.strip()][:2]:
-        w = fb.getlength(ln)
-        dr.text(((W - w) / 2, y), ln, font=fb, fill="white", stroke_width=5, stroke_fill="black")
-        y += 78
-    y += 10
-    for ln in [x for x in sub.splitlines() if x.strip()][:2]:
-        w = fs.getlength(ln)
-        dr.text(((W - w) / 2, y), ln, font=fs, fill=(255, 214, 10), stroke_width=3, stroke_fill="black")
-        y += 42
+    fb, fs = _f(SUB_FONT, 60), _f(SUB_FONT, 30)
+    lines = [(ln, fb, "white", 5, 78) for ln in [x for x in big.splitlines() if x.strip()][:2]]
+    lines += [("", None, None, 0, 10)]
+    lines += [(ln, fs, (255, 214, 10), 3, 42) for ln in [x for x in sub.splitlines() if x.strip()][:2]]
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))           # 글씨 그림자(흐림) — 상자 없이도 밝은 배경에서 읽히게
+    ds, dt = ImageDraw.Draw(sh), ImageDraw.Draw(im)
+    yy = y
+    for ln, f, col, sw, step in lines:
+        if f:
+            x = (W - f.getlength(ln)) / 2
+            ds.text((x, yy + 4), ln, font=f, fill=(0, 0, 0, 170), stroke_width=sw + 3, stroke_fill=(0, 0, 0, 170))
+        yy += step
+    im = Image.alpha_composite(im, sh.filter(ImageFilter.GaussianBlur(6)))
+    dt = ImageDraw.Draw(im)
+    yy = y
+    for ln, f, col, sw, step in lines:
+        if f:
+            x = (W - f.getlength(ln)) / 2
+            dt.text((x, yy), ln, font=f, fill=col, stroke_width=sw, stroke_fill="black")
+        yy += step
     im.save(out)
 
 
