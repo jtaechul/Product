@@ -125,8 +125,8 @@
     }
   },
   "last_request": {
-    "file": "06_remake_full.json",
-    "ran_at": "2026-10-04T09:52:41Z",
+    "file": "06_publish.json",
+    "ran_at": "2026-10-04T10:13:51Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
@@ -134,5 +134,12 @@
     "ok": true,
     "sec": 17.87,
     "note": "A안(강아지 두 마리 구간 잘라냄) + 내레이션 또렷하게(조금 느리게·발음 대역 강조·-9 LUFS), 추가 비용 없음"
+  },
+  "ig_publish": {
+    "ok": true,
+    "media_id": "18132623630500751",
+    "username": "lord.shiba.ybd",
+    "permalink": "https://www.instagram.com/reel/DeEZKq5j9_w/",
+    "published_at": "2026-10-04T10:13:51Z"
   }
 }
