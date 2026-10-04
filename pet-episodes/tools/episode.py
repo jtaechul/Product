@@ -2112,7 +2112,8 @@ def _remake_src(ep_id: str, work: Path) -> Path:
     src = work / "_src_in.mp4"
     src.write_bytes(raw)
     ref = work / "_src.mp4"                               # 앞 40초, 소리 없이, 세로 720 이하로 정리
-    _ff(["-i", str(src), "-t", f"{REMAKE_MAX_SEC}", "-an", "-vf", "scale=-2:'min(1280,ih)',fps=24,setsar=1,format=yuv420p",
+    # 원본 소리(발차기·부딪히는 소리 등)는 살려 둔다(사용자 요청 2026-10) — 앞부분 영상에 그대로 깐다
+    _ff(["-i", str(src), "-t", f"{REMAKE_MAX_SEC}", "-c:a", "aac", "-b:a", "128k", "-vf", "scale=-2:'min(1280,ih)',fps=24,setsar=1,format=yuv420p",
          "-c:v", "libx264", "-crf", "20", str(ref)])
     src.unlink(missing_ok=True)
     return ref
@@ -2141,6 +2142,11 @@ def _video_json(video: Path, prompt: str) -> dict:
     return {}
 
 
+def _has_audio(p: Path) -> bool:
+    r = subprocess.run([FFMPEG, "-hide_banner", "-i", str(p)], capture_output=True, text=True)
+    return "Audio:" in (r.stderr or "")
+
+
 def _remake_cut(ref: Path, cut: str, work: Path, res: dict, cap: float) -> Path:
     """사장님이 적은 '잘라낼 장면'(예: 끝에 기괴하게 웃는 장면)을 AI가 원본에서 찾아 잘라 낸다(사용자 요청 2026-10).
     찾은 시각은 log에 남겨 다음 실행에도 같은 자리를 자른다(AI가 매번 다르게 답해 구간이 어긋나지 않게)."""
@@ -2160,13 +2166,19 @@ def _remake_cut(ref: Path, cut: str, work: Path, res: dict, cap: float) -> Path:
     a, b = max(0.0, c["start"]), min(L, c["end"])
     out = work / "_src_cut.mp4"
     if b >= L - 0.6:                                       # 끝부분이면 그 앞까지만
-        _ff(["-i", str(ref), "-t", f"{a:.2f}", "-an", "-c:v", "libx264", "-crf", "18", str(out)])
+        _ff(["-i", str(ref), "-t", f"{a:.2f}", "-c:a", "aac", "-c:v", "libx264", "-crf", "18", str(out)])
     elif a <= 0.6:                                         # 앞부분이면 그 뒤부터
-        _ff(["-ss", f"{b:.2f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "18", str(out)])
+        _ff(["-ss", f"{b:.2f}", "-i", str(ref), "-c:a", "aac", "-c:v", "libx264", "-crf", "18", str(out)])
     else:                                                  # 가운데면 앞뒤를 이어 붙인다
-        _ff(["-i", str(ref), "-filter_complex",
-             f"[0:v]trim=0:{a:.2f},setpts=PTS-STARTPTS[x];[0:v]trim={b:.2f},setpts=PTS-STARTPTS[y];[x][y]concat=n=2:v=1:a=0[v]",
-             "-map", "[v]", "-c:v", "libx264", "-crf", "18", str(out)])
+        if _has_audio(ref):
+            _ff(["-i", str(ref), "-filter_complex",
+                 f"[0:v]trim=0:{a:.2f},setpts=PTS-STARTPTS[x];[0:a]atrim=0:{a:.2f},asetpts=PTS-STARTPTS[xa];"
+                 f"[0:v]trim={b:.2f},setpts=PTS-STARTPTS[y];[0:a]atrim={b:.2f},asetpts=PTS-STARTPTS[ya];[x][xa][y][ya]concat=n=2:v=1:a=1[v][au]",
+                 "-map", "[v]", "-map", "[au]", "-c:v", "libx264", "-crf", "18", "-c:a", "aac", str(out)])
+        else:
+            _ff(["-i", str(ref), "-filter_complex",
+                 f"[0:v]trim=0:{a:.2f},setpts=PTS-STARTPTS[x];[0:v]trim={b:.2f},setpts=PTS-STARTPTS[y];[x][y]concat=n=2:v=1:a=0[v]",
+                 "-map", "[v]", "-c:v", "libx264", "-crf", "18", str(out)])
     c["kept_sec"] = round(_dur(out), 2)
     return out
 
@@ -2216,13 +2228,22 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     return out
 
 
-def _copy_png(big: str, sub: str, out: Path, W=720, H=1280):
-    """광고 문구: 화면 아래쪽(얼굴을 가리지 않게, 사용자 지적 2026-10) + 아래만 살짝 어둡게."""
+COPY_SPOT = ("This is the final shot of an ad. Big text (about 30% of the frame height) must be placed either at the TOP or at the "
+             "BOTTOM so that it does not cover the dog's face, its legs/paws, anything it is holding or wearing (e.g. a cold pack) "
+             "or the product. Which band is emptier? JSON only: {\"place\": \"top\" or \"bottom\", \"why\": \"short\"}")
+
+
+def _copy_png(big: str, sub: str, out: Path, W=720, H=1280, place: str = "bottom"):
+    """광고 문구: 끝 장면에서 강아지·들고 있는 것·상품을 가리지 않는 쪽(위/아래)에 둔다(사용자 지적 2026-10: 냉찜질이 글씨에 가림)."""
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     dr = ImageDraw.Draw(im)
-    dr.rectangle([0, int(H * 0.60), W, H], fill=(0, 0, 0, 90))
     fb, fs = _f(SUB_FONT, 60), _f(SUB_FONT, 30)
-    y = int(H * 0.645)
+    if place == "top":
+        dr.rectangle([0, 0, W, int(H * 0.36)], fill=(0, 0, 0, 90))
+        y = int(H * 0.06)
+    else:
+        dr.rectangle([0, int(H * 0.60), W, H], fill=(0, 0, 0, 90))
+        y = int(H * 0.645)
     for ln in [x for x in big.splitlines() if x.strip()][:2]:
         w = fb.getlength(ln)
         dr.text(((W - w) / 2, y), ln, font=fb, fill="white", stroke_width=5, stroke_fill="black")
@@ -2367,7 +2388,13 @@ def step_remake(ep, epdir, work, log, req):
         dd = round(max(4.0, t0 + vl + 0.6 - Lb), 2)        # 끝 장면 길이
         cta_at = max(0.5, t0 + vl - 1.3 - Lb)
         copy_png, cta_png = work / "_copy.png", work / "_cta.png"
-        _copy_png(rm.get("big", ""), rm.get("sub", ""), copy_png)
+        place = rm.get("copy_place") or (res.get("copy_place") or {}).get("place")
+        if place not in ("top", "bottom"):                # 끝 장면을 보고 비어 있는 쪽(위/아래)을 고른다 — 한 번 정하면 기록해 둔다
+            _remake_spend(res, REMAKE_COST["check"], "문구 위치 고르기", cap)
+            r = _vision_json(start, COPY_SPOT) or {}
+            place = r.get("place") if r.get("place") in ("top", "bottom") else "bottom"
+            res["copy_place"] = {"place": place, "why": str(r.get("why", ""))[:120]}
+        _copy_png(rm.get("big", ""), rm.get("sub", ""), copy_png, place=place)
         _cta_png(cta_png)
         tot = round(Lb + dd, 2)
         fit = f"scale={W}:{H}:force_original_aspect_ratio=decrease,pad={W}:{H}:(ow-iw)/2:(oh-ih)/2"   # 원본이 9:16이 아니어도 이어 붙게
@@ -2377,15 +2404,22 @@ def step_remake(ep, epdir, work, log, req):
              f"[2:v]scale={W}:{H},format=rgba,trim=duration={dd},fade=t=in:st=0:d=0.3:alpha=1[t];[b0][t]overlay=(W-w)/2:0[b1];"
              f"[3:v]scale={W}:{H},format=rgba,trim=duration={dd},fade=t=in:st={cta_at:.2f}:d=0.25:alpha=1[c];[b1][c]overlay=(W-w)/2:0[b];"
              f"[a][b]concat=n=2:v=1:a=0,format=yuv420p[v];"
-             f"[4:a]volume=1.8,adelay={int(t0 * 1000)}:all=1,apad,atrim=0:{tot},alimiter=limit=0.95[aud]")
+             f"[4:a]volume=1.8,adelay={int(t0 * 1000)}:all=1,apad,atrim=0:{tot}[vo0];")
+        src_in = []
+        if rm.get("keep_audio", True) and _has_audio(ref):   # 원본 소리(발차기 소리 등)를 앞부분에 깔고, 내레이션이 나오면 끈다
+            src_in = ["-i", str(ref)]
+            V += (f"[5:a]atrim=0:{Lb:.2f},asetpts=PTS-STARTPTS,afade=t=out:st={max(0.0, t0 - 0.3):.2f}:d=0.3,apad,atrim=0:{tot}[src0];"
+                  f"[src0][vo0]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.95[aud]")
+        else:
+            V += "[vo0]alimiter=limit=0.95[aud]"
         final = work / "final.mp4"
-        _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo),
+        _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo), *src_in,
              "-filter_complex", V, "-map", "[v]", "-map", "[aud]", "-c:v", "libx264", "-crf", "22", "-c:a", "aac", "-b:a", "128k",
              "-movflags", "+faststart", str(final)])
         _ff(["-ss", f"{Lb + min(dd - 0.3, 2.5):.2f}", "-i", str(final), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos",
              "-q:v", "3", str(work / "cover.jpg")])
         log["cover"] = "work/cover.jpg"
-        log["assemble"] = {"ok": True, "sec": round(_dur(final), 2), "note": "리메이크(노래 없음 — 인스타 앱에서 얹기)"}
+        log["assemble"] = {"ok": True, "sec": round(_dur(final), 2), "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"}
         res["full"] = {"ok": True}
     finally:                                              # 남의 원본·중간 파일은 성공·실패와 관계없이 저장소에 남기지 않는다
         for f in work.glob("_*"):
