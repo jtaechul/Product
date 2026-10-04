@@ -2405,11 +2405,12 @@ def step_remake(ep, epdir, work, log, req):
             _pcm_to_wav(base64.b64decode(parts[0]["inlineData"]["data"]), vo, 1.3)
         # 4) 조립: 리메이크 → (흰 번쩍) 끝 장면(느리게 + 마지막 장면 멈춤) + 문구 + 내레이션. 노래 없음
         Lb, vl = _dur(body_v), _dur(vo)
-        t0 = max(0.0, Lb - 0.25)                          # 내레이션은 끝 장면 직전부터
-        whimper = SFX_DIR / "whimper.mp3"                  # 프로필 링크 말할 때 강아지 낑낑 소리(사용자 요청 2026-10)
+        # 강아지 낑낑 소리는 실패 직후 광고 화면이 시작될 때(사용자 지시 2026-10) → 내레이션은 낑낑 소리가 끝난 뒤
+        whimper = SFX_DIR / "whimper.mp3"
         use_wh = rm.get("whimper", True) and whimper.exists()
-        wh_at = t0 + vl - 0.9                             # 마지막 말('프로필 링크에서') 끝자락에 겹쳐 시작
-        dd = round(max(4.0, t0 + vl + 0.6 - Lb, (wh_at + _dur(whimper) + 0.4 - Lb) if use_wh else 0), 2)   # 끝 장면 길이
+        wh_at = Lb + 0.15
+        t0 = (wh_at + _dur(whimper) + 0.1) if use_wh else max(0.0, Lb - 0.25)
+        dd = round(max(4.0, t0 + vl + 0.6 - Lb), 2)        # 끝 장면 길이
         cta_at = max(0.5, t0 + vl - 1.3 - Lb)
         copy_png, cta_png = work / "_copy.png", work / "_cta.png"
         place = rm.get("copy_place") or (res.get("copy_place") or {}).get("place")
