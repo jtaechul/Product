@@ -1925,6 +1925,13 @@ def _vision_json(img: Path, prompt: str) -> dict:
     return {}
 
 
+def _wh(p: Path) -> tuple[int, int]:
+    """영상 가로·세로 픽셀(ffmpeg 출력에서 읽는다)."""
+    r = subprocess.run([FFMPEG, "-i", str(p)], capture_output=True, text=True)
+    m = re.search(r"Video:.*?(\d{2,5})x(\d{2,5})", r.stderr)
+    return (int(m.group(1)), int(m.group(2))) if m else (9, 16)
+
+
 def _norm(src: Path, out: Path, h: int):
     _ff(["-i", str(src), "-an", "-vf", f"scale=-2:{h},fps=24,setsar=1,format=yuv420p", "-c:v", "libx264", "-crf", "24", str(out)])
 
@@ -2025,7 +2032,10 @@ REMAKE_SEG = 9.5               # Omni 편집은 한 번에 10초까지
 REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
 REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
 # 개는 한 마리만(사용자 지적 2026-10 헬기 편: 찍는 사람의 손·무릎이 발로 바뀌어 시바견이 두 마리처럼 보임)
-REMAKE_ONE_DOG = ("ONE DOG ONLY: the main person is the only one who becomes a Shiba, so there is exactly one Shiba in the shot. Their own legs, knees and feet seen at the frame edges stay attached to that same dog's body in the same outfit. A hand, arm, knee or phone of anyone else who is only partly visible at the frame edges (for example the person filming) is replaced by the cabin or background behind it, so no second Shiba or extra paw appears.")
+REMAKE_ONE_DOG = ("NO EXTRA ANIMALS: only the people named in the edit list change, and each of them becomes exactly one complete "
+                  "animal - their own legs, knees and feet seen at the frame edges stay attached to that same body in the same "
+                  "outfit. A hand, arm, knee or phone of anyone else who is only partly visible at the frame edges (for example "
+                  "the person filming) is replaced by the background behind it, so no extra dog or loose paw appears.")
 REMAKE_SWAP = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, "
                "every movement and its timing, camera, background, lights): {swap}. Every replaced head is the Shiba Inu from "
                "image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a "
@@ -2453,7 +2463,19 @@ def step_remake(ep, epdir, work, log, req):
         _cta_png(cta_png)
         tot = round(Lb + dd, 2)
         fit = f"scale={W}:{H}:force_original_aspect_ratio=decrease,pad={W}:{H}:(ow-iw)/2:(oh-ih)/2"   # 원본이 9:16이 아니어도 이어 붙게
-        V = (f"[0:v]{fit},fps=24,setsar=1,format=yuv420p[a];"
+        # 가로 원본(16:9 등)은 세로 화면에 검은 띠 대신 같은 영상을 흐리게 깔고 가운데에 원본 비율 그대로(사용자 지적 2026-10: 9:16으로 나와야 함)
+        # — 가운데만 잘라 내면 옆 사람이 잘리므로 기본은 흐린 배경 채우기. 조금 키우려면 remake.frame_zoom(예 1.25, 양옆이 그만큼 잘림)
+        bw, bh = _wh(body_v)
+        if bw > bh * W / H * 1.05:
+            z = max(1.0, float(rm.get("frame_zoom", 1.0)))
+            fw = int(W * z) // 2 * 2
+            body_f = (f"split[bg0][fg0];[bg0]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},gblur=sigma=18,"
+                      f"eq=brightness=-0.10:saturation=0.85[bgb];[fg0]scale={fw}:-2,crop={W}:ih[fgs];"
+                      f"[bgb][fgs]overlay=(W-w)/2:(H-h)/2")
+            res["frame"] = {"mode": "blur_fill", "src": f"{bw}x{bh}", "zoom": z}
+        else:
+            body_f = fit
+        V = (f"[0:v]{body_f},fps=24,setsar=1,format=yuv420p[a];"
              f"[1:v]{fit},setpts=1.6*PTS,fps=24,tpad=stop_mode=clone:stop_duration=20,trim=duration={dd},setpts=PTS-STARTPTS,"
              f"setsar=1,format=yuv420p,fade=t=in:st=0:d=0.25:color=white[b0];"
              f"[2:v]scale={W}:{H},format=rgba,trim=duration={dd},fade=t=in:st=0:d=0.3:alpha=1[t];[b0][t]overlay=(W-w)/2:0[b1];"
