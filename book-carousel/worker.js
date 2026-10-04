@@ -7016,7 +7016,7 @@ const TREND_ASK = (title) => `이 유튜브 쇼츠("${title}")를 끝까지 보�
 JSON만:
 {"meme":"무슨 밈·장면인지 한국어 1~2문장","music":"노래 제목 - 가수(모르면 빈칸)","moves":"동작·구성 한국어 한 줄",
  "remakeScore":0,"why":"점수 이유 한국어 한 줄","risk":"주의할 점 한국어 한 줄(사람 손 클로즈업·글자 위주 등)",
- "swap":"English numbered list of ONLY what to replace, e.g. 1) replace the dancer's head with the head of the Shiba Inu from image 1; 2) replace the dancer's two hands with furry Shiba front paws; 3) replace the dancer's two feet with furry Shiba hind paws; 4) replace every other person with a real dog of various breeds",
+ "swap":"English numbered list of ONLY what to replace, written as positive requests (never 'no ...'), e.g. 1) replace the dancer's head with the head of the Shiba Inu from image 1; 2) turn the dancer's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the dancer's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace every other person with a real dog of various breeds",
  "productIdeas":[{"keyword":"쿠팡 검색어(반려견 용품)","why":"이 밈과 이어지는 이유 한 줄"}]}
 productIdeas는 3개. 영상 끝에 주인공이 그 상품을 쓰는 장면으로 자연스럽게 이어질 반려견 용품(예: 춤 뒤 → 강아지 이온음료).`;
 

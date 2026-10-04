@@ -2009,7 +2009,8 @@ REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 
 REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
 REMAKE_SWAP = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, "
                "every movement and its timing, camera, background, lights): {swap}. Every replaced head is the Shiba Inu from "
-               "image 1. Paws are thick furry dog paws - no human fingers, nails or bare skin anywhere. Remove any watermark or "
+               "image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a "
+               "round Shiba paw (sleeves and trousers stay as they are). Remove any watermark or "
                "on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting "
                "direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, "
                "nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar "
@@ -2031,8 +2032,8 @@ BOARD_COLS, BOARD_ROWS, BOARD_CW, BOARD_CH = 3, 2, 360, 640
 REMAKE_BOARD = ("Image 1 is a 3x2 grid of six frames taken from one video (each panel is a separate moment; dark bars are only "
                 "padding). Edit ALL six panels the same way and keep the grid layout, panel sizes and everything else exactly as "
                 "it is (bodies, clothes, poses, background, lights, camera framing): {swap}. Every replaced head is the Shiba Inu "
-                "from image 2 (same face, fur colour and markings) - the same dog in every panel. Paws are thick furry dog paws - "
-                "no human fingers, nails or bare skin anywhere. Match each panel's lighting, shadows and focus so it looks like real "
+                "from image 2 (same face, fur colour and markings) - the same dog in every panel; "
+                "every visible arm, leg, hand and foot is a thick, fully furry Shiba leg with a round paw. Match each panel's lighting, shadows and focus so it looks like real "
                 "footage, with no seams at the neck, sleeves or trouser hems. Remove any watermark or on-screen text; add no text.")
 REMAKE_BOARD_REF = (" Image {n} is the approved storyboard for the FIRST FRAME of this clip: the first frame must look exactly like "
                     "it (same dog head, paws and background dogs), then follow the original motion.")
@@ -2078,14 +2079,14 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
         im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
         frames.append(f)
     return {"ok": True, "panels": len(frames)}
-REMAKE_SWAP_DEFAULT = ("1) replace the main person's head with the head of the Shiba Inu from image 1; 2) replace their two hands "
-                       "with furry Shiba front paws; 3) replace their two feet with furry Shiba hind paws; 4) replace every other "
-                       "person with a real dog of various breeds")
+REMAKE_SWAP_DEFAULT = ("1) replace the main person's head with the head of the Shiba Inu from image 1; 2) turn their visible arms, "
+                       "hands, legs and feet into thick furry Shiba legs with round paws; 3) replace every other person with a real "
+                       "dog of various breeds")
 REMAKE_END_START = ("Image 1 is the last frame of the previous shot: keep exactly this Shiba Inu (face, fur, outfit) and this place "
                     "and lighting. Image 2 is the real product. Create one photorealistic vertical 9:16 frame: {ending} The product "
                     "from image 2 is clearly visible and in focus right next to the dog, looking exactly like the real product "
-                    "(same shape, colours and label layout). Front legs are furry Shiba legs with paws - no human hands, fingers or "
-                    "skin anywhere. No other added text, no people.")
+                    "(same shape, colours and label layout). All four legs are thick, fully furry Shiba legs with round paws. "
+                    "No other added text; only animals in the scene.")
 REMAKE_END_PROMPT = ("DURATION: 4 seconds. Image 1 is the first frame. {ending} The product stays where it is and never changes "
                      "shape or label. Same place and lighting, camera almost fixed. Photorealistic. Thick, fully furry dog legs "
                      "and paws only. No added text.")
