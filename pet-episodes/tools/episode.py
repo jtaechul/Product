@@ -2442,7 +2442,7 @@ def step_remake(ep, epdir, work, log, req):
              f"[2:v]scale={W}:{H},format=rgba,trim=duration={dd},fade=t=in:st=0:d=0.3:alpha=1[t];[b0][t]overlay=(W-w)/2:0[b1];"
              f"[3:v]scale={W}:{H},format=rgba,trim=duration={dd},fade=t=in:st={cta_at:.2f}:d=0.25:alpha=1[c];[b1][c]overlay=(W-w)/2:0[b];"
              f"[a][b]concat=n=2:v=1:a=0,format=yuv420p[v];"
-             f"[4:a]volume=1.8,adelay={int(t0 * 1000)}:all=1,apad,atrim=0:{tot}[vo0];")
+             f"[4:a]aresample=48000,adelay={int(t0 * 1000)}:all=1,apad,atrim=0:{tot}[vo0];")
         wh_in = ["-i", str(whimper)] if use_wh else []
         if use_wh:
             V += f"[5:a]volume=1.0,adelay={int(wh_at * 1000)}:all=1,apad,atrim=0:{tot}[wh0];[vo0][wh0]amix=inputs=2:normalize=0:duration=first[vo0w];"
@@ -2453,11 +2453,16 @@ def step_remake(ep, epdir, work, log, req):
         if rm.get("keep_audio", True) and _has_audio(ref):   # 원본 소리(발차기 소리 등)를 앞부분에 깔고, 내레이션이 나오면 끈다
             src_in = ["-i", str(ref)]
             V += (f"[{nxt}:a]atrim=0:{Lb:.2f},asetpts=PTS-STARTPTS,afade=t=out:st={max(0.0, t0 - 0.3):.2f}:d=0.3,apad,atrim=0:{tot}[src0];"
-                  f"[src0]{vo_lbl}amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.95[aud]")
+                  f"[src0]{vo_lbl}amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.97[aud]")
         else:
-            V += f"{vo_lbl}alimiter=limit=0.95[aud]"
+            V += f"{vo_lbl}alimiter=limit=0.97[aud]"
+        # 내레이션은 고르게 눌러 준 뒤 릴스 기준보다 조금 크게(-12 LUFS) 맞춘 파일을 따로 만든다(사용자 지적 2026-10: 성우 목소리가 너무 작음).
+        # ⚠️ 한 그래프 안에서 loudnorm 뒤에 adelay를 걸면 지연이 무시돼 내레이션이 통째로 빠진다(실측) → 파일로 먼저 만든다
+        vo_loud = work / "_vo_loud.wav"
+        _ff(["-i", str(vo), "-af", "acompressor=threshold=-22dB:ratio=3:attack=5:release=90:makeup=2,loudnorm=I=-12:TP=-1.2:LRA=7,aresample=48000",
+             str(vo_loud)])
         final = work / "final.mp4"
-        _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo), *wh_in, *src_in,
+        _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo_loud), *wh_in, *src_in,
              "-filter_complex", V, "-map", "[v]", "-map", "[aud]", "-c:v", "libx264", "-crf", "22", "-c:a", "aac", "-b:a", "128k",
              "-movflags", "+faststart", str(final)])
         _ff(["-ss", f"{Lb + min(dd - 0.3, 2.5):.2f}", "-i", str(final), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos",
