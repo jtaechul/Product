@@ -1,6 +1,6 @@
 {
   "remake": {
-    "spent": 2.498,
+    "spent": 2.648,
     "ledger": [
       {
         "what": "잘라낼 장면 찾기",
@@ -37,6 +37,10 @@
       {
         "what": "문구 위치 고르기",
         "usd": 0.01
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
       }
     ],
     "cut": {
@@ -51,9 +55,10 @@
     "segments": 2,
     "board": {
       "ok": true,
-      "panels": 6
+      "panels": 6,
+      "wait": true
     },
-    "est_full": 1.37,
+    "est_full": 2.18,
     "fixes": [
       {
         "parts": [
@@ -66,6 +71,13 @@
           "copy"
         ],
         "at": "2026-10-04T09:40:18Z"
+      },
+      {
+        "parts": [
+          "segs",
+          "vo"
+        ],
+        "at": "2026-10-04T09:47:15Z"
       }
     ],
     "segs": {
@@ -95,8 +107,8 @@
     }
   },
   "last_request": {
-    "file": "04_remake_full.json",
-    "ran_at": "2026-10-04T09:40:28Z",
+    "file": "05_remake_full.json",
+    "ran_at": "2026-10-04T09:47:39Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
