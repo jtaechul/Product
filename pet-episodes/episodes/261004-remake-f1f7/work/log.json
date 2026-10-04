@@ -119,6 +119,12 @@
           "copy"
         ],
         "at": "2026-10-04T08:05:04Z"
+      },
+      {
+        "parts": [
+          "copy"
+        ],
+        "at": "2026-10-04T08:08:31Z"
       }
     ],
     "copy_place": {
@@ -128,14 +134,14 @@
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be submitted. The prompt contains sensitive words that violate Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\",\"code\":\"content_blocked\"}}",
   "last_request": {
-    "file": "06_remake_fix.json",
-    "ran_at": "2026-10-04T08:05:14Z",
+    "file": "07_remake_fix.json",
+    "ran_at": "2026-10-04T08:08:42Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
-    "sec": 18.83,
+    "sec": 20.38,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
