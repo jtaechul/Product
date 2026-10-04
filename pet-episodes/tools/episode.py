@@ -2262,15 +2262,21 @@ def _copy_png(big: str, sub: str, out: Path, W=720, H=1280, place: str = "bottom
     if place == "top":
         shade.putalpha(grad)
         im.paste(shade, (0, 0))
-        y = int(H * 0.06)
+        y = int(H * 0.095)
     else:
         shade.putalpha(grad.transpose(Image.FLIP_TOP_BOTTOM))
         im.paste(shade, (0, H - band))
-        y = int(H * 0.645)
-    fb, fs = _f(SUB_FONT, 60), _f(SUB_FONT, 30)
-    lines = [(ln, fb, "white", 5, 78) for ln in [x for x in big.splitlines() if x.strip()][:2]]
-    lines += [("", None, None, 0, 10)]
-    lines += [(ln, fs, (255, 214, 10), 3, 42) for ln in [x for x in sub.splitlines() if x.strip()][:2]]
+        y = int(H * 0.60)
+    # 글씨 크기는 이온음료 광고 편과 같게(사용자 지시 2026-10): 큰 글씨 85·작은 글씨 43(720 기준), 줄 간격 96·52
+    def fit(text, size):                                   # 너무 긴 줄은 화면 폭에 맞게 줄인다
+        f = _f(SUB_FONT, size)
+        while size > 24 and f.getlength(text) > W - 40:
+            size -= 2
+            f = _f(SUB_FONT, size)
+        return f
+    lines = [(ln, fit(ln, 85), "white", 6, 96) for ln in [x for x in big.splitlines() if x.strip()][:2]]
+    lines += [("", None, None, 0, 18)]
+    lines += [(ln, fit(ln, 43), (255, 214, 10), 4, 52) for ln in [x for x in sub.splitlines() if x.strip()][:2]]
     sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))           # 글씨 그림자(흐림) — 상자 없이도 밝은 배경에서 읽히게
     ds, dt = ImageDraw.Draw(sh), ImageDraw.Draw(im)
     yy = y
@@ -2293,9 +2299,9 @@ def _copy_png(big: str, sub: str, out: Path, W=720, H=1280, place: str = "bottom
 def _cta_png(out: Path, W=720, H=1280):
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     dr = ImageDraw.Draw(im)
-    f = _f(SUB_FONT, 32)
+    f = _f(SUB_FONT, 50)                                  # 이온음료 편과 같은 크기
     t = "구매는 프로필 링크에서"
-    dr.text(((W - f.getlength(t)) / 2, int(H * 0.905)), t, font=f, fill="white", stroke_width=3, stroke_fill="black")
+    dr.text(((W - f.getlength(t)) / 2, int(H * 0.885)), t, font=f, fill="white", stroke_width=4, stroke_fill="black")
     im.save(out)
 
 
