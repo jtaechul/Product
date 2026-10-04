@@ -784,9 +784,22 @@ def step_ig_probe(log):
                        "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
 
 
+IG_HANDLE = "@lord.shiba.ydb"      # '프로필 링크' 문장 바로 아래 줄(사용자 지시 2026-10)
+
+
+def _with_handle(cap: str) -> str:
+    lines = [l for l in cap.split("\n") if l.strip() != IG_HANDLE]
+    i = next((k for k, l in enumerate(lines) if "프로필 링크" in l), -1)
+    if i >= 0:
+        lines.insert(i + 1, IG_HANDLE)
+    else:
+        lines.append(IG_HANDLE)
+    return "\n".join(lines).strip()
+
+
 def ig_caption(ep):
     """인스타 캡션: 모델이 쓴 캡션 + 해시태그, 쿠팡 파트너스 고지는 없으면 반드시 붙인다(법적 요구)."""
-    cap = str(ep.get("caption") or "").strip()
+    cap = _with_handle(str(ep.get("caption") or "").strip())
     tags = " ".join(t for t in (ep.get("hashtags") or []) if t and t not in cap)
     if tags:
         cap = f"{cap}\n\n{tags}"

@@ -6828,8 +6828,17 @@ async function handleEpisodeRequest(env, body) {
 }
 
 // 인스타·유튜브에 직접 올릴 때 복사할 글(본문·해시태그). 쿠팡 파트너스 고지는 본문에 반드시 들어간다(법적 요구).
+// '프로필 링크' 문장 바로 아래 줄에 우리 계정 아이디(사용자 지시 2026-10) — 없으면 맨 끝(고지 앞)에 붙인다
+const IG_HANDLE = '@lord.shiba.ydb';
+function withHandle(caption) {
+  const lines = String(caption || '').split('\n').filter(l => l.trim() !== IG_HANDLE);
+  const i = lines.findIndex(l => l.includes('프로필 링크'));
+  if (i >= 0) lines.splice(i + 1, 0, IG_HANDLE); else lines.push(IG_HANDLE);
+  return lines.join('\n').trim();
+}
+
 function postTextOf(ep) {
-  let caption = noPrice(String(ep.caption || '').trim());          // 예전 편에 남은 가격 문장도 빼고 보여 준다
+  let caption = withHandle(noPrice(String(ep.caption || '').trim()));   // 예전 편에 남은 가격 문장도 빼고 보여 준다
   if (caption && !caption.includes('쿠팡 파트너스')) caption += `\n\n${COUPANG_DISCLOSURE}`;
   const hashtags = (Array.isArray(ep.hashtags) ? ep.hashtags : []).map(t => String(t).trim()).filter(Boolean)
     .map(t => (t.startsWith('#') ? t : '#' + t)).filter(t => !caption.includes(t)).join(' ');
