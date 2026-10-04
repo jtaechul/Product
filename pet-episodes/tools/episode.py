@@ -2351,6 +2351,32 @@ def _crop_bars(src: Path, out: Path) -> Path:
     return out
 
 
+# 0.5초 시간표(사용자 확정 2026-10: 모든 영상 — 소리 나는 부분을 초 단위로 끊어 입모양·동작을 아주 구체적으로 지시)
+TIMELINE_ASK = ("Watch AND listen to this clip ({dur:.1f} s). For every 0.5-second step from 0.0 to {dur:.1f} describe precisely: "
+                "each visible character by position and outfit (never name or identify real people), the exact body action "
+                "(which arm/leg/hand, direction, speed, any contact such as hitting, slapping, pushing, touching), each "
+                "character's mouth (closed / slightly open / open / wide open, and lip shape), the sound or syllable heard at "
+                "that moment and who makes it (or 'silent' / 'music only'), and the camera (fixed, pan, zoom, cut). Be concrete "
+                "and literal. Return JSON {{\"steps\": [{{\"t\": \"0.0-0.5\", \"action\": \"...\", \"mouth\": \"...\", "
+                "\"sound\": \"...\", \"camera\": \"...\"}}]}}")
+TIMELINE_HEAD = (" SECOND-BY-SECOND TIMELINE of the original (follow it exactly; the dogs replace the people, every action, "
+                 "contact and mouth shape happens at exactly these times so the mouths stay in sync with the sound):")
+
+
+def _timeline(ref: Path, start: float, dur: float, work: Path, res: dict, cap: float, tag: str) -> str:
+    """원본 구간을 소리와 함께 AI가 보고 0.5초마다 동작·입모양·소리·카메라를 적는다. 한 번 만든 시간표는 log에 두고 다시 쓴다(무료)."""
+    tl = res.setdefault("timeline", {})
+    if tag not in tl:
+        clip = work / f"_tl_{tag}.mp4"
+        _ff(["-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", str(ref), "-vf", "scale=-2:480", "-c:v", "libx264", "-crf", "26",
+             "-c:a", "aac", "-b:a", "96k", str(clip)])
+        _remake_spend(res, REMAKE_COST["check"], f"{tag} 0.5초 시간표 만들기", cap)
+        steps = (_video_json(clip, TIMELINE_ASK.format(dur=dur)) or {}).get("steps") or []
+        tl[tag] = [{k: str(x.get(k, ""))[:160] for k in ("t", "action", "mouth", "sound", "camera")} for x in steps if isinstance(x, dict)][:120]
+    rows = [f"[{x['t']}s] action: {x['action']}; mouth: {x['mouth']}; sound: {x['sound']}; camera: {x['camera']}." for x in tl[tag]]
+    return (TIMELINE_HEAD + " " + " ".join(rows))[:6000] if rows else ""
+
+
 def _remake_seg_i2v(key, ref: Path, i: int, seg: float, work: Path, res: dict, cap: float, h: int) -> Path:
     """원본 영상을 넣으면 거절되는 경우(실제 유명인 — 얼굴을 가려도 거절, 2026-10 SNL 랩 편 실측): 확인받은 스토리보드 칸을 첫 장면으로
     원본 구간의 동작을 글로 옮겨 영상을 만든다. 원본 소리·길이는 그대로 맞춘다. 동작은 원본과 똑같지 않을 수 있다."""
@@ -2363,7 +2389,8 @@ def _remake_seg_i2v(key, ref: Path, i: int, seg: float, work: Path, res: dict, c
         raise RuntimeError("원본이 거절돼 스토리보드로 만들어야 하는데 스토리보드 칸이 없습니다")
     first = _crop_bars(board, work / f"_rm_first{i + 1}.png")
     _remake_spend(res, REMAKE_COST["check"], f"구간{i + 1} 동작 글로 옮기기", cap)
-    motion = str((_video_json(piece, MOTION_ASK) or {}).get("motion", "")).strip() or \
+    tl = _timeline(ref, i * seg, seg, work, res, cap, f"seg{i + 1}") if res.get("use_timeline", True) else ""
+    motion = tl or str((_video_json(piece, MOTION_ASK) or {}).get("motion", "")).strip() or \
         "They keep dancing to the beat with the same energy, small steps and arm swings; the camera stays almost fixed."
     from PIL import Image
     fw, fh = Image.open(first).size
@@ -2397,6 +2424,8 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     piece = work / f"_rm_piece{i + 1}.mp4"
     _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "16", str(piece)])
     inputs = [{"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}]
+    if res.get("use_timeline", True):                     # 0.5초 시간표(동작·입모양·소리)를 지시에 그대로 넣는다
+        prompt = prompt + _timeline(ref, i * seg, seg, work, res, cap, f"seg{i + 1}")
     prev = work / f"rm_seg{i}.mp4"
     if i > 0 and prev.exists():                            # 앞 구간과 같은 개로 이어지게
         last = work / f"_rm_prev{i}.png"
@@ -2557,6 +2586,7 @@ def step_remake(ep, epdir, work, log, req):
     res["lipsync"] = bool(rm.get("lipsync"))
     # 원본 동작을 바꾸는 '스토리보드로 만들기'는 기본으로 끈다(사용자 지적 2026-10: 동작을 마음대로 완전히 바꿈) — 켠 편만
     res["allow_i2v"] = bool(rm.get("allow_i2v"))
+    res["use_timeline"] = rm.get("timeline", True) is not False   # 모든 영상에 0.5초 시간표(사용자 확정 2026-10)
     if res["lipsync"]:                                    # 노래·랩 원본: 개 입이 원래 입모양 그대로 열리고 닫혀 소리와 맞게(사용자 요청 2026-10)
         prompt += REMAKE_LIPSYNC
     try:
@@ -2573,7 +2603,7 @@ def step_remake(ep, epdir, work, log, req):
         res.update({"src_sec": round(L, 2), "segments": n, "one_shot": bool(one)})
         # 세로 9:16은 흐린 배경 채우기가 아니라 AI가 위아래 장면을 이어 그려 진짜 세로로(사용자 지시 2026-10)
         sw, sh = _wh(ref)
-        if rm.get("vertical", "extend") == "extend" and sw * 16 > sh * 9 * 1.05:
+        if sw * 16 > sh * 9 * 1.05:                       # ⛔ 핵심 규칙: 원본 비율과 상관없이 무조건 9:16(늘리기·흐린 배경 금지, AI가 새로 그려 채움)
             ref_v = work / "_src_v.mp4"
             if not ref_v.exists():
                 _ff(["-i", str(ref), "-filter_complex",
