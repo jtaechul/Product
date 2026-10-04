@@ -101,13 +101,13 @@
   "last_request": {
     "file": "04_remake_full.json",
     "ran_at": "2026-10-04T11:40:49Z",
-    "ok": false
+    "ok": true,
+    "note": "새 제작은 사장님 지시로 중단 — 앞 15초+광고 편집본(무료)이 완성본"
   },
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
     "sec": 19.9,
     "note": "예전 본편 앞 15초 + 광고(사용자 지시, 추가 비용 없음). 본편은 아직 가로 띠(진짜 세로 아님)"
-  },
-  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
+  }
 }

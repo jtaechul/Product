@@ -125,9 +125,10 @@
     }
   },
   "last_request": {
-    "file": "06_publish.json",
+    "file": "06_remake_full.json",
     "ran_at": "2026-10-04T10:13:51Z",
-    "ok": true
+    "ok": true,
+    "note": "06_publish(인스타 올리기)까지 끝남 — 목록 상태 정리"
   },
   "cover": "work/cover.jpg",
   "assemble": {
