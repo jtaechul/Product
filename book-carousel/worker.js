@@ -5711,6 +5711,28 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
         }));
       }
     }
+    if(e.hasVideo&&e.state!=='running'){
+      b.appendChild(epEl('div','ep-post-lb','수정 요청 (보고 이상한 점을 적으면 필요한 부분만 다시 만듭니다)'));
+      var fx=epEl('textarea',''); fx.rows=3; fx.placeholder='예: 끝 장면에서 강아지가 얼음팩을 더 잘 보이게 / 내레이션을 더 짧게 / 큰 문구를 ○○로'; b.appendChild(fx);
+      var fm=epEl('div','ep-sub','');
+      var fb=epBtn('수정해서 다시 만들기',function(){
+        var note=fx.value.trim(); if(!note){ fm.textContent='수정 요청 사항을 적어 주세요.'; return; }
+        fb.disabled=true; fm.textContent='AI가 요청을 읽고 다시 만들 부분을 정하는 중…';
+        post('/api/episode/request',{id:e.id,kind:'remake_fix_plan',note:note}).then(function(r){
+          fb.disabled=false;
+          if(!r||!r.success){ fm.textContent=(r&&r.error)||'계획을 만들지 못했습니다.'; return; }
+          var p=r.plan, names={segs:'앞부분 영상',ending:'끝 장면',vo:'내레이션',copy:'화면 문구'};
+          var msg='수정 내용: '+(p.summary||note)+'\\n다시 만들 부분: '+p.parts.map(function(x){return names[x]||x;}).join(', ')+'\\n추가 비용: 약 $'+Number(p.est).toFixed(2)+(p.est?'':' (다시 조립만, 무료)')+'\\n\\n이대로 다시 만들까요?';
+          if(!confirm(msg)){ fm.textContent='취소했습니다.'; return; }
+          fm.textContent='요청을 올리는 중…';
+          post('/api/episode/request',{id:e.id,kind:'remake_fix',plan:p}).then(function(x){
+            fm.textContent=(x&&x.success)?'다시 만들고 있습니다. 끝나면 이 화면에 새 영상이 나옵니다(문구만이면 5분, 영상이면 20~40분).':((x&&x.error)||'요청하지 못했습니다.');
+            if(x&&x.success) setTimeout(function(){ loadEpisode(e.id); },1500);
+          }).catch(function(err){ fm.textContent='요청하지 못했습니다: '+err.message; });
+        }).catch(function(err){ fb.disabled=false; fm.textContent='계획을 만들지 못했습니다: '+err.message; });
+      },true);
+      b.appendChild(fb); b.appendChild(fm);
+    }
     if(e.state==='failed'&&!e.hasVideo){
       b.appendChild(epBtn((m.board&&m.board.ok)?'영상 만들기 다시 시도':'스토리보드부터 다시 시도',function(){
         if(m.board&&m.board.ok) epAsk(e.id,'remake_full',{}, '다시 만들고 있습니다(30~50분).');
@@ -6696,6 +6718,55 @@ async function commitFoodRedo(env, id, fs) {
   return { success: true, id, food: check };
 }
 
+// 리메이크 수정 요청(사용자 요청 2026-10): 사장님이 적은 글을 AI가 읽고 '어느 부분만 다시 만들지'와 바뀐 지시를 정한다.
+// 바뀌는 부분만 다시 만들어 돈을 아낀다(문구만 바뀌면 다시 조립만 = 무료).
+const FIX_PART_COST = (srcSec) => ({ segs: Math.round(srcSec * 0.10 * 100) / 100 + 0.15, ending: 0.55, vo: 0.02, copy: 0 });
+async function remakeFixPlan(env, id, note) {
+  const ep = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/episode.json`)) || '{}');
+  const log = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/work/log.json`)) || '{}');
+  if (ep.kind !== 'remake') throw new Error('리메이크 영상이 아닙니다.');
+  const rm = ep.remake || {};
+  const key = await getGeminiKey(env);
+  const ask = `반려견 광고 영상(원본 영상의 사람 머리·손발을 시바견으로 바꾼 앞부분 + 상품 끝 장면 + 느끼한 내레이션 + 화면 문구)을 사장님이 보고 수정 요청을 했다.
+수정 요청: "${note}"
+지금 설정:
+- swap(앞부분 바꾸기 지시, 영어): ${rm.swap || ''}
+- ending(끝 장면 동작, 영어): ${rm.ending || ''}
+- vo(내레이션): ${rm.vo || ''}
+- big(큰 문구): ${rm.big || ''}
+- sub(작은 문구): ${rm.sub || ''}
+요청을 반영하려면 어느 부분을 다시 만들어야 하는지 고르고, 바뀌는 칸만 새로 써라. 바뀌지 않는 칸은 빈 문자열.
+parts: "segs"(앞부분 영상), "ending"(끝 장면), "vo"(내레이션), "copy"(화면 문구만) 중 필요한 것만. 돈이 드는 segs·ending은 꼭 필요할 때만.
+영어 지시문에는 human, hand, finger, skin, nail 같은 사람 몸 낱말을 쓰지 마라(구글이 막는다). 가격·상품명은 쓰지 마라.
+JSON만: {"parts":["ending"],"swap":"","ending":"","vo":"","big":"","sub":"","summary":"무엇을 어떻게 바꾸는지 한국어 한 줄"}`;
+  const o = extractJson(await callGeminiText(key, { system: 'JSON만 출력.', user: ask, max_tokens: 1200, json: true }));
+  const parts = (Array.isArray(o.parts) ? o.parts : []).filter(x => ['segs', 'ending', 'vo', 'copy'].includes(x));
+  if (!parts.length) parts.push('copy');
+  const cost = FIX_PART_COST(Number(log.remake?.src_sec) || 20);
+  const est = Math.round(parts.reduce((t, x) => t + (cost[x] || 0), 0) * 100) / 100;
+  const pick = (k) => String(o[k] || '').trim();
+  return { parts, swap: pick('swap'), ending: pick('ending'), vo: noPrice(pick('vo')), big: noPrice(pick('big')), sub: noPrice(pick('sub')),
+    summary: pick('summary'), est, spent: Number(log.remake?.spent) || 0, note: String(note).slice(0, 300) };
+}
+
+async function remakeFixCommit(env, id, plan) {
+  const ep = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/episode.json`)) || '{}');
+  const rm = ep.remake = ep.remake || {};
+  for (const k of ['swap', 'ending', 'vo', 'big', 'sub']) if (String(plan[k] || '').trim()) rm[k] = String(plan[k]).trim();
+  if (plan.big || plan.sub) ep.caption = `${String(rm.big).replace(/\n/g, ' ')}\n\n${String(rm.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`;
+  // 사장님이 확인창에서 비용을 보고 누른 수정이라 한도를 그만큼 올려 준다
+  rm.cap = Math.max(Number(rm.cap) || REMAKE_CAP_USD, (Number(plan.spent) || 0) + (Number(plan.est) || 0) + 0.3);
+  (rm.fixes = rm.fixes || []).push({ note: plan.note, parts: plan.parts, at: new Date().toISOString() });
+  const list = await gh(env, `/contents/${EP_ROOT}/${id}/requests?ref=${encodeURIComponent(EP_BRANCH)}`);
+  const n = (Array.isArray(list.json) ? list.json.length : 0) + 1;
+  const name = `${String(n).padStart(2, '0')}_remake_fix.json`;
+  await ghCommit(env, [
+    { path: `${EP_ROOT}/${id}/episode.json`, text: JSON.stringify(ep, null, 2) },
+    { path: `${EP_ROOT}/${id}/requests/${name}`, text: JSON.stringify({ id, steps: ['remake'], remake: { mode: 'full', redo: plan.parts } }) },
+  ], `pet: ${id} 수정 요청(${plan.parts.join('·')}): ${String(plan.note).slice(0, 40)}`);
+  return { success: true, id, request: name };
+}
+
 // 같은 편에 추가 요청: 다시 조립·컷 다시 뽑기·인스타 올리기
 async function handleEpisodeRequest(env, body) {
   const id = String(body.id || '');
@@ -6716,6 +6787,13 @@ async function handleEpisodeRequest(env, body) {
     const log = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/work/log.json`)) || '{}');
     if (log.assemble?.ok) throw new Error('이미 영상을 만들었습니다.');   // 스토리보드가 없으면 제작 쪽이 먼저 그린다
     req = { steps: ['remake'], remake: { mode: 'full' } };
+  } else if (kind === 'remake_fix_plan') {
+    const note = String(body.note || '').trim();
+    if (!note) throw new Error('수정 요청 사항을 적어 주세요.');
+    return { success: true, plan: await remakeFixPlan(env, id, note) };
+  } else if (kind === 'remake_fix') {
+    if (!body.plan || !Array.isArray(body.plan.parts)) throw new Error('수정 계획이 없습니다. 다시 눌러 주세요.');
+    return await remakeFixCommit(env, id, body.plan);
   } else if (kind === 'remake_board') {
     req = { steps: ['remake'], remake: { mode: 'board', redo: !!body.redo } };
   } else if (kind === 'food') {                        // 오래 걸려서(1~3분) 뒤에서 처리 → 화면은 목록 새로고침으로 확인

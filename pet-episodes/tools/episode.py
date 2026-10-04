@@ -2269,6 +2269,16 @@ def step_remake(ep, epdir, work, log, req):
             if float(res.get("spent", 0)) + est_all > cap:
                 res["board"]["over"] = True
             return
+        # 수정 요청(사용자 요청 2026-10): 고를 부분의 결과만 지우고 다시 만든다 — 나머지는 그대로 재사용(돈 절약)
+        redo = (req.get("remake") or {}).get("redo") if mode == "full" else None
+        if isinstance(redo, list) and redo:
+            gone = {"segs": ["rm_seg*.mp4", "remake.mp4", "board.jpg", "board_*.jpg"], "ending": ["rm_end_start.png", "rm_end.mp4"],
+                    "vo": ["rm_vo.wav"], "copy": []}
+            for part in redo:
+                for pat in gone.get(part, []):
+                    for f in work.glob(pat):
+                        f.unlink(missing_ok=True)
+            res.setdefault("fixes", []).append({"parts": redo, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
             res["board"] = _remake_board(ref, L, n, seg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
         if mode == "full" and not (work / "rm_seg1.mp4").exists():
