@@ -1,6 +1,6 @@
 {
   "remake": {
-    "spent": 1.093,
+    "spent": 3.539,
     "ledger": [
       {
         "what": "잘라낼 장면 찾기",
@@ -29,6 +29,38 @@
       {
         "what": "구간1 차단됨(요금 없음)",
         "usd": -0.883
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 0.883
+      },
+      {
+        "what": "구간1 검사",
+        "usd": 0.04
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 0.883
+      },
+      {
+        "what": "구간1 검사",
+        "usd": 0.04
+      },
+      {
+        "what": "끝 장면 그림",
+        "usd": 0.15
+      },
+      {
+        "what": "끝 장면 영상",
+        "usd": 0.4
+      },
+      {
+        "what": "끝 장면 사람 손 검사",
+        "usd": 0.03
+      },
+      {
+        "what": "내레이션",
+        "usd": 0.02
       }
     ],
     "cut": {
@@ -46,12 +78,36 @@
       "human": false,
       "where": "",
       "panels": 6
+    },
+    "segs": {
+      "seg1": {
+        "human": true,
+        "where": "full: bare human arms clearly visible across frames, especially extended in the bottom-right frame / bottom: Bottom-right frame, bare human arm swinging on the right side of the body",
+        "quality": 52,
+        "issues": "Reversion to human limbs during fast motion in final frame, slight neck seam softness",
+        "tries": 2,
+        "res": "360p"
+      }
+    },
+    "est_full": 0.61,
+    "end_check": {
+      "human": false,
+      "where": ""
+    },
+    "full": {
+      "ok": true
     }
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be submitted. The prompt contains sensitive words that violate Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\",\"code\":\"content_blocked\"}}",
   "last_request": {
-    "file": "02_remake_full.json",
-    "ran_at": "2026-10-04T07:40:52Z",
-    "ok": false
+    "file": "03_remake_full.json",
+    "ran_at": "2026-10-04T07:47:35Z",
+    "ok": true
+  },
+  "cover": "work/cover.jpg",
+  "assemble": {
+    "ok": true,
+    "sec": 17.88,
+    "note": "리메이크(노래 없음 — 인스타 앱에서 얹기)"
   }
 }
