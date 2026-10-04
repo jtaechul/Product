@@ -3125,5 +3125,1178 @@
     ],
     "translation_ko": "한 소년이 벤치에 앉아 아이스크림을 먹고 있어요.",
     "tmp_id": "L1-0032"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'building a tower'는 탑을 쌓는다는 뜻이에요. 블록으로 높게 탑을 만드는 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "A boy is building a tower with blocks.",
+    "choice_image_prompts": [
+      "A boy building a tower with colorful blocks",
+      "A boy putting blocks into a toy box",
+      "A boy drawing a picture on a paper",
+      "A boy reading a book on the floor"
+    ],
+    "status": "draft",
+    "evidence": "building a tower with blocks",
+    "why_not": {
+      "1": "블록을 장난감 상자에 정리하는 사진이에요",
+      "2": "종이에 그림을 그리는 사진이에요",
+      "3": "바닥에 앉아 책을 읽는 사진이에요"
+    },
+    "key_expr": {
+      "en": "build a tower",
+      "ko": "탑을 쌓다"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boy building block tower",
+        "need": [
+          "boy",
+          "block"
+        ],
+        "prefer": [
+          "tower"
+        ],
+        "avoid": [
+          "drawing"
+        ]
+      },
+      {
+        "q": "boy putting blocks in box",
+        "need": [
+          "boy",
+          "block"
+        ],
+        "prefer": [
+          "box"
+        ],
+        "avoid": [
+          "tower"
+        ]
+      },
+      {
+        "q": "boy drawing picture",
+        "need": [
+          "drawing"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "block"
+        ]
+      },
+      {
+        "q": "boy reading book floor",
+        "need": [
+          "reading"
+        ],
+        "prefer": [
+          "book"
+        ],
+        "avoid": [
+          "block"
+        ]
+      }
+    ],
+    "translation_ko": "한 소년이 블록으로 탑을 쌓고 있어요.",
+    "tmp_id": "L1-0033"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'pulling a suitcase'는 여행 가방을 끈다는 뜻이에요. 손잡이를 잡고 바퀴 달린 가방을 끄는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.travel"
+    ],
+    "accent": "UK",
+    "tts_script": "A woman is pulling a suitcase at the airport.",
+    "choice_image_prompts": [
+      "A woman sleeping on a chair in the airport",
+      "A woman waiting for a taxi outside",
+      "A woman closing a suitcase",
+      "A woman pulling a suitcase with wheels"
+    ],
+    "status": "draft",
+    "evidence": "pulling a suitcase",
+    "why_not": {
+      "0": "의자에 앉아 잠을 자고 있는 사진이에요",
+      "1": "밖에서 택시를 기다리는 사진이에요",
+      "2": "여행 가방을 닫고 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "pull a suitcase",
+      "ko": "여행 가방을 끌다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman sleeping airport chair",
+        "need": [
+          "woman",
+          "sleeping"
+        ],
+        "prefer": [
+          "airport"
+        ],
+        "avoid": [
+          "suitcase"
+        ]
+      },
+      {
+        "q": "woman waiting taxi",
+        "need": [
+          "woman",
+          "waiting"
+        ],
+        "prefer": [
+          "taxi"
+        ],
+        "avoid": [
+          "suitcase"
+        ]
+      },
+      {
+        "q": "woman closing suitcase",
+        "need": [
+          "woman",
+          "suitcase"
+        ],
+        "prefer": [
+          "closing"
+        ],
+        "avoid": [
+          "pulling"
+        ]
+      },
+      {
+        "q": "woman pulling suitcase wheels",
+        "need": [
+          "woman",
+          "suitcase",
+          "pulling"
+        ],
+        "prefer": [
+          "airport"
+        ],
+        "avoid": [
+          "sleeping"
+        ]
+      }
+    ],
+    "translation_ko": "한 여자가 공항에서 여행 가방을 끌고 있어요.",
+    "tmp_id": "L1-0034"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'washing the window'는 창문을 닦는다는 뜻이에요. 빗자루나 설거지가 아니라 유리창을 청소하는 사진을 찾아보세요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "A man is washing the window.",
+    "choice_image_prompts": [
+      "A man sweeping the floor with a broom",
+      "A man washing a large glass window with a sponge",
+      "A man washing dishes at the sink",
+      "A man opening a window wide"
+    ],
+    "status": "draft",
+    "evidence": "washing the window",
+    "why_not": {
+      "0": "빗자루로 바닥을 쓸고 있는 사진이에요",
+      "2": "싱크대에서 설거지를 하는 사진이에요",
+      "3": "창문을 활짝 열고 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "wash the window",
+      "ko": "창문을 닦다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man sweeping floor broom",
+        "need": [
+          "sweeping"
+        ],
+        "prefer": [
+          "broom"
+        ],
+        "avoid": [
+          "window"
+        ]
+      },
+      {
+        "q": "man washing glass window",
+        "need": [
+          "washing",
+          "window"
+        ],
+        "prefer": [
+          "sponge"
+        ],
+        "avoid": [
+          "sweeping"
+        ]
+      },
+      {
+        "q": "man washing dishes sink",
+        "need": [
+          "washing",
+          "dishes"
+        ],
+        "prefer": [
+          "sink"
+        ],
+        "avoid": [
+          "window"
+        ]
+      },
+      {
+        "q": "man opening window",
+        "need": [
+          "opening",
+          "window"
+        ],
+        "prefer": [
+          "man"
+        ],
+        "avoid": [
+          "washing"
+        ]
+      }
+    ],
+    "translation_ko": "한 남자가 창문을 닦고 있어요.",
+    "tmp_id": "L1-0035"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'putting on'은 입거나 신는 중이라는 뜻이에요. 신발을 막 신고 있는 동작을 잘 나타낸 사진을 고르세요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "A girl is putting on her shoes.",
+    "choice_image_prompts": [
+      "A girl putting a hat on her head",
+      "A girl taking off her shoes",
+      "A girl putting on her sneakers",
+      "A girl putting on colorful socks"
+    ],
+    "status": "draft",
+    "evidence": "putting on her shoes",
+    "why_not": {
+      "0": "머리에 모자를 쓰고 있는 사진이에요",
+      "1": "신고 있던 신발을 벗고 있는 사진이에요",
+      "3": "신발이 아니라 양말을 신는 사진이에요"
+    },
+    "key_expr": {
+      "en": "put on shoes",
+      "ko": "신발을 신다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "M.opposite",
+      "3": "M.swap"
+    },
+    "choice_image_queries": [
+      {
+        "q": "girl putting hat on head",
+        "need": [
+          "hat"
+        ],
+        "prefer": [
+          "head"
+        ],
+        "avoid": [
+          "shoes"
+        ]
+      },
+      {
+        "q": "girl taking off shoes",
+        "need": [
+          "shoes",
+          "taking off"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": [
+          "putting on"
+        ]
+      },
+      {
+        "q": "girl putting on sneakers",
+        "need": [
+          "shoes",
+          "putting on"
+        ],
+        "prefer": [
+          "sneakers"
+        ],
+        "avoid": [
+          "hat"
+        ]
+      },
+      {
+        "q": "girl putting on socks",
+        "need": [
+          "socks"
+        ],
+        "prefer": [
+          "putting on"
+        ],
+        "avoid": [
+          "shoes"
+        ]
+      }
+    ],
+    "translation_ko": "한 소녀가 신발을 신고 있어요.",
+    "tmp_id": "L1-0036"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'cutting vegetables'는 채소를 썬다는 뜻이에요. 칼로 도마 위에서 채소를 자르고 있는 요리사 사진을 찾으면 돼요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.work",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "A chef is cutting vegetables on the board.",
+    "choice_image_prompts": [
+      "A chef stirring hot soup in a large pot",
+      "A chef cutting fresh vegetables with a knife on a wooden board",
+      "A chef carrying a delicious plate of food",
+      "A chef washing apples under running water"
+    ],
+    "status": "draft",
+    "evidence": "cutting vegetables on the board",
+    "why_not": {
+      "0": "냄비에 든 뜨거운 수프를 젓고 있는 사진이에요",
+      "2": "완성된 요리 접시를 나르는 사진이에요",
+      "3": "흐르는 물에 과일을 씻고 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "cut vegetables",
+      "ko": "채소를 썰다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "chef stirring soup pot",
+        "need": [
+          "chef",
+          "stirring"
+        ],
+        "prefer": [
+          "soup"
+        ],
+        "avoid": [
+          "cutting"
+        ]
+      },
+      {
+        "q": "chef cutting vegetables board",
+        "need": [
+          "chef",
+          "cutting",
+          "vegetables"
+        ],
+        "prefer": [
+          "board"
+        ],
+        "avoid": [
+          "stirring"
+        ]
+      },
+      {
+        "q": "chef carrying plate food",
+        "need": [
+          "chef",
+          "carrying"
+        ],
+        "prefer": [
+          "plate"
+        ],
+        "avoid": [
+          "cutting"
+        ]
+      },
+      {
+        "q": "chef washing fruits sink",
+        "need": [
+          "chef",
+          "washing"
+        ],
+        "prefer": [
+          "fruits"
+        ],
+        "avoid": [
+          "cutting"
+        ]
+      }
+    ],
+    "translation_ko": "요리사가 도마 위에서 채소를 썰고 있어요.",
+    "tmp_id": "L1-0037"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'setting up a tent'는 텐트를 친다는 뜻이에요. 밖에서 텐트 기둥을 세우며 텐트를 조립하는 모습이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Two friends are setting up a tent.",
+    "choice_image_prompts": [
+      "Two friends sleeping peacefully inside a tent",
+      "Two friends building a warm campfire in the woods",
+      "Two friends setting up a camping tent with poles",
+      "Two friends walking in the forest with heavy backpacks"
+    ],
+    "status": "draft",
+    "evidence": "setting up a tent",
+    "why_not": {
+      "0": "텐트 안에서 잠을 자고 있는 사진이에요",
+      "1": "장작으로 모닥불을 피우는 사진이에요",
+      "3": "무거운 배낭을 메고 숲을 걷는 사진이에요"
+    },
+    "key_expr": {
+      "en": "set up a tent",
+      "ko": "텐트를 치다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "friends sleeping inside tent",
+        "need": [
+          "sleeping"
+        ],
+        "prefer": [
+          "tent"
+        ],
+        "avoid": [
+          "setting up"
+        ]
+      },
+      {
+        "q": "friends building campfire woods",
+        "need": [
+          "campfire"
+        ],
+        "prefer": [
+          "friends"
+        ],
+        "avoid": [
+          "tent"
+        ]
+      },
+      {
+        "q": "friends setting up tent camping",
+        "need": [
+          "setting up",
+          "tent"
+        ],
+        "prefer": [
+          "friends"
+        ],
+        "avoid": [
+          "sleeping"
+        ]
+      },
+      {
+        "q": "friends walking with backpacks",
+        "need": [
+          "walking",
+          "backpack"
+        ],
+        "prefer": [
+          "forest"
+        ],
+        "avoid": [
+          "tent"
+        ]
+      }
+    ],
+    "translation_ko": "두 친구가 텐트를 치고 있어요.",
+    "tmp_id": "L1-0038"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'throwing a ball'은 공을 던진다는 뜻이에요. 소년이 강아지에게 공을 던져주는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "A boy is throwing a ball to his dog.",
+    "choice_image_prompts": [
+      "A dog sleeping on the green grass",
+      "A boy throwing a tennis ball to a dog in a park",
+      "A boy holding a frisbee with his dog",
+      "A boy riding a bicycle in a park"
+    ],
+    "status": "draft",
+    "evidence": "throwing a ball",
+    "why_not": {
+      "0": "강아지가 풀밭에서 자고 있어요",
+      "2": "공이 아니라 원반을 들고 있어요",
+      "3": "아이가 공원에서 자전거를 타고 있어요"
+    },
+    "key_expr": {
+      "en": "throw a ball",
+      "ko": "공을 던지다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "dog sleeping grass",
+        "need": [
+          "dog"
+        ],
+        "prefer": [
+          "sleeping"
+        ],
+        "avoid": [
+          "ball"
+        ]
+      },
+      {
+        "q": "boy throwing ball dog",
+        "need": [
+          "boy",
+          "ball",
+          "dog"
+        ],
+        "prefer": [
+          "throwing"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "boy holding frisbee dog",
+        "need": [
+          "boy",
+          "frisbee",
+          "dog"
+        ],
+        "prefer": [],
+        "avoid": [
+          "ball"
+        ]
+      },
+      {
+        "q": "boy riding bicycle park",
+        "need": [
+          "boy",
+          "bicycle"
+        ],
+        "prefer": [
+          "park"
+        ],
+        "avoid": [
+          "dog",
+          "ball"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "2": "A.echo",
+      "3": "P.other"
+    },
+    "translation_ko": "한 소년이 강아지에게 공을 던지고 있어요.",
+    "tmp_id": "L1-0039"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'putting a book'은 책을 넣는다는 뜻이에요. 가방 안에 책을 넣는 모습이 정답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "A girl is putting a book into her backpack.",
+    "choice_image_prompts": [
+      "A girl sitting on a chair and reading a book",
+      "A girl walking on the street wearing a backpack",
+      "A girl putting a textbook into her open backpack",
+      "A girl writing in a notebook with a pencil"
+    ],
+    "status": "draft",
+    "evidence": "putting a book",
+    "why_not": {
+      "0": "의자에 앉아서 책을 읽고 있어요",
+      "1": "가방을 메고 길을 걷고 있어요",
+      "3": "공책에 연필로 글씨를 쓰고 있어요"
+    },
+    "key_expr": {
+      "en": "put into",
+      "ko": "~안에 넣다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "girl reading book",
+        "need": [
+          "girl",
+          "book"
+        ],
+        "prefer": [
+          "reading"
+        ],
+        "avoid": [
+          "backpack"
+        ]
+      },
+      {
+        "q": "girl walking backpack",
+        "need": [
+          "girl",
+          "backpack"
+        ],
+        "prefer": [
+          "walking"
+        ],
+        "avoid": [
+          "putting",
+          "book"
+        ]
+      },
+      {
+        "q": "girl putting book into backpack",
+        "need": [
+          "girl",
+          "book",
+          "backpack"
+        ],
+        "prefer": [
+          "putting"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "girl writing in notebook",
+        "need": [
+          "girl",
+          "notebook",
+          "writing"
+        ],
+        "prefer": [],
+        "avoid": [
+          "backpack"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "한 소녀가 가방에 책을 넣고 있어요.",
+    "tmp_id": "L1-0040"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'wiping the table'은 탁자를 닦는다는 뜻이에요. 천으로 탁자를 닦는 사진을 고르세요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "A man is wiping the table with a cloth.",
+    "choice_image_prompts": [
+      "A man wiping a wooden table with a white cloth",
+      "A man sitting on a chair resting",
+      "Delicious food is placed on a table",
+      "A man sweeping the floor with a broom"
+    ],
+    "status": "draft",
+    "evidence": "wiping the table",
+    "why_not": {
+      "1": "남자가 의자에 앉아서 쉬고 있어요",
+      "2": "탁자 위에 요리가 놓여 있어요",
+      "3": "남자가 빗자루로 바닥을 쓸고 있어요"
+    },
+    "key_expr": {
+      "en": "wipe the table",
+      "ko": "탁자를 닦다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man wiping table cloth",
+        "need": [
+          "man",
+          "table",
+          "cloth"
+        ],
+        "prefer": [
+          "wiping"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "man sitting on chair",
+        "need": [
+          "man",
+          "chair"
+        ],
+        "prefer": [
+          "sitting"
+        ],
+        "avoid": [
+          "wiping"
+        ]
+      },
+      {
+        "q": "food on table",
+        "need": [
+          "food",
+          "table"
+        ],
+        "prefer": [],
+        "avoid": [
+          "wiping",
+          "man"
+        ]
+      },
+      {
+        "q": "man sweeping floor broom",
+        "need": [
+          "man",
+          "broom",
+          "floor"
+        ],
+        "prefer": [
+          "sweeping"
+        ],
+        "avoid": [
+          "table"
+        ]
+      }
+    ],
+    "miss_type": {
+      "1": "P.other",
+      "2": "A.echo",
+      "3": "W.meaning"
+    },
+    "translation_ko": "한 남자가 천으로 탁자를 닦고 있어요.",
+    "tmp_id": "L1-0041"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'opening the window'는 창문을 연다는 뜻이에요. 여자가 창문을 여는 모습이 정답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "A woman is opening the window.",
+    "choice_image_prompts": [
+      "A woman looking out the window silently",
+      "A woman opening a wooden door",
+      "A woman closing the curtains on a window",
+      "A woman opening a glass window"
+    ],
+    "status": "draft",
+    "evidence": "opening the window",
+    "why_not": {
+      "0": "창문 밖을 가만히 내다보고 있어요",
+      "1": "여자가 창문이 아니라 문을 열고 있어요",
+      "2": "창문에 커튼을 치고 있어요"
+    },
+    "key_expr": {
+      "en": "open the window",
+      "ko": "창문을 열다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman looking out window",
+        "need": [
+          "woman",
+          "window"
+        ],
+        "prefer": [
+          "looking"
+        ],
+        "avoid": [
+          "opening"
+        ]
+      },
+      {
+        "q": "woman opening door",
+        "need": [
+          "woman",
+          "door"
+        ],
+        "prefer": [
+          "opening"
+        ],
+        "avoid": [
+          "window"
+        ]
+      },
+      {
+        "q": "woman closing curtains",
+        "need": [
+          "woman",
+          "curtains"
+        ],
+        "prefer": [
+          "closing"
+        ],
+        "avoid": [
+          "opening"
+        ]
+      },
+      {
+        "q": "woman opening window",
+        "need": [
+          "woman",
+          "window"
+        ],
+        "prefer": [
+          "opening"
+        ],
+        "avoid": []
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "M.swap",
+      "2": "P.other"
+    },
+    "translation_ko": "한 여자가 창문을 열고 있어요.",
+    "tmp_id": "L1-0042"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'riding on a seesaw'는 시소를 탄다는 뜻이에요. 놀이터에서 시소를 타는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Two children are riding on a seesaw.",
+    "choice_image_prompts": [
+      "Two children swinging on swings in a playground",
+      "Two children happily riding on a seesaw together",
+      "Two children sliding down a slide in a park",
+      "Two children sitting and talking on a park bench"
+    ],
+    "status": "draft",
+    "evidence": "riding on a seesaw",
+    "why_not": {
+      "0": "놀이터에서 그네를 타고 있어요",
+      "2": "미끄럼틀을 타고 내려오고 있어요",
+      "3": "벤치에 앉아서 이야기를 나누고 있어요"
+    },
+    "key_expr": {
+      "en": "ride on a seesaw",
+      "ko": "시소를 타다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "children swinging playground",
+        "need": [
+          "children",
+          "swing"
+        ],
+        "prefer": [
+          "playground"
+        ],
+        "avoid": [
+          "seesaw"
+        ]
+      },
+      {
+        "q": "children riding seesaw",
+        "need": [
+          "children",
+          "seesaw"
+        ],
+        "prefer": [
+          "riding"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "children going down slide",
+        "need": [
+          "children",
+          "slide"
+        ],
+        "prefer": [
+          "playing"
+        ],
+        "avoid": [
+          "seesaw"
+        ]
+      },
+      {
+        "q": "children sitting on bench",
+        "need": [
+          "children",
+          "bench"
+        ],
+        "prefer": [
+          "sitting"
+        ],
+        "avoid": [
+          "seesaw"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "두 아이가 시소에 타고 있어요.",
+    "tmp_id": "L1-0043"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'carrying'은 나르다, 들고 가다는 뜻이에요. 큰 상자를 들고 가는 사진을 찾으면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.work"
+    ],
+    "accent": "AU",
+    "tts_script": "A man is carrying a large box.",
+    "choice_image_prompts": [
+      "A man opening a cardboard box to look inside",
+      "A man walking down the street empty-handed",
+      "A man carrying a large cardboard box in his arms",
+      "A man carrying a small briefcase"
+    ],
+    "status": "draft",
+    "evidence": "carrying a large box",
+    "why_not": {
+      "0": "상자를 열어서 안을 보고 있어요",
+      "1": "아무것도 들지 않고 길을 걷고 있어요",
+      "3": "큰 상자가 아니라 작은 가방을 들었어요"
+    },
+    "key_expr": {
+      "en": "carry a box",
+      "ko": "상자를 나르다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man looking inside box",
+        "need": [
+          "man",
+          "box"
+        ],
+        "prefer": [
+          "looking"
+        ],
+        "avoid": [
+          "carrying"
+        ]
+      },
+      {
+        "q": "man walking empty handed",
+        "need": [
+          "man",
+          "walking"
+        ],
+        "prefer": [],
+        "avoid": [
+          "box"
+        ]
+      },
+      {
+        "q": "man carrying large box",
+        "need": [
+          "man",
+          "box"
+        ],
+        "prefer": [
+          "carrying",
+          "large"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "man carrying small bag",
+        "need": [
+          "man",
+          "bag"
+        ],
+        "prefer": [
+          "small"
+        ],
+        "avoid": [
+          "box"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "M.opposite"
+    },
+    "translation_ko": "한 남자가 큰 상자를 나르고 있어요.",
+    "tmp_id": "L1-0044"
   }
 ]

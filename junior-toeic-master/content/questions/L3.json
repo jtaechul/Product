@@ -4570,5 +4570,248 @@
     ],
     "status": "draft",
     "tmp_id": "L3-0056"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Excuse me. Can you help me find a book about space?\nM: Sure. All the science books are on the third floor.\nW: Oh, I see. Do I need to take the stairs?\nM: The elevator is right behind you. It's much faster.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 실례합니다. 우주에 관한 책을 찾는 것 좀 도와주시겠어요?\n남: 물론이죠. 모든 과학 책은 3층에 있습니다.\n여: 아, 그렇군요. 계단을 이용해야 하나요?\n남: 엘리베이터가 바로 뒤에 있어요. 그게 훨씬 더 빠릅니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the woman mainly asking about?",
+        "choices": [
+          "A toy car",
+          "A math book",
+          "A book about space",
+          "A computer game"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "여자는 우주에 관한 책을 찾는 것을 도와달라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.shopping"
+        ],
+        "evidence": "find a book about space",
+        "why_not": {
+          "0": "장난감 이야기는 나오지 않았어요",
+          "1": "수학 책이 아니라 과학 책이에요",
+          "3": "컴퓨터 게임은 묻지 않았어요"
+        },
+        "key_expr": {
+          "en": "about space",
+          "ko": "우주에 관한"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does the man suggest the woman do?",
+        "choices": [
+          "Leave the store",
+          "Use the elevator",
+          "Read a science book here",
+          "Ask another person"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "남자는 엘리베이터가 계단보다 훨씬 빠르다며 타라고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "The elevator is right behind you. It's much faster.",
+        "why_not": {
+          "0": "가게를 나가라는 말은 없었어요",
+          "2": "여기서 책을 읽으라는 말은 안 했어요",
+          "3": "다른 사람에게 물어보라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "much faster",
+          "ko": "훨씬 더 빠른"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0057"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Hello. I bought these running shoes yesterday, but they are too tight.\nW: I'm sorry about that. Do you have the receipt with you?\nM: Yes, here it is. Can I get a bigger size in the same color?\nW: Let me check the computer. Yes, we have them in the back room.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 안녕하세요. 어제 이 러닝화를 샀는데, 너무 꽉 끼어요.\n여: 죄송합니다. 영수증을 가지고 계신가요?\n남: 네, 여기 있습니다. 같은 색상으로 더 큰 사이즈를 받을 수 있나요?\n여: 컴퓨터를 확인해 볼게요. 네, 뒤쪽 창고에 있습니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why is the man at the shop?",
+        "choices": [
+          "To get a bigger size",
+          "To buy a computer",
+          "To return a receipt",
+          "To meet a friend"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "남자는 어제 산 러닝화가 너무 꽉 껴서 더 큰 사이즈로 바꾸러 왔어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.shopping"
+        ],
+        "evidence": "Can I get a bigger size in the same color?",
+        "why_not": {
+          "1": "컴퓨터는 여자가 확인하려고 쓰는 거예요",
+          "2": "영수증을 돌려주러 온 게 아니에요",
+          "3": "친구를 만난다는 말은 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "bigger size",
+          "ko": "더 큰 사이즈"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does the woman ask for?",
+        "choices": [
+          "The running shoes",
+          "A different color",
+          "A computer password",
+          "The receipt"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "여자는 남자에게 영수증을 가지고 있는지 물어봤어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.shopping"
+        ],
+        "evidence": "Do you have the receipt with you?",
+        "why_not": {
+          "0": "신발을 달라는 게 아니라 영수증을 찾았어요",
+          "1": "다른 색깔을 달라고 하지는 않았어요",
+          "2": "비밀번호 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "the receipt",
+          "ko": "영수증"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0058"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Hi, I'm here to ask about the volunteer program at the library.\nM: Great! We always need help putting books on the shelves.\nW: That sounds perfect. How many hours do I need to work?\nM: Usually two hours a week. Please fill out this paper first.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 안녕하세요, 도서관 자원봉사 프로그램에 대해 물어보려고 왔어요.\n남: 잘됐네요! 저희는 책을 선반에 정리할 일손이 항상 필요하거든요.\n여: 딱 좋네요. 일주일에 몇 시간 일해야 하나요?\n남: 보통 일주일에 두 시간이에요. 먼저 이 종이를 작성해 주세요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What are the speakers mainly talking about?",
+        "choices": [
+          "Reading a comic book",
+          "A volunteer program",
+          "Buying some bookshelves",
+          "A library tour"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여자가 도서관 자원봉사 프로그램에 대해 물어보러 왔다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "ask about the volunteer program at the library",
+        "why_not": {
+          "0": "만화책 이야기는 없었어요",
+          "2": "책장을 산다는 말은 나오지 않았어요",
+          "3": "도서관 견학 이야기가 아니에요"
+        },
+        "key_expr": {
+          "en": "volunteer program",
+          "ko": "자원봉사 프로그램"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does the man want the woman to do first?",
+        "choices": [
+          "Read some books",
+          "Come back tomorrow",
+          "Fill out a paper",
+          "Clean the room"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "남자가 여자에게 먼저 종이를 작성해 달라고 부탁했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "Please fill out this paper first.",
+        "why_not": {
+          "0": "책을 읽으라는 말은 안 했어요",
+          "1": "내일 다시 오라는 말은 없었어요",
+          "3": "방을 청소하라는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "fill out",
+          "ko": "작성하다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0059"
   }
 ]
