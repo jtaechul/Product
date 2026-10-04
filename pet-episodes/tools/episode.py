@@ -116,7 +116,28 @@ def _pick_model(key, prefs):
     return next((m for m in prefs if m in _model_cache["names"]), prefs[-1])
 
 
+_STOP_AT = [0.0]
+
+
+def _check_stop():
+    """중단 스위치(사용자 지시 2026-10: 멈춰야 할 제작은 무조건 멈출 것 — GitHub 취소 권한이 없어 대신 씀).
+    브랜치의 pet-episodes/stop.json {"stop": ["<편 이름>" 또는 "all"]}을 돈 드는 호출 직전마다(20초에 한 번) 읽어 있으면 즉시 멈춘다."""
+    br, ep = os.environ.get("GITHUB_REF_NAME", ""), os.environ.get("PET_EP", "")
+    if not br or time.time() - _STOP_AT[0] < 20:
+        return
+    _STOP_AT[0] = time.time()
+    try:
+        subprocess.run(["git", "fetch", "-q", "origin", br], capture_output=True, timeout=30)
+        r = subprocess.run(["git", "show", f"origin/{br}:pet-episodes/stop.json"], capture_output=True, text=True, timeout=15)
+        stop = json.loads(r.stdout).get("stop", []) if r.returncode == 0 else []
+    except Exception:  # noqa: BLE001
+        return
+    if "all" in stop or (ep and ep in stop):
+        raise RuntimeError("중단 스위치로 멈췄습니다(pet-episodes/stop.json)")
+
+
 def gen_image(prompt: str, refs: list[Path], out: Path, aspect="9:16", size: str = "") -> dict:
+    _check_stop()
     key = _key("GEMINI_API_KEY")
     model = _pick_model(key, IMAGE_MODELS)
     parts = [{"inline_data": _b64img(r)} for r in refs] + [{"text": prompt}]
@@ -1565,6 +1586,7 @@ DANCE_TEXT = ("DURATION: 5 seconds. Image 1 is the first frame. The Shiba Inu do
 
 
 def _omni_run(key, body) -> bytes:
+    _check_stop()
     hdr = {"x-goog-api-key": key, "Content-Type": "application/json"}
     t0 = time.time()
     st, raw = _http(f"{API}/interactions", json.dumps(body).encode(), hdr, timeout=900)
@@ -2131,6 +2153,7 @@ REMAKE_END_PROMPT = ("DURATION: 4 seconds. Image 1 is the first frame. {ending} 
 
 def _remake_spend(res: dict, usd: float, what: str, cap: float):
     """돈이 드는 호출 직전에 부른다. 한도를 넘으면 그 호출을 하지 않고 멈춘다(사용자 확정: 편당 5달러)."""
+    _check_stop()
     spent = float(res.get("spent", 0))
     if spent + usd > cap + 1e-6:
         raise RuntimeError(f"비용 한도 ${cap:.0f}를 넘게 돼 멈췄습니다(지금까지 약 ${spent:.2f}, 다음 '{what}' 약 ${usd:.2f})")
@@ -2775,6 +2798,7 @@ def main(path: str) -> int:
     rp = Path(path)
     req = json.loads(rp.read_text(encoding="utf-8"))
     epdir = rp.parent.parent
+    os.environ["PET_EP"] = epdir.name                    # 중단 스위치가 이 편을 알아보게
     epf = epdir / "episode.json"
     ep = json.loads(epf.read_text(encoding="utf-8")) if epf.exists() else {"clips": []}
     ep["_bgm_mix"] = bool(req.get("bgm_mix"))                # 기본: 배경음악 없이(릴스 번역용)
