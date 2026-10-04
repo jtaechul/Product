@@ -2089,8 +2089,8 @@ REMAKE_END_START = ("Image 1 is the last frame of the previous shot: keep exactl
                     "(same shape, colours and label layout). Front legs are furry Shiba legs with paws - no human hands, fingers or "
                     "skin anywhere. No other added text, no people.")
 REMAKE_END_PROMPT = ("DURATION: 4 seconds. Image 1 is the first frame. {ending} The product stays where it is and never changes "
-                     "shape or label. Same place and lighting, camera almost fixed. Photorealistic. Furry dog legs and paws only - "
-                     "no human hands, fingers or skin. No added text.")
+                     "shape or label. Same place and lighting, camera almost fixed. Photorealistic. Thick, fully furry dog legs "
+                     "and paws only. No added text.")
 
 
 def _remake_spend(res: dict, usd: float, what: str, cap: float):
@@ -2197,7 +2197,17 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
         body = {"model": CLIP_MODEL, "input": [vid, *inputs, {"type": "text", "text": prompt}],
                 "response_format": {"type": "video", "resolution": REMAKE_RES},
                 "generation_config": {"video_config": {"task": "edit"}}}
-        rawo.write_bytes(_omni_run(key, body))
+        try:
+            rawo.write_bytes(_omni_run(key, body))
+        except RuntimeError as e:
+            # 막힌 요청(400)은 요금이 나가지 않는다 → 장부에서 되돌리고, 앞서 만든 것이 있으면 그걸 쓴다(2026-10 사고: 다시 만들기 문장이 차단돼 첫 결과까지 잃음)
+            if "HTTP 400" in str(e):
+                res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
+                res.setdefault("ledger", []).append({"what": f"구간{i + 1} 차단됨(요금 없음)", "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
+            if tries:
+                res.setdefault("notes", []).append(f"구간{i + 1} 다시 만들기 실패 → 첫 결과 사용: {str(e)[:120]}")
+                break
+            raise
         _remake_spend(res, REMAKE_COST["check"] * 4, f"구간{i + 1} 검사", cap)
         chk = _human_parts(rawo, work)
         sheet = work / f"_rm_q{i + 1}.jpg"
@@ -2210,12 +2220,10 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
         good = chk.get("human") is False and (score is None or score >= REMAKE_QPASS)
         if good or float(res.get("spent", 0)) + REMAKE_COST["omni_sec"] * seg > cap - 0.8:   # 끝 장면 몫은 남겨 둔다
             break
-        fix = []
-        if chk.get("human") is not False:
-            fix.append("only furry dog paws, never a human hand, finger or bare skin")
-        if score is not None and score < REMAKE_QPASS and tries[-1][3]:
-            fix.append("fix these compositing problems: " + str(tries[-1][3])[:200])
-        prompt = prompt + " Double-check every frame: " + "; ".join(fix) + "."
+        # ⛔ 다시 만들기 문장에 사람 몸 낱말(hand·finger·skin·human 등)을 넣지 않는다 — 구글이 민감 단어로 막는다(2026-10 실측).
+        # 채점기가 쓴 문제 설명도 그런 낱말이 섞여 그대로 붙이지 않고, 정해진 중립 문장만 붙인다.
+        prompt = prompt + (" Double-check every frame: every paw is a thick, fully furry dog paw, and the dog's fur blends "
+                           "smoothly into the clothes with natural lighting and no seams.")
     # 사람 손 없는 것 중 합성 점수가 가장 높은 것
     best = sorted(tries, key=lambda t: (t[1].get("human") is False, t[2] or 0), reverse=True)[0]
     got = _dur(best[0])
@@ -2343,7 +2351,14 @@ def step_remake(ep, epdir, work, log, req):
                         "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
                         "generation_config": {"video_config": {"task": "image_to_video"}}}
                 raw = work / f"_rm_end_raw{attempt}.mp4"
-                raw.write_bytes(_omni_run(key, body))
+                try:
+                    raw.write_bytes(_omni_run(key, body))
+                except RuntimeError as e:
+                    if "HTTP 400" in str(e):            # 막힌 요청은 요금 없음
+                        res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * 4, 3)
+                    if tries:
+                        break
+                    raise
                 _remake_spend(res, REMAKE_COST["check"] * 3, "끝 장면 사람 손 검사", cap)
                 chk = _human_parts(raw, work)
                 tries.append((raw, chk))
