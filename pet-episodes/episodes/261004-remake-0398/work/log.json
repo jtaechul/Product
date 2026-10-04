@@ -1,0 +1,24 @@
+{
+  "remake": {
+    "lipsync": true,
+    "src_sec": 22.18,
+    "segments": 3,
+    "spent": 0.15,
+    "ledger": [
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
+      }
+    ],
+    "board": {
+      "ok": true,
+      "panels": 6
+    },
+    "est_full": 2.79
+  },
+  "last_request": {
+    "file": "01_remake_board.json",
+    "ran_at": "2026-10-04T11:31:06Z",
+    "ok": true
+  }
+}
