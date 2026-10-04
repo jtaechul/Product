@@ -7087,6 +7087,16 @@ function voCta(vo) {
   return (before ? before + '... ' : '') + '관련 제품 구매는... 프로필 링크에서.';
 }
 
+// 리메이크 문구는 브랜드만 뺀다 — 상품명 속 '관절·영양·이온음료' 같은 보통 낱말까지 지우면 문장이 망가진다(2026-10 실측: "아픈 이 메뉴는")
+function remakeBanned(title) {
+  const words = String(title || '').split(/[\s()\[\],/·+]+/).map(w => w.replace(/[^가-힣A-Za-z]/g, '')).filter(w => w.length >= 2);
+  const out = new Set();
+  const brand = brandOf(title); if (brand) out.add(brand);
+  if (words[0] && !MENU_GENERIC.test(words[0]) && !/^(강아지|반려견|고양이|애견|펫)$/.test(words[0])) out.add(words[0]);   // 맨 앞 낱말은 보통 브랜드
+  for (const w of words) if (/[A-Za-z]{3,}/.test(w)) out.add(w);                                   // 영문 낱말(브랜드 표기)
+  return [...out];
+}
+
 async function handleRemakeCopy(env, body) {
   const a = body.analysis || {}, p = body.product || {};
   if (!p.title) throw new Error('상품을 먼저 골라 주세요.');
@@ -7101,8 +7111,8 @@ async function handleRemakeCopy(env, body) {
 JSON만: {"big":"","sub":"","vo":"","ending":"","hashtags":["#..."]}`;
   const t = await callGeminiText(key, { system: '광고 카피라이터. JSON만 출력.', user: ask, max_tokens: 800, json: true }).catch(e => { throw new Error('문구를 만들지 못했습니다: ' + e.message); });
   const o = extractJson(typeof t === 'string' ? t : (t?.text || ''));
-  const banned = menuBannedWords(p.title);
-  const clean = (s) => noPrice(scrubBanned(String(s || ''), banned)).trim();
+  const banned = remakeBanned(p.title);
+  const clean = (s) => noPrice(scrubBanned(String(s || ''), banned).replace(/이 메뉴/g, '이 제품')).trim();
   return { success: true, copy: { big: clean(o.big), sub: clean(o.sub), vo: voCta(clean(o.vo)), ending: String(o.ending || '').slice(0, 400),
     hashtags: cleanHashtags(o.hashtags, banned) } };
 }
@@ -7161,7 +7171,7 @@ async function handleRemakeCommit(env, body) {
     source: { youtube: v.id ? `https://www.youtube.com/watch?v=${v.id}` : '', title: v.title || '', music: a.music || '' },
     remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), cap: REMAKE_CAP_USD },
     caption: `${String(c.big).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
-    hashtags: cleanHashtags(Array.isArray(c.hashtags) ? c.hashtags : String(c.hashtags || '').split(/\s+/), menuBannedWords(p.title)),
+    hashtags: cleanHashtags(Array.isArray(c.hashtags) ? c.hashtags : String(c.hashtags || '').split(/\s+/), remakeBanned(p.title)),
     product: { title: p.title, brand: p.brand || '', category: p.category || '기타', reason: String(c.sub || '').replace(/\n/g, ' '), link: p.link, image: p.image || '' } };
   const dir = `${EP_ROOT}/${id}`;
   await ghCommit(env, [
