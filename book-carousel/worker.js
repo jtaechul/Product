@@ -4888,6 +4888,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="box-hd"><span class="step">02</span><h2>원본 영상 올리기</h2></div>
     <p class="lead" id="trPicked">위에서 "이걸로 리메이크"를 누르세요. 다른 곳(틱톡·인스타)에서 본 영상도 파일만 있으면 됩니다.</p>
     <div class="f"><label for="trFile">원본 영상 파일 (휴대폰에 저장한 영상, 100MB까지 · 앞 40초까지만 씁니다)</label><input id="trFile" type="file" accept="video/*"></div>
+    <button class="btn btn-2 btn-sm" id="trFileGo" type="button">이 파일로 분석하기 (유튜브 링크 없이)</button>
+    <div class="msg" id="trFMsg"></div>
   </section>
   <section class="box" data-view="trend">
     <div class="box-hd"><span class="step">03</span><h2>홍보할 상품</h2></div>
@@ -5680,6 +5682,36 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       $('trBig').value=r.copy.big; $('trSub').value=r.copy.sub; $('trVo').value=r.copy.vo; $('trEnd').value=r.copy.ending; $('trTags').value=(r.copy.hashtags||[]).join(' '); hide('trCMsg');
     }).catch(function(e){ say('trCMsg','만들지 못했습니다: '+e.message,'no'); });
   });
+  // 원본 올리기(한 번 올린 파일은 다시 올리지 않는다 — 분석·제작 공용)
+  function trUpload(f,msgId){
+    if(tr.up&&tr.up.file===f) return Promise.resolve(tr.up.id);
+    return post('/api/remake/start',{size:f.size}).then(function(s){
+      if(!s||!s.success) throw new Error((s&&s.error)||'시작하지 못했습니다.');
+      var n=0;
+      function next(){
+        if(n>=s.chunks){ tr.up={file:f,id:s.id}; return s.id; }
+        say(msgId,'원본을 올리는 중… '+Math.round(n/s.chunks*100)+'%','wait');
+        return fetch('/api/remake/upload?id='+encodeURIComponent(s.id)+'&n='+n,{method:'POST',body:f.slice(n*s.chunkSize,(n+1)*s.chunkSize)})
+          .then(function(r){return r.json();}).then(function(u){ if(!u||!u.success) throw new Error((u&&u.error)||'올리지 못했습니다.'); n++; return next(); });
+      }
+      return next();
+    });
+  }
+  $('trFileGo').addEventListener('click',function(){
+    var f=$('trFile').files&&$('trFile').files[0];
+    if(!f){ say('trFMsg','먼저 위에서 영상 파일을 골라 주세요.','no'); return; }
+    if(f.size>45*1024*1024){ say('trFMsg','분석은 45MB까지 됩니다. 앞부분만 잘라서 올려 주세요.','no'); return; }
+    $('trFileGo').disabled=true; say('trFMsg','원본을 올리는 중…','wait');
+    trUpload(f,'trFMsg').then(function(id){
+      say('trFMsg','AI가 영상을 보는 중… (30초~1분)','wait');
+      return post('/api/trend/analyze-file',{id:id,title:f.name});
+    }).then(function(x){
+      $('trFileGo').disabled=false;
+      if(!x||!x.success) throw new Error((x&&x.error)||'분석하지 못했습니다.');
+      var a=x.analysis; trPick({id:'',title:f.name},a);
+      say('trFMsg','리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:'')+' · 어울리는 상품은 03단계에 버튼으로 나왔습니다.','ok');
+    }).catch(function(e){ $('trFileGo').disabled=false; say('trFMsg',e.message,'no'); });
+  });
   $('trGo').addEventListener('click',function(){
     var f=$('trFile').files&&$('trFile').files[0];
     if(!tr.analysis){ tr.analysis={meme:'',swap:'',productIdeas:[],remakeScore:0}; tr.video={id:'',title:(f&&f.name)||'직접 올린 영상'}; }
@@ -5689,16 +5721,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(!copy.big||!copy.vo){ say('trGoMsg','04 문구와 내레이션을 채워 주세요.','no'); return; }
     if(!confirm('스토리보드 그림을 만듭니다(약 0.16달러, 5~10분). 시작할까요?')) return;
     $('trGo').disabled=true; say('trGoMsg','원본을 올리는 중…','wait');
-    post('/api/remake/start',{size:f.size}).then(function(s){
-      if(!s||!s.success) throw new Error((s&&s.error)||'시작하지 못했습니다.');
-      var n=0;
-      function next(){
-        if(n>=s.chunks) return post('/api/remake/commit',{id:s.id,video:tr.video,analysis:tr.analysis,product:tr.product,copy:copy});
-        say('trGoMsg','원본을 올리는 중… '+Math.round(n/s.chunks*100)+'%','wait');
-        return fetch('/api/remake/upload?id='+encodeURIComponent(s.id)+'&n='+n,{method:'POST',body:f.slice(n*s.chunkSize,(n+1)*s.chunkSize)})
-          .then(function(r){return r.json();}).then(function(u){ if(!u||!u.success) throw new Error((u&&u.error)||'올리지 못했습니다.'); n++; return next(); });
-      }
-      return next();
+    trUpload(f,'trGoMsg').then(function(id){
+      return post('/api/remake/commit',{id:id,video:tr.video,analysis:tr.analysis,product:tr.product,copy:copy});
     }).then(function(c){
       $('trGo').disabled=false;
       if(!c||!c.success) throw new Error((c&&c.error)||'시작하지 못했습니다.');
@@ -7076,6 +7100,60 @@ async function handleTrendAnalyze(env, body) {
   throw new Error('영상을 분석하지 못했습니다: ' + last);
 }
 
+// 사장님이 올린 파일만으로 분석(사용자 요청 2026-10: 유튜브 링크 없이도). 올린 조각을 모아 Gemini 파일 저장소에 올리고 영상을 보게 한다.
+async function handleTrendAnalyzeFile(env, body) {
+  const id = String(body.id || '');
+  const meta = EP_ID_RE.test(id) ? await env.PENDING_POSTS.get('remake_meta:' + id, 'json').catch(() => null) : null;
+  if (!meta) throw new Error('올린 영상 정보가 없습니다. 다시 올려 주세요.');
+  if (meta.size > 45 * 1024 * 1024) throw new Error('분석은 45MB까지 됩니다. 앞부분만 잘라서 올려 주세요.');
+  const ck = 'trend_an_file:' + id;
+  const cached = await env.PENDING_POSTS.get(ck, 'json').catch(() => null);
+  if (cached) return { success: true, analysis: cached, cached: true };
+  const parts = [];
+  for (let n = 0; n < meta.chunks; n++) {
+    const b = await env.PENDING_POSTS.get(`remake_src:${id}:${n}`, 'arrayBuffer');
+    if (!b) throw new Error(`올린 영상 ${n + 1}번째 조각이 없습니다. 다시 올려 주세요.`);
+    parts.push(new Uint8Array(b));
+  }
+  const blob = new Blob(parts, { type: 'video/mp4' });
+  const key = await getGeminiKey(env);
+  const G = 'https://generativelanguage.googleapis.com';
+  const st = await fetch(`${G}/upload/v1beta/files?key=${key}`, { method: 'POST', headers: {
+    'X-Goog-Upload-Protocol': 'resumable', 'X-Goog-Upload-Command': 'start', 'X-Goog-Upload-Header-Content-Length': String(blob.size),
+    'X-Goog-Upload-Header-Content-Type': 'video/mp4', 'Content-Type': 'application/json' }, body: JSON.stringify({ file: { display_name: id } }) });
+  const up = st.headers.get('x-goog-upload-url');
+  if (!up) throw new Error(`영상을 AI에 올리지 못했습니다(${st.status}).`);
+  const fr = await fetch(up, { method: 'POST', headers: { 'X-Goog-Upload-Offset': '0', 'X-Goog-Upload-Command': 'upload, finalize' }, body: blob });
+  const fj = await fr.json().catch(() => ({}));
+  let file = fj.file;
+  if (!file?.uri) throw new Error(`영상을 AI에 올리지 못했습니다(${fr.status}).`);
+  for (let i = 0; i < 25 && file.state !== 'ACTIVE'; i++) {      // 영상 준비(보통 10~30초)
+    if (file.state === 'FAILED') throw new Error('AI가 영상을 읽지 못했습니다. 다른 형식(mp4)으로 올려 주세요.');
+    await new Promise(r => setTimeout(r, 2500));
+    file = await (await fetch(`${G}/v1beta/${file.name}?key=${key}`)).json().catch(() => file);
+  }
+  if (file.state !== 'ACTIVE') throw new Error('AI가 영상을 준비하는 데 너무 오래 걸립니다. 잠시 뒤 다시 눌러 주세요.');
+  let last = '';
+  for (const model of ['gemini-flash-latest', 'gemini-pro-latest']) {
+    const r = await fetch(`${G}/v1beta/models/${model}:generateContent?key=${key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ file_data: { mime_type: 'video/mp4', file_uri: file.uri } }, { text: TREND_ASK(String(body.title || '')) }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 3000, responseMimeType: 'application/json' } }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { last = d?.error?.message || ('HTTP ' + r.status); continue; }
+    try {
+      const o = extractJson((d?.candidates?.[0]?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join(''));
+      const a = { meme: String(o.meme || ''), music: String(o.music || ''), moves: String(o.moves || ''), why: String(o.why || ''), risk: String(o.risk || ''),
+        remakeScore: Math.max(0, Math.min(100, Math.round(Number(o.remakeScore) || 0))), swap: String(o.swap || '').slice(0, 900),
+        productIdeas: (Array.isArray(o.productIdeas) ? o.productIdeas : []).slice(0, 4).map(p => ({ keyword: String(p.keyword || ''), why: String(p.why || '') })).filter(p => p.keyword),
+        at: new Date().toISOString() };
+      await env.PENDING_POSTS.put(ck, JSON.stringify(a), { expirationTtl: REMAKE_TTL });
+      fetch(`${G}/v1beta/${file.name}?key=${key}`, { method: 'DELETE' }).catch(() => {});   // 남의 영상은 AI 저장소에도 남기지 않는다
+      return { success: true, analysis: a };
+    } catch (e) { last = e.message; }
+  }
+  throw new Error('영상을 분석하지 못했습니다: ' + last);
+}
+
 // 상품을 고르면 광고 문구·내레이션·끝 장면을 쓴다. 사장님이 그대로 고칠 수 있다(임의로 빼지 않는다).
 // 내레이션 마지막 구매 안내에 주어를 붙인다(사용자 지시 2026-10: "프로필 링크에서."만 있으면 주어가 없어 어색)
 function voCta(vo) {
@@ -7531,6 +7609,7 @@ export default {
         else if (url.pathname === '/api/episode/request') result = await handleEpisodeRequest(env, body);
         else if (url.pathname === '/api/trend/list') result = await handleTrendList(env, body);
         else if (url.pathname === '/api/trend/analyze') result = await handleTrendAnalyze(env, body);
+        else if (url.pathname === '/api/trend/analyze-file') result = await handleTrendAnalyzeFile(env, body);
         else if (url.pathname === '/api/remake/copy') result = await handleRemakeCopy(env, body);
         else if (url.pathname === '/api/remake/start') result = await handleRemakeStart(env, body);
         else if (url.pathname === '/api/remake/commit') result = await handleRemakeCommit(env, body);

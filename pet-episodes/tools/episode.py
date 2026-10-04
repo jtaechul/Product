@@ -2456,10 +2456,10 @@ def step_remake(ep, epdir, work, log, req):
                   f"[src0]{vo_lbl}amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.97[aud]")
         else:
             V += f"{vo_lbl}alimiter=limit=0.97[aud]"
-        # 내레이션은 고르게 눌러 준 뒤 릴스 기준보다 조금 크게(-12 LUFS) 맞춘 파일을 따로 만든다(사용자 지적 2026-10: 성우 목소리가 너무 작음).
+        # 내레이션은 고르게 눌러 준 뒤 영상에서 가장 큰 소리(원본 발차기 등, 실측 약 -12.7 LUFS)보다 크게(-10 LUFS, 최고점 -1) 맞춘 파일을 따로 만든다(사용자 지적 2026-10: 성우 목소리가 너무 작음).
         # ⚠️ 한 그래프 안에서 loudnorm 뒤에 adelay를 걸면 지연이 무시돼 내레이션이 통째로 빠진다(실측) → 파일로 먼저 만든다
         vo_loud = work / "_vo_loud.wav"
-        _ff(["-i", str(vo), "-af", "acompressor=threshold=-22dB:ratio=3:attack=5:release=90:makeup=2,loudnorm=I=-12:TP=-1.2:LRA=7,aresample=48000",
+        _ff(["-i", str(vo), "-af", "acompressor=threshold=-24dB:ratio=3.5:attack=5:release=90:makeup=3,loudnorm=I=-10:TP=-1.0:LRA=6,aresample=48000",
              str(vo_loud)])
         final = work / "final.mp4"
         _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo_loud), *wh_in, *src_in,
