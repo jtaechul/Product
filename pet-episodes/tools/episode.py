@@ -2222,11 +2222,11 @@ def _mask_faces(src: Path, out: Path) -> dict:
     cap = cv2.VideoCapture(str(src))
     fps = cap.get(cv2.CAP_PROP_FPS) or 24.0
     w, h = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    sc = min(1.0, 640.0 / max(w, h))
-    det = cv2.FaceDetectorYN.create(str(FACE_MODEL), "", (int(w * sc), int(h * sc)), 0.5, 0.3, 50)
+    sc = min(1.0, 960.0 / max(w, h))
+    det = cv2.FaceDetectorYN.create(str(FACE_MODEL), "", (int(w * sc), int(h * sc)), 0.35, 0.3, 50)
     tmp = out.with_suffix(".raw.mp4")
     vw = cv2.VideoWriter(str(tmp), cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
-    hold, frames, hit = [], 0, 0
+    hold, frames, hit, most = [], 0, 0, 0
     while True:
         ok, fr = cap.read()
         if not ok:
@@ -2238,7 +2238,11 @@ def _mask_faces(src: Path, out: Path) -> dict:
             x, y, bw, bh = (float(v) / sc for v in f[:4])
             now.append((x - bw * 0.6, y - bh * 0.75, bw * 2.2, bh * 2.1))   # 머리카락·귀까지
         hit += bool(now)
-        hold = [(b, 0) for b in now] + [(b, a + 1) for b, a in hold if a < 8 and not now]
+        most = max(most, len(now))
+
+        def _far(b):                                      # 새로 찾은 얼굴과 겹치지 않는 옛 상자는 잠시 더 가린다(한 사람을 놓친 프레임 대비)
+            return all(abs((b[0] + b[2] / 2) - (n[0] + n[2] / 2)) > n[2] * 0.5 for n in now)
+        hold = [(b, 0) for b in now] + [(b, a + 1) for b, a in hold if a < 12 and _far(b)]
         for (x, y, bw, bh), _ in hold:
             x0, y0 = max(0, int(x)), max(0, int(y))
             x1, y1 = min(w, int(x + bw)), min(h, int(y + bh))
@@ -2254,7 +2258,37 @@ def _mask_faces(src: Path, out: Path) -> dict:
         raise RuntimeError(f"얼굴 가리기: 영상을 읽지 못했습니다({src.name})")
     _ff(["-i", str(tmp), "-an", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(out)])
     tmp.unlink(missing_ok=True)
-    return {"frames": frames, "with_face": hit}
+    return {"frames": frames, "with_face": hit, "max_faces": most}
+
+
+def _remake_probe(key, ref: Path, prompt: str, work: Path, res: dict, cap: float) -> list:
+    """어떤 입력 때문에 '실제 인물' 거절이 나는지 1초 조각으로 차례로 시험한다. 결과(통과/거절)만 log에 남긴다(원본·조각은 커밋 안 함)."""
+    raw = work / "_probe.mp4"
+    _ff(["-ss", "0", "-t", "1.0", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "18", str(raw)])
+    masked = work / "_probe_m.mp4"
+    mk = _mask_faces(raw, masked)
+    dog = {"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}
+    board = work / "board_01.jpg"
+    cases = [("가린 영상 + 글", masked, []), ("가린 영상 + 강아지 사진", masked, [dog])]
+    if board.exists():
+        cases.append(("가린 영상 + 강아지 + 스토리보드", masked, [dog, {"type": "image", **_b64img(board)}]))
+    out = [{"mask": mk}]
+    for name, vid, imgs in cases:
+        body = {"model": CLIP_MODEL, "input": [{"type": "video", "mime_type": "video/mp4",
+                                                "data": base64.b64encode(vid.read_bytes()).decode()}, *imgs,
+                                               {"type": "text", "text": prompt}],
+                "response_format": {"type": "video", "resolution": REMAKE_RES},
+                "generation_config": {"video_config": {"task": "edit"}}}
+        _remake_spend(res, REMAKE_COST["omni_sec"] * 1.0, f"원인 찾기: {name}", cap)
+        try:
+            _omni_run(key, body)
+            out.append({"case": name, "ok": True})
+            break                                         # 통과하면 더 보내지 않는다(돈 절약)
+        except RuntimeError as e:
+            if "HTTP 400" in str(e):
+                res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"], 3)
+            out.append({"case": name, "ok": False, "err": str(e)[:160]})
+    return out
 
 
 def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res: dict, cap: float, h: int) -> Path:
@@ -2404,6 +2438,9 @@ def step_remake(ep, epdir, work, log, req):
         res.update({"src_sec": round(L, 2), "segments": n})
         est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * 4
                         + REMAKE_COST["tts"], 2)
+        if mode == "probe":                               # 거절 원인 찾기: 1초짜리로 넣는 것을 바꿔 가며 보낸다(통과하면 1초에 0.1달러)
+            res["probe"] = _remake_probe(key, ref, prompt, work, res, cap)
+            return
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
                 res["board"] = _remake_board(ref, L, n, seg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
