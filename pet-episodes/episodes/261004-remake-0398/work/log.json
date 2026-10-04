@@ -3,22 +3,82 @@
     "lipsync": true,
     "src_sec": 22.18,
     "segments": 3,
-    "spent": 0.15,
+    "spent": 2.377,
     "ledger": [
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 0.739
+      },
+      {
+        "what": "구간2 바꾸기",
+        "usd": 0.739
+      },
+      {
+        "what": "구간3 바꾸기",
+        "usd": 0.739
+      },
+      {
+        "what": "문구 위치 고르기",
+        "usd": 0.01
       }
     ],
     "board": {
       "ok": true,
       "panels": 6
     },
-    "est_full": 2.79
+    "est_full": 2.05,
+    "segs": {
+      "seg1": {
+        "human": null,
+        "where": "",
+        "quality": null,
+        "issues": "",
+        "tries": 1,
+        "res": "360p"
+      },
+      "seg2": {
+        "human": null,
+        "where": "",
+        "quality": null,
+        "issues": "",
+        "tries": 1,
+        "res": "360p"
+      },
+      "seg3": {
+        "human": null,
+        "where": "",
+        "quality": null,
+        "issues": "",
+        "tries": 1,
+        "res": "360p"
+      }
+    },
+    "copy_place": {
+      "place": "top",
+      "why": "The top area contains only background wall and window, whereas the bottom 30% overlaps the dog's paws and the product pa"
+    },
+    "frame": {
+      "mode": "blur_fill",
+      "src": "1138x640",
+      "zoom": 1.0
+    },
+    "full": {
+      "ok": true
+    }
   },
   "last_request": {
-    "file": "01_remake_board.json",
-    "ran_at": "2026-10-04T11:31:06Z",
+    "file": "02_remake_full.json",
+    "ran_at": "2026-10-04T11:36:18Z",
     "ok": true
+  },
+  "cover": "work/cover.jpg",
+  "assemble": {
+    "ok": true,
+    "sec": 27.17,
+    "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
