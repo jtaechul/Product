@@ -106,8 +106,8 @@
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
-    "sec": 27.17,
-    "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
+    "sec": 19.9,
+    "note": "예전 본편 앞 15초 + 광고(사용자 지시, 추가 비용 없음). 본편은 아직 가로 띠(진짜 세로 아님)"
   },
   "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
 }

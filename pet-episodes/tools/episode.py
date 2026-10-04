@@ -2467,6 +2467,9 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     best = (rawo, {}, None, "")
     tries = [best]
     got = _dur(best[0])
+    ow, oh = _wh(best[0])
+    if res.get("vertical") and ow * 16 > oh * 9 * 1.05:   # ⛔ 핵심 규칙: 결과가 세로 9:16이 아니면 이어 붙이지 않고 멈춘다
+        raise RuntimeError(f"영상 AI가 세로가 아닌 {ow}x{oh}로 돌려줬습니다. 세로 9:16이 아니라서 멈췄습니다.")
     if got and got < seg * 0.9:                           # AI가 원본보다 짧게 만들면 늘리지 않는다(입모양·박자가 어긋남)
         raise RuntimeError(f"영상 AI가 {got:.1f}초만 만들었습니다(원본 {seg:.1f}초). 한 번에 만들 수 있는 길이를 넘은 것 같습니다.")
     k = seg / got if got else 1.0                         # 원본 구간과 같은 길이로(박자 유지)
