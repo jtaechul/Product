@@ -89,12 +89,18 @@
           "body"
         ],
         "at": "2026-10-04T11:38:15Z"
+      },
+      {
+        "parts": [
+          "body"
+        ],
+        "at": "2026-10-04T11:40:39Z"
       }
     ]
   },
   "last_request": {
-    "file": "03_remake_full.json",
-    "ran_at": "2026-10-04T11:38:28Z",
+    "file": "04_remake_full.json",
+    "ran_at": "2026-10-04T11:40:49Z",
     "ok": false
   },
   "cover": "work/cover.jpg",
@@ -103,5 +109,5 @@
     "sec": 27.17,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   },
-  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Aspect ratio cannot be set in response format for edit task.\",\"code\":\"invalid_request\"}}"
+  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
 }
