@@ -2077,9 +2077,7 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
         f = work / f"board_{i + 1:02d}.jpg"
         im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
         frames.append(f)
-    _remake_spend(res, REMAKE_COST["check"], "스토리보드 사람 손 검사", cap)
-    chk = _vision_json(work / "board.jpg", HUMAN_CHECK) or {}
-    return {"ok": True, "human": chk.get("human"), "where": chk.get("where", ""), "panels": len(frames)}
+    return {"ok": True, "panels": len(frames)}
 REMAKE_SWAP_DEFAULT = ("1) replace the main person's head with the head of the Shiba Inu from image 1; 2) replace their two hands "
                        "with furry Shiba front paws; 3) replace their two feet with furry Shiba hind paws; 4) replace every other "
                        "person with a real dog of various breeds")
@@ -2190,43 +2188,22 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
         prompt = prompt + REMAKE_BOARD_REF.format(n=len(inputs))
     tries = []
     res_name = REMAKE_RES
-    for attempt in range(2):                               # 사람 손이 보이거나 합성이 어색하면 한도 안에서 한 번만 다시
-        _remake_spend(res, REMAKE_COST["omni_sec"] * seg, f"구간{i + 1} 바꾸기", cap)
-        vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()}
-        rawo = work / f"_rm_raw{i + 1}_{attempt}.mp4"
-        body = {"model": CLIP_MODEL, "input": [vid, *inputs, {"type": "text", "text": prompt}],
-                "response_format": {"type": "video", "resolution": REMAKE_RES},
-                "generation_config": {"video_config": {"task": "edit"}}}
-        try:
-            rawo.write_bytes(_omni_run(key, body))
-        except RuntimeError as e:
-            # 막힌 요청(400)은 요금이 나가지 않는다 → 장부에서 되돌리고, 앞서 만든 것이 있으면 그걸 쓴다(2026-10 사고: 다시 만들기 문장이 차단돼 첫 결과까지 잃음)
-            if "HTTP 400" in str(e):
-                res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
-                res.setdefault("ledger", []).append({"what": f"구간{i + 1} 차단됨(요금 없음)", "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
-            if tries:
-                res.setdefault("notes", []).append(f"구간{i + 1} 다시 만들기 실패 → 첫 결과 사용: {str(e)[:120]}")
-                break
-            raise
-        _remake_spend(res, REMAKE_COST["check"] * 4, f"구간{i + 1} 검사", cap)
-        chk = _human_parts(rawo, work)
-        sheet = work / f"_rm_q{i + 1}.jpg"
-        d = max(1.0, _dur(rawo))
-        _ff(["-i", str(rawo), "-vf", f"fps={8 / d:.3f},scale=480:-2,tile=4x2", "-frames:v", "1", "-q:v", "3", str(sheet)])
-        q = _vision_json(sheet, REMAKE_QUALITY)
-        sheet.unlink(missing_ok=True)
-        score = int(q.get("score", 0) or 0) if q else None
-        tries.append((rawo, chk, score, (q or {}).get("issues", "")))
-        # 사람 손·맨살이 보여도 다시 만들지 않는다(사용자 지시 2026-10: "굳이 수정하지 말고 그냥 진행") — 검사는 기록만, 다시 만들기는 합성 점수로만
-        good = score is None or score >= REMAKE_QPASS
-        if good or float(res.get("spent", 0)) + REMAKE_COST["omni_sec"] * seg > cap - 0.8:   # 끝 장면 몫은 남겨 둔다
-            break
-        # ⛔ 다시 만들기 문장에 사람 몸 낱말(hand·finger·skin·human 등)을 넣지 않는다 — 구글이 민감 단어로 막는다(2026-10 실측).
-        # 채점기가 쓴 문제 설명도 그런 낱말이 섞여 그대로 붙이지 않고, 정해진 중립 문장만 붙인다.
-        prompt = prompt + (" Double-check every frame: every paw is a thick, fully furry dog paw, and the dog's fur blends "
-                           "smoothly into the clothes with natural lighting and no seams.")
-    # 합성 점수가 가장 높은 것(사람 손 여부는 기록만)
-    best = sorted(tries, key=lambda t: (t[2] or 0, t[1].get("human") is False), reverse=True)[0]
+    # ⛔ 구간마다 딱 한 번만 만든다(사용자 지시 2026-10: "다시 만들지 마. 돈 아까워. 70점 아래여도 짠 대로") — 검사·다시 만들기 없음
+    _remake_spend(res, REMAKE_COST["omni_sec"] * seg, f"구간{i + 1} 바꾸기", cap)
+    vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()}
+    rawo = work / f"_rm_raw{i + 1}.mp4"
+    body = {"model": CLIP_MODEL, "input": [vid, *inputs, {"type": "text", "text": prompt}],
+            "response_format": {"type": "video", "resolution": REMAKE_RES},
+            "generation_config": {"video_config": {"task": "edit"}}}
+    try:
+        rawo.write_bytes(_omni_run(key, body))
+    except RuntimeError as e:
+        if "HTTP 400" in str(e):                          # 막힌 요청은 요금 없음 → 장부에서 되돌린다
+            res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
+            res.setdefault("ledger", []).append({"what": f"구간{i + 1} 차단됨(요금 없음)", "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
+        raise
+    best = (rawo, {}, None, "")
+    tries = [best]
     got = _dur(best[0])
     k = seg / got if got else 1.0                         # 원본 구간과 같은 길이로(박자 유지)
     hi = work / f"_rm_hi{i + 1}.mp4"                      # 다음 구간 참고용(커밋 안 함)
@@ -2284,7 +2261,7 @@ def step_remake(ep, epdir, work, log, req):
         seg = L / n
         res.update({"src_sec": round(L, 2), "segments": n})
         est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * 4
-                        + REMAKE_COST["check"] * 4 * n + REMAKE_COST["tts"], 2)
+                        + REMAKE_COST["tts"], 2)
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
                 res["board"] = _remake_board(ref, L, n, seg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
@@ -2308,7 +2285,7 @@ def step_remake(ep, epdir, work, log, req):
             res["test"] = {"ok": True, "human": first.get("human"), "where": first.get("where", ""),
                            "quality": first.get("quality"), "issues": first.get("issues", "")}
         res["est_full"] = round(REMAKE_COST["omni_sec"] * seg * (n - 1) + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * 4
-                                + REMAKE_COST["check"] * 4 * n + REMAKE_COST["tts"], 2)
+                                + REMAKE_COST["tts"], 2)
         if mode != "full":
             return
         # 본편 전체 예상이 한도를 넘으면 시작하지 않는다
@@ -2344,30 +2321,20 @@ def step_remake(ep, epdir, work, log, req):
                 raise RuntimeError(f"끝 장면 그림 실패: {r.get('error')}")
         end_v = work / "rm_end.mp4"
         if not end_v.exists():
-            tries = []
-            for attempt in range(2):
-                _remake_spend(res, REMAKE_COST["omni_sec"] * 4, "끝 장면 영상", cap)
-                body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(start)},
-                                                       {"type": "text", "text": REMAKE_END_PROMPT.format(ending=ending)}],
-                        "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
-                        "generation_config": {"video_config": {"task": "image_to_video"}}}
-                raw = work / f"_rm_end_raw{attempt}.mp4"
-                try:
-                    raw.write_bytes(_omni_run(key, body))
-                except RuntimeError as e:
-                    if "HTTP 400" in str(e):            # 막힌 요청은 요금 없음
-                        res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * 4, 3)
-                    if tries:
-                        break
-                    raise
-                _remake_spend(res, REMAKE_COST["check"] * 3, "끝 장면 사람 손 검사", cap)
-                chk = _human_parts(raw, work)
-                tries.append((raw, chk))
-                if True:                                   # 끝 장면은 한 번만(사람 손이 보여도 다시 만들지 않음 — 사용자 지시 2026-10)
-                    break
-            best = next((t for t in tries if t[1].get("human") is False), tries[-1])
-            res["end_check"] = best[1]
-            _norm(best[0], end_v, H)
+            # 끝 장면도 한 번만(다시 만들기·검사 없음 — 사용자 지시 2026-10)
+            _remake_spend(res, REMAKE_COST["omni_sec"] * 4, "끝 장면 영상", cap)
+            body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(start)},
+                                                   {"type": "text", "text": REMAKE_END_PROMPT.format(ending=ending)}],
+                    "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
+                    "generation_config": {"video_config": {"task": "image_to_video"}}}
+            raw = work / "_rm_end_raw.mp4"
+            try:
+                raw.write_bytes(_omni_run(key, body))
+            except RuntimeError as e:
+                if "HTTP 400" in str(e):
+                    res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * 4, 3)
+                raise
+            _norm(raw, end_v, H)
         # 3) 느끼한 내레이션(Enceladus, 1.3배 — 사용자 확정 2026-10)
         vo = work / "rm_vo.wav"
         if not vo.exists():
