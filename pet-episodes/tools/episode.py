@@ -2209,35 +2209,50 @@ def _has_audio(p: Path) -> bool:
     return "Audio:" in (r.stderr or "")
 
 
-PICK_ASK = ("Watch AND listen to this whole clip ({L:.1f} s). Pick the single most hooking and funniest continuous {T:.0f}-second "
-            "window for a short ad reel: the punchline moment (a hit, surprise, reaction or best line) must be inside it, ideally "
-            "4-7 s after the window start, with 1-2 s of setup before it and a reaction after it. Start and end at a natural pause "
-            "or beat - never in the middle of a word or lyric. Return JSON {{\"start\": seconds, \"end\": seconds, "
-            "\"peak\": seconds, \"why\": \"짧은 한국어 이유\"}}.")
+PICK_ASK = ("Watch AND listen to this whole clip ({L:.1f} s). We must shorten it to at most {T:.0f} seconds for an ad reel while "
+            "KEEPING THE ORIGINAL HOOK STRUCTURE untouched: the original opening hook (its first seconds) stays first and the "
+            "original order of setup -> punchline -> reaction stays the same. Touch as little as possible. Rules: 1) if the "
+            "punchline (the hit, surprise, reaction or best line) ends within the first {T:.0f} s, keep the clip from 0 as one piece; "
+            "2) otherwise keep the opening hook from 0 (2-4 s) and the punchline part with its short setup and reaction as a second "
+            "piece, removing only the middle; at most 2 pieces, total {T:.0f} s or less; 3) cut only at natural pauses or beats, "
+            "never in the middle of a word, lyric or movement. Return JSON {{\"pieces\": [[start, end], ...], \"hook\": \"원본 후킹 "
+            "포인트 한국어 한 줄\", \"why\": \"어떻게 줄였는지 한국어 한 줄\"}}.")
 
 
 def _remake_pick(ref: Path, L: float, T: float, work: Path, res: dict, cap: float, manual=None) -> Path:
-    """원본에서 본편 T초(기본 10초)를 고른다(사용자 확정 2026-10: AI가 가장 웃긴 10초). 고른 구간은 log pick에 고정해 다시 쓴다."""
+    """원본을 본편 T초(기본 10초) 이하로 줄이되 원본의 후킹 구조(처음 후킹·준비→펀치라인→반응 순서)는 그대로 둔다(사용자 확정 2026-10).
+    가능하면 처음부터 한 덩어리, 길면 '처음 후킹 + 펀치라인 부분' 두 덩어리로 가운데만 덜어 낸다. 결과는 log pick에 고정해 다시 쓴다."""
     pk = res.get("pick")
     if manual and len(manual) == 2:
-        pk = {"start": float(manual[0]), "end": float(manual[1]), "why": "사장님이 정한 구간"}
-    elif not pk:
+        pk = {"pieces": [[float(manual[0]), float(manual[1])]], "why": "사장님이 정한 구간"}
+    elif not pk or "pieces" not in pk:
         clip = work / "_pick.mp4"
         _ff(["-i", str(ref), "-vf", "scale=-2:360", "-c:v", "libx264", "-crf", "28", "-c:a", "aac", "-b:a", "64k", str(clip)])
-        _remake_spend(res, REMAKE_COST["check"], "가장 웃긴 10초 고르기", cap)
+        _remake_spend(res, REMAKE_COST["check"], "후킹 살려 10초로 줄이기", cap)
         r = _video_json(clip, PICK_ASK.format(L=L, T=T)) or {}
+        pk = {"pieces": r.get("pieces") or [[0, T]], "hook": str(r.get("hook", ""))[:120], "why": str(r.get("why", ""))[:120]}
+    pieces, total = [], 0.0
+    for p in pk["pieces"][:2]:
         try:
-            a = float(r.get("start", 0))
-        except (TypeError, ValueError):
-            a = 0.0
-        pk = {"start": a, "why": str(r.get("why", ""))[:120], "peak": r.get("peak")}
-    a = min(max(0.0, float(pk["start"])), max(0.0, L - T))
-    b = min(L, a + T) if not manual else min(L, float(pk["end"]))
-    res["pick"] = {**pk, "start": round(a, 2), "end": round(b, 2)}
+            a, b = max(0.0, float(p[0])), min(L, float(p[1]))
+        except (TypeError, ValueError, IndexError):
+            continue
+        b = min(b, a + (T - total))
+        if b - a >= 0.5:
+            pieces.append([round(a, 2), round(b, 2)])
+            total += b - a
+    if not pieces:
+        pieces = [[0.0, round(min(L, T), 2)]]                # 모르면 원본 처음부터(후킹 유지)
+    res["pick"] = {**pk, "pieces": pieces, "start": pieces[0][0], "end": pieces[-1][1], "sec": round(sum(b - a for a, b in pieces), 2)}
     out = work / "_src_pick.mp4"
-    _ff(["-ss", f"{a:.3f}", "-t", f"{b - a:.3f}", "-i", str(ref), "-c:v", "libx264", "-crf", "16", "-c:a", "aac", "-b:a", "160k", str(out)])
+    au = _has_audio(ref)
+    fc = "".join(f"[0:v]trim={a}:{b},setpts=PTS-STARTPTS[v{k}];" + (f"[0:a]atrim={a}:{b},asetpts=PTS-STARTPTS,afade=t=in:d=0.04[a{k}];" if au else "")
+                 for k, (a, b) in enumerate(pieces))
+    n = len(pieces)
+    fc += "".join(f"[v{k}]" + (f"[a{k}]" if au else "") for k in range(n)) + f"concat=n={n}:v=1:a={1 if au else 0}[v]" + ("[a]" if au else "")
+    _ff(["-i", str(ref), "-filter_complex", fc, "-map", "[v]", *(["-map", "[a]", "-c:a", "aac", "-b:a", "160k"] if au else []),
+         "-c:v", "libx264", "-crf", "16", str(out)])
     return out
-
 
 def _remake_cut(ref: Path, cut: str, work: Path, res: dict, cap: float) -> Path:
     """사장님이 적은 '잘라낼 장면'(예: 끝에 기괴하게 웃는 장면)을 AI가 원본에서 찾아 잘라 낸다(사용자 요청 2026-10).

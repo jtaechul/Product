@@ -5737,7 +5737,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     b.appendChild(epEl('div','ep-post-hd','인기 영상 리메이크'));
     if(m.source&&m.source.youtube){ var a=epEl('a','',m.source.title||'원본 보기'); a.href=m.source.youtube; a.target='_blank'; a.rel='noopener'; b.appendChild(a); }
     b.appendChild(epEl('div','ep-sub','지금까지 쓴 비용 약 $'+(Number(m.spent)||0).toFixed(2)+' / 한도 $'+(m.cap||5)+(m.est_full?' · 본편 예상 추가 $'+Number(m.est_full).toFixed(2):'')));
-    if(m.pick) b.appendChild(epEl('div','ep-sub','본편 구간(AI가 고른 가장 웃긴 '+Math.round((m.pick.end||0)-(m.pick.start||0))+'초): 원본 '+Number(m.pick.start||0).toFixed(1)+'~'+Number(m.pick.end||0).toFixed(1)+'초'+(m.pick.why?' · '+m.pick.why:'')+' — 바꾸려면 아래 수정 요청에 "원본 ○~○초로"라고 적어 주세요'));
+    if(m.pick){ var pcs=(m.pick.pieces||[[m.pick.start||0,m.pick.end||0]]).map(function(p){ return Number(p[0]).toFixed(1)+'~'+Number(p[1]).toFixed(1)+'초'; }).join(' + ');
+      b.appendChild(epEl('div','ep-sub','본편(원본 후킹 유지, '+Math.round(m.pick.sec||((m.pick.end||0)-(m.pick.start||0)))+'초): 원본 '+pcs+(m.pick.hook?' · 후킹: '+m.pick.hook:'')+(m.pick.why?' · '+m.pick.why:'')+' — 바꾸려면 아래 수정 요청에 "원본 ○~○초로"라고 적어 주세요')); }
     if(m.board&&m.board.ok){
       b.appendChild(epEl('div','ep-post-lb','스토리보드 (영상에서 뽑은 6장면을 강아지로 바꾼 그림 — 영상은 이 그림을 기준으로 만듭니다)'));
       var bi=document.createElement('img'); bi.alt='스토리보드'; bi.style.width='100%'; bi.style.borderRadius='10px';
