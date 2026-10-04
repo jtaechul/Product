@@ -1,6 +1,6 @@
 {
   "kind": "remake",
-  "menuName": "리메이크 · 병뚜껑 챌린지에 실패해 물건을 전부 차버린 뒤 기괴",
+  "menuName": "리메이크 · 병뚜껑 발차기 챌린지 실패",
   "clips": [],
   "source": {
     "youtube": "https://www.youtube.com/watch?v=juXJSg3Ti40",
@@ -8,12 +8,13 @@
     "music": ""
   },
   "remake": {
-    "swap": "1) replace the kicking person's head with the head of the Shiba Inu from image 1; 2) replace the kicking person's hands and bare feet with furry Shiba paws; 3) replace the reacting person's head with a Shiba Inu head applying the wide-mouth smiling filter",
-    "ending": "The Shiba Inu happily chews and enjoys the treat right in front of the camera, with the package clearly visible.",
+    "swap": "1) replace the kicking person's head with the head of the Shiba Inu from image 1; 2) replace the kicking person's hands and bare feet with furry Shiba paws; 3) replace every other person with a real dog of various breeds",
+    "ending": "Right after the failed kick, the Shiba Inu sits on the floor gently holding its sore hind leg with one front paw, a blue ice pack wrapped around that leg with a soft cloth for a cold compress, looking a little hurt but brave; the product package from image 2 stands clearly visible on the floor right next to it.",
     "big": "웃음만 주던 녀석,\n이제 건강 줄 차례",
     "sub": "관절이 아픈 우리 강아지를 위해\n맛있는 영양으로 꽉 채워주세요",
-    "vo": "그렇게 온 집안을 뒤집어놓고... 이 주인 마음도 뒤집어놓다니... 너란 녀석 정말... 프로필 링크에서.",
-    "cap": 5
+    "vo": "발차기는... 실패했지만... 괜찮아. 아픈 관절엔... 영양을 꽉... 채워줄게. 프로필 링크에서.",
+    "cap": 5,
+    "cut": "발차기에 실패한 뒤 사람이 기괴하게 웃는 필터 얼굴이 나오는 끝부분 장면 전부"
   },
   "caption": "웃음만 주던 녀석, 이제 건강 줄 차례\n\n관절이 아픈 우리 강아지를 위해 맛있는 영양으로 꽉 채워주세요\n\n구매는 프로필 링크에서.",
   "hashtags": [

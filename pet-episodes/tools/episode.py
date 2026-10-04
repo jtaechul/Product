@@ -65,8 +65,11 @@ CHARACTER_PROMPTS = {
 
 
 # ---------- 공용 ----------
+HTTP_UA = "pet-episodes/1.0 (+github-actions)"   # 파이썬 기본 이름표(Python-urllib)는 Cloudflare가 봇으로 막는다(오류 1010, 2026-10 리메이크 원본 403 사고)
+
+
 def _http(url, data=None, headers=None, timeout=300):
-    req = urllib.request.Request(url, data=data, headers=headers or {})
+    req = urllib.request.Request(url, data=data, headers={"User-Agent": HTTP_UA, **(headers or {})})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, r.read()
@@ -2102,10 +2105,11 @@ def _remake_spend(res: dict, usd: float, what: str, cap: float):
 def _remake_src(ep_id: str, work: Path) -> Path:
     import hashlib
     import hmac
-    sig = hmac.new(_key("GEMINI_API_KEY").encode(), f"remake:{ep_id}".encode(), hashlib.sha256).hexdigest()
+    sig = hmac.new(_key("GEMINI_API_KEY").strip().encode(), f"remake:{ep_id}".encode(), hashlib.sha256).hexdigest()
     st, raw = _http(f"{REMAKE_WORKER}/api/remake/src?id={ep_id}&sig={sig}", None, {}, timeout=300)
     if st != 200 or len(raw) < 10000:
-        raise RuntimeError(f"원본 영상을 받지 못했습니다(HTTP {st}). 7일이 지나 지워졌으면 처음부터 다시 올려 주세요.")
+        why = {403: "서버가 받기를 거절함(서명·접속 차단)", 404: "원본이 없음(7일이 지나 지워졌거나 덜 올라감 — 처음부터 다시 올려 주세요)"}.get(st, "")
+        raise RuntimeError(f"원본 영상을 받지 못했습니다(HTTP {st} {why}): {raw[:120].decode('utf-8', 'replace')}")
     src = work / "_src_in.mp4"
     src.write_bytes(raw)
     ref = work / "_src.mp4"                               # 앞 40초, 소리 없이, 세로 720 이하로 정리
@@ -2113,6 +2117,59 @@ def _remake_src(ep_id: str, work: Path) -> Path:
          "-c:v", "libx264", "-crf", "20", str(ref)])
     src.unlink(missing_ok=True)
     return ref
+
+
+CUT_ASK = ("Watch this video. Find the part described here and give its time range in seconds: \"{cut}\". "
+           'JSON only: {{"found": true, "start": 0.0, "end": 0.0, "what": "short English description of what you found"}}. '
+           "If the part continues to the end of the video, set end to the video length. If it is not in the video, found=false.")
+
+
+def _video_json(video: Path, prompt: str) -> dict:
+    key = _key("GEMINI_API_KEY")
+    body = {"contents": [{"role": "user", "parts": [{"inline_data": {"mime_type": "video/mp4",
+                                                                     "data": base64.b64encode(video.read_bytes()).decode()}},
+                                                    {"text": prompt}]}],
+            "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
+    for model in ("gemini-flash-latest", "gemini-pro-latest"):
+        st, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                        {"x-goog-api-key": key, "Content-Type": "application/json"})
+        if st == 200:
+            try:
+                t = "".join(p.get("text", "") for p in json.loads(raw)["candidates"][0]["content"]["parts"])
+                return json.loads(t[t.find("{"):t.rfind("}") + 1])
+            except Exception:  # noqa: BLE001
+                pass
+    return {}
+
+
+def _remake_cut(ref: Path, cut: str, work: Path, res: dict, cap: float) -> Path:
+    """사장님이 적은 '잘라낼 장면'(예: 끝에 기괴하게 웃는 장면)을 AI가 원본에서 찾아 잘라 낸다(사용자 요청 2026-10).
+    찾은 시각은 log에 남겨 다음 실행에도 같은 자리를 자른다(AI가 매번 다르게 답해 구간이 어긋나지 않게)."""
+    L = _dur(ref)
+    c = res.get("cut")
+    if not (c and c.get("text") == cut):
+        small = work / "_cut_small.mp4"
+        _ff(["-i", str(ref), "-vf", "scale=-2:360,fps=8", "-an", "-c:v", "libx264", "-crf", "30", str(small)])
+        _remake_spend(res, REMAKE_COST["check"], "잘라낼 장면 찾기", cap)
+        r = _video_json(small, CUT_ASK.format(cut=cut))
+        small.unlink(missing_ok=True)
+        c = {"text": cut, "found": bool(r.get("found")), "start": float(r.get("start") or 0), "end": float(r.get("end") or 0),
+             "what": str(r.get("what", ""))[:200]}
+        res["cut"] = c
+    if not c["found"] or c["end"] - c["start"] < 0.3:
+        return ref
+    a, b = max(0.0, c["start"]), min(L, c["end"])
+    out = work / "_src_cut.mp4"
+    if b >= L - 0.6:                                       # 끝부분이면 그 앞까지만
+        _ff(["-i", str(ref), "-t", f"{a:.2f}", "-an", "-c:v", "libx264", "-crf", "18", str(out)])
+    elif a <= 0.6:                                         # 앞부분이면 그 뒤부터
+        _ff(["-ss", f"{b:.2f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "18", str(out)])
+    else:                                                  # 가운데면 앞뒤를 이어 붙인다
+        _ff(["-i", str(ref), "-filter_complex",
+             f"[0:v]trim=0:{a:.2f},setpts=PTS-STARTPTS[x];[0:v]trim={b:.2f},setpts=PTS-STARTPTS[y];[x][y]concat=n=2:v=1:a=0[v]",
+             "-map", "[v]", "-c:v", "libx264", "-crf", "18", str(out)])
+    c["kept_sec"] = round(_dur(out), 2)
+    return out
 
 
 def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res: dict, cap: float, h: int) -> Path:
@@ -2211,6 +2268,8 @@ def step_remake(ep, epdir, work, log, req):
     prompt = REMAKE_SWAP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "))
     try:
         ref = _remake_src(epdir.name, work)
+        if (rm.get("cut") or "").strip():
+            ref = _remake_cut(ref, rm["cut"].strip(), work, res, cap)
         L = _dur(ref)
         n = max(1, math.ceil(L / REMAKE_SEG))
         seg = L / n
@@ -2224,6 +2283,8 @@ def step_remake(ep, epdir, work, log, req):
             if float(res.get("spent", 0)) + est_all > cap:
                 res["board"]["over"] = True
             return
+        if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
+            res["board"] = _remake_board(ref, L, n, seg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
         if mode == "full" and not (work / "rm_seg1.mp4").exists():
             if float(res.get("spent", 0)) + est_all > cap:
                 raise RuntimeError(f"영상 예상 비용(약 ${est_all:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다. 더 짧은 원본으로 다시 해 주세요.")

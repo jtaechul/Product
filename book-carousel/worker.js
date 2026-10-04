@@ -4887,6 +4887,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="f"><label for="trSub">작은 문구 (두 줄)</label><textarea id="trSub" rows="2"></textarea></div>
     <div class="f"><label for="trVo">느끼한 내레이션</label><textarea id="trVo" rows="3"></textarea></div>
     <div class="f"><label for="trEnd">끝 장면 동작 (영어, AI 영상 지시)</label><textarea id="trEnd" rows="2"></textarea></div>
+    <div class="f"><label for="trCut">원본에서 잘라낼 장면 (선택, 예: 끝에 기괴하게 웃는 장면)</label><input id="trCut" type="text" placeholder="비우면 원본 그대로"></div>
     <div class="msg" id="trCMsg"></div>
   </section>
   <section class="box" data-view="trend">
@@ -5666,7 +5667,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(!tr.analysis){ tr.analysis={meme:'',swap:'',productIdeas:[],remakeScore:0}; tr.video={id:'',title:(f&&f.name)||'직접 올린 영상'}; }
     if(!f){ say('trGoMsg','02에 원본 영상 파일을 올려 주세요.','no'); return; }
     if(!tr.product){ say('trGoMsg','03에서 상품을 골라 주세요.','no'); return; }
-    var copy={big:$('trBig').value.trim(),sub:$('trSub').value.trim(),vo:$('trVo').value.trim(),ending:$('trEnd').value.trim()};
+    var copy={big:$('trBig').value.trim(),sub:$('trSub').value.trim(),vo:$('trVo').value.trim(),ending:$('trEnd').value.trim(),cut:$('trCut').value.trim()};
     if(!copy.big||!copy.vo){ say('trGoMsg','04 문구와 내레이션을 채워 주세요.','no'); return; }
     if(!confirm('스토리보드 그림을 만듭니다(약 0.16달러, 5~10분). 시작할까요?')) return;
     $('trGo').disabled=true; say('trGoMsg','원본을 올리는 중…','wait');
@@ -5706,9 +5707,15 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
         },true));
         b.appendChild(epBtn('스토리보드 다시 그리기 (약 $0.16)',function(){
           if(!confirm('스토리보드를 다시 그립니다(약 0.16달러, 5~10분). 할까요?')) return;
-          epAsk(e.id,'remake_board',{}, '스토리보드를 다시 그리고 있습니다(5~10분).');
+          epAsk(e.id,'remake_board',{redo:true}, '스토리보드를 다시 그리고 있습니다(5~10분).');
         }));
       }
+    }
+    if(e.state==='failed'&&!e.hasVideo){
+      b.appendChild(epBtn((m.board&&m.board.ok)?'영상 만들기 다시 시도':'스토리보드부터 다시 시도',function(){
+        if(m.board&&m.board.ok) epAsk(e.id,'remake_full',{}, '다시 만들고 있습니다(30~50분).');
+        else epAsk(e.id,'remake_board',{}, '스토리보드를 다시 그리고 있습니다(5~10분).');
+      },true));
     }
     if(m.test&&m.test.ok){
       b.appendChild(epEl('div','ep-post-lb','시험본 (앞 구간)'));
@@ -6707,11 +6714,10 @@ async function handleEpisodeRequest(env, body) {
     req = { steps: ['publish'] };
   } else if (kind === 'remake_full') {
     const log = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/work/log.json`)) || '{}');
-    if (!log.remake?.board?.ok && !log.remake?.test?.ok) throw new Error('스토리보드가 아직 없습니다.');
-    if (log.assemble?.ok) throw new Error('이미 영상을 만들었습니다.');
+    if (log.assemble?.ok) throw new Error('이미 영상을 만들었습니다.');   // 스토리보드가 없으면 제작 쪽이 먼저 그린다
     req = { steps: ['remake'], remake: { mode: 'full' } };
   } else if (kind === 'remake_board') {
-    req = { steps: ['remake'], remake: { mode: 'board', redo: true } };
+    req = { steps: ['remake'], remake: { mode: 'board', redo: !!body.redo } };
   } else if (kind === 'food') {                        // 오래 걸려서(1~3분) 뒤에서 처리 → 화면은 목록 새로고침으로 확인
     const jid = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
     await vpJobSet(env, jid, { status: 'queued', kind: 'food-redo', body: { id }, createdAt: Date.now() });
@@ -6985,7 +6991,7 @@ JSON만: {"big":"","sub":"","vo":"","ending":""}`;
 }
 
 async function remakeSig(env, id) {
-  const key = await getGeminiKey(env);
+  const key = String(await getGeminiKey(env) || '').trim();     // 제작 쪽(파이썬)과 같게 앞뒤 공백 제거
   const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const s = await crypto.subtle.sign('HMAC', k, new TextEncoder().encode('remake:' + id));
   return [...new Uint8Array(s)].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -7036,7 +7042,7 @@ async function handleRemakeCommit(env, body) {
   if (!c.big || !c.vo) throw new Error('광고 문구와 내레이션을 채워 주세요.');
   const ep = { kind: 'remake', menuName: `리메이크 · ${String(v.title || a.meme || '').slice(0, 28)}`, clips: [],
     source: { youtube: v.id ? `https://www.youtube.com/watch?v=${v.id}` : '', title: v.title || '', music: a.music || '' },
-    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cap: REMAKE_CAP_USD },
+    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), cap: REMAKE_CAP_USD },
     caption: `${String(c.big).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
     hashtags: ['#시바견', '#강아지', '#밈'],
     product: { title: p.title, brand: p.brand || '', category: p.category || '기타', reason: String(c.sub || '').replace(/\n/g, ' '), link: p.link, image: p.image || '' } };
