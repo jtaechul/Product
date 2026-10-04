@@ -2031,6 +2031,12 @@ REMAKE_MAX_SEC = 40.0          # 원본은 앞 40초까지만(한 편 5달러 �
 REMAKE_SEG = 9.5               # Omni 편집은 한 번에 10초까지
 REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
 REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
+REMAKE_EXTEND = (" VERTICAL FRAME: the input is a {src} shot placed in the middle of a vertical 9:16 frame; the dark blurred bands "
+                 "above and below are only placeholders. Replace them by naturally extending the same scene so it looks filmed "
+                 "vertically: continue the wall and ceiling above, and the floor, furniture and the characters' lower bodies and "
+                 "legs below, matching perspective, lighting and every movement. No blur, no bands, no borders.")
+REMAKE_BOARD_LOOK = (" Image {n} is the approved storyboard: the dogs (heads, fur, hair tufts, accessories, paws) must look exactly like "
+                     "in it; the framing follows the vertical frame described above.")
 REMAKE_LIPSYNC = (" LIP SYNC: each dog's mouth opens, closes and shapes exactly like the original person's mouth in every frame "
                   "(they are rapping), so the mouth movement stays perfectly in sync with the original audio; keep the jaw and "
                   "head timing frame-accurate.")
@@ -2362,7 +2368,7 @@ def _remake_seg_i2v(key, ref: Path, i: int, seg: float, work: Path, res: dict, c
 
 
 def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res: dict, cap: float, h: int) -> Path:
-    if res.get("i2v_fallback") and not res.get("lipsync"):   # 이 편은 원본을 넣으면 거절됨 → 스토리보드로 만든다
+    if res.get("i2v_fallback") and res.get("allow_i2v") and not res.get("lipsync"):   # 이 편은 원본을 넣으면 거절됨 → 스토리보드로 만든다
         return _remake_seg_i2v(key, ref, i, seg, work, res, cap, h)
     out = work / f"rm_seg{i + 1}.mp4"
     piece = work / f"_rm_piece{i + 1}.mp4"
@@ -2378,16 +2384,18 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     board = work / f"board_{i + 1:02d}.jpg"
     if board.exists():                                     # 확인받은 스토리보드 첫 장면에 맞춘다
         inputs.append({"type": "image", **_b64img(board)})
-        prompt = prompt + REMAKE_BOARD_REF.format(n=len(inputs))
+        prompt = prompt + (REMAKE_BOARD_LOOK if res.get("vertical") else REMAKE_BOARD_REF).format(n=len(inputs))
     tries = []
     res_name = REMAKE_RES
     # ⛔ 구간마다 딱 한 번만 만든다(사용자 지시 2026-10: "다시 만들지 마. 돈 아까워. 70점 아래여도 짠 대로") — 검사·다시 만들기 없음
     _remake_spend(res, REMAKE_COST["omni_sec"] * seg, f"구간{i + 1} 바꾸기", cap)
     vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()}
     rawo = work / f"_rm_raw{i + 1}.mp4"
+    rf = {"type": "video", "resolution": REMAKE_RES}
+    if res.get("vertical"):                               # 위아래를 이어 그려 진짜 세로로
+        rf["aspect_ratio"] = "9:16"
     body = {"model": CLIP_MODEL, "input": [vid, *inputs, {"type": "text", "text": prompt}],
-            "response_format": {"type": "video", "resolution": REMAKE_RES},
-            "generation_config": {"video_config": {"task": "edit"}}}
+            "response_format": rf, "generation_config": {"video_config": {"task": "edit"}}}
     def _send(piece_path: Path):
         v = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece_path.read_bytes()).decode()}
         body["input"][0] = v
@@ -2413,7 +2421,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
                 try:
                     _send(masked)
                 except RuntimeError as e2:
-                    if "HTTP 400" in str(e2) and LIKENESS_RE.search(str(e2)):
+                    if "HTTP 400" in str(e2) and LIKENESS_RE.search(str(e2)) and res.get("allow_i2v"):
                         # 가려도 거절(유명인 영상) → 이번 구간 요금은 되돌리고 스토리보드로 만든다. 다음 구간도 같은 방식
                         res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
                         res["i2v_fallback"] = True
@@ -2421,7 +2429,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
                                                              "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
                     else:
                         raise
-            elif "HTTP 400" in str(e) and LIKENESS_RE.search(str(e)) and not res.get("lipsync"):   # 이미 가린 영상인데도 거절 → 스토리보드로
+            elif "HTTP 400" in str(e) and LIKENESS_RE.search(str(e)) and res.get("allow_i2v"):   # 이미 가린 영상인데도 거절 → 스토리보드로(켠 편만)
                 res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
                 res["i2v_fallback"] = True
                 res.setdefault("ledger", []).append({"what": f"구간{i + 1} 가려도 거절 → 스토리보드로 만들기(요금 없음)",
@@ -2438,6 +2446,8 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     best = (rawo, {}, None, "")
     tries = [best]
     got = _dur(best[0])
+    if got and got < seg * 0.9:                           # AI가 원본보다 짧게 만들면 늘리지 않는다(입모양·박자가 어긋남)
+        raise RuntimeError(f"영상 AI가 {got:.1f}초만 만들었습니다(원본 {seg:.1f}초). 한 번에 만들 수 있는 길이를 넘은 것 같습니다.")
     k = seg / got if got else 1.0                         # 원본 구간과 같은 길이로(박자 유지)
     hi = work / f"_rm_hi{i + 1}.mp4"                      # 다음 구간 참고용(커밋 안 함)
     _ff(["-i", str(best[0]), "-an", "-vf", f"setpts=PTS*{k:.5f}", "-t", f"{seg:.3f}", "-c:v", "libx264", "-crf", "18", str(hi)])
@@ -2521,6 +2531,8 @@ def step_remake(ep, epdir, work, log, req):
     W, H = 360, 640                                       # 360p(사용자 확정)
     prompt = REMAKE_SWAP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "))
     res["lipsync"] = bool(rm.get("lipsync"))
+    # 원본 동작을 바꾸는 '스토리보드로 만들기'는 기본으로 끈다(사용자 지적 2026-10: 동작을 마음대로 완전히 바꿈) — 켠 편만
+    res["allow_i2v"] = bool(rm.get("allow_i2v"))
     if res["lipsync"]:                                    # 노래·랩 원본: 개 입이 원래 입모양 그대로 열리고 닫혀 소리와 맞게(사용자 요청 2026-10)
         prompt += REMAKE_LIPSYNC
     try:
@@ -2528,9 +2540,25 @@ def step_remake(ep, epdir, work, log, req):
         if (rm.get("cut") or "").strip():
             ref = _remake_cut(ref, rm["cut"].strip(), work, res, cap)
         L = _dur(ref)
-        n = max(1, math.ceil(L / REMAKE_SEG))
+        nb = max(1, math.ceil(L / REMAKE_SEG))            # 스토리보드 칸 나누기(그림 확인용)
+        bseg = L / nb
+        # 처음부터 끝까지 한 번에(사용자 지시 2026-10: 10초씩 끊지 말고 한 번에) — remake.one_shot=false일 때만 예전처럼 나눈다
+        one = rm.get("one_shot", True)
+        n = 1 if one else nb
         seg = L / n
-        res.update({"src_sec": round(L, 2), "segments": n})
+        res.update({"src_sec": round(L, 2), "segments": n, "one_shot": bool(one)})
+        # 세로 9:16은 흐린 배경 채우기가 아니라 AI가 위아래 장면을 이어 그려 진짜 세로로(사용자 지시 2026-10)
+        sw, sh = _wh(ref)
+        if rm.get("vertical", "extend") == "extend" and sw * 16 > sh * 9 * 1.05:
+            ref_v = work / "_src_v.mp4"
+            if not ref_v.exists():
+                _ff(["-i", str(ref), "-filter_complex",
+                     f"[0:v]split[a][b];[a]scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,gblur=sigma=30,"
+                     f"eq=brightness=-0.25:saturation=0.6[bg];[b]scale=720:-2[fg];[bg][fg]overlay=0:(H-h)/2,setsar=1,format=yuv420p[v]",
+                     "-map", "[v]", "-map", "0:a?", "-c:v", "libx264", "-crf", "16", "-c:a", "aac", "-b:a", "160k", str(ref_v)])
+            prompt += REMAKE_EXTEND.format(src=f"{sw}x{sh}")
+            res["vertical"] = {"mode": "extend", "src": f"{sw}x{sh}"}
+            ref = ref_v
         est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * 4
                         + REMAKE_COST["tts"], 2)
         if mode == "probe":                               # 거절 원인 찾기: 1초짜리로 넣는 것을 바꿔 가며 보낸다(통과하면 1초에 0.1달러)
@@ -2538,7 +2566,7 @@ def step_remake(ep, epdir, work, log, req):
             return
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
-                res["board"] = _remake_board(ref, L, n, seg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
+                res["board"] = _remake_board(ref, L, nb, bseg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
             res["est_full"] = est_all
             if float(res.get("spent", 0)) + est_all > cap:
                 res["board"]["over"] = True
@@ -2547,14 +2575,15 @@ def step_remake(ep, epdir, work, log, req):
         redo = (req.get("remake") or {}).get("redo") if mode == "full" else None
         if isinstance(redo, list) and redo:
             gone = {"segs": ["rm_seg*.mp4", "remake.mp4", "board.jpg", "board_*.jpg"], "ending": ["rm_end_start.png", "rm_end.mp4"],
-                    "vo": ["rm_vo.wav"], "copy": []}
+                    "vo": ["rm_vo.wav"], "copy": [],
+                    "body": ["rm_seg*.mp4", "remake.mp4"]}            # 본편만 다시(스토리보드는 그대로)
             for part in redo:
                 for pat in gone.get(part, []):
                     for f in work.glob(pat):
                         f.unlink(missing_ok=True)
             res.setdefault("fixes", []).append({"parts": redo, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
-            res["board"] = _remake_board(ref, L, n, seg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
+            res["board"] = _remake_board(ref, L, nb, bseg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
             # 새로 그린 스토리보드는 확인받은 뒤에 영상으로(사용자 지적 2026-10 헬기 편: 확인 안 한 그림에 개가 두 마리 → 영상도 두 마리)
             res["est_full"] = est_all
             res["board"]["wait"] = True

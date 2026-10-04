@@ -15,8 +15,10 @@
     "vo": "기침 끝, 랩은 계속. 구매는 프로필 링크에서.",
     "cut": "",
     "whimper": false,
-    "cap": 0.2,
-    "lipsync": true
+    "cap": 5.5,
+    "lipsync": true,
+    "one_shot": true,
+    "vertical": "extend"
   },
   "caption": "너도 랩 좋아해? 기침은 이제 뚝!\n\n스껄하느라 거칠어진 우리 아이 숨소리 귀한 침향으로 맑고 편안하게 지켜주세요\n\n구매는 프로필 링크에서.",
   "hashtags": [
