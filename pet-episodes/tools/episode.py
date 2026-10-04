@@ -2217,15 +2217,16 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
         sheet.unlink(missing_ok=True)
         score = int(q.get("score", 0) or 0) if q else None
         tries.append((rawo, chk, score, (q or {}).get("issues", "")))
-        good = chk.get("human") is False and (score is None or score >= REMAKE_QPASS)
+        # 사람 손·맨살이 보여도 다시 만들지 않는다(사용자 지시 2026-10: "굳이 수정하지 말고 그냥 진행") — 검사는 기록만, 다시 만들기는 합성 점수로만
+        good = score is None or score >= REMAKE_QPASS
         if good or float(res.get("spent", 0)) + REMAKE_COST["omni_sec"] * seg > cap - 0.8:   # 끝 장면 몫은 남겨 둔다
             break
         # ⛔ 다시 만들기 문장에 사람 몸 낱말(hand·finger·skin·human 등)을 넣지 않는다 — 구글이 민감 단어로 막는다(2026-10 실측).
         # 채점기가 쓴 문제 설명도 그런 낱말이 섞여 그대로 붙이지 않고, 정해진 중립 문장만 붙인다.
         prompt = prompt + (" Double-check every frame: every paw is a thick, fully furry dog paw, and the dog's fur blends "
                            "smoothly into the clothes with natural lighting and no seams.")
-    # 사람 손 없는 것 중 합성 점수가 가장 높은 것
-    best = sorted(tries, key=lambda t: (t[1].get("human") is False, t[2] or 0), reverse=True)[0]
+    # 합성 점수가 가장 높은 것(사람 손 여부는 기록만)
+    best = sorted(tries, key=lambda t: (t[2] or 0, t[1].get("human") is False), reverse=True)[0]
     got = _dur(best[0])
     k = seg / got if got else 1.0                         # 원본 구간과 같은 길이로(박자 유지)
     hi = work / f"_rm_hi{i + 1}.mp4"                      # 다음 구간 참고용(커밋 안 함)
@@ -2362,7 +2363,7 @@ def step_remake(ep, epdir, work, log, req):
                 _remake_spend(res, REMAKE_COST["check"] * 3, "끝 장면 사람 손 검사", cap)
                 chk = _human_parts(raw, work)
                 tries.append((raw, chk))
-                if chk.get("human") is False or float(res.get("spent", 0)) + REMAKE_COST["omni_sec"] * 4 > cap:
+                if True:                                   # 끝 장면은 한 번만(사람 손이 보여도 다시 만들지 않음 — 사용자 지시 2026-10)
                     break
             best = next((t for t in tries if t[1].get("human") is False), tries[-1])
             res["end_check"] = best[1]
