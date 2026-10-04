@@ -1,0 +1,9 @@
+{
+  "remake": {},
+  "error": "원본 영상을 받지 못했습니다(HTTP 403). 7일이 지나 지워졌으면 처음부터 다시 올려 주세요.",
+  "last_request": {
+    "file": "01_remake_board.json",
+    "ran_at": "2026-10-04T07:32:14Z",
+    "ok": false
+  }
+}
