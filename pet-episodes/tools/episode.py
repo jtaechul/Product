@@ -2455,11 +2455,35 @@ def step_remake(ep, epdir, work, log, req):
             vo_lbl, nxt = "[vo0w]", 6
         else:
             vo_lbl, nxt = "[vo0]", 5
-        src_in = []
+        src_in, mix = [], [vo_lbl]
         if rm.get("keep_audio", True) and _has_audio(ref):   # 원본 소리(발차기 소리 등)를 앞부분에 깔고, 내레이션이 나오면 끈다
             src_in = ["-i", str(ref)]
-            V += (f"[{nxt}:a]atrim=0:{Lb:.2f},asetpts=PTS-STARTPTS,afade=t=out:st={max(0.0, t0 - 0.3):.2f}:d=0.3,apad,atrim=0:{tot}[src0];"
-                  f"[src0]{vo_lbl}amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.97[aud]")
+            V += (f"[{nxt}:a]atrim=0:{Lb:.2f},asetpts=PTS-STARTPTS,volume={float(rm.get('src_vol', 1.0)):.2f},"
+                  f"afade=t=out:st={max(0.0, t0 - 0.3):.2f}:d=0.3,apad,atrim=0:{tot}[src0];")
+            mix.append("[src0]")
+            nxt += 1
+        # 장면 효과음(사용자 요청 2026-10: 헬기 소리·용암에 팝콘 터지는 소리가 잘 들리게) — remake.sfx = [{file, at, vol, loop}]
+        # 시각은 리메이크 본편 기준. loop는 at부터 내레이션 시작(t0)까지 반복하다 줄여 끈다. 파일은 pet-episodes/sfx(우리가 만든 효과음)
+        sfx_in = []
+        for s in rm.get("sfx") or []:
+            f = SFX_DIR / str(s.get("file", ""))
+            if not f.is_file():
+                continue
+            at, vol = max(0.0, float(s.get("at", 0))), float(s.get("vol", 1.0))
+            if s.get("loop"):
+                ln = max(0.5, float(s.get("until", t0)) - at)
+                sfx_in += ["-stream_loop", "-1", "-i", str(f)]
+                body_a = f"atrim=0:{ln:.2f},afade=t=out:st={max(0.0, ln - 0.6):.2f}:d=0.6,"
+            else:
+                sfx_in += ["-i", str(f)]
+                body_a = ""
+            lb = f"[fx{len(mix)}]"
+            V += (f"[{nxt}:a]aresample=48000,{body_a}volume={vol:.2f},asetpts=PTS-STARTPTS,"
+                  f"adelay={int(at * 1000)}:all=1,apad,atrim=0:{tot}{lb};")
+            mix.append(lb)
+            nxt += 1
+        if len(mix) > 1:
+            V += f"{''.join(mix)}amix=inputs={len(mix)}:normalize=0:duration=first,alimiter=limit=0.97[aud]"
         else:
             V += f"{vo_lbl}alimiter=limit=0.97[aud]"
         # 내레이션은 고르게 눌러 준 뒤 영상에서 가장 큰 소리(원본 발차기 등, 실측 약 -12.7 LUFS)보다 크게(-10 LUFS, 최고점 -1) 맞춘 파일을 따로 만든다(사용자 지적 2026-10: 성우 목소리가 너무 작음).
@@ -2468,7 +2492,7 @@ def step_remake(ep, epdir, work, log, req):
         _ff(["-i", str(vo), "-af", "acompressor=threshold=-24dB:ratio=3.5:attack=5:release=90:makeup=3,loudnorm=I=-10:TP=-1.0:LRA=6,aresample=48000",
              str(vo_loud)])
         final = work / "final.mp4"
-        _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo_loud), *wh_in, *src_in,
+        _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo_loud), *wh_in, *src_in, *sfx_in,
              "-filter_complex", V, "-map", "[v]", "-map", "[aud]", "-c:v", "libx264", "-crf", "22", "-c:a", "aac", "-b:a", "128k",
              "-movflags", "+faststart", str(final)])
         _ff(["-ss", f"{Lb + min(dd - 0.3, 2.5):.2f}", "-i", str(final), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos",
