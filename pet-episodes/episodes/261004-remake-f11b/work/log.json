@@ -1,0 +1,35 @@
+{
+  "remake": {
+    "spent": 0.16,
+    "ledger": [
+      {
+        "what": "잘라낼 장면 찾기",
+        "usd": 0.01
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
+      }
+    ],
+    "cut": {
+      "text": "마지막에 화면 가운데에 큰 인스타그램 로고와 아이디가 뜨는 끝부분",
+      "found": true,
+      "start": 15.0,
+      "end": 18.0,
+      "what": "A large Instagram logo and username appear in the center of the darkened screen at the end of the video.",
+      "kept_sec": 16.08
+    },
+    "src_sec": 16.08,
+    "segments": 2,
+    "board": {
+      "ok": true,
+      "panels": 6
+    },
+    "est_full": 2.18
+  },
+  "last_request": {
+    "file": "01_remake_board.json",
+    "ran_at": "2026-10-04T09:32:45Z",
+    "ok": true
+  }
+}
