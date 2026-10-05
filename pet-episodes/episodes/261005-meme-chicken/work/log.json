@@ -1,6 +1,6 @@
 {
   "meme": {
-    "spent": 2.17,
+    "spent": 2.27,
     "ledger": [
       {
         "what": "스토리보드 그림",
@@ -45,6 +45,26 @@
       {
         "what": "녹음: 강아지가 먹는 치킨은 ",
         "usd": 0.02
+      },
+      {
+        "what": "녹음: 야… 내 치킨.",
+        "usd": 0.02
+      },
+      {
+        "what": "녹음: 누구야.",
+        "usd": 0.02
+      },
+      {
+        "what": "녹음: 아, 그래?",
+        "usd": 0.02
+      },
+      {
+        "what": "녹음: 발에 묻은 건 뭔데?",
+        "usd": 0.02
+      },
+      {
+        "what": "녹음: 반성은 안 합니다… 먼",
+        "usd": 0.02
       }
     ],
     "board": {
@@ -64,17 +84,65 @@
     },
     "full": {
       "ok": true
-    }
+    },
+    "say": [
+      {
+        "text": "야… 내 치킨.",
+        "voice": "Fenrir",
+        "speed": 1.2,
+        "at": 0.1,
+        "sec": 1.8,
+        "room": 1.4,
+        "over": true
+      },
+      {
+        "text": "누구야.",
+        "voice": "Fenrir",
+        "speed": 1.25,
+        "at": 1.6,
+        "sec": 0.93,
+        "room": 1.05,
+        "over": false
+      },
+      {
+        "text": "아, 그래?",
+        "voice": "Fenrir",
+        "speed": 1.2,
+        "at": 5.7,
+        "sec": 1.54,
+        "room": 1.3,
+        "over": true
+      },
+      {
+        "text": "발에 묻은 건 뭔데?",
+        "voice": "Fenrir",
+        "speed": 1.25,
+        "at": 7.2,
+        "sec": 1.56,
+        "room": 1.65,
+        "over": false
+      },
+      {
+        "text": "반성은 안 합니다… 먼저 사 주세요. 구매는 프로필 링",
+        "voice": "Enceladus",
+        "speed": 1.3,
+        "at": 11.5,
+        "sec": 4.17,
+        "room": 4.5,
+        "over": false
+      }
+    ]
   },
   "last_request": {
-    "file": "04_meme_full.json",
-    "ran_at": "2026-10-05T04:21:07Z",
-    "ok": true
+    "file": "05_meme_full.json",
+    "ran_at": "2026-10-05T05:10:14Z",
+    "ok": false
   },
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
     "sec": 16.0,
     "note": "밈 광고(본편 10.0초 + 광고 6.0초)"
-  }
+  },
+  "error": "대사가 칸을 넘칩니다(1.3배로도): 야… 내 치킨. 1.8초>1.4초 / 아, 그래? 1.54초>1.3초"
 }
