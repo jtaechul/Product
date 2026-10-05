@@ -3177,5 +3177,902 @@
     },
     "translation_ko": "유리컵을 옮길 때는 조심하세요.",
     "tmp_id": "R1-0082"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The baby bird ______ by the children in the park yesterday.",
+    "choices": [
+      "rescued",
+      "is rescuing",
+      "rescues",
+      "was rescued"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "아기 새는 구조를 '받은' 거니까 was 같은 짝이 필요해요. 어제 일이라서 was rescued를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.passive",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "yesterday",
+    "why_not": {
+      "0": "was 같은 짝이 빠졌어요",
+      "1": "새가 직접 구조한다는 뜻이 돼요",
+      "2": "새가 직접 구조한다는 뜻이 돼요"
+    },
+    "key_expr": {
+      "en": "was rescued by ~",
+      "ko": "~에 의해 구조되었다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "W.meaning",
+      "2": "W.meaning"
+    },
+    "translation_ko": "그 아기 새는 어제 공원에서 아이들에게 구조되었어요.",
+    "tmp_id": "R1-0083"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Fresh bread ______ at this bakery every morning.",
+    "choices": [
+      "bakes",
+      "is baked",
+      "are baked",
+      "baked"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "빵은 스스로 굽는 게 아니라 '구워지는' 거라 is 같은 짝이 필요해요. 빵은 하나로 쳐서 is baked를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.passive",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Fresh bread",
+    "why_not": {
+      "0": "빵이 직접 굽는다는 뜻이 돼요",
+      "2": "빵은 여러 개일 때 쓰는 말과 안 어울려요",
+      "3": "is 같은 짝이 빠졌어요"
+    },
+    "key_expr": {
+      "en": "is baked",
+      "ko": "구워진다"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "2": "G.form",
+      "3": "G.pair"
+    },
+    "translation_ko": "이 빵집에서는 매일 아침 신선한 빵이 구워져요.",
+    "tmp_id": "R1-0084"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The science project must ______ by next Monday.",
+    "choices": [
+      "finish",
+      "finished",
+      "be finished",
+      "finishing"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "프로젝트는 '끝내지는' 거라서 be가 필요해요. must 뒤에는 모양이 안 바뀐 원래 말인 be를 써야 해요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.passive",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "must",
+    "why_not": {
+      "0": "프로젝트가 직접 끝낸다는 뜻이 돼요",
+      "1": "must 뒤에는 모양이 안 바뀐 말이 와야 해요",
+      "3": "프로젝트가 직접 끝내고 있다는 뜻이 돼요"
+    },
+    "key_expr": {
+      "en": "must be finished",
+      "ko": "끝내져야 한다"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "G.form",
+      "3": "W.meaning"
+    },
+    "translation_ko": "과학 프로젝트는 다음 주 월요일까지 끝나야 해요.",
+    "tmp_id": "R1-0085"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "These apple trees ______ by my grandfather three years ago.",
+    "choices": [
+      "were planted",
+      "are planted",
+      "plant",
+      "planted"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "나무는 '심어지는' 거니까 짝이 되는 말이 필요해요. 3년 전 일이고 나무가 여러 그루라서 were planted를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.passive",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "three years ago",
+    "why_not": {
+      "1": "3년 전 일이라서 맞지 않아요",
+      "2": "나무가 직접 심는다는 뜻이 돼요",
+      "3": "짝이 되는 말이 빠졌어요"
+    },
+    "key_expr": {
+      "en": "were planted by ~",
+      "ko": "~에 의해 심어졌다"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "W.meaning",
+      "3": "G.pair"
+    },
+    "translation_ko": "이 사과나무들은 3년 전에 할아버지께서 심으셨어요.",
+    "tmp_id": "R1-0086"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Where ______ this beautiful photo taken?",
+    "choices": [
+      "did",
+      "is",
+      "does",
+      "was"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "사진이 '찍힌' 거라서 taken과 짝을 이룰 말이 필요해요. 이미 찍은 사진이니까 was를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.passive",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "taken",
+    "why_not": {
+      "0": "taken과 짝을 이룰 수 없어요",
+      "1": "이미 찍힌 사진이라서 맞지 않아요",
+      "2": "taken과 짝을 이룰 수 없어요"
+    },
+    "key_expr": {
+      "en": "was taken",
+      "ko": "찍혔다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "G.form",
+      "2": "G.pair"
+    },
+    "translation_ko": "이 아름다운 사진은 어디서 찍혔나요?",
+    "tmp_id": "R1-0087"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "These toy cars ______ of wood, so they are very strong.",
+    "choices": [
+      "make",
+      "made",
+      "are made",
+      "is made"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "장난감 자동차는 '만들어진' 거라서 are 같은 짝이 필요해요. 여러 대니까 are made를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.passive",
+      "V.shopping"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "These toy cars",
+    "why_not": {
+      "0": "자동차가 직접 만든다는 뜻이 돼요",
+      "1": "are 같은 짝이 빠졌어요",
+      "3": "자동차가 여러 대라서 맞지 않아요"
+    },
+    "key_expr": {
+      "en": "are made of ~",
+      "ko": "~로 만들어지다"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "G.pair",
+      "3": "G.form"
+    },
+    "translation_ko": "이 장난감 자동차들은 나무로 만들어져서 아주 튼튼해요.",
+    "tmp_id": "R1-0088"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Lily got a new camera. ______ pictures are very beautiful.",
+    "choices": [
+      "She",
+      "Her",
+      "Hers",
+      "Him"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "릴리의 사진이라고 해야 하니까 '그녀의'라는 뜻인 Her가 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pronoun",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Lily",
+    "why_not": {
+      "0": "그녀는 이라는 뜻이라 안 어울려요",
+      "2": "그녀의 것 이라는 뜻이라 이상해요",
+      "3": "남자를 가리키는 말이에요"
+    },
+    "key_expr": {
+      "en": "beautiful pictures",
+      "ko": "아름다운 사진들"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "W.meaning"
+    },
+    "translation_ko": "릴리는 새 카메라를 받았어요. 그녀의 사진들은 아주 아름다워요.",
+    "tmp_id": "R1-0090"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "These cookies look delicious. Can I eat one of ______?",
+    "choices": [
+      "they",
+      "their",
+      "them",
+      "theirs"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "쿠키가 여러 개라서 그것들 중 하나라고 할 때는 them을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pronoun",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "These cookies",
+    "why_not": {
+      "0": "of 뒤에 올 수 없는 모양이에요",
+      "1": "그것들의 라는 뜻이라 안 어울려요",
+      "3": "그것들의 것 이라는 뜻이라 이상해요"
+    },
+    "key_expr": {
+      "en": "one of them",
+      "ko": "그것들 중 하나"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "이 쿠키들은 맛있어 보여요. 그것들 중 하나를 먹어도 될까요?",
+    "tmp_id": "R1-0091"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I left my pencil case at home. Can I use ______?",
+    "choices": [
+      "your",
+      "you",
+      "yourself",
+      "yours"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "내 것을 두고 와서 '너의 것'을 써도 되냐고 묻는 거라서 yours가 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pronoun",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "I left my pencil case",
+    "why_not": {
+      "0": "뒤에 물건 이름이 꼭 있어야 해요",
+      "1": "너를 사용한다는 뜻이 되어 어색해요",
+      "2": "너 자신이라는 뜻이라 맞지 않아요"
+    },
+    "key_expr": {
+      "en": "leave at home",
+      "ko": "집에 두고 오다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "W.meaning",
+      "2": "W.meaning"
+    },
+    "translation_ko": "제 필통을 집에 두고 왔어요. 네 것을 사용해도 될까요?",
+    "tmp_id": "R1-0092"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Mr. Brown is a great doctor. Many people like ______.",
+    "choices": [
+      "he",
+      "his",
+      "him",
+      "himself"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "브라운 선생님을 좋아한다는 뜻이니, '그를'이라는 뜻의 him을 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pronoun",
+      "V.work"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Mr. Brown",
+    "why_not": {
+      "0": "누가 하는지 말할 때만 써요",
+      "1": "그의 라는 뜻이라 뒤에 말이 필요해요",
+      "3": "스스로를 이라는 뜻이라 어색해요"
+    },
+    "key_expr": {
+      "en": "a great doctor",
+      "ko": "훌륭한 의사"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "W.meaning"
+    },
+    "translation_ko": "브라운 선생님은 훌륭한 의사 선생님이에요. 많은 사람들이 그를 좋아해요.",
+    "tmp_id": "R1-0093"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Look at the little bird on the window. ______ is singing a sweet song.",
+    "choices": [
+      "Its",
+      "It",
+      "He",
+      "They"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "새 한 마리를 가리킬 때는 It을 써서 '그것은'이라고 표현해요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.pronoun",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "the little bird",
+    "why_not": {
+      "0": "그것의 라는 뜻이라서 안 어울려요",
+      "2": "주로 사람(남자)을 가리킬 때 써요",
+      "3": "여러 마리일 때 쓰는 말이에요"
+    },
+    "key_expr": {
+      "en": "sing a sweet song",
+      "ko": "달콤한 노래를 부르다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "W.meaning",
+      "3": "G.form"
+    },
+    "translation_ko": "창문에 있는 작은 새를 보세요. 그것은 달콤한 노래를 부르고 있어요.",
+    "tmp_id": "R1-0094"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Mr. Smith, ______ we play soccer on the grass here?",
+    "choices": [
+      "Are",
+      "Do",
+      "May",
+      "Have"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "어른에게 행동을 해도 되는지 허락을 받을 때는 May를 써서 예의 바르게 물어봐요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.modal",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Mr. Smith",
+    "why_not": {
+      "0": "play 모양이 바뀌어야 쓸 수 있어요",
+      "1": "허락을 구하는 뜻이 아니에요",
+      "3": "문장 모양이 맞지 않아요"
+    },
+    "key_expr": {
+      "en": "May we play",
+      "ko": "우리가 놀아도 될까요"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "W.meaning",
+      "3": "G.form"
+    },
+    "translation_ko": "스미스 선생님, 저희가 여기 잔디밭에서 축구를 해도 될까요?",
+    "tmp_id": "R1-0095"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My grandmother ______ visit our house this weekend.",
+    "choices": [
+      "going",
+      "will",
+      "is",
+      "does"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "이번 주말에 오실 거라는 앞날의 이야기라서 will을 써요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.modal",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "this weekend",
+    "why_not": {
+      "0": "앞에 is, 뒤에 to가 있어야 해요",
+      "2": "visit 모양이 바뀌어야 쓸 수 있어요",
+      "3": "뜻이 어울리지 않아요"
+    },
+    "key_expr": {
+      "en": "will visit",
+      "ko": "방문하실 것이다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "2": "G.form",
+      "3": "W.meaning"
+    },
+    "translation_ko": "우리 할머니는 이번 주말에 우리 집에 오실 거예요.",
+    "tmp_id": "R1-0096"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Your shoes are very dirty. You ______ wash them.",
+    "choices": [
+      "are",
+      "doing",
+      "have",
+      "should"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "신발이 더러워서 씻는 게 좋겠다고 충고할 때 should를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.modal",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "very dirty",
+    "why_not": {
+      "0": "wash 모양이 바뀌어야 쓸 수 있어요",
+      "1": "문장 모양이 맞지 않아요",
+      "2": "뒤에 to가 있어야 해요"
+    },
+    "key_expr": {
+      "en": "should wash",
+      "ko": "씻는 것이 좋겠다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "2": "G.pair"
+    },
+    "translation_ko": "네 신발이 아주 더러워. 씻는 게 좋겠어.",
+    "tmp_id": "R1-0097"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "______ you please pass me the salt?",
+    "choices": [
+      "Could",
+      "Are",
+      "Does",
+      "Have"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "남에게 소금을 달라고 부탁할 때는 Could를 써서 부드럽게 말해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.modal",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "please pass me",
+    "why_not": {
+      "1": "pass 모양이 바뀌어야 쓸 수 있어요",
+      "2": "부탁하는 뜻이 아니에요",
+      "3": "소금을 달라는 뜻이 안 돼요"
+    },
+    "key_expr": {
+      "en": "Could you pass",
+      "ko": "건네주시겠어요"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "제게 소금 좀 건네주시겠어요?",
+    "tmp_id": "R1-0098"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The museum rules say we ______ touch the paintings.",
+    "choices": [
+      "not must",
+      "must don't",
+      "doesn't must",
+      "must not"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "절대 만지면 안 된다는 규칙을 말할 때는 must not을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.modal",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "The museum rules say",
+    "why_not": {
+      "0": "not은 must 뒤에 와야 해요",
+      "1": "must와 don't는 같이 쓰지 않아요",
+      "2": "must 앞에 doesn't를 쓰지 않아요"
+    },
+    "key_expr": {
+      "en": "must not touch",
+      "ko": "만지면 안 된다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "2": "G.form"
+    },
+    "translation_ko": "박물관 규칙에 우리는 그림을 만지면 안 된다고 되어 있어요.",
+    "tmp_id": "R1-0099"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I lost my ticket, so I ______ go inside the concert hall.",
+    "choices": [
+      "cannot",
+      "not can",
+      "am not",
+      "do not"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "표가 없어서 들어갈 수 없다는 뜻이니까 cannot을 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.modal",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "lost my ticket",
+    "why_not": {
+      "1": "not은 can 뒤에 와야 해요",
+      "2": "들어갈 수 없다는 뜻이 안 돼요",
+      "3": "할 수 없다는 뜻이 빠져서 어색해요"
+    },
+    "key_expr": {
+      "en": "cannot go",
+      "ko": "들어갈 수 없다"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "나는 표를 잃어버려서 공연장 안으로 들어갈 수 없어요.",
+    "tmp_id": "R1-0100"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The new hotel is ______ than the old post office.",
+    "choices": [
+      "tall",
+      "taller",
+      "tallest",
+      "highly"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "뒤에 than(~보다)이 있어서 두 건물을 견주는 말인 taller가 와야 해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.compare",
+      "V.travel"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "than the old post office",
+    "why_not": {
+      "0": "견주는 모양이 아니에요",
+      "2": "여러 개 중 최고를 뜻할 때 써요",
+      "3": "모양도 뜻도 이 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "taller than",
+      "ko": "~보다 더 높은"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "W.meaning"
+    },
+    "translation_ko": "새 호텔은 옛날 우체국보다 더 높아요.",
+    "tmp_id": "R1-0101"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I think strawberries are the ______ fruits in the world.",
+    "choices": [
+      "delicious",
+      "more delicious",
+      "most delicious",
+      "much delicious"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "세상에서 가장 어떻다고 말하는 자리이고 앞에 the가 있어서 제일을 뜻하는 말을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.compare",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "the ______ fruits in the world",
+    "why_not": {
+      "0": "가장 어떻다는 뜻이 빠졌어요",
+      "1": "둘을 견줄 때 쓰는 말이에요",
+      "3": "알맞지 않은 모양이에요"
+    },
+    "key_expr": {
+      "en": "most delicious",
+      "ko": "가장 맛있는"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "제 생각에는 딸기가 세상에서 가장 맛있는 과일이에요.",
+    "tmp_id": "R1-0102"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Winter in this town is not as ______ as it was last year.",
+    "choices": [
+      "cold",
+      "colder",
+      "coldest",
+      "coldly"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "as와 as 사이에는 원래 모양 그대로 써야 해요. '작년만큼 춥지 않다'는 뜻이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.compare",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "as ______ as",
+    "why_not": {
+      "1": "as 사이에는 견주는 모양을 쓰지 않아요",
+      "2": "as 사이에는 제일을 뜻하는 모양을 안 써요",
+      "3": "이 자리에는 안 맞는 모양이에요"
+    },
+    "key_expr": {
+      "en": "as cold as",
+      "ko": "~만큼 추운"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "이 동네의 겨울은 작년만큼 춥지 않아요.",
+    "tmp_id": "R1-0103"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Minji has two sisters, and she is the ______ of them all.",
+    "choices": [
+      "young",
+      "youth",
+      "younger",
+      "youngest"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "세 명 이상 중에서 '가장 어리다'라고 말하려면 the와 함께 제일을 뜻하는 말을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.compare",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "the ______ of them all",
+    "why_not": {
+      "0": "가장 어떻다는 뜻이 없어요",
+      "1": "이 자리에는 올 수 없는 낱말이에요",
+      "2": "둘을 견줄 때 쓰는 모양이에요"
+    },
+    "key_expr": {
+      "en": "the youngest",
+      "ko": "가장 어린"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "W.meaning",
+      "2": "G.form"
+    },
+    "translation_ko": "민지에게는 두 명의 언니가 있고, 그녀가 그중에서 가장 어립니다.",
+    "tmp_id": "R1-0104"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My backpack is much ______ than Minho's because I have many books.",
+    "choices": [
+      "heavy",
+      "heavier",
+      "heaviest",
+      "heavily"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "than이 있으니 둘을 견주는 모양이 필요해요. '더 무겁다'는 뜻이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.compare",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "than Minho's",
+    "why_not": {
+      "0": "견주는 모양이 아니에요",
+      "2": "여럿 중 최고를 뜻할 때 써요",
+      "3": "모양과 뜻이 어울리지 않아요"
+    },
+    "key_expr": {
+      "en": "much heavier",
+      "ko": "훨씬 더 무거운"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "제 가방에는 책이 많아서 민호의 것보다 훨씬 더 무거워요.",
+    "tmp_id": "R1-0105"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The white rabbit has ______ ears than the brown cat.",
+    "choices": [
+      "long",
+      "longest",
+      "length",
+      "longer"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "뒤에 than(~보다)이 나와서 둘을 견주는 말인 longer가 와야 해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.compare",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "than the brown cat",
+    "why_not": {
+      "0": "견주는 모양이 아니에요",
+      "1": "여러 마리 중 최고일 때 써요",
+      "2": "길이라는 뜻의 다른 낱말이에요"
+    },
+    "key_expr": {
+      "en": "longer than",
+      "ko": "~보다 더 긴"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "2": "W.meaning"
+    },
+    "translation_ko": "하얀 토끼는 갈색 고양이보다 더 긴 귀를 가지고 있어요.",
+    "tmp_id": "R1-0106"
   }
 ]
