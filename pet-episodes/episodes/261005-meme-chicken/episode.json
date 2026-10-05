@@ -1,191 +1,194 @@
 {
-  "id": "261005-meme-chicken",
-  "kind": "meme",
-  "product": {
-    "title": "독특 수제간식 강아지 치킨(3P 총중량120g) 멍치킨, 1개",
-    "link": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=9580575154&itemId=16182442683&vendorItemId=83376806255",
-    "brand": "독특",
-    "category": "간식"
-  },
-  "meme": {
-    "cap": 5,
-    "title": "통닭 털어 놓고 친구를 고발함",
-    "scene": "ONE LOCKED-OFF CAMERA for panels 1-5: a static camera standing on the floor at dog eye level, vertical 9:16, exactly the same framing, position, lens, kitchen background and lighting in panels 1-5, like frames of one uncut 10-second shot; only poses change. Bright modern home kitchen, white cabinets, a window behind, light wood floor, cool daylight. Foreground center on the floor: a torn-apart, half-eaten greasy human roast chicken - ripped skin, pulled-off drumsticks, bare bones, shredded meat and grease smears scattered around (NOT a whole intact chicken). Middle background between and behind the two dogs: the owner (a man in a grey sweatshirt, dark joggers, grey socks), framed so the TOP EDGE OF THE PICTURE CUTS HIM AT CHEST LEVEL - no head, no face anywhere. Both dogs are realistic adult Shiba Inus with real proportions, no clothes, no collars. No text, no watermark.",
-    "panels": [
-      "0s: owner bent forward, one hand pointing down at the torn chicken, the other on his knee; Shiba A sits upright, chin up, shameless face; Shiba B sits hunched, head lowered, ears flattened back, guilty eyes looking up. [CAST CHECK - must be true in this panel: exactly TWO dogs visible, both fully inside the frame. LEFT dog = Shiba A: red-orange (fox-red) coat with cream chest and cream cheeks, sits on the LEFT side of the chicken. RIGHT dog = Shiba B: pale cream-white coat with faint sesame shading, slightly smaller, sits on the RIGHT side of the chicken. The dogs never swap sides, never change colour, never leave the frame. The owner is cropped by the top edge of the frame at chest level: his head and face are NEVER visible, only his grey sweatshirt torso, arms, hands, dark joggers and grey socks.]",
-      "2s: owner's hand still pointing at the chicken; Shiba A has its right front paw stretched out sideways, the tip of the paw pointing precisely at Shiba B, mouth slightly open; Shiba B still head down, ears flat. [CAST CHECK - must be true in this panel: exactly TWO dogs visible, both fully inside the frame. LEFT dog = Shiba A: red-orange (fox-red) coat with cream chest and cream cheeks, sits on the LEFT side of the chicken. RIGHT dog = Shiba B: pale cream-white coat with faint sesame shading, slightly smaller, sits on the RIGHT side of the chicken. The dogs never swap sides, never change colour, never leave the frame. The owner is cropped by the top edge of the frame at chest level: his head and face are NEVER visible, only his grey sweatshirt torso, arms, hands, dark joggers and grey socks.]",
-      "4s: Shiba A barks loudly upward toward the owner's torso, mouth wide open showing teeth, ears forward, right paw still pointing at Shiba B; owner's hands raised in surprise; Shiba B's eyes rolled sideways toward Shiba A. [CAST CHECK - must be true in this panel: exactly TWO dogs visible, both fully inside the frame. LEFT dog = Shiba A: red-orange (fox-red) coat with cream chest and cream cheeks, sits on the LEFT side of the chicken. RIGHT dog = Shiba B: pale cream-white coat with faint sesame shading, slightly smaller, sits on the RIGHT side of the chicken. The dogs never swap sides, never change colour, never leave the frame. The owner is cropped by the top edge of the frame at chest level: his head and face are NEVER visible, only his grey sweatshirt torso, arms, hands, dark joggers and grey socks.]",
-      "7s: owner's hand reaches down and points his index finger at Shiba A's raised right front paw, which clearly has glossy chicken grease and a shred of roast chicken meat stuck in the fur; Shiba A frozen mid-bark with wide eyes; Shiba B watching. [CAST CHECK - must be true in this panel: exactly TWO dogs visible, both fully inside the frame. LEFT dog = Shiba A: red-orange (fox-red) coat with cream chest and cream cheeks, sits on the LEFT side of the chicken. RIGHT dog = Shiba B: pale cream-white coat with faint sesame shading, slightly smaller, sits on the RIGHT side of the chicken. The dogs never swap sides, never change colour, never leave the frame. The owner is cropped by the top edge of the frame at chest level: his head and face are NEVER visible, only his grey sweatshirt torso, arms, hands, dark joggers and grey socks.]",
-      "9s: Shiba A has lowered the paw and tucked it behind its body, looking away to the side with an awkward guilty face; Shiba B has lifted its head and stares flatly at Shiba A; owner's hands on his hips. [CAST CHECK - must be true in this panel: exactly TWO dogs visible, both fully inside the frame. LEFT dog = Shiba A: red-orange (fox-red) coat with cream chest and cream cheeks, sits on the LEFT side of the chicken. RIGHT dog = Shiba B: pale cream-white coat with faint sesame shading, slightly smaller, sits on the RIGHT side of the chicken. The dogs never swap sides, never change colour, never leave the frame. The owner is cropped by the top edge of the frame at chest level: his head and face are NEVER visible, only his grey sweatshirt torso, arms, hands, dark joggers and grey socks.]",
-      "12s (separate ad shot, chicken mess cleaned away, warmer light, owner completely out of frame): Shiba A sits front and center facing the camera with a smug confident face; in front of it a woven rattan basket full of golden-brown crumb-coated chicken-drumstick shaped dog treats exactly like the real product image; Shiba B sits behind on the right drooling at the basket. [CAST CHECK: exactly two dogs: Shiba A red-orange in front center, Shiba B pale cream-white behind on the right; no people.]"
-    ],
-    "hook": "통닭 털어 놓고 친구를 고발함",
-    "big": "통닭 말고\n멍치킨",
-    "sub": "강아지 전용 치킨 모양 수제간식",
-    "vo": "구매는 프로필 링크에서.",
-    "line_a": "사실 우리가 원한 건 뻑뻑한 통닭이 아니야!",
-    "hashtags": [
-      "#강아지수제간식",
-      "#강아지치킨간식",
-      "#강아지닭고기간식",
-      "#강아지훈련간식",
-      "#반려견수제간식"
-    ],
-    "one_shot_sec": 10,
-    "body_sec": 10,
-    "ad_sec": 6,
-    "body_prompt": "DURATION: 10 seconds. Image 1 is the first frame: keep exactly this kitchen, this torn-apart roast chicken on the floor, these two dogs and the owner's position. CAMERA: one locked-off static camera on the floor at dog eye level for the entire 10 seconds - no cuts, no zoom, no pan, no shake. Photorealistic, natural daylight, realistic adult Shiba Inu proportions, no clothes, no text. CAST (must stay true for the whole clip): exactly two dogs, both always fully in frame. LEFT = Shiba A, red-orange fox-red coat with cream chest and cheeks. RIGHT = Shiba B, pale cream-white coat, slightly smaller. They never swap sides, never change colour, never leave. The owner (grey sweatshirt, dark joggers, grey socks) stays cropped by the top edge at chest level: his head and face are NEVER visible. ACTION & MOUTH TIMELINE: [0.0-1.5s] owner bends forward and jabs his index finger down at the chicken mess twice; Shiba A sits upright with chin up, mouth closed; Shiba B hunches, head low, ears flat. [1.5-2.6s] owner's hand moves toward the dogs; Shiba A lifts its right front paw and stretches it sideways, the paw tip pointing precisely at Shiba B, and holds the pose. [2.6-2.9s] Shiba A gives one sharp bark (mouth snaps open once) while still pointing. [3.0-4.6s] Shiba A turns its head up toward the owner and barks back three times in quick succession (mouth opens wide at 3.1s, 3.6s, 4.1s), ears forward, defiant; owner's hands lift slightly in surprise. [4.6-6.0s] Shiba A jabs the pointing paw twice toward Shiba B (4.8s, 5.3s) with a short bark on each jab; Shiba B's eyes roll sideways toward Shiba A, head still low. [6.0-7.3s] owner puts his hands on his knees and leans down closer; Shiba A keeps the paw raised, mouth closed, smug. [7.3-8.6s] owner's index finger points straight at Shiba A's raised right front paw, which clearly has glossy chicken grease and a shred of roast chicken meat stuck in the fur; Shiba A freezes, eyes widen. [8.6-10.0s] Shiba A swallows (throat moves once), slowly lowers the paw and tucks it behind its body, and looks away to the side with an awkward guilty face; Shiba B lifts its head and stares flatly at Shiba A. Shiba B's mouth stays closed for the whole clip.",
-    "ad_prompt": "DURATION: 6 seconds. Image 1 is the first frame: keep exactly these two dogs, the woven rattan basket of golden-brown crumb-coated chicken-drumstick shaped dog treats and the warm kitchen. CAMERA: locked-off, very slow push-in, no cuts. Photorealistic, no text, no people. Shiba A (red-orange) front center, Shiba B (pale cream-white) behind on the right; they never swap or change colour. TIMELINE: [0.0-2.4s] Shiba A looks straight into the lens with a smug shameless face, mouth opening and closing in a confident talking rhythm. [2.4-3.6s] Shiba A raises its right front paw and points down at the basket. [3.6-6.0s] both dogs lean in, each picks up one drumstick treat in its mouth and chews happily, tails wagging. The treats keep exactly the same shape and golden-brown colour.",
-    "audio": [
-      {
-        "t": 0.1,
-        "end": 1.5,
-        "kind": "say",
-        "who": "owner",
-        "voice": "Fenrir",
-        "speed": 1.25,
-        "text": "하… 이거 뭐야?",
-        "emotion": "뜯겨 나간 통닭을 막 발견한 순간. 기가 막혀서 깊게 한숨 쉬고, 끝은 어이없어 떨리는 목소리. 화가 치밀어 오르기 직전."
-      },
-      {
-        "t": 1.6,
-        "end": 2.6,
-        "kind": "say",
-        "who": "owner",
-        "voice": "Fenrir",
-        "speed": 1.3,
-        "text": "누가 그랬어?!",
-        "emotion": "버럭 소리친다. 언성을 확 높여 화가 폭발한 목소리, 끝을 세게 올려 다그친다."
-      },
-      {
-        "t": 2.75,
-        "kind": "sfx",
-        "file": "shiba_bark_single.mp3",
-        "vol": 1.0
-      },
-      {
-        "t": 3.5,
-        "kind": "sfx",
-        "file": "shiba_bark_single.mp3",
-        "vol": 1.0
-      },
-      {
-        "t": 4.0,
-        "kind": "sfx",
-        "file": "shiba_bark_single.mp3",
-        "vol": 1.0
-      },
-      {
-        "t": 4.75,
-        "kind": "sfx",
-        "file": "shiba_bark_single.mp3",
-        "vol": 0.95
-      },
-      {
-        "t": 5.0,
-        "kind": "sfx",
-        "file": "shiba_bark_single.mp3",
-        "vol": 0.95
-      },
-      {
-        "t": 5.7,
-        "end": 7.0,
-        "kind": "say",
-        "who": "owner",
-        "voice": "Fenrir",
-        "speed": 1.25,
-        "text": "어쭈, 대드는 거야?",
-        "emotion": "강아지가 오히려 짖으며 대들자 황당해서 피식 웃음 섞인 기막힌 목소리. 눈을 가늘게 뜨고 비꼬듯이."
-      },
-      {
-        "t": 7.2,
-        "end": 8.7,
-        "kind": "say",
-        "who": "owner",
-        "voice": "Fenrir",
-        "speed": 1.2,
-        "text": "…너 앞발에 닭 묻었는데?",
-        "emotion": "결정적 증거를 발견한 순간. 목소리를 확 낮추고 조용히, 한 박자 뜸 들인 뒤 또박또박. 승리한 듯한 낮은 톤."
-      },
-      {
-        "t": 8.9,
-        "kind": "sfx",
-        "file": "dog_gulp_whimper.mp3",
-        "vol": 1.0
-      },
-      {
-        "t": 10.1,
-        "end": 13.2,
-        "kind": "say",
-        "who": "dog",
-        "voice": "Puck",
-        "speed": 1.3,
-        "text": "사실 우리가 원한 건 뻑뻑한 통닭이 아니야!",
-        "emotion": "들켰는데도 하나도 안 미안한 뻔뻔한 강아지. 당당하고 능청스럽게, 자신만만한 미소가 느껴지게. 끝은 힘주어 단언."
-      },
-      {
-        "t": 14.2,
-        "end": 15.9,
-        "kind": "say",
-        "who": "vo",
-        "voice": "Enceladus",
-        "speed": 1.3,
-        "text": "구매는 프로필 링크에서.",
-        "emotion": "느끼하고 끈적한 광고 내레이션. 낮게 속삭이듯, 그러나 또렷하게."
-      }
-    ],
-    "subs": [
-      {
-        "t0": 0.0,
-        "t1": 2.5,
-        "text": "통닭 털어 놓고\n친구를 고발함",
-        "style": "hook"
-      },
-      {
-        "t0": 0.1,
-        "t1": 1.5,
-        "text": "하… 이거 뭐야?"
-      },
-      {
-        "t0": 1.6,
-        "t1": 2.6,
-        "text": "누가 그랬어?!"
-      },
-      {
-        "t0": 2.7,
-        "t1": 4.4,
-        "text": "[번역: 나한테 소리 지르지 마]",
-        "style": "yellow"
-      },
-      {
-        "t0": 4.5,
-        "t1": 5.6,
-        "text": "[번역: 쟤도 같이 했어]",
-        "style": "yellow"
-      },
-      {
-        "t0": 5.7,
-        "t1": 7.0,
-        "text": "어쭈, 대드는 거야?"
-      },
-      {
-        "t0": 7.2,
-        "t1": 8.7,
-        "text": "…너 앞발에 닭 묻었는데?"
-      },
-      {
-        "t0": 8.9,
-        "t1": 10.0,
-        "text": "[번역: …]",
-        "style": "yellow"
-      },
-      {
-        "t0": 10.1,
-        "t1": 13.3,
-        "text": "사실 우리가 원한 건\n뻑뻑한 통닭이 아니야!",
-        "style": "top"
-      }
-    ]
-  },
-  "caption": "통닭 털어 놓고 친구를 고발함\n\n강아지 전용 치킨 모양 수제간식\n\n구매는 프로필 링크에서."
+ "id": "261005-meme-chicken",
+ "kind": "meme",
+ "product": {
+  "title": "독특 수제간식 강아지 치킨(3P 총중량120g) 멍치킨, 1개",
+  "link": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=9580575154&itemId=16182442683&vendorItemId=83376806255",
+  "brand": "독특",
+  "category": "간식"
+ },
+ "meme": {
+  "cap": 5,
+  "title": "통닭 털어 놓고 친구를 고발함",
+  "scene": "ONE LOCKED-OFF CAMERA for panels 1-5: a static camera standing on the floor at dog eye level, vertical 9:16, exactly the same framing, position, lens, kitchen background and lighting in panels 1-5, like frames of one uncut 10-second shot; only poses change. Bright modern home kitchen, white cabinets, a window behind, light wood floor, cool daylight. Foreground center on the floor: a torn-apart, half-eaten greasy human roast chicken - ripped skin, pulled-off drumsticks, bare bones, shredded meat and grease smears scattered around (NOT a whole intact chicken). Middle background between and behind the two dogs: the owner (a man in a grey sweatshirt, dark joggers, grey socks), framed so the TOP EDGE OF THE PICTURE CUTS HIM AT CHEST LEVEL - no head, no face anywhere. Both dogs are realistic adult Shiba Inus with real proportions, no clothes, no collars. No text, no watermark.",
+  "panels": [
+   "0s: owner bent forward, one hand pointing down at the torn chicken, the other on his knee; Shiba A sits upright, chin up, shameless face; Shiba B sits hunched, head lowered, ears flattened back, guilty eyes looking up. [CAST CHECK - must be true in this panel: exactly TWO dogs visible, both fully inside the frame. LEFT dog = Shiba A: red-orange (fox-red) coat with cream chest and cream cheeks, sits on the LEFT side of the chicken. RIGHT dog = Shiba B: pale cream-white coat with faint sesame shading, slightly smaller, sits on the RIGHT side of the chicken. The dogs never swap sides, never change colour, never leave the frame. The owner is cropped by the top edge of the frame at chest level: his head and face are NEVER visible, only his grey sweatshirt torso, arms, hands, dark joggers and grey socks.]",
+   "2s: owner's hand still pointing at the chicken; Shiba A has its right front paw stretched out sideways, the tip of the paw pointing precisely at Shiba B, mouth slightly open; Shiba B still head down, ears flat. [CAST CHECK - must be true in this panel: exactly TWO dogs visible, both fully inside the frame. LEFT dog = Shiba A: red-orange (fox-red) coat with cream chest and cream cheeks, sits on the LEFT side of the chicken. RIGHT dog = Shiba B: pale cream-white coat with faint sesame shading, slightly smaller, sits on the RIGHT side of the chicken. The dogs never swap sides, never change colour, never leave the frame. The owner is cropped by the top edge of the frame at chest level: his head and face are NEVER visible, only his grey sweatshirt torso, arms, hands, dark joggers and grey socks.]",
+   "4s: Shiba A barks loudly upward toward the owner's torso, mouth wide open showing teeth, ears forward, right paw still pointing at Shiba B; owner's hands raised in surprise; Shiba B's eyes rolled sideways toward Shiba A. [CAST CHECK - must be true in this panel: exactly TWO dogs visible, both fully inside the frame. LEFT dog = Shiba A: red-orange (fox-red) coat with cream chest and cream cheeks, sits on the LEFT side of the chicken. RIGHT dog = Shiba B: pale cream-white coat with faint sesame shading, slightly smaller, sits on the RIGHT side of the chicken. The dogs never swap sides, never change colour, never leave the frame. The owner is cropped by the top edge of the frame at chest level: his head and face are NEVER visible, only his grey sweatshirt torso, arms, hands, dark joggers and grey socks.]",
+   "7s: owner's hand reaches down and points his index finger at Shiba A's raised right front paw, which clearly has glossy chicken grease and a shred of roast chicken meat stuck in the fur; Shiba A frozen mid-bark with wide eyes; Shiba B watching. [CAST CHECK - must be true in this panel: exactly TWO dogs visible, both fully inside the frame. LEFT dog = Shiba A: red-orange (fox-red) coat with cream chest and cream cheeks, sits on the LEFT side of the chicken. RIGHT dog = Shiba B: pale cream-white coat with faint sesame shading, slightly smaller, sits on the RIGHT side of the chicken. The dogs never swap sides, never change colour, never leave the frame. The owner is cropped by the top edge of the frame at chest level: his head and face are NEVER visible, only his grey sweatshirt torso, arms, hands, dark joggers and grey socks.]",
+   "9s: Shiba A has lowered the paw and tucked it behind its body, looking away to the side with an awkward guilty face; Shiba B has lifted its head and stares flatly at Shiba A; owner's hands on his hips. [CAST CHECK - must be true in this panel: exactly TWO dogs visible, both fully inside the frame. LEFT dog = Shiba A: red-orange (fox-red) coat with cream chest and cream cheeks, sits on the LEFT side of the chicken. RIGHT dog = Shiba B: pale cream-white coat with faint sesame shading, slightly smaller, sits on the RIGHT side of the chicken. The dogs never swap sides, never change colour, never leave the frame. The owner is cropped by the top edge of the frame at chest level: his head and face are NEVER visible, only his grey sweatshirt torso, arms, hands, dark joggers and grey socks.]",
+   "12s (separate ad shot, chicken mess cleaned away, warmer light, owner completely out of frame): Shiba A sits front and center facing the camera with a smug confident face; in front of it a woven rattan basket full of golden-brown crumb-coated chicken-drumstick shaped dog treats exactly like the real product image; Shiba B sits behind on the right drooling at the basket. [CAST CHECK: exactly two dogs: Shiba A red-orange in front center, Shiba B pale cream-white behind on the right; no people.]"
+  ],
+  "hook": "통닭 털어 놓고 친구를 고발함",
+  "big": "치킨 도둑 막는 법\n먼저 사 주면 됩니다",
+  "sub": "식탁 위 치킨 노리기 전에\n강아지 전용 치킨 모양 수제간식",
+  "vo": "반성은 안 합니다… 먼저 사 주세요. 구매는 프로필 링크에서.",
+  "line_a": "사실 우리가 원한 건 뻑뻑한 통닭이 아니야!",
+  "hashtags": [
+   "#강아지수제간식",
+   "#강아지치킨간식",
+   "#강아지닭고기간식",
+   "#강아지훈련간식",
+   "#반려견수제간식"
+  ],
+  "one_shot_sec": 10,
+  "body_sec": 10,
+  "ad_sec": 6,
+  "body_prompt": "DURATION: 10 seconds. Image 1 is the first frame: keep exactly this kitchen, this torn-apart roast chicken on the floor, these two dogs and the owner's position. CAMERA: one locked-off static camera on the floor at dog eye level for the entire 10 seconds - no cuts, no zoom, no pan, no shake. Photorealistic, natural daylight, realistic adult Shiba Inu proportions, no clothes, no text. CAST (must stay true for the whole clip): exactly two dogs, both always fully in frame. LEFT = Shiba A, red-orange fox-red coat with cream chest and cheeks. RIGHT = Shiba B, pale cream-white coat, slightly smaller. They never swap sides, never change colour, never leave. The owner (grey sweatshirt, dark joggers, grey socks) stays cropped by the top edge at chest level: his head and face are NEVER visible. ACTION & MOUTH TIMELINE: [0.0-1.5s] owner bends forward and jabs his index finger down at the chicken mess twice; Shiba A sits upright with chin up, mouth closed; Shiba B hunches, head low, ears flat. [1.5-2.6s] owner's hand moves toward the dogs; Shiba A lifts its right front paw and stretches it sideways, the paw tip pointing precisely at Shiba B, and holds the pose. [2.6-2.9s] Shiba A gives one sharp bark (mouth snaps open once) while still pointing. [3.0-4.6s] Shiba A turns its head up toward the owner and barks back three times in quick succession (mouth opens wide at 3.1s, 3.6s, 4.1s), ears forward, defiant; owner's hands lift slightly in surprise. [4.6-6.0s] Shiba A jabs the pointing paw twice toward Shiba B (4.8s, 5.3s) with a short bark on each jab; Shiba B's eyes roll sideways toward Shiba A, head still low. [6.0-7.3s] owner puts his hands on his knees and leans down closer; Shiba A keeps the paw raised, mouth closed, smug. [7.3-8.6s] owner's index finger points straight at Shiba A's raised right front paw, which clearly has glossy chicken grease and a shred of roast chicken meat stuck in the fur; Shiba A freezes, eyes widen. [8.6-10.0s] Shiba A swallows (throat moves once), slowly lowers the paw and tucks it behind its body, and looks away to the side with an awkward guilty face; Shiba B lifts its head and stares flatly at Shiba A. Shiba B's mouth stays closed for the whole clip.",
+  "ad_prompt": "DURATION: 6 seconds. Image 1 is the first frame: keep exactly these two dogs, the woven rattan basket of golden-brown crumb-coated chicken-drumstick shaped dog treats and the warm kitchen. CAMERA: locked-off, very slow push-in, no cuts. Photorealistic, no text, no people. Shiba A (red-orange) front center, Shiba B (pale cream-white) behind on the right; they never swap or change colour. TIMELINE: [0.0-2.4s] Shiba A looks straight into the lens with a smug shameless face, mouth opening and closing in a confident talking rhythm. [2.4-3.6s] Shiba A raises its right front paw and points down at the basket. [3.6-6.0s] both dogs lean in, each picks up one drumstick treat in its mouth and chews happily, tails wagging. The treats keep exactly the same shape and golden-brown colour.",
+  "audio": [
+   {
+    "t": 0.1,
+    "end": 1.5,
+    "kind": "say",
+    "who": "owner",
+    "voice": "Fenrir",
+    "speed": 1.2,
+    "text": "야… 내 치킨.",
+    "emotion": "뜯겨 나간 통닭을 막 본 순간. 넋이 나가 허탈하게, 힘 빠진 낮은 목소리. '야…'에서 한숨 섞어 뜸."
+   },
+   {
+    "t": 1.6,
+    "end": 2.65,
+    "kind": "say",
+    "who": "owner",
+    "voice": "Fenrir",
+    "speed": 1.25,
+    "text": "누구야.",
+    "emotion": "화를 꾹 눌러 참은 낮고 무서운 목소리. 짧게 끊어서 다그친다."
+   },
+   {
+    "t": 2.75,
+    "kind": "sfx",
+    "file": "shiba_bark_single.mp3",
+    "vol": 1.0
+   },
+   {
+    "t": 3.5,
+    "kind": "sfx",
+    "file": "shiba_bark_single.mp3",
+    "vol": 1.0
+   },
+   {
+    "t": 4.1,
+    "kind": "sfx",
+    "file": "shiba_bark_single.mp3",
+    "vol": 1.0
+   },
+   {
+    "t": 4.75,
+    "kind": "sfx",
+    "file": "shiba_bark_single.mp3",
+    "vol": 0.95
+   },
+   {
+    "t": 5.7,
+    "end": 7.0,
+    "kind": "say",
+    "who": "owner",
+    "voice": "Fenrir",
+    "speed": 1.2,
+    "text": "아, 그래?",
+    "emotion": "다 알면서 믿어 주는 척 비꼬는 말투. 피식 웃음 섞어 끝을 올린다."
+   },
+   {
+    "t": 7.2,
+    "end": 8.85,
+    "kind": "say",
+    "who": "owner",
+    "voice": "Fenrir",
+    "speed": 1.25,
+    "text": "발에 묻은 건 뭔데?",
+    "emotion": "손가락으로 가리키며 결정적 증거를 들이민다. 무표정하게 낮고 또박또박, 이겼다는 여유."
+   },
+   {
+    "t": 8.9,
+    "kind": "sfx",
+    "file": "dog_gulp_whimper.mp3",
+    "vol": 1.0
+   },
+   {
+    "t": 10.2,
+    "kind": "sfx",
+    "file": "shiba_bark_single.mp3",
+    "vol": 1.0
+   },
+   {
+    "t": 10.9,
+    "kind": "sfx",
+    "file": "shiba_bark_single.mp3",
+    "vol": 1.0
+   },
+   {
+    "t": 11.5,
+    "end": 16.0,
+    "kind": "say",
+    "who": "vo",
+    "voice": "Enceladus",
+    "speed": 1.3,
+    "text": "반성은 안 합니다… 먼저 사 주세요. 구매는 프로필 링크에서.",
+    "emotion": "체념한 다큐멘터리 내레이터처럼 담담하고 느끼하게. '안 합니다…'에서 짧게 뜸, 마지막 문장은 또렷하게."
+   }
+  ],
+  "subs": [
+   {
+    "t0": 0.0,
+    "t1": 2.5,
+    "text": "통닭 털어 놓고\n친구를 고발함",
+    "style": "hook"
+   },
+   {
+    "t0": 0.1,
+    "t1": 1.5,
+    "text": "야… 내 치킨."
+   },
+   {
+    "t0": 1.6,
+    "t1": 2.65,
+    "text": "누구야."
+   },
+   {
+    "t0": 2.75,
+    "t1": 3.45,
+    "text": "[번역: 쟤예요]",
+    "style": "yellow"
+   },
+   {
+    "t0": 3.5,
+    "t1": 4.65,
+    "text": "[번역: 쟤가 뜯었어요]",
+    "style": "yellow"
+   },
+   {
+    "t0": 4.75,
+    "t1": 5.6,
+    "text": "[번역: 전 결백해요]",
+    "style": "yellow"
+   },
+   {
+    "t0": 5.7,
+    "t1": 7.0,
+    "text": "아, 그래?"
+   },
+   {
+    "t0": 7.2,
+    "t1": 8.85,
+    "text": "발에 묻은 건 뭔데?"
+   },
+   {
+    "t0": 8.9,
+    "t1": 10.0,
+    "text": "[번역: 증거 없음]",
+    "style": "yellow"
+   },
+   {
+    "t0": 10.1,
+    "t1": 11.6,
+    "text": "[번역: 다음엔 안 들킬게요]",
+    "style": "yellow"
+   }
+  ],
+  "copy_at": 3.3
+ },
+ "caption": "통닭 털어 놓고 친구를 고발함\n\n강아지 전용 치킨 모양 수제간식\n\n구매는 프로필 링크에서."
 }

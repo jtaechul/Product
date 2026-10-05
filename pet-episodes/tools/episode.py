@@ -3023,6 +3023,7 @@ def _meme_full(ep, epdir, work, log, res, mm, cap):
               "dog": ("Puck", "[연기 지시] 한국어. 통닭을 털다 걸린 뻔뻔한 강아지가 당당하게 우기는 목소리. 능청스럽고 자신만만하게, 또박또박 빠르게."),
               "vo": (VOICE_NAME, VO_DIRECTION + " " + VO_PACE)}
     ins, fc, labels = [], [], []
+    res["say"] = []                                       # 이번 조립의 녹음 실측만 남긴다
     for k, a in enumerate(mm.get("audio", [])):
         at = float(a.get("t", 0))
         if a.get("kind") == "say":
@@ -3043,8 +3044,9 @@ def _meme_full(ep, epdir, work, log, res, mm, cap):
                     _ff(["-i", str(wav), "-af", f"atempo={k2:.4f}", str(tmp)])
                     tmp.replace(wav)
                     L = _dur(wav)
-                res.setdefault("say", []).append({"text": a["text"][:30], "voice": v, "speed": sp, "at": at, "sec": round(L, 2),
-                                                  "room": round(room, 2) if room > 0 else None, "over": bool(room > 0 and L > room + 0.05)})
+            L, room = _dur(wav), float(a.get("end", 0)) - at
+            res["say"].append({"text": a["text"][:30], "voice": v, "speed": sp, "at": at, "sec": round(L, 2),
+                               "room": round(room, 2) if room > 0 else None, "over": bool(room > 0 and L > room + 0.05)})
             ins += ["-i", str(wav)]
             chain = f"acompressor=threshold=-24dB:ratio=3:attack=5:release=90:makeup=2,volume={float(a.get('vol', 1.0)):.2f}"
         else:
@@ -3053,6 +3055,9 @@ def _meme_full(ep, epdir, work, log, res, mm, cap):
         n = len(labels)
         fc.append(f"[{n + 2}:a]aresample=48000,{chain},adelay={int(at * 1000)}:all=1,apad,atrim=0:{tot}[s{n}]")
         labels.append(f"[s{n}]")
+    over = [x for x in res["say"] if x["over"]]
+    if over:                                              # 1.3배로도 칸을 넘치면 잘리거나 겹치므로 붙이지 않고 멈춘다
+        raise RuntimeError("대사가 칸을 넘칩니다(1.3배로도): " + " / ".join(f"{x['text']} {x['sec']}초>{x['room']}초" for x in over))
     # 자막·문구 그림
     pngs = []
     for k, sb in enumerate(mm.get("subs", [])):
@@ -3062,7 +3067,7 @@ def _meme_full(ep, epdir, work, log, res, mm, cap):
     cp, cta = work / "_copy.png", work / "_cta.png"
     _copy_png(mm.get("big", ""), mm.get("sub", ""), cp, place="bottom")
     _cta_png(cta)
-    pngs += [(cp, Lb, tot), (cta, Lb + max(0.0, La - 2.2), tot)]
+    pngs += [(cp, Lb + float(mm.get("copy_at", 0)), tot), (cta, Lb + max(0.0, La - 2.2), tot)]   # copy_at: 광고 시작 뒤 문구가 뜨는 시각
     n_a = len(labels)
     for f, a, b in pngs:
         ins += ["-loop", "1", "-t", f"{tot}", "-i", str(f)]
