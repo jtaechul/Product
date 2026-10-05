@@ -955,3 +955,20 @@ def test_answer_card_has_series_line(tmp_path):
     assert "次の深海の謎も、このチャンネルで。" in src
     out = A.answer_png("この生き物は？", "テスト", "Testus fishus", tmp_path / "a.png")
     assert out.exists()
+
+
+def test_screen_text_blocks_korean_annotation(tmp_path):
+    """실사고 2026-10-05: 왕게 편 주석이 한국어 → 영상 글꼴(일본어)에 없어 네모 □. 대본 검사·조립 직전 검사 둘 다 막는다."""
+    import assemble as A
+    assert A.missing_glyphs("1800年代後半から 水深4152m 第5歩脚") == []
+    assert A.label_png("宿主はセンジュナマコ", tmp_path / "ok.png").exists()
+    with pytest.raises(A.GlyphError):
+        A.label_png("1800년대 후반 이후", tmp_path / "bad.png")
+    with pytest.raises(A.GlyphError):
+        A.hook_png("수심에 사는, この生き物は？", tmp_path / "h.png")
+    facts = [{"id": "F1", "fact": "1800", "fact_jp": "", "quote": "1800"}]
+    cut = {"jp": "1800年代後半以降、学者は疑ってきました。", "ko": "학자들은 의심했습니다.", "fact": "F1", "annotation": "1800년대 후반"}
+    probs = admin.validate_script([cut] * admin.SCRIPT_CUTS, facts)
+    assert any("韓国語" in p for p in probs)
+    cut["annotation"] = "1800年代後半から"
+    assert not any("注釈" in p for p in admin.validate_script([cut] * admin.SCRIPT_CUTS, facts))

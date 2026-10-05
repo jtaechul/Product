@@ -217,6 +217,17 @@ def assemble(pid: str) -> dict:
         _save(status_path(pid), st)
         raise SystemExit(str(e))
     sc = _load(_script_path(pid)) or {}
+    try:                                                     # ★화면 글자(주석·후킹·정답) 글꼴 검사 — 없는 글자는 네모 □(실사고 2026-10-05)
+        for c in sc.get("cuts", []):
+            A.check_glyphs(str(c.get("annotation") or ""), f"{c.get('cut')}번 컷 주석")
+        hk = sc.get("hook") or {}
+        A.check_glyphs(str(hk.get("question_jp") or "") + str(hk.get("answer_jp") or ""), "후킹·정답")
+    except A.GlyphError as e:
+        st["checks"] = {"at": _now(), "screen_text": {"ok": False, "value": str(e)[:200],
+                                                     "rule": "화면 글자가 글꼴에 모두 있을 것(한국어 주석 금지 · 네모 □ 금지)"}}
+        _note(st, "video", "error", "화면 글자 검사 불통과 — 영상을 만들지 않았습니다: " + str(e)[:160])
+        _save(status_path(pid), st)
+        raise SystemExit(str(e))
     ending = "" if sc.get("hook") else str(pilot / asm["ending"])   # ★후킹 편은 공용 엔딩 대신 [후킹][본편][정답 카드]
     dst.parent.mkdir(parents=True, exist_ok=True)           # 빈 폴더는 git에 안 남아 로컬 재조립 때 없을 수 있다(실측 ffmpeg 254)
     A.main(str(pilot), asm["clips_id"], asm["tts_id"], ending, str(dst), overrides=over)
@@ -229,6 +240,8 @@ def assemble(pid: str) -> dict:
     st["checks"] = auto_checks(dst, body_s=body_s)
     st["checks"]["subtitle_font"] = {"ok": True, "value": font["font_file"],
                                      "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"}
+    st["checks"]["screen_text"] = {"ok": True, "value": "주석·후킹·정답 글자 모두 글꼴에 있음",
+                                   "rule": "화면 글자가 글꼴에 모두 있을 것(한국어 주석 금지 · 네모 □ 금지)"}
     st["stages"]["video"]["state"] = "review"
     a["built_at"] = _now()
     _save(status_path(pid), st)
@@ -1211,7 +1224,7 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
 {feedback}
 # 出力(JSONのみ)
 {{"cuts":[{{"cut":1,"jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
-"scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄)","annotation":"画面の赤い注釈(短く・数字は事実どおり・なければ空)"}}],
+"scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄)","annotation":"画面の注釈(日本語のみ・韓国語禁止・14文字以内・数字は事実どおり・なければ空)"}}],
 "hook":{{"cut":3,"question_jp":"皮を脱ぎ捨てる、この生き物は？","question_ko":"한국어 번역","answer_jp":"呼び名","answer_ko":"한국어 이름"}}}}
 
 # 事実リスト
@@ -1263,6 +1276,11 @@ def validate_script(cuts: list[dict], facts: list[dict]) -> list[str]:
             probs.append(f"カット{i}: 根拠の事実番号がない/存在しない番号です({c.get('fact')})。")
         if re.search(r"[가-힣]", jp) or not re.search(r"[ぁ-んァ-ン一-龥]", jp):
             probs.append(f"カット{i}: 日本語の台詞になっていません。")
+        ann = str(c.get("annotation", ""))
+        if re.search(r"[가-힣ㄱ-ㆎ]", ann):                   # ★실사고 2026-10-05: 한국어 주석 → 영상 글꼴(일본어)에 없어 네모 □로 깨짐
+            probs.append(f"カット{i}: 注釈「{ann}」に韓国語があります。注釈は日本語だけで書いてください。")
+        if len(ann) > 14:
+            probs.append(f"カット{i}: 注釈「{ann}」が長すぎます({len(ann)}文字)。14文字以内にしてください。")
         if not re.search(r"[가-힣]", ko):
             probs.append(f"カット{i}: 韓国語訳(ko)がありません。")
         if not 12 <= len(jp) <= 50:

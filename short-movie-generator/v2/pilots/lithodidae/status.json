@@ -643,11 +643,11 @@
         "tts_id": "r10051532_script_tts",
         "ending": ""
       },
-      "built_at": "2026-10-05T22:48:47Z"
+      "built_at": "2026-10-05T23:03:38Z"
     }
   },
   "checks": {
-    "at": "2026-10-05T22:48:47Z",
+    "at": "2026-10-05T23:03:38Z",
     "duration_s": 56.18,
     "white_edge_px": {
       "value": 0,
@@ -667,6 +667,11 @@
       "ok": true,
       "value": "NotoSansJP-Bold.ttf",
       "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"
+    },
+    "screen_text": {
+      "ok": true,
+      "value": "주석·후킹·정답 글자 모두 글꼴에 있음",
+      "rule": "화면 글자가 글꼴에 모두 있을 것(한국어 주석 금지 · 네모 □ 금지)"
     }
   },
   "jobs": {

@@ -63,16 +63,69 @@ def _font(size: int) -> ImageFont.FreeTypeFont:
     return f
 
 
+class GlyphError(RuntimeError):
+    """화면 글자에 글꼴에 없는 문자가 있다(그대로 그리면 네모 □) — 영상을 만들지 않고 멈춘다."""
+
+
+_CMAP: set | None = None
+
+
+def missing_glyphs(text: str) -> list[str]:
+    """FONT_BOLD 에 없는 글자 목록(공백 제외). 예: 한글은 NotoSansJP 에 없다 → 네모로 깨짐."""
+    global _CMAP
+    if _CMAP is None:
+        from fontTools.ttLib import TTFont
+        _CMAP = set(TTFont(str(FONT_BOLD)).getBestCmap())
+    return sorted({ch for ch in text if not ch.isspace() and ord(ch) not in _CMAP})
+
+
+def check_glyphs(text: str, where: str) -> None:
+    """★화면에 그릴 글자 자가 검사(실사고 2026-10-05: 왕게 편 빨간 주석이 한국어로 들어가 네모 □로 깨짐)."""
+    bad = missing_glyphs(text)
+    if bad:
+        raise GlyphError(f"{where}「{text}」에 글꼴에 없는 글자 {''.join(bad)} — 일본어로 고쳐야 합니다(한국어 금지)")
+
+
+PAPER = (246, 236, 214)        # 미니어처 종이 꼬리표(크림 종이)
+INK = (58, 40, 28)             # 갈색 잉크 글씨
+TAG_RED = (178, 42, 36)        # 테두리·밑줄(빨간 주석 → 미니어처 소품 톤의 붉은 잉크)
+TAPE = (232, 214, 160)         # 마스킹 테이프
+
+
 def label_png(text: str, out: Path) -> Path:
-    """빨간 주석(위쪽 1/3 — 하단 자막과 겹치지 않게): 흰 글씨 + 빨간 칩."""
-    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    f = _font(40)
+    """화면 주석(위쪽 1/3 — 하단 자막과 겹치지 않게) — 미니어처 세트에 붙인 **종이 꼬리표** 모양
+    (운영자 지시 2026-10-05: 빨간 칩이 디오라마와 안 어울림). 크림 종이 + 붉은 잉크 이중 테두리 + 갈색 글씨 +
+    마스킹 테이프 + 살짝 기울임 + 그림자. 글꼴에 없는 글자(한국어 등)는 그리기 전에 멈춘다."""
+    check_glyphs(text, "주석")
+    f = _fit_font(text, 42, W - 200)
     tw = f.getlength(text)
     a, d = f.getmetrics()
-    x0, y0 = int((W - tw) / 2) - 20, int(H * 0.30)
-    dr = ImageDraw.Draw(im)
-    dr.rounded_rectangle([x0, y0, x0 + tw + 40, y0 + a + d + 20], radius=12, fill=RED + (235,))
-    dr.text((x0 + 20, y0 + 10), text, font=f, fill=(255, 255, 255, 255))
+    pw, ph = int(tw) + 72, a + d + 44
+    tag = Image.new("RGBA", (pw + 40, ph + 60), (0, 0, 0, 0))
+    ox, oy = 20, 30
+    sh = Image.new("RGBA", tag.size, (0, 0, 0, 0))
+    ImageDraw.Draw(sh).rounded_rectangle([ox + 5, oy + 8, ox + pw + 5, oy + ph + 8], radius=6, fill=(0, 0, 0, 120))
+    from PIL import ImageFilter
+    tag.alpha_composite(sh.filter(ImageFilter.GaussianBlur(7)))
+    dr = ImageDraw.Draw(tag)
+    dr.rounded_rectangle([ox, oy, ox + pw, oy + ph], radius=6, fill=PAPER + (255,))
+    # 종이 결(아주 옅은 가로 줄) — 인쇄물이 아니라 손으로 만든 종이 느낌
+    for yy in range(oy + 6, oy + ph - 4, 7):
+        dr.line([(ox + 6, yy), (ox + pw - 6, yy)], fill=(222, 206, 174, 38), width=1)
+    dr.rounded_rectangle([ox + 7, oy + 7, ox + pw - 7, oy + ph - 7], radius=4, outline=TAG_RED + (230,), width=3)
+    dr.rounded_rectangle([ox + 12, oy + 12, ox + pw - 12, oy + ph - 12], radius=3, outline=TAG_RED + (120,), width=1)
+    dr.text((ox + 36, oy + 22), text, font=f, fill=INK + (255,))
+    # 마스킹 테이프(왼쪽 위 비스듬히)
+    tp = Image.new("RGBA", (110, 34), TAPE + (225,))
+    td = ImageDraw.Draw(tp)
+    for x in range(0, 110, 9):
+        td.line([(x, 0), (x, 2)], fill=(0, 0, 0, 0), width=4)
+        td.line([(x + 4, 32), (x + 4, 34)], fill=(0, 0, 0, 0), width=4)
+    tp = tp.rotate(28, expand=True, resample=Image.BICUBIC)
+    tag.alpha_composite(tp, (ox - 26, oy - 22))
+    tag = tag.rotate(2.5, expand=True, resample=Image.BICUBIC)
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    im.alpha_composite(tag, (max(0, int((W - tag.width) / 2)), int(H * 0.27)))
     im.save(out)
     return out
 
@@ -126,6 +179,7 @@ HOOK_FONT = 128                # 후킹 글자 크기(운영자 지시 2026-09-3
 def hook_png(question: str, out: Path) -> Path:
     """후킹 질문 — 화면 가운데 위쪽을 크게 덮는 **빨간 글자만**(칩·자막 없음 · 운영자 확정).
     글자 128px, 「、」에서 줄을 나눠 2~3줄. 어두운 테두리로 가독성."""
+    check_glyphs(question, "후킹 질문")
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     size, max_w = HOOK_FONT, W - 60
     while True:
@@ -165,6 +219,7 @@ def answer_png(question: str, answer: str, sci: str, out: Path, bg: Path | None 
     """정답 카드(운영자 지시 2026-09-30 디자인 개선): 본편 마지막 화면을 어둡게·흐리게 깐 배경 위에
     작은 빨간 「正解」 라벨 → 큰 흰 이름 → 학명(이탤릭) → 가는 선 → 「チャンネル登録」 배지. 질문은 위쪽에 작게."""
     from PIL import ImageFilter
+    check_glyphs(question + answer + sci, "정답 카드")
     if bg and Path(bg).exists():
         im = Image.open(bg).convert("RGB").resize((W, H)).filter(ImageFilter.GaussianBlur(10))
         im = Image.blend(im, Image.new("RGB", (W, H), NAVY), 0.62).convert("RGBA")
