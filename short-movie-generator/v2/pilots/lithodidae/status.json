@@ -16,7 +16,7 @@
       "approved_at": "2026-10-05T15:29:14Z"
     },
     "script": {
-      "state": "review",
+      "state": "approved",
       "notes": [
         {
           "at": "2026-10-05T15:32:12Z",
@@ -32,11 +32,17 @@
           "at": "2026-10-05T15:45:06Z",
           "kind": "crosscheck",
           "text": "AI 교차 검사: 의심 2건"
+        },
+        {
+          "at": "2026-10-05T22:00:31Z",
+          "kind": "approve",
+          "text": ""
         }
-      ]
+      ],
+      "approved_at": "2026-10-05T22:00:31Z"
     },
     "storyboard": {
-      "state": "locked",
+      "state": "working",
       "notes": []
     },
     "video": {
@@ -443,6 +449,13 @@
       "at": "2026-10-05T15:32:39Z",
       "action": "write_script",
       "text": "대본 자동 작성 완료 — 승인 대기"
+    },
+    "storyboard": {
+      "stage": "storyboard",
+      "status": "running",
+      "at": "2026-10-05T22:00:31Z",
+      "action": "job_start",
+      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
     }
   },
   "cost": {
