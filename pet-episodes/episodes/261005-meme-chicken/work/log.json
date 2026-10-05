@@ -126,16 +126,16 @@
         "text": "반성은 안 합니다… 먼저 사 주세요. 구매는 프로필 링",
         "voice": "Enceladus",
         "speed": 1.3,
-        "at": 11.5,
+        "at": 11.25,
         "sec": 4.17,
-        "room": 4.5,
+        "room": 4.75,
         "over": false
       }
     ]
   },
   "last_request": {
-    "file": "06_meme_full.json",
-    "ran_at": "2026-10-05T05:14:28Z",
+    "file": "07_meme_full.json",
+    "ran_at": "2026-10-05T05:38:49Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
