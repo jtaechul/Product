@@ -5436,7 +5436,10 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   function epEl(tag,cls,text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
   function epBtn(text,fn,main){ var b=epEl('button','btn btn-sm'+(main?'':' btn-2'),text); b.type='button'; b.addEventListener('click',fn); return b; }
   function epTitle(e){ return (e.episode?'제'+e.episode+'화 · ':'')+(e.menu||e.id); }
-  function epSub(e){ return [e.title, e.sec?Math.round(e.sec)+'초':'', e.ranAt?stampKo(e.ranAt):''].filter(Boolean).join(' · '); }
+  function epSub(e){ return [e.title, e.sec?Math.round(e.sec)+'초':'', e.ranAt?stampKo(e.ranAt):'', (e.sched&&!e.sched.err&&!(e.ig&&e.ig.ok))?'예약 '+schedKo(e.sched.at):''].filter(Boolean).join(' · '); }
+  function schedKo(t){ var d=new Date(Number(t)); return (d.getMonth()+1)+'/'+d.getDate()+'('+'일월화수목금토'[d.getDay()]+') '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+  function nextEvening(){ var d=new Date(); if(d.getHours()>=19) d.setDate(d.getDate()+1); d.setHours(19,0,0,0);
+    function p(n){ return String(n).padStart(2,'0'); } return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T19:00'; }
   function curView(){ var h=(location.hash||'').replace('#',''); var v=h.split('/')[0]||'new';
     return ['new','list','products','legacy','ep','trend'].indexOf(v)<0 ? {v:'new'} : {v:v, id:decodeURIComponent(h.split('/')[1]||'')}; }
   function showView(){
@@ -5517,12 +5520,37 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(e.hasVideo && e.state!=='running'){
       if(e.ig&&e.ig.ok){
         var ig=epEl('a','btn btn-sm','인스타 게시물 보기'); ig.href=e.ig.permalink||'#'; ig.target='_blank'; ig.rel='noopener'; act.appendChild(ig);
-      } else act.appendChild(epBtn('인스타에 올리기',function(){
-        if(!confirm('이 영상을 인스타그램 릴스로 바로 올립니다. 올린 뒤에는 인스타 앱에서만 지울 수 있습니다. 올릴까요?')) return;
-        epAsk(e.id,'publish',{}, '인스타에 올리는 중입니다. 5~10분 뒤 이 화면에 게시물 링크가 나옵니다.');
-      },true));
+      } else {
+        act.appendChild(epBtn('인스타에 올리기',function(){
+          if(!confirm('이 영상을 인스타그램 릴스로 바로 올립니다. 올린 뒤에는 인스타 앱에서만 지울 수 있습니다. 올릴까요?')) return;
+          epAsk(e.id,'publish',{}, '인스타에 올리는 중입니다. 5~10분 뒤 이 화면에 게시물 링크가 나옵니다.');
+        },true));
+        if(!(e.sched&&!e.sched.err)) act.appendChild(epBtn('올리기 예약',function(){ sb.classList.toggle('view-off'); }));
+      }
     }
     d.appendChild(act);
+    // 인스타 올리기 예약(사용자 요청 2026-10): 고른 시각이 되면 서버가 자동으로 올린다(반응 좋은 시간: 월·화 저녁 6~9시)
+    var sb=epEl('div','ep-post view-off');
+    if(e.hasVideo&&!(e.ig&&e.ig.ok)){
+      if(e.sched&&!e.sched.err){
+        var sr=epEl('div','ep-act');
+        sr.appendChild(epEl('div','ep-sub','인스타 올리기 예약됨: '+schedKo(e.sched.at)));
+        sr.appendChild(epBtn('예약 취소',function(){ if(confirm('예약을 취소할까요?')) epAsk(e.id,'unschedule',{},'예약을 취소했습니다.'); }));
+        d.appendChild(sr);
+      } else {
+        if(e.sched&&e.sched.err) d.appendChild(epEl('div','ep-err','예약 올리기 실패('+schedKo(e.sched.at)+'): '+e.sched.err));
+        sb.appendChild(epEl('div','ep-post-hd','올릴 날짜·시각 고르기 (반응 좋은 시간: 월·화 저녁 6~9시)'));
+        var inp=document.createElement('input'); inp.type='datetime-local'; inp.value=nextEvening(); inp.style.cssText='width:100%;padding:10px;font-size:16px;margin:6px 0';
+        sb.appendChild(inp);
+        sb.appendChild(epBtn('이 시각에 올리기 예약',function(){
+          var t=new Date(inp.value).getTime();
+          if(!t){ alert('날짜와 시각을 골라 주세요.'); return; }
+          if(!confirm(schedKo(t)+'에 이 영상을 인스타 릴스로 자동으로 올립니다. 예약할까요?')) return;
+          epAsk(e.id,'schedule',{at:t},'예약했습니다: '+schedKo(t)+'에 자동으로 올립니다.');
+        },true));
+        d.appendChild(sb);
+      }
+    }
     if(e.kind==='remake') d.appendChild(remakeBox(e));
     if(e.product&&e.product.title) d.appendChild(shopBox(e));
     if(e.ig&&!e.ig.ok&&e.ig.error) d.appendChild(epEl('div','ep-err','인스타 올리기 실패: '+e.ig.error));
@@ -6819,6 +6847,34 @@ async function remakeFixCommit(env, id, plan) {
   return { success: true, id, request: name };
 }
 
+// 인스타 올리기 예약(사용자 요청 2026-10) — KV 한 칸(ig_sched_all = {편: {at, err}})에 시각을 두고, 매분 크론이 때가 되면
+// 'publish' 요청을 올린다(그 뒤는 '인스타에 올리기' 버튼과 같음). KV list는 하루 1000번 한도라 쓰지 않는다.
+const IG_SCHED_KEY = 'ig_sched_all';
+async function igSchedMap(env) {
+  try { return (await env.PENDING_POSTS.get(IG_SCHED_KEY, 'json')) || {}; } catch { return {}; }
+}
+async function igScheduleSet(env, id, at) {
+  const m = await igSchedMap(env);
+  if (!at) { delete m[id]; await env.PENDING_POSTS.put(IG_SCHED_KEY, JSON.stringify(m)); return { success: true, id, sched: null }; }
+  const now = Date.now();
+  if (!(at > now + 60e3)) throw new Error('예약 시각은 지금보다 1분 이상 뒤로 골라 주세요.');
+  if (at > now + 30 * 864e5) throw new Error('예약은 30일 안쪽으로만 됩니다.');
+  const log = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/work/log.json`)) || '{}');
+  if (!log.assemble?.ok) throw new Error('아직 영상이 완성되지 않았습니다.');
+  if (log.ig_publish?.media_id) throw new Error('이미 인스타에 올린 편입니다.');
+  m[id] = { at };
+  await env.PENDING_POSTS.put(IG_SCHED_KEY, JSON.stringify(m));
+  return { success: true, id, sched: m[id] };
+}
+async function runIgSchedule(env) {
+  const m = await igSchedMap(env), now = Date.now();
+  const due = Object.keys(m).find(id => !m[id].err && Number(m[id].at) <= now);
+  if (!due) return;                                   // 한 번에 한 편만(외부 호출 한도)
+  try { await handleEpisodeRequest(env, { id: due, kind: 'publish' }); delete m[due]; }
+  catch (e) { m[due] = { at: m[due].at, err: String(e.message || e).slice(0, 200) }; }
+  await env.PENDING_POSTS.put(IG_SCHED_KEY, JSON.stringify(m));
+}
+
 // 같은 편에 추가 요청: 다시 조립·컷 다시 뽑기·인스타 올리기
 async function handleEpisodeRequest(env, body) {
   const id = String(body.id || '');
@@ -6835,6 +6891,8 @@ async function handleEpisodeRequest(env, body) {
     if (!log.assemble?.ok) throw new Error('아직 영상이 완성되지 않았습니다.');
     if (log.ig_publish?.media_id) throw new Error('이미 인스타에 올린 편입니다.');
     req = { steps: ['publish'] };
+  } else if (kind === 'schedule' || kind === 'unschedule') {
+    return await igScheduleSet(env, id, kind === 'schedule' ? Number(body.at) : 0);
   } else if (kind === 'remake_full') {
     const log = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/work/log.json`)) || '{}');
     if (log.assemble?.ok) throw new Error('이미 영상을 만들었습니다.');   // 스토리보드가 없으면 제작 쪽이 먼저 그린다
@@ -6885,6 +6943,7 @@ async function handleEpisodeList(env, body) {
   const r = await gh(env, `/contents/${EP_ROOT}?ref=${encodeURIComponent(EP_BRANCH)}`);
   if (!r.ok) throw new Error(`편 목록을 못 읽었습니다(${r.status}).`);
   const want = body.id ? [String(body.id)] : null;
+  const sched = await igSchedMap(env);
   const dirs = (r.json || []).filter(x => x.type === 'dir' && /^\d/.test(x.name) && !/^000-/.test(x.name)).map(x => x.name)
     .filter(n => want ? want.includes(n) : !/^00[1-5]-/.test(n)).sort().reverse().slice(0, 12);  // 001~005 = 시험 제작분(목록에서 숨김)
   const eps = await Promise.all(dirs.map(async id => {
@@ -6904,7 +6963,7 @@ async function handleEpisodeList(env, body) {
       cuts: (ep.clips || []).map((c, i) => ({ no: `c${String(i + 1).padStart(2, '0')}`, role: c.role || '', line: c.line || '' })),
       sec: log.assemble?.sec || 0, hasVideo: !!log.assemble?.ok, error: done && !log.last_request?.ok ? String(log.error || '').slice(0, 300) : '',
       ranAt: log.last_request?.ran_at || '', ig: log.ig_publish || null, post: postTextOf(ep), hasCover: !!log.cover, foodCheck,
-      product: ep.product || null, kind: ep.kind || '',
+      product: ep.product || null, kind: ep.kind || '', sched: sched[id] || null,
       remake: ep.kind === 'remake' ? { ...(ep.remake || {}), ...(log.remake || {}), source: ep.source || null } : null };
   }));
   return { success: true, episodes: eps };
@@ -7744,6 +7803,7 @@ export default {
     } else {
       ctx.waitUntil(runScheduled(env));
       ctx.waitUntil(runVpJobs(env));
+      ctx.waitUntil(runIgSchedule(env).catch(() => {}));   // 인스타 올리기 예약
     }
   },
 };
