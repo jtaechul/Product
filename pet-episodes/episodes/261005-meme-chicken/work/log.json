@@ -1,7 +1,11 @@
 {
   "meme": {
-    "spent": 0.15,
+    "spent": 0.3,
     "ledger": [
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
+      },
       {
         "what": "스토리보드 그림",
         "usd": 0.15
@@ -14,8 +18,8 @@
     }
   },
   "last_request": {
-    "file": "01_meme_board.json",
-    "ran_at": "2026-10-05T03:06:58Z",
+    "file": "02_meme_board.json",
+    "ran_at": "2026-10-05T03:13:33Z",
     "ok": true
   }
 }
