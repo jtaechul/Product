@@ -2882,6 +2882,60 @@ def step_remake(ep, epdir, work, log, req):
             f.unlink(missing_ok=True)
 
 
+# 밈 새로 만들기(원본 영상 없이 기획안으로 처음부터 — 사용자 확정 2026-10 '통닭 범인 고발' 편)
+MEME_BOARD = ("Image 1 is a layout template: six empty vertical 9:16 panels in a 3x2 grid on black. Draw a photorealistic "
+              "storyboard by filling EACH panel exactly inside its box (keep the grid, panel sizes and the black area below; "
+              "no numbers, no text, no borders drawn inside the pictures). Image 2 shows the Shiba Inu breed look to use "
+              "(real adult proportions, no cartoon eyes, no clothes). {product}All six panels are the SAME scene, the SAME "
+              "two dogs and the SAME kitchen, like frames of one continuous video. SCENE: {scene} {panels}")
+
+
+def _board_template(path: Path):
+    W0 = BOARD_CW * BOARD_COLS
+    tile = Image.new("RGB", (W0, int(W0 * 5 / 4)), (0, 0, 0))
+    from PIL import ImageDraw
+    d = ImageDraw.Draw(tile)
+    for i in range(BOARD_COLS * BOARD_ROWS):
+        x, y = (i % BOARD_COLS) * BOARD_CW, (i // BOARD_COLS) * BOARD_CH
+        d.rectangle([x + 3, y + 3, x + BOARD_CW - 4, y + BOARD_CH - 4], fill=(205, 205, 205), outline=(255, 255, 255), width=3)
+    tile.save(path)
+
+
+def step_meme(ep, epdir, work, log, req):
+    """기획안으로 처음부터 만드는 밈 광고. 지금은 스토리보드 그림(6칸)까지 — 확인받은 뒤 영상 단계로."""
+    res = log.setdefault("meme", {})
+    mm = ep.get("meme") or {}
+    cap = float(mm.get("cap", 5))
+    mode = (req.get("meme") or {}).get("mode", "board")
+    if mode == "board":
+        if (work / "board.jpg").exists() and not (req.get("meme") or {}).get("redo"):
+            return
+        tpl = work / "_tpl.png"
+        _board_template(tpl)
+        refs = [tpl, ROOT / "pet-episodes" / "characters" / "dog.png"]
+        prod = next((epdir / "refs").glob("product.*"), None) if (epdir / "refs").exists() else None
+        ptxt = ""
+        if prod:
+            refs.append(prod)
+            ptxt = "Image 3 is the real product: wherever the product appears it must look exactly like image 3 (same shape, colour, texture). "
+        panels = " ".join(f"Panel {k + 1} ({'top' if k < 3 else 'bottom'} {['left', 'middle', 'right'][k % 3]}): {t}"
+                          for k, t in enumerate(mm.get("panels", [])))
+        _remake_spend(res, REMAKE_COST["image"], "스토리보드 그림", cap)
+        out = work / "_board_out.png"
+        r = gen_image(MEME_BOARD.format(product=ptxt, scene=mm.get("scene", ""), panels=panels), refs, out, "4:5", "2K")
+        if not r.get("ok"):
+            raise RuntimeError(f"스토리보드 그림 실패: {r.get('error')}")
+        im = Image.open(out).convert("RGB")
+        k = im.size[0] / (BOARD_CW * BOARD_COLS)
+        im.save(work / "board.jpg", quality=88)
+        for i in range(BOARD_COLS * BOARD_ROWS):
+            x, y = (i % BOARD_COLS) * BOARD_CW * k, (i // BOARD_COLS) * BOARD_CH * k
+            im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(work / f"board_{i + 1:02d}.jpg", quality=90)
+        res["board"] = {"ok": True, "panels": BOARD_COLS * BOARD_ROWS, "wait": True}
+        for f in work.glob("_*"):                         # 중간 파일은 커밋하지 않는다
+            f.unlink(missing_ok=True)
+
+
 def main(path: str) -> int:
     rp = Path(path)
     req = json.loads(rp.read_text(encoding="utf-8"))
@@ -2914,6 +2968,8 @@ def main(path: str) -> int:
             step_vo(work, log, req.get("vo") or {})
         if "remake" in steps:
             step_remake(ep, epdir, work, log, req)
+        if "meme" in steps:
+            step_meme(ep, epdir, work, log, req)
         if "swap" in steps:
             try:
                 step_swap(work, log, req.get("swap") or {})
