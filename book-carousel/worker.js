@@ -6863,7 +6863,7 @@ async function handleEpisodeRequest(env, body) {
 
 // 인스타·유튜브에 직접 올릴 때 복사할 글(본문·해시태그). 쿠팡 파트너스 고지는 본문에 반드시 들어간다(법적 요구).
 // '프로필 링크' 문장 바로 아래 줄에 우리 계정 아이디(사용자 지시 2026-10) — 없으면 맨 끝(고지 앞)에 붙인다
-const IG_HANDLE = '@lord.shiba.ydb';
+const IG_HANDLE = '@lord.shiba.ybd';
 function withHandle(caption) {
   const lines = String(caption || '').split('\n').filter(l => l.trim() !== IG_HANDLE);
   const i = lines.findIndex(l => l.includes('프로필 링크'));

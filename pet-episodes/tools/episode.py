@@ -806,7 +806,7 @@ def step_ig_probe(log):
                        "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
 
 
-IG_HANDLE = "@lord.shiba.ydb"      # '프로필 링크' 문장 바로 아래 줄(사용자 지시 2026-10)
+IG_HANDLE = "@lord.shiba.ybd"      # '프로필 링크' 문장 바로 아래 줄(사용자 지시 2026-10)
 
 
 def _with_handle(cap: str) -> str:
