@@ -93,7 +93,7 @@
         "res": "360p"
       }
     },
-    "est_full": 0.57,
+    "est_full": 0.77,
     "end_check": {
       "human": false,
       "where": ""
@@ -131,23 +131,34 @@
           "copy"
         ],
         "at": "2026-10-04T08:30:59Z"
+      },
+      {
+        "parts": [
+          "copy"
+        ],
+        "at": "2026-10-05T07:09:48Z"
       }
     ],
     "copy_place": {
       "place": "top",
       "why": "The bottom area contains the dog's paws, ice pack, towel, and the product pouch, whereas the top only contains a wall ha"
-    }
+    },
+    "lipsync": false,
+    "allow_i2v": false,
+    "use_timeline": true,
+    "src_full_sec": 8.83,
+    "one_shot": true
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be submitted. The prompt contains sensitive words that violate Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\",\"code\":\"content_blocked\"}}",
   "last_request": {
-    "file": "09_publish.json",
-    "ran_at": "2026-10-05T07:03:03Z",
+    "file": "10_remake_fix.json",
+    "ran_at": "2026-10-05T07:09:57Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
-    "sec": 20.38,
+    "sec": 18.0,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   },
   "ig_publish": {
