@@ -2934,6 +2934,139 @@ def step_meme(ep, epdir, work, log, req):
         res["board"] = {"ok": True, "panels": BOARD_COLS * BOARD_ROWS, "wait": True}
         for f in work.glob("_*"):                         # 중간 파일은 커밋하지 않는다
             f.unlink(missing_ok=True)
+        return
+    if mode == "full":
+        _meme_full(ep, epdir, work, log, res, mm, cap)
+        for f in work.glob("_*"):
+            f.unlink(missing_ok=True)
+
+
+def _say(text: str, voice: str, direction: str, out: Path, speed: float = 1.0) -> Path:
+    """한 줄 대사 녹음(Gemini 음성). 음높이는 그대로."""
+    key = _key("GEMINI_API_KEY")
+    model = _pick_model(key, TTS_MODELS)
+    body = {"contents": [{"role": "user", "parts": [{"text": f"{direction}\n\n대사: {text}"}]}],
+            "generationConfig": {"responseModalities": ["AUDIO"],
+                                 "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}}}}
+    code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                      {"x-goog-api-key": key, "Content-Type": "application/json"})
+    parts = [q for c in json.loads(raw).get("candidates", []) for q in c.get("content", {}).get("parts", [])
+             if "inlineData" in q] if code == 200 else []
+    if not parts:
+        raise RuntimeError(f"녹음 실패({voice}, HTTP {code})")
+    _pcm_to_wav(base64.b64decode(parts[0]["inlineData"]["data"]), out, speed, 0.0)
+    return out
+
+
+def _sub_png(text: str, out: Path, style: str = "white", W=720, H=1280):
+    """자막 한 장: white=사람 대사(아래쪽), yellow=짖는 소리 번역(아래쪽), hook=화면 가운데 큰 후킹 문구."""
+    from PIL import ImageFilter
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    size, col, y = ((78, "white", int(H * 0.40)) if style == "hook" else (54, "white", int(H * 0.10)) if style == "top"
+                    else (48, (255, 214, 10) if style == "yellow" else "white", int(H * 0.74)))
+    f = _f(SUB_FONT, size)
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ds, yy = ImageDraw.Draw(sh), y
+    for ln in lines:
+        while f.getlength(ln) > W - 50 and size > 26:
+            size -= 2
+            f = _f(SUB_FONT, size)
+        ds.text(((W - f.getlength(ln)) / 2, yy + 4), ln, font=f, fill=(0, 0, 0, 170), stroke_width=9, stroke_fill=(0, 0, 0, 170))
+        yy += int(size * 1.18)
+    im = Image.alpha_composite(im, sh.filter(ImageFilter.GaussianBlur(5)))
+    dt, yy = ImageDraw.Draw(im), y
+    for ln in lines:
+        dt.text(((W - f.getlength(ln)) / 2, yy), ln, font=f, fill=col, stroke_width=6 if style == "hook" else 5, stroke_fill="black")
+        yy += int(size * 1.18)
+    im.save(out)
+
+
+def _meme_clip(key, first: Path, prompt: str, sec: int, out: Path, res: dict, cap: float, what: str):
+    """첫 장면 그림 한 장 + 지시문으로 Omni Flash 영상을 딱 한 번 만든다(다시 만들기 없음)."""
+    if out.exists():
+        return out
+    usd = REMAKE_COST["omni_sec"] * sec
+    _remake_spend(res, usd, what, cap)
+    body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(first)}, {"type": "text", "text": prompt}],
+            "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
+            "generation_config": {"video_config": {"task": "image_to_video"}}}
+    raw = out.with_name("_" + out.stem + "_raw.mp4")
+    try:
+        raw.write_bytes(_omni_run(key, body))
+    except RuntimeError as e:
+        if "HTTP 400" in str(e):                          # 막힌 요청은 요금 없음
+            res["spent"] = round(float(res.get("spent", 0)) - usd, 3)
+            res.setdefault("ledger", []).append({"what": f"{what} 차단됨(요금 없음)", "usd": -round(usd, 3)})
+        raise
+    ow, oh = _wh(raw)
+    if ow * 16 > oh * 9 * 1.05:                           # ⛔ 핵심 규칙: 세로 9:16이 아니면 멈춘다
+        raise RuntimeError(f"{what}: 영상 AI가 세로가 아닌 {ow}x{oh}로 돌려줬습니다")
+    res.setdefault("clips", {})[out.stem] = {"asked": sec, "got": round(_dur(raw), 2)}
+    _ff(["-i", str(raw), "-an", "-vf", "scale=360:640:force_original_aspect_ratio=increase,crop=360:640,fps=24,setsar=1,format=yuv420p",
+         "-c:v", "libx264", "-crf", "19", str(out)])
+    return out
+
+
+def _meme_full(ep, epdir, work, log, res, mm, cap):
+    """밈 광고 본편(한 번에) + 광고(한 번에) + 대사·짖는 소리·자막 조립."""
+    key = _key("GEMINI_API_KEY")
+    W, H = 360, 640
+    body_sec, ad_sec = int(mm.get("body_sec", 10)), int(mm.get("ad_sec", 6))
+    body_v = _meme_clip(key, work / "board_01.jpg", mm["body_prompt"], body_sec, work / "meme_body.mp4", res, cap, f"본편 {body_sec}초")
+    ad_v = _meme_clip(key, work / "board_06.jpg", mm["ad_prompt"], ad_sec, work / "meme_ad.mp4", res, cap, f"광고 {ad_sec}초")
+    Lb, La = min(_dur(body_v), float(body_sec)), min(_dur(ad_v), float(ad_sec))
+    tot = round(Lb + La, 2)
+    # 소리: 대사(녹음)와 효과음을 정해진 시각에
+    voices = {"owner": ("Fenrir", "[연기 지시] 한국어. 기르는 개가 통닭을 다 뜯어 놓은 걸 본 30대 남자 주인. 어이없고 화나서 언성을 높이되 웃음이 날 만큼 현실적으로. 또박또박."),
+              "dog": ("Puck", "[연기 지시] 한국어. 통닭을 털다 걸린 뻔뻔한 강아지가 당당하게 우기는 목소리. 능청스럽고 자신만만하게, 또박또박 빠르게."),
+              "vo": (VOICE_NAME, VO_DIRECTION + " " + VO_PACE)}
+    ins, fc, labels = [], [], []
+    for k, a in enumerate(mm.get("audio", [])):
+        at = float(a.get("t", 0))
+        if a.get("kind") == "say":
+            v, d = voices.get(a.get("who", "vo"), voices["vo"])
+            wav = work / f"_say{k}.wav"
+            if not wav.exists():
+                _remake_spend(res, REMAKE_COST["tts"], f"녹음: {a['text'][:12]}", cap)
+                _say(a["text"], v, d, wav, float(a.get("speed", 1.15)))
+            ins += ["-i", str(wav)]
+            chain = f"acompressor=threshold=-24dB:ratio=3:attack=5:release=90:makeup=2,volume={float(a.get('vol', 1.0)):.2f}"
+        else:
+            ins += ["-i", str(SFX_DIR / a["file"])]
+            chain = f"volume={float(a.get('vol', 1.0)):.2f}"
+        n = len(labels)
+        fc.append(f"[{n + 2}:a]aresample=48000,{chain},adelay={int(at * 1000)}:all=1,apad,atrim=0:{tot}[s{n}]")
+        labels.append(f"[s{n}]")
+    # 자막·문구 그림
+    pngs = []
+    for k, sb in enumerate(mm.get("subs", [])):
+        f = work / f"_sub{k}.png"
+        _sub_png(sb["text"], f, sb.get("style", "white"))
+        pngs.append((f, float(sb["t0"]), float(sb["t1"])))
+    cp, cta = work / "_copy.png", work / "_cta.png"
+    _copy_png(mm.get("big", ""), mm.get("sub", ""), cp, place="bottom")
+    _cta_png(cta)
+    pngs += [(cp, Lb, tot), (cta, Lb + max(0.0, La - 2.2), tot)]
+    n_a = len(labels)
+    for f, a, b in pngs:
+        ins += ["-loop", "1", "-t", f"{tot}", "-i", str(f)]
+    v = (f"[0:v]trim=duration={Lb:.2f},setpts=PTS-STARTPTS[b0];[1:v]trim=duration={La:.2f},setpts=PTS-STARTPTS,"
+         f"fade=t=in:st=0:d=0.25:color=white[a0];[b0][a0]concat=n=2:v=1:a=0,format=yuv420p[v0]")
+    cur = "v0"
+    for j, (f, a, b) in enumerate(pngs):
+        idx = 2 + n_a + j
+        v += f";[{idx}:v]scale={W}:{H},format=rgba[p{j}];[{cur}][p{j}]overlay=0:0:enable='between(t,{a:.2f},{b:.2f})'[w{j}]"
+        cur = f"w{j}"
+    au = ";".join(fc) + (";" if fc else "") + ("".join(labels) + f"amix=inputs={len(labels)}:normalize=0:duration=first,"
+          "loudnorm=I=-12:TP=-1.0:LRA=9,alimiter=limit=0.97,aresample=48000,aformat=channel_layouts=stereo[aud]" if labels else "anullsrc=r=48000:cl=stereo,atrim=0:1[aud]")
+    final = work / "final.mp4"
+    _ff(["-i", str(body_v), "-i", str(ad_v), *ins, "-filter_complex", v + ";" + au, "-map", f"[{cur}]", "-map", "[aud]",
+         "-t", f"{tot}", "-c:v", "libx264", "-crf", "21", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(final)])
+    _ff(["-ss", "2.2", "-i", str(final), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos", "-q:v", "3", str(work / "cover.jpg")])
+    log["cover"] = "work/cover.jpg"
+    log["assemble"] = {"ok": True, "sec": round(_dur(final), 2), "note": f"밈 광고(본편 {Lb:.1f}초 + 광고 {La:.1f}초)"}
+    res["full"] = {"ok": True}
 
 
 def main(path: str) -> int:
