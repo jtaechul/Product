@@ -16,8 +16,19 @@
       "approved_at": "2026-10-05T15:29:14Z"
     },
     "script": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-10-05T15:32:12Z",
+          "kind": "auto",
+          "text": "대본 자동 작성 완료"
+        },
+        {
+          "at": "2026-10-05T15:32:39Z",
+          "kind": "crosscheck",
+          "text": "AI 교차 검사: 의심 2건"
+        }
+      ]
     },
     "storyboard": {
       "state": "locked",
@@ -64,15 +75,383 @@
       "page": "https://www.inaturalist.org/taxa/47397"
     }
   },
-  "artifacts": {},
+  "artifacts": {
+    "script": {
+      "cuts": [
+        {
+          "cut": 1,
+          "jp": "1800年代後半以降、学者はこの生物が殻を捨てたヤドカリだと疑ってきました。",
+          "ko": "1800년대 후반 이후, 학자들은 이 생물이 껍데기를 버린 소라게라고 의심해 왔습니다.",
+          "tts": "1800ねんだいこうはんいこう、がくしゃはこのせいぶつがからをすてたやどかりだとうたがってきました。",
+          "fact": "F1",
+          "sec": 8,
+          "speech_s": 6.1,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F1",
+              "fact": "1800년대 후반부터 학자들은 왕게가 2차 석회화를 거쳐 껍데기를 버린 소라게라고 의심해 왔습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/King_crab"
+              ],
+              "quote": "Since the late 1800s, carcinologists have suspected that king crabs are hermit crabs who underwent secondary calcification and left their shell.",
+              "source_title": "Wikipedia(en) King crab"
+            }
+          ]
+        },
+        {
+          "cut": 2,
+          "jp": "2歳から4歳の若いうちは、防御のために数千匹からなる群れを形成します。",
+          "ko": "2살에서 4살의 어린 시기에는 방어를 위해 수천 마리로 이루어진 무리를 형성합니다.",
+          "tts": "2さいから4さいのわかいうちは、ぼうぎょのためにすうせんひきからなるむれをけいせいします。",
+          "fact": "F8",
+          "sec": 8,
+          "speech_s": 5.64,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F8",
+              "fact": "왕게는 특히 2~4세의 어린 시기에 방어를 위해 수천 마리로 이루어진 무리를 형성합니다.",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/%E3%82%BF%E3%83%A9%E3%83%90%E3%82%AC%E3%83%8B%E7%A7%91"
+              ],
+              "quote": "とくに2歳から4歳の若いうちは防御のために数千匹からなる群を形勢する。",
+              "source_title": "Wikipedia(ja) タラバガニ科"
+            }
+          ]
+        },
+        {
+          "cut": 3,
+          "jp": "正体はタラバガニ科。見えない場所に、エラを磨くための短い足が隠れています。",
+          "ko": "정체는 왕게과. 보이지 않는 곳에 아가미를 닦기 위한 짧은 다리가 숨겨져 있습니다.",
+          "tts": "しょうたいはたらばがにか。みえないばしょに、えらをみがくためのみじかいあしがかくれています。",
+          "fact": "F2",
+          "sec": 8,
+          "speech_s": 5.87,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F2",
+              "fact": "왕게과(타라바가니과)는 실제로는 제5가슴다리가 있지만 짧아서 아가미실 안에 들어 있으며, 아가미를 청소하는 데 쓰입니다.",
+              "sources": [
+                "https://ja.wikipedia.org/wiki/%E3%82%BF%E3%83%A9%E3%83%90%E3%82%AC%E3%83%8B%E7%A7%91"
+              ],
+              "quote": "実際には第5脚が存在するが、短く、鰓室内に差し込まれている。この脚は、歩行用としては退化しているようにみえるが、鰓をきれいにするために用いられている。",
+              "source_title": "Wikipedia(ja) タラバガニ科"
+            }
+          ]
+        },
+        {
+          "cut": 4,
+          "jp": "コンニャクウオという魚が、そのエラの中に卵を産みつけて安全に孵化させます。",
+          "ko": "꼼치류의 물고기가 그 아가미 안에 알을 낳아 안전하게 부화시킵니다.",
+          "tts": "こんにゃくうおというさかなが、そのえらのなかにたまごをうみつけてあんぜんにふかさせます。",
+          "fact": "F11",
+          "sec": 8,
+          "speech_s": 5.34,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F11",
+              "fact": "꼼치류는 부화할 때까지 안전하고 통풍이 잘 되는 왕게의 아가미실에 알을 낳습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/King_crab"
+              ],
+              "quote": "The careproctus lays eggs in the gill chamber of the king crab which serves as a well-protected and aerated area for the eggs to reside until they hatch.",
+              "source_title": "Wikipedia(en) King crab"
+            }
+          ]
+        },
+        {
+          "cut": 5,
+          "jp": "幼い頃は、センジュナマコという生き物を宿主とし、その上下で見つかります。",
+          "ko": "어릴 때는 바다돼지라는 생물을 숙주로 삼아 그 위아래에서 발견됩니다.",
+          "tts": "おさないころは、せんじゅなまこといういきものをしゅくしゅとし、そのじょうげでみつかります。",
+          "fact": "F10",
+          "sec": 8,
+          "speech_s": 5.34,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F10",
+              "fact": "네올리토데스 디오메데아에를 포함한 왕게 종의 새끼들은 바다돼지라 불리는 해삼을 숙주로 삼아 그 위나 아래에서 발견됩니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/King_crab"
+              ],
+              "quote": "Juveniles of species of king crabs, including Neolithodes diomedeae, use a species (Scotoplanes Sp. A) of sea cucumber (often known as \"sea pigs\") as hosts and can be found on top of and under Scotoplanes.",
+              "source_title": "Wikipedia(en) King crab"
+            }
+          ]
+        },
+        {
+          "cut": 6,
+          "jp": "水深4152メートルの深海でも発見された、死骸などを食べる掃除屋です。",
+          "ko": "수심 4152미터의 심해에서도 발견된, 사체 등을 먹는 청소부입니다.",
+          "tts": "すいしん4152めーとるのしんかいでもはっけんされた、しがいなどをたべるそうじやです。",
+          "fact": "F4,F5",
+          "sec": 8,
+          "speech_s": 5.85,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F4",
+              "fact": "심해왕게아과(Lithodinae)의 파랄로미스속은 최대 4,152m, 네올리토데스속은 3,207m, 리토데스속은 1,821m 깊이에서 발견되었습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/King_crab"
+              ],
+              "quote": "At the deepest, members of the Lithodinae genera Paralomis, Neolithodes, and Lithodes have been found at depths of 4,152 m (13,622 ft), 3,207 m (10,522 ft), and 1,821 m (5,974 ft), respectively.",
+              "source_title": "Wikipedia(en) King crab"
+            },
+            {
+              "id": "F5",
+              "fact": "왕게류는 거미불가사리나 죽은 사체를 먹는 심해의 청소부이자 포식자입니다.",
+              "sources": [],
+              "quote": "거미불가사리나 죽은 사체를 먹는 심해의 청소부이자 포식자다",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            }
+          ]
+        },
+        {
+          "cut": 7,
+          "jp": "一部の集団では50%以上が、寄生性のフジツボに繁殖能力を奪われます。",
+          "ko": "일부 집단에서는 50% 이상이 기생성 따개비에게 번식 능력을 빼앗깁니다.",
+          "tts": "いちぶのしゅうだんでは50%いじょうが、きせいせいのふじつぼにはんしょくのうりょくをうばわれます。",
+          "fact": "F12",
+          "sec": 8,
+          "speech_s": 6.17,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F12",
+              "fact": "기생 따개비는 왕게를 영구적으로 불임으로 만들며, 일부 왕게 개체군의 50% 이상이 감염되어 있습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/King_crab"
+              ],
+              "quote": "The barnacle irreversibly sterilizes the crab, and over 50% of some king crab populations are affected.",
+              "source_title": "Wikipedia(en) King crab"
+            }
+          ]
+        },
+        {
+          "cut": 8,
+          "jp": "冷たく餌の少ない暗闇のなかで、彼らはとてもゆっくりと成長し、長生きします。",
+          "ko": "차갑고 먹이가 적은 어둠 속에서 이들은 매우 천천히 성장하며 오래 삽니다.",
+          "tts": "つめたくえさのすくないくらやみのなかで、かれらはとてもゆっくりとせいちょうし、ながいきします。",
+          "fact": "F14",
+          "sec": 8,
+          "speech_s": 5.92,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F14",
+              "fact": "왕게류는 차갑고 먹이가 적은 심해에서 아주 느리게 자라며 오래 삽니다.",
+              "sources": [],
+              "quote": "차갑고 먹이가 적은 심해에서 아주 느리게 자라며 오래 산다",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            }
+          ]
+        }
+      ],
+      "pending_lines": [],
+      "hook": {
+        "cut": 4,
+        "at": 3.0,
+        "question_jp": "エラの中に魚が卵を産みつける、この生き物は？",
+        "question_ko": "아가미 안에 물고기가 알을 낳는 이 생물은?",
+        "answer_jp": "タラバガニ科",
+        "answer_ko": "왕게과"
+      },
+      "audio": "out/r10051532_script_tts/body.wav",
+      "tts_id": "r10051532_script_tts",
+      "verification": "자동 작성 · 출처 3곳 · 원문 인용이 확인된 사실 14개(확인 안 된 0개 버림) · 코드 검사 통과 · 예상 길이 68.0초",
+      "crosscheck": {
+        "at": "2026-10-05T15:32:12Z",
+        "model": "gemini-3.1-pro-preview",
+        "issues": [
+          {
+            "cut": 4,
+            "type": "scope",
+            "problem_ko": "사실 목록에는 '꼼치류(クサウオ類)'라고 넓게 분류되어 있으나, 대본에서는 특정 종인 '곤냐쿠우오(コンニャクウオ)'로 범위를 좁혀 언급했습니다.",
+            "facts": [
+              "F11"
+            ],
+            "suggestion_jp": "クサウオの仲間が、そのエラの中に卵を産みつけて安全に孵化させます。",
+            "suggestion_ko": "꼼치류 물고기가 그 아가미실 안에 알을 낳아 안전하게 부화시킵니다."
+          },
+          {
+            "cut": 8,
+            "type": "unsupported",
+            "problem_ko": "사실 목록에는 '심해'라고 명시되어 있으나, 대본에는 사실 목록에 없는 '어둠 속(암흑 속)'이라는 표현이 임의로 추가되었습니다.",
+            "facts": [
+              "F14"
+            ],
+            "suggestion_jp": "冷たく餌の少ない深海で、彼らはとてもゆっくりと成長し、長生きします。",
+            "suggestion_ko": "차갑고 먹이가 적은 심해에서, 그들은 매우 천천히 성장하며 오래 삽니다."
+          }
+        ]
+      }
+    },
+    "topic": {
+      "facts": [
+        {
+          "id": "F1",
+          "fact": "1800년대 후반부터 학자들은 왕게가 2차 석회화를 거쳐 껍데기를 버린 소라게라고 의심해 왔습니다.",
+          "fact_jp": "1800年代後半以降、学者はタラバガニが二次石灰化を経て殻を捨てたヤドカリであると疑ってきました。",
+          "quote": "Since the late 1800s, carcinologists have suspected that king crabs are hermit crabs who underwent secondary calcification and left their shell.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/King_crab"
+          ],
+          "source_title": "Wikipedia(en) King crab"
+        },
+        {
+          "id": "F2",
+          "fact": "왕게과(타라바가니과)는 실제로는 제5가슴다리가 있지만 짧아서 아가미실 안에 들어 있으며, 아가미를 청소하는 데 쓰입니다.",
+          "fact_jp": "タラバガニ科には実際には第5脚が存在しますが、短く鰓室内に差し込まれており、鰓をきれいにするために用いられています。",
+          "quote": "実際には第5脚が存在するが、短く、鰓室内に差し込まれている。この脚は、歩行用としては退化しているようにみえるが、鰓をきれいにするために用いられている。",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/%E3%82%BF%E3%83%A9%E3%83%90%E3%82%AC%E3%83%8B%E7%A7%91"
+          ],
+          "source_title": "Wikipedia(ja) タラバガニ科"
+        },
+        {
+          "id": "F3",
+          "fact": "왕게의 배면에는 판이나 결절로 이루어진 짧은 복부가 있는데, 암컷의 경우 비대칭 형태를 띱니다.",
+          "fact_jp": "タラバガニの裏側には板や結節で構成された短い腹部があり、メスの場合は非対称になっています。",
+          "quote": "On their underside, they have a short abdomen – composed of plates or nodules – which is asymmetrical in females.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/King_crab"
+          ],
+          "source_title": "Wikipedia(en) King crab"
+        },
+        {
+          "id": "F4",
+          "fact": "심해왕게아과(Lithodinae)의 파랄로미스속은 최대 4,152m, 네올리토데스속은 3,207m, 리토데스속은 1,821m 깊이에서 발견되었습니다.",
+          "fact_jp": "エゾイバラガニ属は最大4,152m、ニホンイバラガニ属は3,207m、イバラガニ属は1,821mの深さでそれぞれ発見されています。",
+          "quote": "At the deepest, members of the Lithodinae genera Paralomis, Neolithodes, and Lithodes have been found at depths of 4,152 m (13,622 ft), 3,207 m (10,522 ft), and 1,821 m (5,974 ft), respectively.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/King_crab"
+          ],
+          "source_title": "Wikipedia(en) King crab"
+        },
+        {
+          "id": "F5",
+          "fact": "왕게류는 거미불가사리나 죽은 사체를 먹는 심해의 청소부이자 포식자입니다.",
+          "fact_jp": "タラバガニ類はクモヒトデや死骸を食べる深海の掃除屋であり捕食者です。",
+          "quote": "거미불가사리나 죽은 사체를 먹는 심해의 청소부이자 포식자다",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F6",
+          "fact": "왕게과 중에는 심해 열수구 근처에서 박테리아가 화학 합성한 화합물을 먹이로 삼는 종도 있습니다.",
+          "fact_jp": "タラバガニ科のなかには、深海の噴出孔付近で細菌類が化学合成する化合物を餌としているものもみられます。",
+          "quote": "タラバガニ科のなかには、硫化水素やメタン・アンモニアなどを湧出する深海の噴出孔付近で、細菌類が化学合成する化合物を餌としているものもみられる。",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/%E3%82%BF%E3%83%A9%E3%83%90%E3%82%AC%E3%83%8B%E7%A7%91"
+          ],
+          "source_title": "Wikipedia(ja) タラバガニ科"
+        },
+        {
+          "id": "F7",
+          "fact": "왕게류는 온몸이 단단한 가시로 뒤덮여 있어 포식자로부터 몸을 지킵니다.",
+          "fact_jp": "タラバガニ類は全身が硬い棘で覆われており、捕食者から身を守ります。",
+          "quote": "온몸이 단단한 가시로 뒤덮여 포식자로부터 몸을 지킨다",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F8",
+          "fact": "왕게는 특히 2~4세의 어린 시기에 방어를 위해 수천 마리로 이루어진 무리를 형성합니다.",
+          "fact_jp": "タラバガニは、とくに2歳から4歳の若いうちは防御のために数千匹からなる群を形勢します。",
+          "quote": "とくに2歳から4歳の若いうちは防御のために数千匹からなる群を形勢する。",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/%E3%82%BF%E3%83%A9%E3%83%90%E3%82%AC%E3%83%8B%E7%A7%91"
+          ],
+          "source_title": "Wikipedia(ja) タラバガニ科"
+        },
+        {
+          "id": "F9",
+          "fact": "에조이바라가니속의 일종(Paralomis spinosissima)은 14개월의 유생 기간을 오직 난황의 영양분만으로 보냅니다.",
+          "fact_jp": "エゾイバラガニ属の一種（Paralomis spinosissima）は、14ヶ月の幼生期間を、卵黄からの栄養だけで過ごします。",
+          "quote": "エゾイバラガニ属の一種（Paralomis spinosissima）は、14ヶ月の幼生期間を、卵黄からの栄養だけで過ごす。",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/%E3%82%BF%E3%83%A9%E3%83%90%E3%82%AC%E3%83%8B%E7%A7%91"
+          ],
+          "source_title": "Wikipedia(ja) タラバガニ科"
+        },
+        {
+          "id": "F10",
+          "fact": "네올리토데스 디오메데아에를 포함한 왕게 종의 새끼들은 바다돼지라 불리는 해삼을 숙주로 삼아 그 위나 아래에서 발견됩니다.",
+          "fact_jp": "ニホンイバラガニ属の一種などのタラバガニの幼体は、センジュナマコ（シーピッグ）を宿主とし、その上や下で見つかります。",
+          "quote": "Juveniles of species of king crabs, including Neolithodes diomedeae, use a species (Scotoplanes Sp. A) of sea cucumber (often known as \"sea pigs\") as hosts and can be found on top of and under Scotoplanes.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/King_crab"
+          ],
+          "source_title": "Wikipedia(en) King crab"
+        },
+        {
+          "id": "F11",
+          "fact": "꼼치류는 부화할 때까지 안전하고 통풍이 잘 되는 왕게의 아가미실에 알을 낳습니다.",
+          "fact_jp": "コンニャクウオは、孵化するまで安全で通気性の良いタラバガニの鰓室に卵を産み付けます。",
+          "quote": "The careproctus lays eggs in the gill chamber of the king crab which serves as a well-protected and aerated area for the eggs to reside until they hatch.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/King_crab"
+          ],
+          "source_title": "Wikipedia(en) King crab"
+        },
+        {
+          "id": "F12",
+          "fact": "기생 따개비는 왕게를 영구적으로 불임으로 만들며, 일부 왕게 개체군의 50% 이상이 감염되어 있습니다.",
+          "fact_jp": "寄生性のフジツボはカニを不可逆的に不妊化させ、一部のタラバガニ個体群の50％以上が影響を受けています。",
+          "quote": "The barnacle irreversibly sterilizes the crab, and over 50% of some king crab populations are affected.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/King_crab"
+          ],
+          "source_title": "Wikipedia(en) King crab"
+        },
+        {
+          "id": "F13",
+          "fact": "2006년에는 남극해의 남극이빨고기 위장 속에서 에조이바라가니속의 신종(Paralomis stevensi)이 발견되었습니다.",
+          "fact_jp": "2006年には、南極海のライギョダマシの胃のなかからエゾイバラガニ属の新種が見つかっています。",
+          "quote": "2006年には、南極海のライギョダマシの胃のなかからエゾイバラガニ属の新種（Paralomis stevensi Ahyong & Dawson, 2006）が見つかっている。",
+          "sources": [
+            "https://ja.wikipedia.org/wiki/%E3%82%BF%E3%83%A9%E3%83%90%E3%82%AC%E3%83%8B%E7%A7%91"
+          ],
+          "source_title": "Wikipedia(ja) タラバガニ科"
+        },
+        {
+          "id": "F14",
+          "fact": "왕게류는 차갑고 먹이가 적은 심해에서 아주 느리게 자라며 오래 삽니다.",
+          "fact_jp": "タラバガニ類は冷たく餌の少ない深海で非常にゆっくりと成長し、長生きします。",
+          "quote": "차갑고 먹이가 적은 심해에서 아주 느리게 자라며 오래 산다",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        }
+      ]
+    }
+  },
   "checks": {},
   "jobs": {
     "script": {
       "stage": "script",
-      "status": "running",
-      "at": "2026-10-05T15:29:14Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-05T15:32:39Z",
+      "action": "write_script",
+      "text": "대본 자동 작성 완료 — 승인 대기"
     }
+  },
+  "cost": {
+    "estimate": {
+      "script": 0.05,
+      "storyboard": 0.54,
+      "video": 6.4
+    },
+    "spent": [
+      {
+        "at": "2026-10-05T15:32:12Z",
+        "what": "대본 자동 작성(AI+나레이션)",
+        "usd": 0.05
+      }
+    ]
   }
 }
