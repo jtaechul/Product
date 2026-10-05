@@ -1213,6 +1213,7 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
 - 数字は何の数字か分かるように書く(「水深5000メートル」「体長25センチ」)。数字は算用数字で。
 - 1カット目: 思わず手が止まる場面や問いから始める。発見の年・場所・人の出来事が事実リストにあれば、そこから物語として始める。
 - 前提から親切に。専門用語はやさしく言い換える。
+- 生き物を「あだ名」(海の豚・頭のないニワトリなど)で呼ぶときは、実際に何の生き物か(ナマコの仲間など)も分かるように書く。scene_ko も同じ(例: 바다돼지(해삼))。
 - 同じ単語・言い回しを何度も繰り返さない。文末も単調にしない。
 - {n}カット目: 余韻のある締め(画面は暗闇に消えていく)。「チャンネル登録」「コメント」などの呼びかけは書かない(共通エンディングが別にある)。
 - 呼び名: {name_rule}
@@ -1224,7 +1225,7 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
 {feedback}
 # 出力(JSONのみ)
 {{"cuts":[{{"cut":1,"jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
-"scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄)","annotation":"画面の注釈(日本語のみ・韓国語禁止・14文字以内・数字は事実どおり・なければ空)"}}],
+"scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄 · 별명은 실제 생물을 괄호로: 바다돼지(해삼))","annotation":"画面の注釈(日本語のみ・韓国語禁止・14文字以内・数字は事実どおり・なければ空)"}}],
 "hook":{{"cut":3,"question_jp":"皮を脱ぎ捨てる、この生き物は？","question_ko":"한국어 번역","answer_jp":"呼び名","answer_ko":"한국어 이름"}}}}
 
 # 事実リスト
@@ -1276,6 +1277,9 @@ def validate_script(cuts: list[dict], facts: list[dict]) -> list[str]:
             probs.append(f"カット{i}: 根拠の事実番号がない/存在しない番号です({c.get('fact')})。")
         if re.search(r"[가-힣]", jp) or not re.search(r"[ぁ-んァ-ン一-龥]", jp):
             probs.append(f"カット{i}: 日本語の台詞になっていません。")
+        m = _KO_NICK.search(str(c.get("scene_ko", "")))
+        if m:                                                # ★별명만 쓰면 콘티가 진짜 동물을 그린다(실사고 2026-10-06 바다돼지)
+            probs.append(f"カット{i}: scene_ko の「{m.group(1)}」は呼び名(あだ名)だけです。実際の生き物を括弧で添えてください(例: 바다돼지(해삼))。")
         ann = str(c.get("annotation", ""))
         if re.search(r"[가-힣ㄱ-ㆎ]", ann):                   # ★실사고 2026-10-05: 한국어 주석 → 영상 글꼴(일본어)에 없어 네모 □로 깨짐
             probs.append(f"カット{i}: 注釈「{ann}」に韓国語があります。注釈は日本語だけで書いてください。")
@@ -1609,6 +1613,11 @@ Plan ONE storyboard panel (the first frame of the video clip) for EACH of the {n
   at most {max_close} CLOSE shots (only when the narration names a body part); the rest MEDIUM. No two consecutive cuts on the same
   set; cross-section "box" sets at most 2.
 - Show exactly what that cut's narration says; do not invent facts.
+- NICKNAMES ARE NOT ANIMALS: many deep-sea creatures have figurative names ("sea pig" = a deep-sea SEA CUCUMBER, "headless
+  chicken monster" = a swimming sea cucumber, "sea butterfly" = a tiny swimming sea snail, "sea toad" = an anglerfish). Always
+  describe what the organism REALLY is with its true body (e.g. "a translucent pink deep-sea sea cucumber (Scotoplanes) with
+  stubby tube-feet legs and two pairs of feeler-like papillae on its back"). NEVER write the nickname's land-animal word
+  (pig, chicken, cow, dog ...) in a description and never draw a land animal.
 - NEVER text, letters, numbers, labels, arrows, logos in the image. Painted clay figurines are fine; never real human hands or
   people. No other animals unless the narration says so. Keep the upper quarter of every panel calm and uncluttered (captions).
 - The LAST cut's panel: the creature is already dim and receding into deep darkness (the video will fade to black).
@@ -1626,6 +1635,23 @@ Return JSON only: {{"panels":{{"1":{{"shot":"wide|medium|close","motion":"omni|s
 """
 
 
+# ★별명을 글자 그대로 그리는 사고 방지(실사고 2026-10-06: 왕게 편 5번 컷 — 사실은 「바다돼지라 불리는 해삼」인데
+#   콘티 설명이 "clay sea pig"로 적혀 진짜 돼지 인형이 그려짐). 콘티 설명에 육상 동물 단어가 나오면 불통과 → 실제 생물로 다시 쓰게 한다.
+_LAND_ANIMAL = re.compile(r"\b(pig|piglet|hog|boar|swine|chicken|hen|rooster|cow|bull|dog|puppy|cat|kitten|horse|elephant|mouse|"
+                          r"rat|rabbit|sheep|goat|monkey|bear|lion|tiger|duck|frog)s?\b(?!-like|-ear|\s+like)", re.I)
+# 한국어 장면 아이디어(scene_ko)에서 별명만 쓰는 것 — 「바다돼지(해삼)」처럼 실제 생물을 괄호로 함께 적어야 통과
+_KO_NICK = re.compile(r"(돼지|닭|병아리|강아지|고양이|코끼리|토끼|생쥐|두꺼비)(?!\s*\()")
+
+
+def literal_animal_problems(text: str, where: str) -> list[str]:
+    """콘티 설명에 육상 동물 단어(별명을 글자 그대로 그릴 위험)가 있으면 이유 목록(영어 · AI에게 그대로 돌려줌)."""
+    words = sorted({m.group(1).lower() for m in _LAND_ANIMAL.finditer(text or "")})
+    if not words:
+        return []
+    return [f"{where}: the word(s) {', '.join(words)} name a land animal. If this comes from a nickname (e.g. 'sea pig' is a "
+            f"deep-sea SEA CUCUMBER), describe the REAL organism by its true anatomy and never use that word — no land animals."]
+
+
 def validate_storyboard_plan(panels: dict, cuts: list[dict], hook_cut: int | None = None) -> list[str]:
     """콘티 계획 코드 검사(운영자 승인 2026-10-01 미니어처 규칙) — 불통과 이유(영어 · AI에게 그대로 돌려줌)."""
     import math
@@ -1640,6 +1666,7 @@ def validate_storyboard_plan(panels: dict, cuts: list[dict], hook_cut: int | Non
             probs.append(f"Cut {c['cut']}: shot must be wide, medium or close.")
         if len([x for x in p.get("props") or [] if str(x).strip()]) < 2:
             probs.append(f"Cut {c['cut']}: list at least 2 hand-made props or set materials.")
+        probs += literal_animal_problems(str(p.get("desc", "")) + " " + " ".join(map(str, p.get("props") or [])), f"Cut {c['cut']}")
     shots = [(panels.get(c["cut"]) or {}).get("shot") for c in cuts]
     min_wide, max_close = math.ceil(n * SB_WIDE_RATIO), max(1, round(n * SB_CLOSE_RATIO))
     if shots.count("wide") < min_wide:
@@ -1887,7 +1914,101 @@ _GRID_HEAD_GENERIC = ("Create ONE image that is a clean 2x2 grid of FOUR separat
                       "hand-made tabletop-diorama look (set building, materials, desk-lamp light, tilt-shift, camera height); never copy "
                       "their animal, map or objects literally. Clay figurines, boats and vehicles never make the creature look giant. "
                       "Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, "
-                      "logos, watermarks. Painted clay figurines are allowed; never real human hands or people.\n")
+                      "logos, watermarks. Painted clay figurines are allowed; never real human hands or people. Every animal is drawn as "
+                      "what it REALLY is — a nickname like 'sea pig' (a sea cucumber) never means a pig; never draw land animals.\n")
+
+
+_PANEL_FIX_PROMPT = """You are the storyboard artist of a Japanese science YouTube Short made as {style}.
+{creature}. Its anatomy is fixed: {anatomy}
+Redraw the plan of ONE panel (cut {cut}) only. The operator found this problem and it MUST be fixed: {memo}
+Narration (JP): {jp}
+Korean: {ko}
+Facts: {facts}
+Previous panel description (wrong): {old}
+Keep the same rules: hand-made tabletop miniature world, at least 2 hand-made props or set materials, no text/letters/numbers,
+no real human hands or people, keep the upper quarter calm. NICKNAMES ARE NOT ANIMALS: describe every organism as what it
+REALLY is with its true body ("sea pig" = a deep-sea SEA CUCUMBER) and never use a land-animal word or draw a land animal.
+{feedback}
+Return JSON only: {{"shot":"wide|medium|close","props":["prop 1","prop 2"],"desc":"English description: set, camera angle, organisms with their true anatomy, props, light"}}
+"""
+
+
+def redo_panel(pid: str, cut: int, memo: str = "", ask=None, run=None) -> dict:
+    """콘티 한 칸만 다시 그린다(운영자 지시 2026-10-06: 별명 '바다돼지'를 진짜 돼지로 그린 사고).
+    AI가 그 칸 설명만 고쳐 쓰고(별명·육상 동물 코드 검사) → 9:16 이미지 1장(약 $0.134) → 무료 줌인 컷이면 바로 다시
+    확대 영상을 만들어 재조립(추가 비용 0). 영상 AI 컷이면 그림만 바꾸고 「이 컷만 다시 만들기」를 눌러야 영상에 반영된다."""
+    st = load_status(pid)
+    sc = _load(_script_path(pid))
+    pilot = PILOTS / pid
+    c = next((x for x in sc.get("cuts", []) if int(x.get("cut", 0)) == int(cut)), None)
+    if not c:
+        raise SystemExit(f"{cut}번 컷이 없습니다")
+    cc = _load(pilot / "creature_card.json") or {}
+    ftxt = "\n".join(f"{f['id']}: {f['fact']}" for f in sc.get("facts", []))
+    ask = ask or (lambda p: _gemini_text(p, temperature=0.4))
+    set_job(pid, "storyboard", "running", f"{cut}번 콘티 칸 다시 그리는 중", "redo_panel")
+    try:
+        fb, plan, probs = "", {}, []
+        for _ in range(3):
+            plan = _json_obj(ask(_PANEL_FIX_PROMPT.format(style=_MINI_STYLE, creature=_MINI_CREATURE, anatomy=cc.get("anatomy", ""),
+                                                          cut=cut, memo=memo or "the panel does not show what the narration says",
+                                                          jp=c.get("jp", ""), ko=c.get("ko", ""), facts=ftxt,
+                                                          old=c.get("panel_desc", ""), feedback=fb)))
+            probs = validate_storyboard_plan({int(cut): plan}, [c])
+            probs = [x for x in probs if x.startswith(f"Cut {cut}")]          # 한 칸만 보므로 비율(넓은 샷 수 등) 검사는 제외
+            if not probs:
+                break
+            fb = "# Problems in your previous answer (fix all)\n" + "\n".join("- " + x for x in probs)
+        if probs:
+            raise RuntimeError("콘티 칸 설명이 검사를 3번 모두 통과하지 못했습니다: " + " / ".join(probs[:2]))
+        refs = [r["file"] for r in cc.get("use_as_reference", [])][:3]
+        style = [r for r in STYLE_REFS if (PILOTS / "_shared" / "style" / Path(r).name).exists()]
+        head = _GRID_HEAD_GENERIC.format(style=_MINI_STYLE, creature=_MINI_CREATURE, anatomy=cc.get("anatomy", ""),
+                                         forbidden=cc.get("forbidden", ""), ns=len(style))
+        head = ("Create ONE single vertical 9:16 photograph — one scene, NOT a grid or collage. "
+                + head[head.index("Shared look"):].replace("all panels", "the photo").replace("every panel", "the photo"))
+        name = f"p{int(cut):02d}"
+        rid = _rid("panel")
+        rp = pilot / "requests" / f"{rid}.json"
+        _save(rp, {"id": rid, "kind": "gen_images", "purpose": f"콘티 {cut}번 칸만 다시 그리기 — {memo}",
+                   "model_preference": ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"],
+                   "items": [{"name": name, "aspect": "9:16", "refs": refs + style,
+                              "prompt": head + f"Scene ({plan.get('shot', 'wide')} shot): {plan['desc']} "
+                                               f"Hand-made props: {', '.join(map(str, plan.get('props') or []))}."}]})
+        if (run or _run_request)(rp) != 0:
+            raise RuntimeError(f"콘티 칸 이미지 생성 실패(요청 {rid})")
+        img = next((f for f in (pilot / "out" / rid).glob(f"{name}.*")), None)
+        if not img:
+            raise RuntimeError(f"콘티 칸 이미지가 없습니다(요청 {rid})")
+        c.setdefault("keyframe_history", []).append(c.get("keyframe"))
+        c["keyframe"], c["panel_desc"], c["panel_shot"] = str(img.relative_to(pilot)), plan["desc"], plan.get("shot", "")
+        _save(_script_path(pid), sc)
+        st = load_status(pid)
+        for pnl in (st["artifacts"].get("storyboard") or {}).get("panels", []):
+            if int(pnl["cut"]) == int(cut):
+                pnl.update(file=c["keyframe"], desc=plan["desc"], shot=plan.get("shot", ""))
+        st.setdefault("cost", {}).setdefault("spent", []).append({"at": _now(), "what": f"콘티 {cut}번 칸 다시 그리기", "usd": IMG_USD})
+        _note(st, "storyboard", "redo_panel", f"{cut}번 칸만 다시 그림. {memo}".strip())
+        clip = next((x for x in (st["artifacts"].get("video") or {}).get("clips", []) if int(x["cut"]) == int(cut)), None)
+        msg = f"{cut}번 콘티 칸 다시 그림"
+        if clip and (clip.get("motion") == "still" or "_stills/" in clip["file"]):
+            tmv = {t["cut"]: t for t in sc.get("timing_v5") or []}
+            sec = float((tmv.get(int(cut)) or {}).get("sec") or clip.get("sec") or 6)
+            dst = pilot / "out" / f"{rid}_stills" / f"c{int(cut):02d}.mp4"
+            still_clip(img, sec, dst)
+            clip.setdefault("history", []).append(clip["file"])
+            clip["file"] = str(dst.relative_to(pilot))
+            _save(status_path(pid), st)
+            set_job(pid, "storyboard", "done", msg + " — 무료 줌인 컷이라 바로 재조립", "redo_panel")
+            return assemble(pid)
+        if clip:
+            msg += " — 영상 AI 컷이라 「이 컷만 다시 만들기」를 눌러야 영상에 반영됩니다"
+            _note(st, "video", "auto", msg)
+        _save(status_path(pid), st)
+        return set_job(pid, "storyboard", "done", msg, "redo_panel")
+    except Exception as e:                                   # noqa: BLE001
+        set_job(pid, "storyboard", "failed", f"{cut}번 콘티 칸 다시 그리기 실패: {str(e)[:200]}", "redo_panel")
+        raise SystemExit(f"콘티 칸 다시 그리기 실패: {e}")
 
 
 def _ensure_tts(pid: str, sc: dict) -> str:
@@ -2194,6 +2315,8 @@ def main(argv: list[str]) -> int:
         revise(a[0], a[1], memo(2) or "다시 하기 요청", kind=cmd)
     elif cmd == "redo_cut":
         redo_cut(a[0], int(a[1]), memo(2))
+    elif cmd == "redo_panel":                                # 콘티 한 칸만 다시 그리기(메모 = 무엇이 틀렸는지)
+        redo_panel(a[0], int(a[1]), memo(2))
     elif cmd == "write_script":                              # 대본 자동 작성(메모가 있으면 '수정 요청'으로 반영)
         write_script(a[0], memo(1))
     elif cmd == "stats":                                     # 유튜브 실적 가져오기(편 id 없으면 업로드된 모든 편)

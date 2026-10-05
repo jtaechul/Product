@@ -61,7 +61,7 @@
 - **상태 파일 하나**: 편마다 `v2/pilots/<id>/status.json`(단계 상태 locked/working/review/revise/approved · 기록 · 결과물 경로 ·
   자동 검사 · 비용). 목록 `v2/pilots/index.json`, 주제 후보 `v2/topics.json`(`admin.py topics`로 갱신).
 - **버튼 = 워크플로**: 페이지는 파일을 직접 쓰지 않는다 → `v2-admin.yml` 디스패치 → `v2/tools/admin.py`
-  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
+  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·redo_panel·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
   `v2-admin.yml`은 **main에도** 둔다(디스패치 워크플로 규칙 · 하드룰 #15③).
 - **★컷별 대사 수정(운영자 확정 2026-09-28) — 대사를 고쳐도 영상은 자동으로 바뀌지 않는다**:
   대본 카드의 컷마다 「대사 수정」 → 일본어·한국어(·읽기, 비우면 Janome 자동) 입력 → 「이 대사로 저장」(`admin.py edit_line`)은
@@ -301,6 +301,20 @@
     페이지에 남긴다(자동 검사 표 「화면 글자(주석·질문)」).
 - **주석 디자인**: 빨간 칩 폐기 → 미니어처 세트에 붙인 **종이 꼬리표**(크림 종이 + 붉은 잉크 이중 테두리 + 갈색 글씨 +
   마스킹 테이프 + 2.5° 기울임 + 그림자 · 화면 위쪽 27%) — `assemble.label_png`. 디오라마 소품처럼 보여야 한다.
+
+### ★★별명은 동물이 아니다 — 실제 생물을 그린다 (운영자 확정 2026-10-06 · 핵심 규칙 · 절대 위반 금지)
+- **실사고**: 왕게 편 5번 컷 — 사실은 「바다돼지라 불리는 **해삼**」인데, 대본의 장면 아이디어가 「바다돼지」만 적고
+  콘티 설명이 "clay **sea pig**"로 이어져 **진짜 돼지 인형**이 그려졌다(별명 = 수식어를 주어로 그림).
+- **규칙**: 별명(바다돼지·머리없는닭괴물·바다나비 등)은 **실제 생물이 무엇인지**(해삼·헤엄치는 해삼·작은 바다달팽이)로
+  풀어 쓰고 그 몸 그대로 그린다. 육상 동물(돼지·닭·소·개 …)은 어떤 컷에도 그리지 않는다.
+  - 대본: 프롬프트에 규칙 + `validate_script`가 `scene_ko`에 별명만 있으면(괄호로 실제 생물이 없으면) 불통과 — 「바다돼지(해삼)」.
+  - 콘티 계획: `_SB_PROMPT`의 NICKNAMES ARE NOT ANIMALS + `validate_storyboard_plan` → `literal_animal_problems`가
+    설명·소품에 육상 동물 단어(pig·chicken·cow …, `-like`/`-ear` 비유는 허용)가 있으면 이유를 돌려주고 다시 쓰게 한다.
+  - 이미지 지시문: `_GRID_HEAD_GENERIC` 끝에 "별명은 그 동물이 아님 · 육상 동물 금지".
+- **한 칸만 고치기**: 영상 카드의 컷마다 「그림이 틀렸으면: 이 컷 그림만 다시 그리기(약 $0.13)」(`admin.py redo_panel` ·
+  메모 필수). AI가 그 칸 설명만 다시 쓰고(같은 코드 검사) → 9:16 이미지 1장 → **무료 줌인 컷이면 확대 영상을 다시 만들어
+  바로 재조립**(추가 비용 0), 영상 AI 컷이면 그림만 바꾸고 「이 컷만 다시 만들기」를 눌러야 영상에 반영(비용 경고).
+  회귀: `test_nickname_is_not_drawn_as_land_animal` · `test_redo_panel_redraws_one_still_cut_and_reassembles`.
 
 ### ★후킹 2초 + 정답 카드 = 공용 엔딩 대체 (운영자 확정 2026-09-30 · `assemble.py` · `admin.write_script/edit_hook`)
 - **공용 댓글 유도 엔딩(약 10초)은 뺀다** — 너무 길다(운영자). 마지막 본편 컷이 어둠으로 사라지면 본편은 끝. 고정 댓글

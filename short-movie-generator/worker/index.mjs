@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-06-1 (주석 깨짐 수정 · 종이 꼬리표 주석 · 화면 글자 검사)";
+const BUILD="v2026-10-06-2 (별명→실제 생물 규칙 · 컷 그림만 다시 그리기)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2581,6 +2581,7 @@ function v2stageBody(st,stage){
         '<div class="cfact"><b>'+c.cut+'번 컷</b> · '+esc(c.sec)+'초'+(c.motion==="still"?' · 무료 줌인':'')+((c.history||[]).length?(' · 재생성 '+c.history.length+'회'):'')+'</div>'+
         (c.review?'<div class="cfact'+(c.review==="양호"?'':' warn')+'">'+esc(c.review)+'</div>':'')+
         '<button class="btn warn" data-cut="'+c.cut+'" data-sec="'+esc(c.sec)+'">'+(c.motion==="still"?'이 컷을 영상 AI로 바꾸기':'이 컷만 다시 만들기')+' (약 $'+(Number(c.sec||0)*OMNI_USD).toFixed(2)+')</button>'+
+        '<button class="btn" data-panel="'+c.cut+'" data-still="'+(c.motion==="still"?1:0)+'" style="margin-top:6px">그림이 틀렸으면: 이 컷 그림만 다시 그리기 (약 $0.13)</button>'+
         '<button class="btn" data-rcopen="'+c.cut+'">수정 방향 적고 다시 만들기</button>'+
       '</div>').join("")+'</div>'+v2recutPanels(st)+
       ((((st.artifacts||{}).script||{}).pending_lines||[]).length?(
@@ -2798,6 +2799,14 @@ async function renderV2Episode(pid){
     const cut=b.dataset.cut, usd=(Number(b.dataset.sec||0)*OMNI_USD).toFixed(2), note=(($("#note-video")||{}).value||"").trim();
     if(!confirm(cut+"번 컷만 다시 만들까요? 비용 약 $"+usd+" (같은 시작 이미지·지시문으로 새로 생성 → 완성본 자동 재조립)"))return;
     await v2do("redo_cut",pid,cut,note,b);
+  });
+  // 콘티 한 칸만 다시 그리기(운영자 지시 2026-10-06: 별명 '바다돼지'를 진짜 돼지로 그린 사고) — 무엇이 틀렸는지 메모 필수
+  document.querySelectorAll("[data-panel]").forEach(b=>b.onclick=async()=>{
+    const cut=b.dataset.panel, still=b.dataset.still==="1";
+    const memo=(prompt(cut+"번 컷 그림에서 무엇이 틀렸나요? (예: 바다돼지는 해삼인데 진짜 돼지가 그려짐)")||"").trim();
+    if(!memo)return;
+    if(!confirm(cut+"번 컷 그림만 다시 그릴까요? 비용 약 $0.13"+(still?" — 무료 줌인 컷이라 새 그림으로 완성본까지 자동 재조립합니다.":" — 영상 AI 컷이라 그림만 바뀌고, 그다음 「이 컷만 다시 만들기」를 눌러야 영상에 반영됩니다.")))return;
+    if(await v2do("redo_panel",pid,cut,memo,b))banner(cut+"번 컷 그림 다시 그리기를 요청했습니다. 3~5분 뒤 새로고침하세요.","ok");
   });
   const cutsA=((st.artifacts||{}).script||{}).cuts||[];
   document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const e=$("#ed-"+b.dataset.edit);if(e)e.style.display=(e.style.display==="none"?"block":"none");

@@ -972,3 +972,59 @@ def test_screen_text_blocks_korean_annotation(tmp_path):
     assert any("韓国語" in p for p in probs)
     cut["annotation"] = "1800年代後半から"
     assert not any("注釈" in p for p in admin.validate_script([cut] * admin.SCRIPT_CUTS, facts))
+
+
+def test_nickname_is_not_drawn_as_land_animal():
+    """실사고 2026-10-06: 「바다돼지라 불리는 해삼」을 콘티가 "clay sea pig"로 적어 진짜 돼지 인형이 그려짐."""
+    assert admin.literal_animal_problems("a chunky translucent clay sea pig (Scotoplanes) stands still", "Cut 5")
+    assert admin.literal_animal_problems("a headless chicken monster swims", "Cut 1")
+    assert not admin.literal_animal_problems("a translucent pink deep-sea sea cucumber with stubby tube-feet legs", "Cut 5")
+    assert not admin.literal_animal_problems("a dumbo octopus with elephant-ear fins", "Cut 2")
+    cuts = [{"cut": i, "jp": "x", "ko": "x"} for i in range(1, 9)]
+    panels = {i: {"shot": "wide", "motion": "omni" if i in (1, 3) else "still", "set_edge": True, "props": ["lamp", "chart"],
+                  "desc": "A wide shot of the cardboard set with a clay research ship on paper waves and a desk lamp."} for i in range(1, 9)}
+    assert not admin.validate_storyboard_plan(panels, cuts, 1)
+    panels[5]["desc"] = "Wide shot: a chunky translucent clay sea pig stands on the clay seabed with tiny king crabs on its back."
+    assert any(p.startswith("Cut 5") and "sea cucumber" in p.lower() for p in admin.validate_storyboard_plan(panels, cuts, 1))
+    assert "NICKNAMES ARE NOT ANIMALS" in admin._SB_PROMPT and "never draw land animals" in admin._GRID_HEAD_GENERIC
+    # 대본의 장면 아이디어(scene_ko)도 별명만 쓰면 불통과 — 실제 생물을 괄호로
+    facts = [{"id": "F1", "fact": "", "fact_jp": "", "quote": ""}]
+    cut = {"jp": "幼い頃はセンジュナマコを宿主とします。", "ko": "어릴 때는 해삼을 숙주로 삼습니다.", "fact": "F1",
+           "scene_ko": "바다돼지 위아래에 작은 왕게들", "annotation": ""}
+    assert any("scene_ko" in p for p in admin.validate_script([cut] * admin.SCRIPT_CUTS, facts))
+    cut["scene_ko"] = "바다돼지(해삼) 위아래에 작은 왕게들"
+    assert not any("scene_ko" in p for p in admin.validate_script([cut] * admin.SCRIPT_CUTS, facts))
+
+
+def test_redo_panel_redraws_one_still_cut_and_reassembles(real_copy, monkeypatch):
+    from PIL import Image
+    sc = json.loads((real_copy / "script.json").read_text(encoding="utf-8"))
+    st = admin.load_status("bathynomus_giganteus")
+    st["artifacts"].setdefault("video", {})["clips"] = [{"cut": 2, "file": "out/old_stills/c02.mp4", "sec": 4, "motion": "still"}]
+    admin._save(admin.status_path("bathynomus_giganteus"), st)
+    answers = iter(['{"shot":"wide","props":["lamp","chart"],"desc":"A clay sea pig stands on a painted seabed beside a desk lamp."}',
+                    '{"shot":"wide","props":["lamp","chart"],"desc":"A translucent pink deep-sea sea cucumber with stubby tube-feet on a painted clay seabed beside a desk lamp."}'])
+    prompts = []
+
+    def ask(p):
+        prompts.append(p)
+        return next(answers)
+
+    def run(rp):
+        req = json.loads(rp.read_text(encoding="utf-8"))
+        assert "NOT a grid" in req["items"][0]["prompt"] and "sea cucumber" in req["items"][0]["prompt"]
+        out = rp.parent.parent / "out" / req["id"]
+        out.mkdir(parents=True, exist_ok=True)
+        Image.new("RGB", (360, 640), (40, 60, 80)).save(out / "p02.jpg")
+        return 0
+    called = {}
+    monkeypatch.setattr(admin, "assemble", lambda pid: called.setdefault("asm", pid))
+    admin.redo_panel("bathynomus_giganteus", 2, "바다돼지는 해삼인데 돼지가 그려짐", ask=ask, run=run)
+    assert len(prompts) == 2 and "pig" in prompts[1]                     # 1차 답의 'pig' 를 이유와 함께 돌려보냄
+    sc = json.loads((real_copy / "script.json").read_text(encoding="utf-8"))
+    c2 = next(c for c in sc["cuts"] if c.get("cut") == 2)
+    assert "sea cucumber" in c2["panel_desc"] and c2["keyframe"].endswith("p02.jpg")
+    st = admin.load_status("bathynomus_giganteus")
+    clip = st["artifacts"]["video"]["clips"][0]
+    assert "_stills/" in clip["file"] and (real_copy / clip["file"]).exists() and clip["history"] == ["out/old_stills/c02.mp4"]
+    assert called["asm"] == "bathynomus_giganteus"
