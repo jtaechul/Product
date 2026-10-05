@@ -140,8 +140,8 @@
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be submitted. The prompt contains sensitive words that violate Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy). Try rephrasing the prompt.\",\"code\":\"content_blocked\"}}",
   "last_request": {
-    "file": "08_remake_fix.json",
-    "ran_at": "2026-10-04T08:31:07Z",
+    "file": "09_publish.json",
+    "ran_at": "2026-10-05T07:03:03Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
@@ -149,5 +149,12 @@
     "ok": true,
     "sec": 20.38,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
+  },
+  "ig_publish": {
+    "ok": true,
+    "media_id": "18010099148968081",
+    "username": "lord.shiba.ybd",
+    "permalink": "https://www.instagram.com/reel/DeGoHBgCu_U/",
+    "published_at": "2026-10-05T07:03:03Z"
   }
 }
