@@ -68,8 +68,14 @@
       "approved_at": "2026-10-05T22:42:21Z"
     },
     "video": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-10-05T22:46:03Z",
+          "kind": "auto",
+          "text": "영상 컷 준비 완료 — 조립 + 자동 검사"
+        }
+      ]
     },
     "upload": {
       "state": "locked",
@@ -578,9 +584,91 @@
           "motion": "omni"
         }
       ]
+    },
+    "video": {
+      "clips_request": "r1005224358_clips",
+      "clips": [
+        {
+          "cut": 1,
+          "file": "out/r1005224314_stills/c01.mp4",
+          "sec": 8,
+          "motion": "still"
+        },
+        {
+          "cut": 2,
+          "file": "out/r1005224314_stills/c02.mp4",
+          "sec": 8,
+          "motion": "still"
+        },
+        {
+          "cut": 3,
+          "file": "out/r1005224358_clips/c03.mp4",
+          "sec": 8,
+          "motion": "omni"
+        },
+        {
+          "cut": 4,
+          "file": "out/r1005224358_clips/c04.mp4",
+          "sec": 8,
+          "motion": "omni"
+        },
+        {
+          "cut": 5,
+          "file": "out/r1005224314_stills/c05.mp4",
+          "sec": 8,
+          "motion": "still"
+        },
+        {
+          "cut": 6,
+          "file": "out/r1005224358_clips/c06.mp4",
+          "sec": 8,
+          "motion": "omni"
+        },
+        {
+          "cut": 7,
+          "file": "out/r1005224314_stills/c07.mp4",
+          "sec": 8,
+          "motion": "still"
+        },
+        {
+          "cut": 8,
+          "file": "out/r1005224358_clips/c08.mp4",
+          "sec": 8,
+          "motion": "omni"
+        }
+      ],
+      "final": "out/r1005224603_final/final.mp4",
+      "assemble": {
+        "clips_id": "r1005224358_clips",
+        "tts_id": "r10051532_script_tts",
+        "ending": ""
+      },
+      "built_at": "2026-10-05T22:48:47Z"
     }
   },
-  "checks": {},
+  "checks": {
+    "at": "2026-10-05T22:48:47Z",
+    "duration_s": 56.18,
+    "white_edge_px": {
+      "value": 0,
+      "ok": true,
+      "rule": "좌우 가장자리 흰 줄 0px"
+    },
+    "loudness_lufs": {
+      "value": -15.9,
+      "ok": true,
+      "rule": "-16 LUFS ±1"
+    },
+    "music": {
+      "ok": true,
+      "rule": "음악 없음(영상 AI 오디오는 조립 때 전부 버림)"
+    },
+    "subtitle_font": {
+      "ok": true,
+      "value": "NotoSansJP-Bold.ttf",
+      "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"
+    }
+  },
   "jobs": {
     "script": {
       "stage": "script",
@@ -598,10 +686,10 @@
     },
     "video": {
       "stage": "video",
-      "status": "running",
-      "at": "2026-10-05T22:42:21Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-05T22:48:47Z",
+      "action": "make_video",
+      "text": "영상 자동 제작 완료 — 승인 대기"
     }
   },
   "cost": {
@@ -630,6 +718,11 @@
         "at": "2026-10-05T22:39:17Z",
         "what": "콘티 격자 2장",
         "usd": 0.268
+      },
+      {
+        "at": "2026-10-05T22:46:03Z",
+        "what": "영상 컷 4개 생성",
+        "usd": 3.2
       }
     ]
   }
