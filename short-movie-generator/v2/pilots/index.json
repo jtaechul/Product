@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-30T22:35:06Z",
+  "updated": "2026-10-05T15:29:14Z",
   "items": [
     {
       "id": "bathynomus_giganteus",
@@ -8,7 +8,9 @@
       "stage": "done",
       "state": "approved",
       "job": null,
-      "created": "2026-09-27T00:00:00Z"
+      "created": "2026-09-27T00:00:00Z",
+      "uploaded_at": "2026-09-28T12:23:52Z",
+      "stats": null
     },
     {
       "id": "enypniastes_eximia",
@@ -17,7 +19,26 @@
       "stage": "done",
       "state": "approved",
       "job": null,
-      "created": "2026-09-30T09:44:09Z"
+      "created": "2026-09-30T09:44:09Z",
+      "uploaded_at": "2026-09-30T22:35:06Z",
+      "stats": null
+    },
+    {
+      "id": "lithodidae",
+      "name_ko": "심해 킹크랩(리소드과)",
+      "sci": "Lithodidae",
+      "stage": "script",
+      "state": "working",
+      "job": {
+        "stage": "script",
+        "status": "running",
+        "at": "2026-10-05T15:29:14Z",
+        "action": "job_start",
+        "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      },
+      "created": "2026-10-05T15:29:14Z",
+      "uploaded_at": null,
+      "stats": null
     }
   ]
 }

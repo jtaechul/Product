@@ -1,0 +1,78 @@
+{
+  "id": "lithodidae",
+  "name_ko": "심해 킹크랩(리소드과)",
+  "sci": "Lithodidae",
+  "created": "2026-10-05T15:29:14Z",
+  "stages": {
+    "topic": {
+      "state": "approved",
+      "notes": [
+        {
+          "at": "2026-10-05T15:29:14Z",
+          "kind": "approve",
+          "text": "운영자가 주제로 선택"
+        }
+      ],
+      "approved_at": "2026-10-05T15:29:14Z"
+    },
+    "script": {
+      "state": "working",
+      "notes": []
+    },
+    "storyboard": {
+      "state": "locked",
+      "notes": []
+    },
+    "video": {
+      "state": "locked",
+      "notes": []
+    },
+    "upload": {
+      "state": "locked",
+      "notes": []
+    }
+  },
+  "topic": {
+    "id": "lithodidae",
+    "key": "king crab",
+    "name_ko": "심해 킹크랩(리소드과)",
+    "ko_official": true,
+    "name_en": "Lithodid king crab",
+    "sci": "Lithodidae",
+    "depth_m": "200-2000",
+    "facts_n": 5,
+    "facts": [
+      "게처럼 보이지만 사실은 소라게(집게)에 가까운 '가짜 게'다",
+      "걸어 다니는 다리가 세 쌍뿐이다(마지막 한 쌍은 작게 퇴화해 등딱지 아래 숨는다)",
+      "온몸이 단단한 가시로 뒤덮여 포식자로부터 몸을 지킨다"
+    ],
+    "sources": [
+      "NOAA Ocean Exploration",
+      "WoRMS"
+    ],
+    "checks": {
+      "한 편 = 한 대상": true,
+      "사실 3개 이상": true,
+      "서식 수심": true
+    },
+    "ready": true,
+    "in_progress": false,
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/6245963/medium.jpg",
+      "credit": "(c) Ondřej Radosta, some rights reserved (CC BY-NC), uploaded by Ondřej Radosta",
+      "license": "cc-by-nc",
+      "page": "https://www.inaturalist.org/taxa/47397"
+    }
+  },
+  "artifacts": {},
+  "checks": {},
+  "jobs": {
+    "script": {
+      "stage": "script",
+      "status": "running",
+      "at": "2026-10-05T15:29:14Z",
+      "action": "job_start",
+      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+    }
+  }
+}
