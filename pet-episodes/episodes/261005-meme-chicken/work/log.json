@@ -1,0 +1,22 @@
+{
+  "meme": {
+    "spent": 0.15,
+    "ledger": [
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
+      }
+    ],
+    "board": {
+      "ok": true,
+      "panels": 6,
+      "wait": true
+    }
+  },
+  "error": "'clips'",
+  "last_request": {
+    "file": "01_meme_board.json",
+    "ran_at": "2026-10-05T03:06:58Z",
+    "ok": false
+  }
+}
