@@ -27,6 +27,11 @@
           "at": "2026-10-05T15:32:39Z",
           "kind": "crosscheck",
           "text": "AI 교차 검사: 의심 2건"
+        },
+        {
+          "at": "2026-10-05T15:45:06Z",
+          "kind": "crosscheck",
+          "text": "AI 교차 검사: 의심 2건"
         }
       ]
     },
@@ -265,7 +270,7 @@
       "tts_id": "r10051532_script_tts",
       "verification": "자동 작성 · 출처 3곳 · 원문 인용이 확인된 사실 14개(확인 안 된 0개 버림) · 코드 검사 통과 · 예상 길이 68.0초",
       "crosscheck": {
-        "at": "2026-10-05T15:32:12Z",
+        "at": "2026-10-05T15:44:41Z",
         "model": "gemini-3.1-pro-preview",
         "issues": [
           {
