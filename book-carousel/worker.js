@@ -4902,9 +4902,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="box-hd"><span class="step">04</span><h2>광고 문구 · 내레이션</h2></div>
     <p class="lead">AI가 초안을 쓰고, 마음대로 고칠 수 있습니다. 쓴 그대로 영상에 들어갑니다.</p>
     <button class="btn btn-2 btn-sm" id="trCopyGo" type="button">문구 만들기</button>
-    <div class="f"><label for="trBig">큰 문구 (두 줄)</label><textarea id="trBig" rows="2"></textarea></div>
-    <div class="f"><label for="trSub">작은 문구 (두 줄)</label><textarea id="trSub" rows="2"></textarea></div>
-    <div class="f"><label for="trVo">느끼한 내레이션</label><textarea id="trVo" rows="3"></textarea></div>
+    <div class="f"><label for="trBig">캡션 첫 줄 (두 줄 · 영상에는 안 나옴)</label><textarea id="trBig" rows="2"></textarea></div>
+    <div class="f"><label for="trSub">캡션 설명 (두 줄 · 영상에는 안 나옴)</label><textarea id="trSub" rows="2"></textarea></div>
+    <div class="f"><label for="trVo">웃긴 내레이션 (4초 안 · 끝은 "구매는 프로필 링크에서.")</label><textarea id="trVo" rows="3"></textarea></div>
     <div class="f"><label for="trEnd">끝 장면 동작 (영어, AI 영상 지시)</label><textarea id="trEnd" rows="2"></textarea></div>
     <div class="f"><label for="trTags">해시태그 (상품을 사려는 사람이 검색할 말, 띄어쓰기로 구분)</label><input id="trTags" type="text" placeholder="#강아지관절영양제 #노견관절케어"></div>
     <div class="f"><label style="display:flex;gap:8px;align-items:center"><input id="trWhimper" type="checkbox" style="width:auto"> 광고 화면 시작에 강아지 낑낑 소리 넣기 (부딪히거나 실패해 아파하는 장면일 때만)</label></div>
@@ -7188,10 +7188,11 @@ async function handleRemakeCopy(env, body) {
   if (!p.title) throw new Error('상품을 먼저 골라 주세요.');
   const key = await getGeminiKey(env);
   const ask = `반려견 광고 영상의 마지막 장면 문구를 써라. 앞부분은 "${a.meme || ''}" 밈을 실사 시바견이 따라 하는 영상이고, 끝에서 시바견이 이 상품을 쓴다: "${p.title}".
-- big: 화면 큰 문구 2줄(줄바꿈 \\n), 각 줄 12자 이내, 시청자 강아지에게 말을 거는 훅(예: "당신의 강아지도\\n갈증을 느낍니다")
-- sub: 작은 문구 2줄(\\n), 상품이 주는 이점을 구체적으로(예: "춤추며 빠져나간 수분과 전해질\\n강아지 전용 이온음료로 빠르게 채워주세요")
-- vo: 느끼한 남자 내레이션, 짧은 말 3~4마디로 전체 25자 안팎(읽으면 5초 안쪽). '...' 뜸은 한 번만. 마지막은 반드시 짧게 "구매는 프로필 링크에서." — "관련 제품 구매는"처럼 길게 쓰지 말고, 주어 없이 "프로필 링크에서."만 쓰지도 마라
-- ending: English one sentence — what the Shiba Inu does with the product in the final 4-second shot (it must clearly use/enjoy the product, product visible)
+※ 끝 광고 화면에는 글씨를 띄우지 않는다(작은 "구매는 프로필 링크에서"만). big·sub는 인스타 캡션에만 쓴다.
+- big: 캡션 첫 줄용 훅 2줄(줄바꿈 \\n), 각 줄 12자 이내(예: "당신의 강아지도\\n갈증을 느낍니다")
+- sub: 캡션용 2줄(\\n), 상품이 주는 이점을 구체적으로(예: "춤추며 빠져나간 수분과 전해질\\n강아지 전용 이온음료로 빠르게 채워주세요")
+- vo: 웃긴 내레이션. 앞 장면에서 벌어진 사건(실패·망함)을 그대로 이어 받아 한 번 비트는 능청스러운 한 마디(12자 안팎, 광고 말투·효능 설명 금지) + 마지막에 반드시 "구매는 프로필 링크에서." 전체 22자 안팎(4초 안에 읽힘). '...' 뜸은 한 번만. 주어 없이 "프로필 링크에서."만 쓰지 마라
+- ending: English one sentence — the final 4-second shot that CONTINUES the same joke in the same place with the same Shiba Inu (no cut to a clean ad set): the dog now has the product and does one funny, clear action with it (product visible)
 - hashtags: ${HASHTAG_RULE}
 - whimper: 앞부분이 강아지가 넘어지거나 부딪히거나 실패해 아파하는 장면이면 true(광고 화면 시작에 낑낑 소리), 그 밖(신나는 장면·놀라운 장면 등)이면 false
 상품명·브랜드명·가격·숫자 금액은 어디에도 쓰지 마라(품목 이름은 된다: 예 "강아지 전용 이온음료").
@@ -7256,7 +7257,7 @@ async function handleRemakeCommit(env, body) {
   if (!c.big || !c.vo) throw new Error('광고 문구와 내레이션을 채워 주세요.');
   const ep = { kind: 'remake', menuName: `리메이크 · ${String(v.title || a.meme || '').slice(0, 28)}`, clips: [],
     source: { youtube: v.id ? `https://www.youtube.com/watch?v=${v.id}` : '', title: v.title || '', music: a.music || '' },
-    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, cap: REMAKE_CAP_USD },
+    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, ad: 'vo', cap: REMAKE_CAP_USD },   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
     caption: `${String(c.big).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
     hashtags: cleanHashtags(Array.isArray(c.hashtags) ? c.hashtags : String(c.hashtags || '').split(/\s+/), remakeBanned(p.title)),
     product: { title: p.title, brand: p.brand || '', category: p.category || '기타', reason: String(c.sub || '').replace(/\n/g, ' '), link: p.link, image: p.image || '' } };

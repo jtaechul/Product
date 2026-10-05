@@ -2055,6 +2055,7 @@ REMAKE_SEG = 9.5               # Omni 편집은 한 번에 10초까지
 SAY_SPEED_MIN, SAY_SPEED_MAX = 1.2, 1.3   # ⛔ 핵심 규칙: 녹음 속도는 항상 1.2~1.3배(사용자 확정 2026-10)
 REMAKE_BODY_SEC = 10.0         # 본편은 10초(사용자 확정 2026-10: 비용 최소·한 번에) — AI가 가장 웃긴 10초를 고른다. 편마다 remake.max_sec
 REMAKE_END_SEC = 6             # 광고 끝 장면은 처음부터 6초로(사용자 확정 2026-10, 예전 4초×1.6배 늘리기 대신)
+REMAKE_END_SEC_VO = 4          # 글씨 없는 광고(remake.ad="vo"): 웃긴 장면 4초 + 웃긴 내레이션만(사용자 확정 2026-10, 헬기 편 광고 시작에서 절반 이탈)
 REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
 REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
 REMAKE_EXTEND = (" VERTICAL FRAME: the input is a {src} shot placed in the middle of a vertical 9:16 frame; the dark blurred bands "
@@ -2150,7 +2151,7 @@ REMAKE_END_START = ("Image 1 is the last frame of the previous shot: keep exactl
                     "from image 2 is clearly visible and in focus right next to the dog, looking exactly like the real product "
                     "(same shape, colours and label layout). All four legs are thick, fully furry Shiba legs with round paws. "
                     "No other added text; only animals in the scene.")
-REMAKE_END_PROMPT = ("DURATION: 6 seconds. Image 1 is the first frame. {ending} The product stays where it is and never changes "
+REMAKE_END_PROMPT = ("DURATION: {sec} seconds. Image 1 is the first frame. {ending} The product stays where it is and never changes "
                      "shape or label. Same place and lighting, camera almost fixed. Photorealistic. Thick, fully furry dog legs "
                      "and paws only. No added text.")
 
@@ -2638,6 +2639,8 @@ def step_remake(ep, epdir, work, log, req):
     res["use_timeline"] = rm.get("timeline", True) is not False   # 모든 영상에 0.5초 시간표(사용자 확정 2026-10)
     if res["lipsync"]:                                    # 노래·랩 원본: 개 입이 원래 입모양 그대로 열리고 닫혀 소리와 맞게(사용자 요청 2026-10)
         prompt += REMAKE_LIPSYNC
+    ad_vo = rm.get("ad") == "vo"                         # 큰 문구 없이 웃긴 장면 + 내레이션 + 작은 "구매는 프로필 링크에서"만
+    end_sec = REMAKE_END_SEC_VO if ad_vo else REMAKE_END_SEC
     try:
         ref = _remake_src(epdir.name, work)
         if (rm.get("cut") or "").strip():
@@ -2667,7 +2670,7 @@ def step_remake(ep, epdir, work, log, req):
             prompt += REMAKE_EXTEND.format(src=f"{sw}x{sh}")
             res["vertical"] = {"mode": "extend", "src": f"{sw}x{sh}"}
             ref = ref_v
-        est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * REMAKE_END_SEC
+        est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * end_sec
                         + REMAKE_COST["tts"], 2)
         if mode == "probe":                               # 거절 원인 찾기: 1초짜리로 넣는 것을 바꿔 가며 보낸다(통과하면 1초에 0.1달러)
             res["probe"] = _remake_probe(key, ref, prompt, work, res, cap, (req.get("remake") or {}).get("cases"))
@@ -2713,7 +2716,7 @@ def step_remake(ep, epdir, work, log, req):
         if mode == "test":
             res["test"] = {"ok": True, "human": first.get("human"), "where": first.get("where", ""),
                            "quality": first.get("quality"), "issues": first.get("issues", "")}
-        res["est_full"] = round(REMAKE_COST["omni_sec"] * seg * (n - 1) + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * REMAKE_END_SEC
+        res["est_full"] = round(REMAKE_COST["omni_sec"] * seg * (n - 1) + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * end_sec
                                 + REMAKE_COST["tts"], 2)
         if mode != "full":
             return
@@ -2751,9 +2754,9 @@ def step_remake(ep, epdir, work, log, req):
         end_v = work / "rm_end.mp4"
         if not end_v.exists():
             # 끝 장면도 한 번만(다시 만들기·검사 없음 — 사용자 지시 2026-10)
-            _remake_spend(res, REMAKE_COST["omni_sec"] * REMAKE_END_SEC, "끝 장면 영상", cap)
+            _remake_spend(res, REMAKE_COST["omni_sec"] * end_sec, "끝 장면 영상", cap)
             body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(start)},
-                                                   {"type": "text", "text": REMAKE_END_PROMPT.format(ending=ending)}],
+                                                   {"type": "text", "text": REMAKE_END_PROMPT.format(ending=ending, sec=end_sec)}],
                     "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
                     "generation_config": {"video_config": {"task": "image_to_video"}}}
             raw = work / "_rm_end_raw.mp4"
@@ -2761,7 +2764,7 @@ def step_remake(ep, epdir, work, log, req):
                 raw.write_bytes(_omni_run(key, body))
             except RuntimeError as e:
                 if "HTTP 400" in str(e):
-                    res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * REMAKE_END_SEC, 3)
+                    res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * end_sec, 3)
                 raise
             _norm(raw, end_v, H)
         # 3) 느끼한 내레이션(Enceladus, 1.3배 — 사용자 확정 2026-10)
@@ -2789,18 +2792,23 @@ def step_remake(ep, epdir, work, log, req):
         dd = round(max(4.0, t0 + vl + 0.6 - Lb), 2)        # 끝 장면 길이
         if _dur(end_v) >= 5.5:                            # 6초로 만든 광고는 6초를 다 쓴다(사용자 확정 2026-10: 광고 5~6초)
             dd = max(dd, 6.0)
+        if ad_vo:                                         # 4초 장면은 늘리지 않고, 내레이션이 더 길면 마지막 장면을 잠깐 멈춰 둔다
+            dd = round(max(_dur(end_v), t0 + vl + 0.4 - Lb), 2)
         cta_at = max(0.5, t0 + vl - 1.3 - Lb)
         copy_png, cta_png = work / "_copy.png", work / "_cta.png"
-        place = rm.get("copy_place") or (res.get("copy_place") or {}).get("place")
-        if place not in ("top", "bottom"):                # 끝 장면을 보고 비어 있는 쪽(위/아래)을 고른다 — 한 번 정하면 기록해 둔다
-            _remake_spend(res, REMAKE_COST["check"], "문구 위치 고르기", cap)
-            r = _vision_json(start, COPY_SPOT) or {}
-            place = r.get("place") if r.get("place") in ("top", "bottom") else "bottom"
-            res["copy_place"] = {"place": place, "why": str(r.get("why", ""))[:120]}
-        _copy_png(rm.get("big", ""), rm.get("sub", ""), copy_png, place=place)
+        if ad_vo:                                         # 큰 문구·노란 설명 없음(사용자 확정 2026-10) — 빈 그림
+            Image.new("RGBA", (720, 1280), (0, 0, 0, 0)).save(copy_png)
+        else:
+            place = rm.get("copy_place") or (res.get("copy_place") or {}).get("place")
+            if place not in ("top", "bottom"):                # 끝 장면을 보고 비어 있는 쪽(위/아래)을 고른다 — 한 번 정하면 기록해 둔다
+                _remake_spend(res, REMAKE_COST["check"], "문구 위치 고르기", cap)
+                r = _vision_json(start, COPY_SPOT) or {}
+                place = r.get("place") if r.get("place") in ("top", "bottom") else "bottom"
+                res["copy_place"] = {"place": place, "why": str(r.get("why", ""))[:120]}
+            _copy_png(rm.get("big", ""), rm.get("sub", ""), copy_png, place=place)
         _cta_png(cta_png)
         tot = round(Lb + dd, 2)
-        end_slow = 1.0 if _dur(end_v) >= 5.5 else 1.6        # 6초로 만든 끝 장면은 늘리지 않는다(예전 4초짜리만 1.6배)
+        end_slow = 1.0 if (ad_vo or _dur(end_v) >= 5.5) else 1.6        # 6초로 만든 끝 장면은 늘리지 않는다(예전 4초짜리만 1.6배)
         fit = f"scale={W}:{H}:force_original_aspect_ratio=decrease,pad={W}:{H}:(ow-iw)/2:(oh-ih)/2"   # 원본이 9:16이 아니어도 이어 붙게
         # 가로 원본(16:9 등)은 세로 화면에 검은 띠 대신 같은 영상을 흐리게 깔고 가운데에 원본 비율 그대로(사용자 지적 2026-10: 9:16으로 나와야 함)
         # — 가운데만 잘라 내면 옆 사람이 잘리므로 기본은 흐린 배경 채우기. 조금 키우려면 remake.frame_zoom(예 1.25, 양옆이 그만큼 잘림)
