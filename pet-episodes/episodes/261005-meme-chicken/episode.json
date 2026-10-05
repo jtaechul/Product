@@ -61,25 +61,13 @@
     "t": 2.75,
     "kind": "sfx",
     "file": "shiba_bark_single.mp3",
-    "vol": 1.0
-   },
-   {
-    "t": 3.5,
-    "kind": "sfx",
-    "file": "shiba_bark_single.mp3",
-    "vol": 1.0
+    "vol": 0.8
    },
    {
     "t": 4.1,
     "kind": "sfx",
     "file": "shiba_bark_single.mp3",
-    "vol": 1.0
-   },
-   {
-    "t": 4.75,
-    "kind": "sfx",
-    "file": "shiba_bark_single.mp3",
-    "vol": 0.95
+    "vol": 0.8
    },
    {
     "t": 5.4,
@@ -111,16 +99,10 @@
     "t": 10.2,
     "kind": "sfx",
     "file": "shiba_bark_single.mp3",
-    "vol": 1.0
+    "vol": 0.8
    },
    {
-    "t": 10.9,
-    "kind": "sfx",
-    "file": "shiba_bark_single.mp3",
-    "vol": 1.0
-   },
-   {
-    "t": 11.5,
+    "t": 11.25,
     "end": 16.0,
     "kind": "say",
     "who": "vo",
@@ -149,20 +131,14 @@
    },
    {
     "t0": 2.75,
-    "t1": 3.45,
+    "t1": 4.0,
     "text": "[번역: 쟤예요]",
     "style": "yellow"
    },
    {
-    "t0": 3.5,
-    "t1": 4.65,
+    "t0": 4.1,
+    "t1": 5.3,
     "text": "[번역: 쟤가 뜯었어요]",
-    "style": "yellow"
-   },
-   {
-    "t0": 4.75,
-    "t1": 5.6,
-    "text": "[번역: 전 결백해요]",
     "style": "yellow"
    },
    {
@@ -182,8 +158,8 @@
     "style": "yellow"
    },
    {
-    "t0": 10.1,
-    "t1": 11.6,
+    "t0": 10.2,
+    "t1": 11.2,
     "text": "[번역: 다음엔 안 들킬게요]",
     "style": "yellow"
    }

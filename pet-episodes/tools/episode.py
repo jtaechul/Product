@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import re
@@ -3032,7 +3033,7 @@ def _meme_full(ep, epdir, work, log, res, mm, cap):
             if a.get("emotion"):                          # 줄마다 감정·톤 지시(핵심 규칙)
                 d = f"{d}\n[이 줄의 감정·톤] {a['emotion']}"
             sp = min(SAY_SPEED_MAX, max(SAY_SPEED_MIN, float(a.get("speed", 1.25))))
-            wav = work / f"_say{k}.wav"
+            wav = work / ("_say_" + hashlib.md5(f"{a['text']}|{v}|{sp}|{a.get('emotion', '')}".encode()).hexdigest()[:10] + ".wav")   # 순서가 바뀌어도 같은 녹음 재사용
             if not wav.exists():
                 _remake_spend(res, REMAKE_COST["tts"], f"녹음: {a['text'][:12]}", cap)
                 _say(a["text"], v, d, wav, sp)
