@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "new | approve | revise | redo | ready | redo_cut | assemble | topics | edit_line | apply_lines | crosscheck | recut_plan | recut_approve | recut_cancel | upload_meta | save_meta | write_script | write_storyboard | make_video | edit_hook"
+        description: "new | approve | revise | redo | ready | redo_cut | assemble | topics | edit_line | apply_lines | crosscheck | recut_plan | recut_approve | recut_cancel | upload_meta | save_meta | write_script | write_storyboard | make_video | edit_hook | stats"
         required: true
       pilot:
         description: "편 id (예: bathynomus_giganteus)"
@@ -108,7 +108,7 @@ jobs:
                                  video)      python3 v2/tools/admin.py make_video "$IN_PILOT" "$M" ;;
                                  *)          python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
                                esac ;;
-            assemble|apply_lines|sync|crosscheck|upload_meta) python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" ;;
+            assemble|apply_lines|sync|crosscheck|upload_meta|stats) python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" ;;
             topics)            python3 v2/tools/admin.py topics ;;
             ready|redo_cut|edit_line|edit_hook|recut_plan|recut_approve|recut_cancel|save_meta)
                                python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
