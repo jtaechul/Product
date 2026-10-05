@@ -2394,7 +2394,7 @@
     ],
     "accent": "US",
     "tts_script": "Which classroom is our next class in?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Which classroom",
     "why_not": {
       "0": "교실에 대한 딴소리예요",
@@ -2430,7 +2430,7 @@
     ],
     "accent": "UK",
     "tts_script": "Did you walk the dog this morning?",
-    "status": "draft",
+    "status": "active",
     "evidence": "walk the dog",
     "why_not": {
       "0": "들린 개(dog) 낱말에 낚였어요",
@@ -2466,7 +2466,7 @@
     ],
     "accent": "AU",
     "tts_script": "How can I book a ticket for the concert?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How can I",
     "why_not": {
       "1": "들린 콘서트 낱말에 낚였어요",
@@ -2502,7 +2502,7 @@
     ],
     "accent": "US",
     "tts_script": "What time should we leave for the airport?",
-    "status": "draft",
+    "status": "active",
     "evidence": "What time",
     "why_not": {
       "0": "시간이 아니라 장소를 말했어요",
@@ -2538,7 +2538,7 @@
     ],
     "accent": "UK",
     "tts_script": "What is your favorite subject?",
-    "status": "draft",
+    "status": "active",
     "evidence": "favorite subject",
     "why_not": {
       "0": "질문과 상관없는 딴소리예요",
@@ -2574,7 +2574,7 @@
     ],
     "accent": "AU",
     "tts_script": "Have you been to the new bakery on Main Street?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Have you been to",
     "why_not": {
       "1": "빵집에 대한 대답이 아니에요",
@@ -2610,7 +2610,7 @@
     ],
     "accent": "US",
     "tts_script": "Are you going to the science museum tomorrow?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Are you going",
     "why_not": {
       "1": "박물관이 좋다는 다른 말이에요",
@@ -2646,7 +2646,7 @@
     ],
     "accent": "UK",
     "tts_script": "Where did you buy that blue cap?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Where did you buy",
     "why_not": {
       "0": "얼마인지 가격을 답했어요",
@@ -2682,7 +2682,7 @@
     ],
     "accent": "AU",
     "tts_script": "What time does the baseball game start?",
-    "status": "draft",
+    "status": "active",
     "evidence": "What time",
     "why_not": {
       "0": "경기에서 이겼다는 엉뚱한 이야기예요",
@@ -2718,7 +2718,7 @@
     ],
     "accent": "US",
     "tts_script": "Could you pass me the salt, please?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Could you pass me",
     "why_not": {
       "0": "짜지 않다는 엉뚱한 대답이에요",
@@ -2754,7 +2754,7 @@
     ],
     "accent": "UK",
     "tts_script": "How did you fix the computer?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How did you fix",
     "why_not": {
       "1": "새 노트북이라는 다른 이야기예요",
@@ -2790,7 +2790,7 @@
     ],
     "accent": "AU",
     "tts_script": "Why are you wearing a jacket indoors?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Why are you wearing",
     "why_not": {
       "0": "어디서 샀는지 답했어요",

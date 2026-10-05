@@ -2639,7 +2639,7 @@
       "Two children sitting on a park bench, drinking water",
       "Two children riding bicycles on a path in a park"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "playing badminton",
     "why_not": {
       "0": "축구공을 차고 있는 사진이에요",
@@ -2741,7 +2741,7 @@
       "A vase full of beautiful flowers sitting on a table",
       "A stack of empty plates sitting on a table"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A vase of flowers",
     "why_not": {
       "0": "사과가 담긴 바구니 사진이에요",
@@ -2947,7 +2947,7 @@
       "A girl looking through binoculars at a bird",
       "A girl talking on a smartphone while walking"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "taking a picture",
     "why_not": {
       "0": "붓으로 그림을 그리는 사진이에요",
@@ -4035,7 +4035,7 @@
       "A woman closing the curtains on a window",
       "A woman opening a glass window"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "opening the window",
     "why_not": {
       "0": "창문 밖을 가만히 내다보고 있어요",
@@ -4132,7 +4132,7 @@
       "Two children sliding down a slide in a park",
       "Two children sitting and talking on a park bench"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "riding on a seesaw",
     "why_not": {
       "0": "놀이터에서 그네를 타고 있어요",
@@ -4229,7 +4229,7 @@
       "A man carrying a large cardboard box in his arms",
       "A man carrying a small briefcase"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "carrying a large box",
     "why_not": {
       "0": "상자를 열어서 안을 보고 있어요",

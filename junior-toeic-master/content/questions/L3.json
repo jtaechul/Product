@@ -3609,7 +3609,7 @@
       },
       "translation_ko": "여: 스타 영화관에 오신 것을 환영합니다. 무엇을 도와드릴까요?\n남: 안녕하세요. 3시 우주 영화 표 두 장 사고 싶어요.\n여: 죄송하지만, 그 영화는 모두 매진되었습니다. 5시 영화는 자리가 있습니다.\n남: 아, 그건 저희에게 너무 늦네요. 그냥 내일 다시 올게요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Where are the speakers?",
@@ -3690,7 +3690,7 @@
       },
       "translation_ko": "남: 좋은 아침입니다. 제 고양이 벨라의 약을 가지러 왔어요.\n여: 안녕하세요. 차트를 확인해 볼게요. 아, 의사 선생님이 고양이를 먼저 보고 싶어 하세요.\n남: 정말요? 하지만 지난달에 막 건강 검진을 받았는데요.\n여: 네, 하지만 이 약은 독하거든요. 선생님이 고양이 몸무게를 다시 재야 해요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What are the speakers mainly talking about?",
@@ -3771,7 +3771,7 @@
       },
       "translation_ko": "여: 좋은 아침입니다. 방을 체크아웃하실 준비가 되셨나요?\n남: 네. 여기 제 방 열쇠가 있습니다. 아주 잘 머물다 가요.\n여: 다행이네요. 공항으로 가는 택시를 불러 드릴까요?\n남: 아니요, 괜찮습니다. 제 친구가 차로 데려다줄 거예요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Where is this conversation taking place?",
@@ -3852,7 +3852,7 @@
       },
       "translation_ko": "남: 엄마, 우리 텐트를 어디에 칠까요? 강 옆에요?\n여: 아니, 밤에는 물 근처가 너무 춥단다. 저 큰 나무들 아래에 설치하자.\n남: 좋은 생각이에요. 내일 아침에 나무들이 그늘을 만들어 줄 거예요.\n여: 맞아. 차에서 가방 옮기는 것 좀 도와줄래?"
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What are the boy and his mom mainly talking about?",
@@ -3934,7 +3934,7 @@
       },
       "translation_ko": "여: 학교 체육대회가 다음 주 금요일이야. 데이비드, 넌 어떤 경기에 참가하니?\n남: 나는 이어달리기에서 달리고 싶어. 사라, 넌 어때?\n여: 나는 반 친구들이랑 피구 경기를 할 거야. 우리는 매일 오후에 연습해.\n남: 재밌겠다. 우리 최선을 다해서 상품을 좀 타자!"
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What are the speakers mainly discussing?",
@@ -4016,7 +4016,7 @@
       },
       "translation_ko": "남: 안녕하세요, 우리 고양이가 쓸 따뜻한 침대를 찾고 있어요. 겨울이 오고 있거든요.\n여: 이쪽에 둥근 침대들이 있어요. 아주 부드럽고 편안하답니다.\n남: 오, 우리 고양이가 이 초록색을 좋아하겠네요. 이걸로 살게요.\n여: 좋은 선택이세요. 가방에 넣어 드릴게요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the man doing in the shop?",
@@ -4098,7 +4098,7 @@
       },
       "translation_ko": "여: 내 콩 식물이 오늘 아파 보여. 잎이 노랗게 변하고 있어.\n남: 아, 물을 너무 많이 준 거 아니야?\n여: 이번 주에 매일 물을 줬어. 물이 많이 필요한 줄 알았거든.\n남: 과학 선생님이 일주일에 두 번이면 충분하다고 하셨어. 햇볕이 잘 드는 창가에 두자."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"The science teacher said twice a week is enough\"?",
@@ -4179,7 +4179,7 @@
       },
       "translation_ko": "남: 가자, 버스터. 오후 산책할 시간이야!\n여: 잠깐만, 지금 데리고 나가면 안 돼. 강아지 발바닥에 닿기에 땅이 너무 뜨거워.\n남: 정말? 하지만 하루 종일 문 앞에서 기다렸는걸.\n여: 해가 질 때까지 거실에서 강아지랑 놀아 주는 건 어때?"
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"The ground is too hot for his paws\"?",
@@ -4260,7 +4260,7 @@
       },
       "translation_ko": "남: 엄마, 우리 아침으로 팬케이크 먹어도 돼요?\n여: 그러고 싶지만, 우유갑이 거의 비어 있네.\n남: 대신 물을 써도 될까요? 요리 프로그램에서 봤어요.\n여: 음, 그러면 맛이 별로 없을 텐데. 엄마가 금방 옆 가게에 다녀올게."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"the milk carton is almost empty\"?",
@@ -4406,7 +4406,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "L3-0054"
   },
   {
@@ -4487,7 +4487,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "L3-0055"
   },
   {
@@ -4568,7 +4568,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "L3-0056"
   },
   {
@@ -4585,7 +4585,7 @@
       },
       "translation_ko": "여: 실례합니다. 우주에 관한 책을 찾는 것 좀 도와주시겠어요?\n남: 물론이죠. 모든 과학 책은 3층에 있습니다.\n여: 아, 그렇군요. 계단을 이용해야 하나요?\n남: 엘리베이터가 바로 뒤에 있어요. 그게 훨씬 더 빠릅니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the woman mainly asking about?",
@@ -4666,7 +4666,7 @@
       },
       "translation_ko": "남: 안녕하세요. 어제 이 러닝화를 샀는데, 너무 꽉 끼어요.\n여: 죄송합니다. 영수증을 가지고 계신가요?\n남: 네, 여기 있습니다. 같은 색상으로 더 큰 사이즈를 받을 수 있나요?\n여: 컴퓨터를 확인해 볼게요. 네, 뒤쪽 창고에 있습니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why is the man at the shop?",
@@ -4747,7 +4747,7 @@
       },
       "translation_ko": "여: 안녕하세요, 도서관 자원봉사 프로그램에 대해 물어보려고 왔어요.\n남: 잘됐네요! 저희는 책을 선반에 정리할 일손이 항상 필요하거든요.\n여: 딱 좋네요. 일주일에 몇 시간 일해야 하나요?\n남: 보통 일주일에 두 시간이에요. 먼저 이 종이를 작성해 주세요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What are the speakers mainly talking about?",
