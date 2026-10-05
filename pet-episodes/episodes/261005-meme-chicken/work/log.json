@@ -108,9 +108,9 @@
         "text": "아, 그래?",
         "voice": "Fenrir",
         "speed": 1.2,
-        "at": 5.4,
+        "at": 5.6,
         "sec": 1.54,
-        "room": 1.75,
+        "room": 1.55,
         "over": false
       },
       {
@@ -134,8 +134,8 @@
     ]
   },
   "last_request": {
-    "file": "07_meme_full.json",
-    "ran_at": "2026-10-05T05:38:49Z",
+    "file": "08_meme_full.json",
+    "ran_at": "2026-10-05T05:44:48Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
