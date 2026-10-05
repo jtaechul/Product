@@ -1,6 +1,6 @@
 {
   "meme": {
-    "spent": 0.45,
+    "spent": 2.17,
     "ledger": [
       {
         "what": "스토리보드 그림",
@@ -13,17 +13,68 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "본편 10초",
+        "usd": 1.0
+      },
+      {
+        "what": "광고 6초",
+        "usd": 0.6
+      },
+      {
+        "what": "녹음: 하… 이거 뭐야?",
+        "usd": 0.02
+      },
+      {
+        "what": "녹음: 누가 그랬어?!",
+        "usd": 0.02
+      },
+      {
+        "what": "녹음: 어쭈, 지금 대드는 거",
+        "usd": 0.02
+      },
+      {
+        "what": "녹음: …너 앞발에 닭 묻었는",
+        "usd": 0.02
+      },
+      {
+        "what": "녹음: 사실 우리가 원한 건 ",
+        "usd": 0.02
+      },
+      {
+        "what": "녹음: 강아지가 먹는 치킨은 ",
+        "usd": 0.02
       }
     ],
     "board": {
       "ok": true,
       "panels": 6,
       "wait": true
+    },
+    "clips": {
+      "meme_body": {
+        "asked": 10,
+        "got": 10.01
+      },
+      "meme_ad": {
+        "asked": 6,
+        "got": 6.02
+      }
+    },
+    "full": {
+      "ok": true
     }
   },
   "last_request": {
-    "file": "03_meme_board.json",
-    "ran_at": "2026-10-05T03:21:55Z",
+    "file": "04_meme_full.json",
+    "ran_at": "2026-10-05T04:21:07Z",
     "ok": true
+  },
+  "cover": "work/cover.jpg",
+  "assemble": {
+    "ok": true,
+    "sec": 16.0,
+    "note": "밈 광고(본편 10.0초 + 광고 6.0초)"
   }
 }
