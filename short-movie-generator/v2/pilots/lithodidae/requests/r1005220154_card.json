@@ -1,0 +1,31 @@
+{
+  "id": "r1005220154_card",
+  "kind": "gen_images",
+  "purpose": "생물 카드(자동) — 이후 콘티·영상의 형태 기준",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "card_side",
+      "aspect": "1:1",
+      "refs": [
+        "out/r1005220128_refs/ref_00.jpg",
+        "out/r1005220128_refs/ref_01.jpg",
+        "out/r1005220128_refs/ref_02.jpg"
+      ],
+      "prompt": "A single accurately sculpted, hand-painted collectible miniature figurine of Lithodidae, photographed as a macro studio shot. Shape, proportions and colour pattern must be anatomically faithful to the attached real reference photos: The Lithodid king crab features a robust, crab-like armored carapace that is either densely covered in long, sharp spines or heavily textured with coarse nodules. Coloration ranges from deep solid red to bright orange, sometimes mottled with white or purple spots. It has four visible pairs of appendages: one pair of front arms ending in claws (often asymmetrical), and three pairs of long, spiny walking legs. A fifth pair of legs is hidden inside the gill chamber. Small, black, stalked eyes are positioned close together at the front. The underside has a short, folded abdomen made of plates. Satin hand-painted finish with faint brush texture — clearly a crafted figure, not a slick living animal (운영자 승인 2026-10-01). Shallow depth of field (tilt-shift macro), warm desk-lamp light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans. Must not have a fish head, octopus arms, a visible snail shell, swimming fins, or more than four visible pairs of legs. View: three-quarter side view of the whole body."
+    },
+    {
+      "name": "card_top",
+      "aspect": "1:1",
+      "refs": [
+        "out/r1005220128_refs/ref_00.jpg",
+        "out/r1005220128_refs/ref_01.jpg",
+        "out/r1005220128_refs/ref_02.jpg"
+      ],
+      "prompt": "A single accurately sculpted, hand-painted collectible miniature figurine of Lithodidae, photographed as a macro studio shot. Shape, proportions and colour pattern must be anatomically faithful to the attached real reference photos: The Lithodid king crab features a robust, crab-like armored carapace that is either densely covered in long, sharp spines or heavily textured with coarse nodules. Coloration ranges from deep solid red to bright orange, sometimes mottled with white or purple spots. It has four visible pairs of appendages: one pair of front arms ending in claws (often asymmetrical), and three pairs of long, spiny walking legs. A fifth pair of legs is hidden inside the gill chamber. Small, black, stalked eyes are positioned close together at the front. The underside has a short, folded abdomen made of plates. Satin hand-painted finish with faint brush texture — clearly a crafted figure, not a slick living animal (운영자 승인 2026-10-01). Shallow depth of field (tilt-shift macro), warm desk-lamp light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans. Must not have a fish head, octopus arms, a visible snail shell, swimming fins, or more than four visible pairs of legs. View: straight top-down view of the whole body."
+    }
+  ]
+}

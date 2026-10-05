@@ -42,8 +42,14 @@
       "approved_at": "2026-10-05T22:00:31Z"
     },
     "storyboard": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-10-05T22:09:42Z",
+          "kind": "auto",
+          "text": "스토리보드 자동 작성 완료 — 승인 대기"
+        }
+      ]
     },
     "video": {
       "state": "locked",
@@ -439,6 +445,123 @@
           "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
         }
       ]
+    },
+    "storyboard": {
+      "sheet": "out/r1005220452_sb/storyboard.jpg",
+      "request": "r1005220452_sb",
+      "card": [
+        "out/r1005220154_card/card_side.jpg",
+        "out/r1005220154_card/card_top.jpg",
+        "out/r1005220128_refs/ref_00.jpg"
+      ],
+      "compare": "out/r1005220154_card/compare.jpg",
+      "card_check": {
+        "items": [
+          {
+            "item": "게와 유사한 견고한 갑각 형태와 비율을 유지할 것.",
+            "verdict": "pass",
+            "note_ko": "갑각의 형태와 전반적인 비율이 실제와 유사하게 재현됨."
+          },
+          {
+            "item": "표면은 길고 날카로운 가시나 울퉁불퉁한 결절로 덮여 있을 것.",
+            "verdict": "pass",
+            "note_ko": "표면의 결절과 가시 질감이 실제 개체들과 일치함."
+          },
+          {
+            "item": "색상은 짙은 붉은색, 주황색이거나 흰색 또는 보라색 무늬가 섞여 있을 것.",
+            "verdict": "pass",
+            "note_ko": "붉은색 바탕에 흰색 무늬가 섞인 색상이 실제와 부합함."
+          },
+          {
+            "item": "외부로 보이는 다리는 집게발 1쌍과 걷는다리 3쌍으로 총 8개일 것.",
+            "verdict": "pass",
+            "note_ko": "총 8개의 다리(집게발 1쌍, 걷는다리 3쌍)가 정확히 표현됨."
+          },
+          {
+            "item": "제5가슴다리는 아가미실 내부에 숨겨져 있어 외부에서 보이지 않게 할 것.",
+            "verdict": "pass",
+            "note_ko": "실제와 같이 제5가슴다리가 외부에서 보이지 않음."
+          },
+          {
+            "item": "작고 까만 눈이 앞쪽 중앙 부근에 위치할 것.",
+            "verdict": "pass",
+            "note_ko": "앞쪽 중앙의 작고 까만 눈 위치와 형태가 동일함."
+          },
+          {
+            "item": "배면에는 판이나 결절로 이루어진 짧은 복부가 접혀 있을 것.",
+            "verdict": "unknown",
+            "note_ko": "제공된 실제 사진들에서 배면(복부)이 보이지 않아 판단 불가함."
+          }
+        ],
+        "error": ""
+      },
+      "checklist": [
+        "게와 유사한 견고한 갑각 형태와 비율을 유지할 것.",
+        "표면은 길고 날카로운 가시나 울퉁불퉁한 결절로 덮여 있을 것.",
+        "색상은 짙은 붉은색, 주황색이거나 흰색 또는 보라색 무늬가 섞여 있을 것.",
+        "외부로 보이는 다리는 집게발 1쌍과 걷는다리 3쌍으로 총 8개일 것.",
+        "제5가슴다리는 아가미실 내부에 숨겨져 있어 외부에서 보이지 않게 할 것.",
+        "작고 까만 눈이 앞쪽 중앙 부근에 위치할 것.",
+        "배면에는 판이나 결절로 이루어진 짧은 복부가 접혀 있을 것."
+      ],
+      "panels": [
+        {
+          "cut": 1,
+          "file": "out/r1005220452_sb/p01.jpg",
+          "desc": "A wooden worktable set. A tiny clay scientist figurine stands on a sketchbook, looking through a wire-and-plastic magnifying glass at a detailed miniature king crab figurine next to an empty painted clay snail shell. A real pencil and the table edge are visible on the right. Warm desk lamp lighting. The upper quarter is an uncluttered painted cardboard wall.",
+          "shot": "wide",
+          "motion": "still"
+        },
+        {
+          "cut": 2,
+          "file": "out/r1005220452_sb/p02.jpg",
+          "desc": "A cross-section wooden display box showing the deep sea. Inside, hundreds of tiny, simplified clay and paper-cut crabs form a massive mound on a felt seabed. In the foreground, one detailed juvenile king crab figurine stands out. The edge of the wooden box and a cutting mat are visible on the outside. The upper quarter is plain blue cellophane water.",
+          "shot": "wide",
+          "motion": "still"
+        },
+        {
+          "cut": 3,
+          "file": "out/r1005220452_sb/p03.jpg",
+          "desc": "Close-up on a folded paper specimen tray. The detailed king crab figurine is resting on its back, revealing its short, folded abdomen plates. The camera peers into the gap of the gill chamber where the tiny fifth pair of legs is actively moving to clean the gills. A cotton swab and a clay scalpel lie nearby. The upper quarter is the blurred dark wooden texture of the table.",
+          "shot": "close",
+          "motion": "omni"
+        },
+        {
+          "cut": 4,
+          "file": "out/r1005220452_sb/p04.jpg",
+          "desc": "Dynamic underwater scene. A detailed king crab figurine is perched on a paper-cut rock, its carapace slightly raised. A stylized clay snailfish is actively swimming around the crab's side, depositing tiny translucent glass beads representing eggs into the crab's gill crevices. Cotton-wool marine snow hangs on fine threads. The upper quarter is dark, crumpled blue cellophane.",
+          "shot": "medium",
+          "motion": "omni"
+        },
+        {
+          "cut": 5,
+          "file": "out/r1005220452_sb/p05.jpg",
+          "desc": "A deep-sea floor set built on a cutting mat. A chunky clay sea pig figurine walks across a seabed of painted clay. Several tiny, detailed juvenile king crab figurines are hiding underneath and riding on top of the sea pig. The backdrop is a painted cardboard with a visible seam, and the edge of the cutting mat is in the foreground. Upper quarter is uncluttered dark blue cardboard.",
+          "shot": "wide",
+          "motion": "still"
+        },
+        {
+          "cut": 6,
+          "file": "out/r1005220452_sb/p06.jpg",
+          "desc": "A cross-section cardboard box set depicting a deep ocean trench. A detailed king crab figurine is actively tearing at a whale carcass made of clay and wire ribs. Tiny LED fairy lights provide a dim bioluminescent glow. The corrugated edge of the cardboard box is visible on the left. The upper quarter is the dark, empty interior of the box.",
+          "shot": "wide",
+          "motion": "omni"
+        },
+        {
+          "cut": 7,
+          "file": "out/r1005220452_sb/p07.jpg",
+          "desc": "A detailed king crab figurine stands on a felt rock surrounded by bent wire corals. Protruding from under its folded abdomen plates is a large, yellowish clay sac representing a parasitic barnacle. The crab's posture is slumped. The lighting is a moody, warm spotlight from above. The upper quarter is a smooth, dark painted backdrop.",
+          "shot": "medium",
+          "motion": "still"
+        },
+        {
+          "cut": 8,
+          "file": "out/r1005220452_sb/p08.jpg",
+          "desc": "The edge of the wooden worktable fades into deep shadow. The detailed king crab figurine is seen from behind, slowly walking away across a dark grey clay seabed towards a black velvet backdrop. The warm desk lamp lighting is dimming, leaving the creature receding into deep darkness. The upper quarter is pure black velvet.",
+          "shot": "wide",
+          "motion": "omni"
+        }
+      ]
     }
   },
   "checks": {},
@@ -452,23 +575,33 @@
     },
     "storyboard": {
       "stage": "storyboard",
-      "status": "running",
-      "at": "2026-10-05T22:00:31Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-05T22:09:42Z",
+      "action": "write_storyboard",
+      "text": "스토리보드 자동 작성 완료 — 승인 대기"
     }
   },
   "cost": {
     "estimate": {
       "script": 0.05,
       "storyboard": 0.54,
-      "video": 6.4
+      "video": 3.2
     },
     "spent": [
       {
         "at": "2026-10-05T15:32:12Z",
         "what": "대본 자동 작성(AI+나레이션)",
         "usd": 0.05
+      },
+      {
+        "at": "2026-10-05T22:04:07Z",
+        "what": "생물 카드 2장",
+        "usd": 0.268
+      },
+      {
+        "at": "2026-10-05T22:09:42Z",
+        "what": "콘티 격자 2장",
+        "usd": 0.268
       }
     ]
   }

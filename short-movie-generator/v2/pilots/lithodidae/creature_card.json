@@ -1,0 +1,93 @@
+{
+  "status": "자동 생성(운영자 승인 대기)",
+  "at": "2026-10-05T22:04:07Z",
+  "anatomy": "The Lithodid king crab features a robust, crab-like armored carapace that is either densely covered in long, sharp spines or heavily textured with coarse nodules. Coloration ranges from deep solid red to bright orange, sometimes mottled with white or purple spots. It has four visible pairs of appendages: one pair of front arms ending in claws (often asymmetrical), and three pairs of long, spiny walking legs. A fifth pair of legs is hidden inside the gill chamber. Small, black, stalked eyes are positioned close together at the front. The underside has a short, folded abdomen made of plates.",
+  "forbidden": "Must not have a fish head, octopus arms, a visible snail shell, swimming fins, or more than four visible pairs of legs.",
+  "size_note": "",
+  "checklist": [
+    "게와 유사한 견고한 갑각 형태와 비율을 유지할 것.",
+    "표면은 길고 날카로운 가시나 울퉁불퉁한 결절로 덮여 있을 것.",
+    "색상은 짙은 붉은색, 주황색이거나 흰색 또는 보라색 무늬가 섞여 있을 것.",
+    "외부로 보이는 다리는 집게발 1쌍과 걷는다리 3쌍으로 총 8개일 것.",
+    "제5가슴다리는 아가미실 내부에 숨겨져 있어 외부에서 보이지 않게 할 것.",
+    "작고 까만 눈이 앞쪽 중앙 부근에 위치할 것.",
+    "배면에는 판이나 결절로 이루어진 짧은 복부가 접혀 있을 것."
+  ],
+  "check": {
+    "items": [
+      {
+        "item": "게와 유사한 견고한 갑각 형태와 비율을 유지할 것.",
+        "verdict": "pass",
+        "note_ko": "갑각의 형태와 전반적인 비율이 실제와 유사하게 재현됨."
+      },
+      {
+        "item": "표면은 길고 날카로운 가시나 울퉁불퉁한 결절로 덮여 있을 것.",
+        "verdict": "pass",
+        "note_ko": "표면의 결절과 가시 질감이 실제 개체들과 일치함."
+      },
+      {
+        "item": "색상은 짙은 붉은색, 주황색이거나 흰색 또는 보라색 무늬가 섞여 있을 것.",
+        "verdict": "pass",
+        "note_ko": "붉은색 바탕에 흰색 무늬가 섞인 색상이 실제와 부합함."
+      },
+      {
+        "item": "외부로 보이는 다리는 집게발 1쌍과 걷는다리 3쌍으로 총 8개일 것.",
+        "verdict": "pass",
+        "note_ko": "총 8개의 다리(집게발 1쌍, 걷는다리 3쌍)가 정확히 표현됨."
+      },
+      {
+        "item": "제5가슴다리는 아가미실 내부에 숨겨져 있어 외부에서 보이지 않게 할 것.",
+        "verdict": "pass",
+        "note_ko": "실제와 같이 제5가슴다리가 외부에서 보이지 않음."
+      },
+      {
+        "item": "작고 까만 눈이 앞쪽 중앙 부근에 위치할 것.",
+        "verdict": "pass",
+        "note_ko": "앞쪽 중앙의 작고 까만 눈 위치와 형태가 동일함."
+      },
+      {
+        "item": "배면에는 판이나 결절로 이루어진 짧은 복부가 접혀 있을 것.",
+        "verdict": "unknown",
+        "note_ko": "제공된 실제 사진들에서 배면(복부)이 보이지 않아 판단 불가함."
+      }
+    ],
+    "error": ""
+  },
+  "refs": [
+    {
+      "file": "out/r1005220128_refs/ref_00.jpg",
+      "credit": "(c) Ondřej Radosta, some rights reserved (CC BY-NC), uploaded by Ondřej Radosta",
+      "license": "cc-by-nc"
+    },
+    {
+      "file": "out/r1005220128_refs/ref_01.jpg",
+      "credit": "(c) Erasmo Macaya Horta, some rights reserved (CC BY), uploaded by Erasmo Macaya Horta",
+      "license": "cc-by"
+    },
+    {
+      "file": "out/r1005220128_refs/ref_02.jpg",
+      "credit": "(c) Gonzalo Mucientes Sandoval, some rights reserved (CC BY-NC), uploaded by Gonzalo Mucientes Sandoval",
+      "license": "cc-by-nc"
+    },
+    {
+      "file": "out/r1005220128_refs/ref_03.jpg",
+      "credit": "(c) Jackson W.F. Chu, some rights reserved (CC BY-NC-SA)",
+      "license": "cc-by-nc-sa"
+    }
+  ],
+  "use_as_reference": [
+    {
+      "file": "out/r1005220154_card/card_side.jpg",
+      "role": "생물 카드(자동)"
+    },
+    {
+      "file": "out/r1005220154_card/card_top.jpg",
+      "role": "생물 카드(자동)"
+    },
+    {
+      "file": "out/r1005220128_refs/ref_00.jpg",
+      "role": "실사 기준"
+    }
+  ],
+  "compare": "out/r1005220154_card/compare.jpg"
+}

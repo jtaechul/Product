@@ -176,7 +176,11 @@
       "scene_ko": "학자가 돋보기로 껍데기 없는 소라게 모양의 생물을 관찰하는 디오라마",
       "annotation": "1800년대 후반 이후",
       "sec": 8,
-      "speech_s": 6.1
+      "speech_s": 6.1,
+      "keyframe": "out/r1005220452_sb/p01.jpg",
+      "panel_desc": "A wooden worktable set. A tiny clay scientist figurine stands on a sketchbook, looking through a wire-and-plastic magnifying glass at a detailed miniature king crab figurine next to an empty painted clay snail shell. A real pencil and the table edge are visible on the right. Warm desk lamp lighting. The upper quarter is an uncluttered painted cardboard wall.",
+      "panel_shot": "wide",
+      "motion": "still"
     },
     {
       "cut": 2,
@@ -187,7 +191,11 @@
       "scene_ko": "수천 마리의 작은 게들이 뭉쳐서 거대한 무리를 이룬 심해 디오라마",
       "annotation": "2〜4歳 / 수천 마리",
       "sec": 8,
-      "speech_s": 5.64
+      "speech_s": 5.64,
+      "keyframe": "out/r1005220452_sb/p02.jpg",
+      "panel_desc": "A cross-section wooden display box showing the deep sea. Inside, hundreds of tiny, simplified clay and paper-cut crabs form a massive mound on a felt seabed. In the foreground, one detailed juvenile king crab figurine stands out. The edge of the wooden box and a cutting mat are visible on the outside. The upper quarter is plain blue cellophane water.",
+      "panel_shot": "wide",
+      "motion": "still"
     },
     {
       "cut": 3,
@@ -198,7 +206,11 @@
       "scene_ko": "왕게의 배면을 보여주며 숨겨진 짧은 다리가 아가미를 청소하는 모습",
       "annotation": "제5가슴다리",
       "sec": 8,
-      "speech_s": 5.87
+      "speech_s": 5.87,
+      "keyframe": "out/r1005220452_sb/p03.jpg",
+      "panel_desc": "Close-up on a folded paper specimen tray. The detailed king crab figurine is resting on its back, revealing its short, folded abdomen plates. The camera peers into the gap of the gill chamber where the tiny fifth pair of legs is actively moving to clean the gills. A cotton swab and a clay scalpel lie nearby. The upper quarter is the blurred dark wooden texture of the table.",
+      "panel_shot": "close",
+      "motion": "omni"
     },
     {
       "cut": 4,
@@ -209,7 +221,11 @@
       "scene_ko": "꼼치가 왕게의 아가미 틈새에 알을 낳고 있는 신비로운 장면",
       "annotation": "부화할 때까지 안전",
       "sec": 8,
-      "speech_s": 5.34
+      "speech_s": 5.34,
+      "keyframe": "out/r1005220452_sb/p04.jpg",
+      "panel_desc": "Dynamic underwater scene. A detailed king crab figurine is perched on a paper-cut rock, its carapace slightly raised. A stylized clay snailfish is actively swimming around the crab's side, depositing tiny translucent glass beads representing eggs into the crab's gill crevices. Cotton-wool marine snow hangs on fine threads. The upper quarter is dark, crumpled blue cellophane.",
+      "panel_shot": "medium",
+      "motion": "omni"
     },
     {
       "cut": 5,
@@ -220,7 +236,11 @@
       "scene_ko": "심해 바닥을 걷는 바다돼지 위아래에 작은 왕게들이 숨어 있는 모습",
       "annotation": "숙주 바다돼지",
       "sec": 8,
-      "speech_s": 5.34
+      "speech_s": 5.34,
+      "keyframe": "out/r1005220452_sb/p05.jpg",
+      "panel_desc": "A deep-sea floor set built on a cutting mat. A chunky clay sea pig figurine walks across a seabed of painted clay. Several tiny, detailed juvenile king crab figurines are hiding underneath and riding on top of the sea pig. The backdrop is a painted cardboard with a visible seam, and the edge of the cutting mat is in the foreground. Upper quarter is uncluttered dark blue cardboard.",
+      "panel_shot": "wide",
+      "motion": "still"
     },
     {
       "cut": 6,
@@ -231,7 +251,11 @@
       "scene_ko": "수심 4152m 표시판 옆에서 바닥의 사체를 먹고 있는 왕게 디오라마",
       "annotation": "수심 4152m",
       "sec": 8,
-      "speech_s": 5.85
+      "speech_s": 5.85,
+      "keyframe": "out/r1005220452_sb/p06.jpg",
+      "panel_desc": "A cross-section cardboard box set depicting a deep ocean trench. A detailed king crab figurine is actively tearing at a whale carcass made of clay and wire ribs. Tiny LED fairy lights provide a dim bioluminescent glow. The corrugated edge of the cardboard box is visible on the left. The upper quarter is the dark, empty interior of the box.",
+      "panel_shot": "wide",
+      "motion": "omni"
     },
     {
       "cut": 7,
@@ -242,7 +266,11 @@
       "scene_ko": "몸에 기생성 따개비가 붙어 있어 괴로워하는 왕게의 모습",
       "annotation": "50% 이상이 영향",
       "sec": 8,
-      "speech_s": 6.17
+      "speech_s": 6.17,
+      "keyframe": "out/r1005220452_sb/p07.jpg",
+      "panel_desc": "A detailed king crab figurine stands on a felt rock surrounded by bent wire corals. Protruding from under its folded abdomen plates is a large, yellowish clay sac representing a parasitic barnacle. The crab's posture is slumped. The lighting is a moody, warm spotlight from above. The upper quarter is a smooth, dark painted backdrop.",
+      "panel_shot": "medium",
+      "motion": "still"
     },
     {
       "cut": 8,
@@ -253,7 +281,11 @@
       "scene_ko": "어두운 심해로 천천히 걸어 들어가는 왕게의 뒷모습이 어둠 속으로 사라짐",
       "annotation": "",
       "sec": 8,
-      "speech_s": 5.92
+      "speech_s": 5.92,
+      "keyframe": "out/r1005220452_sb/p08.jpg",
+      "panel_desc": "The edge of the wooden worktable fades into deep shadow. The detailed king crab figurine is seen from behind, slowly walking away across a dark grey clay seabed towards a black velvet backdrop. The warm desk lamp lighting is dimming, leaving the creature receding into deep darkness. The upper quarter is pure black velvet.",
+      "panel_shot": "wide",
+      "motion": "omni"
     }
   ],
   "timing_rule": "컷 길이 = (앞 여백 0.15초 + 나레이션 + 여유 0.6초)를 짝수 초로 올림",
@@ -440,5 +472,12 @@
       ]
     }
   ],
-  "total_sec": 68.0
+  "total_sec": 68.0,
+  "storyboard_history": [
+    {
+      "at": "2026-10-05T22:09:42Z",
+      "rid": "r1005220452_sb",
+      "feedback": ""
+    }
+  ]
 }
