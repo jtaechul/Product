@@ -942,6 +942,11 @@ def test_upload_adds_playlist_and_stats(real_copy):
     assert "재발급" in bad["bathynomus_giganteus"]["error"]
     idx = admin.build_index()
     assert next(i for i in idx["items"] if i["id"] == "bathynomus_giganteus")["stats"]["error"]
+    # 분석 권한이 없어도 공개 통계(Data API)로 조회·좋아요·댓글은 기록된다(운영자 지적 2026-10-05)
+    part = admin.fetch_stats(stats_fn=lambda *a: {"views": 1383, "likes": 20, "comments": 2, "_source": "data_api",
+                                                  "_errors": {"analytics": "403 insufficient"}})
+    sv = part["bathynomus_giganteus"]
+    assert sv["views"] == 1383 and sv["partial"] and sv["source"] == "data_api" and "error" not in sv
 
 
 def test_answer_card_has_series_line(tmp_path):

@@ -987,10 +987,15 @@ def youtube_upload(pid: str, uploader=None, playlister=None) -> dict:
 def fetch_stats(pid: str | None = None, stats_fn=None) -> dict:
     """업로드한 편의 유튜브 실적을 가져와 status.artifacts.upload.stats 에 저장(운영자 선택 2026-10-05 · 실적 자동 수집).
     pid 가 없으면 업로드된 모든 편. 권한이 없으면 편마다 error 로 기록(재발급 안내)."""
+    scopes = None
     if stats_fn is None:
         sys.path.insert(0, str(ROOT))
         from src.core import youtube_upload as yt           # noqa: E402
         stats_fn = yt.video_stats
+        try:                                                 # 지금 토큰이 실제로 받은 권한(추측 대신 실측 기록)
+            scopes = yt.token_scopes()
+        except Exception as e:                               # noqa: BLE001
+            scopes = [f"확인 실패: {str(e)[:80]}"]
     done = {}
     for p in sorted(PILOTS.glob("*/status.json")):
         st = _load(p, {})
@@ -1008,10 +1013,16 @@ def fetch_stats(pid: str | None = None, stats_fn=None) -> dict:
                   "subs": int(m.get("subscribersGained") or 0), "likes": int(m.get("likes") or 0), "comments": int(m.get("comments") or 0)}
             sv["subs_per_1k"] = round(sv["subs"] * 1000 / sv["views"], 2) if sv["views"] else 0
             sv["like_rate"] = round(sv["likes"] * 100 / sv["views"], 2) if sv["views"] else 0
+            sv["source"] = m.get("_source", "analytics")
+            if sv["source"] == "data_api":                   # 공개 통계만 — 시청 시간·구독 증가는 yt-analytics 권한이 있어야 나온다
+                sv["partial"] = True
+                sv["missing_reason"] = (m.get("_errors") or {}).get("analytics", "")[:160]
         except Exception as e:                               # noqa: BLE001
             msg = str(e)
-            sv = {"at": _now(), "error": ("권한 없음 — 토큰 재발급 필요(scripts/youtube_oauth.py)" if "insufficient" in msg.lower()
-                                          or "403" in msg or "scope" in msg.lower() else msg[:160])}
+            sv = {"at": _now(), "error": ("권한 없음 — 토큰 재발급 필요(scripts/youtube_oauth.py) · " + msg[:200]
+                                          if "insufficient" in msg.lower() or "403" in msg or "scope" in msg.lower() else msg[:200])}
+        if scopes is not None:
+            sv["token_scopes"] = scopes
         st["artifacts"]["upload"]["stats"] = sv
         _save(p, st)
         done[st["id"]] = sv

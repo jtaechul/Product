@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-05-1 (혼합 제작 · 놀라움 점수 · 재생목록 · 실적 · 주 2편)";
+const BUILD="v2026-10-05-2 (실적: 지금 토큰으로 공개 통계 수집 · 권한 실측)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2447,6 +2447,9 @@ const V2_WEEKLY_TARGET=2;                       // ABYSS 업로드 목표: 주 2
 function v2statsHTML(sv){
   if(!sv)return '<div class="hint">실적은 목록 화면의 「유튜브 실적 새로고침」을 누르면 나옵니다.</div>';
   if(sv.error)return '<div class="cfact warn">실적을 못 가져왔습니다 — '+esc(sv.error)+'</div>';
+  if(sv.partial)return '<div class="sect">유튜브 실적 ('+v2when(sv.at)+' 기준 · 공개 통계)</div>'+
+    '<div class="cfact">조회 <b>'+sv.views.toLocaleString()+'</b> · 좋아요 '+sv.likes+' ('+sv.like_rate+'%) · 댓글 '+sv.comments+'</div>'+
+    '<div class="hint">평균 시청 시간·구독 증가는 유튜브 분석 권한이 있어야 나옵니다.</div>';
   const m=Math.floor(sv.avg_view_s/60), s2=Math.round(sv.avg_view_s%60);
   return '<div class="sect">유튜브 실적 ('+v2when(sv.at)+' 기준)</div>'+
     '<div class="cfact">조회 <b>'+sv.views.toLocaleString()+'</b> · 평균 시청 <b>'+(m?m+"분 ":"")+s2+'초</b> ('+sv.avg_view_pct.toFixed(0)+'%) · 시청 '+(sv.minutes/60).toFixed(1)+'시간</div>'+

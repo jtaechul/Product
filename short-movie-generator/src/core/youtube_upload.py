@@ -140,11 +140,42 @@ def add_to_playlist(video_id: str, title: str, description: str = "") -> dict:
 STAT_METRICS = "views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,likes,comments"
 
 
+def token_scopes() -> list[str]:
+    """지금 YOUTUBE_REFRESH_TOKEN 이 실제로 받은 권한 목록(토큰 값은 기록하지 않는다 — 권한 이름만)."""
+    import json
+    import urllib.parse
+    import urllib.request
+    from google.auth.transport.requests import Request
+    c = _creds_any()
+    c.refresh(Request())
+    q = urllib.parse.urlencode({"access_token": c.token})
+    with urllib.request.urlopen(f"https://oauth2.googleapis.com/tokeninfo?{q}", timeout=20) as r:
+        return sorted((json.loads(r.read().decode()).get("scope") or "").split())
+
+
 def video_stats(video_id: str, start: str, end: str) -> dict:
-    """YouTube Analytics — 한 영상의 기간 실적(조회·시청 분·평균 시청 초·평균 시청 비율·구독 증가·좋아요·댓글)."""
+    """한 영상의 실적. ① YouTube Analytics(조회·시청 분·평균 시청·구독 증가·좋아요·댓글 — yt-analytics 권한 필요)
+    ② 안 되면 Data API videos.list 공개 통계(조회·좋아요·댓글 — 지금 토큰으로 되는지 실제 실행으로 확인).
+    반환에 _source(analytics|data_api)와 _errors(실패한 경로 사유)를 붙인다."""
     from googleapiclient.discovery import build
-    ya = build("youtubeAnalytics", "v2", credentials=_creds_any(), cache_discovery=False)
-    r = ya.reports().query(ids="channel==MINE", startDate=start, endDate=end, metrics=STAT_METRICS,
-                           filters=f"video=={video_id}").execute()
-    row = (r.get("rows") or [[0] * len(STAT_METRICS.split(","))])[0]
-    return dict(zip(STAT_METRICS.split(","), row))
+    errors = {}
+    creds = _creds_any()
+    try:
+        ya = build("youtubeAnalytics", "v2", credentials=creds, cache_discovery=False)
+        r = ya.reports().query(ids="channel==MINE", startDate=start, endDate=end, metrics=STAT_METRICS,
+                               filters=f"video=={video_id}").execute()
+        row = (r.get("rows") or [[0] * len(STAT_METRICS.split(","))])[0]
+        return {**dict(zip(STAT_METRICS.split(","), row)), "_source": "analytics"}
+    except Exception as e:                                   # noqa: BLE001
+        errors["analytics"] = str(e)[:200]
+    try:
+        yt = build("youtube", "v3", credentials=creds, cache_discovery=False)
+        items = yt.videos().list(part="statistics", id=video_id).execute().get("items") or []
+        if not items:
+            raise RuntimeError("영상 없음")
+        s = items[0]["statistics"]
+        return {"views": int(s.get("viewCount") or 0), "likes": int(s.get("likeCount") or 0),
+                "comments": int(s.get("commentCount") or 0), "_source": "data_api", "_errors": errors}
+    except Exception as e:                                   # noqa: BLE001
+        errors["data_api"] = str(e)[:200]
+    raise RuntimeError(" / ".join(f"{k}: {v}" for k, v in errors.items()))
