@@ -1,0 +1,57 @@
+{
+  "id": "r1005223819_sb",
+  "kind": "gen_images",
+  "purpose": "8컷 콘티(자동) — 컷별 시작 이미지 · 2×2 격자",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "grid1",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/r1005220154_card/card_side.jpg",
+        "out/r1005220154_card/card_top.jpg",
+        "out/r1005220128_refs/ref_00.jpg",
+        "../_shared/style/style_desk_chart.jpg",
+        "../_shared/style/style_ocean_block.jpg"
+      ],
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described below. Shared look for all panels: a handcrafted TABLETOP miniature diorama shot like toy / scale-model photography: the whole world is a small hand-made set built on a wooden worktable or inside an open cardboard or wooden display box, lit by a warm desk lamp; strong tilt-shift with shallow depth of field and a slightly high camera looking down onto the set; every prop and the seabed are cute, chunky and visibly hand-made (felt, cotton-wool marine snow hanging on fine threads, crumpled blue cellophane water, painted cardboard backdrops with visible seams, paper-cut rocks and kelp, clay with fingerprints, bent wire, tiny LED fairy-light bulbs for any glow); muted warm palette. the creature is the ONLY precise object: an accurately sculpted, hand-painted collectible figurine with satin paint and faint brush texture, with exactly the real anatomy, proportions and colours. It must match the attached replica (creature card) and real reference photo exactly and be identical in every panel: The Lithodid king crab features a robust, crab-like armored carapace that is either densely covered in long, sharp spines or heavily textured with coarse nodules. Coloration ranges from deep solid red to bright orange, sometimes mottled with white or purple spots. It has four visible pairs of appendages: one pair of front arms ending in claws (often asymmetrical), and three pairs of long, spiny walking legs. A fifth pair of legs is hidden inside the gill chamber. Small, black, stalked eyes are positioned close together at the front. The underside has a short, folded abdomen made of plates. Must not have a fish head, octopus arms, a visible snail shell, swimming fins, or more than four visible pairs of legs. STYLE REFERENCES: the LAST 2 attached images come from another episode of the same series — copy ONLY their hand-made tabletop-diorama look (set building, materials, desk-lamp light, tilt-shift, camera height); never copy their animal, map or objects literally. Clay figurines, boats and vehicles never make the creature look giant. Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, logos, watermarks. Painted clay figurines are allowed; never real human hands or people.\nPanel 1 (top-left, wide shot): A wide shot of a wooden desk with an open cardboard box set. Inside, a tiny clay scholar figurine holds a wire-and-plastic magnifying glass up to a highly detailed, hand-painted collectible king crab figurine with exceptionally long, spiny walking legs and satin paint. Scattered textless paper sketches lie around the clay scholar. The base of a warm desk lamp and the wooden table edge are visible on the left. Shallow depth of field keeps the upper quarter uncluttered. Hand-made props: clay scholar figurine, wire-and-plastic magnifying glass, textless paper sketches, cardboard box.\nPanel 2 (top-right, wide shot): Wide shot of a deep-sea diorama made of crumpled blue cellophane and paper-cut rocks. A massive swarm of hundreds of tiny, meticulously painted clay king crabs with long legs is piled up in a defensive mound. Warm, dim fairy lights illuminate the mound from the side. The upper quarter is dark blue cellophane, completely calm and uncluttered. Hand-made props: crumpled blue cellophane water, paper-cut rocks, hundreds of tiny clay crabs.\nPanel 3 (bottom-left, close shot): Close-up shot looking down at a green cutting mat with grid lines. An oversized pair of real metal tweezers holds the detailed king crab figurine flipped on its back, revealing its folded abdomen plates. A tiny, hidden 5th pair of legs is actively sweeping and cleaning the gill area. A cotton swab rests nearby, emphasizing the miniature scale. Hand-made props: green cutting mat, metal tweezers, cotton swab.\nPanel 4 (bottom-right, close shot): Dynamic, striking close-up of the crab's side carapace. A translucent pink clay snailfish is actively darting toward the crab's slightly open gill slit, depositing tiny glowing glass beads (eggs) inside. The crab's accurately sculpted, long spiny legs frame the shot dynamically. Felt kelp sways in the blurred background. The upper quarter is a smooth, dark painted backdrop. Hand-made props: clay snailfish, tiny glass beads, felt kelp.",
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "p01",
+          "p02",
+          "p03",
+          "p04"
+        ]
+      }
+    },
+    {
+      "name": "grid2",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/r1005220154_card/card_side.jpg",
+        "out/r1005220154_card/card_top.jpg",
+        "out/r1005220128_refs/ref_00.jpg",
+        "../_shared/style/style_desk_chart.jpg",
+        "../_shared/style/style_ocean_block.jpg"
+      ],
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described below. Shared look for all panels: a handcrafted TABLETOP miniature diorama shot like toy / scale-model photography: the whole world is a small hand-made set built on a wooden worktable or inside an open cardboard or wooden display box, lit by a warm desk lamp; strong tilt-shift with shallow depth of field and a slightly high camera looking down onto the set; every prop and the seabed are cute, chunky and visibly hand-made (felt, cotton-wool marine snow hanging on fine threads, crumpled blue cellophane water, painted cardboard backdrops with visible seams, paper-cut rocks and kelp, clay with fingerprints, bent wire, tiny LED fairy-light bulbs for any glow); muted warm palette. the creature is the ONLY precise object: an accurately sculpted, hand-painted collectible figurine with satin paint and faint brush texture, with exactly the real anatomy, proportions and colours. It must match the attached replica (creature card) and real reference photo exactly and be identical in every panel: The Lithodid king crab features a robust, crab-like armored carapace that is either densely covered in long, sharp spines or heavily textured with coarse nodules. Coloration ranges from deep solid red to bright orange, sometimes mottled with white or purple spots. It has four visible pairs of appendages: one pair of front arms ending in claws (often asymmetrical), and three pairs of long, spiny walking legs. A fifth pair of legs is hidden inside the gill chamber. Small, black, stalked eyes are positioned close together at the front. The underside has a short, folded abdomen made of plates. Must not have a fish head, octopus arms, a visible snail shell, swimming fins, or more than four visible pairs of legs. STYLE REFERENCES: the LAST 2 attached images come from another episode of the same series — copy ONLY their hand-made tabletop-diorama look (set building, materials, desk-lamp light, tilt-shift, camera height); never copy their animal, map or objects literally. Clay figurines, boats and vehicles never make the creature look giant. Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, logos, watermarks. Painted clay figurines are allowed; never real human hands or people.\nPanel 1 (top-left, wide shot): Wide shot showing the visible seam of a painted cardboard backdrop and the wooden table edge. In the center of a painted clay seabed, a chunky, translucent clay sea pig (Scotoplanes) stands still. Several tiny, detailed long-legged king crabs are perched on its back and hiding beneath its legs. Cotton-wool marine snow hangs on fine threads. Hand-made props: clay sea pig, cotton-wool marine snow, painted cardboard backdrop.\nPanel 2 (top-right, wide shot): Wide shot of a dark deep-sea diorama representing extreme depth. An adult king crab figurine with exceptionally long, realistic spiny legs is actively picking at a large, porous clay whale bone. Tiny blue LED fairy lights mimic bioluminescence in the surrounding felt tube worms. The upper quarter is a smooth, dark painted backdrop, devoid of any text or numbers. Hand-made props: porous clay whale bone, LED fairy lights, felt tube worms.\nPanel 3 (bottom-left, medium shot): Medium shot inside a wooden display box, with the raw wooden wall clearly visible on the right. The highly detailed king crab figurine is propped up slightly on a bent wire stand. A grotesque, fleshy yellow clay sac (parasitic barnacle) is attached under its folded abdomen. The crab's long spiny legs droop slightly. Warm desk lamp lighting casts dramatic shadows. Hand-made props: wooden display box, bent wire stand, fleshy yellow clay sac.\nPanel 4 (bottom-right, wide shot): Wide shot. The accurately sculpted king crab, showing its long spiny legs and textured carapace, is walking away from the camera across a clay seabed into a deep black velvet backdrop. The warm lighting from the desk lamp is fading rapidly, leaving the creature dim and receding into deep darkness. Sparse cotton-wool marine snow hangs motionless. The upper quarter is pure black. Hand-made props: black velvet backdrop, cotton-wool marine snow, clay seabed.",
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "p05",
+          "p06",
+          "p07",
+          "p08"
+        ]
+      }
+    }
+  ]
+}

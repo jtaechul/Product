@@ -42,7 +42,7 @@
       "approved_at": "2026-10-05T22:00:31Z"
     },
     "storyboard": {
-      "state": "revise",
+      "state": "review",
       "notes": [
         {
           "at": "2026-10-05T22:09:42Z",
@@ -53,6 +53,11 @@
           "at": "2026-10-05T22:36:47Z",
           "kind": "revise",
           "text": "실제 사진처럼 다리가 더 길어야 해."
+        },
+        {
+          "at": "2026-10-05T22:39:17Z",
+          "kind": "auto",
+          "text": "스토리보드 자동 작성 완료 — 승인 대기 (수정 요청 반영)"
         }
       ]
     },
@@ -452,8 +457,8 @@
       ]
     },
     "storyboard": {
-      "sheet": "out/r1005220452_sb/storyboard.jpg",
-      "request": "r1005220452_sb",
+      "sheet": "out/r1005223819_sb/storyboard.jpg",
+      "request": "r1005223819_sb",
       "card": [
         "out/r1005220154_card/card_side.jpg",
         "out/r1005220154_card/card_top.jpg",
@@ -512,57 +517,57 @@
       "panels": [
         {
           "cut": 1,
-          "file": "out/r1005220452_sb/p01.jpg",
-          "desc": "A wooden worktable set. A tiny clay scientist figurine stands on a sketchbook, looking through a wire-and-plastic magnifying glass at a detailed miniature king crab figurine next to an empty painted clay snail shell. A real pencil and the table edge are visible on the right. Warm desk lamp lighting. The upper quarter is an uncluttered painted cardboard wall.",
+          "file": "out/r1005223819_sb/p01.jpg",
+          "desc": "A wide shot of a wooden desk with an open cardboard box set. Inside, a tiny clay scholar figurine holds a wire-and-plastic magnifying glass up to a highly detailed, hand-painted collectible king crab figurine with exceptionally long, spiny walking legs and satin paint. Scattered textless paper sketches lie around the clay scholar. The base of a warm desk lamp and the wooden table edge are visible on the left. Shallow depth of field keeps the upper quarter uncluttered.",
           "shot": "wide",
           "motion": "still"
         },
         {
           "cut": 2,
-          "file": "out/r1005220452_sb/p02.jpg",
-          "desc": "A cross-section wooden display box showing the deep sea. Inside, hundreds of tiny, simplified clay and paper-cut crabs form a massive mound on a felt seabed. In the foreground, one detailed juvenile king crab figurine stands out. The edge of the wooden box and a cutting mat are visible on the outside. The upper quarter is plain blue cellophane water.",
+          "file": "out/r1005223819_sb/p02.jpg",
+          "desc": "Wide shot of a deep-sea diorama made of crumpled blue cellophane and paper-cut rocks. A massive swarm of hundreds of tiny, meticulously painted clay king crabs with long legs is piled up in a defensive mound. Warm, dim fairy lights illuminate the mound from the side. The upper quarter is dark blue cellophane, completely calm and uncluttered.",
           "shot": "wide",
           "motion": "still"
         },
         {
           "cut": 3,
-          "file": "out/r1005220452_sb/p03.jpg",
-          "desc": "Close-up on a folded paper specimen tray. The detailed king crab figurine is resting on its back, revealing its short, folded abdomen plates. The camera peers into the gap of the gill chamber where the tiny fifth pair of legs is actively moving to clean the gills. A cotton swab and a clay scalpel lie nearby. The upper quarter is the blurred dark wooden texture of the table.",
+          "file": "out/r1005223819_sb/p03.jpg",
+          "desc": "Close-up shot looking down at a green cutting mat with grid lines. An oversized pair of real metal tweezers holds the detailed king crab figurine flipped on its back, revealing its folded abdomen plates. A tiny, hidden 5th pair of legs is actively sweeping and cleaning the gill area. A cotton swab rests nearby, emphasizing the miniature scale.",
           "shot": "close",
           "motion": "omni"
         },
         {
           "cut": 4,
-          "file": "out/r1005220452_sb/p04.jpg",
-          "desc": "Dynamic underwater scene. A detailed king crab figurine is perched on a paper-cut rock, its carapace slightly raised. A stylized clay snailfish is actively swimming around the crab's side, depositing tiny translucent glass beads representing eggs into the crab's gill crevices. Cotton-wool marine snow hangs on fine threads. The upper quarter is dark, crumpled blue cellophane.",
-          "shot": "medium",
+          "file": "out/r1005223819_sb/p04.jpg",
+          "desc": "Dynamic, striking close-up of the crab's side carapace. A translucent pink clay snailfish is actively darting toward the crab's slightly open gill slit, depositing tiny glowing glass beads (eggs) inside. The crab's accurately sculpted, long spiny legs frame the shot dynamically. Felt kelp sways in the blurred background. The upper quarter is a smooth, dark painted backdrop.",
+          "shot": "close",
           "motion": "omni"
         },
         {
           "cut": 5,
-          "file": "out/r1005220452_sb/p05.jpg",
-          "desc": "A deep-sea floor set built on a cutting mat. A chunky clay sea pig figurine walks across a seabed of painted clay. Several tiny, detailed juvenile king crab figurines are hiding underneath and riding on top of the sea pig. The backdrop is a painted cardboard with a visible seam, and the edge of the cutting mat is in the foreground. Upper quarter is uncluttered dark blue cardboard.",
+          "file": "out/r1005223819_sb/p05.jpg",
+          "desc": "Wide shot showing the visible seam of a painted cardboard backdrop and the wooden table edge. In the center of a painted clay seabed, a chunky, translucent clay sea pig (Scotoplanes) stands still. Several tiny, detailed long-legged king crabs are perched on its back and hiding beneath its legs. Cotton-wool marine snow hangs on fine threads.",
           "shot": "wide",
           "motion": "still"
         },
         {
           "cut": 6,
-          "file": "out/r1005220452_sb/p06.jpg",
-          "desc": "A cross-section cardboard box set depicting a deep ocean trench. A detailed king crab figurine is actively tearing at a whale carcass made of clay and wire ribs. Tiny LED fairy lights provide a dim bioluminescent glow. The corrugated edge of the cardboard box is visible on the left. The upper quarter is the dark, empty interior of the box.",
+          "file": "out/r1005223819_sb/p06.jpg",
+          "desc": "Wide shot of a dark deep-sea diorama representing extreme depth. An adult king crab figurine with exceptionally long, realistic spiny legs is actively picking at a large, porous clay whale bone. Tiny blue LED fairy lights mimic bioluminescence in the surrounding felt tube worms. The upper quarter is a smooth, dark painted backdrop, devoid of any text or numbers.",
           "shot": "wide",
           "motion": "omni"
         },
         {
           "cut": 7,
-          "file": "out/r1005220452_sb/p07.jpg",
-          "desc": "A detailed king crab figurine stands on a felt rock surrounded by bent wire corals. Protruding from under its folded abdomen plates is a large, yellowish clay sac representing a parasitic barnacle. The crab's posture is slumped. The lighting is a moody, warm spotlight from above. The upper quarter is a smooth, dark painted backdrop.",
+          "file": "out/r1005223819_sb/p07.jpg",
+          "desc": "Medium shot inside a wooden display box, with the raw wooden wall clearly visible on the right. The highly detailed king crab figurine is propped up slightly on a bent wire stand. A grotesque, fleshy yellow clay sac (parasitic barnacle) is attached under its folded abdomen. The crab's long spiny legs droop slightly. Warm desk lamp lighting casts dramatic shadows.",
           "shot": "medium",
           "motion": "still"
         },
         {
           "cut": 8,
-          "file": "out/r1005220452_sb/p08.jpg",
-          "desc": "The edge of the wooden worktable fades into deep shadow. The detailed king crab figurine is seen from behind, slowly walking away across a dark grey clay seabed towards a black velvet backdrop. The warm desk lamp lighting is dimming, leaving the creature receding into deep darkness. The upper quarter is pure black velvet.",
+          "file": "out/r1005223819_sb/p08.jpg",
+          "desc": "Wide shot. The accurately sculpted king crab, showing its long spiny legs and textured carapace, is walking away from the camera across a clay seabed into a deep black velvet backdrop. The warm lighting from the desk lamp is fading rapidly, leaving the creature dim and receding into deep darkness. Sparse cotton-wool marine snow hangs motionless. The upper quarter is pure black.",
           "shot": "wide",
           "motion": "omni"
         }
@@ -580,10 +585,10 @@
     },
     "storyboard": {
       "stage": "storyboard",
-      "status": "running",
-      "at": "2026-10-05T22:36:47Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-05T22:39:17Z",
+      "action": "write_storyboard",
+      "text": "스토리보드 자동 작성 완료 — 승인 대기"
     }
   },
   "cost": {
@@ -605,6 +610,11 @@
       },
       {
         "at": "2026-10-05T22:09:42Z",
+        "what": "콘티 격자 2장",
+        "usd": 0.268
+      },
+      {
+        "at": "2026-10-05T22:39:17Z",
         "what": "콘티 격자 2장",
         "usd": 0.268
       }
