@@ -22,7 +22,7 @@
     "hook": "통닭 털어 놓고 친구를 고발함",
     "big": "통닭 말고\n멍치킨",
     "sub": "강아지 전용 치킨 모양 수제간식",
-    "vo": "강아지가 먹는 치킨은 따로 있다. 구매는 프로필 링크에서.",
+    "vo": "구매는 프로필 링크에서.",
     "line_a": "사실 우리가 원한 건 뻑뻑한 통닭이 아니야!",
     "hashtags": [
       "#강아지수제간식",
@@ -38,27 +38,41 @@
     "ad_prompt": "DURATION: 6 seconds. Image 1 is the first frame: keep exactly these two dogs, the woven rattan basket of golden-brown crumb-coated chicken-drumstick shaped dog treats and the warm kitchen. CAMERA: locked-off, very slow push-in, no cuts. Photorealistic, no text, no people. Shiba A (red-orange) front center, Shiba B (pale cream-white) behind on the right; they never swap or change colour. TIMELINE: [0.0-2.4s] Shiba A looks straight into the lens with a smug shameless face, mouth opening and closing in a confident talking rhythm. [2.4-3.6s] Shiba A raises its right front paw and points down at the basket. [3.6-6.0s] both dogs lean in, each picks up one drumstick treat in its mouth and chews happily, tails wagging. The treats keep exactly the same shape and golden-brown colour.",
     "audio": [
       {
-        "t": 0.2,
+        "t": 0.1,
+        "end": 1.5,
         "kind": "say",
         "who": "owner",
-        "text": "하… 이거 뭐야?"
+        "voice": "Fenrir",
+        "speed": 1.25,
+        "text": "하… 이거 뭐야?",
+        "emotion": "뜯겨 나간 통닭을 막 발견한 순간. 기가 막혀서 깊게 한숨 쉬고, 끝은 어이없어 떨리는 목소리. 화가 치밀어 오르기 직전."
       },
       {
-        "t": 1.5,
+        "t": 1.6,
+        "end": 2.6,
         "kind": "say",
         "who": "owner",
-        "text": "누가 그랬어?!"
+        "voice": "Fenrir",
+        "speed": 1.3,
+        "text": "누가 그랬어?!",
+        "emotion": "버럭 소리친다. 언성을 확 높여 화가 폭발한 목소리, 끝을 세게 올려 다그친다."
       },
       {
-        "t": 2.6,
+        "t": 2.75,
         "kind": "sfx",
         "file": "shiba_bark_single.mp3",
         "vol": 1.0
       },
       {
-        "t": 3.0,
+        "t": 3.5,
         "kind": "sfx",
-        "file": "shiba_bark_triple.mp3",
+        "file": "shiba_bark_single.mp3",
+        "vol": 1.0
+      },
+      {
+        "t": 4.0,
+        "kind": "sfx",
+        "file": "shiba_bark_single.mp3",
         "vol": 1.0
       },
       {
@@ -68,91 +82,106 @@
         "vol": 0.95
       },
       {
-        "t": 5.25,
+        "t": 5.0,
         "kind": "sfx",
         "file": "shiba_bark_single.mp3",
         "vol": 0.95
       },
       {
-        "t": 6.0,
+        "t": 5.7,
+        "end": 7.0,
         "kind": "say",
         "who": "owner",
-        "text": "어쭈, 지금 대드는 거야?"
+        "voice": "Fenrir",
+        "speed": 1.25,
+        "text": "어쭈, 대드는 거야?",
+        "emotion": "강아지가 오히려 짖으며 대들자 황당해서 피식 웃음 섞인 기막힌 목소리. 눈을 가늘게 뜨고 비꼬듯이."
       },
       {
-        "t": 7.4,
+        "t": 7.2,
+        "end": 8.7,
         "kind": "say",
         "who": "owner",
-        "text": "…너 앞발에 닭 묻었는데?"
+        "voice": "Fenrir",
+        "speed": 1.2,
+        "text": "…너 앞발에 닭 묻었는데?",
+        "emotion": "결정적 증거를 발견한 순간. 목소리를 확 낮추고 조용히, 한 박자 뜸 들인 뒤 또박또박. 승리한 듯한 낮은 톤."
       },
       {
-        "t": 8.7,
+        "t": 8.9,
         "kind": "sfx",
         "file": "dog_gulp_whimper.mp3",
         "vol": 1.0
       },
       {
-        "t": 10.15,
+        "t": 10.1,
+        "end": 13.2,
         "kind": "say",
         "who": "dog",
-        "text": "사실 우리가 원한 건 뻑뻑한 통닭이 아니야!"
+        "voice": "Puck",
+        "speed": 1.3,
+        "text": "사실 우리가 원한 건 뻑뻑한 통닭이 아니야!",
+        "emotion": "들켰는데도 하나도 안 미안한 뻔뻔한 강아지. 당당하고 능청스럽게, 자신만만한 미소가 느껴지게. 끝은 힘주어 단언."
       },
       {
-        "t": 12.6,
+        "t": 14.2,
+        "end": 15.9,
         "kind": "say",
         "who": "vo",
-        "text": "강아지가 먹는 치킨은 따로 있다. 구매는 프로필 링크에서.",
-        "speed": 1.3
+        "voice": "Enceladus",
+        "speed": 1.3,
+        "text": "구매는 프로필 링크에서.",
+        "emotion": "느끼하고 끈적한 광고 내레이션. 낮게 속삭이듯, 그러나 또렷하게."
       }
     ],
     "subs": [
       {
         "t0": 0.0,
-        "t1": 3.0,
+        "t1": 2.5,
         "text": "통닭 털어 놓고\n친구를 고발함",
         "style": "hook"
       },
       {
-        "t0": 0.2,
-        "t1": 1.4,
+        "t0": 0.1,
+        "t1": 1.5,
         "text": "하… 이거 뭐야?"
       },
       {
-        "t0": 1.5,
-        "t1": 2.9,
+        "t0": 1.6,
+        "t1": 2.6,
         "text": "누가 그랬어?!"
       },
       {
-        "t0": 3.0,
-        "t1": 4.6,
+        "t0": 2.7,
+        "t1": 4.4,
         "text": "[번역: 나한테 소리 지르지 마]",
         "style": "yellow"
       },
       {
-        "t0": 4.6,
-        "t1": 6.0,
+        "t0": 4.5,
+        "t1": 5.6,
         "text": "[번역: 쟤도 같이 했어]",
         "style": "yellow"
       },
       {
-        "t0": 6.0,
-        "t1": 7.3,
-        "text": "어쭈, 지금 대드는 거야?"
+        "t0": 5.7,
+        "t1": 7.0,
+        "text": "어쭈, 대드는 거야?"
       },
       {
-        "t0": 7.4,
+        "t0": 7.2,
         "t1": 8.7,
         "text": "…너 앞발에 닭 묻었는데?"
       },
       {
-        "t0": 8.7,
+        "t0": 8.9,
         "t1": 10.0,
         "text": "[번역: …]",
         "style": "yellow"
       },
       {
-        "t0": 10.15,
-        "t1": 12.5,
+        "t0": 10.1,
+        "t1": 13.3,
         "text": "사실 우리가 원한 건\n뻑뻑한 통닭이 아니야!",
         "style": "top"
       }

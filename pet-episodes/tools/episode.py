@@ -2051,6 +2051,7 @@ def step_drink(work, log, cfg):
 REMAKE_WORKER = "https://book-carousel.jtaechul.workers.dev"
 REMAKE_MAX_SEC = 40.0          # 원본은 앞 40초까지만(한 편 5달러 한도 안)
 REMAKE_SEG = 9.5               # Omni 편집은 한 번에 10초까지
+SAY_SPEED_MIN, SAY_SPEED_MAX = 1.2, 1.3   # ⛔ 핵심 규칙: 녹음 속도는 항상 1.2~1.3배(사용자 확정 2026-10)
 REMAKE_BODY_SEC = 10.0         # 본편은 10초(사용자 확정 2026-10: 비용 최소·한 번에) — AI가 가장 웃긴 10초를 고른다. 편마다 remake.max_sec
 REMAKE_END_SEC = 6             # 광고 끝 장면은 처음부터 6초로(사용자 확정 2026-10, 예전 4초×1.6배 늘리기 대신)
 REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
@@ -3026,10 +3027,24 @@ def _meme_full(ep, epdir, work, log, res, mm, cap):
         at = float(a.get("t", 0))
         if a.get("kind") == "say":
             v, d = voices.get(a.get("who", "vo"), voices["vo"])
+            v = a.get("voice") or v                       # 줄마다 목소리 아이디
+            if a.get("emotion"):                          # 줄마다 감정·톤 지시(핵심 규칙)
+                d = f"{d}\n[이 줄의 감정·톤] {a['emotion']}"
+            sp = min(SAY_SPEED_MAX, max(SAY_SPEED_MIN, float(a.get("speed", 1.25))))
             wav = work / f"_say{k}.wav"
             if not wav.exists():
                 _remake_spend(res, REMAKE_COST["tts"], f"녹음: {a['text'][:12]}", cap)
-                _say(a["text"], v, d, wav, float(a.get("speed", 1.15)))
+                _say(a["text"], v, d, wav, sp)
+                room = float(a.get("end", 0)) - at       # 칸이 정해져 있으면 1.3배 안에서만 맞춘다
+                L = _dur(wav)
+                if room > 0 and L > room and sp < SAY_SPEED_MAX:
+                    k2 = min(SAY_SPEED_MAX / sp, L / room)
+                    tmp = wav.with_name(wav.stem + "_f.wav")
+                    _ff(["-i", str(wav), "-af", f"atempo={k2:.4f}", str(tmp)])
+                    tmp.replace(wav)
+                    L = _dur(wav)
+                res.setdefault("say", []).append({"text": a["text"][:30], "voice": v, "speed": sp, "at": at, "sec": round(L, 2),
+                                                  "room": round(room, 2) if room > 0 else None, "over": bool(room > 0 and L > room + 0.05)})
             ins += ["-i", str(wav)]
             chain = f"acompressor=threshold=-24dB:ratio=3:attack=5:release=90:makeup=2,volume={float(a.get('vol', 1.0)):.2f}"
         else:
