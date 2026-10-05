@@ -38,8 +38,8 @@
   "ad_prompt": "DURATION: 6 seconds. Image 1 is the first frame: keep exactly these two dogs, the woven rattan basket of golden-brown crumb-coated chicken-drumstick shaped dog treats and the warm kitchen. CAMERA: locked-off, very slow push-in, no cuts. Photorealistic, no text, no people. Shiba A (red-orange) front center, Shiba B (pale cream-white) behind on the right; they never swap or change colour. TIMELINE: [0.0-2.4s] Shiba A looks straight into the lens with a smug shameless face, mouth opening and closing in a confident talking rhythm. [2.4-3.6s] Shiba A raises its right front paw and points down at the basket. [3.6-6.0s] both dogs lean in, each picks up one drumstick treat in its mouth and chews happily, tails wagging. The treats keep exactly the same shape and golden-brown colour.",
   "audio": [
    {
-    "t": 0.1,
-    "end": 1.5,
+    "t": 0.03,
+    "end": 1.71,
     "kind": "say",
     "who": "owner",
     "voice": "Fenrir",
@@ -48,8 +48,8 @@
     "emotion": "뜯겨 나간 통닭을 막 본 순간. 넋이 나가 허탈하게, 힘 빠진 낮은 목소리. '야…'에서 한숨 섞어 뜸."
    },
    {
-    "t": 1.6,
-    "end": 2.65,
+    "t": 1.72,
+    "end": 2.7,
     "kind": "say",
     "who": "owner",
     "voice": "Fenrir",
@@ -82,8 +82,8 @@
     "vol": 0.95
    },
    {
-    "t": 5.7,
-    "end": 7.0,
+    "t": 5.4,
+    "end": 7.15,
     "kind": "say",
     "who": "owner",
     "voice": "Fenrir",
@@ -138,13 +138,13 @@
     "style": "hook"
    },
    {
-    "t0": 0.1,
-    "t1": 1.5,
+    "t0": 0.03,
+    "t1": 1.71,
     "text": "야… 내 치킨."
    },
    {
-    "t0": 1.6,
-    "t1": 2.65,
+    "t0": 1.72,
+    "t1": 2.7,
     "text": "누구야."
    },
    {
@@ -166,8 +166,8 @@
     "style": "yellow"
    },
    {
-    "t0": 5.7,
-    "t1": 7.0,
+    "t0": 5.4,
+    "t1": 7.15,
     "text": "아, 그래?"
    },
    {
