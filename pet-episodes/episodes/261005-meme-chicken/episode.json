@@ -60,17 +60,47 @@
    {
     "t": 2.75,
     "kind": "sfx",
-    "file": "shiba_bark_single.mp3",
-    "vol": 0.8
+    "file": "shiba_bark_one.mp3",
+    "vol": 0.75
    },
    {
-    "t": 4.1,
+    "t": 3.17,
     "kind": "sfx",
-    "file": "shiba_bark_single.mp3",
-    "vol": 0.8
+    "file": "shiba_bark_one.mp3",
+    "vol": 0.75
    },
    {
-    "t": 5.4,
+    "t": 3.58,
+    "kind": "sfx",
+    "file": "shiba_bark_one.mp3",
+    "vol": 0.75
+   },
+   {
+    "t": 4.08,
+    "kind": "sfx",
+    "file": "shiba_bark_one.mp3",
+    "vol": 0.75
+   },
+   {
+    "t": 4.75,
+    "kind": "sfx",
+    "file": "shiba_bark_one.mp3",
+    "vol": 0.75
+   },
+   {
+    "t": 5.08,
+    "kind": "sfx",
+    "file": "shiba_bark_one.mp3",
+    "vol": 0.65
+   },
+   {
+    "t": 5.42,
+    "kind": "sfx",
+    "file": "shiba_bark_one.mp3",
+    "vol": 0.6
+   },
+   {
+    "t": 5.6,
     "end": 7.15,
     "kind": "say",
     "who": "owner",
@@ -96,10 +126,10 @@
     "vol": 1.0
    },
    {
-    "t": 10.2,
+    "t": 10.17,
     "kind": "sfx",
-    "file": "shiba_bark_single.mp3",
-    "vol": 0.8
+    "file": "shiba_bark_one.mp3",
+    "vol": 0.75
    },
    {
     "t": 11.25,
@@ -131,18 +161,24 @@
    },
    {
     "t0": 2.75,
-    "t1": 4.0,
+    "t1": 3.5,
     "text": "[번역: 쟤예요]",
     "style": "yellow"
    },
    {
-    "t0": 4.1,
-    "t1": 5.3,
+    "t0": 3.58,
+    "t1": 4.65,
     "text": "[번역: 쟤가 뜯었어요]",
     "style": "yellow"
    },
    {
-    "t0": 5.4,
+    "t0": 4.75,
+    "t1": 5.58,
+    "text": "[번역: 전 결백해요]",
+    "style": "yellow"
+   },
+   {
+    "t0": 5.6,
     "t1": 7.15,
     "text": "아, 그래?"
    },
@@ -158,7 +194,7 @@
     "style": "yellow"
    },
    {
-    "t0": 10.2,
+    "t0": 10.17,
     "t1": 11.2,
     "text": "[번역: 다음엔 안 들킬게요]",
     "style": "yellow"
