@@ -102,3 +102,49 @@ def upload(video_path: str, title: str, description: str, tags: list[str] | None
     vid = resp["id"]
     log.info("[youtube] 완료: %s (%s)", vid, privacy)
     return {"video_id": vid, "url": f"https://youtu.be/{vid}", "privacy": privacy}
+
+
+# ── 재생목록·실적(운영자 선택 2026-10-05) ─────────────────────────────────────────
+# 업로드 전용 토큰(youtube.upload)으로는 재생목록·실적을 못 읽는다 → scripts/youtube_oauth.py 로 토큰을 다시 받으면
+# (youtube + yt-analytics.readonly 추가) 동작한다. 권한이 없으면 예외를 던지고, 호출부가 '토큰 재발급 필요'로 기록한다.
+SCOPE_HELP = "유튜브 토큰에 재생목록·실적 권한이 없습니다 — scripts/youtube_oauth.py 로 토큰을 다시 발급해 YOUTUBE_REFRESH_TOKEN 을 바꿔 주세요"
+
+
+def _creds_any():
+    from google.oauth2.credentials import Credentials
+    # scopes=None: 토큰이 받은 권한 그대로 갱신(없는 권한을 요구하면 갱신 자체가 실패하므로 지정하지 않는다)
+    return Credentials(token=None, refresh_token=os.environ["YOUTUBE_REFRESH_TOKEN"],
+                       client_id=os.environ["YOUTUBE_CLIENT_ID"], client_secret=os.environ["YOUTUBE_CLIENT_SECRET"],
+                       token_uri=_TOKEN_URI, scopes=None)
+
+
+def add_to_playlist(video_id: str, title: str, description: str = "") -> dict:
+    """제목이 같은 내 재생목록을 찾고(없으면 공개로 만들고) 영상을 넣는다. 반환 {"playlist_id"}."""
+    from googleapiclient.discovery import build
+    yt = build("youtube", "v3", credentials=_creds_any(), cache_discovery=False)
+    pid, tok = None, None
+    while not pid:
+        r = yt.playlists().list(part="snippet", mine=True, maxResults=50, pageToken=tok).execute()
+        pid = next((p["id"] for p in r.get("items", []) if p["snippet"]["title"] == title), None)
+        tok = r.get("nextPageToken")
+        if not tok:
+            break
+    if not pid:
+        pid = yt.playlists().insert(part="snippet,status", body={"snippet": {"title": title, "description": description},
+                                                                 "status": {"privacyStatus": "public"}}).execute()["id"]
+    yt.playlistItems().insert(part="snippet", body={"snippet": {"playlistId": pid, "resourceId": {
+        "kind": "youtube#video", "videoId": video_id}}}).execute()
+    return {"playlist_id": pid}
+
+
+STAT_METRICS = "views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,likes,comments"
+
+
+def video_stats(video_id: str, start: str, end: str) -> dict:
+    """YouTube Analytics — 한 영상의 기간 실적(조회·시청 분·평균 시청 초·평균 시청 비율·구독 증가·좋아요·댓글)."""
+    from googleapiclient.discovery import build
+    ya = build("youtubeAnalytics", "v2", credentials=_creds_any(), cache_discovery=False)
+    r = ya.reports().query(ids="channel==MINE", startDate=start, endDate=end, metrics=STAT_METRICS,
+                           filters=f"video=={video_id}").execute()
+    row = (r.get("rows") or [[0] * len(STAT_METRICS.split(","))])[0]
+    return dict(zip(STAT_METRICS.split(","), row))

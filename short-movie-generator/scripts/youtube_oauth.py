@@ -23,7 +23,10 @@ from __future__ import annotations
 import os
 import sys
 
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+# 업로드 + 재생목록(youtube) + 실적 읽기(yt-analytics.readonly) — 2026-10-05 운영자 선택(재생목록 자동 추가·실적 자동 수집)
+SCOPES = ["https://www.googleapis.com/auth/youtube.upload",
+          "https://www.googleapis.com/auth/youtube",
+          "https://www.googleapis.com/auth/yt-analytics.readonly"]
 
 
 def main() -> int:

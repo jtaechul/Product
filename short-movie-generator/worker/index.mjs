@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-09-30-7 (컷이 있으면 다시 시도는 무료 표시)";
+const BUILD="v2026-10-05-1 (혼합 제작 · 놀라움 점수 · 재생목록 · 실적 · 주 2편)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2442,6 +2442,16 @@ async function v2do(action,pid,stage,note,btn){
   return false;
 }
 
+// ── 유튜브 실적(운영자 선택 2026-10-05 · 실적 자동 수집) ──
+const V2_WEEKLY_TARGET=2;                       // ABYSS 업로드 목표: 주 2편(운영자 선택 2026-10-05)
+function v2statsHTML(sv){
+  if(!sv)return '<div class="hint">실적은 목록 화면의 「유튜브 실적 새로고침」을 누르면 나옵니다.</div>';
+  if(sv.error)return '<div class="cfact warn">실적을 못 가져왔습니다 — '+esc(sv.error)+'</div>';
+  const m=Math.floor(sv.avg_view_s/60), s2=Math.round(sv.avg_view_s%60);
+  return '<div class="sect">유튜브 실적 ('+v2when(sv.at)+' 기준)</div>'+
+    '<div class="cfact">조회 <b>'+sv.views.toLocaleString()+'</b> · 평균 시청 <b>'+(m?m+"분 ":"")+s2+'초</b> ('+sv.avg_view_pct.toFixed(0)+'%) · 시청 '+(sv.minutes/60).toFixed(1)+'시간</div>'+
+    '<div class="cfact">구독 +<b>'+sv.subs+'</b> (조회 1,000회당 '+sv.subs_per_1k+'명) · 좋아요 '+sv.likes+' ('+sv.like_rate+'%) · 댓글 '+sv.comments+'</div>';
+}
 // ── 영상 목록(/) ──
 async function renderV2List(){
   view().innerHTML='<div class="banner" id="msg"></div><div class="card"><span class="lbl">영상 목록</span><div class="hint">불러오는 중…</div></div>';
@@ -2454,16 +2464,25 @@ async function renderV2List(){
   html+='<div class="card"><span class="lbl">영상 목록</span>'+
     '<div class="hint" style="margin-top:0">한 편을 누르면 주제 → 대본 → 스토리보드 → 영상 → 업로드 순서로 한 페이지에서 확인·승인합니다.</div>'+
     '<a class="btn save" style="display:block;text-align:center;text-decoration:none;margin-top:12px" href="/new">새 영상 만들기</a></div>';
+  // 업로드 주기(운영자 선택 2026-10-05: 주 2편) — 최근 7일 업로드 수
+  const wk=items.filter(x=>x.uploaded_at&&(Date.now()-Date.parse(x.uploaded_at))<7*864e5).length;
+  const tot=items.reduce((a,x)=>a+((x.stats&&!x.stats.error)?x.stats.views:0),0), subs=items.reduce((a,x)=>a+((x.stats&&!x.stats.error)?x.stats.subs:0),0);
+  html+='<div class="card"><span class="lbl">업로드 주기 · 실적</span>'+
+    '<div class="cfact">최근 7일 업로드 <b class="'+(wk>=V2_WEEKLY_TARGET?"ok":"err")+'">'+wk+'편</b> / 목표 주 '+V2_WEEKLY_TARGET+'편'+(wk<V2_WEEKLY_TARGET?' — '+(V2_WEEKLY_TARGET-wk)+'편 더 올려야 합니다':'')+'</div>'+
+    (tot?'<div class="cfact">업로드한 편 합계: 조회 '+tot.toLocaleString()+' · 구독 +'+subs+'</div>':'')+
+    '<button class="btn" id="v2stats" style="width:100%;margin-top:8px">유튜브 실적 새로고침 (무료)</button></div>';
   groups.forEach(([title,fn])=>{
     const g=items.filter(fn);
     html+='<div class="card"><span class="lbl">'+esc(title)+' ('+g.length+')</span>'+
       (g.length?g.map(x=>'<a class="clitem" href="/v/'+encodeURIComponent(x.id)+'">'+
         '<span class="nm">'+esc(x.name_ko||x.id)+'<small><i>'+esc(x.sci||"")+'</i></small></span>'+
-        '<span class="t">'+(x.stage==="done"?"":esc(STG_KO[x.stage]||x.stage)+" · ")+v2badgeJob(x.state,v2job(x.job,x.stage,x.state,x.id))+'</span></a>').join("")
+        '<span class="t">'+(x.stage==="done"?(x.stats&&!x.stats.error?("조회 "+x.stats.views.toLocaleString()+" · 구독 +"+x.stats.subs+" · "):""):esc(STG_KO[x.stage]||x.stage)+" · ")+v2badgeJob(x.state,v2job(x.job,x.stage,x.state,x.id))+'</span></a>').join("")
         :'<div class="hint" style="margin-top:0">없음</div>')+'</div>';
   });
   html+=v2tokbox();
   view().innerHTML=html;v2bindTok();
+  const rs=$("#v2stats");if(rs)rs.onclick=async()=>{if(confirm("업로드한 모든 편의 유튜브 실적을 가져올까요? (무료 · 1~2분)"))
+    if(await v2do("stats","","","",rs))banner("실적을 가져오는 중입니다. 1~2분 뒤 새로고침하세요.","ok");};
 }
 
 // ── 새 영상 만들기(/new) ──
@@ -2477,7 +2496,9 @@ async function renderV2New(){
       ?'<a href="'+esc(t.photo.page||t.photo.url)+'" target="_blank" rel="noopener" style="flex:none"><img class="cthumb" loading="lazy" referrerpolicy="no-referrer" src="'+esc(t.photo.url)+'" alt="'+esc(t.name_ko)+'"></a>'
       :'<div class="cthumb noimg">사진 없음</div>';
   const card=t=>'<div class="ccard">'+thumb(t)+'<div class="cbody">'+
-      '<div class="ctitle">'+esc(t.name_ko)+(t.ko_official===false?' <span style="font-size:11px;font-weight:400;color:var(--am)">(정식 한글명 없음)</span>':'')+'</div>'+
+      '<div class="ctitle">'+esc(t.name_ko)+(t.ko_official===false?' <span style="font-size:11px;font-weight:400;color:var(--am)">(정식 한글명 없음)</span>':'')+
+        (t.score?' <span class="v2st '+(t.score>=8?"done":t.score>=6?"wait":"")+'">놀라움 '+t.score+'/10</span>':'')+'</div>'+
+      (t.hook_ko?'<div class="cfact"><b>핵심 한 줄</b> '+esc(t.hook_ko)+(t.hook_jp?' <span style="opacity:.7">'+esc(t.hook_jp)+'</span>':'')+'</div>':'')+
       '<div class="cmeta"><i>'+esc(t.sci)+'</i>'+(t.depth_m?(' · 수심 '+esc(t.depth_m)+'m'):'')+'</div>'+
       (t.photo&&t.photo.credit?'<div class="cfact" style="font-size:10px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">사진: '+esc(t.photo.credit)+'</div>':'')+
       (t.facts||[]).map(f=>'<div class="cfact">· '+esc(f)+'</div>').join("")+
@@ -2531,7 +2552,8 @@ function v2stageBody(st,stage){
     if(!a.sheet)return '<div class="hint">스토리보드 이미지가 나오면 이 칸에 보입니다.</div>';
     const chk=(a.card_check||{}), items=chk.items||[];
     return '<span class="lbl">콘티(컷별 시작 이미지)</span><img src="'+v2media(pid,a.sheet)+'" loading="lazy">'+
-      ((a.panels||[]).length?'<div class="sect">컷별 화면 설명</div>'+a.panels.map(p=>'<div class="cfact"><b>'+p.cut+'</b> '+esc(p.desc||"")+'</div>').join(""):'')+
+      ((a.panels||[]).length?'<div class="sect">컷별 화면 설명 — 영상 AI 컷 / 무료 줌인 컷</div>'+a.panels.map(p=>'<div class="cfact"><b>'+p.cut+'</b> '+
+        (p.motion?'<span class="v2st '+(p.motion==="still"?"done":"wait")+'">'+(p.motion==="still"?"무료 줌인":"영상 AI")+'</span> ':'')+esc(p.desc||"")+'</div>').join(""):'')+
       (a.compare?'<span class="lbl" style="margin-top:14px">생물 카드 ↔ 실사 대조 시트</span><img src="'+v2media(pid,a.compare)+'" loading="lazy">':'')+
       (items.length?'<div class="sect">해부학 체크리스트 (AI 실사 대조)</div>'+items.map(i=>'<div class="cfact"><span class="'+(i.verdict==="pass"?"ok":i.verdict==="fail"?"err":"")+'">'+
         (i.verdict==="pass"?"통과":i.verdict==="fail"?"불통과":"확인 불가")+'</span> '+esc(i.item)+(i.note_ko?' <span style="opacity:.7">— '+esc(i.note_ko)+'</span>':'')+'</div>').join("")
@@ -2553,9 +2575,9 @@ function v2stageBody(st,stage){
       '<div class="sect">컷별 검수 — 마음에 안 드는 컷만 다시 만들기</div>'+
       '<div class="v2clips">'+(a.clips||[]).map(c=>'<div class="v2clip">'+
         '<video controls playsinline preload="metadata" src="'+v2media(pid,c.file)+'#t=0.5"></video>'+
-        '<div class="cfact"><b>'+c.cut+'번 컷</b> · '+esc(c.sec)+'초'+((c.history||[]).length?(' · 재생성 '+c.history.length+'회'):'')+'</div>'+
+        '<div class="cfact"><b>'+c.cut+'번 컷</b> · '+esc(c.sec)+'초'+(c.motion==="still"?' · 무료 줌인':'')+((c.history||[]).length?(' · 재생성 '+c.history.length+'회'):'')+'</div>'+
         (c.review?'<div class="cfact'+(c.review==="양호"?'':' warn')+'">'+esc(c.review)+'</div>':'')+
-        '<button class="btn warn" data-cut="'+c.cut+'" data-sec="'+esc(c.sec)+'">이 컷만 다시 만들기 (약 $'+(Number(c.sec||0)*OMNI_USD).toFixed(2)+')</button>'+
+        '<button class="btn warn" data-cut="'+c.cut+'" data-sec="'+esc(c.sec)+'">'+(c.motion==="still"?'이 컷을 영상 AI로 바꾸기':'이 컷만 다시 만들기')+' (약 $'+(Number(c.sec||0)*OMNI_USD).toFixed(2)+')</button>'+
         '<button class="btn" data-rcopen="'+c.cut+'">수정 방향 적고 다시 만들기</button>'+
       '</div>').join("")+'</div>'+v2recutPanels(st)+
       ((((st.artifacts||{}).script||{}).pending_lines||[]).length?(
@@ -2569,6 +2591,8 @@ function v2stageBody(st,stage){
     const m=a.meta||null, res=a.result||null;
     if(res&&res.url)return '<div class="cfact"><span class="ok">업로드 완료</span> ('+esc(V2_PV[res.privacy]||res.privacy||"")+
         (res.category?' · '+esc(V2_CAT[res.category]||res.category):'')+') · <a href="'+esc(res.url)+'" target="_blank">유튜브에서 보기</a></div>'+
+      (res.playlist?'<div class="cfact">재생목록 「深海の謎」에 추가됨</div>':(res.playlist_error?'<div class="cfact warn">재생목록 추가 실패 — '+esc(res.playlist_error)+'</div>':''))+
+      v2statsHTML(a.stats)+
       v2dlHTML("u")+
       '<div class="sect">인스타그램 등에 붙여넣기 — 복사</div>'+
       v2copyBox("제목 (일본어)",m.title_jp,"cp_tj")+v2copyBox("설명 (일본어 · 해시태그 포함)",m.desc_jp,"cp_dj")+

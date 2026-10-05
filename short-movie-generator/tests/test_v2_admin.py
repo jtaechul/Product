@@ -664,7 +664,8 @@ def _fake_vision(p, images=None):
         return json.dumps({"items": [{"item": "머리 없음", "verdict": "pass", "note_ko": "좋음"}, {"item": "눈 없음", "verdict": "unknown", "note_ko": ""}]})
     if "storyboard artist" in p:
         shots = ["wide", "wide", "close", "wide", "medium", "wide", "wide", "close"]
-        return json.dumps({"panels": {str(i): {"shot": shots[i - 1], "set_edge": i % 2 == 1, "props": ["paper waves", "clay scientist"],
+        motion = ["still", "omni", "still", "omni", "omni", "still", "still", "omni"]     # 후킹 컷(5)은 omni · 4컷 이하
+        return json.dumps({"panels": {str(i): {"shot": shots[i - 1], "motion": motion[i - 1], "set_edge": i % 2 == 1, "props": ["paper waves", "clay scientist"],
                                                "desc": f"Panel {i}: tabletop diorama box on a wooden desk, the creature small in the frame, desk lamp."}
                                       for i in range(1, 9)}})
     if "per-second TIMELINE" in p:
@@ -811,8 +812,9 @@ def test_species_tag_never_empty_without_japanese_name():
 
 
 # ── 미니어처 세계관 규칙(운영자 승인 2026-10-01 · 실사고: 자동 콘티가 빈 배경 + 생물 접사만 그림) ──────────────
-def _plan(shots, edges=4, props=2):
-    return {i + 1: {"shot": sh, "set_edge": i < edges, "props": ["felt", "paper"][:props], "desc": "x" * 50} for i, sh in enumerate(shots)}
+def _plan(shots, edges=4, props=2, omni=(1, 3)):
+    return {i + 1: {"shot": sh, "motion": "omni" if (i + 1) in omni else "still", "set_edge": i < edges,
+                    "props": ["felt", "paper"][:props], "desc": "x" * 50} for i, sh in enumerate(shots)}
 
 
 def test_validate_storyboard_plan_miniature_rules():
@@ -860,3 +862,91 @@ def test_storyboard_trial_does_not_touch_status(v2, monkeypatch):
     res = admin.storyboard_trial("test_fish", out=out, ask=_fake_vision, gen=gen)
     assert res["ok"] and (out / "compare_old_new.jpg").exists() and (out / "plan.json").exists()
     assert (v2 / "pilots" / "test_fish" / "status.json").read_text(encoding="utf-8") == before
+
+
+# ── 개편(운영자 선택 2026-10-05): 혼합 제작 · 놀라움 점수 · 재생목록 · 실적 · 연재감 ──────────────
+def test_plan_requires_hook_omni_and_omni_budget():
+    cuts = [{"cut": i} for i in range(1, 9)]
+    ok = _plan(["wide"] * 5 + ["medium", "close", "close"], omni=(1, 3, 5))
+    assert admin.validate_storyboard_plan(ok, cuts, hook_cut=3) == []
+    p = " ".join(admin.validate_storyboard_plan(_plan(["wide"] * 8, omni=(1, 2, 3, 4, 5, 6)), cuts, hook_cut=7))
+    assert "at most 4" in p and "Cut 7 is the opening hook" in p
+
+
+def test_make_video_hybrid_generates_only_omni_cuts(v2, monkeypatch):
+    _prep_pilot(v2, monkeypatch)
+    admin.write_storyboard("test_fish", ask=_fake_vision, get=lambda u: {"results": []}, fetch=_fake_fetch)
+    st = admin.load_status("test_fish")
+    assert [p["motion"] for p in st["artifacts"]["storyboard"]["panels"]].count("omni") == 4
+    assert st["cost"]["estimate"]["video"] < sum(c["sec"] for c in st["artifacts"]["script"]["cuts"]) * admin.OMNI_USD_PER_SEC
+    admin.approve("test_fish", "storyboard")
+    seen = []
+    base = _fake_runner(v2)
+    def counting(rp):
+        req = json.loads(Path(rp).read_text(encoding="utf-8"))
+        if req["kind"] == "gen_omni":
+            seen.append(sorted(it["name"] for it in req["items"]))
+        return base(rp)
+    monkeypatch.setattr(admin, "_RUN_REQUEST", counting)
+    monkeypatch.setattr(admin, "assemble", lambda pid: None)
+    st = admin.make_video("test_fish", ask=_fake_vision)
+    assert seen == [["c02", "c04", "c05", "c08"]]                       # 유료 생성은 영상 AI 컷 4개만
+    clips = {c["cut"]: c for c in st["artifacts"]["video"]["clips"]}
+    assert len(clips) == 8 and clips[1]["motion"] == "still" and "_stills/" in clips[1]["file"]
+    assert (v2 / "pilots" / "test_fish" / clips[1]["file"]).exists()
+    spent = [x for x in st["cost"]["spent"] if "영상 컷" in x["what"]][0]["usd"]
+    assert spent == round(sum(clips[k]["sec"] for k in (2, 4, 5, 8)) * admin.OMNI_USD_PER_SEC, 2)
+
+
+def test_redo_still_cut_upgrades_to_omni(v2, monkeypatch):
+    _prep_pilot(v2, monkeypatch)
+    admin.write_storyboard("test_fish", ask=_fake_vision, get=lambda u: {"results": []}, fetch=_fake_fetch)
+    admin.approve("test_fish", "storyboard")
+    monkeypatch.setattr(admin, "assemble", lambda pid: None)
+    admin.make_video("test_fish", ask=_fake_vision)
+    called = []
+    monkeypatch.setattr(admin, "make_video", lambda pid, fb="", ask=None: called.append(fb))
+    admin.redo_cut("test_fish", 1)
+    sc = json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))
+    assert called == ["1번 컷"] and sc["cuts"][0]["motion"] == "omni"
+
+
+def test_topic_scores_sort_and_cache(v2, monkeypatch):
+    monkeypatch.setattr(admin, "TOPIC_SCORES", v2 / "topic_scores.json")
+    items = [{"id": "a", "sci": "A a", "name_en": "a", "facts": ["x"], "ready": True},
+             {"id": "b", "sci": "B b", "name_en": "b", "facts": ["y"], "ready": True}]
+    calls = []
+    def ask(p):
+        calls.append(p)
+        return json.dumps({"scores": {"a": {"score": 4, "hook_jp": "ふつう", "hook_ko": "보통"}, "b": {"score": 9, "hook_jp": "5年絶食", "hook_ko": "5년 단식"}}})
+    sc = admin._topic_scores(items, ask=ask)
+    assert sc["b"]["score"] == 9 and sc["a"]["hook_ko"] == "보통"
+    admin._topic_scores(items, ask=ask)
+    assert len(calls) == 1                                    # 캐시 — 두 번째는 묻지 않음
+
+
+def test_upload_adds_playlist_and_stats(real_copy):
+    st = admin.load_status("bathynomus_giganteus")
+    st["artifacts"].setdefault("upload", {})["meta"] = admin._compose_meta(
+        json.loads((admin._script_path("bathynomus_giganteus")).read_text(encoding="utf-8")), dict(_META))
+    admin._save(admin.status_path("bathynomus_giganteus"), st)
+    pl = []
+    st = admin.youtube_upload("bathynomus_giganteus", uploader=lambda *a, **k: {"url": "https://youtu.be/X", "video_id": "X", "privacy": "private"},
+                              playlister=lambda vid, title, desc: pl.append((vid, title)) or {"playlist_id": "PL1"})
+    assert pl == [("X", "深海の謎")] and st["artifacts"]["upload"]["result"]["playlist"] == "PL1"
+    got = admin.fetch_stats(stats_fn=lambda vid, a, b: {"views": 1383, "estimatedMinutesWatched": 432, "averageViewDuration": 42,
+                                                         "averageViewPercentage": 71.5, "subscribersGained": 3, "likes": 20, "comments": 2})
+    sv = got["bathynomus_giganteus"]
+    assert sv["views"] == 1383 and sv["subs_per_1k"] == 2.17 and sv["like_rate"] == 1.45
+    bad = admin.fetch_stats(stats_fn=lambda *a: (_ for _ in ()).throw(RuntimeError("HttpError 403 insufficientPermissions")))
+    assert "재발급" in bad["bathynomus_giganteus"]["error"]
+    idx = admin.build_index()
+    assert next(i for i in idx["items"] if i["id"] == "bathynomus_giganteus")["stats"]["error"]
+
+
+def test_answer_card_has_series_line(tmp_path):
+    import assemble as A
+    src = Path(A.__file__).read_text(encoding="utf-8")
+    assert "次の深海の謎も、このチャンネルで。" in src
+    out = A.answer_png("この生き物は？", "テスト", "Testus fishus", tmp_path / "a.png")
+    assert out.exists()

@@ -19,6 +19,7 @@
   python admin.py write_script <id> [수정 요청]  # 대본 자동 작성(출처 → 원문 확인된 사실 → 대본 → 검사 → 미리듣기 → 승인 대기)
   python admin.py write_storyboard <id> [수정 요청]  # 스토리보드 자동(참조 실사 → 생물 카드 → 실사 대조 → 콘티 격자 → 승인 대기)
   python admin.py make_video <id> [수정 요청]    # 영상 자동(컷별 지시문 → Omni → 조립 → 검사 → 승인 대기 · 'N번'이면 그 컷만)
+  python admin.py stats [id]                    # 유튜브 실적(조회·시청 지속·구독 전환) 가져오기 — 재생목록·실적 권한 토큰 필요
   python admin.py job_start <id> <stage> [설명]  # 자동 작업 '진행 중' 기록(워크플로가 긴 작업 전에 먼저 커밋)
   python admin.py job_fail <id> <action>        # 워크플로가 중간에 죽으면 진행 중 기록을 '실패'로
   python admin.py ready <id> <stage> [메모]      # 작업 결과가 나왔음 → 승인 대기로
@@ -161,7 +162,19 @@ def redo_cut(pid: str, cut: int, memo: str = "") -> dict:
     if not clip:
         raise SystemExit(f"{cut}번 컷이 없습니다")
     pilot = PILOTS / pid
-    src = _load(pilot / "requests" / f"{art['clips_request']}.json")
+    if clip.get("motion") == "still" or "_stills/" in clip["file"]:
+        # 혼합 제작의 무료 줌인 컷 → 이 컷만 영상 AI(Omni)로 바꿔 만든다(같은 그림을 다시 확대해도 결과가 같으므로)
+        sc = _load(_script_path(pid))
+        for c in sc["cuts"]:
+            if c.get("cut") == int(cut):
+                c["motion"] = "omni"
+        _save(_script_path(pid), sc)
+        _note(st, "video", "redo_cut", f"{cut}번 컷: 무료 줌인 → 영상 AI로 바꿔 다시 만듦. {memo}".strip())
+        _save(status_path(pid), st)
+        return make_video(pid, f"{int(cut)}번 컷")
+    # 그 컷을 만든 요청서(혼합 제작은 컷마다 요청서가 다를 수 있어 파일 경로에서 찾는다)
+    m = re.match(r"out/([^/]+)/", clip["file"])
+    src = _load(pilot / "requests" / f"{m.group(1) if m else art['clips_request']}.json") or _load(pilot / "requests" / f"{art['clips_request']}.json")
     item = next(i for i in src["items"] if i["name"] == f"c{int(cut):02d}")
     rid = f"r{time.strftime('%m%d%H%M', time.gmtime())}_c{int(cut):02d}"
     req = {k: v for k, v in src.items() if k != "items"}
@@ -803,7 +816,10 @@ _REPRO_JP = "※映像はAIによる再現映像です（生き物の形は実�
 _REPRO_KO = "※ 영상은 AI 재현 영상입니다(생물의 형태는 실제 사진을 참고했습니다)."
 PINNED_COMMENT = "次に見たい深海の生き物は？"
 _META_PROMPT = """You write YouTube Shorts metadata for a Japanese deep-sea science channel. Use ONLY the facts and narration below.
-Rules: title_jp = hook-style Japanese title, max 28 characters, mystery/awe tone, no honorific needed, no hashtags,
+Rules: title_jp = hook-style Japanese title, max 32 characters, mystery/awe tone, no honorific needed, no hashtags,
+follow the channel's PROVEN FORMULA (our two best videos): [the single most unbelievable fact or trait] + 深海の + [name or 謎],
+e.g. 「5年以上も絶食した深海の巨大生物ダイオウグソクムシの謎」「頭も骨もない深海の謎「首なしチキンモンスター」」 —
+put the most surprising concrete fact (a number or a missing body part etc.) at the very start;
 no "#Shorts", no episode numbers, NO office-worker jokes (有給/残業/上司 etc.), never exaggerate beyond the facts.
 desc_jp = 3-4 short sentences in polite Japanese (です・ます), summarising the story with the concrete facts.
 title_ko / desc_ko = natural Korean versions (존댓말 for desc).
@@ -924,7 +940,11 @@ def save_upload_meta(pid: str, data: dict) -> dict:
     return st
 
 
-def youtube_upload(pid: str, uploader=None) -> dict:
+PLAYLIST_TITLE = "深海の謎"                                     # 쇼츠를 모으는 재생목록(운영자 선택 2026-10-05)
+PLAYLIST_DESC = "1話にひとつ、深海の生き物の謎を手作りのミニチュアで再現します。"
+
+
+def youtube_upload(pid: str, uploader=None, playlister=None) -> dict:
     """완성본을 유튜브에 올린다(같은 편 두 번 금지). uploader: 테스트용 대체 함수."""
     st = load_status(pid)
     up = st.setdefault("artifacts", {}).setdefault("upload", {})
@@ -940,6 +960,7 @@ def youtube_upload(pid: str, uploader=None) -> dict:
         if not yt.has_credentials():
             raise SystemExit("유튜브 연결 키(YOUTUBE_*)가 없습니다")
         uploader = yt.upload
+        playlister = playlister or yt.add_to_playlist
     tags = [t.lstrip("#") for t in m.get("tags_jp", [])]
     try:
         r = uploader(str(video), m["title_jp"], m.get("desc_jp", ""), tags=tags, privacy=m.get("privacy", "private"),
@@ -951,8 +972,50 @@ def youtube_upload(pid: str, uploader=None) -> dict:
     up["result"] = {"url": r["url"], "video_id": r.get("video_id", ""), "privacy": r.get("privacy", ""),
                     "category": m.get("category") or "15", "at": _now()}
     _note(st, "upload", "uploaded", f"유튜브 업로드 완료({r.get('privacy', '')}): {r['url']} — 고정 댓글은 유튜브 앱에서 직접 달고 고정")
+    if playlister and r.get("video_id"):                     # 재생목록 추가 — 실패해도 업로드는 성공으로 둔다
+        try:
+            pl = playlister(r["video_id"], PLAYLIST_TITLE, PLAYLIST_DESC)
+            up["result"]["playlist"] = pl.get("playlist_id", "")
+            _note(st, "upload", "playlist", f"재생목록 「{PLAYLIST_TITLE}」에 추가")
+        except Exception as e:                               # noqa: BLE001
+            up["result"]["playlist_error"] = str(e)[:160]
+            _note(st, "upload", "error", f"재생목록 추가 실패(토큰 권한 부족이면 재발급 필요): {str(e)[:120]}")
     _save(status_path(pid), st)
     return st
+
+
+def fetch_stats(pid: str | None = None, stats_fn=None) -> dict:
+    """업로드한 편의 유튜브 실적을 가져와 status.artifacts.upload.stats 에 저장(운영자 선택 2026-10-05 · 실적 자동 수집).
+    pid 가 없으면 업로드된 모든 편. 권한이 없으면 편마다 error 로 기록(재발급 안내)."""
+    if stats_fn is None:
+        sys.path.insert(0, str(ROOT))
+        from src.core import youtube_upload as yt           # noqa: E402
+        stats_fn = yt.video_stats
+    done = {}
+    for p in sorted(PILOTS.glob("*/status.json")):
+        st = _load(p, {})
+        if not st or (pid and st.get("id") != pid):
+            continue
+        res = ((st.get("artifacts") or {}).get("upload") or {}).get("result") or {}
+        if not res.get("video_id"):
+            continue
+        start = (res.get("at") or _now())[:10]
+        end = time.strftime("%Y-%m-%d", time.gmtime())
+        try:
+            m = stats_fn(res["video_id"], start, end)
+            sv = {"at": _now(), "views": int(m.get("views") or 0), "minutes": float(m.get("estimatedMinutesWatched") or 0),
+                  "avg_view_s": float(m.get("averageViewDuration") or 0), "avg_view_pct": float(m.get("averageViewPercentage") or 0),
+                  "subs": int(m.get("subscribersGained") or 0), "likes": int(m.get("likes") or 0), "comments": int(m.get("comments") or 0)}
+            sv["subs_per_1k"] = round(sv["subs"] * 1000 / sv["views"], 2) if sv["views"] else 0
+            sv["like_rate"] = round(sv["likes"] * 100 / sv["views"], 2) if sv["views"] else 0
+        except Exception as e:                               # noqa: BLE001
+            msg = str(e)
+            sv = {"at": _now(), "error": ("권한 없음 — 토큰 재발급 필요(scripts/youtube_oauth.py)" if "insufficient" in msg.lower()
+                                          or "403" in msg or "scope" in msg.lower() else msg[:160])}
+        st["artifacts"]["upload"]["stats"] = sv
+        _save(p, st)
+        done[st["id"]] = sv
+    return done
 
 
 # ── 자동 검사(완성본) ─────────────────────────────────────────────────────
@@ -1129,6 +1192,7 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
 - 同じ単語・言い回しを何度も繰り返さない。文末も単調にしない。
 - {n}カット目: 余韻のある締め(画面は暗闇に消えていく)。「チャンネル登録」「コメント」などの呼びかけは書かない(共通エンディングが別にある)。
 - 呼び名: {name_rule}
+- この回の核になる驚きの事実(主題選定時の一行・事実リストで裏付けること): {core}
 - hook(冒頭2秒の引き): 台本の中で**いちばん驚く場面のカット番号**を選び、その場面を見せながら出す短い問い
   「〇〇する、この生き物は？」(8〜22文字・「？」で終わる・答えの名前は入れない・事実リストにある行動だけ)。
   answer_jp は最後の「正解：〇〇」に入れる呼び名(台本で使った呼び名と同じ)。
@@ -1296,6 +1360,7 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
             if len(facts) < 4:
                 raise RuntimeError(f"출처 원문으로 확인된 사실이 {len(facts)}개뿐입니다(버린 것 {dropped}개) — 대본을 쓸 수 없습니다")
         name = ja_name or topic.get("name_en") or topic.get("sci", "")
+        core = (_load(TOPIC_SCORES, {}) or {}).get(pid, {}).get("hook_jp", "")
         name_rule = (f"和名「{ja_name}」を使う。" if ja_name else
                      f"和名がないので、事実リストにある呼び名(英名「{topic.get('name_en', '')}」の直訳など)か「この生き物」と呼ぶ。和名を作らない。")
         ftxt = "\n".join(f"{f['id']}: {f.get('fact_jp') or f['fact']}(出典原文: {f.get('quote', '')})" for f in facts)
@@ -1305,7 +1370,8 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
             fb = f"# 運営者の修正依頼(必ず反映)\n{feedback}\n# 前の台本\n{prev}\n"
         hook = None
         for attempt in range(3):
-            gen = _json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt)))
+            gen = _json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt,
+                                                             core=core or "(なし — 事実リストから最も驚く一つを選ぶ)")))
             cuts, hook = gen.get("cuts") or [], gen.get("hook")
             probs = validate_script(cuts, facts) + validate_hook(hook, cuts, facts)
             if not probs:
@@ -1398,6 +1464,9 @@ _MINI_CREATURE = ("the creature is the ONLY precise object: an accurately sculpt
                   "paint and faint brush texture, with exactly the real anatomy, proportions and colours")
 STYLE_REFS = ["../_shared/style/style_desk_chart.jpg", "../_shared/style/style_ocean_block.jpg"]   # 시범편 승인 콘티(생물 안 보이는 부분)
 SB_WIDE_RATIO, SB_CLOSE_RATIO = 5 / 8, 2 / 8                 # 8컷 중 넓은 세트 샷 5컷 이상 · 접사 2컷 이하
+# ★혼합 제작(운영자 선택 2026-10-05 · 편당 $7 → 약 $3): 움직임이 꼭 필요한 컷만 Omni 영상, 나머지는 콘티 이미지를
+#   천천히 확대하는 무료 컷. 8컷 중 Omni 최대 4컷(후킹 컷은 반드시 Omni — 맨 앞 2초가 움직여야 한다).
+SB_OMNI_RATIO = 4 / 8
 _RUN_REQUEST = None                                          # 테스트용 대체(요청 파일 경로 → 반환코드)
 
 
@@ -1515,8 +1584,11 @@ Plan ONE storyboard panel (the first frame of the video clip) for EACH of the {n
   people. No other animals unless the narration says so. Keep the upper quarter of every panel calm and uncluttered (captions).
 - The LAST cut's panel: the creature is already dim and receding into deep darkness (the video will fade to black).
 - Cut {hook_cut} is used as the 2-second opening hook — make it the most striking, dynamic composition.
+- MOTION (budget): mark each cut "omni" ONLY if the narration needs real movement (swimming, eating, escaping, a fast reaction);
+  mark it "still" when a calm, slowly pushed-in tableau tells it just as well (introductions, explanations, records, endings).
+  At most {max_omni} cuts may be "omni"; cut {hook_cut} MUST be "omni". Compose "still" panels so they read well without motion.
 {feedback}
-Return JSON only: {{"panels":{{"1":{{"shot":"wide|medium|close","set_edge":true,"props":["prop 1","prop 2"],
+Return JSON only: {{"panels":{{"1":{{"shot":"wide|medium|close","motion":"omni|still","set_edge":true,"props":["prop 1","prop 2"],
 "desc":"English description of panel 1: set, camera angle, creature pose and size in frame, props, light"}}, "2":{{...}}}}}}
 # Cuts (Japanese narration / Korean / scene idea / seconds)
 {cuts}
@@ -1525,7 +1597,7 @@ Return JSON only: {{"panels":{{"1":{{"shot":"wide|medium|close","set_edge":true,
 """
 
 
-def validate_storyboard_plan(panels: dict, cuts: list[dict]) -> list[str]:
+def validate_storyboard_plan(panels: dict, cuts: list[dict], hook_cut: int | None = None) -> list[str]:
     """콘티 계획 코드 검사(운영자 승인 2026-10-01 미니어처 규칙) — 불통과 이유(영어 · AI에게 그대로 돌려줌)."""
     import math
     n = len(cuts)
@@ -1545,6 +1617,14 @@ def validate_storyboard_plan(panels: dict, cuts: list[dict]) -> list[str]:
         probs.append(f"Only {shots.count('wide')} WIDE set shots — make at least {min_wide} of the {n} panels wide tabletop shots.")
     if shots.count("close") > max_close:
         probs.append(f"{shots.count('close')} CLOSE shots — at most {max_close}; turn the others into wide or medium set shots.")
+    motions = [(panels.get(c["cut"]) or {}).get("motion") for c in cuts]
+    if any(m not in ("omni", "still") for m in motions):
+        probs.append("Every panel needs motion = omni or still.")
+    max_omni = max(1, int(n * SB_OMNI_RATIO))
+    if motions.count("omni") > max_omni:
+        probs.append(f"{motions.count('omni')} cuts are omni — at most {max_omni}; make calmer cuts still.")
+    if hook_cut and (panels.get(hook_cut) or {}).get("motion") != "omni":
+        probs.append(f"Cut {hook_cut} is the opening hook and must be omni.")
     edges = sum(1 for c in cuts if (panels.get(c["cut"]) or {}).get("set_edge") is True)
     if edges < math.ceil(n / 2):
         probs.append(f"The set edge is visible in only {edges} panels — show it in at least {math.ceil(n / 2)}.")
@@ -1565,12 +1645,13 @@ def plan_storyboard(sc: dict, cc: dict, feedback: str = "", ask=None) -> dict:
         plan = _json_obj(ask(_SB_PROMPT.format(style=_MINI_STYLE, creature=_MINI_CREATURE, anatomy=cc.get("anatomy", ""),
                                                size_note=cc.get("size_note") or "see the facts", n=len(cuts),
                                                min_wide=math.ceil(len(cuts) * SB_WIDE_RATIO), max_close=max(1, round(len(cuts) * SB_CLOSE_RATIO)),
+                                               max_omni=max(1, int(len(cuts) * SB_OMNI_RATIO)),
                                                hook_cut=hook_cut, feedback=fb, cuts=ctxt, facts=ftxt)))
         panels = {}
         for k, v in (plan.get("panels") or {}).items():
             if str(k).isdigit():
                 panels[int(k)] = v if isinstance(v, dict) else {"desc": str(v)}
-        probs = validate_storyboard_plan(panels, cuts)
+        probs = validate_storyboard_plan(panels, cuts, hook_cut)
         if not probs:
             return panels
         fb = base_fb + "# Problems in your previous plan (fix all)\n" + "\n".join("- " + p for p in probs) + "\n"
@@ -1746,6 +1827,7 @@ def write_storyboard(pid: str, feedback: str = "", ask=None, get=None, fetch=Non
             c["keyframe"] = f"out/{rid}/{f.name}"
             c["panel_desc"] = panels[c["cut"]]["desc"]
             c["panel_shot"] = panels[c["cut"]].get("shot", "")
+            c["motion"] = panels[c["cut"]].get("motion", "omni")
         sheet = _tile(pfiles, pilot / "out" / rid / "storyboard.jpg", cols=4)
         sc.setdefault("storyboard_history", []).append({"at": _now(), "rid": rid, "feedback": feedback})
         _save(_script_path(pid), sc)
@@ -1754,7 +1836,10 @@ def write_storyboard(pid: str, feedback: str = "", ask=None, get=None, fetch=Non
                                          "card": [r["file"] for r in cc.get("use_as_reference", [])],
                                          "compare": cc.get("compare"), "card_check": cc.get("check"), "checklist": cc.get("checklist"),
                                          "panels": [{"cut": c["cut"], "file": c["keyframe"], "desc": c["panel_desc"],
-                                                     "shot": c.get("panel_shot", "")} for c in cuts]}
+                                                     "shot": c.get("panel_shot", ""), "motion": c.get("motion", "omni")} for c in cuts]}
+        tmv = {t["cut"]: t for t in sc.get("timing_v5") or []}
+        st.setdefault("cost", {}).setdefault("estimate", {})["video"] = round(sum(
+            float((tmv.get(c["cut"]) or {}).get("sec") or c.get("sec") or 6) for c in cuts if c.get("motion", "omni") == "omni") * OMNI_USD_PER_SEC, 2)
         st["cost"].setdefault("spent", []).append({"at": _now(), "what": "콘티 격자 2장", "usd": round(IMG_USD * len(items), 3)})
         st["stages"]["storyboard"]["state"] = "review"
         _note(st, "storyboard", "auto", "스토리보드 자동 작성 완료 — 승인 대기" + (" (수정 요청 반영)" if feedback else ""))
@@ -1807,6 +1892,19 @@ def _ensure_tts(pid: str, sc: dict) -> str:
     return rid
 
 
+def still_clip(img: Path, sec: float, dst: Path, fade_out: bool = False) -> Path:
+    """무료 컷(혼합 제작): 콘티 이미지를 sec초 동안 천천히 확대(1.00→1.08) — 720×1280·24fps·무음."""
+    W, H, FPS = 720, 1280, 24
+    n = int(round(sec * FPS))
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    vf = (f"scale={W * 2}:{H * 2}:force_original_aspect_ratio=increase,crop={W * 2}:{H * 2},"
+          f"zoompan=z='min(zoom+{0.08 / max(n, 1):.6f},1.08)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={n}:s={W}x{H}:fps={FPS},setsar=1"
+          + (f",fade=t=out:st={max(0.0, sec - 1.0):.2f}:d=1.0" if fade_out else ""))
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", str(img), "-vf", vf, "-frames:v", str(n),
+                    "-an", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(dst)], check=True)
+    return dst
+
+
 def make_video(pid: str, feedback: str = "", ask=None) -> dict:
     """④ 영상 자동: 컷별 초 단위 Omni 지시문(AI) → Omni Flash 생성(메모에 'N번' 컷이 있으면 그 컷만) → 조립 → 자동 검사 → 승인 대기."""
     st = load_status(pid)
@@ -1829,6 +1927,21 @@ def make_video(pid: str, feedback: str = "", ask=None) -> dict:
         targets = [c for c in cuts if (not only and c["cut"] not in prev_clips) or (only and c["cut"] in only)] if (only or prev_clips) else cuts
         if not targets and not prev_clips:
             targets = cuts
+        # ★혼합 제작: 'still' 컷은 콘티 이미지를 천천히 확대하는 무료 컷으로 여기서 바로 만든다(유료 생성 대상에서 제외)
+        stills = [c for c in targets if c.get("motion") == "still"]
+        if stills:
+            sid = _rid("stills")
+            for c in stills:
+                dst = pilot / "out" / sid / f"c{c['cut']:02d}.mp4"
+                still_clip(pilot / c["keyframe"], float(tm[c["cut"]]["sec"]), dst, fade_out=(c["cut"] == cuts[-1]["cut"]))
+                prev_clips[c["cut"]] = f"out/{sid}/{dst.name}"
+            targets = [c for c in targets if c.get("motion") != "still"]
+            st = load_status(pid)
+            st["artifacts"]["video"] = {**old, "clips_request": old.get("clips_request") or sid,
+                                        "clips": [{"cut": c["cut"], "file": prev_clips[c["cut"]], "sec": tm[c["cut"]]["sec"],
+                                                   "motion": c.get("motion", "omni")} for c in cuts if c["cut"] in prev_clips]}
+            _save(status_path(pid), st)
+            old = st["artifacts"]["video"]
         if targets:
             def chunks_txt(c):
                 segs = _chunks(c["jp"])
@@ -1862,7 +1975,8 @@ def make_video(pid: str, feedback: str = "", ask=None) -> dict:
             st = load_status(pid)
             st.setdefault("cost", {}).setdefault("spent", []).append({"at": _now(), "what": f"영상 컷 {len(targets) - len(failed)}개 생성", "usd": round(spent, 2)})
             st["artifacts"]["video"] = {**old, "clips_request": rid,
-                                        "clips": [{"cut": c["cut"], "file": prev_clips[c["cut"]], "sec": tm[c["cut"]]["sec"]} for c in cuts if c["cut"] in prev_clips]}
+                                        "clips": [{"cut": c["cut"], "file": prev_clips[c["cut"]], "sec": tm[c["cut"]]["sec"],
+                                                   "motion": c.get("motion", "omni")} for c in cuts if c["cut"] in prev_clips]}
             _save(status_path(pid), st)
             if failed:
                 raise RuntimeError(f"영상 생성 실패 컷: {failed} (성공한 컷은 보관 — 「다시 시도」는 실패 컷만 다시 만듭니다)")
@@ -1893,7 +2007,9 @@ def build_index() -> dict:
         cur = next((s for s in STAGES if st["stages"][s]["state"] != "approved"), "done")
         items.append({"id": st["id"], "name_ko": st.get("name_ko", ""), "sci": st.get("sci", ""),
                       "stage": cur, "state": st["stages"][cur]["state"] if cur != "done" else "approved",
-                      "job": (st.get("jobs") or {}).get(cur), "created": st.get("created", "")})
+                      "job": (st.get("jobs") or {}).get(cur), "created": st.get("created", ""),
+                      "uploaded_at": ((((st.get("artifacts") or {}).get("upload") or {}).get("result") or {}).get("at")),
+                      "stats": (((st.get("artifacts") or {}).get("upload") or {}).get("stats"))})
     idx = {"updated": _now(), "items": items}
     _save(PILOTS / "index.json", idx)
     return idx
@@ -1958,7 +2074,42 @@ def _topic_media(items: list[dict], fetch=None) -> dict:
     return cache
 
 
-def build_topics(fetch=None) -> dict:
+# ── 주제 '놀라움 점수'(운영자 선택 2026-10-05) ─────────────────────────────────────
+# 이긴 두 편(5년 절식 · 머리가 없음)은 "한 줄로 말할 수 있는 믿기 힘든 사실"이 제목·후킹을 이끌었다 → 주제 후보마다
+# AI가 출처 있는 사실 안에서 그 한 줄과 1~10점을 매기고, 새 영상 페이지는 점수 높은 종부터 보여 준다. 결과는 캐시.
+TOPIC_SCORES = V2 / "topic_scores.json"
+_SCORE_PROMPT = """You pick topics for a Japanese YouTube Shorts channel about deep-sea creatures. The two best-performing videos
+were driven by ONE unbelievable, concrete fact told in a single line (「5年以上も絶食した」, 「頭も骨もない」).
+For EACH species below, using ONLY its listed facts (never invent), write the single most surprising fact as a short hook and
+score how strongly it would stop a scrolling viewer (1 = ordinary, 10 = unbelievable). Concrete numbers, missing/strange body
+parts and extreme behaviours score high; generic "lives in the deep sea" scores low.
+Return JSON only: {{"scores":{{"<id>":{{"score":7,"hook_jp":"日本語で一行(20字以内)","hook_ko":"한국어 한 줄"}}}}}}
+# Species
+{items}
+"""
+
+
+def _topic_scores(items: list[dict], ask=None) -> dict:
+    cache = _load(TOPIC_SCORES, {}) or {}
+    todo = [t for t in items if t["ready"] and t["id"] not in cache]
+    if todo:
+        try:
+            txt = "\n".join(f"{t['id']} ({t['sci']} / {t['name_en']}): " + " | ".join(t.get("all_facts") or t["facts"]) for t in todo)
+            got = _json_obj((ask or _gemini_text)(_SCORE_PROMPT.format(items=txt))).get("scores") or {}
+            for t in todo:
+                g = got.get(t["id"]) or {}
+                try:
+                    sc = max(1, min(10, int(g.get("score"))))
+                except (TypeError, ValueError):
+                    continue
+                cache[t["id"]] = {"score": sc, "hook_jp": str(g.get("hook_jp", ""))[:40], "hook_ko": str(g.get("hook_ko", ""))[:60], "at": _now()}
+            _save(TOPIC_SCORES, cache)
+        except Exception as e:                               # noqa: BLE001 — 점수가 없어도 주제 목록은 만든다
+            print(f"[topics] 놀라움 점수 실패: {e}")
+    return cache
+
+
+def build_topics(fetch=None, ask=None) -> dict:
     """주제 후보 = v1에서 이미 사실(출처 포함)을 모아 둔 심해 종 중 **한 편 = 한 대상** 기준을 통과한 종.
     사진 장수·이야기거리(발견 사건·연도)는 자동으로 판정하지 못한다 → 화면에 '시작 후 확인'으로 정직하게 표시."""
     sys.path.insert(0, str(ROOT))
@@ -1980,15 +2131,19 @@ def build_topics(fetch=None) -> dict:
             ko = KO_GROUP.get(pid) or sci
         out.append({
             "id": pid, "key": key, "name_ko": ko, "ko_official": ko_official, "name_en": sp.get("common_name_en", ""), "sci": sci,
-            "depth_m": depth, "facts_n": len(facts), "facts": facts[:3], "sources": sp.get("sources") or [],
+            "depth_m": depth, "facts_n": len(facts), "facts": facts[:3], "all_facts": facts, "sources": sp.get("sources") or [],
             "checks": {"한 편 = 한 대상": ok_subject, "사실 3개 이상": len(facts) >= 3, "서식 수심": bool(depth)},
             "ready": ok_subject and len(facts) >= 3 and bool(depth),
             "in_progress": pid in have,
         })
-    out.sort(key=lambda t: (not t["ready"], t["in_progress"], t["name_ko"]))
     media = _topic_media(out, fetch)
+    scores = _topic_scores(out, ask)
     for t in out:
         t["photo"] = (media.get(t["id"]) or {}).get("photo")
+        sc = scores.get(t["id"]) or {}
+        t["score"], t["hook_jp"], t["hook_ko"] = sc.get("score"), sc.get("hook_jp", ""), sc.get("hook_ko", "")
+        t.pop("all_facts", None)
+    out.sort(key=lambda t: (not t["ready"], t["in_progress"], -(t.get("score") or 0), t["name_ko"]))   # 점수 높은 종부터
     res = {"updated": _now(), "topics": out}
     _save(V2 / "topics.json", res)
     return res
@@ -2012,6 +2167,8 @@ def main(argv: list[str]) -> int:
         redo_cut(a[0], int(a[1]), memo(2))
     elif cmd == "write_script":                              # 대본 자동 작성(메모가 있으면 '수정 요청'으로 반영)
         write_script(a[0], memo(1))
+    elif cmd == "stats":                                     # 유튜브 실적 가져오기(편 id 없으면 업로드된 모든 편)
+        fetch_stats(a[0] if a and a[0] else None)
     elif cmd == "write_storyboard":                          # 스토리보드 자동(메모 = 수정 요청)
         write_storyboard(a[0], memo(1))
     elif cmd == "make_video":                                # 영상 자동(메모에 'N번'이 있으면 그 컷만)

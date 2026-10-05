@@ -228,6 +228,10 @@ def answer_png(question: str, answer: str, sci: str, out: Path, bg: Path | None 
         y += a + d + 40
     dr = ImageDraw.Draw(im)
     dr.line([(W // 2 - 60, y), (W // 2 + 60, y)], fill=(200, 60, 60, 220), width=3)
+    # 연재감 한 줄(운영자 선택 2026-10-05 — 회차 번호는 금지라 '다음 수수께끼'를 약속하는 문장으로)
+    series = "次の深海の謎も、このチャンネルで。"
+    f = _fit_font(series, 30, W - 120)
+    dr.text((int((W - f.getlength(series)) / 2), int(H * 0.78) - 64), series, font=f, fill=(225, 230, 240, 255))
     # 구독 배지(흰 알약 + 빨간 점)
     pill = "チャンネル登録"
     f = _font(30)
