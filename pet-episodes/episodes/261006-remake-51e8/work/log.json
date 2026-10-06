@@ -4,23 +4,31 @@
       "pieces": [
         [
           0.0,
-          8.3
+          1.5
         ],
         [
-          11.0,
-          12.61
+          0.0,
+          2.5
+        ],
+        [
+          2.5,
+          4.5
+        ],
+        [
+          7.0,
+          9.0
         ]
       ],
-      "why": "사장님 확인 대본: 해머 실패 + 노래, 노래 가운데만 덜어 냄",
+      "why": "사장님이 정한 조각",
       "start": 0.0,
-      "end": 12.61,
-      "sec": 9.91
+      "end": 9.0,
+      "sec": 8.0
     },
     "lipsync": false,
     "allow_i2v": false,
     "use_timeline": true,
     "src_full_sec": 12.61,
-    "src_sec": 9.94,
+    "src_sec": 8.0,
     "segments": 1,
     "one_shot": true,
     "board_times": [
@@ -31,7 +39,7 @@
       6.5,
       9.5
     ],
-    "spent": 1.874,
+    "spent": 2.674,
     "ledger": [
       {
         "what": "스토리보드 그림",
@@ -68,6 +76,10 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "장면1 만들기(8초)",
+        "usd": 0.8
       }
     ],
     "board": {
@@ -236,17 +248,21 @@
     },
     "full": {
       "ok": true
+    },
+    "shots": {
+      "n": 1,
+      "sec": 8.0
     }
   },
   "last_request": {
-    "file": "10_remake_board.json",
-    "ran_at": "2026-10-06T15:44:15Z",
+    "file": "11_remake_full.json",
+    "ran_at": "2026-10-06T15:50:02Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
-    "sec": 14.63,
+    "sec": 12.71,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   },
   "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
