@@ -9,7 +9,7 @@ on:
     paths: ["pet-episodes/episodes/*/requests/*.json"]
 
 concurrency:
-  group: pet-episode-v2   # 옛 줄(pet-episode)에 걸려 멈춘 실행을 기다리지 않게(2026-10)
+  group: pet-episode-v3   # 받기 단계에서 멈춘 옛 실행을 기다리지 않게(2026-10)
   cancel-in-progress: false
 
 permissions:

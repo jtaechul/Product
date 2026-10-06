@@ -133,7 +133,10 @@ def _check_stop():
         data = json.loads(r.stdout) if r.returncode == 0 else {}
         # old_only: 옛 코드로 돌던(멈춰 있던) 실행만 멈추고 새 실행은 통과(2026-10: 옛 실행 줄이 내려받기에 걸려 새 줄로 다시 돌릴 때 두 번 만들기 방지)
         stop = [x for x in data.get("stop", []) if x not in data.get("old_only", [])]
+        allow = data.get("allow", [])                     # "편:요청파일" — 그 요청만 통과(멈춘 옛 실행은 막고 새로 보낸 요청은 진행, 2026-10)
     except Exception:  # noqa: BLE001
+        return
+    if f"{ep}:{os.environ.get('PET_REQ', '')}" in allow:
         return
     if "all" in stop or (ep and ep in stop):
         raise RuntimeError("중단 스위치로 멈췄습니다(pet-episodes/stop.json)")
@@ -3283,6 +3286,7 @@ def main(path: str) -> int:
     req = json.loads(rp.read_text(encoding="utf-8"))
     epdir = rp.parent.parent
     os.environ["PET_EP"] = epdir.name                    # 중단 스위치가 이 편을 알아보게
+    os.environ["PET_REQ"] = rp.name
     epf = epdir / "episode.json"
     ep = json.loads(epf.read_text(encoding="utf-8")) if epf.exists() else {"clips": []}
     ep["_bgm_mix"] = bool(req.get("bgm_mix"))                # 기본: 배경음악 없이(릴스 번역용)
