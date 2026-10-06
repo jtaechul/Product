@@ -2894,7 +2894,10 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
     for g in gags:
         kind = g.get("kind", "")
         words = g.get("words") or []
-        ok = any(w.lower() in allt.lower() for w in words) if words else bool(re.search(GAG_KINDS.get(kind, "$^"), allt, re.I))
+        low = allt.lower()
+        ok = (any(w.lower() in low for w in words) if words else bool(re.search(GAG_KINDS.get(kind, "$^"), allt, re.I))) \
+            or (str(g.get("en", "")).lower() in low if g.get("en") else False) \
+            or (_soften(str(g.get("text", "")))[:50].lower() in low if g.get("text") else False)   # 사장님이 적은 개그(words 없음)는 글 그대로 있는지
         if not ok:
             probs.append(f"개그 포인트가 지시에서 빠졌습니다: [{g.get('t', '')}] {kind} — {g.get('text', g.get('what', ''))[:80]}")
     for t in texts[:len(texts) - (1 if motion else 0)]:     # 비켜 가기 검사는 사람이 쓴 지시문만(동작 따라 만들기 지시문은 시간표 그대로라 제외)
