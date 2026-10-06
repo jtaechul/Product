@@ -3,15 +3,50 @@
     "pick": {
       "pieces": [
         [
-          0,
+          0.0,
           8.3
         ],
         [
           11.0,
-          12.7
+          12.61
         ]
       ],
-      "why": "사장님 확인 대본: 해머 실패 + 노래, 노래 가운데만 덜어 냄"
-    }
+      "why": "사장님 확인 대본: 해머 실패 + 노래, 노래 가운데만 덜어 냄",
+      "start": 0.0,
+      "end": 12.61,
+      "sec": 9.91
+    },
+    "lipsync": false,
+    "allow_i2v": false,
+    "use_timeline": true,
+    "src_full_sec": 12.61,
+    "src_sec": 9.94,
+    "segments": 1,
+    "one_shot": true,
+    "board_times": [
+      0.9,
+      1.8,
+      2.3,
+      3.5,
+      6.5,
+      9.5
+    ],
+    "spent": 0.15,
+    "ledger": [
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
+      }
+    ],
+    "board": {
+      "ok": true,
+      "panels": 6
+    },
+    "est_full": 1.56
+  },
+  "last_request": {
+    "file": "01_remake_board.json",
+    "ran_at": "2026-10-06T14:36:28Z",
+    "ok": true
   }
 }
