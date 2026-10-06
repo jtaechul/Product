@@ -12,13 +12,8 @@
   "beats": [
    {
     "t0": 0.0,
-    "t1": 2.5,
-    "text": "Photorealistic phone footage of a playful sports blooper, fixed wide shot of a grassy athletics field on an overcast day; the officials are dogs in lime-green shirts. [0.0-1.5s] the Shiba in the royal-blue tank top spins round twice on its hind legs, holding a rope with a small round ball on the end that swings around it. [1.5-1.8s] it lets go too early and the ball sails away sideways out of frame; the official dogs jump in surprise. [1.8-2.5s] the Shiba wobbles, loses balance and plops down to sit on the grass, looking embarrassed. No cuts, camera fixed."
-   },
-   {
-    "t0": 2.5,
-    "t1": 9.91,
-    "text": "Photorealistic, sharp, fixed medium close-up, camera does not move, no cuts. The Shiba in the black tuxedo and white bow tie sings opera behind two microphones in front of a red velvet curtain. [0.0-0.5s] it opens its mouth wide, showing teeth and tongue. [0.5-5.5s] it holds one long high note: mouth stays wide open, jaw steady with a tiny vibrato tremble, head tilting slightly back at about 4s, body still. [5.5-6.0s] the note ends and the mouth closes. [6.0-8.0s] mouth fully closed, it lifts its chin and looks upward with a small proud smile, standing still and poised."
+    "t1": 8.0,
+    "text": "Photorealistic, sharp, clean modern footage. ONE 8-second clip with ONE hard cut at exactly 4.0s. SHOT A (0.0-4.0s), fixed wide shot of the grassy athletics field exactly like image 1: [0.0-2.5s] the Shiba in the royal-blue tank top spins round twice on its hind legs, holding a rope with a small round ball on the end that swings around it; the two dogs in lime-green shirts watch. [2.5-3.0s] it lets go too early and the ball sails away sideways out of frame; the lime-green-shirt dogs jump back in surprise. [3.0-4.0s] the Shiba wobbles and plops down to sit on the grass, looking embarrassed. HARD CUT at 4.0s. SHOT B (4.0-8.0s), fixed medium close-up on a concert stage with a red velvet curtain: the same Shiba in a black tuxedo jacket and white bow tie sits behind two silver microphones. [4.0-6.5s] mouth wide open singing one long high opera note, jaw steady with a tiny vibrato, head tilting slightly back. [6.5-7.0s] the note fades, mouth still open. [7.0-7.5s] the mouth closes. [7.5-8.0s] mouth closed, chin lifted, small proud smile, ending exactly like image 2. Camera fixed in each shot."
    }
   ],
   "board_times": [
@@ -46,7 +41,7 @@
    },
    {
     "file": "body_fall_grass.mp3",
-    "at": 2.15,
+    "at": 3.2,
     "vol": 1.0
    }
   ],
@@ -62,20 +57,34 @@
   "shots": [
    {
     "panel": 1,
+    "last_panel": 6,
     "t0": 0.0,
-    "t1": 2.5,
-    "prompt": "Photorealistic phone footage of a playful sports blooper, fixed wide shot of a grassy athletics field on an overcast day; the officials are dogs in lime-green shirts. [0.0-1.5s] the Shiba in the royal-blue tank top spins round twice on its hind legs, holding a rope with a small round ball on the end that swings around it. [1.5-1.8s] it lets go too early and the ball sails away sideways out of frame; the official dogs jump in surprise. [1.8-2.5s] the Shiba wobbles, loses balance and plops down to sit on the grass, looking embarrassed. No cuts, camera fixed."
-   },
-   {
-    "panel": 4,
-    "t0": 2.5,
-    "t1": 9.91,
-    "prompt": "Photorealistic, sharp, fixed medium close-up, camera does not move, no cuts. The Shiba in the black tuxedo and white bow tie sings opera behind two microphones in front of a red velvet curtain. [0.0-0.5s] it opens its mouth wide, showing teeth and tongue. [0.5-5.5s] it holds one long high note: mouth stays wide open, jaw steady with a tiny vibrato tremble, head tilting slightly back at about 4s, body still. [5.5-6.0s] the note ends and the mouth closes. [6.0-8.0s] mouth fully closed, it lifts its chin and looks upward with a small proud smile, standing still and poised.",
-    "sec": 8
+    "t1": 8.0,
+    "sec": 8,
+    "prompt": "Photorealistic, sharp, clean modern footage. ONE 8-second clip with ONE hard cut at exactly 4.0s. SHOT A (0.0-4.0s), fixed wide shot of the grassy athletics field exactly like image 1: [0.0-2.5s] the Shiba in the royal-blue tank top spins round twice on its hind legs, holding a rope with a small round ball on the end that swings around it; the two dogs in lime-green shirts watch. [2.5-3.0s] it lets go too early and the ball sails away sideways out of frame; the lime-green-shirt dogs jump back in surprise. [3.0-4.0s] the Shiba wobbles and plops down to sit on the grass, looking embarrassed. HARD CUT at 4.0s. SHOT B (4.0-8.0s), fixed medium close-up on a concert stage with a red velvet curtain: the same Shiba in a black tuxedo jacket and white bow tie sits behind two silver microphones. [4.0-6.5s] mouth wide open singing one long high opera note, jaw steady with a tiny vibrato, head tilting slightly back. [6.5-7.0s] the note fades, mouth still open. [7.0-7.5s] the mouth closes. [7.5-8.0s] mouth closed, chin lifted, small proud smile, ending exactly like image 2. Camera fixed in each shot."
    }
   ],
   "src_vol": 1.0,
-  "board_fresh": true
+  "board_fresh": true,
+  "pieces": [
+   [
+    0,
+    1.5
+   ],
+   [
+    0,
+    2.5
+   ],
+   [
+    2.5,
+    4.5
+   ],
+   [
+    7.0,
+    9.0
+   ]
+  ],
+  "max_sec": 8
  },
  "caption": "해머는 놓쳐도 강아지는 안 놓쳐요\n\n손목밴드까지 걸어 두는 자동 리드줄. 산책 중 줄 놓칠 걱정 없이.\n\n구매는 프로필 링크에서.",
  "hashtags": [

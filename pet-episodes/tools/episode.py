@@ -2251,8 +2251,13 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
                 sk = int(sh.get("sec", sec))                    # 장면마다 길이(긴 장면은 한 번에, 2026-10 아리아 노래 7.4초)
                 usd = REMAKE_COST["omni_sec"] * sk
                 _remake_spend(res, usd, f"장면{k + 1} 만들기({sk}초)", cap)
-                body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(first)}, {"type": "text", "text":
-                        f"DURATION: {sk} seconds. Image 1 is the first frame. {sh['prompt']} {look}" + REMAKE_CLEAN}],
+                last = []                                   # 한 번에 두 장면(가운데 컷)을 만들 때 마지막 장면 칸(2026-10 아리아 편: 따로 만들면 돈이 두 번)
+                if sh.get("last_panel"):
+                    lp = _crop_bars(work / f"board_{int(sh['last_panel']):02d}.jpg", work / f"_shot_last{k + 1}.png")
+                    last = [{"type": "image", **_b64img(lp)}]
+                body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(first)}, *last, {"type": "text", "text":
+                        f"DURATION: {sk} seconds. Image 1 is the first frame." + (" Image 2 is the last frame." if last else "")
+                        + f" {sh['prompt']} {look}" + REMAKE_CLEAN}],
                         "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
                         "generation_config": {"video_config": {"task": "image_to_video"}}}
                 raw = work / f"_shot_raw{k + 1}.mp4"
@@ -2400,7 +2405,9 @@ def _remake_pick(ref: Path, L: float, T: float, work: Path, res: dict, cap: floa
     """원본을 본편 T초(기본 10초) 이하로 줄이되 원본의 후킹 구조(처음 후킹·준비→펀치라인→반응 순서)는 그대로 둔다(사용자 확정 2026-10).
     가능하면 처음부터 한 덩어리, 길면 '처음 후킹 + 펀치라인 부분' 두 덩어리로 가운데만 덜어 낸다. 결과는 log pick에 고정해 다시 쓴다."""
     pk = res.get("pick")
-    if manual and len(manual) == 2:
+    if manual and isinstance(manual[0], (list, tuple)):     # 여러 조각을 사장님이 직접(remake.pieces, 2026-10 아리아 편: 장면 길이에 맞춰 소리를 이어 붙임)
+        pk = {"pieces": [[float(a), float(b)] for a, b in manual], "why": "사장님이 정한 조각"}
+    elif manual and len(manual) == 2:
         pk = {"pieces": [[float(manual[0]), float(manual[1])]], "why": "사장님이 정한 구간"}
     elif not pk or "pieces" not in pk:
         clip = work / "_pick.mp4"
@@ -2409,7 +2416,7 @@ def _remake_pick(ref: Path, L: float, T: float, work: Path, res: dict, cap: floa
         r = _video_json(clip, PICK_ASK.format(L=L, T=T)) or {}
         pk = {"pieces": r.get("pieces") or [[0, T]], "hook": str(r.get("hook", ""))[:120], "why": str(r.get("why", ""))[:120]}
     pieces, total = [], 0.0
-    for p in pk["pieces"][:2]:
+    for p in pk["pieces"][:6]:
         try:
             a, b = max(0.0, float(p[0])), min(L, float(p[1]))
         except (TypeError, ValueError, IndexError):
@@ -2825,8 +2832,8 @@ def step_remake(ep, epdir, work, log, req):
         L = _dur(ref)
         res["src_full_sec"] = round(L, 2)
         T = float(rm.get("max_sec", REMAKE_BODY_SEC))     # 본편 길이(기본 10초) — 원본 파일 길이를 그대로 쓰지 않는다(핵심 규칙)
-        if L > T + 0.3 or rm.get("window"):
-            ref = _remake_pick(ref, L, T, work, res, cap, rm.get("window"))
+        if L > T + 0.3 or rm.get("window") or rm.get("pieces"):
+            ref = _remake_pick(ref, L, T, work, res, cap, rm.get("pieces") or rm.get("window"))
             L = _dur(ref)
         nb = max(1, math.ceil(L / REMAKE_SEG))            # 스토리보드 칸 나누기(그림 확인용)
         bseg = L / nb
