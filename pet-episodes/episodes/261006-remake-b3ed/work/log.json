@@ -7,7 +7,7 @@
     "src_sec": 10.01,
     "segments": 1,
     "one_shot": true,
-    "spent": 2.78,
+    "spent": 3.58,
     "ledger": [
       {
         "what": "스토리보드 그림",
@@ -72,6 +72,10 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "장면1 만들기(8초)",
+        "usd": 0.8
       }
     ],
     "board": {
@@ -245,22 +249,22 @@
     ],
     "shots": {
       "n": 6,
-      "sec": 10.0
+      "sec": 10.04
     },
     "full": {
       "ok": true
     }
   },
   "last_request": {
-    "file": "09_remake_board.json",
-    "ran_at": "2026-10-06T15:37:18Z",
+    "file": "11_remake_full.json",
+    "ran_at": "2026-10-06T15:52:37Z",
     "ok": true
   },
   "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)",
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
-    "sec": 14.08,
+    "sec": 14.13,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
