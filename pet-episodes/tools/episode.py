@@ -2242,10 +2242,11 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
                      f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps=24,setsar=1,format=yuv420p",
                      "-c:v", "libx264", "-crf", "20", str(out)])
             else:
-                usd = REMAKE_COST["omni_sec"] * sec
-                _remake_spend(res, usd, f"장면{k + 1} 만들기({sec}초)", cap)
+                sk = int(sh.get("sec", sec))                    # 장면마다 길이(긴 장면은 한 번에, 2026-10 아리아 노래 7.4초)
+                usd = REMAKE_COST["omni_sec"] * sk
+                _remake_spend(res, usd, f"장면{k + 1} 만들기({sk}초)", cap)
                 body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(first)}, {"type": "text", "text":
-                        f"DURATION: {sec} seconds. Image 1 is the first frame. {sh['prompt']} {look}" + REMAKE_CLEAN}],
+                        f"DURATION: {sk} seconds. Image 1 is the first frame. {sh['prompt']} {look}" + REMAKE_CLEAN}],
                         "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
                         "generation_config": {"video_config": {"task": "image_to_video"}}}
                 raw = work / f"_shot_raw{k + 1}.mp4"
