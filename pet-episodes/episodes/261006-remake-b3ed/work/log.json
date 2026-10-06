@@ -7,8 +7,12 @@
     "src_sec": 10.01,
     "segments": 1,
     "one_shot": true,
-    "spent": 0.15,
+    "spent": 0.3,
     "ledger": [
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
+      },
       {
         "what": "스토리보드 그림",
         "usd": 0.15
@@ -18,11 +22,19 @@
       "ok": true,
       "panels": 6
     },
-    "est_full": 1.57
+    "est_full": 1.57,
+    "board_times": [
+      0.4,
+      2.5,
+      4.3,
+      5.9,
+      8.2,
+      8.7
+    ]
   },
   "last_request": {
-    "file": "01_remake_board.json",
-    "ran_at": "2026-10-06T11:16:56Z",
+    "file": "02_remake_board.json",
+    "ran_at": "2026-10-06T11:26:24Z",
     "ok": true
   }
 }
