@@ -31,22 +31,210 @@
       6.5,
       9.5
     ],
-    "spent": 0.15,
+    "spent": 1.724,
     "ledger": [
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "seg1 0.5초 시간표 만들기",
+        "usd": 0.01
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 0.994
+      },
+      {
+        "what": "끝 장면 그림",
+        "usd": 0.15
+      },
+      {
+        "what": "끝 장면 영상",
+        "usd": 0.4
+      },
+      {
+        "what": "내레이션",
+        "usd": 0.02
       }
     ],
     "board": {
       "ok": true,
       "panels": 6
     },
-    "est_full": 1.56
+    "est_full": 0.57,
+    "timeline": {
+      "seg1": [
+        {
+          "t": "0.0-0.5",
+          "action": "Athlete in blue tank top and black shorts begins windup on throwing circle; official in green shirt and khakis stands right holding clipboard.",
+          "mouth": "Athlete's mouth slightly open; official's mouth closed.",
+          "sound": "Distant outdoor ambient murmur.",
+          "camera": "Fixed wide shot."
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "Athlete rotates hips and swings right arm holding discus backward; official watches.",
+          "mouth": "Athlete's mouth closed; official's mouth closed.",
+          "sound": "Ambient outdoor noise.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "Athlete spins forward across the pad, swinging arm forward to release discus off-target to the right.",
+          "mouth": "Athlete's mouth slightly open in exertion; official's mouth closed.",
+          "sound": "Windup motion sound.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "Discus flies directly toward official; athlete stumbles forward completing release.",
+          "mouth": "Athlete's mouth open; official's mouth closed.",
+          "sound": "Quiet ambient tone.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "Discus strikes the standing official directly in the groin; official starts recoiling in pain.",
+          "mouth": "Athlete's mouth open; official's mouth drops open.",
+          "sound": "Impact thud and spectator shout ('Oh!').",
+          "camera": "Fixed."
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "Cut to an anthropomorphic white fluffy dog in a black tuxedo and white bow tie centered behind two microphones on stands.",
+          "mouth": "Dog opens mouth wide, exposing teeth and tongue.",
+          "sound": "High-pitched operatic soprano note begins.",
+          "camera": "Cut to static medium close-up."
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "Dog holds singing pose facing forward behind microphones.",
+          "mouth": "Dog's mouth wide open.",
+          "sound": "Sustained high operatic note ('Aaaah').",
+          "camera": "Fixed."
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "Dog maintains upright singing posture.",
+          "mouth": "Dog's mouth wide open with steady jaw.",
+          "sound": "Continuation of sustained soprano note.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "Dog remains stationary behind microphones.",
+          "mouth": "Dog's mouth wide open with slight vibrato movement.",
+          "sound": "Operatic soprano note with vibrato.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "Dog maintains erect posture in tuxedo.",
+          "mouth": "Dog's mouth held wide open.",
+          "sound": "High soprano vibrato sustained.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "5.0-5.5",
+          "action": "Dog keeps head raised toward microphones.",
+          "mouth": "Dog's mouth wide open.",
+          "sound": "High soprano vibrato sustained.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "5.5-6.0",
+          "action": "Dog continues operatic delivery motionless.",
+          "mouth": "Dog's mouth wide open.",
+          "sound": "High soprano note sustained.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "6.0-6.5",
+          "action": "Dog holds still at microphones.",
+          "mouth": "Dog's mouth wide open.",
+          "sound": "Operatic vocal note modulating slightly.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "6.5-7.0",
+          "action": "Dog holds pose with head tilted slightly back.",
+          "mouth": "Dog's mouth wide open.",
+          "sound": "Vibrato vocal ornamentation.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "7.0-7.5",
+          "action": "Dog maintains stage posture.",
+          "mouth": "Dog's mouth wide open.",
+          "sound": "Sustained high operatic note.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "7.5-8.0",
+          "action": "Dog continues sustained vocal finish.",
+          "mouth": "Dog's mouth wide open.",
+          "sound": "High note decrescendo.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "8.0-8.5",
+          "action": "Dog finishes singing note.",
+          "mouth": "Dog's mouth starts closing.",
+          "sound": "Vocal note ends; audience applause begins.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "8.5-9.0",
+          "action": "Dog closes mouth, lifts chin and looks upward in proud composure.",
+          "mouth": "Dog's mouth fully closed.",
+          "sound": "Audience applause and cheers.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "9.0-9.5",
+          "action": "Dog stands poised and motionless at microphones.",
+          "mouth": "Dog's mouth closed.",
+          "sound": "Audience applause.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "9.5-9.9",
+          "action": "Dog remains still facing slightly right.",
+          "mouth": "Dog's mouth closed.",
+          "sound": "Audience applause continues.",
+          "camera": "Fixed."
+        }
+      ]
+    },
+    "segs": {
+      "seg1": {
+        "human": null,
+        "where": "",
+        "quality": null,
+        "issues": "",
+        "tries": 1,
+        "res": "360p"
+      }
+    },
+    "frame": {
+      "mode": "blur_fill",
+      "src": "1138x640",
+      "zoom": 1.0
+    },
+    "full": {
+      "ok": true
+    }
   },
   "last_request": {
-    "file": "01_remake_board.json",
-    "ran_at": "2026-10-06T14:36:28Z",
+    "file": "03_remake_full.json",
+    "ran_at": "2026-10-06T15:10:06Z",
     "ok": true
+  },
+  "cover": "work/cover.jpg",
+  "assemble": {
+    "ok": true,
+    "sec": 14.63,
+    "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
