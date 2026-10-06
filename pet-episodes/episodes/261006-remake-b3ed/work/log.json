@@ -248,8 +248,8 @@
     }
   },
   "last_request": {
-    "file": "08_remake_full.json",
-    "ran_at": "2026-10-06T15:19:12Z",
+    "file": "06_remake_board.json",
+    "ran_at": "2026-10-06T15:29:19Z",
     "ok": true
   },
   "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)",
