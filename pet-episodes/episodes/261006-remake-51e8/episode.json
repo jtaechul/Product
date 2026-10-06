@@ -37,7 +37,7 @@
       "close shot of the tuxedo Shiba singing a long high note, eyes half closed, head tilted up.",
       "the tuxedo Shiba with mouth closed, small proud smile."
     ],
-    "keep_audio": false,
+    "keep_audio": true,
     "sfx": [
       {
         "file": "hammer_spin_whoosh.mp3",
@@ -47,11 +47,6 @@
       {
         "file": "body_fall_grass.mp3",
         "at": 2.15,
-        "vol": 1.0
-      },
-      {
-        "file": "opera_dog_howl.mp3",
-        "at": 2.5,
         "vol": 1.0
       }
     ],
@@ -81,7 +76,8 @@
         ],
         "prompt": "Keep the original motion exactly: the singer's mouth opens and closes exactly like the original (wide open singing one long note until near the end, then closed with a small proud smile). Same black stage, two microphones, black tuxedo, white bow tie."
       }
-    ]
+    ],
+    "src_vol": 1.0
   },
   "caption": "해머는 놓쳐도 강아지는 안 놓쳐요\n\n손목밴드까지 걸어 두는 자동 리드줄. 산책 중 줄 놓칠 걱정 없이.\n\n구매는 프로필 링크에서.",
   "hashtags": [
