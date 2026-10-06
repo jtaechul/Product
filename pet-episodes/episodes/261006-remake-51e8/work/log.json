@@ -56,6 +56,14 @@
       {
         "what": "내레이션",
         "usd": 0.02
+      },
+      {
+        "what": "장면1 만들기(4초)",
+        "usd": 0.4
+      },
+      {
+        "what": "장면1 차단됨(요금 없음)",
+        "usd": -0.4
       }
     ],
     "board": {
@@ -227,8 +235,8 @@
     }
   },
   "last_request": {
-    "file": "04_remake_full.json",
-    "ran_at": "2026-10-06T15:23:24Z",
+    "file": "06_remake_full.json",
+    "ran_at": "2026-10-06T15:31:24Z",
     "ok": false
   },
   "cover": "work/cover.jpg",
@@ -237,5 +245,5 @@
     "sec": 14.63,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   },
-  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
+  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}"
 }
