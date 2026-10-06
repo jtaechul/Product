@@ -2135,6 +2135,12 @@ def _apply_freeze(src: Path, out: Path, spans, back: float = 0.0) -> Path:
     return out
 
 
+REMAKE_CLEAN = (" OUTPUT QUALITY: render clean, sharp, high-detail modern camera footage. Do NOT copy the input's blur, noise, "
+                "compression blocks, low resolution or washed-out colours; keep ONLY its composition, framing, timing, actions, "
+                "mouth movements and camera movement.")
+CLEAN_VF = "hqdn3d=3:3:4:4,scale=720:1280:flags=lanczos,unsharp=5:5:0.8:3:3:0.4"   # 원본 화질 손질(돈 안 듦) — 영상 AI에 넣기 전
+
+
 def _assert_vertical(v: Path, what: str):
     """⛔ 핵심 규칙: 꽉 찬 세로 9:16만 쓴다. 파일이 9:16이 아니거나 속에 위아래(좌우) 검은 띠가 있으면 멈춘다(자르기·늘리기·흐린 배경 금지)."""
     w, h = _wh(v)
@@ -2196,7 +2202,7 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
             if sh.get("src") and ref is not None:      # 원본이 꽉 찬 세로인 구간: 원본 그대로 바꾼다(동작·입모양 유지)
                 a, b = float(sh["src"][0]), float(sh["src"][1])
                 piece = work / f"_shot_src{k + 1}.mp4"
-                _ff(["-ss", f"{a:.3f}", "-t", f"{b - a:.3f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "16", str(piece)])
+                _ff(["-ss", f"{a:.3f}", "-t", f"{b - a:.3f}", "-i", str(ref), "-an", "-vf", CLEAN_VF, "-c:v", "libx264", "-crf", "16", str(piece)])
                 cw, ch = _content_wh(piece)
                 if cw * 16 > ch * 9 * 1.15:
                     raise RuntimeError(f"장면{k + 1}: 원본 속 화면이 가로({cw}x{ch})라 원본으로 바꿀 수 없습니다 — 그림으로 만드는 장면으로 바꿔 주세요")
@@ -2206,7 +2212,7 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
                     {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()},
                     {"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")},
                     {"type": "image", **_b64img(first)},
-                    {"type": "text", "text": swap_prompt + " " + str(sh.get("prompt", "")) + REMAKE_BOARD_REF.format(n=2)}],
+                    {"type": "text", "text": swap_prompt + " " + str(sh.get("prompt", "")) + REMAKE_BOARD_REF.format(n=2) + REMAKE_CLEAN}],
                     "response_format": {"type": "video", "resolution": REMAKE_RES}, "generation_config": {"video_config": {"task": "edit"}}}
                 raw = work / f"_shot_raw{k + 1}.mp4"
                 try:
@@ -2227,7 +2233,7 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
                 usd = REMAKE_COST["omni_sec"] * sec
                 _remake_spend(res, usd, f"장면{k + 1} 만들기({sec}초)", cap)
                 body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(first)}, {"type": "text", "text":
-                        f"DURATION: {sec} seconds. Image 1 is the first frame. {sh['prompt']} {look}"}],
+                        f"DURATION: {sec} seconds. Image 1 is the first frame. {sh['prompt']} {look}" + REMAKE_CLEAN}],
                         "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
                         "generation_config": {"video_config": {"task": "image_to_video"}}}
                 raw = work / f"_shot_raw{k + 1}.mp4"
@@ -2616,7 +2622,8 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
         return _remake_seg_i2v(key, ref, i, seg, work, res, cap, h)
     out = work / f"rm_seg{i + 1}.mp4"
     piece = work / f"_rm_piece{i + 1}.mp4"
-    _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "16", str(piece)])
+    _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-vf", CLEAN_VF, "-c:v", "libx264", "-crf", "16", str(piece)])
+    prompt = prompt + REMAKE_CLEAN                        # 원본 화질은 따라 하지 않고 구도·개그·소리만(사용자 지시 2026-10)
     inputs = [{"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}]
     if res.get("use_timeline", True):                     # 0.5초 시간표(동작·입모양·소리)를 지시에 그대로 넣는다
         prompt = prompt + _timeline(ref, i * seg, seg, work, res, cap, f"seg{i + 1}")
