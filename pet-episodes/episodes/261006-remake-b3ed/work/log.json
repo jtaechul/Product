@@ -7,7 +7,7 @@
     "src_sec": 10.01,
     "segments": 1,
     "one_shot": true,
-    "spent": 0.3,
+    "spent": 0.31,
     "ledger": [
       {
         "what": "스토리보드 그림",
@@ -16,6 +16,18 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "seg1 0.5초 시간표 만들기",
+        "usd": 0.01
+      },
+      {
+        "what": "구간1 바꾸기",
+        "usd": 1.001
+      },
+      {
+        "what": "구간1 차단됨(요금 없음)",
+        "usd": -1.001
       }
     ],
     "board": {
@@ -30,11 +42,156 @@
       5.9,
       8.2,
       8.7
-    ]
+    ],
+    "timeline": {
+      "seg1": [
+        {
+          "t": "0.0-0.5",
+          "action": "Shirtless passenger on moped holds right arm up while a hand applies a white popsicle to his armpit like deodorant; driver in white shirt steers.",
+          "mouth": "Driver mouth closed; passenger mouth slightly open.",
+          "sound": "Music with Portuguese singing.",
+          "camera": "Handheld tracking close-up."
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "Hand continues rubbing the melting white popsicle under the passenger's raised arm.",
+          "mouth": "Passenger mouth slightly open, neutral expression.",
+          "sound": "Singing continues.",
+          "camera": "Handheld close-up moving slightly left."
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "Camera pans to driver looking back over his shoulder while steering the moped.",
+          "mouth": "Driver mouth open in a grin.",
+          "sound": "Singing continues.",
+          "camera": "Pan left to driver."
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "Camera returns to passenger; hand rubs dripping ice cream across his armpit and side torso.",
+          "mouth": "Passenger mouth slightly open.",
+          "sound": "Singing continues.",
+          "camera": "Pan right to passenger."
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "Hand rubs melting popsicle against passenger's underarm, leaving thick white residue.",
+          "mouth": "Passenger mouth slightly open.",
+          "sound": "Singing continues.",
+          "camera": "Close-up on passenger's torso."
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "Hand pulls popsicle downward, leaving melted cream stretching from passenger's armpit.",
+          "mouth": "Passenger mouth slightly open.",
+          "sound": "Singing continues.",
+          "camera": "Slight pan following popsicle motion."
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "A pedestrian walks past in the background as camera moves back toward driver.",
+          "mouth": "Driver mouth open, smiling; passenger neutral.",
+          "sound": "Singing continues.",
+          "camera": "Pan left toward driver."
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "Driver steers moped forward while laughing, head tilted slightly downward.",
+          "mouth": "Driver mouth wide open, laughing.",
+          "sound": "Singing continues.",
+          "camera": "Tracking medium shot of driver."
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "Camera zooms out showing driver and shirtless passenger riding together down the road.",
+          "mouth": "Driver mouth open; passenger mouth closed.",
+          "sound": "Singing continues.",
+          "camera": "Zoom out to medium-wide tracking shot."
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "Both men ride the moped as driver continues steering and passenger holds his arm down.",
+          "mouth": "Driver mouth open, laughing; passenger mouth closed.",
+          "sound": "Singing continues.",
+          "camera": "Tracking shot from front-right."
+        },
+        {
+          "t": "5.0-5.5",
+          "action": "Camera zooms in on the driver, who has white cream smeared around his mouth and chin.",
+          "mouth": "Driver mouth wide open, laughing.",
+          "sound": "Singing continues.",
+          "camera": "Zoom in towards driver's face."
+        },
+        {
+          "t": "5.5-6.0",
+          "action": "Driver laughs hysterically with eyes squinted shut and melted cream dripping down his chin.",
+          "mouth": "Driver mouth wide open in laughter.",
+          "sound": "Singing continues.",
+          "camera": "Close-up on driver's face."
+        },
+        {
+          "t": "6.0-6.5",
+          "action": "Driver continues laughing intensely while riding, head bobbing slightly.",
+          "mouth": "Driver mouth wide open, showing teeth and white cream.",
+          "sound": "Singing continues.",
+          "camera": "Handheld close-up."
+        },
+        {
+          "t": "6.5-7.0",
+          "action": "Driver laughs with head tilted back slightly, squinting eyes.",
+          "mouth": "Driver mouth wide open.",
+          "sound": "Singing continues.",
+          "camera": "Handheld close-up."
+        },
+        {
+          "t": "7.0-7.5",
+          "action": "Driver continues grinning and laughing with melted cream coated around his lips.",
+          "mouth": "Driver mouth wide open.",
+          "sound": "Singing continues.",
+          "camera": "Handheld close-up."
+        },
+        {
+          "t": "7.5-8.0",
+          "action": "Driver maintains full laughter expression, eyes closed tight.",
+          "mouth": "Driver mouth wide open.",
+          "sound": "Singing continues.",
+          "camera": "Handheld close-up."
+        },
+        {
+          "t": "8.0-8.5",
+          "action": "Driver chuckles continuously while navigating moped.",
+          "mouth": "Driver mouth open, laughing.",
+          "sound": "Singing continues.",
+          "camera": "Handheld close-up."
+        },
+        {
+          "t": "8.5-9.0",
+          "action": "Driver laughs with head slightly turned.",
+          "mouth": "Driver mouth wide open.",
+          "sound": "Singing continues.",
+          "camera": "Handheld close-up."
+        },
+        {
+          "t": "9.0-9.5",
+          "action": "Driver holds laugh with eyes crinkled and mouth filled with white ice cream froth.",
+          "mouth": "Driver mouth wide open.",
+          "sound": "Singing continues.",
+          "camera": "Handheld close-up."
+        },
+        {
+          "t": "9.5-10.0",
+          "action": "Driver remains laughing as the clip ends.",
+          "mouth": "Driver mouth wide open.",
+          "sound": "Singing fades out.",
+          "camera": "Fixed close-up."
+        }
+      ]
+    }
   },
   "last_request": {
-    "file": "02_remake_board.json",
-    "ran_at": "2026-10-06T11:26:24Z",
-    "ok": true
-  }
+    "file": "03_remake_full.json",
+    "ran_at": "2026-10-06T11:33:00Z",
+    "ok": false
+  },
+  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The model could not generate output because the input image violates Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy).\",\"code\":\"prohibited_content\"}}"
 }
