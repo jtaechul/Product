@@ -7,7 +7,7 @@
     "src_sec": 10.01,
     "segments": 1,
     "one_shot": true,
-    "spent": 0.31,
+    "spent": 0.46,
     "ledger": [
       {
         "what": "스토리보드 그림",
@@ -36,6 +36,10 @@
       {
         "what": "구간1 차단됨(요금 없음)",
         "usd": -1.001
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
       }
     ],
     "board": {
@@ -209,9 +213,9 @@
     ]
   },
   "last_request": {
-    "file": "05_remake_full.json",
-    "ran_at": "2026-10-06T14:49:37Z",
-    "ok": false
+    "file": "07_remake_board.json",
+    "ran_at": "2026-10-06T15:05:51Z",
+    "ok": true
   },
   "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
 }
