@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-          fetch-depth: 0
+          fetch-depth: 30     # 전체 기록(영상 수천 개 기록)은 받지 않는다 — 최근 30개 커밋만(받기 15분 → 수 초)
           filter: blob:none   # 저장소에 영상이 쌓여 전체 받기에 10분+ 걸림 → 지금 판의 파일만 받고 옛 영상은 받지 않음
 
       - name: 도구 설치
