@@ -2216,6 +2216,13 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
                               [ROOT / "pet-episodes" / "characters" / "dog.png"], first, "9:16")
                 if not r.get("ok"):
                     raise RuntimeError(f"장면{k + 1} 첫 장면 그림 실패: {r}")
+        if sh.get("cut_from") and not out.exists():      # 한 번 만든 영상에서 잘라 쓰기(2026-10: 장면마다 따로 만들면 돈이 여러 번 — 한 번에 만들고 나눠 씀)
+            ci, ca = int(sh["cut_from"][0]), float(sh["cut_from"][1])
+            raw0 = work / f"_shot_raw{ci}.mp4"
+            if not raw0.exists():
+                raise RuntimeError(f"장면{k + 1}: 잘라 쓸 영상(장면{ci})이 아직 없습니다")
+            _ff(["-ss", f"{ca:.3f}", "-i", str(raw0), "-an", "-t", f"{L:.3f}", "-vf", f"scale={W}:{H},fps=24,setsar=1,format=yuv420p",
+                 "-c:v", "libx264", "-crf", "20", str(out)])
         if not out.exists():
             if sh.get("src") and ref is not None:      # 원본이 꽉 찬 세로인 구간: 원본 그대로 바꾼다(동작·입모양 유지)
                 a, b = float(sh["src"][0]), float(sh["src"][1])
@@ -2271,7 +2278,8 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
                 _assert_vertical(raw, f"장면{k + 1}")
                 _ff(["-i", str(raw), "-an", "-t", f"{L:.3f}", "-vf", f"scale={W}:{H},fps=24,setsar=1,format=yuv420p",
                      "-c:v", "libx264", "-crf", "20", str(out)])
-        parts.append(out)
+        if not sh.get("hidden"):                          # hidden = 잘라 쓰기용으로만 만든 영상(본편에 그대로 넣지 않음)
+            parts.append(out)
     body_v = work / "remake.mp4"
     ins = sum((["-i", str(o)] for o in parts), [])
     _ff([*ins, "-filter_complex", "".join(f"[{i}:v]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=1:a=0,format=yuv420p[v]",
