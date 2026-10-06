@@ -5529,6 +5529,18 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       }
     }
     d.appendChild(act);
+    if(e.state!=='running'){                          // 영상 삭제(사용자 요청 2026-10)
+      var delb=epBtn('이 영상 삭제',function(){
+        if(!confirm('이 영상과 대본·스토리보드를 모두 지웁니다. 되돌릴 수 없습니다.'+((e.ig&&e.ig.ok)?' (인스타에 올린 게시물은 지워지지 않으니 인스타 앱에서 따로 지워 주세요.)':'')+' 지울까요?')) return;
+        say('epDMsg','지우는 중…','wait');
+        post('/api/episode/request',{id:e.id,kind:'delete'}).then(function(r){
+          if(r&&r.success){ say('epDMsg','지웠습니다.','ok'); setTimeout(function(){ location.hash='#list'; },800); }
+          else say('epDMsg',(r&&r.error)||'지우지 못했습니다.','no');
+        }).catch(function(x){ say('epDMsg','지우지 못했습니다: '+x.message,'no'); });
+      });
+      delb.style.cssText='margin-top:6px;color:#b42318;border-color:#f3c3be';
+      var dr=epEl('div','ep-act'); dr.appendChild(delb); d.appendChild(dr);
+    }
     // 인스타 올리기 예약(사용자 요청 2026-10): 고른 시각이 되면 서버가 자동으로 올린다(반응 좋은 시간: 월·화 저녁 6~9시)
     var sb=epEl('div','ep-post view-off');
     if(e.hasVideo&&!(e.ig&&e.ig.ok)){
@@ -6875,6 +6887,31 @@ async function runIgSchedule(env) {
   await env.PENDING_POSTS.put(IG_SCHED_KEY, JSON.stringify(m));
 }
 
+// 영상 삭제(사용자 요청 2026-10): 그 편 폴더(대본·요청·결과 영상)를 한 커밋으로 지운다. 인스타에 이미 올린 게시물은 지워지지 않는다.
+// 제작 중이면 지우지 않는다. 커밋에 [skip ci]를 붙여 제작 워크플로가 돌지 않게.
+async function episodeDelete(env, id) {
+  const base = `${EP_ROOT}/${id}`;
+  const paths = [];
+  async function walk(dir, depth) {
+    const r = await gh(env, `/contents/${dir}?ref=${encodeURIComponent(EP_BRANCH)}`);
+    if (!r.ok || !Array.isArray(r.json)) return;
+    for (const x of r.json) {
+      if (x.type === 'file') paths.push(x.path);
+      else if (x.type === 'dir' && depth < 3) await walk(x.path, depth + 1);
+    }
+  }
+  await walk(base, 0);
+  if (!paths.length) throw new Error('지울 영상이 없습니다(이미 지웠을 수 있습니다).');
+  const reqs = paths.filter(x => x.startsWith(`${base}/requests/`)).map(x => x.split('/').pop()).sort();
+  const log = JSON.parse((await ghText(env, `${base}/work/log.json`)) || '{}');
+  if (reqs.length && log.last_request?.file !== reqs[reqs.length - 1]) throw new Error('지금 만드는 중이라 지울 수 없습니다. 끝난 뒤 다시 눌러 주세요.');
+  await ghCommit(env, paths.map(path => ({ path, del: true })), `pet: ${id} 영상 삭제 [skip ci]`);
+  const m = await igSchedMap(env);
+  if (m[id]) { delete m[id]; await env.PENDING_POSTS.put(IG_SCHED_KEY, JSON.stringify(m)); }
+  await env.PENDING_POSTS.delete(`ep_meta:${id}`).catch(() => {});
+  return { success: true, id, deleted: paths.length };
+}
+
 // 같은 편에 추가 요청: 다시 조립·컷 다시 뽑기·인스타 올리기
 async function handleEpisodeRequest(env, body) {
   const id = String(body.id || '');
@@ -6891,6 +6928,8 @@ async function handleEpisodeRequest(env, body) {
     if (!log.assemble?.ok) throw new Error('아직 영상이 완성되지 않았습니다.');
     if (log.ig_publish?.media_id) throw new Error('이미 인스타에 올린 편입니다.');
     req = { steps: ['publish'] };
+  } else if (kind === 'delete') {
+    return await episodeDelete(env, id);
   } else if (kind === 'schedule' || kind === 'unschedule') {
     return await igScheduleSet(env, id, kind === 'schedule' ? Number(body.at) : 0);
   } else if (kind === 'remake_full') {
