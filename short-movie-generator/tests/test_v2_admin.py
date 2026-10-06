@@ -1093,3 +1093,20 @@ def test_youtube_body_has_publish_at_only_when_scheduled(monkeypatch):
     assert r["privacy"] == "scheduled"
     yt.upload("v.mp4", "t", "d", privacy="public")
     assert "publishAt" not in bodies[-1]["status"] and bodies[-1]["status"]["privacyStatus"] == "public"
+
+
+def test_glyph_check_works_without_fonttools(monkeypatch):
+    """실사고 2026-10-06: 서버에 fontTools 가 없어 조립이 실패 → Pillow 대체 판정으로도 같은 결과."""
+    import builtins
+    import assemble as A
+    real = builtins.__import__
+
+    def imp(name, *a, **k):
+        if name.startswith("fontTools"):
+            raise ImportError(name)
+        return real(name, *a, **k)
+    monkeypatch.setattr(A, "_CMAP", None)
+    monkeypatch.setattr(builtins, "__import__", imp)
+    assert A.missing_glyphs("1800年代後半から 水深4152m 第5歩脚") == []
+    assert A.missing_glyphs("1800년대") == ["년", "대"]
+    monkeypatch.setattr(A, "_CMAP", None)

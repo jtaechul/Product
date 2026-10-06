@@ -74,8 +74,15 @@ def missing_glyphs(text: str) -> list[str]:
     """FONT_BOLD 에 없는 글자 목록(공백 제외). 예: 한글은 NotoSansJP 에 없다 → 네모로 깨짐."""
     global _CMAP
     if _CMAP is None:
-        from fontTools.ttLib import TTFont
-        _CMAP = set(TTFont(str(FONT_BOLD)).getBestCmap())
+        try:
+            from fontTools.ttLib import TTFont
+            _CMAP = set(TTFont(str(FONT_BOLD)).getBestCmap())
+        except ImportError:                                  # 실사고 2026-10-06: 서버에 fontTools 가 없어 조립 실패 → Pillow 로 대체 판정
+            _CMAP = False
+    if _CMAP is False:
+        f = ImageFont.truetype(str(FONT_BOLD), 40)
+        tofu = bytes(f.getmask("\U0010FFFF"))               # 글꼴에 없는 글자는 이 빈 상자(.notdef)와 똑같이 그려진다
+        return sorted({ch for ch in text if not ch.isspace() and bytes(f.getmask(ch)) == tofu})
     return sorted({ch for ch in text if not ch.isspace() and ord(ch) not in _CMAP})
 
 

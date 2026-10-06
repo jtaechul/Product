@@ -78,7 +78,7 @@
       "approved_at": "2026-10-05T22:42:21Z"
     },
     "video": {
-      "state": "approved",
+      "state": "review",
       "notes": [
         {
           "at": "2026-10-05T22:46:03Z",
@@ -668,7 +668,7 @@
         "tts_id": "r10051532_script_tts",
         "ending": ""
       },
-      "built_at": "2026-10-05T23:03:38Z"
+      "built_at": "2026-10-06T00:10:43Z"
     },
     "upload": {
       "meta": {
@@ -713,7 +713,7 @@
     }
   },
   "checks": {
-    "at": "2026-10-05T23:03:38Z",
+    "at": "2026-10-06T00:10:43Z",
     "duration_s": 56.18,
     "white_edge_px": {
       "value": 0,
@@ -750,10 +750,10 @@
     },
     "storyboard": {
       "stage": "storyboard",
-      "status": "failed",
-      "at": "2026-10-06T00:04:49Z",
+      "status": "done",
+      "at": "2026-10-06T00:10:43Z",
       "action": "redo_panel",
-      "text": "5번 콘티 칸 다시 그리기 실패: No module named 'fontTools'"
+      "text": "5번 콘티 칸 다시 그림 — 무료 줌인 컷이라 완성본 재조립(조립은 서버 글꼴 도구 누락으로 실패했던 것을 고쳐 다시 함)"
     },
     "video": {
       "stage": "video",

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-06T00:09:11Z",
+  "updated": "2026-10-06T00:12:04Z",
   "items": [
     {
       "id": "bathynomus_giganteus",
@@ -27,9 +27,15 @@
       "id": "lithodidae",
       "name_ko": "심해 킹크랩(리소드과)",
       "sci": "Lithodidae",
-      "stage": "upload",
+      "stage": "video",
       "state": "review",
-      "job": null,
+      "job": {
+        "stage": "video",
+        "status": "done",
+        "at": "2026-10-05T22:48:47Z",
+        "action": "make_video",
+        "text": "영상 자동 제작 완료 — 승인 대기"
+      },
       "created": "2026-10-05T15:29:14Z",
       "uploaded_at": null,
       "stats": null
