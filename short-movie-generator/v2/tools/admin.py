@@ -929,17 +929,49 @@ def upload_meta(pid: str, ask=None) -> dict:
     return st
 
 
+# ── 예약 공개(운영자 요청 2026-10-06) ─────────────────────────────────────
+# 화면에서 한국 시간(KST = 일본 시간과 같음)으로 고른 시각 → 유튜브 publishAt(UTC). 업로드는 바로 하고(비공개),
+# 그 시각에 유튜브가 자동으로 공개한다(우리 서버가 그때 깨어 있을 필요 없음).
+SCHEDULE_MIN_LEAD_S = 15 * 60                               # 너무 가까운 시각은 업로드가 끝나기 전에 지나 버린다
+SCHEDULE_MAX_DAYS = 180
+
+
+def parse_publish_at(text: str, now: float | None = None) -> str:
+    """'2026-10-07T19:00'(KST) 또는 오프셋 있는 ISO → 'YYYY-MM-DDTHH:MM:00Z'(UTC). 지난 시각·너무 먼 시각은 거절."""
+    import datetime as dt
+    t = str(text or "").strip()
+    if not t:
+        raise SystemExit("예약 공개 시각이 비어 있습니다")
+    try:
+        d = dt.datetime.fromisoformat(t.replace("Z", "+00:00"))
+    except ValueError:
+        raise SystemExit(f"예약 공개 시각 형식이 이상합니다: {t}")
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=dt.timezone(dt.timedelta(hours=9)))   # 화면 입력 = 한국 시간
+    u = d.astimezone(dt.timezone.utc).replace(second=0, microsecond=0)
+    lead = u.timestamp() - (time.time() if now is None else now)
+    if lead < SCHEDULE_MIN_LEAD_S:
+        raise SystemExit("예약 공개 시각은 지금부터 15분 이후여야 합니다 — 시각을 다시 골라 주세요")
+    if lead > SCHEDULE_MAX_DAYS * 86400:
+        raise SystemExit(f"예약 공개는 {SCHEDULE_MAX_DAYS}일 안쪽으로만 잡을 수 있습니다")
+    return u.strftime("%Y-%m-%dT%H:%M:00Z")
+
+
 def save_upload_meta(pid: str, data: dict) -> dict:
     st = load_status(pid)
     up = st.setdefault("artifacts", {}).setdefault("upload", {})
     if (up.get("result") or {}).get("url"):
         raise SystemExit("이미 업로드했습니다 — 제목·설명은 유튜브 스튜디오에서 고쳐 주세요")
     m = up.setdefault("meta", {})
-    for k in ("title_jp", "title_ko", "desc_jp", "desc_ko", "pinned_comment", "privacy", "category"):
+    for k in ("title_jp", "title_ko", "desc_jp", "desc_ko", "pinned_comment", "privacy", "category", "publish_at"):
         if k in data:
             m[k] = str(data[k]).strip()
-    if m.get("privacy") not in ("private", "unlisted", "public"):
+    if m.get("privacy") not in ("private", "unlisted", "public", "scheduled"):
         m["privacy"] = "private"
+    if m["privacy"] == "scheduled":
+        m["publish_at"] = parse_publish_at(m.get("publish_at", ""))
+    else:
+        m.pop("publish_at", None)
     if m.get("category") not in YT_CATEGORIES:
         m["category"] = "15"
     if not m.get("title_jp") or len(m["title_jp"]) > 100:
@@ -975,16 +1007,21 @@ def youtube_upload(pid: str, uploader=None, playlister=None) -> dict:
         uploader = yt.upload
         playlister = playlister or yt.add_to_playlist
     tags = [t.lstrip("#") for t in m.get("tags_jp", [])]
+    pub = parse_publish_at(m.get("publish_at", "")) if m.get("privacy") == "scheduled" else None   # 지났으면 여기서 멈춤
     try:
-        r = uploader(str(video), m["title_jp"], m.get("desc_jp", ""), tags=tags, privacy=m.get("privacy", "private"),
-                     category_id=m.get("category") or "15")
+        r = uploader(str(video), m["title_jp"], m.get("desc_jp", ""), tags=tags,
+                     privacy="private" if pub else m.get("privacy", "private"),
+                     category_id=m.get("category") or "15", **({"publish_at": pub} if pub else {}))
     except Exception as e:                                   # noqa: BLE001
         _note(st, "upload", "error", f"유튜브 업로드 실패: {str(e)[:160]}")
         _save(status_path(pid), st)
         raise SystemExit(f"유튜브 업로드 실패: {e}")
-    up["result"] = {"url": r["url"], "video_id": r.get("video_id", ""), "privacy": r.get("privacy", ""),
+    up["result"] = {"url": r["url"], "video_id": r.get("video_id", ""), "privacy": "scheduled" if pub else r.get("privacy", ""),
                     "category": m.get("category") or "15", "at": _now()}
-    _note(st, "upload", "uploaded", f"유튜브 업로드 완료({r.get('privacy', '')}): {r['url']} — 고정 댓글은 유튜브 앱에서 직접 달고 고정")
+    if pub:
+        up["result"]["publish_at"] = pub
+    _note(st, "upload", "uploaded", f"유튜브 업로드 완료({'예약 공개 ' + pub if pub else r.get('privacy', '')}): {r['url']}"
+          " — 고정 댓글은 유튜브 앱에서 직접 달고 고정")
     if playlister and r.get("video_id"):                     # 재생목록 추가 — 실패해도 업로드는 성공으로 둔다
         try:
             pl = playlister(r["video_id"], PLAYLIST_TITLE, PLAYLIST_DESC)
@@ -2158,7 +2195,8 @@ def build_index() -> dict:
         items.append({"id": st["id"], "name_ko": st.get("name_ko", ""), "sci": st.get("sci", ""),
                       "stage": cur, "state": st["stages"][cur]["state"] if cur != "done" else "approved",
                       "job": (st.get("jobs") or {}).get(cur), "created": st.get("created", ""),
-                      "uploaded_at": ((((st.get("artifacts") or {}).get("upload") or {}).get("result") or {}).get("at")),
+                      "uploaded_at": (lambda r: r.get("publish_at") or r.get("at"))(                 # 예약이면 공개 시각 기준(주 2편 집계)
+                          (((st.get("artifacts") or {}).get("upload") or {}).get("result") or {})),
                       "stats": (((st.get("artifacts") or {}).get("upload") or {}).get("stats"))})
     idx = {"updated": _now(), "items": items}
     _save(PILOTS / "index.json", idx)

@@ -251,6 +251,21 @@ statusOverride = null;
   if (ap?.onclick) await ap.onclick();
   const sent = dispatched.slice(d3)[0]; const note = sent ? JSON.parse(sent.body.inputs.note) : {};
   res.upload_sends_screen_values = !!sent && sent.body.inputs.action === "approve" && note.privacy === "public" && note.category === "28" && note.title_jp === "画面の題名";
+  // 예약 공개(운영자 요청 2026-10-06): 선택지 · 「내일 19:00」 버튼 · 시각이 함께 전송 · 업로드 후 예약 안내
+  statusOverride = s8; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  const u9 = els.view.innerHTML; res.schedule_option_shown = u9.includes('value="scheduled"') && u9.includes('id="up_at"') && u9.includes("오늘 19:00");
+  els["up_tj"] = makeEl("up_tj"); els["up_tj"].value = "題"; els["up_pv"] = makeEl("up_pv"); els["up_pv"].value = "scheduled"; els["up_at"] = makeEl("up_at");
+  const qb = (lists["[data-atq]"] || []).find(b => b.dataset.atq === "1"); if (qb?.onclick) qb.onclick();
+  const picked = els["up_at"].value || "";
+  const d9 = dispatched.length; const ap9 = (lists["[data-act]"] || []).find(b => b.dataset.act === "approve" && b.dataset.stage === "upload");
+  if (ap9?.onclick) await ap9.onclick();
+  const sent9 = dispatched.slice(d9)[0]; const note9 = sent9 ? JSON.parse(sent9.body.inputs.note) : {};
+  res.schedule_sends_time = /T19:00$/.test(picked) && note9.privacy === "scheduled" && note9.publish_at === picked;
+  els["up_at"].value = "2020-01-01T19:00"; const d10 = dispatched.length; if (ap9?.onclick) await ap9.onclick();
+  res.schedule_past_blocked = dispatched.length === d10;
+  const s10 = JSON.parse(JSON.stringify(s7)); s10.artifacts.upload.result = { url: "https://youtu.be/X", privacy: "scheduled", publish_at: "2026-10-07T10:00:00Z" };
+  statusOverride = s10; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  res.schedule_result_shown = els.view.innerHTML.includes("10월 7일 19:00") && els.view.innerHTML.includes("예약 공개");
   statusOverride = null;
 }
 

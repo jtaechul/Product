@@ -370,6 +370,12 @@
   `artifacts.upload.stats`에 기록. **재생목록·실적은 토큰 재발급 필요**(`scripts/youtube_oauth.py` — youtube +
   yt-analytics.readonly 권한). 재발급 전엔 실패 사유만 기록하고 업로드는 그대로 된다.
 - 롱폼 모음편은 선택하지 않음(보류).
+- **예약 공개 업로드(운영자 요청 2026-10-06)**: 업로드 카드 「공개 범위」에 **예약 공개(시간 지정)** — 한국 시간(=일본 시간)으로
+  시각을 고르면(빠른 버튼 「오늘/내일 19:00」 · 기본 다음 19:00) 「승인 → 유튜브 업로드」 때 **바로 비공개로 올리고 유튜브
+  `publishAt`으로 그 시각에 자동 공개**한다(우리 서버가 그때 돌 필요 없음 · 업로드 권한만으로 됨). 시각은 **지금+15분 ~ 180일**만
+  허용(`admin.parse_publish_at` · 저장할 때와 업로드 직전 두 번 검사 — 지난 시각이면 올리지 않고 멈춤). 결과에 `publish_at`(UTC) 기록,
+  페이지는 「예약 공개 — N월 N일 HH:MM 공개 예정」 표시. 주 2편 집계는 공개 시각 기준. 회귀: `test_scheduled_upload_*`·
+  `test_youtube_body_has_publish_at_only_when_scheduled` · `v2_admin_check.mjs`(schedule_*).
 
 ### 비용 (한 편 기준 · 2026-10 혼합 제작)
 | 항목 | 금액 |

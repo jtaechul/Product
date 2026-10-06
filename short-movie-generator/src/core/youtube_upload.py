@@ -70,10 +70,12 @@ def _client():
 
 def upload(video_path: str, title: str, description: str, tags: list[str] | None = None,
            *, privacy: str = "private", category_id: str = "15",
-           made_for_kids: bool = False) -> dict:
+           made_for_kids: bool = False, publish_at: str | None = None) -> dict:
     """영상 업로드(재개형). 반환: {"video_id", "url", "privacy"}.
 
     category_id 기본 15 = 'Pets & Animals'(해양생물에 적합). privacy 기본 private(게이트).
+    publish_at(UTC ISO 'YYYY-MM-DDTHH:MM:SSZ'): 예약 공개 — 지금은 비공개로 올리고 그 시각에 유튜브가 자동 공개
+    (YouTube Data API 규칙: publishAt 은 privacyStatus=private 일 때만 유효).
     """
     if not has_credentials():
         raise RuntimeError("no_credentials")
@@ -92,6 +94,9 @@ def upload(video_path: str, title: str, description: str, tags: list[str] | None
             "selfDeclaredMadeForKids": bool(made_for_kids),
         },
     }
+    if publish_at:
+        body["status"].update(privacyStatus="private", publishAt=publish_at)
+        privacy = "scheduled"
     media = MediaFileUpload(video_path, chunksize=-1, resumable=True, mimetype="video/mp4")
     req = yt.videos().insert(part="snippet,status", body=body, media_body=media)
     resp = None

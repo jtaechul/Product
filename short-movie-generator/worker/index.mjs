@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-06-2 (별명→실제 생물 규칙 · 컷 그림만 다시 그리기)";
+const BUILD="v2026-10-06-3 (예약 공개 업로드)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2593,7 +2593,8 @@ function v2stageBody(st,stage){
   }
   if(stage==="upload"){
     const m=a.meta||null, res=a.result||null;
-    if(res&&res.url)return '<div class="cfact"><span class="ok">업로드 완료</span> ('+esc(V2_PV[res.privacy]||res.privacy||"")+
+    if(res&&res.url)return (res.publish_at?'<div class="cfact"><span class="ok">예약 공개</span> '+esc(v2kstLabel(res.publish_at))+'(한국·일본 시간)에 유튜브가 자동으로 공개합니다. 그 전까지는 비공개입니다.</div>':'')+
+      '<div class="cfact"><span class="ok">업로드 완료</span> ('+esc(V2_PV[res.privacy]||res.privacy||"")+
         (res.category?' · '+esc(V2_CAT[res.category]||res.category):'')+') · <a href="'+esc(res.url)+'" target="_blank">유튜브에서 보기</a></div>'+
       (res.playlist?'<div class="cfact">재생목록 「深海の謎」에 추가됨</div>':(res.playlist_error?'<div class="cfact warn">재생목록 추가 실패 — '+esc(res.playlist_error)+'</div>':''))+
       v2statsHTML(a.stats)+
@@ -2614,7 +2615,11 @@ function v2stageBody(st,stage){
       '<span class="lbl">유튜브 카테고리</span><select id="up_ct">'+Object.entries(V2_CAT).map(([v,l])=>'<option value="'+v+'"'+((m.category||"15")===v?' selected':'')+'>'+l+'</option>').join("")+'</select>'+
       '<div class="hint">제목 끝 해시태그 2개(종명 + #深海) · #Shorts 없음 · 설명에 구독·댓글 유도, AI 재현 영상 표기, 출처가 자동으로 들어갑니다.</div>'+
       '<span class="lbl">고정 댓글 (업로드 후 유튜브 앱에서 직접 고정)</span><input id="up_pc" value="'+esc(m.pinned_comment||"")+'">'+
-      '<span class="lbl">공개 범위</span><select id="up_pv">'+[["private","비공개(먼저 확인)"],["unlisted","일부 공개"],["public","공개"]].map(([v,l])=>'<option value="'+v+'"'+(m.privacy===v?' selected':'')+'>'+l+'</option>').join("")+'</select>'+
+      '<span class="lbl">공개 범위</span><select id="up_pv">'+[["private","비공개(먼저 확인)"],["unlisted","일부 공개"],["public","공개"],["scheduled","예약 공개 (시간 지정)"]].map(([v,l])=>'<option value="'+v+'"'+(m.privacy===v?' selected':'')+'>'+l+'</option>').join("")+'</select>'+
+      '<div id="up_atbox" style="display:'+(m.privacy==="scheduled"?'block':'none')+'">'+
+        '<span class="lbl">공개할 시각 (한국 시간 = 일본 시간)</span><input type="datetime-local" id="up_at" value="'+esc(m.publish_at?v2kstInput(m.publish_at):v2nextAt(19,0))+'">'+
+        '<div class="btnrow"><button class="btn" data-atq="0">오늘 19:00</button><button class="btn" data-atq="1">내일 19:00</button></div>'+
+        '<div class="hint">「승인 → 유튜브 업로드」를 누르면 지금 비공개로 올라가고, 이 시각에 유튜브가 자동으로 공개합니다. 시각은 지금부터 15분 이후로 골라 주세요.</div></div>'+
       '<div class="btnrow"><button class="btn" id="upsave">수정 내용 저장</button><button class="btn warn" id="upmeta">AI로 다시 쓰기</button></div>';
   }
   return "";
@@ -2643,12 +2648,18 @@ function v2recutPanels(st){
     return h;}).join("");
 }
 // ── 복사(운영자 요청 2026-09-28: 업로드 뒤에도 제목·설명·해시태그를 인스타그램에 붙여넣을 수 있게) ──
-const V2_PV={private:"비공개",unlisted:"일부 공개",public:"공개"};
+const V2_PV={private:"비공개",unlisted:"일부 공개",public:"공개",scheduled:"예약 공개"};
+// 예약 공개(운영자 요청 2026-10-06): 화면은 한국 시간(KST=JST), 저장은 UTC
+function v2kstInput(iso){const t=Date.parse(iso);return isNaN(t)?"":new Date(t+9*36e5).toISOString().slice(0,16);}
+function v2kstLabel(iso){const v=v2kstInput(iso);if(!v)return "";const [d,h]=v.split("T"),[,mo,da]=d.split("-");return (+mo)+"월 "+(+da)+"일 "+h;}
+function v2nextAt(hour,dayOff){const k=new Date(Date.now()+9*36e5);k.setUTCDate(k.getUTCDate()+(dayOff||0));k.setUTCHours(hour,0,0,0);
+  if(!dayOff&&k.getTime()-9*36e5<Date.now()+15*6e4)k.setUTCDate(k.getUTCDate()+1);return k.toISOString().slice(0,16);}
 const V2_CAT={"15":"반려동물/동물","28":"과학기술","27":"교육"};
 function v2copyBtn(fromId){return '<button class="btn v2edit" data-copyfrom="'+fromId+'">복사</button>';}
 function v2copyBox(label,text,id){return '<span class="lbl">'+esc(label)+'</span><div class="v2copy"><div class="v2copytxt" id="'+id+'">'+esc(text||"")+'</div>'+v2copyBtn(id)+'</div>';}
 function v2upFields(){return {title_jp:($("#up_tj")||{}).value,title_ko:($("#up_tk")||{}).value,desc_jp:($("#up_dj")||{}).value,
-  desc_ko:($("#up_dk")||{}).value,pinned_comment:($("#up_pc")||{}).value,privacy:($("#up_pv")||{}).value,category:($("#up_ct")||{}).value};}
+  desc_ko:($("#up_dk")||{}).value,pinned_comment:($("#up_pc")||{}).value,privacy:($("#up_pv")||{}).value,category:($("#up_ct")||{}).value,
+  publish_at:(($("#up_pv")||{}).value==="scheduled")?(($("#up_at")||{}).value||""):""};}
 // ── 완성본 저장(운영자 요청 2026-09-28 · 인스타그램 등 직접 올리기용) ──
 //   아이폰: 공유 창이 열리면 「비디오 저장」 → 사진 앱에 저장. 안 되면 안내에 뜨는 직접 저장 링크.
 function v2dlHTML(k){return '<button class="btn save" data-v2dl="'+k+'" style="width:100%;margin-top:10px">완성본 영상 저장 (휴대폰 사진에 저장)</button>'+
@@ -2768,9 +2779,13 @@ async function renderV2Episode(pid){
     if(act==="revise"&&!note){banner("수정 요청은 무엇을 고칠지 칸에 적어 주세요.","err");return;}
     const nIss=stage==="script"?((((st.artifacts||{}).script||{}).crosscheck||{}).issues||[]).length:0;
     if(act==="approve"&&stage==="upload"){
-      const pv=(($("#up_pv")||{}).value)||"private", pvk={private:"비공개",unlisted:"일부 공개",public:"공개"}[pv]||pv;
+      const pv=(($("#up_pv")||{}).value)||"private";
       const d=v2upFields();
       if(!String(d.title_jp||"").trim()){banner("일본어 제목이 비어 있습니다.","err");return;}
+      if(pv==="scheduled"){const t=Date.parse(d.publish_at+":00+09:00");
+        if(!d.publish_at||isNaN(t)){banner("예약 공개 시각을 골라 주세요.","err");return;}
+        if(t<Date.now()+15*6e4){banner("예약 공개 시각은 지금부터 15분 이후여야 합니다.","err");return;}}
+      const pvk=pv==="scheduled"?("예약 공개("+v2kstLabel(new Date(Date.parse(d.publish_at+":00+09:00")).toISOString())+" 공개)"):({private:"비공개",unlisted:"일부 공개",public:"공개"}[pv]||pv);
       if(!confirm("유튜브에 '"+pvk+"' · 카테고리 '"+(V2_CAT[d.category]||d.category)+"'(으)로 업로드할까요? 지금 화면의 제목·설명 그대로 올라갑니다. (한 번 올리면 다시 올릴 수 없습니다)"))return;
       if(await v2do("approve",pid,"upload",JSON.stringify(d),b))banner("업로드를 시작했습니다. 2~5분 뒤 새로고침하면 유튜브 링크가 보입니다.","ok");
       return;
@@ -2849,6 +2864,8 @@ async function renderV2Episode(pid){
   });
   document.querySelectorAll("[data-rcno]").forEach(b=>b.onclick=async()=>{if(confirm(b.dataset.rcno+"번 컷 수정을 취소할까요?"))await v2do("recut_cancel",pid,b.dataset.rcno,"",b);});
   const um=$("#upmeta");if(um)um.onclick=async()=>{if(confirm("유튜브 제목·설명을 AI로 (다시) 쓸까요? 지금 칸의 내용은 바뀝니다."))await v2do("upload_meta",pid,"","",um);};
+  const upv=$("#up_pv");if(upv)upv.onchange=()=>{const bx=$("#up_atbox");if(bx)bx.style.display=upv.value==="scheduled"?"block":"none";};
+  document.querySelectorAll("[data-atq]").forEach(b=>b.onclick=()=>{const i=$("#up_at");if(i)i.value=v2nextAt(19,+b.dataset.atq);});
   const us=$("#upsave");if(us)us.onclick=async()=>{
     const d=v2upFields();
     if(!String(d.title_jp||"").trim()){banner("일본어 제목이 비어 있습니다.","err");return;}

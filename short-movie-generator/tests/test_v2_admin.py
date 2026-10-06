@@ -1028,3 +1028,68 @@ def test_redo_panel_redraws_one_still_cut_and_reassembles(real_copy, monkeypatch
     clip = st["artifacts"]["video"]["clips"][0]
     assert "_stills/" in clip["file"] and (real_copy / clip["file"]).exists() and clip["history"] == ["out/old_stills/c02.mp4"]
     assert called["asm"] == "bathynomus_giganteus"
+
+
+def test_scheduled_upload_publishes_at_given_kst_time(real_copy):
+    """예약 공개(운영자 요청 2026-10-06): 화면의 한국 시간 → 유튜브 publishAt(UTC) · 지금은 비공개로 업로드."""
+    import time as _t
+    now = _t.time()
+    assert admin.parse_publish_at("2026-10-07T19:00", now=_t.mktime((2026, 10, 6, 0, 0, 0, 0, 0, 0))) == "2026-10-07T10:00:00Z"
+    with pytest.raises(SystemExit):
+        admin.parse_publish_at("2020-01-01T19:00")                     # 지난 시각
+    with pytest.raises(SystemExit):
+        admin.parse_publish_at(_t.strftime("%Y-%m-%dT%H:%M", _t.gmtime(now + 9 * 3600 + 300)))   # 5분 뒤(KST) — 너무 가까움
+    with pytest.raises(SystemExit):
+        admin.parse_publish_at("2099-01-01T19:00")                     # 180일 넘음
+    st = admin.load_status("bathynomus_giganteus")
+    st["artifacts"].setdefault("upload", {})["meta"] = admin._compose_meta(
+        json.loads((admin._script_path("bathynomus_giganteus")).read_text(encoding="utf-8")), dict(_META))
+    admin._save(admin.status_path("bathynomus_giganteus"), st)
+    kst = _t.strftime("%Y-%m-%dT%H:%M", _t.gmtime(now + 9 * 3600 + 2 * 86400))   # 이틀 뒤(KST)
+    admin.save_upload_meta("bathynomus_giganteus", {"privacy": "scheduled", "publish_at": kst})
+    m = admin.load_status("bathynomus_giganteus")["artifacts"]["upload"]["meta"]
+    assert m["privacy"] == "scheduled" and m["publish_at"].endswith("Z")
+    got = {}
+
+    def up(path, title, desc, tags=None, privacy=None, category_id=None, publish_at=None):
+        got.update(privacy=privacy, publish_at=publish_at)
+        return {"url": "https://youtu.be/x", "video_id": "x", "privacy": privacy}
+    admin.youtube_upload("bathynomus_giganteus", uploader=up, playlister=lambda *a: {"playlist_id": "p"})
+    assert got == {"privacy": "private", "publish_at": m["publish_at"]}
+    res = admin.load_status("bathynomus_giganteus")["artifacts"]["upload"]["result"]
+    assert res["privacy"] == "scheduled" and res["publish_at"] == m["publish_at"]
+    # 공개로 바꾸면 예약 시각은 지워진다
+    st = admin.load_status("bathynomus_giganteus"); st["artifacts"]["upload"].pop("result"); admin._save(admin.status_path("bathynomus_giganteus"), st)
+    admin.save_upload_meta("bathynomus_giganteus", {"privacy": "public", "publish_at": kst})
+    assert "publish_at" not in admin.load_status("bathynomus_giganteus")["artifacts"]["upload"]["meta"]
+
+
+def test_youtube_body_has_publish_at_only_when_scheduled(monkeypatch):
+    sys.path.insert(0, str(Path(admin.__file__).resolve().parents[2]))
+    from src.core import youtube_upload as yt
+    bodies = []
+
+    class Req:
+        def next_chunk(self):
+            return None, {"id": "vid"}
+
+    class Vids:
+        def insert(self, part, body, media_body):
+            bodies.append(body)
+            return Req()
+
+    class C:
+        def videos(self):
+            return Vids()
+    monkeypatch.setattr(yt, "has_credentials", lambda: True)
+    monkeypatch.setattr(yt, "_client", lambda: C())
+    import types
+    fake = types.ModuleType("googleapiclient.http")
+    fake.MediaFileUpload = lambda *a, **k: None                            # 실제 라이브러리 없이 요청 본문만 확인
+    monkeypatch.setitem(sys.modules, "googleapiclient", types.ModuleType("googleapiclient"))
+    monkeypatch.setitem(sys.modules, "googleapiclient.http", fake)
+    r = yt.upload("v.mp4", "t", "d", privacy="private", publish_at="2026-10-07T10:00:00Z")
+    assert bodies[-1]["status"]["publishAt"] == "2026-10-07T10:00:00Z" and bodies[-1]["status"]["privacyStatus"] == "private"
+    assert r["privacy"] == "scheduled"
+    yt.upload("v.mp4", "t", "d", privacy="public")
+    assert "publishAt" not in bodies[-1]["status"] and bodies[-1]["status"]["privacyStatus"] == "public"
