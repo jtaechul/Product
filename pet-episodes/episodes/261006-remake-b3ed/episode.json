@@ -8,7 +8,7 @@
     "music": "Mágica - Calcinha Preta"
   },
   "remake": {
-    "swap": "1) replace the scooter driver's head with the head of the Shiba Inu from image 1; 2) turn the driver's visible arms and hands into thick furry Shiba front legs with round paws; 3) replace the shirtless passenger behind with another breed of dog having furry limbs and head; 4) replace the person rubbing the popsicle and any bystanders with real dogs of various breeds",
+    "swap": "1) the scooter DRIVER (white short-sleeve mesh shirt, dark shorts) becomes the Shiba Inu from image 1: Shiba head, and his arms, hands, legs and feet become thick furry Shiba legs with round paws; 2) the SHIRTLESS REAR PASSENGER becomes a golden retriever: retriever head and his whole bare chest, belly, back, raised arm, armpit and legs become a fully furry golden retriever body and furry legs (no bare human skin left anywhere); 3) the hand that holds the ice-cream bar coming in from the frame edge becomes one furry dog paw; 4) the bystander in the checked shirt and jeans becomes a real mixed-breed dog walking upright the same way",
     "ending": "The Shiba Inu rubs the wet wipe furiously all over the shocked victim's head with a smug grin, holding the pack proudly in its paw.",
     "big": "아이스크림 테러\n시바의 결말은?",
     "sub": "독일 더마 테스트 완료한 펫티슈로\n떡짐과 비린내 엉킴까지 말끔하게",
@@ -16,7 +16,125 @@
     "cut": "",
     "whimper": false,
     "ad": "vo",
-    "cap": 5
+    "cap": 5,
+    "beats": [
+      {
+        "t0": 0.0,
+        "t1": 2.2,
+        "text": "Handheld camera behind the moving scooter on a sunny hedge-lined road. The golden retriever passenger holds one foreleg high; a dog paw from the right edge rubs a vanilla ice-cream bar back and forth deep in its armpit fur, smearing white cream; at 1.5-2.2 the retriever lifts its paw to its face, grimacing, a white cream streak on its cheek."
+      },
+      {
+        "t0": 2.2,
+        "t1": 3.1,
+        "text": "Fast whip-pan to the front: the Shiba driver turns its head back toward camera and laughs with its mouth wide open (2.3-2.8), then fast whip-pan back."
+      },
+      {
+        "t0": 3.1,
+        "t1": 4.1,
+        "text": "Back on the armpit: the paw keeps rubbing, the ice cream bar is melting and dripping down the furry belly; the retriever looks away in disgust."
+      },
+      {
+        "t0": 4.1,
+        "t1": 5.1,
+        "text": "Hard cut to an extreme close-up of the armpit fur with the crushed, melting ice-cream bar (comedic freeze frame, nothing moves)."
+      },
+      {
+        "t0": 5.2,
+        "t1": 5.7,
+        "text": "Wide: a bystander dog walks past on the sidewalk and stares; the Shiba driver is still laughing."
+      },
+      {
+        "t0": 5.8,
+        "t1": 6.1,
+        "text": "PUNCHLINE: the paw shoves the same armpit ice-cream bar into the laughing Shiba driver's open mouth; it bites down."
+      },
+      {
+        "t0": 6.1,
+        "t1": 7.3,
+        "text": "The Shiba keeps riding with the ice-cream stick hanging out of its mouth, chewing, unaware."
+      },
+      {
+        "t0": 7.3,
+        "t1": 8.4,
+        "text": "The retriever hops off the back; the scooter wobbles and bumps into a big grey plastic trash bin, which tips over (8.1-8.3)."
+      },
+      {
+        "t0": 8.4,
+        "t1": 9.5,
+        "text": "Hard cut to a close-up of the Shiba driver's face: mouth wide open in a disgusted scream, full of white ice cream (comedic freeze frame, nothing moves)."
+      },
+      {
+        "t0": 9.6,
+        "t1": 10.0,
+        "text": "Wide: the scooter tips, the trash bin rolls on the pavement, the retriever stumbles beside it."
+      }
+    ],
+    "board_times": [
+      0.4,
+      2.5,
+      4.3,
+      5.9,
+      8.2,
+      8.7
+    ],
+    "board_notes": [
+      "golden retriever passenger with a fully furry body and raised furry foreleg (NO bare human skin, no human arm), a dog paw rubbing the ice-cream bar in its armpit; Shiba driver in white mesh shirt in front.",
+      "the Shiba driver turned back toward the camera, laughing with mouth wide open, white mesh shirt, furry paws on the handlebars.",
+      "extreme close-up of golden retriever armpit fur with a crushed melting vanilla ice-cream bar and white drips; the holding hand is a furry dog paw; no human skin.",
+      "a furry dog paw pushes the ice-cream bar into the open mouth of the Shiba driver (white mesh shirt), Shiba eyes squeezed shut.",
+      "the Shiba driver on the black scooter bumping into a big grey plastic trash bin; the golden retriever jumping off behind; furry legs only.",
+      "close-up of the Shiba driver's face, mouth wide open in a disgusted scream full of white ice cream, white mesh shirt."
+    ],
+    "freeze": [
+      [
+        4.1,
+        5.1
+      ],
+      [
+        8.4,
+        9.5
+      ]
+    ],
+    "keep_audio": false,
+    "sfx": [
+      {
+        "file": "scooter_ride_loop.mp3",
+        "at": 0.0,
+        "vol": 0.45,
+        "loop": true,
+        "until": 8.3
+      },
+      {
+        "file": "icecream_squish.mp3",
+        "at": 0.2,
+        "vol": 0.9
+      },
+      {
+        "file": "icecream_squish.mp3",
+        "at": 3.2,
+        "vol": 0.8
+      },
+      {
+        "file": "zoom_hit.mp3",
+        "at": 4.05,
+        "vol": 1.0
+      },
+      {
+        "file": "icecream_chomp.mp3",
+        "at": 5.8,
+        "vol": 1.0
+      },
+      {
+        "file": "trash_bin_crash.mp3",
+        "at": 8.1,
+        "vol": 1.0
+      },
+      {
+        "file": "zoom_hit.mp3",
+        "at": 8.35,
+        "vol": 1.0
+      }
+    ]
   },
   "caption": "아이스크림 테러 시바의 결말은?\n\n독일 더마 테스트 완료한 펫티슈로 떡짐과 비린내 엉킴까지 말끔하게\n\n구매는 프로필 링크에서.",
   "hashtags": [

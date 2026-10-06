@@ -2115,11 +2115,33 @@ def _board_times(L: float, n: int, seg: float) -> list[float]:
     return t
 
 
-def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path, res: dict, cap: float):
+def _apply_freeze(src: Path, out: Path, spans) -> Path:
+    """[[시작, 끝], ...] 구간을 시작 프레임으로 멈춰 둔다(길이는 그대로, 24fps 기준 ffmpeg freezeframes)."""
+    L, fps = _dur(src), 24
+    chain, cur = [f"[0:v]fps={fps},setpts=PTS-STARTPTS[v0]"], "v0"
+    for k, (a, b) in enumerate(sorted((float(a), float(b)) for a, b in spans)):
+        a, b = max(0.0, a), min(L, b)
+        if b <= a:
+            continue
+        f0, f1 = int(round(a * fps)), int(round(b * fps)) - 1
+        chain.append(f"[{cur}]split[s{k}a][s{k}b];[s{k}a][s{k}b]freezeframes=first={f0}:last={f1}:replace={f0}[v{k + 1}]")
+        cur = f"v{k + 1}"
+    chain.append(f"[{cur}]format=yuv420p[v]")
+    _ff(["-i", str(src), "-filter_complex", ";".join(chain), "-map", "[v]", "-c:v", "libx264", "-crf", "20", str(out)])
+    return out
+
+
+def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path, res: dict, cap: float,
+                  times: list | None = None, notes: list | None = None):
+    """times = 칸마다 원본에서 뽑을 시각(웃음 포인트를 사람이 골라 줄 때, remake.board_times), notes = 칸마다 바꿀 내용(remake.board_notes)."""
     W0, H0 = BOARD_CW * BOARD_COLS, BOARD_CH * BOARD_ROWS
     fit = f"scale={BOARD_CW}:{BOARD_CH}:force_original_aspect_ratio=decrease,pad={BOARD_CW}:{BOARD_CH}:(ow-iw)/2:(oh-ih)/2"
     cells = []
-    for k, t in enumerate(_board_times(L, n, seg)):
+    tt = [float(x) for x in (times or [])][:BOARD_COLS * BOARD_ROWS]
+    if len(tt) < BOARD_COLS * BOARD_ROWS:
+        tt = (tt + _board_times(L, n, seg))[:BOARD_COLS * BOARD_ROWS]
+    res["board_times"] = tt
+    for k, t in enumerate(tt):
         c = work / f"_bcell{k}.png"
         _ff(["-ss", f"{min(t, L - 0.1):.2f}", "-i", str(ref), "-frames:v", "1", "-vf", fit, str(c)])
         cells.append(c)
@@ -2130,7 +2152,10 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
     tile.save(src_tile)
     _remake_spend(res, REMAKE_COST["image"], "스토리보드 그림", cap)
     out = work / "_board_out.png"
-    r = gen_image(REMAKE_BOARD.format(swap=swap), [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, "4:5", "2K")
+    ask = REMAKE_BOARD.format(swap=swap)
+    if notes:                                           # 칸마다 무엇을 바꾸는지(사용자 지적 2026-10: 사람 맨살·팔이 그대로 남음)
+        ask += " PANEL-BY-PANEL (left to right, top row first): " + " ".join(f"Panel {k + 1}: {str(x).strip()}" for k, x in enumerate(notes[:6]))
+    r = gen_image(ask, [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, "4:5", "2K")
     if not r.get("ok"):
         raise RuntimeError(f"스토리보드 그림 실패: {r.get('error')}")
     im = Image.open(out).convert("RGB")
@@ -2633,6 +2658,9 @@ def step_remake(ep, epdir, work, log, req):
     key = _key("GEMINI_API_KEY")
     W, H = 360, 640                                       # 360p(사용자 확정)
     prompt = REMAKE_SWAP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "))
+    if rm.get("beats"):                                   # 사람이 원본을 보고 적은 초 단위 대본(웃음 포인트·줌·정지 화면) — 가장 우선
+        prompt += (" AUTHOR'S BEAT SHEET of the original (authoritative; keep every cut, zoom, freeze frame and action at these exact "
+                   "times, only the people become dogs): " + " ".join(f"[{b['t0']:.1f}-{b['t1']:.1f}s] {b['text']}" for b in rm["beats"]))
     res["lipsync"] = bool(rm.get("lipsync"))
     # 원본 동작을 바꾸는 '스토리보드로 만들기'는 기본으로 끈다(사용자 지적 2026-10: 동작을 마음대로 완전히 바꿈) — 켠 편만
     res["allow_i2v"] = bool(rm.get("allow_i2v"))
@@ -2677,7 +2705,8 @@ def step_remake(ep, epdir, work, log, req):
             return
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
-                res["board"] = _remake_board(ref, L, nb, bseg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
+                res["board"] = _remake_board(ref, L, nb, bseg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap,
+                                              rm.get("board_times"), rm.get("board_notes"))
             res["est_full"] = est_all
             if float(res.get("spent", 0)) + est_all > cap:
                 res["board"]["over"] = True
@@ -2696,7 +2725,8 @@ def step_remake(ep, epdir, work, log, req):
             if {"segs", "body"} & set(redo):
                 res.pop("timeline", None)                 # 본편을 다시 만들면 0.5초 시간표도 새로(구간이 바뀌었을 수 있음)
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
-            res["board"] = _remake_board(ref, L, nb, bseg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap)
+            res["board"] = _remake_board(ref, L, nb, bseg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap,
+                                              rm.get("board_times"), rm.get("board_notes"))
             # 새로 그린 스토리보드는 확인받은 뒤에 영상으로(사용자 지적 2026-10 헬기 편: 확인 안 한 그림에 개가 두 마리 → 영상도 두 마리)
             res["est_full"] = est_all
             res["board"]["wait"] = True
@@ -2735,6 +2765,9 @@ def step_remake(ep, epdir, work, log, req):
             ins += ["-i", str(o)]
         _ff([*ins, "-filter_complex", "".join(f"[{i}:v]" for i in range(n)) + f"concat=n={n}:v=1:a=0,format=yuv420p[v]",
              "-map", "[v]", "-c:v", "libx264", "-crf", "23", str(body_v)])
+        if rm.get("freeze"):                              # 원본의 화면 정지(웃음 포인트)는 영상 AI가 움직여 버리므로 조립 때 그 장면을 그대로 멈춘다
+            body_v = _apply_freeze(body_v, work / "remake_fz.mp4", rm["freeze"])
+            res["freeze"] = rm["freeze"]
         # 2) 끝 장면: 마지막 프레임 + 실제 상품 사진 → 첫 장면 → 4초
         last = work / "_rm_last.png"
         _ff(["-sseof", "-0.1", "-i", str(body_v), "-frames:v", "1", str(last)])
