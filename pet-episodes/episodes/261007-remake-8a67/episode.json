@@ -1,0 +1,93 @@
+{
+ "kind": "remake",
+ "menuName": "리메이크 · 사과 도둑과 경비견(시험)",
+ "clips": [],
+ "source": {
+  "youtube": "",
+  "title": "사과 도둑과 경비견(사장님 올림)",
+  "music": ""
+ },
+ "remake": {
+  "method": "motion",
+  "keep_people": true,
+  "cast": "exactly one human man (black hoodie) and exactly one dog (the Shiba) - no other people or animals",
+  "swap": "the yellow Labrador in the yard becomes the Shiba Inu from image 1 (the same Shiba in every frame, thick furry legs, round paws); the man in the black hoodie climbing the fence stays a real human man with the same black hoodie, black trousers, hood up, face hidden by the hood, human hands, and exactly the same actions",
+  "window": [
+   0,
+   8.1
+  ],
+  "board_times": [
+   0.5,
+   1.5,
+   2.1,
+   3.0,
+   5.2,
+   7.4
+  ],
+  "board_notes": [
+   "Vertical 9:16 security-camera view of a sunny backyard: a tall wooden plank fence runs across the middle, an apple tree heavy with red apples overhangs the fence from behind, dirt and dry-grass ground with a round tree stump at front-left, hard daylight. 0.5s: the man in a black hoodie (hood up, black trousers) is straddling the top of the fence, swinging a leg over to climb into the yard; the Shiba stands on the ground below looking up at him, ears up.",
+   "Vertical 9:16 security-camera view of a sunny backyard: a tall wooden plank fence runs across the middle, an apple tree heavy with red apples overhangs the fence from behind, dirt and dry-grass ground with a round tree stump at front-left, hard daylight. 1.5s: the man has landed and stands by the fence facing the Shiba; the Shiba stands facing him, relaxed, tail up and wagging.",
+   "Vertical 9:16 security-camera view of a sunny backyard: a tall wooden plank fence runs across the middle, an apple tree heavy with red apples overhangs the fence from behind, dirt and dry-grass ground with a round tree stump at front-left, hard daylight. 2.1s: the man bends and pats the Shiba's head with one hand; the Shiba leans into the hand happily, eyes soft, tail wagging.",
+   "Vertical 9:16 security-camera view of a sunny backyard: a tall wooden plank fence runs across the middle, an apple tree heavy with red apples overhangs the fence from behind, dirt and dry-grass ground with a round tree stump at front-left, hard daylight. 3.0s: the man reaches up with both arms, pulling an apple-laden branch down and picking red apples; the Shiba stands beside him watching calmly.",
+   "Vertical 9:16 security-camera view of a sunny backyard: a tall wooden plank fence runs across the middle, an apple tree heavy with red apples overhangs the fence from behind, dirt and dry-grass ground with a round tree stump at front-left, hard daylight. 5.2s: the man is climbing back over the fence, one leg over the top, hoodie pocket bulging with apples; the Shiba stands below watching him leave, tail wagging.",
+   "Vertical 9:16 security-camera view of a sunny backyard: a tall wooden plank fence runs across the middle, an apple tree heavy with red apples overhangs the fence from behind, dirt and dry-grass ground with a round tree stump at front-left, hard daylight. 7.4s: the Shiba alone in the yard, sniffing the ground by the fence then glancing toward the camera, tail wagging; only the man's leg is disappearing over the fence at the top-left; apples still hang above."
+  ],
+  "gags": [
+   {
+    "t": "0.0-1.2",
+    "kind": "담넘기",
+    "en": "climbs over the fence",
+    "text": "the man in the black hoodie climbs over the wooden fence from behind the apple tree and drops into the yard while the Shiba looks up at him"
+   },
+   {
+    "t": "1.5-2.4",
+    "kind": "쓰다듬기",
+    "en": "pats the guard dog",
+    "text": "the man bends forward and pats and strokes the Shiba's head; the Shiba leans in and wags its tail, friendly, no barking"
+   },
+   {
+    "t": "2.5-3.9",
+    "kind": "사과따기",
+    "en": "steals the apples",
+    "text": "the man reaches up with both arms, pulls an apple-laden branch down and picks red apples, tucking them into his hoodie; the Shiba stands beside him watching calmly"
+   },
+   {
+    "t": "4.0-6.6",
+    "kind": "담넘기",
+    "en": "climbs back out with the apples",
+    "text": "the man turns, grabs the top of the fence and climbs back over it and out of sight; the Shiba just watches, tail wagging"
+   },
+   {
+    "t": "6.6-8.1",
+    "kind": "반응",
+    "en": "the guard-dog reaction",
+    "text": "the Shiba alone sniffs the ground where the man stood, then turns and looks toward the camera, tail wagging as if nothing happened"
+   }
+  ],
+  "keep_audio": true,
+  "ending": "Same backyard by the wooden fence, same daylight and security-camera angle, the thief is gone. The Shiba sits calmly in front of the fence with the real dog apple-juice product (image 2) standing upright on the ground beside it, lapping apple juice from a small bowl next to the bottle, tail wagging, red apples still hanging above",
+  "big": "사과 도둑을 그냥 보내 준 경비견",
+  "sub": "사과는 양보해도 주스는 못 참지",
+  "vo": "사과는 드릴게요. 주스는 제 거라서. 구매는 프로필 링크에서.",
+  "cut": "",
+  "whimper": false,
+  "ad": "vo",
+  "cap": 5
+ },
+ "caption": "사과 도둑을 그냥 보내 준 경비견\n\n사과는 양보해도 주스는 못 참지\n\n구매는 프로필 링크에서.",
+ "hashtags": [
+  "#강아지사과주스",
+  "#강아지음료",
+  "#반려견과일주스",
+  "#강아지수분보충",
+  "#강아지간식추천"
+ ],
+ "product": {
+  "title": "강아지용 사과주스",
+  "brand": "",
+  "category": "간식",
+  "reason": "사과는 양보해도 주스는 못 참지",
+  "link": "",
+  "image": ""
+ }
+}

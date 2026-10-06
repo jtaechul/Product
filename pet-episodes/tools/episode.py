@@ -2112,7 +2112,7 @@ REMAKE_BOARD_FRESH = ("Image 1 is an empty 3x2 storyboard layout: six grey verti
                       "black bars, keeping the grid layout and panel sizes exactly. Every panel is sharp, clean, high-detail modern camera "
                       "footage with natural colours (no blur, no noise, no low-resolution look). The dog in every panel is the Shiba Inu "
                       "from image 2 (same face, fur colour and markings) - the same dog in every panel, with thick furry legs and round "
-                      "paws. Only animals, no people. Add no text, numbers or borders inside the panels.")
+                      "paws. {people} Add no text, numbers or borders inside the panels.")
 REMAKE_BOARD_REF = (" Image {n} is the approved storyboard for the FIRST FRAME of this clip: the first frame must look exactly like "
                     "it (same dog head, paws and background dogs), then follow the original motion.")
 
@@ -2304,7 +2304,7 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
 
 
 def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path, res: dict, cap: float,
-                  times: list | None = None, notes: list | None = None, fresh: bool = False):
+                  times: list | None = None, notes: list | None = None, fresh: bool = False, cast: str = ""):
     """times = 칸마다 원본에서 뽑을 시각(웃음 포인트를 사람이 골라 줄 때, remake.board_times), notes = 칸마다 바꿀 내용(remake.board_notes)."""
     W0, H0 = BOARD_CW * BOARD_COLS, BOARD_CH * BOARD_ROWS
     fit = f"scale={BOARD_CW}:{BOARD_CH}:force_original_aspect_ratio=decrease,pad={BOARD_CW}:{BOARD_CH}:(ow-iw)/2:(oh-ih)/2"
@@ -2329,7 +2329,8 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
     tile.save(src_tile)
     _remake_spend(res, REMAKE_COST["image"], "스토리보드 그림", cap)
     out = work / "_board_out.png"
-    ask = REMAKE_BOARD_FRESH if fresh else REMAKE_BOARD.format(swap=swap)
+    ask = REMAKE_BOARD_FRESH.format(people=(f"CAST in every panel: {cast} (the human stays a real human with a human face, hands and clothes)."
+                                            if cast else "Only animals, no people.")) if fresh else REMAKE_BOARD.format(swap=swap)
     if notes:                                           # 칸마다 무엇을 바꾸는지(사용자 지적 2026-10: 사람 맨살·팔이 그대로 남음)
         ask += " PANEL-BY-PANEL (left to right, top row first): " + " ".join(f"Panel {k + 1}: {str(x).strip()}" for k, x in enumerate(notes[:6]))
     r = gen_image(ask, [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, "4:5", "2K")
@@ -2937,8 +2938,8 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
 MOTION_HEAD = ("MOTION TRANSFER. The video is the MOTION REFERENCE: reproduce it shot for shot - every body action, contact, fall, "
                "head turn, mouth opening, hand/paw movement, camera move, pan, zoom and cut happens at exactly the same second as in "
                "the video, with the same framing and composition. Image 1 is the APPEARANCE REFERENCE for the first frame: the "
-               "characters, clothes, props and place look exactly like image 1 in every frame (the people of the video are these "
-               "dogs: {swap}). Do not invent new actions, do not skip or soften any action. ")
+               "characters, clothes, props and place look exactly like image 1 in every frame. CAST MAPPING from the video to the "
+               "output: {swap}. Do not invent new actions, do not skip or soften any action. ")
 MOTION_GAGS = (" MUST-KEEP COMEDY BEATS (the joke lives here - every one must be clearly visible at this exact time): {gags}.")
 MOTION_FILL = (" VERTICAL 9:16: fill the whole vertical frame edge to edge with the scene (extend the scene above and below if the "
                "reference is wider); no black bars, no blurred bands, no letterbox.")
@@ -2954,7 +2955,7 @@ def _soften(txt: str) -> str:
 
 
 def _gag_text(gags: list) -> str:
-    return "; ".join(f"[{g.get('t', '')}s] {GAG_KO.get(g.get('kind', ''), g.get('kind', ''))} - {_soften(str(g.get('text', g.get('what', ''))))[:110]}"
+    return "; ".join(f"[{g.get('t', '')}s] {g.get('en') or GAG_KO.get(g.get('kind', ''), g.get('kind', ''))} - {_soften(str(g.get('text', g.get('what', ''))))[:110]}"
                      for g in gags)
 
 
@@ -2974,7 +2975,7 @@ def _board_notes_auto(rows: list, times: list, swap: str) -> list:
                     break
         act = _soften(str((row or {}).get("action", "")))[:220]
         cam = str((row or {}).get("camera", ""))[:60]
-        notes.append(_soften(f"Moment at {t:.1f}s of the original: {act} Camera: {cam}. The people are the dogs ({swap}); same place and props."))
+        notes.append(_soften(f"Moment at {t:.1f}s of the original: {act} Camera: {cam}. Cast: {swap}; same place and props."))
     return notes
 
 
@@ -2988,9 +2989,13 @@ def _motion_prompt(rm: dict, res: dict, L: float, swap: str) -> str:
         p += _soften(TIMELINE_HEAD + " " + " ".join(f"[{x['t']}s] action: {x['action']}; mouth: {x['mouth']}; camera: {x['camera']}." for x in rows))[:5200]
     if gags:
         p += MOTION_GAGS.format(gags=_gag_text(gags))
-    p += " " + REMAKE_ONE_DOG + MOTION_FILL + REMAKE_CLEAN
-    p += (" Every leg, arm, hand and foot of the characters is a thick furry dog leg with a round paw (anything held is held by a "
-          "paw); no humans, no human skin, no added text, no morphing, no extra animals.")
+    p += " " + (("CAST COUNT: " + str(rm["cast"]) + ".") if rm.get("cast") else REMAKE_ONE_DOG) + MOTION_FILL + REMAKE_CLEAN
+    if rm.get("keep_people"):                             # 사람은 사람 그대로(사용자 지시 2026-10 사과 도둑 편) — 개만 시바견
+        p += (" The human character keeps a human face, hands and clothes exactly as in the video; the dog is the Shiba Inu with thick "
+              "furry legs and round paws; no added text, no morphing, no extra animals, no extra people.")
+    else:
+        p += (" Every leg, arm, hand and foot of the characters is a thick furry dog leg with a round paw (anything held is held by a "
+              "paw); no humans, no human skin, no added text, no morphing, no extra animals.")
     return _soften(p)                                     # 바꾸기 설명(swap)에 든 막힐 낱말까지 한 번에
 
 
@@ -3181,7 +3186,7 @@ def step_remake(ep, epdir, work, log, req):
         b_fresh = bool(rm.get("board_fresh")) or motion   # 동작 따라 만들기는 스토리보드도 원본 합성 없이 깨끗하게
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
-                res["board"] = _remake_board(ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh)
+                res["board"] = _remake_board(ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "")
             res["est_full"] = est_all
             if float(res.get("spent", 0)) + est_all > cap:
                 res["board"]["over"] = True
@@ -3200,7 +3205,7 @@ def step_remake(ep, epdir, work, log, req):
             if {"segs", "body"} & set(redo):
                 res.pop("timeline", None)                 # 본편을 다시 만들면 0.5초 시간표도 새로(구간이 바뀌었을 수 있음)
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
-            res["board"] = _remake_board(ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh)
+            res["board"] = _remake_board(ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "")
             # 새로 그린 스토리보드는 확인받은 뒤에 영상으로(사용자 지적 2026-10 헬기 편: 확인 안 한 그림에 개가 두 마리 → 영상도 두 마리)
             res["est_full"] = est_all
             res["board"]["wait"] = True
@@ -3216,6 +3221,8 @@ def step_remake(ep, epdir, work, log, req):
             ref_gen = _apply_freeze(ref, work / "_src_hidden.mp4", rm["hide_spans"], back=0.15)   # 바로 앞 장면으로 덮어 보내고, 조립 때 스토리보드 칸으로 채운다
             res["hide_spans"] = rm["hide_spans"]
         shots_mode = mode == "full" and rm.get("source_video") is False and bool(rm.get("shots"))
+        if mode == "full" and not (work / "rm_end.mp4").exists() and not (ep.get("product") or {}).get("image"):
+            raise RuntimeError("상품 사진이 없습니다 — 끝 광고 장면에 실제 상품 사진이 필요합니다. 상품(쿠팡 링크)을 먼저 정해 주세요(돈 안 씀)")
         if motion and mode == "full":                     # 동작 따라 만들기(Genjutsu 방식): 원본 = 동작 참고, 스토리보드 1번 칸 = 모습 참고
             body_v = _remake_motion(key, ref, L, work, res, cap, W, H, rm, swap_txt)
         elif shots_mode:                                  # 원본 영상을 영상 AI에 넣지 않고 스토리보드 칸 + 초 단위 지시로 장면마다 만든다
