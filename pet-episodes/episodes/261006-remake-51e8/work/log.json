@@ -31,7 +31,7 @@
       6.5,
       9.5
     ],
-    "spent": 1.724,
+    "spent": 1.874,
     "ledger": [
       {
         "what": "스토리보드 그림",
@@ -64,13 +64,17 @@
       {
         "what": "장면1 차단됨(요금 없음)",
         "usd": -0.4
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
       }
     ],
     "board": {
       "ok": true,
       "panels": 6
     },
-    "est_full": 0.57,
+    "est_full": 1.56,
     "timeline": {
       "seg1": [
         {
@@ -235,9 +239,9 @@
     }
   },
   "last_request": {
-    "file": "09_remake_full.json",
-    "ran_at": "2026-10-06T15:41:48Z",
-    "ok": false
+    "file": "10_remake_board.json",
+    "ran_at": "2026-10-06T15:44:15Z",
+    "ok": true
   },
   "cover": "work/cover.jpg",
   "assemble": {
