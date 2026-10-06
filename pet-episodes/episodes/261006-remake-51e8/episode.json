@@ -18,7 +18,7 @@
    {
     "t0": 2.5,
     "t1": 9.91,
-    "text": "Photorealistic, sharp, fixed medium close-up, camera does not move, no cuts. The Shiba in the black tuxedo and white bow tie sings opera behind two microphones. [0.0-0.5s] it opens its mouth wide, showing teeth and tongue. [0.5-5.5s] it holds one long high note: mouth stays wide open, jaw steady with a tiny vibrato tremble, head tilting slightly back at about 4s, body still. [5.5-6.0s] the note ends and the mouth closes. [6.0-8.0s] mouth fully closed, it lifts its chin and looks upward with a small proud smile, standing still and poised."
+    "text": "Photorealistic, sharp, fixed medium close-up, camera does not move, no cuts. The Shiba in the black tuxedo and white bow tie sings opera behind two microphones in front of a red velvet curtain. [0.0-0.5s] it opens its mouth wide, showing teeth and tongue. [0.5-5.5s] it holds one long high note: mouth stays wide open, jaw steady with a tiny vibrato tremble, head tilting slightly back at about 4s, body still. [5.5-6.0s] the note ends and the mouth closes. [6.0-8.0s] mouth fully closed, it lifts its chin and looks upward with a small proud smile, standing still and poised."
    }
   ],
   "board_times": [
@@ -71,9 +71,9 @@
     "panel": 4,
     "t0": 2.5,
     "t1": 9.91,
-    "prompt": "Photorealistic, sharp, fixed medium close-up, camera does not move, no cuts. The Shiba in the black tuxedo and white bow tie sings opera behind two microphones. [0.0-0.5s] it opens its mouth wide, showing teeth and tongue. [0.5-5.5s] it holds one long high note: mouth stays wide open, jaw steady with a tiny vibrato tremble, head tilting slightly back at about 4s, body still. [5.5-6.0s] the note ends and the mouth closes. [6.0-8.0s] mouth fully closed, it lifts its chin and looks upward with a small proud smile, standing still and poised.",
+    "prompt": "Photorealistic, sharp, fixed medium close-up, camera does not move, no cuts. The Shiba in the black tuxedo and white bow tie sings opera behind two microphones in front of a red velvet curtain. [0.0-0.5s] it opens its mouth wide, showing teeth and tongue. [0.5-5.5s] it holds one long high note: mouth stays wide open, jaw steady with a tiny vibrato tremble, head tilting slightly back at about 4s, body still. [5.5-6.0s] the note ends and the mouth closes. [6.0-8.0s] mouth fully closed, it lifts its chin and looks upward with a small proud smile, standing still and poised.",
     "sec": 8,
-    "fresh": "Medium close-up on a dark concert stage with a plain black background and soft warm spotlight. The Shiba Inu sits upright facing the camera wearing a black tuxedo jacket and a white bow tie, behind two silver microphones on stands, head tilted slightly up, mouth wide open singing an opera note, eyes half closed."
+    "fresh": "Medium close-up on a concert stage with a deep red velvet curtain filling the whole background, warm golden spotlight, visible stage floor at the bottom. The Shiba Inu sits upright facing the camera wearing a black tuxedo jacket and a white bow tie, behind two silver microphones on stands, head tilted slightly up, mouth wide open singing an opera note, eyes half closed."
    }
   ],
   "src_vol": 1.0
