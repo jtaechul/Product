@@ -123,6 +123,8 @@ _STOP_AT = [0.0]
 def _check_stop():
     """중단 스위치(사용자 지시 2026-10: 멈춰야 할 제작은 무조건 멈출 것 — GitHub 취소 권한이 없어 대신 씀).
     브랜치의 pet-episodes/stop.json {"stop": ["<편 이름>" 또는 "all"]}을 돈 드는 호출 직전마다(20초에 한 번) 읽어 있으면 즉시 멈춘다."""
+    if os.environ.get("PET_NO_SPEND"):                  # 점검 모드(remake.mode "check"): 돈 드는 호출은 하나도 하지 않는다
+        raise RuntimeError("점검 모드라 돈 드는 호출을 막았습니다")
     br, ep = os.environ.get("GITHUB_REF_NAME", ""), os.environ.get("PET_EP", "")
     if not br or time.time() - _STOP_AT[0] < 20:
         return
@@ -2203,10 +2205,11 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
     for k, sh in enumerate(rm["shots"]):
         L = round(float(sh["t1"]) - float(sh["t0"]), 3)
         out = work / f"rm_shot{k + 1}.mp4"
-        pnl = work / f"board_{int(sh['panel']):02d}.jpg"
-        if not pnl.exists():
-            raise RuntimeError(f"스토리보드 {sh['panel']}번 칸이 없습니다")
-        first = _crop_bars(pnl, work / f"_shot_first{k + 1}.png")
+        reuse = bool(sh.get("cut_from") or sh.get("freeze_from"))   # 이미 만든 영상에서 잘라 쓰거나 멈추는 장면은 칸이 필요 없다
+        pnl = work / f"board_{int(sh.get('panel', 1)):02d}.jpg"
+        if not pnl.exists() and not reuse:
+            raise RuntimeError(f"스토리보드 {sh.get('panel')}번 칸이 없습니다")
+        first = pnl if reuse else _crop_bars(pnl, work / f"_shot_first{k + 1}.png")
         if sh.get("fresh"):                               # 흐린 원본에서 뽑은 칸 대신 구도만 따라 깨끗한 새 첫 장면(사용자 지시 2026-10 아리아 편: 원본 화질 따라가지 말 것)
             first = work / f"_shot_fresh{k + 1}.png"
             if not first.exists():
@@ -2223,6 +2226,17 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
                 raise RuntimeError(f"장면{k + 1}: 잘라 쓸 영상(장면{ci})이 아직 없습니다")
             _ff(["-ss", f"{ca:.3f}", "-i", str(raw0), "-an", "-t", f"{L:.3f}", "-vf", f"scale={W}:{H},fps=24,setsar=1,format=yuv420p",
                  "-c:v", "libx264", "-crf", "20", str(out)])
+        if sh.get("freeze_from") and not out.exists():   # 원본의 화면 정지·줌 개그 = 만든 영상의 한 장면을 멈춰(+부드러운 줌) — 스토리보드 그림을 섞지 않는다(옷·개가 달라짐)
+            ci, ct = int(sh["freeze_from"][0]), float(sh["freeze_from"][1])
+            raw0 = work / f"_shot_raw{ci}.mp4"
+            if not raw0.exists():
+                raise RuntimeError(f"장면{k + 1}: 멈출 영상(장면{ci})이 아직 없습니다")
+            fr = work / f"_freeze{k + 1}.png"
+            _ff(["-ss", f"{ct:.3f}", "-i", str(raw0), "-frames:v", "1", "-vf", f"scale={W}:{H}", str(fr)])
+            z, nfr = float(sh.get("zoom", 1.0)), max(1, round(L * 24))
+            zx = f"1+({z - 1:.4f})*(3*pow(on/{nfr},2)-2*pow(on/{nfr},3))"   # 천천히 시작·천천히 멈추는 줌(계단식 금지)
+            _ff(["-loop", "1", "-i", str(fr), "-vf", f"scale={W * 4}:{H * 4},zoompan=z='{zx}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+                 f":d={nfr}:s={W}x{H}:fps=24,setsar=1,format=yuv420p", "-frames:v", str(nfr), "-c:v", "libx264", "-crf", "20", str(out)])
         if not out.exists():
             if sh.get("src") and ref is not None:      # 원본이 꽉 찬 세로인 구간: 원본 그대로 바꾼다(동작·입모양 유지)
                 a, b = float(sh["src"][0]), float(sh["src"][1])
@@ -2377,6 +2391,7 @@ CUT_ASK = ("Watch this video. Find the part described here and give its time ran
 
 
 def _video_json(video: Path, prompt: str) -> dict:
+    _check_stop()
     key = _key("GEMINI_API_KEY")
     body = {"contents": [{"role": "user", "parts": [{"inline_data": {"mime_type": "video/mp4",
                                                                      "data": base64.b64encode(video.read_bytes()).decode()}},
@@ -2612,6 +2627,7 @@ def _timeline(ref: Path, start: float, dur: float, work: Path, res: dict, cap: f
         _remake_spend(res, REMAKE_COST["check"], f"{tag} 0.5초 시간표 만들기", cap)
         steps = (_video_json(clip, TIMELINE_ASK.format(dur=dur)) or {}).get("steps") or []
         tl[tag] = [{k: str(x.get(k, ""))[:160] for k in ("t", "action", "mouth", "sound", "camera")} for x in steps if isinstance(x, dict)][:120]
+        res["timeline_src"] = res.get("src_sig", "")
     rows = [f"[{x['t']}s] action: {x['action']}; mouth: {x['mouth']}; sound: {x['sound']}; camera: {x['camera']}." for x in tl[tag]]
     return (TIMELINE_HEAD + " " + " ".join(rows))[:6000] if rows else ""
 
@@ -2813,12 +2829,107 @@ def _cta_png(out: Path, W=720, H=1280):
     im.save(out)
 
 
+
+# ── 리메이크 사전 점검(무료, 2026-10 사고: 아리아 편 '해머가 심판을 맞힘' 개그를 순화하다 지움 · 물티슈 편 옛 원본 분석으로 지시 → 넘어지는 장면 없음,
+#    정지 칸(스토리보드)과 새 영상의 옷·개가 달라 엉망 · 사람 손 등장). 돈 드는 호출 전에 반드시 통과해야 한다.
+GAG_KINDS = {
+    "맞힘": r"\b(hit|hits|hitting|strike|strikes|striking|struck|smash\w*|slap\w*|kick\w*|punch\w*|bump\w*|collid\w*|knock\w*|smack\w*|whack\w*|bonk\w*|thud|impact)\b",
+    "넘어짐": r"\b(fall|falls|falling|fell|tumbl\w*|trip\w*|toppl\w*|tips? over|tipping over|crash\w*|wipes? out|slip\w*|plops? down)\b",
+    "줌": r"\b(zoom\w*|push(es)? in|snap zoom)\b",
+    "정지": r"\b(freez\w*|still frame|freeze-frame)\b",
+    "입에넣기": r"\b(into (his|her|its|their|the) mouth|feeds?|stuff\w*|shov\w* .* mouth)\b",
+}
+GAG_DODGE = r"\b(miss(es|ed)?|out of frame|away from|avoids?|narrowly|just past|instead of)\b"   # 개그를 비켜 가게 순화한 흔적
+RISKY = {r"\b(groin|crotch|genitals?|private parts)\b": "bottom (rump)", r"\b(blood\w*|bleed\w*|wound\w*|gore)\b": "(빼기)",
+         r"\b(naked|nude|shirtless|bare (chest|skin|torso))\b": "furry body", r"\b(sexual\w*|sexy|seductive)\b": "(빼기)",
+         r"\b(gun|knife|stab\w*|kill\w*)\b": "(빼기)"}
+HUMAN_HAND = r"\b(?<!dog )(?<!furry )(?<!paw )(hand|hands|finger|fingers|fist)\b"
+
+
+def _src_sig(ref: Path) -> str:
+    """원본 지문(앞 2MB + 길이) — 시간표가 지금 원본 것인지 확인용(2026-10 물티슈 편: 바뀐 원본에 옛 시간표를 씀)."""
+    with open(ref, "rb") as f:
+        head = f.read(2_000_000)
+    return hashlib.md5(head).hexdigest()[:12] + f"-{_dur(ref):.1f}"
+
+
+def _gag_beats(rows: list) -> list:
+    """0.5초 시간표에서 개그 포인트(맞힘·넘어짐·줌·정지·입에 넣기)를 뽑는다. [{t, kind, text}]"""
+    out = []
+    for x in rows or []:
+        txt = " ".join(str(x.get(k, "")) for k in ("action", "sound", "camera"))
+        for kind, rx in GAG_KINDS.items():
+            if re.search(rx, txt, re.I) and not (out and out[-1]["kind"] == kind and out[-1]["text"] == txt):
+                if kind == "줌" and re.search(r"zoom(s|ing)? out", txt, re.I):
+                    continue                                   # 빠지는 줌은 개그 포인트로 세지 않는다
+                out.append({"t": str(x.get("t", "")), "kind": kind, "text": txt[:160]})
+    seen, uniq = set(), []                                     # 같은 종류가 이어지면 한 번만
+    for g in out:
+        key = (g["kind"], g["t"].split("-")[0][:3])
+        if key not in seen:
+            seen.add(key)
+            uniq.append(g)
+    return uniq
+
+
+def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
+    """돈 쓰기 전 무료 점검. 문제 목록(한국어)을 돌려준다 — 비어 있어야 진행."""
+    probs = []
+    shots = rm.get("shots") or []
+    texts = [str(sh.get("prompt", "")) for sh in shots] + [str(x) for x in (rm.get("board_notes") or [])] + \
+            [str(b.get("text", "")) for b in (rm.get("beats") or [])]
+    allt = " ".join(texts)
+    # 1) 시간표가 지금 원본 것인가(원본 지문 src_sig = step_remake가 기록, timeline_src = 시간표를 만들 때의 지문)
+    if res.get("timeline") and (shots or rm.get("board_fresh")):
+        if not res.get("timeline_src"):
+            probs.append("0.5초 시간표가 지금 원본 것인지 확인할 수 없습니다(지문 없음) — 지금 원본으로 다시 분석해야 합니다")
+        elif res.get("src_sig") and res["timeline_src"] != res["src_sig"]:
+            probs.append("0.5초 시간표가 예전 원본 것입니다(원본이 바뀜) — 지금 원본으로 다시 분석해야 합니다")
+    # 2) 개그 포인트가 지시에 다 살아 있나(사장님이 적은 rm.gags가 우선, 없으면 시간표에서 자동) — 원본을 글로 옮겨 새로 만드는 방식에만
+    newway = bool(shots) or bool(rm.get("board_fresh"))
+    gags = (rm.get("gags") or _gag_beats([x for v in (res.get("timeline") or {}).values() for x in v])) if newway else []
+    for g in gags:
+        kind = g.get("kind", "")
+        words = g.get("words") or []
+        ok = any(w.lower() in allt.lower() for w in words) if words else bool(re.search(GAG_KINDS.get(kind, "$^"), allt, re.I))
+        if not ok:
+            probs.append(f"개그 포인트가 지시에서 빠졌습니다: [{g.get('t', '')}] {kind} — {g.get('text', g.get('what', ''))[:80]}")
+    for t in texts:
+        if re.search(GAG_KINDS["맞힘"], " ".join(g.get("text", "") for g in gags if g.get("kind") == "맞힘"), re.I) and re.search(GAG_DODGE, t, re.I):
+            probs.append(f"맞히는 개그를 비켜 가게 순화했습니다('{re.search(GAG_DODGE, t, re.I).group(0)}') — 맞는 부위만 바꾸고 맞는 건 남겨야 합니다")
+            break
+    # 3) 막힐 만한 낱말(맞는 장면은 남기고 부위·표현만 바꾼다)
+    for rx, fix in RISKY.items():
+        m = re.search(rx, allt, re.I)
+        if m:
+            probs.append(f"막힐 수 있는 낱말 '{m.group(0)}' → '{fix}'로 바꾸세요(개그 동작은 그대로)")
+    # 4) 사람 손
+    for t in [str(sh.get("prompt", "")) for sh in shots]:
+        m = re.search(HUMAN_HAND, t, re.I)
+        if m and not re.search(r"\bpaw", t[max(0, m.start() - 20):m.end() + 5], re.I):
+            probs.append(f"사람 손으로 그려질 낱말 '{m.group(0)}' — 'furry dog paw'로 쓰세요")
+            break
+    # 5) 정지 칸(스토리보드 그림)과 새 영상을 섞으면 개·옷·장소가 달라진다
+    gen = [sh for sh in shots if not sh.get("still") and not sh.get("cut_from") and not sh.get("freeze_from")]
+    if any(sh.get("still") for sh in shots) and (gen or any(sh.get("cut_from") for sh in shots)):
+        probs.append("스토리보드 정지 칸(still)과 새로 만든 영상을 섞었습니다 — 정지는 만든 영상의 한 장면을 멈추세요(freeze_from)")
+    # 6) 한 번에 만들 수 있는데 여러 번 만드는가(돈)
+    if len(gen) > 1 and mode == "full" and not rm.get("multi_gen_ok"):
+        probs.append(f"영상을 {len(gen)}번 따로 만듭니다 — 컷을 지시에 넣어 한 번에 만들고 나눠 쓰세요(cut_from). 꼭 필요하면 multi_gen_ok")
+    # 7) 9:16 · 길이
+    tot = max([float(sh.get("t1", 0)) for sh in shots] or [0])
+    if shots and tot > float(rm.get("max_sec", REMAKE_BODY_SEC)) + 0.3:
+        probs.append(f"본편이 {tot:.1f}초로 정한 길이보다 깁니다")
+    return probs
+
 def step_remake(ep, epdir, work, log, req):
     import math
     res = log.setdefault("remake", {})
     rm = ep.get("remake") or {}
     cap = float(rm.get("cap", 5))
     mode = (req.get("remake") or {}).get("mode", "test")
+    if mode == "check":
+        os.environ["PET_NO_SPEND"] = "1"
     key = _key("GEMINI_API_KEY")
     W, H = 360, 640                                       # 360p(사용자 확정)
     prompt = REMAKE_SWAP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "))
@@ -2838,6 +2949,11 @@ def step_remake(ep, epdir, work, log, req):
         if (rm.get("cut") or "").strip():
             ref = _remake_cut(ref, rm["cut"].strip(), work, res, cap)
         L = _dur(ref)
+        res["src_sig"] = _src_sig(ref)                    # 원본이 바뀌면 옛 0.5초 시간표를 버린다(2026-10 물티슈 편: 옛 원본 분석으로 지시)
+        if res.get("timeline") and ((res.get("timeline_src") and res["timeline_src"] != res["src_sig"])
+                                    or (not res.get("timeline_src") and mode != "check" and (rm.get("shots") or rm.get("board_fresh")))):
+            res.pop("timeline", None)
+            res["timeline_reset"] = "원본이 바뀌어 시간표를 다시 만듦"
         res["src_full_sec"] = round(L, 2)
         T = float(rm.get("max_sec", REMAKE_BODY_SEC))     # 본편 길이(기본 10초) — 원본 파일 길이를 그대로 쓰지 않는다(핵심 규칙)
         if L > T + 0.3 or rm.get("window") or rm.get("pieces"):
@@ -2864,6 +2980,14 @@ def step_remake(ep, epdir, work, log, req):
             ref = ref_v
         est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * end_sec
                         + REMAKE_COST["tts"], 2)
+        if mode in ("board", "full", "check") and (rm.get("shots") or rm.get("board_fresh")):   # 사전 점검(무료) — 통과해야 돈을 쓴다
+            if mode != "check" and not (res.get("timeline") or {}).get("all") and not rm.get("gags"):
+                _timeline(ref, 0, L, work, res, cap, "all")   # 원본 전체 0.5초 시간표(약 0.01달러) — 개그 포인트 자동 뽑기용
+            res["preflight"] = _remake_preflight(rm, res, ref, mode)
+            if mode == "check":
+                return
+            if res["preflight"] and not rm.get("preflight_skip"):
+                raise RuntimeError("사전 점검에서 멈춤(돈 안 씀): " + " / ".join(res["preflight"]))
         if mode == "probe":                               # 거절 원인 찾기: 1초짜리로 넣는 것을 바꿔 가며 보낸다(통과하면 1초에 0.1달러)
             res["probe"] = _remake_probe(key, ref, prompt, work, res, cap, (req.get("remake") or {}).get("cases"))
             return
@@ -3323,6 +3447,7 @@ def main(path: str) -> int:
     epdir = rp.parent.parent
     os.environ["PET_EP"] = epdir.name                    # 중단 스위치가 이 편을 알아보게
     os.environ["PET_REQ"] = rp.name
+    os.environ.pop("PET_NO_SPEND", None)               # 점검 모드는 그 요청에만
     epf = epdir / "episode.json"
     ep = json.loads(epf.read_text(encoding="utf-8")) if epf.exists() else {"clips": []}
     ep["_bgm_mix"] = bool(req.get("bgm_mix"))                # 기본: 배경음악 없이(릴스 번역용)
