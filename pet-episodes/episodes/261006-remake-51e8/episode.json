@@ -1,98 +1,98 @@
 {
-  "kind": "remake",
-  "menuName": "리메이크 · 해머 놓친 날의 아리아",
-  "clips": [],
-  "source": {
-    "youtube": "",
-    "title": "samoyed vocal pets (사장님 업로드)",
-    "music": ""
-  },
-  "remake": {
-    "swap": "FIELD SHOT: 1) the hammer-throw athlete (blonde ponytail, royal-blue tank top, black shorts) becomes the Shiba Inu from image 1: Shiba head, and every bare arm, hand, leg and foot becomes a thick furry Shiba leg with a round paw (no bare human skin left); 2) each official in a lime-green shirt becomes a real dog of a different breed wearing the same lime-green shirt. STAGE SHOT: 3) the white Samoyed singer in the black tuxedo and white bow tie becomes the same Shiba Inu from image 1 (Shiba head and fur, same tuxedo, same microphones, same black background)",
-    "beats": [
-      {
-        "t0": 0.0,
-        "t1": 2.5,
-        "text": "Photorealistic phone footage, fixed wide shot of a grass hammer-throw field on an overcast day; officials are dogs in lime-green shirts. [0.0-1.5s] the Shiba in the royal-blue tank top and black shorts spins round twice on its hind legs holding the hammer wire with both front paws, the iron ball whirling around it. [1.5-1.8s] the paws let go too early: the hammer flies off sideways toward the official dogs, who flinch. [1.8-2.5s] the Shiba loses balance and topples over onto the grass. No cuts, camera fixed."
-      },
-      {
-        "t0": 2.5,
-        "t1": 9.91,
-        "text": "Keep the original motion exactly: the singer's mouth opens and closes exactly like the original (wide open singing one long note until near the end, then closed with a small proud smile). Same black stage, two microphones, black tuxedo, white bow tie."
-      }
-    ],
-    "board_times": [
-      0.9,
-      1.8,
-      2.3,
-      3.5,
-      6.5,
-      9.5
-    ],
-    "board_notes": [
-      "Shiba in the blue tank top spinning with the hammer; all four legs furry Shiba legs, no human skin; officials in lime-green shirts are dogs.",
-      "the hammer flying away sideways; the Shiba off balance, furry paws empty.",
-      "the Shiba toppling onto the grass, furry legs in the air.",
-      "the Shiba in a black tuxedo with white bow tie singing with mouth wide open in front of two microphones on a black background.",
-      "close shot of the tuxedo Shiba singing a long high note, eyes half closed, head tilted up.",
-      "the tuxedo Shiba with mouth closed, small proud smile."
-    ],
-    "keep_audio": true,
-    "sfx": [
-      {
-        "file": "hammer_spin_whoosh.mp3",
-        "at": 0.2,
-        "vol": 0.9
-      },
-      {
-        "file": "body_fall_grass.mp3",
-        "at": 2.15,
-        "vol": 1.0
-      }
-    ],
-    "ending": "Back on the same grass throwing field in daylight, the same Shiba Inu in the blue tank top stands calmly on a short leash; the lime-green-shirt official dog holds the leash handle (the real product from the image: the retractable leash with its anti-drop wrist band looped around its front paw), the Shiba smugly side-eyes the hammer lying far away on the grass.",
-    "big": "해머는 놓쳐도\n강아지는 안 놓쳐요",
-    "sub": "손목밴드까지 걸어 두는 자동 리드줄\n산책 중 줄 놓칠 걱정 없이",
-    "vo": "해머는 놓쳐도... 강아지는 안 놓쳐요. 구매는 프로필 링크에서.",
-    "cut": "",
-    "whimper": false,
-    "ad": "vo",
-    "cap": 5,
-    "source_video": false,
-    "shots": [
-      {
-        "panel": 1,
-        "t0": 0.0,
-        "t1": 2.5,
-        "prompt": "Photorealistic phone footage, fixed wide shot of a grass hammer-throw field on an overcast day; officials are dogs in lime-green shirts. [0.0-1.5s] the Shiba in the royal-blue tank top and black shorts spins round twice on its hind legs holding the hammer wire with both front paws, the iron ball whirling around it. [1.5-1.8s] the paws let go too early: the hammer flies off sideways toward the official dogs, who flinch. [1.8-2.5s] the Shiba loses balance and topples over onto the grass. No cuts, camera fixed."
-      },
-      {
-        "panel": 4,
-        "t0": 2.5,
-        "t1": 9.91,
-        "src": [
-          2.5,
-          9.91
-        ],
-        "prompt": "Keep the original motion exactly: the singer's mouth opens and closes exactly like the original (wide open singing one long note until near the end, then closed with a small proud smile). Same black stage, two microphones, black tuxedo, white bow tie."
-      }
-    ],
-    "src_vol": 1.0
-  },
-  "caption": "해머는 놓쳐도 강아지는 안 놓쳐요\n\n손목밴드까지 걸어 두는 자동 리드줄. 산책 중 줄 놓칠 걱정 없이.\n\n구매는 프로필 링크에서.",
-  "hashtags": [
-    "#강아지자동리드줄",
-    "#강아지리드줄",
-    "#강아지산책줄",
-    "#이탈방지리드줄",
-    "#강아지산책용품"
+ "kind": "remake",
+ "menuName": "리메이크 · 해머 놓친 날의 아리아",
+ "clips": [],
+ "source": {
+  "youtube": "",
+  "title": "samoyed vocal pets (사장님 업로드)",
+  "music": ""
+ },
+ "remake": {
+  "swap": "FIELD SHOT: 1) the hammer-throw athlete (blonde ponytail, royal-blue tank top, black shorts) becomes the Shiba Inu from image 1: Shiba head, and every bare arm, hand, leg and foot becomes a thick furry Shiba leg with a round paw (no bare human skin left); 2) each official in a lime-green shirt becomes a real dog of a different breed wearing the same lime-green shirt. STAGE SHOT: 3) the white Samoyed singer in the black tuxedo and white bow tie becomes the same Shiba Inu from image 1 (Shiba head and fur, same tuxedo, same microphones, same black background)",
+  "beats": [
+   {
+    "t0": 0.0,
+    "t1": 2.5,
+    "text": "Photorealistic phone footage of a playful sports blooper, fixed wide shot of a grassy athletics field on an overcast day; the officials are dogs in lime-green shirts. [0.0-1.5s] the Shiba in the royal-blue tank top spins round twice on its hind legs, holding a rope with a small round ball on the end that swings around it. [1.5-1.8s] it lets go too early and the ball sails away sideways out of frame; the official dogs jump in surprise. [1.8-2.5s] the Shiba wobbles, loses balance and plops down to sit on the grass, looking embarrassed. No cuts, camera fixed."
+   },
+   {
+    "t0": 2.5,
+    "t1": 9.91,
+    "text": "Keep the original motion exactly: the singer's mouth opens and closes exactly like the original (wide open singing one long note until near the end, then closed with a small proud smile). Same black stage, two microphones, black tuxedo, white bow tie."
+   }
   ],
-  "product": {
-    "title": "롱펫 고급형 강아지 자동리드줄 360도 꼬임방지 + 이탈방지 손목밴드 세트",
-    "brand": "롱펫",
-    "category": "반려/애완용품",
-    "reason": "손목밴드까지 걸어 두는 자동 리드줄",
-    "link": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=9468262358&itemId=28179462951&vendorItemId=93883316273&traceid=V0-153-f42bdf69e64dd2f1&requestid=20261006232143617012515906&token=31850C%7CMIXED&pt=0&slot=9",
-    "image": "https://ads-partners.coupang.com/image1/9sbzI6uqYIIuPdEq9klaHzSObYmV82ApspJHRKNMru6KmVBGHxgnwz2GLelapCKLKXDQoGv1o2f94F-vxK_Ie_qw2FTLJI7XcACZJqiZit1O1KvSID1fAf1bUXToDIc-CptjNNpDVkJ-WrA_Umt2ckmoyoyXcc5JalPK07pZQqt8JjLK_kNCY6YSE4zcXOvZ5eBFZXmuji8nhAsdU1AtLgGh7uRfTQ-mkS8L5MO96neClDkvo_VxN66y-gKbpipyqh0Pvo3qw50cclMjvbHpejCoV1iy5x6teuQYbZcCS-AGUoh2QKoR95G4qNrJnZ7hsPSYdOkmYspkt9nKwPmxfHkzjK-HSBCWsYDfhgcYdoOtVNyd1x1D9Mce7lO0ytEuIMzTM5yCGmuDbA3n6tFM2wHhKH_Avm8s0MuzabGKOtwLtp_KIyLITw38GwHO8C7Ai-S6hLCb4etWm2oADo3P3oSEmB2lfEpnL3QkEofMtzEwO7mAnFmbH5YILzgXHI-9tpsx7r4f_6GdxBMvP5satEuXLYfqApH7XJVQl6SyJ8XJbJ0="
-  }
+  "board_times": [
+   0.9,
+   1.8,
+   2.3,
+   3.5,
+   6.5,
+   9.5
+  ],
+  "board_notes": [
+   "Shiba in the blue tank top spinning with the hammer; all four legs furry Shiba legs, no human skin; officials in lime-green shirts are dogs.",
+   "the hammer flying away sideways; the Shiba off balance, furry paws empty.",
+   "the Shiba toppling onto the grass, furry legs in the air.",
+   "the Shiba in a black tuxedo with white bow tie singing with mouth wide open in front of two microphones on a black background.",
+   "close shot of the tuxedo Shiba singing a long high note, eyes half closed, head tilted up.",
+   "the tuxedo Shiba with mouth closed, small proud smile."
+  ],
+  "keep_audio": true,
+  "sfx": [
+   {
+    "file": "hammer_spin_whoosh.mp3",
+    "at": 0.2,
+    "vol": 0.9
+   },
+   {
+    "file": "body_fall_grass.mp3",
+    "at": 2.15,
+    "vol": 1.0
+   }
+  ],
+  "ending": "Back on the same grass throwing field in daylight, the same Shiba Inu in the blue tank top stands calmly on a short leash; the lime-green-shirt official dog holds the leash handle (the real product from the image: the retractable leash with its anti-drop wrist band looped around its front paw), the Shiba smugly side-eyes the hammer lying far away on the grass.",
+  "big": "해머는 놓쳐도\n강아지는 안 놓쳐요",
+  "sub": "손목밴드까지 걸어 두는 자동 리드줄\n산책 중 줄 놓칠 걱정 없이",
+  "vo": "해머는 놓쳐도... 강아지는 안 놓쳐요. 구매는 프로필 링크에서.",
+  "cut": "",
+  "whimper": false,
+  "ad": "vo",
+  "cap": 5,
+  "source_video": false,
+  "shots": [
+   {
+    "panel": 1,
+    "t0": 0.0,
+    "t1": 2.5,
+    "prompt": "Photorealistic phone footage of a playful sports blooper, fixed wide shot of a grassy athletics field on an overcast day; the officials are dogs in lime-green shirts. [0.0-1.5s] the Shiba in the royal-blue tank top spins round twice on its hind legs, holding a rope with a small round ball on the end that swings around it. [1.5-1.8s] it lets go too early and the ball sails away sideways out of frame; the official dogs jump in surprise. [1.8-2.5s] the Shiba wobbles, loses balance and plops down to sit on the grass, looking embarrassed. No cuts, camera fixed."
+   },
+   {
+    "panel": 4,
+    "t0": 2.5,
+    "t1": 9.91,
+    "src": [
+     2.5,
+     9.91
+    ],
+    "prompt": "Keep the original motion exactly: the singer's mouth opens and closes exactly like the original (wide open singing one long note until near the end, then closed with a small proud smile). Same black stage, two microphones, black tuxedo, white bow tie."
+   }
+  ],
+  "src_vol": 1.0
+ },
+ "caption": "해머는 놓쳐도 강아지는 안 놓쳐요\n\n손목밴드까지 걸어 두는 자동 리드줄. 산책 중 줄 놓칠 걱정 없이.\n\n구매는 프로필 링크에서.",
+ "hashtags": [
+  "#강아지자동리드줄",
+  "#강아지리드줄",
+  "#강아지산책줄",
+  "#이탈방지리드줄",
+  "#강아지산책용품"
+ ],
+ "product": {
+  "title": "롱펫 고급형 강아지 자동리드줄 360도 꼬임방지 + 이탈방지 손목밴드 세트",
+  "brand": "롱펫",
+  "category": "반려/애완용품",
+  "reason": "손목밴드까지 걸어 두는 자동 리드줄",
+  "link": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=9468262358&itemId=28179462951&vendorItemId=93883316273&traceid=V0-153-f42bdf69e64dd2f1&requestid=20261006232143617012515906&token=31850C%7CMIXED&pt=0&slot=9",
+  "image": "https://ads-partners.coupang.com/image1/9sbzI6uqYIIuPdEq9klaHzSObYmV82ApspJHRKNMru6KmVBGHxgnwz2GLelapCKLKXDQoGv1o2f94F-vxK_Ie_qw2FTLJI7XcACZJqiZit1O1KvSID1fAf1bUXToDIc-CptjNNpDVkJ-WrA_Umt2ckmoyoyXcc5JalPK07pZQqt8JjLK_kNCY6YSE4zcXOvZ5eBFZXmuji8nhAsdU1AtLgGh7uRfTQ-mkS8L5MO96neClDkvo_VxN66y-gKbpipyqh0Pvo3qw50cclMjvbHpejCoV1iy5x6teuQYbZcCS-AGUoh2QKoR95G4qNrJnZ7hsPSYdOkmYspkt9nKwPmxfHkzjK-HSBCWsYDfhgcYdoOtVNyd1x1D9Mce7lO0ytEuIMzTM5yCGmuDbA3n6tFM2wHhKH_Avm8s0MuzabGKOtwLtp_KIyLITw38GwHO8C7Ai-S6hLCb4etWm2oADo3P3oSEmB2lfEpnL3QkEofMtzEwO7mAnFmbH5YILzgXHI-9tpsx7r4f_6GdxBMvP5satEuXLYfqApH7XJVQl6SyJ8XJbJ0="
+ }
 }
