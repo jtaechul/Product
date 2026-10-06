@@ -209,9 +209,9 @@
     ]
   },
   "last_request": {
-    "file": "04_remake_full.json",
-    "ran_at": "2026-10-06T11:39:00Z",
+    "file": "05_remake_full.json",
+    "ran_at": "2026-10-06T14:49:37Z",
     "ok": false
   },
-  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The model could not generate output because the input image violates Google's [Generative AI Prohibited Use policy](https://policies.google.com/terms/generative-ai/use-policy).\",\"code\":\"prohibited_content\"}}"
+  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
 }
