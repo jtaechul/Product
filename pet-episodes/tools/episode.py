@@ -2132,6 +2132,53 @@ def _apply_freeze(src: Path, out: Path, spans, back: float = 0.0) -> Path:
     return out
 
 
+def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: int) -> Path:
+    """원본 영상 없이 만들기(2026-10 아이스크림 편: 원본을 성적 장면으로 오인해 거절). remake.shots = [{panel, t0, t1, still, prompt}]
+    — 움직이는 장면은 확인받은 스토리보드 칸을 첫 장면으로 shot_sec(기본 4초)짜리를 만들고 필요한 길이만 잘라 쓴다,
+    still이면 그 칸 그림을 그대로 멈춰 둔다(돈 안 듦). 칸마다 한 번만(다시 만들기 없음)."""
+    sec = int(rm.get("shot_sec", 4))
+    look = ("Photorealistic, natural daylight, real dogs only (no people, no bare human skin), every leg a thick furry dog leg with a "
+            "round paw, the same dogs and clothes as in image 1, no added text, no morphing, no extra animals.")
+    parts = []
+    for k, sh in enumerate(rm["shots"]):
+        L = round(float(sh["t1"]) - float(sh["t0"]), 3)
+        out = work / f"rm_shot{k + 1}.mp4"
+        pnl = work / f"board_{int(sh['panel']):02d}.jpg"
+        if not pnl.exists():
+            raise RuntimeError(f"스토리보드 {sh['panel']}번 칸이 없습니다")
+        first = _crop_bars(pnl, work / f"_shot_first{k + 1}.png")
+        if not out.exists():
+            if sh.get("still"):
+                _ff(["-loop", "1", "-t", f"{L:.3f}", "-i", str(first), "-vf",
+                     f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps=24,setsar=1,format=yuv420p",
+                     "-c:v", "libx264", "-crf", "20", str(out)])
+            else:
+                usd = REMAKE_COST["omni_sec"] * sec
+                _remake_spend(res, usd, f"장면{k + 1} 만들기({sec}초)", cap)
+                body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(first)}, {"type": "text", "text":
+                        f"DURATION: {sec} seconds. Image 1 is the first frame. {sh['prompt']} {look}"}],
+                        "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
+                        "generation_config": {"video_config": {"task": "image_to_video"}}}
+                raw = work / f"_shot_raw{k + 1}.mp4"
+                try:
+                    raw.write_bytes(_omni_run(key, body))
+                except RuntimeError as e:
+                    if "HTTP 400" in str(e):                  # 막힌 요청은 요금 없음
+                        res["spent"] = round(float(res.get("spent", 0)) - usd, 3)
+                        res.setdefault("ledger", []).append({"what": f"장면{k + 1} 차단됨(요금 없음)", "usd": -round(usd, 3)})
+                    raise
+                _ff(["-i", str(raw), "-an", "-t", f"{L:.3f}", "-vf",
+                     f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps=24,setsar=1,format=yuv420p",
+                     "-c:v", "libx264", "-crf", "20", str(out)])
+        parts.append(out)
+    body_v = work / "remake.mp4"
+    ins = sum((["-i", str(o)] for o in parts), [])
+    _ff([*ins, "-filter_complex", "".join(f"[{i}:v]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=1:a=0,format=yuv420p[v]",
+         "-map", "[v]", "-c:v", "libx264", "-crf", "20", str(body_v)])
+    res["shots"] = {"n": len(parts), "sec": round(_dur(body_v), 2)}
+    return body_v
+
+
 def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path, res: dict, cap: float,
                   times: list | None = None, notes: list | None = None):
     """times = 칸마다 원본에서 뽑을 시각(웃음 포인트를 사람이 골라 줄 때, remake.board_times), notes = 칸마다 바꿀 내용(remake.board_notes)."""
@@ -2742,34 +2789,38 @@ def step_remake(ep, epdir, work, log, req):
         if rm.get("hide_spans"):                          # 영상 AI가 거절하는 장면(2026-10 아이스크림 편: 맨살에 흰 액체 클로즈업 → prohibited_content)은
             ref_gen = _apply_freeze(ref, work / "_src_hidden.mp4", rm["hide_spans"], back=0.15)   # 바로 앞 장면으로 덮어 보내고, 조립 때 스토리보드 칸으로 채운다
             res["hide_spans"] = rm["hide_spans"]
-        s1 = work / "rm_seg1.mp4"
-        if not s1.exists():
-            _remake_seg(key, ref_gen, 0, seg, prompt, work, res, cap, H)
+        shots_mode = mode == "full" and rm.get("source_video") is False and bool(rm.get("shots"))
+        if shots_mode:                                    # 원본 영상을 영상 AI에 넣지 않고 스토리보드 칸 + 초 단위 지시로 장면마다 만든다
+            body_v = _remake_shots(key, rm, work, res, cap, W, H)
+        else:
+            s1 = work / "rm_seg1.mp4"
+            if not s1.exists():
+                _remake_seg(key, ref_gen, 0, seg, prompt, work, res, cap, H)
+                if mode == "test":
+                    _ff(["-i", str(s1), "-c", "copy", "-movflags", "+faststart", str(work / "test.mp4")])
+            first = res.get("segs", {}).get("seg1", {})
             if mode == "test":
-                _ff(["-i", str(s1), "-c", "copy", "-movflags", "+faststart", str(work / "test.mp4")])
-        first = res.get("segs", {}).get("seg1", {})
-        if mode == "test":
-            res["test"] = {"ok": True, "human": first.get("human"), "where": first.get("where", ""),
-                           "quality": first.get("quality"), "issues": first.get("issues", "")}
-        res["est_full"] = round(REMAKE_COST["omni_sec"] * seg * (n - 1) + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * end_sec
-                                + REMAKE_COST["tts"], 2)
-        if mode != "full":
-            return
-        # 본편 전체 예상이 한도를 넘으면 시작하지 않는다
-        if float(res.get("spent", 0)) + res["est_full"] > cap:
-            raise RuntimeError(f"본편 예상 비용(약 ${res['est_full']:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다. 더 짧은 원본으로 다시 해 주세요.")
-        segs = []
-        for i in range(n):
-            o = work / f"rm_seg{i + 1}.mp4"
-            if not o.exists():
-                _remake_seg(key, ref_gen, i, seg, prompt, work, res, cap, H)
-            segs.append(o)
-        body_v = work / "remake.mp4"
-        ins = []
-        for o in segs:
-            ins += ["-i", str(o)]
-        _ff([*ins, "-filter_complex", "".join(f"[{i}:v]" for i in range(n)) + f"concat=n={n}:v=1:a=0,format=yuv420p[v]",
-             "-map", "[v]", "-c:v", "libx264", "-crf", "23", str(body_v)])
+                res["test"] = {"ok": True, "human": first.get("human"), "where": first.get("where", ""),
+                               "quality": first.get("quality"), "issues": first.get("issues", "")}
+            res["est_full"] = round(REMAKE_COST["omni_sec"] * seg * (n - 1) + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * end_sec
+                                    + REMAKE_COST["tts"], 2)
+            if mode != "full":
+                return
+            # 본편 전체 예상이 한도를 넘으면 시작하지 않는다
+            if float(res.get("spent", 0)) + res["est_full"] > cap:
+                raise RuntimeError(f"본편 예상 비용(약 ${res['est_full']:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다. 더 짧은 원본으로 다시 해 주세요.")
+            segs = []
+            for i in range(n):
+                o = work / f"rm_seg{i + 1}.mp4"
+                if not o.exists():
+                    _remake_seg(key, ref_gen, i, seg, prompt, work, res, cap, H)
+                segs.append(o)
+            body_v = work / "remake.mp4"
+            ins = []
+            for o in segs:
+                ins += ["-i", str(o)]
+            _ff([*ins, "-filter_complex", "".join(f"[{i}:v]" for i in range(n)) + f"concat=n={n}:v=1:a=0,format=yuv420p[v]",
+                 "-map", "[v]", "-c:v", "libx264", "-crf", "23", str(body_v)])
         if rm.get("freeze"):                              # 원본의 화면 정지(웃음 포인트)는 영상 AI가 움직여 버리므로 조립 때 그 장면을 그대로 멈춘다
             body_v = _apply_freeze(body_v, work / "remake_fz.mp4", rm["freeze"])
             res["freeze"] = rm["freeze"]

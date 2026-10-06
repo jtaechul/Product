@@ -24,6 +24,7 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
+          filter: blob:none   # 저장소에 영상이 쌓여 전체 받기에 10분+ 걸림 → 지금 판의 파일만 받고 옛 영상은 받지 않음
 
       - name: 도구 설치
         run: |
