@@ -7,7 +7,7 @@
     "src_sec": 10.01,
     "segments": 1,
     "one_shot": true,
-    "spent": 0.46,
+    "spent": 2.63,
     "ledger": [
       {
         "what": "스토리보드 그림",
@@ -40,6 +40,34 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "장면1 만들기(4초)",
+        "usd": 0.4
+      },
+      {
+        "what": "장면2 만들기(4초)",
+        "usd": 0.4
+      },
+      {
+        "what": "장면4 만들기(4초)",
+        "usd": 0.4
+      },
+      {
+        "what": "장면5 만들기(4초)",
+        "usd": 0.4
+      },
+      {
+        "what": "끝 장면 그림",
+        "usd": 0.15
+      },
+      {
+        "what": "끝 장면 영상",
+        "usd": 0.4
+      },
+      {
+        "what": "내레이션",
+        "usd": 0.02
       }
     ],
     "board": {
@@ -210,12 +238,25 @@
         9.5,
         6
       ]
-    ]
+    ],
+    "shots": {
+      "n": 6,
+      "sec": 10.0
+    },
+    "full": {
+      "ok": true
+    }
   },
   "last_request": {
-    "file": "07_remake_board.json",
-    "ran_at": "2026-10-06T15:05:51Z",
+    "file": "08_remake_full.json",
+    "ran_at": "2026-10-06T15:19:12Z",
     "ok": true
   },
-  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
+  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)",
+  "cover": "work/cover.jpg",
+  "assemble": {
+    "ok": true,
+    "sec": 14.08,
+    "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
+  }
 }
