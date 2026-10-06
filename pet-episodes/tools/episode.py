@@ -2842,7 +2842,7 @@ GAG_KINDS = {
 }
 GAG_DODGE = r"\b(miss(es|ed)?|out of frame|away from|avoids?|narrowly|just past|instead of)\b"   # 개그를 비켜 가게 순화한 흔적
 RISKY = {r"\b(groin|crotch|genitals?|private parts)\b": "bottom (rump)", r"\b(blood\w*|bleed\w*|wound\w*|gore)\b": "(빼기)",
-         r"\b(naked|nude|shirtless|bare (chest|skin|torso))\b": "furry body", r"\b(sexual\w*|sexy|seductive)\b": "(빼기)",
+         r"(?<!no )(?<!no human )\b(naked|nude|shirtless|bare (chest|skin|torso))\b": "furry body", r"\b(sexual\w*|sexy|seductive)\b": "(빼기)",
          r"\b(gun|knife|stab\w*|kill\w*)\b": "(빼기)"}
 HUMAN_HAND = r"\b(?<!dog )(?<!furry )(?<!paw )(hand|hands|finger|fingers|fist)\b"
 
@@ -2877,17 +2877,18 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
     """돈 쓰기 전 무료 점검. 문제 목록(한국어)을 돌려준다 — 비어 있어야 진행."""
     probs = []
     shots = rm.get("shots") or []
+    motion = rm.get("method") == "motion" and not shots
     texts = [str(sh.get("prompt", "")) for sh in shots] + [str(x) for x in (rm.get("board_notes") or [])] + \
-            [str(b.get("text", "")) for b in (rm.get("beats") or [])]
+            [str(b.get("text", "")) for b in (rm.get("beats") or [])] + ([str(res.get("motion_prompt", ""))] if motion else [])
     allt = " ".join(texts)
     # 1) 시간표가 지금 원본 것인가(원본 지문 src_sig = step_remake가 기록, timeline_src = 시간표를 만들 때의 지문)
-    if res.get("timeline") and (shots or rm.get("board_fresh")):
+    if res.get("timeline") and (shots or rm.get("board_fresh") or motion):
         if not res.get("timeline_src"):
             probs.append("0.5초 시간표가 지금 원본 것인지 확인할 수 없습니다(지문 없음) — 지금 원본으로 다시 분석해야 합니다")
         elif res.get("src_sig") and res["timeline_src"] != res["src_sig"]:
             probs.append("0.5초 시간표가 예전 원본 것입니다(원본이 바뀜) — 지금 원본으로 다시 분석해야 합니다")
     # 2) 개그 포인트가 지시에 다 살아 있나(사장님이 적은 rm.gags가 우선, 없으면 시간표에서 자동) — 원본을 글로 옮겨 새로 만드는 방식에만
-    newway = bool(shots) or bool(rm.get("board_fresh"))
+    newway = bool(shots) or bool(rm.get("board_fresh")) or motion
     gags = (rm.get("gags") or _gag_beats([x for v in (res.get("timeline") or {}).values() for x in v])) if newway else []
     for g in gags:
         kind = g.get("kind", "")
@@ -2895,10 +2896,14 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
         ok = any(w.lower() in allt.lower() for w in words) if words else bool(re.search(GAG_KINDS.get(kind, "$^"), allt, re.I))
         if not ok:
             probs.append(f"개그 포인트가 지시에서 빠졌습니다: [{g.get('t', '')}] {kind} — {g.get('text', g.get('what', ''))[:80]}")
-    for t in texts:
+    for t in texts[:len(texts) - (1 if motion else 0)]:     # 비켜 가기 검사는 사람이 쓴 지시문만(동작 따라 만들기 지시문은 시간표 그대로라 제외)
         if re.search(GAG_KINDS["맞힘"], " ".join(g.get("text", "") for g in gags if g.get("kind") == "맞힘"), re.I) and re.search(GAG_DODGE, t, re.I):
             probs.append(f"맞히는 개그를 비켜 가게 순화했습니다('{re.search(GAG_DODGE, t, re.I).group(0)}') — 맞는 부위만 바꾸고 맞는 건 남겨야 합니다")
             break
+    if motion and not (res.get("timeline") or {}).get("all") and not rm.get("gags"):
+        probs.append("원본 0.5초 시간표가 없습니다 — 동작 따라 만들기는 시간표(개그 포인트)가 있어야 합니다")
+    if motion and not res.get("motion_prompt"):
+        probs.append("동작 따라 만들기 지시문이 아직 만들어지지 않았습니다")
     # 3) 막힐 만한 낱말(맞는 장면은 남기고 부위·표현만 바꾼다)
     for rx, fix in RISKY.items():
         m = re.search(rx, allt, re.I)
@@ -2922,6 +2927,167 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
     if shots and tot > float(rm.get("max_sec", REMAKE_BODY_SEC)) + 0.3:
         probs.append(f"본편이 {tot:.1f}초로 정한 길이보다 깁니다")
     return probs
+
+
+# ── 동작 따라 만들기(사용자 지시 2026-10: "올리는 밈 영상의 모든 포인트를 살리고 최대한 유사하게", Higgsfield Genjutsu 방식 참고) ──
+# Genjutsu = 원본 영상을 '동작·카메라·타이밍 참고'로만 넣고, 모습은 깨끗한 참고 그림(확인받은 스토리보드 1번 칸)에서 가져와 새로 렌더링.
+# 우리 영상 AI(Omni)의 같은 기능 = reference_to_video(그림 + 영상 참고, 9:16 지정 가능). 원본 위에 합성(edit)하지 않으므로 화질이 깨끗하고,
+# 동작은 원본 그대로. 개그 포인트(맞힘·넘어짐·줌·정지·입에 넣기)는 0.5초 시간표에서 자동으로 뽑아 '반드시 넣을 것'으로 지시하고,
+# 돈 쓰기 전 _remake_preflight가 빠진 것이 없는지 확인한다. 줌·정지는 영상 AI가 못 살리므로 조립 때 같은 시각에 직접 넣는다(_apply_gag_fx).
+MOTION_HEAD = ("MOTION TRANSFER. The video is the MOTION REFERENCE: reproduce it shot for shot - every body action, contact, fall, "
+               "head turn, mouth opening, hand/paw movement, camera move, pan, zoom and cut happens at exactly the same second as in "
+               "the video, with the same framing and composition. Image 1 is the APPEARANCE REFERENCE for the first frame: the "
+               "characters, clothes, props and place look exactly like image 1 in every frame (the people of the video are these "
+               "dogs: {swap}). Do not invent new actions, do not skip or soften any action. ")
+MOTION_GAGS = (" MUST-KEEP COMEDY BEATS (the joke lives here - every one must be clearly visible at this exact time): {gags}.")
+MOTION_FILL = (" VERTICAL 9:16: fill the whole vertical frame edge to edge with the scene (extend the scene above and below if the "
+               "reference is wider); no black bars, no blurred bands, no letterbox.")
+GAG_KO = {"맞힘": "gets hit", "넘어짐": "falls over", "줌": "snap zoom-in", "정지": "freeze frame", "입에넣기": "pushed into the mouth"}
+
+
+def _soften(txt: str) -> str:
+    """막힐 만한 낱말만 바꾼다(개그 동작은 그대로): 사타구니→엉덩이, 맨살→털 등."""
+    out = txt
+    for rx, fix in RISKY.items():
+        out = re.sub(rx, "" if fix == "(빼기)" else fix, out, flags=re.I)
+    return re.sub(r"\s{2,}", " ", out)
+
+
+def _gag_text(gags: list) -> str:
+    return "; ".join(f"[{g.get('t', '')}s] {GAG_KO.get(g.get('kind', ''), g.get('kind', ''))} - {_soften(str(g.get('text', g.get('what', ''))))[:110]}"
+                     for g in gags)
+
+
+def _board_notes_auto(rows: list, times: list, swap: str) -> list:
+    """스토리보드 칸 글(자동): 그 시각의 시간표 줄을 그대로 옮기되 사람은 개로. 사장님이 board_notes를 적으면 그것이 우선."""
+    notes = []
+    for t in times:
+        row = None
+        for x in rows or []:
+            try:
+                a, b = (float(v) for v in str(x.get("t", "")).split("-")[:2])
+            except ValueError:
+                continue
+            if a <= t < b or (row is None and a >= t):
+                row = x
+                if a <= t < b:
+                    break
+        act = _soften(str((row or {}).get("action", "")))[:220]
+        cam = str((row or {}).get("camera", ""))[:60]
+        notes.append(_soften(f"Moment at {t:.1f}s of the original: {act} Camera: {cam}. The people are the dogs ({swap}); same place and props."))
+    return notes
+
+
+def _motion_prompt(rm: dict, res: dict, L: float, swap: str) -> str:
+    rows = (res.get("timeline") or {}).get("all") or []
+    gags = rm.get("gags") or _gag_beats(rows)
+    p = f"DURATION: {L:.1f} seconds. " + MOTION_HEAD.format(swap=swap)
+    if rm.get("beats"):                                   # 사장님이 적은 초 단위 대본이 있으면 가장 우선
+        p += " AUTHOR'S BEAT SHEET (authoritative): " + " ".join(f"[{b['t0']:.1f}-{b['t1']:.1f}s] {b['text']}" for b in rm["beats"])
+    if rows:
+        p += _soften(TIMELINE_HEAD + " " + " ".join(f"[{x['t']}s] action: {x['action']}; mouth: {x['mouth']}; camera: {x['camera']}." for x in rows))[:5200]
+    if gags:
+        p += MOTION_GAGS.format(gags=_gag_text(gags))
+    p += " " + REMAKE_ONE_DOG + MOTION_FILL + REMAKE_CLEAN
+    p += (" Every leg, arm, hand and foot of the characters is a thick furry dog leg with a round paw (anything held is held by a "
+          "paw); no humans, no human skin, no added text, no morphing, no extra animals.")
+    return _soften(p)                                     # 바꾸기 설명(swap)에 든 막힐 낱말까지 한 번에
+
+
+def _apply_gag_fx(src: Path, out: Path, gags: list, L: float) -> dict:
+    """줌·정지 개그를 조립 때 직접 넣는다 — 영상 AI는 줌·정지 화면을 살리지 못한다(2026-10 아이스크림 편). 줌은 천천히 들어갔다 나오는
+    연속 곡선(계단식 금지), 정지는 그 구간 첫 프레임을 멈춤. 효과음 제안(zoom_hit 등)은 결과에 적어 두고 sfx는 사장님이 정한 것만 쓴다."""
+    zooms, freezes = [], []
+    for g in gags:
+        try:
+            a, b = (float(v) for v in str(g.get("t", "")).split("-")[:2])
+        except ValueError:
+            continue
+        if g.get("kind") == "줌":
+            zooms.append(a)
+        elif g.get("kind") == "정지":
+            freezes.append([a, min(L, max(b, a + 0.6))])
+    cur = src
+    if zooms:
+        bump = "+".join(f"0.18*clip((in/24-{z:.2f})/0.35,0,1)*clip(({z + 1.3:.2f}-in/24)/0.35,0,1)" for z in zooms)
+        W, H = _wh(src)                                   # crop의 w/h는 시간식을 못 받으므로 zoompan(프레임 번호 in, 24fps)로 연속 줌
+        zo = out.with_name(out.stem + "_z.mp4")
+        _ff(["-i", str(cur), "-vf", f"fps=24,scale={W * 2}:{H * 2}:flags=lanczos,zoompan=z='1+{bump}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+             f":d=1:s={W}x{H}:fps=24,setsar=1,format=yuv420p", "-an", "-c:v", "libx264", "-crf", "19", str(zo)])
+        cur = zo
+    if freezes:
+        cur = _apply_freeze(cur, out.with_name(out.stem + "_f.mp4"), freezes)
+    if cur == src:
+        return {"zooms": [], "freezes": []}
+    _ff(["-i", str(cur), "-c", "copy", str(out)])
+    return {"zooms": zooms, "freezes": freezes, "sfx_suggest": [{"file": "zoom_hit.mp3", "at": z} for z in zooms]}
+
+
+def _remake_motion(key, ref: Path, L: float, work: Path, res: dict, cap: float, W: int, H: int, rm: dict, swap: str) -> Path:
+    """원본 = 동작 참고 영상, 스토리보드 1번 칸 = 모습 참고 그림 → 깨끗한 9:16 새 영상 한 번(reference_to_video). 딱 한 번만 만든다."""
+    out = work / "remake.mp4"
+    if out.exists():
+        return out
+    board = work / "board_01.jpg"
+    if not board.exists():
+        raise RuntimeError("확인받은 스토리보드가 없습니다 — 스토리보드(한 장)를 먼저 그리고 확인받아야 합니다")
+    first = _crop_bars(board, work / "_mo_first.png")
+    drv = work / "_mo_drv.mp4"
+    if not drv.exists():                                  # 동작 참고용 원본(소리 없음, 화질 손질)
+        _ff(["-i", str(ref), "-an", "-vf", CLEAN_VF, "-c:v", "libx264", "-crf", "16", str(drv)])
+    if rm.get("mask_faces") or res.get("mask_faces"):
+        m = work / "_mo_drv_m.mp4"
+        res.setdefault("masked", {})["motion"] = _mask_faces(drv, m, 1.6)
+        drv = m
+    prompt = res.get("motion_prompt") or _motion_prompt(rm, res, L, swap)
+    res["motion_prompt"] = prompt
+    inputs = [{"type": "image", **_b64img(first)}]
+    if rm.get("ref_dog"):
+        inputs.append({"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")})
+    usd = REMAKE_COST["omni_sec"] * L
+    _remake_spend(res, usd, f"동작 따라 만들기({L:.1f}초)", cap)
+    rawo = work / "_mo_raw.mp4"
+
+    def _send(v: Path):
+        body = {"model": CLIP_MODEL, "input": [*inputs, {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(v.read_bytes()).decode()},
+                                             {"type": "text", "text": prompt}],
+                "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
+                "generation_config": {"video_config": {"task": "reference_to_video"}}}
+        rawo.write_bytes(_omni_run(key, body))
+
+    try:
+        try:
+            _send(drv)
+        except RuntimeError as e:
+            if "HTTP 400" in str(e) and LIKENESS_RE.search(str(e)) and not res.get("mask_faces") and not res.get("lipsync"):
+                res["mask_faces"] = True                      # 실제 인물 거절(요금 없음) → 얼굴 가리고 한 번만 다시
+                res.setdefault("ledger", []).append({"what": "실제 인물 거절 → 얼굴 가리고 다시(요금 없음)", "usd": 0})
+                m = work / "_mo_drv_m.mp4"
+                res.setdefault("masked", {})["motion"] = _mask_faces(drv, m, 1.6)
+                _send(m)
+            else:
+                raise
+    except RuntimeError as e:
+        if "HTTP 400" in str(e):
+            res["spent"] = round(float(res.get("spent", 0)) - usd, 3)
+            res.setdefault("ledger", []).append({"what": "동작 따라 만들기 차단됨(요금 없음)", "usd": -round(usd, 3)})
+            raise RuntimeError("원본을 동작 참고로 넣었더니 영상 AI가 거절했습니다(요금 없음). 이 편은 원본 없이 스토리보드+초 단위 지시(remake.shots)로 "
+                               "만들어야 합니다 — 사장님 확인 후 진행. 원문: " + str(e)[:200])
+        raise
+    _assert_vertical(rawo, "본편")
+    got = _dur(rawo)
+    if got < L * 0.9:
+        raise RuntimeError(f"영상 AI가 {got:.1f}초만 만들었습니다(원본 {L:.1f}초). 늘리지 않고 멈춥니다.")
+    k = L / got if got else 1.0
+    fit = work / "_mo_fit.mp4"
+    _ff(["-i", str(rawo), "-an", "-vf", f"setpts=PTS*{k:.5f},scale={W}:{H}:flags=lanczos,unsharp=3:3:0.4,fps=24,setsar=1,format=yuv420p",
+         "-t", f"{L:.3f}", "-c:v", "libx264", "-crf", "19", "-preset", "slow", str(fit)])
+    gags = rm.get("gags") or _gag_beats((res.get("timeline") or {}).get("all") or [])
+    fx = _apply_gag_fx(fit, out, gags, L) if rm.get("gag_fx", True) else {}
+    if not out.exists():
+        _ff(["-i", str(fit), "-c", "copy", str(out)])
+    res["motion"] = {"ok": True, "sec": round(_dur(out), 2), "gags": gags, "fx": fx, "masked": bool(res.get("mask_faces"))}
+    return out
 
 def step_remake(ep, epdir, work, log, req):
     import math
@@ -2967,9 +3133,27 @@ def step_remake(ep, epdir, work, log, req):
         n = 1 if one else nb
         seg = L / n
         res.update({"src_sec": round(L, 2), "segments": n, "one_shot": bool(one)})
+        motion = rm.get("method") == "motion" and not rm.get("shots")   # 동작 따라 만들기(새 편 기본, Genjutsu 방식)
+        res["method"] = "motion" if motion else ("shots" if rm.get("shots") else "edit")
+        swap_txt = (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". ")
+        if motion and mode in ("board", "full", "check"):
+            if mode != "check" and not (res.get("timeline") or {}).get("all"):
+                _timeline(ref, 0, L, work, res, cap, "all")   # 원본 전체 0.5초 시간표(약 0.01달러): 개그 포인트·스토리보드 글·지시문의 바탕
+            rows = (res.get("timeline") or {}).get("all") or []
+            gags = rm.get("gags") or _gag_beats(rows)
+            res["gags"] = gags
+            if not rm.get("board_times"):                 # 스토리보드 6칸 = 개그 포인트 시각 + 고르게
+                gt = sorted({round(float(str(g.get("t", "0")).split("-")[0]), 2) for g in gags if str(g.get("t", "")).split("-")[0].replace(".", "").isdigit()})
+                even = [round(L * (i + 0.5) / 6, 2) for i in range(6)]
+                res["board_times_auto"] = sorted(gt[:6] + [t for t in even if all(abs(t - g) > 0.8 for g in gt)])[:6]
+            if not rm.get("board_notes"):
+                res["board_notes_auto"] = _board_notes_auto(rows, rm.get("board_times") or res.get("board_times_auto") or [], swap_txt)
+            res["motion_prompt"] = _motion_prompt(rm, res, L, swap_txt)
         # 세로 9:16은 흐린 배경 채우기가 아니라 AI가 위아래 장면을 이어 그려 진짜 세로로(사용자 지시 2026-10)
         sw, sh = _wh(ref)
-        if sw * 16 > sh * 9 * 1.05:                       # ⛔ 핵심 규칙: 원본 비율과 상관없이 무조건 9:16(늘리기·흐린 배경 금지, AI가 새로 그려 채움)
+        if motion:
+            res["vertical"] = {"mode": "reference_to_video 9:16", "src": f"{sw}x{sh}"}   # 참고 영상은 비율 그대로 넣고 출력만 9:16으로 받는다
+        elif sw * 16 > sh * 9 * 1.05:                       # ⛔ 핵심 규칙: 원본 비율과 상관없이 무조건 9:16(늘리기·흐린 배경 금지, AI가 새로 그려 채움)
             ref_v = work / "_src_v.mp4"
             if not ref_v.exists():
                 _ff(["-i", str(ref), "-filter_complex",
@@ -2981,7 +3165,7 @@ def step_remake(ep, epdir, work, log, req):
             ref = ref_v
         est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * end_sec
                         + REMAKE_COST["tts"], 2)
-        if mode in ("board", "full", "check") and (rm.get("shots") or rm.get("board_fresh")):   # 사전 점검(무료) — 통과해야 돈을 쓴다
+        if mode in ("board", "full", "check") and (rm.get("shots") or rm.get("board_fresh") or motion):   # 사전 점검(무료) — 통과해야 돈을 쓴다
             if mode != "check" and not (res.get("timeline") or {}).get("all") and not rm.get("gags"):
                 _timeline(ref, 0, L, work, res, cap, "all")   # 원본 전체 0.5초 시간표(약 0.01달러) — 개그 포인트 자동 뽑기용
             res["preflight"] = _remake_preflight(rm, res, ref, mode)
@@ -2992,10 +3176,12 @@ def step_remake(ep, epdir, work, log, req):
         if mode == "probe":                               # 거절 원인 찾기: 1초짜리로 넣는 것을 바꿔 가며 보낸다(통과하면 1초에 0.1달러)
             res["probe"] = _remake_probe(key, ref, prompt, work, res, cap, (req.get("remake") or {}).get("cases"))
             return
+        b_times = rm.get("board_times") or res.get("board_times_auto")
+        b_notes = rm.get("board_notes") or res.get("board_notes_auto")
+        b_fresh = bool(rm.get("board_fresh")) or motion   # 동작 따라 만들기는 스토리보드도 원본 합성 없이 깨끗하게
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
-                res["board"] = _remake_board(ref, L, nb, bseg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap,
-                                              rm.get("board_times"), rm.get("board_notes"), bool(rm.get("board_fresh")))
+                res["board"] = _remake_board(ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh)
             res["est_full"] = est_all
             if float(res.get("spent", 0)) + est_all > cap:
                 res["board"]["over"] = True
@@ -3014,8 +3200,7 @@ def step_remake(ep, epdir, work, log, req):
             if {"segs", "body"} & set(redo):
                 res.pop("timeline", None)                 # 본편을 다시 만들면 0.5초 시간표도 새로(구간이 바뀌었을 수 있음)
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
-            res["board"] = _remake_board(ref, L, nb, bseg, (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "), work, res, cap,
-                                              rm.get("board_times"), rm.get("board_notes"), bool(rm.get("board_fresh")))
+            res["board"] = _remake_board(ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh)
             # 새로 그린 스토리보드는 확인받은 뒤에 영상으로(사용자 지적 2026-10 헬기 편: 확인 안 한 그림에 개가 두 마리 → 영상도 두 마리)
             res["est_full"] = est_all
             res["board"]["wait"] = True
@@ -3031,7 +3216,9 @@ def step_remake(ep, epdir, work, log, req):
             ref_gen = _apply_freeze(ref, work / "_src_hidden.mp4", rm["hide_spans"], back=0.15)   # 바로 앞 장면으로 덮어 보내고, 조립 때 스토리보드 칸으로 채운다
             res["hide_spans"] = rm["hide_spans"]
         shots_mode = mode == "full" and rm.get("source_video") is False and bool(rm.get("shots"))
-        if shots_mode:                                    # 원본 영상을 영상 AI에 넣지 않고 스토리보드 칸 + 초 단위 지시로 장면마다 만든다
+        if motion and mode == "full":                     # 동작 따라 만들기(Genjutsu 방식): 원본 = 동작 참고, 스토리보드 1번 칸 = 모습 참고
+            body_v = _remake_motion(key, ref, L, work, res, cap, W, H, rm, swap_txt)
+        elif shots_mode:                                  # 원본 영상을 영상 AI에 넣지 않고 스토리보드 칸 + 초 단위 지시로 장면마다 만든다
             body_v = _remake_shots(key, rm, work, res, cap, W, H, ref, prompt)
         else:
             if not (work / "rm_seg1.mp4").exists() and not res.get("vertical"):   # 돈 쓰기 전에: 9:16 파일이어도 속이 가로(위아래 검은 띠)면
@@ -3190,7 +3377,13 @@ def step_remake(ep, epdir, work, log, req):
         # 장면 효과음(사용자 요청 2026-10: 헬기 소리·용암에 팝콘 터지는 소리가 잘 들리게) — remake.sfx = [{file, at, vol, loop}]
         # 시각은 리메이크 본편 기준. loop는 at부터 내레이션 시작(t0)까지 반복하다 줄여 끈다. 파일은 pet-episodes/sfx(우리가 만든 효과음)
         sfx_in = []
-        for s in rm.get("sfx") or []:
+        sfx_list = list(rm.get("sfx") or [])
+        if rm.get("sfx_auto", True):                      # 동작 따라 만들기에서 찾은 줌 시각에 줌 효과음을 자동으로(같은 시각에 사장님 효과음이 있으면 그대로)
+            for sg in ((res.get("motion") or {}).get("fx") or {}).get("sfx_suggest") or []:
+                if all(abs(float(x.get("at", -9)) - float(sg["at"])) > 0.3 for x in sfx_list):
+                    sfx_list.append({**sg, "vol": 0.9, "auto": True})
+            res["sfx_used"] = sfx_list
+        for s in sfx_list:
             f = SFX_DIR / str(s.get("file", ""))
             if not f.is_file():
                 continue
