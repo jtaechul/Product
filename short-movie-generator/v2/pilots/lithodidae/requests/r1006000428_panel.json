@@ -1,0 +1,23 @@
+{
+  "id": "r1006000428_panel",
+  "kind": "gen_images",
+  "purpose": "콘티 5번 칸만 다시 그리기 — 바다돼지는 해삼인데 진짜 돼지가 그려짐",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "p05",
+      "aspect": "9:16",
+      "refs": [
+        "out/r1005220154_card/card_side.jpg",
+        "out/r1005220154_card/card_top.jpg",
+        "out/r1005220128_refs/ref_00.jpg",
+        "../_shared/style/style_desk_chart.jpg",
+        "../_shared/style/style_ocean_block.jpg"
+      ],
+      "prompt": "Create ONE single vertical 9:16 photograph — one scene, NOT a grid or collage. Shared look for the photo: a handcrafted TABLETOP miniature diorama shot like toy / scale-model photography: the whole world is a small hand-made set built on a wooden worktable or inside an open cardboard or wooden display box, lit by a warm desk lamp; strong tilt-shift with shallow depth of field and a slightly high camera looking down onto the set; every prop and the seabed are cute, chunky and visibly hand-made (felt, cotton-wool marine snow hanging on fine threads, crumpled blue cellophane water, painted cardboard backdrops with visible seams, paper-cut rocks and kelp, clay with fingerprints, bent wire, tiny LED fairy-light bulbs for any glow); muted warm palette. the creature is the ONLY precise object: an accurately sculpted, hand-painted collectible figurine with satin paint and faint brush texture, with exactly the real anatomy, proportions and colours. It must match the attached replica (creature card) and real reference photo exactly and be identical in the photo: The Lithodid king crab features a robust, crab-like armored carapace that is either densely covered in long, sharp spines or heavily textured with coarse nodules. Coloration ranges from deep solid red to bright orange, sometimes mottled with white or purple spots. It has four visible pairs of appendages: one pair of front arms ending in claws (often asymmetrical), and three pairs of long, spiny walking legs. A fifth pair of legs is hidden inside the gill chamber. Small, black, stalked eyes are positioned close together at the front. The underside has a short, folded abdomen made of plates. Must not have a fish head, octopus arms, a visible snail shell, swimming fins, or more than four visible pairs of legs. STYLE REFERENCES: the LAST 2 attached images come from another episode of the same series — copy ONLY their hand-made tabletop-diorama look (set building, materials, desk-lamp light, tilt-shift, camera height); never copy their animal, map or objects literally. Clay figurines, boats and vehicles never make the creature look giant. Keep the upper quarter of the photo calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, logos, watermarks. Painted clay figurines are allowed; never real human hands or people. Every animal is drawn as what it REALLY is — a nickname like 'sea pig' (a sea cucumber) never means a pig; never draw land animals.\nScene (medium shot): Medium shot, high camera looking down with strong tilt-shift and shallow depth of field. On a painted clay seabed resting on a wooden worktable lit by a warm desk lamp, a chunky, hand-made translucent polymer clay deep-sea sea cucumber (a plump, oval marine invertebrate with thick fleshy tube feet and long dorsal papillae) stands still. Several tiny, accurately sculpted and hand-painted collectible figurines of juvenile Lithodid king crabs (red armored carapace, four visible pairs of spiny legs) are perched on the sea cucumber's back and hiding beneath its fleshy tube feet. Cotton-wool marine snow hangs on fine threads. The upper quarter is a calm, out-of-focus painted cardboard backdrop with visible seams. Hand-made props: translucent polymer clay sea cucumber, cotton-wool marine snow on fine threads, painted clay seabed."
+    }
+  ]
+}

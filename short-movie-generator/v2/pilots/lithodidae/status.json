@@ -63,6 +63,16 @@
           "at": "2026-10-05T22:42:21Z",
           "kind": "approve",
           "text": ""
+        },
+        {
+          "at": "2026-10-06T00:04:44Z",
+          "kind": "redo_panel",
+          "text": "5번 칸만 다시 그림. 바다돼지는 해삼인데 진짜 돼지가 그려짐"
+        },
+        {
+          "at": "2026-10-06T00:04:49Z",
+          "kind": "error",
+          "text": "5번 콘티 칸 다시 그리기 실패: No module named 'fontTools'"
         }
       ],
       "approved_at": "2026-10-05T22:42:21Z"
@@ -569,9 +579,9 @@
         },
         {
           "cut": 5,
-          "file": "out/r1005223819_sb/p05.jpg",
-          "desc": "Wide shot showing the visible seam of a painted cardboard backdrop and the wooden table edge. In the center of a painted clay seabed, a chunky, translucent clay sea pig (Scotoplanes) stands still. Several tiny, detailed long-legged king crabs are perched on its back and hiding beneath its legs. Cotton-wool marine snow hangs on fine threads.",
-          "shot": "wide",
+          "file": "out/r1006000428_panel/p05.jpg",
+          "desc": "Medium shot, high camera looking down with strong tilt-shift and shallow depth of field. On a painted clay seabed resting on a wooden worktable lit by a warm desk lamp, a chunky, hand-made translucent polymer clay deep-sea sea cucumber (a plump, oval marine invertebrate with thick fleshy tube feet and long dorsal papillae) stands still. Several tiny, accurately sculpted and hand-painted collectible figurines of juvenile Lithodid king crabs (red armored carapace, four visible pairs of spiny legs) are perched on the sea cucumber's back and hiding beneath its fleshy tube feet. Cotton-wool marine snow hangs on fine threads. The upper quarter is a calm, out-of-focus painted cardboard backdrop with visible seams.",
+          "shot": "medium",
           "motion": "still"
         },
         {
@@ -626,9 +636,12 @@
         },
         {
           "cut": 5,
-          "file": "out/r1005224314_stills/c05.mp4",
+          "file": "out/r1006000428_panel_stills/c05.mp4",
           "sec": 8,
-          "motion": "still"
+          "motion": "still",
+          "history": [
+            "out/r1005224314_stills/c05.mp4"
+          ]
         },
         {
           "cut": 6,
@@ -737,10 +750,10 @@
     },
     "storyboard": {
       "stage": "storyboard",
-      "status": "running",
-      "at": "2026-10-06T00:03:21Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "failed",
+      "at": "2026-10-06T00:04:49Z",
+      "action": "redo_panel",
+      "text": "5번 콘티 칸 다시 그리기 실패: No module named 'fontTools'"
     },
     "video": {
       "stage": "video",
@@ -781,6 +794,11 @@
         "at": "2026-10-05T22:46:03Z",
         "what": "영상 컷 4개 생성",
         "usd": 3.2
+      },
+      {
+        "at": "2026-10-06T00:04:44Z",
+        "what": "콘티 5번 칸 다시 그리기",
+        "usd": 0.134
       }
     ]
   }

@@ -237,10 +237,13 @@
       "annotation": "宿主はセンジュナマコ",
       "sec": 8,
       "speech_s": 5.34,
-      "keyframe": "out/r1005223819_sb/p05.jpg",
-      "panel_desc": "Wide shot showing the visible seam of a painted cardboard backdrop and the wooden table edge. In the center of a painted clay seabed, a chunky, translucent clay sea pig (Scotoplanes) stands still. Several tiny, detailed long-legged king crabs are perched on its back and hiding beneath its legs. Cotton-wool marine snow hangs on fine threads.",
-      "panel_shot": "wide",
-      "motion": "still"
+      "keyframe": "out/r1006000428_panel/p05.jpg",
+      "panel_desc": "Medium shot, high camera looking down with strong tilt-shift and shallow depth of field. On a painted clay seabed resting on a wooden worktable lit by a warm desk lamp, a chunky, hand-made translucent polymer clay deep-sea sea cucumber (a plump, oval marine invertebrate with thick fleshy tube feet and long dorsal papillae) stands still. Several tiny, accurately sculpted and hand-painted collectible figurines of juvenile Lithodid king crabs (red armored carapace, four visible pairs of spiny legs) are perched on the sea cucumber's back and hiding beneath its fleshy tube feet. Cotton-wool marine snow hangs on fine threads. The upper quarter is a calm, out-of-focus painted cardboard backdrop with visible seams.",
+      "panel_shot": "medium",
+      "motion": "still",
+      "keyframe_history": [
+        "out/r1005223819_sb/p05.jpg"
+      ]
     },
     {
       "cut": 6,
