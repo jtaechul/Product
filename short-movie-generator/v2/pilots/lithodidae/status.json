@@ -99,7 +99,7 @@
       "approved_at": "2026-10-06T00:14:56Z"
     },
     "upload": {
-      "state": "review",
+      "state": "approved",
       "notes": [
         {
           "at": "2026-10-05T23:11:56Z",
@@ -110,8 +110,29 @@
           "at": "2026-10-06T00:15:19Z",
           "kind": "meta",
           "text": "유튜브 제목·설명·해시태그 작성 — 확인 후 「승인 → 유튜브 업로드」"
+        },
+        {
+          "at": "2026-10-06T02:23:48Z",
+          "kind": "meta_edit",
+          "text": "운영자가 제목·설명 수정"
+        },
+        {
+          "at": "2026-10-06T02:23:50Z",
+          "kind": "uploaded",
+          "text": "유튜브 업로드 완료(예약 공개 2026-10-06T10:00:00Z): https://youtu.be/Yyli79yRfmY — 고정 댓글은 유튜브 앱에서 직접 달고 고정"
+        },
+        {
+          "at": "2026-10-06T02:23:50Z",
+          "kind": "error",
+          "text": "재생목록 추가 실패(토큰 권한 부족이면 재발급 필요): <HttpError 403 when requesting https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50&"
+        },
+        {
+          "at": "2026-10-06T02:23:50Z",
+          "kind": "approve",
+          "text": ""
         }
-      ]
+      ],
+      "approved_at": "2026-10-06T02:23:50Z"
     }
   },
   "topic": {
@@ -721,10 +742,20 @@
           "#심해의수수께끼"
         ],
         "pinned_comment": "次に見たい深海の生き物は？",
-        "privacy": "private",
-        "category": "15"
+        "privacy": "scheduled",
+        "category": "15",
+        "publish_at": "2026-10-06T10:00:00Z"
       },
-      "meta_at": "2026-10-06T00:15:19Z"
+      "meta_at": "2026-10-06T00:15:19Z",
+      "result": {
+        "url": "https://youtu.be/Yyli79yRfmY",
+        "video_id": "Yyli79yRfmY",
+        "privacy": "scheduled",
+        "category": "15",
+        "at": "2026-10-06T02:23:50Z",
+        "publish_at": "2026-10-06T10:00:00Z",
+        "playlist_error": "<HttpError 403 when requesting https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50&alt=json returned \"Request had insuffici"
+      }
     }
   },
   "checks": {
