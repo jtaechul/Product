@@ -2200,7 +2200,8 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
     still이면 그 칸 그림을 그대로 멈춰 둔다(돈 안 듦). 칸마다 한 번만(다시 만들기 없음)."""
     sec = int(rm.get("shot_sec", 4))
     look = ("Photorealistic, natural daylight, real dogs only (no people, no bare human skin), every leg a thick furry dog leg with a "
-            "round paw, the same dogs and clothes as in image 1, no added text, no morphing, no extra animals.")
+            "round paw, anything held is held by a furry dog paw (no human hands or fingers anywhere), "
+            "the same dogs and clothes as in image 1 in every shot, no added text, no morphing, no extra animals.")
     parts = []
     for k, sh in enumerate(rm["shots"]):
         L = round(float(sh["t1"]) - float(sh["t0"]), 3)
