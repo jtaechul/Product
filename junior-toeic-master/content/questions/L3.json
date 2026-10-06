@@ -4813,5 +4813,409 @@
       }
     ],
     "tmp_id": "L3-0059"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Are we ready to build the birdhouse for our science project?\nW: We have the wood and glue, but we still need some paint.\nM: I can bring my paint from home tomorrow.\nW: Great. Let's meet in the science lab after lunch.",
+      "accent": "US",
+      "tts_voices": {
+        "M": "male",
+        "W": "female"
+      },
+      "translation_ko": "남: 우리 과학 프로젝트로 새집 만들 준비 다 됐어?\n여: 나무랑 풀은 있는데, 페인트가 아직 필요해.\n남: 내가 내일 집에서 페인트를 가져올 수 있어.\n여: 좋아. 점심 먹고 과학실에서 만나자."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What do the students still need to get?",
+        "choices": [
+          "Wood",
+          "Glue",
+          "Paint",
+          "Nails"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "여자가 나무와 풀은 있지만 페인트가 아직 필요하다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "we still need some paint",
+        "why_not": {
+          "0": "나무는 이미 준비되어 있다고 했어요",
+          "1": "풀도 이미 있다고 했어요",
+          "3": "못에 대한 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "need some paint",
+          "ko": "페인트가 필요하다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where will the students meet?",
+        "choices": [
+          "In the library",
+          "In the science lab",
+          "At the wood shop",
+          "At the boy's house"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여자가 점심을 먹고 과학실에서 만나자고 말했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "Let's meet in the science lab",
+        "why_not": {
+          "0": "도서관은 나오지 않았어요",
+          "2": "나무 가게는 나오지 않았어요",
+          "3": "집에서 페인트를 가져온다고만 했어요"
+        },
+        "key_expr": {
+          "en": "science lab",
+          "ko": "과학실"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L3-0060"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Excuse me, did anyone find a water bottle?\nM: We have a few in the lost and found. What color is yours?\nW: It's silver with a red sticker on it.\nM: Ah, here it is. Someone found it near the basketball court.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 실례합니다, 혹시 물병 찾으신 분 있나요?\n남: 분실물 센터에 몇 개 있어요. 무슨 색인가요?\n여: 은색이고 빨간색 스티커가 붙어 있어요.\n남: 아, 여기 있네요. 누군가 농구장 근처에서 찾았어요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the woman looking for?",
+        "choices": [
+          "A silver sticker",
+          "A water bottle",
+          "A basketball",
+          "A lost key"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여자가 처음에 물병을 찾은 사람이 있는지 물어봤어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "did anyone find a water bottle?",
+        "why_not": {
+          "0": "물병에 붙은 스티커 색깔이에요",
+          "2": "농구장 근처에서 찾았다고 했어요",
+          "3": "열쇠 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "water bottle",
+          "ko": "물병"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where was the item found?",
+        "choices": [
+          "At the bus stop",
+          "Near the swimming pool",
+          "In the classroom",
+          "Near the basketball court"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "남자가 농구장 근처에서 누군가 찾았다고 알려주었어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "Someone found it near the basketball court.",
+        "why_not": {
+          "0": "버스 정류장 이야기는 없어요",
+          "1": "수영장 이야기는 없어요",
+          "2": "교실 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "lost and found",
+          "ko": "분실물 센터"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0061"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Hi, I'd like to sign up for beginner guitar lessons.\nW: We have classes on Tuesdays and Thursdays. Which day is better for you?\nM: Tuesday works for me. What time does it start?\nW: It starts at five o'clock in room 102.",
+      "accent": "AU",
+      "tts_voices": {
+        "M": "male",
+        "W": "female"
+      },
+      "translation_ko": "남: 안녕하세요, 초급 기타 수업을 등록하고 싶어요.\n여: 화요일과 목요일에 수업이 있어요. 어느 날이 더 좋으신가요?\n남: 저는 화요일이 좋아요. 몇 시에 시작하나요?\n여: 5시에 102호에서 시작해요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What does the man want to do?",
+        "choices": [
+          "Buy a new guitar",
+          "Book a practice room",
+          "Teach a music class",
+          "Sign up for guitar lessons"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "남자가 처음 인사하며 초급 기타 수업을 등록하고 싶다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.leisure"
+        ],
+        "evidence": "I'd like to sign up for beginner guitar lessons.",
+        "why_not": {
+          "0": "새 기타를 산다는 말은 없었어요",
+          "1": "연습실을 예약하는 내용이 아니에요",
+          "2": "수업을 듣고 싶어 하지 가르치는 게 아니에요"
+        },
+        "key_expr": {
+          "en": "sign up for",
+          "ko": "~을 등록하다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.opposite"
+        }
+      },
+      {
+        "stem": "What time does the man's class start?",
+        "choices": [
+          "Five o'clock",
+          "Four o'clock",
+          "Six o'clock",
+          "Two o'clock"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "여자가 수업이 5시에 시작한다고 알려 주었어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.detail",
+          "V.leisure"
+        ],
+        "evidence": "It starts at five o'clock",
+        "why_not": {
+          "1": "4시는 나오지 않은 시간이에요",
+          "2": "6시 이야기는 없었어요",
+          "3": "2시 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "start at five",
+          "ko": "5시에 시작하다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0062"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Mark, did you pack your bag for the farm trip tomorrow?\nM: I packed my lunch and a water bottle. Do I need anything else?\nW: Mr. Jones said we will be outside all morning. You should bring a hat.\nM: Good idea. I'll get my blue cap from the closet right now.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 마크, 내일 농장 견학 갈 가방은 다 쌌니?\n남: 점심이랑 물병은 챙겼어요. 다른 것도 필요한가요?\n여: 존스 선생님이 아침 내내 밖에 있을 거라고 하셨어. 모자를 가져가는 게 좋아.\n남: 좋은 생각이에요. 당장 옷장에서 파란색 모자를 꺼낼게요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What will the boy do tomorrow?",
+        "choices": [
+          "Visit a zoo",
+          "Go to a farm",
+          "Clean the classroom",
+          "Go camping"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "내일 농장으로 견학을 간다고 이야기했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "for the farm trip tomorrow",
+        "why_not": {
+          "0": "동물원 이야기는 없었어요",
+          "2": "교실 청소 이야기는 없었어요",
+          "3": "캠핑 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "pack a bag",
+          "ko": "가방을 싸다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What is the boy going to bring from his closet?",
+        "choices": [
+          "A jacket",
+          "A bag",
+          "A water bottle",
+          "A hat"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "남자가 옷장에서 파란색 모자를 꺼낸다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "I'll get my blue cap from the closet",
+        "why_not": {
+          "0": "재킷 이야기는 없었어요",
+          "1": "가방은 이미 쌌다고 했어요",
+          "2": "물병도 이미 챙겼어요"
+        },
+        "key_expr": {
+          "en": "from the closet",
+          "ko": "옷장에서"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L3-0064"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Hi, Sarah. Are we still making chocolate muffins for the club today?\nW: No, the cooking room is closed today. We are going to bake them on Friday instead.\nM: Oh, I see. What time should we meet on Friday?\nW: Let's meet at three thirty after the math test.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 안녕, 사라. 우리 오늘 동아리에서 초콜릿 머핀 만드는 거 맞지?\n여: 아니, 오늘은 요리실이 문을 닫았어. 대신 금요일에 구울 거야.\n남: 아, 그렇구나. 금요일 몇 시에 만나면 될까?\n여: 수학 시험이 끝나는 3시 30분에 만나자."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What will they make for the club?",
+        "choices": [
+          "Apple pies",
+          "Cheese sandwiches",
+          "Chocolate muffins",
+          "Strawberry cakes"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "동아리에서 초콜릿 머핀을 만들 거라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.detail",
+          "V.food"
+        ],
+        "evidence": "making chocolate muffins for the club",
+        "why_not": {
+          "0": "사과 파이는 나오지 않았어요",
+          "1": "치즈 샌드위치는 나오지 않았어요",
+          "3": "딸기 케이크는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "bake",
+          "ko": "굽다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What time will they meet on Friday?",
+        "choices": [
+          "At three thirty",
+          "At four o'clock",
+          "At four thirty",
+          "At five o'clock"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "여자가 수학 시험이 끝나고 3시 30분에 만나자고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "Let's meet at three thirty",
+        "why_not": {
+          "1": "4시 이야기는 없었어요",
+          "2": "4시 30분 이야기는 없었어요",
+          "3": "5시 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "after the math test",
+          "ko": "수학 시험 후에"
+        },
+        "miss_type": {
+          "1": "M.number",
+          "2": "M.number",
+          "3": "M.number"
+        }
+      }
+    ],
+    "tmp_id": "L3-0065"
   }
 ]

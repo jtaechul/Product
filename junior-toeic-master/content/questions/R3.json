@@ -8454,5 +8454,459 @@
     ],
     "status": "active",
     "tmp_id": "R3-0118"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SPRING FESTIVAL AT GREEN GARDEN\nSpring is here! Come to Green Garden this weekend. We have beautiful tulips and roses. At 11:00 a.m., you can learn how to plant flowers in a pot. At 2:00 p.m., there will be a magic show near the fountain. Tickets are 3,000 won for children and 5,000 won for adults.",
+      "translation_ko": "그린 정원 봄 축제\n봄이 왔어요! 이번 주말에 그린 정원으로 오세요. 아름다운 튤립과 장미가 있어요. 오전 11시에는 화분에 꽃을 심는 방법을 배울 수 있어요. 오후 2시에는 분수대 근처에서 마술 쇼가 열립니다. 표는 어린이 3,000원, 어른 5,000원입니다."
+    },
+    "questions": [
+      {
+        "stem": "How much is a ticket for an adult?",
+        "choices": [
+          "2,000 won",
+          "3,000 won",
+          "4,000 won",
+          "5,000 won"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "안내문에 어른 표는 5,000원이라고 적혀 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "5,000 won for adults.",
+        "why_not": {
+          "0": "2,000원이라는 말은 안 나와요",
+          "1": "3,000원은 어린이 표 가격이에요",
+          "2": "4,000원이라는 말은 안 나와요"
+        },
+        "key_expr": {
+          "en": "for adults",
+          "ko": "어른을 위한"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will happen at 2:00 p.m.?",
+        "choices": [
+          "People will plant flowers.",
+          "There will be a magic show.",
+          "People will buy tulips.",
+          "There will be a dance show."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "오후 2시에는 분수대 근처에서 마술 쇼가 열린다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "At 2:00 p.m., there will be a magic show near the fountain.",
+        "why_not": {
+          "0": "꽃 심기는 오전 11시 행사예요",
+          "2": "튤립을 사는 행사는 아니에요",
+          "3": "춤 공연은 열리지 않아요"
+        },
+        "key_expr": {
+          "en": "magic show",
+          "ko": "마술 쇼"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0119"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "JOIN THE SCHOOL BROADCASTING CLUB\nDo you like talking to people? Our club is looking for two new announcers. You will read the school news every morning. You don't need any experience. We will teach you how to use the microphone. If you want to join, please come to Room 304 on Wednesday after school.",
+      "translation_ko": "학교 방송반에 들어오세요\n사람들과 이야기하는 것을 좋아하나요? 우리 동아리는 두 명의 새 아나운서를 찾고 있습니다. 여러분은 매일 아침 학교 뉴스를 읽게 될 거예요. 경험이 없어도 괜찮아요. 우리가 마이크 사용법을 가르쳐 줄게요. 가입하고 싶다면 수요일 방과 후에 304호로 오세요."
+    },
+    "questions": [
+      {
+        "stem": "What will the new announcers do every morning?",
+        "choices": [
+          "Clean the club room",
+          "Fix the microphones",
+          "Read the school news",
+          "Talk to the teachers"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "아나운서들은 매일 아침 학교 뉴스를 읽게 될 거라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "You will read the school news every morning.",
+        "why_not": {
+          "0": "동아리 방을 청소한다는 말은 없어요",
+          "1": "마이크를 고친다는 말은 없어요",
+          "3": "선생님과 이야기한다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "read the news",
+          "ko": "뉴스를 읽다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "When should you go to Room 304 to join the club?",
+        "choices": [
+          "On Monday morning",
+          "On Wednesday morning",
+          "On Monday after school",
+          "On Wednesday after school"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "동아리에 가입하고 싶으면 수요일 방과 후에 오라고 안내했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "come to Room 304 on Wednesday after school.",
+        "why_not": {
+          "0": "월요일 아침이 아니에요",
+          "1": "수요일 아침이 아니라 방과 후예요",
+          "2": "월요일이 아니라 수요일이에요"
+        },
+        "key_expr": {
+          "en": "after school",
+          "ko": "방과 후에"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0120"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "KIDS BAKING CONTEST\nDo you love baking? Join our Kids Baking Contest this Saturday at the town hall. You must bring your own cookies or cupcakes. The judges will taste them at 1:00 p.m. The winner will get a big chocolate box. To enter the contest, send an email to Mr. Davis by Thursday.",
+      "translation_ko": "어린이 베이킹 대회\n빵 굽는 것을 좋아하나요? 이번 주 토요일 마을 회관에서 열리는 어린이 베이킹 대회에 참가하세요. 여러분이 직접 만든 쿠키나 컵케이크를 가져와야 합니다. 심사위원들이 오후 1시에 맛을 볼 거예요. 우승자는 큰 초콜릿 상자를 받을 거예요. 대회에 참가하려면 목요일까지 데이비스 선생님께 이메일을 보내세요."
+    },
+    "questions": [
+      {
+        "stem": "What must the kids bring?",
+        "choices": [
+          "Cookies or cupcakes",
+          "A chocolate box",
+          "A recipe book",
+          "Baking pans"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "대회에 올 때 직접 만든 쿠키나 컵케이크를 가져와야 한다고 적혀 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.food"
+        ],
+        "evidence": "You must bring your own cookies or cupcakes.",
+        "why_not": {
+          "1": "초콜릿 상자는 우승자가 받는 선물이에요",
+          "2": "요리책을 가져오라는 말은 없어요",
+          "3": "빵 굽는 틀에 대한 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "bring your own",
+          "ko": "직접 가져오다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "How can you enter the contest?",
+        "choices": [
+          "Visit the town hall on Thursday",
+          "Call Mr. Davis on Friday",
+          "Send a text message to Mr. Davis",
+          "Send an email to Mr. Davis"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "대회에 참가하려면 목요일까지 데이비스 선생님께 이메일을 보내라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.daily"
+        ],
+        "evidence": "To enter the contest, send an email to Mr. Davis",
+        "why_not": {
+          "0": "목요일에 마을 회관에 가는 게 아니에요",
+          "1": "전화를 거는 게 아니라 이메일을 보내야 해요",
+          "2": "문자 메시지가 아니라 이메일이에요"
+        },
+        "key_expr": {
+          "en": "enter the contest",
+          "ko": "대회에 참가하다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0121"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "PHOTO CLUB\nDo you like taking pictures? Join the Photo Club!\nWe meet every Tuesday at 3:30 p.m. in the art room.\nYou do not need a camera. You can use a school tablet.\nWe will have a photo contest in November.\nCome and make great memories with us!",
+      "translation_ko": "사진 동아리\n사진 찍는 것을 좋아하나요? 사진 동아리에 들어오세요!\n우리는 매주 화요일 오후 3시 30분에 미술실에서 만납니다.\n카메라가 없어도 됩니다. 학교 태블릿을 사용할 수 있어요.\n11월에는 사진 대회를 열 거예요.\n와서 우리와 함께 멋진 추억을 만드세요!"
+    },
+    "questions": [
+      {
+        "stem": "Where does the Photo Club meet?",
+        "choices": [
+          "In the art room",
+          "In the science room",
+          "In the library",
+          "In the computer room"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "동아리는 미술실에서 모인다고 안내문에 적혀 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "in the art room.",
+        "why_not": {
+          "1": "과학실이라는 말은 없어요",
+          "2": "도서관이라는 말은 없어요",
+          "3": "컴퓨터실이라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "take pictures",
+          "ko": "사진을 찍다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can you use if you do not have a camera?",
+        "choices": [
+          "A cell phone",
+          "A school tablet",
+          "A drawing book",
+          "A friend's camera"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "카메라가 없으면 학교 태블릿을 사용할 수 있다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "You can use a school tablet.",
+        "why_not": {
+          "0": "휴대폰 이야기는 안 나왔어요",
+          "2": "그림 그리는 책은 카메라 대신 쓸 수 없어요",
+          "3": "친구의 카메라를 빌린다는 내용은 없어요"
+        },
+        "key_expr": {
+          "en": "do not need",
+          "ko": "필요하지 않다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "W.meaning",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "R3-0122",
+    "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "MAGIC SHOW AT THE TOWN HALL\nCome and see the amazing Mr. Smile!\nHe will make objects float and pull ribbons out of a hat.\nDate: Sunday, October 20\nTime: 4:00 p.m. to 5:00 p.m.\nTicket: 5 dollars for children, 10 dollars for adults.\nYou can buy tickets at the door. Do not miss the fun!",
+      "translation_ko": "마을 회관 마술쇼\n와서 놀라운 스마일 씨를 만나 보세요!\n그는 물건들을 둥둥 띄우고 모자에서 리본을 꺼낼 거예요.\n날짜: 10월 20일 일요일\n시간: 오후 4시부터 5시까지\n표: 어린이 5달러, 어른 10달러.\n입구에서 표를 살 수 있어요. 재미있는 기회를 놓치지 마세요!"
+    },
+    "questions": [
+      {
+        "stem": "What day of the week is the magic show?",
+        "choices": [
+          "Friday",
+          "Saturday",
+          "Sunday",
+          "Monday"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "날짜를 보면 일요일(Sunday)에 열린다고 적혀 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "Sunday, October 20",
+        "why_not": {
+          "0": "금요일이 아니에요",
+          "1": "토요일이 아니에요",
+          "3": "월요일이 아니에요"
+        },
+        "key_expr": {
+          "en": "at the door",
+          "ko": "입구에서"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "3": "M.number"
+        }
+      },
+      {
+        "stem": "How much is a ticket for an adult?",
+        "choices": [
+          "4 dollars",
+          "5 dollars",
+          "20 dollars",
+          "10 dollars"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "어른 표는 10달러라고 안내되어 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.shopping"
+        ],
+        "evidence": "10 dollars for adults.",
+        "why_not": {
+          "0": "4달러라는 말은 없어요",
+          "1": "5달러는 어린이 표 가격이에요",
+          "2": "20달러라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "for adults",
+          "ko": "어른들을 위한"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.number"
+        }
+      }
+    ],
+    "tmp_id": "R3-0123",
+    "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "MODEL BOAT RACE\nBring your own small boat and race it on the pond!\nDate: Saturday, July 15\nTime: 10:00 a.m.\nPlace: Blue Lake Park\nRule 1: Your boat must be made of paper or wood.\nRule 2: No plastic boats are allowed.\nThe winner will get a gold medal and a big watermelon.",
+      "translation_ko": "모형 보트 경주\n자신만의 작은 보트를 가져와서 연못에서 경주해 보세요!\n날짜: 7월 15일 토요일\n시간: 오전 10시\n장소: 푸른 호수 공원\n규칙 1: 보트는 종이나 나무로 만들어야 합니다.\n규칙 2: 플라스틱 보트는 안 됩니다.\n우승자는 금메달과 큰 수박을 받을 거예요."
+    },
+    "questions": [
+      {
+        "stem": "Where is the boat race?",
+        "choices": [
+          "At the school gym",
+          "At Blue Lake Park",
+          "At the town library",
+          "At a swimming pool"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "경주가 열리는 장소는 푸른 호수 공원이에요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "Place: Blue Lake Park",
+        "why_not": {
+          "0": "학교 체육관은 안 나왔어요",
+          "2": "도서관에서 하는 경주가 아니에요",
+          "3": "수영장이라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "on the pond",
+          "ko": "연못에서"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will the winner of the race get?",
+        "choices": [
+          "A new plastic boat",
+          "A ticket to a magic show",
+          "A gold medal and a watermelon",
+          "Some paper and wood"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "우승자는 금메달과 큰 수박을 받는다고 적혀 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "The winner will get a gold medal and a big watermelon.",
+        "why_not": {
+          "0": "플라스틱 보트는 쓸 수 없어요",
+          "1": "마술쇼 표 이야기는 없어요",
+          "3": "종이와 나무는 보트 재료로 쓰라고 했어요"
+        },
+        "key_expr": {
+          "en": "get a gold medal",
+          "ko": "금메달을 받다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "R3-0124",
+    "status": "draft"
   }
 ]
