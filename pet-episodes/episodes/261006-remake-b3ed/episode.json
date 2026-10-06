@@ -8,7 +8,7 @@
     "music": "Mágica - Calcinha Preta"
   },
   "remake": {
-    "swap": "1) the scooter DRIVER (white short-sleeve mesh shirt, dark shorts) becomes the Shiba Inu from image 1: Shiba head, and his arms, hands, legs and feet become thick furry Shiba legs with round paws; 2) the SHIRTLESS REAR PASSENGER becomes a golden retriever: retriever head and his whole bare chest, belly, back, raised arm, armpit and legs become a fully furry golden retriever body and furry legs (no bare human skin left anywhere); 3) the hand that holds the ice-cream bar coming in from the frame edge becomes one furry dog paw; 4) the bystander in the checked shirt and jeans becomes a real mixed-breed dog walking upright the same way",
+    "swap": "1) the scooter DRIVER (white short-sleeve mesh shirt, dark shorts) becomes the Shiba Inu from image 1 (Shiba head, furry Shiba legs and round paws); 2) the SHIRTLESS REAR PASSENGER becomes a fluffy golden retriever with a fully furry body; he holds a big grey plastic drum/bucket up on his shoulder with one raised front leg, which exposes his underarm; 3) the hand that holds the vanilla ice-cream bar coming in from the right edge becomes one furry dog paw; 4) the bystander becomes a real dog",
     "ending": "Right after the crash, in the same sunny street next to the tipped-over scooter and the rolled grey trash bin, the same Shiba Inu in the white mesh shirt sits on the pavement, its fur and shirt smeared with melted white ice cream and dust; it pulls one wet wipe out of the pink pet wet-wipe pack (the real product from the image, pink pack with a navy lid) and briskly wipes the ice cream off its muzzle and chest, the pack standing upright on the ground right beside it with the label facing the camera; the golden retriever sits dazed in the background.",
     "big": "아이스크림 테러\n시바의 결말은?",
     "sub": "독일 더마 테스트 완료한 펫티슈로\n떡짐과 비린내 엉킴까지 말끔하게",
@@ -21,49 +21,49 @@
       {
         "t0": 0.0,
         "t1": 2.2,
-        "text": "Photorealistic handheld phone footage from behind a moving black scooter on a sunny road lined with green hedges. [0.0-0.5s] the golden retriever passenger keeps its right front leg raised high; the dog paw entering from the right edge rubs the vanilla ice-cream bar back and forth in the fur under that leg. [0.5-1.5s] two more quick rubs; the retriever's ears flatten and it pulls a disgusted face. [1.5-2.2s] the retriever turns its head away from the camera, eyes squinting. The Shiba driver keeps riding in front. Camera shakes slightly with the ride, no cuts."
+        "text": "Photorealistic handheld phone footage behind a moving black scooter on a sunny road lined with green hedges. The golden retriever passenger keeps holding the big grey plastic drum up on its shoulder with its raised front leg the whole time. [0.0-1.5s] the dog paw entering from the right edge rubs the vanilla ice-cream bar back and forth in the fur under that raised leg, three quick rubs. [1.5-2.2s] the retriever grimaces and turns its head away. The Shiba driver keeps riding in front. No cuts."
       },
       {
         "t0": 2.2,
-        "t1": 4.1,
-        "text": "Photorealistic handheld phone footage on the moving scooter. [0.0-0.3s] quick whip-pan arriving on the Shiba driver in the white mesh shirt. [0.3-1.4s] the Shiba twists its head back toward the camera and laughs hard with its mouth wide open, shoulders shaking. [1.4-1.9s] it keeps laughing and faces forward again, paws on the handlebars. No cuts."
+        "t1": 3.4,
+        "text": "Photorealistic handheld phone footage on the moving scooter. [0.0-1.2s] the Shiba driver in the white mesh shirt twists its head back toward the camera and laughs hard with its mouth wide open, shoulders shaking, paws on the handlebars. No cuts."
       },
       {
-        "t0": 4.1,
-        "t1": 5.1,
-        "text": "(still frame) freeze frame of panel 3"
+        "t0": 3.4,
+        "t1": 4.4,
+        "text": "(still frame of panel 3) "
       },
       {
-        "t0": 5.1,
-        "t1": 7.3,
-        "text": "Photorealistic handheld phone footage on the moving scooter. [0.0-0.6s] the Shiba driver laughing with its mouth open; the dog paw pops the vanilla ice-cream bar straight into its open mouth. [0.6-1.2s] the Shiba clamps its jaws on the bar, eyes squeezing shut. [1.2-2.2s] it keeps riding forward with the ice-cream stick sticking out of its mouth, chewing, unaware. No cuts."
+        "t0": 4.4,
+        "t1": 6.4,
+        "text": "Photorealistic handheld phone footage on the moving scooter, close on the Shiba driver. [0.0-0.5s] the Shiba laughs with its mouth open; the dog paw pushes the vanilla ice-cream bar straight into its open mouth. [0.5-1.0s] the Shiba bites down on the bar. [1.0-2.0s] it keeps the bar in its mouth, chewing, still unaware, riding forward. No cuts."
       },
       {
-        "t0": 7.3,
-        "t1": 8.4,
-        "text": "Photorealistic phone footage on a sunny pavement by green hedges. [0.0-0.5s] the golden retriever hops off the back of the black scooter. [0.5-1.1s] the scooter wobbles and its front bumps a big grey plastic trash bin, which tips over and falls. No cuts."
+        "t0": 6.4,
+        "t1": 7.6,
+        "text": "(still frame of panel 5) "
       },
       {
-        "t0": 8.4,
+        "t0": 7.6,
         "t1": 10.0,
-        "text": "(still frame) freeze frame of panel 6"
+        "text": "Photorealistic phone footage, wide shot on a sunny pavement by green hedges. [0.0-1.0s] the black scooter wobbles left and right as the disgusted Shiba driver loses control. [1.0-1.8s] it tips over sideways onto the pavement; the golden retriever behind loses its grip and the big grey plastic drum falls and rolls on the ground. [1.8-2.4s] both dogs tumble beside the fallen scooter. No cuts, camera steady."
       }
     ],
     "board_times": [
-      0.4,
-      2.5,
-      4.3,
+      1.8,
+      2.6,
+      4.6,
       5.9,
-      8.2,
-      8.7
+      8.6,
+      7.6
     ],
     "board_notes": [
-      "a fluffy golden retriever (fully furry body, no human skin) sits on the back of a black scooter holding one front leg high; a furry dog paw from the right rubs a small neat vanilla ice-cream bar into the fur under its raised leg; the Shiba driver in a white mesh shirt sits in front. Keep the ice cream tidy: no dripping liquid.",
-      "the Shiba driver in the white mesh short-sleeve shirt turns back toward the camera laughing with its mouth wide open, furry paws on the scooter handlebars.",
-      "extreme close-up of golden retriever underarm fur with a squashed vanilla ice-cream bar pressed into the fur and a few smudges; the bar is held by a furry dog paw. Funny, not messy: no dripping liquid.",
-      "a furry dog paw pops the vanilla ice-cream bar into the open, laughing mouth of the Shiba driver (white mesh shirt); the Shiba's eyes squeeze shut in surprise.",
-      "the Shiba driver on the black scooter bumping into a big grey plastic trash bin that tips over; the golden retriever hops off behind; furry legs only.",
-      "close-up of the Shiba driver's face frozen in a disgusted yell, a bit of ice cream on its lips and nose, white mesh shirt."
+      "golden retriever passenger on the back seat holding a big grey plastic drum up on its shoulder with its raised front leg; a furry dog paw from the right rubs a small neat vanilla ice-cream bar into the fur under that raised leg; the retriever grimaces; the Shiba driver in the white mesh shirt rides in front. Tidy ice cream, no dripping liquid.",
+      "the Shiba driver in the white mesh shirt turns back toward the camera laughing with its mouth wide open, furry paws on the handlebars; the retriever with the grey drum on its shoulder behind.",
+      "extreme close-up: the furry dog paw presses the squashed vanilla ice-cream bar into the golden retriever's underarm fur; part of the grey drum visible above. Funny, tidy, no dripping liquid.",
+      "the furry dog paw pushes that same vanilla ice-cream bar into the open laughing mouth of the Shiba driver (white mesh shirt).",
+      "close-up of the Shiba driver's face scrunching up in disgust the moment it tastes the ice cream: eyes squeezed shut, mouth wide open in a grimace with the ice-cream bar in it, white mesh shirt.",
+      "wide shot: the black scooter wobbling and starting to tip over sideways on the pavement, the Shiba driver leaning, the golden retriever behind it losing grip of the grey plastic drum which is falling; green hedges, sunny."
     ],
     "keep_audio": false,
     "sfx": [
@@ -72,7 +72,7 @@
         "at": 0.0,
         "vol": 0.45,
         "loop": true,
-        "until": 8.3
+        "until": 9.0
       },
       {
         "file": "icecream_squish.mp3",
@@ -81,22 +81,22 @@
       },
       {
         "file": "zoom_hit.mp3",
-        "at": 4.05,
+        "at": 3.35,
         "vol": 1.0
       },
       {
         "file": "icecream_chomp.mp3",
-        "at": 5.6,
-        "vol": 1.0
-      },
-      {
-        "file": "trash_bin_crash.mp3",
-        "at": 7.9,
+        "at": 4.85,
         "vol": 1.0
       },
       {
         "file": "zoom_hit.mp3",
-        "at": 8.35,
+        "at": 6.35,
+        "vol": 1.0
+      },
+      {
+        "file": "trash_bin_crash.mp3",
+        "at": 8.7,
         "vol": 1.0
       }
     ],
@@ -106,37 +106,37 @@
         "panel": 1,
         "t0": 0.0,
         "t1": 2.2,
-        "prompt": "Photorealistic handheld phone footage from behind a moving black scooter on a sunny road lined with green hedges. [0.0-0.5s] the golden retriever passenger keeps its right front leg raised high; the dog paw entering from the right edge rubs the vanilla ice-cream bar back and forth in the fur under that leg. [0.5-1.5s] two more quick rubs; the retriever's ears flatten and it pulls a disgusted face. [1.5-2.2s] the retriever turns its head away from the camera, eyes squinting. The Shiba driver keeps riding in front. Camera shakes slightly with the ride, no cuts."
+        "prompt": "Photorealistic handheld phone footage behind a moving black scooter on a sunny road lined with green hedges. The golden retriever passenger keeps holding the big grey plastic drum up on its shoulder with its raised front leg the whole time. [0.0-1.5s] the dog paw entering from the right edge rubs the vanilla ice-cream bar back and forth in the fur under that raised leg, three quick rubs. [1.5-2.2s] the retriever grimaces and turns its head away. The Shiba driver keeps riding in front. No cuts."
       },
       {
         "panel": 2,
         "t0": 2.2,
-        "t1": 4.1,
-        "prompt": "Photorealistic handheld phone footage on the moving scooter. [0.0-0.3s] quick whip-pan arriving on the Shiba driver in the white mesh shirt. [0.3-1.4s] the Shiba twists its head back toward the camera and laughs hard with its mouth wide open, shoulders shaking. [1.4-1.9s] it keeps laughing and faces forward again, paws on the handlebars. No cuts."
+        "t1": 3.4,
+        "prompt": "Photorealistic handheld phone footage on the moving scooter. [0.0-1.2s] the Shiba driver in the white mesh shirt twists its head back toward the camera and laughs hard with its mouth wide open, shoulders shaking, paws on the handlebars. No cuts."
       },
       {
         "panel": 3,
-        "t0": 4.1,
-        "t1": 5.1,
+        "t0": 3.4,
+        "t1": 4.4,
         "still": true
       },
       {
         "panel": 4,
-        "t0": 5.1,
-        "t1": 7.3,
-        "prompt": "Photorealistic handheld phone footage on the moving scooter. [0.0-0.6s] the Shiba driver laughing with its mouth open; the dog paw pops the vanilla ice-cream bar straight into its open mouth. [0.6-1.2s] the Shiba clamps its jaws on the bar, eyes squeezing shut. [1.2-2.2s] it keeps riding forward with the ice-cream stick sticking out of its mouth, chewing, unaware. No cuts."
+        "t0": 4.4,
+        "t1": 6.4,
+        "prompt": "Photorealistic handheld phone footage on the moving scooter, close on the Shiba driver. [0.0-0.5s] the Shiba laughs with its mouth open; the dog paw pushes the vanilla ice-cream bar straight into its open mouth. [0.5-1.0s] the Shiba bites down on the bar. [1.0-2.0s] it keeps the bar in its mouth, chewing, still unaware, riding forward. No cuts."
       },
       {
         "panel": 5,
-        "t0": 7.3,
-        "t1": 8.4,
-        "prompt": "Photorealistic phone footage on a sunny pavement by green hedges. [0.0-0.5s] the golden retriever hops off the back of the black scooter. [0.5-1.1s] the scooter wobbles and its front bumps a big grey plastic trash bin, which tips over and falls. No cuts."
+        "t0": 6.4,
+        "t1": 7.6,
+        "still": true
       },
       {
         "panel": 6,
-        "t0": 8.4,
+        "t0": 7.6,
         "t1": 10.0,
-        "still": true
+        "prompt": "Photorealistic phone footage, wide shot on a sunny pavement by green hedges. [0.0-1.0s] the black scooter wobbles left and right as the disgusted Shiba driver loses control. [1.0-1.8s] it tips over sideways onto the pavement; the golden retriever behind loses its grip and the big grey plastic drum falls and rolls on the ground. [1.8-2.4s] both dogs tumble beside the fallen scooter. No cuts, camera steady."
       }
     ],
     "shot_sec": 4
