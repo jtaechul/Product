@@ -839,6 +839,7 @@ def step_ig_publish(ep, epdir, work, log, force=False):
     final = work / "final.mp4"
     if not final.exists():
         raise RuntimeError("final.mp4 없음 — 먼저 영상을 완성하세요")
+    _assert_vertical(final, "인스타 올리기 전 검사")         # ⛔ 꽉 찬 세로가 아닌 영상은 인스타에 올리지 않는다
     tok = _ig_token()
     if not tok:
         raise RuntimeError("IG_ACCESS_TOKEN 없음")
@@ -2134,6 +2135,36 @@ def _apply_freeze(src: Path, out: Path, spans, back: float = 0.0) -> Path:
     return out
 
 
+def _assert_vertical(v: Path, what: str):
+    """⛔ 핵심 규칙: 꽉 찬 세로 9:16만 쓴다. 파일이 9:16이 아니거나 속에 위아래(좌우) 검은 띠가 있으면 멈춘다(자르기·늘리기·흐린 배경 금지)."""
+    w, h = _wh(v)
+    if abs(w * 16 - h * 9) > h * 9 * 0.03:
+        raise RuntimeError(f"{what}: 영상이 세로 9:16이 아닙니다({w}x{h}) — 자르거나 늘리지 않고 멈췄습니다")
+    cw, ch = _content_wh(v)                               # 속 화면이 9:16보다 가로로 넓으면 = 위아래 검은 띠(검은 무대 배경은 좁게 잡혀 통과)
+    if cw * 16 > ch * 9 * 1.10:
+        raise RuntimeError(f"{what}: 화면 위아래에 검은 띠가 있습니다(실제 화면 {cw}x{ch} / {w}x{h}) — 꽉 찬 세로가 아니라 멈췄습니다")
+    if _blur_bands(v):                                    # 흐린 배경으로 위아래를 채운 영상(2026-10 아리아 편 사고)도 멈춘다
+        raise RuntimeError(f"{what}: 화면 위아래가 흐린 배경으로 채워져 있습니다 — 꽉 찬 세로가 아니라 멈췄습니다")
+
+
+def _blur_bands(v: Path) -> bool:
+    """위·아래 띠가 가운데보다 훨씬 흐린 장면이 절반 넘게 이어지면 True(흐린 배경 채우기 감지)."""
+    from PIL import ImageFilter, ImageStat
+    tmp = v.with_name("_bb_%03d.png")
+    for f in v.parent.glob("_bb_*.png"):
+        f.unlink()
+    _ff(["-i", str(v), "-vf", "fps=2,scale=180:320", str(tmp)])
+    frames = sorted(v.parent.glob("_bb_*.png"))
+    bad = 0
+    for f in frames:
+        e = Image.open(f).convert("L").filter(ImageFilter.FIND_EDGES)
+        top, mid, bot = (ImageStat.Stat(e.crop(b)).mean[0] for b in ((0, 0, 180, 64), (0, 112, 180, 208), (0, 256, 180, 320)))
+        if mid > 6 and top < mid * 0.5 and bot < mid * 0.5:
+            bad += 1
+        f.unlink()
+    return bool(frames) and bad > len(frames) * 0.5
+
+
 def _content_wh(src: Path) -> tuple[int, int]:
     """검은 띠를 뺀 실제 화면 크기(ffmpeg cropdetect, 여러 장면 중 가장 넓은 것)."""
     r = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(src), "-vf", "fps=2,cropdetect=24:2:1", "-f", "null", "-"],
@@ -2146,7 +2177,7 @@ def _content_wh(src: Path) -> tuple[int, int]:
     return best
 
 
-def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: int) -> Path:
+def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: int, ref: Path | None = None, swap_prompt: str = "") -> Path:
     """원본 영상 없이 만들기(2026-10 아이스크림 편: 원본을 성적 장면으로 오인해 거절). remake.shots = [{panel, t0, t1, still, prompt}]
     — 움직이는 장면은 확인받은 스토리보드 칸을 첫 장면으로 shot_sec(기본 4초)짜리를 만들고 필요한 길이만 잘라 쓴다,
     still이면 그 칸 그림을 그대로 멈춰 둔다(돈 안 듦). 칸마다 한 번만(다시 만들기 없음)."""
@@ -2162,7 +2193,33 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
             raise RuntimeError(f"스토리보드 {sh['panel']}번 칸이 없습니다")
         first = _crop_bars(pnl, work / f"_shot_first{k + 1}.png")
         if not out.exists():
-            if sh.get("still"):
+            if sh.get("src") and ref is not None:      # 원본이 꽉 찬 세로인 구간: 원본 그대로 바꾼다(동작·입모양 유지)
+                a, b = float(sh["src"][0]), float(sh["src"][1])
+                piece = work / f"_shot_src{k + 1}.mp4"
+                _ff(["-ss", f"{a:.3f}", "-t", f"{b - a:.3f}", "-i", str(ref), "-an", "-c:v", "libx264", "-crf", "16", str(piece)])
+                cw, ch = _content_wh(piece)
+                if cw * 16 > ch * 9 * 1.15:
+                    raise RuntimeError(f"장면{k + 1}: 원본 속 화면이 가로({cw}x{ch})라 원본으로 바꿀 수 없습니다 — 그림으로 만드는 장면으로 바꿔 주세요")
+                usd = REMAKE_COST["omni_sec"] * (b - a)
+                _remake_spend(res, usd, f"장면{k + 1} 원본 바꾸기({b - a:.1f}초)", cap)
+                body = {"model": CLIP_MODEL, "input": [
+                    {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()},
+                    {"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")},
+                    {"type": "image", **_b64img(first)},
+                    {"type": "text", "text": swap_prompt + " " + str(sh.get("prompt", "")) + REMAKE_BOARD_REF.format(n=2)}],
+                    "response_format": {"type": "video", "resolution": REMAKE_RES}, "generation_config": {"video_config": {"task": "edit"}}}
+                raw = work / f"_shot_raw{k + 1}.mp4"
+                try:
+                    raw.write_bytes(_omni_run(key, body))
+                except RuntimeError as e:
+                    if "HTTP 400" in str(e):
+                        res["spent"] = round(float(res.get("spent", 0)) - usd, 3)
+                        res.setdefault("ledger", []).append({"what": f"장면{k + 1} 차단됨(요금 없음)", "usd": -round(usd, 3)})
+                    raise
+                _assert_vertical(raw, f"장면{k + 1}")
+                _ff(["-i", str(raw), "-an", "-t", f"{L:.3f}", "-vf", f"scale={W}:{H},fps=24,setsar=1,format=yuv420p",
+                     "-c:v", "libx264", "-crf", "20", str(out)])
+            elif sh.get("still"):
                 _ff(["-loop", "1", "-t", f"{L:.3f}", "-i", str(first), "-vf",
                      f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps=24,setsar=1,format=yuv420p",
                      "-c:v", "libx264", "-crf", "20", str(out)])
@@ -2181,8 +2238,8 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
                         res["spent"] = round(float(res.get("spent", 0)) - usd, 3)
                         res.setdefault("ledger", []).append({"what": f"장면{k + 1} 차단됨(요금 없음)", "usd": -round(usd, 3)})
                     raise
-                _ff(["-i", str(raw), "-an", "-t", f"{L:.3f}", "-vf",
-                     f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps=24,setsar=1,format=yuv420p",
+                _assert_vertical(raw, f"장면{k + 1}")
+                _ff(["-i", str(raw), "-an", "-t", f"{L:.3f}", "-vf", f"scale={W}:{H},fps=24,setsar=1,format=yuv420p",
                      "-c:v", "libx264", "-crf", "20", str(out)])
         parts.append(out)
     body_v = work / "remake.mp4"
@@ -2634,8 +2691,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     tries = [best]
     got = _dur(best[0])
     ow, oh = _wh(best[0])
-    if ow * 16 > oh * 9 * 1.05:                           # ⛔ 핵심 규칙: 결과가 세로 9:16이 아니면 이어 붙이지 않고 멈춘다(원본이 9:16이어도 — 2026-10 아리아 편: 위아래 검은 띠 원본을 AI가 잘라 16:9로 돌려줌)
-        raise RuntimeError(f"영상 AI가 세로가 아닌 {ow}x{oh}로 돌려줬습니다. 세로 9:16이 아니라서 멈췄습니다.")
+    _assert_vertical(best[0], f"구간{i + 1}")             # ⛔ 핵심 규칙: 꽉 찬 세로 9:16이 아니면 이어 붙이지 않고 멈춘다(2026-10 아리아 편 재발)
     if got and got < seg * 0.9:                           # AI가 원본보다 짧게 만들면 늘리지 않는다(입모양·박자가 어긋남)
         raise RuntimeError(f"영상 AI가 {got:.1f}초만 만들었습니다(원본 {seg:.1f}초). 한 번에 만들 수 있는 길이를 넘은 것 같습니다.")
     k = seg / got if got else 1.0                         # 원본 구간과 같은 길이로(박자 유지)
@@ -2805,7 +2861,7 @@ def step_remake(ep, epdir, work, log, req):
             res["hide_spans"] = rm["hide_spans"]
         shots_mode = mode == "full" and rm.get("source_video") is False and bool(rm.get("shots"))
         if shots_mode:                                    # 원본 영상을 영상 AI에 넣지 않고 스토리보드 칸 + 초 단위 지시로 장면마다 만든다
-            body_v = _remake_shots(key, rm, work, res, cap, W, H)
+            body_v = _remake_shots(key, rm, work, res, cap, W, H, ref, prompt)
         else:
             if not (work / "rm_seg1.mp4").exists() and not res.get("vertical"):   # 돈 쓰기 전에: 9:16 파일이어도 속이 가로(위아래 검은 띠)면
                 cw, ch = _content_wh(ref)                 # 영상 AI가 띠를 잘라 16:9로 돌려준다(2026-10 아리아 편 실측) → 시작 전에 멈춘다
@@ -2934,18 +2990,9 @@ def step_remake(ep, epdir, work, log, req):
         tot = round(Lb + dd, 2)
         end_slow = 1.0 if (ad_vo or _dur(end_v) >= 5.5) else 1.6        # 6초로 만든 끝 장면은 늘리지 않는다(예전 4초짜리만 1.6배)
         fit = f"scale={W}:{H}:force_original_aspect_ratio=decrease,pad={W}:{H}:(ow-iw)/2:(oh-ih)/2"   # 원본이 9:16이 아니어도 이어 붙게
-        # 가로 원본(16:9 등)은 세로 화면에 검은 띠 대신 같은 영상을 흐리게 깔고 가운데에 원본 비율 그대로(사용자 지적 2026-10: 9:16으로 나와야 함)
-        # — 가운데만 잘라 내면 옆 사람이 잘리므로 기본은 흐린 배경 채우기. 조금 키우려면 remake.frame_zoom(예 1.25, 양옆이 그만큼 잘림)
-        bw, bh = _wh(body_v)
-        if bw > bh * W / H * 1.05:
-            z = max(1.0, float(rm.get("frame_zoom", 1.0)))
-            fw = int(W * z) // 2 * 2
-            body_f = (f"split[bg0][fg0];[bg0]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},gblur=sigma=18,"
-                      f"eq=brightness=-0.10:saturation=0.85[bgb];[fg0]scale={fw}:-2,crop={W}:ih[fgs];"
-                      f"[bgb][fgs]overlay=(W-w)/2:(H-h)/2")
-            res["frame"] = {"mode": "blur_fill", "src": f"{bw}x{bh}", "zoom": z}
-        else:
-            body_f = fit
+        # ⛔ 흐린 배경 채우기·가로 띠 조립은 삭제(사용자 지시 2026-10, 아리아 편 재발 사고) — 본편이 꽉 찬 세로가 아니면 멈춘다
+        _assert_vertical(body_v, "본편")
+        body_f = f"scale={W}:{H},setsar=1"
         V = (f"[0:v]{body_f},fps=24,setsar=1,format=yuv420p[a];"
              f"[1:v]{fit},setpts={end_slow}*PTS,fps=24,tpad=stop_mode=clone:stop_duration=20,trim=duration={dd},setpts=PTS-STARTPTS,"
              f"setsar=1,format=yuv420p,fade=t=in:st=0:d=0.25:color=white[b0];"
@@ -3007,6 +3054,7 @@ def step_remake(ep, epdir, work, log, req):
         _ff(["-ss", f"{Lb + min(dd - 0.3, 2.5):.2f}", "-i", str(final), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos",
              "-q:v", "3", str(work / "cover.jpg")])
         log["cover"] = "work/cover.jpg"
+        _assert_vertical(final, "완성본")                 # ⛔ 마지막 관문: 꽉 찬 세로가 아니면 완성으로 표시하지 않는다(인스타 올리기도 막힘)
         log["assemble"] = {"ok": True, "sec": round(_dur(final), 2), "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"}
         res["full"] = {"ok": True}
     finally:                                              # 남의 원본·중간 파일은 성공·실패와 관계없이 저장소에 남기지 않는다
@@ -3218,6 +3266,7 @@ def _meme_full(ep, epdir, work, log, res, mm, cap):
          "-t", f"{tot}", "-c:v", "libx264", "-crf", "21", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(final)])
     _ff(["-ss", "2.2", "-i", str(final), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos", "-q:v", "3", str(work / "cover.jpg")])
     log["cover"] = "work/cover.jpg"
+    _assert_vertical(final, "완성본")
     log["assemble"] = {"ok": True, "sec": round(_dur(final), 2), "note": f"밈 광고(본편 {Lb:.1f}초 + 광고 {La:.1f}초)"}
     res["full"] = {"ok": True}
 

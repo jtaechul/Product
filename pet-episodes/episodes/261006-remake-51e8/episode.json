@@ -12,28 +12,13 @@
     "beats": [
       {
         "t0": 0.0,
-        "t1": 1.6,
-        "text": "Wide static shot of a grass throwing field: the Shiba in the blue tank top spins round and round holding the hammer wire with both front paws, the iron ball whirling; lime-green-shirt official dogs stand at the side and back."
-      },
-      {
-        "t0": 1.6,
-        "t1": 2.0,
-        "text": "The Shiba lets go too early: the hammer flies off sideways toward the official dogs, who flinch."
-      },
-      {
-        "t0": 2.0,
         "t1": 2.5,
-        "text": "The Shiba loses balance and topples over onto the grass."
+        "text": "Photorealistic phone footage, fixed wide shot of a grass hammer-throw field on an overcast day; officials are dogs in lime-green shirts. [0.0-1.5s] the Shiba in the royal-blue tank top and black shorts spins round twice on its hind legs holding the hammer wire with both front paws, the iron ball whirling around it. [1.5-1.8s] the paws let go too early: the hammer flies off sideways toward the official dogs, who flinch. [1.8-2.5s] the Shiba loses balance and topples over onto the grass. No cuts, camera fixed."
       },
       {
         "t0": 2.5,
-        "t1": 9.0,
-        "text": "Hard cut to a black stage: the same Shiba in a black tuxedo and white bow tie, head tilted up, eyes half closed, mouth wide open singing one long dramatic opera note into two microphones, head swaying slowly; the mouth stays wide open the whole time."
-      },
-      {
-        "t0": 9.0,
-        "t1": 10.0,
-        "text": "The note ends: the Shiba closes its mouth and gives a small proud, slightly embarrassed smile to the camera."
+        "t1": 9.91,
+        "text": "Keep the original motion exactly: the singer's mouth opens and closes exactly like the original (wide open singing one long note until near the end, then closed with a small proud smile). Same black stage, two microphones, black tuxedo, white bow tie."
       }
     ],
     "board_times": [
@@ -77,7 +62,26 @@
     "cut": "",
     "whimper": false,
     "ad": "vo",
-    "cap": 5
+    "cap": 5,
+    "source_video": false,
+    "shots": [
+      {
+        "panel": 1,
+        "t0": 0.0,
+        "t1": 2.5,
+        "prompt": "Photorealistic phone footage, fixed wide shot of a grass hammer-throw field on an overcast day; officials are dogs in lime-green shirts. [0.0-1.5s] the Shiba in the royal-blue tank top and black shorts spins round twice on its hind legs holding the hammer wire with both front paws, the iron ball whirling around it. [1.5-1.8s] the paws let go too early: the hammer flies off sideways toward the official dogs, who flinch. [1.8-2.5s] the Shiba loses balance and topples over onto the grass. No cuts, camera fixed."
+      },
+      {
+        "panel": 4,
+        "t0": 2.5,
+        "t1": 9.91,
+        "src": [
+          2.5,
+          9.91
+        ],
+        "prompt": "Keep the original motion exactly: the singer's mouth opens and closes exactly like the original (wide open singing one long note until near the end, then closed with a small proud smile). Same black stage, two microphones, black tuxedo, white bow tie."
+      }
+    ]
   },
   "caption": "해머는 놓쳐도 강아지는 안 놓쳐요\n\n손목밴드까지 걸어 두는 자동 리드줄. 산책 중 줄 놓칠 걱정 없이.\n\n구매는 프로필 링크에서.",
   "hashtags": [
