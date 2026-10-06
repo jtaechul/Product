@@ -2705,14 +2705,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
         return _remake_seg_i2v(key, ref, i, seg, work, res, cap, h)
     out = work / f"rm_seg{i + 1}.mp4"
     piece = work / f"_rm_piece{i + 1}.mp4"
-    if res.get("pre_enhance"):                            # 원본을 먼저 AI로 복원(무료, CPU): 합성 AI가 깨끗한 입력을 보고 더 자세히 그린다(사용자 요청 2026-10 "업스케일만 말고 더 디테일하게")
-        raw_piece = work / f"_rm_piece{i + 1}_raw.mp4"
-        _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-vf", "hqdn3d=2:2:3:3", "-c:v", "libx264", "-crf", "16", str(raw_piece)])
-        from upscale import upscale_video
-        pw, ph = _wh(raw_piece)
-        res["pre_enhance_info"] = upscale_video(raw_piece, piece, dn=0.5, target=(720, 1280) if ph >= pw else (1280, 720))
-    else:
-        _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-vf", CLEAN_VF, "-c:v", "libx264", "-crf", "16", str(piece)])
+    _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-vf", CLEAN_VF, "-c:v", "libx264", "-crf", "16", str(piece)])
     prompt = prompt + REMAKE_CLEAN                        # 원본 화질은 따라 하지 않고 구도·개그·소리만(사용자 지시 2026-10)
     inputs = [{"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}]
     if res.get("use_timeline", True):                     # 0.5초 시간표(동작·입모양·소리)를 지시에 그대로 넣는다
@@ -3184,6 +3177,18 @@ def step_remake(ep, epdir, work, log, req):
         if L > T + 0.3 or rm.get("window") or rm.get("pieces"):
             ref = _remake_pick(ref, L, T, work, res, cap, rm.get("pieces") or rm.get("window"))
             L = _dur(ref)
+        if rm.get("pre_enhance"):                         # 합성 전에 원본을 AI로 복원(무료, CPU, 원본 크기 그대로): 합성 AI가 깨끗한 입력을 보고 더 자세히 그린다(사용자 요청 2026-10)
+            enh = work / "_src_enh.mp4"
+            if not enh.exists():
+                from upscale import upscale_video
+                sw0, sh0 = _wh(ref)
+                t_e = time.time()
+                tmp_v = work / "_src_enh_v.mp4"
+                _ff(["-i", str(ref), "-an", "-vf", "hqdn3d=2:2:3:3", "-c:v", "libx264", "-crf", "16", str(work / "_src_dn.mp4")])
+                info = upscale_video(work / "_src_dn.mp4", tmp_v, dn=float(rm.get("pre_enhance_dn", 0.5)), target=(sw0, sh0))
+                _ff(["-i", str(tmp_v), "-i", str(ref), "-map", "0:v", "-map", "1:a?", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", str(enh)])
+                res["pre_enhance_info"] = {**info, "sec": round(time.time() - t_e)}
+            ref = enh
         nb = max(1, math.ceil(L / REMAKE_SEG))            # 스토리보드 칸 나누기(그림 확인용)
         bseg = L / nb
         # 처음부터 끝까지 한 번에(사용자 지시 2026-10: 10초씩 끊지 말고 한 번에) — remake.one_shot=false일 때만 예전처럼 나눈다

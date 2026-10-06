@@ -65,7 +65,7 @@
    }
   ],
   "keep_audio": true,
-  "ending": "Same backyard by the wooden fence, same daylight and security-camera angle, the thief is gone. The Shiba sits calmly in front of the fence with the real dog apple-juice product (image 2) standing upright on the ground beside it, lapping apple juice from a small bowl next to the bottle, tail wagging, red apples still hanging above",
+  "ending": "Same backyard by the wooden fence, same daylight and security-camera angle, the thief is gone. The Shiba sits calmly in front of the fence next to the real pet juice pouch product (image 2) standing upright on the ground, lapping juice from a small bowl beside the pouch, tail wagging, red apples still hanging above",
   "big": "사과 도둑을 그냥 보내 준 경비견",
   "sub": "사과는 양보해도 주스는 못 참지",
   "vo": "사과는 드릴게요. 주스는 제 거라서. 구매는 프로필 링크에서.",
@@ -187,8 +187,11 @@
     "camera": "fixed security camera, slightly high angle"
    }
   ],
-  "upscale": 2,
-  "upscale_dn": 0.3
+  "upscale": 0,
+  "upscale_dn": 0.3,
+  "res": "720p",
+  "pre_enhance": true,
+  "pre_enhance_dn": 0.5
  },
  "caption": "사과 도둑을 그냥 보내 준 경비견\n\n사과는 양보해도 주스는 못 참지\n\n구매는 프로필 링크에서.",
  "hashtags": [
@@ -199,11 +202,11 @@
   "#강아지간식추천"
  ],
  "product": {
-  "title": "강아지용 사과주스",
-  "brand": "",
+  "title": "웰썸 강아지 주스, ABC, 150ml, 10개",
+  "brand": "웰썸",
   "category": "간식",
   "reason": "사과는 양보해도 주스는 못 참지",
-  "link": "",
-  "image": ""
+  "link": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=7584440942&itemId=20027761801&vendorItemId=95851000089&traceid=V0-153-ac29f65ec309ab20&clickBeacon=4ce28bf0-c1db-11f1-ac64-0c956f401eb4%7E3&requestid=20261007081145693112915769&token=31850C%7CMIXED&pt=1&slot=1",
+  "image": "https://ads-partners.coupang.com/image1/MlLX6x2EiHVuIUR7MqhkBNhb-xyZTn63X6YS0JvFdtI-w15A7N1_-9RAO8gjtLklVC0pJYnR1QvSz0IEM0xg8VlgUyTZV3KBV9r6rHYsPpypAte_AhzORa65pFJZFmpuvT80_yBztnemaZybk8IsDab806kvgVBDTqTvtAcz6QDK2_C9JTwS1SMeq9ybKAAbu3_wMbbfPFTJwiyfQ4pGRvRGpHlPKkbDpKk7JCRnqgu2KQYn3hXcCYwf35-F4mtaIrDcbn3HAKBzckI26HnmcqODawPUCMdxajtWMpuInsaTtX7swyasCw6f5XA9h977_u5gzeE6kGi_0qMr_ohWwYABAI-E2xQRJZMDk0Bl49MxgRumeL85WQVhiqt6kYlSFddQBjoimaM3atxQRP9RB9zhVpXJDuIiMOEEOjk28Xd-H84jD6Xl3z-KzI9pOGZWeo17DdSeSSz171Hiw-t1Fph4yIk_IsrPPNzqqv5Fz8O_kiwS8jyW1ZQGCPLR773j2PujScM-FTk="
  }
 }
