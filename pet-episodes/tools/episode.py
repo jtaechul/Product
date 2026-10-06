@@ -2115,16 +2115,17 @@ def _board_times(L: float, n: int, seg: float) -> list[float]:
     return t
 
 
-def _apply_freeze(src: Path, out: Path, spans) -> Path:
-    """[[시작, 끝], ...] 구간을 시작 프레임으로 멈춰 둔다(길이는 그대로, 24fps 기준 ffmpeg freezeframes)."""
+def _apply_freeze(src: Path, out: Path, spans, back: float = 0.0) -> Path:
+    """[[시작, 끝], ...] 구간을 시작 프레임(back초 앞 프레임)으로 멈춰 둔다(길이는 그대로, 24fps 기준 ffmpeg freezeframes)."""
     L, fps = _dur(src), 24
     chain, cur = [f"[0:v]fps={fps},setpts=PTS-STARTPTS[v0]"], "v0"
-    for k, (a, b) in enumerate(sorted((float(a), float(b)) for a, b in spans)):
+    for k, (a, b) in enumerate(sorted((float(x[0]), float(x[1])) for x in spans)):
         a, b = max(0.0, a), min(L, b)
         if b <= a:
             continue
         f0, f1 = int(round(a * fps)), int(round(b * fps)) - 1
-        chain.append(f"[{cur}]split[s{k}a][s{k}b];[s{k}a][s{k}b]freezeframes=first={f0}:last={f1}:replace={f0}[v{k + 1}]")
+        rp = max(0, f0 - int(round(back * fps)))
+        chain.append(f"[{cur}]split[s{k}a][s{k}b];[s{k}a][s{k}b]freezeframes=first={f0}:last={f1}:replace={rp}[v{k + 1}]")
         cur = f"v{k + 1}"
     chain.append(f"[{cur}]format=yuv420p[v]")
     _ff(["-i", str(src), "-filter_complex", ";".join(chain), "-map", "[v]", "-c:v", "libx264", "-crf", "20", str(out)])
@@ -2737,9 +2738,13 @@ def step_remake(ep, epdir, work, log, req):
             if float(res.get("spent", 0)) + est_all > cap:
                 raise RuntimeError(f"영상 예상 비용(약 ${est_all:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다. 더 짧은 원본으로 다시 해 주세요.")
         # 1) 시험(예전 방식): 첫 구간(본편에 그대로 쓴다)
+        ref_gen = ref
+        if rm.get("hide_spans"):                          # 영상 AI가 거절하는 장면(2026-10 아이스크림 편: 맨살에 흰 액체 클로즈업 → prohibited_content)은
+            ref_gen = _apply_freeze(ref, work / "_src_hidden.mp4", rm["hide_spans"], back=0.15)   # 바로 앞 장면으로 덮어 보내고, 조립 때 스토리보드 칸으로 채운다
+            res["hide_spans"] = rm["hide_spans"]
         s1 = work / "rm_seg1.mp4"
         if not s1.exists():
-            _remake_seg(key, ref, 0, seg, prompt, work, res, cap, H)
+            _remake_seg(key, ref_gen, 0, seg, prompt, work, res, cap, H)
             if mode == "test":
                 _ff(["-i", str(s1), "-c", "copy", "-movflags", "+faststart", str(work / "test.mp4")])
         first = res.get("segs", {}).get("seg1", {})
@@ -2757,7 +2762,7 @@ def step_remake(ep, epdir, work, log, req):
         for i in range(n):
             o = work / f"rm_seg{i + 1}.mp4"
             if not o.exists():
-                _remake_seg(key, ref, i, seg, prompt, work, res, cap, H)
+                _remake_seg(key, ref_gen, i, seg, prompt, work, res, cap, H)
             segs.append(o)
         body_v = work / "remake.mp4"
         ins = []
@@ -2768,6 +2773,22 @@ def step_remake(ep, epdir, work, log, req):
         if rm.get("freeze"):                              # 원본의 화면 정지(웃음 포인트)는 영상 AI가 움직여 버리므로 조립 때 그 장면을 그대로 멈춘다
             body_v = _apply_freeze(body_v, work / "remake_fz.mp4", rm["freeze"])
             res["freeze"] = rm["freeze"]
+        if rm.get("hide_spans"):                          # 가려 보낸 구간 = 확인받은 스토리보드 칸(정지 화면)으로 채운다
+            ins, fc, cur = ["-i", str(body_v)], [], "0:v"
+            for k, sp in enumerate(rm["hide_spans"]):
+                pnl = work / f"board_{int(sp[2]):02d}.jpg"
+                if len(sp) < 3 or not pnl.exists():
+                    continue
+                ins += ["-loop", "1", "-i", str(pnl)]
+                n_in = ins.count("-i") - 1
+                fc.append(f"[{n_in}:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1[im{k}];"
+                          f"[{cur}][im{k}]overlay=0:0:enable='between(t,{float(sp[0]):.2f},{float(sp[1]) - 0.01:.2f})':shortest=1[o{k}]")
+                cur = f"o{k}"
+            if fc:
+                hid = work / "remake_hid.mp4"
+                _ff([*ins, "-filter_complex", ";".join(fc) + f";[{cur}]format=yuv420p[v]", "-map", "[v]", "-t", f"{_dur(body_v):.2f}",
+                     "-c:v", "libx264", "-crf", "20", str(hid)])
+                body_v = hid
         # 2) 끝 장면: 마지막 프레임 + 실제 상품 사진 → 첫 장면 → 4초
         last = work / "_rm_last.png"
         _ff(["-sseof", "-0.1", "-i", str(body_v), "-frames:v", "1", str(last)])
