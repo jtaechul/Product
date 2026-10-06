@@ -20,7 +20,7 @@
     "src_sec": 8.13,
     "segments": 1,
     "one_shot": true,
-    "method": "motion",
+    "method": "composite",
     "timeline": {
       "all": [
         {
@@ -135,9 +135,123 @@
           "sound": "music only",
           "camera": "fixed security camera, slightly high angle"
         }
+      ],
+      "seg1": [
+        {
+          "t": "0.0-0.5",
+          "action": "The man in a black hoodie (hood up) and black trousers is on top of the wooden fence at the top-left, swinging his legs over and dropping into the yard. The dog stands in the yard facing left, looking",
+          "mouth": "dog closed; man hidden by hood",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "The man lands on his feet by the fence and straightens up. The dog turns toward him, tail up, calm.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "The man stands upright facing the dog, arms at his sides. The dog stands facing him, relaxed.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "The man extends his right hand to the dog's muzzle and head and touches it like a friendly greeting pat. The dog stays still and lets him, tail relaxed, no aggression.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "The man strokes the dog's head briefly, then lifts his arm up toward the apple branches above the fence. The dog stands calmly looking at him.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "The man reaches up with both arms into the apple tree and pulls an apple-laden branch down. The dog stands beside him watching, panting lightly.",
+          "mouth": "dog slightly open (panting)",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "The man picks red apples from the branch with both hands. The dog watches calmly, tail wagging gently.",
+          "mouth": "dog slightly open",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "The man holds the apples at his chest with both hands and tucks them into the front pocket of his hoodie. The dog stands still, watching.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "The man turns to the fence and reaches up, grabbing the top of the fence with both hands. The dog turns its head, calm.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "The man pulls himself up the fence, feet against the boards. The dog takes a few slow steps and sniffs the ground.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "5.0-5.5",
+          "action": "The man swings his legs over the top of the fence. The dog stands below, tail wagging, looking around.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "5.5-6.0",
+          "action": "The man drops down on the far side of the fence, disappearing; only his legs are visible at the top-left. The dog turns and trots slowly to the right.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "6.0-6.5",
+          "action": "The man is gone except one leg at the very top-left behind the fence. The dog walks slowly right, tail wagging gently.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "6.5-7.0",
+          "action": "The dog strolls under the apple branches, sniffing the ground, relaxed, alone in the yard.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "7.0-7.5",
+          "action": "The dog pauses and turns toward the camera, tail wagging.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        },
+        {
+          "t": "7.5-8.1",
+          "action": "The dog stands looking ahead toward the camera, calm, as if nothing happened.",
+          "mouth": "dog closed",
+          "sound": "music only",
+          "camera": "fixed security camera, slightly high angle"
+        }
       ]
     },
-    "spent": 0.16,
+    "spent": 3.969,
     "ledger": [
       {
         "what": "all 0.5초 시간표 만들기",
@@ -146,6 +260,22 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "구간1 바꾸기(720p)",
+        "usd": 2.439
+      },
+      {
+        "what": "끝 장면 그림",
+        "usd": 0.15
+      },
+      {
+        "what": "끝 장면 영상(720p)",
+        "usd": 1.2
+      },
+      {
+        "what": "내레이션",
+        "usd": 0.02
       }
     ],
     "timeline_src": "bde28badc6bf-12.2",
@@ -183,7 +313,7 @@
     ],
     "motion_prompt": "DURATION: 8.1 seconds. MOTION TRANSFER. The video is the MOTION REFERENCE: reproduce it shot for shot - every body action, contact, fall, head turn, mouth opening, hand/paw movement, camera move, pan, zoom and cut happens at exactly the same second as in the video, with the same framing and composition. Image 1 is the APPEARANCE REFERENCE for the first frame: the characters, clothes, props and place look exactly like image 1 in every frame. CAST MAPPING from the video to the output: the yellow Labrador in the yard becomes the Shiba Inu from image 1 (the same Shiba in every frame, thick furry legs, round paws, calm and friendly the whole time - it never barks, charges or attacks); the man in the black hoodie climbing the fence stays a real human man with the same black hoodie, black trousers, hood up, face hidden by the hood, human hands, and exactly the same actions. Do not invent new actions, do not skip or soften any action. SECOND-BY-SECOND TIMELINE of the original (follow it exactly; the dogs replace the people, every action, contact and mouth shape happens at exactly these times so the mouths stay in sync with the sound): [0.0-0.5s] action: The man in a black hoodie (hood up) and black trousers is on top of the wooden fence at the top-left, swinging his legs over and dropping into the yard. The dog stands in the yard facing left, looking; mouth: dog closed; man hidden by hood; camera: fixed security camera, slightly high angle. [0.5-1.0s] action: The man lands on his feet by the fence and straightens up. The dog turns toward him, tail up, calm.; mouth: dog closed; camera: fixed security camera, slightly high angle. [1.0-1.5s] action: The man stands upright facing the dog, arms at his sides. The dog stands facing him, relaxed.; mouth: dog closed; camera: fixed security camera, slightly high angle. [1.5-2.0s] action: The man extends his right hand to the dog's muzzle and head and touches it like a friendly greeting pat. The dog stays still and lets him, tail relaxed, no aggression.; mouth: dog closed; camera: fixed security camera, slightly high angle. [2.0-2.5s] action: The man strokes the dog's head briefly, then lifts his arm up toward the apple branches above the fence. The dog stands calmly looking at him.; mouth: dog closed; camera: fixed security camera, slightly high angle. [2.5-3.0s] action: The man reaches up with both arms into the apple tree and pulls an apple-laden branch down. The dog stands beside him watching, panting lightly.; mouth: dog slightly open (panting); camera: fixed security camera, slightly high angle. [3.0-3.5s] action: The man picks red apples from the branch with both hands. The dog watches calmly, tail wagging gently.; mouth: dog slightly open; camera: fixed security camera, slightly high angle. [3.5-4.0s] action: The man holds the apples at his chest with both hands and tucks them into the front pocket of his hoodie. The dog stands still, watching.; mouth: dog closed; camera: fixed security camera, slightly high angle. [4.0-4.5s] action: The man turns to the fence and reaches up, grabbing the top of the fence with both hands. The dog turns its head, calm.; mouth: dog closed; camera: fixed security camera, slightly high angle. [4.5-5.0s] action: The man pulls himself up the fence, feet against the boards. The dog takes a few slow steps and sniffs the ground.; mouth: dog closed; camera: fixed security camera, slightly high angle. [5.0-5.5s] action: The man swings his legs over the top of the fence. The dog stands below, tail wagging, looking around.; mouth: dog closed; camera: fixed security camera, slightly high angle. [5.5-6.0s] action: The man drops down on the far side of the fence, disappearing; only his legs are visible at the top-left. The dog turns and trots slowly to the right.; mouth: dog closed; camera: fixed security camera, slightly high angle. [6.0-6.5s] action: The man is gone except one leg at the very top-left behind the fence. The dog walks slowly right, tail wagging gently.; mouth: dog closed; camera: fixed security camera, slightly high angle. [6.5-7.0s] action: The dog strolls under the apple branches, sniffing the ground, relaxed, alone in the yard.; mouth: dog closed; camera: fixed security camera, slightly high angle. [7.0-7.5s] action: The dog pauses and turns toward the camera, tail wagging.; mouth: dog closed; camera: fixed security camera, slightly high angle. [7.5-8.1s] action: The dog stands looking ahead toward the camera, calm, as if nothing happened.; mouth: dog closed; camera: fixed security camera, slightly high angle. MUST-KEEP COMEDY BEATS (the joke lives here - every one must be clearly visible at this exact time): [0.0-1.2s] climbs over the fence - the man in the black hoodie climbs over the wooden fence from behind the apple tree and drops into the yard wh; [1.5-2.4s] pats the guard dog - the man bends forward and pats and strokes the Shiba's head; the Shiba leans in and wags its tail, friendly, n; [2.5-3.9s] steals the apples - the man reaches up with both arms, pulls an apple-laden branch down and picks red apples, tucking them into hi; [4.0-6.6s] climbs back out with the apples - the man turns, grabs the top of the fence and climbs back over it and out of sight; the Shiba just watches, ta; [6.6-8.1s] the guard-dog reaction - the Shiba alone sniffs the ground where the man stood, then turns and looks toward the camera, tail wagging as. CAST COUNT: exactly one human man (black hoodie) and exactly one dog (the Shiba) - no other people or animals. VERTICAL 9:16: fill the whole vertical frame edge to edge with the scene (extend the scene above and below if the reference is wider); no black bars, no blurred bands, no letterbox. OUTPUT QUALITY: render clean, sharp, high-detail modern camera footage. Do NOT copy the input's blur, noise, compression blocks, low resolution or washed-out colours; keep ONLY its composition, framing, timing, actions, mouth movements and camera movement. The human character keeps a human face, hands and clothes exactly as in the video; the dog is the Shiba Inu with thick furry legs and round paws; no added text, no morphing, no extra animals, no extra people.",
     "vertical": {
-      "mode": "reference_to_video 9:16",
+      "mode": "extend",
       "src": "720x720"
     },
     "preflight": [],
@@ -200,12 +330,44 @@
       "ok": true,
       "panels": 6
     },
-    "est_full": 1.38
+    "est_full": 0.57,
+    "gen_res": "720p",
+    "pre_enhance": true,
+    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (every person's face, hands and clothes, every movement and its timing, camera, background, lights): the yellow Labrador in the yard becomes the Shiba Inu from image 1 (the same Shiba in every frame, thick furry legs, round paws, calm and friendly the whole time - it never barks, charges or attacks); the man in the black hoodie climbing the fence stays a real human man with the same black hoodie, black trousers, hood up, face hidden by the hood, human hands, and exactly the same actions. The replaced animal is the Shiba Inu from image 1 (same face, fur colour and markings in every frame), a natural size, and its body moves exactly as the original animal's body (same pose, gait, head turns, tail, mouth). The human stays a real human with his own face, hands and clothes, unchanged. CAST COUNT: exactly one human man (black hoodie) and exactly one dog (the Shiba) - no other people or animals. Remove any watermark or on-screen text. COMPOSITING QUALITY: the dog must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, focus and grain; no seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings. KEEP THESE MOMENTS EXACTLY AS IN THE VIDEO (the joke lives here): [0.0-1.2s] climbs over the fence - the man in the black hoodie climbs over the wooden fence from behind the apple tree and drops into the yard wh; [1.5-2.4s] pats the guard dog - the man bends forward and pats and strokes the Shiba's head; the Shiba leans in and wags its tail, friendly, n; [2.5-3.9s] steals the apples - the man reaches up with both arms, pulls an apple-laden branch down and picks red apples, tucking them into hi; [4.0-6.6s] climbs back out with the apples - the man turns, grabs the top of the fence and climbs back over it and out of sight; the Shiba just watches, ta; [6.6-8.1s] the guard-dog reaction - the Shiba alone sniffs the ground where the man stood, then turns and looks toward the camera, tail wagging as.",
+    "pre_enhance_info": {
+      "ok": true,
+      "frames": 195,
+      "size": "720x720",
+      "scale": 1.0,
+      "dn": 0.5,
+      "model": "realesr-general-x4v3",
+      "sec": 2337
+    },
+    "segs": {
+      "seg1": {
+        "human": null,
+        "where": "",
+        "quality": null,
+        "issues": "",
+        "tries": 1,
+        "res": "720p"
+      }
+    },
+    "sfx_used": [],
+    "full": {
+      "ok": true
+    }
   },
   "error": "사전 점검에서 멈춤(돈 안 씀): 개그 포인트가 지시에서 빠졌습니다: [0.0-1.2] 담넘기 — the man in the black hoodie climbs over the wooden fence from behind the apple t / 개그 포인트가 지시에서 빠졌습니다: [1.5-2.4] 쓰다듬기 — the man bends forward and pats and strokes the Shiba's head; the Shiba leans in  / 개그 포인트가 지시에서 빠졌습니다: [2.5-3.9] 사과따기 — the man reaches up with both arms, pulls an apple-laden branch down and picks re / 개그 포인트가 지시에서 빠졌습니다: [4.0-6.6] 담넘기 — the man turns, grabs the top of the fence and climbs back over it and out of sig / 개그 ",
   "last_request": {
-    "file": "02_remake_board.json",
-    "ran_at": "2026-10-06T22:47:29Z",
+    "file": "03_remake_full.json",
+    "ran_at": "2026-10-06T23:55:51Z",
     "ok": true
+  },
+  "cover": "work/cover.jpg",
+  "assemble": {
+    "ok": true,
+    "sec": 12.54,
+    "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
