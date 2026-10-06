@@ -63,7 +63,9 @@ jobs:
             approve)         case "$IN_STAGE" in           # 대본 승인 → 스토리보드 자동 · 콘티 승인 → 영상 자동(운영자 지시 2026-09-30)
                                script)     python3 v2/tools/admin.py approve "$IN_PILOT" script "$IN_NOTE"; JOB=storyboard ;;
                                storyboard) python3 v2/tools/admin.py approve "$IN_PILOT" storyboard "$IN_NOTE"; JOB=video ;;
-                             esac ;;                        # video·upload 승인은 키가 필요해 '버튼 실행' 단계에서
+                               video)      python3 v2/tools/admin.py approve "$IN_PILOT" video "$IN_NOTE"   # 키 불필요 → 설치 전에 바로 반영(약 20초)
+                                           bash v2/tools/ci_commit.sh "chore(v2): 승인 video $IN_PILOT [skip ci]" ;;
+                             esac ;;                        # upload 승인은 키가 필요해 '버튼 실행' 단계에서(video 는 거기서 다시 불려도 이미 승인 → 그대로)
             revise|redo)     case "$IN_STAGE" in
                                script|storyboard|video) python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE"; JOB="$IN_STAGE" ;;
                              esac ;;
