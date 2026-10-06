@@ -11,7 +11,7 @@
   "method": "motion",
   "keep_people": true,
   "cast": "exactly one human man (black hoodie) and exactly one dog (the Shiba) - no other people or animals",
-  "swap": "the yellow Labrador in the yard becomes the Shiba Inu from image 1 (the same Shiba in every frame, thick furry legs, round paws); the man in the black hoodie climbing the fence stays a real human man with the same black hoodie, black trousers, hood up, face hidden by the hood, human hands, and exactly the same actions",
+  "swap": "the yellow Labrador in the yard becomes the Shiba Inu from image 1 (the same Shiba in every frame, thick furry legs, round paws, calm and friendly the whole time - it never barks, charges or attacks); the man in the black hoodie climbing the fence stays a real human man with the same black hoodie, black trousers, hood up, face hidden by the hood, human hands, and exactly the same actions",
   "window": [
    0,
    8.1
@@ -72,7 +72,121 @@
   "cut": "",
   "whimper": false,
   "ad": "vo",
-  "cap": 5
+  "cap": 5,
+  "timeline": [
+   {
+    "t": "0.0-0.5",
+    "action": "The man in a black hoodie (hood up) and black trousers is on top of the wooden fence at the top-left, swinging his legs over and dropping into the yard. The dog stands in the yard facing left, looking up at him.",
+    "mouth": "dog closed; man hidden by hood",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "0.5-1.0",
+    "action": "The man lands on his feet by the fence and straightens up. The dog turns toward him, tail up, calm.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "1.0-1.5",
+    "action": "The man stands upright facing the dog, arms at his sides. The dog stands facing him, relaxed.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "1.5-2.0",
+    "action": "The man extends his right hand to the dog's muzzle and head and touches it like a friendly greeting pat. The dog stays still and lets him, tail relaxed, no aggression.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "2.0-2.5",
+    "action": "The man strokes the dog's head briefly, then lifts his arm up toward the apple branches above the fence. The dog stands calmly looking at him.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "2.5-3.0",
+    "action": "The man reaches up with both arms into the apple tree and pulls an apple-laden branch down. The dog stands beside him watching, panting lightly.",
+    "mouth": "dog slightly open (panting)",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "3.0-3.5",
+    "action": "The man picks red apples from the branch with both hands. The dog watches calmly, tail wagging gently.",
+    "mouth": "dog slightly open",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "3.5-4.0",
+    "action": "The man holds the apples at his chest with both hands and tucks them into the front pocket of his hoodie. The dog stands still, watching.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "4.0-4.5",
+    "action": "The man turns to the fence and reaches up, grabbing the top of the fence with both hands. The dog turns its head, calm.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "4.5-5.0",
+    "action": "The man pulls himself up the fence, feet against the boards. The dog takes a few slow steps and sniffs the ground.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "5.0-5.5",
+    "action": "The man swings his legs over the top of the fence. The dog stands below, tail wagging, looking around.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "5.5-6.0",
+    "action": "The man drops down on the far side of the fence, disappearing; only his legs are visible at the top-left. The dog turns and trots slowly to the right.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "6.0-6.5",
+    "action": "The man is gone except one leg at the very top-left behind the fence. The dog walks slowly right, tail wagging gently.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "6.5-7.0",
+    "action": "The dog strolls under the apple branches, sniffing the ground, relaxed, alone in the yard.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "7.0-7.5",
+    "action": "The dog pauses and turns toward the camera, tail wagging.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   },
+   {
+    "t": "7.5-8.1",
+    "action": "The dog stands looking ahead toward the camera, calm, as if nothing happened.",
+    "mouth": "dog closed",
+    "sound": "music only",
+    "camera": "fixed security camera, slightly high angle"
+   }
+  ]
  },
  "caption": "사과 도둑을 그냥 보내 준 경비견\n\n사과는 양보해도 주스는 못 참지\n\n구매는 프로필 링크에서.",
  "hashtags": [

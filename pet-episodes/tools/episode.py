@@ -3129,6 +3129,10 @@ def step_remake(ep, epdir, work, log, req):
                                     or (not res.get("timeline_src") and mode != "check" and (rm.get("shots") or rm.get("board_fresh")))):
             res.pop("timeline", None)
             res["timeline_reset"] = "원본이 바뀌어 시간표를 다시 만듦"
+        if isinstance(rm.get("timeline"), list) and rm["timeline"]:   # 프레임으로 직접 확인한 0.5초 시간표(AI 시간표가 틀릴 때 — 2026-10 사과 도둑 편: AI가 '개가 덤벼든다'로 잘못 읽음)
+            res.setdefault("timeline", {})["all"] = [{k: str(x.get(k, ""))[:200] for k in ("t", "action", "mouth", "sound", "camera")} for x in rm["timeline"]]
+            res["timeline_src"] = res["src_sig"]
+            res["timeline_manual"] = True
         res["src_full_sec"] = round(L, 2)
         T = float(rm.get("max_sec", REMAKE_BODY_SEC))     # 본편 길이(기본 10초) — 원본 파일 길이를 그대로 쓰지 않는다(핵심 규칙)
         if L > T + 0.3 or rm.get("window") or rm.get("pieces"):
