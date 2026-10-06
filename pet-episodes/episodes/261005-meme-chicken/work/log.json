@@ -134,8 +134,8 @@
     ]
   },
   "last_request": {
-    "file": "08_meme_full.json",
-    "ran_at": "2026-10-05T05:44:48Z",
+    "file": "09_publish.json",
+    "ran_at": "2026-10-06T09:05:19Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
@@ -144,5 +144,12 @@
     "sec": 16.0,
     "note": "밈 광고(본편 10.0초 + 광고 6.0초)"
   },
-  "error": "대사가 칸을 넘칩니다(1.3배로도): 야… 내 치킨. 1.8초>1.4초 / 아, 그래? 1.54초>1.3초"
+  "error": "대사가 칸을 넘칩니다(1.3배로도): 야… 내 치킨. 1.8초>1.4초 / 아, 그래? 1.54초>1.3초",
+  "ig_publish": {
+    "ok": true,
+    "media_id": "18041776085637150",
+    "username": "lord.shiba.ybd",
+    "permalink": "https://www.instagram.com/reel/DeJa6qeDGfA/",
+    "published_at": "2026-10-06T09:05:19Z"
+  }
 }
