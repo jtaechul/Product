@@ -2201,6 +2201,15 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
         if not pnl.exists():
             raise RuntimeError(f"스토리보드 {sh['panel']}번 칸이 없습니다")
         first = _crop_bars(pnl, work / f"_shot_first{k + 1}.png")
+        if sh.get("fresh"):                               # 흐린 원본에서 뽑은 칸 대신 구도만 따라 깨끗한 새 첫 장면(사용자 지시 2026-10 아리아 편: 원본 화질 따라가지 말 것)
+            first = work / f"_shot_fresh{k + 1}.png"
+            if not first.exists():
+                _remake_spend(res, 0.15, f"장면{k + 1} 깨끗한 첫 장면 그림", cap)
+                r = gen_image(str(sh["fresh"]) + " Image 1 is the Shiba Inu to use (same face and fur). Sharp, clean, high-detail modern phone photo, "
+                              "full-frame vertical 9:16 with no black bars, natural colours, no blur, no text.",
+                              [ROOT / "pet-episodes" / "characters" / "dog.png"], first, "9:16")
+                if not r.get("ok"):
+                    raise RuntimeError(f"장면{k + 1} 첫 장면 그림 실패: {r}")
         if not out.exists():
             if sh.get("src") and ref is not None:      # 원본이 꽉 찬 세로인 구간: 원본 그대로 바꾼다(동작·입모양 유지)
                 a, b = float(sh["src"][0]), float(sh["src"][1])
