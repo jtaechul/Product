@@ -2134,6 +2134,18 @@ def _apply_freeze(src: Path, out: Path, spans, back: float = 0.0) -> Path:
     return out
 
 
+def _content_wh(src: Path) -> tuple[int, int]:
+    """검은 띠를 뺀 실제 화면 크기(ffmpeg cropdetect, 여러 장면 중 가장 넓은 것)."""
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(src), "-vf", "fps=2,cropdetect=24:2:1", "-f", "null", "-"],
+                       capture_output=True, text=True)
+    best = _wh(src)
+    for m in re.finditer(r"crop=(\d+):(\d+):", r.stderr):
+        w, h = int(m.group(1)), int(m.group(2))
+        if w * best[1] > h * best[0]:                     # 더 가로로 넓은 장면이 있으면 그것을 기준으로
+            best = (w, h)
+    return best
+
+
 def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: int) -> Path:
     """원본 영상 없이 만들기(2026-10 아이스크림 편: 원본을 성적 장면으로 오인해 거절). remake.shots = [{panel, t0, t1, still, prompt}]
     — 움직이는 장면은 확인받은 스토리보드 칸을 첫 장면으로 shot_sec(기본 4초)짜리를 만들고 필요한 길이만 잘라 쓴다,
@@ -2622,7 +2634,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     tries = [best]
     got = _dur(best[0])
     ow, oh = _wh(best[0])
-    if res.get("vertical") and ow * 16 > oh * 9 * 1.05:   # ⛔ 핵심 규칙: 결과가 세로 9:16이 아니면 이어 붙이지 않고 멈춘다
+    if ow * 16 > oh * 9 * 1.05:                           # ⛔ 핵심 규칙: 결과가 세로 9:16이 아니면 이어 붙이지 않고 멈춘다(원본이 9:16이어도 — 2026-10 아리아 편: 위아래 검은 띠 원본을 AI가 잘라 16:9로 돌려줌)
         raise RuntimeError(f"영상 AI가 세로가 아닌 {ow}x{oh}로 돌려줬습니다. 세로 9:16이 아니라서 멈췄습니다.")
     if got and got < seg * 0.9:                           # AI가 원본보다 짧게 만들면 늘리지 않는다(입모양·박자가 어긋남)
         raise RuntimeError(f"영상 AI가 {got:.1f}초만 만들었습니다(원본 {seg:.1f}초). 한 번에 만들 수 있는 길이를 넘은 것 같습니다.")
@@ -2795,6 +2807,11 @@ def step_remake(ep, epdir, work, log, req):
         if shots_mode:                                    # 원본 영상을 영상 AI에 넣지 않고 스토리보드 칸 + 초 단위 지시로 장면마다 만든다
             body_v = _remake_shots(key, rm, work, res, cap, W, H)
         else:
+            if not (work / "rm_seg1.mp4").exists() and not res.get("vertical"):   # 돈 쓰기 전에: 9:16 파일이어도 속이 가로(위아래 검은 띠)면
+                cw, ch = _content_wh(ref)                 # 영상 AI가 띠를 잘라 16:9로 돌려준다(2026-10 아리아 편 실측) → 시작 전에 멈춘다
+                if cw * 16 > ch * 9 * 1.15:
+                    raise RuntimeError(f"원본 속 화면이 가로({cw}x{ch}, 위아래 검은 띠)라 영상 AI가 16:9로 돌려줍니다. "
+                                       "스토리보드 칸으로 장면마다 만드는 방식(remake.shots, source_video: false)으로 바꿔 주세요.")
             s1 = work / "rm_seg1.mp4"
             if not s1.exists():
                 _remake_seg(key, ref_gen, 0, seg, prompt, work, res, cap, H)
