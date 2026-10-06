@@ -8,7 +8,7 @@
   "music": ""
  },
  "remake": {
-  "method": "motion",
+  "method": "composite",
   "keep_people": true,
   "cast": "exactly one human man (black hoodie) and exactly one dog (the Shiba) - no other people or animals",
   "swap": "the yellow Labrador in the yard becomes the Shiba Inu from image 1 (the same Shiba in every frame, thick furry legs, round paws, calm and friendly the whole time - it never barks, charges or attacks); the man in the black hoodie climbing the fence stays a real human man with the same black hoodie, black trousers, hood up, face hidden by the hood, human hands, and exactly the same actions",
@@ -186,7 +186,9 @@
     "sound": "music only",
     "camera": "fixed security camera, slightly high angle"
    }
-  ]
+  ],
+  "upscale": 2,
+  "upscale_dn": 0.3
  },
  "caption": "사과 도둑을 그냥 보내 준 경비견\n\n사과는 양보해도 주스는 못 참지\n\n구매는 프로필 링크에서.",
  "hashtags": [

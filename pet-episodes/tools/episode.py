@@ -2089,6 +2089,21 @@ REMAKE_SWAP = ("Edit this video. Change ONLY these things and keep absolutely ev
                "and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no "
                "flicker, morphing or changing markings.")
 # 구간 사이 같은 개로: 앞 구간 마지막 장면을 두 번째 참고 이미지로(사용자 지적 2026-10: 합성 품질을 더 높게)
+# 사람은 사람 그대로, 동물만 시바견(사용자 지시 2026-10 사과 도둑 편) — Genjutsu식 합성(원본 동작·구도·소리 그대로)
+REMAKE_SWAP_KEEP = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (every person's face, "
+                    "hands and clothes, every movement and its timing, camera, background, lights): {swap}. The replaced animal is the Shiba "
+                    "Inu from image 1 (same face, fur colour and markings in every frame), a natural size, and its body moves exactly as "
+                    "the original animal's body (same pose, gait, head turns, tail, mouth). The human stays a real human with his own "
+                    "face, hands and clothes, unchanged. CAST COUNT: {cast}. Remove any watermark or on-screen text. COMPOSITING QUALITY: "
+                    "the dog must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, "
+                    "focus and grain; no seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings.")
+REMAKE_BOARD_KEEP = ("Image 1 is a 3x2 grid of six frames taken from one video (each panel is a separate moment; dark bars are only "
+                     "padding). Edit ALL six panels the same way and keep the grid layout, panel sizes and everything else exactly as "
+                     "it is (people, clothes, poses, background, lights, camera framing): {swap}. The replaced animal is the Shiba Inu "
+                     "from image 2 (same face, fur colour and markings) - the same dog in every panel, in the same pose as the original "
+                     "animal. The human stays a real human with his own face, hands and clothes. CAST COUNT: {cast}. Match each panel's "
+                     "lighting, shadows and focus so it looks like real footage. Remove any watermark or on-screen text; add no text.")
+REMAKE_GAGS_KEEP = (" KEEP THESE MOMENTS EXACTLY AS IN THE VIDEO (the joke lives here): {gags}.")
 REMAKE_PREV = (" Image 2 is how this Shiba looked at the end of the previous part of the same video: keep it identical (same face, "
                "fur colour and markings, eyes, accessories).")
 # 합성 품질 채점: 사람 손 검사와 별도로 이음새·크기·조명·깜빡임을 본다. 기준 미달이면 한도 안에서 한 번 다시
@@ -2330,7 +2345,8 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
     _remake_spend(res, REMAKE_COST["image"], "스토리보드 그림", cap)
     out = work / "_board_out.png"
     ask = REMAKE_BOARD_FRESH.format(people=(f"CAST in every panel: {cast} (the human stays a real human with a human face, hands and clothes)."
-                                            if cast else "Only animals, no people.")) if fresh else REMAKE_BOARD.format(swap=swap)
+                                            if cast else "Only animals, no people.")) if fresh else \
+        (REMAKE_BOARD_KEEP.format(swap=swap, cast=cast) if cast else REMAKE_BOARD.format(swap=swap))
     if notes:                                           # 칸마다 무엇을 바꾸는지(사용자 지적 2026-10: 사람 맨살·팔이 그대로 남음)
         ask += " PANEL-BY-PANEL (left to right, top row first): " + " ".join(f"Panel {k + 1}: {str(x).strip()}" for k, x in enumerate(notes[:6]))
     r = gen_image(ask, [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, "4:5", "2K")
@@ -2622,6 +2638,16 @@ TIMELINE_HEAD = (" SECOND-BY-SECOND TIMELINE of the original (follow it exactly;
 def _timeline(ref: Path, start: float, dur: float, work: Path, res: dict, cap: float, tag: str) -> str:
     """원본 구간을 소리와 함께 AI가 보고 0.5초마다 동작·입모양·소리·카메라를 적는다. 한 번 만든 시간표는 log에 두고 다시 쓴다(무료)."""
     tl = res.setdefault("timeline", {})
+    if tag not in tl and res.get("timeline_manual") and tl.get("all"):   # 프레임으로 확인한 시간표가 있으면 구간도 그것으로(AI 시간표 다시 안 받음)
+        rows_m = []
+        for x in tl["all"]:
+            try:
+                a, b = (float(v) for v in str(x.get("t", "")).split("-")[:2])
+            except ValueError:
+                continue
+            if b > start and a < start + dur:
+                rows_m.append({**x, "t": f"{max(0.0, a - start):.1f}-{min(dur, b - start):.1f}"})
+        tl[tag] = rows_m
     if tag not in tl:
         clip = work / f"_tl_{tag}.mp4"
         _ff(["-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", str(ref), "-vf", "scale=-2:480", "-c:v", "libx264", "-crf", "26",
@@ -2879,17 +2905,19 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
     probs = []
     shots = rm.get("shots") or []
     motion = rm.get("method") == "motion" and not shots
+    composite = rm.get("method") == "composite" and not shots
     texts = [str(sh.get("prompt", "")) for sh in shots] + [str(x) for x in (rm.get("board_notes") or [])] + \
-            [str(b.get("text", "")) for b in (rm.get("beats") or [])] + ([str(res.get("motion_prompt", ""))] if motion else [])
+            [str(b.get("text", "")) for b in (rm.get("beats") or [])] + \
+            ([str(res.get("motion_prompt", ""))] if motion else [str(res.get("edit_prompt", ""))] if composite else [])
     allt = " ".join(texts)
     # 1) 시간표가 지금 원본 것인가(원본 지문 src_sig = step_remake가 기록, timeline_src = 시간표를 만들 때의 지문)
-    if res.get("timeline") and (shots or rm.get("board_fresh") or motion):
+    if res.get("timeline") and (shots or rm.get("board_fresh") or motion or composite):
         if not res.get("timeline_src"):
             probs.append("0.5초 시간표가 지금 원본 것인지 확인할 수 없습니다(지문 없음) — 지금 원본으로 다시 분석해야 합니다")
         elif res.get("src_sig") and res["timeline_src"] != res["src_sig"]:
             probs.append("0.5초 시간표가 예전 원본 것입니다(원본이 바뀜) — 지금 원본으로 다시 분석해야 합니다")
     # 2) 개그 포인트가 지시에 다 살아 있나(사장님이 적은 rm.gags가 우선, 없으면 시간표에서 자동) — 원본을 글로 옮겨 새로 만드는 방식에만
-    newway = bool(shots) or bool(rm.get("board_fresh")) or motion
+    newway = bool(shots) or bool(rm.get("board_fresh")) or motion or composite
     gags = (rm.get("gags") or _gag_beats([x for v in (res.get("timeline") or {}).values() for x in v])) if newway else []
     for g in gags:
         kind = g.get("kind", "")
@@ -2900,7 +2928,7 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
             or (_soften(str(g.get("text", "")))[:50].lower() in low if g.get("text") else False)   # 사장님이 적은 개그(words 없음)는 글 그대로 있는지
         if not ok:
             probs.append(f"개그 포인트가 지시에서 빠졌습니다: [{g.get('t', '')}] {kind} — {g.get('text', g.get('what', ''))[:80]}")
-    for t in texts[:len(texts) - (1 if motion else 0)]:     # 비켜 가기 검사는 사람이 쓴 지시문만(동작 따라 만들기 지시문은 시간표 그대로라 제외)
+    for t in texts[:len(texts) - (1 if (motion or composite) else 0)]:     # 비켜 가기 검사는 사람이 쓴 지시문만(자동 지시문은 시간표 그대로라 제외)
         if re.search(GAG_KINDS["맞힘"], " ".join(g.get("text", "") for g in gags if g.get("kind") == "맞힘"), re.I) and re.search(GAG_DODGE, t, re.I):
             probs.append(f"맞히는 개그를 비켜 가게 순화했습니다('{re.search(GAG_DODGE, t, re.I).group(0)}') — 맞는 부위만 바꾸고 맞는 건 남겨야 합니다")
             break
@@ -3107,7 +3135,14 @@ def step_remake(ep, epdir, work, log, req):
         os.environ["PET_NO_SPEND"] = "1"
     key = _key("GEMINI_API_KEY")
     W, H = 360, 640                                       # 360p(사용자 확정)
-    prompt = REMAKE_SWAP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "))
+    if rm.get("keep_people"):                             # 사람은 사람 그대로, 동물만 시바견(2026-10 사과 도둑 편)
+        prompt = REMAKE_SWAP_KEEP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "),
+                                         cast=str(rm.get("cast") or "the same people and animals as the original"))
+    else:
+        prompt = REMAKE_SWAP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "))
+    if rm.get("gags"):                                    # 확인한 개그 포인트는 합성 지시에도 '그대로 둘 것'으로 박는다
+        prompt += REMAKE_GAGS_KEEP.format(gags=_gag_text(rm["gags"]))
+    res["edit_prompt"] = prompt
     if rm.get("beats"):                                   # 사람이 원본을 보고 적은 초 단위 대본(웃음 포인트·줌·정지 화면) — 가장 우선
         prompt += (" AUTHOR'S BEAT SHEET of the original (authoritative; keep every cut, zoom, freeze frame and action at these exact "
                    "times, only the people become dogs): " + " ".join(f"[{b['t0']:.1f}-{b['t1']:.1f}s] {b['text']}" for b in rm["beats"]))
@@ -3145,8 +3180,11 @@ def step_remake(ep, epdir, work, log, req):
         n = 1 if one else nb
         seg = L / n
         res.update({"src_sec": round(L, 2), "segments": n, "one_shot": bool(one)})
-        motion = rm.get("method") == "motion" and not rm.get("shots")   # 동작 따라 만들기(새 편 기본, Genjutsu 방식)
-        res["method"] = "motion" if motion else ("shots" if rm.get("shots") else "edit")
+        motion = rm.get("method") == "motion" and not rm.get("shots")   # 동작 따라 만들기(원본은 참고만, 새로 렌더링)
+        composite = rm.get("method") == "composite" and not rm.get("shots")   # Genjutsu식 합성: 원본 영상 그대로 + 동물만 바꿈 + 업스케일(새 편 기본, 사용자 지시 2026-10)
+        res["method"] = "motion" if motion else ("composite" if composite else ("shots" if rm.get("shots") else "edit"))
+        if composite and mode in ("board", "full", "check") and not (res.get("timeline") or {}).get("all") and mode != "check":
+            _timeline(ref, 0, L, work, res, cap, "all")   # 원본 전체 0.5초 시간표(약 0.01달러) — 프레임으로 검증해 remake.timeline으로 바로잡을 수 있다
         swap_txt = (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". ")
         if motion and mode in ("board", "full", "check"):
             if mode != "check" and not (res.get("timeline") or {}).get("all"):
@@ -3177,7 +3215,7 @@ def step_remake(ep, epdir, work, log, req):
             ref = ref_v
         est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * end_sec
                         + REMAKE_COST["tts"], 2)
-        if mode in ("board", "full", "check") and (rm.get("shots") or rm.get("board_fresh") or motion):   # 사전 점검(무료) — 통과해야 돈을 쓴다
+        if mode in ("board", "full", "check") and (rm.get("shots") or rm.get("board_fresh") or motion or composite):   # 사전 점검(무료) — 통과해야 돈을 쓴다
             if mode != "check" and not (res.get("timeline") or {}).get("all") and not rm.get("gags"):
                 _timeline(ref, 0, L, work, res, cap, "all")   # 원본 전체 0.5초 시간표(약 0.01달러) — 개그 포인트 자동 뽑기용
             res["preflight"] = _remake_preflight(rm, res, ref, mode)
@@ -3268,6 +3306,16 @@ def step_remake(ep, epdir, work, log, req):
                 ins += ["-i", str(o)]
             _ff([*ins, "-filter_complex", "".join(f"[{i}:v]" for i in range(n)) + f"concat=n={n}:v=1:a=0,format=yuv420p[v]",
                  "-map", "[v]", "-c:v", "libx264", "-crf", "23", str(body_v)])
+        up = int(rm.get("upscale") or 0)                  # Genjutsu식 '합성 뒤 고화질': Real-ESRGAN(무료, CPU)로 2배 → 720x1280(사용자 지시 2026-10)
+        if up > 1:
+            hq = work / "remake_hq.mp4"
+            if not hq.exists():
+                from upscale import upscale_video
+                t_up = time.time()
+                res["upscale"] = {**upscale_video(body_v, hq, up, float(rm.get("upscale_dn", 0.3))), "sec": round(time.time() - t_up)}
+            _assert_vertical(hq, "본편(업스케일)")
+            body_v = hq
+            W, H = W * up, H * up
         if rm.get("freeze"):                              # 원본의 화면 정지(웃음 포인트)는 영상 AI가 움직여 버리므로 조립 때 그 장면을 그대로 멈춘다
             body_v = _apply_freeze(body_v, work / "remake_fz.mp4", rm["freeze"])
             res["freeze"] = rm["freeze"]
@@ -3318,7 +3366,13 @@ def step_remake(ep, epdir, work, log, req):
                 if "HTTP 400" in str(e):
                     res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * end_sec, 3)
                 raise
-            _norm(raw, end_v, H)
+            _norm(raw, end_v, 640)
+        if int(rm.get("upscale") or 0) > 1 and _wh(end_v)[1] < H:   # 끝 장면도 같은 화질로
+            from upscale import upscale_video
+            hq_end = work / "rm_end_hq.mp4"
+            if not hq_end.exists():
+                upscale_video(end_v, hq_end, int(rm["upscale"]), float(rm.get("upscale_dn", 0.3)))
+            end_v = hq_end
         # 3) 느끼한 내레이션(Enceladus, 1.3배 — 사용자 확정 2026-10)
         vo = work / "rm_vo.wav"
         if not vo.exists():

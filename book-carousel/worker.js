@@ -7355,7 +7355,7 @@ async function handleRemakeCommit(env, body) {
   if (!c.big || !c.vo) throw new Error('광고 문구와 내레이션을 채워 주세요.');
   const ep = { kind: 'remake', menuName: `리메이크 · ${String(v.title || a.meme || '').slice(0, 28)}`, clips: [],
     source: { youtube: v.id ? `https://www.youtube.com/watch?v=${v.id}` : '', title: v.title || '', music: a.music || '' },
-    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, ad: 'vo', method: 'motion', cap: REMAKE_CAP_USD },   // method 'motion' = 원본은 동작 참고로만, 깨끗한 새 렌더링(Genjutsu 방식, 사용자 지시 2026-10: 모든 포인트 살리고 최대한 유사하게)   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
+    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, ad: 'vo', method: 'composite', upscale: 2, cap: REMAKE_CAP_USD },   // method 'composite' = Genjutsu식: 원본 영상 그대로 두고 동물만 바꿔 합성(edit) → Real-ESRGAN 2배 업스케일(사용자 지시 2026-10: 본질 왜곡 금지, 합성 후 고화질)   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
     caption: `${String(c.big).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
     hashtags: cleanHashtags(Array.isArray(c.hashtags) ? c.hashtags : String(c.hashtags || '').split(/\s+/), remakeBanned(p.title)),
     product: { title: p.title, brand: p.brand || '', category: p.category || '기타', reason: String(c.sub || '').replace(/\n/g, ' '), link: p.link, image: p.image || '' } };
