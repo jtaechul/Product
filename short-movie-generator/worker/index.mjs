@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-06-3 (예약 공개 업로드)";
+const BUILD="v2026-10-06-4 (승인 처리 중 표시 · 자동 새로고침)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2364,6 +2364,15 @@ const V2_JOB_STALE_MIN=25;
 const V2_REQ_MIN=4;
 let V2_LIVE={};                                    // pid → 진행 중 실행(html_url 등)
 function v2reqGet(pid){try{const r=JSON.parse(localStorage.getItem("v2req:"+pid)||"null");return r&&((Date.now()-Date.parse(r.at))/60000<V2_REQ_MIN)?r:null;}catch(e){return null;}}
+// ★보낸 승인·수정 요청이 서버에 반영될 때까지 '처리 중'으로 보여 준다(운영자 지적 2026-10-06 · 실사고: 영상 승인을 눌렀는데
+//   반영까지 약 1.5분 걸리고 페이지는 60초 뒤 한 번만 다시 읽어서 계속 「승인 대기」로 보임 → 여러 번 누름).
+//   서버의 그 단계 상태가 누를 때와 달라지면(=반영됨) 자동으로 풀리고, 최대 V2_PEND_MIN분 동안 15초마다 다시 읽는다.
+const V2_PEND_MIN=6;
+function v2pendSet(pid,stage,act,from){try{localStorage.setItem("v2pend:"+pid+":"+stage,JSON.stringify({act:act,from:from,at:new Date().toISOString()}));}catch(e){}}
+function v2pendGet(pid,stage,state,st){try{const k="v2pend:"+pid+":"+stage, r=JSON.parse(localStorage.getItem(k)||"null");if(!r)return null;
+  const up=(((st||{}).artifacts||{}).upload||{}).result||{};
+  const done=r.from!==state||(stage==="upload"&&up.url)||(Date.now()-Date.parse(r.at))/60000>=V2_PEND_MIN;
+  if(done){localStorage.removeItem(k);return null;}return r;}catch(e){return null;}}
 function v2reqSet(pid,stage){try{localStorage.setItem("v2req:"+pid,JSON.stringify({stage:stage,at:new Date().toISOString()}));}catch(e){}}
 async function v2liveRuns(){
   V2_LIVE={};
@@ -2723,11 +2732,14 @@ function v2estimate(c,jp){
 function v2stageCard(st,stage){
   const s=(st.stages||{})[stage]||{state:"locked"}, state=s.state, locked=state==="locked";
   const jb=v2job((st.jobs||{})[stage],stage,state,st.id);V2_ST_FOR_COST=st;
+  const pend=v2pendGet(st.id,stage,state,st), PACT={approve:stage==="upload"?"업로드":"승인",revise:"수정 요청",redo:"다시 하기"};
   const est=((st.cost||{}).estimate||{})[stage];
   const notes=(s.notes||[]).slice(-3).reverse();
   let h='<div class="card v2stage'+(locked?' v2locked':'')+'" id="stg-'+stage+'">'+
     '<div class="v2head"><span class="v2title">'+esc(STG_KO[stage])+'</span>'+
-    (GATE_KO[stage]?'<span class="v2gate">'+esc(GATE_KO[stage])+'</span>':'')+v2badgeJob(state,jb)+'</div>';
+    (GATE_KO[stage]?'<span class="v2gate">'+esc(GATE_KO[stage])+'</span>':'')+(pend?'<span class="v2st prog">처리 중</span>':v2badgeJob(state,jb))+'</div>'+
+    (pend?'<div class="cfact" id="pend-'+stage+'"><span class="ok">「'+esc(PACT[pend.act]||pend.act)+'」을(를) 서버에 보냈습니다</span> ('+v2when(pend.at)+') — 반영까지 '+(stage==="upload"?'2~5분':'1~2분')+
+      ' 걸립니다. <b>다시 누르지 않아도 됩니다.</b> 이 화면은 15초마다 저절로 새로 고쳐집니다.</div>':'');
   if(locked){
     h+='<div class="hint" style="margin-top:6px">앞 단계를 승인하면 열립니다.'+(est?(' (예상 비용 약 $'+est+')'):'')+'</div></div>';
     return h;
@@ -2736,15 +2748,15 @@ function v2stageCard(st,stage){
   if(notes.length)h+='<div class="sect">기록</div>'+notes.map(n=>'<div class="cfact">'+v2when(n.at)+' · '+esc(n.text||n.kind)+'</div>').join("");
   if(stage==="upload"){
     const up=((st.artifacts||{}).upload)||{};
-    if(!(up.result&&up.result.url))h+='<div class="v2btns" style="grid-template-columns:1fr"><button class="btn save" data-act="approve" data-stage="upload"'+(state==="review"?'':' disabled')+'>승인 → 유튜브 업로드</button></div>'+
+    if(!(up.result&&up.result.url))h+='<div class="v2btns" style="grid-template-columns:1fr"><button class="btn save" data-act="approve" data-stage="upload"'+(state==="review"&&!pend?'':' disabled')+'>승인 → 유튜브 업로드</button></div>'+
       (state!=="review"?'<div class="hint">제목·설명이 준비되면 누를 수 있습니다.</div>':'<div class="hint">수정했다면 먼저 「수정 내용 저장」을 누르고, 저장이 반영된 뒤(1~2분) 업로드하세요.</div>');
   }
   else if(stage!=="topic"){
     h+='<textarea class="v2note" id="note-'+stage+'" placeholder="수정 요청 내용(예: 2번 컷 대사를 더 쉽게)" style="min-height:70px;margin-top:12px"></textarea>'+
       '<div class="v2btns">'+
-        '<button class="btn save" data-act="approve" data-stage="'+stage+'"'+(state==="review"?'':' disabled')+'>승인</button>'+
-        '<button class="btn warn" data-act="revise" data-stage="'+stage+'">수정 요청</button>'+
-        '<button class="btn rd" data-act="redo" data-stage="'+stage+'">다시 하기</button>'+
+        '<button class="btn save" data-act="approve" data-stage="'+stage+'"'+(state==="review"&&!pend?'':' disabled')+'>승인</button>'+
+        '<button class="btn warn" data-act="revise" data-stage="'+stage+'"'+(pend?' disabled':'')+'>수정 요청</button>'+
+        '<button class="btn rd" data-act="redo" data-stage="'+stage+'"'+(pend?' disabled':'')+'>다시 하기</button>'+
       '</div>'+
       (state!=="review"?'<div class="hint">승인은 결과가 나온 뒤(승인 대기)에 누를 수 있습니다.</div>':'')+
       (est?'<div class="hint">이 단계 예상 비용: 약 $'+est+'</div>':'');
@@ -2771,7 +2783,7 @@ async function renderV2Episode(pid){
   html+=v2tokbox();
   view().innerHTML=html;v2bindTok();
   // 작업이 도는 중(또는 막 요청함)이면 15초마다 저절로 새로 읽는다 — 운영자가 새로고침을 안 눌러도 결과가 뜨게
-  const busy=STG.some(s=>{const k=v2job((st.jobs||{})[s],s,st.stages[s].state,pid).kind;return k==="running"||k==="starting";});
+  const busy=STG.some(s=>{const k=v2job((st.jobs||{})[s],s,st.stages[s].state,pid).kind;return k==="running"||k==="starting"||!!v2pendGet(pid,s,st.stages[s].state,st);});
   if(busy)window.__v2poll=setTimeout(()=>{if(location.pathname==="/v/"+pid)renderV2Episode(pid);},15000);
   document.querySelectorAll("[data-act]").forEach(b=>b.onclick=async()=>{
     const act=b.dataset.act, stage=b.dataset.stage, note=(($("#note-"+stage)||{}).value||"").trim();
@@ -2787,7 +2799,8 @@ async function renderV2Episode(pid){
         if(t<Date.now()+15*6e4){banner("예약 공개 시각은 지금부터 15분 이후여야 합니다.","err");return;}}
       const pvk=pv==="scheduled"?("예약 공개("+v2kstLabel(new Date(Date.parse(d.publish_at+":00+09:00")).toISOString())+" 공개)"):({private:"비공개",unlisted:"일부 공개",public:"공개"}[pv]||pv);
       if(!confirm("유튜브에 '"+pvk+"' · 카테고리 '"+(V2_CAT[d.category]||d.category)+"'(으)로 업로드할까요? 지금 화면의 제목·설명 그대로 올라갑니다. (한 번 올리면 다시 올릴 수 없습니다)"))return;
-      if(await v2do("approve",pid,"upload",JSON.stringify(d),b))banner("업로드를 시작했습니다. 2~5분 뒤 새로고침하면 유튜브 링크가 보입니다.","ok");
+      if(await v2do("approve",pid,"upload",JSON.stringify(d),b)){banner("업로드를 시작했습니다. 2~5분 뒤 유튜브 링크가 보입니다(화면이 저절로 새로 고쳐집니다).","ok");
+        v2pendSet(pid,"upload","approve",st.stages.upload.state);renderV2Episode(pid);}
       return;
     }
     if(V2_ACTS.has(act)){
@@ -2807,7 +2820,7 @@ async function renderV2Episode(pid){
     if(await v2do(act,pid,stage,note,b)){
       const js=(act==="approve")?nextS:stage;
       if(js&&V2_AUTO[js]){v2reqSet(pid,js);renderV2Episode(pid);}
-      else setTimeout(()=>renderV2Episode(pid),60000);
+      else{v2pendSet(pid,stage,act,st.stages[stage].state);renderV2Episode(pid);}
     }
   });
   document.querySelectorAll("[data-cut]").forEach(b=>b.onclick=async()=>{

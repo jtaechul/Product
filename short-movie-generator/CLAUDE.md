@@ -134,6 +134,12 @@
   파일이 없는 새 편에 적용해 ffmpeg 실패 · 컷 8개 $6.2는 이미 생성됨)는 `assemble`만 다시 돌리면 되고 **비용 0** — 페이지의
   「다시 시도」도 컷이 다 있으면 "무료 · 조립·검사만"으로 표시. 인서트는 `insert_for`가 **파일이 있을 때만** 적용하고 새 편은
   script.json 컷의 `insert{file,at,cx,cy,r}`로 지정한다. 회귀: `test_build_cut_without_pilot_macro_insert`.
+- **★누른 승인은 반영될 때까지 「처리 중」(운영자 지적 2026-10-06 · 실사고)**: 영상 승인을 눌렀는데 서버 반영에 약 1.5분이 걸리고
+  페이지는 60초 뒤 한 번만 다시 읽어 계속 「승인 대기」로 보였다 → 여러 번 누름(두 번째는 '이미 승인됨'으로 실패). 수정:
+  ① 승인·수정 요청·다시 하기·업로드를 보내면 그 단계에 「처리 중 — 서버에 보냈습니다 · 다시 누르지 않아도 됩니다」를 띄우고 버튼을 잠근 뒤
+  **서버 상태가 바뀔 때까지 15초마다 자동으로 다시 읽는다**(`v2pendSet/v2pendGet` · 최대 6분) ② **영상 승인은 키가 필요 없어 설치 전 첫 단계에서
+  바로 반영·커밋**(약 20초) ③ `approve`는 **이미 승인된 단계면 실패하지 않고 그대로 둔다**(두 번 눌러도 안전).
+  회귀: `test_approve_only_when_review_and_unlocks_next`·`test_video_approve_lands_before_installs` · `v2_admin_check.mjs`(approve_shows_pending·pending_clears_*).
 - **아직 자동이 아닌 것(정직 표기)**: 고정 댓글 달기·고정은 수동. 특징 줌인 매크로 인서트 자동 생성은 추후.
 - 검사: `worker/v2_admin_check.mjs`(메뉴 2개·페이지 렌더·잠금/승인 버튼·디스패치 입력·/legacy) · `tests/test_v2_admin.py`.
 

@@ -56,6 +56,17 @@ def test_approve_only_when_review_and_unlocks_next(v2):
     admin.main(["ready", "test_fish", "script", "대본 완료"])
     admin.approve("test_fish", "script")
     assert states("test_fish") == ["approved", "approved", "working", "locked", "locked"]
+    n = len(admin.load_status("test_fish")["stages"]["script"]["notes"])
+    admin.approve("test_fish", "script")                  # ★두 번 눌러도 실패 아님 · 아무것도 안 바뀜(실사고 2026-10-06)
+    assert states("test_fish") == ["approved", "approved", "working", "locked", "locked"]
+    assert len(admin.load_status("test_fish")["stages"]["script"]["notes"]) == n
+
+
+def test_video_approve_lands_before_installs():
+    """영상 승인은 키가 필요 없으니 설치 전 첫 단계에서 바로 반영·커밋한다(반영 1.5분 → 약 20초)."""
+    wf = (Path(admin.__file__).resolve().parents[3] / ".github/workflows/v2-admin.yml").read_text(encoding="utf-8")
+    first = wf[wf.index("진행 중 먼저 기록"):wf.index("- name: 준비")]
+    assert 'approve "$IN_PILOT" video' in first and "ci_commit.sh" in first.split('approve "$IN_PILOT" video')[1][:200]
 
 
 def test_revise_relocks_later_stages(v2):

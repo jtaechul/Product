@@ -268,6 +268,23 @@ statusOverride = null;
   res.schedule_result_shown = els.view.innerHTML.includes("10월 7일 19:00") && els.view.innerHTML.includes("예약 공개");
   statusOverride = null;
 }
+// ── 승인 후 '처리 중'(운영자 지적 2026-10-06: 반영 전까지 「승인 대기」로 남아 여러 번 누름) ──
+{
+  const store = {}; const ls0 = globalThis.localStorage;
+  globalThis.localStorage = { getItem: k => (k === "gh_pat" ? "tok" : (store[k] ?? null)), setItem: (k, v) => { store[k] = v; }, removeItem: k => { delete store[k]; } };
+  const sv = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+  sv.stages.video.state = "review"; sv.stages.upload.state = "locked"; delete sv.jobs;
+  statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  const apv = (lists["[data-act]"] || []).find(b => b.dataset.act === "approve" && b.dataset.stage === "video");
+  const dv = dispatched.length; if (apv?.onclick) await apv.onclick(); for (let i = 0; i < 20; i++) await Promise.resolve();
+  const vcard = els.view.innerHTML.slice(els.view.innerHTML.indexOf('id="stg-video"'), els.view.innerHTML.indexOf('id="stg-upload"'));
+  res.approve_shows_pending = dispatched.length === dv + 1 && vcard.includes("서버에 보냈습니다") && vcard.includes("처리 중") &&
+    /data-act="approve" data-stage="video" disabled/.test(vcard);
+  const sv2 = JSON.parse(JSON.stringify(sv)); sv2.stages.video.state = "approved"; sv2.stages.upload.state = "review";
+  statusOverride = sv2; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  res.pending_clears_when_server_updates = !els.view.innerHTML.includes("서버에 보냈습니다") && !Object.keys(store).some(k => k.startsWith("v2pend:"));
+  globalThis.localStorage = ls0; statusOverride = null;
+}
 
 els = {}; window.location.pathname = "/legacy"; api.renderHome(); res.legacy_home_renders = (els.view?.innerHTML || "").includes("쇼츠 생성 시작");
 console.log(JSON.stringify(res, null, 1));

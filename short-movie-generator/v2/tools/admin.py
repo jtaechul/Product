@@ -87,6 +87,9 @@ def _note(st: dict, stage: str, kind: str, text: str) -> None:
 def approve(pid: str, stage: str, memo: str = "") -> dict:
     st = load_status(pid)
     s = st["stages"][stage]
+    if s["state"] == "approved":                             # ★두 번 눌러도 실패로 만들지 않는다(실사고 2026-10-06: 반영이 늦어 다시 누름)
+        print(f"{STAGE_KO[stage]}은(는) 이미 승인되어 있습니다 — 그대로 둡니다")
+        return st
     if s["state"] != "review":
         raise SystemExit(f"{STAGE_KO[stage]}은(는) 지금 승인할 수 없습니다(상태: {s['state']}) — 결과가 나온 뒤(승인 대기)에만 승인")
     if stage == "upload":                                   # ★업로드 단계의 승인 = 실제 유튜브 업로드(실패하면 승인 안 됨)
