@@ -130,7 +130,9 @@ def _check_stop():
     try:
         subprocess.run(["git", "fetch", "-q", "origin", br], capture_output=True, timeout=30)
         r = subprocess.run(["git", "show", f"origin/{br}:pet-episodes/stop.json"], capture_output=True, text=True, timeout=15)
-        stop = json.loads(r.stdout).get("stop", []) if r.returncode == 0 else []
+        data = json.loads(r.stdout) if r.returncode == 0 else {}
+        # old_only: 옛 코드로 돌던(멈춰 있던) 실행만 멈추고 새 실행은 통과(2026-10: 옛 실행 줄이 내려받기에 걸려 새 줄로 다시 돌릴 때 두 번 만들기 방지)
+        stop = [x for x in data.get("stop", []) if x not in data.get("old_only", [])]
     except Exception:  # noqa: BLE001
         return
     if "all" in stop or (ep and ep in stop):
