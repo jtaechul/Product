@@ -2705,7 +2705,14 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
         return _remake_seg_i2v(key, ref, i, seg, work, res, cap, h)
     out = work / f"rm_seg{i + 1}.mp4"
     piece = work / f"_rm_piece{i + 1}.mp4"
-    _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-vf", CLEAN_VF, "-c:v", "libx264", "-crf", "16", str(piece)])
+    if res.get("pre_enhance"):                            # 원본을 먼저 AI로 복원(무료, CPU): 합성 AI가 깨끗한 입력을 보고 더 자세히 그린다(사용자 요청 2026-10 "업스케일만 말고 더 디테일하게")
+        raw_piece = work / f"_rm_piece{i + 1}_raw.mp4"
+        _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-vf", "hqdn3d=2:2:3:3", "-c:v", "libx264", "-crf", "16", str(raw_piece)])
+        from upscale import upscale_video
+        pw, ph = _wh(raw_piece)
+        res["pre_enhance_info"] = upscale_video(raw_piece, piece, dn=0.5, target=(720, 1280) if ph >= pw else (1280, 720))
+    else:
+        _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-vf", CLEAN_VF, "-c:v", "libx264", "-crf", "16", str(piece)])
     prompt = prompt + REMAKE_CLEAN                        # 원본 화질은 따라 하지 않고 구도·개그·소리만(사용자 지시 2026-10)
     inputs = [{"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}]
     if res.get("use_timeline", True):                     # 0.5초 시간표(동작·입모양·소리)를 지시에 그대로 넣는다
@@ -2722,12 +2729,13 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
         inputs.append({"type": "image", **_b64img(board)})
         prompt = prompt + (REMAKE_BOARD_LOOK if res.get("vertical") else REMAKE_BOARD_REF).format(n=len(inputs))
     tries = []
-    res_name = REMAKE_RES
+    res_name = res.get("gen_res") or REMAKE_RES           # remake.res "720p"면 처음부터 720p로(실제 요금 약 3배, 디테일 가장 확실 — 사장님이 고른 편만)
+    mult = 3 if res_name == "720p" else 1
     # ⛔ 구간마다 딱 한 번만 만든다(사용자 지시 2026-10: "다시 만들지 마. 돈 아까워. 70점 아래여도 짠 대로") — 검사·다시 만들기 없음
-    _remake_spend(res, REMAKE_COST["omni_sec"] * seg, f"구간{i + 1} 바꾸기", cap)
+    _remake_spend(res, REMAKE_COST["omni_sec"] * seg * mult, f"구간{i + 1} 바꾸기({res_name})", cap)
     vid = {"type": "video", "mime_type": "video/mp4", "data": base64.b64encode(piece.read_bytes()).decode()}
     rawo = work / f"_rm_raw{i + 1}.mp4"
-    rf = {"type": "video", "resolution": REMAKE_RES}      # ⚠️ 편집(edit)은 aspect_ratio를 받지 않는다(400 실측) — 세로는 넣는 영상을 9:16 틀로 만들어 맞춘다
+    rf = {"type": "video", "resolution": res_name}        # ⚠️ 편집(edit)은 aspect_ratio를 받지 않는다(400 실측) — 세로는 넣는 영상을 9:16 틀로 만들어 맞춘다
     body = {"model": CLIP_MODEL, "input": [vid, *inputs, {"type": "text", "text": prompt}],
             "response_format": rf, "generation_config": {"video_config": {"task": "edit"}}}
     def _send(piece_path: Path):
@@ -2757,23 +2765,23 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
                 except RuntimeError as e2:
                     if "HTTP 400" in str(e2) and LIKENESS_RE.search(str(e2)) and res.get("allow_i2v"):
                         # 가려도 거절(유명인 영상) → 이번 구간 요금은 되돌리고 스토리보드로 만든다. 다음 구간도 같은 방식
-                        res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
+                        res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg * mult, 3)
                         res["i2v_fallback"] = True
                         res.setdefault("ledger", []).append({"what": f"구간{i + 1} 가려도 거절 → 스토리보드로 만들기(요금 없음)",
-                                                             "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
+                                                             "usd": -round(REMAKE_COST["omni_sec"] * seg * mult, 3)})
                     else:
                         raise
             elif "HTTP 400" in str(e) and LIKENESS_RE.search(str(e)) and res.get("allow_i2v"):   # 이미 가린 영상인데도 거절 → 스토리보드로(켠 편만)
-                res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
+                res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg * mult, 3)
                 res["i2v_fallback"] = True
                 res.setdefault("ledger", []).append({"what": f"구간{i + 1} 가려도 거절 → 스토리보드로 만들기(요금 없음)",
-                                                     "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
+                                                     "usd": -round(REMAKE_COST["omni_sec"] * seg * mult, 3)})
             else:
                 raise
     except RuntimeError as e:
         if "HTTP 400" in str(e):                          # 막힌 요청은 요금 없음 → 장부에서 되돌린다
-            res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg, 3)
-            res.setdefault("ledger", []).append({"what": f"구간{i + 1} 차단됨(요금 없음)", "usd": -round(REMAKE_COST["omni_sec"] * seg, 3)})
+            res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg * mult, 3)
+            res.setdefault("ledger", []).append({"what": f"구간{i + 1} 차단됨(요금 없음)", "usd": -round(REMAKE_COST["omni_sec"] * seg * mult, 3)})
         raise
     if res.get("i2v_fallback"):                           # 위에서 가려도 거절됨(요금은 이미 되돌림) → 스토리보드로
         return _remake_seg_i2v(key, ref, i, seg, work, res, cap, h)
@@ -3134,7 +3142,10 @@ def step_remake(ep, epdir, work, log, req):
     if mode == "check":
         os.environ["PET_NO_SPEND"] = "1"
     key = _key("GEMINI_API_KEY")
-    W, H = 360, 640                                       # 360p(사용자 확정)
+    gen_res = "720p" if str(rm.get("res", "")).lower() == "720p" else REMAKE_RES   # 생성 해상도(기본 360p, 사장님이 고른 편만 720p)
+    W, H = (720, 1280) if gen_res == "720p" else (360, 640)
+    res["gen_res"] = gen_res
+    res["pre_enhance"] = bool(rm.get("pre_enhance"))      # 합성 전에 원본을 AI로 복원(무료)
     if rm.get("keep_people"):                             # 사람은 사람 그대로, 동물만 시바견(2026-10 사과 도둑 편)
         prompt = REMAKE_SWAP_KEEP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "),
                                          cast=str(rm.get("cast") or "the same people and animals as the original"))
@@ -3306,16 +3317,19 @@ def step_remake(ep, epdir, work, log, req):
                 ins += ["-i", str(o)]
             _ff([*ins, "-filter_complex", "".join(f"[{i}:v]" for i in range(n)) + f"concat=n={n}:v=1:a=0,format=yuv420p[v]",
                  "-map", "[v]", "-c:v", "libx264", "-crf", "23", str(body_v)])
-        up = int(rm.get("upscale") or 0)                  # Genjutsu식 '합성 뒤 고화질': Real-ESRGAN(무료, CPU)로 2배 → 720x1280(사용자 지시 2026-10)
-        if up > 1:
+        up = float(rm.get("upscale") or 0)                # Genjutsu식 '합성 뒤 고화질': Real-ESRGAN(무료, CPU) — 2 = 720x1280, 3(또는 out_h 1920) = 1080x1920(사용자 지시 2026-10)
+        out_h = int(rm.get("out_h") or (round(H * up) if up > 1 else H))
+        out_h = min(out_h, 1920) - (min(out_h, 1920) % 2)   # 인스타 최대 1080x1920
+        if out_h > H:
             hq = work / "remake_hq.mp4"
-            if not hq.exists():
+            if not hq.exists() or _wh(hq)[1] != out_h:
                 from upscale import upscale_video
                 t_up = time.time()
-                res["upscale"] = {**upscale_video(body_v, hq, up, float(rm.get("upscale_dn", 0.3))), "sec": round(time.time() - t_up)}
+                res["upscale"] = {**upscale_video(body_v, hq, dn=float(rm.get("upscale_dn", 0.3)), target=(round(out_h * 9 / 16) // 2 * 2, out_h)),
+                                  "sec": round(time.time() - t_up)}
             _assert_vertical(hq, "본편(업스케일)")
             body_v = hq
-            W, H = W * up, H * up
+            W, H = _wh(hq)
         if rm.get("freeze"):                              # 원본의 화면 정지(웃음 포인트)는 영상 AI가 움직여 버리므로 조립 때 그 장면을 그대로 멈춘다
             body_v = _apply_freeze(body_v, work / "remake_fz.mp4", rm["freeze"])
             res["freeze"] = rm["freeze"]
@@ -3354,24 +3368,24 @@ def step_remake(ep, epdir, work, log, req):
         end_v = work / "rm_end.mp4"
         if not end_v.exists():
             # 끝 장면도 한 번만(다시 만들기·검사 없음 — 사용자 지시 2026-10)
-            _remake_spend(res, REMAKE_COST["omni_sec"] * end_sec, "끝 장면 영상", cap)
+            _remake_spend(res, REMAKE_COST["omni_sec"] * end_sec * (3 if gen_res == "720p" else 1), f"끝 장면 영상({gen_res})", cap)
             body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(start)},
                                                    {"type": "text", "text": REMAKE_END_PROMPT.format(ending=ending, sec=end_sec)}],
-                    "response_format": {"type": "video", "resolution": REMAKE_RES, "aspect_ratio": "9:16"},
+                    "response_format": {"type": "video", "resolution": gen_res, "aspect_ratio": "9:16"},
                     "generation_config": {"video_config": {"task": "image_to_video"}}}
             raw = work / "_rm_end_raw.mp4"
             try:
                 raw.write_bytes(_omni_run(key, body))
             except RuntimeError as e:
                 if "HTTP 400" in str(e):
-                    res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * end_sec, 3)
+                    res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * end_sec * (3 if gen_res == "720p" else 1), 3)
                 raise
-            _norm(raw, end_v, 640)
-        if int(rm.get("upscale") or 0) > 1 and _wh(end_v)[1] < H:   # 끝 장면도 같은 화질로
+            _norm(raw, end_v, 1280 if gen_res == "720p" else 640)
+        if _wh(end_v)[1] < H:                             # 끝 장면도 본편과 같은 화질로(업스케일)
             from upscale import upscale_video
             hq_end = work / "rm_end_hq.mp4"
-            if not hq_end.exists():
-                upscale_video(end_v, hq_end, int(rm["upscale"]), float(rm.get("upscale_dn", 0.3)))
+            if not hq_end.exists() or _wh(hq_end)[1] != H:
+                upscale_video(end_v, hq_end, dn=float(rm.get("upscale_dn", 0.3)), target=(W, H))
             end_v = hq_end
         # 3) 느끼한 내레이션(Enceladus, 1.3배 — 사용자 확정 2026-10)
         vo = work / "rm_vo.wav"

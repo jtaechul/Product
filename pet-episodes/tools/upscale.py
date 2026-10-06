@@ -68,14 +68,16 @@ def _wh(src: Path) -> tuple[int, int]:
     return (int(m.group(1)), int(m.group(2))) if m else (0, 0)
 
 
-def upscale_video(src: Path, out: Path, scale: int = 2, dn: float = 0.3, fps: int = 24, crf: int = 18) -> dict:
-    """src(소리 없음이어도 됨) → out(영상만, 가로세로 scale배). 프레임을 파이프로 흘려 메모리를 아낀다."""
+def upscale_video(src: Path, out: Path, scale: float = 2, dn: float = 0.3, fps: int = 24, crf: int = 18, target: tuple | None = None) -> dict:
+    """src(소리 없음이어도 됨) → out(영상만). 모델은 항상 x4로 그린 뒤 target(가로, 세로) 또는 scale배로 줄인다(초해상 뒤 축소 = 더 또렷).
+    프레임을 파이프로 흘려 메모리를 아낀다. 360x640 → 1080x1920도 가능(scale 3)."""
     _ensure_torch()
     import torch
     w, h = _wh(src)
     if not w:
         raise RuntimeError(f"업스케일: 영상 크기를 못 읽음 {src}")
-    W, H = w * scale, h * scale
+    W, H = (int(target[0]), int(target[1])) if target else (int(round(w * scale)), int(round(h * scale)))
+    W, H = W - W % 2, H - H % 2
     model = _model(dn)
     dec = subprocess.Popen([FFMPEG, "-v", "error", "-i", str(src), "-an", "-vf", f"fps={fps}", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
                            stdout=subprocess.PIPE)
@@ -89,8 +91,8 @@ def upscale_video(src: Path, out: Path, scale: int = 2, dn: float = 0.3, fps: in
                 break
             x = torch.frombuffer(bytearray(buf), dtype=torch.uint8).reshape(h, w, 3).permute(2, 0, 1).float().div_(255).unsqueeze(0)
             y = model(x)                                   # x4
-            if scale != 4:
-                y = torch.nn.functional.interpolate(y, size=(H, W), mode="area")
+            if (H, W) != tuple(y.shape[-2:]):
+                y = torch.nn.functional.interpolate(y, size=(H, W), mode="area" if H <= y.shape[-2] else "bicubic")
             y = y.clamp_(0, 1).mul_(255).round_().to(torch.uint8).squeeze(0).permute(1, 2, 0).contiguous()
             enc.stdin.write(bytes(y.untyped_storage()))   # numpy 없이 바로 바이트로(torch 2.x)
             n += 1
@@ -100,7 +102,7 @@ def upscale_video(src: Path, out: Path, scale: int = 2, dn: float = 0.3, fps: in
     dec.wait()
     if enc.returncode != 0 or not out.exists():
         raise RuntimeError("업스케일 인코딩 실패")
-    return {"ok": True, "frames": n, "size": f"{W}x{H}", "scale": scale, "dn": dn, "model": "realesr-general-x4v3"}
+    return {"ok": True, "frames": n, "size": f"{W}x{H}", "scale": round(W / w, 2), "dn": dn, "model": "realesr-general-x4v3"}
 
 
 def _ensure_torch():
