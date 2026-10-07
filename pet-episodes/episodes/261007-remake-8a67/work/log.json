@@ -3,7 +3,7 @@
     "lipsync": false,
     "allow_i2v": false,
     "use_timeline": true,
-    "src_sig": "683719394410-12.2",
+    "src_sig": "bde28badc6bf-12.2",
     "src_full_sec": 12.25,
     "pick": {
       "pieces": [
@@ -48,7 +48,7 @@
         "usd": 0.02
       }
     ],
-    "timeline_src": "683719394410-12.2",
+    "timeline_src": "bde28badc6bf-12.2",
     "gags": [
       {
         "t": "0.0-1.2",
@@ -247,8 +247,8 @@
   },
   "error": "사전 점검에서 멈춤(돈 안 씀): 개그 포인트가 지시에서 빠졌습니다: [0.0-1.2] 담넘기 — the man in the black hoodie climbs over the wooden fence from behind the apple t / 개그 포인트가 지시에서 빠졌습니다: [1.5-2.4] 쓰다듬기 — the man bends forward and pats and strokes the Shiba's head; the Shiba leans in  / 개그 포인트가 지시에서 빠졌습니다: [2.5-3.9] 사과따기 — the man reaches up with both arms, pulls an apple-laden branch down and picks re / 개그 포인트가 지시에서 빠졌습니다: [4.0-6.6] 담넘기 — the man turns, grabs the top of the fence and climbs back over it and out of sig / 개그 ",
   "last_request": {
-    "file": "04_remake_full.json",
-    "ran_at": "2026-10-07T00:02:31Z",
+    "file": "05_remake_full.json",
+    "ran_at": "2026-10-07T00:09:04Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
