@@ -2616,5 +2616,219 @@
     ],
     "status": "active",
     "tmp_id": "R2-0026"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Clean Up Our Park!\nDo you want a clean park? We will pick up trash in Green Park (1) ______ Saturday morning. We will give you garbage bags and gloves. (2) ______ you should wear comfortable shoes because we will walk a lot. (3) ______ After we finish, we will eat sandwiches together.",
+      "translation_ko": "우리 공원 청소하기!\n깨끗한 공원을 원하나요? 우리는 토요일 아침에 그린 공원에서 쓰레기를 주울 거예요. 우리가 쓰레기봉투와 장갑을 줄 겁니다. 하지만 많이 걸을 거니까 편안한 신발을 신어야 해요. 각자 마실 물을 조금 챙겨 오세요. 다 끝난 후에, 우리는 다 같이 샌드위치를 먹을 거예요."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "on",
+          "in",
+          "at",
+          "by"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "특정한 요일이나 날짜를 말할 때는 앞에 on을 써요. 그래서 on Saturday예요.",
+        "difficulty_label": 1,
+        "tags": [
+          "G.prep",
+          "RS.context"
+        ],
+        "evidence": "Saturday morning",
+        "why_not": {
+          "1": "달이나 계절 앞에 쓰는 말이에요",
+          "2": "시간이나 좁은 장소에 써요",
+          "3": "'~까지'라는 뜻이 돼요"
+        },
+        "key_expr": {
+          "en": "on Saturday morning",
+          "ko": "토요일 아침에"
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "G.clue",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "So",
+          "But",
+          "Or",
+          "If"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "봉투와 장갑은 준비해서 주지만 신발은 직접 편하게 신고 오라는 뜻이라 But으로 이어져요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.conj",
+          "RS.context"
+        ],
+        "evidence": "you should wear comfortable shoes",
+        "why_not": {
+          "0": "원인과 결과를 이을 때 써요",
+          "2": "둘 중 하나를 고를 때 써요",
+          "3": "'만약'이라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "wear comfortable shoes",
+          "ko": "편안한 신발을 신다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "2": "G.clue",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "You have to buy a ticket.",
+          "The park is closed today.",
+          "We will watch a movie.",
+          "Please bring some water."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "공원을 청소하고 샌드위치를 먹는 행사니까, 마실 물을 챙겨 오라는 말이 자연스럽게 어울려요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context",
+          "V.daily"
+        ],
+        "evidence": "After we finish, we will eat sandwiches together.",
+        "why_not": {
+          "0": "청소하는 거라 표는 필요 없어요",
+          "1": "공원을 청소한다고 했어요",
+          "2": "영화 이야기는 어울리지 않아요"
+        },
+        "key_expr": {
+          "en": "bring some water",
+          "ko": "물을 좀 가져오다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "2": "F.offtopic"
+        }
+      }
+    ],
+    "tmp_id": "R2-0027",
+    "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Dear Tom,\nI got a new bicycle for my birthday! It is bright red and (1) ______ very fast. Yesterday, my dad and I rode our bikes along the river. (2) ______ We saw many ducks swimming there. I want to ride it with you next time. Let's go to the park together (3) ______ we meet this Sunday.\nFrom, Minho",
+      "translation_ko": "Tom에게,\n나 생일 선물로 새 자전거를 받았어! 밝은 빨간색이고 아주 빠르게 잘 달려. 어제 아빠와 나는 강을 따라 자전거를 탔어. 자전거 타기 딱 좋은 날씨였어. 우리는 거기서 오리들이 헤엄치는 걸 많이 봤어. 다음에는 너와 같이 자전거를 타고 싶어. 이번 주 일요일에 우리가 만날 때 같이 공원에 가자.\nMinho가"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "go",
+          "going",
+          "goes",
+          "went"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "새 자전거 한 대를 가리키는 It 뒤에 오니까 모양을 맞추어 goes를 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.agreement",
+          "RS.context"
+        ],
+        "evidence": "It is bright red and",
+        "why_not": {
+          "0": "여럿이거나 나, 너일 때 써요",
+          "1": "혼자서는 쓸 수 없는 모양이에요",
+          "3": "이미 지나간 일을 말할 때 써요"
+        },
+        "key_expr": {
+          "en": "goes very fast",
+          "ko": "아주 빠르게 달린다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.form",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "I lost my backpack there.",
+          "The weather was perfect for riding.",
+          "We stayed inside the house.",
+          "The river was completely dry."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "강가에서 아빠와 기분 좋게 자전거를 탔다는 내용 뒤에 날씨가 좋았다는 말이 잘 어울려요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context",
+          "V.leisure"
+        ],
+        "evidence": "rode our bikes along the river",
+        "why_not": {
+          "0": "가방 잃어버린 이야기는 뜬금없어요",
+          "2": "집 밖에서 자전거를 탔다고 했어요",
+          "3": "오리가 헤엄쳤다고 해서 안 맞아요"
+        },
+        "key_expr": {
+          "en": "perfect for riding",
+          "ko": "타기에 완벽한"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "when",
+          "who",
+          "where",
+          "what"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "일요일에 만날 '때' 같이 공원에 가자고 하는 거니까 when이 맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.conj",
+          "RS.context"
+        ],
+        "evidence": "we meet this Sunday",
+        "why_not": {
+          "1": "누구인지 사람을 말할 때 써요",
+          "2": "어디인지 장소를 말할 때 써요",
+          "3": "무엇인지 사물을 말할 때 써요"
+        },
+        "key_expr": {
+          "en": "when we meet",
+          "ko": "우리가 만날 때"
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "tmp_id": "R2-0028",
+    "status": "draft"
   }
 ]

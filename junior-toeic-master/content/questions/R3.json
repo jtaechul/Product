@@ -8908,5 +8908,461 @@
     ],
     "tmp_id": "R3-0124",
     "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Next Friday is 'Pajama Day' at our school. All students and teachers can wear their comfortable pajamas to school. You can also bring your favorite teddy bear. But please remember to wear real shoes, not bedroom slippers, for safety. We will take a big group photo in the gym at noon.",
+      "translation_ko": "다음 주 금요일은 우리 학교의 '파자마 데이'입니다. 모든 학생과 선생님은 편안한 잠옷을 입고 학교에 올 수 있습니다. 여러분이 가장 좋아하는 곰 인형을 가져와도 됩니다. 하지만 안전을 위해 침실용 실내화가 아니라 진짜 신발을 신어야 한다는 것을 기억해 주세요. 우리는 정오에 체육관에서 큰 단체 사진을 찍을 것입니다."
+    },
+    "questions": [
+      {
+        "stem": "What is this notice mainly about?",
+        "choices": [
+          "How to wash your pajamas",
+          "The rules for taking a photo",
+          "A fun event at school next Friday",
+          "Why students need new slippers"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "다음 주 금요일에 열리는 학교 행사인 '파자마 데이'를 안내하는 글이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ],
+        "evidence": "Next Friday is 'Pajama Day' at our school.",
+        "why_not": {
+          "0": "잠옷을 빠는 방법은 나오지 않았어요.",
+          "1": "사진 찍는 규칙을 설명하는 글이 아니에요.",
+          "3": "새 실내화가 필요하다는 내용은 없어요."
+        },
+        "key_expr": {
+          "en": "comfortable",
+          "ko": "편안한"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Who is this notice for?",
+        "choices": [
+          "People who sell pajamas",
+          "Students and teachers at the school",
+          "Parents who take pictures",
+          "Doctors who work at a hospital"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "학교에서 열리는 행사를 알리는 글이므로, 학교에 다니는 학생과 선생님을 위한 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ],
+        "evidence": "All students and teachers can wear their comfortable pajamas to school.",
+        "why_not": {
+          "0": "잠옷을 파는 사람에게 쓴 글이 아니에요.",
+          "2": "사진을 찍는 부모님을 위한 글이 아니에요.",
+          "3": "병원 의사와는 관련이 없는 이야기예요."
+        },
+        "key_expr": {
+          "en": "wear",
+          "ko": "입다, 신다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0125"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Did you drink enough water today? Our bodies need a lot of water to stay healthy. When you play outside and sweat, you lose water from your body. If you don't drink water, you might feel tired or get a headache. Try to drink at least eight glasses of water every day to keep your body strong and happy!",
+      "translation_ko": "오늘 물을 충분히 마셨나요? 우리 몸이 건강하려면 많은 물이 필요합니다. 밖에서 놀고 땀을 흘리면, 몸에서 물이 빠져나갑니다. 물을 마시지 않으면 피곤하거나 머리가 아플 수 있습니다. 몸을 튼튼하고 기분 좋게 유지하기 위해 매일 적어도 8잔의 물을 마시도록 노력하세요!"
+    },
+    "questions": [
+      {
+        "stem": "What is the best title for this passage?",
+        "choices": [
+          "Why We Should Drink Enough Water",
+          "The Best Place to Play Outside",
+          "How to Make Sweet Fruit Juice",
+          "Good Medicines for a Headache"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "우리 몸을 건강하게 유지하기 위해 물을 충분히 마셔야 한다는 내용이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ],
+        "evidence": "Our bodies need a lot of water to stay healthy.",
+        "why_not": {
+          "1": "밖에서 놀기 좋은 장소는 나오지 않아요.",
+          "2": "과일 주스 만드는 방법은 적혀 있지 않아요.",
+          "3": "두통약에 대한 글이 아니에요."
+        },
+        "key_expr": {
+          "en": "stay healthy",
+          "ko": "건강을 유지하다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What does the writer want us to do?",
+        "choices": [
+          "To play outside in the sun every day",
+          "To drink eight glasses of water every day",
+          "To sleep for eight hours every night",
+          "To take medicine when we have a headache"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "글쓴이는 우리 몸을 튼튼하게 하려고 매일 물을 8잔씩 마시기를 바라고 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ],
+        "evidence": "Try to drink at least eight glasses of water every day",
+        "why_not": {
+          "0": "매일 밖에서 놀라는 것이 글의 진짜 목적은 아니에요.",
+          "2": "매일 8시간 자라는 말은 없어요.",
+          "3": "머리가 아플 때 약을 먹으라는 글이 아니에요."
+        },
+        "key_expr": {
+          "en": "at least",
+          "ko": "적어도"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.number",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0126"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Welcome to the Star Town Movie Night! Tonight, we will show a fun animation movie called 'The Flying Cat'. The movie starts at 7 p.m. and will last for two hours. You can sit on the grass and enjoy the cool evening breeze. Don't forget to bring your own blankets and snacks. Enjoy the movie!",
+      "translation_ko": "별빛 마을 영화의 밤에 오신 것을 환영합니다! 오늘 밤, 우리는 '나는 고양이'라는 재미있는 애니메이션 영화를 보여드릴 것입니다. 영화는 저녁 7시에 시작해서 두 시간 동안 계속됩니다. 잔디밭에 앉아 시원한 저녁 바람을 즐길 수 있습니다. 각자 쓸 담요와 간식을 가져오는 것을 잊지 마세요. 영화를 즐겁게 관람하세요!"
+    },
+    "questions": [
+      {
+        "stem": "What is the main purpose of this announcement?",
+        "choices": [
+          "To teach people how to make a movie",
+          "To sell warm blankets and snacks",
+          "To ask people to buy movie tickets",
+          "To welcome people to the movie night"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "사람들을 환영하며 별빛 마을의 야외 영화 상영 행사에 대해 안내하고 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Welcome to the Star Town Movie Night!",
+        "why_not": {
+          "0": "영화를 만드는 법을 가르쳐주는 것이 아니에요.",
+          "1": "담요와 간식을 판다는 내용은 없어요.",
+          "2": "표를 사라는 말은 나오지 않았어요."
+        },
+        "key_expr": {
+          "en": "announcement",
+          "ko": "안내 방송, 공지"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What is the main event described in this announcement?",
+        "choices": [
+          "Cleaning the grass in the park",
+          "Buying a flying cat",
+          "Watching an animation movie outdoors",
+          "Making snacks together"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "야외 잔디밭에 앉아 다 같이 애니메이션 영화를 보는 행사예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "V.leisure"
+        ],
+        "evidence": "we will show a fun animation movie",
+        "why_not": {
+          "0": "잔디를 청소하는 행사가 아니에요.",
+          "1": "영화 제목이 고양이일 뿐 진짜 고양이를 사는 게 아니에요.",
+          "3": "간식을 같이 만드는 행사가 아니에요."
+        },
+        "key_expr": {
+          "en": "animation movie",
+          "ko": "애니메이션 영화"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "W.meaning",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0127"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Welcome to Green Leaf Botanical Garden!\nWe have many beautiful flowers and trees. To protect the plants, please do not walk off the paths. Also, do not drop your trash anywhere. Please use the trash cans. You can take pictures, but keep your camera flash off so you don't hurt the plants.",
+      "translation_ko": "그린 리프 식물원에 오신 것을 환영합니다!\n이곳에는 아름다운 꽃과 나무가 많습니다. 식물을 보호하기 위해 길 밖으로 걸어 다니지 마세요. 또, 쓰레기를 아무 데나 버리지 마세요. 쓰레기통을 이용해 주세요. 사진을 찍어도 되지만 식물이 다치지 않게 카메라 플래시는 꺼 두세요."
+    },
+    "questions": [
+      {
+        "stem": "In the notice, the word 'drop' means ____.",
+        "choices": [
+          "to hold something in your hand",
+          "to pick something up",
+          "to leave something on the ground",
+          "to look at something closely"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "쓰레기를 아무 데나 버리지 말라는 뜻이니까 땅에 남겨 둔다는 뜻이 맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "do not drop your trash anywhere.",
+        "why_not": {
+          "0": "손에 들고 있으라는 뜻이 아니에요",
+          "1": "줍는 것이 아니라 버린다는 뜻이에요",
+          "3": "자세히 본다는 뜻과는 관계없어요"
+        },
+        "key_expr": {
+          "en": "drop your trash",
+          "ko": "쓰레기를 버리다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.opposite",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "In the notice, the word 'off' means ____.",
+        "choices": [
+          "taking a picture",
+          "moving very fast",
+          "turned on",
+          "not working or shining"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "카메라 플래시를 켜지 말라는 뜻이니 빛나지 않게 둔다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "keep your camera flash off",
+        "why_not": {
+          "0": "사진을 찍는 동작 자체가 아니에요",
+          "1": "빨리 움직인다는 뜻이 아니에요",
+          "2": "켜진 상태가 아니라 꺼진 상태예요"
+        },
+        "key_expr": {
+          "en": "keep off",
+          "ko": "꺼진 상태로 두다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0128"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "School News - New Bicycle Parking\nNext week, our school will build a new bicycle parking space. The old one was too small for all our bikes. The new parking space will be near the front gate. During the work, the road near the front gate will be blocked. Please use the back gate. With the new space, riding bikes will be more safe for everyone.",
+      "translation_ko": "학교 소식 - 새 자전거 주차장\n다음 주에 우리 학교는 새 자전거 주차장을 만들 예정입니다. 예전 주차장은 모든 자전거를 두기에 너무 작았습니다. 새 주차장은 정문 근처에 생깁니다. 공사를 하는 동안 정문 근처 길은 막힐 것입니다. 뒷문을 이용해 주세요. 새 주차장이 생기면 자전거 타기가 모두에게 더 안전해질 것입니다."
+    },
+    "questions": [
+      {
+        "stem": "In the news, the word 'blocked' means ____.",
+        "choices": [
+          "open to everyone",
+          "closed so you cannot pass",
+          "clean and empty",
+          "painted with colors"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "길이 막혀서 뒷문을 쓰라고 했으니, 지나갈 수 없게 닫혔다는 뜻이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "the road near the front gate will be blocked. Please use the back gate.",
+        "why_not": {
+          "0": "누구나 지나갈 수 있다는 뜻의 반대예요",
+          "2": "깨끗하고 비어 있다는 뜻이 아니에요",
+          "3": "색칠을 한다는 말이 아니에요"
+        },
+        "key_expr": {
+          "en": "be blocked",
+          "ko": "막히다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "In the news, the word 'safe' means ____.",
+        "choices": [
+          "not dangerous",
+          "very expensive",
+          "hard to find",
+          "too small"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "새 주차장이 생기면 자전거 타기가 더 안전해진다는 뜻이니 위험하지 않다는 말이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "riding bikes will be more safe for everyone.",
+        "why_not": {
+          "1": "아주 비싸다는 뜻이 아니에요",
+          "2": "찾기 어렵다는 뜻이 아니에요",
+          "3": "너무 작다는 뜻은 주차장 크기 이야기예요"
+        },
+        "key_expr": {
+          "en": "more safe",
+          "ko": "더 안전한"
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "W.meaning",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0129"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Town Library - Origami Class\nThe Star Town Library is starting an origami class for children. It is every Friday at 4:00 p.m. You do not need to bring anything. The library will provide color paper for everyone. This week, we will make paper frogs. If you want to join the class, please sign up on our website.",
+      "translation_ko": "마을 도서관 - 종이접기 교실\n별빛 마을 도서관에서 어린이를 위한 종이접기 수업을 시작합니다. 매주 금요일 오후 4시입니다. 아무것도 가져올 필요가 없습니다. 도서관에서 모두에게 색종이를 제공할 것입니다. 이번 주에는 종이 개구리를 만들 것입니다. 수업에 참여하고 싶다면 우리 웹사이트에서 등록해 주세요."
+    },
+    "questions": [
+      {
+        "stem": "In the notice, the word 'provide' means ____.",
+        "choices": [
+          "to clean a room",
+          "to read a book",
+          "to give something needed",
+          "to throw away"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "색종이를 가져오지 않아도 도서관에서 준다고 했으니, 필요한 것을 준다는 뜻이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "The library will provide color paper for everyone.",
+        "why_not": {
+          "0": "방을 청소한다는 뜻이 아니에요",
+          "1": "책을 읽는다는 말이 아니에요",
+          "3": "버린다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "provide color paper",
+          "ko": "색종이를 제공하다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "In the notice, the words 'sign up' mean ____.",
+        "choices": [
+          "to draw a picture",
+          "to put your name on a list",
+          "to stand up quickly",
+          "to buy a computer"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "수업을 들으려면 웹사이트에 이름을 올려 등록해야 한다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "If you want to join the class, please sign up on our website.",
+        "why_not": {
+          "0": "그림을 그린다는 뜻이 아니에요",
+          "2": "빨리 일어선다는 말이 아니에요",
+          "3": "컴퓨터를 산다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "sign up",
+          "ko": "등록하다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0130"
   }
 ]
