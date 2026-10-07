@@ -159,7 +159,7 @@
   ],
   "method": "composite",
   "res": "720p",
-  "pre_enhance": true,
+  "pre_enhance": false,
   "pre_enhance_dn": 0.5,
   "upscale": 0,
   "lipsync": true,

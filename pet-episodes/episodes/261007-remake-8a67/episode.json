@@ -190,7 +190,7 @@
   "upscale": 0,
   "upscale_dn": 0.3,
   "res": "720p",
-  "pre_enhance": true,
+  "pre_enhance": false,
   "pre_enhance_dn": 0.5,
   "ad_copy": true,
   "copy_place": "top"

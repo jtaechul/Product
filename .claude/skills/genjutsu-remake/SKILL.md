@@ -9,7 +9,7 @@ description: 사장님이 올린 밈 영상에 시바견을 Genjutsu식으로 �
 새로 그리는 방식(`method: motion`, `shots`)은 사장님이 따로 시킬 때만.
 
 **확정 설정(2026-10-07 사과 도둑 편 테스트로 확인, 사장님 선택 "720p로, 아예 안 흐리게")**
-`method: "composite"` + `res: "720p"`(합성을 처음부터 720p로) + `pre_enhance: true`(합성 전 원본 AI 복원, 무료) + `upscale: 0`(720p 그대로 조립) + `ad: "vo"` + `ad_copy: true`(끝 광고 화면에 캡션 문구).
+`method: "composite"` + `res: "720p"`(합성을 처음부터 720p로) + `pre_enhance: false`(원본 AI 복원은 제작 서버 CPU에서 40분 걸려 **끔** — 사장님 지시 2026-10-07; 720p 합성만으로 선명) + `upscale: 0`(720p 그대로 조립) + `ad: "vo"` + `ad_copy: true`(끝 광고 화면에 캡션 문구).
 결과: 원본이 흐린 보안카메라 영상이어도 결과는 또렷한 720x1280, 사람은 사람 그대로·개만 시바견, 세로는 AI가 위아래를 이어 그림.
 비용(장부 기준) 본편 8초 약 2.4 + 끝 광고 1.35 + 분석·스토리보드 0.2 = 약 4달러(실제 약 1.4달러). 시간: 원본 복원이 제작 서버 CPU에서 약 40분(8초 기준) + 합성·광고 약 10분.
 1080p까지 올리려면 `out_h: 1920`(무료, 시간 +40분) — 인스타는 1080p로 다시 압축하므로 보통 720p면 충분.
@@ -27,14 +27,14 @@ description: 사장님이 올린 밈 영상에 시바견을 Genjutsu식으로 �
    - 소리 크기 흐름(astats)으로 음악인지 효과음인지 가늠. 음악이면 `keep_audio: false` + 우리 효과음(`pet-episodes/sfx`).
    - 개그 포인트를 `remake.gags`(t·kind·en·text)로 적는다. AI 0.5초 시간표(`_timeline`)는 틀릴 수 있다 — 프레임과 대조해 틀리면 `remake.timeline`(목록)에 확인한 시간표를 직접 쓴다(2026-10 사과 도둑 편: AI가 "개가 덤벼든다"로 잘못 읽음).
 3. **episode.json** (`pet-episodes/episodes/<id>/episode.json`, kind `remake`):
-   - `remake.method: "composite"`, `res: "720p"`, `pre_enhance: true`, `upscale: 0`(위 확정 설정), `window`, `timeline`, `gags`, `keep_audio`.
+   - `remake.method: "composite"`, `res: "720p"`, `pre_enhance: false`, `upscale: 0`(위 확정 설정), `window`, `timeline`, `gags`, `keep_audio`.
    - 바꿀 대상: `swap`(무엇을 시바견으로, 무엇은 그대로). 사람을 그대로 둘 땐 `keep_people: true` + `cast: "exactly one human man and one dog"`.
    - 끝 광고(4초, 같은 장소·같은 개): `ending`(장면), `vo`("…구매는 프로필 링크에서."), `big`/`sub`(캡션용), `ad: "vo"`, `hashtags` 5개(쇼핑 검색어).
    - `product.link`·`product.image`(쿠팡 상품) **필수** — 없으면 영상 단계가 돈 쓰기 전에 멈춘다.
 4. **스토리보드**: `requests/NN_remake_board.json` `{"remake":{"mode":"board"}}` + `pet-episodes/stop.json`의 `allow`에 `"<id>:NN_remake_board.json"`. 원본 6장면 격자에 대상만 바꾼 합성 미리보기(`_remake_board`, keep_people이면 `REMAKE_BOARD_KEEP`). → 사장님 확인.
 5. **영상**: `NN_remake_full.json` `{"remake":{"mode":"full"}}` + allow.
    - 사전 점검(`_remake_preflight`, 무료)을 통과해야 돈을 쓴다: 시간표 있음·개그 포인트 반영·막힐 낱말·옛 원본 분석·여러 번 만들기.
-   - 원본 복원(`pre_enhance`): `pet-episodes/tools/upscale.py`(realesr-general-x4v3, CPU, 노이즈 제거 0.5)로 원본을 원본 크기 그대로 깨끗하게 → 합성 AI가 깨끗한 입력을 본다.
+   - (끔, 선택) 원본 복원(`pre_enhance`): CPU 약 40분이라 기본 끔. 켜면 `upscale.py`로 원본을 깨끗하게 한 뒤 합성.
    - 본편: Omni `edit` 720p **한 번**(`_remake_seg`, 원본 소리 없이 영상만 넣고 소리는 조립 때 원본에서). 가로·정사각 원본은 9:16 틀에 넣고 위아래를 AI가 이어 그리게(`REMAKE_EXTEND`). 결과가 꽉 찬 9:16이 아니면 멈춤(`_assert_vertical`).
    - (선택) 업스케일: `upscale`/`out_h`로 1080x1920까지(무료, 느림).
    - 끝 광고 4초 + 내레이션(Enceladus 1.3배) + **화면 위 캡션 문구(big/sub, `ad_copy: true`, 위치는 개·상품을 안 가리는 쪽 `copy_place`)** + 작은 "구매는 프로필 링크에서"(사장님 확정 2026-10-07).
