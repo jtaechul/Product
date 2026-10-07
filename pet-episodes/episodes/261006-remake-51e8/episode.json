@@ -146,21 +146,63 @@
    },
    {
     "t": "8.0-8.5",
-    "action": "The dog finishes the note.",
-    "mouth": "mouth starts closing",
-    "sound": "note ends; applause begins",
+    "action": "The singer launches into the Queen of the Night staccato run: the mouth opens and closes sharply on each note.",
+    "mouth": "opening and closing fast, one shape per note",
+    "sound": "ah-ah-ah-ah staccato coloratura (Der Hoelle Rache)",
     "camera": "fixed"
    },
    {
     "t": "8.5-9.0",
-    "action": "The dog closes its mouth, lifts its chin and looks upward in proud composure.",
+    "action": "Staccato run continues, head bobbing slightly with each note.",
+    "mouth": "opening and closing fast",
+    "sound": "ah-ah-ah-ah staccato",
+    "camera": "fixed"
+   },
+   {
+    "t": "9.0-9.5",
+    "action": "Staccato run continues.",
+    "mouth": "opening and closing fast",
+    "sound": "ah-ah-ah-ah staccato",
+    "camera": "fixed"
+   },
+   {
+    "t": "9.5-10.0",
+    "action": "Staccato run continues, chin lifted.",
+    "mouth": "opening and closing fast",
+    "sound": "ah-ah-ah-ah staccato",
+    "camera": "fixed"
+   },
+   {
+    "t": "10.0-10.5",
+    "action": "Staccato run continues.",
+    "mouth": "opening and closing fast",
+    "sound": "ah-ah-ah-ah staccato",
+    "camera": "fixed"
+   },
+   {
+    "t": "10.5-11.0",
+    "action": "The run climbs to the top note and holds.",
+    "mouth": "wide open",
+    "sound": "high top note",
+    "camera": "fixed"
+   },
+   {
+    "t": "11.0-11.5",
+    "action": "The singer finishes the phrase.",
+    "mouth": "closing",
+    "sound": "note ends; applause begins",
+    "camera": "fixed"
+   },
+   {
+    "t": "11.5-12.0",
+    "action": "The singer closes its mouth and lifts its chin in proud composure.",
     "mouth": "closed",
     "sound": "applause and cheers",
     "camera": "fixed"
    },
    {
-    "t": "9.0-9.9",
-    "action": "The dog stands poised and motionless at the microphones, facing slightly right.",
+    "t": "12.0-12.6",
+    "action": "The singer stands poised and motionless at the microphones.",
     "mouth": "closed",
     "sound": "applause",
     "camera": "fixed"
@@ -180,13 +222,19 @@
     "text": "the hammer strikes the official on the bottom and the official doubles over in pain"
    },
    {
-    "t": "2.5-8.5",
+    "t": "2.5-8.0",
     "kind": "노래",
     "en": "the opera reaction",
     "text": "hard cut to the tuxedo singer holding one long dramatic opera note with its mouth wide open, mouth exactly in sync with the original"
    },
    {
-    "t": "8.5-9.9",
+    "t": "8.0-11.0",
+    "kind": "스타카토",
+    "en": "the Queen of the Night ah-ah-ah run",
+    "text": "the singer's mouth opens and closes sharply on every staccato note of the coloratura run, exactly like the original"
+   },
+   {
+    "t": "11.0-12.6",
     "kind": "반응",
     "en": "the proud finish",
     "text": "the singer closes its mouth and lifts its chin proudly while the applause plays"
@@ -198,7 +246,12 @@
   "pre_enhance_dn": 0.5,
   "upscale": 0,
   "lipsync": true,
-  "ad_copy": true
+  "ad_copy": true,
+  "window": [
+   0,
+   12.61
+  ],
+  "max_sec": 13
  },
  "caption": "해머는 놓쳤어도 강아지는 안 놓쳐요\n\n손목밴드까지 걸어 두는 자동 리드줄 산책 중 줄 놓칠 걱정 없이\n\n구매는 프로필 링크에서.",
  "hashtags": [
