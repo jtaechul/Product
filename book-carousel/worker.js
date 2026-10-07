@@ -7355,7 +7355,7 @@ async function handleRemakeCommit(env, body) {
   if (!c.big || !c.vo) throw new Error('광고 문구와 내레이션을 채워 주세요.');
   const ep = { kind: 'remake', menuName: `리메이크 · ${String(v.title || a.meme || '').slice(0, 28)}`, clips: [],
     source: { youtube: v.id ? `https://www.youtube.com/watch?v=${v.id}` : '', title: v.title || '', music: a.music || '' },
-    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, ad: 'vo', method: 'composite', res: '720p', pre_enhance: true, upscale: 0, cap: REMAKE_CAP_USD },   // Genjutsu식(사용자 확정 2026-10 사과 도둑 편): 원본 그대로 두고 대상만 합성, 처음부터 720p + 합성 전 원본 AI 복원(무료) — '아예 안 흐리게'   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
+    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, ad: 'vo', ad_copy: true, method: 'composite', res: '720p', pre_enhance: true, upscale: 0, cap: REMAKE_CAP_USD },   // ad_copy: 끝 광고 화면에 캡션 문구(큰/작은 글씨)도 올림(사장님 확정 2026-10-07)   // Genjutsu식(사용자 확정 2026-10 사과 도둑 편): 원본 그대로 두고 대상만 합성, 처음부터 720p + 합성 전 원본 AI 복원(무료) — '아예 안 흐리게'   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
     caption: `${String(c.big).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
     hashtags: cleanHashtags(Array.isArray(c.hashtags) ? c.hashtags : String(c.hashtags || '').split(/\s+/), remakeBanned(p.title)),
     product: { title: p.title, brand: p.brand || '', category: p.category || '기타', reason: String(c.sub || '').replace(/\n/g, ' '), link: p.link, image: p.image || '' } };

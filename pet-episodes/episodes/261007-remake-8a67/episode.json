@@ -191,7 +191,9 @@
   "upscale_dn": 0.3,
   "res": "720p",
   "pre_enhance": true,
-  "pre_enhance_dn": 0.5
+  "pre_enhance_dn": 0.5,
+  "ad_copy": true,
+  "copy_place": "top"
  },
  "caption": "사과 도둑을 그냥 보내 준 경비견\n\n사과는 양보해도 주스는 못 참지\n\n구매는 프로필 링크에서.",
  "hashtags": [

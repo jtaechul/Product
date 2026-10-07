@@ -3177,7 +3177,7 @@ def step_remake(ep, epdir, work, log, req):
         if L > T + 0.3 or rm.get("window") or rm.get("pieces"):
             ref = _remake_pick(ref, L, T, work, res, cap, rm.get("pieces") or rm.get("window"))
             L = _dur(ref)
-        if rm.get("pre_enhance"):                         # 합성 전에 원본을 AI로 복원(무료, CPU, 원본 크기 그대로): 합성 AI가 깨끗한 입력을 보고 더 자세히 그린다(사용자 요청 2026-10)
+        if rm.get("pre_enhance") and not (work / "remake.mp4").exists():   # 합성 전에 원본을 AI로 복원(무료, CPU 약 40분, 원본 크기 그대로) — 본편이 이미 있으면(다시 조립) 건너뜀
             enh = work / "_src_enh.mp4"
             if not enh.exists():
                 from upscale import upscale_video
@@ -3421,7 +3421,7 @@ def step_remake(ep, epdir, work, log, req):
             dd = round(max(_dur(end_v), t0 + vl + 0.4 - Lb), 2)
         cta_at = max(0.5, t0 + vl - 1.3 - Lb)
         copy_png, cta_png = work / "_copy.png", work / "_cta.png"
-        if ad_vo:                                         # 큰 문구·노란 설명 없음(사용자 확정 2026-10) — 빈 그림
+        if ad_vo and not rm.get("ad_copy"):               # 큰 문구·노란 설명 없음(2026-10 초기) — 빈 그림. ad_copy=true면 캡션 문구를 화면에도 올린다(사장님 확정 2026-10-07 사과 도둑 편)
             Image.new("RGBA", (720, 1280), (0, 0, 0, 0)).save(copy_png)
         else:
             place = rm.get("copy_place") or (res.get("copy_place") or {}).get("place")
