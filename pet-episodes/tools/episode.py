@@ -3372,8 +3372,8 @@ def step_remake(ep, epdir, work, log, req):
             body_v = _freeze_zoom(body_v, work / "remake_fzz.mp4", float(fz["at"]), float(fz.get("dur", 0.8)), float(fz.get("x", 0.5)),
                                   float(fz.get("y", 0.5)), float(fz.get("zoom", 1.6)))
             res["freeze_zoom"] = fz
-            rm = {**rm, "sfx": [({**x, "at": float(x.get("at", 0)) + float(fz.get("dur", 0.8))} if float(x.get("at", 0)) > float(fz["at"]) else x)
-                                for x in (rm.get("sfx") or [])]}   # 멈춤 뒤 효과음 시각은 자동으로 밀린다(효과음 시각은 멈춤 전 본편 기준으로 적는다)
+            rm = {**rm, "sfx": [({**x, "at": float(x.get("at", 0)) + float(fz.get("dur", 0.8))} if (float(x.get("at", 0)) > float(fz["at"]) and not x.get("fixed")) else x)
+                                for x in (rm.get("sfx") or [])]}   # 멈춤 뒤 효과음 시각은 자동으로 밀린다(멈춤 전 본편 기준). 멈춤 중에 날 소리(비명)는 fixed: true
         if rm.get("freeze"):                              # 원본의 화면 정지(웃음 포인트)는 영상 AI가 움직여 버리므로 조립 때 그 장면을 그대로 멈춘다
             body_v = _apply_freeze(body_v, work / "remake_fz.mp4", rm["freeze"])
             res["freeze"] = rm["freeze"]

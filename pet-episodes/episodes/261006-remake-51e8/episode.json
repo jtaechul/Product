@@ -24,7 +24,8 @@
    {
     "file": "hammer_hit_yelp.mp3",
     "at": 2.36,
-    "vol": 1.0
+    "vol": 1.0,
+    "fixed": true
    },
    {
     "file": "queen_of_night_staccato.mp3",
