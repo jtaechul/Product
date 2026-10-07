@@ -75,136 +75,87 @@
     "camera": "static medium close-up"
    },
    {
-    "t": "3.0-3.5",
-    "action": "The dog holds the singing pose facing forward behind the microphones.",
-    "mouth": "wide open",
-    "sound": "sustained high note",
-    "camera": "fixed"
-   },
-   {
-    "t": "3.5-4.0",
-    "action": "The dog keeps an upright singing posture.",
-    "mouth": "wide open, steady jaw",
-    "sound": "sustained note",
-    "camera": "fixed"
-   },
-   {
-    "t": "4.0-4.5",
-    "action": "The dog remains stationary behind the microphones.",
-    "mouth": "wide open with slight vibrato",
-    "sound": "note with vibrato",
-    "camera": "fixed"
-   },
-   {
-    "t": "4.5-5.0",
-    "action": "The dog keeps the erect posture in the tuxedo.",
-    "mouth": "wide open",
-    "sound": "vibrato sustained",
-    "camera": "fixed"
-   },
-   {
-    "t": "5.0-5.5",
+    "t": "3.1-3.6",
     "action": "The dog keeps its head raised toward the microphones.",
     "mouth": "wide open",
     "sound": "sustained",
     "camera": "fixed"
    },
    {
-    "t": "5.5-6.0",
+    "t": "3.6-4.1",
     "action": "The dog continues the operatic delivery, motionless.",
     "mouth": "wide open",
     "sound": "sustained",
     "camera": "fixed"
    },
    {
-    "t": "6.0-6.5",
+    "t": "4.1-4.6",
     "action": "The dog holds still at the microphones.",
     "mouth": "wide open",
     "sound": "note modulating slightly",
     "camera": "fixed"
    },
    {
-    "t": "6.5-7.0",
+    "t": "4.6-5.1",
     "action": "The dog holds the pose with the head tilted slightly back.",
     "mouth": "wide open",
     "sound": "vibrato ornament",
     "camera": "fixed"
    },
    {
-    "t": "7.0-7.5",
+    "t": "5.1-5.6",
     "action": "The dog maintains the stage posture.",
     "mouth": "wide open",
     "sound": "sustained",
     "camera": "fixed"
    },
    {
-    "t": "7.5-8.0",
+    "t": "5.6-6.1",
     "action": "The dog continues the sustained finish of the note.",
     "mouth": "wide open",
     "sound": "decrescendo",
     "camera": "fixed"
    },
    {
-    "t": "8.0-8.5",
+    "t": "6.1-6.6",
     "action": "The singer launches into the Queen of the Night staccato run: the mouth opens and closes sharply on each note.",
     "mouth": "opening and closing fast, one shape per note",
     "sound": "ah-ah-ah-ah staccato coloratura (Der Hoelle Rache)",
     "camera": "fixed"
    },
    {
-    "t": "8.5-9.0",
+    "t": "6.6-7.1",
     "action": "Staccato run continues, head bobbing slightly with each note.",
     "mouth": "opening and closing fast",
     "sound": "ah-ah-ah-ah staccato",
     "camera": "fixed"
    },
    {
-    "t": "9.0-9.5",
+    "t": "7.1-7.6",
     "action": "Staccato run continues.",
     "mouth": "opening and closing fast",
     "sound": "ah-ah-ah-ah staccato",
     "camera": "fixed"
    },
    {
-    "t": "9.5-10.0",
+    "t": "7.6-8.1",
     "action": "Staccato run continues, chin lifted.",
     "mouth": "opening and closing fast",
     "sound": "ah-ah-ah-ah staccato",
     "camera": "fixed"
    },
    {
-    "t": "10.0-10.5",
+    "t": "8.1-8.6",
     "action": "Staccato run continues.",
     "mouth": "opening and closing fast",
     "sound": "ah-ah-ah-ah staccato",
     "camera": "fixed"
    },
    {
-    "t": "10.5-11.0",
+    "t": "8.6-9.1",
     "action": "The run climbs to the top note and holds.",
     "mouth": "wide open",
     "sound": "high top note",
-    "camera": "fixed"
-   },
-   {
-    "t": "11.0-11.5",
-    "action": "The singer finishes the phrase.",
-    "mouth": "closing",
-    "sound": "note ends; applause begins",
-    "camera": "fixed"
-   },
-   {
-    "t": "11.5-12.0",
-    "action": "The singer closes its mouth and lifts its chin in proud composure.",
-    "mouth": "closed",
-    "sound": "applause and cheers",
-    "camera": "fixed"
-   },
-   {
-    "t": "12.0-12.6",
-    "action": "The singer stands poised and motionless at the microphones.",
-    "mouth": "closed",
-    "sound": "applause",
     "camera": "fixed"
    }
   ],
@@ -222,19 +173,19 @@
     "text": "the hammer strikes the official on the bottom and the official doubles over in pain"
    },
    {
-    "t": "2.5-8.0",
+    "t": "2.5-6.1",
     "kind": "노래",
     "en": "the opera reaction",
     "text": "hard cut to the tuxedo singer holding one long dramatic opera note with its mouth wide open, mouth exactly in sync with the original"
    },
    {
-    "t": "8.0-11.0",
+    "t": "6.1-9.1",
     "kind": "스타카토",
     "en": "the Queen of the Night ah-ah-ah run",
     "text": "the singer's mouth opens and closes sharply on every staccato note of the coloratura run, exactly like the original"
    },
    {
-    "t": "11.0-12.6",
+    "t": "9.1-9.1",
     "kind": "반응",
     "en": "the proud finish",
     "text": "the singer closes its mouth and lifts its chin proudly while the applause plays"
@@ -247,11 +198,17 @@
   "upscale": 0,
   "lipsync": true,
   "ad_copy": true,
-  "window": [
-   0,
-   12.61
-  ],
-  "max_sec": 13
+  "max_sec": 10,
+  "pieces": [
+   [
+    0.0,
+    3.0
+   ],
+   [
+    4.9,
+    11.0
+   ]
+  ]
  },
  "caption": "해머는 놓쳤어도 강아지는 안 놓쳐요\n\n손목밴드까지 걸어 두는 자동 리드줄 산책 중 줄 놓칠 걱정 없이\n\n구매는 프로필 링크에서.",
  "hashtags": [
