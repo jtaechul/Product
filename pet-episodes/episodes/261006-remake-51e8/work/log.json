@@ -4,31 +4,23 @@
       "pieces": [
         [
           0.0,
-          1.5
-        ],
-        [
-          0.0,
-          2.5
-        ],
-        [
-          2.5,
-          4.5
+          3.0
         ],
         [
           7.0,
-          9.0
+          11.0
         ]
       ],
       "why": "사장님이 정한 조각",
       "start": 0.0,
-      "end": 9.0,
-      "sec": 8.0
+      "end": 11.0,
+      "sec": 7.0
     },
     "lipsync": true,
     "allow_i2v": false,
     "use_timeline": true,
     "src_full_sec": 12.61,
-    "src_sec": 8.0,
+    "src_sec": 7.0,
     "segments": 1,
     "one_shot": true,
     "board_times": [
@@ -39,7 +31,7 @@
       5.33,
       6.67
     ],
-    "spent": 2.824,
+    "spent": 4.934,
     "ledger": [
       {
         "what": "스토리보드 그림",
@@ -84,13 +76,21 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "구간1 바꾸기(720p)",
+        "usd": 2.1
+      },
+      {
+        "what": "문구 위치 고르기",
+        "usd": 0.01
       }
     ],
     "board": {
       "ok": true,
       "panels": 6
     },
-    "est_full": 1.37,
+    "est_full": 0.57,
     "timeline": {
       "seg1": [
         {
@@ -272,100 +272,65 @@
         },
         {
           "t": "2.5-3.0",
-          "action": "CUT to a white fluffy dog in a black tuxedo and white bow tie, centered behind two microphones on stands, black stage.",
-          "mouth": "dog opens mouth wide",
-          "sound": "high operatic soprano note begins",
+          "action": "CUT to a white fluffy dog in a black tuxedo and white bow tie, centered behind two microphones on stands, black stage; it opens its mouth wide and the high opera note begins.",
+          "mouth": "opens wide",
+          "sound": "high operatic note begins",
           "camera": "static medium close-up"
         },
         {
           "t": "3.0-3.5",
-          "action": "The dog holds the singing pose facing forward behind the microphones.",
+          "action": "The singer holds the long high note, head tilted slightly back.",
           "mouth": "wide open",
-          "sound": "sustained high note",
+          "sound": "sustained note with vibrato",
           "camera": "fixed"
         },
         {
           "t": "3.5-4.0",
-          "action": "The dog keeps an upright singing posture.",
-          "mouth": "wide open, steady jaw",
-          "sound": "sustained note",
+          "action": "The singer launches into the Queen of the Night staccato run: the mouth opens and closes sharply on each note.",
+          "mouth": "opening and closing fast, one shape per note",
+          "sound": "ah-ah-ah-ah staccato coloratura",
           "camera": "fixed"
         },
         {
           "t": "4.0-4.5",
-          "action": "The dog remains stationary behind the microphones.",
-          "mouth": "wide open with slight vibrato",
-          "sound": "note with vibrato",
+          "action": "Staccato run continues, head bobbing slightly with each note.",
+          "mouth": "opening and closing fast",
+          "sound": "ah-ah-ah-ah staccato",
           "camera": "fixed"
         },
         {
           "t": "4.5-5.0",
-          "action": "The dog keeps the erect posture in the tuxedo.",
-          "mouth": "wide open",
-          "sound": "vibrato sustained",
+          "action": "Staccato run continues.",
+          "mouth": "opening and closing fast",
+          "sound": "ah-ah-ah-ah staccato",
           "camera": "fixed"
         },
         {
           "t": "5.0-5.5",
-          "action": "The dog keeps its head raised toward the microphones.",
-          "mouth": "wide open",
-          "sound": "sustained",
+          "action": "Staccato run continues, chin lifted.",
+          "mouth": "opening and closing fast",
+          "sound": "ah-ah-ah-ah staccato",
           "camera": "fixed"
         },
         {
           "t": "5.5-6.0",
-          "action": "The dog continues the operatic delivery, motionless.",
-          "mouth": "wide open",
-          "sound": "sustained",
+          "action": "Staccato run continues.",
+          "mouth": "opening and closing fast",
+          "sound": "ah-ah-ah-ah staccato",
           "camera": "fixed"
         },
         {
           "t": "6.0-6.5",
-          "action": "The dog holds still at the microphones.",
+          "action": "The run climbs to the top note and holds.",
           "mouth": "wide open",
-          "sound": "note modulating slightly",
+          "sound": "high top note",
           "camera": "fixed"
         },
         {
           "t": "6.5-7.0",
-          "action": "The dog holds the pose with the head tilted slightly back.",
-          "mouth": "wide open",
-          "sound": "vibrato ornament",
-          "camera": "fixed"
-        },
-        {
-          "t": "7.0-7.5",
-          "action": "The dog maintains the stage posture.",
-          "mouth": "wide open",
-          "sound": "sustained",
-          "camera": "fixed"
-        },
-        {
-          "t": "7.5-8.0",
-          "action": "The dog continues the sustained finish of the note.",
-          "mouth": "wide open",
-          "sound": "decrescendo",
-          "camera": "fixed"
-        },
-        {
-          "t": "8.0-8.5",
-          "action": "The dog finishes the note.",
-          "mouth": "mouth starts closing",
+          "action": "The singer finishes the phrase.",
+          "mouth": "closing",
           "sound": "note ends; applause begins",
-          "camera": "fixed"
-        },
-        {
-          "t": "8.5-9.0",
-          "action": "The dog closes its mouth, lifts its chin and looks upward in proud composure.",
-          "mouth": "closed",
-          "sound": "applause and cheers",
-          "camera": "fixed"
-        },
-        {
-          "t": "9.0-9.9",
-          "action": "The dog stands poised and motionless at the microphones, facing slightly right.",
-          "mouth": "closed",
-          "sound": "applause",
           "camera": "fixed"
         }
       ]
@@ -377,7 +342,7 @@
         "quality": null,
         "issues": "",
         "tries": 1,
-        "res": "360p"
+        "res": "720p"
       }
     },
     "frame": {
@@ -394,7 +359,7 @@
     },
     "gen_res": "720p",
     "pre_enhance": true,
-    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, every movement and its timing, camera, background, lights): FIELD SHOT: 1) the hammer-throw athlete (royal-blue tank top, black shorts) becomes the Shiba Inu from image 1: Shiba head, and every bare arm, hand, leg and foot becomes a thick furry Shiba leg with a round paw; 2) each official in a lime-green shirt becomes a real dog of a different breed wearing the same lime-green shirt. STAGE SHOT: 3) the white fluffy singer in the black tuxedo and white bow tie becomes the same Shiba Inu from image 1 (Shiba head and fur, same tuxedo, same microphones, same black stage), its mouth opening and closing exactly like the original singer's mouth. Every replaced head is the Shiba Inu from image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a round Shiba paw (sleeves and trousers stay as they are). SAME HEADCOUNT: the number of animals in every frame matches the number of people in the original frame - one person becomes exactly one animal, never two. Body parts of a person seen at the frame edges belong to that same animal and stay attached to it. Remove any watermark or on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings. KEEP THESE MOMENTS EXACTLY AS IN THE VIDEO (the joke lives here): [1.0-2.0s] the throw goes wrong - the athlete spins and releases the hammer off-target, stumbling forward; [2.0-2.5s] the official gets hit - the hammer strikes the official on the bottom and the official doubles over in pain; [2.5-8.5s] the opera reaction - hard cut to the tuxedo singer holding one long dramatic opera note with its mouth wide open, mouth exactly in ; [8.5-9.9s] the proud finish - the singer closes its mouth and lifts its chin proudly while the applause plays.",
+    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, every movement and its timing, camera, background, lights): FIELD SHOT: 1) the hammer-throw athlete (royal-blue tank top, black shorts) becomes the Shiba Inu from image 1: Shiba head, and every bare arm, hand, leg and foot becomes a thick furry Shiba leg with a round paw; 2) each official in a lime-green shirt becomes a real dog of a different breed wearing the same lime-green shirt. STAGE SHOT: 3) the white fluffy singer in the black tuxedo and white bow tie becomes the same Shiba Inu from image 1 (Shiba head and fur, same tuxedo, same microphones, same black stage), its mouth opening and closing exactly like the original singer's mouth. Every replaced head is the Shiba Inu from image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a round Shiba paw (sleeves and trousers stay as they are). SAME HEADCOUNT: the number of animals in every frame matches the number of people in the original frame - one person becomes exactly one animal, never two. Body parts of a person seen at the frame edges belong to that same animal and stay attached to it. Remove any watermark or on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings. KEEP THESE MOMENTS EXACTLY AS IN THE VIDEO (the joke lives here): [1.0-2.0s] the throw goes wrong - the athlete spins and releases the hammer off-target, stumbling forward; [2.0-2.5s] the official gets hit - the hammer strikes the official on the bottom and the official doubles over in pain; [2.5-3.5s] the opera reaction - hard cut to the tuxedo singer opening its mouth wide on a dramatic high opera note, mouth exactly in sync with; [3.5-6.5s] the Queen of the Night ah-ah-ah run - the singer's mouth opens and closes sharply on every staccato note of the coloratura run, exactly like the ori.",
     "src_sig": "02b889c98987-12.6",
     "timeline_src": "02b889c98987-12.6",
     "timeline_manual": true,
@@ -407,17 +372,50 @@
       "mode": "extend",
       "src": "720x970"
     },
-    "preflight": []
+    "preflight": [],
+    "pre_enhance_info": {
+      "ok": true,
+      "frames": 168,
+      "size": "720x970",
+      "scale": 1.0,
+      "dn": 0.5,
+      "model": "realesr-general-x4v3",
+      "sec": 2167
+    },
+    "fixes": [
+      {
+        "parts": [
+          "body"
+        ],
+        "at": "2026-10-07T10:52:20Z"
+      }
+    ],
+    "copy_place": {
+      "place": "bottom",
+      "why": "The top band covers the dog's head, ears, and face, whereas the bottom band is mostly open grass with ample clear space."
+    },
+    "sfx_used": [
+      {
+        "file": "hammer_spin_whoosh.mp3",
+        "at": 0.2,
+        "vol": 0.9
+      },
+      {
+        "file": "body_fall_grass.mp3",
+        "at": 3.2,
+        "vol": 1.0
+      }
+    ]
   },
   "last_request": {
-    "file": "12_remake_board.json",
-    "ran_at": "2026-10-07T04:11:12Z",
+    "file": "13_remake_full.json",
+    "ran_at": "2026-10-07T11:06:57Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
-    "sec": 12.71,
+    "sec": 11.71,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   },
   "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
