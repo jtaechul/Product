@@ -69,93 +69,65 @@
    },
    {
     "t": "2.5-3.0",
-    "action": "CUT to a white fluffy dog in a black tuxedo and white bow tie, centered behind two microphones on stands, black stage.",
-    "mouth": "dog opens mouth wide",
-    "sound": "high operatic soprano note begins",
+    "action": "CUT to a white fluffy dog in a black tuxedo and white bow tie, centered behind two microphones on stands, black stage; it opens its mouth wide and the high opera note begins.",
+    "mouth": "opens wide",
+    "sound": "high operatic note begins",
     "camera": "static medium close-up"
    },
    {
-    "t": "3.1-3.6",
-    "action": "The dog keeps its head raised toward the microphones.",
+    "t": "3.0-3.5",
+    "action": "The singer holds the long high note, head tilted slightly back.",
     "mouth": "wide open",
-    "sound": "sustained",
+    "sound": "sustained note with vibrato",
     "camera": "fixed"
    },
    {
-    "t": "3.6-4.1",
-    "action": "The dog continues the operatic delivery, motionless.",
-    "mouth": "wide open",
-    "sound": "sustained",
-    "camera": "fixed"
-   },
-   {
-    "t": "4.1-4.6",
-    "action": "The dog holds still at the microphones.",
-    "mouth": "wide open",
-    "sound": "note modulating slightly",
-    "camera": "fixed"
-   },
-   {
-    "t": "4.6-5.1",
-    "action": "The dog holds the pose with the head tilted slightly back.",
-    "mouth": "wide open",
-    "sound": "vibrato ornament",
-    "camera": "fixed"
-   },
-   {
-    "t": "5.1-5.6",
-    "action": "The dog maintains the stage posture.",
-    "mouth": "wide open",
-    "sound": "sustained",
-    "camera": "fixed"
-   },
-   {
-    "t": "5.6-6.1",
-    "action": "The dog continues the sustained finish of the note.",
-    "mouth": "wide open",
-    "sound": "decrescendo",
-    "camera": "fixed"
-   },
-   {
-    "t": "6.1-6.6",
+    "t": "3.5-4.0",
     "action": "The singer launches into the Queen of the Night staccato run: the mouth opens and closes sharply on each note.",
     "mouth": "opening and closing fast, one shape per note",
-    "sound": "ah-ah-ah-ah staccato coloratura (Der Hoelle Rache)",
+    "sound": "ah-ah-ah-ah staccato coloratura",
     "camera": "fixed"
    },
    {
-    "t": "6.6-7.1",
+    "t": "4.0-4.5",
     "action": "Staccato run continues, head bobbing slightly with each note.",
     "mouth": "opening and closing fast",
     "sound": "ah-ah-ah-ah staccato",
     "camera": "fixed"
    },
    {
-    "t": "7.1-7.6",
+    "t": "4.5-5.0",
     "action": "Staccato run continues.",
     "mouth": "opening and closing fast",
     "sound": "ah-ah-ah-ah staccato",
     "camera": "fixed"
    },
    {
-    "t": "7.6-8.1",
+    "t": "5.0-5.5",
     "action": "Staccato run continues, chin lifted.",
     "mouth": "opening and closing fast",
     "sound": "ah-ah-ah-ah staccato",
     "camera": "fixed"
    },
    {
-    "t": "8.1-8.6",
+    "t": "5.5-6.0",
     "action": "Staccato run continues.",
     "mouth": "opening and closing fast",
     "sound": "ah-ah-ah-ah staccato",
     "camera": "fixed"
    },
    {
-    "t": "8.6-9.1",
+    "t": "6.0-6.5",
     "action": "The run climbs to the top note and holds.",
     "mouth": "wide open",
     "sound": "high top note",
+    "camera": "fixed"
+   },
+   {
+    "t": "6.5-7.0",
+    "action": "The singer finishes the phrase.",
+    "mouth": "closing",
+    "sound": "note ends; applause begins",
     "camera": "fixed"
    }
   ],
@@ -173,13 +145,13 @@
     "text": "the hammer strikes the official on the bottom and the official doubles over in pain"
    },
    {
-    "t": "2.5-6.1",
+    "t": "2.5-3.5",
     "kind": "노래",
     "en": "the opera reaction",
-    "text": "hard cut to the tuxedo singer holding one long dramatic opera note with its mouth wide open, mouth exactly in sync with the original"
+    "text": "hard cut to the tuxedo singer opening its mouth wide on a dramatic high opera note, mouth exactly in sync with the original"
    },
    {
-    "t": "6.1-9.1",
+    "t": "3.5-6.5",
     "kind": "스타카토",
     "en": "the Queen of the Night ah-ah-ah run",
     "text": "the singer's mouth opens and closes sharply on every staccato note of the coloratura run, exactly like the original"
@@ -199,7 +171,7 @@
     3.0
    ],
    [
-    4.9,
+    7.0,
     11.0
    ]
   ]
