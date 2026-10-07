@@ -8,30 +8,7 @@
   "music": ""
  },
  "remake": {
-  "swap": "FIELD SHOT: 1) the hammer-throw athlete (blonde ponytail, royal-blue tank top, black shorts) becomes the Shiba Inu from image 1: Shiba head, and every bare arm, hand, leg and foot becomes a thick furry Shiba leg with a round paw (no bare human skin left); 2) each official in a lime-green shirt becomes a real dog of a different breed wearing the same lime-green shirt. STAGE SHOT: 3) the white Samoyed singer in the black tuxedo and white bow tie becomes the same Shiba Inu from image 1 (Shiba head and fur, same tuxedo, same microphones, same black background)",
-  "beats": [
-   {
-    "t0": 0.0,
-    "t1": 8.0,
-    "text": "Photorealistic, sharp, clean modern footage. ONE 8-second clip with ONE hard cut at exactly 4.0s. SHOT A (0.0-4.0s), fixed wide shot of the grassy athletics field exactly like image 1: [0.0-2.5s] the Shiba in the royal-blue tank top spins round twice on its hind legs, holding a rope with a small round ball on the end that swings around it; the two dogs in lime-green shirts watch. [2.5-3.0s] it lets go too early and the ball sails away sideways out of frame; the lime-green-shirt dogs jump back in surprise. [3.0-4.0s] the Shiba wobbles and plops down to sit on the grass, looking embarrassed. HARD CUT at 4.0s. SHOT B (4.0-8.0s), fixed medium close-up on a concert stage with a red velvet curtain: the same Shiba in a black tuxedo jacket and white bow tie sits behind two silver microphones. [4.0-6.5s] mouth wide open singing one long high opera note, jaw steady with a tiny vibrato, head tilting slightly back. [6.5-7.0s] the note fades, mouth still open. [7.0-7.5s] the mouth closes. [7.5-8.0s] mouth closed, chin lifted, small proud smile, ending exactly like image 2. Camera fixed in each shot."
-   }
-  ],
-  "board_times": [
-   0.9,
-   1.8,
-   2.3,
-   3.5,
-   6.5,
-   9.5
-  ],
-  "board_notes": [
-   "Wide shot of a green grassy athletics field on a bright overcast day, trees and a low fence behind. The Shiba in a royal-blue sports tank top stands on its hind legs mid-spin, both front paws gripping a rope with a small round ball swinging out beside it; two dogs of other breeds in lime-green shirts stand to the right watching, one holding a clipboard.",
-   "Same wide shot of the same field. The rope and ball fly away sideways out of frame; the Shiba's front paws are empty and open, eyes wide; the two lime-green-shirt dogs jump back in surprise.",
-   "Same wide shot of the same field. The Shiba in the blue tank top has plopped down sitting on the grass, looking embarrassed; the lime-green-shirt dogs stare at it.",
-   "Medium close-up on a concert stage with a deep red velvet curtain behind, warm golden spotlight. The same Shiba in a black tuxedo jacket and white bow tie sits upright behind two silver microphones on stands, mouth wide open singing an opera note, showing teeth and tongue.",
-   "Closer shot, same stage and red curtain. The tuxedo Shiba holds a long high note, head tilted slightly back, mouth wide open, eyes half closed, very dramatic.",
-   "Same medium close-up on the stage with the red curtain. The tuxedo Shiba has finished singing: mouth closed, chin lifted, small proud smile, standing poised behind the two microphones."
-  ],
+  "swap": "FIELD SHOT: 1) the hammer-throw athlete (royal-blue tank top, black shorts) becomes the Shiba Inu from image 1: Shiba head, and every bare arm, hand, leg and foot becomes a thick furry Shiba leg with a round paw; 2) each official in a lime-green shirt becomes a real dog of a different breed wearing the same lime-green shirt. STAGE SHOT: 3) the white fluffy singer in the black tuxedo and white bow tie becomes the same Shiba Inu from image 1 (Shiba head and fur, same tuxedo, same microphones, same black stage), its mouth opening and closing exactly like the original singer's mouth",
   "keep_audio": true,
   "sfx": [
    {
@@ -46,47 +23,184 @@
    }
   ],
   "ending": "Back on the same grass throwing field in daylight, the same Shiba Inu in the blue tank top stands calmly on a short leash; the lime-green-shirt official dog holds the leash handle (the real product from the image: the retractable leash with its anti-drop wrist band looped around its front paw), the Shiba smugly side-eyes the hammer lying far away on the grass.",
-  "big": "해머는 놓쳐도\n강아지는 안 놓쳐요",
+  "big": "해머는 놓쳤어도\n강아지는 안 놓쳐요",
   "sub": "손목밴드까지 걸어 두는 자동 리드줄\n산책 중 줄 놓칠 걱정 없이",
   "vo": "해머는 놓쳐도... 강아지는 안 놓쳐요. 구매는 프로필 링크에서.",
   "cut": "",
   "whimper": false,
   "ad": "vo",
-  "cap": 5,
-  "source_video": false,
-  "shots": [
+  "cap": 7,
+  "src_vol": 1.0,
+  "timeline": [
    {
-    "panel": 1,
-    "last_panel": 6,
-    "t0": 0.0,
-    "t1": 8.0,
-    "sec": 8,
-    "prompt": "Photorealistic, sharp, clean modern footage. ONE 8-second clip with ONE hard cut at exactly 4.0s. SHOT A (0.0-4.0s), fixed wide shot of the grassy athletics field exactly like image 1: [0.0-2.5s] the Shiba in the royal-blue tank top spins round twice on its hind legs, holding a rope with a small round ball on the end that swings around it; the two dogs in lime-green shirts watch. [2.5-3.0s] it lets go too early and the ball sails away sideways out of frame; the lime-green-shirt dogs jump back in surprise. [3.0-4.0s] the Shiba wobbles and plops down to sit on the grass, looking embarrassed. HARD CUT at 4.0s. SHOT B (4.0-8.0s), fixed medium close-up on a concert stage with a red velvet curtain: the same Shiba in a black tuxedo jacket and white bow tie sits behind two silver microphones. [4.0-6.5s] mouth wide open singing one long high opera note, jaw steady with a tiny vibrato, head tilting slightly back. [6.5-7.0s] the note fades, mouth still open. [7.0-7.5s] the mouth closes. [7.5-8.0s] mouth closed, chin lifted, small proud smile, ending exactly like image 2. Camera fixed in each shot."
+    "t": "0.0-0.5",
+    "action": "The athlete in a royal-blue tank top and black shorts stands in the throwing circle and begins the windup, holding the hammer wire; an official in a lime-green shirt stands to the right holding a clipboard.",
+    "mouth": "athlete slightly open; official closed",
+    "sound": "outdoor ambient",
+    "camera": "fixed wide"
+   },
+   {
+    "t": "0.5-1.0",
+    "action": "The athlete rotates hips and swings the hammer back with the right arm; the official watches.",
+    "mouth": "closed",
+    "sound": "ambient",
+    "camera": "fixed"
+   },
+   {
+    "t": "1.0-1.5",
+    "action": "The athlete spins forward across the circle and swings the arm forward, releasing the hammer off-target to the right.",
+    "mouth": "athlete slightly open",
+    "sound": "windup motion",
+    "camera": "fixed"
+   },
+   {
+    "t": "1.5-2.0",
+    "action": "The hammer flies straight toward the official; the athlete stumbles forward completing the release.",
+    "mouth": "athlete open; official closed",
+    "sound": "quiet",
+    "camera": "fixed"
+   },
+   {
+    "t": "2.0-2.5",
+    "action": "The hammer strikes the standing official on the bottom; the official doubles over and recoils in pain.",
+    "mouth": "athlete open; official drops open",
+    "sound": "impact thud and a spectator shout",
+    "camera": "fixed"
+   },
+   {
+    "t": "2.5-3.0",
+    "action": "CUT to a white fluffy dog in a black tuxedo and white bow tie, centered behind two microphones on stands, black stage.",
+    "mouth": "dog opens mouth wide",
+    "sound": "high operatic soprano note begins",
+    "camera": "static medium close-up"
+   },
+   {
+    "t": "3.0-3.5",
+    "action": "The dog holds the singing pose facing forward behind the microphones.",
+    "mouth": "wide open",
+    "sound": "sustained high note",
+    "camera": "fixed"
+   },
+   {
+    "t": "3.5-4.0",
+    "action": "The dog keeps an upright singing posture.",
+    "mouth": "wide open, steady jaw",
+    "sound": "sustained note",
+    "camera": "fixed"
+   },
+   {
+    "t": "4.0-4.5",
+    "action": "The dog remains stationary behind the microphones.",
+    "mouth": "wide open with slight vibrato",
+    "sound": "note with vibrato",
+    "camera": "fixed"
+   },
+   {
+    "t": "4.5-5.0",
+    "action": "The dog keeps the erect posture in the tuxedo.",
+    "mouth": "wide open",
+    "sound": "vibrato sustained",
+    "camera": "fixed"
+   },
+   {
+    "t": "5.0-5.5",
+    "action": "The dog keeps its head raised toward the microphones.",
+    "mouth": "wide open",
+    "sound": "sustained",
+    "camera": "fixed"
+   },
+   {
+    "t": "5.5-6.0",
+    "action": "The dog continues the operatic delivery, motionless.",
+    "mouth": "wide open",
+    "sound": "sustained",
+    "camera": "fixed"
+   },
+   {
+    "t": "6.0-6.5",
+    "action": "The dog holds still at the microphones.",
+    "mouth": "wide open",
+    "sound": "note modulating slightly",
+    "camera": "fixed"
+   },
+   {
+    "t": "6.5-7.0",
+    "action": "The dog holds the pose with the head tilted slightly back.",
+    "mouth": "wide open",
+    "sound": "vibrato ornament",
+    "camera": "fixed"
+   },
+   {
+    "t": "7.0-7.5",
+    "action": "The dog maintains the stage posture.",
+    "mouth": "wide open",
+    "sound": "sustained",
+    "camera": "fixed"
+   },
+   {
+    "t": "7.5-8.0",
+    "action": "The dog continues the sustained finish of the note.",
+    "mouth": "wide open",
+    "sound": "decrescendo",
+    "camera": "fixed"
+   },
+   {
+    "t": "8.0-8.5",
+    "action": "The dog finishes the note.",
+    "mouth": "mouth starts closing",
+    "sound": "note ends; applause begins",
+    "camera": "fixed"
+   },
+   {
+    "t": "8.5-9.0",
+    "action": "The dog closes its mouth, lifts its chin and looks upward in proud composure.",
+    "mouth": "closed",
+    "sound": "applause and cheers",
+    "camera": "fixed"
+   },
+   {
+    "t": "9.0-9.9",
+    "action": "The dog stands poised and motionless at the microphones, facing slightly right.",
+    "mouth": "closed",
+    "sound": "applause",
+    "camera": "fixed"
    }
   ],
-  "src_vol": 1.0,
-  "board_fresh": true,
-  "pieces": [
-   [
-    0,
-    1.5
-   ],
-   [
-    0,
-    2.5
-   ],
-   [
-    2.5,
-    4.5
-   ],
-   [
-    7.0,
-    9.0
-   ]
+  "gags": [
+   {
+    "t": "1.0-2.0",
+    "kind": "던지기",
+    "en": "the throw goes wrong",
+    "text": "the athlete spins and releases the hammer off-target, stumbling forward"
+   },
+   {
+    "t": "2.0-2.5",
+    "kind": "맞힘",
+    "en": "the official gets hit",
+    "text": "the hammer strikes the official on the bottom and the official doubles over in pain"
+   },
+   {
+    "t": "2.5-8.5",
+    "kind": "노래",
+    "en": "the opera reaction",
+    "text": "hard cut to the tuxedo singer holding one long dramatic opera note with its mouth wide open, mouth exactly in sync with the original"
+   },
+   {
+    "t": "8.5-9.9",
+    "kind": "반응",
+    "en": "the proud finish",
+    "text": "the singer closes its mouth and lifts its chin proudly while the applause plays"
+   }
   ],
-  "max_sec": 8
+  "method": "composite",
+  "res": "720p",
+  "pre_enhance": true,
+  "pre_enhance_dn": 0.5,
+  "upscale": 0,
+  "lipsync": true,
+  "ad_copy": true
  },
- "caption": "해머는 놓쳐도 강아지는 안 놓쳐요\n\n손목밴드까지 걸어 두는 자동 리드줄. 산책 중 줄 놓칠 걱정 없이.\n\n구매는 프로필 링크에서.",
+ "caption": "해머는 놓쳤어도 강아지는 안 놓쳐요\n\n손목밴드까지 걸어 두는 자동 리드줄 산책 중 줄 놓칠 걱정 없이\n\n구매는 프로필 링크에서.",
  "hashtags": [
   "#강아지자동리드줄",
   "#강아지리드줄",

@@ -2657,7 +2657,7 @@ def _timeline(ref: Path, start: float, dur: float, work: Path, res: dict, cap: f
         tl[tag] = [{k: str(x.get(k, ""))[:160] for k in ("t", "action", "mouth", "sound", "camera")} for x in steps if isinstance(x, dict)][:120]
         res["timeline_src"] = res.get("src_sig", "")
     rows = [f"[{x['t']}s] action: {x['action']}; mouth: {x['mouth']}; sound: {x['sound']}; camera: {x['camera']}." for x in tl[tag]]
-    return (TIMELINE_HEAD + " " + " ".join(rows))[:6000] if rows else ""
+    return _soften(TIMELINE_HEAD + " " + " ".join(rows))[:6000] if rows else ""   # 막힐 낱말(사타구니 등)은 부위만 바꿔 넣는다
 
 
 def _remake_seg_i2v(key, ref: Path, i: int, seg: float, work: Path, res: dict, cap: float, h: int) -> Path:
@@ -3177,6 +3177,15 @@ def step_remake(ep, epdir, work, log, req):
         if L > T + 0.3 or rm.get("window") or rm.get("pieces"):
             ref = _remake_pick(ref, L, T, work, res, cap, rm.get("pieces") or rm.get("window"))
             L = _dur(ref)
+        cw0, ch0 = _content_wh(ref)                       # 파일 속 검은 띠를 걷어 실제 화면만 남긴다(2026-10 아리아 편: 9:16 파일 안에 가로 화면 → AI가 띠를 잘라 16:9로 돌려줌)
+        sw0, sh0 = _wh(ref)
+        if cw0 >= 64 and ch0 >= 64 and (cw0 < sw0 * 0.97 or ch0 < sh0 * 0.97):
+            crop_v = work / "_src_crop.mp4"
+            if not crop_v.exists():
+                _ff(["-i", str(ref), "-vf", f"crop={cw0 - cw0 % 2}:{ch0 - ch0 % 2}:(iw-{cw0})/2:(ih-{ch0})/2", "-c:v", "libx264", "-crf", "16",
+                     "-c:a", "aac", "-b:a", "160k", str(crop_v)])
+            res["cropped"] = {"file": f"{sw0}x{sh0}", "content": f"{cw0}x{ch0}"}
+            ref = crop_v
         if rm.get("pre_enhance") and not (work / "remake.mp4").exists():   # 합성 전에 원본을 AI로 복원(무료, CPU 약 40분, 원본 크기 그대로) — 본편이 이미 있으면(다시 조립) 건너뜀
             enh = work / "_src_enh.mp4"
             if not enh.exists():
