@@ -24,7 +24,7 @@
       "end": 9.0,
       "sec": 8.0
     },
-    "lipsync": false,
+    "lipsync": true,
     "allow_i2v": false,
     "use_timeline": true,
     "src_full_sec": 12.61,
@@ -32,14 +32,14 @@
     "segments": 1,
     "one_shot": true,
     "board_times": [
-      0.9,
-      1.8,
-      2.3,
-      3.5,
-      6.5,
-      9.5
+      0.05,
+      4.0,
+      2.67,
+      4.0,
+      5.33,
+      6.67
     ],
-    "spent": 2.674,
+    "spent": 2.824,
     "ledger": [
       {
         "what": "스토리보드 그림",
@@ -80,13 +80,17 @@
       {
         "what": "장면1 만들기(8초)",
         "usd": 0.8
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
       }
     ],
     "board": {
       "ok": true,
       "panels": 6
     },
-    "est_full": 1.56,
+    "est_full": 1.37,
     "timeline": {
       "seg1": [
         {
@@ -229,6 +233,141 @@
           "sound": "Audience applause continues.",
           "camera": "Fixed."
         }
+      ],
+      "all": [
+        {
+          "t": "0.0-0.5",
+          "action": "The athlete in a royal-blue tank top and black shorts stands in the throwing circle and begins the windup, holding the hammer wire; an official in a lime-green shirt stands to the right holding a clip",
+          "mouth": "athlete slightly open; official closed",
+          "sound": "outdoor ambient",
+          "camera": "fixed wide"
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "The athlete rotates hips and swings the hammer back with the right arm; the official watches.",
+          "mouth": "closed",
+          "sound": "ambient",
+          "camera": "fixed"
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "The athlete spins forward across the circle and swings the arm forward, releasing the hammer off-target to the right.",
+          "mouth": "athlete slightly open",
+          "sound": "windup motion",
+          "camera": "fixed"
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "The hammer flies straight toward the official; the athlete stumbles forward completing the release.",
+          "mouth": "athlete open; official closed",
+          "sound": "quiet",
+          "camera": "fixed"
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "The hammer strikes the standing official on the bottom; the official doubles over and recoils in pain.",
+          "mouth": "athlete open; official drops open",
+          "sound": "impact thud and a spectator shout",
+          "camera": "fixed"
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "CUT to a white fluffy dog in a black tuxedo and white bow tie, centered behind two microphones on stands, black stage.",
+          "mouth": "dog opens mouth wide",
+          "sound": "high operatic soprano note begins",
+          "camera": "static medium close-up"
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "The dog holds the singing pose facing forward behind the microphones.",
+          "mouth": "wide open",
+          "sound": "sustained high note",
+          "camera": "fixed"
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "The dog keeps an upright singing posture.",
+          "mouth": "wide open, steady jaw",
+          "sound": "sustained note",
+          "camera": "fixed"
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "The dog remains stationary behind the microphones.",
+          "mouth": "wide open with slight vibrato",
+          "sound": "note with vibrato",
+          "camera": "fixed"
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "The dog keeps the erect posture in the tuxedo.",
+          "mouth": "wide open",
+          "sound": "vibrato sustained",
+          "camera": "fixed"
+        },
+        {
+          "t": "5.0-5.5",
+          "action": "The dog keeps its head raised toward the microphones.",
+          "mouth": "wide open",
+          "sound": "sustained",
+          "camera": "fixed"
+        },
+        {
+          "t": "5.5-6.0",
+          "action": "The dog continues the operatic delivery, motionless.",
+          "mouth": "wide open",
+          "sound": "sustained",
+          "camera": "fixed"
+        },
+        {
+          "t": "6.0-6.5",
+          "action": "The dog holds still at the microphones.",
+          "mouth": "wide open",
+          "sound": "note modulating slightly",
+          "camera": "fixed"
+        },
+        {
+          "t": "6.5-7.0",
+          "action": "The dog holds the pose with the head tilted slightly back.",
+          "mouth": "wide open",
+          "sound": "vibrato ornament",
+          "camera": "fixed"
+        },
+        {
+          "t": "7.0-7.5",
+          "action": "The dog maintains the stage posture.",
+          "mouth": "wide open",
+          "sound": "sustained",
+          "camera": "fixed"
+        },
+        {
+          "t": "7.5-8.0",
+          "action": "The dog continues the sustained finish of the note.",
+          "mouth": "wide open",
+          "sound": "decrescendo",
+          "camera": "fixed"
+        },
+        {
+          "t": "8.0-8.5",
+          "action": "The dog finishes the note.",
+          "mouth": "mouth starts closing",
+          "sound": "note ends; applause begins",
+          "camera": "fixed"
+        },
+        {
+          "t": "8.5-9.0",
+          "action": "The dog closes its mouth, lifts its chin and looks upward in proud composure.",
+          "mouth": "closed",
+          "sound": "applause and cheers",
+          "camera": "fixed"
+        },
+        {
+          "t": "9.0-9.9",
+          "action": "The dog stands poised and motionless at the microphones, facing slightly right.",
+          "mouth": "closed",
+          "sound": "applause",
+          "camera": "fixed"
+        }
       ]
     },
     "segs": {
@@ -252,11 +391,27 @@
     "shots": {
       "n": 1,
       "sec": 8.0
-    }
+    },
+    "gen_res": "720p",
+    "pre_enhance": true,
+    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, every movement and its timing, camera, background, lights): FIELD SHOT: 1) the hammer-throw athlete (royal-blue tank top, black shorts) becomes the Shiba Inu from image 1: Shiba head, and every bare arm, hand, leg and foot becomes a thick furry Shiba leg with a round paw; 2) each official in a lime-green shirt becomes a real dog of a different breed wearing the same lime-green shirt. STAGE SHOT: 3) the white fluffy singer in the black tuxedo and white bow tie becomes the same Shiba Inu from image 1 (Shiba head and fur, same tuxedo, same microphones, same black stage), its mouth opening and closing exactly like the original singer's mouth. Every replaced head is the Shiba Inu from image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a round Shiba paw (sleeves and trousers stay as they are). SAME HEADCOUNT: the number of animals in every frame matches the number of people in the original frame - one person becomes exactly one animal, never two. Body parts of a person seen at the frame edges belong to that same animal and stay attached to it. Remove any watermark or on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings. KEEP THESE MOMENTS EXACTLY AS IN THE VIDEO (the joke lives here): [1.0-2.0s] the throw goes wrong - the athlete spins and releases the hammer off-target, stumbling forward; [2.0-2.5s] the official gets hit - the hammer strikes the official on the bottom and the official doubles over in pain; [2.5-8.5s] the opera reaction - hard cut to the tuxedo singer holding one long dramatic opera note with its mouth wide open, mouth exactly in ; [8.5-9.9s] the proud finish - the singer closes its mouth and lifts its chin proudly while the applause plays.",
+    "src_sig": "02b889c98987-12.6",
+    "timeline_src": "02b889c98987-12.6",
+    "timeline_manual": true,
+    "cropped": {
+      "file": "720x1280",
+      "content": "720x970"
+    },
+    "method": "composite",
+    "vertical": {
+      "mode": "extend",
+      "src": "720x970"
+    },
+    "preflight": []
   },
   "last_request": {
-    "file": "11_remake_full.json",
-    "ran_at": "2026-10-06T15:50:02Z",
+    "file": "12_remake_board.json",
+    "ran_at": "2026-10-07T04:11:12Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
