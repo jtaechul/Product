@@ -5,11 +5,11 @@
  "source": {
   "youtube": "",
   "title": "samoyed vocal pets (사장님 업로드)",
-  "music": ""
+  "music": "Mozart, Der Hölle Rache — Ferenc Fricsay 1953 recording (Wikimedia Commons, 자유 이용) 49.0~53.5초"
  },
  "remake": {
   "swap": "FIELD SHOT: 1) the hammer-throw athlete (royal-blue tank top, black shorts) becomes the Shiba Inu from image 1: Shiba head, and every bare arm, hand, leg and foot becomes a thick furry Shiba leg with a round paw; 2) each official in a lime-green shirt becomes a real dog of a different breed wearing the same lime-green shirt. STAGE SHOT: 3) the white fluffy singer in the black tuxedo and white bow tie becomes the same Shiba Inu from image 1 (Shiba head and fur, same tuxedo, same microphones, same black stage), its mouth opening and closing exactly like the original singer's mouth",
-  "keep_audio": true,
+  "keep_audio": false,
   "sfx": [
    {
     "file": "hammer_spin_whoosh.mp3",
@@ -17,8 +17,18 @@
     "vol": 0.9
    },
    {
-    "file": "body_fall_grass.mp3",
-    "at": 3.2,
+    "file": "hammer_hit_thud.mp3",
+    "at": 2.0,
+    "vol": 1.0
+   },
+   {
+    "file": "hammer_hit_yelp.mp3",
+    "at": 2.15,
+    "vol": 1.0
+   },
+   {
+    "file": "queen_of_night_staccato.mp3",
+    "at": 2.5,
     "vol": 1.0
    }
   ],
