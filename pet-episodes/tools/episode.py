@@ -3031,6 +3031,27 @@ def _motion_prompt(rm: dict, res: dict, L: float, swap: str) -> str:
     return _soften(p)                                     # 바꾸기 설명(swap)에 든 막힐 낱말까지 한 번에
 
 
+def _freeze_zoom(src: Path, out: Path, at: float, dur: float, x: float, y: float, z: float) -> Path:
+    """at초에서 dur초 동안 화면을 멈추고 (x, y)(0~1 비율) 쪽으로 1배→z배 천천히 줌(부드러운 곡선, 계단식 금지). 앞·뒤는 그대로 이어 붙인다."""
+    W, H = _wh(src)
+    L = _dur(src)
+    at = max(0.05, min(at, L - 0.05))
+    fr = out.with_name(out.stem + "_frame.png")
+    _ff(["-ss", f"{at:.3f}", "-i", str(src), "-frames:v", "1", str(fr)])
+    n = max(2, round(dur * 24))
+    ease = f"(3*pow(on/{n},2)-2*pow(on/{n},3))"
+    zx = f"1+({z - 1:.3f})*{ease}"
+    held = out.with_name(out.stem + "_held.mp4")
+    _ff(["-loop", "1", "-i", str(fr), "-vf", f"scale={W * 2}:{H * 2}:flags=lanczos,zoompan=z='{zx}':x='{x:.3f}*iw-(iw/zoom)*{x:.3f}'"
+         f":y='{y:.3f}*ih-(ih/zoom)*{y:.3f}':d={n}:s={W}x{H}:fps=24,setsar=1,format=yuv420p", "-frames:v", str(n), "-c:v", "libx264", "-crf", "19", str(held)])
+    a, b = out.with_name(out.stem + "_a.mp4"), out.with_name(out.stem + "_b.mp4")
+    _ff(["-i", str(src), "-an", "-t", f"{at:.3f}", "-vf", "fps=24,setsar=1,format=yuv420p", "-c:v", "libx264", "-crf", "19", str(a)])
+    _ff(["-ss", f"{at:.3f}", "-i", str(src), "-an", "-vf", "fps=24,setsar=1,format=yuv420p", "-c:v", "libx264", "-crf", "19", str(b)])
+    _ff(["-i", str(a), "-i", str(held), "-i", str(b), "-filter_complex", "[0:v][1:v][2:v]concat=n=3:v=1:a=0,format=yuv420p[v]", "-map", "[v]",
+         "-c:v", "libx264", "-crf", "19", str(out)])
+    return out
+
+
 def _apply_gag_fx(src: Path, out: Path, gags: list, L: float) -> dict:
     """줌·정지 개그를 조립 때 직접 넣는다 — 영상 AI는 줌·정지 화면을 살리지 못한다(2026-10 아이스크림 편). 줌은 천천히 들어갔다 나오는
     연속 곡선(계단식 금지), 정지는 그 구간 첫 프레임을 멈춤. 효과음 제안(zoom_hit 등)은 결과에 적어 두고 sfx는 사장님이 정한 것만 쓴다."""
@@ -3346,6 +3367,13 @@ def step_remake(ep, epdir, work, log, req):
             _assert_vertical(hq, "본편(업스케일)")
             body_v = hq
             W, H = _wh(hq)
+        fz = rm.get("freeze_zoom")                        # 맞는 순간 화면을 멈추고 맞은 쪽으로 천천히 줌(사장님 아이디어 2026-10-07 아리아 편): {at, dur, x, y, zoom}
+        if isinstance(fz, dict) and fz.get("at") is not None:
+            body_v = _freeze_zoom(body_v, work / "remake_fzz.mp4", float(fz["at"]), float(fz.get("dur", 0.8)), float(fz.get("x", 0.5)),
+                                  float(fz.get("y", 0.5)), float(fz.get("zoom", 1.6)))
+            res["freeze_zoom"] = fz
+            rm = {**rm, "sfx": [({**x, "at": float(x.get("at", 0)) + float(fz.get("dur", 0.8))} if float(x.get("at", 0)) > float(fz["at"]) else x)
+                                for x in (rm.get("sfx") or [])]}   # 멈춤 뒤 효과음 시각은 자동으로 밀린다(효과음 시각은 멈춤 전 본편 기준으로 적는다)
         if rm.get("freeze"):                              # 원본의 화면 정지(웃음 포인트)는 영상 AI가 움직여 버리므로 조립 때 그 장면을 그대로 멈춘다
             body_v = _apply_freeze(body_v, work / "remake_fz.mp4", rm["freeze"])
             res["freeze"] = rm["freeze"]
