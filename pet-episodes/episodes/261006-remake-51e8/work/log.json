@@ -158,12 +158,12 @@
       },
       {
         "file": "hammer_hit_thud.mp3",
-        "at": 2.25,
+        "at": 2.22,
         "vol": 1.0
       },
       {
         "file": "hammer_hit_yelp.mp3",
-        "at": 2.36,
+        "at": 2.31,
         "vol": 1.0,
         "fixed": true
       },
@@ -175,11 +175,11 @@
     ],
     "timeline_reset": "원본이 바뀌어 시간표를 다시 만듦",
     "freeze_zoom": {
-      "at": 2.35,
+      "at": 2.3,
       "dur": 0.8,
-      "x": 0.85,
-      "y": 0.53,
-      "zoom": 2.6
+      "x": 0.9,
+      "y": 0.4,
+      "zoom": 2.2
     },
     "timeline": {
       "all": [
@@ -285,8 +285,8 @@
     }
   },
   "last_request": {
-    "file": "17_remake_full.json",
-    "ran_at": "2026-10-07T11:52:24Z",
+    "file": "18_remake_full.json",
+    "ran_at": "2026-10-07T11:56:08Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
