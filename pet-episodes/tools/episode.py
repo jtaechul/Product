@@ -3272,8 +3272,8 @@ def step_remake(ep, epdir, work, log, req):
                     for f in work.glob(pat):
                         f.unlink(missing_ok=True)
             res.setdefault("fixes", []).append({"parts": redo, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
-            if {"segs", "body"} & set(redo):
-                res.pop("timeline", None)                 # 본편을 다시 만들면 0.5초 시간표도 새로(구간이 바뀌었을 수 있음)
+            if {"segs", "body"} & set(redo) and not res.get("timeline_manual"):
+                res.pop("timeline", None)                 # 본편을 다시 만들면 0.5초 시간표도 새로(구간이 바뀌었을 수 있음) — 직접 확인한 시간표는 유지
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
             res["board"] = _remake_board(ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "")
             # 새로 그린 스토리보드는 확인받은 뒤에 영상으로(사용자 지적 2026-10 헬기 편: 확인 안 한 그림에 개가 두 마리 → 영상도 두 마리)
