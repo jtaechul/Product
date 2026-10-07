@@ -247,8 +247,8 @@
   },
   "error": "사전 점검에서 멈춤(돈 안 씀): 개그 포인트가 지시에서 빠졌습니다: [0.0-1.2] 담넘기 — the man in the black hoodie climbs over the wooden fence from behind the apple t / 개그 포인트가 지시에서 빠졌습니다: [1.5-2.4] 쓰다듬기 — the man bends forward and pats and strokes the Shiba's head; the Shiba leans in  / 개그 포인트가 지시에서 빠졌습니다: [2.5-3.9] 사과따기 — the man reaches up with both arms, pulls an apple-laden branch down and picks re / 개그 포인트가 지시에서 빠졌습니다: [4.0-6.6] 담넘기 — the man turns, grabs the top of the fence and climbs back over it and out of sig / 개그 ",
   "last_request": {
-    "file": "05_remake_full.json",
-    "ran_at": "2026-10-07T00:09:04Z",
+    "file": "06_publish.json",
+    "ran_at": "2026-10-07T10:04:27Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
@@ -256,5 +256,12 @@
     "ok": true,
     "sec": 12.54,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
+  },
+  "ig_publish": {
+    "ok": true,
+    "media_id": "18411886705085748",
+    "username": "lord.shiba.ybd",
+    "permalink": "https://www.instagram.com/reel/DeMGdKHiGEz/",
+    "published_at": "2026-10-07T10:04:27Z"
   }
 }
