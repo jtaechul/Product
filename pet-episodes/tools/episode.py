@@ -3186,7 +3186,9 @@ def step_remake(ep, epdir, work, log, req):
                      "-c:a", "aac", "-b:a", "160k", str(crop_v)])
             res["cropped"] = {"file": f"{sw0}x{sh0}", "content": f"{cw0}x{ch0}"}
             ref = crop_v
-        if rm.get("pre_enhance") and not (work / "remake.mp4").exists():   # 합성 전에 원본을 AI로 복원(무료, CPU 약 40분, 원본 크기 그대로) — 본편이 이미 있으면(다시 조립) 건너뜀
+        redo_early = (req.get("remake") or {}).get("redo") if mode == "full" else None
+        body_redo = isinstance(redo_early, list) and bool({"segs", "body"} & set(redo_early))
+        if rm.get("pre_enhance") and (body_redo or not (work / "remake.mp4").exists()):   # 합성 전에 원본을 AI로 복원(무료, CPU 약 40분, 원본 크기 그대로) — 본편이 이미 있으면(다시 조립) 건너뜀
             enh = work / "_src_enh.mp4"
             if not enh.exists():
                 from upscale import upscale_video
