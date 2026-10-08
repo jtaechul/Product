@@ -1,0 +1,18 @@
+{
+  "remake": {
+    "gen_res": "720p",
+    "pre_enhance": true,
+    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, every movement and its timing, camera, background, lights): 1) Replace the bear cub's head and furry body with the Shiba Inu; 2) In the space scene, replace the riding bear with the Shiba Inu pedaling the rainbow bicycle. Every replaced head is the Shiba Inu from image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a round Shiba paw (sleeves and trousers stay as they are). SAME HEADCOUNT: the number of animals in every frame matches the number of people in the original frame - one person becomes exactly one animal, never two. Body parts of a person seen at the frame edges belong to that same animal and stay attached to it. Remove any watermark or on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings.",
+    "lipsync": false,
+    "allow_i2v": false,
+    "use_timeline": true,
+    "src_sig": "66721d59bf6c-11.1",
+    "src_full_sec": 11.08
+  },
+  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)",
+  "last_request": {
+    "file": "01_remake_board.json",
+    "ran_at": "2026-10-08T14:09:03Z",
+    "ok": false
+  }
+}
