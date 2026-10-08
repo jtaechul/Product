@@ -7104,7 +7104,7 @@ const TREND_RANK = (rows) => `아래는 유튜브 쇼츠 목록이다. 각 영�
 JSON만: {"items":[{"i":0,"kind":"챌린지|밈|패러디|댄스|기타","easy":0}]}
 ${rows.map((r, i) => `${i}. ${r.title} / ${r.desc}`).join('\n')}`;
 const REMAKE_CAP_USD = 5;                          // 한 편 최대 비용(사용자 확정 2026-10)
-const REMAKE_CHUNK = 5 * 1024 * 1024;              // 원본 올리기 조각 크기(KV 한 값 25MB 제한 안쪽)
+const REMAKE_CHUNK = 5 * 1024 * 1024;  // deploy-bump 2026-10-08: pre_enhance 기본 끔이 [skip ci]로 배포되지 않았던 것을 바로잡는 재배포              // 원본 올리기 조각 크기(KV 한 값 25MB 제한 안쪽)
 const REMAKE_MAX_CHUNKS = 20;                      // 최대 100MB
 const REMAKE_TTL = 7 * 24 * 3600;
 const kstYmd = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(2, 10).replace(/-/g, '');

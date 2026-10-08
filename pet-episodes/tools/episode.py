@@ -3209,7 +3209,7 @@ def step_remake(ep, epdir, work, log, req):
             ref = crop_v
         redo_early = (req.get("remake") or {}).get("redo") if mode == "full" else None
         body_redo = isinstance(redo_early, list) and bool({"segs", "body"} & set(redo_early))
-        if rm.get("pre_enhance") and (body_redo or not (work / "remake.mp4").exists()):   # 합성 전에 원본을 AI로 복원(무료, CPU 약 40분, 원본 크기 그대로) — 본편이 이미 있으면(다시 조립) 건너뜀
+        if rm.get("pre_enhance") and mode == "full" and (body_redo or not (work / "remake.mp4").exists()):   # 합성 전에 원본을 AI로 복원(영상 단계에서만 — 스토리보드엔 불필요)(무료, CPU 약 40분, 원본 크기 그대로) — 본편이 이미 있으면(다시 조립) 건너뜀
             enh = work / "_src_enh.mp4"
             if not enh.exists():
                 from upscale import upscale_video
