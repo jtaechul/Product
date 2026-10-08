@@ -154,9 +154,13 @@ def gen_image(prompt: str, refs: list[Path], out: Path, aspect="9:16", size: str
     body = {"contents": [{"role": "user", "parts": parts}],
             "generationConfig": {"responseModalities": ["IMAGE"],
                                  "imageConfig": {"aspectRatio": aspect, **({"imageSize": size} if size else {})}}}
+    names = _model_cache.get("names") or set()
+    chain = [model] + [m for m in IMAGE_MODELS if m != model and (not names or m in names)]   # 시간 초과면 다음(빠른) 모델로(2026-10-08: pro 그림 AI가 2분 30초씩 3번 시간 초과)
     for attempt in range(3):                              # 연결 끊김(코드 0)은 요금이 안 나가므로 한 번 더(3번까지)
         code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
                           {"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=150)   # 응답 없이 5분씩 기다리지 않게(2026-10-08)
+        if code == 0 and attempt + 1 < len(chain):
+            model = chain[attempt + 1]
         if code == 200:
             d = json.loads(raw)
             imgs = [p["inlineData"] for c in d.get("candidates", []) for p in c.get("content", {}).get("parts", [])
