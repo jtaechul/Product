@@ -8,7 +8,7 @@
     "use_timeline": true,
     "src_sig": "66721d59bf6c-11.1",
     "src_full_sec": 11.08,
-    "spent": 0.62,
+    "spent": 4.11,
     "ledger": [
       {
         "what": "후킹 살려 10초로 줄이기",
@@ -33,6 +33,30 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "seg1 0.5초 시간표 만들기",
+        "usd": 0.01
+      },
+      {
+        "what": "구간1 바꾸기(720p)",
+        "usd": 2.1
+      },
+      {
+        "what": "끝 장면 그림",
+        "usd": 0.15
+      },
+      {
+        "what": "끝 장면 영상(720p)",
+        "usd": 1.2
+      },
+      {
+        "what": "내레이션",
+        "usd": 0.02
+      },
+      {
+        "what": "문구 위치 고르기",
+        "usd": 0.01
       }
     ],
     "pick": {
@@ -165,6 +189,106 @@
           "sound": "synth electronic riff continues",
           "camera": "fixed"
         }
+      ],
+      "seg1": [
+        {
+          "t": "0.0-0.5",
+          "action": "Brown bear cub leans down in a field and bites into a red mushroom.",
+          "mouth": "Moving, pressed against mushroom",
+          "sound": "Deep, slowed vocal sound",
+          "camera": "Fixed horizontal frame"
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "Cub continues chewing into the red fly agaric mushroom.",
+          "mouth": "Chewing, slightly open",
+          "sound": "Slowed deep vocal line continues",
+          "camera": "Fixed"
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "Cub munches on the mushroom with head lowered to the ground.",
+          "mouth": "Chewing, opening and closing",
+          "sound": "Low distorted voice continues",
+          "camera": "Fixed"
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "Cub continues chewing pieces of mushroom on the mossy ground.",
+          "mouth": "Chewing against mushroom",
+          "sound": "Deep pitched vocal phrase finishes",
+          "camera": "Fixed"
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "Cub slows chewing, keeping snout near the half-eaten mushroom.",
+          "mouth": "Slightly open, chewing slowly",
+          "sound": "Resonant deep synth tone",
+          "camera": "Fixed"
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "Cub pauses over the mushrooms, dazed.",
+          "mouth": "Parted, chewing faintly",
+          "sound": "Low drone tone",
+          "camera": "Fixed"
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "Cub lies on its back among bushes with paws raised, head tilted backward.",
+          "mouth": "Slightly open",
+          "sound": "Deep tone transitions to sudden high-pitched intro",
+          "camera": "Cut to medium shot of cub on back"
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "Cub rests motionless on its back looking upwards.",
+          "mouth": "Slightly open",
+          "sound": "High-pitched chipmunk vocal melody starts rapidly",
+          "camera": "Fixed"
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "Cub stares blankly with wide glazed eyes, motionless.",
+          "mouth": "Slightly open, relaxed lips",
+          "sound": "Fast high-pitched chipmunk singing continues",
+          "camera": "Cut to close-up of cub's face tilted backward"
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "Cub remains still with wide eyes staring into space.",
+          "mouth": "Slightly open",
+          "sound": "High-pitched chipmunk electronic vocals build up",
+          "camera": "Fixed close-up"
+        },
+        {
+          "t": "5.0-5.5",
+          "action": "Cutout bear rides a small bicycle with glowing rainbow wheels across outer space.",
+          "mouth": "Closed",
+          "sound": "Electronic synth drop melody ('Shooting Stars' chipmunk remix)",
+          "camera": "Cut to space animation"
+        },
+        {
+          "t": "5.5-6.0",
+          "action": "Bear continues pedaling bicycle through star-filled space.",
+          "mouth": "Closed",
+          "sound": "Upbeat high-pitched synth melody and beat",
+          "camera": "Fixed"
+        },
+        {
+          "t": "6.0-6.5",
+          "action": "Bear cycles smoothly in place over neon nebula glow.",
+          "mouth": "Closed",
+          "sound": "Upbeat synth dance music continues",
+          "camera": "Fixed"
+        },
+        {
+          "t": "6.5-7.0",
+          "action": "Bear pedals rainbow bicycle continuously as cosmic lights swirl below.",
+          "mouth": "Closed",
+          "sound": "High-pitched synth music continues",
+          "camera": "Fixed"
+        }
       ]
     },
     "timeline_src": "66721d59bf6c-11.1",
@@ -191,7 +315,7 @@
       "ok": true,
       "panels": 6
     },
-    "est_full": 1.27,
+    "est_full": 0.57,
     "board_times_auto": [
       0.5,
       1.0,
@@ -205,12 +329,37 @@
       5.8,
       6.2,
       6.6
-    ]
+    ],
+    "board_ref": "approved_board_01.jpg",
+    "segs": {
+      "seg1": {
+        "human": null,
+        "where": "",
+        "quality": null,
+        "issues": "",
+        "tries": 1,
+        "res": "720p"
+      }
+    },
+    "copy_place": {
+      "place": "top",
+      "why": "The top 30% contains only the starry background, whereas the bottom 30% intersects with the dog's tail and bed."
+    },
+    "sfx_used": [],
+    "full": {
+      "ok": true
+    }
   },
   "error": "스토리보드 그림 실패: HTTP 0: 연결 끊김: The read operation timed out",
   "last_request": {
-    "file": "07_remake_board.json",
-    "ran_at": "2026-10-08T15:08:23Z",
-    "ok": false
+    "file": "08_remake_full.json",
+    "ran_at": "2026-10-08T15:12:53Z",
+    "ok": true
+  },
+  "cover": "work/cover.jpg",
+  "assemble": {
+    "ok": true,
+    "sec": 13.38,
+    "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
