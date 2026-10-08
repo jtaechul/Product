@@ -7,12 +7,50 @@
     "allow_i2v": false,
     "use_timeline": true,
     "src_sig": "66721d59bf6c-11.1",
-    "src_full_sec": 11.08
+    "src_full_sec": 11.08,
+    "spent": 0.01,
+    "ledger": [
+      {
+        "what": "후킹 살려 10초로 줄이기",
+        "usd": 0.01
+      }
+    ],
+    "pick": {
+      "pieces": [
+        [
+          0.0,
+          7.0
+        ]
+      ],
+      "hook": "빨간 버섯을 먹고 환각에 빠져버린 아기 곰",
+      "why": "곰이 우주에서 무지개 외발자전거를 타는 하이라이트가 7초대에 끝나므로, 뒤쪽의 불필요한 아웃트로 로고 구간을 잘라내어 단일 클립으로 압축했습니다.",
+      "start": 0.0,
+      "end": 7.0,
+      "sec": 7.0
+    },
+    "cropped": {
+      "file": "640x1138",
+      "content": "640x428"
+    },
+    "pre_enhance_info": {
+      "ok": true,
+      "frames": 168,
+      "size": "640x428",
+      "scale": 1.0,
+      "dn": 0.5,
+      "model": "realesr-general-x4v3",
+      "sec": 955
+    },
+    "src_sec": 7.0,
+    "segments": 1,
+    "one_shot": true,
+    "method": "composite",
+    "timeline": {}
   },
   "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)",
   "last_request": {
-    "file": "02_remake_board.json",
-    "ran_at": "2026-10-08T14:13:05Z",
+    "file": "03_remake_board.json",
+    "ran_at": "2026-10-08T14:32:52Z",
     "ok": false
   }
 }
