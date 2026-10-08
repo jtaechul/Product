@@ -2138,16 +2138,33 @@ REMAKE_BOARD_REF = (" Image {n} is the approved storyboard for the FIRST FRAME o
                     "it (same dog head, paws and background dogs), then follow the original motion.")
 
 
-def _board_times(L: float, n: int, seg: float) -> list[float]:
+def _board_times(L: float, n: int, seg: float, total: int = 0) -> list[float]:
+    total = total or BOARD_COLS * BOARD_ROWS
     t = [round(i * seg + 0.05, 2) for i in range(n)]            # 칸 1~n = 구간 첫 장면(영상 AI 기준 그림)
     extra = [round(i * seg + seg / 2, 2) for i in range(n)]
     for x in extra:
-        if len(t) >= BOARD_COLS * BOARD_ROWS:
+        if len(t) >= total:
             break
         t.append(x)
-    while len(t) < BOARD_COLS * BOARD_ROWS:
-        t.append(round(L * len(t) / (BOARD_COLS * BOARD_ROWS), 2))
+    while len(t) < total:
+        t.append(round(L * len(t) / total, 2))
     return t
+
+
+def _board_grid(panels: int) -> tuple:
+    """스토리보드 칸 수 → (열, 행, 그림 비율). 그림 한 장 값은 같다(2026-10-08 사장님 지적: 6칸이면 다 표현 못 함)."""
+    if panels <= 6:
+        return 3, 2, "4:5"
+    if panels <= 9:
+        return 3, 3, "9:16"
+    return 4, 3, "3:4"
+
+
+def _board_panels(L: float, rm: dict) -> int:
+    """칸 수: 사장님이 정하면(board_panels) 그대로, 아니면 6초 이상이면 12칸, 4초 이상 9칸, 그 밖 6칸."""
+    if rm.get("board_panels"):
+        return max(6, min(12, int(rm["board_panels"])))
+    return 12 if L >= 6 else 9 if L >= 4 else 6
 
 
 def _apply_freeze(src: Path, out: Path, spans, back: float = 0.0) -> Path:
@@ -2325,28 +2342,32 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
 
 
 def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path, res: dict, cap: float,
-                  times: list | None = None, notes: list | None = None, fresh: bool = False, cast: str = "", extend: bool = False):
+                  times: list | None = None, notes: list | None = None, fresh: bool = False, cast: str = "", extend: bool = False,
+                  panels: int = 6):
     """times = 칸마다 원본에서 뽑을 시각(웃음 포인트를 사람이 골라 줄 때, remake.board_times), notes = 칸마다 바꿀 내용(remake.board_notes)."""
-    W0, H0 = BOARD_CW * BOARD_COLS, BOARD_CH * BOARD_ROWS
+    cols, rows, aspect = _board_grid(panels)
+    N = cols * rows
+    W0, H0 = BOARD_CW * cols, BOARD_CH * rows
     fit = f"scale={BOARD_CW}:{BOARD_CH}:force_original_aspect_ratio=decrease,pad={BOARD_CW}:{BOARD_CH}:(ow-iw)/2:(oh-ih)/2" + \
         (":color=0x808080" if extend else "")            # 가로 원본: 위아래는 '빈 회색 캔버스'(흐린 복사본을 깔면 그림 AI가 그대로 남김 — 2026-10-08 사고)
     cells = []
-    tt = [float(x) for x in (times or [])][:BOARD_COLS * BOARD_ROWS]
-    if len(tt) < BOARD_COLS * BOARD_ROWS:
-        tt = (tt + _board_times(L, n, seg))[:BOARD_COLS * BOARD_ROWS]
+    tt = [float(x) for x in (times or [])][:N]
+    even = [round(L * (i + 0.5) / N, 2) for i in range(N)]   # 시간표가 없을 때: 고르게(겹치는 시각 없이)
+    if len(tt) < N:
+        tt = tt + even[len(tt):]
     res["board_times"] = tt
     for k, t in enumerate(tt):
         c = work / f"_bcell{k}.png"
         _ff(["-ss", f"{min(t, L - 0.1):.2f}", "-i", str(ref), "-frames:v", "1", "-vf", fit, str(c)])
         cells.append(c)
-    tile = Image.new("RGB", (W0, int(W0 * 5 / 4)), (0, 0, 0))   # 4:5에 맞춰 아래만 검은 여백
+    tile = Image.new("RGB", (W0, int(W0 * 5 / 4) if aspect == "4:5" else H0), (0, 0, 0))   # 3x2는 4:5에 맞춰 아래만 검은 여백, 3x3·4x3은 딱 맞음
     if fresh:                                           # 원본 화면을 넣지 않고 빈 칸 틀만 — 칸마다 글 지시대로 깨끗하게 새로 그림(사용자 지시 2026-10 아리아 편: 원본 합성은 화질이 더럽다)
         dr = ImageDraw.Draw(tile)
-        for k in range(BOARD_COLS * BOARD_ROWS):
-            x, y = (k % BOARD_COLS) * BOARD_CW, (k // BOARD_COLS) * BOARD_CH
+        for k in range(N):
+            x, y = (k % cols) * BOARD_CW, (k // cols) * BOARD_CH
             dr.rectangle((x + 2, y + 2, x + BOARD_CW - 3, y + BOARD_CH - 3), fill=(128, 128, 128), outline=(255, 255, 255), width=3)
     for k, c in enumerate([] if fresh else cells):
-        tile.paste(Image.open(c).convert("RGB"), ((k % BOARD_COLS) * BOARD_CW, (k // BOARD_COLS) * BOARD_CH))
+        tile.paste(Image.open(c).convert("RGB"), ((k % cols) * BOARD_CW, (k // cols) * BOARD_CH))
     src_tile = work / "_board_src.png"
     tile.save(src_tile)
     _remake_spend(res, REMAKE_COST["image"], "스토리보드 그림", cap)
@@ -2357,16 +2378,19 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
     if extend and not fresh:                            # 가로 원본: 위아래 흐린 자리표시를 장면으로 이어 그린다(영상과 같게, 2026-10-08)
         ask += REMAKE_BOARD_EXTEND
     if notes:                                           # 칸마다 무엇을 바꾸는지(사용자 지적 2026-10: 사람 맨살·팔이 그대로 남음)
-        ask += " PANEL-BY-PANEL (left to right, top row first): " + " ".join(f"Panel {k + 1}: {str(x).strip()}" for k, x in enumerate(notes[:6]))
-    r = gen_image(ask, [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, "4:5", "2K")
+        ask += " PANEL-BY-PANEL (left to right, top row first): " + " ".join(f"Panel {k + 1}: {str(x).strip()}" for k, x in enumerate(notes[:N]))
+    if N != 6:                                          # 칸 수에 맞게 지시문의 '3x2·여섯 칸'을 바꾼다
+        ask = (ask.replace("3x2", f"{cols}x{rows}").replace("ALL six panels", f"ALL {N} panels").replace("six frames", f"{N} frames")
+               .replace("six grey", f"{N} grey").replace("six panels", f"{N} panels"))
+    r = gen_image(ask, [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, aspect, "2K")
     if not r.get("ok"):
         raise RuntimeError(f"스토리보드 그림 실패: {r.get('error')}")
     im = Image.open(out).convert("RGB")
     k = im.size[0] / W0
     im.save(work / "board.jpg", quality=88)
     frames = []
-    for i in range(BOARD_COLS * BOARD_ROWS):
-        x, y = (i % BOARD_COLS) * BOARD_CW * k, (i // BOARD_COLS) * BOARD_CH * k
+    for i in range(N):
+        x, y = (i % cols) * BOARD_CW * k, (i // cols) * BOARD_CH * k
         f = work / f"board_{i + 1:02d}.jpg"
         im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
         frames.append(f)
@@ -3284,8 +3308,9 @@ def step_remake(ep, epdir, work, log, req):
         res["method"] = "motion" if motion else ("composite" if composite else ("shots" if rm.get("shots") else "edit"))
         if composite and mode in ("board", "full", "check") and not (res.get("timeline") or {}).get("all") and mode != "check":
             _timeline(ref, 0, L, work, res, cap, "all")   # 원본 전체 0.5초 시간표(약 0.01달러) — 프레임으로 검증해 remake.timeline으로 바로잡을 수 있다
+        n_pan = _board_panels(L, rm)
         if composite and not rm.get("board_times") and (res.get("timeline") or {}).get("all"):
-            res["board_times_auto"] = _scene_times(res["timeline"]["all"], L)   # 장면마다 한 칸 이상(핵심 장면이 빠지지 않게)
+            res["board_times_auto"] = _scene_times(res["timeline"]["all"], L, n_pan)   # 장면마다 한 칸 이상(핵심 장면이 빠지지 않게)
         swap_txt = (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". ")
         if motion and mode in ("board", "full", "check"):
             if mode != "check" and not (res.get("timeline") or {}).get("all"):
@@ -3334,7 +3359,7 @@ def step_remake(ep, epdir, work, log, req):
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
                 res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "",
-                                              (res.get("vertical") or {}).get("mode") == "extend")
+                                              (res.get("vertical") or {}).get("mode") == "extend", n_pan)
             res["est_full"] = est_all
             if float(res.get("spent", 0)) + est_all > cap:
                 res["board"]["over"] = True
@@ -3354,7 +3379,7 @@ def step_remake(ep, epdir, work, log, req):
                 res.pop("timeline", None)                 # 본편을 다시 만들면 0.5초 시간표도 새로(구간이 바뀌었을 수 있음) — 직접 확인한 시간표는 유지
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
             res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "",
-                                              (res.get("vertical") or {}).get("mode") == "extend")
+                                              (res.get("vertical") or {}).get("mode") == "extend", n_pan)
             # 새로 그린 스토리보드는 확인받은 뒤에 영상으로(사용자 지적 2026-10 헬기 편: 확인 안 한 그림에 개가 두 마리 → 영상도 두 마리)
             res["est_full"] = est_all
             res["board"]["wait"] = True
@@ -3465,6 +3490,8 @@ def step_remake(ep, epdir, work, log, req):
             r = gen_image(REMAKE_END_START.format(ending=ending), [last, prod], start, "9:16")
             if not r.get("ok"):
                 raise RuntimeError(f"끝 장면 그림 실패: {r.get('error')}")
+            if _panel_bands([start]):                     # ⛔ 광고 첫 장면도 꽉 찬 9:16인지(위아래 띠) — 영상 만들기 전에 멈춘다(2026-10-08)
+                raise RuntimeError("끝 광고 첫 장면 그림 위아래가 꽉 찬 화면이 아닙니다(흐린/빈 띠) — 영상 만들기 전에 멈춤")
         end_v = work / "rm_end.mp4"
         if not end_v.exists():
             # 끝 장면도 한 번만(다시 만들기·검사 없음 — 사용자 지시 2026-10)
