@@ -11,8 +11,8 @@
   },
   "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)",
   "last_request": {
-    "file": "01_remake_board.json",
-    "ran_at": "2026-10-08T14:09:03Z",
+    "file": "02_remake_board.json",
+    "ran_at": "2026-10-08T14:13:05Z",
     "ok": false
   }
 }
