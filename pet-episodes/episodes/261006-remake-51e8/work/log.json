@@ -285,8 +285,8 @@
     }
   },
   "last_request": {
-    "file": "18_remake_full.json",
-    "ran_at": "2026-10-07T11:56:08Z",
+    "file": "19_publish.json",
+    "ran_at": "2026-10-08T14:15:06Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
@@ -295,5 +295,12 @@
     "sec": 12.46,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   },
-  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
+  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)",
+  "ig_publish": {
+    "ok": true,
+    "media_id": "17950236246269780",
+    "username": "lord.shiba.ybd",
+    "permalink": "https://www.instagram.com/reel/DePH9K1AN-D/",
+    "published_at": "2026-10-08T14:15:06Z"
+  }
 }
