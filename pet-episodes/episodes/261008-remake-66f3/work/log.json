@@ -1,18 +1,26 @@
 {
   "remake": {
     "gen_res": "720p",
-    "pre_enhance": true,
+    "pre_enhance": false,
     "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, every movement and its timing, camera, background, lights): 1) Replace the bear cub's head and furry body with the Shiba Inu; 2) In the space scene, replace the riding bear with the Shiba Inu pedaling the rainbow bicycle. Every replaced head is the Shiba Inu from image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a round Shiba paw (sleeves and trousers stay as they are). SAME HEADCOUNT: the number of animals in every frame matches the number of people in the original frame - one person becomes exactly one animal, never two. Body parts of a person seen at the frame edges belong to that same animal and stay attached to it. Remove any watermark or on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings.",
     "lipsync": false,
     "allow_i2v": false,
     "use_timeline": true,
     "src_sig": "66721d59bf6c-11.1",
     "src_full_sec": 11.08,
-    "spent": 0.01,
+    "spent": 0.17,
     "ledger": [
       {
         "what": "후킹 살려 10초로 줄이기",
         "usd": 0.01
+      },
+      {
+        "what": "all 0.5초 시간표 만들기",
+        "usd": 0.01
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
       }
     ],
     "pick": {
@@ -45,12 +53,127 @@
     "segments": 1,
     "one_shot": true,
     "method": "composite",
-    "timeline": {}
+    "timeline": {
+      "all": [
+        {
+          "t": "0.0-0.5",
+          "action": "Brown bear cub crouches in green shrubs, leaning head down to bite a red mushroom.",
+          "mouth": "open, chewing mushroom cap",
+          "sound": "low male vocal chanting 'O Father'",
+          "camera": "fixed medium shot"
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "Cub continues chewing on the mushroom cap with head low.",
+          "mouth": "open around mushroom",
+          "sound": "male vocal chanting continues",
+          "camera": "fixed"
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "Cub bites pieces off the mushroom, front paws planted on the ground.",
+          "mouth": "open, chewing",
+          "sound": "male vocal chanting continues",
+          "camera": "fixed"
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "Cub chews on the mushroom base, holding head tilted down.",
+          "mouth": "slightly open, chewing",
+          "sound": "male vocal chanting continues",
+          "camera": "fixed"
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "Cub nibbles the remaining mushroom stem.",
+          "mouth": "slightly open",
+          "sound": "deep male vocal note ('O Father')",
+          "camera": "fixed"
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "Cub swallows and remains still over the mushroom patch.",
+          "mouth": "closed",
+          "sound": "choral drone fading",
+          "camera": "fixed"
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "Cut to bear cub lying flat on its back in bushes, paws curled toward chest, staring blankly upward.",
+          "mouth": "slightly open",
+          "sound": "synth electronic riff ('Shooting Stars')",
+          "camera": "cut to low-angle medium shot"
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "Bear cub stays motionless on its back, eyes wide and unfocused.",
+          "mouth": "slightly open",
+          "sound": "synth electronic riff continues",
+          "camera": "fixed"
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "Cut to close-up of cub's face upside down, staring dazed into the air.",
+          "mouth": "slightly open",
+          "sound": "synth electronic riff continues",
+          "camera": "cut to extreme close-up"
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "Cub remains still, eyes wide and glistening.",
+          "mouth": "slightly open",
+          "sound": "synth electronic riff continues",
+          "camera": "fixed"
+        },
+        {
+          "t": "5.0-5.5",
+          "action": "Cut to bear cub riding a small bicycle with glowing rainbow wheels across starry black space, pedaling legs.",
+          "mouth": "open, tilted upward",
+          "sound": "synth electronic riff continues",
+          "camera": "cut to wide shot"
+        },
+        {
+          "t": "5.5-6.0",
+          "action": "Cub continues pedaling the bicycle through space, hands gripping handlebars.",
+          "mouth": "open",
+          "sound": "synth electronic riff continues",
+          "camera": "fixed"
+        },
+        {
+          "t": "6.0-6.5",
+          "action": "Cub pedals bicycle across space as glowing rainbow wheels spin.",
+          "mouth": "open",
+          "sound": "synth electronic riff continues",
+          "camera": "fixed"
+        },
+        {
+          "t": "6.5-7.0",
+          "action": "Cub continues cycling forward against the dark starry background.",
+          "mouth": "open",
+          "sound": "synth electronic riff continues",
+          "camera": "fixed"
+        }
+      ]
+    },
+    "timeline_src": "66721d59bf6c-11.1",
+    "vertical": {
+      "mode": "extend",
+      "src": "640x428"
+    },
+    "preflight": [],
+    "board_times": [
+      0.05,
+      3.5,
+      2.33,
+      3.5,
+      4.67,
+      5.83
+    ]
   },
-  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)",
+  "error": "Remote end closed connection without response",
   "last_request": {
-    "file": "03_remake_board.json",
-    "ran_at": "2026-10-08T14:32:52Z",
+    "file": "04_remake_board.json",
+    "ran_at": "2026-10-08T14:41:57Z",
     "ok": false
   }
 }
