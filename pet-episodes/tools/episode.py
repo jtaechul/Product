@@ -156,7 +156,7 @@ def gen_image(prompt: str, refs: list[Path], out: Path, aspect="9:16", size: str
                                  "imageConfig": {"aspectRatio": aspect, **({"imageSize": size} if size else {})}}}
     for attempt in range(3):                              # 연결 끊김(코드 0)은 요금이 안 나가므로 한 번 더(3번까지)
         code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
-                          {"x-goog-api-key": key, "Content-Type": "application/json"})
+                          {"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=150)   # 응답 없이 5분씩 기다리지 않게(2026-10-08)
         if code == 200:
             d = json.loads(raw)
             imgs = [p["inlineData"] for c in d.get("candidates", []) for p in c.get("content", {}).get("parts", [])
