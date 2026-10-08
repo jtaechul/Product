@@ -8,7 +8,7 @@
     "use_timeline": true,
     "src_sig": "66721d59bf6c-11.1",
     "src_full_sec": 11.08,
-    "spent": 0.17,
+    "spent": 0.32,
     "ledger": [
       {
         "what": "후킹 살려 10초로 줄이기",
@@ -17,6 +17,10 @@
       {
         "what": "all 0.5초 시간표 만들기",
         "usd": 0.01
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
       },
       {
         "what": "스토리보드 그림",
@@ -168,12 +172,17 @@
       3.5,
       4.67,
       5.83
-    ]
+    ],
+    "board": {
+      "ok": true,
+      "panels": 6
+    },
+    "est_full": 1.27
   },
   "error": "Remote end closed connection without response",
   "last_request": {
-    "file": "04_remake_board.json",
-    "ran_at": "2026-10-08T14:41:57Z",
-    "ok": false
+    "file": "05_remake_board.json",
+    "ran_at": "2026-10-08T14:45:06Z",
+    "ok": true
   }
 }
