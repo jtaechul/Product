@@ -76,6 +76,8 @@ def _http(url, data=None, headers=None, timeout=300):
             return r.status, r.read()
     except urllib.error.HTTPError as e:
         return e.code, e.read()
+    except (urllib.error.URLError, ConnectionError, TimeoutError, OSError) as e:   # 연결 끊김(2026-10-08 "Remote end closed connection") → 0으로 돌려 재시도하게
+        return 0, f"연결 끊김: {e}".encode()
 
 
 def _key(name):
@@ -152,7 +154,7 @@ def gen_image(prompt: str, refs: list[Path], out: Path, aspect="9:16", size: str
     body = {"contents": [{"role": "user", "parts": parts}],
             "generationConfig": {"responseModalities": ["IMAGE"],
                                  "imageConfig": {"aspectRatio": aspect, **({"imageSize": size} if size else {})}}}
-    for attempt in range(2):
+    for attempt in range(3):                              # 연결 끊김(코드 0)은 요금이 안 나가므로 한 번 더(3번까지)
         code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
                           {"x-goog-api-key": key, "Content-Type": "application/json"})
         if code == 200:
