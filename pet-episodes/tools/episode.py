@@ -2105,9 +2105,10 @@ REMAKE_BOARD_KEEP = ("Image 1 is a 3x2 grid of six frames taken from one video (
                      "from image 2 (same face, fur colour and markings) - the same dog in every panel, in the same pose as the original "
                      "animal. The human stays a real human with his own face, hands and clothes. CAST COUNT: {cast}. Match each panel's "
                      "lighting, shadows and focus so it looks like real footage. Remove any watermark or on-screen text; add no text.")
-REMAKE_BOARD_EXTEND = (" VERTICAL FILL: in every panel the blurred, darkened bands above and below the sharp picture are only placeholders - "
-                       "repaint them by naturally extending the same scene upward and downward (matching perspective, light and content) so "
-                       "every panel is ONE sharp, full vertical photo edge to edge. No blur, no bands, no letterbox.")
+REMAKE_BOARD_EXTEND = (" VERTICAL FILL (most important): in every panel the flat gray areas above and below the picture are EMPTY CANVAS - "
+                       "paint them by naturally extending the same scene upward and downward (sky, trees, ground, space, the rest of the "
+                       "body - matching perspective, light and focus) so every panel is ONE sharp, full vertical 9:16 photo edge to edge. "
+                       "No gray, no blur, no bands, no letterbox, no borders anywhere.")
 REMAKE_GAGS_KEEP = (" KEEP THESE MOMENTS EXACTLY AS IN THE VIDEO (the joke lives here): {gags}.")
 REMAKE_PREV = (" Image 2 is how this Shiba looked at the end of the previous part of the same video: keep it identical (same face, "
                "fur colour and markings, eyes, accessories).")
@@ -2327,7 +2328,8 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
                   times: list | None = None, notes: list | None = None, fresh: bool = False, cast: str = "", extend: bool = False):
     """times = 칸마다 원본에서 뽑을 시각(웃음 포인트를 사람이 골라 줄 때, remake.board_times), notes = 칸마다 바꿀 내용(remake.board_notes)."""
     W0, H0 = BOARD_CW * BOARD_COLS, BOARD_CH * BOARD_ROWS
-    fit = f"scale={BOARD_CW}:{BOARD_CH}:force_original_aspect_ratio=decrease,pad={BOARD_CW}:{BOARD_CH}:(ow-iw)/2:(oh-ih)/2"
+    fit = f"scale={BOARD_CW}:{BOARD_CH}:force_original_aspect_ratio=decrease,pad={BOARD_CW}:{BOARD_CH}:(ow-iw)/2:(oh-ih)/2" + \
+        (":color=0x808080" if extend else "")            # 가로 원본: 위아래는 '빈 회색 캔버스'(흐린 복사본을 깔면 그림 AI가 그대로 남김 — 2026-10-08 사고)
     cells = []
     tt = [float(x) for x in (times or [])][:BOARD_COLS * BOARD_ROWS]
     if len(tt) < BOARD_COLS * BOARD_ROWS:
@@ -2368,7 +2370,23 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
         f = work / f"board_{i + 1:02d}.jpg"
         im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
         frames.append(f)
+    bad = _panel_bands(frames)
+    if bad:                                             # ⛔ 9:16 꽉 찬 화면이 아닌 칸(위아래 흐림·회색·검정 띠)은 보여 주지 않고 멈춘다(2026-10-08 사고)
+        raise RuntimeError(f"스토리보드 {', '.join(str(b) for b in bad)}번 칸 위아래가 꽉 찬 화면이 아닙니다(흐린/빈 띠) — 보여 주지 않고 멈춤")
     return {"ok": True, "panels": len(frames)}
+
+
+def _panel_bands(frames: list) -> list:
+    """칸 그림마다 위·아래 20%가 가운데보다 훨씬 밋밋(흐림·단색 띠)하면 그 칸 번호. 흐린 띠·회색 캔버스·검은 띠 모두 잡는다."""
+    from PIL import ImageFilter, ImageStat
+    bad = []
+    for i, f in enumerate(frames):
+        im = Image.open(f).convert("L").resize((180, 320))
+        e = im.filter(ImageFilter.FIND_EDGES)
+        top, mid, bot = (ImageStat.Stat(e.crop(b)).mean[0] for b in ((0, 0, 180, 64), (0, 112, 180, 208), (0, 256, 180, 320)))
+        if mid > 6 and (top < mid * 0.35 or bot < mid * 0.35):
+            bad.append(i + 1)
+    return bad
 REMAKE_SWAP_DEFAULT = ("1) replace the main person's head with the head of the Shiba Inu from image 1; 2) turn their visible arms, "
                        "hands, legs and feet into thick furry Shiba legs with round paws; 3) replace every other person with a real "
                        "dog of various breeds")
@@ -3260,6 +3278,7 @@ def step_remake(ep, epdir, work, log, req):
         n = 1 if one else nb
         seg = L / n
         res.update({"src_sec": round(L, 2), "segments": n, "one_shot": bool(one)})
+        ref_board = None
         motion = rm.get("method") == "motion" and not rm.get("shots")   # 동작 따라 만들기(원본은 참고만, 새로 렌더링)
         composite = rm.get("method") == "composite" and not rm.get("shots")   # Genjutsu식 합성: 원본 영상 그대로 + 동물만 바꿈 + 업스케일(새 편 기본, 사용자 지시 2026-10)
         res["method"] = "motion" if motion else ("composite" if composite else ("shots" if rm.get("shots") else "edit"))
@@ -3294,6 +3313,7 @@ def step_remake(ep, epdir, work, log, req):
                      "-map", "[v]", "-map", "0:a?", "-c:v", "libx264", "-crf", "16", "-c:a", "aac", "-b:a", "160k", str(ref_v)])
             prompt += REMAKE_EXTEND.format(src=f"{sw}x{sh}")
             res["vertical"] = {"mode": "extend", "src": f"{sw}x{sh}"}
+            ref_board = ref                               # 스토리보드는 흐린 자리표시가 아니라 진짜 화면 + 빈 회색 캔버스로(2026-10-08 사고)
             ref = ref_v
         est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * end_sec
                         + REMAKE_COST["tts"], 2)
@@ -3313,7 +3333,7 @@ def step_remake(ep, epdir, work, log, req):
         b_fresh = bool(rm.get("board_fresh")) or motion   # 동작 따라 만들기는 스토리보드도 원본 합성 없이 깨끗하게
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
-                res["board"] = _remake_board(ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "",
+                res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "",
                                               (res.get("vertical") or {}).get("mode") == "extend")
             res["est_full"] = est_all
             if float(res.get("spent", 0)) + est_all > cap:
@@ -3333,7 +3353,7 @@ def step_remake(ep, epdir, work, log, req):
             if {"segs", "body"} & set(redo) and not res.get("timeline_manual"):
                 res.pop("timeline", None)                 # 본편을 다시 만들면 0.5초 시간표도 새로(구간이 바뀌었을 수 있음) — 직접 확인한 시간표는 유지
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
-            res["board"] = _remake_board(ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "",
+            res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "",
                                               (res.get("vertical") or {}).get("mode") == "extend")
             # 새로 그린 스토리보드는 확인받은 뒤에 영상으로(사용자 지적 2026-10 헬기 편: 확인 안 한 그림에 개가 두 마리 → 영상도 두 마리)
             res["est_full"] = est_all
