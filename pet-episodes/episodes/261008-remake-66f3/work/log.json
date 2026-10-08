@@ -8,7 +8,7 @@
     "use_timeline": true,
     "src_sig": "66721d59bf6c-11.1",
     "src_full_sec": 11.08,
-    "spent": 0.47,
+    "spent": 0.62,
     "ledger": [
       {
         "what": "후킹 살려 10초로 줄이기",
@@ -17,6 +17,10 @@
       {
         "what": "all 0.5초 시간표 만들기",
         "usd": 0.01
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
       },
       {
         "what": "스토리보드 그림",
@@ -170,12 +174,18 @@
     },
     "preflight": [],
     "board_times": [
+      0.5,
       1.0,
+      1.5,
       2.0,
+      2.5,
       3.5,
-      4.5,
-      5.67,
-      6.33
+      4.33,
+      4.67,
+      5.4,
+      5.8,
+      6.2,
+      6.6
     ],
     "board": {
       "ok": true,
@@ -183,18 +193,24 @@
     },
     "est_full": 1.27,
     "board_times_auto": [
+      0.5,
       1.0,
+      1.5,
       2.0,
+      2.5,
       3.5,
-      4.5,
-      5.67,
-      6.33
+      4.33,
+      4.67,
+      5.4,
+      5.8,
+      6.2,
+      6.6
     ]
   },
-  "error": "Remote end closed connection without response",
+  "error": "스토리보드 그림 실패: HTTP 0: 연결 끊김: The read operation timed out",
   "last_request": {
-    "file": "06_remake_board.json",
-    "ran_at": "2026-10-08T14:58:12Z",
-    "ok": true
+    "file": "07_remake_board.json",
+    "ran_at": "2026-10-08T15:08:23Z",
+    "ok": false
   }
 }
