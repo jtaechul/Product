@@ -2766,7 +2766,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
              "-frames:v", "1", str(last)])
         inputs.append({"type": "image", **_b64img(last)})
         prompt = prompt + REMAKE_PREV
-    board = work / f"board_{i + 1:02d}.jpg"
+    board = work / (res.get("board_ref") or f"board_{i + 1:02d}.jpg")   # 사장님이 확인한 그 스토리보드 칸(나중에 다시 그린 것에 덮여도 그대로)
     if board.exists():                                     # 확인받은 스토리보드 첫 장면에 맞춘다
         inputs.append({"type": "image", **_b64img(board)})
         prompt = prompt + (REMAKE_BOARD_LOOK if res.get("vertical") else REMAKE_BOARD_REF).format(n=len(inputs))
@@ -3234,6 +3234,7 @@ def step_remake(ep, epdir, work, log, req):
     W, H = (720, 1280) if gen_res == "720p" else (360, 640)
     res["gen_res"] = gen_res
     res["pre_enhance"] = bool(rm.get("pre_enhance"))      # 합성 전에 원본을 AI로 복원(무료)
+    res["board_ref"] = rm.get("board_ref") or ""          # 확인받은 스토리보드 칸 파일(예: approved_board_01.jpg)
     if rm.get("keep_people"):                             # 사람은 사람 그대로, 동물만 시바견(2026-10 사과 도둑 편)
         prompt = REMAKE_SWAP_KEEP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "),
                                          cast=str(rm.get("cast") or "the same people and animals as the original"))
