@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-09-p1",
+ "nonce": "2026-10-09-p2",
  "stay": "히든클리프 호텔 제주",
  "ok": false,
  "steps": {
@@ -8,8 +8,98 @@
   }
  },
  "models": {
-  "text": "gemini-2.5-flash",
-  "tts": "gemini-2.5-flash-preview-tts"
+  "text": [
+   "gemini-3.8-flash",
+   "gemini-3.7-flash",
+   "gemini-3.6-flash",
+   "gemini-3.5-flash",
+   "gemini-3.5-flash-lite",
+   "gemini-3.1-flash-lite"
+  ],
+  "tts": [
+   "gemini-3.8-flash-tts",
+   "gemini-3.8-flash-lite-tts",
+   "gemini-3.1-flash-tts-preview",
+   "gemini-2.5-flash-preview-tts",
+   "gemini-2.5-pro-preview-tts"
+  ]
  },
- "error": "RuntimeError: Gemini 오류 HTTP 404: {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features and improvements. We recommend you to use the Interactions API (https://ai.google.dev/gemini-api/docs"
+ "script": {
+  "hook": "제주에서 조용히 쉬고 싶을 때",
+  "lines": [
+   "절벽 뷰를 바라보며 조식을 즐길 수 있어요",
+   "초록빛 가든 전망 룸에서 편안히 머물러보세요",
+   "정원이 보이는 더블룸은 아늑한 분위기를 줘요",
+   "자쿠지가 있는 하프오션뷰 패밀리룸도 있답니다",
+   "자세한 객실 예약 정보는 프로필에 있어요"
+  ],
+  "title": "히든클리프 호텔 제주 객실 소개",
+  "caption": "히든클리프 호텔 제주에서 만나는 다양한 객실입니다. 클리프뷰부터 가든 전망과 자쿠지 패밀리룸까지 준비되어 있습니다. 나에게 맞는 객실을 확인해보세요.",
+  "hashtags": [
+   "#히든클리프호텔제주",
+   "#제주호텔",
+   "#클리프뷰",
+   "#가든뷰",
+   "#제주여행"
+  ],
+  "rooms": [
+   0,
+   2,
+   3,
+   5,
+   6,
+   7,
+   9
+  ],
+  "excluded": [
+   {
+    "i": 1,
+    "reason": "항공 포함 패키지 여행 상품"
+   },
+   {
+    "i": 4,
+    "reason": "패키지 여행 상품 추정"
+   },
+   {
+    "i": 8,
+    "reason": "항공 포함 패키지 여행 상품"
+   }
+  ],
+  "image_for_line": [
+   0,
+   0,
+   3,
+   2,
+   9,
+   0
+  ]
+ },
+ "room_names": {
+  "0": "디럭스 더블 클리프뷰(2인조식포함)",
+  "2": "디럭스 더블룸, 정원 전망",
+  "3": "디럭스 더블 가든뷰",
+  "5": "디럭스 더블 가든뷰 룸",
+  "6": "디럭스 더블 가든",
+  "7": "디럭스 가든전망 더블-객실만",
+  "9": "하프오션뷰 패밀리 (자쿠지)"
+ },
+ "image_sizes": {
+  "0": [
+   1000,
+   1000
+  ],
+  "2": [
+   1000,
+   1000
+  ],
+  "3": [
+   1000,
+   1000
+  ],
+  "9": [
+   952,
+   1000
+  ]
+ },
+ "error": "FileNotFoundError: [Errno 2] No such file or directory: 'ffmpeg'"
 }
