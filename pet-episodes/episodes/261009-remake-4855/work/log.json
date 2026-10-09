@@ -203,8 +203,8 @@
   },
   "error": "사전 점검에서 멈춤(돈 안 씀): 개그 포인트가 지시에서 빠졌습니다: [0.0-0.5] 넘어짐 — Woman (left, grey crop top, black shorts, slippers) walks forward carrying two p / 개그 포인트가 지시에서 빠졌습니다: [2.5-3.0] 맞힘 — Tan dog collides into white dog from behind while both slide at high speed. Loud / 개그 포인트가 지시에서 빠졌습니다: [3.0-3.5] 넘어짐 — Both dogs flip and tumble over each other in a rolling crash on the tile floor.  / 개그 포인트가 지시에서 빠졌습니다: [4.5-5.0] 맞힘 — Tan dog steps toward right food bowl; white dog hits lower wall/cabinet with its / 개그 포인트가",
   "last_request": {
-    "file": "01_remake_board.json",
-    "ran_at": "2026-10-09T13:27:18Z",
+    "file": "02_remake_board.json",
+    "ran_at": "2026-10-09T13:34:43Z",
     "ok": false
   }
 }
