@@ -3,7 +3,7 @@
     "gen_res": "720p",
     "pre_enhance": false,
     "board_ref": "",
-    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (every person's face, hair, hands and clothes, every movement and its timing, camera, background, lights): 1) turn the tan dog into the Shiba Inu from image 1; 2) turn the white dog into a cream-coloured Shiba Inu (a real Shiba with a cream-white coat) - both dogs keep exactly their original motion. Each replaced animal is a Shiba Inu - the main one looks exactly like the Shiba in image 1 (same face, fur colour and markings in every frame) - at the natural size of the original animal, and its body moves exactly as that original animal's body (same pose, gait, run, slide, fall, head turns, tail, mouth). Every person stays a real human with their own face, hair, hands and clothes, unchanged. CAST COUNT: exactly one woman (the owner, unchanged) and two dogs, both Shiba Inus. Remove any watermark or on-screen text. COMPOSITING QUALITY: each dog must look filmed in the same shot - match the original lighting direction, colour, shadows and motion blur; no seam, outline or halo; the same dogs in every frame with no flicker, morphing or changing markings. KEEP THE FUNNY MOMENTS AT 2.5-3.0, 3.0-3.5, 4.5-5.0, 5.0-5.5 s EXACTLY AS IN THE INPUT VIDEO, frame by frame (the joke lives there).",
+    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (every person's face, hair, hands and clothes, every movement and its timing, camera, background, lights): 1) turn the tan dog into the Shiba Inu from image 1; 2) turn the white dog into a cream-coloured Shiba Inu (a real Shiba with a cream-white coat) - both dogs keep exactly their original motion. Each replaced animal is a Shiba Inu - the main one looks exactly like the Shiba in image 1 (same face, fur colour and markings in every frame) - at the natural size of the original animal, and its body moves exactly as that original animal's body (same pose, gait, run, slide, fall, head turns, tail, mouth). Every person stays a real human with their own face, hair, hands and clothes, unchanged; a face that is blurred or pixelated in the input stays exactly as blurred. NEVER ADD an animal: a frame that shows no animal in the input stays without one. CAST COUNT: exactly one woman (the owner, unchanged) and two dogs, both Shiba Inus. Remove any watermark or on-screen text. COMPOSITING QUALITY: each dog must look filmed in the same shot - match the original lighting direction, colour, shadows and motion blur; no seam, outline or halo; the same dogs in every frame with no flicker, morphing or changing markings. KEEP THE FUNNY MOMENTS AT 2.5-3.0, 3.0-3.5, 4.5-5.0, 5.0-5.5 s EXACTLY AS IN THE INPUT VIDEO, frame by frame (the joke lives there).",
     "lipsync": false,
     "allow_i2v": false,
     "use_timeline": true,
@@ -1220,10 +1220,6 @@
         "at": "2026-10-09T16:22:31Z"
       }
     ],
-    "vertical": {
-      "mode": "track",
-      "src": "720x400"
-    },
     "segs": {
       "seg1": {
         "human": null,
@@ -1241,13 +1237,17 @@
     "sfx_used": [],
     "full": {
       "ok": true
+    },
+    "vertical": {
+      "mode": "extend",
+      "src": "720x400"
     }
   },
-  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}",
+  "error": "본편 예상 비용(약 $0.57)이 한도 $5를 넘어 시작하지 않았습니다. 더 짧은 원본으로 다시 해 주세요.",
   "last_request": {
-    "file": "08_remake_full.json",
-    "ran_at": "2026-10-09T16:32:06Z",
-    "ok": true
+    "file": "09_remake_full.json",
+    "ran_at": "2026-10-09T16:46:44Z",
+    "ok": false
   },
   "cover": "work/cover.jpg",
   "assemble": {
