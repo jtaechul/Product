@@ -107,19 +107,38 @@ def pick_models() -> dict:
     except Exception as e:  # noqa: BLE001
         log("모델 목록 조회 실패 → 기본 이름 사용:", str(e)[:100])
 
-    def first(cands, default):
-        for c in cands:
-            for n in names:
-                if c(n):
-                    return n
-        return default
+    def ver(n):
+        m = re.search(r"gemini-(\d+(?:\.\d+)?)", n)
+        return float(m.group(1)) if m else 0.0
 
-    text = first([lambda n: n == "gemini-2.5-flash",
-                  lambda n: re.fullmatch(r"gemini-[\d.]+-flash", n) is not None,
-                  lambda n: "flash" in n and not any(x in n for x in ("tts", "image", "live", "audio", "lite"))],
-                 "gemini-2.5-flash")
-    tts = first([lambda n: "tts" in n and "flash" in n, lambda n: "tts" in n], "gemini-2.5-flash-preview-tts")
-    return {"text": text, "tts": tts}
+    bad = ("tts", "image", "live", "audio", "embed", "veo", "omni", "lyria", "robotics", "computer")
+    text = [n for n in names if n.startswith("gemini-") and "flash" in n and not any(x in n for x in bad)]
+    # 새 버전 먼저, 같은 버전이면 이름이 짧은(정식판) 것 먼저. 'lite' 는 뒤로.
+    text.sort(key=lambda n: (-ver(n), "lite" in n, "preview" in n or "exp" in n, len(n)))
+    tts = [n for n in names if "tts" in n]
+    tts.sort(key=lambda n: (-ver(n), "flash" not in n, len(n)))
+    return {"text": (text or ["gemini-2.5-flash"])[:6],
+            "tts": (tts or ["gemini-2.5-flash-preview-tts"])[:5]}
+
+
+USED = {}
+
+
+def _try_models(kind: str, models: list, fn):
+    """목록에 있어도 이 키로는 못 쓰는 모델이 있다(실측: 2.5-flash 404). 되는 것이 나올 때까지 넘긴다."""
+    last = None
+    for m in models:
+        try:
+            out = fn(m)
+            USED[kind] = m
+            return out
+        except RuntimeError as e:
+            last = e
+            if any(c in str(e) for c in ("HTTP 404", "HTTP 400", "HTTP 403")):
+                log(f"{kind} 모델 {m} 사용 불가 → 다음:", str(e)[:110].replace("\n", " "))
+                continue
+            raise
+    raise RuntimeError(f"쓸 수 있는 {kind} 모델이 없음: {last}")
 
 
 def gemini_json(model: str, system: str, content: str) -> dict:
@@ -161,6 +180,8 @@ def gemini_tts(model: str, text: str, voice: str, style: str, out_wav: Path) -> 
             return len(pcm) / 2 / rate
         except Exception as e:  # noqa: BLE001
             last = e
+            if any(c in str(e) for c in ("HTTP 404", "HTTP 400", "HTTP 403")):
+                raise RuntimeError(str(e))
             log(f"음성 시도 {attempt + 1} 실패:", str(e)[:160])
             time.sleep(4)
     raise RuntimeError(f"음성 생성 실패: {last}")
@@ -324,7 +345,7 @@ def main() -> int:
             raise RuntimeError("검색 결과가 2개 미만")
         models = pick_models()
         report["models"] = models
-        script = write_script(models["text"], stay, items)
+        script = _try_models("text", models["text"], lambda m: write_script(m, stay, items))
         lines = [script["hook"]] + list(script["lines"])
         report["script"] = {k: script.get(k) for k in ("hook", "lines", "title", "caption", "hashtags", "rooms", "excluded", "image_for_line")}
         report["room_names"] = {str(i): str(items[i].get("productName", ""))[:70] for i in script["rooms"]}
@@ -344,8 +365,9 @@ def main() -> int:
         # 음성
         wav = BUILD / "narration.wav"
         raw = BUILD / "narration_raw.wav"
-        gemini_tts(models["tts"], "\n".join(lines), str(req.get("voice") or "Erinome"),
-                   "다음 대사를 밝고 설레는 여행 추천 내레이션 톤으로, 또렷하고 리듬감 있게 읽어줘", raw)
+        _try_models("tts", models["tts"], lambda m: gemini_tts(
+            m, "\n".join(lines), str(req.get("voice") or "Erinome"),
+            "다음 대사를 밝고 설레는 여행 추천 내레이션 톤으로, 또렷하고 리듬감 있게 읽어줘", raw))
         tempo = float(req.get("tempo") or 1.12)
         run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-filter:a", f"atempo={tempo:.3f}", str(wav)])
         with wave.open(str(wav), "rb") as wf:
@@ -384,9 +406,10 @@ def main() -> int:
         caption = DISCLOSURE + "\n\n" + str(script.get("caption", "")).strip() + "\n\n" + " ".join(script.get("hashtags") or [])
         meta = {"stay": stay, "title": script.get("title"), "caption": caption,
                 "affiliate_url": cheapest.get("productUrl"), "duration_sec": round(dur_total, 2),
-                "lines": lines, "models": models}
+                "lines": lines, "models": dict(USED)}
         (BUILD / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
         assert DISCLOSURE in meta["caption"], "고지문 누락 — 중단"
+        report["models_used"] = dict(USED)
         report.update({"ok": True, "duration_sec": round(dur_total, 2),
                        "video_bytes": video.stat().st_size})
     except Exception as e:  # noqa: BLE001
