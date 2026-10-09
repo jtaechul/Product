@@ -2305,6 +2305,30 @@ SUBJECT_ASK = ("These are {n} frames, in order and {dt:.2f} s apart, from one vi
                "(i = 0..{last}); use empty lists when none is visible.")
 
 
+def _frames_json(t: str, key: str):
+    """프레임별 상자 응답을 어떤 모양으로 와도 읽는다(2026-10-09: 응답이 목록으로 와 못 읽고 얼굴 모자이크가 멈춤).
+    {"frames": [...]} · [...] · 코드 블록 · 각 프레임이 {"i", key} 또는 상자 목록. 못 읽으면 None."""
+    t = re.sub(r"^```(?:json)?\s*|\s*```$", "", (t or "").strip())
+    got = None
+    for cand in (t, t[t.find("{"):t.rfind("}") + 1] if "{" in t else "", t[t.find("["):t.rfind("]") + 1] if "[" in t else ""):
+        try:
+            got = json.loads(cand)
+            break
+        except (ValueError, TypeError):
+            continue
+    if isinstance(got, dict):
+        got = got.get("frames") if isinstance(got.get("frames"), list) else next((v for v in got.values() if isinstance(v, list)), None)
+    if not isinstance(got, list) or not got:
+        return None
+    out = []
+    for k, e in enumerate(got):
+        if isinstance(e, dict):
+            out.append({"i": e.get("i", k), key: e.get(key) if key in e else e.get("boxes") or e.get("box_2d") and [e["box_2d"]] or []})
+        elif isinstance(e, list):                           # 프레임마다 상자 목록만 온 경우
+            out.append({"i": k, key: [b for b in e if isinstance(b, list)] or ([e] if len(e) == 4 and all(isinstance(v, (int, float)) for v in e) else [])})
+    return out
+
+
 def _subject_boxes(ref: Path, work: Path, res: dict, cap: float, fps: int = 4):
     """세로 화면 카메라가 따라갈 대상 위치 — AI가 프레임마다(초당 4장) 동물·사람 상자를 찾는다(약 0.01달러, log track_ai에 두고 다시 씀).
     2026-10-09 타일매트 편: 움직임만 보고 따라가니 방을 나가는 주인을 따라가 강아지를 놓침 → 동물이 있으면 동물을 따라간다."""
@@ -2332,11 +2356,14 @@ def _subject_boxes(ref: Path, work: Path, res: dict, cap: float, fps: int = 4):
                         {"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=150)
         if st == 200:
             try:
-                t = "".join(q.get("text", "") for q in json.loads(raw)["candidates"][0]["content"]["parts"])
-                got = json.loads(t[t.find("{"):t.rfind("}") + 1])
-                break
+                t = "".join(q.get("text", "") for q in json.loads(raw)["candidates"][0]["content"]["parts"] if not q.get("thought"))
+                t2 = re.sub(r"^```(?:json)?\s*|\s*```$", "", t.strip())
+                got = json.loads(t2[t2.find("{"):t2.rfind("}") + 1]) if t2.lstrip().startswith("{") else {"frames": json.loads(t2[t2.find("["):t2.rfind("]") + 1])}
+                if isinstance(got.get("frames"), list) and got["frames"]:
+                    break
+                res["track_ai_raw"] = t[:300]
             except Exception:  # noqa: BLE001
-                pass
+                res["track_ai_raw"] = (raw[:300].decode("utf-8", "replace") if isinstance(raw, bytes) else str(raw)[:300])
     import shutil
     shutil.rmtree(d, ignore_errors=True)                     # 원본에서 뽑은 프레임은 바로 지운다
     fr = (got or {}).get("frames") or []
@@ -2381,21 +2408,29 @@ def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: in
     key = _key("GEMINI_API_KEY")
     parts = [{"inline_data": _b64img(f)} for f in frames] + [{"text": HEAD_ASK.format(n=len(frames), dt=1 / fps, last=len(frames) - 1)}]
     body = {"contents": [{"role": "user", "parts": parts}], "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
-    got = None
+    fr, why = None, ""
     for model in ("gemini-flash-latest", "gemini-pro-latest"):
         st, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
-                        {"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=150)
-        if st == 200:
-            try:
-                t = "".join(q.get("text", "") for q in json.loads(raw)["candidates"][0]["content"]["parts"])
-                got = json.loads(t[t.find("{"):t.rfind("}") + 1])
-                break
-            except Exception:  # noqa: BLE001
-                pass
+                        {"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=180)
+        if st != 200:
+            why = f"{model} HTTP {st}: " + (raw[:200].decode("utf-8", "replace") if isinstance(raw, bytes) else str(raw)[:200])
+            continue
+        try:
+            t = "".join(q.get("text", "") for q in json.loads(raw)["candidates"][0]["content"]["parts"] if not q.get("thought"))
+        except Exception:  # noqa: BLE001
+            t = ""
+        fr = _frames_json(t, "heads")
+        if fr and len(fr) >= len(frames) * 0.6:               # 프레임 수가 맞아야 믿는다(일부만 오면 얼굴이 새므로 다음 모델로)
+            break
+        if fr:
+            why = f"{model} 프레임 수가 모자람({len(fr)}/{len(frames)})"
+            fr = None
+            continue
+        why = f"{model} 응답을 못 읽음: " + (t[:200] if t else (raw[:200].decode("utf-8", "replace") if isinstance(raw, bytes) else ""))
     shutil.rmtree(d, ignore_errors=True)
-    fr = (got or {}).get("frames")
-    if not isinstance(fr, list) or not fr:
-        raise RuntimeError("사람 얼굴 위치를 찾지 못해 모자이크하지 못했습니다(얼굴이 드러난 영상은 내보내지 않음) — 다시 시도하면 조립만 다시 합니다")
+    if not fr:
+        res["faces_raw"] = why[:400]
+        raise RuntimeError("사람 얼굴 위치를 찾지 못해 모자이크하지 못했습니다(얼굴이 드러난 영상은 내보내지 않음, 돈 안 듦) — " + why[:160])
     heads = []
     for k in range(len(frames)):
         e = next((x for x in fr if isinstance(x, dict) and str(x.get("i")) == str(k)), fr[k] if k < len(fr) and isinstance(fr[k], dict) else {})
@@ -2420,7 +2455,7 @@ def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: in
             break
         kf = n / vfps * fps
         k0 = min(len(heads) - 1, int(kf))
-        boxes = heads[k0] + (heads[k0 + 1] if k0 + 1 < len(heads) else []) + (heads[k0 - 1] if k0 > 0 else [])
+        boxes = [b for kk in range(max(0, k0 - 2), min(len(heads), k0 + 3)) for b in heads[kk]]   # 앞뒤 0.5초 상자까지 합쳐 가린다(움직여도·놓쳐도 새지 않게)
         hit += bool(boxes)
         for (y0, x0, y1, x1) in boxes:
             bw, bh = (x1 - x0) * w, (y1 - y0) * h
