@@ -2421,7 +2421,7 @@ def _head_boxes_1(img: Path, key: str) -> list | None:
     return None
 
 
-def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: int = 4) -> dict:
+def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: int = 12) -> dict:
     """사람은 그대로 두는 편: 결과 영상의 사람 머리(얼굴·머리카락)를 모자이크한다(사장님 확정 2026-10-09: 원본에서 가린 주인 얼굴을
     영상 AI가 새로 그려 드러냄 — "모자이크 처리 당연히"). 머리 위치는 AI가 초당 4장, 장면 한 장씩 찾고(약 0.02달러, 사람만·동물 제외),
     사이 프레임은 앞뒤 0.5초 상자까지 합쳐 넉넉히 가린다(움직여도·한 장 놓쳐도 새지 않게).
@@ -2438,17 +2438,49 @@ def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: in
     fw = int(round(1000 * sw0 / sh0)) // 2 * 2
     ox = (1000 - fw) // 2
     _ff(["-i", str(src), "-vf", f"fps={fps},scale={fw}:1000,pad=1000:1000:{ox}:0:color=gray", "-q:v", "3", str(d / "f%03d.jpg")])
-    frames = sorted(d.glob("f*.jpg"))[:120]
-    _remake_spend(res, 0.02, "사람 얼굴 위치 찾기(모자이크, 장면 한 장씩)", cap)
+    frames = sorted(d.glob("f*.jpg"))[:240]
+    # 초당 12장(2026-10-09: 초당 4장으로는 화면이 빠르게 넘어가는 순간 얼굴 위치를 놓쳐 잠깐 드러남)
+    _remake_spend(res, 0.05, "사람 얼굴 위치 찾기(흐림, 장면 한 장씩 초당 12장)", cap)
     key = _key("GEMINI_API_KEY")
-    with ThreadPoolExecutor(max_workers=6) as ex:
+    with ThreadPoolExecutor(max_workers=8) as ex:
         heads = list(ex.map(lambda f: _head_boxes_1(f, key), frames))
     shutil.rmtree(d, ignore_errors=True)
     miss = sum(1 for x in heads if x is None)
+
     if not frames or miss > len(frames) * 0.2:
         res["faces_raw"] = f"머리 찾기 실패 {miss}/{len(frames)}장"
         raise RuntimeError(f"사람 얼굴 위치를 {miss}/{len(frames)}장에서 찾지 못해 모자이크하지 못했습니다(얼굴이 드러난 영상은 내보내지 않음)")
     heads = [[(y0, (x0 * 1000 - ox) / fw, y1, (x1 * 1000 - ox) / fw) for (y0, x0, y1, x1) in (x or [])] for x in heads]   # 정사각 틀 → 장면 비율
+    return {**_apply_head_mosaic(src, out, heads, fps), "fps": fps}
+
+
+def _apply_head_mosaic(src: Path, out: Path, heads: list, fps: int = 4) -> dict:
+    """찾아 둔 머리 상자(초당 fps장, 0~1 비율)로 얼굴 부분만 부드럽게 흐리게 한다 — 모자이크(네모 칸)는 영상이 이상해 보여 쓰지 않는다
+    (사장님 지시 2026-10-09: "모자이크 말고 거기만 흐리게"). 타원 모양으로 가장자리가 자연스럽게 번지게, 원본의 흐림처럼.
+    혼자 튄 상자(앞뒤는 서로 가까운데 그 장면만 멀리)는 앞뒤 평균으로 고치고, 사이 프레임은 앞뒤 두 장면 상자를 함께 흐린다."""
+    import cv2
+    import numpy as np
+    H = [[tuple(b) for b in x] for x in heads]
+    jump = 0.2 * max(1.0, 4 / fps) if fps < 4 else 0.2           # 한 장 사이에 이보다 멀리 튀면 잘못 찾은 것으로 본다
+
+    def _c(b):
+        return ((b[1] + b[3]) / 2, (b[0] + b[2]) / 2)
+
+    def _d(a, b):
+        return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
+    for k in range(len(H)):                                # 혼자 튄 상자 바로잡기(2026-10-09: 2.5초 상자가 등에 가 얼굴이 보임)
+        if len(H[k]) != 1:
+            continue
+        b = _c(H[k][0])
+        pv = H[k - 1][0] if k > 0 and len(H[k - 1]) == 1 else None
+        nx = H[k + 1][0] if k + 1 < len(H) and len(H[k + 1]) == 1 else None
+        if pv and nx:
+            if _d(_c(pv), _c(nx)) < 0.12 and _d(_c(pv), b) > 0.18 and _d(_c(nx), b) > 0.18:
+                H[k] = [tuple((u + v) / 2 for u, v in zip(pv, nx))]
+        elif pv and _d(_c(pv), b) > jump:                 # 다음 장면엔 사람이 없고 앞 장면과 멀리 튐 → 앞 장면 위치 유지
+            H[k] = [pv]
+        elif nx and _d(_c(nx), b) > jump:                 # 앞 장면엔 없고 다음 장면과 멀리 튐 → 다음 장면 위치
+            H[k] = [nx]
     cap_v = cv2.VideoCapture(str(src))
     vfps = cap_v.get(cv2.CAP_PROP_FPS) or 24.0
     w, h = int(cap_v.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap_v.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -2459,27 +2491,31 @@ def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: in
         ok, im = cap_v.read()
         if not ok:
             break
-        k0 = min(len(heads) - 1, int(n / vfps * fps))
-        boxes = [b for kk in range(max(0, k0 - 2), min(len(heads), k0 + 3)) for b in heads[kk]]   # 앞뒤 0.5초 상자까지 합쳐 가린다
+        k0 = min(len(H) - 1, int(n / vfps * fps))
+        boxes = H[k0] + (H[k0 + 1] if k0 + 1 < len(H) else [])   # 이 장면과 다음 장면 사이(움직여도 새지 않게)
         hit += bool(boxes)
         for (y0, x0, y1, x1) in boxes:
             bw, bh = (x1 - x0) * w, (y1 - y0) * h
             X0, Y0 = max(0, int(x0 * w - bw * 0.3)), max(0, int(y0 * h - bh * 0.3))
             X1, Y1 = min(w, int(x1 * w + bw * 0.3)), min(h, int(y1 * h + bh * 0.25))
-            if X1 - X0 < 4 or Y1 - Y0 < 4:
+            if X1 - X0 < 8 or Y1 - Y0 < 8:
                 continue
-            roi = im[Y0:Y1, X0:X1]
-            small = cv2.resize(roi, (max(1, (X1 - X0) // 11), max(1, (Y1 - Y0) // 11)), interpolation=cv2.INTER_LINEAR)   # 굵은 모자이크
-            im[Y0:Y1, X0:X1] = cv2.resize(small, (X1 - X0, Y1 - Y0), interpolation=cv2.INTER_NEAREST)
+            roi = im[Y0:Y1, X0:X1].astype(np.float32)
+            sig = max(10.0, 0.2 * min(bw, bh))                 # 얼굴을 못 알아볼 만큼 강하게, 그러나 부드럽게
+            blur = cv2.GaussianBlur(roi, (0, 0), sig)
+            m = np.zeros((Y1 - Y0, X1 - X0), np.float32)       # 타원 + 가장자리 번짐
+            cv2.ellipse(m, ((X1 - X0) // 2, (Y1 - Y0) // 2), (int((X1 - X0) * 0.44), int((Y1 - Y0) * 0.44)), 0, 0, 360, 1.0, -1)
+            m = cv2.GaussianBlur(m, (0, 0), max(4.0, 0.1 * min(X1 - X0, Y1 - Y0)))[..., None]
+            im[Y0:Y1, X0:X1] = (roi * (1 - m) + blur * m).clip(0, 255).astype(np.uint8)
         vw.write(im)
         n += 1
     cap_v.release()
     vw.release()
     if not n:
-        raise RuntimeError("얼굴 모자이크: 영상을 읽지 못했습니다")
+        raise RuntimeError("얼굴 흐림: 영상을 읽지 못했습니다")
     _ff(["-i", str(tmp), "-an", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", str(out)])
     tmp.unlink(missing_ok=True)
-    return {"frames": n, "with_head": hit, "ai_frames": len(frames), "heads": [[[round(v, 3) for v in b] for b in x] for x in heads]}
+    return {"frames": n, "with_head": hit, "ai_frames": len(heads), "heads": [[[round(v, 3) for v in b] for b in x] for x in heads]}
 
 
 def _track_crop(ref: Path, work: Path, res: dict, ai: dict | None = None) -> Path:
@@ -3907,9 +3943,14 @@ def step_remake(ep, epdir, work, log, req):
                 body_v = hid
         if rm.get("keep_people") and rm.get("blur_faces", True):   # ⛔ 사람은 그대로 두는 편: 사람 얼굴은 항상 모자이크(사장님 확정 2026-10-09)
             fb = work / "remake_faces.mp4"
-            if not fb.exists() or res.get("faces_src") != _src_sig(body_v):
-                res["faces"] = _blur_heads(body_v, fb, work, res, cap)
+            if not fb.exists() or res.get("faces_src") != _src_sig(body_v) or res.get("faces_v") != 4:
+                old = res.get("faces") or {}
+                if old.get("heads") and old.get("fps") == 12 and abs(_dur(body_v) - old.get("frames", 0) / 24) < 0.2:   # 같은 본편: 찾아 둔 머리 위치로 다시 입힘(돈 안 듦)
+                    res["faces"] = {**_apply_head_mosaic(body_v, fb, old["heads"], 12), "fps": 12}
+                else:
+                    res["faces"] = _blur_heads(body_v, fb, work, res, cap)
                 res["faces_src"] = _src_sig(body_v)
+                res["faces_v"] = 4                         # 가리는 방식 판(4 = 부드러운 흐림 + 초당 12장, 사장님 지시) — 판이 바뀌면 다시 입힌다
             body_v = fb
         # 2) 끝 장면: 마지막 프레임 + 실제 상품 사진 → 첫 장면 → 4초
         last = work / "_rm_last.png"
