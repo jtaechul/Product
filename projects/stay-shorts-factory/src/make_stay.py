@@ -394,8 +394,13 @@ def compose_veo(stay: str, lines: list, clips: list, wav: Path, narr_total: floa
     run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(build / "concat.txt"),
          "-c", "copy", str(silent)])
     video_len = probe_duration(silent)
-    total = max(video_len, narr_total + 0.8)
-    pad = max(0.0, total - video_len)          # 나레이션이 더 길면 마지막 장면을 멈춰 세워 채운다
+    need = narr_total + 0.8
+    # 나레이션이 영상보다 길면(컷이 빠졌을 때) 먼저 영상 전체를 최대 1.5배까지 느리게 늘리고,
+    # 그래도 모자라는 만큼만 마지막 장면을 멈춰 세운다. (stay-run-4: 5컷 20초에 나레이션 28초 → 끝 9초가 정지 화면이었다)
+    factor = min(1.5, need / video_len) if video_len < need else 1.0
+    stretched = video_len * factor
+    total = max(stretched, need)
+    pad = max(0.0, total - stretched)
 
     header = build / "ov_header.png"
     make_overlay(header, stay, "", False, header=True)
@@ -412,7 +417,8 @@ def compose_veo(stay: str, lines: list, clips: list, wav: Path, narr_total: floa
     for p, _, _ in caps:
         cmd += ["-i", str(p)]
     cmd += ["-i", str(wav)]
-    fc = f"[0:v]tpad=stop_mode=clone:stop_duration={pad:.3f}[v0];[v0][1:v]overlay=0:0:format=auto[v1];"
+    fc = (f"[0:v]setpts={factor:.4f}*PTS,fps={FPS},tpad=stop_mode=clone:stop_duration={pad:.3f}[v0];"
+          f"[v0][1:v]overlay=0:0:format=auto[v1];")
     for n, (_, a, b) in enumerate(caps):
         fc += f"[v{n + 1}][{n + 2}:v]overlay=0:0:format=auto:enable='between(t,{a:.3f},{b:.3f})'[v{n + 2}];"
     fc += f"[v{len(caps) + 1}]format=yuv420p[v];[{len(caps) + 2}:a]apad[a]"
@@ -497,9 +503,10 @@ def produce_veo(req: dict, stay: str, items: list, models: dict, report: dict) -
         n, out = s["n"], BUILD / f"veo_{s['n']}.mp4"
         row = {"n": n, "slot": s["slot"], "ok": False, "krw": 0.0}
         seed = veo.seed_for(stay, n, s["k"])
+        before = veo.spent_this_run()
         for attempt in range(2):
             try:
-                row["krw"] += veo.make_clip(s["prompt"], BUILD / f"shot_{n}.png", CLIP_SEC, out, seed + attempt)
+                veo.make_clip(s["prompt"], BUILD / f"shot_{n}.png", CLIP_SEC, out, seed + attempt)
                 row["ok"] = True
                 clips[n] = out
                 break
@@ -514,6 +521,7 @@ def produce_veo(req: dict, stay: str, items: list, models: dict, report: dict) -
                 row["error"] = str(e)[:200]
                 log(f"컷 {n} 실패 — 제외: {str(e)[:160]}")
                 break
+        row["krw"] = round(veo.spent_this_run() - before)   # 실패한 시도에 나간 값까지 이 컷 몫으로 적는다
         results.append(row)
         if stopped:
             log("한도에 걸려 여기서 멈춤 —", stopped)

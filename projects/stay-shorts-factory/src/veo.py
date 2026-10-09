@@ -217,16 +217,46 @@ def _fake_clip(image: Path, sec: float, out: Path):
                     "-pix_fmt", "yuv420p", str(out)], check=True)
 
 
+def _transient(msg: str) -> int:
+    """구글 쪽 일시 오류면 몇 초 쉬고 다시 할지, 아니면 0.
+
+    2026-10-09 실측 (stay-run-4): 7컷 중 2컷이 이것으로 빠졌다.
+      - HTTP 429 "You exceeded your current quota" — 분당 호출 한도. 바로 다음 컷은 통과했다 → 60초 쉬면 된다 (요청이 거절된 것이라 돈은 안 나갔다)
+      - 생성 중 code 13 "internal server issue. Please try again in a few minutes" — 구글 내부 오류 (요청은 받아들여졌으므로 장부에는 적힌다)"""
+    low = msg.lower()
+    if "429" in msg or "한도/결제" in msg or "quota" in low:
+        return 60
+    if "internal server" in low or '"code": 13' in msg:
+        return 20
+    return 0
+
+
 def make_clip(prompt: str, image: Path, sec: int, out: Path, seed: int | None = None,
-              ratio: str = "9:16", mime: str = "image/png") -> float:
-    """사진 1장 + 지시문 → 영상 1컷. 돌려주는 값은 이 컷에 쓴 돈(원).
+              ratio: str = "9:16", mime: str = "image/png", retries: int = 2) -> float:
+    """사진 1장 + 지시문 → 영상 1컷. 돌려주는 값은 이 컷에 쓴 돈(원). 구글 일시 오류는 쉬었다가 다시 한다.
 
     실패 갈래: CapReached(한도) · RaiFiltered(안전필터, 씨앗 바꿔 재시도 가능) · VeoError(그 밖)."""
     if FAKE:
         log(f"VEO_FAKE — 가짜 클립 ({sec}초, 0원): {out.name}")
         _fake_clip(image, sec, out)
         return 0.0
+    total = 0.0
+    for attempt in range(retries + 1):
+        try:
+            return total + _make_once(prompt, image, sec, out, seed, ratio, mime)
+        except (RaiFiltered, CapReached):
+            raise
+        except VeoError as e:
+            wait = _transient(str(e))
+            if not wait or attempt == retries:
+                raise
+            total += getattr(e, "krw", 0.0)
+            log(f"구글 일시 오류 → {wait}초 뒤 다시 ({attempt + 1}/{retries}): {str(e)[:120]}")
+            time.sleep(wait)
+    raise VeoError("도달할 수 없는 자리")
 
+
+def _make_once(prompt: str, image: Path, sec: int, out: Path, seed, ratio: str, mime: str) -> float:
     krw = guard(sec)
     log(f"영상 요청 ({sec}초 · {RESOLUTION} · {ratio} · 약 {krw:,.0f}원): {out.name}")
     inst = {"prompt": prompt,
@@ -248,7 +278,9 @@ def make_clip(prompt: str, image: Path, sec: int, out: Path, seed: int | None = 
         time.sleep(POLL_SEC)
         st = _get(name)
         if st.get("error"):
-            raise VeoError(f"생성 중 실패: {json.dumps(st['error'], ensure_ascii=False)[:250]}")
+            err = VeoError(f"생성 중 실패: {json.dumps(st['error'], ensure_ascii=False)[:250]}")
+            err.krw = krw                       # 요청은 받아들여졌으므로 이 컷 값은 이미 장부에 있다
+            raise err
         if st.get("done"):
             uri = _find_uri(st)
             if not uri:
