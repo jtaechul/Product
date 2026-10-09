@@ -3,13 +3,13 @@
     "gen_res": "720p",
     "pre_enhance": false,
     "board_ref": "",
-    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (every person's face, hair, hands and clothes, every movement and its timing, camera, background, lights): 1) turn the tan dog into the Shiba Inu from image 1; 2) turn the white dog into a cream-coloured Shiba Inu (a real Shiba with a cream-white coat) - both dogs keep exactly their original running, sliding, colliding, tumbling and eating motion. Each replaced animal is a Shiba Inu - the main one looks exactly like the Shiba in image 1 (same face, fur colour and markings in every frame) - at the natural size of the original animal, and its body moves exactly as that original animal's body (same pose, gait, run, slide, fall, head turns, tail, mouth). Every person stays a real human with their own face, hair, hands and clothes, unchanged. CAST COUNT: exactly one real human woman (the owner, unchanged - her own face, hair, grey crop top, black shorts and slippers) and two dogs, both Shiba Inus. Remove any watermark or on-screen text. COMPOSITING QUALITY: each dog must look filmed in the same shot - match the original lighting direction, colour, shadows and motion blur; no seam, outline or halo; the same dogs in every frame with no flicker, morphing or changing markings. KEEP THESE MOMENTS EXACTLY AS IN THE VIDEO (the joke lives here): [2.5-3.0s] collides - Tan dog collides into white dog from behind while both slide at high speed. Loud skidding and scuffling noise.; [3.0-3.5s] collision, tumble - Both dogs flip and tumble over each other in a rolling crash on the tile floor. Collision thump and claws scra; [4.5-5.0s] hits - Tan dog steps toward right food bowl; white dog hits lower wall/cabinet with its back and hind legs. Soft wall; [5.0-5.5s] slipping - Tan dog lowers head into bowl to eat; white dog props front paws against wall while slipping on hind legs. Kib.",
+    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (every person's face, hair, hands and clothes, every movement and its timing, camera, background, lights): 1) turn the tan dog into the Shiba Inu from image 1; 2) turn the white dog into a cream-coloured Shiba Inu (a real Shiba with a cream-white coat) - both dogs keep exactly their original motion. Each replaced animal is a Shiba Inu - the main one looks exactly like the Shiba in image 1 (same face, fur colour and markings in every frame) - at the natural size of the original animal, and its body moves exactly as that original animal's body (same pose, gait, run, slide, fall, head turns, tail, mouth). Every person stays a real human with their own face, hair, hands and clothes, unchanged. CAST COUNT: exactly one woman (the owner, unchanged) and two dogs, both Shiba Inus. Remove any watermark or on-screen text. COMPOSITING QUALITY: each dog must look filmed in the same shot - match the original lighting direction, colour, shadows and motion blur; no seam, outline or halo; the same dogs in every frame with no flicker, morphing or changing markings. KEEP THE FUNNY MOMENTS AT 2.5-3.0, 3.0-3.5, 4.5-5.0, 5.0-5.5 s EXACTLY AS IN THE INPUT VIDEO, frame by frame (the joke lives there).",
     "lipsync": false,
     "allow_i2v": false,
     "use_timeline": true,
     "src_sig": "9096cb4bdbc3-16.2",
     "src_full_sec": 16.25,
-    "spent": 0.48,
+    "spent": 4.71,
     "ledger": [
       {
         "what": "후킹 살려 10초로 줄이기",
@@ -50,6 +50,26 @@
       {
         "what": "구간1 차단됨(요금 없음)",
         "usd": -2.85
+      },
+      {
+        "what": "구간1 바꾸기(720p)",
+        "usd": 2.85
+      },
+      {
+        "what": "끝 장면 그림",
+        "usd": 0.15
+      },
+      {
+        "what": "끝 장면 영상(720p)",
+        "usd": 1.2
+      },
+      {
+        "what": "내레이션",
+        "usd": 0.02
+      },
+      {
+        "what": "문구 위치 고르기",
+        "usd": 0.01
       }
     ],
     "pick": {
@@ -407,7 +427,7 @@
       "ok": true,
       "panels": 12
     },
-    "est_full": 1.52,
+    "est_full": 0.57,
     "track": {
       "ok": true,
       "src": "720x400",
@@ -1193,22 +1213,46 @@
         }
       ]
     },
-    "vertical": {
-      "mode": "track",
-      "src": "720x400"
-    },
     "blocked": [
       {
         "seg": 1,
         "why": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}",
         "at": "2026-10-09T16:22:31Z"
       }
-    ]
+    ],
+    "vertical": {
+      "mode": "track",
+      "src": "720x400"
+    },
+    "segs": {
+      "seg1": {
+        "human": null,
+        "where": "",
+        "quality": null,
+        "issues": "",
+        "tries": 1,
+        "res": "720p"
+      }
+    },
+    "copy_place": {
+      "place": "top",
+      "why": "The bottom 30% contains the dog's front paws and the toy, whereas the top leaves the face, legs, paws, and toy completel"
+    },
+    "sfx_used": [],
+    "full": {
+      "ok": true
+    }
   },
   "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}",
   "last_request": {
-    "file": "07_remake_full.json",
-    "ran_at": "2026-10-09T16:22:31Z",
-    "ok": false
+    "file": "08_remake_full.json",
+    "ran_at": "2026-10-09T16:32:06Z",
+    "ok": true
+  },
+  "cover": "work/cover.jpg",
+  "assemble": {
+    "ok": true,
+    "sec": 14.88,
+    "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
