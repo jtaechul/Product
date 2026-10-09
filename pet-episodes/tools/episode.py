@@ -1962,6 +1962,20 @@ def _vision_json(img: Path, prompt: str) -> dict:
     return {}
 
 
+def _clean_tmp(work: Path):
+    """중간 파일(_로 시작) 정리 — 파일·폴더 모두, 절대 오류를 내지 않는다. 남의 원본·중간 파일은 저장소에 남기지 않는다
+    (2026-10-09 사고: 임시 폴더 _trk_frames에서 정리가 깨져 진짜 실패 이유가 가려지고 원본에서 뽑은 파일이 커밋됨)."""
+    import shutil
+    for f in list(work.glob("_*")):
+        try:
+            if f.is_dir():
+                shutil.rmtree(f, ignore_errors=True)
+            else:
+                f.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
 def _wh(p: Path) -> tuple[int, int]:
     """영상 가로·세로 픽셀(ffmpeg 출력에서 읽는다)."""
     r = subprocess.run([FFMPEG, "-i", str(p)], capture_output=True, text=True)
@@ -2318,6 +2332,8 @@ def _subject_boxes(ref: Path, work: Path, res: dict, cap: float, fps: int = 4):
                 break
             except Exception:  # noqa: BLE001
                 pass
+    import shutil
+    shutil.rmtree(d, ignore_errors=True)                     # 원본에서 뽑은 프레임은 바로 지운다
     fr = (got or {}).get("frames") or []
     if not fr:
         return None
@@ -3070,6 +3086,7 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
             else:
                 raise
     except RuntimeError as e:
+        res.setdefault("blocked", []).append({"seg": i + 1, "why": str(e)[:600], "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
         if "HTTP 400" in str(e):                          # 막힌 요청은 요금 없음 → 장부에서 되돌린다
             res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg * mult, 3)
             res.setdefault("ledger", []).append({"what": f"구간{i + 1} 차단됨(요금 없음)", "usd": -round(REMAKE_COST["omni_sec"] * seg * mult, 3)})
@@ -3914,8 +3931,7 @@ def step_remake(ep, epdir, work, log, req):
         log["assemble"] = {"ok": True, "sec": round(_dur(final), 2), "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"}
         res["full"] = {"ok": True}
     finally:                                              # 남의 원본·중간 파일은 성공·실패와 관계없이 저장소에 남기지 않는다
-        for f in work.glob("_*"):
-            f.unlink(missing_ok=True)
+        _clean_tmp(work)
         for f in work.glob("rm_seg*_raw*"):
             f.unlink(missing_ok=True)
 
@@ -3970,13 +3986,11 @@ def step_meme(ep, epdir, work, log, req):
             x, y = (i % BOARD_COLS) * BOARD_CW * k, (i // BOARD_COLS) * BOARD_CH * k
             im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(work / f"board_{i + 1:02d}.jpg", quality=90)
         res["board"] = {"ok": True, "panels": BOARD_COLS * BOARD_ROWS, "wait": True}
-        for f in work.glob("_*"):                         # 중간 파일은 커밋하지 않는다
-            f.unlink(missing_ok=True)
+        _clean_tmp(work)                         # 중간 파일은 커밋하지 않는다
         return
     if mode == "full":
         _meme_full(ep, epdir, work, log, res, mm, cap)
-        for f in work.glob("_*"):
-            f.unlink(missing_ok=True)
+        _clean_tmp(work)
 
 
 def _say(text: str, voice: str, direction: str, out: Path, speed: float = 1.0) -> Path:
@@ -4167,20 +4181,17 @@ def main(path: str) -> int:
             try:
                 step_swap(work, log, req.get("swap") or {})
             finally:
-                for f in work.glob("_*"):
-                    f.unlink(missing_ok=True)
+                _clean_tmp(work)
         if "dance_full" in steps:
             try:
                 step_dance_full(work, log, req.get("dance_full") or {})
             finally:
-                for f in work.glob("_*"):
-                    f.unlink(missing_ok=True)
+                _clean_tmp(work)
         if "drink" in steps:
             try:
                 step_drink(work, log, req.get("drink") or {})
             finally:                                         # 실패해도 중간 파일은 남기지 않는다
-                for f in work.glob("_*"):
-                    f.unlink(missing_ok=True)
+                _clean_tmp(work)
         if not ep.get("clips"):
             if "publish" in steps:                               # 직접 조립한 광고 편(컷 없음)도 인스타에 올릴 수 있게
                 step_ig_publish(ep, epdir, work, log, bool(req.get("force_publish")))

@@ -52,6 +52,7 @@ jobs:
       - name: 결과 커밋
         if: always()
         run: |
+          find pet-episodes/episodes -path '*/work/_*' -prune -exec rm -rf {} + 2>/dev/null || true   # 중간 파일·원본 조각은 절대 커밋하지 않는다(2026-10-09 사고)
           git add pet-episodes/episodes/*/work || true
           if git diff --cached --quiet; then echo "결과 없음"; exit 0; fi
           git config user.name "github-actions[bot]"
