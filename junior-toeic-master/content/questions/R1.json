@@ -4074,5 +4074,240 @@
     },
     "translation_ko": "하얀 토끼는 갈색 고양이보다 더 긴 귀를 가지고 있어요.",
     "tmp_id": "R1-0106"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The band practices ______ their new song every afternoon.",
+    "choices": [
+      "play",
+      "to play",
+      "played",
+      "playing"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "practice(연습하다) 뒤에는 '~하는 것을'이라는 뜻으로 항상 ing 모양이 와요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.toinf",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "practices",
+    "why_not": {
+      "0": "이 짝에서는 원래 모양을 쓰지 않아요",
+      "1": "practice 뒤에는 to를 쓰지 않아요",
+      "2": "이미 지나간 일로 쓰지 않아요"
+    },
+    "key_expr": {
+      "en": "practice playing",
+      "ko": "연주하는 것을 연습하다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "G.pair",
+      "2": "G.form"
+    },
+    "translation_ko": "그 밴드는 매일 오후 새로운 노래를 연주하는 것을 연습합니다.",
+    "tmp_id": "R1-0107"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Jisu needs ______ her room before her friends come over.",
+    "choices": [
+      "to clean",
+      "cleaning",
+      "clean",
+      "cleaned"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "need 뒤에는 보통 '~할 필요가 있다'라는 뜻으로 to가 함께 와요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.toinf",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "needs",
+    "why_not": {
+      "1": "need 뒤에는 ing를 쓰지 않아요",
+      "2": "이 짝에서는 원래 모양을 쓰지 않아요",
+      "3": "이미 지나간 일로 쓰지 않아요"
+    },
+    "key_expr": {
+      "en": "need to clean",
+      "ko": "청소할 필요가 있다"
+    },
+    "miss_type": {
+      "1": "G.pair",
+      "2": "G.pair",
+      "3": "G.form"
+    },
+    "translation_ko": "지수는 친구들이 놀러 오기 전에 자기 방을 청소해야 합니다.",
+    "tmp_id": "R1-0108"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Our teacher asked us ______ a short story about summer vacation.",
+    "choices": [
+      "write",
+      "writing",
+      "to write",
+      "wrote"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "ask 사람 to ~ 는 '누구에게 ~하라고 부탁하다'라는 짝이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.toinf",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "asked us",
+    "why_not": {
+      "0": "이 짝에서는 원래 모양을 쓰지 않아요",
+      "1": "ask 짝에서는 ing를 쓰지 않아요",
+      "3": "이미 지나간 일로 쓰지 않아요"
+    },
+    "key_expr": {
+      "en": "ask someone to ~",
+      "ko": "누구에게 ~하라고 부탁하다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "G.pair",
+      "3": "G.form"
+    },
+    "translation_ko": "선생님은 우리에게 여름 방학에 대한 짧은 이야기를 쓰라고 하셨습니다.",
+    "tmp_id": "R1-0109"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My little brother is very good at ______ castles with sand.",
+    "choices": [
+      "to build",
+      "building",
+      "build",
+      "builds"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "at 같은 말 뒤에는 행동을 나타낼 때 항상 ing 모양을 써야 해요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.toinf",
+      "G.prep",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "good at",
+    "why_not": {
+      "0": "at 뒤에는 to를 쓰지 않아요",
+      "2": "at 뒤에는 원래 모양을 쓰지 않아요",
+      "3": "at 뒤에는 s를 붙이지 않아요"
+    },
+    "key_expr": {
+      "en": "be good at ~",
+      "ko": "~을 잘하다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "내 남동생은 모래로 성 만드는 것을 아주 잘합니다.",
+    "tmp_id": "R1-0110"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Minho promised ______ my computer this weekend.",
+    "choices": [
+      "fixing",
+      "fix",
+      "fixed",
+      "to fix"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "promise(약속하다) 뒤에는 앞으로 할 일을 나타내는 to가 와야 해요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.toinf",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "promised",
+    "why_not": {
+      "0": "promise 뒤에는 ing를 쓰지 않아요",
+      "1": "이 짝에서는 원래 모양을 쓰지 않아요",
+      "2": "이미 지나간 일로 쓰지 않아요"
+    },
+    "key_expr": {
+      "en": "promise to ~",
+      "ko": "~하기로 약속하다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "G.pair",
+      "2": "G.form"
+    },
+    "translation_ko": "민호는 이번 주말에 내 컴퓨터를 고쳐 주기로 약속했습니다.",
+    "tmp_id": "R1-0111"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Yuna finished ______ her book report before dinner.",
+    "choices": [
+      "writing",
+      "to write",
+      "write",
+      "wrote"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "finish(끝내다) 뒤에는 하던 일을 나타내는 ing 모양이 꼭 와야 해요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.toinf",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "finished",
+    "why_not": {
+      "1": "finish 뒤에는 to를 쓰지 않아요",
+      "2": "이 짝에서는 원래 모양을 쓰지 않아요",
+      "3": "이미 지나간 일로 쓰지 않아요"
+    },
+    "key_expr": {
+      "en": "finish writing",
+      "ko": "쓰는 것을 끝내다"
+    },
+    "miss_type": {
+      "1": "G.pair",
+      "2": "G.pair",
+      "3": "G.form"
+    },
+    "translation_ko": "유나는 저녁 식사 전에 독후감 쓰는 것을 끝냈습니다.",
+    "tmp_id": "R1-0112"
   }
 ]

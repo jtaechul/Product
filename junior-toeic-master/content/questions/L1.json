@@ -4298,5 +4298,603 @@
     },
     "translation_ko": "한 남자가 큰 상자를 나르고 있어요.",
     "tmp_id": "L1-0044"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'drawing a picture'는 그림을 그린다는 뜻이에요. 크레용을 쥐고 그림 그리는 사진을 고르세요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "A child is drawing a picture with crayons.",
+    "choice_image_prompts": [
+      "A child reading a book at a desk",
+      "A child drawing a picture with crayons",
+      "A child playing with toy blocks",
+      "A child sleeping on a desk"
+    ],
+    "status": "draft",
+    "evidence": "drawing a picture",
+    "why_not": {
+      "0": "책을 읽는 사진이에요",
+      "2": "장난감 블록을 가지고 노는 사진이에요",
+      "3": "책상에 엎드려 자는 사진이에요"
+    },
+    "key_expr": {
+      "en": "draw a picture",
+      "ko": "그림을 그리다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "child reading a book desk",
+        "need": [
+          "reading",
+          "book"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "crayons"
+        ]
+      },
+      {
+        "q": "child drawing picture with crayons",
+        "need": [
+          "drawing",
+          "crayons"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "sleeping"
+        ]
+      },
+      {
+        "q": "child playing with toy blocks",
+        "need": [
+          "blocks",
+          "playing"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "crayons"
+        ]
+      },
+      {
+        "q": "child sleeping on desk",
+        "need": [
+          "sleeping",
+          "desk"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "drawing",
+          "book"
+        ]
+      }
+    ],
+    "translation_ko": "아이가 크레용으로 그림을 그리고 있어요.",
+    "tmp_id": "L1-0045"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'playing the guitar'는 기타를 친다는 뜻이에요. 기타를 들고 있는 사진이 정답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "A man is playing the guitar.",
+    "choice_image_prompts": [
+      "A man singing into a microphone",
+      "A man playing the drums",
+      "A man playing the piano",
+      "A man playing the guitar"
+    ],
+    "status": "draft",
+    "evidence": "playing the guitar",
+    "why_not": {
+      "0": "마이크에 대고 노래하는 사진이에요",
+      "1": "드럼을 치는 사진이에요",
+      "2": "피아노를 치는 사진이에요"
+    },
+    "key_expr": {
+      "en": "play the guitar",
+      "ko": "기타를 치다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man singing microphone",
+        "need": [
+          "microphone",
+          "singing"
+        ],
+        "prefer": [
+          "man"
+        ],
+        "avoid": [
+          "guitar"
+        ]
+      },
+      {
+        "q": "man playing drums",
+        "need": [
+          "drums",
+          "playing"
+        ],
+        "prefer": [
+          "man"
+        ],
+        "avoid": [
+          "guitar"
+        ]
+      },
+      {
+        "q": "man playing piano",
+        "need": [
+          "piano",
+          "playing"
+        ],
+        "prefer": [
+          "man"
+        ],
+        "avoid": [
+          "guitar"
+        ]
+      },
+      {
+        "q": "man playing guitar",
+        "need": [
+          "guitar",
+          "playing"
+        ],
+        "prefer": [
+          "man"
+        ],
+        "avoid": [
+          "microphone"
+        ]
+      }
+    ],
+    "translation_ko": "남자가 기타를 치고 있어요.",
+    "tmp_id": "L1-0046"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'slide'는 미끄럼틀이에요. 아이들이 미끄럼틀을 타고 내려오는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Two children are going down a slide.",
+    "choice_image_prompts": [
+      "Two children going down a slide",
+      "Children swinging on swings",
+      "Children playing in a sandbox",
+      "Children running a race"
+    ],
+    "status": "draft",
+    "evidence": "going down a slide",
+    "why_not": {
+      "1": "그네를 타는 사진이에요",
+      "2": "모래놀이를 하는 사진이에요",
+      "3": "달리기 경주를 하는 사진이에요"
+    },
+    "key_expr": {
+      "en": "go down a slide",
+      "ko": "미끄럼틀을 타다"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "children going down a slide",
+        "need": [
+          "slide"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "swings"
+        ]
+      },
+      {
+        "q": "children swinging swings",
+        "need": [
+          "swings"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "slide"
+        ]
+      },
+      {
+        "q": "children playing in sandbox",
+        "need": [
+          "sandbox"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "slide"
+        ]
+      },
+      {
+        "q": "children running a race",
+        "need": [
+          "running"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "slide"
+        ]
+      }
+    ],
+    "translation_ko": "두 아이가 미끄럼틀을 타고 내려오고 있어요.",
+    "tmp_id": "L1-0047"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'picking apples'는 사과를 딴다는 뜻이에요. 나무에서 열매를 따는 여자의 사진이 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "A woman is picking apples from a tree.",
+    "choice_image_prompts": [
+      "A woman cutting an apple on a board",
+      "A woman eating an apple",
+      "A woman picking apples from a tree",
+      "A woman watering a tree"
+    ],
+    "status": "draft",
+    "evidence": "picking apples",
+    "why_not": {
+      "0": "도마 위에서 사과를 자르는 사진이에요",
+      "1": "사과를 먹는 사진이에요",
+      "3": "나무에 물을 주는 사진이에요"
+    },
+    "key_expr": {
+      "en": "pick apples",
+      "ko": "사과를 따다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman cutting apple board",
+        "need": [
+          "cutting",
+          "apple"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "tree"
+        ]
+      },
+      {
+        "q": "woman eating an apple",
+        "need": [
+          "eating",
+          "apple"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "tree"
+        ]
+      },
+      {
+        "q": "woman picking apples from tree",
+        "need": [
+          "picking",
+          "apples",
+          "tree"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "cutting"
+        ]
+      },
+      {
+        "q": "woman watering a tree",
+        "need": [
+          "watering",
+          "tree"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "apples"
+        ]
+      }
+    ],
+    "translation_ko": "여자가 나무에서 사과를 따고 있어요.",
+    "tmp_id": "L1-0048"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'pouring milk'는 우유를 붓는다는 뜻이에요. 그릇에 우유를 따르는 사진을 고르세요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "A boy is pouring milk into a bowl.",
+    "choice_image_prompts": [
+      "A boy drinking a glass of milk",
+      "A boy dropping a carton of milk",
+      "A boy cooking an egg in a pan",
+      "A boy pouring milk into a bowl"
+    ],
+    "status": "draft",
+    "evidence": "pouring milk",
+    "why_not": {
+      "0": "우유를 마시는 사진이에요",
+      "1": "우유갑을 바닥에 떨어뜨린 사진이에요",
+      "2": "프라이팬에 요리를 하는 사진이에요"
+    },
+    "key_expr": {
+      "en": "pour milk",
+      "ko": "우유를 붓다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boy drinking glass of milk",
+        "need": [
+          "drinking",
+          "milk"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "pouring"
+        ]
+      },
+      {
+        "q": "boy dropping carton of milk",
+        "need": [
+          "dropping",
+          "milk"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "pouring",
+          "bowl"
+        ]
+      },
+      {
+        "q": "boy cooking egg in a pan",
+        "need": [
+          "cooking",
+          "pan"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "milk"
+        ]
+      },
+      {
+        "q": "boy pouring milk into bowl",
+        "need": [
+          "pouring",
+          "milk",
+          "bowl"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "dropping"
+        ]
+      }
+    ],
+    "translation_ko": "소년이 그릇에 우유를 붓고 있어요.",
+    "tmp_id": "L1-0049"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'picnic blanket'은 소풍 돗자리예요. 바닥에 돗자리를 펴고 앉아 있는 사진을 찾아보세요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "A family is sitting on a picnic blanket.",
+    "choice_image_prompts": [
+      "A family eating at a restaurant table",
+      "A family walking in the forest",
+      "A family sitting on a picnic blanket",
+      "A family standing in front of a house"
+    ],
+    "status": "draft",
+    "evidence": "sitting on a picnic blanket",
+    "why_not": {
+      "0": "식당 식탁에서 밥을 먹는 사진이에요",
+      "1": "숲속을 걷고 있는 사진이에요",
+      "3": "집 앞에 서 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "picnic blanket",
+      "ko": "소풍 돗자리"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "family eating at restaurant table",
+        "need": [
+          "eating",
+          "restaurant"
+        ],
+        "prefer": [
+          "family"
+        ],
+        "avoid": [
+          "picnic",
+          "blanket"
+        ]
+      },
+      {
+        "q": "family walking in forest",
+        "need": [
+          "walking",
+          "forest"
+        ],
+        "prefer": [
+          "family"
+        ],
+        "avoid": [
+          "picnic",
+          "sitting"
+        ]
+      },
+      {
+        "q": "family sitting on picnic blanket",
+        "need": [
+          "sitting",
+          "picnic",
+          "blanket"
+        ],
+        "prefer": [
+          "family"
+        ],
+        "avoid": [
+          "walking"
+        ]
+      },
+      {
+        "q": "family standing in front of house",
+        "need": [
+          "standing",
+          "house"
+        ],
+        "prefer": [
+          "family"
+        ],
+        "avoid": [
+          "picnic",
+          "sitting"
+        ]
+      }
+    ],
+    "translation_ko": "가족이 소풍 돗자리 위에 앉아 있어요.",
+    "tmp_id": "L1-0050"
   }
 ]

@@ -9592,5 +9592,385 @@
     ],
     "status": "draft",
     "tmp_id": "R3-0133"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "DINO FOSSIL EXHIBITION\nCome to the City Nature Museum and see real dinosaur bones!\nDates: October 1 to October 31\nEvery day at 2:00 p.m., you can watch scientists put together dinosaur bones.\nTickets are 5,000 won for everyone.\nPlease buy your tickets at the information desk on the first floor.",
+      "translation_ko": "공룡 화석 전시회\n시티 자연 박물관에 오셔서 진짜 공룡 뼈를 보세요!\n기간: 10월 1일부터 10월 31일까지\n매일 오후 2시에 과학자들이 공룡 뼈를 조립하는 것을 볼 수 있습니다.\n티켓은 누구나 5,000원입니다.\n티켓은 1층 안내 데스크에서 사 주세요."
+    },
+    "questions": [
+      {
+        "stem": "What time can you watch the scientists put the bones together?",
+        "choices": [
+          "10:00 a.m.",
+          "1:00 p.m.",
+          "2:00 p.m.",
+          "5:00 p.m."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "매일 오후 2시에 과학자들이 공룡 뼈를 맞추는 것을 볼 수 있다고 글에 나와 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "Every day at 2:00 p.m., you can watch scientists put together dinosaur bones.",
+        "why_not": {
+          "0": "10시는 글에 나오지 않은 시간이에요",
+          "1": "1시는 지문에 없는 시간이에요",
+          "3": "5는 시간이 아니라 티켓 가격 숫자예요"
+        },
+        "key_expr": {
+          "en": "put together",
+          "ko": "조립하다, 맞추다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.number"
+        }
+      },
+      {
+        "stem": "Where should you go to buy a ticket?",
+        "choices": [
+          "The gift shop",
+          "The science lab",
+          "The second floor",
+          "The information desk"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "티켓은 1층에 있는 안내 데스크에서 사야 한다고 쓰여 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.travel"
+        ],
+        "evidence": "Please buy your tickets at the information desk on the first floor.",
+        "why_not": {
+          "0": "기념품 가게는 글에 안 나왔어요",
+          "1": "과학 실험실은 지문에 없는 곳이에요",
+          "2": "안내 데스크는 2층이 아니라 1층에 있어요"
+        },
+        "key_expr": {
+          "en": "information desk",
+          "ko": "안내 데스크"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0134"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "JUNK ART CONTEST\nCan you make art from old things? Join our Junk Art Contest!\nYou can use old plastic bottles, empty boxes, or old clothes to make your art.\nWho can join: 4th to 6th grade students\nWhere to bring your art: The art room on the 3rd floor\nDeadline: Friday at 4:00 p.m.\nThe winner will get a new coloring set!",
+      "translation_ko": "재활용품 미술 대회\n낡은 물건으로 예술 작품을 만들 수 있나요? 재활용품 미술 대회에 참가해 보세요!\n낡은 플라스틱 병이나 빈 상자, 헌 옷을 사용해 작품을 만들 수 있습니다.\n참가 대상: 4학년에서 6학년 학생\n작품 내는 곳: 3층 미술실\n마감 시간: 금요일 오후 4시\n1등을 한 사람에게는 새 색칠 도구 세트를 줍니다!"
+    },
+    "questions": [
+      {
+        "stem": "What can the winner get?",
+        "choices": [
+          "An empty box",
+          "A coloring set",
+          "An old bottle",
+          "A new jacket"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "글의 마지막 줄을 보면 우승자에게는 새 색칠 도구 세트를 준다고 적혀 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "The winner will get a new coloring set!",
+        "why_not": {
+          "0": "빈 상자는 작품을 만들 때 쓰는 재료예요",
+          "2": "낡은 병도 재활용품 재료예요",
+          "3": "새 재킷을 준다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "coloring set",
+          "ko": "색칠 도구 세트"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where do students need to bring their art?",
+        "choices": [
+          "The art room",
+          "The school hall",
+          "The science lab",
+          "The library"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "작품을 내는 곳은 3층에 있는 미술실이라고 안내되어 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "Where to bring your art: The art room on the 3rd floor",
+        "why_not": {
+          "1": "학교 강당은 지문에 나오지 않았어요",
+          "2": "과학 실험실로 가져오라는 말은 없어요",
+          "3": "도서관은 글에 없는 장소예요"
+        },
+        "key_expr": {
+          "en": "bring your art",
+          "ko": "작품을 가져오다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0135"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Do you like taking pictures? Join our school's nature photo contest! You can capture beautiful moments like a bird flying or a flower opening. Please submit your photos to Mr. Davis by Friday. The winner will get a new camera bag.",
+      "translation_ko": "사진 찍는 것을 좋아하나요? 우리 학교 자연 사진 대회에 참여하세요! 새가 날거나 꽃이 피는 것 같은 아름다운 순간을 사진으로 남길 수 있어요. 금요일까지 데이비스 선생님께 사진을 내 주세요. 우승자에게는 새 카메라 가방을 줍니다."
+    },
+    "questions": [
+      {
+        "stem": "The word \"capture\" is closest in meaning to",
+        "choices": [
+          "take a picture of",
+          "paint a color on",
+          "let something go",
+          "buy a new camera"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아름다운 순간을 사진으로 찍어서 남긴다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.leisure"
+        ],
+        "evidence": "You can capture beautiful moments like a bird flying or a flower opening.",
+        "why_not": {
+          "1": "물감을 칠한다는 뜻이 아니에요",
+          "2": "날려 보낸다는 뜻이 아니에요",
+          "3": "새 카메라를 산다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "capture a moment",
+          "ko": "순간을 포착하다"
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "W.meaning",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "The word \"submit\" is closest in meaning to",
+        "choices": [
+          "throw away",
+          "hand in",
+          "look carefully",
+          "print out"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "선생님께 대회에 참가할 사진을 내라는 뜻이라서 hand in이 잘 어울려요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.school"
+        ],
+        "evidence": "Please submit your photos to Mr. Davis by Friday.",
+        "why_not": {
+          "0": "사진을 버리라는 뜻이 아니에요",
+          "2": "자세히 보라는 뜻이 아니에요",
+          "3": "인쇄하라는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "submit your photos",
+          "ko": "사진을 제출하다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0136"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Yesterday, Jin helped his dad wash their old car. They used soapy water and a large sponge to clean the windows. After washing, dad wiped the car with a dry towel. Soon, the car was spotless. Jin was tired but felt proud of his hard work.",
+      "translation_ko": "어제 진이는 아빠가 낡은 자동차 닦는 것을 도왔어요. 그들은 비눗물과 커다란 스펀지를 써서 창문을 닦았어요. 물로 씻은 뒤에, 아빠는 마른 수건으로 차를 닦았어요. 곧 자동차는 티 없이 깨끗해졌어요. 진이는 피곤했지만 열심히 일한 것이 자랑스러웠어요."
+    },
+    "questions": [
+      {
+        "stem": "The word \"spotless\" is closest in meaning to",
+        "choices": [
+          "covered with spots",
+          "very heavy",
+          "completely clean",
+          "totally broken"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "마른 수건으로 닦은 뒤 차가 티 하나 없이 아주 깨끗해졌다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ],
+        "evidence": "Soon, the car was spotless.",
+        "why_not": {
+          "0": "얼룩으로 덮였다는 뜻이 아니에요",
+          "1": "아주 무겁다는 뜻이 아니에요",
+          "3": "완전히 망가졌다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "spotless",
+          "ko": "티 없이 깨끗한"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "The word \"proud\" is closest in meaning to",
+        "choices": [
+          "feeling very sleepy",
+          "feeling bad about a mistake",
+          "feeling angry at someone",
+          "feeling pleased with what you did"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "피곤하지만 열심히 일한 것이 뿌듯하고 기분 좋았다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ],
+        "evidence": "Jin was tired but felt proud of his hard work.",
+        "why_not": {
+          "0": "매우 졸립다는 뜻이 아니에요",
+          "1": "실수해서 기분 나쁘다는 말이 아니에요",
+          "2": "누군가에게 화가 났다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "feel proud",
+          "ko": "자랑스럽게 느끼다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "W.meaning",
+          "2": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0137"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "It is getting cold. Our town is collecting thick coats and blankets for families who need them. You can donate items at the community center. Please bring gently used clothes that do not have any holes or stains. Thank you for your warm heart!",
+      "translation_ko": "날씨가 추워지고 있어요. 우리 마을은 필요한 가족들을 위해 두꺼운 코트와 담요를 모으고 있습니다. 주민 센터에 물건을 기부할 수 있습니다. 구멍이나 얼룩이 없고 깨끗하게 입은 옷을 가져와 주세요. 여러분의 따뜻한 마음에 감사드립니다!"
+    },
+    "questions": [
+      {
+        "stem": "The word \"donate\" is closest in meaning to",
+        "choices": [
+          "sell for money",
+          "give for free",
+          "borrow for a day",
+          "wash with soap"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "필요한 사람을 위해 옷을 모아 기부한다는 것은 무료로 도와준다는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ],
+        "evidence": "You can donate items at the community center.",
+        "why_not": {
+          "0": "돈을 받고 파는 것이 아니에요",
+          "2": "하루 빌려준다는 뜻이 아니에요",
+          "3": "비누로 씻는다는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "donate items",
+          "ko": "물건을 기부하다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "The words \"gently used\" mean the clothes are",
+        "choices": [
+          "worn before but still good",
+          "brand new from the store",
+          "torn and full of holes",
+          "too small to wear"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "구멍이나 얼룩이 없어야 한다고 했으니, 입었던 옷이라도 상태가 좋은 것이어야 해요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.shopping"
+        ],
+        "evidence": "Please bring gently used clothes that do not have any holes or stains.",
+        "why_not": {
+          "1": "가게에서 산 새 옷을 말하는 게 아니에요",
+          "2": "찢어지고 구멍 난 옷은 안 돼요",
+          "3": "작아서 못 입는 옷이라는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "gently used clothes",
+          "ko": "깨끗하게 입은 중고 옷"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.opposite",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0138"
   }
 ]
