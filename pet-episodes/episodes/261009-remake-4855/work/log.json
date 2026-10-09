@@ -42,6 +42,14 @@
       {
         "what": "구간1 차단됨(요금 없음)",
         "usd": -2.85
+      },
+      {
+        "what": "구간1 바꾸기(720p)",
+        "usd": 2.85
+      },
+      {
+        "what": "구간1 차단됨(요금 없음)",
+        "usd": -2.85
       }
     ],
     "pick": {
@@ -1188,12 +1196,19 @@
     "vertical": {
       "mode": "track",
       "src": "720x400"
-    }
+    },
+    "blocked": [
+      {
+        "seg": 1,
+        "why": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}",
+        "at": "2026-10-09T16:22:31Z"
+      }
+    ]
   },
-  "error": "[Errno 21] Is a directory: 'pet-episodes/episodes/261009-remake-4855/work/_trk_frames'",
+  "error": "Omni HTTP 400: {\"error\":{\"message\":\"Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.\",\"code\":\"content_blocked\"}}",
   "last_request": {
-    "file": "06_remake_full.json",
-    "ran_at": "2026-10-09T16:12:16Z",
+    "file": "07_remake_full.json",
+    "ran_at": "2026-10-09T16:22:31Z",
     "ok": false
   }
 }
