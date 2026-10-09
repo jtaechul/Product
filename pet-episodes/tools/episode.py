@@ -2082,9 +2082,10 @@ REMAKE_LIPSYNC = (" LIP SYNC: each dog's mouth opens, closes and shapes exactly 
                   "(they are rapping), so the mouth movement stays perfectly in sync with the original audio; keep the jaw and "
                   "head timing frame-accurate.")
 # 동물 수 = 원본 등장인물 수(사용자 확정 2026-10: "한 마리만" 규칙 대신 대전제 하나 — 한 명이면 한 마리, 여럿이면 대략 그 수)
-REMAKE_ONE_DOG = ("SAME HEADCOUNT: the number of animals in every frame matches the number of people in the original frame - "
-                  "one person becomes exactly one animal, never two. Body parts of a person seen at the frame edges belong "
-                  "to that same animal and stay attached to it.")
+REMAKE_ONE_DOG = ("SAME HEADCOUNT: one person becomes exactly one animal, never two; animals that are already in the original "
+                  "stay as they are (same number, breed and colour) - so every frame has exactly as many animals as the original "
+                  "frame has people and animals together, and no animal is added where nobody was. Body parts of a person seen at "
+                  "the frame edges belong to that same animal and stay attached to it.")
 REMAKE_SWAP = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, "
                "every movement and its timing, camera, background, lights): {swap}. Every replaced head is the Shiba Inu from "
                "image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a "
@@ -2129,7 +2130,7 @@ BOARD_COLS, BOARD_ROWS, BOARD_CW, BOARD_CH = 3, 2, 360, 640
 REMAKE_BOARD = ("Image 1 is a 3x2 grid of six frames taken from one video (each panel is a separate moment; dark bars are only "
                 "padding). Edit ALL six panels the same way and keep the grid layout, panel sizes and everything else exactly as "
                 "it is (bodies, clothes, poses, background, lights, camera framing): {swap}. Every replaced head is the Shiba Inu "
-                "from image 2 (same face, fur colour and markings) - the same dog in every panel; "
+                "from image 2 (same face, fur colour and markings) - the same Shiba in every panel where that person appears; "
                 "every visible arm, leg, hand and foot is a thick, fully furry Shiba leg with a round paw. " + REMAKE_ONE_DOG + " Match each panel's lighting, shadows and focus so it looks like real "
                 "footage, with no seams at the neck, sleeves or trouser hems. Remove any watermark or on-screen text; add no text.")
 REMAKE_BOARD_FRESH = ("Image 1 is an empty 3x2 storyboard layout: six grey vertical 9:16 panels (the black strip at the bottom is only "
@@ -2914,12 +2915,15 @@ def _cta_png(out: Path, W=720, H=1280):
 
 # ── 리메이크 사전 점검(무료, 2026-10 사고: 아리아 편 '해머가 심판을 맞힘' 개그를 순화하다 지움 · 물티슈 편 옛 원본 분석으로 지시 → 넘어지는 장면 없음,
 #    정지 칸(스토리보드)과 새 영상의 옷·개가 달라 엉망 · 사람 손 등장). 돈 드는 호출 전에 반드시 통과해야 한다.
+# 낱말 끝을 정해 둔다(2026-10-09 사고: 'slippers(슬리퍼)'를 'slip(넘어짐)'으로 읽어 없는 개그를 찾고 제작을 멈춤 · tripod·freezer·punchline 같은 오인도 막음)
 GAG_KINDS = {
-    "맞힘": r"\b(hit|hits|hitting|strike|strikes|striking|struck|smash\w*|slap\w*|kick\w*|punch\w*|bump\w*|collid\w*|knock\w*|smack\w*|whack\w*|bonk\w*|thud|impact)\b",
-    "넘어짐": r"\b(fall|falls|falling|fell|tumbl\w*|trip\w*|toppl\w*|tips? over|tipping over|crash\w*|wipes? out|slip\w*|plops? down)\b",
-    "줌": r"\b(zoom\w*|push(es)? in|snap zoom)\b",
-    "정지": r"\b(freez\w*|still frame|freeze-frame)\b",
-    "입에넣기": r"\b(into (his|her|its|their|the) mouth|feeds?|stuff\w*|shov\w* .* mouth)\b",
+    "맞힘": r"\b(hit|hits|hitting|strike|strikes|struck|smash(es|ed|ing)?|slap(s|ped|ping)?|kick(s|ed|ing)?|punch(es|ed|ing)?|bump(s|ed|ing)?|"
+            r"collid(e|es|ed|ing)|collision|knock(s|ed|ing)? (into|over|down|against|back|out)|smack(s|ed|ing)?|whack(s|ed|ing)?|bonk(s|ed|ing)?|thud|impact)\b",
+    "넘어짐": r"\b(fall|falls|falling|fell|tumbl(e|es|ed|ing)|trip(s|ped|ping)?|toppl(e|es|ed|ing)|tips? over|tipping over|crash(es|ed|ing)?|"
+              r"wipes? out|slip(s|ped|ping)?|plops? down)\b",
+    "줌": r"\b(zoom(s|ed|ing)?|push(es)? in|snap zoom)\b",
+    "정지": r"\b(freez(e|es|ing)|still frame|freeze-frame)\b",
+    "입에넣기": r"\b(into (his|her|its|their|the) mouth|feeds? (him|her|it|them)\b|stuff(s|ed|ing) \w+( \w+)? in(to)?\b|shov\w* .* mouth)",
 }
 GAG_DODGE = r"\b(miss(es|ed)?|out of frame|away from|avoids?|narrowly|just past|instead of)\b"   # 개그를 비켜 가게 순화한 흔적
 RISKY = {r"\b(groin|crotch|genitals?|private parts)\b": "bottom (rump)", r"\b(blood\w*|bleed\w*|wound\w*|gore)\b": "(빼기)",
@@ -2941,10 +2945,11 @@ def _gag_beats(rows: list) -> list:
     for x in rows or []:
         txt = " ".join(str(x.get(k, "")) for k in ("action", "sound", "camera"))
         for kind, rx in GAG_KINDS.items():
-            if re.search(rx, txt, re.I) and not (out and out[-1]["kind"] == kind and out[-1]["text"] == txt):
+            m = re.search(rx, txt, re.I)
+            if m and not (out and out[-1]["kind"] == kind and out[-1]["text"] == txt):
                 if kind == "줌" and re.search(r"zoom(s|ing)? out", txt, re.I):
                     continue                                   # 빠지는 줌은 개그 포인트로 세지 않는다
-                out.append({"t": str(x.get("t", "")), "kind": kind, "text": txt[:160]})
+                out.append({"t": str(x.get("t", "")), "kind": kind, "word": m.group(0).lower(), "text": txt[:160]})
     seen, uniq = set(), []                                     # 같은 종류가 이어지면 한 번만
     for g in out:
         key = (g["kind"], g["t"].split("-")[0][:3])
@@ -2952,6 +2957,16 @@ def _gag_beats(rows: list) -> list:
             seen.add(key)
             uniq.append(g)
     return uniq
+
+
+def _auto_gags(rm: dict, res: dict) -> list:
+    """개그 포인트 목록 — 사장님이 적은 rm.gags가 우선, 없으면 원본 전체 0.5초 시간표('all')에서 자동.
+    합성 지시문에 넣는 목록과 사전 점검이 확인하는 목록이 같아야 한다(2026-10-09 사고: 점검만 하고 지시문엔 안 넣어 매번 멈춤)."""
+    if rm.get("gags"):
+        return rm["gags"]
+    tl = res.get("timeline") or {}
+    rows = tl.get("all") or [x for v in tl.values() for x in v]
+    return _gag_beats(rows)
 
 
 def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
@@ -2972,7 +2987,7 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
             probs.append("0.5초 시간표가 예전 원본 것입니다(원본이 바뀜) — 지금 원본으로 다시 분석해야 합니다")
     # 2) 개그 포인트가 지시에 다 살아 있나(사장님이 적은 rm.gags가 우선, 없으면 시간표에서 자동) — 원본을 글로 옮겨 새로 만드는 방식에만
     newway = bool(shots) or bool(rm.get("board_fresh")) or motion or composite
-    gags = (rm.get("gags") or _gag_beats([x for v in (res.get("timeline") or {}).values() for x in v])) if newway else []
+    gags = _auto_gags(rm, res) if newway else []
     for g in gags:
         kind = g.get("kind", "")
         words = g.get("words") or []
@@ -3040,8 +3055,17 @@ def _soften(txt: str) -> str:
 
 
 def _gag_text(gags: list) -> str:
-    return "; ".join(f"[{g.get('t', '')}s] {g.get('en') or GAG_KO.get(g.get('kind', ''), g.get('kind', ''))} - {_soften(str(g.get('text', g.get('what', ''))))[:110]}"
-                     for g in gags)
+    # 자동으로 찾은 개그는 원문에 실제로 있는 낱말(collides·tumble 등)을 이름표로 — 종류 이름(falls over)을 붙이면 낱말을 잘못 읽었을 때
+    # 원본에 없는 동작을 시키게 된다
+    merged = []                                           # 같은 줄에서 두 종류(collision·tumble)가 나오면 한 번만 적는다
+    for g in gags:
+        lab = g.get('en') or g.get('word') or GAG_KO.get(g.get('kind', ''), g.get('kind', ''))
+        txt = _soften(str(g.get('text', g.get('what', ''))))[:110]
+        if merged and merged[-1][0] == g.get('t', '') and merged[-1][2] == txt:
+            merged[-1][1].append(lab)
+            continue
+        merged.append([g.get('t', ''), [lab], txt])
+    return "; ".join(f"[{t}s] {', '.join(dict.fromkeys(labs))} - {txt}" for t, labs, txt in merged)
 
 
 def _board_notes_auto(rows: list, times: list, swap: str) -> list:
@@ -3313,6 +3337,13 @@ def step_remake(ep, epdir, work, log, req):
         res["method"] = "motion" if motion else ("composite" if composite else ("shots" if rm.get("shots") else "edit"))
         if composite and mode in ("board", "full", "check") and not (res.get("timeline") or {}).get("all") and mode != "check":
             _timeline(ref, 0, L, work, res, cap, "all")   # 원본 전체 0.5초 시간표(약 0.01달러) — 프레임으로 검증해 remake.timeline으로 바로잡을 수 있다
+        if composite and not rm.get("gags") and (res.get("timeline") or {}).get("all"):
+            gags_auto = _auto_gags(rm, res)               # 원본에서 찾은 개그(부딪힘·넘어짐 등)를 합성 지시에 '그대로 둘 것'으로(2026-10-09 사고: 점검만 하고 안 넣어 매번 멈춤)
+            res["gags"] = gags_auto
+            if gags_auto:
+                add = REMAKE_GAGS_KEEP.format(gags=_gag_text(gags_auto))
+                prompt += add
+                res["edit_prompt"] = res.get("edit_prompt", "") + add
         n_pan = _board_panels(L, rm)
         if composite and not rm.get("board_times") and (res.get("timeline") or {}).get("all"):
             res["board_times_auto"] = _scene_times(res["timeline"]["all"], L, n_pan)   # 장면마다 한 칸 이상(핵심 장면이 빠지지 않게)

@@ -25,7 +25,7 @@ description: 사장님이 올린 밈 영상에 시바견을 Genjutsu식으로 �
 2. **무료 분석**(돈 쓰기 전):
    - `ffmpeg`로 0.25~0.5초 간격 프레임 시트를 뽑아 **직접 본다**. 검은 화면·창작자 로고 아웃트로는 `remake.window: [시작, 끝]`으로 뺀다.
    - 소리 크기 흐름(astats)으로 음악인지 효과음인지 가늠. 음악이면 `keep_audio: false` + 우리 효과음(`pet-episodes/sfx`).
-   - 개그 포인트를 `remake.gags`(t·kind·en·text)로 적는다. AI 0.5초 시간표(`_timeline`)는 틀릴 수 있다 — 프레임과 대조해 틀리면 `remake.timeline`(목록)에 확인한 시간표를 직접 쓴다(2026-10 사과 도둑 편: AI가 "개가 덤벼든다"로 잘못 읽음).
+   - 개그 포인트는 0.5초 시간표에서 자동으로 뽑아 합성 지시에 '그대로 둘 것'으로 넣는다(`_auto_gags` — 점검 목록과 같은 것, 2026-10-09 사고: 점검만 하고 지시엔 안 넣어 매번 멈춤). 시간표가 틀리면 `remake.gags`(t·kind·en·text)로 직접 적는다. AI 0.5초 시간표(`_timeline`)는 틀릴 수 있다 — 프레임과 대조해 틀리면 `remake.timeline`(목록)에 확인한 시간표를 직접 쓴다(2026-10 사과 도둑 편: AI가 "개가 덤벼든다"로 잘못 읽음).
 3. **episode.json** (`pet-episodes/episodes/<id>/episode.json`, kind `remake`):
    - `remake.method: "composite"`, `res: "720p"`, `pre_enhance: false`, `upscale: 0`(위 확정 설정), `window`, `timeline`, `gags`, `keep_audio`.
    - 바꿀 대상: `swap`(무엇을 시바견으로, 무엇은 그대로). 사람을 그대로 둘 땐 `keep_people: true` + `cast: "exactly one human man and one dog"`.
