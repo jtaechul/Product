@@ -2079,6 +2079,8 @@ REMAKE_EXTEND = (" VERTICAL FRAME: the input is a {src} shot placed in the middl
                  "that continues past the picture edge, matching perspective, lighting and every movement. The extended areas have the "
                  "same brightness, colour, contrast, texture and sharpness as the middle - never plain white, grey, overexposed, foggy "
                  "or blank. No blur, no bands, no borders.")
+REMAKE_BOARD_DOGS = (" Image {n} is an approved storyboard frame from this video: every Shiba Inu looks exactly like in it (face, fur "
+                     "colour, markings and size); everything else follows the input video.")
 REMAKE_BOARD_LOOK = (" Image {n} is the approved storyboard: the dogs (heads, fur, hair tufts, accessories, paws) must look exactly like "
                      "in it, and the areas above and below the original picture (walls, ceiling, floor) look like in it too; the framing "
                      "follows the vertical frame described above.")
@@ -2275,6 +2277,76 @@ def _blur_bands(v: Path) -> bool:
             bad += 1
         f.unlink()
     return bool(frames) and bad > len(frames) * 0.5
+
+
+def _track_crop(ref: Path, work: Path, res: dict) -> Path:
+    """가로 원본 → 움직임을 따라가는 세로 9:16 화면(사장님 확정 2026-10-09 타일매트 편: 위아래를 이어 그리면 강아지가 화면의 5%라
+    720p로 만들어도 흐리고 아래가 하얗게 가린 것처럼 보임). 고정 카메라 영상에서 프레임 차이로 움직이는 곳(사람·강아지)을 찾아
+    세로 창이 카메라처럼 부드럽게 따라간다(미리 살짝 움직이며 따라감). 위아래를 AI로 그리지 않으니 흐린·하얀 띠가 생길 수 없고,
+    강아지는 약 3배 크게 담긴다. 합성 AI가 720p로 새로 그려 선명해진다(업스케일러 없음). 돈 안 듦."""
+    import numpy as np
+    out = work / "_src_track.mp4"
+    sw, sh = _wh(ref)
+    wc = sh * 9 / 16                                        # 세로 창 폭(원본 높이 그대로)
+    aw = 240
+    ah = max(2, int(round(sh * aw / sw)) // 2 * 2)
+    raw = subprocess.run([FFMPEG, "-v", "error", "-i", str(ref), "-vf", f"fps=12,scale={aw}:{ah},format=gray",
+                          "-f", "rawvideo", "-"], capture_output=True).stdout
+    n = len(raw) // (aw * ah)
+    if n < 3:
+        raise RuntimeError("따라가는 세로 화면: 원본 프레임을 읽지 못했습니다")
+    fr = np.frombuffer(raw[:n * aw * ah], np.uint8).reshape(n, ah, aw).astype(np.int16)
+    k = max(4, int(round(wc * aw / sw)))
+    cen = [None]
+    for i in range(1, n):
+        d = (np.abs(fr[i] - fr[i - 1]) > 18).sum(axis=0).astype(float)   # 열마다 바뀐 점 수 = 그 자리의 움직임
+        if d.sum() < 0.002 * aw * ah:                       # 거의 안 움직이면 앞 위치 유지
+            cen.append(None)
+            continue
+        cs = np.concatenate([[0.0], np.cumsum(d)])
+        left = int(np.argmax(cs[k:] - cs[:-k]))             # 움직임이 가장 많이 담기는 창
+        seg = d[left:left + k]
+        cx = left + float((seg * (np.arange(len(seg)) + 0.5)).sum() / max(seg.sum(), 1e-6))   # 그 창 안 움직임의 무게중심
+        cen.append(cx / aw * sw)
+    first = next((c for c in cen if c is not None), sw / 2)
+    path, last = [], first
+    for c in cen:
+        last = c if c is not None else last
+        path.append(last)
+    raw_c = np.array(path, float)
+    def _ma(x, m):                                          # 이동 평균(가장자리는 끝값으로)
+        return np.convolve(np.pad(x, m // 2, mode="edge"), np.ones(m) / m, mode="valid")
+    a = _ma(raw_c, 9)                                       # 0.75초로 부드럽게(카메라처럼 미리 따라감)
+    a = np.clip(a, raw_c - wc * 0.28, raw_c + wc * 0.28)    # 움직이는 대상은 늘 창 안에(빠르게 방향을 바꿀 때 놓치지 않게)
+    a = _ma(a, 5)                                           # 꺾인 곳만 한 번 더 다듬기(0.4초)
+    a = np.clip(a, wc / 2, sw - wc / 2)
+    t12 = np.arange(len(a)) / 12.0
+    # 2) 세로 창으로 잘라 720x1280으로(소수점 위치까지 부드럽게)
+    dec = subprocess.Popen([FFMPEG, "-v", "error", "-i", str(ref), "-an", "-vf", "fps=24,format=rgb24", "-f", "rawvideo", "-"],
+                           stdout=subprocess.PIPE)
+    vtmp = work / "_src_track_v.mp4"
+    enc = subprocess.Popen([FFMPEG, "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", "720x1280", "-r", "24", "-i", "-",
+                            "-an", "-c:v", "libx264", "-crf", "16", "-preset", "medium", "-pix_fmt", "yuv420p", str(vtmp)],
+                           stdin=subprocess.PIPE)
+    fb, j = sw * sh * 3, 0
+    while True:
+        buf = dec.stdout.read(fb)
+        if len(buf) < fb:
+            break
+        c = float(np.interp(j / 24.0, t12, a))
+        im = Image.frombytes("RGB", (sw, sh), buf).resize((720, 1280), Image.LANCZOS, box=(c - wc / 2, 0, c + wc / 2, sh))
+        enc.stdin.write(im.tobytes())
+        j += 1
+    dec.stdout.close()
+    enc.stdin.close()
+    enc.wait()
+    dec.wait()
+    if enc.returncode != 0 or j < 3:
+        raise RuntimeError("따라가는 세로 화면을 만들지 못했습니다")
+    _ff(["-i", str(vtmp), "-i", str(ref), "-map", "0:v", "-map", "1:a?", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", str(out)])
+    res["track"] = {"ok": True, "src": f"{sw}x{sh}", "win": round(wc), "zoom": round(1280 / sh, 2),
+                    "path": [round(float(np.interp(t, t12, a)) / sw, 3) for t in np.arange(0, t12[-1] + 0.01, 0.5)]}
+    return out
 
 
 def _content_wh(src: Path) -> tuple[int, int]:
@@ -2845,7 +2917,9 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     board = work / (res.get("board_ref") or f"board_{i + 1:02d}.jpg")   # 사장님이 확인한 그 스토리보드 칸(나중에 다시 그린 것에 덮여도 그대로)
     if board.exists():                                     # 확인받은 스토리보드 첫 장면에 맞춘다
         inputs.append({"type": "image", **_b64img(board)})
-        prompt = prompt + (REMAKE_BOARD_LOOK if res.get("vertical") else REMAKE_BOARD_REF).format(n=len(inputs))
+        vmode = (res.get("vertical") or {}).get("mode", "")
+        prompt = prompt + (REMAKE_BOARD_LOOK if vmode == "extend" else REMAKE_BOARD_DOGS if vmode == "track"
+                           else REMAKE_BOARD_REF).format(n=len(inputs))
     tries = []
     res_name = res.get("gen_res") or REMAKE_RES           # remake.res "720p"면 처음부터 720p로(실제 요금 약 3배, 디테일 가장 확실 — 사장님이 고른 편만)
     mult = 3 if res_name == "720p" else 1
@@ -3427,9 +3501,14 @@ def step_remake(ep, epdir, work, log, req):
             if not rm.get("board_notes"):
                 res["board_notes_auto"] = _board_notes_auto(rows, rm.get("board_times") or res.get("board_times_auto") or [], swap_txt)
             res["motion_prompt"] = _motion_prompt(rm, res, L, swap_txt)
-        # 세로 9:16은 흐린 배경 채우기가 아니라 AI가 위아래 장면을 이어 그려 진짜 세로로(사용자 지시 2026-10)
+        # 세로 9:16: 가로 원본은 움직임을 따라가는 세로 화면으로 잘라 키운다(합성 기본, 사장님 확정 2026-10-09 — 위아래를 이어 그리면
+        # 강아지가 작고 아래가 하얗게 가린 것처럼 보임). 예전 '위아래 이어 그리기'는 remake.vertical="extend"일 때만
         sw, sh = _wh(ref)
-        if motion:
+        res.pop("vertical", None)
+        if composite and sw * 16 > sh * 9 * 1.05 and rm.get("vertical", "track") == "track":
+            ref = _track_crop(ref, work, res)
+            res["vertical"] = {"mode": "track", "src": f"{sw}x{sh}"}
+        elif motion:
             res["vertical"] = {"mode": "reference_to_video 9:16", "src": f"{sw}x{sh}"}   # 참고 영상은 비율 그대로 넣고 출력만 9:16으로 받는다
         elif sw * 16 > sh * 9 * 1.05:                       # ⛔ 핵심 규칙: 원본 비율과 상관없이 무조건 9:16(늘리기·흐린 배경 금지, AI가 새로 그려 채움)
             ref_v = work / "_src_v.mp4"
