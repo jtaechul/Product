@@ -487,6 +487,11 @@ _GOOD = [("暗い海の底で、体を青く光らせる魚がいます。", "F4
          ("光の届かない世界で、静かに暮らしています。", "F2"), ("今日も暗い海の底で、青い光がまたたきます。", "F4")]
 
 
+_CANDS = [{"pattern": "異常な行動", "text_jp": "触ると、青く光る", "key_jp": "青く光る", "voice_jp": "触れると、体が青く光る", "text_ko": "건드리면 파랗게 빛난다"},
+          {"pattern": "常識破り", "text_jp": "魚なのに、青く光る", "key_jp": "光る", "voice_jp": "魚なのに、体が青く光る", "text_ko": "물고기인데 파랗게 빛난다"},
+          {"pattern": "正体の反転", "text_jp": "光の正体は、魚", "key_jp": "魚", "voice_jp": "暗い海の光、その正体は魚", "text_ko": "빛의 정체는 물고기"}]
+
+
 def _fake_ai(bad_first=False):
     calls = {"script": 0}
     def ask(p):
@@ -498,8 +503,7 @@ def _fake_ai(bad_first=False):
                     for i, (jp, f) in enumerate(_GOOD)]
             if bad_first and calls["script"] == 1:
                 cuts[3]["jp"] = "大きさは50センチにもなります。"      # 사실에 없는 숫자 → 코드 검사에서 걸려 다시 쓰게
-            hook = {"cut": 5, "question_jp": "青く光る、この生き物は？", "question_ko": "파랗게 빛나는 이 생물은?",
-                    "answer_jp": "テストウオ", "answer_ko": "시험어"}
+            hook = {"cut": 5, "answer_jp": "テストウオ", "answer_ko": "시험어", "candidates": _CANDS}   # 후킹 개편: 사실 한 줄 후보 3개
             return json.dumps({"core": "F4", "cuts": cuts, "hook": hook})      # 핵심 사실 F4: 후킹 컷 5 · 마지막 3컷의 8번
         return json.dumps({"issues": []})                    # 교차 검사
     return ask, calls
@@ -520,7 +524,10 @@ def test_write_script_real_job_moves_script_to_review(v2):
     assert "50" not in sc["cuts"][3]["jp"]
     a = st["artifacts"]["script"]
     assert len(a["cuts"]) == 8 and a["cuts"][0]["facts"][0]["id"] == "F4" and a["crosscheck"]["issues"] == []
-    assert sc["core"] == "F4" and sc["hook"]["type"] == "identity" and a["core"]["id"] == "F4"      # 핵심 사실 하나(D)
+    assert sc["core"] == "F4" and sc["hook"]["type"] == "line" and a["core"]["id"] == "F4"          # 핵심 사실 하나(D)
+    hk = sc["hook"]                                                       # 후킹 개편: 후보 3개 · 기본 1번이 지금 후킹
+    assert len(hk["candidates"]) == 3 and hk["chosen"] == 0 and hk["question_jp"] == "触ると、青く光る"
+    assert hk["key_jp"] == "青く光る" and hk["voice_jp"] == "触れると、体が青く光る" and hk["pattern"] == "異常な行動"
     assert sc["hook"]["cut"] == 5 and sc["hook"]["at"] is not None and a["hook"]["answer_jp"] == "テストウオ"
     assert sc["total_sec"] == sum(c["sec"] for c in sc["cuts"]) + 4      # 후킹 2초 + 정답 카드 2초
 
@@ -587,12 +594,15 @@ def test_edit_hook_changes_script_only(v2):
     admin.new_pilot("test_fish")
     ask, _ = _fake_ai()
     admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
-    admin.main(["edit_hook", "test_fish", "_", json.dumps({"cut": 4, "at": 99, "question_jp": "30センチの、この魚は？", "answer_jp": "テストウオ"})])
+    admin.main(["edit_hook", "test_fish", "_", json.dumps({"cut": 4, "at": 99, "question_jp": "30センチの、光る魚", "key_jp": "光る魚",
+                                                           "voice_jp": "30センチの、光る魚", "answer_jp": "テストウオ"})])
     sc = json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))
-    assert sc["hook"]["cut"] == 4 and sc["hook"]["question_jp"] == "30センチの、この魚は？"
+    assert sc["hook"]["cut"] == 4 and sc["hook"]["question_jp"] == "30センチの、光る魚" and sc["hook"]["type"] == "line"
     assert sc["hook"]["at"] <= sc["cuts"][3]["sec"] - 2 and len(sc["hook_history"]) == 1     # 시작 초는 컷 안으로
-    with pytest.raises(SystemExit):                                                     # 정답 이름이 질문에 들어가면 거절
-        admin.edit_hook("test_fish", {"question_jp": "テストウオは何をする？"})
+    with pytest.raises(SystemExit):                                                     # 정답 이름이 문장에 들어가면 거절
+        admin.edit_hook("test_fish", {"question_jp": "テストウオ、光る魚"})
+    with pytest.raises(SystemExit):                                                     # 이름 맞히기 퀴즈는 거절(개편)
+        admin.edit_hook("test_fish", {"question_jp": "光る、この魚は？", "key_jp": "光る", "voice_jp": "光る魚"})
 
 
 def _tiny_clip(path, sec, color):
@@ -658,6 +668,9 @@ def _fake_runner(tmp_root):
             elif req["kind"] == "gen_omni":
                 _tiny_clip(out / f"{it['name']}.mp4", it.get("sec", 4), "gray")
                 items.append({"name": it["name"], "file": f"{it['name']}.mp4"})
+            elif req["kind"] == "gen_tts" and it.get("name") == "hook":             # 후킹 한 줄 목소리(1.6초)
+                _silent_wav(out / "hook.wav", 1.6)
+                items.append({"name": "hook", "file": "hook.wav"})
             elif req["kind"] == "gen_tts":
                 _silent_wav(out / "body.wav", 30)
                 segs = it["segments"]
@@ -800,7 +813,7 @@ def test_workflow_has_secrets_and_setup():
     assert "job_start" in run1 and "ci_commit.sh" in run1
     for a in ("write_script", "write_storyboard", "make_video"):           # 키가 없는 첫 단계에서 유료 작업을 돌리면 안 된다
         assert f"admin.py {a}" not in run1, a
-    for a in ("write_script", "write_storyboard", "make_video", "edit_hook", "recut_approve", "upload_meta", "save_meta"):
+    for a in ("write_script", "write_storyboard", "make_video", "edit_hook", "recut_approve", "upload_meta", "save_meta", "save_viewed"):
         assert a in run2, a
     assert steps["실패 기록"].get("if") == "failure()" and steps["결과 커밋"].get("if") == "always()"
 
@@ -1187,16 +1200,16 @@ def test_edit_hook_fixes_start_only_when_operator_changes_it(v2):
     admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
     sc = lambda: json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))   # noqa: E731
     at0 = sc()["hook"]["at"]
-    admin.edit_hook("test_fish", {"at": str(at0), "question_jp": "青白く光る、この生き物は？"})     # 페이지는 지금 값을 그대로 다시 보낸다
+    admin.edit_hook("test_fish", {"at": str(at0), "question_ko": "건드리면 빛난다"})          # 페이지는 지금 값을 그대로 다시 보낸다
     assert "at_by" not in sc()["hook"]
     admin.edit_hook("test_fish", {"at": "0.5"})
     assert sc()["hook"]["at"] == 0.5 and sc()["hook"]["at_by"] == "operator"
-    admin.edit_hook("test_fish", {"at": "", "question_jp": "青く光る、この生き物は？"})
+    admin.edit_hook("test_fish", {"at": ""})
     assert "at_by" not in sc()["hook"]                                                 # 칸을 비우면 다시 자동
     admin.edit_hook("test_fish", {"at": "1", "cut": 8})
     assert sc()["hook"]["at_by"] == "operator"
     admin.edit_hook("test_fish", {"at": str(sc()["hook"]["at"]), "cut": 5})          # 컷만 바꾸면 새 컷에서 자동
-    assert "at_by" not in sc()["hook"] and sc()["hook"]["type"] == "identity"
+    assert "at_by" not in sc()["hook"] and sc()["hook"]["type"] == "line"
 
 
 def test_storyboard_opening_cuts_must_move():
@@ -1254,12 +1267,13 @@ def test_title_never_contains_the_answer(v2):
     seen = []
     def meta(p):
         seen.append(p)
-        title = "青く光る魚テストウオの謎" if len(seen) == 1 else "刺激で青く光る、深海の謎"
+        title = "青く光る魚テストウオの謎" if len(seen) == 1 else "触ると青く光る、深海の謎"
         return json.dumps(dict(_META, title_jp=title, title_ko="자극을 받으면 파랗게 빛나는 심해의 수수께끼"))
     st = admin.upload_meta("test_fish", ask=meta)
     m = st["artifacts"]["upload"]["meta"]
     assert len(seen) == 2 and "テストウオ" in seen[1] and "Problems in your previous answer" in seen[1]
-    assert m["title_jp"].startswith("刺激で青く光る、深海の謎") and m["title_jp"].endswith("#テストウオ #深海")   # 종명은 끝 해시태그로만
+    assert m["title_jp"].startswith("触ると青く光る、深海の謎") and m["title_jp"].endswith("#テストウオ #深海")   # 종명은 끝 해시태그로만
+    assert "SAME LINE" in seen[0] and "触ると、青く光る" in seen[0]                               # 제목도 후킹과 같은 문장으로 시작
     assert "CORE FACT" in seen[0] and "F4: 刺激を受けると青く光る" in seen[0]
     with pytest.raises(ValueError):
         admin.upload_meta("test_fish", ask=lambda p: json.dumps(dict(_META, title_jp="テストウオの秘密")))
@@ -1272,3 +1286,136 @@ def test_answer_card_shows_name_for_fact_question(tmp_path):
     import assemble as A
     out = A.answer_png("エラの中に、何を隠している？", "魚の卵", "Lithodidae", tmp_path / "a.png", name="タラバガニ科")
     assert out.exists()
+
+
+# ── 후킹 개편(운영자 선택 2026-10-09): 0초 목소리 · 12자 한 줄 · 사실 한 줄 후보 3개 · 흰 글자+빨강 핵심어 · 시청함 % ──
+_F = [{"id": "F1", "fact": "수심 2000m", "fact_jp": "水深2000メートル", "quote": "2000 m"}]
+
+
+def test_hook_line_rules():
+    ok = {"pattern": "常識破り", "text_jp": "ナマコなのに、泳ぐ", "key_jp": "泳ぐ", "voice_jp": "ナマコなのに、海の中を泳ぐ"}
+    assert admin.validate_hook_line(ok, _F, ["センジュナマコ"]) == []
+    bad = lambda **kw: " ".join(admin.validate_hook_line(dict(ok, **kw), _F, ["センジュナマコ"]))   # noqa: E731
+    assert "12文字以内" in bad(text_jp="エラの中に魚が卵を産みつける")                           # 22자(왕게 편)
+    assert "2行まで" in bad(text_jp="光る、皮を、捨てる", key_jp="光る", voice_jp="光る")
+    assert "名前当て" in bad(text_jp="泳ぐ、この生き物は？")
+    assert "key_jp" in bad(key_jp="走る")
+    assert "voice_jp に key_jp" in bad(voice_jp="ナマコなのに、海の中を進む")
+    assert "長すぎます" in bad(voice_jp="ナマコなのに泳ぐという、とても珍しい性質を持っていることで知られている")
+    assert "センジュナマコ" in bad(text_jp="センジュナマコ、泳ぐ")
+    assert "5000" in bad(text_jp="5000mで、泳ぐ", voice_jp="5000mで泳ぐ")                   # 사실에 없는 숫자
+    assert "2000" not in bad(text_jp="2000mで、泳ぐ", voice_jp="2000mで泳ぐ")
+    assert "pattern" in bad(pattern="なぞなぞ")
+    assert admin.hook_segments("触ると、青く光る") == ["触ると", "青く光る"]
+
+
+def test_write_script_candidates_and_pick(v2):
+    admin.new_pilot("test_fish")
+    ask, _ = _fake_ai()
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    sc = lambda: json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))   # noqa: E731
+    hk = sc()["hook"]
+    hk["voice_file"], hk["voice_for"] = "out/x/hook.wav", hk["voice_jp"]
+    admin._save(admin._script_path("test_fish"), dict(sc(), hook=hk))
+    st = admin.edit_hook("test_fish", {"pick": 2})
+    h = sc()["hook"]
+    assert h["chosen"] == 2 and h["question_jp"] == "光の正体は、魚" and h["key_jp"] == "魚" and h["pattern"] == "正体の反転"
+    assert "voice_file" not in h                                          # 문장이 바뀌면 다음 조립 때 목소리를 다시 만든다
+    assert st["artifacts"]["script"]["hook"]["chosen"] == 2
+    with pytest.raises(SystemExit):
+        admin.edit_hook("test_fish", {"pick": 5})
+
+
+def test_hook_line_png_white_text_red_key_top(tmp_path):
+    """흰 글자+검은 테두리, 핵심 단어만 빨강 · 화면 위쪽(생물을 가리지 않게) · 「、」에서만 줄바꿈."""
+    import assemble as A
+    from PIL import Image
+    im = Image.open(A.hook_png("触ると、青く光る", tmp_path / "h.png", key="青く光る")).convert("RGBA")
+    px = im.load()
+    red = [(x, y) for y in range(0, A.H, 4) for x in range(0, A.W, 4) if px[x, y][3] > 200 and px[x, y][0] > 200 and px[x, y][1] < 70]
+    white = [(x, y) for y in range(0, A.H, 4) for x in range(0, A.W, 4) if px[x, y][3] > 200 and min(px[x, y][:3]) > 235]
+    assert len(red) > 150 and len(white) > 150
+    ink = [y for y in range(0, A.H, 4) if any(px[x, y][3] > 120 for x in range(0, A.W, 8))]
+    assert min(ink) > A.H * 0.08 and max(ink) < A.H * 0.40                # 위쪽 띠 안에만(가운데 생물 자리 비움)
+    assert min(y for _, y in red) > min(y for _, y in white)              # 빨간 핵심어는 둘째 줄(青く光る)
+    old = Image.open(A.hook_png("光る皮を投げ捨てる、この生き物は？", tmp_path / "o.png")).convert("RGBA")   # 옛 편 디자인 유지
+    assert old.getbbox()[1] > A.H * 0.15
+
+
+def test_assemble_line_hook_speaks_from_zero(tmp_path):
+    """후킹 개편 편: 맨 앞 0초부터 글자 + 목소리(무음 아님) · 끝 카드 「この生き物は」."""
+    import assemble as A
+    P = tmp_path / "p"; (P / "out" / "clips").mkdir(parents=True); (P / "out" / "tts").mkdir(parents=True); (P / "out" / "hv").mkdir(parents=True)
+    _tiny_clip(P / "out" / "clips" / "c01.mp4", 4, "blue"); _tiny_clip(P / "out" / "clips" / "c02.mp4", 4, "red")
+    _silent_wav(P / "out" / "tts" / "body.wav", 6)
+    _silent_wav(P / "out" / "hv" / "hook.wav", 2.2)                      # 목소리 대신 소리(2.2초)
+    tps = lambda: [{"jp_seg": None, "start": 0.15, "end": 2.5}]
+    sc = {"subject": {"scientific_name": "Testus fishus", "jp_name": "テストウオ"},
+          "hook": {"cut": 2, "at": 0.0, "type": "line", "question_jp": "触ると、青く光る", "key_jp": "青く光る", "voice_jp": "触れると青く光る",
+                   "voice_file": "out/hv/hook.wav", "answer_jp": "テストウオ"},
+          "cuts": [{"cut": 1, "jp": "こんにちは。", "tts": "こんにちは。", "sec": 4}, {"cut": 2, "jp": "さようなら。", "tts": "さようなら。", "sec": 4}],
+          "timing_v5": [{"cut": 1, "sec": 4, "audio_from": 0.0, "audio_to": 2.5, "speech_s": 2.5, "lead": 0.15, "local_tps": tps()},
+                        {"cut": 2, "sec": 4, "audio_from": 2.5, "audio_to": 5.0, "speech_s": 2.5, "lead": 0.15, "local_tps": tps()}]}
+    (P / "script.json").write_text(json.dumps(sc, ensure_ascii=False), encoding="utf-8")
+    dst = tmp_path / "final.mp4"
+    info = A.main(str(P), "clips", "tts", "", str(dst))
+    hsec = info["hook"]["len"]
+    assert info["hook"]["voice"] and 2.5 <= hsec <= A.HOOK_MAX_S              # 목소리 길이만큼 후킹이 늘어남(최대 3초)
+    dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(dst)],
+                               capture_output=True, text=True).stdout)
+    assert abs(dur - (hsec + 6.5 + A.ANSWER_S)) < 0.3
+    vol = subprocess.run(["ffmpeg", "-hide_banner", "-t", "2", "-i", str(dst), "-af", "volumedetect", "-f", "null", "-"],
+                         capture_output=True, text=True).stderr
+    mean = float(re.search(r"mean_volume: (-?[\d.]+) dB", vol).group(1))
+    assert mean > -40                                                      # 예전 후킹은 -91dB(완전 무음)
+    from PIL import Image
+    f = tmp_path / "f0.png"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", "0.04", "-i", str(dst), "-frames:v", "1", str(f)], check=True)
+    im = Image.open(f).convert("RGB")
+    band = [im.getpixel((x, y)) for y in range(int(A.H * 0.12), int(A.H * 0.35), 6) for x in range(0, A.W, 6)]
+    assert sum(1 for r, g, b in band if min(r, g, b) > 225) > 40               # 0초 첫 장면부터 흰 글자
+
+
+def test_answer_card_label_for_line_hook(tmp_path):
+    import assemble as A
+    from PIL import ImageChops, Image
+    a = Image.open(A.answer_png("触ると、青く光る", "テストウオ", "Testus fishus", tmp_path / "a.png", label="この生き物は"))
+    b = Image.open(A.answer_png("触ると、青く光る", "テストウオ", "Testus fishus", tmp_path / "b.png"))
+    assert ImageChops.difference(a.convert("RGB"), b.convert("RGB")).getbbox()      # 라벨이 실제로 다르게 그려짐
+
+
+def test_ensure_hook_voice_once_per_sentence(v2, monkeypatch):
+    admin.new_pilot("test_fish")
+    ask, _ = _fake_ai()
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    calls = []
+    base = _fake_runner(v2)
+
+    def run(rp):
+        calls.append(json.loads(Path(rp).read_text(encoding="utf-8")))
+        return base(rp)
+    monkeypatch.setattr(admin, "_RUN_REQUEST", run)
+    f1 = admin.ensure_hook_voice("test_fish")
+    assert f1 and (v2 / "pilots" / "test_fish" / f1).exists() and calls[0]["items"][0]["tts"]   # 히라가나 낭독문
+    assert admin.ensure_hook_voice("test_fish") == f1 and len(calls) == 1                      # 같은 문장이면 다시 안 만듦
+    admin.edit_hook("test_fish", {"pick": 1})
+    assert admin.ensure_hook_voice("test_fish") != f1 and len(calls) == 2                      # 문장이 바뀌면 새로
+    monkeypatch.setattr(admin, "_RUN_REQUEST", lambda rp: 1)
+    admin.edit_hook("test_fish", {"pick": 0})
+    assert admin.ensure_hook_voice("test_fish") is None                                       # 실패해도 예외 없이 None
+
+
+def test_save_viewed_records_pattern_and_index(v2):
+    admin.new_pilot("test_fish")
+    ask, _ = _fake_ai()
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    admin.main(["save_viewed", "test_fish", "_", json.dumps({"pct": "18.6%"})])
+    v = admin.load_status("test_fish")["artifacts"]["upload"]["viewed"]
+    assert v["pct"] == 18.6 and v["hook"]["pattern"] == "異常な行動" and v["hook"]["line"] == "触ると、青く光る" and v["hook"]["voice"]
+    idx = json.loads((v2 / "pilots" / "index.json").read_text(encoding="utf-8"))
+    assert idx["items"][0]["viewed"]["pct"] == 18.6
+    for bad in ("abc", "120"):
+        with pytest.raises(SystemExit):
+            admin.save_viewed("test_fish", {"pct": bad})
+    assert admin.hook_pattern_label({}) == "후킹 없음(옛)"
+    assert admin.hook_pattern_label({"hook": {"question_jp": "光る皮を投げ捨てる、この生き物は？"}}) == "名前当て(옛)"

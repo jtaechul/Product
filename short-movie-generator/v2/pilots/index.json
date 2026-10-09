@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-06T02:23:50Z",
+  "updated": "2026-10-09T14:16:15Z",
   "items": [
     {
       "id": "bathynomus_giganteus",
@@ -10,7 +10,8 @@
       "job": null,
       "created": "2026-09-27T00:00:00Z",
       "uploaded_at": "2026-09-28T12:23:52Z",
-      "stats": null
+      "stats": null,
+      "viewed": null
     },
     {
       "id": "enypniastes_eximia",
@@ -21,7 +22,8 @@
       "job": null,
       "created": "2026-09-30T09:44:09Z",
       "uploaded_at": "2026-09-30T22:35:06Z",
-      "stats": null
+      "stats": null,
+      "viewed": null
     },
     {
       "id": "lithodidae",
@@ -32,7 +34,17 @@
       "job": null,
       "created": "2026-10-05T15:29:14Z",
       "uploaded_at": "2026-10-06T10:00:00Z",
-      "stats": null
+      "stats": null,
+      "viewed": {
+        "pct": 18.6,
+        "at": "2026-10-09T14:16:15Z",
+        "note": "운영자 스크린샷 2026-10-09 (넘김 81.4%)",
+        "hook": {
+          "line": "エラの中に魚が卵を産みつける、この生き物は？",
+          "pattern": "名前当て(옛)",
+          "voice": false
+        }
+      }
     }
   ]
 }

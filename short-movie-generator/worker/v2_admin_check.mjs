@@ -51,7 +51,7 @@ globalThis.fetch = async (url, opts) => {
 };
 
 const api = new Function(js.replace(/\ninit\(\);\s*$/, "\n") +
-  "\n; return { renderV2List, renderV2New, renderV2Episode, renderHome };").call(null);
+  "\n; return { renderV2List, renderV2New, renderV2Episode, renderHome, v2viewedCard };").call(null);
 const res = {};
 // 새 영상: 시작할 수 있는 종 카드에 사진 + 한글명(운영자 확정 2026-09-30)
 { const keepEls = els; els = {}; await api.renderV2New(); const nw2 = els.view.innerHTML; els = keepEls;
@@ -311,6 +311,38 @@ statusOverride = null;
   asked = ""; if (apv2?.onclick) await apv2.onclick();
   res.approve_no_warn_when_moving = asked !== "" && !asked.includes("[주의]");
   globalThis.confirm = cf0; statusOverride = null;
+}
+
+// ── 후킹 개편(운영자 선택 2026-10-09): 후보 3개 고르기 · 빨간 핵심어 · 0초 목소리 · 시청함 % 기록 ──
+{
+  const sv = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+  sv.stages.video.state = "approved"; sv.stages.upload.state = "approved"; delete sv.jobs;
+  const C = [{ pattern: "異常な行動", text_jp: "触ると、青く光る", key_jp: "青く光る", voice_jp: "触れると、体が青く光る", text_ko: "건드리면 파랗게 빛난다" },
+             { pattern: "常識破り", text_jp: "魚なのに、青く光る", key_jp: "光る", voice_jp: "魚なのに、体が青く光る", text_ko: "물고기인데 빛난다" },
+             { pattern: "正体の反転", text_jp: "光の正体は、魚", key_jp: "魚", voice_jp: "暗い海の光、その正体は魚", text_ko: "빛의 정체는 물고기" }];
+  sv.artifacts.script.hook = { cut: 5, at: 3.25, at_by: "auto", motion: 6.1, type: "line", question_jp: C[0].text_jp, question_ko: C[0].text_ko,
+    key_jp: C[0].key_jp, voice_jp: C[0].voice_jp, pattern: C[0].pattern, answer_jp: "テストウオ", answer_ko: "시험어", chosen: 0, candidates: C };
+  sv.artifacts.upload = Object.assign({}, sv.artifacts.upload || {}, { result: { url: "https://youtu.be/x", privacy: "public" },
+    viewed: { pct: 18.6, at: "2026-10-09T00:00:00Z", hook: { pattern: "名前当て(옛)", line: "エラの中に魚が卵を産みつける、この生き物は？" } } });
+  statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  const ev = els.view.innerHTML;
+  res.hook_line_shown = ev.includes("0초부터 목소리") && ev.includes('<b style="color:var(--rd)">青く光る</b>') &&
+    ev.includes("0초 목소리: 「触れると、体が青く光る」") && ev.includes("この生き物は");
+  res.hook_pick_buttons = (lists["[data-hkpick]"] || []).length === 2;
+  const pk = (lists["[data-hkpick]"] || []).find(b => b.dataset.hkpick === "2");
+  const d0 = dispatched.length; if (pk?.onclick) await pk.onclick();
+  const dp = dispatched.slice(d0)[0];
+  res.hook_pick_dispatch = !!dp && dp.body.inputs.action === "edit_hook" && JSON.parse(dp.body.inputs.note).pick === 2;
+  res.hook_editor_has_voice_fields = ev.includes('id="hk_kj"') && ev.includes('id="hk_vj"');
+  res.viewed_box_shown = ev.includes("시청함 % 기록") && ev.includes('id="vw_pct"') && ev.includes("18.6%");
+  el("vw_pct").value = "23.4";
+  const vs = el("vwsave"); const d1 = dispatched.length; if (vs.onclick) await vs.onclick();
+  const dv = dispatched.slice(d1)[0];
+  res.viewed_save_dispatch = !!dv && dv.body.inputs.action === "save_viewed" && JSON.parse(dv.body.inputs.note).pct === 23.4;
+  const card = api.v2viewedCard([{ id: "lithodidae", name_ko: "왕게", viewed: { pct: 18.6, hook: { pattern: "名前当て(옛)", line: "エラの中に…" } } },
+                                 { id: "x", name_ko: "아직" }]);
+  res.viewed_list_card = card.includes("18.6%") && card.includes("후킹 틀별 평균") && card.includes("名前当て(옛): <b>18.6%</b> (1편)");
+  statusOverride = null;
 }
 
 els = {}; window.location.pathname = "/legacy"; api.renderHome(); res.legacy_home_renders = (els.view?.innerHTML || "").includes("쇼츠 생성 시작");

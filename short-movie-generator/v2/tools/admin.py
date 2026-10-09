@@ -232,6 +232,7 @@ def assemble(pid: str) -> dict:
         _note(st, "video", "error", "화면 글자 검사 불통과 — 영상을 만들지 않았습니다: " + str(e)[:160])
         _save(status_path(pid), st)
         raise SystemExit(str(e))
+    voice = ensure_hook_voice(pid, sc) if (sc.get("hook") or {}).get("voice_jp") else None   # ★0초부터 목소리(2026-10-09)
     ending = "" if sc.get("hook") else str(pilot / asm["ending"])   # ★후킹 편은 공용 엔딩 대신 [후킹][본편][정답 카드]
     dst.parent.mkdir(parents=True, exist_ok=True)           # 빈 폴더는 git에 안 남아 로컬 재조립 때 없을 수 있다(실측 ffmpeg 254)
     info = A.main(str(pilot), asm["clips_id"], asm["tts_id"], ending, str(dst), overrides=over) or {}
@@ -253,6 +254,9 @@ def assemble(pid: str) -> dict:
     st["checks"]["screen_text"] = {"ok": True, "value": "주석·후킹·정답 글자 모두 글꼴에 있음",
                                    "rule": "화면 글자가 글꼴에 모두 있을 것(한국어 주석 금지 · 네모 □ 금지)"}
     st["checks"].update(motion_checks(dst, used))
+    if (sc.get("hook") or {}).get("voice_jp"):
+        st["checks"]["hook_voice"] = {"ok": bool(voice and (used or {}).get("voice")), "value": sc["hook"]["voice_jp"],
+                                      "rule": "후킹 한 줄을 0초부터 목소리로 읽기(실패하면 맨 앞이 무음 — 「완성본 다시 조립」으로 다시 시도)"}
     st["stages"]["video"]["state"] = "review"
     a["built_at"] = _now()
     _save(status_path(pid), st)
@@ -465,7 +469,13 @@ def edit_hook(pid: str, data: dict) -> dict:
         raise SystemExit("후킹 정보가 없는 대본입니다")
     hk = dict(sc["hook"])
     cuts = [c for c in sc["cuts"] if "tts" in c]
-    for k in ("question_jp", "question_ko", "answer_jp", "answer_ko"):
+    line = hk.get("type") == "line"                          # 2026-10-09 개편 뒤의 편(믿기 힘든 사실 한 줄 · 후보 3개)
+    if line and data.get("pick") not in (None, ""):          # 후보 중 하나로 바꾸기(대본 승인 전에 운영자가 고름)
+        i = int(data["pick"])
+        if not 0 <= i < len(hk.get("candidates") or []):
+            raise SystemExit(f"후보 {i + 1}번이 없습니다")
+        hk = hook_from_candidate(hk, i)
+    for k in ("question_jp", "question_ko", "answer_jp", "answer_ko") + (("key_jp", "voice_jp") if line else ()):
         if k in data and str(data[k]).strip():
             hk[k] = str(data[k]).strip()
     if data.get("cut"):
@@ -484,10 +494,20 @@ def edit_hook(pid: str, data: dict) -> dict:
             hk.pop("at_by", None)                            # 컷만 바꾸면 새 컷에서 자동
     elif cut_changed:
         hk.pop("at_by", None)
-    probs = validate_hook(hk, cuts, sc.get("facts", []), name=(sc.get("subject") or {}).get("jp_name", ""))
+    jp_name = (sc.get("subject") or {}).get("jp_name", "")
+    if line:
+        probs = validate_hook_line({"text_jp": hk.get("question_jp"), "key_jp": hk.get("key_jp"), "voice_jp": hk.get("voice_jp"),
+                                    "pattern": hk.get("pattern")}, sc.get("facts", []), name_stems(hk.get("answer_jp", ""), jp_name))
+        if not 1 <= int(hk["cut"]) <= len(cuts):
+            probs.append(f"{hk['cut']}번 컷이 없습니다")
+    else:
+        probs = validate_hook(hk, cuts, sc.get("facts", []), name=jp_name)
     if probs:
         raise SystemExit("후킹 검사 불통과: " + " / ".join(probs))
-    hk["type"] = hook_type(hk.get("question_jp", ""))
+    if not line:
+        hk["type"] = hook_type(hk.get("question_jp", ""))
+    if hk.get("voice_for") != hk.get("voice_jp"):            # 목소리 문장이 바뀌면 다음 조립 때 다시 읽힌다(약 $0.001)
+        hk.pop("voice_file", None)
     sec = float(cuts[int(hk["cut"]) - 1].get("sec") or 0)
     hk["at"] = round(max(0.0, min(float(hk.get("at") or 0.0), max(0.0, sec - HOOK_S))), 2)
     if cut_changed or hk.get("at_by") != sc["hook"].get("at_by") or hk["at"] != sc["hook"].get("at"):
@@ -500,7 +520,8 @@ def edit_hook(pid: str, data: dict) -> dict:
         st["artifacts"]["script"]["hook_pending"] = True         # 영상엔 아직 미반영 — 재조립 필요
         _note(st, "video", "hook", "후킹·정답 문구 수정됨 — 「완성본 다시 조립」을 누르면 반영(무료)")
     where = f"{hk['at']}초부터(운영자 지정)" if hk.get("at_by") == "operator" else "가장 많이 움직이는 2초(조립 때 자동 선택)"
-    _note(st, "script", "hook", f"후킹 수정: {hk['cut']}번 컷 {where} 「{hk['question_jp']}」 → 正解 {hk['answer_jp']}")
+    tail = f" · 목소리 「{hk.get('voice_jp', '')}」 · 끝 카드 {hk['answer_jp']}" if line else f" → 正解 {hk['answer_jp']}"
+    _note(st, "script", "hook", f"후킹 수정: {hk['cut']}번 컷 {where} 「{hk['question_jp']}」{tail}")
     _save(status_path(pid), st)
     return st
 
@@ -941,11 +962,14 @@ def title_spoilers(sc: dict) -> tuple[list[str], list[str]]:
     """제목 본문에 넣으면 안 되는 말(운영자 선택 2026-10-09 D: 제목에 정답 이름을 넣지 않는다) — (일본어, 한국어).
     후킹 정답은 늘 금지 · 정체 맞히기(identity) 편은 和名도 금지(종명은 제목 끝 해시태그로만 — 채널 규칙 그대로)."""
     hk, sub = sc.get("hook") or {}, sc.get("subject") or {}
-    ident = (hk.get("type") or hook_type(hk.get("question_jp", ""))) == "identity"
+    ident = (hk.get("type") or hook_type(hk.get("question_jp", ""))) in ("identity", "line")   # line = 끝 카드가 이름 공개
     jp = [hk.get("answer_jp", "")] + ([sub.get("jp_name", "")] if ident else [])
     ko = [hk.get("answer_ko", "")] + ([sub.get("ko_name", "")] if ident else [])
-    stem = lambda xs: {y for x in xs if x for y in (x, re.sub(r"(科|属|類|の仲間|과|속|류)$", "", x)) if len(y) >= 2}   # noqa: E731
-    return sorted(stem(jp)), sorted(stem(ko))
+    return sorted(set(name_stems(*jp))), sorted(set(name_stems(*ko)))
+
+
+def _title_key(s: str) -> str:
+    return re.sub(r"[、。，,．.！!？?\s「」『』]", "", str(s or ""))
 
 
 def upload_meta(pid: str, ask=None) -> dict:
@@ -958,6 +982,10 @@ def upload_meta(pid: str, ask=None) -> dict:
     ban_jp, ban_ko = title_spoilers(sc)
     name_rule = ("NEVER put these words in title_jp / title_ko (they give away the answer, which the video reveals only at the end; "
                  "the species name is added automatically as a hashtag): " + ", ".join(ban_jp + ban_ko) + ".") if ban_jp + ban_ko else ""
+    if hk.get("type") == "line":                             # ★제목도 후킹과 같은 문장으로 시작(운영자 선택 2026-10-09)
+        name_rule += (f"\nSAME LINE: title_jp must START with the opening line 「{hk.get('question_jp', '')}」 exactly as written "
+                      "(you may drop the 「、」), then add a short continuation such as 深海の謎 (max 32 characters in total). "
+                      "title_ko starts with its Korean meaning.")
     prompt = _META_PROMPT.format(
         name_jp=sub.get("jp_name", ""), name_ko=sub.get("ko_name", ""), sci=sub.get("scientific_name", ""),
         core=(f"{core['id']}: {core.get('fact_jp') or core['fact']} / {core['fact']}" if core else "(not set — use the most surprising fact)"),
@@ -975,6 +1003,8 @@ def upload_meta(pid: str, ask=None) -> dict:
             raise ValueError("제목에 금지된 회사원 소재가 들어갔습니다 — 다시 쓰기")
         probs = [f"title_jp contains 「{w}」 — remove it" for w in ban_jp if w in gen["title_jp"]] + \
                 [f"title_ko contains 「{w}」 — remove it" for w in ban_ko if w in gen["title_ko"]]
+        if hk.get("type") == "line" and not _title_key(gen["title_jp"]).startswith(_title_key(hk.get("question_jp", ""))):
+            probs.append(f"title_jp must START with the opening line 「{hk.get('question_jp', '')}」 (same words) and then continue")
         if not probs:
             break
     if probs:
@@ -1341,17 +1371,23 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
 - core(この回の核・一つだけ): 事実リストから、この回でいちばん驚く事実を**一つだけ**選び、その番号を core に書く
   (候補: {core}・事実リストで裏付けること)。冒頭の問い(hook)・動画タイトル・最後の3カットのどれかが、すべてこの同じ事実を扱う。
   ほかの事実は、その理由や背景として使う(話をあちこちに広げない)。
-- hook(冒頭2秒の引き): core の事実を描くカットの番号を cut にする(そのカットの fact に core を入れる)。問いは core の事実について:
-  ・見た目では正体が分からない生き物だけ、正体当て「〇〇する、この生き物は？」(answer_jp = 台本で使った呼び名)。
-  ・カニ・エビ・ヤドカリ・イカ・タコ・サメ・クラゲ・ヒトデ・ウニなど見た目で正体が分かる生き物は正体当てにしない。
-    事実の問い(例「エラの中に、何を隠している？」)にして、answer_jp はその答え(14文字以内の短い言葉)。
-  ・8〜22文字・「？」で終わる・答えは入れない・事実リストにあることだけ。
-  ★答え(answer_jp)は**カット1・2には出さず**、3カット目以降で初めて明かす(冒頭で答えを言わない)。
+- hook(冒頭2秒・0秒からナレーションの声つき): core の事実を描くカットの番号を cut にする(そのカットの fact に core を入れる)。
+  「この生き物は？」のような名前当てクイズは禁止。core の事実を、スクロールの指が止まる「信じられない一行」にして、
+  型の違う候補をちょうど3つ出す。型 = 正体の反転 / 常識破り / 異常な行動 / 欠けた体 / 極端な数字(事実リストにある数字だけ)。
+  ・text_jp: 画面に大きく出す一行。「、」を除いて12文字以内・2行まで。改行したい所にだけ「、」を入れる(1行8文字以内・単語の途中で切らない)。
+    いちばん驚く言葉を先頭近くに。生き物の名前・呼び名は入れない。事実を誇張しない(「〜と疑われている」程度の事実は「？」をつける)。
+  ・key_jp: text_jp の中でいちばん強い言葉(赤で強調する・6文字以内・text_jp にそのまま含まれる)。
+  ・voice_jp: 0秒からナレーションが読む一言(text_jp と同じ意味・少し補ってよい・2.5秒以内・key_jp を含む・名前は入れない)。
+  ・answer_jp は最後のカードに出す生き物の呼び名(台本で使った呼び名と同じ)。カット1・2には出さず、3カット目以降で明かす。
 {feedback}
 # 出力(JSONのみ)
 {{"core":"F4","cuts":[{{"cut":1,"jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
 "scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄 · 별명은 실제 생물을 괄호로: 바다돼지(해삼))","annotation":"画面の注釈(日本語のみ・韓国語禁止・14文字以内・数字は事実どおり・なければ空)"}}],
-"hook":{{"cut":6,"question_jp":"皮を脱ぎ捨てる、この生き物は？","question_ko":"한국어 번역","answer_jp":"呼び名 または 事実の答え","answer_ko":"한국어"}}}}
+"hook":{{"cut":6,"answer_jp":"呼び名","answer_ko":"한국어 이름","candidates":[
+{{"pattern":"常識破り","text_jp":"ナマコなのに、泳ぐ","key_jp":"泳ぐ","voice_jp":"ナマコなのに、海の中を泳ぐ","text_ko":"해삼인데 헤엄친다"}},
+{{"pattern":"欠けた体","text_jp":"頭も骨もない","key_jp":"頭も骨も","voice_jp":"頭も、骨も、目もない","text_ko":"머리도 뼈도 없다"}},
+{{"pattern":"異常な行動","text_jp":"光る皮を、おとりに捨てる","key_jp":"光る皮","voice_jp":"襲われると、光る皮をおとりに捨てる","text_ko":"빛나는 피부를 미끼로 버린다"}}]}}}}
+(上の candidates の例は書き方の見本。今回の生き物の事実だけで書くこと)
 
 # 事実リスト
 {facts}
@@ -1437,8 +1473,112 @@ _FAMILIAR = re.compile(r"カニ|ガニ|ヤドカリ|エビ|イカ|タコ|ダコ|
 
 
 def hook_type(question: str) -> str:
-    """후킹 질문 종류: 'identity'(정체 맞히기 「…この生き物は？」) | 'fact'(사실 질문 「…何を隠している？」)."""
+    """후킹 질문 종류: 'identity'(정체 맞히기 「…この生き物は？」) | 'fact'(사실 질문 「…何を隠している？」).
+    ★2026-10-09 후킹 개편 뒤 새 편은 'line'(믿기 힘든 사실 한 줄) — 그건 hook["type"]에 저장돼 있다."""
     return "identity" if _IDENTITY_Q.search(str(question or "").strip()) else "fact"
+
+
+# ★★후킹 개편(운영자 선택 2026-10-09 · 실사고: 첫 2초가 무음 + 22자짜리 이름 퀴즈가 1.8초만 떠서 다 못 읽음 +
+#   빨간 글자 3줄이 생물을 가림 + 「投 / げ捨てる」처럼 단어 중간 줄바꿈 → 왕게 편 81% 넘김).
+#   ① 0초부터 목소리: voice_jp 를 나레이션 목소리로 읽어 후킹에 깐다(TTS 약 $0.001)
+#   ② 한눈에 읽히는 글자: 화면 문장 12자 이내(「、」 제외) · 2줄까지 · 「、」 자리에서만 줄바꿈(1줄 8자 이내)
+#   ③ 이름 맞히기 금지 → 핵심 사실의 「믿기 힘든 한 줄」을 5가지 틀로 후보 3개 → 운영자가 대본 승인 때 고름 · 제목도 같은 문장
+#   ④ 흰 글자 + 검은 테두리, 핵심 단어(key_jp)만 빨강 · 화면 위쪽(유튜브 버튼에 가리지 않는 높이) · 0초부터 표시
+HOOK_LINE_MAX = 12
+HOOK_SEG_MAX = 8
+HOOK_KEY_MAX = 6
+HOOK_VOICE_MAX_S = 2.6
+HOOK_PATTERNS = ("正体の反転", "常識破り", "異常な行動", "欠けた体", "極端な数字")
+
+
+def hook_segments(text: str) -> list[str]:
+    """화면 문장의 줄(「、」에서만 나눔 · 쉼표는 화면에 안 찍음)."""
+    return [p.strip() for p in re.split(r"[、,]", str(text or "")) if p.strip()]
+
+
+def _visible_len(text: str) -> int:
+    return len(re.sub(r"[、,\s]", "", str(text or "")))
+
+
+def name_stems(*names: str) -> list[str]:
+    """이름과 그 줄기(「タラバガニ科」→「タラバガニ」) — 후킹 문장·제목에 넣으면 안 되는 말."""
+    out = []
+    for x in names:
+        x = str(x or "").strip()
+        for y in (x, re.sub(r"(科|属|類|の仲間|과|속|류)$", "", x)):
+            if len(y) >= 2 and y not in out:
+                out.append(y)
+    return out
+
+
+def validate_hook_line(c: dict, facts: list[dict], banned: list[str], where: str = "hook") -> list[str]:
+    """후킹 한 줄(화면 문장 text_jp · 빨간 단어 key_jp · 0초 목소리 voice_jp · 틀 pattern) 코드 검사."""
+    t, k, v = (str(c.get(x, "") or "").strip() for x in ("text_jp", "key_jp", "voice_jp"))
+    probs = []
+    segs = hook_segments(t)
+    if not t or _visible_len(t) > HOOK_LINE_MAX:
+        probs.append(f"{where}: text_jp「{t}」は{_visible_len(t)}文字です。「、」を除いて{HOOK_LINE_MAX}文字以内にしてください。")
+    if len(segs) > 2 or any(len(x) > HOOK_SEG_MAX for x in segs):
+        probs.append(f"{where}: text_jp は2行まで・1行{HOOK_SEG_MAX}文字以内です。改行したい所にだけ「、」を入れてください(単語の途中で切らない)。")
+    if _IDENTITY_Q.search(t) or _IDENTITY_Q.search(v):
+        probs.append(f"{where}: 「この生き物は？」のような名前当ては使わないでください。核の事実を、信じられない一行にしてください。")
+    if not k or k not in t or len(k) > HOOK_KEY_MAX:
+        probs.append(f"{where}: key_jp「{k}」は text_jp にそのまま含まれる{HOOK_KEY_MAX}文字以内の、いちばん強い言葉にしてください。")
+    if not v:
+        probs.append(f"{where}: voice_jp(0秒からナレーションが読む一言)がありません。")
+    else:
+        if k and k not in v:
+            probs.append(f"{where}: voice_jp に key_jp「{k}」を入れてください(画面と同じ言葉を声でも言う)。")
+        s = estimate_speech(auto_reading(v))
+        if s > HOOK_VOICE_MAX_S:
+            probs.append(f"{where}: voice_jp「{v}」は長すぎます(約{s:.1f}秒)。{HOOK_VOICE_MAX_S}秒以内にしてください。")
+    for w in banned:
+        if w in t or w in v:
+            probs.append(f"{where}: 名前「{w}」を入れないでください(名前は最後のカードで見せる)。")
+    if _CTA_WORDS.search(t + v):
+        probs.append(f"{where}: 呼びかけ(登録・コメント等)を入れないでください。")
+    allowed = set().union(*[_nums(f["fact"] + " " + f.get("fact_jp", "") + " " + f.get("quote", "")) for f in facts]) if facts else set()
+    bad = sorted((_nums(t) | _nums(v)) - allowed)
+    if bad:
+        probs.append(f"{where}: 根拠の事実にない数字 {', '.join(bad)} があります。")
+    if c.get("pattern") not in HOOK_PATTERNS:
+        probs.append(f"{where}: pattern は {' / '.join(HOOK_PATTERNS)} のどれかにしてください。")
+    return probs
+
+
+def validate_hook_candidates(hook: dict, cuts: list[dict], facts: list[dict], name: str = "") -> list[str]:
+    """새 후킹(후보 3개) 검사: 컷 번호 · 마지막 카드 이름 · 후보마다 validate_hook_line · 서로 다른 문장."""
+    probs = []
+    try:
+        cut = int(hook.get("cut", 0))
+    except (TypeError, ValueError):
+        cut = 0
+    if not 1 <= cut <= max(1, len(cuts)):
+        probs.append(f"hook.cut={hook.get('cut')} は存在しないカット番号です。")
+    a = str(hook.get("answer_jp", "")).strip()
+    if not a or len(a) > 24:
+        probs.append("hook.answer_jp(最後のカードに出す呼び名)が空か長すぎます。")
+    if a and any(a in str(c.get("jp", "")) for c in cuts[:2]):
+        probs.append(f"呼び名「{a}」がカット1〜2に出ています。3カット目以降で初めて明かしてください。")
+    cands = hook.get("candidates")
+    if not isinstance(cands, list) or len(cands) != 3 or not all(isinstance(c, dict) for c in cands):
+        return probs + ["hook.candidates は型の違う候補をちょうど3つにしてください。"]
+    banned = name_stems(a, name)
+    for i, c in enumerate(cands, 1):
+        probs += validate_hook_line(c, facts, banned, where=f"候補{i}")
+    if len({_norm(c.get("text_jp", "")) for c in cands}) < 3:
+        probs.append("3つの候補の text_jp が同じです。言い方や型を変えてください。")
+    return probs
+
+
+def hook_from_candidate(hk: dict, i: int) -> dict:
+    """후보 i 를 지금 후킹(화면 문장·빨간 단어·목소리·틀)으로 — 목소리 파일은 다음 조립 때 다시 만든다."""
+    c = hk["candidates"][i]
+    out = dict(hk)
+    out.update(question_jp=str(c["text_jp"]).strip(), question_ko=str(c.get("text_ko", "")).strip(),
+               key_jp=str(c["key_jp"]).strip(), voice_jp=str(c["voice_jp"]).strip(), pattern=c.get("pattern", ""),
+               chosen=i, type="line")
+    return out
 
 
 def validate_core(core: str | None, hook: dict | None, cuts: list[dict], facts: list[dict]) -> list[str]:
@@ -1571,7 +1711,8 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
             gen = _json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt,
                                                              core=core or "(なし — 事実リストから最も驚く一つを選ぶ)")))
             cuts, hook, core_id = gen.get("cuts") or [], gen.get("hook"), str(gen.get("core") or "").strip()
-            probs = validate_script(cuts, facts) + validate_hook(hook, cuts, facts, name=ja_name or "") + \
+            probs = validate_script(cuts, facts) + (validate_hook_candidates(hook, cuts, facts, name=ja_name or "")
+                                                    if isinstance(hook, dict) else ["hook がありません。"]) + \
                 validate_core(core_id, hook, cuts, facts)
             if not probs:
                 break
@@ -1585,12 +1726,14 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
                         "fact": ",".join(re.findall(r"F\d+", str(c.get("fact", "")))),
                         "scene_ko": str(c.get("scene_ko", "")).strip(), "annotation": str(c.get("annotation", "")).strip()})
         hk_cut = int(hook["cut"])
+        cands = [{k: str(c.get(k, "") or "").strip() for k in ("pattern", "text_jp", "key_jp", "voice_jp", "text_ko")}
+                 for c in hook["candidates"]]
         sc = {"episode": pid, "subject": {"scientific_name": topic.get("sci", ""), "jp_name": ja_name or "",
                                           "ko_name": st.get("name_ko", "")},
-              # ★후킹(운영자 확정 2026-09-30): 맨 앞 2초 = 본편 hk_cut 컷에서 그대로 발췌 + 빨간 질문 · 맨 뒤 = 정답 카드
-              "hook": {"cut": hk_cut, "at": None, "question_jp": str(hook["question_jp"]).strip(),
-                       "question_ko": str(hook.get("question_ko", "")).strip(), "answer_jp": str(hook["answer_jp"]).strip(),
-                       "answer_ko": str(hook.get("answer_ko", "")).strip(), "type": hook_type(hook["question_jp"])},
+              # ★후킹(운영자 확정 2026-09-30 · 개편 2026-10-09): 맨 앞 = 본편 hk_cut 컷에서 발췌 + 0초부터 목소리 + 흰 글자 한 줄
+              #   (핵심 단어만 빨강) · 후보 3개 중 운영자가 고른다(기본 1번) · 맨 뒤 = 생물 이름 카드
+              "hook": hook_from_candidate({"cut": hk_cut, "at": None, "answer_jp": str(hook["answer_jp"]).strip(),
+                                           "answer_ko": str(hook.get("answer_ko", "")).strip(), "candidates": cands}, 0),
               "core": core_id,                               # ★핵심 사실 하나(후킹·제목·마지막 3컷이 함께 다룸)
               "facts": facts, "source_docs": [{k: d[k] for k in ("id", "url", "title")} for d in docs],
               "cuts": out, "timing_rule": "컷 길이 = (앞 여백 0.15초 + 나레이션 + 여유 0.6초)를 짝수 초로 올림",
@@ -2249,6 +2392,35 @@ def _ensure_tts(pid: str, sc: dict) -> str:
     return rid
 
 
+def ensure_hook_voice(pid: str, sc: dict | None = None) -> str | None:
+    """후킹 한 줄 목소리(0초부터 읽기 · 운영자 선택 2026-10-09). 지금 문장으로 만든 파일이 있으면 그대로, 없으면 나레이션과
+    같은 목소리로 합성(약 $0.001). 반환: 편 폴더 기준 wav 경로 · 실패하면 None(조립은 계속하고 자동 검사에 「불통과」로 남긴다)."""
+    sc = sc or _load(_script_path(pid)) or {}
+    hk = sc.get("hook") or {}
+    voice = str(hk.get("voice_jp") or "").strip()
+    if not voice:
+        return None
+    pilot = PILOTS / pid
+    if hk.get("voice_file") and hk.get("voice_for") == voice and (pilot / hk["voice_file"]).exists():
+        return hk["voice_file"]
+    rid = _rid("hook_tts")
+    rp = pilot / "requests" / f"{rid}.json"
+    _save(rp, {"id": rid, "kind": "gen_tts", "purpose": "후킹 한 줄 목소리(0초부터 읽기)",
+               "items": [{"name": "hook", "jp": voice, "tts": auto_reading(voice)}]})
+    try:
+        code = _run_request(rp)
+    except Exception:                                        # noqa: BLE001 — 목소리가 없어도 조립은 계속
+        code = 1
+    res = _load(pilot / "out" / rid / "result.json") or {}
+    f = next((it.get("file") for it in res.get("items", []) if it.get("file")), None)
+    if code != 0 or not f or not (pilot / "out" / rid / f).exists():
+        return None
+    hk["voice_file"], hk["voice_for"] = f"out/{rid}/{f}", voice
+    sc["hook"] = hk
+    _save(_script_path(pid), sc)
+    return hk["voice_file"]
+
+
 def still_clip(img: Path, sec: float, dst: Path, fade_out: bool = False) -> Path:
     """무료 컷(혼합 제작): 콘티 이미지를 sec초 동안 천천히 확대(1.00→1.08) — 720×1280·24fps·무음."""
     W, H, FPS = 720, 1280, 24
@@ -2356,6 +2528,38 @@ def make_video(pid: str, feedback: str = "", ask=None) -> dict:
 
 
 # ── 목록 파일 ─────────────────────────────────────────────────────────────
+# ── 시청함 % 기록(운영자 선택 2026-10-09) ────────────────────────────────────
+# 유튜브 스튜디오 → 콘텐츠 → 그 쇼츠 → 분석 → 「시청함 vs 넘김」의 '시청함' 비율을 편마다 적어 두고, 후킹 틀별로 비교한다
+# (지금은 유튜브 API로 이 숫자를 받지 않는다 · 왕게 편 18.6%). 3편뿐이라 결론이 아니라 가설 검증용.
+_OLD_HOOK_PATTERN = {"identity": "名前当て(옛)", "fact": "事実の問い(옛)"}
+
+
+def hook_pattern_label(sc: dict) -> str:
+    hk = sc.get("hook") or {}
+    if not hk:
+        return "후킹 없음(옛)"
+    return hk.get("pattern") or _OLD_HOOK_PATTERN.get(hk.get("type") or hook_type(hk.get("question_jp", "")), "")
+
+
+def save_viewed(pid: str, data: dict) -> dict:
+    st = load_status(pid)
+    raw = str(data.get("pct", "")).replace("%", "").strip()
+    try:
+        pct = round(float(raw), 1)
+    except ValueError:
+        raise SystemExit("시청함 %는 숫자로 적어 주세요(예: 18.6)")
+    if not 0 <= pct <= 100:
+        raise SystemExit("시청함 %는 0~100 사이여야 합니다")
+    sc = _load(_script_path(pid)) or {}
+    hk = sc.get("hook") or {}
+    up = st.setdefault("artifacts", {}).setdefault("upload", {})
+    up["viewed"] = {"pct": pct, "at": _now(), "note": str(data.get("note", "") or "").strip()[:120],
+                    "hook": {"line": hk.get("question_jp", ""), "pattern": hook_pattern_label(sc), "voice": bool(hk.get("voice_jp"))}}
+    _note(st, "upload", "viewed", f"시청함 {pct}% 기록 · 후킹 틀 {up['viewed']['hook']['pattern']}")
+    _save(status_path(pid), st)
+    return st
+
+
 def build_index() -> dict:
     items = []
     for p in sorted(PILOTS.glob("*/status.json")):
@@ -2368,7 +2572,8 @@ def build_index() -> dict:
                       "job": (st.get("jobs") or {}).get(cur), "created": st.get("created", ""),
                       "uploaded_at": (lambda r: r.get("publish_at") or r.get("at"))(                 # 예약이면 공개 시각 기준(주 2편 집계)
                           (((st.get("artifacts") or {}).get("upload") or {}).get("result") or {})),
-                      "stats": (((st.get("artifacts") or {}).get("upload") or {}).get("stats"))})
+                      "stats": (((st.get("artifacts") or {}).get("upload") or {}).get("stats")),
+                      "viewed": (((st.get("artifacts") or {}).get("upload") or {}).get("viewed"))})   # 시청함 %·후킹 틀
     idx = {"updated": _now(), "items": items}
     _save(PILOTS / "index.json", idx)
     return idx
@@ -2564,6 +2769,8 @@ def main(argv: list[str]) -> int:
         upload_meta(a[0])
     elif cmd == "save_meta":                                 # note = {"title_jp":..,"desc_jp":..,..}
         save_upload_meta(a[0], json.loads(memo(2) or "{}"))
+    elif cmd == "save_viewed":                               # note = {"pct": 18.6, "note": ".."} — 유튜브 스튜디오 '시청함 %'
+        save_viewed(a[0], json.loads(memo(2) or "{}"))
     elif cmd == "crosscheck":
         crosscheck(a[0])
     elif cmd == "apply_lines":

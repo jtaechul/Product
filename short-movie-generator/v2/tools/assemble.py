@@ -183,9 +183,16 @@ def _wrap_lines(text: str, f: ImageFont.FreeTypeFont, max_w: int) -> list[str]:
 HOOK_FONT = 128                # 후킹 글자 크기(운영자 지시 2026-09-30: 예전 64 → 2배 · 화면을 크게 덮게)
 
 
-def hook_png(question: str, out: Path) -> Path:
-    """후킹 질문 — 화면 가운데 위쪽을 크게 덮는 **빨간 글자만**(칩·자막 없음 · 운영자 확정).
-    글자 128px, 「、」에서 줄을 나눠 2~3줄. 어두운 테두리로 가독성."""
+HOOK_TOP = 0.12                # 새 후킹 글자 위치(화면 위쪽 · 유튜브 위쪽 버튼 아래 · 생물을 가리지 않게)
+KEY_RED = (232, 28, 28)
+
+
+def hook_png(question: str, out: Path, key: str | None = None) -> Path:
+    """후킹 글자. key=None 이면 옛 편 디자인(2026-09-30: 가운데 위쪽 빨간 글자 2~3줄).
+    ★key 가 있으면(후킹 개편 2026-10-09 · 운영자 선택) **흰 글자 + 검은 테두리, 핵심 단어(key)만 빨강 + 흰 테두리** ·
+    화면 위쪽(HOOK_TOP) · 「、」 자리에서만 줄바꿈(단어 중간 금지 · 최대 2줄) · 줄이 넘치면 글자 크기만 줄인다."""
+    if key is not None:
+        return _hook_png_line(question, out, key)
     check_glyphs(question, "후킹 질문")
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     size, max_w = HOOK_FONT, W - 60
@@ -215,6 +222,40 @@ def hook_png(question: str, out: Path) -> Path:
     return out
 
 
+def _hook_png_line(text: str, out: Path, key: str) -> Path:
+    from PIL import ImageFilter
+    check_glyphs(text, "후킹 문장")
+    lines = [p.strip() for p in text.replace(",", "、").split("、") if p.strip()] or [text]
+    size, max_w = HOOK_FONT, W - 70
+    while size > 64 and max(_font(size).getlength(x) for x in lines) > max_w:
+        size -= 4
+    f = _font(size)
+    lh = int(size * 1.22)                       # 줄 간격을 좁게(글꼴 기본 줄높이는 1.45배라 글자 덩어리가 화면 가운데까지 내려옴)
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(sh)
+    y = int(H * HOOK_TOP)
+    for ln in lines:
+        sd.text((int((W - f.getlength(ln)) / 2) + 5, y + 7), ln, font=f, fill=(0, 0, 0, 170), stroke_width=12, stroke_fill=(0, 0, 0, 170))
+        y += lh
+    im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(6)))
+    dr = ImageDraw.Draw(im)
+    y = int(H * HOOK_TOP)
+    for ln in lines:
+        x = (W - f.getlength(ln)) / 2
+        j = ln.find(key) if key else -1
+        parts = [(ln, False)] if j < 0 else [(ln[:j], False), (key, True), (ln[j + len(key):], False)]
+        for seg, red in parts:
+            if not seg:
+                continue
+            dr.text((int(x), y), seg, font=f, fill=(KEY_RED if red else (255, 255, 255)) + (255,), stroke_width=8,
+                    stroke_fill=(255, 255, 255, 255) if red else (0, 0, 0, 255))
+            x += f.getlength(seg)
+        y += lh
+    im.save(out)
+    return out
+
+
 def _italic(im: Image.Image) -> Image.Image:
     """학명은 이탤릭(하드룰) — 이탤릭 글꼴이 없어 글자 그림을 살짝 기울인다."""
     w, h = im.size
@@ -223,12 +264,12 @@ def _italic(im: Image.Image) -> Image.Image:
 
 
 def answer_png(question: str, answer: str, sci: str, out: Path, bg: Path | None = None, portrait: Path | None = None,
-               name: str = "") -> Path:
+               name: str = "", label: str = "正解") -> Path:
     """정답 카드(운영자 지시 2026-09-30 디자인 개선): 본편 마지막 화면을 어둡게·흐리게 깐 배경 위에
     작은 빨간 「正解」 라벨 → 큰 흰 이름 → 학명(이탤릭) → 가는 선 → 「チャンネル登録」 배지. 질문은 위쪽에 작게.
     name: 사실 질문 편(정답이 이름이 아님)일 때 정답 아래에 생물 이름을 한 줄 더(운영자 선택 2026-10-09 D)."""
     from PIL import ImageFilter
-    check_glyphs(question + answer + sci + name, "정답 카드")
+    check_glyphs(question + answer + sci + name + label, "정답 카드")
     if bg and Path(bg).exists():
         im = Image.open(bg).convert("RGB").resize((W, H)).filter(ImageFilter.GaussianBlur(10))
         im = Image.blend(im, Image.new("RGB", (W, H), NAVY), 0.62).convert("RGBA")
@@ -261,8 +302,8 @@ def answer_png(question: str, answer: str, sci: str, out: Path, bg: Path | None 
         f = _fit_font(question, 32, W - 120)
         dr.text((int((W - f.getlength(question)) / 2), top), question, font=f, fill=(170, 185, 200, 255))
         top += 60
-    # 「正解」 빨간 라벨
-    lab = "正解"
+    # 「正解」 빨간 라벨(후킹 개편 편은 이름 공개라 「この生き物は」)
+    lab = label or "正解"
     f = _font(30)
     tw = f.getlength(lab)
     a, d = f.getmetrics()
@@ -380,34 +421,75 @@ def best_hook_window(series: list[float | None], usable_s: float, sec: float = H
     return best
 
 
-def pick_hook(clip: Path, hook: dict, clip_s: float) -> dict:
-    """후킹 발췌 구간: 운영자가 시작 초를 직접 정했으면(at_by=operator) 그대로, 아니면 가장 많이 움직이는 2초를 자동 선택."""
-    hmax = max(0.0, clip_s - HOOK_S)
+def pick_hook(clip: Path, hook: dict, clip_s: float, sec: float = HOOK_S) -> dict:
+    """후킹 발췌 구간(길이 sec): 운영자가 시작 초를 직접 정했으면(at_by=operator) 그대로, 아니면 가장 많이 움직이는 구간을 자동 선택."""
+    hmax = max(0.0, clip_s - sec)
     series = motion_series(clip, dur=clip_s or None)
     if hook.get("at_by") == "operator" and hook.get("at") is not None:
         at = round(max(0.0, min(float(hook["at"]), hmax)), 2)
-        return {"at": at, "motion": window_motion(series, at), "by": "operator"}
-    at, m = best_hook_window(series, clip_s)
+        return {"at": at, "motion": window_motion(series, at, sec), "by": "operator"}
+    at, m = best_hook_window(series, clip_s, sec)
     return {"at": round(min(at, hmax), 2), "motion": m, "by": "auto"}
 
 
-def build_hook(clip: Path, at: float, question: str, t: Path) -> Path:
-    """후킹 2초: 본편 컷(clip)의 at초부터 HOOK_S초를 그대로 발췌 + 빨간 질문 글자(0.2초부터). 자막·나레이션 없음."""
+# ★0초부터 목소리(후킹 개편 2026-10-09): 목소리가 길면 후킹을 최대 3초까지 늘린다(말이 잘리지 않게)
+HOOK_MAX_S = 3.0
+VOICE_LEAD_S = 0.1
+
+
+def hook_seconds(voice: Path | None) -> float:
+    if not voice:
+        return HOOK_S
+    return round(min(HOOK_MAX_S, max(HOOK_S, VOICE_LEAD_S + _dur(voice) + 0.3)), 2)
+
+
+def _loudnorm_2pass(src: Path, dst: Path) -> Path:
+    """짧은 목소리를 -16 LUFS 로 정확히 맞춘다(2번 재기 · 선형). 한 번에 하면 짧은 소리는 1~2LU 크게 나온다(실측 -14.9)."""
+    er = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(src), "-af", "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json",
+                         "-f", "null", "-"], capture_output=True, text=True).stderr
+    try:
+        m = json.loads(er[er.rindex("{"):er.rindex("}") + 1])
+        af = (f"loudnorm=I=-16:TP=-1.5:LRA=11:measured_I={m['input_i']}:measured_TP={m['input_tp']}:"
+              f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']}:linear=true")
+    except (ValueError, KeyError):
+        af = "loudnorm=I=-16:TP=-1.5:LRA=11"
+    _run(["-i", str(src), "-af", af + ",aresample=48000", "-ac", "1", str(dst)])
+    return dst
+
+
+def _voiced_video(src_v: Path, voice: Path, out: Path, sec: float) -> Path:
+    """후킹 목소리를 0.1초부터 깐 mp4(-16 LUFS · 스테레오 48k) — 본편과 concat 할 수 있는 같은 규격."""
+    vn = _loudnorm_2pass(voice, out.with_name("hook_voice_norm.wav"))
+    _run(["-i", str(src_v), "-i", str(vn), "-filter_complex",
+          f"[0:v]fps={FPS},setsar=1[v];[1:a]aresample=48000,adelay={int(VOICE_LEAD_S * 1000)}:all=1,"
+          f"apad=whole_dur={sec},atrim=0:{sec},asetpts=PTS-STARTPTS[a]",
+          "-map", "[v]", "-map", "[a]", "-t", f"{sec}", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
+          "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", str(out)])
+    return out
+
+
+def build_hook(clip: Path, at: float, question: str, t: Path, key: str | None = None, voice: Path | None = None,
+               sec: float = HOOK_S) -> Path:
+    """후킹: 본편 컷(clip)의 at초부터 sec초를 그대로 발췌 + 글자.
+    옛 편(key=None): 빨간 질문 0.2초부터 · 무음.  ★개편 편: 흰 글자+빨간 핵심 단어 0초부터 + 목소리(voice) 0.1초부터."""
     ex = t / "hook_ex.mp4"
     _run(["-ss", f"{at:.2f}", "-i", str(clip), "-vf",
           f"scale={W + 2 * EDGE}:{(H + 2 * EDGE * H // W) // 2 * 2}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1,fps={FPS},"
-          f"tpad=stop_mode=clone:stop_duration={HOOK_S}", "-t", f"{HOOK_S}", "-an", "-c:v", "libx264", "-crf", "16",
+          f"tpad=stop_mode=clone:stop_duration={sec}", "-t", f"{sec}", "-an", "-c:v", "libx264", "-crf", "16",
           "-pix_fmt", "yuv420p", str(ex)])
-    lab = hook_png(question, t / "hook_q.png")
+    lab = hook_png(question, t / "hook_q.png", key=key)
     ov = t / "hook_v.mp4"
-    _run(["-i", str(ex), "-i", str(lab), "-filter_complex", "[0:v][1:v]overlay=0:0:enable='gte(t,0.2)'[v]",
+    start = "0" if key is not None else "0.2"
+    _run(["-i", str(ex), "-i", str(lab), "-filter_complex", f"[0:v][1:v]overlay=0:0:enable='gte(t,{start})'[v]",
           "-map", "[v]", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", str(ov)])
-    return _silent_video(ov, t / "hook.mp4", HOOK_S)
+    if voice:
+        return _voiced_video(ov, voice, t / "hook.mp4", sec)
+    return _silent_video(ov, t / "hook.mp4", sec)
 
 
 def build_answer(question: str, answer: str, sci: str, t: Path, bg: Path | None = None, portrait: Path | None = None,
-                 name: str = "") -> Path:
-    png = answer_png(question, answer, sci, t / "answer.png", bg=bg, portrait=portrait, name=name)
+                 name: str = "", label: str = "正解") -> Path:
+    png = answer_png(question, answer, sci, t / "answer.png", bg=bg, portrait=portrait, name=name, label=label)
     raw = t / "answer_raw.mp4"
     _run(["-loop", "1", "-i", str(png), "-t", f"{ANSWER_S}", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", str(raw)])
     return _silent_video(raw, t / "answer.mp4", ANSWER_S, fade_in=0.4)
@@ -524,15 +606,21 @@ def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, override
         if hook:
             n = int(hook["cut"])
             clip = Path((overrides or {}).get(n) or P / "out" / clips_id / f"c{n:02d}.mp4")
-            pick = pick_hook(clip, hook, float(cuts[n].get("sec") or 0))
+            line = hook.get("type") == "line"                # 후킹 개편(2026-10-09) 편: 흰 글자 한 줄 + 0초 목소리
+            vf = hook.get("voice_file") if line else None
+            voice = P / vf if vf and (P / vf).exists() else None
+            hsec = hook_seconds(voice)
+            pick = pick_hook(clip, hook, float(cuts[n].get("sec") or 0), sec=hsec)
             at = pick["at"]
-            info["hook"] = {"cut": n, **pick}
+            info["hook"] = {"cut": n, **pick, "len": hsec, "voice": bool(voice)}
             lastf = t / "last_frame.jpg"
             _run(["-sseof", "-0.3", "-i", str(t / "body_v.mp4"), "-frames:v", "1", "-q:v", "2", str(lastf)])
-            segs = [build_hook(clip, at, hook["question_jp"], t), t / "body.mp4",
+            segs = [build_hook(clip, at, hook["question_jp"], t, key=(hook.get("key_jp") or "") if line else None,
+                               voice=voice, sec=hsec), t / "body.mp4",
                     build_answer(hook.get("question_jp", ""), hook["answer_jp"], sc.get("subject", {}).get("scientific_name", ""), t,
                                  bg=lastf if lastf.exists() else None, portrait=_portrait(P),
-                                 name=sc.get("subject", {}).get("jp_name", "") if hook.get("type") == "fact" else "")]
+                                 name=sc.get("subject", {}).get("jp_name", "") if hook.get("type") == "fact" else "",
+                                 label="この生き物は" if line else "正解")]
         elif ending:
             _run(["-i", ending, "-vf", f"scale={W}:{H},setsar=1,fps={FPS}",
                   "-af", "loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000", "-c:v", "libx264", "-crf", "18",

@@ -63,7 +63,7 @@
 - **상태 파일 하나**: 편마다 `v2/pilots/<id>/status.json`(단계 상태 locked/working/review/revise/approved · 기록 · 결과물 경로 ·
   자동 검사 · 비용). 목록 `v2/pilots/index.json`, 주제 후보 `v2/topics.json`(`admin.py topics`로 갱신).
 - **버튼 = 워크플로**: 페이지는 파일을 직접 쓰지 않는다 → `v2-admin.yml` 디스패치 → `v2/tools/admin.py`
-  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·redo_panel·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
+  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·redo_panel·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta·save_viewed) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
   `v2-admin.yml`은 **main에도** 둔다(디스패치 워크플로 규칙 · 하드룰 #15③).
 - **★컷별 대사 수정(운영자 확정 2026-09-28) — 대사를 고쳐도 영상은 자동으로 바뀌지 않는다**:
   대본 카드의 컷마다 「대사 수정」 → 일본어·한국어(·읽기, 비우면 Janome 자동) 입력 → 「이 대사로 저장」(`admin.py edit_line`)은
@@ -326,6 +326,8 @@
   회귀: `test_nickname_is_not_drawn_as_land_animal` · `test_redo_panel_redraws_one_still_cut_and_reassembles`.
 
 ### ★후킹 2초 + 정답 카드 = 공용 엔딩 대체 (운영자 확정 2026-09-30 · `assemble.py` · `admin.write_script/edit_hook`)
+> ★**2026-10-09 후킹 개편(운영자 선택)부터 새 편은 아래 「후킹 개편」 규칙**을 따른다(0초 목소리 · 흰 글자 한 줄 · 이름 퀴즈 금지 ·
+> 끝 카드 「この生き物は」). 이 절의 빨간 질문·무음·「正解」 카드는 **`hook.type`이 `line`이 아닌 옛 편**(대왕구족충·닭괴물·왕게)에만 적용.
 - **공용 댓글 유도 엔딩(약 10초)은 뺀다** — 너무 길다(운영자). 마지막 본편 컷이 어둠으로 사라지면 본편은 끝. 고정 댓글
   「次に見たい深海の生き物は？」은 그대로 유지(업로드 카드). 아래 「엔딩(운영자 확정)」의 공용 엔딩 항목은 `hook`이 없는 옛 편에만 적용.
 - **후킹 씬(맨 앞 0~2초)**: **새로 만들지 않고** 완성된 본편에서 가장 놀라운 2초를 그대로 발췌해 맨 앞에 붙인다(추가 비용 0).
@@ -412,7 +414,8 @@
 - **D. 핵심 사실 하나(비용 0)**: 대본 JSON에 **`core`(F번호 하나)** — 후킹 질문·유튜브 제목·마지막 3컷 중 하나가 **같은 사실**을
   다룬다(`validate_core`: 후킹 컷의 근거에 core 포함 · 마지막 3컷 중 하나에 core). **정체 질문(「…この生き物は？」)은 생김새로 정답이 안
   보이는 생물만** — 정답·和名에 カニ/ガニ/ヤドカリ/エビ/イカ/タコ/ダコ/サメ/ザメ/クラゲ/ヒトデ/ウニ가 있으면 불통과 → **사실 질문**
-  (예 「エラの中に、何を隠している？」 · 정답 14자 이내)으로(`hook_type`·`_IDENTITY_Q`·`_FAMILIAR`). 사실 질문 편은 정답 카드에
+  (예 「エラの中に、何を隠している？」 · 정답 14자 이내)으로(`hook_type`·`_IDENTITY_Q`·`_FAMILIAR`) — ★같은 날 「후킹 개편」으로 새 편은
+  이름 맞히기 자체를 쓰지 않는다(이 검사는 옛 편 후킹을 고칠 때만 쓰임). 사실 질문 편은 정답 카드에
   **생물 이름을 한 줄 더**(`answer_png(name=)`) · 종명 태그는 정답 대신 和名/학명. **제목 본문에 후킹 정답 금지(정체 질문 편은 和名도)**
   (`title_spoilers` · `upload_meta`가 최대 3번 다시 쓰게 함). ※ **제목 끝 종명 해시태그(종명 + #深海)는 채널 규칙대로 유지**(검색용 ·
   2026-09-28 확정 규칙) — 정체 질문은 이제 생김새로 모르는 생물에만 쓰므로 해시태그 이름만으로는 정체가 드러나지 않는다(운영자에게 보고).
@@ -422,6 +425,38 @@
   `test_storyboard_opening_cuts_must_move`·`test_script_cut1_must_not_open_with_history`·`test_core_fact_ties_hook_and_ending`·
   `test_identity_question_banned_when_looks_give_it_away`·`test_title_never_contains_the_answer`·`test_answer_card_shows_name_*`) ·
   `v2_admin_check.mjs`(motion_rows_shown·hook_auto_window_shown·core_fact_shown·approve_warns_low_motion·approve_no_warn_when_moving).
+
+### ★★후킹 개편 — 0초 목소리 + 한눈에 읽히는 사실 한 줄 (운영자 선택 2026-10-09 · 4개 + 기록 칸 모두 채택)
+- **분석 근거(실측)**: ① 닭괴물·왕게 편 **첫 2초 완전 무음(-91dB)** — 가장 잘 된 대왕구족충 편만 0초부터 나레이션
+  ② 질문이 **22자(왕게)·17자(닭괴물)인데 화면엔 1.8초만**(0.2초부터) — 대학생 평균 읽기 1분 653자(小林·川嶋 2018)로도 22자는 2초,
+  시청자 71%가 45세 이상(8월 채널 통계) ③ 「この生き物は？」 **이름 맞히기** — 모르는 이름은 궁금하지 않고, 게처럼 생기면 답이 보임
+  (잘 된 제목 「5年以上も絶食した」「頭も骨もない」, 예전 최고 「正体はヤドカリ」는 모두 **믿기 힘든 사실 한 줄**)
+  ④ 빨간 글자 3줄이 **생물(물고기·아가미)을 가림** · 「投 / げ捨てる」 **단어 중간 줄바꿈** · 0.2초 전 첫 장면엔 글자 없음.
+  업계 가이드(공식 연구 아님): 쇼츠 피드 '시청함' 목표 70~80%(왕게 18.6%) · 무음으로 보는 사람이 많아 첫 글자가 혼자 뜻을 전해야 함 ·
+  흰 굵은 글자+검은 테두리, 강조어만 색 · 화면 위아래 끝은 유튜브 버튼에 가림. → **근거는 3편 + 가이드라 가설** — 다음 편들의 시청함 %로 확인.
+- **① 0초부터 목소리**: 후킹 한 줄(`hook.voice_jp`)을 **나레이션과 같은 목소리**로 읽어 0.1초부터 깐다(`admin.ensure_hook_voice` → `gen_tts`
+  1건 약 $0.001 · `out/<rid>_hook_tts/hook.wav` · 같은 문장이면 다시 안 만듦). 음량은 **2번 재기 선형 정규화**(`assemble._loudnorm_2pass` —
+  한 번에 하면 짧은 소리가 1~2LU 크게 나옴 · 실측 후킹 -16.7 / 본편 -16.2 LUFS). 목소리가 길면 후킹을 **최대 3초**까지 늘린다
+  (`hook_seconds` · 2.6초 넘는 목소리 문장은 대본 검사에서 거절). 합성 실패해도 조립은 계속하고 자동 검사 「맨 앞 목소리」 **불통과** +
+  승인 확인창 경고. ※ 2026-09-30 「후킹은 나레이션 없음」 규칙을 **새 편에서 대체**.
+- **② 한눈에 읽히는 글자**: 화면 문장(`question_jp`) **「、」 빼고 12자 이내 · 2줄까지 · 「、」 자리에서만 줄바꿈(1줄 8자 이내 · 단어 중간 금지)** ·
+  **0초부터 표시** · **화면 위쪽**(위에서 12%부터 · 생물을 가리지 않게 · 유튜브 위쪽 버튼 아래) · 줄이 넘치면 글자 크기만 줄임(128→최소 64px).
+- **③ 이름 맞히기 금지 → 「믿기 힘든 사실 한 줄」**: 핵심 사실(core)을 5가지 틀(`HOOK_PATTERNS` = 正体の反転·常識破り·異常な行動·欠けた体·
+  極端な数字)로 **후보 3개** — 각 후보 = 화면 문장 `text_jp` + 빨간 단어 `key_jp`(6자 이내 · 문장 안에 그대로) + 0초 목소리 `voice_jp`(빨간 단어 포함 ·
+  2.6초 이내) + `pattern` + `text_ko`. 코드 검사 `validate_hook_line`/`validate_hook_candidates`: 길이·줄·이름 맞히기·이름(정답·和名과 그 줄기)·
+  사실에 없는 숫자·호소 문구. 기본은 1번 후보, **대본 카드에서 운영자가 「이 문장으로 바꾸기」로 고른다**(`edit_hook {"pick": i}` · `hook.chosen`) ·
+  「후킹 직접 고치기」로 문장·빨간 단어·목소리 수정. 「〜と疑われている」 수준 사실은 「？」(예 「正体は、ヤドカリ？」).
+  **끝 카드는 「正解」 대신 「この生き物は」 + 이름**(이름 퀴즈가 아니므로). **제목은 후킹 한 줄로 시작**(`upload_meta` SAME LINE ·
+  `_title_key`로 비교 · 이름 금지는 그대로 · 종명은 제목 끝 해시태그).
+- **④ 글자 디자인**: **흰 글자 + 검은 테두리, 핵심 단어만 빨강(+흰 테두리)** · 부드러운 그림자(`assemble._hook_png_line` · `hook_png(key=)`).
+  ※ 2026-09-30 「빨간 글자 + 흰 테두리」(운영자 선택)는 **옛 편에만** 유지(`key=None`).
+- **⑤ 시청함 % 기록**: 업로드 카드(업로드 뒤)에 「시청함 % 저장」(`admin.py save_viewed` · `artifacts.upload.viewed` = pct·후킹 틀·문장·목소리 여부) ·
+  목록 화면 「첫 화면 성적」 카드가 편별 % + **후킹 틀별 평균**(`index.json`의 `viewed`). 숫자는 유튜브 스튜디오 → 분석 → 「시청함 vs 넘김」에서
+  운영자가 옮겨 적는다(API로 안 받음). 왕게 편 18.6%를 첫 기록으로 넣음(옛 틀 「名前当て(옛)」).
+- 회귀: `tests/test_v2_admin.py`(`test_hook_line_rules`·`test_write_script_candidates_and_pick`·`test_hook_line_png_white_text_red_key_top`·
+  `test_assemble_line_hook_speaks_from_zero`(맨 앞 2초 무음 아님 · 0초 첫 장면에 흰 글자)·`test_answer_card_label_for_line_hook`·
+  `test_ensure_hook_voice_once_per_sentence`·`test_save_viewed_records_pattern_and_index`) · `v2_admin_check.mjs`(hook_line_shown·hook_pick_*·
+  hook_editor_has_voice_fields·viewed_box_shown·viewed_save_dispatch·viewed_list_card).
 
 ### 비용 (한 편 기준 · 2026-10 혼합 제작)
 | 항목 | 금액 |

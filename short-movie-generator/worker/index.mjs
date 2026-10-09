@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-09-1 (첫 2초 자동 선택 · 앞 15초 움직임 · 핵심 사실 하나)";
+const BUILD="v2026-10-09-2 (후킹 개편: 0초 목소리 · 12자 한 줄 · 후보 3개 · 시청함 % 기록)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2464,6 +2464,25 @@ function v2statsHTML(sv){
     '<div class="cfact">조회 <b>'+sv.views.toLocaleString()+'</b> · 평균 시청 <b>'+(m?m+"분 ":"")+s2+'초</b> ('+sv.avg_view_pct.toFixed(0)+'%) · 시청 '+(sv.minutes/60).toFixed(1)+'시간</div>'+
     '<div class="cfact">구독 +<b>'+sv.subs+'</b> (조회 1,000회당 '+sv.subs_per_1k+'명) · 좋아요 '+sv.likes+' ('+sv.like_rate+'%) · 댓글 '+sv.comments+'</div>';
 }
+// ★시청함 % 기록(운영자 선택 2026-10-09) — 유튜브 스튜디오 숫자를 편마다 적어 후킹 틀별로 비교
+function v2viewedHTML(vw){
+  return '<div class="sect">첫 화면 성적 — 시청함 % 기록</div>'+
+    (vw?'<div class="cfact">기록: 시청함 <b class="'+(vw.pct>=70?"ok":(vw.pct>=50?"warn":"err"))+'">'+esc(vw.pct)+'%</b>'+
+      (((vw.hook||{}).pattern)?' · 후킹 틀 '+esc(vw.hook.pattern):'')+' · '+v2when(vw.at)+'</div>':'')+
+    '<div class="hint" style="margin-top:4px">유튜브 스튜디오 → 콘텐츠 → 이 쇼츠 → 분석 → 「시청함 vs 넘김」의 <b>시청함</b> 숫자를 적어 주세요(업로드 2~3일 뒤). 업계 가이드 목표는 70~80%입니다.</div>'+
+    '<div class="btnrow"><input id="vw_pct" type="number" step="0.1" min="0" max="100" inputmode="decimal" placeholder="예: 18.6" value="'+esc(vw?vw.pct:"")+'">'+
+    '<button class="btn save" id="vwsave">시청함 % 저장</button></div>';
+}
+function v2viewedCard(items){
+  const vw=items.filter(x=>x.viewed&&x.viewed.pct!=null);
+  if(!vw.length)return '';
+  const by={};vw.forEach(x=>{const k=((x.viewed.hook||{}).pattern)||"?";(by[k]=by[k]||[]).push(+x.viewed.pct);});
+  return '<div class="card"><span class="lbl">첫 화면 성적 — 시청함 % (업계 목표 70~80%)</span>'+
+    vw.map(x=>'<div class="cfact">'+esc(x.name_ko||x.id)+' · <b class="'+(x.viewed.pct>=70?"ok":(x.viewed.pct>=50?"warn":"err"))+'">'+esc(x.viewed.pct)+'%</b>'+
+      (((x.viewed.hook||{}).pattern)?' · '+esc(x.viewed.hook.pattern):'')+(((x.viewed.hook||{}).line)?' 「'+esc(x.viewed.hook.line)+'」':'')+'</div>').join("")+
+    '<div class="sect">후킹 틀별 평균</div>'+Object.entries(by).map(([k,v])=>'<div class="cfact">'+esc(k)+': <b>'+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1)+'%</b> ('+v.length+'편)</div>').join("")+
+    '<div class="hint">편 수가 적을 때는 참고만 하세요. 기록은 각 편 업로드 카드에서 합니다.</div></div>';
+}
 // ── 영상 목록(/) ──
 async function renderV2List(){
   view().innerHTML='<div class="banner" id="msg"></div><div class="card"><span class="lbl">영상 목록</span><div class="hint">불러오는 중…</div></div>';
@@ -2482,7 +2501,7 @@ async function renderV2List(){
   html+='<div class="card"><span class="lbl">업로드 주기 · 실적</span>'+
     '<div class="cfact">최근 7일 업로드 <b class="'+(wk>=V2_WEEKLY_TARGET?"ok":"err")+'">'+wk+'편</b> / 목표 주 '+V2_WEEKLY_TARGET+'편'+(wk<V2_WEEKLY_TARGET?' — '+(V2_WEEKLY_TARGET-wk)+'편 더 올려야 합니다':'')+'</div>'+
     (tot?'<div class="cfact">업로드한 편 합계: 조회 '+tot.toLocaleString()+' · 구독 +'+subs+'</div>':'')+
-    '<button class="btn" id="v2stats" style="width:100%;margin-top:8px">유튜브 실적 새로고침 (무료)</button></div>';
+    '<button class="btn" id="v2stats" style="width:100%;margin-top:8px">유튜브 실적 새로고침 (무료)</button></div>'+v2viewedCard(items);
   groups.forEach(([title,fn])=>{
     const g=items.filter(fn);
     html+='<div class="card"><span class="lbl">'+esc(title)+' ('+g.length+')</span>'+
@@ -2577,7 +2596,7 @@ function v2stageBody(st,stage){
   if(stage==="video"){
     if(!a.final)return '<div class="hint">완성본이 나오면 이 칸에 보입니다.</div>';
     const ck=st.checks||{};
-    const rows=[["subtitle_font","자막 글꼴",""],["screen_text","화면 글자(주석·질문)",""],["hook_motion","맨 앞 2초 움직임",""],["front_motion","앞 15초 움직임",""],
+    const rows=[["subtitle_font","자막 글꼴",""],["screen_text","화면 글자(주석·질문)",""],["hook_voice","맨 앞 목소리",""],["hook_motion","맨 앞 2초 움직임",""],["front_motion","앞 15초 움직임",""],
                 ["white_edge_px","가장자리 흰 줄","px"],["loudness_lufs","음량","LUFS"],["music","음악 없음",""]]
       .filter(([k])=>ck[k]).map(([k,lab,u])=>'<div class="cfact"><span class="'+(ck[k].ok?"ok":(ck[k].warn?"warn":"err"))+'">'+(ck[k].ok?"통과":(ck[k].warn?"주의":"불통과"))+'</span> '+esc(lab)+
         (ck[k].value!=null?(' — '+esc(ck[k].value)+(u?(" "+u):"")):"")+' <span style="opacity:.6">('+esc(ck[k].rule||"")+')</span></div>').join("");
@@ -2607,7 +2626,7 @@ function v2stageBody(st,stage){
       '<div class="cfact"><span class="ok">업로드 완료</span> ('+esc(V2_PV[res.privacy]||res.privacy||"")+
         (res.category?' · '+esc(V2_CAT[res.category]||res.category):'')+') · <a href="'+esc(res.url)+'" target="_blank">유튜브에서 보기</a></div>'+
       (res.playlist?'<div class="cfact">재생목록 「深海の謎」에 추가됨</div>':(res.playlist_error?'<div class="cfact warn">재생목록 추가 실패 — '+esc(res.playlist_error)+'</div>':''))+
-      v2statsHTML(a.stats)+
+      v2statsHTML(a.stats)+v2viewedHTML(a.viewed)+
       v2dlHTML("u")+
       '<div class="sect">인스타그램 등에 붙여넣기 — 복사</div>'+
       v2copyBox("제목 (일본어)",m.title_jp,"cp_tj")+v2copyBox("설명 (일본어 · 해시태그 포함)",m.desc_jp,"cp_dj")+
@@ -2692,11 +2711,48 @@ function v2factsHTML(c){
 function v2motionWarn(ck){
   const w=[["hook_motion","맨 앞 2초"],["front_motion","앞 15초"]].filter(([k])=>ck[k]&&ck[k].ok===false)
     .map(([k,lab])=>lab+" 움직임 "+ck[k].value);
+  if(ck.hook_voice&&ck.hook_voice.ok===false)w.unshift("맨 앞 목소리가 들어가지 않았습니다(무음)");
   return w.length?("[주의] "+w.join(", ")+" — 기준보다 적습니다. 첫 화면이 멈춰 보이면 시청자가 바로 넘깁니다(왕게 편 81%).\\n\\n"):"";
 }
 // ── 후킹 2초 + 정답 카드(운영자 확정 2026-09-30 · 공용 엔딩 대체) ──
+function v2hookKey(text,key){                     // 화면 문장에서 핵심 단어만 빨강(영상과 같은 모양)
+  const t=String(text||""), k=String(key||""), i=k?t.indexOf(k):-1;
+  return i<0?esc(t):esc(t.slice(0,i))+'<b style="color:var(--rd)">'+esc(k)+'</b>'+esc(t.slice(i+k.length));
+}
+function v2hookAtLine(h){
+  return '<div class="cfact">발췌: <b>'+esc(h.cut)+'번 컷</b> '+(h.at_by==="operator"?(esc(h.at)+'초부터 (운영자 지정)'):
+      (h.at_by==="auto"?(esc(h.at)+'초부터 (가장 많이 움직이는 구간 자동 선택'+(h.motion!=null?' · 움직임 '+esc(h.motion):'')+')'):'가장 많이 움직이는 구간 (조립 때 자동 선택)'))+
+      ' · 본편 그대로 · 추가 비용 없음</div>';
+}
+// ★후킹 개편(운영자 선택 2026-10-09): 0초부터 목소리 + 흰 글자 한 줄(핵심 단어만 빨강) · 후보 3개 중 고르기 · 끝 카드 = 이름 공개
+function v2hookLineHTML(a){
+  const h=a.hook, cuts=a.cuts||[], core=a.core, cands=h.candidates||[], ch=+(h.chosen||0);
+  return '<div class="sect">맨 앞 후킹 — 0초부터 목소리 + 큰 글자 한 줄 · 마지막 이름 카드</div>'+
+    (core?'<div class="cfact">핵심 사실(후킹·제목·마지막 3컷이 함께 다룸): <b>'+esc(core.id)+'</b> '+esc(core.fact||"")+'</div>':'')+
+    '<div class="cfact">화면 문장: <b style="font-size:17px">'+v2hookKey(h.question_jp,h.key_jp)+'</b> <small>'+esc(h.question_ko||"")+(h.pattern?' · 틀 '+esc(h.pattern):'')+'</small></div>'+
+    '<div class="cfact">0초 목소리: 「'+esc(h.voice_jp||"")+'」</div>'+v2hookAtLine(h)+
+    '<div class="cfact">끝 카드: この生き物は <b>'+esc(h.answer_jp||"")+'</b> <small>'+esc(h.answer_ko||"")+'</small> + 학명 + 구독 배지</div>'+
+    (cands.length?'<div class="sect">후보 '+cands.length+'개 — 대본 승인 전에 고르세요</div>'+cands.map((c,i)=>'<div class="cfact">'+
+      (i===ch?'<span class="ok">지금 선택</span> ':'')+'<b>'+v2hookKey(c.text_jp,c.key_jp)+'</b> <small>'+esc(c.text_ko||"")+(c.pattern?' · '+esc(c.pattern):'')+'</small>'+
+      '<br><small>목소리: 「'+esc(c.voice_jp||"")+'」</small>'+
+      (i===ch?'':'<button class="btn" data-hkpick="'+i+'" style="width:100%;margin-top:6px">이 문장으로 바꾸기</button>')+'</div>').join(""):'')+
+    (a.hook_pending?'<div class="cfact warn">수정됨 · 영상엔 아직 미반영 — 영상 카드의 「완성본 다시 조립」을 누르면 반영(목소리 약 $0.001)</div>':'')+
+    '<button class="btn v2edit" id="hkopen">후킹 직접 고치기</button>'+
+    '<div class="v2ed" id="hked" style="display:none">'+
+      '<span class="lbl">발췌할 컷</span><select id="hk_cut">'+cuts.map(c=>'<option value="'+c.cut+'"'+(String(c.cut)===String(h.cut)?' selected':'')+'>'+c.cut+'번 · '+esc(c.sec||"")+'초 · '+esc(String(c.ko||"").slice(0,22))+'</option>').join("")+'</select>'+
+      '<span class="lbl">발췌 시작(초) — 비워 두면 가장 많이 움직이는 구간을 자동 선택 · 숫자를 바꾸면 그 초로 고정</span><input id="hk_at" type="number" step="0.5" min="0" value="'+esc(h.at==null||h.at_by!=="operator"?"":h.at)+'">'+
+      '<span class="lbl">화면 문장(일본어 · 「、」 빼고 12자 이내 · 줄을 바꿀 곳에만 「、」)</span><input id="hk_qj" value="'+esc(h.question_jp||"")+'">'+
+      '<span class="lbl">빨간 단어(화면 문장 안에 그대로 있는 말 · 6자 이내)</span><input id="hk_kj" value="'+esc(h.key_jp||"")+'">'+
+      '<span class="lbl">0초 목소리 문장(2.5초 이내 · 빨간 단어 포함 · 이름 금지)</span><input id="hk_vj" value="'+esc(h.voice_jp||"")+'">'+
+      '<span class="lbl">화면 문장(한국어 · 확인용)</span><input id="hk_qk" value="'+esc(h.question_ko||"")+'">'+
+      '<span class="lbl">끝 카드 이름(일본어)</span><input id="hk_aj" value="'+esc(h.answer_jp||"")+'">'+
+      '<span class="lbl">끝 카드 이름(한국어 · 확인용)</span><input id="hk_ak" value="'+esc(h.answer_ko||"")+'">'+
+      '<button class="btn save" id="hksave" style="width:100%;margin-top:8px">후킹 저장 (영상은 다시 조립할 때 반영)</button>'+
+    '</div>';
+}
 function v2hookHTML(a){
   const h=a.hook;if(!h)return "";
+  if(h.type==="line")return v2hookLineHTML(a);
   const cuts=a.cuts||[];
   const core=a.core;
   return '<div class="sect">맨 앞 2초 후킹 + 마지막 정답 카드 — 공용 엔딩 대신</div>'+
@@ -2864,8 +2920,21 @@ async function renderV2Episode(pid){
   const hs=$("#hksave");if(hs)hs.onclick=async()=>{
     const d={cut:($("#hk_cut")||{}).value,at:($("#hk_at")||{}).value,question_jp:(($("#hk_qj")||{}).value||"").trim(),question_ko:(($("#hk_qk")||{}).value||"").trim(),
              answer_jp:(($("#hk_aj")||{}).value||"").trim(),answer_ko:(($("#hk_ak")||{}).value||"").trim()};
-    if(!d.question_jp||!d.answer_jp){banner("질문과 정답 이름을 채워 주세요.","err");return;}
+    const kj=$("#hk_kj"), vj=$("#hk_vj");
+    if(kj)d.key_jp=(kj.value||"").trim();
+    if(vj)d.voice_jp=(vj.value||"").trim();
+    if(!d.question_jp||!d.answer_jp){banner(kj?"화면 문장과 끝 카드 이름을 채워 주세요.":"질문과 정답 이름을 채워 주세요.","err");return;}
     if(await v2do("edit_hook",pid,"_",JSON.stringify(d),hs))setTimeout(()=>renderV2Episode(pid),60000);
+  };
+  document.querySelectorAll("[data-hkpick]").forEach(b=>b.onclick=async()=>{
+    const i=+b.dataset.hkpick;
+    if(!confirm("후킹 문장을 후보 "+(i+1)+"번으로 바꿀까요? 대본만 바뀌고, 영상이 이미 있으면 「완성본 다시 조립」 때 반영됩니다."))return;
+    if(await v2do("edit_hook",pid,"_",JSON.stringify({pick:i}),b))setTimeout(()=>renderV2Episode(pid),60000);
+  });
+  const vws=$("#vwsave");if(vws)vws.onclick=async()=>{
+    const n=parseFloat(((($("#vw_pct")||{}).value)||"").trim());
+    if(!(n>=0&&n<=100)){banner("시청함 %는 0~100 사이 숫자로 적어 주세요(예: 18.6).","err");return;}
+    if(await v2do("save_viewed",pid,"_",JSON.stringify({pct:n}),vws))setTimeout(()=>renderV2Episode(pid),60000);
   };
   const cc=$("#v2cc");if(cc)cc.onclick=async()=>{if(confirm("대본 전체를 AI로 교차 검사할까요? (약 $0.02 · 1~2분)"))await v2do("crosscheck",pid,"","",cc);};
   document.querySelectorAll("[data-usesug]").forEach(b=>b.onclick=()=>{
