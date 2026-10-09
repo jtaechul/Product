@@ -1,0 +1,1654 @@
+{
+ "nonce": "2026-10-09-d1",
+ "theme": "실내 온수풀·온천",
+ "region": "강원",
+ "month": "2026-11",
+ "keywords": [
+  "온천",
+  "온수풀",
+  "온수 풀",
+  "실내수영장",
+  "실내 수영장",
+  "스파",
+  "사우나",
+  "자쿠지",
+  "히노키",
+  "노천탕",
+  "찜질"
+ ],
+ "ran_at": "2026-10-09",
+ "layers": {
+  "gemini": "20곳",
+  "naver": "23곳 · 네이버 44회 호출 · 오류 0",
+  "tourapi": "지역 숙박 253건 중 테마 시설 10곳"
+ },
+ "candidates": [
+  {
+   "name": "덕구온천콘도",
+   "city": "삼척",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '삼척 온천 호텔' · 숙박>호텔"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 7,
+    "theme_hits": [
+     "온천"
+    ],
+    "min_price": 64800.0,
+    "room_names": [
+     "별장온천텔 더블룸",
+     "스탠다드 트윈룸",
+     "C2 오션뷰D",
+     "별관201호",
+     "일반 201호",
+     "콘도 스탠다드 더블 일출 하프오션뷰(썬크루즈)"
+    ]
+   },
+   "photos": {
+    "usable": 7,
+    "water": 3,
+    "room": 1,
+    "special": 3,
+    "skip": 0,
+    "people": 1,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=81629141&vendorItemId=3687476119&itemId=590700525&traceid=V0-153-8d9dfbac9819c051&requestid=20261010002354773070956833&token=31850C%7CGM&pt=0&slot=1",
+   "score": 7,
+   "reasons": [
+    "객실 이름: 온천",
+    "물놀이 사진 3장",
+    "쓸 수 있는 사진 7장",
+    "객실·특별 공간 사진 있음"
+   ]
+  },
+  {
+   "name": "양양 더앤리조트",
+   "city": "양양군",
+   "sources": [
+    "gemini",
+    "naver"
+   ],
+   "why": [
+    "천연 온천수로 채워지는 온천 가든온 스파 및 온수 수영장 보유",
+    "네이버 '양양 온천 호텔' · 숙박>호텔",
+    "네이버 '양양 스파 호텔' · 숙박>호텔"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [],
+    "min_price": 68000.0,
+    "room_names": [
+     "디럭스더블",
+     "패밀리 스위트 온돌",
+     "Premier Suite",
+     "패밀리 스위트",
+     "디럭스 더블룸",
+     "디럭스 더블"
+    ]
+   },
+   "photos": {
+    "usable": 10,
+    "water": 3,
+    "room": 0,
+    "special": 7,
+    "skip": 0,
+    "people": 3,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000573998&vendorItemId=70000006038995&itemId=20000049988181&traceid=V0-153-46e570dc04fa6408&requestid=20261010001444432290542037&token=31850C%7CGM&pt=0&slot=1",
+   "score": 6,
+   "reasons": [
+    "물놀이 사진 3장",
+    "쓸 수 있는 사진 10장",
+    "출처 2곳 일치"
+   ]
+  },
+  {
+   "name": "소노펠리체 델피노",
+   "city": "고성군",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "울산바위 뷰의 천연 온천수 인피니티풀과 오션플레이 실내 온천풀 보유"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [
+     "사우나",
+     "스파",
+     "온천"
+    ],
+    "min_price": 27000.0,
+    "room_names": [
+     "EAST스위트(취사/스텐다드)",
+     "실버 스위트 (취사/파노라마뷰/침대)",
+     "EAST소노벨 스위트(클린/스탠다드)",
+     "02. 미들시즌★ 주중 소인권",
+     "실버 취사/설악마운틴뷰/침대",
+     "01. 델피노 온천사우나 5회권"
+    ]
+   },
+   "photos": {
+    "usable": 7,
+    "water": 0,
+    "room": 1,
+    "special": 6,
+    "skip": 3,
+    "people": 2,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010544096&vendorItemId=70000135732970&itemId=20002039899619&traceid=V0-153-e6fa339ceed6b7cb&requestid=20261010001849122027064266&token=31850C%7CGM&pt=0&slot=1",
+   "score": 6,
+   "reasons": [
+    "객실 이름: 사우나, 스파, 온천",
+    "쓸 수 있는 사진 7장",
+    "객실·특별 공간 사진 있음"
+   ]
+  },
+  {
+   "name": "동해보양온천 컨벤션호텔",
+   "city": "동해시",
+   "sources": [
+    "gemini",
+    "naver"
+   ],
+   "why": [
+    "행정안전부 승인 국민보양온천수를 사용하는 대규모 실내 온천 해수풀 운영",
+    "네이버 '강릉 온천 호텔' · 숙박>호텔",
+    "네이버 '강릉 온천 호텔' · 숙박>호텔부속시설",
+    "네이버 '동해 온천 호텔' · 숙박>호텔",
+    "네이버 '동해 온천 호텔' · 숙박>호텔부속시설",
+    "네이버 '삼척 온천 호텔' · 숙박>호텔"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 9,
+    "theme_hits": [
+     "온천"
+    ],
+    "min_price": 70000.0,
+    "room_names": [
+     "별장온천텔 가족실 온돌",
+     "스탠다드 온돌 (침대요청불가)",
+     "공원전망 온돌(그랜드)",
+     "공원전망 온돌",
+     "스탠다드 더블룸 또는 트윈룸",
+     "스탠다드 더블룸 또는 트윈룸"
+    ]
+   },
+   "photos": {
+    "usable": 9,
+    "water": 2,
+    "room": 0,
+    "special": 7,
+    "skip": 0,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=81629141&vendorItemId=3687476117&itemId=590700526&traceid=V0-153-8d9dfbac9819c051&requestid=20261010001520770305304500&token=31850C%7CGM&pt=0&slot=1",
+   "score": 5,
+   "reasons": [
+    "객실 이름: 온천",
+    "물놀이 사진 2장",
+    "쓸 수 있는 사진 9장",
+    "출처 2곳 일치"
+   ]
+  },
+  {
+   "name": "오색그린야드호텔",
+   "city": "양양군",
+   "sources": [
+    "gemini",
+    "naver"
+   ],
+   "why": [
+    "탄산온천과 복합 알칼리온천을 동시에 즐길 수 있는 대형 온천 스파 시설 보유",
+    "네이버 '양양 온천 호텔' · 숙박>호텔"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 9,
+    "theme_hits": [
+     "사우나",
+     "온천",
+     "찜질"
+    ],
+    "min_price": 27000.0,
+    "room_names": [
+     "호텔 그랜드 패밀리 35평",
+     "패밀리룸 (룸 온리, 30평형)",
+     "디럭스 트윈룸",
+     "호텔 패밀리 30평(Special Offer)",
+     "호텔 그랜드 패밀리 (35평)",
+     "호텔 그랜드 패밀리 (35평) 온천 & 찜질권 미포함"
+    ]
+   },
+   "photos": {
+    "usable": 6,
+    "water": 0,
+    "room": 0,
+    "special": 6,
+    "skip": 3,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000503627&vendorItemId=70000005729782&itemId=20000027609828&traceid=V0-153-587604f84db7a050&requestid=20261010001541601035233104&token=31850C%7CGM&pt=0&slot=1",
+   "score": 5,
+   "reasons": [
+    "객실 이름: 사우나, 온천, 찜질",
+    "사진 6장 (운영자 보완 필요)",
+    "출처 2곳 일치"
+   ]
+  },
+  {
+   "name": "양양 설해원",
+   "city": "양양군",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "미백온천수로 운영되는 실내외 온천 수영장과 노천 스파 시설 보유"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [
+     "스파"
+    ],
+    "min_price": 69300.0,
+    "room_names": [
+     "[조식 2인 무료]스위트 더블룸",
+     "스위트 더블",
+     "가족형독채(분리형(거실1+침실2+욕실2))",
+     "말리부",
+     "진주린(오션뷰/애견동반)",
+     "102호"
+    ]
+   },
+   "photos": {
+    "usable": 10,
+    "water": 1,
+    "room": 3,
+    "special": 6,
+    "skip": 0,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011386361&vendorItemId=70000286737705&itemId=20002213248749&traceid=V0-153-5dcfd6b5267521e1&requestid=20261010001621749249114080&token=31850C%7CGM&pt=0&slot=1",
+   "score": 5,
+   "reasons": [
+    "객실 이름: 스파",
+    "물놀이 사진 1장",
+    "쓸 수 있는 사진 10장",
+    "객실·특별 공간 사진 있음"
+   ]
+  },
+  {
+   "name": "세인트존스 호텔",
+   "city": "강릉시",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "동절기에도 운영되는 돔 형태의 실내형 온수 인피니티풀 보유"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [
+     "스파"
+    ],
+    "min_price": 10000.0,
+    "room_names": [
+     "슈페리어더블or헐리우드 트윈 도시전망",
+     "10월특가★슈페리어→골져스 파셜★UP 더블룸",
+     "01. 런닝맨(60분) 1인권",
+     "B2. 뮤즈 1인권",
+     "마운틴-1",
+     "디럭스 온돌(전망없음)"
+    ]
+   },
+   "tour_facts": [],
+   "tour_themed": false,
+   "tour_addr": "강원특별자치도 강릉시 창해로 307",
+   "photos": {
+    "usable": 7,
+    "water": 2,
+    "room": 1,
+    "special": 4,
+    "skip": 3,
+    "people": 3,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000570032&vendorItemId=70000005963001&itemId=20000048991639&traceid=V0-153-72832fb8d58cb0b5&requestid=20261010001722040317252801&token=31850C%7CGM&pt=0&slot=1",
+   "score": 5,
+   "reasons": [
+    "객실 이름: 스파",
+    "물놀이 사진 2장",
+    "쓸 수 있는 사진 7장",
+    "객실·특별 공간 사진 있음"
+   ]
+  },
+  {
+   "name": "체스터톤스 속초",
+   "city": "속초시",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "지하 1층에 천연 온천수로 운영되는 온천사우나 및 온수 스파 시설 구비"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [],
+    "min_price": 70000.0,
+    "room_names": [
+     "시그니처 투룸 디럭스 로프트",
+     "스탠다드 트윈룸 도시전망",
+     "투룸 슈페리어 더블(Room Only)",
+     "[도보특가] 시티뷰 스탠다드 더블",
+     "스위트 더블룸",
+     "스튜디오(Special Offer★12시 레이트 체크아웃)"
+    ]
+   },
+   "photos": {
+    "usable": 10,
+    "water": 3,
+    "room": 0,
+    "special": 7,
+    "skip": 0,
+    "people": 3,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002315036&vendorItemId=70000286487441&itemId=20002212519662&traceid=V0-153-b89d189b18621d61&requestid=20261010001829845131603882&token=31850C%7CGM&pt=0&slot=1",
+   "score": 5,
+   "reasons": [
+    "물놀이 사진 3장",
+    "쓸 수 있는 사진 10장"
+   ]
+  },
+  {
+   "name": "속초 척산온천휴양촌",
+   "city": "속초시",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "전통 있는 천연 라돈 온천수 실내외 대중탕 및 가족온천탕 운영"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [
+     "사우나",
+     "온천"
+    ],
+    "min_price": 10500.0,
+    "room_names": [
+     "01. 척산온천 사우나1인(대인)",
+     "디럭스 모던",
+     "23평형 룸only",
+     "스위트 디럭스",
+     "스탠다드 온돌",
+     "23평형+룸온리특가"
+    ]
+   },
+   "photos": {
+    "usable": 8,
+    "water": 1,
+    "room": 0,
+    "special": 7,
+    "skip": 2,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010800189&vendorItemId=70000146652416&itemId=20002052404122&traceid=V0-153-74abeb602ac0f37c&requestid=20261010002045856119621220&token=31850C%7CGM&pt=0&slot=1",
+   "score": 5,
+   "reasons": [
+    "객실 이름: 사우나, 온천",
+    "물놀이 사진 1장",
+    "쓸 수 있는 사진 8장"
+   ]
+  },
+  {
+   "name": "동방모텔",
+   "city": "강원특별자치도 영월군 영월읍 단종로 ",
+   "sources": [
+    "tourapi"
+   ],
+   "why": [
+    "사우나"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [],
+    "min_price": 5700.0,
+    "room_names": [
+     "스탠다드룸",
+     "스탠다드 더블(온돌,60인치TV,넷플릭스 개인계정)",
+     "체크인시 배정",
+     "패밀리 트윈룸",
+     "스탠다드룸, 더블침대 1개",
+     "스탠다드 더블룸"
+    ]
+   },
+   "tour_facts": [
+    "사우나"
+   ],
+   "tour_themed": true,
+   "tour_addr": "강원특별자치도 영월군 영월읍 단종로 3-1",
+   "photos": {
+    "usable": 9,
+    "water": 0,
+    "room": 2,
+    "special": 7,
+    "skip": 1,
+    "people": 1,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010215459&vendorItemId=70000177676955&itemId=20002085845321&traceid=V0-153-3f56eae6d8740426&requestid=20261010002510646223628687&token=31850C%7CGM&pt=0&slot=1",
+   "score": 5,
+   "reasons": [
+    "TourAPI 시설: 사우나",
+    "쓸 수 있는 사진 9장",
+    "객실·특별 공간 사진 있음"
+   ]
+  },
+  {
+   "name": "호텔 인터불고 원주",
+   "city": "원주시",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "연중 온수로 운영되는 실내 정규 수영장과 사우나 시설 완비"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [
+     "스파"
+    ],
+    "min_price": 28000.0,
+    "room_names": [
+     "스탠다드 트윈룸",
+     "스탠다드 트윈",
+     "스탠다드 트윈(Room Only)",
+     "스탠다드 트윈 시티뷰-객실만",
+     "커플룸 (프라이빗 스파)",
+     "디럭스 트윈룸"
+    ]
+   },
+   "photos": {
+    "usable": 9,
+    "water": 1,
+    "room": 0,
+    "special": 8,
+    "skip": 1,
+    "people": 1,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=83736267&vendorItemId=3643997085&itemId=591075493&traceid=V0-153-cb4acd8b758ec988&requestid=20261010001702739159950647&token=31850C%7CGM&pt=0&slot=1",
+   "score": 4,
+   "reasons": [
+    "객실 이름: 스파",
+    "물놀이 사진 1장",
+    "쓸 수 있는 사진 9장"
+   ]
+  },
+  {
+   "name": "하이원 그랜드호텔",
+   "city": "정선군",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "하이원 워터월드 내 실내 온수 스파 및 실내 수영장 시설 완비"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 9,
+    "theme_hits": [],
+    "min_price": 50000.0,
+    "room_names": [
+     "슈페리어 트윈",
+     "스탠다드 더블",
+     "디럭스 더블룸",
+     "슈페리어 트윈 SPT",
+     "디럭스 테라스 더블룸, 산 전망",
+     "마운틴콘도 그랜드 디럭스 MGD"
+    ]
+   },
+   "photos": {
+    "usable": 8,
+    "water": 1,
+    "room": 1,
+    "special": 6,
+    "skip": 1,
+    "people": 1,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000001958614&vendorItemId=70000050135056&itemId=20001014701207&traceid=V0-153-b44bfbc6b4408c3f&requestid=20261010001759151212625893&token=31850C%7CGM&pt=0&slot=2",
+   "score": 4,
+   "reasons": [
+    "물놀이 사진 1장",
+    "쓸 수 있는 사진 8장",
+    "객실·특별 공간 사진 있음"
+   ]
+  },
+  {
+   "name": "켄싱턴호텔 설악",
+   "city": "속초시",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "설악산 온천수를 활용한 실내 온천 사우나 시설 운영"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [
+     "온천"
+    ],
+    "min_price": 97810.0,
+    "room_names": [
+     "스탠다드 온돌 더블",
+     "프리미어 로잔 연립형",
+     "1.디럭스온돌 더블룸",
+     "스탠다드 온돌",
+     "스탠다드 킹",
+     "디럭스 더블룸 산전망"
+    ]
+   },
+   "tour_facts": [],
+   "tour_themed": false,
+   "tour_addr": "강원특별자치도 속초시 설악산로 998 (설악동)",
+   "photos": {
+    "usable": 9,
+    "water": 2,
+    "room": 0,
+    "special": 7,
+    "skip": 1,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011244166&vendorItemId=70000280323275&itemId=20002201433102&traceid=V0-153-c73a47543c63badb&requestid=20261010001938430166871893&token=31850C%7CGM&pt=0&slot=1",
+   "score": 4,
+   "reasons": [
+    "객실 이름: 온천",
+    "물놀이 사진 2장",
+    "쓸 수 있는 사진 9장"
+   ]
+  },
+  {
+   "name": "오션스파",
+   "city": "속초",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '속초 스파 호텔' · 숙박>호텔",
+    "네이버 '고성 스파 호텔' · 숙박>호텔"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 9,
+    "theme_hits": [
+     "사우나",
+     "온천"
+    ],
+    "min_price": 19900.0,
+    "room_names": [
+     "02. 미들시즌★ 주중 소인권",
+     "스탠다드",
+     "유로빌라 로얄",
+     "01. 델피노 온천사우나 5회권",
+     "EAST패밀리스탠다드(취사/침대)",
+     "오후권 [E].대인(남자)"
+    ]
+   },
+   "photos": {
+    "usable": 6,
+    "water": 2,
+    "room": 0,
+    "special": 4,
+    "skip": 3,
+    "people": 3,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011285860&vendorItemId=70000314663843&itemId=20002252276969&traceid=V0-153-01a759c35ee74204&requestid=20261010002210682249119856&token=31850C%7CGM&pt=0&slot=1",
+   "score": 4,
+   "reasons": [
+    "객실 이름: 사우나, 온천",
+    "물놀이 사진 2장",
+    "사진 6장 (운영자 보완 필요)"
+   ]
+  },
+  {
+   "name": "호텔덕구온천",
+   "city": "삼척",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '삼척 온천 호텔' · 숙박>호텔"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 8,
+    "theme_hits": [
+     "온천"
+    ],
+    "min_price": 64800.0,
+    "room_names": [
+     "스탠다드 22평",
+     "303-가족(커플)",
+     "콘도 스탠다드 더블 일출 하프오션뷰(썬크루즈)",
+     "스탠다드 온돌",
+     "디럭스 1층타입(랜덤배정)",
+     "웰빙객실 양실"
+    ]
+   },
+   "photos": {
+    "usable": 8,
+    "water": 2,
+    "room": 0,
+    "special": 6,
+    "skip": 0,
+    "people": 1,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002654723&vendorItemId=70000073566631&itemId=20001037830677&traceid=V0-153-cabe8b1544b3b14f&requestid=20261010002342795313199015&token=31850C%7CGM&pt=0&slot=3",
+   "score": 4,
+   "reasons": [
+    "객실 이름: 온천",
+    "물놀이 사진 2장",
+    "쓸 수 있는 사진 8장"
+   ]
+  },
+  {
+   "name": "르컬렉티브 속초중앙",
+   "city": "고성",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '고성 온천 호텔' · 숙박>기타숙박업"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 5,
+    "theme_hits": [],
+    "min_price": 80413.0,
+    "room_names": [
+     "스튜디오 랜덤 저층",
+     "스튜디오 베리어프리",
+     "Studio Random",
+     "스튜디오 랜덤",
+     "스튜디오 트윈"
+    ]
+   },
+   "photos": {
+    "usable": 5,
+    "water": 4,
+    "room": 1,
+    "special": 0,
+    "skip": 0,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011040426&vendorItemId=70000166986600&itemId=20002074729234&traceid=V0-153-fe94b92ff80a26dc&requestid=20261010002411337249111923&token=31850C%7CGM&pt=0&slot=1",
+   "score": 4,
+   "reasons": [
+    "물놀이 사진 4장",
+    "사진 5장 (운영자 보완 필요)"
+   ]
+  },
+  {
+   "name": "양양국제공항호텔",
+   "city": "강원특별자치도 양양군 손양면 동해대로",
+   "sources": [
+    "tourapi"
+   ],
+   "why": [
+    "대중탕 · 피트니스 · 스포츠시설"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [],
+    "min_price": 33300.0,
+    "room_names": [
+     "스탠다드 더블(Special Offer, 설악산 뷰,넷플릭스 이용가능/개",
+     "디럭스 더블룸",
+     "스위트 트윈룸",
+     "스탠다드 더블룸, 발코니, 산 전망",
+     "스위트 더블",
+     "스탠다드 더블룸"
+    ]
+   },
+   "tour_facts": [
+    "대중탕",
+    "피트니스",
+    "스포츠시설"
+   ],
+   "tour_themed": true,
+   "tour_addr": "강원특별자치도 양양군 손양면 동해대로 2338",
+   "photos": {
+    "usable": 7,
+    "water": 0,
+    "room": 0,
+    "special": 7,
+    "skip": 3,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002665655&vendorItemId=70000213374591&itemId=20002126097885&traceid=V0-153-5934b4dc61ba6b7c&requestid=20261010002450176300088495&token=31850C%7CGM&pt=0&slot=1",
+   "score": 4,
+   "reasons": [
+    "TourAPI 시설: 대중탕, 피트니스, 스포츠시설",
+    "쓸 수 있는 사진 7장"
+   ]
+  },
+  {
+   "name": "소노벨 비발디파크",
+   "city": "홍천군",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "오션월드 내 다양한 실내 온수풀 존과 스파 시설 이용 가능"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [],
+    "min_price": 65000.0,
+    "room_names": [
+     "패밀리(B동/취사/스탠다드/침대)",
+     "파크뷰 패밀리룸 (세미 키친, 반려동물 동반 가능, 광견병&종합백신 접종",
+     "실버 (취사/파크뷰/침대)",
+     "소노캄A 스탠다드룸 (키친 없음)",
+     "실버 스위트 (취사/파크뷰/침대)",
+     "감성 독립 105(독립 스테이, 개별 바베큐)"
+    ]
+   },
+   "photos": {
+    "usable": 9,
+    "water": 0,
+    "room": 1,
+    "special": 8,
+    "skip": 1,
+    "people": 2,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010787384&vendorItemId=70000145793226&itemId=20002051140476&traceid=V0-153-2360451b72d8d8d0&requestid=20261010001739481212628645&token=31850C%7CGM&pt=0&slot=1",
+   "score": 3,
+   "reasons": [
+    "쓸 수 있는 사진 9장",
+    "객실·특별 공간 사진 있음"
+   ]
+  },
+  {
+   "name": "롯데리조트 속초",
+   "city": "속초시",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "바다 전망의 실내 온수 워터파크와 다양한 실내 스파 시설 구비"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [],
+    "min_price": 89000.0,
+    "room_names": [
+     "[콘도] 패밀리 23평 바다전망",
+     "패밀리 23평(Sunset Check-in(18시체크인/10시체크아웃)★",
+     "콘도 패밀리23평, 바다 전망",
+     "디럭스 더블",
+     "주니어 패밀리 스위트, 바다 전망",
+     "단체룸"
+    ]
+   },
+   "photos": {
+    "usable": 9,
+    "water": 1,
+    "room": 0,
+    "special": 8,
+    "skip": 1,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000578675&vendorItemId=70000006079841&itemId=20000050911034&traceid=V0-153-00f522d9ef652ffa&requestid=20261010001909898317252636&token=31850C%7CGM&pt=0&slot=1",
+   "score": 3,
+   "reasons": [
+    "물놀이 사진 1장",
+    "쓸 수 있는 사진 9장"
+   ]
+  },
+  {
+   "name": "휘닉스 평창 호텔",
+   "city": "평창군",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "블루캐니언 워터파크 내 천연 광천수를 이용한 실내 온수 스파존 완비"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [],
+    "min_price": 50000.0,
+    "room_names": [
+     "슈페리어 더블",
+     "스위트 베드",
+     "일반실(침대)",
+     "룸 (1~2인, 베드룸)",
+     "슈페리어 트윈(Room Only)",
+     "스위트 38평"
+    ]
+   },
+   "photos": {
+    "usable": 9,
+    "water": 0,
+    "room": 1,
+    "special": 8,
+    "skip": 1,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000026214&vendorItemId=70000003293465&itemId=20001018317953&traceid=V0-153-f99a805c35cf9ef6&requestid=20261010001959568137882517&token=31850C%7CGM&pt=0&slot=1",
+   "score": 3,
+   "reasons": [
+    "쓸 수 있는 사진 9장",
+    "객실·특별 공간 사진 있음"
+   ]
+  },
+  {
+   "name": "정선 파크로쉬 리조트앤웰니스",
+   "city": "정선군",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "자연을 바라보며 웰니스를 즐길 수 있는 실내 온수 스파 및 사우나 보유"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 8,
+    "theme_hits": [],
+    "min_price": 259540.0,
+    "room_names": [
+     "숙암 트윈룸 (웰니스 클럽 및 아쿠아 클럽 이용(2인) 포함)",
+     "숙암룸 트윈",
+     "숙암 트윈(Room Only)",
+     "숙암룸 트윈",
+     "윈세프 호텔 무소음 쇼케이스 냉장고 WC-20D,25D,30D 20L-3",
+     "윈세프 호텔 무소음 쇼케이스 냉장고 WC-20D,25D,30D 20L-3"
+    ]
+   },
+   "photos": {
+    "usable": 4,
+    "water": 3,
+    "room": 0,
+    "special": 1,
+    "skip": 3,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000001795864&vendorItemId=70000039047822&itemId=20001030372610&traceid=V0-153-19a23fda5e83ca30&requestid=20261010002121817305306166&token=31850C%7CGM&pt=0&slot=1",
+   "score": 3,
+   "reasons": [
+    "물놀이 사진 3장"
+   ]
+  },
+  {
+   "name": "설악워터피아 한화리조트 설악 쏘라노",
+   "city": "속초시",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "설악워터피아 내 대규모 실내외 온천 테마파크와 온수풀 시설을 갖추고 있음"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [
+     "스파"
+    ],
+    "min_price": 22000.0,
+    "room_names": [
+     "미들시즌 나이트스파 2인권(NB368301)",
+     "미들시즌 나이트스파 소인권(NB368297)",
+     "디럭스 모던",
+     "쏘라노 디럭스 23평",
+     "디럭스 유러피안 1 룸 호텔 타입",
+     "디럭스 (트윈베드)"
+    ]
+   },
+   "photos": {
+    "usable": 6,
+    "water": 0,
+    "room": 0,
+    "special": 6,
+    "skip": 2,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011382433&vendorItemId=70000314602471&itemId=20002252183211&traceid=V0-153-ea4b298f910044bb&requestid=20261010001603201092263730&token=31850C%7CGM&pt=0&slot=1",
+   "score": 2,
+   "reasons": [
+    "객실 이름: 스파",
+    "사진 6장 (운영자 보완 필요)"
+   ]
+  },
+  {
+   "name": "오크밸리 리조트",
+   "city": "원주시",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "체련장 및 대형 실내 온수 수영장과 사우나 시설 보유"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [],
+    "min_price": 83000.0,
+    "room_names": [
+     "25평 더블 - 미취사객실",
+     "25평힐스빌리지[미취사객실]",
+     "밸리 빌리지 스탠다드룸 (더블베드, 31평형)",
+     "노스48평-일반(룸온리)",
+     "[밸리빌리지] 31평 일반 더블베드",
+     "★[밸리빌리지] 31평(일반)_더블(룸온리)"
+    ]
+   },
+   "photos": {
+    "usable": 9,
+    "water": 0,
+    "room": 0,
+    "special": 9,
+    "skip": 1,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011293971&vendorItemId=70000255579526&itemId=20002173172953&traceid=V0-153-fc7e7164ad851882&requestid=20261010002022571177698602&token=31850C%7CGM&pt=0&slot=1",
+   "score": 2,
+   "reasons": [
+    "쓸 수 있는 사진 9장"
+   ]
+  },
+  {
+   "name": "설악산과 동해바다 그리고 온천",
+   "city": "속초",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '속초 온천 호텔' · 숙박>호텔"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 5,
+    "theme_hits": [
+     "사우나",
+     "온천"
+    ],
+    "min_price": 10500.0,
+    "room_names": [
+     "01. 척산온천 사우나1인(대인)",
+     "더블 8층",
+     "디럭스 쿼드룸, 침실 1개",
+     "슈페리어 쿼드",
+     "시그니처 더블룸"
+    ]
+   },
+   "photos": {
+    "usable": 4,
+    "water": 0,
+    "room": 0,
+    "special": 4,
+    "skip": 1,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010800189&vendorItemId=70000146652416&itemId=20002052404122&traceid=V0-153-74abeb602ac0f37c&requestid=20261010002151726249113084&token=31850C%7CGM&pt=0&slot=1",
+   "score": 2,
+   "reasons": [
+    "객실 이름: 사우나, 온천"
+   ]
+  },
+  {
+   "name": "더잭슨나인스호텔",
+   "city": "강원특별자치도 춘천시 중앙로 193 ",
+   "sources": [
+    "tourapi"
+   ],
+   "why": [
+    "사우나 · 피트니스"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 3,
+    "theme_hits": [],
+    "min_price": 166520.0,
+    "room_names": [
+     "스탠다드 더블(주차불가)",
+     "패밀리 디럭스 트윈",
+     "코너 스위트"
+    ]
+   },
+   "tour_facts": [
+    "사우나",
+    "피트니스"
+   ],
+   "tour_themed": true,
+   "tour_addr": "강원특별자치도 춘천시 중앙로 193 더잭슨나인스호텔",
+   "photos": {
+    "usable": 3,
+    "water": 0,
+    "room": 0,
+    "special": 3,
+    "skip": 0,
+    "people": 2,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002658819&vendorItemId=70000073600709&itemId=20001037864956&traceid=V0-153-ba5949b41edcbfb5&requestid=20261010002532739092260555&token=31850C%7CGM&pt=0&slot=1",
+   "score": 2,
+   "reasons": [
+    "TourAPI 시설: 사우나, 피트니스"
+   ]
+  },
+  {
+   "name": "스테이다래",
+   "city": "강원특별자치도 춘천시 신북읍 샘뜨락길",
+   "sources": [
+    "tourapi"
+   ],
+   "why": [
+    "부대시설: 자쿠지"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [],
+    "min_price": 10800.0,
+    "room_names": [
+     "NSB9791157411429 새책-스테이책터 [내 다래끼] --햇살 어",
+     "NSB9788975070662 새책-스테이책터 [명시 따라쓰기 첫사랑]-",
+     "새책-스테이책터 [카르마와 인연법]-태라 전난영 지음",
+     "NSB9788992491938 새책-스테이책터 [New 서강 한국어 St",
+     "NSB9788987122793 새책-스테이책터 [데생 그리고 독백] 대덕",
+     "새책-스테이책터 [시퀀스제어 기초에서 응용까지] ---다래헌(다래출판사)"
+    ]
+   },
+   "tour_facts": [
+    "부대시설: 자쿠지"
+   ],
+   "tour_themed": true,
+   "tour_addr": "강원특별자치도 춘천시 신북읍 샘뜨락길 32",
+   "photos": {
+    "usable": 0,
+    "water": 0,
+    "room": 0,
+    "special": 0,
+    "skip": 10,
+    "people": 1,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=7354293242&itemId=18932318533&vendorItemId=86059091195&traceid=V0-153-e630e9bd0863d4bf&requestid=20261010002540774092263289&token=31850C%7CGM&pt=0&slot=1",
+   "score": 2,
+   "reasons": [
+    "TourAPI 시설: 부대시설: 자쿠지"
+   ]
+  },
+  {
+   "name": "용평리조트 드래곤밸리호텔",
+   "city": "평창군",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "피크아일랜드 워터파크의 실내 온수풀 및 스파 사우나 시설 이용 가능"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 6,
+    "theme_hits": [],
+    "min_price": 99000.0,
+    "room_names": [
+     "타워콘도 18평 [온돌]",
+     "디럭스 트윈룸",
+     "빌라콘도 28평 더블",
+     "빌라28평형",
+     "프리미엄 펫룸 온돌",
+     "[타워콘도] 18타입"
+    ]
+   },
+   "photos": {
+    "usable": 6,
+    "water": 0,
+    "room": 0,
+    "special": 6,
+    "skip": 0,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000418713&vendorItemId=70000005308985&itemId=20000012521857&traceid=V0-153-a33903db02232b8d&requestid=20261010001817844166871895&token=31850C%7CGM&pt=0&slot=1",
+   "score": 1,
+   "reasons": [
+    "사진 6장 (운영자 보완 필요)"
+   ]
+  },
+  {
+   "name": "스테이피어471",
+   "city": "동해",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '동해 스파 호텔' · 숙박>펜션"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 3,
+    "theme_hits": [],
+    "min_price": 94000.0,
+    "room_names": [
+     "308호",
+     "308호",
+     "302호"
+    ]
+   },
+   "photos": {
+    "usable": 3,
+    "water": 0,
+    "room": 2,
+    "special": 1,
+    "skip": 0,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002658907&vendorItemId=70000073601264&itemId=20001037865519&traceid=V0-153-3d0d63741deb89b6&requestid=20261010002317395223627177&token=31850C%7CGM&pt=0&slot=1",
+   "score": 1,
+   "reasons": [
+    "객실·특별 공간 사진 있음"
+   ]
+  },
+  {
+   "name": "탑스텐 호텔",
+   "city": "강릉시",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "동해 바다 전망의 천연 암반 금진온천과 실내 온수 아쿠아파크 보유"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 9,
+    "theme_hits": [],
+    "min_price": 13000.0,
+    "room_names": [
+     "프리미엄 더블(부분바다전망/고층)",
+     "[CGV] 래브라도 전용 영화관람권 (2D)[G00000222025]",
+     "프리미엄 더블 (부분바다전망/고층)",
+     "프리미엄 더블(부분바다전망, 고층)",
+     "와우_CGV 영화관람권[G00000221861]",
+     "[골드박스] 경주월드 특가 종일권(~11/1) 소인"
+    ]
+   },
+   "photos": {
+    "usable": 3,
+    "water": 0,
+    "room": 0,
+    "special": 3,
+    "skip": 6,
+    "people": 2,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011264187&vendorItemId=70000283338114&itemId=20002205680318&traceid=V0-153-51ef22e8660d6191&requestid=20261010001642146290546040&token=31850C%7CGM&pt=0&slot=1",
+   "score": 0,
+   "reasons": []
+  },
+  {
+   "name": "홍천 알파카스테이",
+   "city": "홍천군",
+   "sources": [
+    "gemini"
+   ],
+   "why": [
+    "객실별 프라이빗 사계절 실내 온수풀 및 스파 설비 완비"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 9,
+    "theme_hits": [],
+    "min_price": 9900.0,
+    "room_names": [
+     "르무통 메이트 발 편한 메리노울 운동화",
+     "[행복미트] 돼지 등갈비 수입산 살이 두꺼운 최고의 로인립 구이용 찜용 ",
+     "오레오오즈 시리얼",
+     "매일두유 99.9 서리태",
+     "노마진 반려견 배변패드",
+     "해피바스 오리지널컬렉션 고보습 산양유 바디워시 바닐라 머스크향 910g"
+    ]
+   },
+   "photos": {
+    "usable": 1,
+    "water": 0,
+    "room": 1,
+    "special": 0,
+    "skip": 8,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=6902113163&itemId=18223105928&vendorItemId=83454344514&traceid=V0-153-91d7f95e842a48ba&pt=0&requestid=20261010002106985166873573&slot=1",
+   "score": 0,
+   "reasons": []
+  },
+  {
+   "name": "5k스파펜션&amp;호텔",
+   "city": "강릉",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '강릉 스파 호텔' · 숙박>펜션"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 9,
+    "theme_hits": [],
+    "min_price": 9900.0,
+    "room_names": [
+     "르무통 메이트 발 편한 메리노울 운동화",
+     "[행복미트] 돼지 등갈비 수입산 살이 두꺼운 최고의 로인립 구이용 찜용 ",
+     "오레오오즈 시리얼",
+     "매일두유 99.9 서리태",
+     "노마진 반려견 배변패드",
+     "해피바스 오리지널컬렉션 고보습 산양유 바디워시 바닐라 머스크향 910g"
+    ]
+   },
+   "photos": {
+    "usable": 2,
+    "water": 0,
+    "room": 2,
+    "special": 0,
+    "skip": 7,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=6902113163&itemId=18223105928&vendorItemId=83454344514&traceid=V0-153-91d7f95e842a48ba&pt=0&requestid=20261010002136815313194459&slot=1",
+   "score": 0,
+   "reasons": []
+  },
+  {
+   "name": "설악온천맘모스리조텔",
+   "city": "속초",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '속초 온천 호텔' · 숙박>기타숙박업"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 2,
+    "theme_hits": [],
+    "min_price": 50000.0,
+    "room_names": [
+     "A-TYPE 콘도형 온돌2인(욕조O)(욕조/취사가능)",
+     "콘도미니엄 B 타입 (2인, 온돌, 욕조 없음)"
+    ]
+   },
+   "photos": {
+    "usable": 2,
+    "water": 0,
+    "room": 0,
+    "special": 2,
+    "skip": 0,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002653647&vendorItemId=70000073556499&itemId=20001037820574&traceid=V0-153-88de1875b2a881c3&requestid=20261010002204307176196775&token=31850C%7CGM&pt=0&slot=1",
+   "score": 0,
+   "reasons": []
+  },
+  {
+   "name": "설악호텔 미송",
+   "city": "양양",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '양양 온천 호텔' · 숙박>호텔"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 4,
+    "theme_hits": [],
+    "min_price": 50000.0,
+    "room_names": [
+     "킹룸 (랜덤배정)_ 2",
+     "킹(소나무 킹, 탑 킹, 화이트 킹 객실 중 체크인시 랜덤배정)",
+     "25평 원룸 온돌",
+     "킹룸 (랜덤배정)"
+    ]
+   },
+   "photos": {
+    "usable": 4,
+    "water": 0,
+    "room": 0,
+    "special": 4,
+    "skip": 0,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011429839&vendorItemId=70000295823218&itemId=20002225313475&traceid=V0-153-f0bbf1149bf1b584&requestid=20261010002230941249116691&token=31850C%7CGM&pt=0&slot=1",
+   "score": 0,
+   "reasons": []
+  },
+  {
+   "name": "플럼바고양양오션앤올스위트2906호",
+   "city": "양양",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '양양 스파 호텔' · 숙박>호텔"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 9,
+    "theme_hits": [],
+    "min_price": 9900.0,
+    "room_names": [
+     "르무통 메이트 발 편한 메리노울 운동화",
+     "[행복미트] 돼지 등갈비 수입산 살이 두꺼운 최고의 로인립 구이용 찜용 ",
+     "오레오오즈 시리얼",
+     "매일두유 99.9 서리태",
+     "노마진 반려견 배변패드",
+     "해피바스 오리지널컬렉션 고보습 산양유 바디워시 바닐라 머스크향 910g"
+    ]
+   },
+   "photos": {
+    "usable": 1,
+    "water": 0,
+    "room": 1,
+    "special": 0,
+    "skip": 7,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=6902113163&itemId=18223105928&vendorItemId=83454344514&traceid=V0-153-91d7f95e842a48ba&pt=0&requestid=20261010002241275069302798&slot=1",
+   "score": 0,
+   "reasons": []
+  },
+  {
+   "name": "카루나",
+   "city": "양양",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '양양 스파 호텔' · 숙박>펜션"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 6,
+    "theme_hits": [],
+    "min_price": 6300.0,
+    "room_names": [
+     "디럭스 더블",
+     "카루나, 프로게스테론 크림 2 oz(여성용)",
+     "카루나 프로게스테론 퓨어, 플러스 크림 Progesterone Cream",
+     "화이트샌즈 숨쉬기 편한 UV 브리즈 쿨링 끈조절 마스크 카루나",
+     "거품 사랑 5 - 루나 코믹스 (완결)",
+     "재규어 LJZ 루나그레이 주문 스프레이 카 페인트 + 모비스 투명마감용스"
+    ]
+   },
+   "photos": {
+    "usable": 1,
+    "water": 0,
+    "room": 0,
+    "special": 1,
+    "skip": 5,
+    "people": 1,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=85137622&vendorItemId=3652884631&itemId=625915269&traceid=V0-153-5cc925e19e8f5f62&requestid=20261010002254666074087229&token=31850C%7CGM&pt=0&slot=5",
+   "score": 0,
+   "reasons": []
+  },
+  {
+   "name": "삼척온천관광호텔온천각",
+   "city": "삼척",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '삼척 온천 호텔' · 숙박>호텔"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 9,
+    "theme_hits": [],
+    "min_price": 7900.0,
+    "room_names": [
+     "르무통 메이트 발 편한 메리노울 운동화",
+     "[행복미트] 돼지 등갈비 수입산 살이 두꺼운 최고의 로인립 구이용 찜용 ",
+     "오레오오즈 시리얼, 450g, 2개",
+     "매일두유 99.9 서리태, 24개, 190ml",
+     "노마진 반려견 배변패드, 20개입, 3개",
+     "해피바스 오리지널컬렉션 고보습 산양유 바디워시 바닐라 머스크향 910g,"
+    ]
+   },
+   "photos": {
+    "usable": 1,
+    "water": 0,
+    "room": 1,
+    "special": 0,
+    "skip": 8,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=6902113163&itemId=18223105928&vendorItemId=83454344514&traceid=V0-153-91d7f95e842a48ba&pt=0&requestid=20261010002328041223620956&slot=1",
+   "score": 0,
+   "reasons": []
+  },
+  {
+   "name": "서로재",
+   "city": "고성",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '고성 스파 호텔' · 숙박>펜션"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 10,
+    "theme_hits": [],
+    "min_price": 1700.0,
+    "room_names": [
+     "스텐 코너철 4개 브라켓 꺽쇠 장석 철물 sta+192wi",
+     "찍찍이테이프(거칠이) 폭2.5 길이18.5M 테이프",
+     "하우스밴드 끈 다용도 비닐 고정 20mmX500M 착한장터",
+     "달팽이 소년 1",
+     "포장용 택배박스 14X10X5cm 400매",
+     "스텐일자평철 일반 평철브라켓 보강철물 평철"
+    ]
+   },
+   "photos": {
+    "usable": 0,
+    "water": 0,
+    "room": 0,
+    "special": 0,
+    "skip": 8,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=8882763537&itemId=25925769351&vendorItemId=94489125865&traceid=V0-153-9348c05a7c0af257&requestid=20261010002423306300088745&token=31850C%7CGM&pt=0&slot=1",
+   "score": 0,
+   "reasons": []
+  },
+  {
+   "name": "써밋베이 시그니처펜션",
+   "city": "고성",
+   "sources": [
+    "naver"
+   ],
+   "why": [
+    "네이버 '고성 스파 호텔' · 숙박>펜션"
+   ],
+   "coupang": {
+    "ok": true,
+    "error": null,
+    "rooms_n": 2,
+    "theme_hits": [],
+    "min_price": 79000.0,
+    "room_names": [
+     "16층 르시엘 하늘가득(오션뷰)",
+     "511호"
+    ]
+   },
+   "photos": {
+    "usable": 2,
+    "water": 0,
+    "room": 0,
+    "special": 2,
+    "skip": 0,
+    "people": 0,
+    "error": null
+   },
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002657356&vendorItemId=70000309885677&itemId=20002244868991&traceid=V0-153-7c48c58dd5148997&requestid=20261010002441613091187919&token=31850C%7CGM&pt=0&slot=1",
+   "score": 0,
+   "reasons": []
+  },
+  {
+   "name": "평창강힐링하우스",
+   "city": "강원특별자치도 평창군 평창읍 매화길 ",
+   "sources": [
+    "tourapi"
+   ],
+   "why": [
+    "대중탕 · 스포츠시설"
+   ],
+   "coupang": {
+    "ok": false,
+    "error": null,
+    "rooms_n": 1,
+    "theme_hits": [],
+    "min_price": 179000.0,
+    "room_names": [
+     "별관2"
+    ]
+   },
+   "tour_facts": [
+    "대중탕",
+    "스포츠시설"
+   ],
+   "tour_themed": true,
+   "tour_addr": "강원특별자치도 평창군 평창읍 매화길 189-59",
+   "score": 2,
+   "reasons": [
+    "TourAPI 시설: 대중탕, 스포츠시설"
+   ]
+  },
+  {
+   "name": "라카이 샌드파인",
+   "city": "강원특별자치도 강릉시 해안로 536",
+   "sources": [
+    "tourapi"
+   ],
+   "why": [
+    "사우나 · 피트니스 · 스포츠시설 · 부대시설: 사우나"
+   ],
+   "coupang": {
+    "ok": false,
+    "error": null,
+    "rooms_n": 1,
+    "theme_hits": [],
+    "min_price": 28000.0,
+    "room_names": [
+     "나우맵 강릉시지도 코팅 - 강원도 도로 행정 우리나라 전도"
+    ]
+   },
+   "tour_facts": [
+    "사우나",
+    "피트니스",
+    "스포츠시설",
+    "부대시설: 사우나"
+   ],
+   "tour_themed": true,
+   "tour_addr": "강원특별자치도 강릉시 해안로 536",
+   "score": 2,
+   "reasons": [
+    "TourAPI 시설: 사우나, 피트니스, 스포츠시설, 부대시설: 사우나"
+   ]
+  }
+ ],
+ "summary": {
+  "generated": 40,
+  "coupang_ok": 38,
+  "models": {
+   "text": "gemini-3.8-flash",
+   "vision": "gemini-3.8-flash"
+  }
+ }
+}
