@@ -1,0 +1,15 @@
+{
+ "nonce": "2026-10-09-p1",
+ "stay": "히든클리프 호텔 제주",
+ "ok": false,
+ "steps": {
+  "search": {
+   "count": 10
+  }
+ },
+ "models": {
+  "text": "gemini-2.5-flash",
+  "tts": "gemini-2.5-flash-preview-tts"
+ },
+ "error": "RuntimeError: Gemini 오류 HTTP 404: {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features and improvements. We recommend you to use the Interactions API (https://ai.google.dev/gemini-api/docs"
+}
