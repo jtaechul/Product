@@ -4,6 +4,9 @@
 > 인스타 릴스 + 유튜브 쇼츠에 발행해 쿠팡 파트너스 수수료를 얻는 파이프라인.
 > 원본 계획서와 결정 기록: claude.ai 프로젝트 "오토 캐쉬 카우" 문서 `claude/stay-shorts-plan.md`.
 > 폴더 이름 `stay-shorts-factory` 는 작업용 이름이다 (채널 이름 미정).
+> 위치: `main` 브랜치의 `projects/stay-shorts-factory/` (2026-10-09 main 반영). 작업 브랜치는
+> `claude/stay-shorts-factory`. 영상 1편 만들기: `requests/produce/request.json` 의 `stay`(숙소 이름)와
+> `nonce` 를 바꿔 푸시 → `stay-shorts-produce` 워크플로 → Release `stay-run-N` 에 `video.mp4`.
 
 ## 운영자 확정 사항 (2026-10-09 — 다시 묻지 않는다)
 

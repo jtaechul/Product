@@ -8,7 +8,7 @@ name: stay-shorts-produce
 on:
   workflow_dispatch: {}
   push:
-    branches: ["claude/stay-shorts-factory"]
+    branches: ["main", "claude/stay-shorts-factory"]
     paths: ["projects/stay-shorts-factory/requests/produce/*.json"]
 
 permissions:
