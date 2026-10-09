@@ -1,7 +1,7 @@
 {
  "probe_version": 2,
- "ran_at": "2026-10-09T10:03:15Z",
- "nonce": "2026-10-09-03",
+ "ran_at": "2026-10-09T10:03:43Z",
+ "nonce": "2026-10-09-04",
  "secrets": {
   "names": {
    "COUPANG_ACCESS_KEY": {
@@ -34,16 +34,841 @@
   "search": [
    {
     "http": 200,
-    "rCode": "400",
-    "rMessage": "limit is out of range",
-    "count": 0,
+    "rCode": "0",
+    "rMessage": "게시글 작성 시, \"파트너스 활동을 통해 일정액의 수수료를 제공받을 수 있음\"을 기재하셔야 합니다",
+    "count": 10,
+    "fields": [
+     "categoryName",
+     "isFreeShipping",
+     "isRocket",
+     "keyword",
+     "productId",
+     "productImage",
+     "productName",
+     "productPrice",
+     "productUrl",
+     "rank"
+    ],
+    "image_fields": [
+     "productImage"
+    ],
+    "distinct_images": 10,
+    "distinct_product_ids": 10,
+    "url_shapes": {
+     "link.coupang.com/re/AFFTDP": 10
+    },
+    "image_hosts": {
+     "ads-partners.coupang.com": 10
+    },
+    "categories": {
+     "Travel": 10
+    },
+    "samples": [
+     {
+      "name": "디럭스 더블 클리프뷰(2인조식포함)",
+      "price": 367997.0,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "[김포출발] 2박3일 13시대 ◀▶ 20시대 3인기준 1인요금",
+      "price": 539000.0,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "디럭스 더블룸, 정원 전망",
+      "price": 273904.0,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "디럭스 더블 가든뷰",
+      "price": 424290.0,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "3인1실기준,1인 요금 조식불포함 2박3일",
+      "price": 489000.0,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "디럭스 더블 가든뷰 룸",
+      "price": 255676.0,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "디럭스 더블 가든",
+      "price": 221000.0,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "디럭스 가든전망 더블-객실만",
+      "price": 304200.0,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "[광주출발] 2박3일 12시-14시대 ◀▶ 13시-15시대 3인기준 1인요금",
+      "price": 485000.0,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "하프오션뷰 패밀리 (자쿠지)",
+      "price": 234000.0,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     }
+    ],
     "keyword": "히든클리프 호텔 제주",
     "path_variant": "no_v1",
     "pair": "COUPANG_ACCESS_KEY"
+   },
+   {
+    "http": 200,
+    "rCode": "0",
+    "rMessage": "게시글 작성 시, \"파트너스 활동을 통해 일정액의 수수료를 제공받을 수 있음\"을 기재하셔야 합니다",
+    "count": 10,
+    "fields": [
+     "categoryName",
+     "isFreeShipping",
+     "isRocket",
+     "keyword",
+     "productId",
+     "productImage",
+     "productName",
+     "productPrice",
+     "productUrl",
+     "rank"
+    ],
+    "image_fields": [
+     "productImage"
+    ],
+    "distinct_images": 10,
+    "distinct_product_ids": 10,
+    "url_shapes": {
+     "link.coupang.com/re/AFFTDP": 10
+    },
+    "image_hosts": {
+     "ads-partners.coupang.com": 10
+    },
+    "categories": {
+     "Travel": 10
+    },
+    "samples": [
+     {
+      "name": "[콘도] 패밀리 23평 바다전망",
+      "price": 735000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "패밀리 23평(Sunset Check-in(18시체크인/10시체크아웃)★연박불가, 콘도)",
+      "price": 614000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "콘도 패밀리23평, 바다 전망",
+      "price": 729989,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "디럭스 더블",
+      "price": 611719,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "주니어 패밀리 스위트, 바다 전망",
+      "price": 439780,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "단체룸",
+      "price": 800000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "25평형 바다전망 1층 - 2인 기준(취사불가, 인원추가 시 현장결제)",
+      "price": 89000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "[특가]수페리어트윈(펫동반가능객실)",
+      "price": 539000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "로얄 스위트",
+      "price": 317951,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "[주중] 종일권 소인",
+      "price": 24000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     }
+    ],
+    "keyword": "롯데리조트 속초",
+    "path_variant": "no_v1"
+   },
+   {
+    "http": 200,
+    "rCode": "0",
+    "rMessage": "게시글 작성 시, \"파트너스 활동을 통해 일정액의 수수료를 제공받을 수 있음\"을 기재하셔야 합니다",
+    "count": 10,
+    "fields": [
+     "categoryName",
+     "isFreeShipping",
+     "isRocket",
+     "keyword",
+     "productId",
+     "productImage",
+     "productName",
+     "productPrice",
+     "productUrl",
+     "rank"
+    ],
+    "image_fields": [
+     "productImage"
+    ],
+    "distinct_images": 10,
+    "distinct_product_ids": 10,
+    "url_shapes": {
+     "link.coupang.com/re/AFFTDP": 10
+    },
+    "image_hosts": {
+     "ads-partners.coupang.com": 10
+    },
+    "categories": {
+     "Travel": 10
+    },
+    "samples": [
+     {
+      "name": "슈페리어(스탠다드/트윈)",
+      "price": 380000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "패밀리-슈페리어/스탠다드/트윈",
+      "price": 380000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "패밀리 슈페리어 (스탠다드/트윈)",
+      "price": 390000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "패밀리(슈페리어/스텐다드/트윈)",
+      "price": 234300,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "스탠다드 슈페리어 트윈룸",
+      "price": 372917,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "슈페리어 (스탠다드/트윈)",
+      "price": 376546,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "슈페리어 (스탠다드/트윈)",
+      "price": 247430,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "[B].유월드 자유이용권_골드패스",
+      "price": 50900,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "[C].라이트 패스",
+      "price": 29900,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "힐링 야경투어(월~목) [B].소인",
+      "price": 8000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     }
+    ],
+    "keyword": "소노캄 여수",
+    "path_variant": "no_v1"
+   },
+   {
+    "http": 200,
+    "rCode": "0",
+    "rMessage": "게시글 작성 시, \"파트너스 활동을 통해 일정액의 수수료를 제공받을 수 있음\"을 기재하셔야 합니다",
+    "count": 10,
+    "fields": [
+     "categoryName",
+     "isFreeShipping",
+     "isRocket",
+     "keyword",
+     "productId",
+     "productImage",
+     "productName",
+     "productPrice",
+     "productUrl",
+     "rank"
+    ],
+    "image_fields": [
+     "productImage"
+    ],
+    "distinct_images": 10,
+    "distinct_product_ids": 10,
+    "url_shapes": {
+     "link.coupang.com/re/AFFTDP": 10
+    },
+    "image_hosts": {
+     "ads-partners.coupang.com": 10
+    },
+    "categories": {
+     "Travel": 10
+    },
+    "samples": [
+     {
+      "name": "402(미온수삼겹살조식무료제공/노래방/세탁기/식세기)",
+      "price": 179000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "B(커플PC,노천탕,안마의자,스타일러닌텐도사용가능,프로젝터,독채)",
+      "price": 490000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "파티룸 → 숙박상품x(시간제 파티룸 대여 상품(숙소 문의 필수))",
+      "price": 200000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "202호(복층/미온수수영장/개별바베큐/2베드)",
+      "price": 119000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "D-6호-23평/실내풀/키즈애견동반가능( 실내풀장/애견동반)",
+      "price": 179000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "S05 노래방풀빌라 그린(복층)",
+      "price": 430000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "G1키즈풀빌라원룸",
+      "price": 69000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "키즈3 (개별온수풀(유아풀1,성인풀1))",
+      "price": 170000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "A동 102호(미온수독채풀빌라,기준2/최대6인)",
+      "price": 299000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     },
+     {
+      "name": "B4(WITH DOG)",
+      "price": 290000,
+      "category": "Travel",
+      "isRocket": false,
+      "url_params": [
+       "itemId",
+       "lptag",
+       "pageKey",
+       "pt",
+       "requestid",
+       "slot",
+       "token",
+       "traceid",
+       "vendorItemId"
+      ]
+     }
+    ],
+    "keyword": "가평 풀빌라",
+    "path_variant": "no_v1"
    }
-  ]
+  ],
+  "pair_used": {
+   "access": "COUPANG_ACCESS_KEY",
+   "secret": "COUPANG_SECRET_KEY"
+  }
  },
  "verdict": {
-  "keys": "키는 있으나 API 호출이 통과하지 못함 (search 결과 참조)"
+  "keys": "정상 — COUPANG_ACCESS_KEY / COUPANG_SECRET_KEY 로 호출 성공",
+  "domestic_travel_best_count": null,
+  "overseas_travel_best_count": null,
+  "deeplink_product_ok": false,
+  "deeplink_travel_ok": false,
+  "calls_made": 4
  }
 }
