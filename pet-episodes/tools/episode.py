@@ -3806,9 +3806,14 @@ def step_remake(ep, epdir, work, log, req):
                                     + REMAKE_COST["tts"], 2)
             if mode != "full":
                 return
-            # 본편 전체 예상이 한도를 넘으면 시작하지 않는다
-            if float(res.get("spent", 0)) + res["est_full"] > cap:
-                raise RuntimeError(f"본편 예상 비용(약 ${res['est_full']:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다. 더 짧은 원본으로 다시 해 주세요.")
+            # 본편 전체 예상이 한도를 넘으면 시작하지 않는다 — 이미 만든 것(구간·끝 그림·끝 영상·내레이션)은 다시 만들지 않으니 빼고 센다
+            # (2026-10-09: 얼굴 모자이크만 넣어 다시 조립하는데 이미 있는 끝 광고 값을 또 더해 한도에 걸려 멈춤)
+            need = (REMAKE_COST["omni_sec"] * seg * sum(1 for k in range(1, n) if not (work / f"rm_seg{k + 1}.mp4").exists())
+                    + (0 if (work / "rm_end_start.png").exists() else REMAKE_COST["image"])
+                    + (0 if (work / "rm_end.mp4").exists() else REMAKE_COST["omni_sec"] * end_sec)
+                    + (0 if (work / "rm_vo.wav").exists() else REMAKE_COST["tts"]))
+            if float(res.get("spent", 0)) + need > cap:
+                raise RuntimeError(f"남은 제작 예상 비용(약 ${need:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다(지금까지 ${float(res.get('spent', 0)):.2f}).")
             segs = []
             for i in range(n):
                 o = work / f"rm_seg{i + 1}.mp4"
