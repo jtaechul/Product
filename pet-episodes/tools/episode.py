@@ -2692,7 +2692,9 @@ TIMELINE_HEAD = (" SECOND-BY-SECOND TIMELINE of the original (follow it exactly;
 def _timeline(ref: Path, start: float, dur: float, work: Path, res: dict, cap: float, tag: str) -> str:
     """원본 구간을 소리와 함께 AI가 보고 0.5초마다 동작·입모양·소리·카메라를 적는다. 한 번 만든 시간표는 log에 두고 다시 쓴다(무료)."""
     tl = res.setdefault("timeline", {})
-    if tag not in tl and res.get("timeline_manual") and tl.get("all"):   # 프레임으로 확인한 시간표가 있으면 구간도 그것으로(AI 시간표 다시 안 받음)
+    # 원본 전체 시간표('all')가 지금 원본 것이면 구간 시간표도 그것을 잘라 쓴다(AI 시간표 다시 안 받음 — 같은 원본을 두 번 분석하지 않게,
+    # 2026-10-09: 합성 영상 단계가 흐린 세로 틀 영상으로 시간표를 한 번 더 받던 것). 프레임으로 확인한 시간표도 같은 길
+    if tag not in tl and tag != "all" and tl.get("all") and (res.get("timeline_manual") or res.get("timeline_src") == res.get("src_sig")):
         rows_m = []
         for x in tl["all"]:
             try:
@@ -3565,6 +3567,9 @@ def step_remake(ep, epdir, work, log, req):
             if not parts:
                 raise RuntimeError(f"내레이션 녹음 실패(HTTP {code})")
             _pcm_to_wav(base64.b64decode(parts[0]["inlineData"]["data"]), vo, float(rm.get("vo_speed", REMAKE_VO_SPEED)))
+            if _dur(vo) < 0.3:                            # 빈 녹음이면 조립이 끝나지 않고 멈춰 있는다(2026-10-09 점검에서 발견) — 바로 알린다
+                vo.unlink(missing_ok=True)
+                raise RuntimeError("내레이션 녹음이 비어 있습니다(소리 없음) — 다시 시도해 주세요")
         # 4) 조립: 리메이크 → (흰 번쩍) 끝 장면(느리게 + 마지막 장면 멈춤) + 문구 + 내레이션. 노래 없음
         Lb, vl = _dur(body_v), _dur(vo)
         # 강아지 낑낑 소리는 실패 직후 광고 화면이 시작될 때(사용자 지시 2026-10) → 내레이션은 낑낑 소리가 끝난 뒤
