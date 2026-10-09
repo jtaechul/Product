@@ -222,11 +222,13 @@ def _italic(im: Image.Image) -> Image.Image:
     return im.transform((w + int(h * k), h), Image.AFFINE, (1, k, -int(h * k), 0, 1, 0), resample=Image.BICUBIC)
 
 
-def answer_png(question: str, answer: str, sci: str, out: Path, bg: Path | None = None, portrait: Path | None = None) -> Path:
+def answer_png(question: str, answer: str, sci: str, out: Path, bg: Path | None = None, portrait: Path | None = None,
+               name: str = "") -> Path:
     """정답 카드(운영자 지시 2026-09-30 디자인 개선): 본편 마지막 화면을 어둡게·흐리게 깐 배경 위에
-    작은 빨간 「正解」 라벨 → 큰 흰 이름 → 학명(이탤릭) → 가는 선 → 「チャンネル登録」 배지. 질문은 위쪽에 작게."""
+    작은 빨간 「正解」 라벨 → 큰 흰 이름 → 학명(이탤릭) → 가는 선 → 「チャンネル登録」 배지. 질문은 위쪽에 작게.
+    name: 사실 질문 편(정답이 이름이 아님)일 때 정답 아래에 생물 이름을 한 줄 더(운영자 선택 2026-10-09 D)."""
     from PIL import ImageFilter
-    check_glyphs(question + answer + sci, "정답 카드")
+    check_glyphs(question + answer + sci + name, "정답 카드")
     if bg and Path(bg).exists():
         im = Image.open(bg).convert("RGB").resize((W, H)).filter(ImageFilter.GaussianBlur(10))
         im = Image.blend(im, Image.new("RGB", (W, H), NAVY), 0.62).convert("RGBA")
@@ -278,6 +280,11 @@ def answer_png(question: str, answer: str, sci: str, out: Path, bg: Path | None 
     dr.text((int((W - tw) / 2), y), answer, font=f, fill=(255, 255, 255, 255))
     a2, d2 = f.getmetrics()
     y += a2 + d2 + 18
+    if name and name != answer:
+        f = _fit_font(name, 44, W - 120)
+        dr.text((int((W - f.getlength(name)) / 2), y), name, font=f, fill=(235, 238, 245, 255))
+        a3, d3 = f.getmetrics()
+        y += a3 + d3 + 10
     if sci:
         sci = sci[:1].upper() + sci[1:]
         f = _fit_font(sci, 34, W - 160)
@@ -329,6 +336,61 @@ def _silent_video(src_v: Path, out: Path, sec: float, fade_in: float = 0.0) -> P
     return out
 
 
+# ★후킹 2초 자동 선택(운영자 선택 2026-10-09 · 실사고: 왕게 편 — 대본 단계에서 영상도 없이 「컷 한가운데 2초」를
+#   정해 두었더니 거의 멈춘 장면이 맨 앞에 나가 81%가 바로 넘김). 이제 완성된 클립에서 실제로 가장 많이 움직이는 2초를 잰다.
+#   움직임 = 회색 90×160 · 초당 8장 · 앞뒤 장면의 평균 밝기 차이(장면이 확 바뀌는 한 장은 뺌) — 실패 분석 때 쓴 것과 같은 계산.
+MOTION_FPS = 8
+HOOK_MIN_MOTION = 3.0          # 맨 앞 2초 움직임 하한(실측: 왕게 1.0 → 81% 즉시 이탈 · 대왕구족충 3.8 · 유령해삼 6.9)
+FRONT_S = 15.0                 # 「앞 15초」 움직임 측정 구간(왕게 1.4 · 대왕구족충 7.4 · 유령해삼 2.5)
+FRONT_MIN_MOTION = 2.0
+
+
+def motion_series(mp4: Path, fps: int = MOTION_FPS, dur: float | None = None) -> list[float | None]:
+    """프레임 사이 움직임 목록(i번 = i/fps초 → (i+1)/fps초). 컷 전환처럼 한 장만 확 튀는 값은 None(움직임에서 뺀다)."""
+    import numpy as np
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(mp4), *(["-t", f"{dur}"] if dur else []),
+                          "-vf", f"fps={fps},scale=90:160,format=gray", "-f", "rawvideo", "-"], capture_output=True).stdout
+    fr = np.frombuffer(raw, np.uint8)
+    if fr.size < 2 * 90 * 160:
+        return []
+    fr = fr[:fr.size // (90 * 160) * 90 * 160].reshape(-1, 160, 90).astype(float)
+    d = np.abs(np.diff(fr, axis=0)).mean(axis=(1, 2))
+    out: list[float | None] = []
+    for i, v in enumerate(d):
+        nb = [d[j] for j in (i - 1, i + 1) if 0 <= j < len(d)]
+        out.append(None if v > 10 and nb and max(nb) < 0.45 * v else round(float(v), 3))
+    return out
+
+
+def window_motion(series: list[float | None], at: float, sec: float = HOOK_S, fps: int = MOTION_FPS) -> float:
+    """at초부터 sec초 동안의 평균 움직임(뺀 값 제외)."""
+    i0 = int(round(at * fps))
+    vals = [v for v in series[i0:i0 + int(round(sec * fps))] if v is not None]
+    return round(sum(vals) / len(vals), 2) if vals else 0.0
+
+
+def best_hook_window(series: list[float | None], usable_s: float, sec: float = HOOK_S, fps: int = MOTION_FPS) -> tuple[float, float]:
+    """클립 앞 usable_s초 안에서 평균 움직임이 가장 큰 sec초 구간의 (시작 초, 움직임). 같으면 앞쪽."""
+    best = (0.0, window_motion(series, 0.0, sec, fps))
+    last = int(round(max(0.0, usable_s - sec) * fps))
+    for i in range(1, last + 1):
+        m = window_motion(series, i / fps, sec, fps)
+        if m > best[1]:
+            best = (round(i / fps, 2), m)
+    return best
+
+
+def pick_hook(clip: Path, hook: dict, clip_s: float) -> dict:
+    """후킹 발췌 구간: 운영자가 시작 초를 직접 정했으면(at_by=operator) 그대로, 아니면 가장 많이 움직이는 2초를 자동 선택."""
+    hmax = max(0.0, clip_s - HOOK_S)
+    series = motion_series(clip, dur=clip_s or None)
+    if hook.get("at_by") == "operator" and hook.get("at") is not None:
+        at = round(max(0.0, min(float(hook["at"]), hmax)), 2)
+        return {"at": at, "motion": window_motion(series, at), "by": "operator"}
+    at, m = best_hook_window(series, clip_s)
+    return {"at": round(min(at, hmax), 2), "motion": m, "by": "auto"}
+
+
 def build_hook(clip: Path, at: float, question: str, t: Path) -> Path:
     """후킹 2초: 본편 컷(clip)의 at초부터 HOOK_S초를 그대로 발췌 + 빨간 질문 글자(0.2초부터). 자막·나레이션 없음."""
     ex = t / "hook_ex.mp4"
@@ -343,8 +405,9 @@ def build_hook(clip: Path, at: float, question: str, t: Path) -> Path:
     return _silent_video(ov, t / "hook.mp4", HOOK_S)
 
 
-def build_answer(question: str, answer: str, sci: str, t: Path, bg: Path | None = None, portrait: Path | None = None) -> Path:
-    png = answer_png(question, answer, sci, t / "answer.png", bg=bg, portrait=portrait)
+def build_answer(question: str, answer: str, sci: str, t: Path, bg: Path | None = None, portrait: Path | None = None,
+                 name: str = "") -> Path:
+    png = answer_png(question, answer, sci, t / "answer.png", bg=bg, portrait=portrait, name=name)
     raw = t / "answer_raw.mp4"
     _run(["-loop", "1", "-i", str(png), "-t", f"{ANSWER_S}", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", str(raw)])
     return _silent_video(raw, t / "answer.mp4", ANSWER_S, fade_in=0.4)
@@ -407,9 +470,11 @@ def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: P
     return cur
 
 
-def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, overrides: dict | None = None) -> None:
+def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, overrides: dict | None = None) -> dict:
     """overrides: {컷번호: 클립 경로} — 관리자 페이지에서 그 컷만 다시 만든 경우 새 클립을 쓴다.
-    ending: 예전 공용 엔딩 mp4(script.json 에 hook 이 없는 옛 편에만 쓰임 · '' 이면 안 붙임)."""
+    ending: 예전 공용 엔딩 mp4(script.json 에 hook 이 없는 옛 편에만 쓰임 · '' 이면 안 붙임).
+    반환: {"hook": {"cut", "at", "motion", "by"}} — 실제로 쓴 후킹 구간(후킹이 없는 옛 편은 빈 dict)."""
+    info: dict = {}
     karaoke.verify_font()        # ★자막 글꼴 자가 검사 — 네모(□)·빈칸이면 여기서 멈춘다(영상을 만들지 않음)
     P = Path(pilot)
     sc = json.loads((P / "script.json").read_text(encoding="utf-8"))
@@ -459,12 +524,15 @@ def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, override
         if hook:
             n = int(hook["cut"])
             clip = Path((overrides or {}).get(n) or P / "out" / clips_id / f"c{n:02d}.mp4")
-            at = max(0.0, min(float(hook.get("at") or 0.0), max(0.0, float(cuts[n].get("sec") or 0) - HOOK_S)))
+            pick = pick_hook(clip, hook, float(cuts[n].get("sec") or 0))
+            at = pick["at"]
+            info["hook"] = {"cut": n, **pick}
             lastf = t / "last_frame.jpg"
             _run(["-sseof", "-0.3", "-i", str(t / "body_v.mp4"), "-frames:v", "1", "-q:v", "2", str(lastf)])
             segs = [build_hook(clip, at, hook["question_jp"], t), t / "body.mp4",
                     build_answer(hook.get("question_jp", ""), hook["answer_jp"], sc.get("subject", {}).get("scientific_name", ""), t,
-                                 bg=lastf if lastf.exists() else None, portrait=_portrait(P))]
+                                 bg=lastf if lastf.exists() else None, portrait=_portrait(P),
+                                 name=sc.get("subject", {}).get("jp_name", "") if hook.get("type") == "fact" else "")]
         elif ending:
             _run(["-i", ending, "-vf", f"scale={W}:{H},setsar=1,fps={FPS}",
                   "-af", "loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000", "-c:v", "libx264", "-crf", "18",
@@ -472,11 +540,12 @@ def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, override
             segs.append(t / "end.mp4")
         if len(segs) == 1:
             _run(["-i", str(segs[0]), "-c", "copy", dst])
-            return
+            return info
         ins = [x for p in segs for x in ("-i", str(p))]
         fc = "".join(f"[{i}:v][{i}:a]" for i in range(len(segs))) + f"concat=n={len(segs)}:v=1:a=1[v][a]"
         _run([*ins, "-filter_complex", fc, "-map", "[v]", "-map", "[a]",
               "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", dst])
+    return info
 
 
 if __name__ == "__main__":

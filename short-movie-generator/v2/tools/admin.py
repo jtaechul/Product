@@ -224,7 +224,8 @@ def assemble(pid: str) -> dict:
         for c in sc.get("cuts", []):
             A.check_glyphs(str(c.get("annotation") or ""), f"{c.get('cut')}번 컷 주석")
         hk = sc.get("hook") or {}
-        A.check_glyphs(str(hk.get("question_jp") or "") + str(hk.get("answer_jp") or ""), "후킹·정답")
+        A.check_glyphs(str(hk.get("question_jp") or "") + str(hk.get("answer_jp") or "")
+                       + str((sc.get("subject") or {}).get("jp_name") or ""), "후킹·정답")
     except A.GlyphError as e:
         st["checks"] = {"at": _now(), "screen_text": {"ok": False, "value": str(e)[:200],
                                                      "rule": "화면 글자가 글꼴에 모두 있을 것(한국어 주석 금지 · 네모 □ 금지)"}}
@@ -233,8 +234,14 @@ def assemble(pid: str) -> dict:
         raise SystemExit(str(e))
     ending = "" if sc.get("hook") else str(pilot / asm["ending"])   # ★후킹 편은 공용 엔딩 대신 [후킹][본편][정답 카드]
     dst.parent.mkdir(parents=True, exist_ok=True)           # 빈 폴더는 git에 안 남아 로컬 재조립 때 없을 수 있다(실측 ffmpeg 254)
-    A.main(str(pilot), asm["clips_id"], asm["tts_id"], ending, str(dst), overrides=over)
+    info = A.main(str(pilot), asm["clips_id"], asm["tts_id"], ending, str(dst), overrides=over) or {}
+    used = info.get("hook")
+    if used and sc.get("hook"):                              # 실제로 쓴 후킹 구간을 대본에 남긴다(페이지 「발췌: N번 컷 X초부터」가 사실이 되게)
+        sc["hook"].update(at=used["at"], motion=used["motion"], at_by=used["by"])
+        _save(_script_path(pid), sc)
     st = load_status(pid)
+    if used and sc.get("hook"):
+        _sync_script_artifacts(st, sc)
     a = st["artifacts"]["video"]
     st["artifacts"].get("script", {}).pop("hook_pending", None)
     tmv = (sc.get("timing_v5") or [])
@@ -245,6 +252,7 @@ def assemble(pid: str) -> dict:
                                      "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"}
     st["checks"]["screen_text"] = {"ok": True, "value": "주석·후킹·정답 글자 모두 글꼴에 있음",
                                    "rule": "화면 글자가 글꼴에 모두 있을 것(한국어 주석 금지 · 네모 □ 금지)"}
+    st["checks"].update(motion_checks(dst, used))
     st["stages"]["video"]["state"] = "review"
     a["built_at"] = _now()
     _save(status_path(pid), st)
@@ -292,6 +300,7 @@ def _sync_script_artifacts(st: dict, sc: dict) -> None:
     st.setdefault("artifacts", {}).setdefault("script", {})["cuts"] = cuts
     st["artifacts"]["script"]["pending_lines"] = [c["cut"] for c in cuts if c["pending"]]
     st["artifacts"]["script"]["hook"] = sc.get("hook")
+    st["artifacts"]["script"]["core"] = (facts_for(sc, str(sc.get("core") or "")) or [None])[0]   # 핵심 사실 하나(D)
 
 
 def facts_for(sc: dict, ids: str) -> list[dict]:
@@ -461,13 +470,28 @@ def edit_hook(pid: str, data: dict) -> dict:
             hk[k] = str(data[k]).strip()
     if data.get("cut"):
         hk["cut"] = int(data["cut"])
-    if data.get("at") not in (None, ""):
-        hk["at"] = round(float(data["at"]), 2)
-    probs = validate_hook(hk, cuts, sc.get("facts", []))
+    # ★발췌 시작 초(운영자 선택 2026-10-09): 기본은 조립 때 「가장 많이 움직이는 2초」 자동 선택.
+    #   운영자가 값을 **바꿨을 때만** 그 값으로 고정(at_by=operator) · 칸을 비우면 다시 자동 · 컷만 바꾸면 그 컷에서 자동.
+    cut_changed = int(hk["cut"]) != int(sc["hook"].get("cut") or 0)
+    raw_at = str(data.get("at") if data.get("at") is not None else "").strip()
+    if "at" in data and not raw_at:
+        hk.pop("at_by", None)                                # 칸을 비우면 자동 선택으로
+    elif raw_at:
+        new_at = round(float(raw_at), 2)
+        if hk.get("at") is None or abs(new_at - float(hk["at"])) > 0.005:
+            hk["at"], hk["at_by"] = new_at, "operator"       # 바꿨을 때만 고정
+        elif cut_changed:
+            hk.pop("at_by", None)                            # 컷만 바꾸면 새 컷에서 자동
+    elif cut_changed:
+        hk.pop("at_by", None)
+    probs = validate_hook(hk, cuts, sc.get("facts", []), name=(sc.get("subject") or {}).get("jp_name", ""))
     if probs:
         raise SystemExit("후킹 검사 불통과: " + " / ".join(probs))
+    hk["type"] = hook_type(hk.get("question_jp", ""))
     sec = float(cuts[int(hk["cut"]) - 1].get("sec") or 0)
     hk["at"] = round(max(0.0, min(float(hk.get("at") or 0.0), max(0.0, sec - HOOK_S))), 2)
+    if cut_changed or hk.get("at_by") != sc["hook"].get("at_by") or hk["at"] != sc["hook"].get("at"):
+        hk.pop("motion", None)                               # 움직임 값은 다음 조립 때 다시 잰다
     sc.setdefault("hook_history", []).append({"at": _now(), "hook": sc["hook"]})
     sc["hook"] = hk
     _save(_script_path(pid), sc)
@@ -475,7 +499,8 @@ def edit_hook(pid: str, data: dict) -> dict:
     if (st["artifacts"].get("video") or {}).get("final"):
         st["artifacts"]["script"]["hook_pending"] = True         # 영상엔 아직 미반영 — 재조립 필요
         _note(st, "video", "hook", "후킹·정답 문구 수정됨 — 「완성본 다시 조립」을 누르면 반영(무료)")
-    _note(st, "script", "hook", f"후킹 수정: {hk['cut']}번 컷 {hk['at']}초 「{hk['question_jp']}」 → 正解 {hk['answer_jp']}")
+    where = f"{hk['at']}초부터(운영자 지정)" if hk.get("at_by") == "operator" else "가장 많이 움직이는 2초(조립 때 자동 선택)"
+    _note(st, "script", "hook", f"후킹 수정: {hk['cut']}번 컷 {where} 「{hk['question_jp']}」 → 正解 {hk['answer_jp']}")
     _save(status_path(pid), st)
     return st
 
@@ -832,10 +857,11 @@ _REPRO_JP = "※映像はAIによる再現映像です（生き物の形は実�
 _REPRO_KO = "※ 영상은 AI 재현 영상입니다(생물의 형태는 실제 사진을 참고했습니다)."
 PINNED_COMMENT = "次に見たい深海の生き物は？"
 _META_PROMPT = """You write YouTube Shorts metadata for a Japanese deep-sea science channel. Use ONLY the facts and narration below.
-Rules: title_jp = hook-style Japanese title, max 32 characters, mystery/awe tone, no honorific needed, no hashtags,
-follow the channel's PROVEN FORMULA (our two best videos): [the single most unbelievable fact or trait] + 深海の + [name or 謎],
-e.g. 「5年以上も絶食した深海の巨大生物ダイオウグソクムシの謎」「頭も骨もない深海の謎「首なしチキンモンスター」」 —
-put the most surprising concrete fact (a number or a missing body part etc.) at the very start;
+Rules: title_jp = hook-style Japanese title, max 32 characters, mystery/awe tone, no honorific needed, no hashtags.
+ONE CORE FACT: the title is about the episode's CORE FACT below — the same fact the opening question asks about and the ending
+pays off. Put its most surprising concrete detail (a number, a missing body part, a strange behaviour) at the very start and end
+with 深海の謎 or a question, e.g. 「5年以上も絶食する、深海の巨大生物の謎」「頭も骨もない、深海の謎」.
+{name_rule}
 no "#Shorts", no episode numbers, NO office-worker jokes (有給/残業/上司 etc.), never exaggerate beyond the facts.
 desc_jp = 3-4 short sentences in polite Japanese (です・ます), summarising the story with the concrete facts.
 title_ko / desc_ko = natural Korean versions (존댓말 for desc).
@@ -847,6 +873,10 @@ Return JSON only:
 {{"title_jp":"...","title_ko":"...","desc_jp":"...","desc_ko":"...","tags_jp":["#..."],"tags_ko":["#..."]}}
 # Species
 {name_jp} / {name_ko} / {sci}
+# CORE FACT (the one fact this episode is about)
+{core}
+# Opening question (first 2 seconds) → its answer (revealed only at the end)
+{question} → {answer}
 # Narration (by cut)
 {cuts}
 # Facts
@@ -878,6 +908,8 @@ def species_tags(sc: dict) -> tuple[str, str]:
     → 和名 → 후킹 정답 이름 → 학명 순으로 반드시 채운다."""
     sub = sc.get("subject", {})
     hk = sc.get("hook") or {}
+    if hk.get("type") == "fact":                             # 사실 질문 편의 정답은 이름이 아니다(D) — 종명 태그로 쓰지 않음
+        hk = {}
     jp = (sub.get("jp_name") or hk.get("answer_jp") or sub.get("scientific_name") or "").replace(" ", "")
     ko = (sub.get("ko_name") or hk.get("answer_ko") or sub.get("scientific_name") or "").replace(" ", "")
     return "#" + jp, "#" + ko
@@ -905,20 +937,48 @@ YT_CATEGORIES = {"15": "반려동물/동물", "28": "과학기술", "27": "교�
 _STALE = re.compile(r"有給|残業|定時|上司|出社|유급|야근|상사|출근|퇴근|직장인")
 
 
+def title_spoilers(sc: dict) -> tuple[list[str], list[str]]:
+    """제목 본문에 넣으면 안 되는 말(운영자 선택 2026-10-09 D: 제목에 정답 이름을 넣지 않는다) — (일본어, 한국어).
+    후킹 정답은 늘 금지 · 정체 맞히기(identity) 편은 和名도 금지(종명은 제목 끝 해시태그로만 — 채널 규칙 그대로)."""
+    hk, sub = sc.get("hook") or {}, sc.get("subject") or {}
+    ident = (hk.get("type") or hook_type(hk.get("question_jp", ""))) == "identity"
+    jp = [hk.get("answer_jp", "")] + ([sub.get("jp_name", "")] if ident else [])
+    ko = [hk.get("answer_ko", "")] + ([sub.get("ko_name", "")] if ident else [])
+    stem = lambda xs: {y for x in xs if x for y in (x, re.sub(r"(科|属|類|の仲間|과|속|류)$", "", x)) if len(y) >= 2}   # noqa: E731
+    return sorted(stem(jp)), sorted(stem(ko))
+
+
 def upload_meta(pid: str, ask=None) -> dict:
     st = load_status(pid)
     sc = _load(_script_path(pid))
     sub = sc.get("subject", {})
+    hk = sc.get("hook") or {}
+    by = {f["id"]: f for f in sc.get("facts", [])}
+    core = by.get(str(sc.get("core") or ""))
+    ban_jp, ban_ko = title_spoilers(sc)
+    name_rule = ("NEVER put these words in title_jp / title_ko (they give away the answer, which the video reveals only at the end; "
+                 "the species name is added automatically as a hashtag): " + ", ".join(ban_jp + ban_ko) + ".") if ban_jp + ban_ko else ""
     prompt = _META_PROMPT.format(
         name_jp=sub.get("jp_name", ""), name_ko=sub.get("ko_name", ""), sci=sub.get("scientific_name", ""),
+        core=(f"{core['id']}: {core.get('fact_jp') or core['fact']} / {core['fact']}" if core else "(not set — use the most surprising fact)"),
+        question=hk.get("question_jp", ""), answer=hk.get("answer_jp", ""), name_rule=name_rule,
         cuts="\n".join(f"{c['cut']}: {c['jp']}" for c in sc["cuts"] if "tts" in c),
         facts="\n".join(f"{f['id']}: {f['fact']}" for f in sc.get("facts", [])))
-    gen = json.loads(re.search(r"\{.*\}", (ask or _gemini_text)(prompt), re.S).group(0))
-    for k in ("title_jp", "title_ko", "desc_jp", "desc_ko"):
-        if not str(gen.get(k, "")).strip():
-            raise ValueError(f"{k} 비어 있음")
-    if _STALE.search(gen["title_jp"] + gen["title_ko"]):
-        raise ValueError("제목에 금지된 회사원 소재가 들어갔습니다 — 다시 쓰기")
+    probs: list[str] = []
+    for _ in range(3):
+        gen = json.loads(re.search(r"\{.*\}", (ask or _gemini_text)(prompt + (
+            "\n# Problems in your previous answer (fix all)\n" + "\n".join("- " + x for x in probs) if probs else "")), re.S).group(0))
+        for k in ("title_jp", "title_ko", "desc_jp", "desc_ko"):
+            if not str(gen.get(k, "")).strip():
+                raise ValueError(f"{k} 비어 있음")
+        if _STALE.search(gen["title_jp"] + gen["title_ko"]):
+            raise ValueError("제목에 금지된 회사원 소재가 들어갔습니다 — 다시 쓰기")
+        probs = [f"title_jp contains 「{w}」 — remove it" for w in ban_jp if w in gen["title_jp"]] + \
+                [f"title_ko contains 「{w}」 — remove it" for w in ban_ko if w in gen["title_ko"]]
+        if not probs:
+            break
+    if probs:
+        raise ValueError("제목에 정답(이름)이 들어갔습니다 — 3번 다시 써도 빠지지 않음: " + " / ".join(probs[:2]))
     up = st.setdefault("artifacts", {}).setdefault("upload", {})
     old = up.get("meta") or {}
     up["meta"] = _compose_meta(sc, gen)
@@ -1125,6 +1185,24 @@ def auto_checks(mp4: Path, body_s: float = 0.0, step: float = 0.25) -> dict:
     }
 
 
+def motion_checks(mp4: Path, hook: dict | None) -> dict:
+    """★맨 앞 움직임 검사(운영자 선택 2026-10-09 · 실사고: 왕게 편 — 앞 15초가 거의 멈춘 화면이라 81%가 바로 넘김).
+    승인을 막지는 않고 「주의」로 알린다(warn). 기준은 지금까지 올린 3편 실측으로 정한 잠정값."""
+    sys.path.insert(0, str(V2 / "tools"))
+    import assemble as A                                     # noqa: E402
+    out = {}
+    if hook:
+        m = float(hook.get("motion") or 0)
+        how = "자동 선택" if hook.get("by") == "auto" else "운영자 지정"
+        out["hook_motion"] = {"value": m, "ok": m >= A.HOOK_MIN_MOTION, "warn": True,
+                              "rule": f"맨 앞 2초 움직임 {A.HOOK_MIN_MOTION:g} 이상 · {hook['cut']}번 컷 {hook['at']}초부터({how}) · "
+                                      "실측: 왕게 1.0(81% 바로 넘김) · 대왕구족충 3.8 · 유령해삼 6.9"}
+    f = A.window_motion(A.motion_series(mp4, dur=A.FRONT_S), 0.0, A.FRONT_S)
+    out["front_motion"] = {"value": f, "ok": f >= A.FRONT_MIN_MOTION, "warn": True,
+                           "rule": f"앞 15초 평균 움직임 {A.FRONT_MIN_MOTION:g} 이상(잠정) · 실측: 왕게 1.4 · 유령해삼 2.5 · 대왕구족충 7.4"}
+    return out
+
+
 # ── ② 대본 자동 작성(운영자 지적 2026-09-30 · 실사고) ──────────────────────────────
 # 실사고: 새 편을 시작하면 대본 단계가 '작업 중'으로 바뀌고 화면엔 "대본을 작성하고 있습니다"가 떴지만, **실제로 대본을
 #   쓰는 자동 작업이 없었다**(대본은 Claude 세션이 손으로 쓰던 시절의 상태값만 남음) → 아무 일도 안 일어나는데 '작업 중'.
@@ -1141,6 +1219,8 @@ SPEECH_CPS = 8.5                                            # 낭독문(히라�
 SPEECH_MAX_S = 47.0                                         # 나레이션 합계 상한(컷 여유 포함 약 54초가 되게)
 JOB_STALE_MIN = 25                                          # 이보다 오래 '진행 중'이면 멈춘 것으로 본다(페이지 표시)
 _CTA_WORDS = re.compile(r"チャンネル登録|高評価|コメント|フォロー|登録して|구독|댓글|좋아요")
+# 1번 컷을 역사·발견 이야기로 여는 것 금지(운영자 선택 2026-10-09 B: 「1번 컷은 역사 설명 대신 생물의 이상한 행동부터」)
+_HISTORY_OPEN = re.compile(r"(?:1[5-9]\d\d|20\d\d)年|学者|研究者|博士|探検|調査船|発見され")   # 「200年生きる」 같은 특징은 허용
 
 
 def set_job(pid: str, stage: str, status: str, text: str = "", action: str = "") -> dict:
@@ -1251,22 +1331,27 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
 - 下の「事実リスト」にあることだけを書く。リストにない数字・年・地名・人名・断定・誇張は書かない。
   各カットに根拠の事実番号を付ける(例 "F2,F5")。出典どうしで数値が違えば広い方を断定しない。
 - 数字は何の数字か分かるように書く(「水深5000メートル」「体長25センチ」)。数字は算用数字で。
-- 1カット目: 思わず手が止まる場面や問いから始める。発見の年・場所・人の出来事が事実リストにあれば、そこから物語として始める。
+- 1カット目: この生き物そのものの、思わず目を疑う行動・姿から始める(画面で生き物が動いている場面)。
+  発見の年・学者・探検の話から始めない(歴史は3カット目以降で短く)。2カット目もその生き物が動く場面を続ける。
 - 前提から親切に。専門用語はやさしく言い換える。
 - 生き物を「あだ名」(海の豚・頭のないニワトリなど)で呼ぶときは、実際に何の生き物か(ナマコの仲間など)も分かるように書く。scene_ko も同じ(例: 바다돼지(해삼))。
 - 同じ単語・言い回しを何度も繰り返さない。文末も単調にしない。
 - {n}カット目: 余韻のある締め(画面は暗闇に消えていく)。「チャンネル登録」「コメント」などの呼びかけは書かない(共通エンディングが別にある)。
 - 呼び名: {name_rule}
-- この回の核になる驚きの事実(主題選定時の一行・事実リストで裏付けること): {core}
-- hook(冒頭2秒の引き): 台本の中で**いちばん驚く場面のカット番号**を選び、その場面を見せながら出す短い問い
-  「〇〇する、この生き物は？」(8〜22文字・「？」で終わる・答えの名前は入れない・事実リストにある行動だけ)。
-  answer_jp は最後の「正解：〇〇」に入れる呼び名(台本で使った呼び名と同じ)。
-  ★正体当てなので、その呼び名(answer_jp)は**カット1・2には出さず**、3カット目以降で初めて明かす(冒頭で答えを言わない)。
+- core(この回の核・一つだけ): 事実リストから、この回でいちばん驚く事実を**一つだけ**選び、その番号を core に書く
+  (候補: {core}・事実リストで裏付けること)。冒頭の問い(hook)・動画タイトル・最後の3カットのどれかが、すべてこの同じ事実を扱う。
+  ほかの事実は、その理由や背景として使う(話をあちこちに広げない)。
+- hook(冒頭2秒の引き): core の事実を描くカットの番号を cut にする(そのカットの fact に core を入れる)。問いは core の事実について:
+  ・見た目では正体が分からない生き物だけ、正体当て「〇〇する、この生き物は？」(answer_jp = 台本で使った呼び名)。
+  ・カニ・エビ・ヤドカリ・イカ・タコ・サメ・クラゲ・ヒトデ・ウニなど見た目で正体が分かる生き物は正体当てにしない。
+    事実の問い(例「エラの中に、何を隠している？」)にして、answer_jp はその答え(14文字以内の短い言葉)。
+  ・8〜22文字・「？」で終わる・答えは入れない・事実リストにあることだけ。
+  ★答え(answer_jp)は**カット1・2には出さず**、3カット目以降で初めて明かす(冒頭で答えを言わない)。
 {feedback}
 # 出力(JSONのみ)
-{{"cuts":[{{"cut":1,"jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
+{{"core":"F4","cuts":[{{"cut":1,"jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
 "scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄 · 별명은 실제 생물을 괄호로: 바다돼지(해삼))","annotation":"画面の注釈(日本語のみ・韓国語禁止・14文字以内・数字は事実どおり・なければ空)"}}],
-"hook":{{"cut":3,"question_jp":"皮を脱ぎ捨てる、この生き物は？","question_ko":"한국어 번역","answer_jp":"呼び名","answer_ko":"한국어 이름"}}}}
+"hook":{{"cut":6,"question_jp":"皮を脱ぎ捨てる、この生き物は？","question_ko":"한국어 번역","answer_jp":"呼び名 または 事実の答え","answer_ko":"한국어"}}}}
 
 # 事実リスト
 {facts}
@@ -1331,6 +1416,9 @@ def validate_script(cuts: list[dict], facts: list[dict]) -> list[str]:
             probs.append(f"カット{i}: {len(jp)}文字です。18〜44文字にしてください。")
         if _CTA_WORDS.search(jp):
             probs.append(f"カット{i}: 呼びかけ(登録・コメント等)は書かないでください。")
+        if i == 1 and _HISTORY_OPEN.search(jp):             # ★왕게 편 실사고 2026-10-09: 「1800年代…学者は」로 시작 → 정지 화면 · 즉시 이탈
+            probs.append(f"カット1: 「{_HISTORY_OPEN.search(jp).group(0)}」— 発見の年・学者・探検の話から始めないでください。"
+                         "この生き物そのものの、目を疑う行動・姿から始めてください(歴史は3カット目以降)。")
         allowed = set().union(*[_nums(by[x]["fact"] + " " + by[x].get("fact_jp", "") + " " + by[x]["quote"]) for x in ids if x in by]) if ids else set()
         bad = sorted((_nums(jp) | _nums(str(c.get("annotation", "")))) - allowed)
         if bad:
@@ -1341,8 +1429,39 @@ def validate_script(cuts: list[dict], facts: list[dict]) -> list[str]:
     return probs
 
 
-def validate_hook(hook: dict | None, cuts: list[dict], facts: list[dict]) -> list[str]:
-    """후킹(맨 앞 2초 질문 + 마지막 정답) 코드 검사 — 불통과 이유 목록."""
+# ★핵심 사실 하나로(운영자 선택 2026-10-09 D · 실사고: 왕게 편 — 후킹은 「물고기가 알을 낳는」 이야기, 제목은 다른 사실,
+#   1번 컷은 학자 이야기라 한 편이 여러 사실로 흩어짐 + 생김새만 봐도 게인데 「이 생물은?」 정체 질문).
+#   후킹 질문·제목·마지막 3컷 중 하나가 같은 핵심 사실(core F번호)을 다루고, 생김새로 정답이 보이는 생물은 정체 질문 금지.
+_IDENTITY_Q = re.compile(r"(この(生き物|生物|動物|魚|子|仲間)(は|って)?|正体(は)?|何者(でしょう)?|だれ|誰)[？?]$")
+_FAMILIAR = re.compile(r"カニ|ガニ|ヤドカリ|エビ|イカ|タコ|ダコ|サメ|ザメ|クラゲ|ヒトデ|ウニ")
+
+
+def hook_type(question: str) -> str:
+    """후킹 질문 종류: 'identity'(정체 맞히기 「…この生き物は？」) | 'fact'(사실 질문 「…何を隠している？」)."""
+    return "identity" if _IDENTITY_Q.search(str(question or "").strip()) else "fact"
+
+
+def validate_core(core: str | None, hook: dict | None, cuts: list[dict], facts: list[dict]) -> list[str]:
+    """핵심 사실 하나(core) 검사: 사실 번호인지 · 후킹 컷이 그 사실을 다루는지 · 마지막 3컷에서 다시 다루는지."""
+    c = str(core or "").strip()
+    if c not in {f["id"] for f in facts}:
+        return [f"core「{core}」が事実リストの番号ではありません。この回の核になる事実を一つだけ選び、その番号(例 F3)を書いてください。"]
+    has = lambda x: c in re.findall(r"F\d+", str(x.get("fact", "")))      # noqa: E731
+    probs = []
+    try:
+        hc = int((hook or {}).get("cut", 0))
+    except (TypeError, ValueError):
+        hc = 0
+    if 1 <= hc <= len(cuts) and not has(cuts[hc - 1]):
+        probs.append(f"hook.cut={hc} のカットが核の事実 {c} を扱っていません。冒頭の問いは核の事実を描くカットから出してください"
+                     f"(そのカットの fact に {c} を入れる)。")
+    if cuts and not any(has(x) for x in cuts[-3:]):
+        probs.append(f"核の事実 {c} が最後の3カットに出てきません。終盤で核の事実に戻り、冒頭の問いの答えを回収してください。")
+    return probs
+
+
+def validate_hook(hook: dict | None, cuts: list[dict], facts: list[dict], name: str = "") -> list[str]:
+    """후킹(맨 앞 2초 질문 + 마지막 정답) 코드 검사 — 불통과 이유 목록. name: 和名(생김새로 정답이 보이는지 판단용)."""
     if not isinstance(hook, dict):
         return ["hook(冒頭の問い)がありません。cuts と一緒に hook を出してください。"]
     probs = []
@@ -1362,7 +1481,13 @@ def validate_hook(hook: dict | None, cuts: list[dict], facts: list[dict]) -> lis
     if a and a in q:
         probs.append("hook.question_jp に答えの名前が入っています(答えは最後に見せる)。")
     if a and any(a in str(c.get("jp", "")) for c in cuts[:2]):
-        probs.append(f"呼び名「{a}」がカット1〜2に出ています。正体当てなので3カット目以降で初めて明かしてください。")
+        probs.append(f"答え「{a}」がカット1〜2に出ています。3カット目以降で初めて明かしてください。")
+    fam = _FAMILIAR.search(a + " " + str(name or ""))
+    if hook_type(q) == "identity" and fam:
+        probs.append(f"「{q}」は正体当てですが、答え「{a}」は見た目で{fam.group(0)}の仲間だと分かってしまいます。"
+                     "正体当てにせず、核の事実についての問い(例「エラの中に、何を隠している？」)にして、answer_jp はその短い答えにしてください。")
+    if hook_type(q) == "fact" and len(a) > 14:
+        probs.append(f"事実の問いの答え「{a}」が長すぎます({len(a)}文字)。14文字以内にしてください。")
     allowed = set().union(*[_nums(f["fact"] + " " + f.get("fact_jp", "") + " " + f.get("quote", "")) for f in facts]) if facts else set()
     bad = sorted(_nums(q) - allowed)
     if bad:
@@ -1445,8 +1570,9 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
         for attempt in range(3):
             gen = _json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt,
                                                              core=core or "(なし — 事実リストから最も驚く一つを選ぶ)")))
-            cuts, hook = gen.get("cuts") or [], gen.get("hook")
-            probs = validate_script(cuts, facts) + validate_hook(hook, cuts, facts)
+            cuts, hook, core_id = gen.get("cuts") or [], gen.get("hook"), str(gen.get("core") or "").strip()
+            probs = validate_script(cuts, facts) + validate_hook(hook, cuts, facts, name=ja_name or "") + \
+                validate_core(core_id, hook, cuts, facts)
             if not probs:
                 break
             fb = (fb + "\n" if feedback else "") + "# 前回の台本の問題点(必ず直す)\n" + "\n".join("- " + p for p in probs) + "\n"
@@ -1464,7 +1590,8 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
               # ★후킹(운영자 확정 2026-09-30): 맨 앞 2초 = 본편 hk_cut 컷에서 그대로 발췌 + 빨간 질문 · 맨 뒤 = 정답 카드
               "hook": {"cut": hk_cut, "at": None, "question_jp": str(hook["question_jp"]).strip(),
                        "question_ko": str(hook.get("question_ko", "")).strip(), "answer_jp": str(hook["answer_jp"]).strip(),
-                       "answer_ko": str(hook.get("answer_ko", "")).strip()},
+                       "answer_ko": str(hook.get("answer_ko", "")).strip(), "type": hook_type(hook["question_jp"])},
+              "core": core_id,                               # ★핵심 사실 하나(후킹·제목·마지막 3컷이 함께 다룸)
               "facts": facts, "source_docs": [{k: d[k] for k in ("id", "url", "title")} for d in docs],
               "cuts": out, "timing_rule": "컷 길이 = (앞 여백 0.15초 + 나레이션 + 여유 0.6초)를 짝수 초로 올림",
               "generated": {"at": _now(), "model": _TEXT_MODEL or "test", "feedback": feedback, "facts_dropped": dropped}}
@@ -1491,7 +1618,8 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
         for c, t in zip(out, timing):
             c["sec"], c["speech_s"] = t["sec"], t["speech_s"]
         hsec = float(out[hk_cut - 1]["sec"])
-        sc["hook"]["at"] = round(max(0.0, hsec / 2 - HOOK_S / 2), 2)      # 발췌 시작 = 컷 한가운데 2초(운영자가 고칠 수 있음)
+        # 임시값(컷 한가운데 2초) — 조립 때 완성된 클립에서 「가장 많이 움직이는 2초」로 바뀐다(운영자가 직접 정하면 그 값)
+        sc["hook"]["at"] = round(max(0.0, hsec / 2 - HOOK_S / 2), 2)
         sc["total_sec"] = sc["total_sec"] + HOOK_S + ANSWER_S
         _save(_script_path(pid), sc)
         st = load_status(pid)
@@ -1662,9 +1790,13 @@ Plan ONE storyboard panel (the first frame of the video clip) for EACH of the {n
   people. No other animals unless the narration says so. Keep the upper quarter of every panel calm and uncluttered (captions).
 - The LAST cut's panel: the creature is already dim and receding into deep darkness (the video will fade to black).
 - Cut {hook_cut} is used as the 2-second opening hook — make it the most striking, dynamic composition.
-- MOTION (budget): mark each cut "omni" ONLY if the narration needs real movement (swimming, eating, escaping, a fast reaction);
-  mark it "still" when a calm, slowly pushed-in tableau tells it just as well (introductions, explanations, records, endings).
-  At most {max_omni} cuts may be "omni"; cut {hook_cut} MUST be "omni". Compose "still" panels so they read well without motion.
+- OPENING (viewers decide in the first seconds whether to keep watching): cuts 1 and 2 show the creature ITSELF, large enough to
+  read on a phone, caught in the middle of the strange action the narration describes — no clay scientists, ships, desks,
+  calendars or empty sets in cut 1.
+- MOTION (budget): cuts {required} MUST be "omni". Mark another cut "omni" ONLY if the narration needs real movement (swimming,
+  eating, escaping, a fast reaction); mark it "still" when a calm, slowly pushed-in tableau tells it just as well (explanations,
+  records, endings). "still" only from cut 3 on, and never 3 "still" cuts in a row. At most {max_omni} cuts may be "omni".
+  Compose "still" panels so they read well without motion.
 {feedback}
 Return JSON only: {{"panels":{{"1":{{"shot":"wide|medium|close","motion":"omni|still","set_edge":true,"props":["prop 1","prop 2"],
 "desc":"English description of panel 1: set, camera angle, creature pose and size in frame, props, light"}}, "2":{{...}}}}}}
@@ -1692,6 +1824,22 @@ def literal_animal_problems(text: str, where: str) -> list[str]:
             f"deep-sea SEA CUCUMBER), describe the REAL organism by its true anatomy and never use that word — no land animals."]
 
 
+# ★앞 15초는 움직이는 영상(운영자 선택 2026-10-09 · 실사고: 왕게 편 — 1·2번 컷이 무료 확대 컷(정지 그림)이고 1번 컷은
+#   학자 인형이 나오는 역사 설명이라 앞 15초 움직임 1.4(대왕구족충 7.4) → 남은 사람도 앞 15초 동안 크게 빠짐).
+#   1·2번 컷과 후킹 컷은 영상 AI 필수 · 무료 확대 컷은 3번부터 · 3컷 연속 금지 · 영상 AI 최대 4컷(비용 그대로).
+#   (2컷 연속까지는 허용: 4컷 예산으로 「연속 0」은 8컷에서 불가능 — 5컷이 필요해 편당 약 $0.7 증가.)
+OPENING_OMNI_CUTS = (1, 2)
+_OPENING_PEOPLE = re.compile(r"\b(scientists?|researchers?|scholars?|professors?|explorers?|ships?|boats?|calendars?)\b", re.I)
+
+
+def omni_required(n: int, hook_cut: int | None) -> list[int]:
+    return sorted({c for c in OPENING_OMNI_CUTS if c <= n} | ({int(hook_cut)} if hook_cut else set()))
+
+
+def omni_budget(n: int, hook_cut: int | None) -> int:
+    return max(len(omni_required(n, hook_cut)), int(n * SB_OMNI_RATIO))
+
+
 def validate_storyboard_plan(panels: dict, cuts: list[dict], hook_cut: int | None = None) -> list[str]:
     """콘티 계획 코드 검사(운영자 승인 2026-10-01 미니어처 규칙) — 불통과 이유(영어 · AI에게 그대로 돌려줌)."""
     import math
@@ -1716,11 +1864,23 @@ def validate_storyboard_plan(panels: dict, cuts: list[dict], hook_cut: int | Non
     motions = [(panels.get(c["cut"]) or {}).get("motion") for c in cuts]
     if any(m not in ("omni", "still") for m in motions):
         probs.append("Every panel needs motion = omni or still.")
-    max_omni = max(1, int(n * SB_OMNI_RATIO))
+    max_omni = omni_budget(n, hook_cut)
     if motions.count("omni") > max_omni:
         probs.append(f"{motions.count('omni')} cuts are omni — at most {max_omni}; make calmer cuts still.")
     if hook_cut and (panels.get(hook_cut) or {}).get("motion") != "omni":
         probs.append(f"Cut {hook_cut} is the opening hook and must be omni.")
+    for c in OPENING_OMNI_CUTS:
+        if c <= n and c != hook_cut and (panels.get(c) or {}).get("motion") != "omni":
+            probs.append(f"Cut {c} plays in the first 15 seconds and must be omni (the creature moving).")
+    run = 0
+    for c, m in zip(cuts, motions):
+        run = run + 1 if m == "still" else 0
+        if run == 3:
+            probs.append(f"Cuts {c['cut'] - 2}-{c['cut']} are 3 still cuts in a row — make one of them omni (and another cut still).")
+    p1 = panels.get(1) or {}
+    m1 = _OPENING_PEOPLE.findall(str(p1.get("desc", "")) + " " + " ".join(map(str, p1.get("props") or [])))
+    if m1:
+        probs.append(f"Cut 1 opens the video: show the creature itself in action, not {', '.join(sorted({w.lower() for w in m1}))}.")
     edges = sum(1 for c in cuts if (panels.get(c["cut"]) or {}).get("set_edge") is True)
     if edges < math.ceil(n / 2):
         probs.append(f"The set edge is visible in only {edges} panels — show it in at least {math.ceil(n / 2)}.")
@@ -1741,7 +1901,8 @@ def plan_storyboard(sc: dict, cc: dict, feedback: str = "", ask=None) -> dict:
         plan = _json_obj(ask(_SB_PROMPT.format(style=_MINI_STYLE, creature=_MINI_CREATURE, anatomy=cc.get("anatomy", ""),
                                                size_note=cc.get("size_note") or "see the facts", n=len(cuts),
                                                min_wide=math.ceil(len(cuts) * SB_WIDE_RATIO), max_close=max(1, round(len(cuts) * SB_CLOSE_RATIO)),
-                                               max_omni=max(1, int(len(cuts) * SB_OMNI_RATIO)),
+                                               max_omni=omni_budget(len(cuts), hook_cut),
+                                               required=", ".join(map(str, omni_required(len(cuts), hook_cut))),
                                                hook_cut=hook_cut, feedback=fb, cuts=ctxt, facts=ftxt)))
         panels = {}
         for k, v in (plan.get("panels") or {}).items():
@@ -1807,6 +1968,10 @@ HARD RULES for every cut:
 - Keep the hand-made tabletop set visible and the camera at miniature scale (slightly high angle, tilt-shift); never push into a
   realistic macro of the creature. Set pieces may move gently (paper waves rock, cotton marine snow drifts, fairy lights twinkle).
 - Never invent facts beyond the narration. No text, letters, numbers, symbols, logos. No real human hands or people.
+- OPENING (viewers swipe away in the first seconds): in cuts 1 and 2 the creature itself moves clearly from the very first
+  second (swims, crawls, turns, reaches, feeds) — no static establishing shot, no slow look at an empty set first.
+- Cut {hook_cut} also supplies the 2-second opening hook: it must contain ONE clear, quick, visible creature action that lasts at
+  least 2 seconds (a burst of swimming, a lunge, a grab, a flip, a sudden turn — only actions the narration and facts support).
 - Cut {last}: the creature drifts away into deep darkness and the frame goes almost black by the end (episode ending).
 {feedback}
 Return JSON only: {{"prompts":{{"1":"TIMELINE text for cut 1","2":"..."}}}}
@@ -1968,6 +2133,7 @@ Previous panel description (wrong): {old}
 Keep the same rules: hand-made tabletop miniature world, at least 2 hand-made props or set materials, no text/letters/numbers,
 no real human hands or people, keep the upper quarter calm. NICKNAMES ARE NOT ANIMALS: describe every organism as what it
 REALLY is with its true body ("sea pig" = a deep-sea SEA CUCUMBER) and never use a land-animal word or draw a land animal.
+Cut 1 opens the video: there, show the creature itself in action — never clay scientists, ships or calendars.
 {feedback}
 Return JSON only: {{"shot":"wide|medium|close","props":["prop 1","prop 2"],"desc":"English description: set, camera angle, organisms with their true anatomy, props, light"}}
 """
@@ -1995,7 +2161,8 @@ def redo_panel(pid: str, cut: int, memo: str = "", ask=None, run=None) -> dict:
                                                           jp=c.get("jp", ""), ko=c.get("ko", ""), facts=ftxt,
                                                           old=c.get("panel_desc", ""), feedback=fb)))
             probs = validate_storyboard_plan({int(cut): plan}, [c])
-            probs = [x for x in probs if x.startswith(f"Cut {cut}")]          # 한 칸만 보므로 비율(넓은 샷 수 등) 검사는 제외
+            # 한 칸만 보므로 비율(넓은 샷 수 등)·영상 AI/무료 컷 배분 검사는 제외(그림만 다시 그리고 움직임 방식은 그대로)
+            probs = [x for x in probs if x.startswith(f"Cut {cut}") and "must be omni" not in x]
             if not probs:
                 break
             fb = "# Problems in your previous answer (fix all)\n" + "\n".join("- " + x for x in probs)
@@ -2141,7 +2308,8 @@ def make_video(pid: str, feedback: str = "", ask=None) -> dict:
                              for c in targets)
             fb = f"# Operator's revision request (must apply)\n{feedback}\n" if feedback else ""
             plan = _json_obj((ask if ask else (lambda p: _gemini_text(p, temperature=0.4)))(
-                _VID_PROMPT.format(style=_MINI_STYLE, anatomy=anatomy, last=cuts[-1]["cut"], feedback=fb, cuts=ctxt)))
+                _VID_PROMPT.format(style=_MINI_STYLE, anatomy=anatomy, last=cuts[-1]["cut"], feedback=fb, cuts=ctxt,
+                                   hook_cut=int((sc.get("hook") or {}).get("cut") or 1))))
             prompts = {int(k): str(v) for k, v in (plan.get("prompts") or {}).items() if str(k).isdigit()}
             miss = [c["cut"] for c in targets if len(prompts.get(c["cut"], "")) < 40]
             if miss:

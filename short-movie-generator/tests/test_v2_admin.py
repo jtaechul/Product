@@ -481,7 +481,7 @@ _FACTS = {"facts": [
     {"fact_ko": "마린 스노를 먹는다", "fact_jp": "マリンスノーを食べる", "quote": "It feeds on marine snow drifting down from above.", "src": "S1"},
     {"fact_ko": "지어낸 사실", "fact_jp": "作り話", "quote": "It can live for 500 years.", "src": "S1"},   # 원문에 없음 → 버림
 ]}
-_GOOD = [("1977年、潜水艇アルビンが深海で見つけた魚がいます。", "F1"), ("すんでいるのは水深2000メートルより深い海。", "F2"),
+_GOOD = [("暗い海の底で、体を青く光らせる魚がいます。", "F4"), ("すんでいるのは水深2000メートルより深い海。", "F2"),
          ("その名は、テストウオといいます。", "F1"), ("大きさは30センチほどになります。", "F3"),
          ("刺激を受けると、体が青く光ります。", "F4"), ("食べるのは、上から降ってくるマリンスノー。", "F5"),
          ("光の届かない世界で、静かに暮らしています。", "F2"), ("今日も暗い海の底で、青い光がまたたきます。", "F4")]
@@ -500,7 +500,7 @@ def _fake_ai(bad_first=False):
                 cuts[3]["jp"] = "大きさは50センチにもなります。"      # 사실에 없는 숫자 → 코드 검사에서 걸려 다시 쓰게
             hook = {"cut": 5, "question_jp": "青く光る、この生き物は？", "question_ko": "파랗게 빛나는 이 생물은?",
                     "answer_jp": "テストウオ", "answer_ko": "시험어"}
-            return json.dumps({"cuts": cuts, "hook": hook})
+            return json.dumps({"core": "F4", "cuts": cuts, "hook": hook})      # 핵심 사실 F4: 후킹 컷 5 · 마지막 3컷의 8번
         return json.dumps({"issues": []})                    # 교차 검사
     return ask, calls
 
@@ -519,7 +519,8 @@ def test_write_script_real_job_moves_script_to_review(v2):
     assert calls["script"] == 2                              # 사실에 없는 숫자(50) → 한 번 더 쓰게 함
     assert "50" not in sc["cuts"][3]["jp"]
     a = st["artifacts"]["script"]
-    assert len(a["cuts"]) == 8 and a["cuts"][0]["facts"][0]["id"] == "F1" and a["crosscheck"]["issues"] == []
+    assert len(a["cuts"]) == 8 and a["cuts"][0]["facts"][0]["id"] == "F4" and a["crosscheck"]["issues"] == []
+    assert sc["core"] == "F4" and sc["hook"]["type"] == "identity" and a["core"]["id"] == "F4"      # 핵심 사실 하나(D)
     assert sc["hook"]["cut"] == 5 and sc["hook"]["at"] is not None and a["hook"]["answer_jp"] == "テストウオ"
     assert sc["total_sec"] == sum(c["sec"] for c in sc["cuts"]) + 4      # 후킹 2초 + 정답 카드 2초
 
@@ -675,8 +676,8 @@ def _fake_vision(p, images=None):
         return json.dumps({"items": [{"item": "머리 없음", "verdict": "pass", "note_ko": "좋음"}, {"item": "눈 없음", "verdict": "unknown", "note_ko": ""}]})
     if "storyboard artist" in p:
         shots = ["wide", "wide", "close", "wide", "medium", "wide", "wide", "close"]
-        motion = ["still", "omni", "still", "omni", "omni", "still", "still", "omni"]     # 후킹 컷(5)은 omni · 4컷 이하
-        return json.dumps({"panels": {str(i): {"shot": shots[i - 1], "motion": motion[i - 1], "set_edge": i % 2 == 1, "props": ["paper waves", "clay scientist"],
+        motion = ["omni", "omni", "still", "still", "omni", "still", "still", "omni"]     # 1·2번·후킹 컷(5) omni · 4컷 이하 · still 3연속 없음
+        return json.dumps({"panels": {str(i): {"shot": shots[i - 1], "motion": motion[i - 1], "set_edge": i % 2 == 1, "props": ["paper waves", "cotton marine snow"],
                                                "desc": f"Panel {i}: tabletop diorama box on a wooden desk, the creature small in the frame, desk lamp."}
                                       for i in range(1, 9)}})
     if "per-second TIMELINE" in p:
@@ -823,7 +824,7 @@ def test_species_tag_never_empty_without_japanese_name():
 
 
 # ── 미니어처 세계관 규칙(운영자 승인 2026-10-01 · 실사고: 자동 콘티가 빈 배경 + 생물 접사만 그림) ──────────────
-def _plan(shots, edges=4, props=2, omni=(1, 3)):
+def _plan(shots, edges=4, props=2, omni=(1, 2, 3, 6)):
     return {i + 1: {"shot": sh, "motion": "omni" if (i + 1) in omni else "still", "set_edge": i < edges,
                     "props": ["felt", "paper"][:props], "desc": "x" * 50} for i, sh in enumerate(shots)}
 
@@ -878,7 +879,7 @@ def test_storyboard_trial_does_not_touch_status(v2, monkeypatch):
 # ── 개편(운영자 선택 2026-10-05): 혼합 제작 · 놀라움 점수 · 재생목록 · 실적 · 연재감 ──────────────
 def test_plan_requires_hook_omni_and_omni_budget():
     cuts = [{"cut": i} for i in range(1, 9)]
-    ok = _plan(["wide"] * 5 + ["medium", "close", "close"], omni=(1, 3, 5))
+    ok = _plan(["wide"] * 5 + ["medium", "close", "close"], omni=(1, 2, 3, 6))
     assert admin.validate_storyboard_plan(ok, cuts, hook_cut=3) == []
     p = " ".join(admin.validate_storyboard_plan(_plan(["wide"] * 8, omni=(1, 2, 3, 4, 5, 6)), cuts, hook_cut=7))
     assert "at most 4" in p and "Cut 7 is the opening hook" in p
@@ -901,12 +902,12 @@ def test_make_video_hybrid_generates_only_omni_cuts(v2, monkeypatch):
     monkeypatch.setattr(admin, "_RUN_REQUEST", counting)
     monkeypatch.setattr(admin, "assemble", lambda pid: None)
     st = admin.make_video("test_fish", ask=_fake_vision)
-    assert seen == [["c02", "c04", "c05", "c08"]]                       # 유료 생성은 영상 AI 컷 4개만
+    assert seen == [["c01", "c02", "c05", "c08"]]                       # 유료 생성은 영상 AI 컷 4개만(1·2번 필수 · 후킹 5번)
     clips = {c["cut"]: c for c in st["artifacts"]["video"]["clips"]}
-    assert len(clips) == 8 and clips[1]["motion"] == "still" and "_stills/" in clips[1]["file"]
-    assert (v2 / "pilots" / "test_fish" / clips[1]["file"]).exists()
+    assert len(clips) == 8 and clips[3]["motion"] == "still" and "_stills/" in clips[3]["file"]
+    assert (v2 / "pilots" / "test_fish" / clips[3]["file"]).exists()
     spent = [x for x in st["cost"]["spent"] if "영상 컷" in x["what"]][0]["usd"]
-    assert spent == round(sum(clips[k]["sec"] for k in (2, 4, 5, 8)) * admin.OMNI_USD_PER_SEC, 2)
+    assert spent == round(sum(clips[k]["sec"] for k in (1, 2, 5, 8)) * admin.OMNI_USD_PER_SEC, 2)
 
 
 def test_redo_still_cut_upgrades_to_omni(v2, monkeypatch):
@@ -917,9 +918,9 @@ def test_redo_still_cut_upgrades_to_omni(v2, monkeypatch):
     admin.make_video("test_fish", ask=_fake_vision)
     called = []
     monkeypatch.setattr(admin, "make_video", lambda pid, fb="", ask=None: called.append(fb))
-    admin.redo_cut("test_fish", 1)
+    admin.redo_cut("test_fish", 3)
     sc = json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))
-    assert called == ["1번 컷"] and sc["cuts"][0]["motion"] == "omni"
+    assert called == ["3번 컷"] and sc["cuts"][2]["motion"] == "omni"
 
 
 def test_topic_scores_sort_and_cache(v2, monkeypatch):
@@ -992,8 +993,8 @@ def test_nickname_is_not_drawn_as_land_animal():
     assert not admin.literal_animal_problems("a translucent pink deep-sea sea cucumber with stubby tube-feet legs", "Cut 5")
     assert not admin.literal_animal_problems("a dumbo octopus with elephant-ear fins", "Cut 2")
     cuts = [{"cut": i, "jp": "x", "ko": "x"} for i in range(1, 9)]
-    panels = {i: {"shot": "wide", "motion": "omni" if i in (1, 3) else "still", "set_edge": True, "props": ["lamp", "chart"],
-                  "desc": "A wide shot of the cardboard set with a clay research ship on paper waves and a desk lamp."} for i in range(1, 9)}
+    panels = {i: {"shot": "wide", "motion": "omni" if i in (1, 2, 5, 8) else "still", "set_edge": True, "props": ["lamp", "chart"],
+                  "desc": "A wide shot of the cardboard set: the creature crawls over paper-cut rocks beside a desk lamp."} for i in range(1, 9)}
     assert not admin.validate_storyboard_plan(panels, cuts, 1)
     panels[5]["desc"] = "Wide shot: a chunky translucent clay sea pig stands on the clay seabed with tiny king crabs on its back."
     assert any(p.startswith("Cut 5") and "sea cucumber" in p.lower() for p in admin.validate_storyboard_plan(panels, cuts, 1))
@@ -1121,3 +1122,153 @@ def test_glyph_check_works_without_fonttools(monkeypatch):
     assert A.missing_glyphs("1800年代後半から 水深4152m 第5歩脚") == []
     assert A.missing_glyphs("1800년대") == ["년", "대"]
     monkeypatch.setattr(A, "_CMAP", None)
+
+
+# ── 왕게 편 실패 대책(운영자 선택 2026-10-09 · 81% 즉시 이탈): A 첫 2초 자동 선택 · B 앞 15초 움직임 · D 핵심 사실 하나 ──
+def _still_then_moving(path, still_s, move_s):
+    """앞 still_s초는 멈춘 회색 화면, 그 뒤 move_s초는 움직이는 시험 화면(testsrc2)."""
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", f"color=c=gray:s=720x1280:r=24:d={still_s}",
+                    "-f", "lavfi", "-i", f"testsrc2=s=720x1280:r=24:d={move_s}", "-filter_complex", "[0:v][1:v]concat=n=2:v=1:a=0[v]",
+                    "-map", "[v]", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(path)], check=True)
+
+
+def test_best_hook_window_picks_the_most_moving_two_seconds():
+    import assemble as A
+    series = [0.2] * 16 + [6.0] * 16 + [1.0] * 16                  # 0~2초 거의 정지 · 2~4초 크게 움직임 · 4~6초 조금
+    assert A.best_hook_window(series, 6.0) == (2.0, 6.0)
+    assert A.window_motion([None, 4.0, 2.0] + [None] * 13, 0.0) == 3.0   # 컷 전환으로 뺀 값(None)은 평균에서 제외
+    assert A.best_hook_window([], 4.0) == (0.0, 0.0)
+
+
+def test_pick_hook_measures_real_clip_and_respects_operator(tmp_path):
+    """실제 영상: 앞 4초가 멈춘 클립이면 자동 선택은 움직이는 뒷부분 · 운영자가 정한 초는 그대로(움직임만 기록)."""
+    import assemble as A
+    clip = tmp_path / "c.mp4"; _still_then_moving(clip, 4, 4)
+    s = A.motion_series(clip)
+    assert 60 <= len(s) <= 66 and all(v is None or v >= 0 for v in s)
+    auto = A.pick_hook(clip, {"at": 1.0}, 8)                          # 대본 단계의 「한가운데 2초」 임시값은 무시
+    op = A.pick_hook(clip, {"at": 1.0, "at_by": "operator"}, 8)
+    assert op == {"at": 1.0, "motion": op["motion"], "by": "operator"} and op["motion"] < 0.5
+    assert auto["by"] == "auto" and auto["at"] >= 3.9 and auto["motion"] > op["motion"] + 1.0
+    assert None in s                                                   # 정지→움직임 전환 한 장(컷 전환)은 움직임에서 뺐다
+    assert A.pick_hook(clip, {"at": 99, "at_by": "operator"}, 8)["at"] == 6.0      # 컷 밖이면 컷 안으로
+
+
+def test_assemble_returns_used_hook_window(tmp_path):
+    import assemble as A
+    P = tmp_path / "p"; (P / "out" / "clips").mkdir(parents=True); (P / "out" / "tts").mkdir(parents=True)
+    _tiny_clip(P / "out" / "clips" / "c01.mp4", 4, "blue"); _still_then_moving(P / "out" / "clips" / "c02.mp4", 2, 2)
+    _silent_wav(P / "out" / "tts" / "body.wav", 6)
+    tps = lambda: [{"jp_seg": None, "start": 0.15, "end": 2.5}]
+    sc = {"subject": {"scientific_name": "Testus fishus", "jp_name": "テストウオ"},
+          "hook": {"cut": 2, "at": 0.0, "question_jp": "青く光る、この生き物は？", "answer_jp": "テストウオ", "type": "identity"},
+          "cuts": [{"cut": 1, "jp": "こんにちは。", "tts": "こんにちは。", "sec": 4}, {"cut": 2, "jp": "さようなら。", "tts": "さようなら。", "sec": 4}],
+          "timing_v5": [{"cut": 1, "sec": 4, "audio_from": 0.0, "audio_to": 2.5, "speech_s": 2.5, "lead": 0.15, "local_tps": tps()},
+                        {"cut": 2, "sec": 4, "audio_from": 2.5, "audio_to": 5.0, "speech_s": 2.5, "lead": 0.15, "local_tps": tps()}]}
+    (P / "script.json").write_text(json.dumps(sc, ensure_ascii=False), encoding="utf-8")
+    info = A.main(str(P), "clips", "tts", "", str(tmp_path / "final.mp4"))
+    assert info["hook"]["cut"] == 2 and info["hook"]["by"] == "auto" and info["hook"]["at"] >= 1.8   # 움직이는 뒤 2초
+    assert info["hook"]["motion"] > 1.0
+    checks = admin.motion_checks(tmp_path / "final.mp4", info["hook"])
+    assert checks["hook_motion"]["warn"] and "2번 컷" in checks["hook_motion"]["rule"] and "자동 선택" in checks["hook_motion"]["rule"]
+    assert "front_motion" in checks and checks["front_motion"]["warn"]
+
+
+def test_motion_checks_warn_on_static_opening(tmp_path):
+    clip = tmp_path / "s.mp4"; _tiny_clip(clip, 6, "gray")
+    ck = admin.motion_checks(clip, {"cut": 1, "at": 0.0, "motion": 1.0, "by": "auto"})
+    assert ck["hook_motion"]["ok"] is False and ck["hook_motion"]["value"] == 1.0
+    assert ck["front_motion"]["ok"] is False and ck["front_motion"]["value"] < 0.5
+
+
+def test_edit_hook_fixes_start_only_when_operator_changes_it(v2):
+    admin.new_pilot("test_fish")
+    ask, _ = _fake_ai()
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    sc = lambda: json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))   # noqa: E731
+    at0 = sc()["hook"]["at"]
+    admin.edit_hook("test_fish", {"at": str(at0), "question_jp": "青白く光る、この生き物は？"})     # 페이지는 지금 값을 그대로 다시 보낸다
+    assert "at_by" not in sc()["hook"]
+    admin.edit_hook("test_fish", {"at": "0.5"})
+    assert sc()["hook"]["at"] == 0.5 and sc()["hook"]["at_by"] == "operator"
+    admin.edit_hook("test_fish", {"at": "", "question_jp": "青く光る、この生き物は？"})
+    assert "at_by" not in sc()["hook"]                                                 # 칸을 비우면 다시 자동
+    admin.edit_hook("test_fish", {"at": "1", "cut": 8})
+    assert sc()["hook"]["at_by"] == "operator"
+    admin.edit_hook("test_fish", {"at": str(sc()["hook"]["at"]), "cut": 5})          # 컷만 바꾸면 새 컷에서 자동
+    assert "at_by" not in sc()["hook"] and sc()["hook"]["type"] == "identity"
+
+
+def test_storyboard_opening_cuts_must_move():
+    cuts = [{"cut": i} for i in range(1, 9)]
+    p = " ".join(admin.validate_storyboard_plan(_plan(["wide"] * 8, omni=(3, 5, 6, 8)), cuts, hook_cut=5))
+    assert "Cut 1 plays in the first 15 seconds" in p and "Cut 2 plays in the first 15 seconds" in p
+    p = " ".join(admin.validate_storyboard_plan(_plan(["wide"] * 8, omni=(1, 2, 3, 4)), cuts, hook_cut=3))
+    assert "3 still cuts in a row" in p
+    plan = _plan(["wide"] * 8, omni=(1, 2, 5, 8))
+    plan[1]["desc"] = "A wide shot of a desk: a clay scientist holds a magnifying glass over a crab figurine."
+    assert any("Cut 1 opens the video" in x for x in admin.validate_storyboard_plan(plan, cuts, hook_cut=5))
+    plan[1]["desc"] = "Wide shot: the crab figurine strides over paper-cut rocks, legs spread, beside a desk lamp."
+    assert admin.validate_storyboard_plan(plan, cuts, hook_cut=5) == []
+    assert admin.omni_required(8, 5) == [1, 2, 5] and admin.omni_budget(8, 5) == 4 and admin.omni_budget(2, 2) == 2
+    assert "cuts 1, 2, 5 MUST be" in admin._SB_PROMPT.format(style="", creature="", anatomy="", size_note="", n=8, min_wide=5,
+                                                             max_close=2, max_omni=4, required="1, 2, 5", hook_cut=5, feedback="",
+                                                             cuts="", facts="")
+    assert "OPENING" in admin._VID_PROMPT and "{hook_cut}" in admin._VID_PROMPT
+
+
+def test_script_cut1_must_not_open_with_history():
+    facts = [{"id": "F1", "fact": "1880년대 발견 · 200년 산다", "fact_jp": "", "quote": "1880s 200 years"}]
+    cut = {"jp": "1880年代、学者はこの生物を調べました。", "ko": "학자가 조사했습니다.", "fact": "F1", "scene_ko": "장면", "annotation": ""}
+    later = dict(cut, jp="この生き物は、200年以上生きるといわれます。")
+    assert any("カット1" in p and "学者" in p or "1880年" in p for p in admin.validate_script([cut] + [later] * 7, facts))
+    assert not any("発見の年" in p for p in admin.validate_script([later] * 8, facts))     # 「200年 산다」 같은 특징은 허용
+    assert not any("発見の年" in p for p in admin.validate_script([later] + [cut] * 7, facts))  # 역사는 3번째 컷 이후면 괜찮다(1번 컷만 검사)
+
+
+def test_core_fact_ties_hook_and_ending():
+    facts = [{"id": f"F{i}", "fact": "x", "fact_jp": "", "quote": ""} for i in range(1, 5)]
+    cuts = [{"cut": i, "jp": "x", "fact": f} for i, f in enumerate(["F1", "F2", "F2", "F3", "F3", "F2", "F1", "F3"], 1)]
+    assert admin.validate_core("F3", {"cut": 5}, cuts, facts) == []
+    assert "hook.cut=2" in " ".join(admin.validate_core("F3", {"cut": 2}, cuts, facts))
+    assert "最後の3カット" in " ".join(admin.validate_core("F4", {"cut": 1}, [dict(c, fact="F4" if c["cut"] == 1 else c["fact"]) for c in cuts], facts))
+    assert "事実リストの番号ではありません" in " ".join(admin.validate_core("", {"cut": 5}, cuts, facts))
+
+
+def test_identity_question_banned_when_looks_give_it_away():
+    cuts = [{"cut": i, "jp": "x"} for i in range(1, 9)]
+    facts = [{"id": "F1", "fact": "", "fact_jp": "", "quote": ""}]
+    king = {"cut": 4, "question_jp": "エラの中に魚が卵を産む、この生き物は？", "answer_jp": "タラバガニ科"}     # 실제로 올린 왕게 편
+    assert admin.hook_type(king["question_jp"]) == "identity"
+    assert any("見た目で" in p for p in admin.validate_hook(king, cuts, facts, name="タラバガニ科"))
+    fact_q = {"cut": 4, "question_jp": "エラの中に、何を隠している？", "answer_jp": "魚の卵"}
+    assert admin.hook_type(fact_q["question_jp"]) == "fact" and admin.validate_hook(fact_q, cuts, facts, name="タラバガニ科") == []
+    odd = {"cut": 4, "question_jp": "光る皮を投げ捨てる、この生き物は？", "answer_jp": "首なしチキンモンスター"}
+    assert admin.validate_hook(odd, cuts, facts) == []                                   # 생김새로 정체를 모르는 생물은 정체 질문 OK
+
+
+def test_title_never_contains_the_answer(v2):
+    admin.new_pilot("test_fish")
+    ask, _ = _fake_ai()
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    seen = []
+    def meta(p):
+        seen.append(p)
+        title = "青く光る魚テストウオの謎" if len(seen) == 1 else "刺激で青く光る、深海の謎"
+        return json.dumps(dict(_META, title_jp=title, title_ko="자극을 받으면 파랗게 빛나는 심해의 수수께끼"))
+    st = admin.upload_meta("test_fish", ask=meta)
+    m = st["artifacts"]["upload"]["meta"]
+    assert len(seen) == 2 and "テストウオ" in seen[1] and "Problems in your previous answer" in seen[1]
+    assert m["title_jp"].startswith("刺激で青く光る、深海の謎") and m["title_jp"].endswith("#テストウオ #深海")   # 종명은 끝 해시태그로만
+    assert "CORE FACT" in seen[0] and "F4: 刺激を受けると青く光る" in seen[0]
+    with pytest.raises(ValueError):
+        admin.upload_meta("test_fish", ask=lambda p: json.dumps(dict(_META, title_jp="テストウオの秘密")))
+    sc = {"subject": {"jp_name": "タラバガニ科", "ko_name": "왕게"}, "hook": {"type": "fact", "answer_jp": "魚の卵", "answer_ko": "물고기 알"}}
+    assert admin.title_spoilers(sc) == (["魚の卵"], ["물고기 알"])                       # 사실 질문 편: 정답만 금지(이름은 괜찮음)
+    assert admin.species_tags(sc) == ("#タラバガニ科", "#왕게")
+
+
+def test_answer_card_shows_name_for_fact_question(tmp_path):
+    import assemble as A
+    out = A.answer_png("エラの中に、何を隠している？", "魚の卵", "Lithodidae", tmp_path / "a.png", name="タラバガニ科")
+    assert out.exists()

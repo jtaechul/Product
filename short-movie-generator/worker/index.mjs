@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-06-4 (승인 처리 중 표시 · 자동 새로고침)";
+const BUILD="v2026-10-09-1 (첫 2초 자동 선택 · 앞 15초 움직임 · 핵심 사실 하나)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2577,8 +2577,9 @@ function v2stageBody(st,stage){
   if(stage==="video"){
     if(!a.final)return '<div class="hint">완성본이 나오면 이 칸에 보입니다.</div>';
     const ck=st.checks||{};
-    const rows=[["subtitle_font","자막 글꼴",""],["screen_text","화면 글자(주석·질문)",""],["white_edge_px","가장자리 흰 줄","px"],["loudness_lufs","음량","LUFS"],["music","음악 없음",""]]
-      .filter(([k])=>ck[k]).map(([k,lab,u])=>'<div class="cfact"><span class="'+(ck[k].ok?"ok":"err")+'">'+(ck[k].ok?"통과":"불통과")+'</span> '+esc(lab)+
+    const rows=[["subtitle_font","자막 글꼴",""],["screen_text","화면 글자(주석·질문)",""],["hook_motion","맨 앞 2초 움직임",""],["front_motion","앞 15초 움직임",""],
+                ["white_edge_px","가장자리 흰 줄","px"],["loudness_lufs","음량","LUFS"],["music","음악 없음",""]]
+      .filter(([k])=>ck[k]).map(([k,lab,u])=>'<div class="cfact"><span class="'+(ck[k].ok?"ok":(ck[k].warn?"warn":"err"))+'">'+(ck[k].ok?"통과":(ck[k].warn?"주의":"불통과"))+'</span> '+esc(lab)+
         (ck[k].value!=null?(' — '+esc(ck[k].value)+(u?(" "+u):"")):"")+' <span style="opacity:.6">('+esc(ck[k].rule||"")+')</span></div>').join("");
     const spent=((st.cost||{}).spent||[]).reduce((s,x)=>s+(+x.usd||0),0);
     return '<span class="lbl">완성본'+(ck.duration_s?(' ('+ck.duration_s+'초)'):'')+'</span>'+
@@ -2687,19 +2688,30 @@ function v2factsHTML(c){
     ((f.sources||[]).length?' '+f.sources.map((u,i)=>'<a href="'+esc(u)+'" target="_blank">출처'+(i+1)+'</a>').join(" "):(f.source_title?' <span style="opacity:.7">('+esc(f.source_title)+')</span>':''))+
     (f.quote?'<div style="opacity:.65;font-size:11px;margin-top:2px">원문: '+esc(f.quote)+'</div>':'')+'</div>').join("");
 }
+// ★맨 앞 움직임 경고(운영자 선택 2026-10-09 · 왕게 편 81% 즉시 이탈): 승인 확인창 맨 앞에 붙인다(막지는 않음)
+function v2motionWarn(ck){
+  const w=[["hook_motion","맨 앞 2초"],["front_motion","앞 15초"]].filter(([k])=>ck[k]&&ck[k].ok===false)
+    .map(([k,lab])=>lab+" 움직임 "+ck[k].value);
+  return w.length?("[주의] "+w.join(", ")+" — 기준보다 적습니다. 첫 화면이 멈춰 보이면 시청자가 바로 넘깁니다(왕게 편 81%).\\n\\n"):"";
+}
 // ── 후킹 2초 + 정답 카드(운영자 확정 2026-09-30 · 공용 엔딩 대체) ──
 function v2hookHTML(a){
   const h=a.hook;if(!h)return "";
   const cuts=a.cuts||[];
+  const core=a.core;
   return '<div class="sect">맨 앞 2초 후킹 + 마지막 정답 카드 — 공용 엔딩 대신</div>'+
-    '<div class="cfact">발췌: <b>'+esc(h.cut)+'번 컷</b> '+esc(h.at==null?"":h.at)+'초부터 2초(본편 그대로 · 추가 비용 없음)</div>'+
+    (core?'<div class="cfact">핵심 사실(후킹 질문·제목·마지막 3컷이 함께 다룸): <b>'+esc(core.id)+'</b> '+esc(core.fact||"")+'</div>':'')+
+    '<div class="cfact">질문 종류: '+(h.type==="fact"?'<b>사실 질문</b> (생김새로 정체가 보이는 생물 — 정답 카드에 생물 이름도 표시)':(h.type==="identity"?'<b>정체 맞히기</b>':'(예전 편)'))+'</div>'+
+    '<div class="cfact">발췌: <b>'+esc(h.cut)+'번 컷</b> '+(h.at_by==="operator"?(esc(h.at)+'초부터 2초 (운영자 지정)'):
+      (h.at_by==="auto"?(esc(h.at)+'초부터 2초 (가장 많이 움직이는 2초 자동 선택'+(h.motion!=null?' · 움직임 '+esc(h.motion):'')+')'):'가장 많이 움직이는 2초 (조립 때 자동 선택)'))+
+      ' · 본편 그대로 · 추가 비용 없음</div>'+
     '<div class="cfact">질문(빨간 글자 · 자막·나레이션 없음): <b style="color:var(--rd)">'+esc(h.question_jp||"")+'</b> <small>'+esc(h.question_ko||"")+'</small></div>'+
     '<div class="cfact">정답 카드: <b>正解：'+esc(h.answer_jp||"")+'</b> <small>'+esc(h.answer_ko||"")+'</small> + 학명 + 구독 배지</div>'+
     (a.hook_pending?'<div class="cfact warn">수정됨 · 영상엔 아직 미반영 — 영상 카드의 「완성본 다시 조립」을 누르면 반영(무료)</div>':'')+
     '<button class="btn v2edit" id="hkopen">후킹 수정</button>'+
     '<div class="v2ed" id="hked" style="display:none">'+
       '<span class="lbl">발췌할 컷</span><select id="hk_cut">'+cuts.map(c=>'<option value="'+c.cut+'"'+(String(c.cut)===String(h.cut)?' selected':'')+'>'+c.cut+'번 · '+esc(c.sec||"")+'초 · '+esc(String(c.ko||"").slice(0,22))+'</option>').join("")+'</select>'+
-      '<span class="lbl">발췌 시작(초) — 그 컷 안에서</span><input id="hk_at" type="number" step="0.5" min="0" value="'+esc(h.at==null?"":h.at)+'">'+
+      '<span class="lbl">발췌 시작(초) — 비워 두면 가장 많이 움직이는 2초를 자동 선택 · 숫자를 바꾸면 그 초로 고정</span><input id="hk_at" type="number" step="0.5" min="0" value="'+esc(h.at==null||h.at_by!=="operator"?"":h.at)+'">'+
       '<span class="lbl">질문(일본어 · 8~22자 · 「？」로 끝 · 정답 이름 넣지 않기)</span><input id="hk_qj" value="'+esc(h.question_jp||"")+'">'+
       '<span class="lbl">질문(한국어 · 확인용)</span><input id="hk_qk" value="'+esc(h.question_ko||"")+'">'+
       '<span class="lbl">정답 이름(일본어)</span><input id="hk_aj" value="'+esc(h.answer_jp||"")+'">'+
@@ -2813,7 +2825,8 @@ async function renderV2Episode(pid){
     }
     const auto=!!V2_AUTO[stage], nextS=STG[STG.indexOf(stage)+1];
     const nextTxt=(act==="approve"&&nextS&&V2_AUTO[nextS])?(" 바로 이어서 "+STG_KO[nextS].slice(3)+"이(가) 자동으로 만들어집니다("+v2cost(nextS,st)+")."):"";
-    const msg=act==="approve"?((nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):"")+lab+"을(를) 승인할까요?"+nextTxt)
+    const mv=stage==="video"?v2motionWarn(st.checks||{}):"";
+    const msg=act==="approve"?(mv+(nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):(mv?"그래도 ":""))+lab+"을(를) 승인할까요?"+nextTxt)
              :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 요청대로 다시 만듭니다("+v2cost(stage,st)+")."+(stage==="video"?" 메모에 '3번 컷'처럼 번호를 적으면 그 컷만 다시 만듭니다(그만큼만 과금).":""):""))
              :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 처음부터 다시 만듭니다("+v2cost(stage,st)+")."+(stage==="video"?" 8컷 전부 다시 생성해 비용이 큽니다.":""):""));
     if(!confirm(msg))return;

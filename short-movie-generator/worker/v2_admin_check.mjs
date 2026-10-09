@@ -286,5 +286,32 @@ statusOverride = null;
   globalThis.localStorage = ls0; statusOverride = null;
 }
 
+// ── 맨 앞 움직임·핵심 사실(운영자 선택 2026-10-09 · 왕게 편 81% 즉시 이탈): 검사 줄 · 자동 선택 구간 · 승인 전 경고 ──
+{
+  const sv = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+  sv.stages.video.state = "review"; sv.stages.upload.state = "locked"; delete sv.jobs;
+  sv.checks = Object.assign({}, sv.checks || {}, {
+    hook_motion: { value: 1.0, ok: false, warn: true, rule: "맨 앞 2초 움직임 3 이상" },
+    front_motion: { value: 7.4, ok: true, warn: true, rule: "앞 15초 평균 움직임 2 이상(잠정)" } });
+  sv.artifacts.script.hook = Object.assign({ cut: 4, question_jp: "エラの中に、何を隠している？", answer_jp: "魚の卵" },
+    sv.artifacts.script.hook || {}, { at: 3.25, at_by: "auto", motion: 1.0, type: "fact" });
+  sv.artifacts.script.core = { id: "F3", fact: "핵심 사실 시험" };
+  statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  const ev = els.view.innerHTML;
+  res.motion_rows_shown = ev.includes("맨 앞 2초 움직임") && ev.includes(">주의<") && ev.includes("앞 15초 움직임");
+  res.hook_auto_window_shown = ev.includes("가장 많이 움직이는 2초 자동 선택 · 움직임 1") && ev.includes('id="hk_at" type="number" step="0.5" min="0" value=""');
+  res.core_fact_shown = ev.includes("핵심 사실") && ev.includes("<b>F3</b>") && ev.includes("사실 질문");
+  let asked = ""; const cf0 = globalThis.confirm; globalThis.confirm = m => { asked = m; return false; };
+  const apv = (lists["[data-act]"] || []).find(b => b.dataset.act === "approve" && b.dataset.stage === "video");
+  const dv = dispatched.length; if (apv?.onclick) await apv.onclick();
+  res.approve_warns_low_motion = asked.startsWith("[주의] 맨 앞 2초 움직임 1") && !asked.includes("앞 15초 움직임") &&
+    asked.includes("그래도") && dispatched.length === dv;
+  sv.checks.hook_motion.ok = true; statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  const apv2 = (lists["[data-act]"] || []).find(b => b.dataset.act === "approve" && b.dataset.stage === "video");
+  asked = ""; if (apv2?.onclick) await apv2.onclick();
+  res.approve_no_warn_when_moving = asked !== "" && !asked.includes("[주의]");
+  globalThis.confirm = cf0; statusOverride = null;
+}
+
 els = {}; window.location.pathname = "/legacy"; api.renderHome(); res.legacy_home_renders = (els.view?.innerHTML || "").includes("쇼츠 생성 시작");
 console.log(JSON.stringify(res, null, 1));
