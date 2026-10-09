@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "new | approve | revise | redo | ready | redo_cut | redo_panel | assemble | topics | edit_line | apply_lines | crosscheck | recut_plan | recut_approve | recut_cancel | upload_meta | save_meta | save_viewed | write_script | write_storyboard | make_video | edit_hook | stats"
+        description: "new | approve | revise | redo | ready | redo_cut | redo_panel | assemble | topics | edit_line | apply_lines | crosscheck | recut_plan | recut_approve | recut_cancel | upload_meta | save_meta | save_viewed | write_script | write_storyboard | make_video | edit_hook | stats | trial_check | trial_skip | ig_probe"
         required: true
       pilot:
         description: "편 id (예: bathynomus_giganteus)"
@@ -78,7 +78,7 @@ jobs:
       - name: 준비
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
-          pip install -q Pillow numpy fonttools google-genai janome google-auth google-auth-oauthlib google-api-python-client
+          pip install -q Pillow numpy fonttools google-genai janome google-auth google-auth-oauthlib google-api-python-client requests
 
       # ★이 단계에만 API 키가 있다(실사고 2026-09-30 run #14: 편집 실수로 이 단계 머리(env)가 지워져 "GEMINI_API_KEY 없음"으로 실패)
       #   → tests/test_v2_admin.py::test_workflow_has_secrets_and_setup 이 워크플로 구조를 검사한다.
@@ -89,6 +89,8 @@ jobs:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          # 인스타 시험 릴스(후킹 A·B 겨루기 · 운영자 선택 2026-10-09) — 게시·지표 읽기. 없으면 시험 없이 예전처럼 진행
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           IN_ACTION: ${{ inputs.action }}
           IN_PILOT: ${{ inputs.pilot }}
           IN_STAGE: ${{ inputs.stage }}
@@ -102,6 +104,7 @@ jobs:
             approve)           case "$IN_STAGE" in           # 승인 자체는 앞 단계에서 끝났고, 여기서 다음 단계를 실제로 만든다
                                  script)     python3 v2/tools/admin.py write_storyboard "$IN_PILOT" ;;
                                  storyboard) python3 v2/tools/admin.py make_video "$IN_PILOT" ;;
+                                 video)      python3 v2/tools/admin.py after_video "$IN_PILOT" ;;   # 시험 릴스(후킹 A·B) → 판정 뒤 제목·설명 · 시험 못 하면 바로 제목·설명
                                  *)          python3 v2/tools/admin.py approve "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
                                esac ;;
             revise|redo)       M=""; [ "$IN_ACTION" = "revise" ] && M="$IN_NOTE"
@@ -113,6 +116,9 @@ jobs:
                                esac ;;
             assemble|apply_lines|sync|crosscheck|upload_meta|stats) python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" ;;
             topics)            python3 v2/tools/admin.py topics ;;
+            trial_check)       python3 v2/tools/admin.py trial_check "$IN_PILOT" ;;   # 편 id 가 비면 진행 중인 모든 시험
+            trial_skip)        python3 v2/tools/admin.py trial_skip "$IN_PILOT" ;;
+            ig_probe)          python3 v2/tools/admin.py ig_probe ;;
             ready|redo_cut|redo_panel|edit_line|edit_hook|recut_plan|recut_approve|recut_cancel|save_meta|save_viewed)
                                python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
             *) echo "모르는 동작: $IN_ACTION"; exit 1 ;;
