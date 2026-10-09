@@ -2143,6 +2143,9 @@ REMAKE_BOARD_EXTEND = (" VERTICAL FILL (most important): in every panel the flat
                        "floor. Every panel is ONE sharp, full vertical 9:16 photo edge to edge. No gray, no blur, no bands, no letterbox, "
                        "no borders anywhere.")
 REMAKE_GAGS_KEEP = (" KEEP THESE MOMENTS EXACTLY AS IN THE VIDEO (the joke lives here): {gags}.")
+# 합성(원본 영상을 그대로 바꾸는 방식)은 동작이 원본에서 오므로 개그 장면을 글로 풀지 않고 시각만 적는다
+# (2026-10-09 타일매트 편: '부딪힘·충돌·벽에 박힘' 설명을 넣자 영상 AI가 지시문을 막음 — Input blocked, content_blocked)
+REMAKE_GAGS_TIMES = (" KEEP THE FUNNY MOMENTS AT {times} s EXACTLY AS IN THE INPUT VIDEO, frame by frame (the joke lives there).")
 # ⛔ 바꿀 대상(사장님 확정 2026-10-09 타일매트 편: "주인은 그냥 사람, 미끄러지는 강아지 두 마리가 시바견"):
 # 원본에 개·고양이 같은 동물이 나오면 동물을 시바견으로 바꾸고 사람은 사람 그대로. 동물이 없을 때만 사람을 시바견(머리·팔다리)으로.
 REMAKE_SWAP_ANIMALS = ("1) turn every dog and other animal in the video into a Shiba Inu (the main one looks exactly like the Shiba in "
@@ -3020,7 +3023,9 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
     _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-vf", CLEAN_VF, "-c:v", "libx264", "-crf", "16", str(piece)])
     prompt = prompt + REMAKE_CLEAN                        # 원본 화질은 따라 하지 않고 구도·개그·소리만(사용자 지시 2026-10)
     inputs = [{"type": "image", **_b64img(ROOT / "pet-episodes" / "characters" / "dog.png")}]
-    if res.get("use_timeline", True):                     # 0.5초 시간표(동작·입모양·소리)를 지시에 그대로 넣는다
+    if res.get("use_timeline", True) and (res.get("method") != "composite" or res.get("lipsync")):   # 0.5초 시간표(동작·입모양·소리)를 지시에 그대로 넣는다
+        # 합성은 동작이 원본 영상에서 오므로 넣지 않는다(입모양 맞추기 편만) — 2026-10-09 타일매트 편: 시간표의 '크롭티·반바지·충돌·벽에 박힘'
+        # 설명과 '개가 사람을 대신한다'(사람은 그대로인데)가 지시에 붙어 영상 AI가 막음(Input blocked)
         prompt = prompt + _timeline(ref, i * seg, seg, work, res, cap, f"seg{i + 1}")
     prev = work / f"rm_seg{i}.mp4"
     if i > 0 and prev.exists():                            # 앞 구간과 같은 개로 이어지게
@@ -3248,7 +3253,7 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
             probs.append("0.5초 시간표가 예전 원본 것입니다(원본이 바뀜) — 지금 원본으로 다시 분석해야 합니다")
     # 2) 개그 포인트가 지시에 다 살아 있나(사장님이 적은 rm.gags가 우선, 없으면 시간표에서 자동) — 원본을 글로 옮겨 새로 만드는 방식에만
     newway = bool(shots) or bool(rm.get("board_fresh")) or motion or composite
-    gags = _auto_gags(rm, res) if newway else []
+    gags = _auto_gags(rm, res) if (newway and not composite) else []   # 합성은 동작이 원본 영상에서 온다 — 개그를 글로 풀면 오히려 막힘(2026-10-09)
     for g in gags:
         kind = g.get("kind", "")
         words = g.get("words") or []
@@ -3597,7 +3602,7 @@ def step_remake(ep, epdir, work, log, req):
             gags_auto = _auto_gags(rm, res)               # 원본에서 찾은 개그(부딪힘·넘어짐 등)를 합성 지시에 '그대로 둘 것'으로(2026-10-09 사고: 점검만 하고 안 넣어 매번 멈춤)
             res["gags"] = gags_auto
             if gags_auto:
-                add = REMAKE_GAGS_KEEP.format(gags=_gag_text(gags_auto))
+                add = REMAKE_GAGS_TIMES.format(times=", ".join(dict.fromkeys(str(g.get("t", "")) for g in gags_auto if g.get("t"))))
                 prompt += add
                 res["edit_prompt"] = res.get("edit_prompt", "") + add
         n_pan = _board_panels(L, rm)

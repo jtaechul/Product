@@ -8,7 +8,7 @@
     "music": ""
   },
   "remake": {
-    "swap": "1) turn the tan dog into the Shiba Inu from image 1; 2) turn the white dog into a cream-coloured Shiba Inu (a real Shiba with a cream-white coat) - both dogs keep exactly their original running, sliding, colliding, tumbling and eating motion",
+    "swap": "1) turn the tan dog into the Shiba Inu from image 1; 2) turn the white dog into a cream-coloured Shiba Inu (a real Shiba with a cream-white coat) - both dogs keep exactly their original motion",
     "ending": "The Shiba Inu calmly walks across the new mat without slipping, looking extremely smug at the camera.",
     "big": "타일 바닥 드리프트\n이제 그만!",
     "sub": "앞면은 포근한 러그 뒤는 방수 타일 매트\n슬개골 탈구 걱정 없이 뛰어놀게 하세요",
@@ -25,7 +25,7 @@
     "cap": 5,
     "swap_before": "1) replace the woman's head with the Shiba Inu head from image 1; 2) turn the woman's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the woman's visible bare legs and feet into thick furry Shiba hind legs with round paws",
     "keep_people": true,
-    "cast": "exactly one real human woman (the owner, unchanged - her own face, hair, grey crop top, black shorts and slippers) and two dogs, both Shiba Inus",
+    "cast": "exactly one woman (the owner, unchanged) and two dogs, both Shiba Inus",
     "swap_ko": "미끄러지는 강아지 두 마리 → 시바견(갈색은 우리 시바견, 흰색은 크림색 시바견), 주인 여자는 사람 그대로"
   },
   "caption": "타일 바닥 드리프트 이제 그만!\n\n앞면은 포근한 러그 뒤는 방수 타일 매트 슬개골 탈구 걱정 없이 뛰어놀게 하세요\n\n구매는 프로필 링크에서.",
