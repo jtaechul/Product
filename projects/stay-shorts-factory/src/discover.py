@@ -282,32 +282,181 @@ def photo_check(model: str, name: str, rooms: list, build: Path) -> dict:
             "people": sum(1 for p in cl if p.get("people")), "classified": cl}
 
 
-# ── 3겹 점수 ───────────────────────────────────────────────────────────
-def score(c: dict) -> tuple[int, list[str]]:
-    s, why = 0, []
-    v, ph = c.get("coupang") or {}, c.get("photos") or {}
-    if v.get("confidence") == "high":
-        s += 2; why.append("숙소 일치 확신 높음")
-    elif v.get("confidence") == "mid":
-        why.append("다른 숙소 섞임: " + ", ".join(v.get("other_properties") or ["?"]))
-    if v.get("theme_hits"):
-        s += min(3, len(v["theme_hits"])); why.append("객실 이름: " + ", ".join(v["theme_hits"]))
+# ── 3겹 점수 v3 (2026-10-09 운영자 지적 반영: 사진 수는 순위에서 뺀다) ──────────────
+#
+#   순위 = "소비자가 지금 찾고 있고, 사면 만족할 숙소" 순. 100점 만점.
+#     수요 40 = 블로그 최근 12개월 글 수(후보 중 상대값, 로그) 25 + 뉴스 최근 90일 5 + 테마 계절성(달력 기준) 10
+#     적합 20 = 확인된 근거(객실 이름 8 · TourAPI 시설 6) 14 + AI 지식의 테마 적합(검증 필요 표시) 6
+#     훅   10 = "한 줄로 말할 거리" 강도 (AI 판정)
+#     가격 20 = 타깃 가격대(1박 10~30만 원) 10 + 자체 기록 대비 하락(15% 이상) 10
+#     기회  5 = 최근 180일 신규·리뉴얼·오픈 뉴스
+#     미측정 5 = 유튜브 포화도·서울 접근성 (키·좌표 없음 — 다음 단계)
+#   감점: 숙소 동일성 mid -4.  게이트(순위 밖): 쿠팡 판매 불가·동일성 low 제외. 사진 부족은 "운영자 사진 필요" 표시만.
+#   수요 축의 원래 설계(네이버 데이터랩 검색어트렌드)는 2026-10-09 네이버가 신규 등록을 막아 블로그 글 수로 대체했다.
+TARGET_PRICE = (100_000, 300_000)          # 타깃: 수도권 출발 30대 커플·가족, 주말 1박
+SEASON = [  # (테마 키워드 조각, 성수기 달 → 10점, 준성수기 달 → 7점, 그 외 4점)
+    (("온천", "온수", "실내", "스파", "사우나", "찜질", "설경"), {11, 12, 1, 2}, {3, 10}),
+    (("풀빌라", "워터파크", "수영장", "바다", "오션", "해변", "계곡"), {6, 7, 8}, {5, 9}),
+    (("벚꽃", "봄"), {3, 4}, {5}),
+    (("단풍", "가을"), {10, 11}, {9}),
+    (("키즈", "가족"), {5, 7, 8, 12, 1}, {6}),
+]
+NEWS_FRESH_RE = re.compile(r"리뉴얼|재개장|오픈|개장|신규|새단장|리모델링")
+
+
+def _naver_search(kind: str, query: str, display: int = 100) -> dict | None:
+    cid = (os.environ.get("NAVER_CLIENT_ID") or "").strip()
+    sec = (os.environ.get("NAVER_CLIENT_SECRET") or "").strip()
+    if not cid or not sec:
+        return None
+    url = f"https://openapi.naver.com/v1/search/{kind}.json?" + urllib.parse.urlencode(
+        {"query": query, "display": display, "start": 1, "sort": "date"})
+    req = urllib.request.Request(url, headers={"X-Naver-Client-Id": cid, "X-Naver-Client-Secret": sec})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:  # noqa: BLE001
+        log(f"네이버 {kind} 검색 실패 ({query}): {str(e)[:80]}")
+        return None
+
+
+def naver_demand(name: str) -> dict:
+    """블로그 최근 12개월 글 수(최대 100, 최신순 100건 안에서 센다) · 뉴스 최근 90일 수 · 신규·리뉴얼 뉴스."""
+    out = {"blog_total": None, "blog_12m": None, "news_90d": None, "fresh_news": []}
+    today = date.today()
+    js = _naver_search("blog", f'"{name}"')
+    if js is not None:
+        out["blog_total"] = int(js.get("total") or 0)
+        n = 0
+        for it in js.get("items") or []:
+            try:
+                d = date(int(it["postdate"][:4]), int(it["postdate"][4:6]), int(it["postdate"][6:8]))
+                n += (today - d).days <= 365
+            except Exception:  # noqa: BLE001
+                continue
+        out["blog_12m"] = n
+    time.sleep(0.15)
+    js = _naver_search("news", f'"{name}"', 50)
+    if js is not None:
+        n, fresh = 0, []
+        for it in js.get("items") or []:
+            try:
+                d = time.strptime(it["pubDate"][5:16], "%d %b %Y")
+                days = (today - date(d.tm_year, d.tm_mon, d.tm_mday)).days
+            except Exception:  # noqa: BLE001
+                continue
+            n += days <= 90
+            title = re.sub(r"<[^>]+>", "", str(it.get("title", "")))
+            if days <= 180 and NEWS_FRESH_RE.search(title):
+                fresh.append(title[:50])
+        out["news_90d"] = n
+        out["fresh_news"] = fresh[:3]
+    time.sleep(0.15)
+    return out
+
+
+HOOK_SYSTEM = """너는 숙소 쇼핑 숏폼 기획자다. 타깃: 수도권 출발 30대 커플·아이 동반 가족, 주말 1박.
+숙소 이름·지역·테마·객실 이름·시설 기록을 보고 네 가지를 판정한다. 모르는 사실은 지어내지 말고 낮게 매긴다.
+- theme_fit (0~10): 이 숙소가 테마(예: 실내 온수풀·온천)에 실제로 맞는 정도. 네 지식으로 아는 시설이 있으면 known_facilities 에 적는다 (검증 필요 표시가 붙는다).
+- hook (한 문장, 20자 내): 이 숙소만의 "한 줄로 말할 거리" (예: "객실 안에 온천수 욕조"). 없으면 빈 문자열.
+- hook_strength (0~10): 그 한 줄이 첫 2초에 멈추게 할 힘. 흔한 말("바다 전망")은 3 이하.
+- target_fit (0~10): 타깃에게 맞는 정도 (가족·커플·접근성·가격대 감각).
+JSON 만: {"theme_fit":n,"known_facilities":["..."],"hook":"...","hook_strength":n,"target_fit":n,"note":"한 줄"}"""
+
+
+def hook_judge(model: str, c: dict, theme: str, region: str) -> dict:
+    v = c.get("coupang") or {}
+    content = (f"숙소: {c['name']} (지역 {region} {c.get('city', '')})\n테마: {theme}\n"
+               f"쿠팡 객실 이름: {', '.join(v.get('room_names') or [])}\n"
+               f"TourAPI 시설 기록: {', '.join(c.get('tour_facts') or []) or '없음'}\n"
+               f"후보로 올라온 이유: {' / '.join(c.get('why') or [])[:200]}")
+    data = ms.gemini_json(model, HOOK_SYSTEM, content)
+
+    def n10(v, hi=10):
+        try:
+            return int(min(hi, max(0, float(v))))
+        except (TypeError, ValueError):
+            return 0
+    return {"theme_fit": n10(data.get("theme_fit")), "known_facilities": [str(x)[:30] for x in (data.get("known_facilities") or [])][:4],
+            "hook": str(data.get("hook", ""))[:40], "hook_strength": n10(data.get("hook_strength")),
+            "target_fit": n10(data.get("target_fit")), "note": str(data.get("note", ""))[:80]}
+
+
+def season_score(theme: str, keywords: list[str], month: str) -> int:
+    try:
+        m = int(month.split("-")[1])
+    except (IndexError, ValueError):
+        return 5
+    text = (theme + " " + " ".join(keywords)).replace(" ", "")
+    for frags, peak, shoulder in SEASON:
+        if any(f in text for f in frags):
+            return 10 if m in peak else 7 if m in shoulder else 4
+    return 5
+
+
+def price_drop(name: str, price: float) -> float | None:
+    """자체 가격 기록(다른 날짜)의 중앙값 대비 지금 가격 비율. 기록이 없으면 None."""
+    pdir = OUT / "prices"
+    past = []
+    for f in sorted(pdir.glob("*.json")) if pdir.exists() else []:
+        if f.stem == date.today().isoformat():
+            continue
+        try:
+            v = json.loads(f.read_text(encoding="utf-8")).get(name)
+            if v:
+                past.append(float(v))
+        except Exception:  # noqa: BLE001
+            continue
+    if not past:
+        return None
+    past.sort()
+    return price / past[len(past) // 2]
+
+
+def score_v3(c: dict, blog_max: int, theme: str, keywords: list[str], month: str) -> tuple[int, dict, list[str]]:
+    import math
+    v, dm, ai = c.get("coupang") or {}, c.get("demand") or {}, c.get("ai") or {}
+    b, why = {}, []
+    # 수요 40
+    blog = dm.get("blog_12m")
+    b["blog"] = round(25 * math.log1p(blog) / math.log1p(blog_max)) if blog and blog_max else 0
+    if blog is not None:
+        why.append(f"블로그 12개월 {blog}건" + ("+" if blog >= 100 else ""))
+    b["news"] = min(5, dm.get("news_90d") or 0)
+    b["season"] = season_score(theme, keywords, month)
+    # 적합 20
+    hits = v.get("theme_hits") or []
+    b["fit_rooms"] = 8 if hits else 0
+    if hits:
+        why.append("객실 이름: " + ", ".join(hits))
+    b["fit_tour"] = 6 if c.get("tour_themed") else 0
     if c.get("tour_themed"):
-        s += 2; why.append("TourAPI 시설: " + ", ".join(c.get("tour_facts") or []))
-    if ph.get("water", 0) >= 3:
-        s += 3; why.append(f"물놀이 사진 {ph['water']}장")
-    elif ph.get("water", 0) >= 1:
-        s += 1; why.append(f"물놀이 사진 {ph['water']}장")
-    if ph.get("usable", 0) >= 7:
-        s += 2; why.append(f"쓸 수 있는 사진 {ph['usable']}장")
-    elif ph.get("usable", 0) >= 5:
-        s += 1; why.append(f"사진 {ph['usable']}장 (운영자 보완 필요)")
-    if ph.get("room", 0) >= 1 and ph.get("special", 0) >= 1:
-        s += 1; why.append("객실·특별 공간 사진 있음")
-    n_src = len(c.get("sources") or [])
-    if n_src >= 2:
-        s += n_src - 1; why.append(f"출처 {n_src}곳 일치")
-    return s, why
+        why.append("TourAPI 시설: " + ", ".join(c.get("tour_facts") or []))
+    b["fit_ai"] = round(6 * ai.get("theme_fit", 0) / 10)
+    if ai.get("known_facilities"):
+        why.append("AI 지식(검증 필요): " + ", ".join(ai["known_facilities"]))
+    # 훅 10
+    b["hook"] = ai.get("hook_strength", 0)
+    # 가격 20
+    p = v.get("min_price")
+    if p:
+        lo, hi = TARGET_PRICE
+        b["price_band"] = 10 if lo <= p <= hi else 6 if lo * 0.5 <= p <= hi * 1.33 else 2
+        r = price_drop(c["name"], p)
+        b["price_drop"] = 10 if r is not None and r <= 0.85 else 0
+        if r is not None:
+            why.append(f"자체 기록 대비 {r:.0%}")
+    else:
+        b["price_band"] = b["price_drop"] = 0
+    # 기회 5
+    b["fresh"] = 5 if dm.get("fresh_news") else 0
+    if dm.get("fresh_news"):
+        why.append("뉴스: " + dm["fresh_news"][0])
+    b["penalty"] = -4 if v.get("confidence") == "mid" else 0
+    if b["penalty"]:
+        why.append("동일성 mid(다른 숙소 섞임: " + ", ".join(v.get("other_properties") or ["?"]) + ")")
+    total = sum(b.values())
+    return int(total), b, why
 
 
 def sheet(cl: list[dict], out: Path, title: str):
@@ -403,27 +552,42 @@ def run(req: dict) -> dict:
             c["tour_addr"] = te.get("addr")
         if cp["ok"]:
             prices[c["name"]] = cp["min_price"]
-            try:
-                ph = ms._try_models("vision", models["text"], lambda m: photo_check(m, c["name"], rooms, BUILD / f"c{i}"))
-            except Exception as e:  # noqa: BLE001
-                ph = {"usable": 0, "water": 0, "room": 0, "special": 0, "error": str(e)[:100], "classified": []}
-            c["photos"] = {k: ph.get(k) for k in ("usable", "water", "room", "special", "skip", "people", "error")}
-            c["_classified"] = ph.get("classified") or []
+            c["_rooms"] = rooms
             c["affiliate_url"] = str((rooms[0] or {}).get("productUrl", ""))
-        c["score"], c["reasons"] = score(c)
-        log(f"  {c['name']}: 쿠팡 {'OK' if cp['ok'] else 'X'} 객실 {cp['rooms_n']} 확신 {cp['confidence']} · 점수 {c['score']}")
+        log(f"  {c['name']}: 쿠팡 {'OK' if cp['ok'] else 'X'} 객실 {cp['rooms_n']} 확신 {cp['confidence']}")
         time.sleep(0.6)
 
-    # 3겹
+    # 3겹 — 수요·적합·훅·가격 점수 (사진은 순위에 넣지 않는다)
     passed = [c for c in merged if (c.get("coupang") or {}).get("ok")]
-    passed.sort(key=lambda c: -c["score"])
-    for rank, c in enumerate(passed[:3], 1):
-        if c.get("_classified"):
-            sheet(c["_classified"], LATEST / f"sheet_{rank}.jpg", f"{rank}. {c['name']} — 쿠팡 사진 {len(c['_classified'])}장")
+    for c in passed:
+        c["demand"] = naver_demand(c["name"])
+        try:
+            c["ai"] = ms._try_models("text", models["text"], lambda m: hook_judge(m, c, theme, region))
+        except Exception as e:  # noqa: BLE001
+            c["ai"] = {"error": str(e)[:80]}
+    blog_max = max((c["demand"].get("blog_12m") or 0 for c in passed), default=0)
+    for c in passed:
+        c["score"], c["breakdown"], c["reasons"] = score_v3(c, blog_max, theme, keywords, month)
+        log(f"  점수 {c['score']:3d} {c['name']} — {c['breakdown']}")
     for c in merged:
-        c.pop("_classified", None)
+        if c not in passed:
+            c["score"], c["reasons"] = 0, []
+    passed.sort(key=lambda c: -c["score"])
+
+    # 제작 가능 여부(사진)는 상위 5곳만 본다 — 순위에는 영향 없음, 표시용
+    for rank, c in enumerate(passed[:5], 1):
+        try:
+            ph = ms._try_models("vision", models["text"], lambda m: photo_check(m, c["name"], c["_rooms"], BUILD / f"top{rank}"))
+        except Exception as e:  # noqa: BLE001
+            ph = {"usable": 0, "water": 0, "room": 0, "special": 0, "error": str(e)[:100], "classified": []}
+        c["photos"] = {k: ph.get(k) for k in ("usable", "water", "room", "special", "skip", "people", "error")}
+        if rank <= 3 and ph.get("classified"):
+            sheet(ph["classified"], LATEST / f"sheet_{rank}.jpg", f"{rank}. {c['name']} — 쿠팡 사진 {len(ph['classified'])}장")
+    for c in merged:
+        c.pop("_rooms", None)
     report["candidates"] = passed + [c for c in merged if c not in passed]
-    report["summary"] = {"generated": len(merged), "coupang_ok": len(passed), "models": dict(ms.USED)}
+    report["summary"] = {"generated": len(merged), "coupang_ok": len(passed), "blog_max_12m": blog_max, "models": dict(ms.USED),
+                         "scoring": "v3: 수요40(블로그25·뉴스5·계절10) 적합20 훅10 가격20 기회5 · 미측정5 · mid -4 · 사진 제외"}
 
     # 기록
     (LATEST / "candidates.json").write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
@@ -435,13 +599,20 @@ def run(req: dict) -> dict:
         pf.write_text(json.dumps(old, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     md = [f"# 숙소 후보 — {region} · {theme} · {month} ({report['ran_at']})", "",
           f"- 후보 {len(merged)}곳 (Gemini {report['layers']['gemini']} / 네이버 {report['layers']['naver']} / TourAPI {report['layers']['tourapi']})",
-          f"- 쿠팡 판매 확인(여행 카테고리 · 객실 {MIN_ROOMS}개 이상 · 숙소 동일성 high/mid) {len(passed)}곳", "",
-          "| 순위 | 숙소 | 점수 | 확신 | 출처 | 객실 | 근거 | 사진(물/객실/특별) | 최저 객실가(조회값) |", "|---|---|---|---|---|---|---|---|---|"]
+          f"- 쿠팡 판매 확인(여행 카테고리 · 객실 {MIN_ROOMS}개 이상 · 숙소 동일성 high/mid) {len(passed)}곳",
+          "- 점수 v3 (100점): 수요 40(블로그 12개월 글 수 25 · 뉴스 5 · 계절 10) + 테마 적합 20 + 훅 10 + 가격 20 + 기회 5 (+미측정 5). "
+          "동일성 mid -4. **사진은 순위에 안 들어간다** — 상위 5곳만 '제작 가능' 확인", "",
+          "| 순위 | 숙소 | 총점 | 수요 | 적합 | 훅 | 가격 | 확신 | 훅 문장 | 근거 | 최저가(조회) | 제작(사진 물/객실/특별) |",
+          "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for i, c in enumerate(passed, 1):
-        v, ph = c["coupang"], c.get("photos") or {}
+        v, ph, b = c["coupang"], c.get("photos"), c.get("breakdown") or {}
         price = f"{int(v['min_price']):,}원" if v.get("min_price") else "-"
-        md.append(f"| {i} | {c['name']} | {c['score']} | {v.get('confidence')} | {'+'.join(c['sources'])} | {v.get('rooms_n')} | "
-                  f"{'; '.join(c['reasons'])[:140]} | {ph.get('water', 0)}/{ph.get('room', 0)}/{ph.get('special', 0)} | {price} |")
+        demand = b.get("blog", 0) + b.get("news", 0) + b.get("season", 0)
+        fit = b.get("fit_rooms", 0) + b.get("fit_tour", 0) + b.get("fit_ai", 0)
+        pr = b.get("price_band", 0) + b.get("price_drop", 0) + b.get("fresh", 0)
+        shot = (f"{ph.get('water', 0)}/{ph.get('room', 0)}/{ph.get('special', 0)}" + (" · 운영자 사진 필요" if (ph.get("usable") or 0) < 7 else "")) if ph else "미확인"
+        md.append(f"| {i} | {c['name']} | {c['score']} | {demand} | {fit} | {b.get('hook', 0)} | {pr} | {v.get('confidence')} | "
+                  f"{(c.get('ai') or {}).get('hook', '')} | {'; '.join(c['reasons'])[:120]} | {price} | {shot} |")
     md += ["", "## 쿠팡에서 못 찾았거나 다른 숙소로 판정된 후보", ""]
     for c in merged:
         if c not in passed:
@@ -450,9 +621,10 @@ def run(req: dict) -> dict:
     top = passed[:5]
     lines = [f"숙소 후보 발굴 — {region} · {theme} · {month}", f"후보 {len(merged)}곳 중 쿠팡 판매 확인 {len(passed)}곳 (영상 제작 없음)"]
     for i, c in enumerate(top, 1):
-        ph = c.get("photos") or {}
-        lines.append(f"{i}. {c['name']} (점수 {c['score']}, 확신 {c['coupang'].get('confidence')}, 객실 {c['coupang'].get('rooms_n')}, "
-                     f"사진 물{ph.get('water', 0)}/객{ph.get('room', 0)}/특{ph.get('special', 0)}) — {'; '.join(c['reasons'])[:90]}")
+        ph, b = c.get("photos") or {}, c.get("breakdown") or {}
+        lines.append(f"{i}. {c['name']} {c['score']}점 (수요 {b.get('blog', 0) + b.get('news', 0) + b.get('season', 0)} · 적합 "
+                     f"{b.get('fit_rooms', 0) + b.get('fit_tour', 0) + b.get('fit_ai', 0)} · 훅 {b.get('hook', 0)} · 가격 {b.get('price_band', 0) + b.get('price_drop', 0)}) "
+                     f"훅: {(c.get('ai') or {}).get('hook', '-')} / 사진 물{ph.get('water', 0)}객{ph.get('room', 0)}특{ph.get('special', 0)}")
     lines.append("표 전체: data/discover/latest/candidates.md")
     (LATEST / "summary.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
