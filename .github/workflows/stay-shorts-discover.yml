@@ -1,0 +1,79 @@
+name: stay-shorts-discover
+
+# 숙소 쇼핑쇼츠 — 테마·지역으로 숙소 후보를 찾고 쿠팡에서 팔리는지 검증해 순위표를 만든다. 영상·Veo 없음 (0원에 가까움).
+# 3겹: Gemini 후보 + 네이버 지역검색 + TourAPI 시설 → 쿠팡 검색 검증 + 사진 분류(Gemini 비전) → 점수.
+# 결과: projects/stay-shorts-factory/data/discover/latest/ (candidates.md 표, sheet_N.jpg 상위 3곳 사진) + 텔레그램 요약.
+# 실행: projects/stay-shorts-factory/requests/discover/request.json 을 바꿔 푸시하거나 Run workflow.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: ["main", "claude/stay-shorts-factory", "claude/stay-shorts-video-conversion-67hiin"]
+    paths: ["projects/stay-shorts-factory/requests/discover/*.json"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stay-shorts-discover
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    name: 숙소 후보 발굴
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            projects/stay-shorts-factory
+            projects/coupang-shorts-factory/assets/fonts
+          sparse-checkout-cone-mode: true
+
+      - name: 준비
+        run: python3 -m pip install -q pillow
+
+      - name: 후보 발굴
+        id: run
+        working-directory: projects/stay-shorts-factory
+        env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          TOUR_API_KEY: ${{ secrets.TOUR_API_KEY }}
+        run: python3 src/discover.py
+
+      - name: 텔레그램 요약
+        if: always()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ] && { echo "텔레그램 키 없음 — 건너뜀"; exit 0; }
+          D=projects/stay-shorts-factory/data/discover/latest
+          TXT=$(cat "$D/summary.txt" 2>/dev/null || echo "숙소 후보 발굴 — 결과 파일 없음 (실행 기록 확인)")
+          curl -s -o /dev/null -w "telegram text http %{http_code}\n" -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+            --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=$TXT" || true
+          for n in 1 2 3; do
+            [ -f "$D/sheet_$n.jpg" ] || continue
+            curl -s -o /dev/null -w "telegram photo $n http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$D/sheet_$n.jpg" \
+              -F caption="후보 $n 쿠팡 사진 (분류 라벨 = Gemini 판단)" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
+          done
+
+      - name: 결과 커밋
+        if: always()
+        run: |
+          P=projects/stay-shorts-factory
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          [ -e "$P/data/discover" ] && git add "$P/data/discover"
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git commit -m "stay-shorts: 숙소 후보 발굴 결과 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git push origin "HEAD:${GITHUB_REF_NAME}" && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i"; git pull --rebase origin "${GITHUB_REF_NAME}" || true; sleep 3
+          done
+          echo "저장 실패"; exit 1
