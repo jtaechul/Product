@@ -3,13 +3,13 @@
     "gen_res": "720p",
     "pre_enhance": false,
     "board_ref": "",
-    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, every movement and its timing, camera, background, lights): 1) replace the woman's head with the Shiba Inu head from image 1; 2) turn the woman's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the woman's visible bare legs and feet into thick furry Shiba hind legs with round paws. Every replaced head is the Shiba Inu from image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a round Shiba paw (sleeves and trousers stay as they are). SAME HEADCOUNT: the number of animals in every frame matches the number of people in the original frame - one person becomes exactly one animal, never two. Body parts of a person seen at the frame edges belong to that same animal and stay attached to it. Remove any watermark or on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings.",
+    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, every movement and its timing, camera, background, lights): 1) replace the woman's head with the Shiba Inu head from image 1; 2) turn the woman's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the woman's visible bare legs and feet into thick furry Shiba hind legs with round paws. Every replaced head is the Shiba Inu from image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a round Shiba paw (sleeves and trousers stay as they are). SAME HEADCOUNT: one person becomes exactly one animal, never two; animals that are already in the original stay as they are (same number, breed and colour) - so every frame has exactly as many animals as the original frame has people and animals together, and no animal is added where nobody was. Body parts of a person seen at the frame edges belong to that same animal and stay attached to it. Remove any watermark or on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings. KEEP THESE MOMENTS EXACTLY AS IN THE VIDEO (the joke lives here): [2.5-3.0s] collides - Tan dog collides into white dog from behind while both slide at high speed. Loud skidding and scuffling noise.; [3.0-3.5s] collision, tumble - Both dogs flip and tumble over each other in a rolling crash on the tile floor. Collision thump and claws scra; [4.5-5.0s] hits - Tan dog steps toward right food bowl; white dog hits lower wall/cabinet with its back and hind legs. Soft wall; [5.0-5.5s] slipping - Tan dog lowers head into bowl to eat; white dog props front paws against wall while slipping on hind legs. Kib.",
     "lipsync": false,
     "allow_i2v": false,
     "use_timeline": true,
     "src_sig": "9096cb4bdbc3-16.2",
     "src_full_sec": 16.25,
-    "spent": 0.02,
+    "spent": 0.17,
     "ledger": [
       {
         "what": "후킹 살려 10초로 줄이기",
@@ -18,6 +18,10 @@
       {
         "what": "all 0.5초 시간표 만들기",
         "usd": 0.01
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
       }
     ],
     "pick": {
@@ -193,18 +197,63 @@
       "mode": "extend",
       "src": "720x400"
     },
-    "preflight": [
-      "개그 포인트가 지시에서 빠졌습니다: [0.0-0.5] 넘어짐 — Woman (left, grey crop top, black shorts, slippers) walks forward carrying two p",
-      "개그 포인트가 지시에서 빠졌습니다: [2.5-3.0] 맞힘 — Tan dog collides into white dog from behind while both slide at high speed. Loud",
-      "개그 포인트가 지시에서 빠졌습니다: [3.0-3.5] 넘어짐 — Both dogs flip and tumble over each other in a rolling crash on the tile floor. ",
-      "개그 포인트가 지시에서 빠졌습니다: [4.5-5.0] 맞힘 — Tan dog steps toward right food bowl; white dog hits lower wall/cabinet with its",
-      "개그 포인트가 지시에서 빠졌습니다: [5.0-5.5] 넘어짐 — Tan dog lowers head into bowl to eat; white dog props front paws against wall wh"
-    ]
+    "preflight": [],
+    "gags": [
+      {
+        "t": "2.5-3.0",
+        "kind": "맞힘",
+        "word": "collides",
+        "text": "Tan dog collides into white dog from behind while both slide at high speed. Loud skidding and scuffling noise. Fixed."
+      },
+      {
+        "t": "3.0-3.5",
+        "kind": "맞힘",
+        "word": "collision",
+        "text": "Both dogs flip and tumble over each other in a rolling crash on the tile floor. Collision thump and claws scratching. Fixed."
+      },
+      {
+        "t": "3.0-3.5",
+        "kind": "넘어짐",
+        "word": "tumble",
+        "text": "Both dogs flip and tumble over each other in a rolling crash on the tile floor. Collision thump and claws scratching. Fixed."
+      },
+      {
+        "t": "4.5-5.0",
+        "kind": "맞힘",
+        "word": "hits",
+        "text": "Tan dog steps toward right food bowl; white dog hits lower wall/cabinet with its back and hind legs. Soft wall bump and panting. Fixed."
+      },
+      {
+        "t": "5.0-5.5",
+        "kind": "넘어짐",
+        "word": "slipping",
+        "text": "Tan dog lowers head into bowl to eat; white dog props front paws against wall while slipping on hind legs. Kibble crunching and bowl clinking. Fixed."
+      }
+    ],
+    "board_times": [
+      0.73,
+      1.46,
+      2.19,
+      2.92,
+      3.65,
+      4.38,
+      5.12,
+      5.85,
+      6.58,
+      7.31,
+      8.04,
+      8.77
+    ],
+    "board": {
+      "ok": true,
+      "panels": 12
+    },
+    "est_full": 1.52
   },
   "error": "사전 점검에서 멈춤(돈 안 씀): 개그 포인트가 지시에서 빠졌습니다: [0.0-0.5] 넘어짐 — Woman (left, grey crop top, black shorts, slippers) walks forward carrying two p / 개그 포인트가 지시에서 빠졌습니다: [2.5-3.0] 맞힘 — Tan dog collides into white dog from behind while both slide at high speed. Loud / 개그 포인트가 지시에서 빠졌습니다: [3.0-3.5] 넘어짐 — Both dogs flip and tumble over each other in a rolling crash on the tile floor.  / 개그 포인트가 지시에서 빠졌습니다: [4.5-5.0] 맞힘 — Tan dog steps toward right food bowl; white dog hits lower wall/cabinet with its / 개그 포인트가",
   "last_request": {
-    "file": "02_remake_board.json",
-    "ran_at": "2026-10-09T13:34:43Z",
-    "ok": false
+    "file": "03_remake_board.json",
+    "ran_at": "2026-10-09T13:59:15Z",
+    "ok": true
   }
 }
