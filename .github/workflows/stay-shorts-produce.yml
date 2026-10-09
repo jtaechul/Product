@@ -34,7 +34,9 @@ jobs:
       - name: 준비 (Pillow · ffmpeg 확인)
         run: |
           python3 -m pip install -q pillow
-          ffmpeg -version | head -1
+          # 러너에 ffmpeg 가 기본으로 없다 (2026-10-09 실측) — 없을 때만 설치한다
+          command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null; }
+          command -v ffmpeg && ffmpeg -version 2>/dev/null | sed -n '1p'
 
       - name: 제작
         id: make
