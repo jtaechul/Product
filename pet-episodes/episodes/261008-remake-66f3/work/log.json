@@ -352,8 +352,8 @@
   },
   "error": "스토리보드 그림 실패: HTTP 0: 연결 끊김: The read operation timed out",
   "last_request": {
-    "file": "08_remake_full.json",
-    "ran_at": "2026-10-08T15:12:53Z",
+    "file": "09_publish.json",
+    "ran_at": "2026-10-09T05:20:56Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
@@ -361,5 +361,12 @@
     "ok": true,
     "sec": 13.38,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
+  },
+  "ig_publish": {
+    "ok": true,
+    "media_id": "17892765657681881",
+    "username": "lord.shiba.ybd",
+    "permalink": "https://www.instagram.com/reel/DeQvnx8FA26/",
+    "published_at": "2026-10-09T05:20:56Z"
   }
 }
