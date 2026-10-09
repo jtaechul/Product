@@ -1,0 +1,210 @@
+{
+  "remake": {
+    "gen_res": "720p",
+    "pre_enhance": false,
+    "board_ref": "",
+    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, every movement and its timing, camera, background, lights): 1) replace the woman's head with the Shiba Inu head from image 1; 2) turn the woman's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the woman's visible bare legs and feet into thick furry Shiba hind legs with round paws. Every replaced head is the Shiba Inu from image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a round Shiba paw (sleeves and trousers stay as they are). SAME HEADCOUNT: the number of animals in every frame matches the number of people in the original frame - one person becomes exactly one animal, never two. Body parts of a person seen at the frame edges belong to that same animal and stay attached to it. Remove any watermark or on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings.",
+    "lipsync": false,
+    "allow_i2v": false,
+    "use_timeline": true,
+    "src_sig": "9096cb4bdbc3-16.2",
+    "src_full_sec": 16.25,
+    "spent": 0.02,
+    "ledger": [
+      {
+        "what": "후킹 살려 10초로 줄이기",
+        "usd": 0.01
+      },
+      {
+        "what": "all 0.5초 시간표 만들기",
+        "usd": 0.01
+      }
+    ],
+    "pick": {
+      "pieces": [
+        [
+          0.0,
+          9.5
+        ]
+      ],
+      "hook": "밥그릇을 내려놓자마자 흥분해서 달려오는 강아지들",
+      "why": "강아지들이 미끄러지며 달려와 밥을 먹는 핵심 슬랩스틱 장면이 9.5초 안에 모두 끝나므로, 뒤의 로고 엔딩을 잘라내고 단일 클립으로 유지했습니다.",
+      "start": 0.0,
+      "end": 9.5,
+      "sec": 9.5
+    },
+    "src_sec": 9.5,
+    "segments": 1,
+    "one_shot": true,
+    "method": "composite",
+    "timeline": {
+      "all": [
+        {
+          "t": "0.0-0.5",
+          "action": "Woman (left, grey crop top, black shorts, slippers) walks forward carrying two pet bowls with both hands.",
+          "mouth": "Blurred/closed.",
+          "sound": "Footsteps shuffling.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "Woman stops and bends knees, lowering both bowls toward the floor.",
+          "mouth": "Closed.",
+          "sound": "Silent / subtle rustling.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "Woman squats down, setting the two white bowls onto the tiled floor.",
+          "mouth": "Opens.",
+          "sound": "Woman says 'Lái'.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "Woman sets bowls firmly and starts rising.",
+          "mouth": "Open.",
+          "sound": "Woman says 'chīfàn'.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "Woman stands and steps back left; white dog and tan dog sprint in from lower right, sliding rapidly across the floor.",
+          "mouth": "Woman closed; dogs open.",
+          "sound": "Paws and claws skidding across tile.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "Tan dog collides into white dog from behind while both slide at high speed.",
+          "mouth": "Dogs open.",
+          "sound": "Loud skidding and scuffling noise.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "Both dogs flip and tumble over each other in a rolling crash on the tile floor.",
+          "mouth": "Dogs open.",
+          "sound": "Collision thump and claws scratching.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "Dogs separate; tan dog rolls onto its paws while white dog slides backwards toward the left wall.",
+          "mouth": "Dogs open.",
+          "sound": "Scrambling paws on tile.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "Tan dog recovers balance facing bowls; white dog continues sliding rear-first into the wall/cabinet.",
+          "mouth": "Dogs open.",
+          "sound": "Claw clicking and body sliding.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "Tan dog steps toward right food bowl; white dog hits lower wall/cabinet with its back and hind legs.",
+          "mouth": "Dogs open.",
+          "sound": "Soft wall bump and panting.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "5.0-5.5",
+          "action": "Tan dog lowers head into bowl to eat; white dog props front paws against wall while slipping on hind legs.",
+          "mouth": "Tan dog chewing; white dog open.",
+          "sound": "Kibble crunching and bowl clinking.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "5.5-6.0",
+          "action": "Tan dog eats from bowl; white dog struggles against the wall trying to gain traction.",
+          "mouth": "Tan dog chewing; white dog open.",
+          "sound": "Munching sounds and paw clicks.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "6.0-6.5",
+          "action": "Tan dog continues eating; white dog stands up on hind legs leaning paws against wall.",
+          "mouth": "Tan dog chewing; white dog open.",
+          "sound": "Continuous kibble crunching.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "6.5-7.0",
+          "action": "Tan dog eats; white dog drops front paws to floor and turns toward the food bowls.",
+          "mouth": "Tan dog chewing; white dog open.",
+          "sound": "Kibble munching.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "7.0-7.5",
+          "action": "Tan dog eats from right bowl; white dog walks forward toward left bowl.",
+          "mouth": "Tan dog chewing; white dog open.",
+          "sound": "Kibble crunching and light paw taps.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "7.5-8.0",
+          "action": "White dog lowers snout into left bowl; tan dog continues eating from right bowl.",
+          "mouth": "Both dogs chewing.",
+          "sound": "Dual kibble chewing sounds.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "8.0-8.5",
+          "action": "Both dogs eat side-by-side from their respective bowls.",
+          "mouth": "Both dogs chewing.",
+          "sound": "Rhythmic kibble crunching.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "8.5-9.0",
+          "action": "Both dogs continue eating rapidly from bowls.",
+          "mouth": "Both dogs chewing.",
+          "sound": "Kibble crunching and bowls rattling.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "9.0-9.5",
+          "action": "Both dogs lick the bottoms of their bowls clean.",
+          "mouth": "Both dogs licking/chewing.",
+          "sound": "Licking and bowl scraping.",
+          "camera": "Fixed."
+        }
+      ]
+    },
+    "timeline_src": "9096cb4bdbc3-16.2",
+    "board_times_auto": [
+      0.73,
+      1.46,
+      2.19,
+      2.92,
+      3.65,
+      4.38,
+      5.12,
+      5.85,
+      6.58,
+      7.31,
+      8.04,
+      8.77
+    ],
+    "vertical": {
+      "mode": "extend",
+      "src": "720x400"
+    },
+    "preflight": [
+      "개그 포인트가 지시에서 빠졌습니다: [0.0-0.5] 넘어짐 — Woman (left, grey crop top, black shorts, slippers) walks forward carrying two p",
+      "개그 포인트가 지시에서 빠졌습니다: [2.5-3.0] 맞힘 — Tan dog collides into white dog from behind while both slide at high speed. Loud",
+      "개그 포인트가 지시에서 빠졌습니다: [3.0-3.5] 넘어짐 — Both dogs flip and tumble over each other in a rolling crash on the tile floor. ",
+      "개그 포인트가 지시에서 빠졌습니다: [4.5-5.0] 맞힘 — Tan dog steps toward right food bowl; white dog hits lower wall/cabinet with its",
+      "개그 포인트가 지시에서 빠졌습니다: [5.0-5.5] 넘어짐 — Tan dog lowers head into bowl to eat; white dog props front paws against wall wh"
+    ]
+  },
+  "error": "사전 점검에서 멈춤(돈 안 씀): 개그 포인트가 지시에서 빠졌습니다: [0.0-0.5] 넘어짐 — Woman (left, grey crop top, black shorts, slippers) walks forward carrying two p / 개그 포인트가 지시에서 빠졌습니다: [2.5-3.0] 맞힘 — Tan dog collides into white dog from behind while both slide at high speed. Loud / 개그 포인트가 지시에서 빠졌습니다: [3.0-3.5] 넘어짐 — Both dogs flip and tumble over each other in a rolling crash on the tile floor.  / 개그 포인트가 지시에서 빠졌습니다: [4.5-5.0] 맞힘 — Tan dog steps toward right food bowl; white dog hits lower wall/cabinet with its / 개그 포인트가",
+  "last_request": {
+    "file": "01_remake_board.json",
+    "ran_at": "2026-10-09T13:27:18Z",
+    "ok": false
+  }
+}
