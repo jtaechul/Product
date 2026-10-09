@@ -5,8 +5,13 @@ description: 사장님이 올린 밈 영상에 시바견을 Genjutsu식으로 �
 
 # Genjutsu식 리메이크 (합성 → 업스케일)
 
-**본질을 왜곡하지 않는다.** 원본 영상은 그대로 두고(모든 동작·구도·박자·소리), 지정한 대상(개·사람 머리 등)만 시바견으로 바꾼다.
+**본질을 왜곡하지 않는다.** 원본 영상은 그대로 두고(모든 동작·구도·박자·소리), 지정한 대상만 시바견으로 바꾼다.
 새로 그리는 방식(`method: motion`, `shots`)은 사장님이 따로 시킬 때만.
+
+**⛔ 바꿀 대상 규칙(사장님 확정 2026-10-09 타일매트 편: 주인이 시바견이 되고 미끄러지는 강아지는 그대로인 사고)**
+- 원본에 개·고양이 같은 동물이 나오면 → **그 동물들을 시바견으로, 사람은 사람 그대로**(주인·행인 모두 원래 얼굴·옷·손). `keep_people: true` + `cast`(정확한 머릿수) + `swap`(동물별로, 가장 눈에 띄는 한 마리는 우리 시바견, 나머지는 원래 털색에 가까운 시바견 — 예: 흰 개 → 크림색 시바견).
+- 동물이 하나도 없을 때만 → 사람의 머리·팔다리를 시바견으로.
+- 관리자 분석(`TREND_ASK`)이 이 규칙으로 정하고 '바꿀 것'을 한국어로 보여 준다(`swap_ko`). 제작 쪽도 0.5초 시간표에 동물이 두 줄 이상 나오는데 사람을 바꾸게 돼 있으면 자동으로 바로잡는다(`_has_animals` → log `swap_fixed`). 일부러 사람을 바꿀 때만 `swap_people_ok: true`.
 
 **확정 설정(2026-10-07 사과 도둑 편 테스트로 확인, 사장님 선택 "720p로, 아예 안 흐리게")**
 `method: "composite"` + `res: "720p"`(합성을 처음부터 720p로) + `pre_enhance: false`(원본 AI 복원은 제작 서버 CPU에서 40분 걸려 **끔** — 사장님 지시 2026-10-07; 720p 합성만으로 선명) + `upscale: 0`(720p 그대로 조립) + `ad: "vo"` + `ad_copy: true`(끝 광고 화면에 캡션 문구).
@@ -28,10 +33,12 @@ description: 사장님이 올린 밈 영상에 시바견을 Genjutsu식으로 �
    - 개그 포인트는 0.5초 시간표에서 자동으로 뽑아 합성 지시에 '그대로 둘 것'으로 넣는다(`_auto_gags` — 점검 목록과 같은 것, 2026-10-09 사고: 점검만 하고 지시엔 안 넣어 매번 멈춤). 시간표가 틀리면 `remake.gags`(t·kind·en·text)로 직접 적는다. AI 0.5초 시간표(`_timeline`)는 틀릴 수 있다 — 프레임과 대조해 틀리면 `remake.timeline`(목록)에 확인한 시간표를 직접 쓴다(2026-10 사과 도둑 편: AI가 "개가 덤벼든다"로 잘못 읽음).
 3. **episode.json** (`pet-episodes/episodes/<id>/episode.json`, kind `remake`):
    - `remake.method: "composite"`, `res: "720p"`, `pre_enhance: false`, `upscale: 0`(위 확정 설정), `window`, `timeline`, `gags`, `keep_audio`.
-   - 바꿀 대상: `swap`(무엇을 시바견으로, 무엇은 그대로). 사람을 그대로 둘 땐 `keep_people: true` + `cast: "exactly one human man and one dog"`.
+   - 바꿀 대상: `swap`(무엇을 시바견으로, 무엇은 그대로) — 위 '바꿀 대상 규칙'대로. 동물이 있으면 `keep_people: true` + `cast: "exactly one real human woman (unchanged) and two dogs, both Shiba Inus"`처럼 정확히.
    - 끝 광고(4초, 같은 장소·같은 개): `ending`(장면), `vo`("…구매는 프로필 링크에서."), `big`/`sub`(캡션용), `ad: "vo"`, `hashtags` 5개(쇼핑 검색어).
    - `product.link`·`product.image`(쿠팡 상품) **필수** — 없으면 영상 단계가 돈 쓰기 전에 멈춘다.
-4. **스토리보드**: `requests/NN_remake_board.json` `{"remake":{"mode":"board"}}` + `pet-episodes/stop.json`의 `allow`에 `"<id>:NN_remake_board.json"`. 원본 6장면 격자에 대상만 바꾼 합성 미리보기(`_remake_board`, keep_people이면 `REMAKE_BOARD_KEEP`). → 사장님 확인.
+4. **스토리보드**: `requests/NN_remake_board.json` `{"remake":{"mode":"board"}}` (멈춤 스위치에 이 편이 있으면 `pet-episodes/stop.json`의 `allow`에 `"<id>:NN_remake_board.json"`). 원본 장면 격자(6·9·12칸)에 대상만 바꾼 합성 미리보기(`_remake_board`, keep_people이면 `REMAKE_BOARD_KEEP`).
+   - 가로 원본은 칸마다 위아래를 **같은 장소의 진짜 모습**으로 이어 그린다(`REMAKE_BOARD_EXTEND`: 위 = 벽·문틀·천장, 아래 = 카메라 쪽으로 커지는 바닥 타일·줄눈·반사·그림자, 밝기·색·선명도는 가운데와 같게). 하얗게 날아간 빈 바닥·회색·흐림 띠는 `_panel_bands(painted)`가 잡아 보여 주지 않는다(2026-10-09: 아래 1/3이 밝기 210·무늬 없음 → "하얀색으로 가려져 있다").
+   - 보내기 전에 칸을 직접 열어 본다: 바꿀 대상이 맞는지(동물만 시바견, 사람 그대로), 머릿수, 위아래가 진짜 장면인지, 화질. → 사장님 확인.
 5. **영상**: `NN_remake_full.json` `{"remake":{"mode":"full"}}` + allow.
    - 사전 점검(`_remake_preflight`, 무료)을 통과해야 돈을 쓴다: 시간표 있음·개그 포인트 반영·막힐 낱말·옛 원본 분석·여러 번 만들기.
    - (끔, 선택) 원본 복원(`pre_enhance`): CPU 약 40분이라 기본 끔. 켜면 `upscale.py`로 원본을 깨끗하게 한 뒤 합성.

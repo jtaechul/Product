@@ -2074,10 +2074,14 @@ REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "check": 0.01, "tts": 0.02}   # 
 REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
 REMAKE_EXTEND = (" VERTICAL FRAME: the input is a {src} shot placed in the middle of a vertical 9:16 frame; the dark blurred bands "
                  "above and below are only placeholders. Replace them by naturally extending the same scene so it looks filmed "
-                 "vertically: continue the wall and ceiling above, and the floor, furniture and the characters' lower bodies and "
-                 "legs below, matching perspective, lighting and every movement. No blur, no bands, no borders.")
+                 "vertically: continue the walls, door frames and ceiling above, and below the floor or ground coming toward the "
+                 "camera (tiles or boards getting larger in perspective, joints, reflections, shadows, furniture) and any body or leg "
+                 "that continues past the picture edge, matching perspective, lighting and every movement. The extended areas have the "
+                 "same brightness, colour, contrast, texture and sharpness as the middle - never plain white, grey, overexposed, foggy "
+                 "or blank. No blur, no bands, no borders.")
 REMAKE_BOARD_LOOK = (" Image {n} is the approved storyboard: the dogs (heads, fur, hair tufts, accessories, paws) must look exactly like "
-                     "in it; the framing follows the vertical frame described above.")
+                     "in it, and the areas above and below the original picture (walls, ceiling, floor) look like in it too; the framing "
+                     "follows the vertical frame described above.")
 REMAKE_LIPSYNC = (" LIP SYNC: each dog's mouth opens, closes and shapes exactly like the original person's mouth in every frame "
                   "(they are rapping), so the mouth movement stays perfectly in sync with the original audio; keep the jaw and "
                   "head timing frame-accurate.")
@@ -2098,23 +2102,69 @@ REMAKE_SWAP = ("Edit this video. Change ONLY these things and keep absolutely ev
 # 구간 사이 같은 개로: 앞 구간 마지막 장면을 두 번째 참고 이미지로(사용자 지적 2026-10: 합성 품질을 더 높게)
 # 사람은 사람 그대로, 동물만 시바견(사용자 지시 2026-10 사과 도둑 편) — Genjutsu식 합성(원본 동작·구도·소리 그대로)
 REMAKE_SWAP_KEEP = ("Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (every person's face, "
-                    "hands and clothes, every movement and its timing, camera, background, lights): {swap}. The replaced animal is the Shiba "
-                    "Inu from image 1 (same face, fur colour and markings in every frame), a natural size, and its body moves exactly as "
-                    "the original animal's body (same pose, gait, head turns, tail, mouth). The human stays a real human with his own "
-                    "face, hands and clothes, unchanged. CAST COUNT: {cast}. Remove any watermark or on-screen text. COMPOSITING QUALITY: "
-                    "the dog must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, "
-                    "focus and grain; no seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings.")
+                    "hair, hands and clothes, every movement and its timing, camera, background, lights): {swap}. Each replaced animal is a "
+                    "Shiba Inu - the main one looks exactly like the Shiba in image 1 (same face, fur colour and markings in every frame) - "
+                    "at the natural size of the original animal, and its body moves exactly as that original animal's body (same pose, "
+                    "gait, run, slide, fall, head turns, tail, mouth). Every person stays a real human with their own face, hair, hands "
+                    "and clothes, unchanged. CAST COUNT: {cast}. Remove any watermark or on-screen text. COMPOSITING QUALITY: "
+                    "each dog must look filmed in the same shot - match the original lighting direction, colour, shadows and motion "
+                    "blur; no seam, outline or halo; the same dogs in every frame with no flicker, morphing or changing markings.")
 REMAKE_BOARD_KEEP = ("Image 1 is a 3x2 grid of six frames taken from one video (each panel is a separate moment; dark bars are only "
                      "padding). Edit ALL six panels the same way and keep the grid layout, panel sizes and everything else exactly as "
-                     "it is (people, clothes, poses, background, lights, camera framing): {swap}. The replaced animal is the Shiba Inu "
-                     "from image 2 (same face, fur colour and markings) - the same dog in every panel, in the same pose as the original "
-                     "animal. The human stays a real human with his own face, hands and clothes. CAST COUNT: {cast}. Match each panel's "
-                     "lighting, shadows and focus so it looks like real footage. Remove any watermark or on-screen text; add no text.")
+                     "it is (people, clothes, poses, background, lights, camera framing): {swap}. Each replaced animal is a Shiba Inu - "
+                     "the main one looks exactly like the Shiba in image 2 (same face, fur colour and markings) - and each one stays the "
+                     "same dog in every panel, in exactly the same pose, place and size as the original animal. Every person stays a "
+                     "real human with their own face, hair, hands and clothes, unchanged. CAST COUNT: {cast}. Keep each panel's "
+                     "lighting and colours, but render every panel as a sharp, clean, high-detail photo (the source frames are blurry "
+                     "low-resolution video: do not copy their blur, noise or compression). Remove any watermark or on-screen text; add no text.")
 REMAKE_BOARD_EXTEND = (" VERTICAL FILL (most important): in every panel the flat gray areas above and below the picture are EMPTY CANVAS - "
-                       "paint them by naturally extending the same scene upward and downward (sky, trees, ground, space, the rest of the "
-                       "body - matching perspective, light and focus) so every panel is ONE sharp, full vertical 9:16 photo edge to edge. "
-                       "No gray, no blur, no bands, no letterbox, no borders anywhere.")
+                       "paint them as the real rest of the same place, as if the same moment had been filmed with a vertical phone "
+                       "camera: above = what is really above (upper walls, door frames, ceiling, lamps, shelves, sky, treetops); below = "
+                       "the floor or ground continuing toward the camera (its tiles, boards, grass or road getting larger in perspective, "
+                       "with joints, reflections, shadows, rugs and objects), plus any part of a person or animal that continues past the "
+                       "picture edge. The painted areas have EXACTLY the same brightness, colour, contrast, texture and sharpness as the "
+                       "picture itself - never a plain white, grey or overexposed area, never fog, haze, a gradient or an empty blank "
+                       "floor. Every panel is ONE sharp, full vertical 9:16 photo edge to edge. No gray, no blur, no bands, no letterbox, "
+                       "no borders anywhere.")
 REMAKE_GAGS_KEEP = (" KEEP THESE MOMENTS EXACTLY AS IN THE VIDEO (the joke lives here): {gags}.")
+# ⛔ 바꿀 대상(사장님 확정 2026-10-09 타일매트 편: "주인은 그냥 사람, 미끄러지는 강아지 두 마리가 시바견"):
+# 원본에 개·고양이 같은 동물이 나오면 동물을 시바견으로 바꾸고 사람은 사람 그대로. 동물이 없을 때만 사람을 시바견(머리·팔다리)으로.
+REMAKE_SWAP_ANIMALS = ("1) turn every dog and other animal in the video into a Shiba Inu (the main one looks exactly like the Shiba in "
+                       "image 1; any other one is a Shiba Inu with its own natural Shiba coat such as cream, red or black-and-tan, close "
+                       "to that animal's original colour), each keeping exactly that animal's motion")
+REMAKE_CAST_DEFAULT = "the same people and animals as in the original - every person stays a real human, every animal becomes a Shiba Inu"
+ANIMAL_RX = (r"(?<!hot )\b(dogs?|puppy|puppies|pups?|cats?|kittens?|shibas?|corgis?|poodles?|retrievers?|husky|huskies|beagles?|pugs?|"
+             r"dachshunds?|chihuahuas?|terriers?|samoyeds?|maltese|pomeranians?|bulldogs?|hamsters?|rabbits?|bunny|bunnies|"
+             r"bears?|cubs?|pandas?|monkeys?|fox|foxes|raccoons?|otters?|capybaras?|goats?|lambs?)\b"
+             r"(?![-\s]*(bowls?|food|toys?|beds?|treats?|leash|house|door|cage|kennel|crate|bags?|clothes|costume|mask|shaped|print|"
+             r"pattern|plush|doll|statue|figure|picture|photo|poster|logo)\b)")
+
+
+PERSON_RX = (r"\b(person|people|woman|women|man|men|girl|boy|guy|lady|human|owner|dancer|athlete|singer|official|kid|child|"
+             r"player|driver|rider|thief)('s)?\b")
+
+
+def _has_animals(rows: list) -> bool:
+    """0.5초 시간표(원본 설명)에 개·고양이가 두 줄 이상 나오면 '동물이 나오는 영상'(밥그릇·장난감 같은 물건 이름은 빼고 센다)."""
+    return sum(1 for x in rows or [] if re.search(ANIMAL_RX, str(x.get("action", "")), re.I)) >= 2
+
+
+def _edit_prompt(rm: dict) -> tuple:
+    """합성 지시문 → (영상 AI에 줄 전체, 기록·점검용 기본). 바꿀 대상 + 사장님이 적은 개그 + 대본·입모양."""
+    swap = (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". ")
+    if rm.get("keep_people"):                             # 사람은 사람 그대로, 동물만 시바견(2026-10 사과 도둑 편 · 2026-10-09 타일매트 편)
+        base = REMAKE_SWAP_KEEP.format(swap=swap, cast=str(rm.get("cast") or REMAKE_CAST_DEFAULT))
+    else:
+        base = REMAKE_SWAP.format(swap=swap)
+    if rm.get("gags"):                                    # 확인한 개그 포인트는 합성 지시에도 '그대로 둘 것'으로 박는다
+        base += REMAKE_GAGS_KEEP.format(gags=_gag_text(rm["gags"]))
+    full = base
+    if rm.get("beats"):                                   # 사람이 원본을 보고 적은 초 단위 대본(웃음 포인트·줌·정지 화면) — 가장 우선
+        full += (" AUTHOR'S BEAT SHEET of the original (authoritative; keep every cut, zoom, freeze frame and action at these exact "
+                 "times, only the people become dogs): " + " ".join(f"[{b['t0']:.1f}-{b['t1']:.1f}s] {b['text']}" for b in rm["beats"]))
+    if rm.get("lipsync"):                                 # 노래·랩 원본: 개 입이 원래 입모양 그대로 열리고 닫혀 소리와 맞게(사용자 요청 2026-10)
+        full += REMAKE_LIPSYNC
+    return full, base
 REMAKE_PREV = (" Image 2 is how this Shiba looked at the end of the previous part of the same video: keep it identical (same face, "
                "fur colour and markings, eyes, accessories).")
 # 합성 품질 채점: 사람 손 검사와 별도로 이음새·크기·조명·깜빡임을 본다. 기준 미달이면 한도 안에서 한 번 다시
@@ -2131,8 +2181,10 @@ REMAKE_BOARD = ("Image 1 is a 3x2 grid of six frames taken from one video (each 
                 "padding). Edit ALL six panels the same way and keep the grid layout, panel sizes and everything else exactly as "
                 "it is (bodies, clothes, poses, background, lights, camera framing): {swap}. Every replaced head is the Shiba Inu "
                 "from image 2 (same face, fur colour and markings) - the same Shiba in every panel where that person appears; "
-                "every visible arm, leg, hand and foot is a thick, fully furry Shiba leg with a round paw. " + REMAKE_ONE_DOG + " Match each panel's lighting, shadows and focus so it looks like real "
-                "footage, with no seams at the neck, sleeves or trouser hems. Remove any watermark or on-screen text; add no text.")
+                "every visible arm, leg, hand and foot is a thick, fully furry Shiba leg with a round paw. " + REMAKE_ONE_DOG + " Keep each panel's lighting, shadows and colours, "
+                "render every panel as a sharp, clean, high-detail photo (the source frames are blurry low-resolution video: do not copy "
+                "their blur, noise or compression), with no seams at the neck, sleeves or trouser hems. Remove any watermark or on-screen "
+                "text; add no text.")
 REMAKE_BOARD_FRESH = ("Image 1 is an empty 3x2 storyboard layout: six grey vertical 9:16 panels (the black strip at the bottom is only "
                       "padding - keep it black). Draw a NEW photograph into EACH grey panel, filling the whole panel edge to edge with no "
                       "black bars, keeping the grid layout and panel sizes exactly. Every panel is sharp, clean, high-detail modern camera "
@@ -2379,7 +2431,7 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
     out = work / "_board_out.png"
     ask = REMAKE_BOARD_FRESH.format(people=(f"CAST in every panel: {cast} (the human stays a real human with a human face, hands and clothes)."
                                             if cast else "Only animals, no people.")) if fresh else \
-        (REMAKE_BOARD_KEEP.format(swap=swap, cast=cast) if cast else REMAKE_BOARD.format(swap=swap))
+        (REMAKE_BOARD_KEEP.format(swap=_img2(swap), cast=cast) if cast else REMAKE_BOARD.format(swap=_img2(swap)))
     if extend and not fresh:                            # 가로 원본: 위아래 흐린 자리표시를 장면으로 이어 그린다(영상과 같게, 2026-10-08)
         ask += REMAKE_BOARD_EXTEND
     if notes:                                           # 칸마다 무엇을 바꾸는지(사용자 지적 2026-10: 사람 맨살·팔이 그대로 남음)
@@ -2399,14 +2451,21 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
         f = work / f"board_{i + 1:02d}.jpg"
         im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
         frames.append(f)
-    bad = _panel_bands(frames)
-    if bad:                                             # ⛔ 9:16 꽉 찬 화면이 아닌 칸(위아래 흐림·회색·검정 띠)은 보여 주지 않고 멈춘다(2026-10-08 사고)
-        raise RuntimeError(f"스토리보드 {', '.join(str(b) for b in bad)}번 칸 위아래가 꽉 찬 화면이 아닙니다(흐린/빈 띠) — 보여 주지 않고 멈춤")
+    bad = _panel_bands(frames, painted=extend and not fresh)
+    if bad:                                             # ⛔ 9:16 꽉 찬 화면이 아닌 칸(위아래 흐림·회색·검정·하얗게 날아간 띠)은 보여 주지 않고 멈춘다(2026-10-08·10-09 사고)
+        raise RuntimeError(f"스토리보드 {', '.join(str(b) for b in bad)}번 칸 위아래가 진짜 장면이 아닙니다(흐린/빈/하얗게 날아간 띠) — 보여 주지 않고 멈춤")
     return {"ok": True, "panels": len(frames)}
 
 
-def _panel_bands(frames: list) -> list:
-    """칸 그림마다 위·아래 20%가 가운데보다 훨씬 밋밋(흐림·단색 띠)하면 그 칸 번호. 흐린 띠·회색 캔버스·검은 띠 모두 잡는다."""
+def _img2(swap: str) -> str:
+    """'바꿀 것' 글은 영상 기준(그림 1 = 우리 시바견) — 스토리보드에서는 그림 1이 격자라 우리 시바견을 그림 2로 고쳐 쓴다."""
+    return re.sub(r"\b(from|in|of|like) image 1\b", r"\1 image 2", swap)
+
+
+def _panel_bands(frames: list, painted: bool = False) -> list:
+    """칸 그림마다 위·아래 20%가 가운데보다 훨씬 밋밋(흐림·단색 띠)하면 그 칸 번호. 흐린 띠·회색 캔버스·검은 띠 모두 잡는다.
+    painted(가로 원본의 위아래를 AI가 이어 그린 칸)면 '하얗게 날아간 빈 바닥'도 잡는다 — 가운데보다 훨씬 밝고 무늬가 없는 띠
+    (2026-10-09 타일매트 편: 아래 1/3이 밝기 210·무늬 거의 없음 vs 가운데 120 → 사장님 "하얀색으로 가려져 있다")."""
     from PIL import ImageFilter, ImageStat
     bad = []
     for i, f in enumerate(frames):
@@ -2415,6 +2474,16 @@ def _panel_bands(frames: list) -> list:
         top, mid, bot = (ImageStat.Stat(e.crop(b)).mean[0] for b in ((0, 0, 180, 64), (0, 112, 180, 208), (0, 256, 180, 320)))
         if mid > 6 and (top < mid * 0.35 or bot < mid * 0.35):
             bad.append(i + 1)
+            continue
+        if painted:
+            em = ImageStat.Stat(e.crop((0, 110, 180, 210))).mean[0]
+            lm = ImageStat.Stat(im.crop((0, 110, 180, 210))).mean[0]
+            for b in ((0, 0, 180, 80), (0, 240, 180, 320)):
+                st_l, eb = ImageStat.Stat(im.crop(b)), ImageStat.Stat(e.crop(b)).mean[0]
+                mean, std = st_l.mean[0], st_l.stddev[0]
+                if (mean > lm + 60 and std < 40 and eb < em * 0.8) or (mean > 190 and std < 30):
+                    bad.append(i + 1)
+                    break
     return bad
 REMAKE_SWAP_DEFAULT = ("1) replace the main person's head with the head of the Shiba Inu from image 1; 2) turn their visible arms, "
                        "hands, legs and feet into thick furry Shiba legs with round paws; 3) replace every other person with a real "
@@ -3265,23 +3334,11 @@ def step_remake(ep, epdir, work, log, req):
     res["gen_res"] = gen_res
     res["pre_enhance"] = bool(rm.get("pre_enhance"))      # 합성 전에 원본을 AI로 복원(무료)
     res["board_ref"] = rm.get("board_ref") or ""          # 확인받은 스토리보드 칸 파일(예: approved_board_01.jpg)
-    if rm.get("keep_people"):                             # 사람은 사람 그대로, 동물만 시바견(2026-10 사과 도둑 편)
-        prompt = REMAKE_SWAP_KEEP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "),
-                                         cast=str(rm.get("cast") or "the same people and animals as the original"))
-    else:
-        prompt = REMAKE_SWAP.format(swap=(rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". "))
-    if rm.get("gags"):                                    # 확인한 개그 포인트는 합성 지시에도 '그대로 둘 것'으로 박는다
-        prompt += REMAKE_GAGS_KEEP.format(gags=_gag_text(rm["gags"]))
-    res["edit_prompt"] = prompt
-    if rm.get("beats"):                                   # 사람이 원본을 보고 적은 초 단위 대본(웃음 포인트·줌·정지 화면) — 가장 우선
-        prompt += (" AUTHOR'S BEAT SHEET of the original (authoritative; keep every cut, zoom, freeze frame and action at these exact "
-                   "times, only the people become dogs): " + " ".join(f"[{b['t0']:.1f}-{b['t1']:.1f}s] {b['text']}" for b in rm["beats"]))
+    prompt, res["edit_prompt"] = _edit_prompt(rm)       # 바꿀 대상 + 사장님 개그 + 대본·입모양(원본에 동물이 있으면 시간표를 본 뒤 다시 만든다)
     res["lipsync"] = bool(rm.get("lipsync"))
     # 원본 동작을 바꾸는 '스토리보드로 만들기'는 기본으로 끈다(사용자 지적 2026-10: 동작을 마음대로 완전히 바꿈) — 켠 편만
     res["allow_i2v"] = bool(rm.get("allow_i2v"))
     res["use_timeline"] = rm.get("timeline", True) is not False   # 모든 영상에 0.5초 시간표(사용자 확정 2026-10)
-    if res["lipsync"]:                                    # 노래·랩 원본: 개 입이 원래 입모양 그대로 열리고 닫혀 소리와 맞게(사용자 요청 2026-10)
-        prompt += REMAKE_LIPSYNC
     ad_vo = rm.get("ad") == "vo"                         # 큰 문구 없이 웃긴 장면 + 내레이션 + 작은 "구매는 프로필 링크에서"만
     end_sec = REMAKE_END_SEC_VO if ad_vo else REMAKE_END_SEC
     try:
@@ -3339,6 +3396,13 @@ def step_remake(ep, epdir, work, log, req):
         res["method"] = "motion" if motion else ("composite" if composite else ("shots" if rm.get("shots") else "edit"))
         if composite and mode in ("board", "full", "check") and not (res.get("timeline") or {}).get("all") and mode != "check":
             _timeline(ref, 0, L, work, res, cap, "all")   # 원본 전체 0.5초 시간표(약 0.01달러) — 프레임으로 검증해 remake.timeline으로 바로잡을 수 있다
+        if composite and not rm.get("keep_people") and not rm.get("swap_people_ok") and _has_animals((res.get("timeline") or {}).get("all")):
+            # ⛔ 원본에 동물이 있으면 동물을 시바견으로, 사람은 그대로(사장님 확정 2026-10-09: 주인이 시바견이 되고 강아지는 그대로인 사고)
+            old_swap = str(rm.get("swap") or "")
+            rm = {**rm, "keep_people": True, "cast": rm.get("cast") or REMAKE_CAST_DEFAULT,
+                  "swap": REMAKE_SWAP_ANIMALS if (not old_swap or re.search(PERSON_RX, old_swap, re.I)) else old_swap}
+            res["swap_fixed"] = {"why": "원본에 동물이 있어 동물을 시바견으로, 사람은 그대로", "from": str(ep.get("remake", {}).get("swap", ""))[:300]}
+            prompt, res["edit_prompt"] = _edit_prompt(rm)
         if composite and not rm.get("gags") and (res.get("timeline") or {}).get("all"):
             gags_auto = _auto_gags(rm, res)               # 원본에서 찾은 개그(부딪힘·넘어짐 등)를 합성 지시에 '그대로 둘 것'으로(2026-10-09 사고: 점검만 하고 안 넣어 매번 멈춤)
             res["gags"] = gags_auto
@@ -3396,7 +3460,7 @@ def step_remake(ep, epdir, work, log, req):
         b_fresh = bool(rm.get("board_fresh")) or motion   # 동작 따라 만들기는 스토리보드도 원본 합성 없이 깨끗하게
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
-                res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "",
+                res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast") or REMAKE_CAST_DEFAULT) if rm.get("keep_people") else "",
                                               (res.get("vertical") or {}).get("mode") == "extend", n_pan)
             res["est_full"] = est_all
             if float(res.get("spent", 0)) + est_all > cap:
@@ -3416,7 +3480,7 @@ def step_remake(ep, epdir, work, log, req):
             if {"segs", "body"} & set(redo) and not res.get("timeline_manual"):
                 res.pop("timeline", None)                 # 본편을 다시 만들면 0.5초 시간표도 새로(구간이 바뀌었을 수 있음) — 직접 확인한 시간표는 유지
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
-            res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast", "")) if rm.get("keep_people") else "",
+            res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast") or REMAKE_CAST_DEFAULT) if rm.get("keep_people") else "",
                                               (res.get("vertical") or {}).get("mode") == "extend", n_pan)
             # 새로 그린 스토리보드는 확인받은 뒤에 영상으로(사용자 지적 2026-10 헬기 편: 확인 안 한 그림에 개가 두 마리 → 영상도 두 마리)
             res["est_full"] = est_all

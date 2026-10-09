@@ -5662,7 +5662,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
             ab.disabled=false;
             if(!x||!x.success){ an.textContent=(x&&x.error)||'분석하지 못했습니다.'; return; }
             var a=x.analysis; v._a=a;
-            an.textContent='리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:'')+' · 어울리는 상품: '+a.productIdeas.map(function(p){return p.keyword;}).join(', ');
+            an.textContent='리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.swapKo?' · 바꿀 것: '+a.swapKo:'')+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:'')+' · 어울리는 상품: '+a.productIdeas.map(function(p){return p.keyword;}).join(', ');
           }).catch(function(e){ ab.disabled=false; an.textContent='분석하지 못했습니다: '+e.message; });
         });
         ab.style.flex='none';
@@ -5708,7 +5708,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     post('/api/trend/analyze',{id:m[1],title:''}).then(function(x){
       if(!x||!x.success){ say('trMsg',(x&&x.error)||'분석하지 못했습니다.','no'); return; }
       var a=x.analysis; trPick({id:m[1],title:a.meme.slice(0,40)},a);
-      say('trMsg','리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:''),'ok');
+      say('trMsg','리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.swapKo?' · 바꿀 것: '+a.swapKo:'')+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:''),'ok');
     }).catch(function(e){ say('trMsg','분석하지 못했습니다: '+e.message,'no'); });
   });
   try{ var rg=localStorage.getItem('trRegion'); if(rg) $('trRegion').value=rg; }catch(e){}
@@ -5751,7 +5751,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       $('trFileGo').disabled=false;
       if(!x||!x.success) throw new Error((x&&x.error)||'분석하지 못했습니다.');
       var a=x.analysis; trPick({id:'',title:f.name},a);
-      say('trFMsg','리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:'')+' · 어울리는 상품은 03단계에 버튼으로 나왔습니다.','ok');
+      say('trFMsg','리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.swapKo?' · 바꿀 것: '+a.swapKo:'')+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:'')+' · 어울리는 상품은 03단계에 버튼으로 나왔습니다.','ok');
     }).catch(function(e){ $('trFileGo').disabled=false; say('trFMsg',e.message,'no'); });
   });
   $('trGo').addEventListener('click',function(){
@@ -5780,6 +5780,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     b.appendChild(epEl('div','ep-sub','지금까지 쓴 비용 약 $'+(Number(m.spent)||0).toFixed(2)+' / 한도 $'+(m.cap||5)+(m.est_full?' · 본편 예상 추가 $'+Number(m.est_full).toFixed(2):'')));
     if(m.pick){ var pcs=(m.pick.pieces||[[m.pick.start||0,m.pick.end||0]]).map(function(p){ return Number(p[0]).toFixed(1)+'~'+Number(p[1]).toFixed(1)+'초'; }).join(' + ');
       b.appendChild(epEl('div','ep-sub','본편(원본 후킹 유지, '+Math.round(m.pick.sec||((m.pick.end||0)-(m.pick.start||0)))+'초): 원본 '+pcs+(m.pick.hook?' · 후킹: '+m.pick.hook:'')+(m.pick.why?' · '+m.pick.why:'')+' — 바꾸려면 아래 수정 요청에 "원본 ○~○초로"라고 적어 주세요')); }
+    if(m.swap_fixed) b.appendChild(epEl('div','ep-sub','바꿀 것: 원본의 동물 → 시바견, 사람은 사람 그대로 (원본에 동물이 있어 자동으로 바로잡음)'));
+    else if(m.swap_ko) b.appendChild(epEl('div','ep-sub','바꿀 것: '+m.swap_ko));
     if(m.music_pick) b.appendChild(epEl('div','ep-sub','추천 노래(인스타 앱에서 얹기): '+m.music_pick));
     if(m.board&&m.board.ok){
       b.appendChild(epEl('div','ep-post-lb','스토리보드 (영상에서 장면마다 뽑아 강아지로 바꾼 그림 — 영상은 이 그림을 기준으로 만듭니다)'));
@@ -7171,20 +7173,38 @@ async function handleTrendList(env, body) {
   return { success: true, ...out };
 }
 
+// ⛔ 바꿀 대상(사장님 확정 2026-10-09 타일매트 편: "주인은 그냥 사람, 미끄러지는 강아지 두 마리가 시바견") — 원본에 동물이 있으면
+// 동물을 시바견으로, 사람은 사람 그대로. 동물이 없을 때만 사람의 머리·손발을 시바견으로. 제작 쪽(episode.py _has_animals)도 한 번 더 확인한다.
 const TREND_ASK = (title) => `이 유튜브 쇼츠("${title}")를 끝까지 보고, 우리 채널 주인공(실사 시바견)으로 리메이크할 수 있는지 판단하라.
-리메이크 방식은 하나뿐이다: 원본 영상을 그대로 두고 등장 인물의 머리·손·발만 시바견으로 바꾸고, 주변 사람은 전부 개로 바꾼다(동작·카메라·배경은 원본 그대로).
-그래서 점수는 "머리·손발만 바꿔도 웃기거나 눈길을 끄는가, 사람이 너무 많거나 손을 클로즈업하거나 글자가 핵심이면 감점"으로 매긴다.
+리메이크는 원본 영상을 그대로 두고(동작·카메라·배경·박자) 대상만 시바견으로 바꾼다. 무엇을 바꿀지는 이 규칙대로만 정한다:
+① 원본에 개·고양이 같은 동물이 한 마리라도 나오면 → 그 동물들을 전부 시바견으로 바꾸고, 사람은 사람 그대로 둔다(주인·행인 모두 원래 얼굴·머리·옷·손 그대로). 동물이 여럿이면 가장 눈에 띄는 한 마리는 그림 1의 우리 시바견, 나머지는 원래 털색에 가까운 시바견(크림·블랙탄 등).
+② 동물이 하나도 없을 때만 → 주인공 사람의 머리·팔다리를 시바견으로, 주변 사람은 개로 바꾼다.
+점수는 "바꿔도 웃기거나 눈길을 끄는가, 너무 복잡하거나 손 클로즈업·글자가 핵심이면 감점"으로 매긴다.
 JSON만:
 {"meme":"무슨 밈·장면인지 한국어 1~2문장","music":"노래 제목 - 가수(모르면 빈칸)","moves":"동작·구성 한국어 한 줄",
  "remakeScore":0,"why":"점수 이유 한국어 한 줄","risk":"주의할 점 한국어 한 줄(사람 손 클로즈업·글자 위주 등)",
- "swap":"English numbered list of ONLY what to replace, written as positive requests (never 'no ...'), e.g. 1) replace the dancer's head with the head of the Shiba Inu from image 1; 2) turn the dancer's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the dancer's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace every other person with a real dog of various breeds",
+ "people":0,"animals":0,"keepPeople":true,
+ "swapKo":"무엇을 시바견으로 바꾸고 무엇을 그대로 두는지 한국어 한 줄(예: 미끄러지는 강아지 두 마리 → 시바견, 주인 여자는 사람 그대로)",
+ "cast":"English exact headcount after the remake, e.g. exactly one real human woman (unchanged) and two dogs, both Shiba Inus",
+ "swap":"English numbered list of ONLY what to replace, written as positive requests (never 'no ...'). Rule ① example: 1) turn the tan dog into the Shiba Inu from image 1; 2) turn the white dog into a cream-coloured Shiba Inu - both dogs keep exactly their original motion. Rule ② example: 1) replace the dancer's head with the head of the Shiba Inu from image 1; 2) turn the dancer's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the dancer's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace every other person with a real dog of various breeds",
  "productIdeas":[{"keyword":"쿠팡 검색어(반려견 용품)","why":"이 밈과 이어지는 이유 한 줄"}]}
+people·animals는 원본에 나오는 사람 수·동물 수. animals가 1 이상이면 keepPeople은 반드시 true(규칙 ①), 0이면 false(규칙 ②).
 productIdeas는 3개. 영상 끝에 주인공이 그 상품을 쓰는 장면으로 자연스럽게 이어질 반려견 용품(예: 춤 뒤 → 강아지 이온음료).`;
+
+// 분석 결과 정리(링크 분석·파일 분석 공통) — 동물이 있으면 사람은 그대로(keepPeople)를 서버가 한 번 더 강제한다
+function trendAnalysisOf(o) {
+  const animals = Math.max(0, Math.round(Number(o.animals) || 0)), people = Math.max(0, Math.round(Number(o.people) || 0));
+  return { meme: String(o.meme || ''), music: String(o.music || ''), moves: String(o.moves || ''), why: String(o.why || ''), risk: String(o.risk || ''),
+    remakeScore: Math.max(0, Math.min(100, Math.round(Number(o.remakeScore) || 0))), swap: String(o.swap || '').slice(0, 900),
+    animals, people, keepPeople: animals > 0 || o.keepPeople === true, swapKo: String(o.swapKo || '').slice(0, 160), cast: String(o.cast || '').slice(0, 300),
+    productIdeas: (Array.isArray(o.productIdeas) ? o.productIdeas : []).slice(0, 4).map(p => ({ keyword: String(p.keyword || ''), why: String(p.why || '') })).filter(p => p.keyword),
+    at: new Date().toISOString() };
+}
 
 async function handleTrendAnalyze(env, body) {
   const id = String(body.id || '').replace(/[^\w-]/g, '').slice(0, 20);
   if (!id) throw new Error('영상 번호가 없습니다.');
-  const ck = 'trend_an:' + id;
+  const ck = 'trend_an2:' + id;                       // 2: 바꿀 대상 규칙(동물 → 시바견, 사람 그대로) 이후 분석
   if (!body.refresh) { const c = await env.PENDING_POSTS.get(ck, 'json').catch(() => null); if (c) return { success: true, analysis: c, cached: true }; }
   const key = await getGeminiKey(env);
   if (!key) throw new Error('Gemini 키가 없습니다.');
@@ -7199,10 +7219,7 @@ async function handleTrendAnalyze(env, body) {
     if (!r.ok) { last = d?.error?.message || ('HTTP ' + r.status); continue; }
     try {
       const o = extractJson((d?.candidates?.[0]?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join(''));
-      const a = { meme: String(o.meme || ''), music: String(o.music || ''), moves: String(o.moves || ''), why: String(o.why || ''), risk: String(o.risk || ''),
-        remakeScore: Math.max(0, Math.min(100, Math.round(Number(o.remakeScore) || 0))), swap: String(o.swap || '').slice(0, 900),
-        productIdeas: (Array.isArray(o.productIdeas) ? o.productIdeas : []).slice(0, 4).map(p => ({ keyword: String(p.keyword || ''), why: String(p.why || '') })).filter(p => p.keyword),
-        at: new Date().toISOString() };
+      const a = trendAnalysisOf(o);
       await env.PENDING_POSTS.put(ck, JSON.stringify(a), { expirationTtl: 30 * 24 * 3600 });
       return { success: true, analysis: a };
     } catch (e) { last = e.message; }
@@ -7216,7 +7233,7 @@ async function handleTrendAnalyzeFile(env, body) {
   const meta = EP_ID_RE.test(id) ? await env.PENDING_POSTS.get('remake_meta:' + id, 'json').catch(() => null) : null;
   if (!meta) throw new Error('올린 영상 정보가 없습니다. 다시 올려 주세요.');
   if (meta.size > 45 * 1024 * 1024) throw new Error('분석은 45MB까지 됩니다. 앞부분만 잘라서 올려 주세요.');
-  const ck = 'trend_an_file:' + id;
+  const ck = 'trend_an_file2:' + id;                  // 2: 바꿀 대상 규칙 이후 분석
   const cached = await env.PENDING_POSTS.get(ck, 'json').catch(() => null);
   if (cached) return { success: true, analysis: cached, cached: true };
   const parts = [];
@@ -7252,10 +7269,7 @@ async function handleTrendAnalyzeFile(env, body) {
     if (!r.ok) { last = d?.error?.message || ('HTTP ' + r.status); continue; }
     try {
       const o = extractJson((d?.candidates?.[0]?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join(''));
-      const a = { meme: String(o.meme || ''), music: String(o.music || ''), moves: String(o.moves || ''), why: String(o.why || ''), risk: String(o.risk || ''),
-        remakeScore: Math.max(0, Math.min(100, Math.round(Number(o.remakeScore) || 0))), swap: String(o.swap || '').slice(0, 900),
-        productIdeas: (Array.isArray(o.productIdeas) ? o.productIdeas : []).slice(0, 4).map(p => ({ keyword: String(p.keyword || ''), why: String(p.why || '') })).filter(p => p.keyword),
-        at: new Date().toISOString() };
+      const a = trendAnalysisOf(o);
       await env.PENDING_POSTS.put(ck, JSON.stringify(a), { expirationTtl: REMAKE_TTL });
       fetch(`${G}/v1beta/${file.name}?key=${key}`, { method: 'DELETE' }).catch(() => {});   // 남의 영상은 AI 저장소에도 남기지 않는다
       return { success: true, analysis: a };
@@ -7358,7 +7372,7 @@ async function handleRemakeCommit(env, body) {
   if (!c.big || !c.vo) throw new Error('광고 문구와 내레이션을 채워 주세요.');
   const ep = { kind: 'remake', menuName: `리메이크 · ${String(v.title || a.meme || '').slice(0, 28)}`, clips: [],
     source: { youtube: v.id ? `https://www.youtube.com/watch?v=${v.id}` : '', title: v.title || '', music: a.music || '' },
-    remake: { swap: a.swap || '', ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, music_pick: String(c.music || '').slice(0, 160), ad: 'vo', ad_copy: true, method: 'composite', res: '720p', pre_enhance: false, upscale: 0, cap: REMAKE_CAP_USD },   // ad_copy: 끝 광고 화면에 캡션 문구도 올림. pre_enhance는 CPU 40분이라 끔(사장님 지시 2026-10-07: 느려 터짐) — 720p 합성만으로 선명   // Genjutsu식(사용자 확정 2026-10 사과 도둑 편): 원본 그대로 두고 대상만 합성, 처음부터 720p + 합성 전 원본 AI 복원(무료) — '아예 안 흐리게'   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
+    remake: { swap: a.swap || '', keep_people: a.keepPeople === true, cast: String(a.cast || '').slice(0, 300), swap_ko: String(a.swapKo || '').slice(0, 160), ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, music_pick: String(c.music || '').slice(0, 160), ad: 'vo', ad_copy: true, method: 'composite', res: '720p', pre_enhance: false, upscale: 0, cap: REMAKE_CAP_USD },   // ad_copy: 끝 광고 화면에 캡션 문구도 올림. pre_enhance는 CPU 40분이라 끔(사장님 지시 2026-10-07: 느려 터짐) — 720p 합성만으로 선명   // Genjutsu식(사용자 확정 2026-10 사과 도둑 편): 원본 그대로 두고 대상만 합성, 처음부터 720p + 합성 전 원본 AI 복원(무료) — '아예 안 흐리게'   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
     caption: `${String(c.big).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
     hashtags: cleanHashtags(Array.isArray(c.hashtags) ? c.hashtags : String(c.hashtags || '').split(/\s+/), remakeBanned(p.title)),
     product: { title: p.title, brand: p.brand || '', category: p.category || '기타', reason: String(c.sub || '').replace(/\n/g, ' '), link: p.link, image: p.image || '' } };
