@@ -1,14 +1,17 @@
 name: stay-shorts-produce
 
-# 숙소 쇼핑쇼츠 — 숙소 이름 1개로 세로 영상 1편을 만든다 (시험 제작판).
-# 쿠팡 검색 → 객실 선별·대본(Gemini) → 음성(Gemini) → 사진 모션 + 자막 합성(ffmpeg).
-# 유료 영상 생성 없음. 업로드 없음 — 완성본은 Release 와 텔레그램으로만 전달한다.
+# 숙소 쇼핑쇼츠 — 숙소 이름 1개로 세로 영상 1편을 만든다.
+# request.json 의 mode 가 "veo" 면 운영자가 원하는 방식: 사진 7장(물놀이 3·객실 2·특별 공간 2) → Veo 이미지→영상 7컷 → 이어 붙이기
+#   (유료 · 1편 약 2,100원 · 한 번 실행 3,000원 / 한 달 50,000원 한도는 src/veo.py 가 지킨다 · 장부 state/spend.json)
+# mode 가 없으면 예전 시험 방식(사진 확대 + 자막, 유료 생성 없음).
+# 쿠팡 검색 → 사진 분류·대본(Gemini) → 음성(Gemini) → [Veo] → 합성(ffmpeg).
+# 업로드 없음 — 완성본은 Release 와 텔레그램으로만 전달한다 (승인 전 발행 금지).
 # 실행: projects/stay-shorts-factory/requests/produce/request.json 을 바꿔 푸시하거나 Run workflow.
 
 on:
   workflow_dispatch: {}
   push:
-    branches: ["main", "claude/stay-shorts-factory"]
+    branches: ["main", "claude/stay-shorts-factory", "claude/stay-shorts-video-conversion-67hiin"]
     paths: ["projects/stay-shorts-factory/requests/produce/*.json"]
 
 permissions:
@@ -22,7 +25,7 @@ jobs:
   produce:
     name: 숙소 영상 1편 제작
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,6 +48,10 @@ jobs:
           COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
           COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # 비어 있으면 코드의 기본값(veo-3.1-lite · 3,000원 · 50,000원)을 쓴다. 바꾸려면 저장소 Variables 에 넣는다.
+          VEO_MODEL: ${{ vars.STAY_VEO_MODEL }}
+          STAY_RUN_KRW: ${{ vars.STAY_RUN_KRW }}
+          STAY_MONTH_KRW: ${{ vars.STAY_MONTH_KRW }}
         run: python3 src/make_stay.py
 
       - name: 완성본을 Release 로 올린다
@@ -54,9 +61,11 @@ jobs:
         run: |
           cd projects/stay-shorts-factory/build
           TAG="stay-run-${{ github.run_number }}"
-          gh release create "$TAG" video.mp4 meta.json --repo "$GITHUB_REPOSITORY" \
+          FILES="video.mp4 meta.json"
+          [ -f ../data/runs/latest/compare_sheet.jpg ] && FILES="$FILES ../data/runs/latest/compare_sheet.jpg"
+          gh release create "$TAG" $FILES --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" --prerelease --title "숙소 쇼츠 시험 제작 $TAG" \
-            --notes "숙소 쇼핑쇼츠 시험 제작본 (검수용 · 미발행)"
+            --notes "숙소 쇼핑쇼츠 시험 제작본 (검수용 · 미발행). compare_sheet.jpg = 원본 사진과 AI 영상 첫 장면 비교"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: 텔레그램으로 영상 전달
@@ -66,24 +75,40 @@ jobs:
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ] && { echo "텔레그램 키 없음 — 건너뜀"; exit 0; }
-          V=projects/stay-shorts-factory/build/video.mp4
+          P=projects/stay-shorts-factory
+          V=$P/build/video.mp4
           if [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$V" ]; then
-            curl -s -o /dev/null -w "telegram http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$V" \
-              -F caption="숙소 쇼츠 시험 제작본입니다 (미발행 · 검수용)" \
-              "https://api.telegram.org/bot$TG_TOKEN/sendVideo" || true
+            CAP=$(python3 - <<'PY' || echo "숙소 쇼츠 시험 제작본입니다 (미발행 · 검수용)"
+          import json
+          m = json.load(open("projects/stay-shorts-factory/build/meta.json", encoding="utf-8"))
+          v = m.get("veo") or {}
+          s = ("Veo 7컷 방식" if m.get("mode") == "veo" else "사진 확대 방식") + f" · {m.get('stay')} · {m.get('duration_sec')}초"
+          if v:
+              s += f" · 클립 {v.get('clips_ok')}/{v.get('clips_total')} · 이번 실행 약 {v.get('spent_krw', 0):,}원 · 이번 달 누적 {v.get('month_total_krw', 0):,}원"
+          print(s + " (미발행 · 검수용)")
+          PY
+          )
+            curl -s -o /dev/null -w "telegram video http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$V" \
+              -F caption="$CAP" "https://api.telegram.org/bot$TG_TOKEN/sendVideo" || true
+            S=$P/data/runs/latest/compare_sheet.jpg
+            if [ -f "$S" ]; then
+              curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$S" \
+                -F caption="왼쪽 원본 사진 · 오른쪽 AI 영상 첫 장면. 실제와 다른 시설·전망이 보이면 폐기합니다" \
+                "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
+            fi
           else
+            ERR=$(python3 -c "import json;r=json.load(open('$P/data/runs/latest/report.json',encoding='utf-8'));v=r.get('veo')or{};print(str(r.get('error',''))[:220]+(f\"  / 이번 실행 영상값 약 {v.get('spent_krw',0):,}원\" if v else ''))" 2>/dev/null || echo "기록을 확인합니다")
             curl -s -o /dev/null -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
-              --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=숙소 쇼츠 시험 제작 실패 — 기록을 확인합니다" || true
+              --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=숙소 쇼츠 시험 제작 실패 — $ERR" || true
           fi
 
-      - name: 기록·미리보기 커밋 (영상은 커밋하지 않는다)
+      - name: 기록·미리보기·장부 커밋 (영상은 커밋하지 않는다)
         if: always()
         run: |
-          D=projects/stay-shorts-factory/data/runs
-          [ -d "$D" ] || { echo "기록 없음"; exit 0; }
+          P=projects/stay-shorts-factory
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$D"
+          for d in data/runs state; do [ -e "$P/$d" ] && git add "$P/$d"; done
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
           git commit -m "stay-shorts: 시험 제작 기록 [skip ci]"
           for i in 1 2 3 4 5; do
