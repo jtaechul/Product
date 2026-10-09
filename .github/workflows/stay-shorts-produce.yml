@@ -1,0 +1,93 @@
+name: stay-shorts-produce
+
+# 숙소 쇼핑쇼츠 — 숙소 이름 1개로 세로 영상 1편을 만든다 (시험 제작판).
+# 쿠팡 검색 → 객실 선별·대본(Gemini) → 음성(Gemini) → 사진 모션 + 자막 합성(ffmpeg).
+# 유료 영상 생성 없음. 업로드 없음 — 완성본은 Release 와 텔레그램으로만 전달한다.
+# 실행: projects/stay-shorts-factory/requests/produce/request.json 을 바꿔 푸시하거나 Run workflow.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: ["claude/stay-shorts-factory"]
+    paths: ["projects/stay-shorts-factory/requests/produce/*.json"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stay-shorts-produce
+  cancel-in-progress: false
+
+jobs:
+  produce:
+    name: 숙소 영상 1편 제작
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            projects/stay-shorts-factory
+            projects/coupang-shorts-factory/assets/fonts
+          sparse-checkout-cone-mode: true
+
+      - name: 준비 (Pillow · ffmpeg 확인)
+        run: |
+          python3 -m pip install -q pillow
+          # 러너에 ffmpeg 가 기본으로 없다 (2026-10-09 실측) — 없을 때만 설치한다
+          command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null; }
+          command -v ffmpeg && ffmpeg -version 2>/dev/null | sed -n '1p'
+
+      - name: 제작
+        id: make
+        working-directory: projects/stay-shorts-factory
+        env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python3 src/make_stay.py
+
+      - name: 완성본을 Release 로 올린다
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd projects/stay-shorts-factory/build
+          TAG="stay-run-${{ github.run_number }}"
+          gh release create "$TAG" video.mp4 meta.json --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --prerelease --title "숙소 쇼츠 시험 제작 $TAG" \
+            --notes "숙소 쇼핑쇼츠 시험 제작본 (검수용 · 미발행)"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: 텔레그램으로 영상 전달
+        if: always()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ] && { echo "텔레그램 키 없음 — 건너뜀"; exit 0; }
+          V=projects/stay-shorts-factory/build/video.mp4
+          if [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$V" ]; then
+            curl -s -o /dev/null -w "telegram http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$V" \
+              -F caption="숙소 쇼츠 시험 제작본입니다 (미발행 · 검수용)" \
+              "https://api.telegram.org/bot$TG_TOKEN/sendVideo" || true
+          else
+            curl -s -o /dev/null -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+              --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=숙소 쇼츠 시험 제작 실패 — 기록을 확인합니다" || true
+          fi
+
+      - name: 기록·미리보기 커밋 (영상은 커밋하지 않는다)
+        if: always()
+        run: |
+          D=projects/stay-shorts-factory/data/runs
+          [ -d "$D" ] || { echo "기록 없음"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$D"
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git commit -m "stay-shorts: 시험 제작 기록 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git push origin "HEAD:${GITHUB_REF_NAME}" && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i"; git pull --rebase origin "${GITHUB_REF_NAME}" || true; sleep 3
+          done
+          echo "저장 실패"; exit 1
