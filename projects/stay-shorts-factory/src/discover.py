@@ -57,7 +57,10 @@ SUBREGIONS = {"강원": ["강릉", "속초", "양양", "평창", "정선", "홍�
               "부산": ["해운대", "기장", "광안리", "송도"], "전남": ["여수", "순천", "담양", "완도"],
               "경남": ["거제", "통영", "남해", "창원"], "경북": ["경주", "포항", "안동", "울진"],
               "충남": ["태안", "보령", "아산", "부여"], "충북": ["충주", "제천", "단양", "청주"]}
-PACKAGE_RE = re.compile(r"출발|항공|패키지|입장권|이용권|투어|자유여행|\d\s*박\s*\d\s*일|왕복|렌터카")
+PACKAGE_RE = re.compile(r"출발|항공|패키지|입장권|이용권|투어|자유여행|\d\s*박\s*\d\s*일|왕복|렌터카|"
+                        r"(회|인|세트|소인|대인|식사|조식|석식|자유|할인|시간)권|권(?![a-zA-Z가-힣])|대인|소인")
+ROOM_MIN_PRICE = 30000          # 1박 객실이 이보다 싸면 입장권·일반 상품으로 본다 (실측: 1,700원 철물, 9,900원 사우나권이 섞였다)
+MIN_ROOMS = 3
 DEFAULT_KEYWORDS = ["온천", "온수풀", "온수 풀", "실내수영장", "실내 수영장", "수영장", "스파", "사우나", "자쿠지", "히노키", "노천탕", "찜질", "풀빌라", "인피니티", "워터파크"]
 
 TOUR = "https://apis.data.go.kr/B551011/KorService2"
@@ -224,18 +227,48 @@ def tour_match(name: str, scan: dict) -> dict | None:
 
 
 # ── 2겹 쿠팡 검증 ──────────────────────────────────────────────────────
-def coupang_verify(name: str, keywords: list[str]) -> dict:
+def coupang_verify(name: str) -> dict:
+    """1차 거르기 (규칙): 여행 카테고리 · 입장권/패키지 제외 · 객실 최저가 이상. 숙소 동일성은 identity() 가 본다.
+
+    2026-10-09 첫 실행 실측: 이름 검색은 ① 일반 상품(철물·크림·시리얼) ② 사우나권·입장권 ③ **다른 숙소의 객실**
+    (덕구온천콘도 검색에 썬크루즈 객실·사진)을 섞어 돌려준다. 규칙만으로는 ③을 못 거른다."""
     try:
         items = ms.coupang_search(name, 10)
     except Exception as e:  # noqa: BLE001
         return {"ok": False, "error": str(e)[:120], "rooms": [], "items": []}
-    rooms = [it for it in items if not PACKAGE_RE.search(str(it.get("productName", "")))]
+    rooms = [it for it in items
+             if "travel" in str(it.get("categoryName", "")).lower()
+             and not PACKAGE_RE.search(str(it.get("productName", "")))
+             and float(it.get("productPrice") or 0) >= ROOM_MIN_PRICE]
+    return {"items": items, "rooms": rooms, "travel_n": sum(1 for it in items if "travel" in str(it.get("categoryName", "")).lower()),
+            "all_names": [f"{i}. {str(it.get('productName', ''))[:60]} / {int(float(it.get('productPrice') or 0)):,}원 / {it.get('categoryName')}"
+                          for i, it in enumerate(items)]}
+
+
+ID_SYSTEM = """너는 숙소 예약 상품 분류 담당이다. 숙소 이름과 쿠팡 검색 결과(번호·상품명·가격)를 보고 '그 숙소의 1박 객실 상품'만 고른다.
+제외: 입장권·이용권·사우나권·세트권·식사권, 항공·패키지, 숙박이 아닌 일반 상품, 그리고 **다른 숙소의 객실**
+(상품명에 다른 숙소·브랜드 이름이 있거나, 이 숙소의 유형·지역·객실 구성과 맞지 않는 것).
+confidence: 남긴 목록이 정말 이 숙소의 객실이라는 확신 — "high"(대부분이 이 숙소 객실, 이름·구성이 맞음) /
+"mid"(이 숙소 객실이 있지만 다른 숙소가 섞임) / "low"(이 숙소 객실이 거의 없거나 판단 불가).
+JSON 만: {"rooms":[번호...],"confidence":"high|mid|low","other_properties":["보인 다른 숙소 이름"],"reason":"한 줄"}"""
+
+
+def identity(model: str, name: str, city: str, rooms: list) -> dict:
+    """Gemini 가 '이 숙소의 객실'만 남긴다 (make_stay 의 객실 선별과 같은 원리)."""
+    listing = "\n".join(f"{i}. {str(it.get('productName', ''))[:70]} / {int(float(it.get('productPrice') or 0)):,}원" for i, it in enumerate(rooms))
+    content = f"숙소 이름: {name}" + (f" (지역: {city})" if city else "") + f"\n\n쿠팡 검색 결과:\n{listing}"
+    data = ms.gemini_json(model, ID_SYSTEM, content)
+    idx = [i for i in (data.get("rooms") or []) if isinstance(i, int) and 0 <= i < len(rooms)]
+    conf = str(data.get("confidence", "low")).lower()
+    return {"rooms": [rooms[i] for i in idx], "confidence": conf if conf in ("high", "mid", "low") else "low",
+            "other_properties": [str(x)[:30] for x in (data.get("other_properties") or [])][:5],
+            "reason": str(data.get("reason", ""))[:100]}
+
+
+def theme_hits(rooms: list, keywords: list[str]) -> list[str]:
     joined = " ".join(str(it.get("productName", "")) for it in rooms).replace(" ", "")
-    hits = sorted({k for k in keywords if k.replace(" ", "") in joined})
-    prices = [float(it.get("productPrice") or 0) for it in rooms if float(it.get("productPrice") or 0) > 0]
-    return {"ok": len(rooms) >= 2, "items": items, "rooms": rooms, "rooms_n": len(rooms), "theme_hits": hits,
-            "min_price": min(prices) if prices else None,
-            "room_names": [str(it.get("productName", ""))[:40] for it in rooms[:6]]}
+    hits = sorted({k.replace(" ", "") for k in keywords if k.replace(" ", "") in joined})
+    return [h for h in hits if not any(h != o and h in o for o in hits)]
 
 
 def photo_check(model: str, name: str, rooms: list, build: Path) -> dict:
@@ -253,6 +286,10 @@ def photo_check(model: str, name: str, rooms: list, build: Path) -> dict:
 def score(c: dict) -> tuple[int, list[str]]:
     s, why = 0, []
     v, ph = c.get("coupang") or {}, c.get("photos") or {}
+    if v.get("confidence") == "high":
+        s += 2; why.append("숙소 일치 확신 높음")
+    elif v.get("confidence") == "mid":
+        why.append("다른 숙소 섞임: " + ", ".join(v.get("other_properties") or ["?"]))
     if v.get("theme_hits"):
         s += min(3, len(v["theme_hits"])); why.append("객실 이름: " + ", ".join(v["theme_hits"]))
     if c.get("tour_themed"):
@@ -337,28 +374,44 @@ def run(req: dict) -> dict:
     merged = merged[:cap]
     log(f"후보 {len(merged)}곳 (Gemini {len(gem)} · 네이버 {len(nav)} · TourAPI {len(tour_list)}) → 쿠팡 검증")
 
-    # 2겹
+    # 2겹 — 규칙 거르기 → Gemini 숙소 동일성 → 사진 분류
     prices = {}
     for i, c in enumerate(merged):
         c["sources"] = sorted(set(c["sources"]))
-        v = coupang_verify(c["name"], keywords)
-        c["coupang"] = {k: v.get(k) for k in ("ok", "error", "rooms_n", "theme_hits", "min_price", "room_names")}
+        v = coupang_verify(c["name"])
+        cp = {"ok": False, "error": v.get("error"), "travel_n": v.get("travel_n", 0), "rule_rooms_n": len(v.get("rooms") or []),
+              "rooms_n": 0, "confidence": None, "other_properties": [], "theme_hits": [], "min_price": None, "room_names": []}
+        rooms = v.get("rooms") or []
+        if len(rooms) >= MIN_ROOMS:
+            try:
+                idn = ms._try_models("text", models["text"], lambda m: identity(m, c["name"], c.get("city", ""), rooms))
+            except Exception as e:  # noqa: BLE001
+                idn = {"rooms": rooms, "confidence": "mid", "other_properties": [], "reason": f"동일성 판정 실패: {str(e)[:60]}"}
+            rooms = idn["rooms"]
+            cp.update({"confidence": idn["confidence"], "other_properties": idn["other_properties"], "identity_reason": idn["reason"]})
+        if len(rooms) >= MIN_ROOMS and cp["confidence"] in ("high", "mid"):
+            prices_l = [float(it.get("productPrice") or 0) for it in rooms]
+            cp.update({"ok": True, "rooms_n": len(rooms), "theme_hits": theme_hits(rooms, keywords), "min_price": min(prices_l),
+                       "room_names": [str(it.get("productName", ""))[:40] for it in rooms[:6]]})
+        elif not cp["error"]:
+            cp["error"] = (f"여행 상품 {cp['travel_n']}개 · 규칙 통과 객실 {cp['rule_rooms_n']}개 · 동일성 {cp['confidence'] or '-'}"
+                           + (f" ({cp.get('identity_reason')})" if cp.get("identity_reason") else ""))
+        c["coupang"] = cp
         te = tour_match(c["name"], scan) if scan else None
         if te:
             c["tour_facts"], c["tour_themed"] = tour_facts(te, keywords)
             c["tour_addr"] = te.get("addr")
-        if v.get("ok"):
-            if v.get("min_price"):
-                prices[c["name"]] = v["min_price"]
+        if cp["ok"]:
+            prices[c["name"]] = cp["min_price"]
             try:
-                ph = ms._try_models("vision", models["text"], lambda m: photo_check(m, c["name"], v["rooms"], BUILD / f"c{i}"))
+                ph = ms._try_models("vision", models["text"], lambda m: photo_check(m, c["name"], rooms, BUILD / f"c{i}"))
             except Exception as e:  # noqa: BLE001
                 ph = {"usable": 0, "water": 0, "room": 0, "special": 0, "error": str(e)[:100], "classified": []}
             c["photos"] = {k: ph.get(k) for k in ("usable", "water", "room", "special", "skip", "people", "error")}
             c["_classified"] = ph.get("classified") or []
-            c["affiliate_url"] = str((v["rooms"][0] or {}).get("productUrl", ""))
+            c["affiliate_url"] = str((rooms[0] or {}).get("productUrl", ""))
         c["score"], c["reasons"] = score(c)
-        log(f"  {c['name']}: 쿠팡 {'OK' if v.get('ok') else 'X'} 객실 {v.get('rooms_n', 0)} · 점수 {c['score']}")
+        log(f"  {c['name']}: 쿠팡 {'OK' if cp['ok'] else 'X'} 객실 {cp['rooms_n']} 확신 {cp['confidence']} · 점수 {c['score']}")
         time.sleep(0.6)
 
     # 3겹
@@ -382,24 +435,24 @@ def run(req: dict) -> dict:
         pf.write_text(json.dumps(old, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     md = [f"# 숙소 후보 — {region} · {theme} · {month} ({report['ran_at']})", "",
           f"- 후보 {len(merged)}곳 (Gemini {report['layers']['gemini']} / 네이버 {report['layers']['naver']} / TourAPI {report['layers']['tourapi']})",
-          f"- 쿠팡에서 판매 확인(객실 2개 이상) {len(passed)}곳", "",
-          "| 순위 | 숙소 | 점수 | 출처 | 쿠팡 객실 | 근거 | 사진(물/객실/특별) | 최저 객실가(조회값) |", "|---|---|---|---|---|---|---|---|"]
+          f"- 쿠팡 판매 확인(여행 카테고리 · 객실 {MIN_ROOMS}개 이상 · 숙소 동일성 high/mid) {len(passed)}곳", "",
+          "| 순위 | 숙소 | 점수 | 확신 | 출처 | 객실 | 근거 | 사진(물/객실/특별) | 최저 객실가(조회값) |", "|---|---|---|---|---|---|---|---|---|"]
     for i, c in enumerate(passed, 1):
         v, ph = c["coupang"], c.get("photos") or {}
-        md.append(f"| {i} | {c['name']} | {c['score']} | {'+'.join(c['sources'])} | {v.get('rooms_n')} | {'; '.join(c['reasons'])[:120]} | "
-                  f"{ph.get('water', 0)}/{ph.get('room', 0)}/{ph.get('special', 0)} | {int(v['min_price']):,}원 |" if v.get("min_price") else
-                  f"| {i} | {c['name']} | {c['score']} | {'+'.join(c['sources'])} | {v.get('rooms_n')} | {'; '.join(c['reasons'])[:120]} | "
-                  f"{ph.get('water', 0)}/{ph.get('room', 0)}/{ph.get('special', 0)} | - |")
-    md += ["", "## 쿠팡에서 못 찾은 후보", ""]
+        price = f"{int(v['min_price']):,}원" if v.get("min_price") else "-"
+        md.append(f"| {i} | {c['name']} | {c['score']} | {v.get('confidence')} | {'+'.join(c['sources'])} | {v.get('rooms_n')} | "
+                  f"{'; '.join(c['reasons'])[:140]} | {ph.get('water', 0)}/{ph.get('room', 0)}/{ph.get('special', 0)} | {price} |")
+    md += ["", "## 쿠팡에서 못 찾았거나 다른 숙소로 판정된 후보", ""]
     for c in merged:
         if c not in passed:
-            md.append(f"- {c['name']} ({'+'.join(c['sources'])}) — 객실 {c['coupang'].get('rooms_n', 0)}개 {c['coupang'].get('error') or ''}")
+            md.append(f"- {c['name']} ({'+'.join(c['sources'])}) — {c['coupang'].get('error') or ''}")
     (LATEST / "candidates.md").write_text("\n".join(md) + "\n", encoding="utf-8")
     top = passed[:5]
     lines = [f"숙소 후보 발굴 — {region} · {theme} · {month}", f"후보 {len(merged)}곳 중 쿠팡 판매 확인 {len(passed)}곳 (영상 제작 없음)"]
     for i, c in enumerate(top, 1):
         ph = c.get("photos") or {}
-        lines.append(f"{i}. {c['name']} (점수 {c['score']}, 객실 {c['coupang'].get('rooms_n')}, 사진 물{ph.get('water', 0)}/객{ph.get('room', 0)}/특{ph.get('special', 0)}) — {'; '.join(c['reasons'])[:90]}")
+        lines.append(f"{i}. {c['name']} (점수 {c['score']}, 확신 {c['coupang'].get('confidence')}, 객실 {c['coupang'].get('rooms_n')}, "
+                     f"사진 물{ph.get('water', 0)}/객{ph.get('room', 0)}/특{ph.get('special', 0)}) — {'; '.join(c['reasons'])[:90]}")
     lines.append("표 전체: data/discover/latest/candidates.md")
     (LATEST / "summary.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
