@@ -2387,62 +2387,68 @@ def _subject_boxes(ref: Path, work: Path, res: dict, cap: float, fps: int = 4):
     return res["track_ai"]
 
 
-HEAD_ASK = ("These are {n} frames, in order and {dt:.2f} s apart, from one video. In EVERY frame give the bounding box of the head "
-            "(face and hair) of every HUMAN person that is at least partly visible - never an animal. Coordinates are box_2d "
-            "[ymin, xmin, ymax, xmax] normalized to 0-1000. JSON only: {{\"frames\": [{{\"i\": 0, \"heads\": [[ymin, xmin, ymax, xmax]]}}]}} "
-            "with exactly {n} entries (i = 0..{last}); use an empty list when no human head is visible.")
+HEAD_ASK1 = ("Detect the head (face and hair) of every HUMAN person in this image - never an animal. Output a JSON list where each "
+             "entry contains the 2D bounding box in \"box_2d\" as [ymin, xmin, ymax, xmax] normalized to 0-1000 and the text "
+             "\"head\" in \"label\". If no human head is visible, output [].")
+
+
+def _head_boxes_1(img: Path, key: str) -> list | None:
+    """한 장면에서 사람 머리 상자들(0~1 비율). 장면 여러 장을 한 번에 물으면 좌표가 어긋나(2026-10-09: 모자이크가 얼굴 옆 배경에 감)
+    구글이 안내하는 표준 방식대로 한 장씩 묻는다. 못 읽으면 None."""
+    body = {"contents": [{"role": "user", "parts": [{"inline_data": _b64img(img)}, {"text": HEAD_ASK1}]}],
+            "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
+    for model in ("gemini-flash-latest", "gemini-pro-latest"):
+        st, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                        {"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=60)
+        if st != 200:
+            continue
+        try:
+            t = "".join(q.get("text", "") for q in json.loads(raw)["candidates"][0]["content"]["parts"] if not q.get("thought"))
+            t = re.sub(r"^```(?:json)?\s*|\s*```$", "", t.strip())
+            got = json.loads(t[t.find("["):t.rfind("]") + 1]) if "[" in t else []
+        except Exception:  # noqa: BLE001
+            continue
+        out = []
+        for e in got if isinstance(got, list) else []:
+            bb = e.get("box_2d") if isinstance(e, dict) else e
+            try:
+                y0, x0, y1, x1 = (min(1.0, max(0.0, float(v) / 1000)) for v in bb[:4])
+            except (TypeError, ValueError, IndexError):
+                continue
+            if x1 > x0 and y1 > y0 and (x1 - x0) * (y1 - y0) < 0.5:
+                out.append((y0, x0, y1, x1))
+        return out
+    return None
 
 
 def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: int = 4) -> dict:
     """사람은 그대로 두는 편: 결과 영상의 사람 머리(얼굴·머리카락)를 모자이크한다(사장님 확정 2026-10-09: 원본에서 가린 주인 얼굴을
-    영상 AI가 새로 그려 드러냄 — "모자이크 처리 당연히"). 머리 위치는 AI가 초당 4장으로 찾고(약 0.01달러, 사람만·동물 제외),
-    사이 프레임은 앞뒤 상자를 합쳐 가린다(움직여도 새지 않게). 얼굴 탐지기(YuNet)는 강아지 얼굴·선반을 잘못 가려 쓰지 않는다."""
+    영상 AI가 새로 그려 드러냄 — "모자이크 처리 당연히"). 머리 위치는 AI가 초당 4장, 장면 한 장씩 찾고(약 0.02달러, 사람만·동물 제외),
+    사이 프레임은 앞뒤 0.5초 상자까지 합쳐 넉넉히 가린다(움직여도·한 장 놓쳐도 새지 않게).
+    얼굴 탐지기(YuNet)는 이 영상에서 옆얼굴을 못 찾고 강아지 얼굴·선반을 잡아 쓰지 않는다."""
     import cv2
     import shutil
+    from concurrent.futures import ThreadPoolExecutor
     d = work / "_head_frames"
     shutil.rmtree(d, ignore_errors=True)
     d.mkdir()
-    _ff(["-i", str(src), "-vf", f"fps={fps},scale=432:-2", "-q:v", "4", str(d / "f%03d.jpg")])
+    # 1000x1000 정사각 틀 가운데에 세로 장면(562x1000)을 넣어 보낸다 — AI가 비율(0~1000)로 답하든 픽셀로 답하든 같은 자리가 된다
+    # (2026-10-09: 좌표가 픽셀로 와 모자이크가 얼굴 왼쪽 위 배경으로 밀림)
+    sw0, sh0 = _wh(src)
+    fw = int(round(1000 * sw0 / sh0)) // 2 * 2
+    ox = (1000 - fw) // 2
+    _ff(["-i", str(src), "-vf", f"fps={fps},scale={fw}:1000,pad=1000:1000:{ox}:0:color=gray", "-q:v", "3", str(d / "f%03d.jpg")])
     frames = sorted(d.glob("f*.jpg"))[:120]
-    _remake_spend(res, REMAKE_COST["check"], "사람 얼굴 위치 찾기(모자이크)", cap)
+    _remake_spend(res, 0.02, "사람 얼굴 위치 찾기(모자이크, 장면 한 장씩)", cap)
     key = _key("GEMINI_API_KEY")
-    parts = [{"inline_data": _b64img(f)} for f in frames] + [{"text": HEAD_ASK.format(n=len(frames), dt=1 / fps, last=len(frames) - 1)}]
-    body = {"contents": [{"role": "user", "parts": parts}], "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
-    fr, why = None, ""
-    for model in ("gemini-flash-latest", "gemini-pro-latest"):
-        st, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
-                        {"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=180)
-        if st != 200:
-            why = f"{model} HTTP {st}: " + (raw[:200].decode("utf-8", "replace") if isinstance(raw, bytes) else str(raw)[:200])
-            continue
-        try:
-            t = "".join(q.get("text", "") for q in json.loads(raw)["candidates"][0]["content"]["parts"] if not q.get("thought"))
-        except Exception:  # noqa: BLE001
-            t = ""
-        fr = _frames_json(t, "heads")
-        if fr and len(fr) >= len(frames) * 0.6:               # 프레임 수가 맞아야 믿는다(일부만 오면 얼굴이 새므로 다음 모델로)
-            break
-        if fr:
-            why = f"{model} 프레임 수가 모자람({len(fr)}/{len(frames)})"
-            fr = None
-            continue
-        why = f"{model} 응답을 못 읽음: " + (t[:200] if t else (raw[:200].decode("utf-8", "replace") if isinstance(raw, bytes) else ""))
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        heads = list(ex.map(lambda f: _head_boxes_1(f, key), frames))
     shutil.rmtree(d, ignore_errors=True)
-    if not fr:
-        res["faces_raw"] = why[:400]
-        raise RuntimeError("사람 얼굴 위치를 찾지 못해 모자이크하지 못했습니다(얼굴이 드러난 영상은 내보내지 않음, 돈 안 듦) — " + why[:160])
-    heads = []
-    for k in range(len(frames)):
-        e = next((x for x in fr if isinstance(x, dict) and str(x.get("i")) == str(k)), fr[k] if k < len(fr) and isinstance(fr[k], dict) else {})
-        hb = []
-        for bb in (e.get("heads") or []):
-            try:
-                y0, x0, y1, x1 = (min(1.0, max(0.0, float(v) / 1000)) for v in bb[:4])
-            except (TypeError, ValueError):
-                continue
-            if x1 > x0 and y1 > y0:
-                hb.append((y0, x0, y1, x1))
-        heads.append(hb)
+    miss = sum(1 for x in heads if x is None)
+    if not frames or miss > len(frames) * 0.2:
+        res["faces_raw"] = f"머리 찾기 실패 {miss}/{len(frames)}장"
+        raise RuntimeError(f"사람 얼굴 위치를 {miss}/{len(frames)}장에서 찾지 못해 모자이크하지 못했습니다(얼굴이 드러난 영상은 내보내지 않음)")
+    heads = [[(y0, (x0 * 1000 - ox) / fw, y1, (x1 * 1000 - ox) / fw) for (y0, x0, y1, x1) in (x or [])] for x in heads]   # 정사각 틀 → 장면 비율
     cap_v = cv2.VideoCapture(str(src))
     vfps = cap_v.get(cv2.CAP_PROP_FPS) or 24.0
     w, h = int(cap_v.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap_v.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -2453,18 +2459,17 @@ def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: in
         ok, im = cap_v.read()
         if not ok:
             break
-        kf = n / vfps * fps
-        k0 = min(len(heads) - 1, int(kf))
-        boxes = [b for kk in range(max(0, k0 - 2), min(len(heads), k0 + 3)) for b in heads[kk]]   # 앞뒤 0.5초 상자까지 합쳐 가린다(움직여도·놓쳐도 새지 않게)
+        k0 = min(len(heads) - 1, int(n / vfps * fps))
+        boxes = [b for kk in range(max(0, k0 - 2), min(len(heads), k0 + 3)) for b in heads[kk]]   # 앞뒤 0.5초 상자까지 합쳐 가린다
         hit += bool(boxes)
         for (y0, x0, y1, x1) in boxes:
             bw, bh = (x1 - x0) * w, (y1 - y0) * h
-            X0, Y0 = max(0, int(x0 * w - bw * 0.2)), max(0, int(y0 * h - bh * 0.2))
-            X1, Y1 = min(w, int(x1 * w + bw * 0.2)), min(h, int(y1 * h + bh * 0.15))
+            X0, Y0 = max(0, int(x0 * w - bw * 0.3)), max(0, int(y0 * h - bh * 0.3))
+            X1, Y1 = min(w, int(x1 * w + bw * 0.3)), min(h, int(y1 * h + bh * 0.25))
             if X1 - X0 < 4 or Y1 - Y0 < 4:
                 continue
             roi = im[Y0:Y1, X0:X1]
-            small = cv2.resize(roi, (max(1, (X1 - X0) // 11), max(1, (Y1 - Y0) // 11)), interpolation=cv2.INTER_LINEAR)   # 굵은 모자이크(얼굴 못 알아보게)
+            small = cv2.resize(roi, (max(1, (X1 - X0) // 11), max(1, (Y1 - Y0) // 11)), interpolation=cv2.INTER_LINEAR)   # 굵은 모자이크
             im[Y0:Y1, X0:X1] = cv2.resize(small, (X1 - X0, Y1 - Y0), interpolation=cv2.INTER_NEAREST)
         vw.write(im)
         n += 1
@@ -2474,7 +2479,7 @@ def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: in
         raise RuntimeError("얼굴 모자이크: 영상을 읽지 못했습니다")
     _ff(["-i", str(tmp), "-an", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", str(out)])
     tmp.unlink(missing_ok=True)
-    return {"frames": n, "with_head": hit, "ai_frames": len(frames)}
+    return {"frames": n, "with_head": hit, "ai_frames": len(frames), "heads": [[[round(v, 3) for v in b] for b in x] for x in heads]}
 
 
 def _track_crop(ref: Path, work: Path, res: dict, ai: dict | None = None) -> Path:
