@@ -143,6 +143,8 @@ def summarize_products(resp: dict) -> dict:
         out["image_fields"] = image_fields
         hosts, shapes, cats = {}, {}, {}
         samples = []
+        out["distinct_images"] = len({str(it.get("productImage") or "") for it in items if isinstance(it, dict)})
+        out["distinct_product_ids"] = len({str(it.get("productId") or "") for it in items if isinstance(it, dict)})
         for it in items:
             if not isinstance(it, dict):
                 continue
@@ -152,7 +154,7 @@ def summarize_products(resp: dict) -> dict:
             hosts[ih] = hosts.get(ih, 0) + 1
             c = str(it.get("categoryName") or "")
             cats[c] = cats.get(c, 0) + 1
-            if len(samples) < 8:
+            if len(samples) < 20:
                 samples.append({
                     "name": _scrub(str(it.get("productName") or ""))[:60],
                     "price": it.get("productPrice"),
@@ -229,13 +231,19 @@ def check_secrets() -> dict:
 
 
 def main() -> int:
-    result = {"probe_version": 1,
-              "ran_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-              "nonce": None, "secrets": {}, "api": {}, "verdict": {}}
+    req = {}
     try:
-        result["nonce"] = json.loads(REQUEST.read_text(encoding="utf-8")).get("nonce")
+        req = json.loads(REQUEST.read_text(encoding="utf-8"))
     except Exception:
         pass
+    keywords = [str(k) for k in (req.get("search_keywords") or SEARCH_KEYWORDS)][:6]
+    limit = int(req.get("limit") or 10)
+    best = [] if req.get("skip_best") else BEST_CATEGORIES
+    deeplinks = [] if req.get("skip_deeplink") else DEEPLINK_TESTS
+    result = {"probe_version": 2,
+              "ran_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+              "nonce": None, "secrets": {}, "api": {}, "verdict": {}}
+    result["nonce"] = req.get("nonce")
 
     sec = check_secrets()
     values = sec.pop("_values")
@@ -250,10 +258,10 @@ def main() -> int:
     # 어느 쌍이 통하는지 — 기준 검색 1회로 가린다
     for p in sec["pairs"]:
         access, secret = values[p["access"]], values[p["secret"]]
-        q = urllib.parse.urlencode({"keyword": SEARCH_KEYWORDS[0], "limit": 5})
+        q = urllib.parse.urlencode({"keyword": keywords[0], "limit": limit})
         variant, resp = get_with_fallback("/products/search", q, access, secret)
         s = summarize_products(resp)
-        s.update({"keyword": SEARCH_KEYWORDS[0], "path_variant": variant, "pair": p["access"]})
+        s.update({"keyword": keywords[0], "path_variant": variant, "pair": p["access"]})
         api.setdefault("search", []).append(s)
         if resp.get("http") == 200 and str(s.get("rCode")) == "0":
             used = (p, access, secret, variant)
@@ -267,20 +275,20 @@ def main() -> int:
     api["pair_used"] = {"access": p["access"], "secret": p["secret"]}
     prefix = BASE if variant == "no_v1" else BASE + "/v1"
 
-    for kw in SEARCH_KEYWORDS[1:]:
-        q = urllib.parse.urlencode({"keyword": kw, "limit": 10})
+    for kw in keywords[1:]:
+        q = urllib.parse.urlencode({"keyword": kw, "limit": limit})
         s = summarize_products(call("GET", prefix + "/products/search", q, None, access, secret))
         s.update({"keyword": kw, "path_variant": variant})
         api["search"].append(s)
 
-    for cid, cname, limit in BEST_CATEGORIES:
-        q = urllib.parse.urlencode({"limit": limit})
+    for cid, cname, blimit in best:
+        q = urllib.parse.urlencode({"limit": blimit})
         s = summarize_products(call("GET", prefix + f"/products/bestcategories/{cid}", q, None, access, secret))
         s.update({"category_id": cid, "category_name": cname})
         api.setdefault("bestcategories", []).append(s)
 
     dl_variant = None
-    for label, urls in DEEPLINK_TESTS:
+    for label, urls in deeplinks:
         if dl_variant is None:
             dl_variant, resp = post_with_fallback("/deeplink", {"coupangUrls": urls}, access, secret)
         else:
