@@ -2429,7 +2429,7 @@ def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: in
             if X1 - X0 < 4 or Y1 - Y0 < 4:
                 continue
             roi = im[Y0:Y1, X0:X1]
-            small = cv2.resize(roi, (max(1, (X1 - X0) // 16), max(1, (Y1 - Y0) // 16)), interpolation=cv2.INTER_LINEAR)
+            small = cv2.resize(roi, (max(1, (X1 - X0) // 11), max(1, (Y1 - Y0) // 11)), interpolation=cv2.INTER_LINEAR)   # 굵은 모자이크(얼굴 못 알아보게)
             im[Y0:Y1, X0:X1] = cv2.resize(small, (X1 - X0, Y1 - Y0), interpolation=cv2.INTER_NEAREST)
         vw.write(im)
         n += 1
