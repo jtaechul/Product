@@ -237,7 +237,7 @@ def main() -> int:
     except Exception:
         pass
     keywords = [str(k) for k in (req.get("search_keywords") or SEARCH_KEYWORDS)][:6]
-    limit = int(req.get("limit") or 10)
+    limit = max(1, min(int(req.get("limit") or 10), 10))   # 검색 limit 는 10 이 상한 (20 → "limit is out of range" 실측)
     best = [] if req.get("skip_best") else BEST_CATEGORIES
     deeplinks = [] if req.get("skip_deeplink") else DEEPLINK_TESTS
     result = {"probe_version": 2,
