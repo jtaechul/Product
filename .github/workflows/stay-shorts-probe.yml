@@ -39,21 +39,11 @@ jobs:
           SHORTS_COUPANG_SECRET_KEY: ${{ secrets.SHORTS_COUPANG_SECRET_KEY }}
         run: python3 scripts/coupang_probe.py
 
-      - name: 관련 시크릿 이름 확인 (이름만 — 값은 읽지도 쓰지도 않는다)
-        if: always()
-        env:
-          ALL_SECRETS: ${{ toJSON(secrets) }}
-        run: |
-          mkdir -p projects/stay-shorts-factory/data/probe
-          printf '%s' "$ALL_SECRETS" | jq -c '{total: (keys|length), matched: [keys[] | select(test("TOUR|KTO|DATA_GO|VISIT|SERVICE_KEY|PUBLIC|NAVER|KAKAO|IG_|INSTA|META|FB_|TIKTOK|COUPANG"; "i"))]}' \
-            > projects/stay-shorts-factory/data/probe/secret_names.json
-          cat projects/stay-shorts-factory/data/probe/secret_names.json
-
       - name: 결과 커밋
         if: always()
         run: |
-          F=projects/stay-shorts-factory/data/probe
-          [ -f "$F/result.json" ] || { echo "결과 파일 없음"; exit 0; }
+          F=projects/stay-shorts-factory/data/probe/result.json
+          [ -f "$F" ] || { echo "결과 파일 없음"; exit 0; }
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$F"
