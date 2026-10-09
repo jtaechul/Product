@@ -9,7 +9,7 @@
     "use_timeline": true,
     "src_sig": "9096cb4bdbc3-16.2",
     "src_full_sec": 16.25,
-    "spent": 0.47,
+    "spent": 0.48,
     "ledger": [
       {
         "what": "후킹 살려 10초로 줄이기",
@@ -30,6 +30,18 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "강아지 위치 찾기(세로 화면 카메라)",
+        "usd": 0.01
+      },
+      {
+        "what": "구간1 바꾸기(720p)",
+        "usd": 2.85
+      },
+      {
+        "what": "구간1 차단됨(요금 없음)",
+        "usd": -2.85
       }
     ],
     "pick": {
@@ -51,6 +63,141 @@
     "method": "composite",
     "timeline": {
       "all": [
+        {
+          "t": "0.0-0.5",
+          "action": "Woman (left, grey crop top, black shorts, slippers) walks forward carrying two pet bowls with both hands.",
+          "mouth": "Blurred/closed.",
+          "sound": "Footsteps shuffling.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "Woman stops and bends knees, lowering both bowls toward the floor.",
+          "mouth": "Closed.",
+          "sound": "Silent / subtle rustling.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "Woman squats down, setting the two white bowls onto the tiled floor.",
+          "mouth": "Opens.",
+          "sound": "Woman says 'Lái'.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "Woman sets bowls firmly and starts rising.",
+          "mouth": "Open.",
+          "sound": "Woman says 'chīfàn'.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "Woman stands and steps back left; white dog and tan dog sprint in from lower right, sliding rapidly across the floor.",
+          "mouth": "Woman closed; dogs open.",
+          "sound": "Paws and claws skidding across tile.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "Tan dog collides into white dog from behind while both slide at high speed.",
+          "mouth": "Dogs open.",
+          "sound": "Loud skidding and scuffling noise.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "Both dogs flip and tumble over each other in a rolling crash on the tile floor.",
+          "mouth": "Dogs open.",
+          "sound": "Collision thump and claws scratching.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "Dogs separate; tan dog rolls onto its paws while white dog slides backwards toward the left wall.",
+          "mouth": "Dogs open.",
+          "sound": "Scrambling paws on tile.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "Tan dog recovers balance facing bowls; white dog continues sliding rear-first into the wall/cabinet.",
+          "mouth": "Dogs open.",
+          "sound": "Claw clicking and body sliding.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "Tan dog steps toward right food bowl; white dog hits lower wall/cabinet with its back and hind legs.",
+          "mouth": "Dogs open.",
+          "sound": "Soft wall bump and panting.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "5.0-5.5",
+          "action": "Tan dog lowers head into bowl to eat; white dog props front paws against wall while slipping on hind legs.",
+          "mouth": "Tan dog chewing; white dog open.",
+          "sound": "Kibble crunching and bowl clinking.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "5.5-6.0",
+          "action": "Tan dog eats from bowl; white dog struggles against the wall trying to gain traction.",
+          "mouth": "Tan dog chewing; white dog open.",
+          "sound": "Munching sounds and paw clicks.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "6.0-6.5",
+          "action": "Tan dog continues eating; white dog stands up on hind legs leaning paws against wall.",
+          "mouth": "Tan dog chewing; white dog open.",
+          "sound": "Continuous kibble crunching.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "6.5-7.0",
+          "action": "Tan dog eats; white dog drops front paws to floor and turns toward the food bowls.",
+          "mouth": "Tan dog chewing; white dog open.",
+          "sound": "Kibble munching.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "7.0-7.5",
+          "action": "Tan dog eats from right bowl; white dog walks forward toward left bowl.",
+          "mouth": "Tan dog chewing; white dog open.",
+          "sound": "Kibble crunching and light paw taps.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "7.5-8.0",
+          "action": "White dog lowers snout into left bowl; tan dog continues eating from right bowl.",
+          "mouth": "Both dogs chewing.",
+          "sound": "Dual kibble chewing sounds.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "8.0-8.5",
+          "action": "Both dogs eat side-by-side from their respective bowls.",
+          "mouth": "Both dogs chewing.",
+          "sound": "Rhythmic kibble crunching.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "8.5-9.0",
+          "action": "Both dogs continue eating rapidly from bowls.",
+          "mouth": "Both dogs chewing.",
+          "sound": "Kibble crunching and bowls rattling.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "9.0-9.5",
+          "action": "Both dogs lick the bottoms of their bowls clean.",
+          "mouth": "Both dogs licking/chewing.",
+          "sound": "Licking and bowl scraping.",
+          "camera": "Fixed."
+        }
+      ],
+      "seg1": [
         {
           "t": "0.0-0.5",
           "action": "Woman (left, grey crop top, black shorts, slippers) walks forward carrying two pet bowls with both hands.",
@@ -256,28 +403,786 @@
     "track": {
       "ok": true,
       "src": "720x400",
-      "win": 225,
-      "zoom": 3.2,
+      "win": "180x320",
+      "top": 0.0,
+      "zoom": 4.0,
+      "by": "AI 대상(동물 우선)",
       "path": [
-        0.156,
-        0.156,
-        0.219,
-        0.273,
-        0.31,
-        0.271,
-        0.394,
-        0.677,
-        0.188,
-        0.163,
-        0.456,
-        0.51,
-        0.475,
-        0.367,
-        0.372,
-        0.476,
-        0.395,
-        0.315,
-        0.202
+        0.154,
+        0.17,
+        0.214,
+        0.247,
+        0.255,
+        0.407,
+        0.804,
+        0.669,
+        0.527,
+        0.474,
+        0.485,
+        0.504,
+        0.494,
+        0.487,
+        0.378,
+        0.415,
+        0.391,
+        0.388,
+        0.388
+      ]
+    },
+    "track_ai": {
+      "src": "9096cb4bdbc3-16.2",
+      "fps": 4,
+      "frames": [
+        {
+          "a": [],
+          "p": []
+        },
+        {
+          "a": [],
+          "p": [
+            [
+              0.038,
+              0.055,
+              0.722,
+              0.242
+            ]
+          ]
+        },
+        {
+          "a": [],
+          "p": [
+            [
+              0.038,
+              0.055,
+              0.718,
+              0.265
+            ]
+          ]
+        },
+        {
+          "a": [],
+          "p": [
+            [
+              0.038,
+              0.1,
+              0.726,
+              0.281
+            ]
+          ]
+        },
+        {
+          "a": [],
+          "p": [
+            [
+              0.0,
+              0.104,
+              0.738,
+              0.32
+            ]
+          ]
+        },
+        {
+          "a": [],
+          "p": [
+            [
+              0.07,
+              0.111,
+              0.738,
+              0.375
+            ]
+          ]
+        },
+        {
+          "a": [],
+          "p": [
+            [
+              0.117,
+              0.12,
+              0.738,
+              0.375
+            ]
+          ]
+        },
+        {
+          "a": [],
+          "p": [
+            [
+              0.117,
+              0.124,
+              0.738,
+              0.382
+            ]
+          ]
+        },
+        {
+          "a": [],
+          "p": [
+            [
+              0.218,
+              0.124,
+              0.738,
+              0.382
+            ]
+          ]
+        },
+        {
+          "a": [],
+          "p": [
+            [
+              0.218,
+              0.124,
+              0.738,
+              0.382
+            ]
+          ]
+        },
+        {
+          "a": [],
+          "p": [
+            [
+              0.117,
+              0.118,
+              0.738,
+              0.375
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.648,
+              0.905,
+              0.914,
+              0.994
+            ]
+          ],
+          "p": [
+            [
+              0.0,
+              0.116,
+              0.738,
+              0.357
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.585,
+              0.708,
+              0.843,
+              0.976
+            ]
+          ],
+          "p": [
+            [
+              0.0,
+              0.13,
+              0.738,
+              0.292
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.542,
+              0.536,
+              0.761,
+              0.81
+            ],
+            [
+              0.57,
+              0.747,
+              0.898,
+              0.994
+            ]
+          ],
+          "p": [
+            [
+              0.0,
+              0.098,
+              0.722,
+              0.271
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.507,
+              0.478,
+              0.671,
+              0.646
+            ],
+            [
+              0.531,
+              0.609,
+              0.746,
+              0.773
+            ]
+          ],
+          "p": [
+            [
+              0.0,
+              0.09,
+              0.691,
+              0.271
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.492,
+              0.443,
+              0.64,
+              0.55
+            ],
+            [
+              0.507,
+              0.531,
+              0.691,
+              0.703
+            ]
+          ],
+          "p": [
+            [
+              0.038,
+              0.055,
+              0.691,
+              0.265
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.484,
+              0.419,
+              0.625,
+              0.507
+            ],
+            [
+              0.445,
+              0.484,
+              0.648,
+              0.611
+            ]
+          ],
+          "p": [
+            [
+              0.038,
+              0.055,
+              0.71,
+              0.167
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.484,
+              0.402,
+              0.609,
+              0.484
+            ],
+            [
+              0.39,
+              0.458,
+              0.621,
+              0.562
+            ]
+          ],
+          "p": [
+            [
+              0.038,
+              0.055,
+              0.691,
+              0.165
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.484,
+              0.39,
+              0.601,
+              0.472
+            ],
+            [
+              0.398,
+              0.453,
+              0.613,
+              0.539
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.484,
+              0.39,
+              0.601,
+              0.472
+            ],
+            [
+              0.398,
+              0.453,
+              0.613,
+              0.539
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.46,
+              0.398,
+              0.601,
+              0.484
+            ],
+            [
+              0.375,
+              0.453,
+              0.609,
+              0.574
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.46,
+              0.4,
+              0.601,
+              0.513
+            ],
+            [
+              0.476,
+              0.499,
+              0.644,
+              0.599
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.445,
+              0.4,
+              0.609,
+              0.513
+            ],
+            [
+              0.476,
+              0.503,
+              0.667,
+              0.619
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.414,
+              0.404,
+              0.617,
+              0.511
+            ],
+            [
+              0.445,
+              0.499,
+              0.699,
+              0.611
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.414,
+              0.369,
+              0.628,
+              0.484
+            ],
+            [
+              0.437,
+              0.507,
+              0.707,
+              0.617
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.429,
+              0.3,
+              0.66,
+              0.427
+            ],
+            [
+              0.445,
+              0.511,
+              0.707,
+              0.642
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.437,
+              0.228,
+              0.667,
+              0.359
+            ],
+            [
+              0.453,
+              0.511,
+              0.71,
+              0.642
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.46,
+              0.16,
+              0.703,
+              0.3
+            ],
+            [
+              0.437,
+              0.488,
+              0.71,
+              0.644
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.468,
+              0.12,
+              0.734,
+              0.273
+            ],
+            [
+              0.445,
+              0.458,
+              0.71,
+              0.64
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.468,
+              0.098,
+              0.742,
+              0.263
+            ],
+            [
+              0.429,
+              0.394,
+              0.718,
+              0.593
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.468,
+              0.077,
+              0.742,
+              0.263
+            ],
+            [
+              0.429,
+              0.343,
+              0.726,
+              0.562
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.468,
+              0.077,
+              0.742,
+              0.31
+            ],
+            [
+              0.429,
+              0.343,
+              0.726,
+              0.54
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.468,
+              0.077,
+              0.742,
+              0.314
+            ],
+            [
+              0.429,
+              0.343,
+              0.726,
+              0.533
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.468,
+              0.077,
+              0.742,
+              0.314
+            ],
+            [
+              0.429,
+              0.343,
+              0.726,
+              0.533
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.468,
+              0.077,
+              0.742,
+              0.314
+            ],
+            [
+              0.429,
+              0.343,
+              0.726,
+              0.533
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.468,
+              0.077,
+              0.742,
+              0.314
+            ],
+            [
+              0.429,
+              0.343,
+              0.726,
+              0.533
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.468,
+              0.077,
+              0.742,
+              0.314
+            ],
+            [
+              0.429,
+              0.343,
+              0.726,
+              0.533
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        },
+        {
+          "a": [
+            [
+              0.468,
+              0.077,
+              0.742,
+              0.314
+            ],
+            [
+              0.429,
+              0.343,
+              0.726,
+              0.533
+            ]
+          ],
+          "p": [
+            [
+              0.492,
+              0.075,
+              0.691,
+              0.146
+            ]
+          ]
+        }
       ]
     },
     "vertical": {
@@ -285,10 +1190,10 @@
       "src": "720x400"
     }
   },
-  "error": "스토리보드 12번 칸 위아래가 진짜 장면이 아닙니다(흐린/빈/하얗게 날아간 띠) — 보여 주지 않고 멈춤",
+  "error": "[Errno 21] Is a directory: 'pet-episodes/episodes/261009-remake-4855/work/_trk_frames'",
   "last_request": {
-    "file": "05_remake_board.json",
-    "ran_at": "2026-10-09T14:58:13Z",
+    "file": "06_remake_full.json",
+    "ran_at": "2026-10-09T16:12:16Z",
     "ok": false
   }
 }
