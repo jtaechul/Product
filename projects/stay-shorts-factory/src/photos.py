@@ -150,16 +150,24 @@ def classify(model: str, cands: list[dict]) -> list[dict]:
             "generationConfig": {"maxOutputTokens": 4000, "temperature": 0.4,
                                  "responseMimeType": "application/json",
                                  "thinkingConfig": {"thinkingBudget": 0}}}
-    try:
-        data = _gpost(f"models/{model}:generateContent", body)
-    except RuntimeError as e:
-        if "thinking" not in str(e).lower():
-            raise
-        body["generationConfig"].pop("thinkingConfig")
-        data = _gpost(f"models/{model}:generateContent", body)
-    txt = "".join(p.get("text", "") for p in (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []))
-    txt = re.sub(r"^```(?:json)?|```$", "", txt.strip()).strip()
-    got = {int(p.get("k", -1)): p for p in (json.loads(txt).get("photos") or []) if isinstance(p, dict)}
+    got = {}
+    for attempt in range(2):                      # 답이 JSON 이 아니면 한 번 더 (0원에 가까운 단계)
+        try:
+            data = _gpost(f"models/{model}:generateContent", body)
+        except RuntimeError as e:
+            if "thinking" not in str(e).lower():
+                raise
+            body["generationConfig"].pop("thinkingConfig", None)
+            data = _gpost(f"models/{model}:generateContent", body)
+        txt = "".join(p.get("text", "") for p in (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []))
+        txt = re.sub(r"^```(?:json)?|```$", "", txt.strip()).strip()
+        try:
+            got = {int(p.get("k", -1)): p for p in (json.loads(txt).get("photos") or []) if isinstance(p, dict)}
+            break
+        except (ValueError, AttributeError) as e:
+            log(f"분류 답이 JSON 이 아님 (시도 {attempt + 1}): {str(e)[:80]} / {txt[:80]!r}")
+    if not got:
+        raise RuntimeError("사진 분류 답을 읽지 못했습니다 (JSON 아님)")
     out = []
     for c in cands:
         p = got.get(c["k"]) or {}
