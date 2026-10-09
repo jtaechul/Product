@@ -1,0 +1,56 @@
+name: stay-shorts-probe
+
+# 숙소 쇼핑쇼츠(projects/stay-shorts-factory) — 쿠팡 파트너스 API 점검.
+# 키가 어떤 이름으로 등록돼 있는지(이름만)와 검색·여행 카테고리·제휴링크 생성이 되는지 확인한다.
+# 영상 제작·업로드·과금 없음. 결과는 data/probe/result.json 으로 같은 브랜치에 커밋된다.
+# 실행: requests/probe/request.json 의 nonce 를 바꿔 푸시하거나, Actions 에서 Run workflow.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: ["claude/stay-shorts-factory"]
+    paths: ["projects/stay-shorts-factory/requests/probe/*.json"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stay-shorts-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: 쿠팡 API 점검
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            projects/stay-shorts-factory
+          sparse-checkout-cone-mode: true
+
+      - name: 점검 실행 (키 값은 출력하지 않는다)
+        working-directory: projects/stay-shorts-factory
+        env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+          SHORTS_COUPANG_ACCESS_KEY: ${{ secrets.SHORTS_COUPANG_ACCESS_KEY }}
+          SHORTS_COUPANG_SECRET_KEY: ${{ secrets.SHORTS_COUPANG_SECRET_KEY }}
+        run: python3 scripts/coupang_probe.py
+
+      - name: 결과 커밋
+        if: always()
+        run: |
+          F=projects/stay-shorts-factory/data/probe/result.json
+          [ -f "$F" ] || { echo "결과 파일 없음"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$F"
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git commit -m "stay-shorts: 쿠팡 API 점검 결과 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git push origin "HEAD:${GITHUB_REF_NAME}" && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i"; git pull --rebase origin "${GITHUB_REF_NAME}" || true; sleep 3
+          done
+          echo "저장 실패"; exit 1
