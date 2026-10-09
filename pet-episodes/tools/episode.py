@@ -2461,7 +2461,6 @@ def _apply_head_mosaic(src: Path, out: Path, heads: list, fps: int = 4) -> dict:
     import cv2
     import numpy as np
     H = [[tuple(b) for b in x] for x in heads]
-    jump = 0.2 * max(1.0, 4 / fps) if fps < 4 else 0.2           # 한 장 사이에 이보다 멀리 튀면 잘못 찾은 것으로 본다
 
     def _c(b):
         return ((b[1] + b[3]) / 2, (b[0] + b[2]) / 2)
@@ -2474,13 +2473,9 @@ def _apply_head_mosaic(src: Path, out: Path, heads: list, fps: int = 4) -> dict:
         b = _c(H[k][0])
         pv = H[k - 1][0] if k > 0 and len(H[k - 1]) == 1 else None
         nx = H[k + 1][0] if k + 1 < len(H) and len(H[k + 1]) == 1 else None
-        if pv and nx:
-            if _d(_c(pv), _c(nx)) < 0.12 and _d(_c(pv), b) > 0.18 and _d(_c(nx), b) > 0.18:
-                H[k] = [tuple((u + v) / 2 for u, v in zip(pv, nx))]
-        elif pv and _d(_c(pv), b) > jump:                 # 다음 장면엔 사람이 없고 앞 장면과 멀리 튐 → 앞 장면 위치 유지
-            H[k] = [pv]
-        elif nx and _d(_c(nx), b) > jump:                 # 앞 장면엔 없고 다음 장면과 멀리 튐 → 다음 장면 위치
-            H[k] = [nx]
+        if pv and nx and _d(_c(pv), _c(nx)) < 0.12 and _d(_c(pv), b) > 0.18 and _d(_c(nx), b) > 0.18:
+            H[k] = [tuple((u + v) / 2 for u, v in zip(pv, nx))]   # 앞뒤는 그대로인데 이 장면만 튐 → 앞뒤 평균
+        # 한쪽만 있는 경우는 고치지 않는다 — 화면이 빠르게 넘어가며 나가는 순간을 오류로 보고 되돌려 얼굴이 드러남(2026-10-09 2.6초)
     cap_v = cv2.VideoCapture(str(src))
     vfps = cap_v.get(cv2.CAP_PROP_FPS) or 24.0
     w, h = int(cap_v.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap_v.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -3943,14 +3938,14 @@ def step_remake(ep, epdir, work, log, req):
                 body_v = hid
         if rm.get("keep_people") and rm.get("blur_faces", True):   # ⛔ 사람은 그대로 두는 편: 사람 얼굴은 항상 모자이크(사장님 확정 2026-10-09)
             fb = work / "remake_faces.mp4"
-            if not fb.exists() or res.get("faces_src") != _src_sig(body_v) or res.get("faces_v") != 4:
+            if not fb.exists() or res.get("faces_src") != _src_sig(body_v) or res.get("faces_v") != 5:
                 old = res.get("faces") or {}
                 if old.get("heads") and old.get("fps") == 12 and abs(_dur(body_v) - old.get("frames", 0) / 24) < 0.2:   # 같은 본편: 찾아 둔 머리 위치로 다시 입힘(돈 안 듦)
                     res["faces"] = {**_apply_head_mosaic(body_v, fb, old["heads"], 12), "fps": 12}
                 else:
                     res["faces"] = _blur_heads(body_v, fb, work, res, cap)
                 res["faces_src"] = _src_sig(body_v)
-                res["faces_v"] = 4                         # 가리는 방식 판(4 = 부드러운 흐림 + 초당 12장, 사장님 지시) — 판이 바뀌면 다시 입힌다
+                res["faces_v"] = 5                         # 가리는 방식 판(5 = 부드러운 흐림 + 초당 12장 + 나가는 순간 유지) — 판이 바뀌면 다시 입힌다
             body_v = fb
         # 2) 끝 장면: 마지막 프레임 + 실제 상품 사진 → 첫 장면 → 4초
         last = work / "_rm_last.png"
