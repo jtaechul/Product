@@ -1,6 +1,7 @@
 {
- "nonce": "2026-10-09-p3",
+ "nonce": "2026-10-09-veo1",
  "stay": "히든클리프 호텔 제주",
+ "mode": "veo",
  "ok": true,
  "steps": {
   "search": {
@@ -24,23 +25,201 @@
    "gemini-2.5-pro-preview-tts"
   ]
  },
- "script": {
-  "hook": "제주에서 여유로운 휴식을 꿈꾸시나요",
-  "lines": [
-   "히든클리프 호텔 제주의 객실을 만나보세요.",
-   "아침 식사가 포함된 클리프뷰 더블룸이 있어요.",
-   "푸른 정원 전망의 아늑한 디럭스룸도 있답니다.",
-   "자쿠지가 있는 하프오션뷰 패밀리룸도 골라보세요.",
-   "자세한 예약 링크는 프로필에 남겨둘게요."
+ "photos": {
+  "candidates": 10,
+  "notes": [
+   "객실 사진이 모자라 물놀이 공간 사진(k=4)으로 채움",
+   "특별한 공간 사진이 모자라 물놀이 공간 사진(k=5)으로 채움"
   ],
-  "title": "히든클리프 호텔 제주 객실 둘러보기",
-  "caption": "클리프뷰와 가든전망 객실이 준비되어 있습니다. 자쿠지를 갖춘 패밀리룸까지 취향에 맞게 선택해 보세요. 편안한 제주 여행을 계획해 보세요.",
+  "classified": [
+   {
+    "k": 0,
+    "source": "coupang",
+    "name": "디럭스 더블 클리프뷰(2인조식포함)",
+    "category": "water",
+    "quality": 8,
+    "description": "호텔 야외 인피니티 풀 너머로 숲과 바다가 펼쳐져 있다.",
+    "people": true
+   },
+   {
+    "k": 1,
+    "source": "coupang",
+    "name": "[김포출발] 2박3일 13시대 ◀▶ 20시대 3인기준 1인요금",
+    "category": "skip",
+    "quality": 4,
+    "description": "상단에 텍스트 배너가 포함된 야외 인피니티 풀 전경이다.",
+    "people": true
+   },
+   {
+    "k": 2,
+    "source": "coupang",
+    "name": "디럭스 더블룸, 정원 전망",
+    "category": "water",
+    "quality": 8,
+    "description": "호텔 야외 인피니티 풀 너머로 푸른 숲과 바다가 보인다.",
+    "people": true
+   },
+   {
+    "k": 3,
+    "source": "coupang",
+    "name": "디럭스 더블 가든뷰",
+    "category": "water",
+    "quality": 8,
+    "description": "호텔 건물 옆으로 숲과 바다를 마주한 인피니티 풀이 보인다.",
+    "people": true
+   },
+   {
+    "k": 4,
+    "source": "coupang",
+    "name": "3인1실기준,1인 요금 조식불포함 2박3일",
+    "category": "water",
+    "quality": 8,
+    "description": "노을 진 하늘 아래 호텔 기둥과 선베드가 놓인 넓은 수영장이다.",
+    "people": false
+   },
+   {
+    "k": 5,
+    "source": "coupang",
+    "name": "디럭스 더블 가든뷰 룸",
+    "category": "water",
+    "quality": 8,
+    "description": "호텔 인피니티 풀과 주변의 울창한 숲과 바다 풍경이다.",
+    "people": true
+   },
+   {
+    "k": 6,
+    "source": "coupang",
+    "name": "디럭스 더블 가든",
+    "category": "special",
+    "quality": 7,
+    "description": "푸른 숲으로 둘러싸인 리조트 건물의 전체 외관이다.",
+    "people": false
+   },
+   {
+    "k": 7,
+    "source": "coupang",
+    "name": "디럭스 가든전망 더블-객실만",
+    "category": "water",
+    "quality": 8,
+    "description": "인피니티 풀에서 한 여성이 녹음이 우거진 언덕 풍경을 바라보고 있다.",
+    "people": true
+   },
+   {
+    "k": 8,
+    "source": "coupang",
+    "name": "[광주출발] 2박3일 12시-14시대 ◀▶ 13시-15시대 3인기준 1인요금",
+    "category": "skip",
+    "quality": 4,
+    "description": "상단에 텍스트 그래픽이 삽입된 야외 인피니티 풀 사진이다.",
+    "people": true
+   },
+   {
+    "k": 9,
+    "source": "coupang",
+    "name": "하프오션뷰 패밀리 (자쿠지)",
+    "category": "room",
+    "quality": 8,
+    "description": "바다 전망 창문 앞 거품 자쿠지와 조식 트레이가 놓여 있다.",
+    "people": false
+   }
+  ],
+  "shots": [
+   {
+    "n": 1,
+    "k": 0,
+    "slot": "water",
+    "category": "water",
+    "source": "coupang",
+    "description": "호텔 야외 인피니티 풀 너머로 숲과 바다가 펼쳐져 있다.",
+    "focus_x": 0.58,
+    "focus_y": 0.73,
+    "prompt": "Slow push-in towards the infinity pool with gentle water ripples under a clear sky. Keep every object, structure, layout and view exactly as in the photo; do not add people, buildings, furniture, water features or scenery that are not in the photo. No text, no captions, no logos, no watermark. Photorealistic, steady, high-end hotel promotional footage, vertical 9:16."
+   },
+   {
+    "n": 2,
+    "k": 2,
+    "slot": "water",
+    "category": "water",
+    "source": "coupang",
+    "description": "호텔 야외 인피니티 풀 너머로 푸른 숲과 바다가 보인다.",
+    "focus_x": 0.58,
+    "focus_y": 0.73,
+    "prompt": "Drone glide forward overlooking the curved infinity pool with light shimmering on the water. Keep every object, structure, layout and view exactly as in the photo; do not add people, buildings, furniture, water features or scenery that are not in the photo. No text, no captions, no logos, no watermark. Photorealistic, steady, high-end hotel promotional footage, vertical 9:16."
+   },
+   {
+    "n": 3,
+    "k": 3,
+    "slot": "water",
+    "category": "water",
+    "source": "coupang",
+    "description": "호텔 건물 옆으로 숲과 바다를 마주한 인피니티 풀이 보인다.",
+    "focus_x": 0.58,
+    "focus_y": 0.73,
+    "prompt": "Slow push-in towards the outdoor swimming pool as water ripples gently. Keep every object, structure, layout and view exactly as in the photo; do not add people, buildings, furniture, water features or scenery that are not in the photo. No text, no captions, no logos, no watermark. Photorealistic, steady, high-end hotel promotional footage, vertical 9:16."
+   },
+   {
+    "n": 4,
+    "k": 9,
+    "slot": "room",
+    "category": "room",
+    "source": "coupang",
+    "description": "바다 전망 창문 앞 거품 자쿠지와 조식 트레이가 놓여 있다.",
+    "focus_x": 0.48,
+    "focus_y": 0.68,
+    "prompt": "Slow push-in toward the bubbling jacuzzi and breakfast tray with soft steam rising. Keep every object, structure, layout and view exactly as in the photo; do not add people, buildings, furniture, water features or scenery that are not in the photo. No text, no captions, no logos, no watermark. Photorealistic, steady, high-end hotel promotional footage, vertical 9:16."
+   },
+   {
+    "n": 5,
+    "k": 4,
+    "slot": "room",
+    "category": "water",
+    "source": "coupang",
+    "description": "노을 진 하늘 아래 호텔 기둥과 선베드가 놓인 넓은 수영장이다.",
+    "focus_x": 0.45,
+    "focus_y": 0.75,
+    "prompt": "Slow pan across the calm pool surface reflecting the sunset glow with subtle water ripples. Keep every object, structure, layout and view exactly as in the photo; do not add people, buildings, furniture, water features or scenery that are not in the photo. No text, no captions, no logos, no watermark. Photorealistic, steady, high-end hotel promotional footage, vertical 9:16."
+   },
+   {
+    "n": 6,
+    "k": 6,
+    "slot": "special",
+    "category": "special",
+    "source": "coupang",
+    "description": "푸른 숲으로 둘러싸인 리조트 건물의 전체 외관이다.",
+    "focus_x": 0.5,
+    "focus_y": 0.45,
+    "prompt": "Drone glide slowly forward above the green forest towards the resort building while leaves sway. Keep every object, structure, layout and view exactly as in the photo; do not add people, buildings, furniture, water features or scenery that are not in the photo. No text, no captions, no logos, no watermark. Photorealistic, steady, high-end hotel promotional footage, vertical 9:16."
+   },
+   {
+    "n": 7,
+    "k": 5,
+    "slot": "special",
+    "category": "water",
+    "source": "coupang",
+    "description": "호텔 인피니티 풀과 주변의 울창한 숲과 바다 풍경이다.",
+    "focus_x": 0.58,
+    "focus_y": 0.73,
+    "prompt": "Gentle tilt down towards the blue pool with soft water ripples. Keep every object, structure, layout and view exactly as in the photo; do not add people, buildings, furniture, water features or scenery that are not in the photo. No text, no captions, no logos, no watermark. Photorealistic, steady, high-end hotel promotional footage, vertical 9:16."
+   }
+  ]
+ },
+ "script": {
+  "hook": "제주에서 숲과 바다를 함께 보고 싶을 때",
+  "lines": [
+   "야외 인피니티 풀 너머 푸른 풍경이 펼쳐져요.",
+   "탁 트인 자연을 바라보며 물놀이를 즐기기 좋아요.",
+   "자쿠지가 있는 하프오션뷰 패밀리 객실도 있어요.",
+   "정원 전망의 가든뷰 더블룸과 클리프뷰도 준비돼요.",
+   "숲속 쉼터가 궁금하면 프로필 링크를 확인해 보세요."
+  ],
+  "title": "제주 히든클리프 호텔 휴식",
+  "caption": "숲과 바다 풍경을 한눈에 담는 히든클리프 호텔 제주입니다. 야외 인피니티 풀과 자쿠지 객실에서 여유로운 시간을 보내보세요.",
   "hashtags": [
-   "#히든클리프",
-   "#제주호텔",
-   "#클리프뷰",
+   "#히든클리프호텔",
    "#제주숙소",
-   "#가든뷰"
+   "#제주여행",
+   "#인피니티풀",
+   "#제주호텔"
   ],
   "rooms": [
    0,
@@ -58,20 +237,12 @@
    },
    {
     "i": 4,
-    "reason": "항공 패키지 추정 상품"
+    "reason": "패키지 여행 상품"
    },
    {
     "i": 8,
     "reason": "항공 포함 패키지 상품"
    }
-  ],
-  "image_for_line": [
-   0,
-   2,
-   0,
-   3,
-   9,
-   9
   ]
  },
  "room_names": {
@@ -83,29 +254,66 @@
   "7": "디럭스 가든전망 더블-객실만",
   "9": "하프오션뷰 패밀리 (자쿠지)"
  },
- "image_sizes": {
-  "0": [
-   1000,
-   1000
+ "narration_sec": 28.16,
+ "veo": {
+  "model": "veo-3.1-lite-generate-preview",
+  "clip_sec": 4,
+  "estimated_krw": 2058,
+  "spent_krw": 1764,
+  "month_total_krw": 1764,
+  "clips": [
+   {
+    "n": 1,
+    "slot": "water",
+    "ok": true,
+    "krw": 294.0
+   },
+   {
+    "n": 2,
+    "slot": "water",
+    "ok": false,
+    "krw": 0.0,
+    "error": "생성 중 실패: {\"code\": 13, \"message\": \"Video generation failed due to an internal server issue. Please try again in a few minutes. If the problem persists, please contact Gemini API support.\"}"
+   },
+   {
+    "n": 3,
+    "slot": "water",
+    "ok": false,
+    "krw": 0.0,
+    "error": "구글이 영상 생성을 받지 않습니다 (한도/결제). 구글 답: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-l"
+   },
+   {
+    "n": 4,
+    "slot": "room",
+    "ok": true,
+    "krw": 294.0
+   },
+   {
+    "n": 5,
+    "slot": "room",
+    "ok": true,
+    "krw": 294.0
+   },
+   {
+    "n": 6,
+    "slot": "special",
+    "ok": true,
+    "krw": 294.0
+   },
+   {
+    "n": 7,
+    "slot": "special",
+    "ok": true,
+    "krw": 294.0
+   }
   ],
-  "2": [
-   1000,
-   1000
-  ],
-  "3": [
-   1000,
-   1000
-  ],
-  "9": [
-   952,
-   1000
-  ]
+  "stopped": null
  },
- "narration_sec": 27.16,
  "models_used": {
+  "vision": "gemini-3.8-flash",
   "text": "gemini-3.8-flash",
   "tts": "gemini-3.8-flash-tts"
  },
- "duration_sec": 27.96,
- "video_bytes": 5085919
+ "duration_sec": 28.96,
+ "video_bytes": 13315772
 }
