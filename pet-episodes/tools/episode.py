@@ -2279,7 +2279,67 @@ def _blur_bands(v: Path) -> bool:
     return bool(frames) and bad > len(frames) * 0.5
 
 
-def _track_crop(ref: Path, work: Path, res: dict) -> Path:
+SUBJECT_ASK = ("These are {n} frames, in order and {dt:.2f} s apart, from one video. In EVERY frame give the bounding boxes of "
+               "every dog, cat or other animal (\"animals\") and of every person (\"people\") that is at least partly visible. "
+               "Coordinates are box_2d [ymin, xmin, ymax, xmax] normalized to 0-1000. JSON only: {{\"frames\": [{{\"i\": 0, "
+               "\"animals\": [[ymin, xmin, ymax, xmax]], \"people\": [[ymin, xmin, ymax, xmax]]}}]}} with exactly {n} entries "
+               "(i = 0..{last}); use empty lists when none is visible.")
+
+
+def _subject_boxes(ref: Path, work: Path, res: dict, cap: float, fps: int = 4):
+    """세로 화면 카메라가 따라갈 대상 위치 — AI가 프레임마다(초당 4장) 동물·사람 상자를 찾는다(약 0.01달러, log track_ai에 두고 다시 씀).
+    2026-10-09 타일매트 편: 움직임만 보고 따라가니 방을 나가는 주인을 따라가 강아지를 놓침 → 동물이 있으면 동물을 따라간다."""
+    tb = res.get("track_ai")
+    if tb and tb.get("src") == res.get("src_sig") and tb.get("frames"):
+        return tb
+    d = work / "_trk_frames"
+    d.mkdir(exist_ok=True)
+    for f in d.glob("*.jpg"):
+        f.unlink()
+    _ff(["-i", str(ref), "-vf", f"fps={fps},scale=512:-2", "-q:v", "4", str(d / "f%03d.jpg")])
+    frames = sorted(d.glob("f*.jpg"))[:80]
+    if not frames:
+        return None
+    try:
+        _remake_spend(res, REMAKE_COST["check"], "강아지 위치 찾기(세로 화면 카메라)", cap)
+    except RuntimeError:                                   # 점검 모드·한도: 돈 쓰지 않고 움직임만으로 따라간다
+        return None
+    key = _key("GEMINI_API_KEY")
+    parts = [{"inline_data": _b64img(f)} for f in frames] + [{"text": SUBJECT_ASK.format(n=len(frames), dt=1 / fps, last=len(frames) - 1)}]
+    body = {"contents": [{"role": "user", "parts": parts}], "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
+    got = None
+    for model in ("gemini-flash-latest", "gemini-pro-latest"):
+        st, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                        {"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=150)
+        if st == 200:
+            try:
+                t = "".join(q.get("text", "") for q in json.loads(raw)["candidates"][0]["content"]["parts"])
+                got = json.loads(t[t.find("{"):t.rfind("}") + 1])
+                break
+            except Exception:  # noqa: BLE001
+                pass
+    fr = (got or {}).get("frames") or []
+    if not fr:
+        return None
+    def boxes(e, k):
+        out = []
+        for bb in (e.get(k) or []):
+            try:
+                y0, x0, y1, x1 = (min(1.0, max(0.0, float(v) / 1000)) for v in bb[:4])
+            except (TypeError, ValueError):
+                continue
+            if x1 > x0 + 0.005 and y1 > y0 + 0.005:
+                out.append([round(y0, 3), round(x0, 3), round(y1, 3), round(x1, 3)])
+        return out
+    clean = []
+    for k in range(len(frames)):
+        e = next((x for x in fr if isinstance(x, dict) and str(x.get("i")) == str(k)), fr[k] if k < len(fr) and isinstance(fr[k], dict) else {})
+        clean.append({"a": boxes(e, "animals"), "p": boxes(e, "people")})
+    res["track_ai"] = {"src": res.get("src_sig"), "fps": fps, "frames": clean}
+    return res["track_ai"]
+
+
+def _track_crop(ref: Path, work: Path, res: dict, ai: dict | None = None) -> Path:
     """가로 원본 → 움직임을 따라가는 세로 9:16 화면(사장님 확정 2026-10-09 타일매트 편: 위아래를 이어 그리면 강아지가 화면의 5%라
     720p로 만들어도 흐리고 아래가 하얗게 가린 것처럼 보임). 고정 카메라 영상에서 프레임 차이로 움직이는 곳(사람·강아지)을 찾아
     세로 창이 카메라처럼 부드럽게 따라간다(미리 살짝 움직이며 따라감). 위아래를 AI로 그리지 않으니 흐린·하얀 띠가 생길 수 없고,
@@ -2287,7 +2347,17 @@ def _track_crop(ref: Path, work: Path, res: dict) -> Path:
     import numpy as np
     out = work / "_src_track.mp4"
     sw, sh = _wh(ref)
-    wc = sh * 9 / 16                                        # 세로 창 폭(원본 높이 그대로)
+    ytop, win_h = 0.0, float(sh)
+    F = (ai or {}).get("frames") or []
+    if any(f["a"] or f["p"] for f in F):
+        # 세로 범위: 모든 대상(사람+동물) 상자의 위·아래(5~95%) + 여유 → 원본 높이의 72~100%, 영상 내내 고정(아래 빈 바닥을 덜 담는다)
+        tops = [b[0] for f in F for b in f["a"] + f["p"]]
+        bots = [b[2] for f in F for b in f["a"] + f["p"]]
+        y0, y1 = max(0.0, float(np.percentile(tops, 5)) - 0.06), min(1.0, float(np.percentile(bots, 95)) + 0.05)
+        hw = min(1.0, max(0.8, y1 - y0))                     # 너무 당기지 않게(최대 약 4배)
+        ytop = min(max(0.0, (y0 + y1) / 2 - hw / 2), 1.0 - hw) * sh
+        win_h = hw * sh
+    wc = win_h * 9 / 16                                     # 세로 창 폭
     aw = 240
     ah = max(2, int(round(sh * aw / sw)) // 2 * 2)
     raw = subprocess.run([FFMPEG, "-v", "error", "-i", str(ref), "-vf", f"fps=12,scale={aw}:{ah},format=gray",
@@ -2308,6 +2378,30 @@ def _track_crop(ref: Path, work: Path, res: dict) -> Path:
         seg = d[left:left + k]
         cx = left + float((seg * (np.arange(len(seg)) + 0.5)).sum() / max(seg.sum(), 1e-6))   # 그 창 안 움직임의 무게중심
         cen.append(cx / aw * sw)
+    if any(f["a"] or f["p"] for f in F):                      # AI 상자: 동물이 있으면 동물, 없으면 사람이 가장 많이 담기는 자리(앞 자리와 가까운 쪽)
+        fa = float((ai or {}).get("fps", 4))
+        cands = np.linspace(wc / 2, sw - wc / 2, 81)
+        xs = []
+        for f in F:
+            bb = f["a"] or f["p"]
+            if not bb:
+                xs.append(None)
+                continue
+            sc = np.zeros(len(cands))
+            for b in bb:
+                bx0, bx1 = b[1] * sw, b[3] * sw
+                sc += np.clip(np.minimum(cands + wc / 2, bx1) - np.maximum(cands - wc / 2, bx0), 0, None) / max(bx1 - bx0, 1.0)
+            best = np.flatnonzero(sc >= sc.max() - 0.02)
+            mid = (min(b[1] for b in bb) + max(b[3] for b in bb)) / 2 * sw     # 담기는 자리 중 대상들의 가운데에 가장 가까운 곳(가운데 구도)
+            pick = cands[best[np.argmin(np.abs(cands[best] - mid))]]
+            xs.append(float(pick))
+        first_ai = next((x for x in xs if x is not None), sw / 2)
+        filled, last = [], first_ai
+        for x in xs:
+            last = x if x is not None else last
+            filled.append(last)
+        t_ai = np.arange(len(filled)) / fa
+        cen = list(np.interp(np.arange(len(cen)) / 12.0, t_ai, filled))
     first = next((c for c in cen if c is not None), sw / 2)
     path, last = [], first
     for c in cen:
@@ -2317,7 +2411,7 @@ def _track_crop(ref: Path, work: Path, res: dict) -> Path:
     def _ma(x, m):                                          # 이동 평균(가장자리는 끝값으로)
         return np.convolve(np.pad(x, m // 2, mode="edge"), np.ones(m) / m, mode="valid")
     a = _ma(raw_c, 9)                                       # 0.75초로 부드럽게(카메라처럼 미리 따라감)
-    a = np.clip(a, raw_c - wc * 0.28, raw_c + wc * 0.28)    # 움직이는 대상은 늘 창 안에(빠르게 방향을 바꿀 때 놓치지 않게)
+    a = np.clip(a, raw_c - wc * 0.22, raw_c + wc * 0.22)    # 움직이는 대상은 늘 창 안에(빠르게 방향을 바꿀 때 놓치지 않게)
     a = _ma(a, 5)                                           # 꺾인 곳만 한 번 더 다듬기(0.4초)
     a = np.clip(a, wc / 2, sw - wc / 2)
     t12 = np.arange(len(a)) / 12.0
@@ -2334,7 +2428,7 @@ def _track_crop(ref: Path, work: Path, res: dict) -> Path:
         if len(buf) < fb:
             break
         c = float(np.interp(j / 24.0, t12, a))
-        im = Image.frombytes("RGB", (sw, sh), buf).resize((720, 1280), Image.LANCZOS, box=(c - wc / 2, 0, c + wc / 2, sh))
+        im = Image.frombytes("RGB", (sw, sh), buf).resize((720, 1280), Image.LANCZOS, box=(c - wc / 2, ytop, c + wc / 2, ytop + win_h))
         enc.stdin.write(im.tobytes())
         j += 1
     dec.stdout.close()
@@ -2344,7 +2438,8 @@ def _track_crop(ref: Path, work: Path, res: dict) -> Path:
     if enc.returncode != 0 or j < 3:
         raise RuntimeError("따라가는 세로 화면을 만들지 못했습니다")
     _ff(["-i", str(vtmp), "-i", str(ref), "-map", "0:v", "-map", "1:a?", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", str(out)])
-    res["track"] = {"ok": True, "src": f"{sw}x{sh}", "win": round(wc), "zoom": round(1280 / sh, 2),
+    res["track"] = {"ok": True, "src": f"{sw}x{sh}", "win": f"{round(wc)}x{round(win_h)}", "top": round(ytop / sh, 3), "zoom": round(1280 / win_h, 2),
+                    "by": "AI 대상(동물 우선)" if any(f["a"] or f["p"] for f in F) else "움직임",
                     "path": [round(float(np.interp(t, t12, a)) / sw, 3) for t in np.arange(0, t12[-1] + 0.01, 0.5)]}
     return out
 
@@ -2523,7 +2618,7 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
         f = work / f"board_{i + 1:02d}.jpg"
         im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
         frames.append(f)
-    bad = _panel_bands(frames, painted=extend and not fresh)
+    bad = _panel_bands(frames, painted=extend and not fresh, real=(res.get("vertical") or {}).get("mode") == "track" and not fresh)
     if bad:                                             # ⛔ 9:16 꽉 찬 화면이 아닌 칸(위아래 흐림·회색·검정·하얗게 날아간 띠)은 보여 주지 않고 멈춘다(2026-10-08·10-09 사고)
         raise RuntimeError(f"스토리보드 {', '.join(str(b) for b in bad)}번 칸 위아래가 진짜 장면이 아닙니다(흐린/빈/하얗게 날아간 띠) — 보여 주지 않고 멈춤")
     return {"ok": True, "panels": len(frames)}
@@ -2534,7 +2629,7 @@ def _img2(swap: str) -> str:
     return re.sub(r"\b(from|in|of|like) image 1\b", r"\1 image 2", swap)
 
 
-def _panel_bands(frames: list, painted: bool = False) -> list:
+def _panel_bands(frames: list, painted: bool = False, real: bool = False) -> list:
     """칸 그림마다 위·아래 20%가 가운데보다 훨씬 밋밋(흐림·단색 띠)하면 그 칸 번호. 흐린 띠·회색 캔버스·검은 띠 모두 잡는다.
     painted(가로 원본의 위아래를 AI가 이어 그린 칸)면 '하얗게 날아간 빈 바닥'도 잡는다 — 가운데보다 훨씬 밝고 무늬가 없는 띠
     (2026-10-09 타일매트 편: 아래 1/3이 밝기 210·무늬 거의 없음 vs 가운데 120 → 사장님 "하얀색으로 가려져 있다")."""
@@ -2544,6 +2639,10 @@ def _panel_bands(frames: list, painted: bool = False) -> list:
         im = Image.open(f).convert("L").resize((180, 320))
         e = im.filter(ImageFilter.FIND_EDGES)
         top, mid, bot = (ImageStat.Stat(e.crop(b)).mean[0] for b in ((0, 0, 180, 64), (0, 112, 180, 208), (0, 256, 180, 320)))
+        if real:                                            # 원본 화면을 잘라 쓴 칸: 그림 AI가 붙인 단색 띠만(표준편차 6 미만)
+            if any(ImageStat.Stat(im.crop(b)).stddev[0] < 6 for b in ((0, 0, 180, 48), (0, 272, 180, 320))):
+                bad.append(i + 1)
+            continue
         if mid > 6 and (top < mid * 0.35 or bot < mid * 0.35):
             bad.append(i + 1)
             continue
@@ -3506,7 +3605,7 @@ def step_remake(ep, epdir, work, log, req):
         sw, sh = _wh(ref)
         res.pop("vertical", None)
         if composite and sw * 16 > sh * 9 * 1.05 and rm.get("vertical", "track") == "track":
-            ref = _track_crop(ref, work, res)
+            ref = _track_crop(ref, work, res, _subject_boxes(ref, work, res, cap))
             res["vertical"] = {"mode": "track", "src": f"{sw}x{sh}"}
         elif motion:
             res["vertical"] = {"mode": "reference_to_video 9:16", "src": f"{sw}x{sh}"}   # 참고 영상은 비율 그대로 넣고 출력만 9:16으로 받는다
