@@ -9,7 +9,7 @@
     "use_timeline": true,
     "src_sig": "9096cb4bdbc3-16.2",
     "src_full_sec": 16.25,
-    "spent": 4.72,
+    "spent": 4.73,
     "ledger": [
       {
         "what": "후킹 살려 10초로 줄이기",
@@ -69,6 +69,10 @@
       },
       {
         "what": "문구 위치 고르기",
+        "usd": 0.01
+      },
+      {
+        "what": "사람 얼굴 위치 찾기(모자이크)",
         "usd": 0.01
       },
       {
@@ -1245,13 +1249,19 @@
     "vertical": {
       "mode": "extend",
       "src": "720x400"
-    }
+    },
+    "faces": {
+      "frames": 228,
+      "with_head": 138,
+      "ai_frames": 38
+    },
+    "faces_src": "d8905f572e8c-9.5"
   },
   "error": "사람 얼굴 위치를 찾지 못해 모자이크하지 못했습니다(얼굴이 드러난 영상은 내보내지 않음) — 다시 시도하면 조립만 다시 합니다",
   "last_request": {
-    "file": "10_remake_full.json",
-    "ran_at": "2026-10-09T16:50:43Z",
-    "ok": false
+    "file": "11_remake_full.json",
+    "ran_at": "2026-10-09T16:55:27Z",
+    "ok": true
   },
   "cover": "work/cover.jpg",
   "assemble": {
