@@ -2122,7 +2122,8 @@ REMAKE_SWAP_KEEP = ("Edit this video. Change ONLY these things and keep absolute
                     "Shiba Inu - the main one looks exactly like the Shiba in image 1 (same face, fur colour and markings in every frame) - "
                     "at the natural size of the original animal, and its body moves exactly as that original animal's body (same pose, "
                     "gait, run, slide, fall, head turns, tail, mouth). Every person stays a real human with their own face, hair, hands "
-                    "and clothes, unchanged. CAST COUNT: {cast}. Remove any watermark or on-screen text. COMPOSITING QUALITY: "
+                    "and clothes, unchanged; a face that is blurred or pixelated in the input stays exactly as blurred. NEVER ADD an "
+                    "animal: a frame that shows no animal in the input stays without one. CAST COUNT: {cast}. Remove any watermark or on-screen text. COMPOSITING QUALITY: "
                     "each dog must look filmed in the same shot - match the original lighting direction, colour, shadows and motion "
                     "blur; no seam, outline or halo; the same dogs in every frame with no flicker, morphing or changing markings.")
 REMAKE_BOARD_KEEP = ("Image 1 is a 3x2 grid of six frames taken from one video (each panel is a separate moment; dark bars are only "
@@ -2130,7 +2131,8 @@ REMAKE_BOARD_KEEP = ("Image 1 is a 3x2 grid of six frames taken from one video (
                      "it is (people, clothes, poses, background, lights, camera framing): {swap}. Each replaced animal is a Shiba Inu - "
                      "the main one looks exactly like the Shiba in image 2 (same face, fur colour and markings) - and each one stays the "
                      "same dog in every panel, in exactly the same pose, place and size as the original animal. Every person stays a "
-                     "real human with their own face, hair, hands and clothes, unchanged. CAST COUNT: {cast}. Keep each panel's "
+                     "real human with their own face, hair, hands and clothes, unchanged; a blurred or pixelated face stays blurred. "
+                     "NEVER ADD an animal to a panel that shows none. CAST COUNT: {cast}. Keep each panel's "
                      "lighting and colours, but render every panel as a sharp, clean, high-detail photo (the source frames are blurry "
                      "low-resolution video: do not copy their blur, noise or compression). Remove any watermark or on-screen text; add no text.")
 REMAKE_BOARD_EXTEND = (" VERTICAL FILL (most important): in every panel the flat gray areas above and below the picture are EMPTY CANVAS - "
@@ -2261,8 +2263,8 @@ def _apply_freeze(src: Path, out: Path, spans, back: float = 0.0) -> Path:
 
 
 REMAKE_CLEAN = (" OUTPUT QUALITY: render clean, sharp, high-detail modern camera footage. Do NOT copy the input's blur, noise, "
-                "compression blocks, low resolution or washed-out colours; keep ONLY its composition, framing, timing, actions, "
-                "mouth movements and camera movement.")
+                "compression blocks, low resolution or washed-out colours (but keep any privacy blur or mosaic on a human face exactly "
+                "as in the input); keep ONLY its composition, framing, timing, actions, mouth movements and camera movement.")
 CLEAN_VF = "hqdn3d=3:3:4:4,scale=720:1280:flags=lanczos,unsharp=5:5:0.8:3:3:0.4"   # 원본 화질 손질(돈 안 듦) — 영상 AI에 넣기 전
 
 
@@ -2356,6 +2358,88 @@ def _subject_boxes(ref: Path, work: Path, res: dict, cap: float, fps: int = 4):
         clean.append({"a": boxes(e, "animals"), "p": boxes(e, "people")})
     res["track_ai"] = {"src": res.get("src_sig"), "fps": fps, "frames": clean}
     return res["track_ai"]
+
+
+HEAD_ASK = ("These are {n} frames, in order and {dt:.2f} s apart, from one video. In EVERY frame give the bounding box of the head "
+            "(face and hair) of every HUMAN person that is at least partly visible - never an animal. Coordinates are box_2d "
+            "[ymin, xmin, ymax, xmax] normalized to 0-1000. JSON only: {{\"frames\": [{{\"i\": 0, \"heads\": [[ymin, xmin, ymax, xmax]]}}]}} "
+            "with exactly {n} entries (i = 0..{last}); use an empty list when no human head is visible.")
+
+
+def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: int = 4) -> dict:
+    """사람은 그대로 두는 편: 결과 영상의 사람 머리(얼굴·머리카락)를 모자이크한다(사장님 확정 2026-10-09: 원본에서 가린 주인 얼굴을
+    영상 AI가 새로 그려 드러냄 — "모자이크 처리 당연히"). 머리 위치는 AI가 초당 4장으로 찾고(약 0.01달러, 사람만·동물 제외),
+    사이 프레임은 앞뒤 상자를 합쳐 가린다(움직여도 새지 않게). 얼굴 탐지기(YuNet)는 강아지 얼굴·선반을 잘못 가려 쓰지 않는다."""
+    import cv2
+    import shutil
+    d = work / "_head_frames"
+    shutil.rmtree(d, ignore_errors=True)
+    d.mkdir()
+    _ff(["-i", str(src), "-vf", f"fps={fps},scale=432:-2", "-q:v", "4", str(d / "f%03d.jpg")])
+    frames = sorted(d.glob("f*.jpg"))[:120]
+    _remake_spend(res, REMAKE_COST["check"], "사람 얼굴 위치 찾기(모자이크)", cap)
+    key = _key("GEMINI_API_KEY")
+    parts = [{"inline_data": _b64img(f)} for f in frames] + [{"text": HEAD_ASK.format(n=len(frames), dt=1 / fps, last=len(frames) - 1)}]
+    body = {"contents": [{"role": "user", "parts": parts}], "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}
+    got = None
+    for model in ("gemini-flash-latest", "gemini-pro-latest"):
+        st, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                        {"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=150)
+        if st == 200:
+            try:
+                t = "".join(q.get("text", "") for q in json.loads(raw)["candidates"][0]["content"]["parts"])
+                got = json.loads(t[t.find("{"):t.rfind("}") + 1])
+                break
+            except Exception:  # noqa: BLE001
+                pass
+    shutil.rmtree(d, ignore_errors=True)
+    fr = (got or {}).get("frames")
+    if not isinstance(fr, list) or not fr:
+        raise RuntimeError("사람 얼굴 위치를 찾지 못해 모자이크하지 못했습니다(얼굴이 드러난 영상은 내보내지 않음) — 다시 시도하면 조립만 다시 합니다")
+    heads = []
+    for k in range(len(frames)):
+        e = next((x for x in fr if isinstance(x, dict) and str(x.get("i")) == str(k)), fr[k] if k < len(fr) and isinstance(fr[k], dict) else {})
+        hb = []
+        for bb in (e.get("heads") or []):
+            try:
+                y0, x0, y1, x1 = (min(1.0, max(0.0, float(v) / 1000)) for v in bb[:4])
+            except (TypeError, ValueError):
+                continue
+            if x1 > x0 and y1 > y0:
+                hb.append((y0, x0, y1, x1))
+        heads.append(hb)
+    cap_v = cv2.VideoCapture(str(src))
+    vfps = cap_v.get(cv2.CAP_PROP_FPS) or 24.0
+    w, h = int(cap_v.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap_v.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    tmp = out.with_suffix(".raw.mp4")
+    vw = cv2.VideoWriter(str(tmp), cv2.VideoWriter_fourcc(*"mp4v"), vfps, (w, h))
+    n, hit = 0, 0
+    while True:
+        ok, im = cap_v.read()
+        if not ok:
+            break
+        kf = n / vfps * fps
+        k0 = min(len(heads) - 1, int(kf))
+        boxes = heads[k0] + (heads[k0 + 1] if k0 + 1 < len(heads) else []) + (heads[k0 - 1] if k0 > 0 else [])
+        hit += bool(boxes)
+        for (y0, x0, y1, x1) in boxes:
+            bw, bh = (x1 - x0) * w, (y1 - y0) * h
+            X0, Y0 = max(0, int(x0 * w - bw * 0.2)), max(0, int(y0 * h - bh * 0.2))
+            X1, Y1 = min(w, int(x1 * w + bw * 0.2)), min(h, int(y1 * h + bh * 0.15))
+            if X1 - X0 < 4 or Y1 - Y0 < 4:
+                continue
+            roi = im[Y0:Y1, X0:X1]
+            small = cv2.resize(roi, (max(1, (X1 - X0) // 16), max(1, (Y1 - Y0) // 16)), interpolation=cv2.INTER_LINEAR)
+            im[Y0:Y1, X0:X1] = cv2.resize(small, (X1 - X0, Y1 - Y0), interpolation=cv2.INTER_NEAREST)
+        vw.write(im)
+        n += 1
+    cap_v.release()
+    vw.release()
+    if not n:
+        raise RuntimeError("얼굴 모자이크: 영상을 읽지 못했습니다")
+    _ff(["-i", str(tmp), "-an", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", str(out)])
+    tmp.unlink(missing_ok=True)
+    return {"frames": n, "with_head": hit, "ai_frames": len(frames)}
 
 
 def _track_crop(ref: Path, work: Path, res: dict, ai: dict | None = None) -> Path:
@@ -3626,7 +3710,7 @@ def step_remake(ep, epdir, work, log, req):
         # 강아지가 작고 아래가 하얗게 가린 것처럼 보임). 예전 '위아래 이어 그리기'는 remake.vertical="extend"일 때만
         sw, sh = _wh(ref)
         res.pop("vertical", None)
-        if composite and sw * 16 > sh * 9 * 1.05 and rm.get("vertical", "track") == "track":
+        if composite and sw * 16 > sh * 9 * 1.05 and rm.get("vertical") == "track":   # 따라가는 카메라는 시킬 때만(사장님 지적 2026-10-09: 여자 줌·강아지 줌 오가며 개판)
             ref = _track_crop(ref, work, res, _subject_boxes(ref, work, res, cap))
             res["vertical"] = {"mode": "track", "src": f"{sw}x{sh}"}
         elif motion:
@@ -3776,6 +3860,12 @@ def step_remake(ep, epdir, work, log, req):
                 _ff([*ins, "-filter_complex", ";".join(fc) + f";[{cur}]format=yuv420p[v]", "-map", "[v]", "-t", f"{_dur(body_v):.2f}",
                      "-c:v", "libx264", "-crf", "20", str(hid)])
                 body_v = hid
+        if rm.get("keep_people") and rm.get("blur_faces", True):   # ⛔ 사람은 그대로 두는 편: 사람 얼굴은 항상 모자이크(사장님 확정 2026-10-09)
+            fb = work / "remake_faces.mp4"
+            if not fb.exists() or res.get("faces_src") != _src_sig(body_v):
+                res["faces"] = _blur_heads(body_v, fb, work, res, cap)
+                res["faces_src"] = _src_sig(body_v)
+            body_v = fb
         # 2) 끝 장면: 마지막 프레임 + 실제 상품 사진 → 첫 장면 → 4초
         last = work / "_rm_last.png"
         _ff(["-sseof", "-0.1", "-i", str(body_v), "-frames:v", "1", str(last)])
