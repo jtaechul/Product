@@ -11,6 +11,7 @@ probe(토큰) 는 발행 없이 '어느 API로, 어느 계정에 올릴 수 있�
 """
 from __future__ import annotations
 
+import json
 import logging
 import time
 
@@ -18,8 +19,11 @@ import requests
 
 log = logging.getLogger(__name__)
 
-_IG_BASE = "https://graph.instagram.com"
-_FB_BASE = "https://graph.facebook.com/v21.0"
+# ★v24.0(2026-10-09): 시험 릴스 게시(trial_params)·「3초 안에 넘긴 비율」(reels_skip_rate)이 들어간 뒤의 버전으로 고정.
+#   새 매개변수를 모르는 옛 버전은 그 값을 조용히 무시할 수 있다 → 시험 릴스가 일반 릴스(팔로워에게 보임)로 올라가는 사고 방지.
+#   (옛 v21.0 은 2년 지원 기간이 끝나 가고, 버전 없는 graph.instagram.com 은 앱 기본 버전을 따른다)
+_IG_BASE = "https://graph.instagram.com/v24.0"
+_FB_BASE = "https://graph.facebook.com/v24.0"
 _TIMEOUT = 30
 
 
@@ -69,11 +73,14 @@ def resolve_ig_user_id(token: str) -> tuple[str, str, str]:
 
 
 def create_container(base: str, ig_id: str, video_url: str, caption: str,
-                     token: str) -> str:
-    """릴스 컨테이너 생성 → creation_id(container id)."""
-    r = requests.post(f"{base}/{ig_id}/media",
-                      data={"media_type": "REELS", "video_url": video_url,
-                            "caption": caption, "access_token": token}, timeout=_TIMEOUT)
+                     token: str, trial: str | None = None) -> str:
+    """릴스 컨테이너 생성 → creation_id(container id).
+    trial: 시험 릴스(팔로워가 아닌 사람에게만 먼저 보임 · Meta 2025-12-03 추가 `trial_params`)의
+    graduation_strategy — "MANUAL"(앱에서 직접 '모두에게 공유') 또는 "SS_PERFORMANCE"(성과가 좋으면 자동 공유)."""
+    data = {"media_type": "REELS", "video_url": video_url, "caption": caption, "access_token": token}
+    if trial:
+        data["trial_params"] = json.dumps({"graduation_strategy": trial})
+    r = requests.post(f"{base}/{ig_id}/media", data=data, timeout=_TIMEOUT)
     if not r.ok:
         raise IGPublishError(f"컨테이너 생성 실패({r.status_code}): {r.text[:300]}")
     cid = str(r.json().get("id", ""))
@@ -158,6 +165,64 @@ def publish_reel(token: str, video_url: str, caption: str) -> dict:
     post_id = publish_container(base, ig_id, cid, token)
     log.info("[ig] 발행 완료 post_id=%s", post_id)
     return {"post_id": post_id, "ig_user_id": ig_id, "username": username}
+
+
+def media_info(base: str, media_id: str, token: str) -> dict:
+    """게시물 주소(permalink)·시각 — 실패해도 빈 dict."""
+    try:
+        r = requests.get(f"{base}/{media_id}", params={"fields": "permalink,timestamp", "access_token": token},
+                         timeout=_TIMEOUT)
+        return r.json() if r.ok else {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def publish_trial_reel(token: str, video_url: str, caption: str, strategy: str = "MANUAL") -> dict:
+    """시험 릴스 1편 게시(팔로워가 아닌 사람에게만 먼저). {media_id, permalink, username, base}."""
+    if not token:
+        raise IGPublishError("IG_ACCESS_TOKEN 이 비어 있습니다.")
+    base, ig_id, username = resolve_ig_user_id(token)
+    cid = create_container(base, ig_id, video_url, caption, token, trial=strategy)
+    wait_container(base, cid, token, max_wait=600)
+    mid = publish_container(base, ig_id, cid, token)
+    info = media_info(base, mid, token)
+    log.info("[ig] 시험 릴스 게시 @%s media=%s", username, mid)
+    return {"media_id": mid, "permalink": info.get("permalink", ""), "username": username, "base": base}
+
+
+# 시험 릴스 비교 지표: 조회 · 도달 · 3초 안에 넘긴 비율(reels_skip_rate · Meta 2025-12-03 추가) · 평균 시청 시간
+TRIAL_METRICS = ("views", "reach", "reels_skip_rate", "ig_reels_avg_watch_time")
+
+
+def _metric_value(item: dict):
+    vals = item.get("values")
+    if vals:
+        return (vals[0] or {}).get("value")
+    return (item.get("total_value") or {}).get("value")
+
+
+def media_insights(token: str, media_id: str, metrics=TRIAL_METRICS) -> dict:
+    """게시물 지표 {metrics: {이름: 값}, errors: {이름: 이유}} — 한꺼번에 실패하면 지표마다 따로 물어 받을 수 있는 것만 모은다
+    (새 지표는 계정·버전에 따라 아직 안 될 수 있음)."""
+    base, _, _ = resolve_ig_user_id(token)
+
+    def ask(ms):
+        return requests.get(f"{base}/{media_id}/insights", params={"metric": ",".join(ms), "access_token": token},
+                            timeout=_TIMEOUT)
+    out, errors = {}, {}
+    r = ask(metrics)
+    if r.ok:
+        for it in r.json().get("data", []):
+            out[it.get("name")] = _metric_value(it)
+    else:
+        for m in metrics:
+            r1 = ask([m])
+            if r1.ok:
+                for it in r1.json().get("data", []):
+                    out[it.get("name")] = _metric_value(it)
+            else:
+                errors[m] = r1.text.replace(token, "***")[:200]
+    return {"metrics": out, "errors": errors}
 
 
 def build_caption(record: dict) -> str:

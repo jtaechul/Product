@@ -29,6 +29,10 @@
   python admin.py crosscheck <id>               # AI 교차 검사(대본 전체 × 사실 전체 — 모순·범위·근거 없음)
   python admin.py recut_plan <id> <컷> '<json>'  # 컷 수정 방향 → 샷 계획 + 콘티(영상은 안 만듦)
   python admin.py recut_approve <id> <컷>        # 콘티 승인 → 샷별 영상 → 한 컷 합성 → 재조립
+  python admin.py after_video <id>              # 완성본 승인 뒤: 시험 릴스(후킹 A·B)로 겨루기 시작 — 못 하면 바로 제목·설명
+  python admin.py trial_check [id]              # 시험 릴스 결과 가져오기·판정(24~48시간 · 이긴 후킹으로 제목·설명·예약 공개 준비)
+  python admin.py trial_skip <id>               # 시험 건너뛰고 지금 후킹으로 진행
+  python admin.py ig_probe                      # 인스타 연결 점검(게시 없음)
   python admin.py topics                        # 주제 후보 목록(topics.json) 갱신
   python admin.py index                         # 편 목록(index.json) 갱신
 """
@@ -36,6 +40,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -107,14 +112,9 @@ def approve(pid: str, stage: str, memo: str = "") -> dict:
         if nxt["state"] == "locked":
             nxt["state"] = "working"
     _save(status_path(pid), st)
-    if stage == "video":                                    # 완성본 승인 → 유튜브 제목·설명·해시태그 자동 작성
-        try:
-            upload_meta(pid)
-        except Exception as e:                               # noqa: BLE001 — 실패해도 승인은 유지, 버튼으로 다시
-            st = load_status(pid)
-            _note(st, "upload", "error", f"제목·설명 자동 작성 실패 — 「AI로 다시 쓰기」를 눌러 주세요: {str(e)[:120]}")
-            _save(status_path(pid), st)
-        st = load_status(pid)
+    # ★완성본 승인 뒤의 일(시험 릴스로 후킹 겨루기 → 이긴 후킹으로 제목·설명)은 `after_video` 가 한다
+    #   (워크플로 '버튼 실행' 단계 — 키가 있는 곳. 승인 자체는 키 없는 첫 단계에서 바로 반영 · 2026-10-06).
+    #   실사고 2026-10-09: 승인을 첫 단계로 옮긴 뒤 여기서 부르던 제목 자동 작성이 키가 없어 조용히 실패하고 있었다.
     return st
 
 
@@ -519,7 +519,8 @@ def edit_hook(pid: str, data: dict) -> dict:
     if (st["artifacts"].get("video") or {}).get("final"):
         st["artifacts"]["script"]["hook_pending"] = True         # 영상엔 아직 미반영 — 재조립 필요
         _note(st, "video", "hook", "후킹·정답 문구 수정됨 — 「완성본 다시 조립」을 누르면 반영(무료)")
-    where = f"{hk['at']}초부터(운영자 지정)" if hk.get("at_by") == "operator" else "가장 많이 움직이는 2초(조립 때 자동 선택)"
+    where = {"operator": f"{hk['at']}초부터(운영자 지정)", "trial": f"{hk['at']}초부터(시험 릴스 구간)"}.get(
+        hk.get("at_by"), "가장 많이 움직이는 2초(조립 때 자동 선택)")
     tail = f" · 목소리 「{hk.get('voice_jp', '')}」 · 끝 카드 {hk['answer_jp']}" if line else f" → 正解 {hk['answer_jp']}"
     _note(st, "script", "hook", f"후킹 수정: {hk['cut']}번 컷 {where} 「{hk['question_jp']}」{tail}")
     _save(status_path(pid), st)
@@ -1223,7 +1224,7 @@ def motion_checks(mp4: Path, hook: dict | None) -> dict:
     out = {}
     if hook:
         m = float(hook.get("motion") or 0)
-        how = "자동 선택" if hook.get("by") == "auto" else "운영자 지정"
+        how = {"auto": "자동 선택", "trial": "시험 릴스 구간"}.get(hook.get("by"), "운영자 지정")
         out["hook_motion"] = {"value": m, "ok": m >= A.HOOK_MIN_MOTION, "warn": True,
                               "rule": f"맨 앞 2초 움직임 {A.HOOK_MIN_MOTION:g} 이상 · {hook['cut']}번 컷 {hook['at']}초부터({how}) · "
                                       "실측: 왕게 1.0(81% 바로 넘김) · 대왕구족충 3.8 · 유령해삼 6.9"}
@@ -1379,7 +1380,7 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
   ・key_jp: text_jp の中でいちばん強い言葉(赤で強調する・6文字以内・text_jp にそのまま含まれる)。
   ・voice_jp: 0秒からナレーションが読む一言(text_jp と同じ意味・少し補ってよい・2.5秒以内・key_jp を含む・名前は入れない)。
   ・answer_jp は最後のカードに出す生き物の呼び名(台本で使った呼び名と同じ)。カット1・2には出さず、3カット目以降で明かす。
-{feedback}
+{pattern_hint}{feedback}
 # 出力(JSONのみ)
 {{"core":"F4","cuts":[{{"cut":1,"jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
 "scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄 · 별명은 실제 생물을 괄호로: 바다돼지(해삼))","annotation":"画面の注釈(日本語のみ・韓国語禁止・14文字以内・数字は事実どおり・なければ空)"}}],
@@ -1707,8 +1708,9 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
             prev = "\n".join(f"カット{c['cut']}: {c['jp']}" for c in old.get("cuts", []) if c.get("jp"))
             fb = f"# 運営者の修正依頼(必ず反映)\n{feedback}\n# 前の台本\n{prev}\n"
         hook = None
+        hint = _pattern_hint()                               # 시험 릴스에서 이긴 후킹 틀(쌓였을 때만 · 참고)
         for attempt in range(3):
-            gen = _json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt,
+            gen = _json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt, pattern_hint=hint,
                                                              core=core or "(なし — 事実リストから最も驚く一つを選ぶ)")))
             cuts, hook, core_id = gen.get("cuts") or [], gen.get("hook"), str(gen.get("core") or "").strip()
             probs = validate_script(cuts, facts) + (validate_hook_candidates(hook, cuts, facts, name=ja_name or "")
@@ -2403,10 +2405,22 @@ def ensure_hook_voice(pid: str, sc: dict | None = None) -> str | None:
     pilot = PILOTS / pid
     if hk.get("voice_file") and hk.get("voice_for") == voice and (pilot / hk["voice_file"]).exists():
         return hk["voice_file"]
-    rid = _rid("hook_tts")
+    rel = _tts_line(pid, voice, "hook_tts")
+    if not rel:
+        return None
+    hk["voice_file"], hk["voice_for"] = rel, voice
+    sc["hook"] = hk
+    _save(_script_path(pid), sc)
+    return rel
+
+
+def _tts_line(pid: str, text: str, tag: str) -> str | None:
+    """한 줄을 나레이션 목소리로 합성 → 편 폴더 기준 wav 경로(실패하면 None · 예외 없음)."""
+    pilot = PILOTS / pid
+    rid = _rid(tag)
     rp = pilot / "requests" / f"{rid}.json"
     _save(rp, {"id": rid, "kind": "gen_tts", "purpose": "후킹 한 줄 목소리(0초부터 읽기)",
-               "items": [{"name": "hook", "jp": voice, "tts": auto_reading(voice)}]})
+               "items": [{"name": "hook", "jp": text, "tts": auto_reading(text)}]})
     try:
         code = _run_request(rp)
     except Exception:                                        # noqa: BLE001 — 목소리가 없어도 조립은 계속
@@ -2415,10 +2429,7 @@ def ensure_hook_voice(pid: str, sc: dict | None = None) -> str | None:
     f = next((it.get("file") for it in res.get("items", []) if it.get("file")), None)
     if code != 0 or not f or not (pilot / "out" / rid / f).exists():
         return None
-    hk["voice_file"], hk["voice_for"] = f"out/{rid}/{f}", voice
-    sc["hook"] = hk
-    _save(_script_path(pid), sc)
-    return hk["voice_file"]
+    return f"out/{rid}/{f}"
 
 
 def still_clip(img: Path, sec: float, dst: Path, fade_out: bool = False) -> Path:
@@ -2560,6 +2571,491 @@ def save_viewed(pid: str, data: dict) -> dict:
     return st
 
 
+# ── 시험 릴스로 후킹 겨루기(운영자 선택 2026-10-09: 자동 · 결과 보고 올리기 · 2개) ────────────────────────
+# 완성본 승인 → 맨 앞만 다른 B 버전(다른 후보 문장·목소리·첫 장면)을 만들어 A·B 를 인스타 「시험 릴스」(팔로워가 아닌 사람에게
+# 먼저 보임 · Meta API 2025-12-03 trial_params)로 함께 올리고, 24~48시간 뒤 「3초 안에 넘긴 비율」(reels_skip_rate)로
+# 이긴 후킹을 고른다 → 이긴 후킹으로 유튜브 제목·설명을 쓰고 예약 공개(일본 시간 19시)를 준비한다.
+# · 유튜브 업로드 승인(관문 4)은 그대로 운영자. 인스타 「모두에게 공유」(졸업)는 API로 안 돼 앱에서 직접 누른다.
+# · 인스타 시청자 ≠ 유튜브 시청자 → 절대 숫자가 아니라 A·B 중 어느 쪽이 나은지만 본다(최종 확인은 유튜브 「시청함 %」).
+# · 시험을 못 하면(키 없음·옛 형식 후킹·게시 실패) 이유를 남기고 예전처럼 바로 제목·설명을 쓴다(업로드 준비는 멈추지 않음).
+TRIAL_DUE_H = 24                       # 인스타가 24시간 뒤부터 성과를 보여 준다 — 그 전엔 판정하지 않는다
+TRIAL_LATE_H = 48                      # 이때까지 조회가 모자라면 낮은 기준으로 판정, 그래도 모자라면 판정 보류
+TRIAL_MIN_VIEWS = 300                  # 24시간 판정: 버전마다 조회 이만큼
+TRIAL_MIN_VIEWS_LATE = 100             # 48시간 판정: 버전마다 조회 이만큼(이보다 적으면 보류 → A 그대로)
+TRIAL_TIE_PP = 3.0                     # 3초 넘김 비율 차이가 이보다 작으면 무승부 → A(처음 고른 후킹) 그대로
+TRIAL_WATCH_TIE = 0.10                 # 넘김 비율을 48시간까지 못 받으면 평균 시청 시간으로 — 10% 미만 차이는 무승부
+TRIAL_B_GAP_S = 1.0                    # B 첫 장면은 A 구간에서 1초 이상 떨어진 곳(거의 같은 영상 두 개 → 인스타 중복 판정 방지)
+TRIAL_B_MOTION = 0.7                   # …단 A 움직임의 70% 이상일 때만, 아니면 A와 같은 장면(B를 덜 움직이는 장면으로 불리하게 안 함)
+TRIAL_RULE = (f"게시 {TRIAL_DUE_H}시간 뒤 두 버전 모두 조회 {TRIAL_MIN_VIEWS}회 이상이면 「3초 안에 넘긴 비율」이 "
+              f"{TRIAL_TIE_PP:g}%p 이상 낮은 쪽이 이김 · 차이가 그보다 작으면 A 그대로 · {TRIAL_LATE_H}시간까지 조회가 모자라면 "
+              f"버전마다 {TRIAL_MIN_VIEWS_LATE}회 이상으로 판정, 그래도 모자라면 판정 보류(A 그대로)")
+DASH_URL = "https://shorts-dashboard.jtaechul.workers.dev"   # 인스타가 영상을 가져가는 공개 주소(워커 /v2file/커밋/편/파일)
+_IG_API: dict = {}                     # 테스트용 대체 {"post": f(url, 캡션), "insights": f(media_id), "probe": f(), "check": f(url)}
+_COMMIT_PUSH = None                    # 테스트용 대체(커밋·푸시 → 커밋 번호)
+
+
+def _safe_err(e) -> str:
+    """오류 문구에서 토큰을 지운다 — status.json 은 공개 저장소에 커밋된다(요청 주소에 access_token 이 섞여 나올 수 있음)."""
+    s = str(e)
+    tok = os.environ.get("IG_ACCESS_TOKEN", "").strip()
+    if tok:
+        s = s.replace(tok, "***")
+    return re.sub(r"(access_token=)[^&\s'\"]+", r"\1***", s)[:240]
+
+
+def _ig() -> dict | None:
+    """인스타 API(토큰은 GitHub 비밀값 IG_ACCESS_TOKEN 에서만 · 화면·기록에 남기지 않음) — 키가 없으면 None."""
+    if _IG_API:
+        return _IG_API
+    tok = os.environ.get("IG_ACCESS_TOKEN", "").strip()
+    if not tok:
+        return None
+    sys.path.insert(0, str(ROOT))
+    from src.core import ig_publish as IG                    # noqa: E402
+    return {"post": lambda url, cap: IG.publish_trial_reel(tok, url, cap, "MANUAL"),
+            "insights": lambda mid: IG.media_insights(tok, mid),
+            "probe": lambda: IG.probe(tok),
+            "check": _url_ready}
+
+
+def _url_ready(url: str, tries: int = 6, wait: float = 10.0) -> bool:
+    """인스타가 가져갈 영상 주소가 실제로 mp4 로 열리는지 — 방금 푸시한 파일·새 배포는 잠깐 늦을 수 있어 몇 번 더 본다."""
+    import urllib.request
+    for i in range(tries):
+        if i:
+            time.sleep(wait)
+        try:
+            req = urllib.request.Request(url, headers={"Range": "bytes=0-1023", "User-Agent": "shorts-admin/1.0"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                if r.status in (200, 206) and "video/mp4" in (r.headers.get("Content-Type") or ""):
+                    return True
+        except Exception:                                    # noqa: BLE001
+            pass
+    return False
+
+
+def _commit_push(msg: str) -> str:
+    """B 영상을 먼저 커밋·푸시(인스타가 공개 주소로 가져가야 함) → 그 커밋 번호. 워크플로 밖(로컬)에서는 올리지 않는다."""
+    if _COMMIT_PUSH:
+        return _COMMIT_PUSH(msg)
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        raise RuntimeError("시험 릴스는 워크플로에서만 올립니다(B 영상을 먼저 커밋·푸시해야 인스타가 가져갈 수 있음)")
+    r = subprocess.run(["bash", str(V2 / "tools" / "ci_commit.sh"), msg], cwd=str(ROOT), capture_output=True, text=True, timeout=600)
+    if r.returncode != 0:
+        raise RuntimeError("B 영상 커밋·푸시 실패: " + (r.stderr or r.stdout or "")[-200:])
+    sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT), capture_output=True, text=True).stdout.strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise RuntimeError("커밋 번호를 읽지 못했습니다")
+    return sha
+
+
+def trial_media_url(sha: str, pid: str, rel: str) -> str:
+    """커밋 번호로 고정한 공개 주소 — 브랜치 이름 주소는 새 파일이 몇 분 늦게 보일 수 있다(raw 캐시)."""
+    return f"{DASH_URL}/v2file/{sha}/{pid}/{rel}"
+
+
+def trial_caption(sc: dict) -> str:
+    """A·B 에 똑같이 붙는 캡션(후킹만 달라야 공정) — 후킹 문장·생물 이름 없이 채널 소개 + AI 재현 표기 + 공통 해시태그."""
+    return PLAYLIST_DESC + "\n" + _REPRO_JP + "\n\n" + " ".join(CORE_TAGS_JP)
+
+
+def _pick_b(hk: dict) -> int | None:
+    """B 후보: 지금 후킹과 문장이 다른 후보 중 **틀(pattern)이 다른** 것을 먼저(같은 말 바꾸기보다 다른 각도를 겨룰 가치가 큼)."""
+    cands = hk.get("candidates") or []
+    others = [i for i, c in enumerate(cands) if isinstance(c, dict) and str(c.get("text_jp") or "").strip()
+              and str(c.get("voice_jp") or "").strip() and _norm(c["text_jp"]) != _norm(hk.get("question_jp", ""))]
+    diff = [i for i in others if cands[i].get("pattern") != hk.get("pattern")]
+    return (diff or others or [None])[0]
+
+
+def _other_window(series: list, a_at: float, usable_s: float, sec: float) -> tuple[float, float]:
+    """B 첫 장면(같은 컷): A 구간에서 TRIAL_B_GAP_S 이상 떨어진 곳 중 가장 많이 움직이는 sec초 — 그 움직임이 A 의
+    TRIAL_B_MOTION 배 이상일 때만, 아니면 A 와 같은 곳. 반환 (시작 초, 움직임)."""
+    sys.path.insert(0, str(V2 / "tools"))
+    import assemble as A                                     # noqa: E402
+    a_m = A.window_motion(series, a_at, sec)
+    best = None
+    for i in range(int(round(max(0.0, usable_s - sec) * A.MOTION_FPS)) + 1):
+        t = round(i / A.MOTION_FPS, 2)
+        if abs(t - a_at) < TRIAL_B_GAP_S:
+            continue
+        m = A.window_motion(series, t, sec)
+        if best is None or m > best[1]:
+            best = (t, m)
+    if best and best[1] > 0 and best[1] >= TRIAL_B_MOTION * a_m:
+        return best
+    return round(a_at, 2), a_m
+
+
+def _assemble_with_hook(pid: str, hk: dict, dst: Path) -> dict:
+    """대본은 그대로 두고 맨 앞 후킹만 hk 로 바꿔 조립(시험 B 버전 · 이긴 B 를 새 본편으로 다시 조립)."""
+    st = load_status(pid)
+    pilot = PILOTS / pid
+    a = st["artifacts"]["video"]
+    sys.path.insert(0, str(V2 / "tools"))
+    import assemble as A                                     # noqa: E402
+    over = {int(c["cut"]): str(pilot / c["file"]) for c in a.get("clips", [])}
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    return A.main(str(pilot), a["assemble"]["clips_id"], a["assemble"]["tts_id"], "", str(dst), overrides=over,
+                  hook_override=hk) or {}
+
+
+def _hook_checks(pid: str, dst: Path, used: dict, voice_jp: str) -> dict:
+    """맨 앞이 바뀐 완성본 검사(움직임 · 목소리 · 음량 · 맨 앞 가장자리 흰 줄)."""
+    ck = auto_checks(dst, body_s=float(used.get("len") or 3.0))
+    out = {k: ck[k] for k in ("duration_s", "loudness_lufs")}
+    if not ck["white_edge_px"]["ok"]:
+        out["white_edge_px"] = ck["white_edge_px"]
+    out.update(motion_checks(dst, used))
+    out["hook_voice"] = {"ok": bool(used.get("voice")), "value": voice_jp,
+                         "rule": "후킹 한 줄을 0초부터 목소리로 읽기(실패하면 맨 앞이 무음 — 「완성본 다시 조립」으로 다시 시도)"}
+    return out
+
+
+def build_trial_variant(pid: str, ib: int) -> dict:
+    """B 버전 완성본: 후보 ib 의 문장·빨간 단어·목소리 + (되면) 다른 첫 장면. 대본(script.json)은 바꾸지 않는다.
+    반환 {"hook": B 후킹(전체), "file": 편 폴더 기준 mp4, "checks": 검사}."""
+    st = load_status(pid)
+    sc = _load(_script_path(pid)) or {}
+    pilot = PILOTS / pid
+    a = st["artifacts"]["video"]
+    sys.path.insert(0, str(V2 / "tools"))
+    import assemble as A                                     # noqa: E402
+    hb = hook_from_candidate(sc["hook"], ib)
+    for k in ("voice_file", "voice_for", "motion"):
+        hb.pop(k, None)
+    A.check_glyphs(hb["question_jp"], "시험 B 후킹")
+    vrel = _tts_line(pid, hb["voice_jp"], "trial_tts")
+    if not vrel:
+        raise RuntimeError("B 후킹 목소리 합성 실패")
+    hb["voice_file"], hb["voice_for"] = vrel, hb["voice_jp"]
+    n = int(hb["cut"])
+    clip = next((pilot / c["file"] for c in a.get("clips", []) if int(c["cut"]) == n), None) \
+        or pilot / "out" / a["assemble"]["clips_id"] / f"c{n:02d}.mp4"
+    cut_s = float(next((c.get("sec") for c in sc.get("cuts", []) if c.get("cut") == n and "tts" in c), 0) or 0)
+    at_b, m_b = _other_window(A.motion_series(clip, dur=cut_s or None), float(sc["hook"].get("at") or 0), cut_s,
+                              A.hook_seconds(pilot / vrel))
+    hb.update(at=at_b, at_by="trial")                        # 조립 때 이 구간 그대로(자동 선택이 A 와 같은 곳으로 돌리지 않게)
+    dst = pilot / "out" / _rid("trial") / "final_b.mp4"
+    used = _assemble_with_hook(pid, hb, dst).get("hook") or {}
+    hb.update(at=used.get("at", at_b), motion=used.get("motion", m_b))
+    return {"hook": hb, "file": str(dst.relative_to(pilot)), "checks": _hook_checks(pid, dst, used, hb["voice_jp"])}
+
+
+def _hook_brief(h: dict) -> dict:
+    return {k: h.get(k) for k in ("question_jp", "question_ko", "key_jp", "voice_jp", "pattern", "chosen", "cut", "at", "motion")}
+
+
+def start_trial(pid: str, api: dict, ib: int) -> dict:
+    """B 버전 조립 → 커밋·푸시 → A·B 를 시험 릴스로 게시(수동 졸업) → artifacts.trial = 진행 중."""
+    set_job(pid, "upload", "running", "시험 릴스 준비 중 — B 버전 조립 → 인스타에 A·B 게시(5~15분)", "after_video")
+    b = build_trial_variant(pid, ib)
+    sha = _commit_push(f"chore(v2): 시험 릴스 B 영상 {pid} [skip ci]")
+    st = load_status(pid)
+    sc = _load(_script_path(pid)) or {}
+    a = st["artifacts"]["video"]
+    files = {"a": a["final"], "b": b["file"]}
+    cap = trial_caption(sc)
+    order = ["a", "b"] if sum(map(ord, pid)) % 2 == 0 else ["b", "a"]   # 먼저 올린 쪽이 늘 유리하지 않게 편마다 번갈아
+    posted: dict = {}
+    try:
+        for k in order:
+            url = trial_media_url(sha, pid, files[k])
+            if not api["check"](url):
+                raise RuntimeError(f"{k.upper()} 영상 주소가 열리지 않습니다(관리자 페이지 배포를 확인): {url}")
+            posted[k] = api["post"](url, cap)
+    except Exception as e:                                   # noqa: BLE001
+        done = ", ".join(f"{k.upper()} {posted[k].get('permalink') or posted[k].get('media_id')}" for k in posted)
+        raise RuntimeError(_safe_err(e) + (f" — 이미 올라간 시험 릴스: {done}(인스타 앱에서 지우거나 그대로 두세요)" if done else ""))
+    hk = sc["hook"]
+    side = lambda k, h: {"hook": h, "file": files[k], "media_id": posted[k].get("media_id", ""),   # noqa: E731
+                         "permalink": posted[k].get("permalink", ""), "metrics": {}}
+    tr = {"state": "running", "posted_at": _now(), "video_built_at": a.get("built_at"), "order": order, "rule": TRIAL_RULE,
+          "caption": cap, "strategy": "MANUAL", "username": next((p.get("username") for p in posted.values() if p.get("username")), ""),
+          "a": side("a", _hook_brief(hk)), "b": {**side("b", b["hook"]), "checks": b["checks"]}}
+    st["artifacts"]["trial"] = tr
+    st.setdefault("jobs", {})["upload"] = {"stage": "upload", "status": "trial", "at": _now(), "action": "after_video",
+                                           "text": "인스타 시험 릴스로 후킹 A·B 를 겨루는 중 — 게시 24시간 뒤부터 결과"}
+    _note(st, "upload", "trial", f"시험 릴스 2개 게시 — A 「{hk.get('question_jp', '')}」 · B 「{b['hook']['question_jp']}」. "
+                                 f"{TRIAL_DUE_H}~{TRIAL_LATE_H}시간 뒤 판정하고, 이긴 후킹으로 제목·설명을 씁니다")
+    _save(status_path(pid), st)
+    return st
+
+
+def next_publish_slot(now: float | None = None, hour: int = 19) -> str:
+    """다음 일본(=한국) 시간 19:00 — 지금부터 1시간 이상 뒤 → UTC 'YYYY-MM-DDTHH:MM:00Z'(유튜브 예약 공개 시각)."""
+    import datetime as dt
+    jst = dt.timezone(dt.timedelta(hours=9))
+    n = dt.datetime.fromtimestamp(time.time() if now is None else now, jst)
+    s = n.replace(hour=hour, minute=0, second=0, microsecond=0)
+    if s.timestamp() - n.timestamp() < 3600:
+        s += dt.timedelta(days=1)
+    return s.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:00Z")
+
+
+def _write_meta_safely(pid: str, schedule: bool = False) -> bool:
+    """유튜브 제목·설명 자동 작성 — 실패해도 멈추지 않고 기록만(화면의 「제목·설명 AI로 쓰기」로 다시).
+    schedule: 시험 판정 뒤 → 운영자가 고른 공개 범위가 없으면 「예약 공개 · 다음 19시」로 준비(업로드는 운영자 승인 때)."""
+    try:
+        upload_meta(pid)
+    except Exception as e:                                   # noqa: BLE001
+        st = load_status(pid)
+        _note(st, "upload", "error", f"제목·설명 자동 작성 실패 — 「제목·설명 AI로 쓰기」를 눌러 주세요: {str(e)[:120]}")
+        _save(status_path(pid), st)
+        return False
+    if schedule:
+        st = load_status(pid)
+        m = st["artifacts"]["upload"]["meta"]
+        if m.get("privacy", "private") == "private":
+            m["privacy"], m["publish_at"] = "scheduled", next_publish_slot()
+            _note(st, "upload", "meta", f"예약 공개 준비: {m['publish_at']}(UTC = 일본·한국 19시) — 업로드는 「승인」을 눌러야 합니다")
+            _save(status_path(pid), st)
+    return True
+
+
+def after_video(pid: str) -> dict:
+    """완성본 승인 뒤(워크플로 '버튼 실행' 단계 · 키 있음): 시험 릴스로 후킹 겨루기 시작.
+    못 하면(옛 형식 후킹 · 다른 후보 없음 · 인스타 키 없음 · 게시 실패) 이유를 남기고 예전처럼 바로 제목·설명을 쓴다."""
+    st = load_status(pid)
+    if st["stages"]["video"]["state"] != "approved":
+        raise SystemExit("완성본이 아직 승인되지 않았습니다")
+    if (((st.get("artifacts") or {}).get("upload") or {}).get("result") or {}).get("url"):
+        print("이미 유튜브에 올린 편 — 그대로 둡니다")
+        return st
+    tr = (st.get("artifacts") or {}).get("trial") or {}
+    if tr.get("state") == "running":                         # 다시 승인(수정 뒤)해도 진행 중인 시험은 그대로 — 후킹 문장 비교라 본편 수정과 무관
+        _note(st, "upload", "trial", "시험 릴스 진행 중 — 결과가 나오면 이긴 후킹으로 제목·설명을 씁니다")
+        _save(status_path(pid), st)
+        return st
+    if tr.get("state") == "decided":                         # 이미 판정 — 대본 후킹이 이긴 쪽이라 다시 조립해도 이긴 후킹
+        _write_meta_safely(pid, schedule=True)
+        return load_status(pid)
+    sc = _load(_script_path(pid)) or {}
+    hk = sc.get("hook") or {}
+    api = _ig()
+    ib = _pick_b(hk) if hk.get("type") == "line" else None
+    voice_ok = ((st.get("checks") or {}).get("hook_voice") or {}).get("ok", True)
+    why = ("옛 형식 후킹(후보 문장 없음)" if hk.get("type") != "line" else
+           "겨룰 다른 후보 문장이 없음" if ib is None else
+           "A 버전 맨 앞 목소리가 없어 공정하게 비교할 수 없음(「완성본 다시 조립」 뒤 다시 승인하면 시험)" if not voice_ok else
+           "인스타 연결 키(IG_ACCESS_TOKEN)가 없음 — 영상 목록의 「인스타 시험 릴스」 칸 안내를 보세요" if not api else "")
+    if not why:
+        try:
+            return start_trial(pid, api, ib)
+        except Exception as e:                               # noqa: BLE001 — 시험이 안 돼도 업로드 준비는 계속
+            why = "시험 릴스 게시 실패: " + _safe_err(e)
+    st = load_status(pid)
+    st.setdefault("artifacts", {})["trial"] = {"state": "skipped", "reason": why, "at": _now()}
+    st.setdefault("jobs", {})["upload"] = {"stage": "upload", "status": "done", "at": _now(), "action": "after_video",
+                                           "text": "시험 릴스 없이 진행"}
+    _note(st, "upload", "trial", f"시험 릴스 건너뜀 — {why}. 지금 후킹으로 제목·설명을 씁니다")
+    _save(status_path(pid), st)
+    _write_meta_safely(pid)
+    return load_status(pid)
+
+
+def _iso_ts(iso: str) -> float:
+    import datetime as dt
+    return dt.datetime.fromisoformat(str(iso).replace("Z", "+00:00")).timestamp()
+
+
+def _skip_pct(v) -> float | None:
+    """3초 넘김 비율 → % (API 가 0~1 비율로 주면 100 을 곱한다 · 실제 넘김 비율이 1% 미만일 일은 없다)."""
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return None
+    return round(v * 100 if 0 < v < 1 else v, 1)
+
+
+def trial_decide(tr: dict, now: float | None = None) -> dict:
+    """판정(TRIAL_RULE) — kind: wait(아직) · win(승부 남) · tie(차이 작음 → A) · hold(조회 부족 → A)."""
+    hours = round(((time.time() if now is None else now) - _iso_ts(tr["posted_at"])) / 3600, 1)
+    res = {"hours": hours, "winner": None}
+    if hours < TRIAL_DUE_H:
+        return {**res, "kind": "wait", "why": f"게시 {hours:g}시간 — {TRIAL_DUE_H}시간 뒤부터 판정"}
+    ma, mb = ((tr.get(k) or {}).get("metrics") or {} for k in ("a", "b"))
+    if "views" not in ma or "views" not in mb:
+        return {**res, "kind": "wait", "why": "지표를 아직 못 가져왔습니다(인스타 연결 확인)"}
+    va, vb = int(ma.get("views") or 0), int(mb.get("views") or 0)
+    late = hours >= TRIAL_LATE_H
+    need = TRIAL_MIN_VIEWS_LATE if late else TRIAL_MIN_VIEWS
+    if min(va, vb) < need:
+        if not late:
+            return {**res, "kind": "wait", "why": f"조회 A {va} · B {vb} — 버전마다 {TRIAL_MIN_VIEWS}회가 모일 때까지(최대 {TRIAL_LATE_H}시간)"}
+        return {**res, "kind": "hold", "why": f"{TRIAL_LATE_H}시간 동안 조회가 모자람(A {va} · B {vb}, 버전마다 {TRIAL_MIN_VIEWS_LATE}회 필요) — A 그대로"}
+    sa, sb = _skip_pct(ma.get("reels_skip_rate")), _skip_pct(mb.get("reels_skip_rate"))
+    if sa is not None and sb is not None:
+        d = round(sa - sb, 1)                                # + 이면 B 가 덜 넘김
+        if abs(d) < TRIAL_TIE_PP:
+            return {**res, "kind": "tie", "by": "skip", "why": f"3초 안에 넘김 A {sa}% · B {sb}% — 차이 {abs(d):g}%p(기준 {TRIAL_TIE_PP:g}%p 미만) → A 그대로"}
+        w = "b" if d > 0 else "a"
+        return {**res, "kind": "win", "winner": w, "by": "skip", "why": f"3초 안에 넘김 A {sa}% · B {sb}% → {w.upper()} 가 {abs(d):g}%p 덜 넘김"}
+    if not late:
+        return {**res, "kind": "wait", "why": f"「3초 안에 넘긴 비율」을 아직 못 받음(조회 A {va} · B {vb}) — {TRIAL_LATE_H}시간까지 기다림"}
+    wa, wb = float(ma.get("ig_reels_avg_watch_time") or 0), float(mb.get("ig_reels_avg_watch_time") or 0)
+    if wa > 0 and wb > 0:
+        rel = (wb - wa) / max(wa, wb)
+        txt = f"넘김 비율을 끝내 못 받아 평균 시청 시간으로: A {wa / 1000:.1f}초 · B {wb / 1000:.1f}초"
+        if abs(rel) < TRIAL_WATCH_TIE:
+            return {**res, "kind": "tie", "by": "watch", "why": txt + f" — 차이 {TRIAL_WATCH_TIE:.0%} 미만 → A 그대로"}
+        w = "b" if rel > 0 else "a"
+        return {**res, "kind": "win", "winner": w, "by": "watch", "why": txt + f" → {w.upper()} 승"}
+    return {**res, "kind": "hold", "why": "비교할 지표(넘김 비율·평균 시청 시간)를 끝내 못 받음 — A 그대로"}
+
+
+def trial_check(pid: str | None = None, now: float | None = None) -> list[dict]:
+    """진행 중인 시험 릴스 지표를 가져와 판정(편 id 가 없으면 진행 중인 모든 편) — 승부가 나면 apply_trial_result."""
+    api = _ig()
+    pids = [pid] if pid else [p.parent.name for p in sorted(PILOTS.glob("*/status.json"))]
+    out = []
+    for p in pids:
+        st = load_status(p)
+        tr = (st.get("artifacts") or {}).get("trial") or {}
+        if tr.get("state") != "running":
+            continue
+        if not api:
+            tr["error"] = "인스타 연결 키(IG_ACCESS_TOKEN)가 없어 결과를 못 가져왔습니다"
+        else:
+            tr.pop("error", None)
+            for k in ("a", "b"):
+                try:
+                    got = api["insights"](tr[k]["media_id"])
+                    tr[k]["metrics"] = {**(tr[k].get("metrics") or {}), **{m: v for m, v in (got.get("metrics") or {}).items() if v is not None}}
+                    tr[k]["metric_errors"] = {m: _safe_err(v) for m, v in (got.get("errors") or {}).items()}
+                except Exception as e:                       # noqa: BLE001 — 한쪽이 실패해도 다른 쪽은 기록
+                    tr[k]["metric_errors"] = {"all": _safe_err(e)}
+        tr["checked_at"] = _now()
+        dec = trial_decide(tr, now)
+        tr["last"] = dec
+        st["artifacts"]["trial"] = tr
+        _save(status_path(p), st)
+        if dec["kind"] != "wait":
+            apply_trial_result(p, dec)
+        out.append({"pid": p, **dec})
+    return out
+
+
+def apply_trial_result(pid: str, dec: dict) -> dict:
+    """판정 반영: B 가 이기면 대본 후킹을 B 로 바꾸고(구간 고정 at_by=trial) 완성본도 B 로 — 아니면 A 그대로.
+    그다음 이긴 후킹으로 유튜브 제목·설명 + 예약 공개 준비. 업로드 자체는 운영자 승인(관문 4)."""
+    st = load_status(pid)
+    tr = st["artifacts"]["trial"]
+    tr.update(state="decided", result=dec, decided_at=_now())
+    win = dec.get("winner") if dec.get("kind") == "win" else None
+    tr["winner"] = win or "a"
+    a = st["artifacts"]["video"]
+    if win == "b":
+        sc = _load(_script_path(pid))
+        hb = {**tr["b"]["hook"], "at_by": "trial"}
+        sc.setdefault("hook_history", []).append({"at": _now(), "hook": sc["hook"], "why": "시험 릴스에서 B 승"})
+        sc["hook"] = hb
+        _save(_script_path(pid), sc)
+        _sync_script_artifacts(st, sc)
+        same = tr.get("video_built_at") == a.get("built_at") and (PILOTS / pid / tr["b"]["file"]).exists()
+        if same:                                             # 시험에 쓴 바로 그 B 영상
+            fb, ck = tr["b"]["file"], tr["b"].get("checks") or {}
+        else:                                                # 시험 중 본편을 고쳐 다시 조립했으면 새 본편 + B 후킹으로 다시 조립
+            dst = PILOTS / pid / "out" / _rid("final_b") / "final.mp4"
+            used = _assemble_with_hook(pid, hb, dst).get("hook") or {}
+            fb, ck = str(dst.relative_to(PILOTS / pid)), _hook_checks(pid, dst, used, hb.get("voice_jp", ""))
+        a["final_a"], a["final"] = a["final"], fb
+        st.setdefault("checks", {}).update(ck)
+        _note(st, "video", "trial", f"시험 릴스 결과 B 승 — 완성본을 B 버전(「{hb.get('question_jp', '')}」)으로 바꿨습니다")
+    st.setdefault("jobs", {})["upload"] = {"stage": "upload", "status": "done", "at": _now(), "action": "trial_check",
+                                           "text": "시험 릴스 판정 끝"}
+    kind_ko = {"win": f"{(win or 'a').upper()} 승", "tie": "무승부(A 그대로)", "hold": "판정 보류(A 그대로)"}.get(dec.get("kind"), "")
+    _note(st, "upload", "trial", f"시험 릴스 판정: {kind_ko} — {dec.get('why', '')}. 이긴 후킹으로 제목·설명을 씁니다 · "
+                                 f"인스타 앱에서 이긴 릴스의 「모두에게 공유」를 누르면 팔로워에게도 보입니다")
+    _save(status_path(pid), st)
+    _write_meta_safely(pid, schedule=True)
+    return load_status(pid)
+
+
+def trial_skip(pid: str) -> dict:
+    """운영자가 시험을 건너뜀 — 지금 후킹(A)으로 바로 제목·설명(인스타에 올라간 시험 릴스는 그대로 둔다 · 팔로워에겐 안 보임)."""
+    st = load_status(pid)
+    tr = (st.get("artifacts") or {}).get("trial") or {}
+    if tr.get("state") == "decided":
+        raise SystemExit("시험 판정이 이미 끝났습니다")
+    if st["stages"]["video"]["state"] != "approved":
+        raise SystemExit("완성본을 먼저 승인해 주세요")
+    tr.update(state="skipped", reason="운영자가 건너뜀", at=_now())
+    st.setdefault("artifacts", {})["trial"] = tr
+    st.setdefault("jobs", {})["upload"] = {"stage": "upload", "status": "done", "at": _now(), "action": "trial_skip",
+                                           "text": "시험 릴스 건너뜀"}
+    _note(st, "upload", "trial", "운영자가 시험 릴스를 건너뜀 — 지금 후킹으로 제목·설명을 씁니다")
+    _save(status_path(pid), st)
+    _write_meta_safely(pid)
+    return load_status(pid)
+
+
+def _ig_status_path() -> Path:
+    return PILOTS / "_shared" / "ig_status.json"
+
+
+def ig_probe() -> dict:
+    """인스타 연결 점검(게시 없음) — 키가 있는지 · 어느 계정에 올라가는지. 결과는 목록 화면에 보인다(index.json)."""
+    api = _ig()
+    res: dict = {"at": _now()}
+    if not api:
+        res.update(ok=False, error="GitHub 비밀값 IG_ACCESS_TOKEN 이 없습니다")
+    else:
+        try:
+            p = api["probe"]()
+            res.update(ok=True, username=p.get("username", ""))
+        except Exception as e:                               # noqa: BLE001
+            res.update(ok=False, error=_safe_err(e))
+    _save(_ig_status_path(), res)
+    return res
+
+
+def hook_pattern_stats() -> dict:
+    """후킹 틀별 시험 릴스 성적 {틀: {tests, wins, losses, ties, skip_avg}} — 판정 보류는 세지 않는다."""
+    out: dict = {}
+    for p in sorted(PILOTS.glob("*/status.json")):
+        tr = ((_load(p, {}) or {}).get("artifacts") or {}).get("trial") or {}
+        res = tr.get("result") or {}
+        if tr.get("state") != "decided" or res.get("kind") not in ("win", "tie"):
+            continue
+        for k in ("a", "b"):
+            s = out.setdefault(((tr.get(k) or {}).get("hook") or {}).get("pattern") or "?",
+                               {"tests": 0, "wins": 0, "losses": 0, "ties": 0, "skips": []})
+            s["tests"] += 1
+            s["ties" if res["kind"] == "tie" else ("wins" if res.get("winner") == k else "losses")] += 1
+            sk = _skip_pct(((tr.get(k) or {}).get("metrics") or {}).get("reels_skip_rate"))
+            if sk is not None:
+                s["skips"].append(sk)
+    for s in out.values():
+        sk = s.pop("skips")
+        s["skip_avg"] = round(sum(sk) / len(sk), 1) if sk else None
+    return out
+
+
+TRIAL_HINT_MIN = 3                     # 판정 난 시험이 이만큼 쌓여야 다음 대본 후보 쓰기에 참고로 알려 준다(적으면 우연)
+
+
+def _pattern_hint() -> str:
+    """지금까지 시험 릴스에서 어느 틀이 이겼는지 — 다음 대본 후보 3개를 쓸 때 참고(3개·서로 다른 틀 규칙은 그대로)."""
+    stats = hook_pattern_stats()
+    if sum(s["tests"] for s in stats.values()) < 2 * TRIAL_HINT_MIN:
+        return ""
+    rows = sorted(stats.items(), key=lambda kv: (-(kv[1]["wins"] - kv[1]["losses"]), kv[0]))
+    return ("- 参考(これまでのInstagram試験リールで、最初の3秒で飛ばされにくかった型。少数なので傾向として): "
+            + " / ".join(f"{k} {s['wins']}勝{s['losses']}敗{s['ties']}分" for k, s in rows)
+            + "。成績の良い型を候補1にしてよいが、型の違う3つを出す規則は同じ。\n")
+
+
+def _trial_brief(tr: dict | None) -> dict | None:
+    if not tr:
+        return None
+    side = lambda k: {"line": (((tr.get(k) or {}).get("hook")) or {}).get("question_jp", ""),   # noqa: E731
+                      "pattern": (((tr.get(k) or {}).get("hook")) or {}).get("pattern", "")}
+    return {"state": tr.get("state"), "posted_at": tr.get("posted_at"), "checked_at": tr.get("checked_at"),
+            "winner": tr.get("winner"), "kind": (tr.get("result") or {}).get("kind"), "reason": tr.get("reason"),
+            "a": side("a"), "b": side("b")}
+
+
 def build_index() -> dict:
     items = []
     for p in sorted(PILOTS.glob("*/status.json")):
@@ -2573,8 +3069,9 @@ def build_index() -> dict:
                       "uploaded_at": (lambda r: r.get("publish_at") or r.get("at"))(                 # 예약이면 공개 시각 기준(주 2편 집계)
                           (((st.get("artifacts") or {}).get("upload") or {}).get("result") or {})),
                       "stats": (((st.get("artifacts") or {}).get("upload") or {}).get("stats")),
-                      "viewed": (((st.get("artifacts") or {}).get("upload") or {}).get("viewed"))})   # 시청함 %·후킹 틀
-    idx = {"updated": _now(), "items": items}
+                      "viewed": (((st.get("artifacts") or {}).get("upload") or {}).get("viewed")),   # 시청함 %·후킹 틀
+                      "trial": _trial_brief((st.get("artifacts") or {}).get("trial"))})            # 시험 릴스(목록 화면 · 자동 결과 확인)
+    idx = {"updated": _now(), "items": items, "hook_patterns": hook_pattern_stats(), "ig": _load(_ig_status_path())}
     _save(PILOTS / "index.json", idx)
     return idx
 
@@ -2771,6 +3268,14 @@ def main(argv: list[str]) -> int:
         save_upload_meta(a[0], json.loads(memo(2) or "{}"))
     elif cmd == "save_viewed":                               # note = {"pct": 18.6, "note": ".."} — 유튜브 스튜디오 '시청함 %'
         save_viewed(a[0], json.loads(memo(2) or "{}"))
+    elif cmd == "after_video":                               # 완성본 승인 뒤(버튼 실행 단계 · 키 있음): 시험 릴스 → 판정 뒤 제목·설명
+        after_video(a[0])
+    elif cmd == "trial_check":                               # 시험 릴스 결과·판정(편 id 가 없으면 진행 중인 모든 편)
+        trial_check(a[0] if a and a[0] else None)
+    elif cmd == "trial_skip":
+        trial_skip(a[0])
+    elif cmd == "ig_probe":
+        ig_probe()
     elif cmd == "crosscheck":
         crosscheck(a[0])
     elif cmd == "apply_lines":

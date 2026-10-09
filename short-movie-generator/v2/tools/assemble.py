@@ -422,12 +422,13 @@ def best_hook_window(series: list[float | None], usable_s: float, sec: float = H
 
 
 def pick_hook(clip: Path, hook: dict, clip_s: float, sec: float = HOOK_S) -> dict:
-    """후킹 발췌 구간(길이 sec): 운영자가 시작 초를 직접 정했으면(at_by=operator) 그대로, 아니면 가장 많이 움직이는 구간을 자동 선택."""
+    """후킹 발췌 구간(길이 sec): 운영자가 시작 초를 직접 정했거나(at_by=operator) 시험 릴스 구간이면(at_by=trial) 그대로,
+    아니면 가장 많이 움직이는 구간을 자동 선택."""
     hmax = max(0.0, clip_s - sec)
     series = motion_series(clip, dur=clip_s or None)
-    if hook.get("at_by") == "operator" and hook.get("at") is not None:
+    if hook.get("at_by") in ("operator", "trial") and hook.get("at") is not None:   # trial = 시험 릴스에서 이긴(또는 겨루는) 구간 그대로
         at = round(max(0.0, min(float(hook["at"]), hmax)), 2)
-        return {"at": at, "motion": window_motion(series, at, sec), "by": "operator"}
+        return {"at": at, "motion": window_motion(series, at, sec), "by": hook["at_by"]}
     at, m = best_hook_window(series, clip_s, sec)
     return {"at": round(min(at, hmax), 2), "motion": m, "by": "auto"}
 
@@ -552,9 +553,11 @@ def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: P
     return cur
 
 
-def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, overrides: dict | None = None) -> dict:
+def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, overrides: dict | None = None,
+         hook_override: dict | None = None) -> dict:
     """overrides: {컷번호: 클립 경로} — 관리자 페이지에서 그 컷만 다시 만든 경우 새 클립을 쓴다.
     ending: 예전 공용 엔딩 mp4(script.json 에 hook 이 없는 옛 편에만 쓰임 · '' 이면 안 붙임).
+    hook_override: script.json 의 hook 대신 쓸 후킹(시험 릴스 B 버전 — 대본은 그대로 두고 맨 앞만 다르게 조립).
     반환: {"hook": {"cut", "at", "motion", "by"}} — 실제로 쓴 후킹 구간(후킹이 없는 옛 편은 빈 dict)."""
     info: dict = {}
     karaoke.verify_font()        # ★자막 글꼴 자가 검사 — 네모(□)·빈칸이면 여기서 멈춘다(영상을 만들지 않음)
@@ -601,7 +604,7 @@ def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, override
               "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
               "-t", f"{body_len}", str(t / "body.mp4")])
         # ④ 앞뒤 연결 — 후킹(hook)이 있으면 [후킹 2초][본편][정답 카드 2초], 없으면 예전 공용 엔딩(주어진 경우만)
-        hook = sc.get("hook") or None
+        hook = hook_override or sc.get("hook") or None
         segs = [t / "body.mp4"]
         if hook:
             n = int(hook["cut"])

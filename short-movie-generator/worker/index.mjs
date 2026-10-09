@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-09-2 (후킹 개편: 0초 목소리 · 12자 한 줄 · 후보 3개 · 시청함 % 기록)";
+const BUILD="v2026-10-09-3 (시험 릴스 후킹 A·B: 자동 게시 · 24~48시간 판정 · 이긴 후킹으로 유튜브 준비)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2393,15 +2393,17 @@ function v2job(job,stage,state,pid){
     if(req&&req.stage===stage&&!fresh)return {kind:"starting",job:{at:req.at}};
   }
   if(state!=="working"&&state!=="revise")return {kind:"none"};
+  if(j&&j.status==="trial")return {kind:"trial",job:j};      // 인스타 시험 릴스로 후킹 겨루는 중(24~48시간 · 멈춤 아님)
   if(j&&j.status==="running"){
     const age=(Date.now()-Date.parse(j.at||0))/60000;
     return age<V2_JOB_STALE_MIN?{kind:"running",job:j}:{kind:"stale",job:j};
   }
   if(j&&j.status==="failed")return {kind:"failed",job:j};
-  return {kind:V2_AUTO[stage]?"idle":"manual",job:j};
+  return {kind:V2_AUTO[stage]?"idle":(stage==="upload"?"none":"manual"),job:j};   // 업로드 칸은 제목·설명 버튼이 따로 있다
 }
 function v2badgeJob(state,jb){
   if(jb.kind==="running")return '<span class="v2st prog">작업 중</span>';
+  if(jb.kind==="trial")return '<span class="v2st prog">시험 중</span>';
   if(jb.kind==="starting")return '<span class="v2st prog">시작 중</span>';
   if(jb.kind==="failed")return '<span class="v2st fail">실패</span>';
   if(jb.kind==="stale")return '<span class="v2st fail">멈춤</span>';
@@ -2414,6 +2416,7 @@ function v2retryBtn(stage,lab){return V2_AUTO[stage]?'<button class="btn save" d
 function v2jobHTML(stage,jb){
   if(jb.kind==="running")return '<div class="hint" style="margin-top:6px"><span class="ok">자동 작업이 실제로 돌고 있습니다</span> — '+esc(jb.job.text||"")+
     ' (시작 '+v2when(jb.job.at)+' · 보통 3~6분)'+(jb.live&&jb.live.url?' · <a href="'+esc(jb.live.url)+'" target="_blank">진행 상황 보기</a>':'')+'. 이 화면은 자동으로 새로 고쳐집니다.</div>';
+  if(jb.kind==="trial")return '<div class="hint" style="margin-top:6px"><span class="ok">인스타 시험 릴스로 후킹 A·B를 겨루는 중입니다</span> — 아래 「인스타 시험 릴스」 칸에서 볼 수 있습니다. 결과가 나오면 이긴 후킹으로 유튜브 제목·설명을 자동으로 씁니다.</div>';
   if(jb.kind==="starting")return '<div class="hint" style="margin-top:6px"><span class="ok">요청을 보냈습니다</span> — 서버가 작업을 시작하는 중입니다(보통 30초 안). 이 화면은 자동으로 새로 고쳐집니다.</div>';
   if(jb.kind==="failed")return '<div class="hint" style="margin-top:6px"><span class="err">자동 작업 실패</span> — '+esc(jb.job.text||"")+'</div>'+v2retryBtn(stage,"다시 시도");
   if(jb.kind==="stale")return '<div class="hint" style="margin-top:6px"><span class="err">작업이 '+V2_JOB_STALE_MIN+'분 넘게 끝나지 않았습니다(멈춘 것으로 보입니다)</span> — 시작 '+v2when(jb.job.at)+'</div>'+v2retryBtn(stage,"다시 시도");
@@ -2501,7 +2504,7 @@ async function renderV2List(){
   html+='<div class="card"><span class="lbl">업로드 주기 · 실적</span>'+
     '<div class="cfact">최근 7일 업로드 <b class="'+(wk>=V2_WEEKLY_TARGET?"ok":"err")+'">'+wk+'편</b> / 목표 주 '+V2_WEEKLY_TARGET+'편'+(wk<V2_WEEKLY_TARGET?' — '+(V2_WEEKLY_TARGET-wk)+'편 더 올려야 합니다':'')+'</div>'+
     (tot?'<div class="cfact">업로드한 편 합계: 조회 '+tot.toLocaleString()+' · 구독 +'+subs+'</div>':'')+
-    '<button class="btn" id="v2stats" style="width:100%;margin-top:8px">유튜브 실적 새로고침 (무료)</button></div>'+v2viewedCard(items);
+    '<button class="btn" id="v2stats" style="width:100%;margin-top:8px">유튜브 실적 새로고침 (무료)</button></div>'+v2viewedCard(items)+v2igCard(idx||{},items);
   groups.forEach(([title,fn])=>{
     const g=items.filter(fn);
     html+='<div class="card"><span class="lbl">'+esc(title)+' ('+g.length+')</span>'+
@@ -2514,6 +2517,8 @@ async function renderV2List(){
   view().innerHTML=html;v2bindTok();
   const rs=$("#v2stats");if(rs)rs.onclick=async()=>{if(confirm("업로드한 모든 편의 유튜브 실적을 가져올까요? (무료 · 1~2분)"))
     if(await v2do("stats","","","",rs))banner("실적을 가져오는 중입니다. 1~2분 뒤 새로고침하세요.","ok");};
+  const ip=$("#igprobe");if(ip)ip.onclick=async()=>{if(await v2do("ig_probe","","","",ip))banner("인스타 연결을 점검하는 중입니다(게시하지 않음). 1~2분 뒤 새로고침하세요.","ok");};
+  v2trialAuto("",items.some(x=>v2trialDue(x.trial)),()=>{if(location.pathname==="/")renderV2List();});
 }
 
 // ── 새 영상 만들기(/new) ──
@@ -2603,6 +2608,7 @@ function v2stageBody(st,stage){
     const spent=((st.cost||{}).spent||[]).reduce((s,x)=>s+(+x.usd||0),0);
     return '<span class="lbl">완성본'+(ck.duration_s?(' ('+ck.duration_s+'초)'):'')+'</span>'+
       '<video controls playsinline preload="metadata" src="'+v2media(pid,a.final,rev)+'#t=0.5"></video>'+v2dlHTML("v")+
+      (a.final_a?'<div class="cfact"><span class="ok">인스타 시험 릴스에서 이긴 B 버전</span>이 완성본입니다(맨 앞 후킹만 다름 · A 버전 파일도 보관).</div>':'')+
       (rows?'<div class="sect">자동 검사'+(ck.at?(' · '+v2when(ck.at)):'')+'</div>'+rows:'')+
       '<div class="sect">컷별 검수 — 마음에 안 드는 컷만 다시 만들기</div>'+
       '<div class="v2clips">'+(a.clips||[]).map(c=>'<div class="v2clip">'+
@@ -2626,7 +2632,7 @@ function v2stageBody(st,stage){
       '<div class="cfact"><span class="ok">업로드 완료</span> ('+esc(V2_PV[res.privacy]||res.privacy||"")+
         (res.category?' · '+esc(V2_CAT[res.category]||res.category):'')+') · <a href="'+esc(res.url)+'" target="_blank">유튜브에서 보기</a></div>'+
       (res.playlist?'<div class="cfact">재생목록 「深海の謎」에 추가됨</div>':(res.playlist_error?'<div class="cfact warn">재생목록 추가 실패 — '+esc(res.playlist_error)+'</div>':''))+
-      v2statsHTML(a.stats)+v2viewedHTML(a.viewed)+
+      v2statsHTML(a.stats)+v2viewedHTML(a.viewed)+v2trialHTML(st)+
       v2dlHTML("u")+
       '<div class="sect">인스타그램 등에 붙여넣기 — 복사</div>'+
       v2copyBox("제목 (일본어)",m.title_jp,"cp_tj")+v2copyBox("설명 (일본어 · 해시태그 포함)",m.desc_jp,"cp_dj")+
@@ -2634,9 +2640,11 @@ function v2stageBody(st,stage){
       v2copyBox("제목 (한국어)",m.title_ko,"cp_tk")+v2copyBox("설명 (한국어 · 해시태그 포함)",m.desc_ko,"cp_dk")+
       v2copyBox("해시태그 (한국어)",(m.tags_ko||[]).join(" "),"cp_hk")+
       v2copyBox("고정 댓글 (유튜브 앱에서 직접 달고 고정)",m.pinned_comment,"cp_pc");
-    if(!m)return '<div class="hint" style="margin-top:0">완성본을 승인하면 유튜브 제목·설명·해시태그를 자동으로 씁니다.</div>'+
-      '<button class="btn save" id="upmeta" style="width:100%;margin-top:8px">제목·설명 AI로 쓰기 (약 $0.01)</button>';
-    return v2dlHTML("u")+'<div class="dual" style="margin-top:4px"><div><span class="lbl">제목 (일본어 · 실제로 올라감)</span><input id="up_tj" value="'+esc(m.title_jp)+'">'+v2copyBtn("up_tj")+'</div>'+
+    const trRun=((st.artifacts||{}).trial||{}).state==="running";
+    if(!m)return v2trialHTML(st)+(trRun?'<div class="hint">시험이 끝나면 이긴 후킹으로 유튜브 제목·설명을 자동으로 쓰고, 예약 공개(일본 시간 19시)를 준비합니다. 기다리지 않으려면 위의 「시험 건너뛰고…」를 누르세요.</div>':
+      '<div class="hint" style="margin-top:0">완성본을 승인하면 유튜브 제목·설명·해시태그를 자동으로 씁니다.</div>'+
+      '<button class="btn save" id="upmeta" style="width:100%;margin-top:8px">제목·설명 AI로 쓰기 (약 $0.01)</button>');
+    return v2trialHTML(st)+v2dlHTML("u")+'<div class="dual" style="margin-top:4px"><div><span class="lbl">제목 (일본어 · 실제로 올라감)</span><input id="up_tj" value="'+esc(m.title_jp)+'">'+v2copyBtn("up_tj")+'</div>'+
         '<div><span class="lbl">제목 (한국어 · 확인용)</span><input id="up_tk" value="'+esc(m.title_ko)+'">'+v2copyBtn("up_tk")+'</div></div>'+
       '<div class="dual"><div><span class="lbl">설명 (일본어 · 실제로 올라감)</span><textarea id="up_dj">'+esc(m.desc_jp)+'</textarea>'+v2copyBtn("up_dj")+'</div>'+
         '<div><span class="lbl">설명 (한국어 · 확인용)</span><textarea id="up_dk">'+esc(m.desc_ko)+'</textarea>'+v2copyBtn("up_dk")+'</div></div>'+
@@ -2646,7 +2654,7 @@ function v2stageBody(st,stage){
       '<span class="lbl">고정 댓글 (업로드 후 유튜브 앱에서 직접 고정)</span><input id="up_pc" value="'+esc(m.pinned_comment||"")+'">'+
       '<span class="lbl">공개 범위</span><select id="up_pv">'+[["private","비공개(먼저 확인)"],["unlisted","일부 공개"],["public","공개"],["scheduled","예약 공개 (시간 지정)"]].map(([v,l])=>'<option value="'+v+'"'+(m.privacy===v?' selected':'')+'>'+l+'</option>').join("")+'</select>'+
       '<div id="up_atbox" style="display:'+(m.privacy==="scheduled"?'block':'none')+'">'+
-        '<span class="lbl">공개할 시각 (한국 시간 = 일본 시간)</span><input type="datetime-local" id="up_at" value="'+esc(m.publish_at?v2kstInput(m.publish_at):v2nextAt(19,0))+'">'+
+        '<span class="lbl">공개할 시각 (한국 시간 = 일본 시간)</span><input type="datetime-local" id="up_at" value="'+esc(m.publish_at&&Date.parse(m.publish_at)>Date.now()+15*6e4?v2kstInput(m.publish_at):v2nextAt(19,0))+'">'+
         '<div class="btnrow"><button class="btn" data-atq="0">오늘 19:00</button><button class="btn" data-atq="1">내일 19:00</button></div>'+
         '<div class="hint">「승인 → 유튜브 업로드」를 누르면 지금 비공개로 올라가고, 이 시각에 유튜브가 자동으로 공개합니다. 시각은 지금부터 15분 이후로 골라 주세요.</div></div>'+
       '<div class="btnrow"><button class="btn" id="upsave">수정 내용 저장</button><button class="btn warn" id="upmeta">AI로 다시 쓰기</button></div>';
@@ -2721,6 +2729,7 @@ function v2hookKey(text,key){                     // 화면 문장에서 핵심 
 }
 function v2hookAtLine(h){
   return '<div class="cfact">발췌: <b>'+esc(h.cut)+'번 컷</b> '+(h.at_by==="operator"?(esc(h.at)+'초부터 (운영자 지정)'):
+      h.at_by==="trial"?(esc(h.at)+'초부터 (인스타 시험 릴스에서 겨룬 구간'+(h.motion!=null?' · 움직임 '+esc(h.motion):'')+')'):
       (h.at_by==="auto"?(esc(h.at)+'초부터 (가장 많이 움직이는 구간 자동 선택'+(h.motion!=null?' · 움직임 '+esc(h.motion):'')+')'):'가장 많이 움직이는 구간 (조립 때 자동 선택)'))+
       ' · 본편 그대로 · 추가 비용 없음</div>';
 }
@@ -2740,7 +2749,7 @@ function v2hookLineHTML(a){
     '<button class="btn v2edit" id="hkopen">후킹 직접 고치기</button>'+
     '<div class="v2ed" id="hked" style="display:none">'+
       '<span class="lbl">발췌할 컷</span><select id="hk_cut">'+cuts.map(c=>'<option value="'+c.cut+'"'+(String(c.cut)===String(h.cut)?' selected':'')+'>'+c.cut+'번 · '+esc(c.sec||"")+'초 · '+esc(String(c.ko||"").slice(0,22))+'</option>').join("")+'</select>'+
-      '<span class="lbl">발췌 시작(초) — 비워 두면 가장 많이 움직이는 구간을 자동 선택 · 숫자를 바꾸면 그 초로 고정</span><input id="hk_at" type="number" step="0.5" min="0" value="'+esc(h.at==null||h.at_by!=="operator"?"":h.at)+'">'+
+      '<span class="lbl">발췌 시작(초) — 비워 두면 가장 많이 움직이는 구간을 자동 선택 · 숫자를 바꾸면 그 초로 고정</span><input id="hk_at" type="number" step="0.5" min="0" value="'+esc(h.at==null||(h.at_by!=="operator"&&h.at_by!=="trial")?"":h.at)+'">'+
       '<span class="lbl">화면 문장(일본어 · 「、」 빼고 12자 이내 · 줄을 바꿀 곳에만 「、」)</span><input id="hk_qj" value="'+esc(h.question_jp||"")+'">'+
       '<span class="lbl">빨간 단어(화면 문장 안에 그대로 있는 말 · 6자 이내)</span><input id="hk_kj" value="'+esc(h.key_jp||"")+'">'+
       '<span class="lbl">0초 목소리 문장(2.5초 이내 · 빨간 단어 포함 · 이름 금지)</span><input id="hk_vj" value="'+esc(h.voice_jp||"")+'">'+
@@ -2796,6 +2805,62 @@ function v2estimate(c,jp){
   if(!c||!c.speech_s||!c.sec)return "";
   const n0=String(c.jp||"").length||1, est=c.speech_s*String(jp||"").length/n0, need=0.15+est+0.6;
   return "예상 나레이션 약 "+est.toFixed(1)+"초 / 이 컷 영상 "+c.sec+"초 — "+(need<=c.sec?"들어갑니다":"길어서 안 들어갈 수 있습니다(줄이거나, 반영 때 이 컷만 다시 만들기가 필요)");
+}
+// ── 인스타 시험 릴스로 후킹 A·B 겨루기(운영자 선택 2026-10-09: 자동 · 결과 보고 올리기 · 2개) ──
+//   완성본 승인 → 서버가 B 버전을 만들어 A·B를 시험 릴스(팔로워가 아닌 사람에게 먼저)로 올린다 → 24~48시간 뒤 「3초 안에 넘긴 비율」로 판정.
+//   서버에 상시 예약 실행이 없어서, 24시간이 지난 시험은 **이 페이지를 열 때** 결과를 자동으로 가져온다(무료 · 50분에 한 번까지).
+const V2_TRIAL_DUE_H=24, V2_TRIAL_RECHECK_MIN=50;
+function v2hoursSince(iso){const t=Date.parse(iso||"");return isNaN(t)?0:(Date.now()-t)/36e5;}
+function v2skipPct(v){if(v==null||v==="")return null;v=+v;return isNaN(v)?null:(v>0&&v<1?v*100:v);}
+function v2trialMetrics(m){m=m||{};const sk=v2skipPct(m.reels_skip_rate), w=+m.ig_reels_avg_watch_time||0;
+  return '조회 '+(m.views!=null?(+m.views).toLocaleString():'—')+' · 3초 안에 넘김 '+(sk!=null?'<b>'+sk.toFixed(1)+'%</b>':'—')+' · 평균 시청 '+(w?(w/1000).toFixed(1)+'초':'—');}
+function v2trialSide(tr,k){
+  const s=tr[k]||{}, h=s.hook||{}, win=tr.state==="decided"&&(tr.winner||"a")===k, errs=Object.keys(s.metric_errors||{});
+  return '<div class="cfact"><b>'+k.toUpperCase()+'</b>'+(win?' <span class="ok">이김</span>':'')+' '+v2hookKey(h.question_jp,h.key_jp)+
+    ' <small>'+esc(h.question_ko||"")+(h.pattern?' · 틀 '+esc(h.pattern):'')+'</small>'+
+    '<br><small>목소리 「'+esc(h.voice_jp||"")+'」'+(h.cut!=null?' · '+esc(h.cut)+'번 컷 '+esc(h.at)+'초부터':'')+'</small>'+
+    '<br><small>'+v2trialMetrics(s.metrics)+(s.permalink?' · <a href="'+esc(s.permalink)+'" target="_blank" rel="noopener">인스타에서 보기</a>':'')+'</small>'+
+    (errs.length?'<br><small class="warn">아직 못 받은 지표: '+esc(errs.join(", "))+'</small>':'')+'</div>';
+}
+function v2trialHTML(st){
+  const tr=(st.artifacts||{}).trial;if(!tr)return "";
+  if(tr.state==="skipped")return '<div class="sect">인스타 시험 릴스</div><div class="cfact">시험 없이 진행 — '+esc(tr.reason||"")+'</div>';
+  const h=v2hoursSince(tr.posted_at), last=tr.last||{}, res=tr.result||{};
+  let x='<div class="sect">인스타 시험 릴스 — 후킹 A·B 겨루기</div>';
+  if(tr.state==="running")x+='<div class="cfact"><span class="v2st prog">시험 중</span> 게시 '+Math.floor(h)+'시간째'+(tr.username?' · @'+esc(tr.username):'')+' · '+
+    (h<V2_TRIAL_DUE_H?('판정은 약 '+Math.ceil(V2_TRIAL_DUE_H-h)+'시간 뒤부터(최대 48시간)'):'판정 시각이 지났습니다 — 이 페이지를 열면 결과를 자동으로 가져옵니다')+'</div>';
+  else x+='<div class="cfact"><span class="ok">판정 끝</span> <b>'+esc(({win:(tr.winner||"a").toUpperCase()+" 승",tie:"무승부 → A 그대로",hold:"판정 보류 → A 그대로"})[res.kind]||"")+'</b> — '+esc(res.why||"")+'</div>';
+  x+=v2trialSide(tr,"a")+v2trialSide(tr,"b");
+  if(tr.state==="running")x+=(last.why?'<div class="hint">마지막 확인 '+v2when(tr.checked_at)+' — '+esc(last.why)+'</div>':'')+
+    (tr.error?'<div class="cfact err">'+esc(tr.error)+'</div>':'')+
+    '<div class="btnrow"><button class="btn save" id="trcheck">지금 결과 가져오기 (무료)</button><button class="btn warn" id="trskip">시험 건너뛰고 지금 후킹(A)으로 진행</button></div>';
+  else{const wl=(tr[tr.winner||"a"]||{}).permalink;
+    x+='<div class="cfact warn">인스타 앱에서 할 일: 이긴 릴스'+(wl?' (<a href="'+esc(wl)+'" target="_blank" rel="noopener">열기</a>)':'')+'를 열고 「모두에게 공유」를 누르면 팔로워에게도 보입니다(API로는 안 됩니다). 진 릴스는 그대로 두거나 지우세요.</div>';}
+  return x+'<div class="hint">판정 규칙: '+esc(tr.rule||"")+'. 인스타 시청자는 유튜브 시청자와 다를 수 있어 두 버전 중 어느 쪽이 나은지만 봅니다(최종 확인은 유튜브 「시청함 %」).</div>';
+}
+function v2trialDue(tr){return !!tr&&tr.state==="running"&&v2hoursSince(tr.posted_at)>=V2_TRIAL_DUE_H&&(!tr.checked_at||v2hoursSince(tr.checked_at)*60>=V2_TRIAL_RECHECK_MIN);}
+function v2trialLater(re){clearTimeout(window.__v2trpoll);window.__v2trpoll=setTimeout(re,100000);}
+async function v2trialAuto(pid,due,re){                   // 24시간 지난 시험 → 결과 자동 가져오기(한 기기에서 50분에 한 번까지)
+  if(!due||!authReady())return false;
+  const k="v2trck:"+(pid||"all"), recent=x=>Date.now()-(+localStorage.getItem(x)||0)<V2_TRIAL_RECHECK_MIN*6e4;
+  try{if(recent(k)||recent("v2trck:all"))return false;localStorage.setItem(k,String(Date.now()));}catch(e){}   // 목록에서 이미 모든 편을 물었으면 또 묻지 않음
+  try{const r=await fetch(API+"/actions/workflows/"+V2_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{action:"trial_check",pilot:pid||"",stage:"",note:""}})});
+    if(r.status===204){banner("인스타 시험 릴스 결과를 자동으로 가져오는 중입니다(무료 · 1~2분 · 화면이 저절로 새로 고쳐집니다).","ok");if(re)v2trialLater(re);return true;}}catch(e){}
+  return false;
+}
+// 목록 화면: 인스타 연결 상태 · 진행 중인 시험 · 후킹 틀별 시험 성적
+function v2igCard(idx,items){
+  const ig=idx.ig||null, hp=Object.entries(idx.hook_patterns||{}), run=items.filter(x=>x.trial&&x.trial.state==="running");
+  return '<div class="card"><span class="lbl">인스타 시험 릴스 — 후킹 겨루기</span>'+
+    (ig?(ig.ok?'<div class="cfact"><span class="ok">연결됨</span> @'+esc(ig.username||"")+' · 점검 '+v2when(ig.at)+'</div>'
+             :'<div class="cfact err">연결 안 됨 — '+esc(ig.error||"")+' · 점검 '+v2when(ig.at)+'</div>')
+       :'<div class="cfact warn">아직 연결을 점검하지 않았습니다.</div>')+
+    run.map(x=>'<div class="cfact">'+esc(x.name_ko||x.id)+' · 시험 '+Math.floor(v2hoursSince(x.trial.posted_at))+'시간째 · A 「'+esc((x.trial.a||{}).line||"")+'」 vs B 「'+esc((x.trial.b||{}).line||"")+'」</div>').join("")+
+    (hp.length?'<div class="sect">후킹 틀별 시험 성적</div>'+hp.map(([k,s])=>'<div class="cfact">'+esc(k)+': '+s.wins+'승 '+s.losses+'패 '+s.ties+'무'+(s.skip_avg!=null?' · 평균 3초 넘김 '+esc(s.skip_avg)+'%':'')+'</div>').join("")+
+      '<div class="hint">판정 난 시험이 3편 넘게 쌓이면 다음 대본 후보를 쓸 때 AI가 참고합니다.</div>':'')+
+    '<div class="hint">완성본을 승인하면 맨 앞 후킹만 다른 2개를 인스타 시험 릴스(팔로워가 아닌 사람에게 먼저)로 올려 24~48시간 겨루고, 이긴 후킹으로 유튜브 업로드를 준비합니다. 연결이 안 되어 있으면 시험 없이 예전처럼 진행합니다.</div>'+
+    '<button class="btn" id="igprobe" style="width:100%;margin-top:8px">인스타 연결 점검 (무료 · 게시 안 함)</button></div>';
 }
 function v2stageCard(st,stage){
   const s=(st.stages||{})[stage]||{state:"locked"}, state=s.state, locked=state==="locked";
@@ -2882,7 +2947,8 @@ async function renderV2Episode(pid){
     const auto=!!V2_AUTO[stage], nextS=STG[STG.indexOf(stage)+1];
     const nextTxt=(act==="approve"&&nextS&&V2_AUTO[nextS])?(" 바로 이어서 "+STG_KO[nextS].slice(3)+"이(가) 자동으로 만들어집니다("+v2cost(nextS,st)+")."):"";
     const mv=stage==="video"?v2motionWarn(st.checks||{}):"";
-    const msg=act==="approve"?(mv+(nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):(mv?"그래도 ":""))+lab+"을(를) 승인할까요?"+nextTxt)
+    const trialTxt=(act==="approve"&&stage==="video")?" 승인하면 (인스타가 연결돼 있을 때) 맨 앞 후킹만 다른 2개를 인스타 시험 릴스로 올려 24~48시간 겨룬 뒤, 이긴 후킹으로 유튜브 제목·설명을 씁니다(연결이 없으면 바로 씁니다).":"";
+    const msg=act==="approve"?(mv+(nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):(mv?"그래도 ":""))+lab+"을(를) 승인할까요?"+nextTxt+trialTxt)
              :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 요청대로 다시 만듭니다("+v2cost(stage,st)+")."+(stage==="video"?" 메모에 '3번 컷'처럼 번호를 적으면 그 컷만 다시 만듭니다(그만큼만 과금).":""):""))
              :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 처음부터 다시 만듭니다("+v2cost(stage,st)+")."+(stage==="video"?" 8컷 전부 다시 생성해 비용이 큽니다.":""):""));
     if(!confirm(msg))return;
@@ -2936,6 +3002,12 @@ async function renderV2Episode(pid){
     if(!(n>=0&&n<=100)){banner("시청함 %는 0~100 사이 숫자로 적어 주세요(예: 18.6).","err");return;}
     if(await v2do("save_viewed",pid,"_",JSON.stringify({pct:n}),vws))setTimeout(()=>renderV2Episode(pid),60000);
   };
+  const reEp=()=>{if(location.pathname==="/v/"+pid)renderV2Episode(pid);};
+  const trc=$("#trcheck");if(trc)trc.onclick=async()=>{if(await v2do("trial_check",pid,"","",trc)){banner("인스타 시험 릴스 결과를 가져오는 중입니다(무료 · 1~2분). 화면이 저절로 새로 고쳐집니다.","ok");v2trialLater(reEp);}};
+  const trs=$("#trskip");if(trs)trs.onclick=async()=>{
+    if(!confirm("시험 릴스를 건너뛰고 지금 후킹(A)으로 유튜브 제목·설명을 쓸까요? 인스타에 올라간 시험 릴스 2개는 그대로 둡니다(팔로워에게는 안 보임)."))return;
+    if(await v2do("trial_skip",pid,"","",trs))v2trialLater(reEp);};
+  v2trialAuto(pid,v2trialDue((st.artifacts||{}).trial),reEp);
   const cc=$("#v2cc");if(cc)cc.onclick=async()=>{if(confirm("대본 전체를 AI로 교차 검사할까요? (약 $0.02 · 1~2분)"))await v2do("crosscheck",pid,"","",cc);};
   document.querySelectorAll("[data-usesug]").forEach(b=>b.onclick=()=>{
     const x=(ccRes.issues||[])[+b.dataset.usesug];if(!x)return;
@@ -3324,10 +3396,28 @@ async function mediaProxy(request, url) {
   return new Response(resp.body, { status: resp.status, headers: out });
 }
 
+// ── 시험 릴스 영상 공개 주소(운영자 선택 2026-10-09): 인스타가 /v2file/<커밋 40자>/<편>/<파일>.mp4 를 가져간다 ──
+//   커밋 번호로 고정한 raw 주소라 방금 푸시한 B 영상도 바로 열린다(브랜치 이름 주소는 몇 분 캐시). v2 편 폴더의 mp4 만 허용.
+async function v2File(request, url) {
+  const m = url.pathname.match(/^\/v2file\/([0-9a-f]{40})\/([a-z0-9_]+)\/((?:[\w.\-]+\/)*[\w.\-]+\.mp4)$/);
+  if (!m || m[3].split("/").some(x => x === "." || x === "..")) return j({ error: "path not allowed" }, 403);
+  const target = "https://raw.githubusercontent.com/" + OWNER + "/" + REPO + "/" + m[1] + "/short-movie-generator/v2/pilots/" + m[2] + "/" + m[3];
+  const h = { "User-Agent": "deep-dive-log-dashboard" };
+  const range = request.headers.get("Range");
+  if (range) h["Range"] = range;
+  const resp = await fetch(target, { headers: h, redirect: "follow" });
+  if (!resp.ok && resp.status !== 206) return j({ error: "upstream " + resp.status }, resp.status === 404 ? 404 : 502);
+  const out = new Headers({ "Content-Type": "video/mp4", "Content-Disposition": "inline", "Accept-Ranges": "bytes",
+                            "Cache-Control": "public, max-age=86400" });
+  for (const k of ["Content-Length", "Content-Range"]) { const v = resp.headers.get(k); if (v) out.set(k, v); }
+  return new Response(request.method === "HEAD" ? null : resp.body, { status: resp.status, headers: out });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/health") return new Response("ok");
+    if (url.pathname.startsWith("/v2file/")) return v2File(request, url);
     if (url.pathname === "/api/mode") return j({ server: !!(env && env.GH_PAT) });
     if (url.pathname === "/api/media") return mediaProxy(request, url);
     if (url.pathname === "/api/pub") return pubRead(url);
