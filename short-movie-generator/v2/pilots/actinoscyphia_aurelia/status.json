@@ -80,6 +80,11 @@
           "at": "2026-10-10T16:03:26Z",
           "kind": "trial",
           "text": "시험 무효: 잘못된 계정(@lord.shiba.ybd)에 올라감 — ABYSS(@abyss_0cean)가 아님 · 운영자 확인 2026-10-10 — 올라간 릴스는 인스타 앱에서 지워 주세요. 「ABYSS 계정에 다시 올리기」로 다시 시험합니다"
+        },
+        {
+          "at": "2026-10-10T16:22:11Z",
+          "kind": "error",
+          "text": "다시 올리기 실패: 연결된 인스타 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 올리지 않았습니다(GitHub 비밀값 IG_ACCESS_TOKEN 을 @abyss_0cean 계정 키로 바꿔 주세요)"
         }
       ]
     }
@@ -815,7 +820,8 @@
           ]
         }
       ],
-      "reason": "잘못된 계정(@lord.shiba.ybd)에 올라감 — ABYSS(@abyss_0cean)가 아님 · 운영자 확인 2026-10-10"
+      "reason": "잘못된 계정(@lord.shiba.ybd)에 올라감 — ABYSS(@abyss_0cean)가 아님 · 운영자 확인 2026-10-10",
+      "error": "연결된 인스타 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 올리지 않았습니다(GitHub 비밀값 IG_ACCESS_TOKEN 을 @abyss_0cean 계정 키로 바꿔 주세요)"
     }
   },
   "checks": {
@@ -890,7 +896,7 @@
       "status": "trial_wait",
       "action": "trial_cancel",
       "text": "시험 무효 — 「ABYSS 계정에 다시 올리기」 또는 「시험 건너뛰기」를 기다리는 중",
-      "at": "2026-10-10T16:03:26Z"
+      "at": "2026-10-10T16:22:11Z"
     }
   },
   "cost": {

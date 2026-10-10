@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-10T16:03:26Z",
+  "updated": "2026-10-10T16:22:11Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -12,7 +12,7 @@
         "status": "trial_wait",
         "action": "trial_cancel",
         "text": "시험 무효 — 「ABYSS 계정에 다시 올리기」 또는 「시험 건너뛰기」를 기다리는 중",
-        "at": "2026-10-10T16:03:26Z"
+        "at": "2026-10-10T16:22:11Z"
       },
       "created": "2026-10-10T03:06:56Z",
       "uploaded_at": null,
@@ -86,10 +86,10 @@
   ],
   "hook_patterns": {},
   "ig": {
-    "at": "2026-10-10T14:46:08Z",
+    "at": "2026-10-10T16:22:11Z",
     "expected": "abyss_0cean",
     "ok": false,
     "username": "lord.shiba.ybd",
-    "error": "연결된 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 시험 릴스를 올리지 않습니다(키를 @abyss_0cean 것으로 바꿔 주세요) · 10/10 시험 게시 때 확인"
+    "error": "연결된 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 시험 릴스를 올리지 않습니다(키를 @abyss_0cean 것으로 바꿔 주세요)"
   }
 }
