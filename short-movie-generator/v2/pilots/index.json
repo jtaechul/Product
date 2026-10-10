@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-10T14:43:15Z",
+  "updated": "2026-10-10T14:46:08Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -7,12 +7,33 @@
       "sci": "Actinoscyphia aurelia",
       "stage": "upload",
       "state": "working",
-      "job": null,
+      "job": {
+        "stage": "upload",
+        "status": "trial",
+        "at": "2026-10-10T14:46:08Z",
+        "action": "after_video",
+        "text": "인스타 시험 릴스로 후킹 A·B 를 겨루는 중 — 게시 24시간 뒤부터 결과"
+      },
       "created": "2026-10-10T03:06:56Z",
       "uploaded_at": null,
       "stats": null,
       "viewed": null,
-      "trial": null
+      "trial": {
+        "state": "running",
+        "posted_at": "2026-10-10T14:46:08Z",
+        "checked_at": null,
+        "winner": null,
+        "kind": null,
+        "reason": null,
+        "a": {
+          "line": "獲物を、決して逃がさない",
+          "pattern": "異常な行動"
+        },
+        "b": {
+          "line": "海の中の、食虫植物？",
+          "pattern": "常識破り"
+        }
+      }
     },
     {
       "id": "bathynomus_giganteus",
