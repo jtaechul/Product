@@ -4780,7 +4780,7 @@
         "evidence": "Instead of soup and rice, we will serve sandwiches and fruit.",
         "why_not": {
           "1": "새 선생님 이야기는 없어요",
-          "2": "솥은 고친다고만 했어요",
+          "2": "솥은 쓸 수 없다고만 했어요",
           "3": "우유를 공짜로 준다는 말은 없어요"
         },
         "key_expr": {
@@ -5752,7 +5752,7 @@
         }
       },
       {
-        "stem": "What does the doctor's words suggest about Kongi's problem?",
+        "stem": "What do the doctor's words suggest about Kongi's problem?",
         "choices": [
           "It was very dangerous.",
           "It came from his new food.",
@@ -6746,10 +6746,10 @@
           "The writer will go home to get his bag",
           "The brother will carry the bag to school",
           "The writer will miss his art class",
-          "The writer's mother will come to school with his bag"
+          "The writer will get his bag back from his mother"
         ],
         "answer_idx": 3,
-        "explanation_ko": "엄마가 일 끝나고 가방을 가져다주신다고 했어요. 그러니 이따가 학교로 오실 거예요.",
+        "explanation_ko": "엄마가 일이 끝나고 가방을 가져다주신다고 했어요. 그러니 이따가 엄마에게서 가방을 돌려받을 거예요.",
         "difficulty_label": 3,
         "tags": [
           "RS.infer"
@@ -6785,7 +6785,7 @@
     "status": "active",
     "questions": [
       {
-        "stem": "Why do the birds eat a lot before the trip?",
+        "stem": "Why do the birds most likely eat a lot before the trip?",
         "choices": [
           "They need the power for the long flight",
           "They want to be lighter in the sky",
@@ -8005,12 +8005,12 @@
         "stem": "What can we guess about the sea turtles?",
         "choices": [
           "They only eat fish.",
-          "They dislike the sound on the glass.",
+          "They do not like people tapping on the glass.",
           "They sleep at 2:00 p.m.",
           "They live in the gift shop."
         ],
         "answer_idx": 1,
-        "explanation_ko": "유리를 두드리면 거북이가 놀란다고 했으니, 유리를 두드리는 소리를 싫어한다는 것을 알 수 있어요.",
+        "explanation_ko": "유리를 두드리면 거북이가 놀란다고 했으니, 사람들이 유리를 두드리는 것을 싫어한다는 것을 알 수 있어요.",
         "difficulty_label": 3,
         "tags": [
           "RS.infer"
@@ -8200,8 +8200,8 @@
           "2": "과자는 엄마가 이미 다 만드셨어요"
         },
         "key_expr": {
-          "en": "play the piano",
-          "ko": "피아노를 치다"
+          "en": "special cookies for my friends",
+          "ko": "친구들을 위한 특별한 과자"
         },
         "miss_type": {
           "0": "M.swap",
@@ -8790,8 +8790,8 @@
           "3": "월요일이 아니에요"
         },
         "key_expr": {
-          "en": "at the door",
-          "ko": "입구에서"
+          "en": "Sunday, October 20",
+          "ko": "10월 20일 일요일"
         },
         "miss_type": {
           "0": "M.number",
@@ -8916,7 +8916,7 @@
     "passage": {
       "kind": "text",
       "content": "Next Friday is 'Pajama Day' at our school. All students and teachers can wear their comfortable pajamas to school. You can also bring your favorite teddy bear. But please remember to wear real shoes, not bedroom slippers, for safety. We will take a big group photo in the gym at noon.",
-      "translation_ko": "다음 주 금요일은 우리 학교의 '파자마 데이'입니다. 모든 학생과 선생님은 편안한 잠옷을 입고 학교에 올 수 있습니다. 여러분이 가장 좋아하는 곰 인형을 가져와도 됩니다. 하지만 안전을 위해 침실용 실내화가 아니라 진짜 신발을 신어야 한다는 것을 기억해 주세요. 우리는 정오에 체육관에서 큰 단체 사진을 찍을 것입니다."
+      "translation_ko": "다음 주 금요일은 우리 학교의 '파자마 데이'입니다. 모든 학생과 선생님은 편안한 잠옷을 입고 학교에 올 수 있습니다. 여러분이 가장 좋아하는 곰 인형을 가져와도 됩니다. 하지만 안전을 위해 침실용 실내화가 아니라 진짜 신발을 신어야 한다는 것을 기억해 주세요. 우리는 낮 12시에 체육관에서 큰 단체 사진을 찍을 것입니다."
     },
     "questions": [
       {
@@ -9200,8 +9200,8 @@
           "2": "켜진 상태가 아니라 꺼진 상태예요"
         },
         "key_expr": {
-          "en": "keep off",
-          "ko": "꺼진 상태로 두다"
+          "en": "keep your camera flash off",
+          "ko": "카메라 플래시를 꺼 두다"
         },
         "miss_type": {
           "0": "W.meaning",
@@ -9219,8 +9219,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "School News - New Bicycle Parking\nNext week, our school will build a new bicycle parking space. The old one was too small for all our bikes. The new parking space will be near the front gate. During the work, the road near the front gate will be blocked. Please use the back gate. With the new space, riding bikes will be more safe for everyone.",
-      "translation_ko": "학교 소식 - 새 자전거 주차장\n다음 주에 우리 학교는 새 자전거 주차장을 만들 예정입니다. 예전 주차장은 모든 자전거를 두기에 너무 작았습니다. 새 주차장은 정문 근처에 생깁니다. 공사를 하는 동안 정문 근처 길은 막힐 것입니다. 뒷문을 이용해 주세요. 새 주차장이 생기면 자전거 타기가 모두에게 더 안전해질 것입니다."
+      "content": "School News - New Bicycle Parking\nNext week, our school will build a new bicycle parking space. The old one was too small for all our bikes. The new parking space will be near the front gate. During the work, the road near the front gate will be blocked. Please use the back gate. With the new space, riding bikes will be safe for everyone.",
+      "translation_ko": "학교 소식 - 새 자전거 주차장\n다음 주에 우리 학교는 새 자전거 주차장을 만들 예정입니다. 예전 주차장은 모든 자전거를 두기에 너무 작았습니다. 새 주차장은 정문 근처에 생깁니다. 공사를 하는 동안 정문 근처 길은 막힐 것입니다. 뒷문을 이용해 주세요. 새 주차장이 생기면 모두가 안전하게 자전거를 탈 수 있을 것입니다."
     },
     "questions": [
       {
@@ -9263,21 +9263,21 @@
           "too small"
         ],
         "answer_idx": 0,
-        "explanation_ko": "새 주차장이 생기면 자전거 타기가 더 안전해진다는 뜻이니 위험하지 않다는 말이에요.",
+        "explanation_ko": "새 주차장이 생기면 모두가 안전하게 자전거를 탈 수 있다는 뜻이니, 위험하지 않다는 말이에요.",
         "difficulty_label": 2,
         "tags": [
           "RS.vocab",
           "RS.context"
         ],
-        "evidence": "riding bikes will be more safe for everyone.",
+        "evidence": "riding bikes will be safe for everyone.",
         "why_not": {
           "1": "아주 비싸다는 뜻이 아니에요",
           "2": "찾기 어렵다는 뜻이 아니에요",
           "3": "너무 작다는 뜻은 주차장 크기 이야기예요"
         },
         "key_expr": {
-          "en": "more safe",
-          "ko": "더 안전한"
+          "en": "safe for everyone",
+          "ko": "모두에게 안전한"
         },
         "miss_type": {
           "1": "W.meaning",
@@ -9371,8 +9371,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "[chat]\nSujin: Minwoo, did you bring the big thick paper? We need it for our science presentation today.\nMinwoo: Oh, no. I thought you had it. I only brought the color pens and the glue.\nSujin: The stationery store near the school opens at 8. We have 20 minutes before class starts.\nMinwoo: I will run there right now! Wait for me at the gate.",
-      "translation_ko": "[채팅]\n수진: 민우야, 크고 두꺼운 종이 가져왔어? 오늘 과학 발표에 필요하잖아.\n민우: 아, 안 돼. 네가 가지고 있는 줄 알았어. 난 색펜이랑 풀만 가져왔거든.\n수진: 학교 근처 문방구가 8시에 문을 열어. 수업 시작 전까지 20분 남았어.\n민우: 지금 당장 거기로 뛰어갈게! 교문에서 나를 기다려 줘."
+      "content": "[chat]\nSujin: Minwoo, did you bring the big thick paper? We need it for our science presentation today.\nMinwoo: Oh, no. I thought you had it. I only brought the color pens and the glue.\nSujin: It is 8 o'clock now, and the stationery store near the school just opened. We have 20 minutes before class starts.\nMinwoo: I will run there right now! Wait for me at the gate.",
+      "translation_ko": "[채팅]\n수진: 민우야, 크고 두꺼운 종이 가져왔어? 오늘 과학 발표에 필요하잖아.\n민우: 아, 안 돼. 네가 가지고 있는 줄 알았어. 난 색펜이랑 풀만 가져왔거든.\n수진: 지금 8시고, 학교 근처 문방구가 방금 문을 열었어. 수업 시작 전까지 20분 남았어.\n민우: 지금 당장 거기로 뛰어갈게! 교문에서 나를 기다려 줘."
     },
     "questions": [
       {
@@ -9415,13 +9415,13 @@
           "The stationery store is inside the school."
         ],
         "answer_idx": 1,
-        "explanation_ko": "문방구가 8시에 열고 수업 시작 전까지 20분이 남았다고 했으니, 수업은 8시 20분에 시작하는 것을 추측할 수 있어요.",
+        "explanation_ko": "지금이 8시이고 수업 시작 전까지 20분이 남았다고 했으니, 수업은 8시 20분에 시작한다는 것을 알 수 있어요.",
         "difficulty_label": 4,
         "tags": [
           "RS.infer",
           "RS.context"
         ],
-        "evidence": "The stationery store near the school opens at 8. We have 20 minutes before class starts.",
+        "evidence": "It is 8 o'clock now, and the stationery store near the school just opened. We have 20 minutes before class starts.",
         "why_not": {
           "0": "과학 발표는 오늘 할 예정이에요",
           "2": "색펜은 민우가 가방에 가지고 있어요",
@@ -9545,7 +9545,7 @@
         "evidence": "When you collect five stars, you can choose a small prize from the teacher's box.",
         "why_not": {
           "0": "숙제를 제출하는 상자라는 말은 없어요",
-          "1": "황금별은 게시판에 붙이거나 주는 것이고 상자 안에 있지 않아요",
+          "1": "상자 안에는 별이 아니라 작은 상이 있어요",
           "3": "소파 아래에 있다는 말은 글에 나오지 않아요"
         },
         "key_expr": {
@@ -9559,7 +9559,7 @@
         }
       },
       {
-        "stem": "Jimin has 4 stars. He just helped his friend clean the desk. What can we guess he will do next?",
+        "stem": "Jimin has 4 stars. He just helped a friend in class. What can we guess he will do next?",
         "choices": [
           "He will sit on the soft sofa for a week.",
           "He will choose a small prize.",

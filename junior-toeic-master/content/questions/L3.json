@@ -381,7 +381,7 @@
           "Go back home"
         ],
         "answer_idx": 1,
-        "explanation_ko": "여자는 7번 버스를 타야 하는데, 마침 그 버스가 오고 있다고 했어요. 그래서 곧 7번 버스를 탈 거예요.",
+        "explanation_ko": "남자가 7번 버스를 타야 한다고 했고, 마침 그 버스가 오고 있어요. 그래서 여자는 곧 7번 버스를 탈 거예요.",
         "difficulty_label": 4,
         "tags": [
           "LS.infer",
@@ -1177,7 +1177,7 @@
     "status": "active",
     "questions": [
       {
-        "stem": "What does the man mean when he says \"I'd love to\"?",
+        "stem": "What does the man mean when he says \"I'd love to, but I have to help my sister\"?",
         "choices": [
           "He will teach the class",
           "He cannot come today",
@@ -1451,12 +1451,12 @@
         }
       },
       {
-        "stem": "What will the woman probably do with the art book?",
+        "stem": "Where can the woman read the art book?",
         "choices": [
-          "Take it home tonight",
-          "Give it to a friend",
-          "Read it in the library",
-          "Keep it until next Friday"
+          "At home tonight",
+          "At her friend's house",
+          "Only in the library",
+          "Anywhere until next Friday"
         ],
         "answer_idx": 2,
         "explanation_ko": "미술 책은 도서관 안에서만 읽을 수 있다고 했어요.",
@@ -2085,7 +2085,7 @@
         "evidence": "My car is at the repair shop until Friday.",
         "why_not": {
           "0": "새 차 이야기는 없었어요",
-          "2": "일곱 시는 연습 시간이에요",
+          "2": "차가 없어서 태워 줄 수 없어요",
           "3": "버스를 타라고 했어요"
         },
         "key_expr": {
@@ -2094,7 +2094,7 @@
         },
         "miss_type": {
           "0": "M.notsaid",
-          "2": "M.swap",
+          "2": "M.opposite",
           "3": "M.notsaid"
         }
       },
@@ -2901,7 +2901,7 @@
         "why_not": {
           "0": "지호에게 책을 샀다는 말은 없어요",
           "2": "책 축제는 이미 다녀온 이야기예요",
-          "3": "생일은 목요일이라고 알고 있어요"
+          "3": "잊었다는 말은 나오지 않았어요"
         },
         "key_expr": {
           "en": "spend all my pocket money",
@@ -4461,7 +4461,7 @@
           "The mountain photo",
           "The beach photo",
           "The school photo",
-          "The leaf photo"
+          "The river photo"
         ],
         "answer_idx": 0,
         "explanation_ko": "산 사진이 밝고 예뻐서 여자가 더 마음에 들어 하니까 대회에 낼 사진으로 고를 거예요.",
@@ -4474,7 +4474,7 @@
         "why_not": {
           "1": "해변 사진은 어둡다고 했어요",
           "2": "학교 대회지만 학교를 찍은 사진은 아니에요",
-          "3": "잎사귀는 산 사진 속에 있는 부분이에요"
+          "3": "강 사진 이야기는 나오지 않았어요"
         },
         "key_expr": {
           "en": "enter in the contest",
@@ -4483,7 +4483,7 @@
         "miss_type": {
           "1": "M.opposite",
           "2": "M.swap",
-          "3": "M.swap"
+          "3": "M.notsaid"
         }
       }
     ],
@@ -4511,10 +4511,10 @@
           "He lost his backpack",
           "He is late for his club",
           "He broke the window",
-          "He cannot open the door"
+          "He cannot find a key"
         ],
         "answer_idx": 3,
-        "explanation_ko": "방송반 열쇠를 찾을 수 없어서 문을 열지 못하고 있는 상황이에요.",
+        "explanation_ko": "남학생이 방송반 열쇠를 못 찾겠다고 말했어요. 가방을 잃어버린 게 아니라 열쇠를 못 찾는 거예요.",
         "difficulty_label": 2,
         "tags": [
           "LS.infer",
@@ -4928,7 +4928,7 @@
         ],
         "evidence": "did anyone find a water bottle?",
         "why_not": {
-          "0": "물병에 붙은 스티커 색깔이에요",
+          "0": "은색은 스티커가 아니라 물병 색이에요",
           "2": "농구장 근처에서 찾았다고 했어요",
           "3": "열쇠 이야기는 나오지 않았어요"
         },

@@ -187,11 +187,11 @@
     "stem": null,
     "choices": [
       "Last Sunday.",
-      "At the bakery.",
+      "In the kitchen.",
       "My grandmother did."
     ],
     "answer_idx": 2,
-    "explanation_ko": "'Who'는 누가 했는지 묻는 말이라 할머니가 만들었다는 답이 정답이에요. 'At the bakery.'는 장소라서 사람을 묻는 질문과 맞지 않아요.",
+    "explanation_ko": "'Who'는 누가 했는지 묻는 말이라 할머니가 만들었다는 답이 정답이에요. 'In the kitchen.'은 장소라서 사람을 묻는 질문과 맞지 않아요.",
     "difficulty_label": 2,
     "tags": [
       "LS.qr",
@@ -203,7 +203,7 @@
     "evidence": "Who made",
     "why_not": {
       "0": "언제인지 답했어요",
-      "1": "어디인지 답했어요"
+      "1": "어디서 만들었는지 답했어요"
     },
     "key_expr": {
       "en": "Who made ~?",
@@ -354,7 +354,7 @@
       "ko": "어디서 살 수 있어?"
     },
     "miss_type": {
-      "0": "M.swap",
+      "0": "A.echo",
       "1": "A.wrongkind"
     },
     "translation_ko": "우표는 어디서 살 수 있어요?"
@@ -786,8 +786,8 @@
       "ko": "우리 ~하는 게 어때?"
     },
     "miss_type": {
-      "1": "M.swap",
-      "2": "M.swap"
+      "1": "A.wrongkind",
+      "2": "A.echo"
     },
     "translation_ko": "그러지 말고 점심 먹고 연습하는 게 어때?"
   },
@@ -1127,7 +1127,7 @@
       "At the bus stop."
     ],
     "answer_idx": 1,
-    "explanation_ko": "왜 들고 있냐고 물었으니 까닭으로 답해요. 색을 말한 건 모양을 물을 때 답이에요.",
+    "explanation_ko": "왜 들고 있냐고 물었으니 까닭으로 답해요. 색을 말한 건 무슨 색인지 물을 때 답이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.qr",
@@ -1365,7 +1365,7 @@
       "0": "M.notsaid",
       "2": "A.echo"
     },
-    "translation_ko": "실례합니다, 이 자리 자리 있나요?"
+    "translation_ko": "실례합니다, 여기 자리 있나요?"
   },
   {
     "type": "single",
@@ -1833,7 +1833,7 @@
       "0": "A.wrongkind",
       "1": "A.echo"
     },
-    "translation_ko": "더 넣고 싶은 거 있어요?"
+    "translation_ko": "더 덧붙이고 싶은 말 있어요?"
   },
   {
     "type": "single",
@@ -1951,7 +1951,7 @@
     "stem": null,
     "choices": [
       "The window, if possible.",
-      "Yes, I would rather.",
+      "Yes, I would.",
       "It's a long flight."
     ],
     "answer_idx": 0,
@@ -1986,7 +1986,7 @@
     "part": "L2",
     "stem": null,
     "choices": [
-      "I thought so too, thanks.",
+      "Thanks, I'll think about it.",
       "It got moved to Monday.",
       "I studied very hard."
     ],
@@ -2002,7 +2002,7 @@
     "status": "active",
     "evidence": "going to be on Friday",
     "why_not": {
-      "0": "thought만 따라 하고 알려주지 않았어요",
+      "0": "think 소리에 끌렸어요. 제안받을 때 하는 말이에요",
       "2": "열심히 했다는 다른 이야기예요"
     },
     "key_expr": {
@@ -2166,7 +2166,7 @@
     "stem": null,
     "choices": [
       "A new bicycle.",
-      "It was last Friday.",
+      "On May fifth.",
       "Yes, I do."
     ],
     "answer_idx": 0,
@@ -2274,7 +2274,7 @@
     "stem": null,
     "choices": [
       "They're on the table.",
-      "I made them yesterday.",
+      "I made my bed.",
       "That sounds fun!"
     ],
     "answer_idx": 2,
@@ -2418,7 +2418,7 @@
     "stem": null,
     "choices": [
       "Yes, I bought a new dog.",
-      "It was a long walk.",
+      "I walk to school.",
       "No, I'll do it after lunch."
     ],
     "answer_idx": 2,
