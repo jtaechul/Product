@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-10T14:46:08Z",
+  "updated": "2026-10-10T16:03:26Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -9,22 +9,22 @@
       "state": "working",
       "job": {
         "stage": "upload",
-        "status": "trial",
-        "at": "2026-10-10T14:46:08Z",
-        "action": "after_video",
-        "text": "인스타 시험 릴스로 후킹 A·B 를 겨루는 중 — 게시 24시간 뒤부터 결과"
+        "status": "trial_wait",
+        "action": "trial_cancel",
+        "text": "시험 무효 — 「ABYSS 계정에 다시 올리기」 또는 「시험 건너뛰기」를 기다리는 중",
+        "at": "2026-10-10T16:03:26Z"
       },
       "created": "2026-10-10T03:06:56Z",
       "uploaded_at": null,
       "stats": null,
       "viewed": null,
       "trial": {
-        "state": "running",
-        "posted_at": "2026-10-10T14:46:08Z",
+        "state": "cancelled",
+        "posted_at": null,
         "checked_at": null,
         "winner": null,
         "kind": null,
-        "reason": null,
+        "reason": "잘못된 계정(@lord.shiba.ybd)에 올라감 — ABYSS(@abyss_0cean)가 아님 · 운영자 확인 2026-10-10",
         "a": {
           "line": "獲物を、決して逃がさない",
           "pattern": "異常な行動"
@@ -85,5 +85,11 @@
     }
   ],
   "hook_patterns": {},
-  "ig": null
+  "ig": {
+    "at": "2026-10-10T14:46:08Z",
+    "expected": "abyss_0cean",
+    "ok": false,
+    "username": "lord.shiba.ybd",
+    "error": "연결된 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 시험 릴스를 올리지 않습니다(키를 @abyss_0cean 것으로 바꿔 주세요) · 10/10 시험 게시 때 확인"
+  }
 }
