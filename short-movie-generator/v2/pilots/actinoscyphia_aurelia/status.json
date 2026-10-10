@@ -1,0 +1,78 @@
+{
+  "id": "actinoscyphia_aurelia",
+  "name_ko": "파리지옥말미잘",
+  "sci": "Actinoscyphia aurelia",
+  "created": "2026-10-10T03:06:56Z",
+  "stages": {
+    "topic": {
+      "state": "approved",
+      "notes": [
+        {
+          "at": "2026-10-10T03:06:56Z",
+          "kind": "approve",
+          "text": "운영자가 주제로 선택"
+        }
+      ],
+      "approved_at": "2026-10-10T03:06:56Z"
+    },
+    "script": {
+      "state": "working",
+      "notes": []
+    },
+    "storyboard": {
+      "state": "locked",
+      "notes": []
+    },
+    "video": {
+      "state": "locked",
+      "notes": []
+    },
+    "upload": {
+      "state": "locked",
+      "notes": []
+    }
+  },
+  "topic": {
+    "id": "actinoscyphia_aurelia",
+    "key": "actinoscyphia aurelia",
+    "name_ko": "파리지옥말미잘",
+    "ko_official": true,
+    "name_en": "Venus flytrap anemone",
+    "sci": "Actinoscyphia aurelia",
+    "depth_m": "1000-1600",
+    "facts_n": 4,
+    "facts": [
+      "식충식물 파리지옥처럼 입 원반을 닫아 먹이를 잡는다",
+      "빠른 물살이 지나는 심해 절벽·산호에 붙어 산다",
+      "물살 방향으로 몸을 돌려 먹이를 기다린다"
+    ],
+    "sources": [
+      "NOAA Ocean Exploration",
+      "WoRMS"
+    ],
+    "checks": {
+      "한 편 = 한 대상": true,
+      "사실 3개 이상": true,
+      "서식 수심": true
+    },
+    "ready": true,
+    "in_progress": false,
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/422701779/medium.jpg",
+      "credit": "\nImage courtesy of Aquapix and Expedition to the Deep Slope 2007, NOAA-OE, no known copyright restrictions (public domain)",
+      "license": "pd",
+      "page": "https://www.inaturalist.org/taxa/1521695"
+    }
+  },
+  "artifacts": {},
+  "checks": {},
+  "jobs": {
+    "script": {
+      "stage": "script",
+      "status": "running",
+      "at": "2026-10-10T03:06:56Z",
+      "action": "job_start",
+      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+    }
+  }
+}

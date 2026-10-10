@@ -1,6 +1,25 @@
 {
-  "updated": "2026-10-09T14:16:15Z",
+  "updated": "2026-10-10T03:06:56Z",
   "items": [
+    {
+      "id": "actinoscyphia_aurelia",
+      "name_ko": "파리지옥말미잘",
+      "sci": "Actinoscyphia aurelia",
+      "stage": "script",
+      "state": "working",
+      "job": {
+        "stage": "script",
+        "status": "running",
+        "at": "2026-10-10T03:06:56Z",
+        "action": "job_start",
+        "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      },
+      "created": "2026-10-10T03:06:56Z",
+      "uploaded_at": null,
+      "stats": null,
+      "viewed": null,
+      "trial": null
+    },
     {
       "id": "bathynomus_giganteus",
       "name_ko": "대왕구족충",
@@ -11,7 +30,8 @@
       "created": "2026-09-27T00:00:00Z",
       "uploaded_at": "2026-09-28T12:23:52Z",
       "stats": null,
-      "viewed": null
+      "viewed": null,
+      "trial": null
     },
     {
       "id": "enypniastes_eximia",
@@ -23,7 +43,8 @@
       "created": "2026-09-30T09:44:09Z",
       "uploaded_at": "2026-09-30T22:35:06Z",
       "stats": null,
-      "viewed": null
+      "viewed": null,
+      "trial": null
     },
     {
       "id": "lithodidae",
@@ -44,7 +65,10 @@
           "pattern": "名前当て(옛)",
           "voice": false
         }
-      }
+      },
+      "trial": null
     }
-  ]
+  ],
+  "hook_patterns": {},
+  "ig": null
 }
