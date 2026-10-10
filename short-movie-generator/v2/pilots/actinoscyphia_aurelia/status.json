@@ -53,17 +53,23 @@
       "approved_at": "2026-10-10T10:59:22Z"
     },
     "video": {
-      "state": "review",
+      "state": "approved",
       "notes": [
         {
           "at": "2026-10-10T11:02:32Z",
           "kind": "auto",
           "text": "영상 컷 준비 완료 — 조립 + 자동 검사"
+        },
+        {
+          "at": "2026-10-10T14:43:15Z",
+          "kind": "approve",
+          "text": ""
         }
-      ]
+      ],
+      "approved_at": "2026-10-10T14:43:15Z"
     },
     "upload": {
-      "state": "locked",
+      "state": "working",
       "notes": []
     }
   },
