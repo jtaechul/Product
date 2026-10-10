@@ -63,7 +63,7 @@
 - **상태 파일 하나**: 편마다 `v2/pilots/<id>/status.json`(단계 상태 locked/working/review/revise/approved · 기록 · 결과물 경로 ·
   자동 검사 · 비용). 목록 `v2/pilots/index.json`, 주제 후보 `v2/topics.json`(`admin.py topics`로 갱신).
 - **버튼 = 워크플로**: 페이지는 파일을 직접 쓰지 않는다 → `v2-admin.yml` 디스패치 → `v2/tools/admin.py`
-  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·redo_panel·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta·save_viewed·trial_check·trial_skip·ig_probe) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
+  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·redo_panel·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta·save_viewed·trial_check·trial_skip·trial_repost·ig_probe) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
   `v2-admin.yml`은 **main에도** 둔다(디스패치 워크플로 규칙 · 하드룰 #15③).
 - **★컷별 대사 수정(운영자 확정 2026-09-28) — 대사를 고쳐도 영상은 자동으로 바뀌지 않는다**:
   대본 카드의 컷마다 「대사 수정」 → 일본어·한국어(·읽기, 비우면 Janome 자동) 입력 → 「이 대사로 저장」(`admin.py edit_line`)은
@@ -492,6 +492,19 @@
   후보를 쓸 때 AI에 참고로 알린다(`_pattern_hint` · 후보 3개·서로 다른 틀 규칙은 그대로). 마지막 실측(2026-07-13 인스타 점검 실행): 저장된 키가
   페이스북 로그인 토큰(EAA…)이고 **「API access blocked」**로 실패 → 새 키를 받기 전까지는 시험 없이 예전처럼 진행된다.
   시험 릴스 자체도 **프로페셔널(비즈니스·크리에이터) 공개 계정 + 팔로워 수 조건**(출처마다 200~1,000명으로 다름 · 앱의 시험 스위치가 최종 확인)이 필요.
+- **★★올릴 계정 = ABYSS 인스타 `@abyss_0cean` 만 (운영자 확정 2026-10-10 · 핵심 규칙 · 절대 위반 금지)**:
+  **실사고 2026-10-10 23:46(한국 시간)**: GitHub 비밀값 `IG_ACCESS_TOKEN`이 개인 계정 **@lord.shiba.ybd** 것이라 파리지옥말미잘 편 시험 릴스 2개가
+  그 계정에 올라갔다(시스템이 계정을 확인하지 않았음). → ① 게시 전 계정 확인 `_ig_account_ok`(`IG_ACCOUNT = "abyss_0cean"` · 결과는
+  `_shared/ig_status.json` → 목록 카드) + 게시 함수도 한 번 더 확인(`ig_publish.publish_trial_reel(expect=)` — 다르면 컨테이너도 안 만듦).
+  ② 완성본 승인 때 **키는 있는데 계정이 다르거나 연결 오류**면 올리지 않고 `trial.state = "cancelled"`(「시험 대기」 · `jobs.upload.status = "trial_wait"`)로
+  **기다린다**(결과 보고 올리기 선택이므로 조용히 건너뛰지 않음 — 키가 아예 없을 때만 예전처럼 바로 제목·설명). ③ 잘못 올라간 시험은
+  `admin.py trial_cancel <id> <이유>`로 **무효**(그 숫자로 판정 안 함 · 올라간 릴스 주소는 `voided`에 남겨 페이지가 「인스타 앱에서 삭제」 안내 —
+  API 삭제는 권한이 불확실해 쓰지 않음) ④ 운영자가 키를 @abyss_0cean 것으로 고치고 「인스타 연결 점검」으로 확인한 뒤 편 페이지
+  **「ABYSS 계정에 다시 올리기」**(`trial_repost` · 본편이 그대로면 **이미 만든 A·B 영상 그대로** · 추가 비용 없음 · 계정이 다르면 다시 멈춤)
+  또는 「시험 건너뛰기」(`trial_skip`). 키를 새로 만들 때는 **시크릿 창에서 @abyss_0cean으로 로그인**(브라우저에 로그인된 다른 계정이 자동으로 쓰인 것으로 추정).
+  운영자 선택(2026-10-10): 파리지옥말미잘 편은 **ABYSS 계정에서 다시 시험**. 회귀: `test_wrong_account_never_posts_and_waits_then_reposts`·
+  `test_trial_cancel_then_repost_reuses_videos`·`test_ig_trial_publish.py::test_trial_reel_refuses_other_account` · `v2_admin_check.mjs`(trial_cancelled_panel ·
+  trial_repost_dispatch · trial_wrong_account_waits · list_wrong_account_warning · list_right_account_ok).
 - 회귀: `tests/test_v2_admin.py`(`test_after_video_posts_two_trial_reels_and_waits`(실제 조립 · 같은 캡션 · 다른 틀 · 다른 첫 장면)·`test_trial_decide_rules`·
   `test_trial_check_b_wins_swaps_hook_video_and_prepares_upload`·`test_trial_tie_or_hold_keeps_a`·`test_after_video_without_instagram_key_goes_straight_to_title`·
   `test_after_video_old_hook_skips_trial`·`test_trial_post_failure_falls_back_and_hides_token`·`test_trial_skip_by_operator`·`test_ig_probe_and_pattern_hint`·

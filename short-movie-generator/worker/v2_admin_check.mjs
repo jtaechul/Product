@@ -400,7 +400,8 @@ statusOverride = null;
   { let asked = ""; const cf0 = globalThis.confirm; globalThis.confirm = m => { asked = m; return false; };
     const apv = (lists["[data-act]"] || []).find(b => b.dataset.act === "approve" && b.dataset.stage === "video");
     if (apv?.onclick) await apv.onclick(); globalThis.confirm = cf0;
-    res.video_approve_mentions_trial = asked.includes("인스타 시험 릴스로 올려 24~48시간 겨룬 뒤") && asked.includes("연결이 없으면 바로 씁니다"); }
+    res.video_approve_mentions_trial = asked.includes("인스타 시험 릴스로 올려 24~48시간 겨룬 뒤") && asked.includes("@abyss_0cean으로 연결돼 있을 때") &&
+      asked.includes("다른 계정이면 올리지 않고 멈춥니다"); }
   // ④ 시험 없이 진행(키 없음 등): 이유가 보인다
   sv = base(); sv.jobs.upload.status = "done"; sv.artifacts.trial = { state: "skipped", reason: "인스타 연결 키(IG_ACCESS_TOKEN)가 없음" };
   statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
@@ -421,6 +422,37 @@ statusOverride = null;
   res.list_due_auto_check = dispatched.slice(d0).filter(x => x.body.inputs.action === "trial_check" && x.body.inputs.pilot === "").length === 1;
   const ipb = els.igprobe; d0 = dispatched.length; if (ipb?.onclick) await ipb.onclick();
   res.ig_probe_dispatch = dispatched.slice(d0).some(x => x.body.inputs.action === "ig_probe");
+  indexOverride = null;
+  // ⑤-2 계정 잠금(운영자 확정 2026-10-10 · 실사고: 개인 계정 @lord.shiba.ybd 에 올라감): 무효 시험 · 다시 올리기 · 계정 경고
+  sv = base(); sv.jobs.upload = { stage: "upload", status: "trial_wait", at: iso(0.5) };
+  Object.assign(sv.artifacts.trial, { state: "cancelled", reason: "잘못된 계정(@lord.shiba.ybd)에 올라감 — ABYSS(@abyss_0cean)가 아님",
+    voided: [{ username: "lord.shiba.ybd", reason: "잘못된 계정", posts: [{ side: "a", permalink: "https://www.instagram.com/reel/DeUVF3-iuoE/" },
+                                                                    { side: "b", permalink: "https://www.instagram.com/reel/DeUVAsGgepp/" }] }] });
+  sv.artifacts.trial.b.file = "out/r1_trial/final_b.mp4"; delete sv.artifacts.trial.posted_at;
+  statusOverride = sv; els = {}; d0 = dispatched.length; await api.renderV2Episode("bathynomus_giganteus");
+  ev = els.view.innerHTML; up = ev.slice(ev.indexOf('id="stg-upload"'));
+  res.trial_cancelled_panel = up.includes('v2st fail">시험 대기') && up.includes("시험이 멈춰 있습니다 — 잘못된 계정(@lord.shiba.ybd)") &&
+    up.includes("reel/DeUVF3-iuoE/") && up.includes("reel/DeUVAsGgepp/") && up.includes("「삭제」") && up.includes('id="trrepost"') &&
+    up.includes('id="trskip"') && up.includes("이미 만든 A·B 영상을 그대로") && !up.includes('id="upmeta"') && !up.includes('id="trcheck"') &&
+    dispatched.length === d0;
+  const trr = els.trrepost; d0 = dispatched.length; if (trr?.onclick) await trr.onclick();
+  res.trial_repost_dispatch = dispatched.slice(d0).some(x => x.body.inputs.action === "trial_repost" && x.body.inputs.pilot === "bathynomus_giganteus");
+  sv = base(); sv.jobs.upload = { stage: "upload", status: "trial_wait", at: iso(0.5) };
+  sv.artifacts.trial = { state: "cancelled", reason: "연결된 인스타 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 올리지 않았습니다" };
+  statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  ev = els.view.innerHTML;
+  res.trial_wrong_account_waits = ev.includes("올리지 않았습니다") && ev.includes("B 버전을 만든 뒤 올립니다") && ev.includes('id="trrepost"');
+  statusOverride = null;
+  indexOverride = { items: [{ id: "t2", name_ko: "파리지옥말미잘", stage: "upload", state: "working", job: { stage: "upload", status: "trial_wait", at: iso(1) },
+      trial: { state: "cancelled", reason: "잘못된 계정(@lord.shiba.ybd)" } }],
+    ig: { ok: false, username: "lord.shiba.ybd", expected: "abyss_0cean", error: "연결된 계정이 @lord.shiba.ybd", at: "2026-10-10T14:46:08Z" } };
+  window.location.pathname = "/"; els = {}; await api.renderV2List();
+  const lv2 = els.view.innerHTML;
+  res.list_wrong_account_warning = lv2.includes("올릴 계정: <b>@abyss_0cean</b>") && lv2.includes("연결된 계정이 @lord.shiba.ybd — ABYSS 계정이 아니라 올리지 않습니다") &&
+    !lv2.includes('<span class="ok">연결됨</span>') && lv2.includes("파리지옥말미잘 · 시험 멈춤") && lv2.includes('v2st fail">시험 대기');
+  indexOverride = { items: [], ig: { ok: true, username: "abyss_0cean", at: "2026-10-11T00:00:00Z" } };
+  els = {}; await api.renderV2List();
+  res.list_right_account_ok = els.view.innerHTML.includes('<span class="ok">연결됨</span> @abyss_0cean');
   indexOverride = null;
   // ⑥ 인스타가 가져갈 영상 주소(/v2file/커밋/편/파일.mp4): 커밋 번호로 고정한 raw 주소 · mp4 · 범위 요청 전달 · 그 밖은 거절
   const sha = "0123456789abcdef0123456789abcdef01234567";

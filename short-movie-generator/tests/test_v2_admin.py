@@ -1477,16 +1477,16 @@ def _trial_pilot(v2, monkeypatch, cands=None, line=True):
 
 class _FakeIG(dict):
     """가짜 인스타 API — 올린 주소·캡션을 기억하고, 지표는 media_id 별로 돌려준다."""
-    def __init__(self, metrics=None, fail_on=None):
-        self.posts, self.metrics, self.n = [], metrics or {}, 0
+    def __init__(self, metrics=None, fail_on=None, user="abyss_0cean"):
+        self.posts, self.metrics, self.n, self.user = [], metrics or {}, 0, user
         def post(url, cap):
             self.n += 1
             if fail_on and self.n == fail_on:
                 raise RuntimeError("HTTPSConnectionPool: /me?fields=user_id&access_token=SECRET123TOKEN failed")
             self.posts.append({"url": url, "caption": cap})
-            return {"media_id": f"m{self.n}", "permalink": f"https://www.instagram.com/reel/R{self.n}/", "username": "deep.sea.test"}
+            return {"media_id": f"m{self.n}", "permalink": f"https://www.instagram.com/reel/R{self.n}/", "username": self.user}
         super().__init__(post=post, insights=lambda mid: {"metrics": dict(self.metrics.get(mid, {})), "errors": {}},
-                         probe=lambda: {"ok": True, "username": "deep.sea.test"}, check=lambda url: True)
+                         probe=lambda: {"ok": True, "username": self.user}, check=lambda url: True)
 
 
 def _meta_ai(line):
@@ -1502,7 +1502,7 @@ def test_after_video_posts_two_trial_reels_and_waits(v2, monkeypatch):
     admin.main(["after_video", pid])
     st = admin.load_status(pid)
     tr = st["artifacts"]["trial"]
-    assert tr["state"] == "running" and len(ig.posts) == 2 and tr["username"] == "deep.sea.test"
+    assert tr["state"] == "running" and len(ig.posts) == 2 and tr["username"] == "abyss_0cean"
     urls = {p["url"] for p in ig.posts}
     assert urls == {f"{admin.DASH_URL}/v2file/{_SHA}/{pid}/out/final/final.mp4", f"{admin.DASH_URL}/v2file/{_SHA}/{pid}/{tr['b']['file']}"}
     assert ig.posts[0]["caption"] == ig.posts[1]["caption"]                      # 후킹만 다르게(캡션은 똑같이)
@@ -1654,7 +1654,7 @@ def test_ig_probe_and_pattern_hint(v2, monkeypatch):
     monkeypatch.setattr(admin, "_IG_API", _FakeIG())
     admin.main(["ig_probe"])
     idx = json.loads((v2 / "pilots" / "index.json").read_text(encoding="utf-8"))
-    assert idx["ig"]["ok"] and idx["ig"]["username"] == "deep.sea.test"
+    assert idx["ig"]["ok"] and idx["ig"]["username"] == "abyss_0cean" and idx["ig"]["expected"] == "abyss_0cean"
     monkeypatch.setenv("IG_ACCESS_TOKEN", "TOKX9")
     bad = _FakeIG(); bad["probe"] = lambda: (_ for _ in ()).throw(RuntimeError("Invalid token TOKX9 access_token=TOKX9"))
     monkeypatch.setattr(admin, "_IG_API", bad)
@@ -1699,3 +1699,47 @@ def test_after_video_skips_trial_when_a_has_no_voice(v2, monkeypatch):
     admin.after_video(pid)
     tr = admin.load_status(pid)["artifacts"]["trial"]
     assert tr["state"] == "skipped" and "목소리" in tr["reason"] and not ig.posts
+
+
+# ── 계정 잠금(운영자 확정 2026-10-10 · 실사고: 키가 개인 계정 @lord.shiba.ybd 것이라 시험 릴스 2개가 거기에 올라감) ──────────
+def test_wrong_account_never_posts_and_waits_then_reposts(v2, monkeypatch):
+    pid, P = _trial_pilot(v2, monkeypatch)
+    ig = _FakeIG(user="lord.shiba.ybd"); monkeypatch.setattr(admin, "_IG_API", ig)
+    admin.main(["after_video", pid])
+    st = admin.load_status(pid); tr = st["artifacts"]["trial"]
+    assert not ig.posts and ig.n == 0                                              # 다른 계정이면 한 개도 안 올림
+    assert tr["state"] == "cancelled" and "@lord.shiba.ybd" in tr["reason"] and "abyss_0cean" in tr["reason"]
+    assert st["jobs"]["upload"]["status"] == "trial_wait" and "meta" not in st["artifacts"].get("upload", {})   # 결과 보고 올리기 → 기다림
+    ig_st = json.loads((v2 / "pilots" / "_shared" / "ig_status.json").read_text(encoding="utf-8"))
+    assert ig_st["ok"] is False and ig_st["username"] == "lord.shiba.ybd" and ig_st["expected"] == "abyss_0cean"
+    with pytest.raises(SystemExit):                                                # 키를 안 고치고 다시 올리기 → 멈춤
+        admin.main(["trial_repost", pid])
+    assert admin.load_status(pid)["artifacts"]["trial"]["state"] == "cancelled" and not ig.posts
+    ig.user = "abyss_0cean"                                                        # 키를 ABYSS 것으로 바꾼 뒤
+    admin.main(["trial_repost", pid])
+    tr = admin.load_status(pid)["artifacts"]["trial"]
+    assert tr["state"] == "running" and len(ig.posts) == 2 and tr["username"] == "abyss_0cean" and (P / tr["b"]["file"]).exists()
+
+
+def test_trial_cancel_then_repost_reuses_videos(v2, monkeypatch):
+    pid, P = _trial_pilot(v2, monkeypatch)
+    ig = _FakeIG(); monkeypatch.setattr(admin, "_IG_API", ig)
+    admin.after_video(pid)
+    first = admin.load_status(pid)["artifacts"]["trial"]
+    admin.main(["trial_cancel", pid, "잘못된 계정(@lord.shiba.ybd)에 올라감"])
+    st = admin.load_status(pid); tr = st["artifacts"]["trial"]
+    assert tr["state"] == "cancelled" and "media_id" not in tr["a"] and tr["a"]["metrics"] == {} and "posted_at" not in tr
+    v = tr["voided"][0]
+    assert v["username"] == "abyss_0cean" and {x["permalink"] for x in v["posts"]} == {first["a"]["permalink"], first["b"]["permalink"]}
+    assert st["jobs"]["upload"]["status"] == "trial_wait"
+    assert admin.trial_check(pid, now=time_after(first["posted_at"], 30)) == []        # 무효 시험은 판정하지 않는다
+    calls = []
+    base = admin._RUN_REQUEST
+    monkeypatch.setattr(admin, "_RUN_REQUEST", lambda rp: calls.append(rp) or base(rp))
+    admin.trial_repost(pid)
+    tr = admin.load_status(pid)["artifacts"]["trial"]
+    assert tr["state"] == "running" and len(ig.posts) == 4 and not calls                # 같은 A·B 영상 그대로(목소리·조립 다시 안 함)
+    assert tr["b"]["file"] == first["b"]["file"] and tr["a"]["media_id"] not in {first["a"]["media_id"], first["b"]["media_id"]}
+    assert tr["voided"][0]["posts"][0]["permalink"] and tr["b"]["checks"]
+    with pytest.raises(SystemExit):                                                # 진행 중이면 다시 올리기 없음
+        admin.trial_repost(pid)

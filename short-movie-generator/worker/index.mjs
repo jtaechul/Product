@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-09-3 (시험 릴스 후킹 A·B: 자동 게시 · 24~48시간 판정 · 이긴 후킹으로 유튜브 준비)";
+const BUILD="v2026-10-10-1 (시험 릴스 계정 잠금 @abyss_0cean · 무효 처리 · ABYSS 계정에 다시 올리기)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2394,6 +2394,7 @@ function v2job(job,stage,state,pid){
   }
   if(state!=="working"&&state!=="revise")return {kind:"none"};
   if(j&&j.status==="trial")return {kind:"trial",job:j};      // 인스타 시험 릴스로 후킹 겨루는 중(24~48시간 · 멈춤 아님)
+  if(j&&j.status==="trial_wait")return {kind:"trialwait",job:j};   // 시험 무효 → 「ABYSS 계정에 다시 올리기」·「건너뛰기」 대기
   if(j&&j.status==="running"){
     const age=(Date.now()-Date.parse(j.at||0))/60000;
     return age<V2_JOB_STALE_MIN?{kind:"running",job:j}:{kind:"stale",job:j};
@@ -2404,6 +2405,7 @@ function v2job(job,stage,state,pid){
 function v2badgeJob(state,jb){
   if(jb.kind==="running")return '<span class="v2st prog">작업 중</span>';
   if(jb.kind==="trial")return '<span class="v2st prog">시험 중</span>';
+  if(jb.kind==="trialwait")return '<span class="v2st fail">시험 대기</span>';
   if(jb.kind==="starting")return '<span class="v2st prog">시작 중</span>';
   if(jb.kind==="failed")return '<span class="v2st fail">실패</span>';
   if(jb.kind==="stale")return '<span class="v2st fail">멈춤</span>';
@@ -2416,6 +2418,7 @@ function v2retryBtn(stage,lab){return V2_AUTO[stage]?'<button class="btn save" d
 function v2jobHTML(stage,jb){
   if(jb.kind==="running")return '<div class="hint" style="margin-top:6px"><span class="ok">자동 작업이 실제로 돌고 있습니다</span> — '+esc(jb.job.text||"")+
     ' (시작 '+v2when(jb.job.at)+' · 보통 3~6분)'+(jb.live&&jb.live.url?' · <a href="'+esc(jb.live.url)+'" target="_blank">진행 상황 보기</a>':'')+'. 이 화면은 자동으로 새로 고쳐집니다.</div>';
+  if(jb.kind==="trialwait")return '<div class="hint" style="margin-top:6px"><span class="err">인스타 시험 릴스가 멈춰 있습니다</span> — 아래 「인스타 시험 릴스」 칸에서 「ABYSS 계정에 다시 올리기」 또는 「시험 건너뛰기」를 눌러 주세요.</div>';
   if(jb.kind==="trial")return '<div class="hint" style="margin-top:6px"><span class="ok">인스타 시험 릴스로 후킹 A·B를 겨루는 중입니다</span> — 아래 「인스타 시험 릴스」 칸에서 볼 수 있습니다. 결과가 나오면 이긴 후킹으로 유튜브 제목·설명을 자동으로 씁니다.</div>';
   if(jb.kind==="starting")return '<div class="hint" style="margin-top:6px"><span class="ok">요청을 보냈습니다</span> — 서버가 작업을 시작하는 중입니다(보통 30초 안). 이 화면은 자동으로 새로 고쳐집니다.</div>';
   if(jb.kind==="failed")return '<div class="hint" style="margin-top:6px"><span class="err">자동 작업 실패</span> — '+esc(jb.job.text||"")+'</div>'+v2retryBtn(stage,"다시 시도");
@@ -2640,8 +2643,8 @@ function v2stageBody(st,stage){
       v2copyBox("제목 (한국어)",m.title_ko,"cp_tk")+v2copyBox("설명 (한국어 · 해시태그 포함)",m.desc_ko,"cp_dk")+
       v2copyBox("해시태그 (한국어)",(m.tags_ko||[]).join(" "),"cp_hk")+
       v2copyBox("고정 댓글 (유튜브 앱에서 직접 달고 고정)",m.pinned_comment,"cp_pc");
-    const trRun=((st.artifacts||{}).trial||{}).state==="running";
-    if(!m)return v2trialHTML(st)+(trRun?'<div class="hint">시험이 끝나면 이긴 후킹으로 유튜브 제목·설명을 자동으로 쓰고, 예약 공개(일본 시간 19시)를 준비합니다. 기다리지 않으려면 위의 「시험 건너뛰고…」를 누르세요.</div>':
+    const trS=((st.artifacts||{}).trial||{}).state, trRun=trS==="running"||trS==="cancelled";
+    if(!m)return v2trialHTML(st)+(trS==="cancelled"?'<div class="hint">다시 올리거나 건너뛰면 유튜브 제목·설명을 자동으로 씁니다.</div>':trRun?'<div class="hint">시험이 끝나면 이긴 후킹으로 유튜브 제목·설명을 자동으로 쓰고, 예약 공개(일본 시간 19시)를 준비합니다. 기다리지 않으려면 위의 「시험 건너뛰고…」를 누르세요.</div>':
       '<div class="hint" style="margin-top:0">완성본을 승인하면 유튜브 제목·설명·해시태그를 자동으로 씁니다.</div>'+
       '<button class="btn save" id="upmeta" style="width:100%;margin-top:8px">제목·설명 AI로 쓰기 (약 $0.01)</button>');
     return v2trialHTML(st)+v2dlHTML("u")+'<div class="dual" style="margin-top:4px"><div><span class="lbl">제목 (일본어 · 실제로 올라감)</span><input id="up_tj" value="'+esc(m.title_jp)+'">'+v2copyBtn("up_tj")+'</div>'+
@@ -2822,15 +2825,28 @@ function v2trialSide(tr,k){
     '<br><small>'+v2trialMetrics(s.metrics)+(s.permalink?' · <a href="'+esc(s.permalink)+'" target="_blank" rel="noopener">인스타에서 보기</a>':'')+'</small>'+
     (errs.length?'<br><small class="warn">아직 못 받은 지표: '+esc(errs.join(", "))+'</small>':'')+'</div>';
 }
+const V2_IG_ACCOUNT="abyss_0cean";                  // ★시험 릴스는 ABYSS 인스타 @abyss_0cean 에만(운영자 확정 2026-10-10)
+function v2voidedHTML(tr){                           // 잘못 올라간(무효) 시험 릴스 — 인스타 앱에서 지우도록 주소를 남긴다
+  return (tr.voided||[]).map(v=>'<div class="cfact warn">무효가 된 시험 릴스'+(v.username?' (@'+esc(v.username)+')':'')+': '+
+    (v.posts||[]).filter(x=>x.permalink).map(x=>'<a href="'+esc(x.permalink)+'" target="_blank" rel="noopener">'+esc(String(x.side||"").toUpperCase())+' 열기</a>').join(" · ")+
+    ' — 아직 안 지웠다면 그 계정으로 로그인한 인스타 앱에서 「···」 → 「삭제」. <small>('+esc(v.reason||"")+')</small></div>').join("");
+}
 function v2trialHTML(st){
   const tr=(st.artifacts||{}).trial;if(!tr)return "";
-  if(tr.state==="skipped")return '<div class="sect">인스타 시험 릴스</div><div class="cfact">시험 없이 진행 — '+esc(tr.reason||"")+'</div>';
+  if(tr.state==="skipped")return '<div class="sect">인스타 시험 릴스</div><div class="cfact">시험 없이 진행 — '+esc(tr.reason||"")+'</div>'+v2voidedHTML(tr);
+  if(tr.state==="cancelled")return '<div class="sect">인스타 시험 릴스 — 후킹 A·B 겨루기</div>'+
+    '<div class="cfact err">시험이 멈춰 있습니다 — '+esc(tr.reason||"")+'</div>'+v2voidedHTML(tr)+
+    (tr.error?'<div class="cfact err">마지막 다시 올리기 실패: '+esc(tr.error)+'</div>':'')+
+    ((tr.a||{}).hook?v2trialSide(tr,"a"):'')+((tr.b||{}).hook?v2trialSide(tr,"b"):'')+
+    '<div class="hint">1) 인스타 키를 ABYSS 계정(@'+V2_IG_ACCOUNT+') 것으로 바꾸고 2) 영상 목록의 「인스타 연결 점검」에서 "연결됨 @'+V2_IG_ACCOUNT+'"을 확인한 뒤 3) 아래 버튼을 누르세요. '+
+      ((tr.b||{}).file?'이미 만든 A·B 영상을 그대로 다시 올립니다(추가 비용 없음).':'B 버전을 만든 뒤 올립니다(목소리 약 $0.001).')+' 연결된 계정이 다르면 올리지 않고 멈춥니다.</div>'+
+    '<div class="btnrow"><button class="btn save" id="trrepost">ABYSS 계정에 다시 올리기 (무료)</button><button class="btn warn" id="trskip">시험 건너뛰고 지금 후킹(A)으로 진행</button></div>';
   const h=v2hoursSince(tr.posted_at), last=tr.last||{}, res=tr.result||{};
   let x='<div class="sect">인스타 시험 릴스 — 후킹 A·B 겨루기</div>';
   if(tr.state==="running")x+='<div class="cfact"><span class="v2st prog">시험 중</span> 게시 '+Math.floor(h)+'시간째'+(tr.username?' · @'+esc(tr.username):'')+' · '+
     (h<V2_TRIAL_DUE_H?('판정은 약 '+Math.ceil(V2_TRIAL_DUE_H-h)+'시간 뒤부터(최대 48시간)'):'판정 시각이 지났습니다 — 이 페이지를 열면 결과를 자동으로 가져옵니다')+'</div>';
   else x+='<div class="cfact"><span class="ok">판정 끝</span> <b>'+esc(({win:(tr.winner||"a").toUpperCase()+" 승",tie:"무승부 → A 그대로",hold:"판정 보류 → A 그대로"})[res.kind]||"")+'</b> — '+esc(res.why||"")+'</div>';
-  x+=v2trialSide(tr,"a")+v2trialSide(tr,"b");
+  x+=v2trialSide(tr,"a")+v2trialSide(tr,"b")+v2voidedHTML(tr);
   if(tr.state==="running")x+=(last.why?'<div class="hint">마지막 확인 '+v2when(tr.checked_at)+' — '+esc(last.why)+'</div>':'')+
     (tr.error?'<div class="cfact err">'+esc(tr.error)+'</div>':'')+
     '<div class="btnrow"><button class="btn save" id="trcheck">지금 결과 가져오기 (무료)</button><button class="btn warn" id="trskip">시험 건너뛰고 지금 후킹(A)으로 진행</button></div>';
@@ -2853,13 +2869,16 @@ async function v2trialAuto(pid,due,re){                   // 24시간 지난 시
 function v2igCard(idx,items){
   const ig=idx.ig||null, hp=Object.entries(idx.hook_patterns||{}), run=items.filter(x=>x.trial&&x.trial.state==="running");
   return '<div class="card"><span class="lbl">인스타 시험 릴스 — 후킹 겨루기</span>'+
-    (ig?(ig.ok?'<div class="cfact"><span class="ok">연결됨</span> @'+esc(ig.username||"")+' · 점검 '+v2when(ig.at)+'</div>'
-             :'<div class="cfact err">연결 안 됨 — '+esc(ig.error||"")+' · 점검 '+v2when(ig.at)+'</div>')
+    '<div class="cfact">올릴 계정: <b>@'+V2_IG_ACCOUNT+'</b> (ABYSS) — 다른 계정이면 올리지 않습니다</div>'+
+    (ig?((u=>ig.ok&&u===V2_IG_ACCOUNT?'<div class="cfact"><span class="ok">연결됨</span> @'+esc(ig.username)+' · 점검 '+v2when(ig.at)+'</div>'
+             :'<div class="cfact err">'+(u&&u!==V2_IG_ACCOUNT?'연결된 계정이 @'+esc(ig.username)+' — ABYSS 계정이 아니라 올리지 않습니다. 인스타 키를 @'+V2_IG_ACCOUNT+' 것으로 바꿔 주세요'
+               :'연결 안 됨 — '+esc(ig.error||""))+' · 점검 '+v2when(ig.at)+'</div>')(String(ig.username||"").toLowerCase()))
        :'<div class="cfact warn">아직 연결을 점검하지 않았습니다.</div>')+
+    items.filter(x=>x.trial&&x.trial.state==="cancelled").map(x=>'<div class="cfact err">'+esc(x.name_ko||x.id)+' · 시험 멈춤 — '+esc(x.trial.reason||"")+' (그 편 페이지에서 다시 올리기)</div>').join("")+
     run.map(x=>'<div class="cfact">'+esc(x.name_ko||x.id)+' · 시험 '+Math.floor(v2hoursSince(x.trial.posted_at))+'시간째 · A 「'+esc((x.trial.a||{}).line||"")+'」 vs B 「'+esc((x.trial.b||{}).line||"")+'」</div>').join("")+
     (hp.length?'<div class="sect">후킹 틀별 시험 성적</div>'+hp.map(([k,s])=>'<div class="cfact">'+esc(k)+': '+s.wins+'승 '+s.losses+'패 '+s.ties+'무'+(s.skip_avg!=null?' · 평균 3초 넘김 '+esc(s.skip_avg)+'%':'')+'</div>').join("")+
       '<div class="hint">판정 난 시험이 3편 넘게 쌓이면 다음 대본 후보를 쓸 때 AI가 참고합니다.</div>':'')+
-    '<div class="hint">완성본을 승인하면 맨 앞 후킹만 다른 2개를 인스타 시험 릴스(팔로워가 아닌 사람에게 먼저)로 올려 24~48시간 겨루고, 이긴 후킹으로 유튜브 업로드를 준비합니다. 연결이 안 되어 있으면 시험 없이 예전처럼 진행합니다.</div>'+
+    '<div class="hint">완성본을 승인하면 맨 앞 후킹만 다른 2개를 인스타 시험 릴스(팔로워가 아닌 사람에게 먼저)로 올려 24~48시간 겨루고, 이긴 후킹으로 유튜브 업로드를 준비합니다. 키가 아예 없으면 시험 없이 예전처럼 진행하고, 다른 계정이면 올리지 않고 멈춥니다.</div>'+
     '<button class="btn" id="igprobe" style="width:100%;margin-top:8px">인스타 연결 점검 (무료 · 게시 안 함)</button></div>';
 }
 function v2stageCard(st,stage){
@@ -2947,7 +2966,7 @@ async function renderV2Episode(pid){
     const auto=!!V2_AUTO[stage], nextS=STG[STG.indexOf(stage)+1];
     const nextTxt=(act==="approve"&&nextS&&V2_AUTO[nextS])?(" 바로 이어서 "+STG_KO[nextS].slice(3)+"이(가) 자동으로 만들어집니다("+v2cost(nextS,st)+")."):"";
     const mv=stage==="video"?v2motionWarn(st.checks||{}):"";
-    const trialTxt=(act==="approve"&&stage==="video")?" 승인하면 (인스타가 연결돼 있을 때) 맨 앞 후킹만 다른 2개를 인스타 시험 릴스로 올려 24~48시간 겨룬 뒤, 이긴 후킹으로 유튜브 제목·설명을 씁니다(연결이 없으면 바로 씁니다).":"";
+    const trialTxt=(act==="approve"&&stage==="video")?" 승인하면 (인스타가 @"+V2_IG_ACCOUNT+"으로 연결돼 있을 때) 맨 앞 후킹만 다른 2개를 인스타 시험 릴스로 올려 24~48시간 겨룬 뒤, 이긴 후킹으로 유튜브 제목·설명을 씁니다(키가 없으면 바로 씁니다 · 다른 계정이면 올리지 않고 멈춥니다).":"";
     const msg=act==="approve"?(mv+(nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):(mv?"그래도 ":""))+lab+"을(를) 승인할까요?"+nextTxt+trialTxt)
              :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 요청대로 다시 만듭니다("+v2cost(stage,st)+")."+(stage==="video"?" 메모에 '3번 컷'처럼 번호를 적으면 그 컷만 다시 만듭니다(그만큼만 과금).":""):""))
              :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 처음부터 다시 만듭니다("+v2cost(stage,st)+")."+(stage==="video"?" 8컷 전부 다시 생성해 비용이 큽니다.":""):""));
@@ -3007,6 +3026,9 @@ async function renderV2Episode(pid){
   const trs=$("#trskip");if(trs)trs.onclick=async()=>{
     if(!confirm("시험 릴스를 건너뛰고 지금 후킹(A)으로 유튜브 제목·설명을 쓸까요? 인스타에 올라간 시험 릴스 2개는 그대로 둡니다(팔로워에게는 안 보임)."))return;
     if(await v2do("trial_skip",pid,"","",trs))v2trialLater(reEp);};
+  const trr=$("#trrepost");if(trr)trr.onclick=async()=>{
+    if(!confirm("ABYSS 계정(@"+V2_IG_ACCOUNT+")에 시험 릴스 2개를 다시 올릴까요? 연결된 인스타 계정이 다르면 올리지 않고 멈춥니다(무료 · 5~15분)."))return;
+    if(await v2do("trial_repost",pid,"","",trr)){banner("ABYSS 계정에 다시 올리는 중입니다(5~15분). 화면이 저절로 새로 고쳐집니다.","ok");v2trialLater(reEp);}};
   v2trialAuto(pid,v2trialDue((st.artifacts||{}).trial),reEp);
   const cc=$("#v2cc");if(cc)cc.onclick=async()=>{if(confirm("대본 전체를 AI로 교차 검사할까요? (약 $0.02 · 1~2분)"))await v2do("crosscheck",pid,"","",cc);};
   document.querySelectorAll("[data-usesug]").forEach(b=>b.onclick=()=>{

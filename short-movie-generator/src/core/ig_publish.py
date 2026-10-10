@@ -177,11 +177,14 @@ def media_info(base: str, media_id: str, token: str) -> dict:
         return {}
 
 
-def publish_trial_reel(token: str, video_url: str, caption: str, strategy: str = "MANUAL") -> dict:
-    """시험 릴스 1편 게시(팔로워가 아닌 사람에게만 먼저). {media_id, permalink, username, base}."""
+def publish_trial_reel(token: str, video_url: str, caption: str, strategy: str = "MANUAL", expect: str | None = None) -> dict:
+    """시험 릴스 1편 게시(팔로워가 아닌 사람에게만 먼저). {media_id, permalink, username, base}.
+    expect: 올려야 할 계정 이름 — 토큰의 계정이 다르면 컨테이너를 만들기 전에 멈춘다(실사고 2026-10-10: 개인 계정에 올라감)."""
     if not token:
         raise IGPublishError("IG_ACCESS_TOKEN 이 비어 있습니다.")
     base, ig_id, username = resolve_ig_user_id(token)
+    if expect and username.lower() != expect.lower():
+        raise IGPublishError(f"연결된 계정 @{username} ≠ 올릴 계정 @{expect} — 게시하지 않았습니다")
     cid = create_container(base, ig_id, video_url, caption, token, trial=strategy)
     wait_container(base, cid, token, max_wait=600)
     mid = publish_container(base, ig_id, cid, token)

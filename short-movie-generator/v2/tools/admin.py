@@ -32,6 +32,8 @@
   python admin.py after_video <id>              # 완성본 승인 뒤: 시험 릴스(후킹 A·B)로 겨루기 시작 — 못 하면 바로 제목·설명
   python admin.py trial_check [id]              # 시험 릴스 결과 가져오기·판정(24~48시간 · 이긴 후킹으로 제목·설명·예약 공개 준비)
   python admin.py trial_skip <id>               # 시험 건너뛰고 지금 후킹으로 진행
+  python admin.py trial_cancel <id> [이유]       # 진행 중인 시험 무효(다른 계정에 올라감 등 — 그 결과로 판정 안 함)
+  python admin.py trial_repost <id>             # 무효가 된 시험을 ABYSS(@abyss_0cean)에 다시 올리기(이미 만든 A·B 그대로)
   python admin.py ig_probe                      # 인스타 연결 점검(게시 없음)
   python admin.py topics                        # 주제 후보 목록(topics.json) 갱신
   python admin.py index                         # 편 목록(index.json) 갱신
@@ -2590,6 +2592,11 @@ TRIAL_RULE = (f"게시 {TRIAL_DUE_H}시간 뒤 두 버전 모두 조회 {TRIAL_M
               f"{TRIAL_TIE_PP:g}%p 이상 낮은 쪽이 이김 · 차이가 그보다 작으면 A 그대로 · {TRIAL_LATE_H}시간까지 조회가 모자라면 "
               f"버전마다 {TRIAL_MIN_VIEWS_LATE}회 이상으로 판정, 그래도 모자라면 판정 보류(A 그대로)")
 DASH_URL = "https://shorts-dashboard.jtaechul.workers.dev"   # 인스타가 영상을 가져가는 공개 주소(워커 /v2file/커밋/편/파일)
+# ★시험 릴스를 올릴 계정 = ABYSS 인스타 @abyss_0cean 만(운영자 확정 2026-10-10) — 연결된 키가 다른 계정이면 절대 올리지 않는다.
+#   실사고 2026-10-10: GitHub 비밀값의 키가 개인 계정(@lord.shiba.ybd) 것이라 파리지옥말미잘 편 시험 릴스 2개가 그 계정에 올라갔다.
+IG_ACCOUNT = "abyss_0cean"
+TRIAL_WAIT_JOB = {"stage": "upload", "status": "trial_wait", "action": "trial_cancel",   # 무효 → 다시 올리기·건너뛰기 대기(페이지 「시험 대기」)
+                  "text": "시험 무효 — 「ABYSS 계정에 다시 올리기」 또는 「시험 건너뛰기」를 기다리는 중"}
 _IG_API: dict = {}                     # 테스트용 대체 {"post": f(url, 캡션), "insights": f(media_id), "probe": f(), "check": f(url)}
 _COMMIT_PUSH = None                    # 테스트용 대체(커밋·푸시 → 커밋 번호)
 
@@ -2612,7 +2619,7 @@ def _ig() -> dict | None:
         return None
     sys.path.insert(0, str(ROOT))
     from src.core import ig_publish as IG                    # noqa: E402
-    return {"post": lambda url, cap: IG.publish_trial_reel(tok, url, cap, "MANUAL"),
+    return {"post": lambda url, cap: IG.publish_trial_reel(tok, url, cap, "MANUAL", expect=IG_ACCOUNT),
             "insights": lambda mid: IG.media_insights(tok, mid),
             "probe": lambda: IG.probe(tok),
             "check": _url_ready}
@@ -2746,10 +2753,31 @@ def _hook_brief(h: dict) -> dict:
     return {k: h.get(k) for k in ("question_jp", "question_ko", "key_jp", "voice_jp", "pattern", "chosen", "cut", "at", "motion")}
 
 
-def start_trial(pid: str, api: dict, ib: int) -> dict:
-    """B 버전 조립 → 커밋·푸시 → A·B 를 시험 릴스로 게시(수동 졸업) → artifacts.trial = 진행 중."""
+def _ig_account_ok(api: dict) -> tuple[bool, str]:
+    """연결된 인스타 계정이 ABYSS(@abyss_0cean)인지 — 게시 전 필수. (맞는지, 계정 이름). 결과는 목록 화면 「인스타 연결」 칸에도 남긴다."""
+    res: dict = {"at": _now(), "expected": IG_ACCOUNT}
+    user, ok = "", False
+    try:
+        user = str((api["probe"]() or {}).get("username") or "")
+        ok = user.lower() == IG_ACCOUNT.lower()
+        res.update(ok=ok, username=user)
+        if not ok:
+            res["error"] = f"연결된 계정이 @{user or '?'} — ABYSS(@{IG_ACCOUNT})가 아니라 시험 릴스를 올리지 않습니다(키를 @{IG_ACCOUNT} 것으로 바꿔 주세요)"
+    except Exception as e:                                   # noqa: BLE001
+        res.update(ok=False, error=_safe_err(e))
+    _save(_ig_status_path(), res)
+    return ok, user
+
+
+def start_trial(pid: str, api: dict, ib: int, reuse_b: dict | None = None) -> dict:
+    """계정 확인(@abyss_0cean) → B 버전 조립(reuse_b 가 있으면 이미 만든 B 그대로) → 커밋·푸시 → A·B 를 시험 릴스로 게시(수동 졸업)
+    → artifacts.trial = 진행 중. 예전 무효 기록(voided)은 그대로 둔다."""
+    ok, user = _ig_account_ok(api)
+    if not ok:
+        raise RuntimeError(f"연결된 인스타 계정이 @{user or '?'} — ABYSS(@{IG_ACCOUNT})가 아니라 올리지 않았습니다"
+                           f"(GitHub 비밀값 IG_ACCESS_TOKEN 을 @{IG_ACCOUNT} 계정 키로 바꿔 주세요)")
     set_job(pid, "upload", "running", "시험 릴스 준비 중 — B 버전 조립 → 인스타에 A·B 게시(5~15분)", "after_video")
-    b = build_trial_variant(pid, ib)
+    b = reuse_b or build_trial_variant(pid, ib)
     sha = _commit_push(f"chore(v2): 시험 릴스 B 영상 {pid} [skip ci]")
     st = load_status(pid)
     sc = _load(_script_path(pid)) or {}
@@ -2772,7 +2800,10 @@ def start_trial(pid: str, api: dict, ib: int) -> dict:
                          "permalink": posted[k].get("permalink", ""), "metrics": {}}
     tr = {"state": "running", "posted_at": _now(), "video_built_at": a.get("built_at"), "order": order, "rule": TRIAL_RULE,
           "caption": cap, "strategy": "MANUAL", "username": next((p.get("username") for p in posted.values() if p.get("username")), ""),
-          "a": side("a", _hook_brief(hk)), "b": {**side("b", b["hook"]), "checks": b["checks"]}}
+          "a": side("a", _hook_brief(hk)), "b": {**side("b", b["hook"]), "checks": b.get("checks") or {}}}
+    old = (st.get("artifacts") or {}).get("trial") or {}
+    if old.get("voided"):
+        tr["voided"] = old["voided"]
     st["artifacts"]["trial"] = tr
     st.setdefault("jobs", {})["upload"] = {"stage": "upload", "status": "trial", "at": _now(), "action": "after_video",
                                            "text": "인스타 시험 릴스로 후킹 A·B 를 겨루는 중 — 게시 24시간 뒤부터 결과"}
@@ -2827,6 +2858,10 @@ def after_video(pid: str) -> dict:
         _note(st, "upload", "trial", "시험 릴스 진행 중 — 결과가 나오면 이긴 후킹으로 제목·설명을 씁니다")
         _save(status_path(pid), st)
         return st
+    if tr.get("state") == "cancelled":                       # 무효가 된 시험 — 운영자가 「ABYSS 계정에 다시 올리기」나 「건너뛰기」를 고른다
+        _note(st, "upload", "trial", "시험이 무효 상태입니다 — 「ABYSS 계정에 다시 올리기」 또는 「시험 건너뛰기」를 눌러 주세요")
+        _save(status_path(pid), st)
+        return st
     if tr.get("state") == "decided":                         # 이미 판정 — 대본 후킹이 이긴 쪽이라 다시 조립해도 이긴 후킹
         _write_meta_safely(pid, schedule=True)
         return load_status(pid)
@@ -2840,6 +2875,19 @@ def after_video(pid: str) -> dict:
            "A 버전 맨 앞 목소리가 없어 공정하게 비교할 수 없음(「완성본 다시 조립」 뒤 다시 승인하면 시험)" if not voice_ok else
            "인스타 연결 키(IG_ACCESS_TOKEN)가 없음 — 영상 목록의 「인스타 시험 릴스」 칸 안내를 보세요" if not api else "")
     if not why:
+        ok, user = _ig_account_ok(api)
+        if not ok:                                           # ★키는 있는데 ABYSS 계정이 아님(또는 연결 오류) — 올리지 않고 기다린다(2026-10-10)
+            err = (_load(_ig_status_path()) or {}).get("error", "")
+            st = load_status(pid)
+            st.setdefault("artifacts", {})["trial"] = {
+                "state": "cancelled", "at": _now(), "rule": TRIAL_RULE,
+                "reason": (f"연결된 인스타 계정이 @{user} — ABYSS(@{IG_ACCOUNT})가 아니라 올리지 않았습니다" if user
+                           else f"인스타 연결 확인 실패 — {err}")}
+            st.setdefault("jobs", {})["upload"] = {**TRIAL_WAIT_JOB, "at": _now()}
+            _note(st, "upload", "trial", st["artifacts"]["trial"]["reason"] + f". 키를 @{IG_ACCOUNT} 것으로 고친 뒤 「ABYSS 계정에 다시 올리기」, "
+                                         "또는 「시험 건너뛰고 지금 후킹(A)으로 진행」을 눌러 주세요")
+            _save(status_path(pid), st)
+            return st
         try:
             return start_trial(pid, api, ib)
         except Exception as e:                               # noqa: BLE001 — 시험이 안 돼도 업로드 준비는 계속
@@ -2972,6 +3020,58 @@ def apply_trial_result(pid: str, dec: dict) -> dict:
     return load_status(pid)
 
 
+def trial_cancel(pid: str, reason: str = "") -> dict:
+    """진행 중인 시험을 무효로(예: 다른 계정에 올라감) — 그 결과로는 판정하지 않는다. 올라간 릴스 주소는 「지워 주세요」로
+    남기고(voided), 운영자의 「ABYSS 계정에 다시 올리기」(trial_repost) 또는 「시험 건너뛰기」(trial_skip)를 기다린다."""
+    st = load_status(pid)
+    tr = (st.get("artifacts") or {}).get("trial") or {}
+    if tr.get("state") != "running":
+        raise SystemExit("진행 중인 시험이 없습니다")
+    reason = reason.strip() or "운영자가 시험을 무효로 함"
+    tr.setdefault("voided", []).append({"at": _now(), "reason": reason, "username": tr.get("username", ""), "posted_at": tr.get("posted_at"),
+                                        "posts": [{"side": k, "media_id": tr[k].get("media_id", ""), "permalink": tr[k].get("permalink", "")}
+                                                  for k in ("a", "b")]})
+    for k in ("a", "b"):
+        for f in ("media_id", "permalink", "metric_errors"):
+            tr[k].pop(f, None)
+        tr[k]["metrics"] = {}
+    for f in ("posted_at", "checked_at", "last", "username", "error"):
+        tr.pop(f, None)
+    tr.update(state="cancelled", reason=reason)
+    st.setdefault("jobs", {})["upload"] = {**TRIAL_WAIT_JOB, "at": _now()}
+    _note(st, "upload", "trial", f"시험 무효: {reason} — 올라간 릴스는 인스타 앱에서 지워 주세요. 「ABYSS 계정에 다시 올리기」로 다시 시험합니다")
+    _save(status_path(pid), st)
+    return st
+
+
+def trial_repost(pid: str) -> dict:
+    """무효가 된 시험을 ABYSS(@abyss_0cean)에 다시 올린다 — 이미 만든 A·B 영상 그대로(추가 비용 없음).
+    본편이 그 뒤 다시 조립됐으면 B 를 새로 만든다. 연결된 계정이 다르면 올리지 않고 멈춘다."""
+    st = load_status(pid)
+    tr = (st.get("artifacts") or {}).get("trial") or {}
+    if tr.get("state") != "cancelled":
+        raise SystemExit("다시 올릴 시험이 없습니다(무효가 된 시험만 다시 올립니다)")
+    if st["stages"]["video"]["state"] != "approved":
+        raise SystemExit("완성본을 먼저 승인해 주세요")
+    api = _ig()
+    if not api:
+        raise SystemExit("인스타 연결 키(IG_ACCESS_TOKEN)가 없습니다")
+    sc = _load(_script_path(pid)) or {}
+    b = tr.get("b") or {}
+    ib = b.get("hook", {}).get("chosen")
+    ib = ib if isinstance(ib, int) else _pick_b(sc.get("hook") or {})
+    same = tr.get("video_built_at") == st["artifacts"]["video"].get("built_at") and b.get("file") and (PILOTS / pid / b["file"]).exists()
+    try:
+        return start_trial(pid, api, ib, reuse_b={k: b[k] for k in ("hook", "file", "checks") if k in b} if same else None)
+    except Exception as e:                                   # noqa: BLE001 — 실패해도 무효 상태로 되돌려 다시 누를 수 있게
+        st = load_status(pid)
+        st["artifacts"]["trial"]["error"] = _safe_err(e)
+        st.setdefault("jobs", {})["upload"] = {**TRIAL_WAIT_JOB, "at": _now()}
+        _note(st, "upload", "error", "다시 올리기 실패: " + _safe_err(e))
+        _save(status_path(pid), st)
+        raise SystemExit("다시 올리기 실패: " + _safe_err(e))
+
+
 def trial_skip(pid: str) -> dict:
     """운영자가 시험을 건너뜀 — 지금 후킹(A)으로 바로 제목·설명(인스타에 올라간 시험 릴스는 그대로 둔다 · 팔로워에겐 안 보임)."""
     st = load_status(pid)
@@ -2997,17 +3097,12 @@ def _ig_status_path() -> Path:
 def ig_probe() -> dict:
     """인스타 연결 점검(게시 없음) — 키가 있는지 · 어느 계정에 올라가는지. 결과는 목록 화면에 보인다(index.json)."""
     api = _ig()
-    res: dict = {"at": _now()}
     if not api:
-        res.update(ok=False, error="GitHub 비밀값 IG_ACCESS_TOKEN 이 없습니다")
-    else:
-        try:
-            p = api["probe"]()
-            res.update(ok=True, username=p.get("username", ""))
-        except Exception as e:                               # noqa: BLE001
-            res.update(ok=False, error=_safe_err(e))
-    _save(_ig_status_path(), res)
-    return res
+        res = {"at": _now(), "expected": IG_ACCOUNT, "ok": False, "error": "GitHub 비밀값 IG_ACCESS_TOKEN 이 없습니다"}
+        _save(_ig_status_path(), res)
+        return res
+    _ig_account_ok(api)                                      # 계정이 @abyss_0cean 이 아니면 ok=False + 경고
+    return _load(_ig_status_path())
 
 
 def hook_pattern_stats() -> dict:
@@ -3274,6 +3369,10 @@ def main(argv: list[str]) -> int:
         trial_check(a[0] if a and a[0] else None)
     elif cmd == "trial_skip":
         trial_skip(a[0])
+    elif cmd == "trial_cancel":                              # 시험 무효(예: 다른 계정에 올라감) — 메모 = 이유
+        trial_cancel(a[0], memo(1))
+    elif cmd == "trial_repost":                              # 무효가 된 시험을 ABYSS 계정에 다시 올리기
+        trial_repost(a[0])
     elif cmd == "ig_probe":
         ig_probe()
     elif cmd == "crosscheck":

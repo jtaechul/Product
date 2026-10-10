@@ -59,3 +59,14 @@ def test_media_insights_falls_back_per_metric_and_hides_token(monkeypatch):
     assert r["metrics"] == {"views": 812, "reach": 640, "ig_reels_avg_watch_time": 4300}
     assert "reels_skip_rate" in r["errors"] and "SECRETTOK" not in json.dumps(r)
     assert IG._metric_value({"total_value": {"value": 47.5}}) == 47.5                   # 새 지표는 total_value 로 올 수 있다
+
+
+def test_trial_reel_refuses_other_account(monkeypatch):
+    """실사고 2026-10-10: 키가 개인 계정 것이라 시험 릴스가 그 계정에 올라감 → 올릴 계정이 다르면 컨테이너도 만들지 않는다."""
+    import pytest
+    made = []
+    monkeypatch.setattr(IG, "resolve_ig_user_id", lambda tok: (IG._IG_BASE, "IG9", "lord.shiba.ybd"))
+    monkeypatch.setattr(IG, "create_container", lambda *a, **k: made.append(a) or "C9")
+    with pytest.raises(IG.IGPublishError):
+        IG.publish_trial_reel("TOK", "https://x/v.mp4", "cap", expect="abyss_0cean")
+    assert not made
