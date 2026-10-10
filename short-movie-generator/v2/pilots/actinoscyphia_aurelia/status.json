@@ -16,8 +16,19 @@
       "approved_at": "2026-10-10T03:06:56Z"
     },
     "script": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-10-10T03:10:21Z",
+          "kind": "auto",
+          "text": "대본 자동 작성 완료"
+        },
+        {
+          "at": "2026-10-10T03:10:58Z",
+          "kind": "crosscheck",
+          "text": "AI 교차 검사: 의심 3건"
+        }
+      ]
     },
     "storyboard": {
       "state": "locked",
@@ -64,15 +75,439 @@
       "page": "https://www.inaturalist.org/taxa/1521695"
     }
   },
-  "artifacts": {},
+  "artifacts": {
+    "script": {
+      "cuts": [
+        {
+          "cut": 1,
+          "jp": "食虫植物のように、口を閉じて獲物を捕らえます。",
+          "ko": "식충식물처럼 입을 닫아 먹이를 잡습니다.",
+          "tts": "しょくちゅうしょくぶつのように、くちをとじてえものをとらえます。",
+          "fact": "F3",
+          "sec": 6,
+          "speech_s": 3.88,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F3",
+              "fact": "식충식물인 파리지옥처럼 입 원반을 닫아 먹이를 사냥합니다.",
+              "sources": [],
+              "quote": "식충식물 파리지옥처럼 입 원반을 닫아 먹이를 잡는다",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            }
+          ]
+        },
+        {
+          "cut": 2,
+          "jp": "捕らえた獲物を包み込み、決して逃がしません。",
+          "ko": "잡은 먹이를 감싸고 결코 놓치지 않습니다.",
+          "tts": "とらえたえものをつつみこみ、けっしてにがしません。",
+          "fact": "F4",
+          "sec": 4,
+          "speech_s": 3.05,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F4",
+              "fact": "잡은 먹이는 단단히 감싸서 절대 놓치지 않습니다.",
+              "sources": [],
+              "quote": "잡은 먹이를 감싸 놓치지 않는다",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            }
+          ]
+        },
+        {
+          "cut": 3,
+          "jp": "この生き物は、水深1000メートル以上の深海にすむイソギンチャクです。",
+          "ko": "이 생물은 수심 1000m 이상의 심해에 사는 말미잘입니다.",
+          "tts": "このいきものは、すいしん1000めーとるいじょうのしんかいにすむいそぎんちゃくです。",
+          "fact": "F1,F6",
+          "sec": 6,
+          "speech_s": 4.83,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F1",
+              "fact": "파리지옥 말미잘(Actinoscyphia aurelia)은 표면적으로 파리지옥과 닮은 대형 말미잘입니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+              ],
+              "quote": "The Venus flytrap sea anemone (Actinoscyphia aurelia) is a large sea anemone that superficially resembles a Venus flytrap.",
+              "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+            },
+            {
+              "id": "F6",
+              "fact": "주요 서식 수심은 1000미터에서 1600미터 사이의 깊은 바다입니다.",
+              "sources": [],
+              "quote": "서식 수심(m): 1000-1600",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            }
+          ]
+        },
+        {
+          "cut": 4,
+          "jp": "深海の崖やサンゴにくっつき、速い水流の方へ体を向けます。",
+          "ko": "심해 절벽이나 산호에 붙어 빠른 물살 쪽으로 몸을 향합니다.",
+          "tts": "しんかいのがけやさんごにくっつき、はやいすいりゅうのほうへからだをむけます。",
+          "fact": "F7,F9",
+          "sec": 6,
+          "speech_s": 4.67,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F7",
+              "fact": "빠른 해류가 지나가는 심해의 절벽이나 산호에 붙어서 살아갑니다.",
+              "sources": [],
+              "quote": "빠른 물살이 지나는 심해 절벽·산호에 붙어 산다",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            },
+            {
+              "id": "F9",
+              "fact": "물살이 흐르는 방향으로 몸을 돌려 먹이가 오기를 기다립니다.",
+              "sources": [],
+              "quote": "물살 방향으로 몸을 돌려 먹이를 기다린다",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            }
+          ]
+        },
+        {
+          "cut": 5,
+          "jp": "漏斗のような形をした、大きな口盤が特徴です。",
+          "ko": "깔때기 모양을 한 큰 입 원반이 특징입니다.",
+          "tts": "ろうとのようなかたちをした、おおきなくちばんがとくちょうです。",
+          "fact": "F11",
+          "sec": 6,
+          "speech_s": 3.92,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F11",
+              "fact": "족반은 작고, 깔때기나 버섯 모양의 크고 오목한 구반에 비해 촉수가 짧은 것이 특징입니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+              ],
+              "quote": "Its pedal disc is small, and its tentacles are short compared to the large, concave oral disc, which is funnel or mushroom-shaped.",
+              "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+            }
+          ]
+        },
+        {
+          "cut": 6,
+          "jp": "触手を2列に伸ばし、流れてくるプランクトンを集めます。",
+          "ko": "촉수를 두 줄로 뻗어 흘러오는 플랑크톤을 모읍니다.",
+          "tts": "しょくしゅを2れつにのばし、ながれてくるぷらんくとんをあつめます。",
+          "fact": "F10,F12",
+          "sec": 6,
+          "speech_s": 4.2,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F10",
+              "fact": "주요 먹이는 해류에 떠내려오는 유기물과 동물플랑크톤입니다.",
+              "sources": [],
+              "quote": "먹이: 떠내려오는 유기물, 동물플랑크톤",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            },
+            {
+              "id": "F12",
+              "fact": "촉수를 두 줄로 뻗어 한 줄은 뒤로, 한 줄은 앞으로 기울인 채 떠내려오는 먹이를 모읍니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+              ],
+              "quote": "It extends its tentacles in two rows, one reflexed back and one sloping forward, and collects food particles as they drift past.",
+              "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+            }
+          ]
+        },
+        {
+          "cut": 7,
+          "jp": "普段は動きませんが、子どもの頃は移動することもあります。",
+          "ko": "평소에는 움직이지 않지만, 어릴 때는 이동하기도 합니다.",
+          "tts": "ふだんはうごきませんが、こどものころはいどうすることもあります。",
+          "fact": "F13",
+          "sec": 6,
+          "speech_s": 4.15,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F13",
+              "fact": "일반적으로 한곳에 붙어사는 고착성으로 알려져 있지만, 특히 어린 개체일 때는 때때로 이동하기도 합니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+              ],
+              "quote": "Although usually considered sessile, the Venus flytrap sea anemone sometimes moves, particularly as a juvenile.",
+              "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+            }
+          ]
+        },
+        {
+          "cut": 8,
+          "jp": "ハエトリグサのように口を閉じる、深海の不思議な罠です。",
+          "ko": "파리지옥처럼 입을 닫는 심해의 신비한 함정입니다.",
+          "tts": "はえとりぐさのようにくちをとじる、しんかいのふしぎなわなです。",
+          "fact": "F1,F3",
+          "sec": 6,
+          "speech_s": 4.16,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F1",
+              "fact": "파리지옥 말미잘(Actinoscyphia aurelia)은 표면적으로 파리지옥과 닮은 대형 말미잘입니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+              ],
+              "quote": "The Venus flytrap sea anemone (Actinoscyphia aurelia) is a large sea anemone that superficially resembles a Venus flytrap.",
+              "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+            },
+            {
+              "id": "F3",
+              "fact": "식충식물인 파리지옥처럼 입 원반을 닫아 먹이를 사냥합니다.",
+              "sources": [],
+              "quote": "식충식물 파리지옥처럼 입 원반을 닫아 먹이를 잡는다",
+              "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+            }
+          ]
+        }
+      ],
+      "pending_lines": [],
+      "hook": {
+        "cut": 1,
+        "at": 2.0,
+        "answer_jp": "ハエトリグサイソギンチャク",
+        "answer_ko": "파리지옥말미잘",
+        "candidates": [
+          {
+            "pattern": "異常な行動",
+            "text_jp": "獲物を、決して逃がさない",
+            "key_jp": "逃がさない",
+            "voice_jp": "獲物を、決して逃がさない",
+            "text_ko": "먹이를 결코 놓치지 않는다"
+          },
+          {
+            "pattern": "常識破り",
+            "text_jp": "海の中の、食虫植物？",
+            "key_jp": "食虫植物",
+            "voice_jp": "海の中にいる、食虫植物？",
+            "text_ko": "바다 속의 식충식물?"
+          },
+          {
+            "pattern": "極端な数字",
+            "text_jp": "水深1000mの、罠",
+            "key_jp": "1000m",
+            "voice_jp": "水深1000mの、罠",
+            "text_ko": "수심 1000m의 함정"
+          }
+        ],
+        "question_jp": "獲物を、決して逃がさない",
+        "question_ko": "먹이를 결코 놓치지 않는다",
+        "key_jp": "逃がさない",
+        "voice_jp": "獲物を、決して逃がさない",
+        "pattern": "異常な行動",
+        "chosen": 0,
+        "type": "line"
+      },
+      "core": {
+        "id": "F3",
+        "fact": "식충식물인 파리지옥처럼 입 원반을 닫아 먹이를 사냥합니다.",
+        "sources": [],
+        "quote": "식충식물 파리지옥처럼 입 원반을 닫아 먹이를 잡는다",
+        "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+      },
+      "audio": "out/r10100310_script_tts/body.wav",
+      "tts_id": "r10100310_script_tts",
+      "verification": "자동 작성 · 출처 2곳 · 원문 인용이 확인된 사실 14개(확인 안 된 0개 버림) · 코드 검사 통과 · 예상 길이 50.0초",
+      "crosscheck": {
+        "at": "2026-10-10T03:10:21Z",
+        "model": "gemini-3.1-pro-preview",
+        "issues": [
+          {
+            "cut": 1,
+            "type": "scope",
+            "problem_ko": "사실 목록(F3)에서는 '입 원반(구반)'을 닫는다고 명시했으나, 대본은 '입'이라고 표현하여 부위의 범위가 부정확합니다.",
+            "facts": [
+              "F3"
+            ],
+            "suggestion_jp": "食虫植物のように、口盤を閉じて獲物を捕らえます。",
+            "suggestion_ko": "식충식물처럼 입 원반을 닫아 먹이를 잡습니다."
+          },
+          {
+            "cut": 3,
+            "type": "scope",
+            "problem_ko": "사실 목록(F6)에 따르면 주요 서식 수심은 1000~1600m 사이이므로, 상한선 없이 '1000미터 이상'이라고 단정하는 것은 서식 범위가 어긋납니다.",
+            "facts": [
+              "F6"
+            ],
+            "suggestion_jp": "この生き物は、主に水深1000メートルから1600メートルの深海にすむイソギンチャクです。",
+            "suggestion_ko": "이 생물은 주로 수심 1000미터에서 1600미터 사이의 심해에 사는 말미잘입니다."
+          },
+          {
+            "cut": 8,
+            "type": "scope",
+            "problem_ko": "사실 목록(F3)에서는 '입 원반'을 닫는다고 명시했으나, 대본은 '입'이라고 표현하여 부위의 범위가 부정확합니다.",
+            "facts": [
+              "F3"
+            ],
+            "suggestion_jp": "ハエトリグサのように口盤を閉じる、深海の不思議な罠です。",
+            "suggestion_ko": "파리지옥처럼 입 원반을 닫는, 심해의 신비한 덫입니다."
+          }
+        ]
+      }
+    },
+    "topic": {
+      "facts": [
+        {
+          "id": "F1",
+          "fact": "파리지옥 말미잘(Actinoscyphia aurelia)은 표면적으로 파리지옥과 닮은 대형 말미잘입니다.",
+          "fact_jp": "ハエトリグソギンチャク（Actinoscyphia aurelia）は、表面上ハエトリグサに似た大型のイソギンチャクです。",
+          "quote": "The Venus flytrap sea anemone (Actinoscyphia aurelia) is a large sea anemone that superficially resembles a Venus flytrap.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+          ],
+          "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+        },
+        {
+          "id": "F2",
+          "fact": "이 심해 생물은 먹이를 잡거나 자신을 보호하기 위해 촉수를 닫습니다.",
+          "fact_jp": "この深海生物は、獲物を捕らえたり身を守るために触手を閉じます。",
+          "quote": "It closes its tentacles to capture prey or to protect itself.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+          ],
+          "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+        },
+        {
+          "id": "F3",
+          "fact": "식충식물인 파리지옥처럼 입 원반을 닫아 먹이를 사냥합니다.",
+          "fact_jp": "食虫植物のハエトリグサのように口盤を閉じて獲物を捕らえます。",
+          "quote": "식충식물 파리지옥처럼 입 원반을 닫아 먹이를 잡는다",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F4",
+          "fact": "잡은 먹이는 단단히 감싸서 절대 놓치지 않습니다.",
+          "fact_jp": "捕らえた獲物を包み込んで決して逃がしません。",
+          "quote": "잡은 먹이를 감싸 놓치지 않는다",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F5",
+          "fact": "이 말미잘은 멕시코만의 심해 협곡 점토질 환경의 점심해수층에서 발견됩니다.",
+          "fact_jp": "このイソギンチャクは、メキシコ湾の深海峡谷にある泥状の漸深海層で発見されます。",
+          "quote": "This sea anemone is found in muddy situations at bathyal depths in deep water canyons in the Gulf of Mexico.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+          ],
+          "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+        },
+        {
+          "id": "F6",
+          "fact": "주요 서식 수심은 1000미터에서 1600미터 사이의 깊은 바다입니다.",
+          "fact_jp": "主な生息水深は1000〜1600メートルの深海です。",
+          "quote": "서식 수심(m): 1000-1600",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F7",
+          "fact": "빠른 해류가 지나가는 심해의 절벽이나 산호에 붙어서 살아갑니다.",
+          "fact_jp": "速い水流が通過する深海の崖やサンゴに付着して生息します。",
+          "quote": "빠른 물살이 지나는 심해 절벽·산호에 붙어 산다",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F8",
+          "fact": "수동적 부유물 식성으로, 용승 해류를 향하도록 가느다란 기둥 위에서 방향을 잡습니다.",
+          "fact_jp": "受動的な懸濁物食者であり、湧昇流に向くように細長い柱状の体で方向を定めます。",
+          "quote": "Venus flytrap sea anemone is a passive suspension feeder, and orients itself on its often slender column so that it faces the upwelling current.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+          ],
+          "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+        },
+        {
+          "id": "F9",
+          "fact": "물살이 흐르는 방향으로 몸을 돌려 먹이가 오기를 기다립니다.",
+          "fact_jp": "水流の方向に体を向けて獲物を待ちます。",
+          "quote": "물살 방향으로 몸을 돌려 먹이를 기다린다",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F10",
+          "fact": "주요 먹이는 해류에 떠내려오는 유기물과 동물플랑크톤입니다.",
+          "fact_jp": "主な餌は、海流に乗って漂流する有機物や動物プランクトンです。",
+          "quote": "먹이: 떠내려오는 유기물, 동물플랑크톤",
+          "sources": [],
+          "source_title": "v1 종 자료(NOAA Ocean Exploration · WoRMS)"
+        },
+        {
+          "id": "F11",
+          "fact": "족반은 작고, 깔때기나 버섯 모양의 크고 오목한 구반에 비해 촉수가 짧은 것이 특징입니다.",
+          "fact_jp": "足盤は小さく、漏斗やキノコ型をした大きくて凹んだ口盤に比べて触手は短いです。",
+          "quote": "Its pedal disc is small, and its tentacles are short compared to the large, concave oral disc, which is funnel or mushroom-shaped.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+          ],
+          "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+        },
+        {
+          "id": "F12",
+          "fact": "촉수를 두 줄로 뻗어 한 줄은 뒤로, 한 줄은 앞으로 기울인 채 떠내려오는 먹이를 모읍니다.",
+          "fact_jp": "触手を2列に伸ばし、1列は後ろに反らせ、もう1列は前に傾けて、漂ってくる食物粒子を集めます。",
+          "quote": "It extends its tentacles in two rows, one reflexed back and one sloping forward, and collects food particles as they drift past.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+          ],
+          "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+        },
+        {
+          "id": "F13",
+          "fact": "일반적으로 한곳에 붙어사는 고착성으로 알려져 있지만, 특히 어린 개체일 때는 때때로 이동하기도 합니다.",
+          "fact_jp": "通常は固着性と考えられていますが、特に幼体の時には時々移動することがあります。",
+          "quote": "Although usually considered sessile, the Venus flytrap sea anemone sometimes moves, particularly as a juvenile.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+          ],
+          "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+        },
+        {
+          "id": "F14",
+          "fact": "2004년 코트디부아르 앞바다의 대량 폐사 사건 당시, 수심 900미터에서 물고기는 거의 없었으나 이 말미잘은 무수히 많았습니다.",
+          "fact_jp": "2004年のコートジボワール沖での大量死事件の際、水深900メートルでは魚はほとんどいませんでしたが、このイソギンチャクは無数にいました。",
+          "quote": "At a depth of 900 metres (3,000 ft) few fish were present, but Venus flytrap sea anemones were numerous.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Venus_flytrap_sea_anemone"
+          ],
+          "source_title": "Wikipedia(en) Venus flytrap sea anemone"
+        }
+      ]
+    }
+  },
   "checks": {},
   "jobs": {
     "script": {
       "stage": "script",
-      "status": "running",
-      "at": "2026-10-10T03:06:56Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-10T03:10:58Z",
+      "action": "write_script",
+      "text": "대본 자동 작성 완료 — 승인 대기"
     }
+  },
+  "cost": {
+    "estimate": {
+      "script": 0.05,
+      "storyboard": 0.54,
+      "video": 4.6
+    },
+    "spent": [
+      {
+        "at": "2026-10-10T03:10:21Z",
+        "what": "대본 자동 작성(AI+나레이션)",
+        "usd": 0.05
+      }
+    ]
   }
 }
