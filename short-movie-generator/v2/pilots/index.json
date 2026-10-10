@@ -1,30 +1,30 @@
 {
-  "updated": "2026-10-10T16:22:11Z",
+  "updated": "2026-10-10T23:16:17Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
       "name_ko": "파리지옥말미잘",
       "sci": "Actinoscyphia aurelia",
       "stage": "upload",
-      "state": "working",
+      "state": "review",
       "job": {
         "stage": "upload",
-        "status": "trial_wait",
-        "action": "trial_cancel",
-        "text": "시험 무효 — 「ABYSS 계정에 다시 올리기」 또는 「시험 건너뛰기」를 기다리는 중",
-        "at": "2026-10-10T16:22:11Z"
+        "status": "done",
+        "at": "2026-10-10T23:16:02Z",
+        "action": "trial_skip",
+        "text": "시험 릴스 건너뜀"
       },
       "created": "2026-10-10T03:06:56Z",
       "uploaded_at": null,
       "stats": null,
       "viewed": null,
       "trial": {
-        "state": "cancelled",
+        "state": "skipped",
         "posted_at": null,
         "checked_at": null,
         "winner": null,
         "kind": null,
-        "reason": "잘못된 계정(@lord.shiba.ybd)에 올라감 — ABYSS(@abyss_0cean)가 아님 · 운영자 확인 2026-10-10",
+        "reason": "운영자가 건너뜀",
         "a": {
           "line": "獲物を、決して逃がさない",
           "pattern": "異常な行動"
