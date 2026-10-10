@@ -1609,6 +1609,10 @@ async function planGaps(db) {
     // AI가 만들기 쉬운 태그로만 쏠려 정작 빈 칸은 그대로 남는다.
     const usable = [...ax.tags]
       .filter((t) => (byTag[t] ?? []).length)      // 출제될 파트를 아는 태그만
+      // 사진 고르기(L1)는 AI 에게 주문하지 않는다. AI 는 문장을 먼저 쓰고 사진은 나중에 검색해
+      // 붙이는데, 그러면 사진이 문장을 못 담는다(content-pipeline.md 7-1: 사진 먼저, 문장은 나중).
+      // 2026-10 실측: AI 가 만든 L1 30개 중 처음부터 사진이 맞은 것은 3개뿐이었다.
+      .filter((t) => byTag[t][0].part !== 'L1')
       .sort((a, b) => (nOf[a] ?? 0) - (nOf[b] ?? 0));
     if (!usable.length) continue;
     const want = Math.ceil((AXIS_TARGET - ax.n) / GAP_BATCH);      // 이 축에 필요한 묶음 수
@@ -1741,9 +1745,15 @@ app.post('/api/admin/questions/activate-drafts', ...admin, async (c) => {
 
   const ok = [];
   const held = [];
+  const photoHeld = [];
   for (const q of rows) {
     if (q.section === 'LC' && !q.audio_url) { held.push(q.id); continue; }
     if (q.part === 'L1' && !q.image_url) { held.push(q.id); continue; }
+    // ⚠ 사진 고르기(L1)는 한꺼번에 출제하지 않는다 — 하나씩 미리보기로 사진을 보고 '출제 시작'.
+    // 사진은 검색 태그로 자동으로 고르기 때문에 문장과 어긋날 수 있다. 2026-10 실제로 출제 중인
+    // L1 32개 중 6개가 어긋나 있었다("창문을 연다"에 바닷가 사진, "상자를 나른다"에 상자 로봇 인형).
+    // 일괄 출제로 들어간 것들이었다. 소리·글은 자동 검사가 잡지만 사진 내용은 사람 눈이 봐야 한다.
+    if (q.part === 'L1') { photoHeld.push(q.id); continue; }
     ok.push(q.id);
   }
   if (ok.length) {
@@ -1787,12 +1797,13 @@ app.post('/api/admin/questions/activate-drafts', ...admin, async (c) => {
   }
 
   return c.json({
-    ok: true, activated: ok.length, held: held.length, synced,
-    next: ok.length
+    ok: true, activated: ok.length, held: held.length, photo_held: photoHeld.length, synced,
+    next: (ok.length
       ? `${ok.length}문항을 출제하기 시작했어요. 내일 세트부터 아이에게 나갑니다.`
         + (held.length ? ` (${held.length}개는 소리·사진이 아직 없어 남겨뒀어요)` : '')
       : held.length ? `${held.length}개 모두 소리·사진을 기다리는 중이에요.`
-        : '출제할 준비 중 문항이 없어요.',
+        : photoHeld.length ? '' : '출제할 준비 중 문항이 없어요.')
+      + (photoHeld.length ? ` 사진 고르기 ${photoHeld.length}개는 사진이 문장과 맞는지 하나씩 열어 보고 출제해 주세요.` : ''),
   });
 });
 

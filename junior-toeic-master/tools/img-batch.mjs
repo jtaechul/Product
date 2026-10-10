@@ -71,8 +71,17 @@ async function get(url, tries = 4) {
 // 2026-08-11 실제로 겪었다 — '눈사람' 자리에 눈사람 장식 인형이, '낚시' 자리에
 // 해질녘 그물 실루엣이 들어왔다. (그리는 행동 자체가 답인 문항이 있으므로
 // paint·drawing 같은 '주제' 낱말은 넣지 않는다 — 여기 있는 건 매체·형태 낱말뿐이다)
+// 'wallpaper': 배경화면용으로 올린 사진은 "windows wallpaper·4k wallpaper" 같은 광고성 태그를 잔뜩 단다.
+// 2026-10 실제 사고 — "A woman is opening the window." 정답 자리에 바닷가 사진이 들어갔다.
+// 그 사진 태그의 "windows wallpaper"가 need 'window' 를 통과시켰다.
 const NEVER = ['figurine', 'doll', 'statue', 'sculpture', 'clipart', 'cartoon', 'anime',
-  'vector', 'render', 'illustration', 'watercolor', 'silhouette', 'ai generated', 'ai-generated'];
+  'vector', 'render', 'illustration', 'watercolor', 'silhouette', 'ai generated', 'ai-generated',
+  'wallpaper'];
+
+// need 낱말은 '낱말 단위'로 찾는다(복수형 s·es 는 인정). 글자 단위로 찾으면 'window' 가
+// 'windows wallpaper' 에, 'cat' 이 'catch' 에 걸린다.
+const esc = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const hasWord = (tags, w) => new RegExp(`\\b${esc(w.toLowerCase())}(?:s|es)?\\b`).test(tags);
 
 async function findPhoto({ q, need = [], prefer = [], avoid = [] }) {
   avoid = [...avoid, ...NEVER];
@@ -89,7 +98,7 @@ async function findPhoto({ q, need = [], prefer = [], avoid = [] }) {
   const passes = (h, extra) => {
     const tags = String(h.tags || '').toLowerCase();
     if (avoid.some((w) => tags.includes(w.toLowerCase()))) return false;
-    return [...need, ...extra].every((w) => tags.includes(w.toLowerCase()));
+    return [...need, ...extra].every((w) => hasWord(tags, w));
   };
   for (const extra of prefer.length ? [prefer, []] : [[]]) {
     for (const hits of pages) {
