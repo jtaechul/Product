@@ -53,8 +53,14 @@
       "approved_at": "2026-10-10T10:59:22Z"
     },
     "video": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-10-10T11:02:32Z",
+          "kind": "auto",
+          "text": "영상 컷 준비 완료 — 조립 + 자동 검사"
+        }
+      ]
     },
     "upload": {
       "state": "locked",
@@ -290,7 +296,7 @@
       "pending_lines": [],
       "hook": {
         "cut": 1,
-        "at": 2.0,
+        "at": 1.0,
         "answer_jp": "ハエトリグサイソギンチャク",
         "answer_ko": "파리지옥말미잘",
         "candidates": [
@@ -322,7 +328,11 @@
         "voice_jp": "獲物を、決して逃がさない",
         "pattern": "異常な行動",
         "chosen": 0,
-        "type": "line"
+        "type": "line",
+        "voice_file": "out/r1010110233_hook_tts/hook.wav",
+        "voice_for": "獲物を、決して逃がさない",
+        "motion": 8.49,
+        "at_by": "auto"
       },
       "core": {
         "id": "F3",
@@ -613,9 +623,113 @@
           "motion": "still"
         }
       ]
+    },
+    "video": {
+      "clips_request": "r1010110048_clips",
+      "clips": [
+        {
+          "cut": 1,
+          "file": "out/r1010110048_clips/c01.mp4",
+          "sec": 6,
+          "motion": "omni"
+        },
+        {
+          "cut": 2,
+          "file": "out/r1010110048_clips/c02.mp4",
+          "sec": 4,
+          "motion": "omni"
+        },
+        {
+          "cut": 3,
+          "file": "out/r1010110009_stills/c03.mp4",
+          "sec": 6,
+          "motion": "still"
+        },
+        {
+          "cut": 4,
+          "file": "out/r1010110048_clips/c04.mp4",
+          "sec": 6,
+          "motion": "omni"
+        },
+        {
+          "cut": 5,
+          "file": "out/r1010110009_stills/c05.mp4",
+          "sec": 6,
+          "motion": "still"
+        },
+        {
+          "cut": 6,
+          "file": "out/r1010110009_stills/c06.mp4",
+          "sec": 6,
+          "motion": "still"
+        },
+        {
+          "cut": 7,
+          "file": "out/r1010110048_clips/c07.mp4",
+          "sec": 6,
+          "motion": "omni"
+        },
+        {
+          "cut": 8,
+          "file": "out/r1010110009_stills/c08.mp4",
+          "sec": 6,
+          "motion": "still"
+        }
+      ],
+      "final": "out/r1010110232_final/final.mp4",
+      "assemble": {
+        "clips_id": "r1010110048_clips",
+        "tts_id": "r10100310_script_tts",
+        "ending": ""
+      },
+      "built_at": "2026-10-10T11:04:26Z"
     }
   },
-  "checks": {},
+  "checks": {
+    "at": "2026-10-10T11:04:25Z",
+    "duration_s": 43.3,
+    "white_edge_px": {
+      "value": 0,
+      "ok": true,
+      "rule": "좌우 가장자리 흰 줄 0px"
+    },
+    "loudness_lufs": {
+      "value": -16.1,
+      "ok": true,
+      "rule": "-16 LUFS ±1"
+    },
+    "music": {
+      "ok": true,
+      "rule": "음악 없음(영상 AI 오디오는 조립 때 전부 버림)"
+    },
+    "subtitle_font": {
+      "ok": true,
+      "value": "NotoSansJP-Bold.ttf",
+      "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"
+    },
+    "screen_text": {
+      "ok": true,
+      "value": "주석·후킹·정답 글자 모두 글꼴에 있음",
+      "rule": "화면 글자가 글꼴에 모두 있을 것(한국어 주석 금지 · 네모 □ 금지)"
+    },
+    "hook_motion": {
+      "value": 8.49,
+      "ok": true,
+      "warn": true,
+      "rule": "맨 앞 2초 움직임 3 이상 · 1번 컷 1.0초부터(자동 선택) · 실측: 왕게 1.0(81% 바로 넘김) · 대왕구족충 3.8 · 유령해삼 6.9"
+    },
+    "front_motion": {
+      "value": 4.17,
+      "ok": true,
+      "warn": true,
+      "rule": "앞 15초 평균 움직임 2 이상(잠정) · 실측: 왕게 1.4 · 유령해삼 2.5 · 대왕구족충 7.4"
+    },
+    "hook_voice": {
+      "ok": true,
+      "value": "獲物を、決して逃がさない",
+      "rule": "후킹 한 줄을 0초부터 목소리로 읽기(실패하면 맨 앞이 무음 — 「완성본 다시 조립」으로 다시 시도)"
+    }
+  },
   "jobs": {
     "script": {
       "stage": "script",
@@ -633,10 +747,10 @@
     },
     "video": {
       "stage": "video",
-      "status": "running",
-      "at": "2026-10-10T10:59:22Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-10T11:04:26Z",
+      "action": "make_video",
+      "text": "영상 자동 제작 완료 — 승인 대기"
     }
   },
   "cost": {
@@ -660,6 +774,11 @@
         "at": "2026-10-10T10:37:52Z",
         "what": "콘티 격자 2장",
         "usd": 0.268
+      },
+      {
+        "at": "2026-10-10T11:02:32Z",
+        "what": "영상 컷 4개 생성",
+        "usd": 2.2
       }
     ]
   }

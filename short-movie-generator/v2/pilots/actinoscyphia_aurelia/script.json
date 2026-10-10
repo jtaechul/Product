@@ -7,7 +7,7 @@
   },
   "hook": {
     "cut": 1,
-    "at": 2.0,
+    "at": 1.0,
     "answer_jp": "ハエトリグサイソギンチャク",
     "answer_ko": "파리지옥말미잘",
     "candidates": [
@@ -39,7 +39,11 @@
     "voice_jp": "獲物を、決して逃がさない",
     "pattern": "異常な行動",
     "chosen": 0,
-    "type": "line"
+    "type": "line",
+    "voice_file": "out/r1010110233_hook_tts/hook.wav",
+    "voice_for": "獲物を、決して逃がさない",
+    "motion": 8.49,
+    "at_by": "auto"
   },
   "core": "F3",
   "facts": [
