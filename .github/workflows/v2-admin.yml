@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "new | approve | revise | redo | ready | redo_cut | redo_panel | assemble | topics | edit_line | apply_lines | crosscheck | recut_plan | recut_approve | recut_cancel | upload_meta | save_meta | save_viewed | write_script | write_storyboard | make_video | edit_hook | stats | trial_check | trial_skip | ig_probe"
+        description: "new | approve | revise | redo | ready | redo_cut | redo_panel | assemble | topics | edit_line | apply_lines | crosscheck | recut_plan | recut_approve | recut_cancel | upload_meta | save_meta | save_viewed | write_script | write_storyboard | make_video | edit_hook | stats | trial_check | trial_skip | trial_repost | ig_probe"
         required: true
       pilot:
         description: "편 id (예: bathynomus_giganteus)"
@@ -118,6 +118,7 @@ jobs:
             topics)            python3 v2/tools/admin.py topics ;;
             trial_check)       python3 v2/tools/admin.py trial_check "$IN_PILOT" ;;   # 편 id 가 비면 진행 중인 모든 시험
             trial_skip)        python3 v2/tools/admin.py trial_skip "$IN_PILOT" ;;
+            trial_repost)      python3 v2/tools/admin.py trial_repost "$IN_PILOT" ;;   # 무효가 된 시험을 ABYSS(@abyss_0cean)에 다시 올리기
             ig_probe)          python3 v2/tools/admin.py ig_probe ;;
             ready|redo_cut|redo_panel|edit_line|edit_hook|recut_plan|recut_approve|recut_cancel|save_meta|save_viewed)
                                python3 v2/tools/admin.py "$IN_ACTION" "$IN_PILOT" "$IN_STAGE" "$IN_NOTE" ;;
