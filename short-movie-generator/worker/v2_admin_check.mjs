@@ -254,16 +254,20 @@ statusOverride = null;
   if (ap?.onclick) await ap.onclick();
   const sent = dispatched.slice(d3)[0]; const note = sent ? JSON.parse(sent.body.inputs.note) : {};
   res.upload_sends_screen_values = !!sent && sent.body.inputs.action === "approve" && note.privacy === "public" && note.category === "28" && note.title_jp === "画面の題名";
-  // 예약 공개(운영자 요청 2026-10-06): 선택지 · 「내일 19:00」 버튼 · 시각이 함께 전송 · 업로드 후 예약 안내
+  // 예약 공개(운영자 요청 2026-10-06 · 기본 아침 9시 2026-10-10): 선택지 · 날짜가 보이는 9시 버튼 · 시각이 함께 전송 · 업로드 후 예약 안내
   statusOverride = s8; els = {}; await api.renderV2Episode("bathynomus_giganteus");
-  const u9 = els.view.innerHTML; res.schedule_option_shown = u9.includes('value="scheduled"') && u9.includes('id="up_at"') && u9.includes("오늘 19:00");
+  const u9 = els.view.innerHTML; res.schedule_option_shown = u9.includes('value="scheduled"') && u9.includes('id="up_at"') &&
+    (u9.match(/data-atq="\d">\d+월 \d+일 09:00</g) || []).length === 2 && /id="up_at" value="\d{4}-\d\d-\d\dT09:00"/.test(u9);
   els["up_tj"] = makeEl("up_tj"); els["up_tj"].value = "題"; els["up_pv"] = makeEl("up_pv"); els["up_pv"].value = "scheduled"; els["up_at"] = makeEl("up_at");
   const qb = (lists["[data-atq]"] || []).find(b => b.dataset.atq === "1"); if (qb?.onclick) qb.onclick();
   const picked = els["up_at"].value || "";
   const d9 = dispatched.length; const ap9 = (lists["[data-act]"] || []).find(b => b.dataset.act === "approve" && b.dataset.stage === "upload");
   if (ap9?.onclick) await ap9.onclick();
   const sent9 = dispatched.slice(d9)[0]; const note9 = sent9 ? JSON.parse(sent9.body.inputs.note) : {};
-  res.schedule_sends_time = /T19:00$/.test(picked) && note9.privacy === "scheduled" && note9.publish_at === picked;
+  const first = (lists["[data-atq]"] || []).find(b => b.dataset.atq === "0"); if (first?.onclick) first.onclick(); const picked0 = els["up_at"].value || "";
+  els["up_at"].value = picked;
+  res.schedule_sends_time = /T09:00$/.test(picked) && note9.privacy === "scheduled" && note9.publish_at === picked &&
+    Date.parse(picked + ":00Z") - Date.parse(picked0 + ":00Z") === 864e5;                 // 두 버튼 = 가장 빠른 9시 · 그다음 날 9시(같아지지 않음)
   els["up_at"].value = "2020-01-01T19:00"; const d10 = dispatched.length; if (ap9?.onclick) await ap9.onclick();
   res.schedule_past_blocked = dispatched.length === d10;
   const s10 = JSON.parse(JSON.stringify(s7)); s10.artifacts.upload.result = { url: "https://youtu.be/X", privacy: "scheduled", publish_at: "2026-10-07T10:00:00Z" };
@@ -382,7 +386,7 @@ statusOverride = null;
     ev.includes("61.5%") && ev.includes("버전마다 300회가 모일 때까지");
   sv.artifacts.trial.checked_at = iso(0.2); statusOverride = sv; els = {}; d0 = dispatched.length; await api.renderV2Episode("bathynomus_giganteus");
   res.trial_recent_check_no_auto = dispatched.length === d0;
-  // ③ 판정 끝(B 승): 결과 · 앱에서 「모두에게 공유」 안내 · 제목 칸 · 지난 예약 시각은 다음 19시로 · 영상 칸에 B 버전 표시
+  // ③ 판정 끝(B 승): 결과 · 앱에서 「모두에게 공유」 안내 · 제목 칸 · 지난 예약 시각은 다음 아침 9시로 · 영상 칸에 B 버전 표시
   sv = base(); sv.stages.upload.state = "review"; sv.jobs.upload.status = "done";
   Object.assign(sv.artifacts.trial, { state: "decided", winner: "b", result: { kind: "win", winner: "b", why: "3초 안에 넘김 A 62% · B 48% → B 가 14%p 덜 넘김" } });
   sv.artifacts.upload.meta = { title_jp: "魚なのに青く光る 深海の謎 #テスト #深海", title_ko: "t", desc_jp: "d", desc_ko: "d", tags_jp: [], tags_ko: [],
@@ -392,7 +396,7 @@ statusOverride = null;
   ev = els.view.innerHTML; up = ev.slice(ev.indexOf('id="stg-upload"'));
   res.trial_decided_panel = up.includes("판정 끝") && up.includes("<b>B 승</b>") && up.includes("모두에게 공유") &&
     up.includes('<span class="ok">이김</span>') && up.includes('id="up_tj"') && !up.includes('id="trcheck"');
-  res.trial_past_schedule_refilled = !up.includes('value="2026-01-01T19:00"') && /id="up_at" value="\d{4}-\d\d-\d\dT19:00"/.test(up);
+  res.trial_past_schedule_refilled = !up.includes('value="2026-01-01T19:00"') && /id="up_at" value="\d{4}-\d\d-\d\dT09:00"/.test(up);
   res.video_card_marks_trial_winner = ev.slice(ev.indexOf('id="stg-video"'), ev.indexOf('id="stg-upload"')).includes("이긴 B 버전");
   // ③-2 완성본 승인 확인창이 시험 릴스로 이어진다는 것을 알린다
   sv = base(); sv.stages.video.state = "review"; sv.stages.upload.state = "locked"; delete sv.jobs; delete sv.artifacts.trial;

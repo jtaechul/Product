@@ -2576,7 +2576,7 @@ def save_viewed(pid: str, data: dict) -> dict:
 # ── 시험 릴스로 후킹 겨루기(운영자 선택 2026-10-09: 자동 · 결과 보고 올리기 · 2개) ────────────────────────
 # 완성본 승인 → 맨 앞만 다른 B 버전(다른 후보 문장·목소리·첫 장면)을 만들어 A·B 를 인스타 「시험 릴스」(팔로워가 아닌 사람에게
 # 먼저 보임 · Meta API 2025-12-03 trial_params)로 함께 올리고, 24~48시간 뒤 「3초 안에 넘긴 비율」(reels_skip_rate)로
-# 이긴 후킹을 고른다 → 이긴 후킹으로 유튜브 제목·설명을 쓰고 예약 공개(일본 시간 19시)를 준비한다.
+# 이긴 후킹을 고른다 → 이긴 후킹으로 유튜브 제목·설명을 쓰고 예약 공개(아침 9시 · PUBLISH_HOUR)를 준비한다.
 # · 유튜브 업로드 승인(관문 4)은 그대로 운영자. 인스타 「모두에게 공유」(졸업)는 API로 안 돼 앱에서 직접 누른다.
 # · 인스타 시청자 ≠ 유튜브 시청자 → 절대 숫자가 아니라 A·B 중 어느 쪽이 나은지만 본다(최종 확인은 유튜브 「시청함 %」).
 # · 시험을 못 하면(키 없음·옛 형식 후킹·게시 실패) 이유를 남기고 예전처럼 바로 제목·설명을 쓴다(업로드 준비는 멈추지 않음).
@@ -2813,8 +2813,11 @@ def start_trial(pid: str, api: dict, ib: int, reuse_b: dict | None = None) -> di
     return st
 
 
-def next_publish_slot(now: float | None = None, hour: int = 19) -> str:
-    """다음 일본(=한국) 시간 19:00 — 지금부터 1시간 이상 뒤 → UTC 'YYYY-MM-DDTHH:MM:00Z'(유튜브 예약 공개 시각)."""
+PUBLISH_HOUR = 9                       # ★예약 공개 기본 시각 = 아침 9시(일본=한국 시간 · 운영자 지시 2026-10-10 · 예전 19시)
+
+
+def next_publish_slot(now: float | None = None, hour: int = PUBLISH_HOUR) -> str:
+    """다음 일본(=한국) 시간 아침 9시 — 지금부터 1시간 이상 뒤 → UTC 'YYYY-MM-DDTHH:MM:00Z'(유튜브 예약 공개 시각)."""
     import datetime as dt
     jst = dt.timezone(dt.timedelta(hours=9))
     n = dt.datetime.fromtimestamp(time.time() if now is None else now, jst)
@@ -2826,7 +2829,7 @@ def next_publish_slot(now: float | None = None, hour: int = 19) -> str:
 
 def _write_meta_safely(pid: str, schedule: bool = False) -> bool:
     """유튜브 제목·설명 자동 작성 — 실패해도 멈추지 않고 기록만(화면의 「제목·설명 AI로 쓰기」로 다시).
-    schedule: 시험 판정 뒤 → 운영자가 고른 공개 범위가 없으면 「예약 공개 · 다음 19시」로 준비(업로드는 운영자 승인 때)."""
+    schedule: 시험 판정 뒤 → 운영자가 고른 공개 범위가 없으면 「예약 공개 · 다음 아침 9시」로 준비(업로드는 운영자 승인 때)."""
     try:
         upload_meta(pid)
     except Exception as e:                                   # noqa: BLE001
@@ -2839,7 +2842,7 @@ def _write_meta_safely(pid: str, schedule: bool = False) -> bool:
         m = st["artifacts"]["upload"]["meta"]
         if m.get("privacy", "private") == "private":
             m["privacy"], m["publish_at"] = "scheduled", next_publish_slot()
-            _note(st, "upload", "meta", f"예약 공개 준비: {m['publish_at']}(UTC = 일본·한국 19시) — 업로드는 「승인」을 눌러야 합니다")
+            _note(st, "upload", "meta", f"예약 공개 준비: {m['publish_at']}(UTC = 일본·한국 아침 {PUBLISH_HOUR}시) — 업로드는 「승인」을 눌러야 합니다")
             _save(status_path(pid), st)
     return True
 

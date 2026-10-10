@@ -1571,7 +1571,7 @@ def test_trial_check_b_wins_swaps_hook_video_and_prepares_upload(v2, monkeypatch
     v = st["artifacts"]["video"]
     assert v["final"] == b["file"] and v["final_a"] == a_final and st["checks"]["hook_voice"]["ok"]
     m = st["artifacts"]["upload"]["meta"]
-    assert m["title_jp"].startswith("魚なのに青く光る") and m["privacy"] == "scheduled" and m["publish_at"].endswith("T10:00:00Z")   # 일본 19시
+    assert m["title_jp"].startswith("魚なのに青く光る") and m["privacy"] == "scheduled" and m["publish_at"].endswith("T00:00:00Z")   # 일본·한국 아침 9시
     assert st["stages"]["upload"]["state"] == "review" and st["jobs"]["upload"]["status"] == "done"
     assert st["artifacts"]["script"]["hook"]["question_jp"] == "魚なのに、青く光る"
     stats = admin.hook_pattern_stats()
@@ -1674,12 +1674,14 @@ def test_ig_probe_and_pattern_hint(v2, monkeypatch):
     assert any("常識破り 2勝0敗0分" in p for p in seen if "構成作家" in p)                # 다음 대본 후보 쓰기에 참고로 들어감
 
 
-def test_next_publish_slot_is_next_19_jst():
+def test_next_publish_slot_is_next_9am_jst():
+    """예약 공개 기본 시각 = 아침 9시(운영자 지시 2026-10-10 · 예전 19시) · 1시간 안쪽이면 다음 날."""
     import datetime as dt
     ts = lambda s: dt.datetime.fromisoformat(s).timestamp()                         # noqa: E731
-    assert admin.next_publish_slot(ts("2026-10-09T08:00:00+00:00")) == "2026-10-09T10:00:00Z"    # 17시 → 오늘 19시
-    assert admin.next_publish_slot(ts("2026-10-09T09:30:00+00:00")) == "2026-10-10T10:00:00Z"    # 18시 30분 → 내일 19시
-    assert admin.next_publish_slot(ts("2026-10-09T12:00:00+00:00")) == "2026-10-10T10:00:00Z"
+    assert admin.PUBLISH_HOUR == 9
+    assert admin.next_publish_slot(ts("2026-10-08T22:00:00+00:00")) == "2026-10-09T00:00:00Z"    # 7시 → 오늘 9시
+    assert admin.next_publish_slot(ts("2026-10-08T23:30:00+00:00")) == "2026-10-10T00:00:00Z"    # 8시 30분 → 내일 9시
+    assert admin.next_publish_slot(ts("2026-10-09T08:00:00+00:00")) == "2026-10-10T00:00:00Z"    # 17시 → 내일 9시
 
 
 def test_other_window_for_trial_b():

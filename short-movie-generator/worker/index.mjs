@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-10-1 (시험 릴스 계정 잠금 @abyss_0cean · 무효 처리 · ABYSS 계정에 다시 올리기)";
+const BUILD="v2026-10-10-2 (예약 공개 기본 시각 = 아침 9시 · 시험 릴스 계정 잠금 @abyss_0cean)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2644,7 +2644,7 @@ function v2stageBody(st,stage){
       v2copyBox("해시태그 (한국어)",(m.tags_ko||[]).join(" "),"cp_hk")+
       v2copyBox("고정 댓글 (유튜브 앱에서 직접 달고 고정)",m.pinned_comment,"cp_pc");
     const trS=((st.artifacts||{}).trial||{}).state, trRun=trS==="running"||trS==="cancelled";
-    if(!m)return v2trialHTML(st)+(trS==="cancelled"?'<div class="hint">다시 올리거나 건너뛰면 유튜브 제목·설명을 자동으로 씁니다.</div>':trRun?'<div class="hint">시험이 끝나면 이긴 후킹으로 유튜브 제목·설명을 자동으로 쓰고, 예약 공개(일본 시간 19시)를 준비합니다. 기다리지 않으려면 위의 「시험 건너뛰고…」를 누르세요.</div>':
+    if(!m)return v2trialHTML(st)+(trS==="cancelled"?'<div class="hint">다시 올리거나 건너뛰면 유튜브 제목·설명을 자동으로 씁니다.</div>':trRun?'<div class="hint">시험이 끝나면 이긴 후킹으로 유튜브 제목·설명을 자동으로 쓰고, 예약 공개(아침 9시)를 준비합니다. 기다리지 않으려면 위의 「시험 건너뛰고…」를 누르세요.</div>':
       '<div class="hint" style="margin-top:0">완성본을 승인하면 유튜브 제목·설명·해시태그를 자동으로 씁니다.</div>'+
       '<button class="btn save" id="upmeta" style="width:100%;margin-top:8px">제목·설명 AI로 쓰기 (약 $0.01)</button>');
     return v2trialHTML(st)+v2dlHTML("u")+'<div class="dual" style="margin-top:4px"><div><span class="lbl">제목 (일본어 · 실제로 올라감)</span><input id="up_tj" value="'+esc(m.title_jp)+'">'+v2copyBtn("up_tj")+'</div>'+
@@ -2657,8 +2657,8 @@ function v2stageBody(st,stage){
       '<span class="lbl">고정 댓글 (업로드 후 유튜브 앱에서 직접 고정)</span><input id="up_pc" value="'+esc(m.pinned_comment||"")+'">'+
       '<span class="lbl">공개 범위</span><select id="up_pv">'+[["private","비공개(먼저 확인)"],["unlisted","일부 공개"],["public","공개"],["scheduled","예약 공개 (시간 지정)"]].map(([v,l])=>'<option value="'+v+'"'+(m.privacy===v?' selected':'')+'>'+l+'</option>').join("")+'</select>'+
       '<div id="up_atbox" style="display:'+(m.privacy==="scheduled"?'block':'none')+'">'+
-        '<span class="lbl">공개할 시각 (한국 시간 = 일본 시간)</span><input type="datetime-local" id="up_at" value="'+esc(m.publish_at&&Date.parse(m.publish_at)>Date.now()+15*6e4?v2kstInput(m.publish_at):v2nextAt(19,0))+'">'+
-        '<div class="btnrow"><button class="btn" data-atq="0">오늘 19:00</button><button class="btn" data-atq="1">내일 19:00</button></div>'+
+        '<span class="lbl">공개할 시각 (한국 시간 = 일본 시간)</span><input type="datetime-local" id="up_at" value="'+esc(m.publish_at&&Date.parse(m.publish_at)>Date.now()+15*6e4?v2kstInput(m.publish_at):v2slot(0))+'">'+
+        '<div class="btnrow"><button class="btn" data-atq="0">'+v2slotLabel(0)+'</button><button class="btn" data-atq="1">'+v2slotLabel(1)+'</button></div>'+
         '<div class="hint">「승인 → 유튜브 업로드」를 누르면 지금 비공개로 올라가고, 이 시각에 유튜브가 자동으로 공개합니다. 시각은 지금부터 15분 이후로 골라 주세요.</div></div>'+
       '<div class="btnrow"><button class="btn" id="upsave">수정 내용 저장</button><button class="btn warn" id="upmeta">AI로 다시 쓰기</button></div>';
   }
@@ -2694,6 +2694,11 @@ function v2kstInput(iso){const t=Date.parse(iso);return isNaN(t)?"":new Date(t+9
 function v2kstLabel(iso){const v=v2kstInput(iso);if(!v)return "";const [d,h]=v.split("T"),[,mo,da]=d.split("-");return (+mo)+"월 "+(+da)+"일 "+h;}
 function v2nextAt(hour,dayOff){const k=new Date(Date.now()+9*36e5);k.setUTCDate(k.getUTCDate()+(dayOff||0));k.setUTCHours(hour,0,0,0);
   if(!dayOff&&k.getTime()-9*36e5<Date.now()+15*6e4)k.setUTCDate(k.getUTCDate()+1);return k.toISOString().slice(0,16);}
+// ★예약 공개 기본 시각 = 아침 9시(한국=일본 시간 · 운영자 지시 2026-10-10 · 예전 19시). 빠른 버튼은 날짜를 그대로 보여 준다
+//   (「오늘 09:00」은 낮에 누르면 이미 지나 내일이 돼 두 버튼이 같아지므로) — 가장 빠른 9시 · 그다음 날 9시.
+const V2_PUBLISH_HOUR=9;
+function v2slot(n){const v=v2nextAt(V2_PUBLISH_HOUR,0);return n?new Date(Date.parse(v+":00Z")+n*864e5).toISOString().slice(0,16):v;}
+function v2slotLabel(n){const [d,h]=v2slot(n).split("T"),[,mo,da]=d.split("-");return (+mo)+"월 "+(+da)+"일 "+h;}
 const V2_CAT={"15":"반려동물/동물","28":"과학기술","27":"교육"};
 function v2copyBtn(fromId){return '<button class="btn v2edit" data-copyfrom="'+fromId+'">복사</button>';}
 function v2copyBox(label,text,id){return '<span class="lbl">'+esc(label)+'</span><div class="v2copy"><div class="v2copytxt" id="'+id+'">'+esc(text||"")+'</div>'+v2copyBtn(id)+'</div>';}
@@ -3054,7 +3059,7 @@ async function renderV2Episode(pid){
   document.querySelectorAll("[data-rcno]").forEach(b=>b.onclick=async()=>{if(confirm(b.dataset.rcno+"번 컷 수정을 취소할까요?"))await v2do("recut_cancel",pid,b.dataset.rcno,"",b);});
   const um=$("#upmeta");if(um)um.onclick=async()=>{if(confirm("유튜브 제목·설명을 AI로 (다시) 쓸까요? 지금 칸의 내용은 바뀝니다."))await v2do("upload_meta",pid,"","",um);};
   const upv=$("#up_pv");if(upv)upv.onchange=()=>{const bx=$("#up_atbox");if(bx)bx.style.display=upv.value==="scheduled"?"block":"none";};
-  document.querySelectorAll("[data-atq]").forEach(b=>b.onclick=()=>{const i=$("#up_at");if(i)i.value=v2nextAt(19,+b.dataset.atq);});
+  document.querySelectorAll("[data-atq]").forEach(b=>b.onclick=()=>{const i=$("#up_at");if(i)i.value=v2slot(+b.dataset.atq);});
   const us=$("#upsave");if(us)us.onclick=async()=>{
     const d=v2upFields();
     if(!String(d.title_jp||"").trim()){banner("일본어 제목이 비어 있습니다.","err");return;}
