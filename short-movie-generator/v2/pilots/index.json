@@ -1,18 +1,18 @@
 {
-  "updated": "2026-10-10T03:10:58Z",
+  "updated": "2026-10-10T10:33:32Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
       "name_ko": "파리지옥말미잘",
       "sci": "Actinoscyphia aurelia",
-      "stage": "script",
-      "state": "review",
+      "stage": "storyboard",
+      "state": "working",
       "job": {
-        "stage": "script",
-        "status": "done",
-        "at": "2026-10-10T03:10:58Z",
-        "action": "write_script",
-        "text": "대본 자동 작성 완료 — 승인 대기"
+        "stage": "storyboard",
+        "status": "running",
+        "at": "2026-10-10T10:33:32Z",
+        "action": "job_start",
+        "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
       },
       "created": "2026-10-10T03:06:56Z",
       "uploaded_at": null,
