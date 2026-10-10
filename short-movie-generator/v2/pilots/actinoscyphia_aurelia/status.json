@@ -69,7 +69,7 @@
       "approved_at": "2026-10-10T14:43:15Z"
     },
     "upload": {
-      "state": "review",
+      "state": "approved",
       "notes": [
         {
           "at": "2026-10-10T14:46:08Z",
@@ -95,8 +95,29 @@
           "at": "2026-10-10T23:16:17Z",
           "kind": "meta",
           "text": "유튜브 제목·설명·해시태그 작성 — 확인 후 「승인 → 유튜브 업로드」"
+        },
+        {
+          "at": "2026-10-10T23:50:56Z",
+          "kind": "meta_edit",
+          "text": "운영자가 제목·설명 수정"
+        },
+        {
+          "at": "2026-10-10T23:50:59Z",
+          "kind": "uploaded",
+          "text": "유튜브 업로드 완료(예약 공개 2026-10-11T00:10:00Z): https://youtu.be/tnprpmZ0jXg — 고정 댓글은 유튜브 앱에서 직접 달고 고정"
+        },
+        {
+          "at": "2026-10-10T23:50:59Z",
+          "kind": "error",
+          "text": "재생목록 추가 실패(토큰 권한 부족이면 재발급 필요): <HttpError 403 when requesting https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50&"
+        },
+        {
+          "at": "2026-10-10T23:50:59Z",
+          "kind": "approve",
+          "text": ""
         }
-      ]
+      ],
+      "approved_at": "2026-10-10T23:50:59Z"
     }
   },
   "topic": {
@@ -871,10 +892,20 @@
           "#다큐멘터리"
         ],
         "pinned_comment": "次に見たい深海の生き物は？",
-        "privacy": "private",
-        "category": "15"
+        "privacy": "scheduled",
+        "category": "28",
+        "publish_at": "2026-10-11T00:10:00Z"
       },
-      "meta_at": "2026-10-10T23:16:17Z"
+      "meta_at": "2026-10-10T23:16:17Z",
+      "result": {
+        "url": "https://youtu.be/tnprpmZ0jXg",
+        "video_id": "tnprpmZ0jXg",
+        "privacy": "scheduled",
+        "category": "28",
+        "at": "2026-10-10T23:50:59Z",
+        "publish_at": "2026-10-11T00:10:00Z",
+        "playlist_error": "<HttpError 403 when requesting https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50&alt=json returned \"Request had insuffici"
+      }
     }
   },
   "checks": {

@@ -1,21 +1,15 @@
 {
-  "updated": "2026-10-10T23:16:17Z",
+  "updated": "2026-10-10T23:50:59Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
       "name_ko": "파리지옥말미잘",
       "sci": "Actinoscyphia aurelia",
-      "stage": "upload",
-      "state": "review",
-      "job": {
-        "stage": "upload",
-        "status": "done",
-        "at": "2026-10-10T23:16:02Z",
-        "action": "trial_skip",
-        "text": "시험 릴스 건너뜀"
-      },
+      "stage": "done",
+      "state": "approved",
+      "job": null,
       "created": "2026-10-10T03:06:56Z",
-      "uploaded_at": null,
+      "uploaded_at": "2026-10-11T00:10:00Z",
       "stats": null,
       "viewed": null,
       "trial": {
