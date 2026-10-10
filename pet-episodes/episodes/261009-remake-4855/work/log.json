@@ -1742,8 +1742,8 @@
   },
   "error": "사람 얼굴 위치를 찾지 못해 모자이크하지 못했습니다(얼굴이 드러난 영상은 내보내지 않음) — 다시 시도하면 조립만 다시 합니다",
   "last_request": {
-    "file": "14_remake_full.json",
-    "ran_at": "2026-10-09T17:14:59Z",
+    "file": "15_publish.json",
+    "ran_at": "2026-10-10T01:39:31Z",
     "ok": true
   },
   "cover": "work/cover.jpg",
@@ -1751,5 +1751,12 @@
     "ok": true,
     "sec": 14.88,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
+  },
+  "ig_publish": {
+    "ok": true,
+    "media_id": "18044572706823699",
+    "username": "lord.shiba.ybd",
+    "permalink": "https://www.instagram.com/reel/DeS7FCkEe3B/",
+    "published_at": "2026-10-10T01:39:31Z"
   }
 }
