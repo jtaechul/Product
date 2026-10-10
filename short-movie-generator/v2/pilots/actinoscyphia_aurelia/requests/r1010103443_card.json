@@ -1,0 +1,27 @@
+{
+  "id": "r1010103443_card",
+  "kind": "gen_images",
+  "purpose": "생물 카드(자동) — 이후 콘티·영상의 형태 기준",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "card_side",
+      "aspect": "1:1",
+      "refs": [
+        "out/r1010103425_refs/ref_00.jpg"
+      ],
+      "prompt": "A single accurately sculpted, hand-painted collectible miniature figurine of Actinoscyphia aurelia, photographed as a macro studio shot. Shape, proportions and colour pattern must be anatomically faithful to the attached real reference photos: The Venus flytrap anemone features a slender, textured, pale tan stalk that widens into a large, concave, funnel-shaped oral disc. The body has no segments, armour, head, tail, or eyes. The oral disc is pale pinkish-white on the inside and folds in half like a Venus flytrap. Its margins are fringed with numerous (dozens of) short, bright orange-pink tentacles arranged in two rows. The base attaches to a substrate via a small pedal disc. The exterior surface of the stalk and disc appears rough and fleshy, lacking any legs, arms, or fins. Satin hand-painted finish with faint brush texture — clearly a crafted figure, not a slick living animal (운영자 승인 2026-10-01). Shallow depth of field (tilt-shift macro), warm desk-lamp light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans. No fish head, no eyes, no octopus arms, no hard shell, no legs, no fins, and no free-swimming posture. View: three-quarter side view of the whole body."
+    },
+    {
+      "name": "card_top",
+      "aspect": "1:1",
+      "refs": [
+        "out/r1010103425_refs/ref_00.jpg"
+      ],
+      "prompt": "A single accurately sculpted, hand-painted collectible miniature figurine of Actinoscyphia aurelia, photographed as a macro studio shot. Shape, proportions and colour pattern must be anatomically faithful to the attached real reference photos: The Venus flytrap anemone features a slender, textured, pale tan stalk that widens into a large, concave, funnel-shaped oral disc. The body has no segments, armour, head, tail, or eyes. The oral disc is pale pinkish-white on the inside and folds in half like a Venus flytrap. Its margins are fringed with numerous (dozens of) short, bright orange-pink tentacles arranged in two rows. The base attaches to a substrate via a small pedal disc. The exterior surface of the stalk and disc appears rough and fleshy, lacking any legs, arms, or fins. Satin hand-painted finish with faint brush texture — clearly a crafted figure, not a slick living animal (운영자 승인 2026-10-01). Shallow depth of field (tilt-shift macro), warm desk-lamp light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans. No fish head, no eyes, no octopus arms, no hard shell, no legs, no fins, and no free-swimming posture. View: straight top-down view of the whole body."
+    }
+  ]
+}

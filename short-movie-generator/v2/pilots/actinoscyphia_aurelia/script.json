@@ -194,7 +194,11 @@
       "scene_ko": "둥근 입을 닫아 먹이를 잡는 파리지옥말미잘(말미잘)의 미니어처 디오라마",
       "annotation": "",
       "sec": 6,
-      "speech_s": 3.88
+      "speech_s": 3.88,
+      "keyframe": "out/r1010103637_sb/p01.jpg",
+      "panel_desc": "Medium shot of the tabletop set. The anemone figurine is in the center, its pale tan stalk anchored out of frame. Its large, funnel-shaped oral disc is actively folding in half to catch cotton-wool marine snow hanging on fine threads. The bright orange-pink tentacles fringe the edges. The background is crumpled blue cellophane water. The upper quarter is calm and uncluttered for captions.",
+      "panel_shot": "medium",
+      "motion": "omni"
     },
     {
       "cut": 2,
@@ -205,7 +209,11 @@
       "scene_ko": "먹이를 감싸는 파리지옥말미잘(말미잘)의 미니어처 디오라마",
       "annotation": "",
       "sec": 4,
-      "speech_s": 3.05
+      "speech_s": 3.05,
+      "keyframe": "out/r1010103637_sb/p02.jpg",
+      "panel_desc": "Close shot. The anemone's oral disc is fully folded in half, trapping the cotton-wool marine snow inside. The pale pinkish-white interior is barely visible through the tightly interlocking bright orange-pink tentacles. The rough, fleshy exterior of the disc is prominent. The creature rests on hand-painted clay rocks. The upper quarter is uncluttered.",
+      "panel_shot": "close",
+      "motion": "omni"
     },
     {
       "cut": 3,
@@ -216,7 +224,11 @@
       "scene_ko": "어두운 심해 바닥에 서 있는 파리지옥말미잘(말미잘) 미니어처",
       "annotation": "水深1000〜1600m",
       "sec": 6,
-      "speech_s": 4.83
+      "speech_s": 4.83,
+      "keyframe": "out/r1010103637_sb/p03.jpg",
+      "panel_desc": "Wide shot of a wooden display box set, the wooden edge clearly visible. A tiny painted clay ROV hangs on a wire to the side, leaving the upper quarter uncluttered. The anemone figurine stands small on a paper-cut rock, accurately scaled to the ROV. Its slender pale tan stalk and funnel-shaped disc are visible.",
+      "panel_shot": "wide",
+      "motion": "still"
     },
     {
       "cut": 4,
@@ -227,7 +239,11 @@
       "scene_ko": "심해 절벽에 붙어 물살을 향하는 미니어처 디오라마",
       "annotation": "",
       "sec": 6,
-      "speech_s": 4.67
+      "speech_s": 4.67,
+      "keyframe": "out/r1010103637_sb/p04.jpg",
+      "panel_desc": "Wide shot on a cutting mat, the grid edge visible. A paper-mache deep-sea cliff dominates the set, with bent wire coral attached. The anemone is attached to the cliff by its small pedal disc, its pale tan stalk bending sharply towards clear cellophane streaks representing a fast water current. The upper quarter is uncluttered.",
+      "panel_shot": "wide",
+      "motion": "omni"
     },
     {
       "cut": 5,
@@ -238,7 +254,11 @@
       "scene_ko": "깔때기 모양의 입을 보여주는 클로즈업 미니어처",
       "annotation": "",
       "sec": 6,
-      "speech_s": 3.92
+      "speech_s": 3.92,
+      "keyframe": "out/r1010103637_sb/p05.jpg",
+      "panel_desc": "Close shot of the anemone's large, concave, funnel-shaped oral disc. The pale pinkish-white inside and the two rows of short, bright orange-pink tentacles are highly detailed with satin paint. The creature sits on a chunky felt seabed, illuminated by tiny LED fairy-light bulbs emitting a warm glow. The upper quarter is uncluttered.",
+      "panel_shot": "close",
+      "motion": "still"
     },
     {
       "cut": 6,
@@ -249,7 +269,11 @@
       "scene_ko": "촉수를 두 줄로 뻗어 먹이를 모으는 미니어처",
       "annotation": "",
       "sec": 6,
-      "speech_s": 4.2
+      "speech_s": 4.2,
+      "keyframe": "out/r1010103637_sb/p06.jpg",
+      "panel_desc": "Wide shot on a wooden worktable, the edge visible. A tiny clay scientist figurine in a diving suit stands on the felt seabed, observing the anemone. The anemone figurine is accurately scaled to the scientist (about one-fifth their height). It has its bright orange-pink tentacles arranged in two rows, gathering tiny cotton-wool plankton suspended on fine threads. The upper quarter is uncluttered.",
+      "panel_shot": "wide",
+      "motion": "still"
     },
     {
       "cut": 7,
@@ -260,7 +284,11 @@
       "scene_ko": "바닥을 조금씩 이동하는 어린 파리지옥말미잘(말미잘) 미니어처",
       "annotation": "",
       "sec": 6,
-      "speech_s": 4.15
+      "speech_s": 4.15,
+      "keyframe": "out/r1010103637_sb/p07.jpg",
+      "panel_desc": "Wide shot showing a painted cardboard backdrop with a visible seam. A tiny clay pacifier prop sits on the seabed to playfully indicate it is a baby. A small baby anemone figurine, identical in proportions but smaller, is shown slowly sliding its pedal disc along painted cardboard rocks. The upper quarter is uncluttered.",
+      "panel_shot": "wide",
+      "motion": "omni"
     },
     {
       "cut": 8,
@@ -271,7 +299,11 @@
       "scene_ko": "다시 입을 닫으며 어둠 속으로 사라지는 파리지옥말미잘(말미잘)",
       "annotation": "",
       "sec": 6,
-      "speech_s": 4.16
+      "speech_s": 4.16,
+      "keyframe": "out/r1010103637_sb/p08.jpg",
+      "panel_desc": "Wide shot inside an open cardboard display box, the box edge visible. The desk lamp lighting the set is turned off, casting deep shadows. The anemone figurine, taking up one third of the frame, has its oral disc folded in half and is receding into the deep darkness, barely illuminated by a single fading LED fairy-light bulb. The upper quarter is uncluttered.",
+      "panel_shot": "wide",
+      "motion": "still"
     }
   ],
   "timing_rule": "컷 길이 = (앞 여백 0.15초 + 나레이션 + 여유 0.6초)를 짝수 초로 올림",
@@ -443,5 +475,12 @@
       ]
     }
   ],
-  "total_sec": 50.0
+  "total_sec": 50.0,
+  "storyboard_history": [
+    {
+      "at": "2026-10-10T10:37:52Z",
+      "rid": "r1010103637_sb",
+      "feedback": ""
+    }
+  ]
 }

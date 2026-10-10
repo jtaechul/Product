@@ -1,0 +1,65 @@
+{
+  "ok": true,
+  "model": "gemini-3-pro-image-preview",
+  "items": [
+    {
+      "name": "card_side",
+      "http": 200,
+      "file": "card_side.jpg",
+      "usage": {
+        "promptTokenCount": 577,
+        "candidatesTokenCount": 1319,
+        "totalTokenCount": 2115,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 319
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 258
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 219,
+        "serviceTier": "standard"
+      }
+    },
+    {
+      "name": "card_top",
+      "http": 200,
+      "file": "card_top.jpg",
+      "usage": {
+        "promptTokenCount": 577,
+        "candidatesTokenCount": 1298,
+        "totalTokenCount": 2103,
+        "promptTokensDetails": [
+          {
+            "modality": "TEXT",
+            "tokenCount": 319
+          },
+          {
+            "modality": "IMAGE",
+            "tokenCount": 258
+          }
+        ],
+        "candidatesTokensDetails": [
+          {
+            "modality": "IMAGE",
+            "tokenCount": 1120
+          }
+        ],
+        "thoughtsTokenCount": 228,
+        "serviceTier": "standard"
+      }
+    }
+  ],
+  "request": "r1010103443_card.json",
+  "kind": "gen_images",
+  "ran_at": "2026-10-10T10:35:16Z"
+}

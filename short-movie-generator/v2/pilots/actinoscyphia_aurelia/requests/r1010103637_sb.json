@@ -1,0 +1,57 @@
+{
+  "id": "r1010103637_sb",
+  "kind": "gen_images",
+  "purpose": "8컷 콘티(자동) — 컷별 시작 이미지 · 2×2 격자",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "grid1",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/r1010103443_card/card_side.jpg",
+        "out/r1010103443_card/card_top.jpg",
+        "out/r1010103425_refs/ref_00.jpg",
+        "../_shared/style/style_desk_chart.jpg",
+        "../_shared/style/style_ocean_block.jpg"
+      ],
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described below. Shared look for all panels: a handcrafted TABLETOP miniature diorama shot like toy / scale-model photography: the whole world is a small hand-made set built on a wooden worktable or inside an open cardboard or wooden display box, lit by a warm desk lamp; strong tilt-shift with shallow depth of field and a slightly high camera looking down onto the set; every prop and the seabed are cute, chunky and visibly hand-made (felt, cotton-wool marine snow hanging on fine threads, crumpled blue cellophane water, painted cardboard backdrops with visible seams, paper-cut rocks and kelp, clay with fingerprints, bent wire, tiny LED fairy-light bulbs for any glow); muted warm palette. the creature is the ONLY precise object: an accurately sculpted, hand-painted collectible figurine with satin paint and faint brush texture, with exactly the real anatomy, proportions and colours. It must match the attached replica (creature card) and real reference photo exactly and be identical in every panel: The Venus flytrap anemone features a slender, textured, pale tan stalk that widens into a large, concave, funnel-shaped oral disc. The body has no segments, armour, head, tail, or eyes. The oral disc is pale pinkish-white on the inside and folds in half like a Venus flytrap. Its margins are fringed with numerous (dozens of) short, bright orange-pink tentacles arranged in two rows. The base attaches to a substrate via a small pedal disc. The exterior surface of the stalk and disc appears rough and fleshy, lacking any legs, arms, or fins. No fish head, no eyes, no octopus arms, no hard shell, no legs, no fins, and no free-swimming posture. STYLE REFERENCES: the LAST 2 attached images come from another episode of the same series — copy ONLY their hand-made tabletop-diorama look (set building, materials, desk-lamp light, tilt-shift, camera height); never copy their animal, map or objects literally. Clay figurines, boats and vehicles never make the creature look giant. Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, logos, watermarks. Painted clay figurines are allowed; never real human hands or people. Every animal is drawn as what it REALLY is — a nickname like 'sea pig' (a sea cucumber) never means a pig; never draw land animals.\nPanel 1 (top-left, medium shot): Medium shot of the tabletop set. The anemone figurine is in the center, its pale tan stalk anchored out of frame. Its large, funnel-shaped oral disc is actively folding in half to catch cotton-wool marine snow hanging on fine threads. The bright orange-pink tentacles fringe the edges. The background is crumpled blue cellophane water. The upper quarter is calm and uncluttered for captions. Hand-made props: crumpled blue cellophane water, cotton-wool marine snow.\nPanel 2 (top-right, close shot): Close shot. The anemone's oral disc is fully folded in half, trapping the cotton-wool marine snow inside. The pale pinkish-white interior is barely visible through the tightly interlocking bright orange-pink tentacles. The rough, fleshy exterior of the disc is prominent. The creature rests on hand-painted clay rocks. The upper quarter is uncluttered. Hand-made props: cotton-wool marine snow, hand-painted clay rocks.\nPanel 3 (bottom-left, wide shot): Wide shot of a wooden display box set, the wooden edge clearly visible. A tiny painted clay ROV hangs on a wire to the side, leaving the upper quarter uncluttered. The anemone figurine stands small on a paper-cut rock, accurately scaled to the ROV. Its slender pale tan stalk and funnel-shaped disc are visible. Hand-made props: wooden display box, tiny painted clay ROV, paper-cut rock.\nPanel 4 (bottom-right, wide shot): Wide shot on a cutting mat, the grid edge visible. A paper-mache deep-sea cliff dominates the set, with bent wire coral attached. The anemone is attached to the cliff by its small pedal disc, its pale tan stalk bending sharply towards clear cellophane streaks representing a fast water current. The upper quarter is uncluttered. Hand-made props: cutting mat, paper-mache deep-sea cliff, clear cellophane streaks.",
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "p01",
+          "p02",
+          "p03",
+          "p04"
+        ]
+      }
+    },
+    {
+      "name": "grid2",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/r1010103443_card/card_side.jpg",
+        "out/r1010103443_card/card_top.jpg",
+        "out/r1010103425_refs/ref_00.jpg",
+        "../_shared/style/style_desk_chart.jpg",
+        "../_shared/style/style_ocean_block.jpg"
+      ],
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described below. Shared look for all panels: a handcrafted TABLETOP miniature diorama shot like toy / scale-model photography: the whole world is a small hand-made set built on a wooden worktable or inside an open cardboard or wooden display box, lit by a warm desk lamp; strong tilt-shift with shallow depth of field and a slightly high camera looking down onto the set; every prop and the seabed are cute, chunky and visibly hand-made (felt, cotton-wool marine snow hanging on fine threads, crumpled blue cellophane water, painted cardboard backdrops with visible seams, paper-cut rocks and kelp, clay with fingerprints, bent wire, tiny LED fairy-light bulbs for any glow); muted warm palette. the creature is the ONLY precise object: an accurately sculpted, hand-painted collectible figurine with satin paint and faint brush texture, with exactly the real anatomy, proportions and colours. It must match the attached replica (creature card) and real reference photo exactly and be identical in every panel: The Venus flytrap anemone features a slender, textured, pale tan stalk that widens into a large, concave, funnel-shaped oral disc. The body has no segments, armour, head, tail, or eyes. The oral disc is pale pinkish-white on the inside and folds in half like a Venus flytrap. Its margins are fringed with numerous (dozens of) short, bright orange-pink tentacles arranged in two rows. The base attaches to a substrate via a small pedal disc. The exterior surface of the stalk and disc appears rough and fleshy, lacking any legs, arms, or fins. No fish head, no eyes, no octopus arms, no hard shell, no legs, no fins, and no free-swimming posture. STYLE REFERENCES: the LAST 2 attached images come from another episode of the same series — copy ONLY their hand-made tabletop-diorama look (set building, materials, desk-lamp light, tilt-shift, camera height); never copy their animal, map or objects literally. Clay figurines, boats and vehicles never make the creature look giant. Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, logos, watermarks. Painted clay figurines are allowed; never real human hands or people. Every animal is drawn as what it REALLY is — a nickname like 'sea pig' (a sea cucumber) never means a pig; never draw land animals.\nPanel 1 (top-left, close shot): Close shot of the anemone's large, concave, funnel-shaped oral disc. The pale pinkish-white inside and the two rows of short, bright orange-pink tentacles are highly detailed with satin paint. The creature sits on a chunky felt seabed, illuminated by tiny LED fairy-light bulbs emitting a warm glow. The upper quarter is uncluttered. Hand-made props: tiny LED fairy-light bulbs, chunky felt seabed.\nPanel 2 (top-right, wide shot): Wide shot on a wooden worktable, the edge visible. A tiny clay scientist figurine in a diving suit stands on the felt seabed, observing the anemone. The anemone figurine is accurately scaled to the scientist (about one-fifth their height). It has its bright orange-pink tentacles arranged in two rows, gathering tiny cotton-wool plankton suspended on fine threads. The upper quarter is uncluttered. Hand-made props: wooden worktable, tiny clay scientist figurine, cotton-wool plankton.\nPanel 3 (bottom-left, wide shot): Wide shot showing a painted cardboard backdrop with a visible seam. A tiny clay pacifier prop sits on the seabed to playfully indicate it is a baby. A small baby anemone figurine, identical in proportions but smaller, is shown slowly sliding its pedal disc along painted cardboard rocks. The upper quarter is uncluttered. Hand-made props: painted cardboard backdrop, tiny clay pacifier prop, painted cardboard rocks.\nPanel 4 (bottom-right, wide shot): Wide shot inside an open cardboard display box, the box edge visible. The desk lamp lighting the set is turned off, casting deep shadows. The anemone figurine, taking up one third of the frame, has its oral disc folded in half and is receding into the deep darkness, barely illuminated by a single fading LED fairy-light bulb. The upper quarter is uncluttered. Hand-made props: cardboard display box, desk lamp.",
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "p05",
+          "p06",
+          "p07",
+          "p08"
+        ]
+      }
+    }
+  ]
+}

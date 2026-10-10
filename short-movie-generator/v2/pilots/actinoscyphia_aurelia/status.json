@@ -37,8 +37,14 @@
       "approved_at": "2026-10-10T10:33:32Z"
     },
     "storyboard": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-10-10T10:37:52Z",
+          "kind": "auto",
+          "text": "스토리보드 자동 작성 완료 — 승인 대기"
+        }
+      ]
     },
     "video": {
       "state": "locked",
@@ -490,6 +496,117 @@
           "source_title": "Wikipedia(en) Venus flytrap sea anemone"
         }
       ]
+    },
+    "storyboard": {
+      "sheet": "out/r1010103637_sb/storyboard.jpg",
+      "request": "r1010103637_sb",
+      "card": [
+        "out/r1010103443_card/card_side.jpg",
+        "out/r1010103443_card/card_top.jpg",
+        "out/r1010103425_refs/ref_00.jpg"
+      ],
+      "compare": "out/r1010103443_card/compare.jpg",
+      "card_check": {
+        "items": [
+          {
+            "item": "가느다란 기둥(stalk) 위에 크고 오목한 깔때기 모양의 구반(oral disc)이 있는 형태인가?",
+            "verdict": "pass",
+            "note_ko": "가느다란 기둥 위에 오목한 깔때기 모양의 구반이 있는 전체적인 형태가 실제 동물과 잘 일치합니다."
+          },
+          {
+            "item": "구반의 가장자리를 따라 짧고 밝은 주황색/분홍색 촉수가 두 줄로 나 있는가?",
+            "verdict": "fail",
+            "note_ko": "실제 동물의 촉수는 길고 가느다란 반면, 모형의 촉수는 짧고 뭉툭하게 표현되어 일치하지 않습니다."
+          },
+          {
+            "item": "구반이 파리지옥처럼 반으로 접힌 구조를 잘 표현했는가?",
+            "verdict": "pass",
+            "note_ko": "파리지옥처럼 반으로 접힌 구반의 독특한 구조를 모형이 잘 재현했습니다."
+          },
+          {
+            "item": "머리, 눈, 꼬리, 다리, 지느러미가 전혀 없는 형태인가?",
+            "verdict": "pass",
+            "note_ko": "실제 동물과 모형 모두 머리, 눈, 꼬리 등의 기관이 없는 형태입니다."
+          },
+          {
+            "item": "몸통 표면은 단단한 껍질이나 마디가 없고 거칠고 육질적인 질감인가?",
+            "verdict": "pass",
+            "note_ko": "단단한 껍질 없이 거칠고 주름진 육질적인 표면 질감이 잘 표현되었습니다."
+          },
+          {
+            "item": "기둥 아래쪽의 족반(pedal disc)은 작고 바닥이나 산호에 붙어 있는 형태인가?",
+            "verdict": "pass",
+            "note_ko": "기둥 아래쪽이 좁아지며 기질에 부착된 형태가 잘 재현되었습니다."
+          }
+        ],
+        "error": ""
+      },
+      "checklist": [
+        "가느다란 기둥(stalk) 위에 크고 오목한 깔때기 모양의 구반(oral disc)이 있는 형태인가?",
+        "구반의 가장자리를 따라 짧고 밝은 주황색/분홍색 촉수가 두 줄로 나 있는가?",
+        "구반이 파리지옥처럼 반으로 접힌 구조를 잘 표현했는가?",
+        "머리, 눈, 꼬리, 다리, 지느러미가 전혀 없는 형태인가?",
+        "몸통 표면은 단단한 껍질이나 마디가 없고 거칠고 육질적인 질감인가?",
+        "기둥 아래쪽의 족반(pedal disc)은 작고 바닥이나 산호에 붙어 있는 형태인가?"
+      ],
+      "panels": [
+        {
+          "cut": 1,
+          "file": "out/r1010103637_sb/p01.jpg",
+          "desc": "Medium shot of the tabletop set. The anemone figurine is in the center, its pale tan stalk anchored out of frame. Its large, funnel-shaped oral disc is actively folding in half to catch cotton-wool marine snow hanging on fine threads. The bright orange-pink tentacles fringe the edges. The background is crumpled blue cellophane water. The upper quarter is calm and uncluttered for captions.",
+          "shot": "medium",
+          "motion": "omni"
+        },
+        {
+          "cut": 2,
+          "file": "out/r1010103637_sb/p02.jpg",
+          "desc": "Close shot. The anemone's oral disc is fully folded in half, trapping the cotton-wool marine snow inside. The pale pinkish-white interior is barely visible through the tightly interlocking bright orange-pink tentacles. The rough, fleshy exterior of the disc is prominent. The creature rests on hand-painted clay rocks. The upper quarter is uncluttered.",
+          "shot": "close",
+          "motion": "omni"
+        },
+        {
+          "cut": 3,
+          "file": "out/r1010103637_sb/p03.jpg",
+          "desc": "Wide shot of a wooden display box set, the wooden edge clearly visible. A tiny painted clay ROV hangs on a wire to the side, leaving the upper quarter uncluttered. The anemone figurine stands small on a paper-cut rock, accurately scaled to the ROV. Its slender pale tan stalk and funnel-shaped disc are visible.",
+          "shot": "wide",
+          "motion": "still"
+        },
+        {
+          "cut": 4,
+          "file": "out/r1010103637_sb/p04.jpg",
+          "desc": "Wide shot on a cutting mat, the grid edge visible. A paper-mache deep-sea cliff dominates the set, with bent wire coral attached. The anemone is attached to the cliff by its small pedal disc, its pale tan stalk bending sharply towards clear cellophane streaks representing a fast water current. The upper quarter is uncluttered.",
+          "shot": "wide",
+          "motion": "omni"
+        },
+        {
+          "cut": 5,
+          "file": "out/r1010103637_sb/p05.jpg",
+          "desc": "Close shot of the anemone's large, concave, funnel-shaped oral disc. The pale pinkish-white inside and the two rows of short, bright orange-pink tentacles are highly detailed with satin paint. The creature sits on a chunky felt seabed, illuminated by tiny LED fairy-light bulbs emitting a warm glow. The upper quarter is uncluttered.",
+          "shot": "close",
+          "motion": "still"
+        },
+        {
+          "cut": 6,
+          "file": "out/r1010103637_sb/p06.jpg",
+          "desc": "Wide shot on a wooden worktable, the edge visible. A tiny clay scientist figurine in a diving suit stands on the felt seabed, observing the anemone. The anemone figurine is accurately scaled to the scientist (about one-fifth their height). It has its bright orange-pink tentacles arranged in two rows, gathering tiny cotton-wool plankton suspended on fine threads. The upper quarter is uncluttered.",
+          "shot": "wide",
+          "motion": "still"
+        },
+        {
+          "cut": 7,
+          "file": "out/r1010103637_sb/p07.jpg",
+          "desc": "Wide shot showing a painted cardboard backdrop with a visible seam. A tiny clay pacifier prop sits on the seabed to playfully indicate it is a baby. A small baby anemone figurine, identical in proportions but smaller, is shown slowly sliding its pedal disc along painted cardboard rocks. The upper quarter is uncluttered.",
+          "shot": "wide",
+          "motion": "omni"
+        },
+        {
+          "cut": 8,
+          "file": "out/r1010103637_sb/p08.jpg",
+          "desc": "Wide shot inside an open cardboard display box, the box edge visible. The desk lamp lighting the set is turned off, casting deep shadows. The anemone figurine, taking up one third of the frame, has its oral disc folded in half and is receding into the deep darkness, barely illuminated by a single fading LED fairy-light bulb. The upper quarter is uncluttered.",
+          "shot": "wide",
+          "motion": "still"
+        }
+      ]
     }
   },
   "checks": {},
@@ -503,23 +620,33 @@
     },
     "storyboard": {
       "stage": "storyboard",
-      "status": "running",
-      "at": "2026-10-10T10:33:32Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-10T10:37:52Z",
+      "action": "write_storyboard",
+      "text": "스토리보드 자동 작성 완료 — 승인 대기"
     }
   },
   "cost": {
     "estimate": {
       "script": 0.05,
       "storyboard": 0.54,
-      "video": 4.6
+      "video": 2.2
     },
     "spent": [
       {
         "at": "2026-10-10T03:10:21Z",
         "what": "대본 자동 작성(AI+나레이션)",
         "usd": 0.05
+      },
+      {
+        "at": "2026-10-10T10:35:38Z",
+        "what": "생물 카드 2장",
+        "usd": 0.268
+      },
+      {
+        "at": "2026-10-10T10:37:52Z",
+        "what": "콘티 격자 2장",
+        "usd": 0.268
       }
     ]
   }

@@ -1,0 +1,72 @@
+{
+  "status": "자동 생성(운영자 승인 대기)",
+  "at": "2026-10-10T10:35:38Z",
+  "anatomy": "The Venus flytrap anemone features a slender, textured, pale tan stalk that widens into a large, concave, funnel-shaped oral disc. The body has no segments, armour, head, tail, or eyes. The oral disc is pale pinkish-white on the inside and folds in half like a Venus flytrap. Its margins are fringed with numerous (dozens of) short, bright orange-pink tentacles arranged in two rows. The base attaches to a substrate via a small pedal disc. The exterior surface of the stalk and disc appears rough and fleshy, lacking any legs, arms, or fins.",
+  "forbidden": "No fish head, no eyes, no octopus arms, no hard shell, no legs, no fins, and no free-swimming posture.",
+  "size_note": "Described as a large deep-sea anemone, though exact dimensions are not specified in the facts.",
+  "checklist": [
+    "가느다란 기둥(stalk) 위에 크고 오목한 깔때기 모양의 구반(oral disc)이 있는 형태인가?",
+    "구반의 가장자리를 따라 짧고 밝은 주황색/분홍색 촉수가 두 줄로 나 있는가?",
+    "구반이 파리지옥처럼 반으로 접힌 구조를 잘 표현했는가?",
+    "머리, 눈, 꼬리, 다리, 지느러미가 전혀 없는 형태인가?",
+    "몸통 표면은 단단한 껍질이나 마디가 없고 거칠고 육질적인 질감인가?",
+    "기둥 아래쪽의 족반(pedal disc)은 작고 바닥이나 산호에 붙어 있는 형태인가?"
+  ],
+  "check": {
+    "items": [
+      {
+        "item": "가느다란 기둥(stalk) 위에 크고 오목한 깔때기 모양의 구반(oral disc)이 있는 형태인가?",
+        "verdict": "pass",
+        "note_ko": "가느다란 기둥 위에 오목한 깔때기 모양의 구반이 있는 전체적인 형태가 실제 동물과 잘 일치합니다."
+      },
+      {
+        "item": "구반의 가장자리를 따라 짧고 밝은 주황색/분홍색 촉수가 두 줄로 나 있는가?",
+        "verdict": "fail",
+        "note_ko": "실제 동물의 촉수는 길고 가느다란 반면, 모형의 촉수는 짧고 뭉툭하게 표현되어 일치하지 않습니다."
+      },
+      {
+        "item": "구반이 파리지옥처럼 반으로 접힌 구조를 잘 표현했는가?",
+        "verdict": "pass",
+        "note_ko": "파리지옥처럼 반으로 접힌 구반의 독특한 구조를 모형이 잘 재현했습니다."
+      },
+      {
+        "item": "머리, 눈, 꼬리, 다리, 지느러미가 전혀 없는 형태인가?",
+        "verdict": "pass",
+        "note_ko": "실제 동물과 모형 모두 머리, 눈, 꼬리 등의 기관이 없는 형태입니다."
+      },
+      {
+        "item": "몸통 표면은 단단한 껍질이나 마디가 없고 거칠고 육질적인 질감인가?",
+        "verdict": "pass",
+        "note_ko": "단단한 껍질 없이 거칠고 주름진 육질적인 표면 질감이 잘 표현되었습니다."
+      },
+      {
+        "item": "기둥 아래쪽의 족반(pedal disc)은 작고 바닥이나 산호에 붙어 있는 형태인가?",
+        "verdict": "pass",
+        "note_ko": "기둥 아래쪽이 좁아지며 기질에 부착된 형태가 잘 재현되었습니다."
+      }
+    ],
+    "error": ""
+  },
+  "refs": [
+    {
+      "file": "out/r1010103425_refs/ref_00.jpg",
+      "credit": "\nImage courtesy of Aquapix and Expedition to the Deep Slope 2007, NOAA-OE, no known copyright restrictions (public domain)",
+      "license": "pd"
+    }
+  ],
+  "use_as_reference": [
+    {
+      "file": "out/r1010103443_card/card_side.jpg",
+      "role": "생물 카드(자동)"
+    },
+    {
+      "file": "out/r1010103443_card/card_top.jpg",
+      "role": "생물 카드(자동)"
+    },
+    {
+      "file": "out/r1010103425_refs/ref_00.jpg",
+      "role": "실사 기준"
+    }
+  ],
+  "compare": "out/r1010103443_card/compare.jpg"
+}
