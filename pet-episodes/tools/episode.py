@@ -2170,11 +2170,43 @@ def _has_animals(rows: list) -> bool:
     return sum(1 for x in rows or [] if re.search(ANIMAL_RX, str(x.get("action", "")), re.I)) >= 2
 
 
+CLOTHES_RX = (r"\b(wearing|in|with)\b[^,;.()]*?\b(top|tops|shorts|skirt|dress|jeans|pants|trousers|shirt|t-shirt|tee|hoodie|slippers|sandals|"
+              r"heels|boots|sneakers|bikini|swimsuit|leggings|tights|socks|stockings|underwear|lingerie|pajamas|robe|towel)\b[^,;.()]*")
+CLOTHES_WORDS = (r"\b(grey|gray|black|white|red|blue|pink|green|yellow|short|long|tight|loose)?\s*(crop top|tank top|top|shorts|skirt|dress|jeans|"
+                 r"pants|trousers|shirt|t-shirt|tee|hoodie|slippers|sandals|heels|boots|sneakers|bikini|swimsuit|leggings|tights|socks|stockings|"
+                 r"underwear|lingerie|pajamas|robe|towel)\b")
+
+
+def _plain_cast(txt: str) -> str:
+    """머릿수·바꿀 것 글에서 옷차림·몸 묘사를 뺀다 — 합성 지시에 '크롭티·반바지' 같은 말이 들어가면 영상 AI가 막는다(2026-10-09 타일매트 편).
+    동작은 원본 영상에서 오므로 글에는 '누가 몇 명·몇 마리를 무엇으로'만 있으면 된다."""
+    t = re.sub(CLOTHES_RX, "", str(txt or ""), flags=re.I)
+    t = re.sub(r"\b(bare|naked|exposed|sexy|slim|curvy|long) (legs?|arms?|skin|body|thighs?|shoulders?|midriff|back)\b", "", t, flags=re.I)
+    t = re.sub(CLOTHES_WORDS, "", t, flags=re.I)
+    t = _soften(t)
+    t = re.sub(r"\b(and|,)\s*(and|,)\b", r"\1", t)
+    t = re.sub(r"[,\s]*\b(and|or|with|in)\b[,\s]*\)", ")", t, flags=re.I)   # 괄호 끝에 남은 '…, and)' 정리
+    t = re.sub(r"[,\s]*-\s*\)", ")", t)
+    t = re.sub(r"\(\s*[-,\s]*\)", "", t)
+    t = re.sub(r"\s*,\s*(,\s*)+", ", ", t)
+    t = re.sub(r"\s+([,.;)])", r"\1", t)
+    t = re.sub(r"\(\s*", "(", t)
+    return re.sub(r"\s{2,}", " ", t).strip(" ,;-")
+
+
+def _prompt_min(res: dict) -> str:
+    """영상 AI가 지시문을 막았을 때 쓰는 가장 짧은 지시문: 바꿀 것 + 머릿수 + '나머지는 그대로'만."""
+    swap, cast = res.get("swap_used") or REMAKE_SWAP_DEFAULT, res.get("cast_used") or ""
+    return ("Edit this video. Keep everything exactly as it is except: " + swap.rstrip(". ") + ". " +
+            (f"Cast after the edit: {cast}. Every person stays a real human, unchanged; a blurred face stays blurred. " if cast else "") +
+            "Same motion and timing, same camera, same background. No added animals or people. Remove any on-screen text.")
+
+
 def _edit_prompt(rm: dict) -> tuple:
     """합성 지시문 → (영상 AI에 줄 전체, 기록·점검용 기본). 바꿀 대상 + 사장님이 적은 개그 + 대본·입모양."""
-    swap = (rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". ")
+    swap = _plain_cast((rm.get("swap") or REMAKE_SWAP_DEFAULT).rstrip(". ")) or REMAKE_SWAP_DEFAULT
     if rm.get("keep_people"):                             # 사람은 사람 그대로, 동물만 시바견(2026-10 사과 도둑 편 · 2026-10-09 타일매트 편)
-        base = REMAKE_SWAP_KEEP.format(swap=swap, cast=str(rm.get("cast") or REMAKE_CAST_DEFAULT))
+        base = REMAKE_SWAP_KEEP.format(swap=swap, cast=_plain_cast(rm.get("cast")) or REMAKE_CAST_DEFAULT)
     else:
         base = REMAKE_SWAP.format(swap=swap)
     if rm.get("gags"):                                    # 확인한 개그 포인트는 합성 지시에도 '그대로 둘 것'으로 박는다
@@ -2444,6 +2476,12 @@ def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: in
     key = _key("GEMINI_API_KEY")
     with ThreadPoolExecutor(max_workers=8) as ex:
         heads = list(ex.map(lambda f: _head_boxes_1(f, key), frames))
+    retry = [k for k, x in enumerate(heads) if x is None]
+    if retry:                                             # 못 읽은 장면만 한 번 더(일시 오류 대비)
+        with ThreadPoolExecutor(max_workers=8) as ex:
+            again = list(ex.map(lambda k: _head_boxes_1(frames[k], key), retry))
+        for k, x in zip(retry, again):
+            heads[k] = x
     shutil.rmtree(d, ignore_errors=True)
     miss = sum(1 for x in heads if x is None)
 
@@ -2451,7 +2489,10 @@ def _blur_heads(src: Path, out: Path, work: Path, res: dict, cap: float, fps: in
         res["faces_raw"] = f"머리 찾기 실패 {miss}/{len(frames)}장"
         raise RuntimeError(f"사람 얼굴 위치를 {miss}/{len(frames)}장에서 찾지 못해 모자이크하지 못했습니다(얼굴이 드러난 영상은 내보내지 않음)")
     heads = [[(y0, (x0 * 1000 - ox) / fw, y1, (x1 * 1000 - ox) / fw) for (y0, x0, y1, x1) in (x or [])] for x in heads]   # 정사각 틀 → 장면 비율
-    return {**_apply_head_mosaic(src, out, heads, fps), "fps": fps}
+    info = {**_apply_head_mosaic(src, out, heads, fps), "fps": fps, "missing": miss}
+    if not any(heads):
+        res["faces_warn"] = "사람 머리를 한 장면에서도 찾지 못함(사람이 안 보이는 영상이면 정상)"
+    return info
 
 
 def _apply_head_mosaic(src: Path, out: Path, heads: list, fps: int = 4) -> dict:
@@ -2780,21 +2821,31 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
     if N != 6:                                          # 칸 수에 맞게 지시문의 '3x2·여섯 칸'을 바꾼다
         ask = (ask.replace("3x2", f"{cols}x{rows}").replace("ALL six panels", f"ALL {N} panels").replace("six frames", f"{N} frames")
                .replace("six grey", f"{N} grey").replace("six panels", f"{N} panels"))
-    r = gen_image(ask, [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, aspect, "2K")
-    if not r.get("ok"):
-        raise RuntimeError(f"스토리보드 그림 실패: {r.get('error')}")
-    im = Image.open(out).convert("RGB")
-    k = im.size[0] / W0
-    im.save(work / "board.jpg", quality=88)
-    frames = []
-    for i in range(N):
-        x, y = (i % cols) * BOARD_CW * k, (i // cols) * BOARD_CH * k
-        f = work / f"board_{i + 1:02d}.jpg"
-        im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
-        frames.append(f)
-    bad = _panel_bands(frames, painted=extend and not fresh, real=(res.get("vertical") or {}).get("mode") == "track" and not fresh)
+    for attempt in range(2):                            # 위아래 띠가 걸리면 더 강한 지시로 딱 한 번 다시 그린다(약 0.15달러) — 그래도 걸리면 멈춤
+        if attempt:
+            _remake_spend(res, REMAKE_COST["image"], "스토리보드 다시(위아래 띠)", cap)
+            ask += (" IMPORTANT: every panel must be one complete photo from its top edge to its bottom edge - the top and bottom "
+                    "fifths of each panel are real room or scenery with the same detail, brightness and sharpness as the middle; "
+                    "never a plain white, grey, black, blurred or empty area.")
+        r = gen_image(ask, [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, aspect, "2K")
+        if not r.get("ok"):
+            raise RuntimeError(f"스토리보드 그림 실패: {r.get('error')}")
+        im = Image.open(out).convert("RGB")
+        k = im.size[0] / W0
+        im.save(work / "board.jpg", quality=88)
+        frames = []
+        for i in range(N):
+            x, y = (i % cols) * BOARD_CW * k, (i // cols) * BOARD_CH * k
+            f = work / f"board_{i + 1:02d}.jpg"
+            im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
+            frames.append(f)
+        bad = _panel_bands(frames, painted=extend and not fresh, real=(res.get("vertical") or {}).get("mode") == "track" and not fresh)
+        if not bad:
+            break
+        res["board_bands"] = {"panels": bad, "redrawn": bool(attempt)}
     if bad:                                             # ⛔ 9:16 꽉 찬 화면이 아닌 칸(위아래 흐림·회색·검정·하얗게 날아간 띠)은 보여 주지 않고 멈춘다(2026-10-08·10-09 사고)
-        raise RuntimeError(f"스토리보드 {', '.join(str(b) for b in bad)}번 칸 위아래가 진짜 장면이 아닙니다(흐린/빈/하얗게 날아간 띠) — 보여 주지 않고 멈춤")
+        (work / "board.jpg").unlink(missing_ok=True)
+        raise RuntimeError(f"스토리보드 {', '.join(str(b) for b in bad)}번 칸 위아래가 진짜 장면이 아닙니다(흐린/빈/하얗게 날아간 띠, 다시 그려도 같음) — 보여 주지 않고 멈춤")
     return {"ok": True, "panels": len(frames)}
 
 
@@ -2826,7 +2877,7 @@ def _panel_bands(frames: list, painted: bool = False, real: bool = False) -> lis
             for b in ((0, 0, 180, 80), (0, 240, 180, 320)):
                 st_l, eb = ImageStat.Stat(im.crop(b)), ImageStat.Stat(e.crop(b)).mean[0]
                 mean, std = st_l.mean[0], st_l.stddev[0]
-                if (mean > lm + 60 and std < 40 and eb < em * 0.8) or (mean > 190 and std < 30):
+                if mean > 190 and std < 32 and eb < em * 0.6:        # 하얗게 날아간 빈 띠(2026-10-09 사고: 밝기 210·표준편차 19~23·무늬 0.4배)
                     bad.append(i + 1)
                     break
     return bad
@@ -2841,6 +2892,20 @@ REMAKE_END_START = ("Image 1 is the last frame of the previous shot: keep exactl
 REMAKE_END_PROMPT = ("DURATION: {sec} seconds. Image 1 is the first frame. {ending} The product stays where it is and never changes "
                      "shape or label. Same place and lighting, camera almost fixed. Photorealistic. Thick, fully furry dog legs "
                      "and paws only. No added text.")
+
+
+def _need_usd(work: Path, seg: float, n: int, end_sec: float, gen_res: str, gone: set | None = None) -> float:
+    """앞으로 더 들 비용(장부 기준, 720p는 x3) — 이미 만든 파일은 빼고, gone(지울 예정 파일 이름)은 없는 것으로 친다.
+    (2026-10-09: 다시 조립인데 이미 있는 끝 광고 값을 또 더해 멈춤 · 수정 요청이 파일을 지운 뒤 한도에 걸려 본편이 사라짐)"""
+    gone = gone or set()
+    mult = 3 if gen_res == "720p" else 1
+    def have(name):
+        return (work / name).exists() and name not in gone
+    usd = REMAKE_COST["omni_sec"] * seg * mult * sum(1 for k in range(n) if not have(f"rm_seg{k + 1}.mp4"))
+    usd += 0 if have("rm_end_start.png") else REMAKE_COST["image"]
+    usd += 0 if have("rm_end.mp4") else REMAKE_COST["omni_sec"] * end_sec * mult
+    usd += 0 if have("rm_vo.wav") else REMAKE_COST["tts"]
+    return round(usd, 2)
 
 
 def _remake_spend(res: dict, usd: float, what: str, cap: float):
@@ -3173,6 +3238,8 @@ def _remake_seg_i2v(key, ref: Path, i: int, seg: float, work: Path, res: dict, c
 def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res: dict, cap: float, h: int) -> Path:
     if res.get("i2v_fallback") and res.get("allow_i2v") and not res.get("lipsync"):   # 이 편은 원본을 넣으면 거절됨 → 스토리보드로 만든다
         return _remake_seg_i2v(key, ref, i, seg, work, res, cap, h)
+    if res.get("prompt_min"):                             # 앞 구간에서 지시문이 막혀 짧은 지시문으로 통과했으면 계속 그것으로
+        prompt = res["prompt_min"]
     out = work / f"rm_seg{i + 1}.mp4"
     piece = work / f"_rm_piece{i + 1}.mp4"
     _ff(["-ss", f"{i * seg:.3f}", "-t", f"{seg:.3f}", "-i", str(ref), "-an", "-vf", CLEAN_VF, "-c:v", "libx264", "-crf", "16", str(piece)])
@@ -3247,10 +3314,25 @@ def _remake_seg(key, ref: Path, i: int, seg: float, prompt: str, work: Path, res
                 raise
     except RuntimeError as e:
         res.setdefault("blocked", []).append({"seg": i + 1, "why": str(e)[:600], "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
-        if "HTTP 400" in str(e):                          # 막힌 요청은 요금 없음 → 장부에서 되돌린다
+        # 지시문이 막힌 것(content_blocked, 실제 인물 거절 아님)이면 요금 없음 → 바꿀 것·머릿수만 적은 가장 짧은 지시문으로 딱 한 번 더
+        # (2026-10-09 타일매트 편: 긴 지시문이 두 번 막힘 → 짧게 쓰니 통과). 그래도 막히면 멈춘다(돈 안 씀)
+        err = e
+        if "HTTP 400" in str(e) and re.search(r"content_blocked|Input blocked|prohibited", str(e), re.I) and not LIKENESS_RE.search(str(e)) \
+                and not res.get("prompt_min") and not res.get("lipsync"):
+            res["prompt_min"] = _prompt_min(res)
+            body["input"][-1] = {"type": "text", "text": res["prompt_min"]}
+            res.setdefault("ledger", []).append({"what": f"구간{i + 1} 지시문 막힘 → 짧은 지시문으로 한 번 더(요금 없음)", "usd": 0})
+            try:
+                _send(piece)
+                err = None
+            except RuntimeError as e2:
+                res["blocked"].append({"seg": i + 1, "why": "짧은 지시문도 막힘: " + str(e2)[:400], "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
+                err = e2
+        if err is not None and "HTTP 400" in str(err):   # 막힌 요청은 요금 없음 → 장부에서 되돌린다
             res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * seg * mult, 3)
             res.setdefault("ledger", []).append({"what": f"구간{i + 1} 차단됨(요금 없음)", "usd": -round(REMAKE_COST["omni_sec"] * seg * mult, 3)})
-        raise
+        if err is not None:
+            raise err
     if res.get("i2v_fallback"):                           # 위에서 가려도 거절됨(요금은 이미 되돌림) → 스토리보드로
         return _remake_seg_i2v(key, ref, i, seg, work, res, cap, h)
     best = (rawo, {}, None, "")
@@ -3685,6 +3767,9 @@ def step_remake(ep, epdir, work, log, req):
     res["pre_enhance"] = bool(rm.get("pre_enhance"))      # 합성 전에 원본을 AI로 복원(무료)
     res["board_ref"] = rm.get("board_ref") or ""          # 확인받은 스토리보드 칸 파일(예: approved_board_01.jpg)
     prompt, res["edit_prompt"] = _edit_prompt(rm)       # 바꿀 대상 + 사장님 개그 + 대본·입모양(원본에 동물이 있으면 시간표를 본 뒤 다시 만든다)
+    res["swap_used"] = _plain_cast(rm.get("swap") or REMAKE_SWAP_DEFAULT) or REMAKE_SWAP_DEFAULT
+    res["cast_used"] = (_plain_cast(rm.get("cast")) or REMAKE_CAST_DEFAULT) if rm.get("keep_people") else ""
+    res.pop("prompt_min", None)
     res["lipsync"] = bool(rm.get("lipsync"))
     # 원본 동작을 바꾸는 '스토리보드로 만들기'는 기본으로 끈다(사용자 지적 2026-10: 동작을 마음대로 완전히 바꿈) — 켠 편만
     res["allow_i2v"] = bool(rm.get("allow_i2v"))
@@ -3753,6 +3838,7 @@ def step_remake(ep, epdir, work, log, req):
                   "swap": REMAKE_SWAP_ANIMALS if (not old_swap or re.search(PERSON_RX, old_swap, re.I)) else old_swap}
             res["swap_fixed"] = {"why": "원본에 동물이 있어 동물을 시바견으로, 사람은 그대로", "from": str(ep.get("remake", {}).get("swap", ""))[:300]}
             prompt, res["edit_prompt"] = _edit_prompt(rm)
+            res["swap_used"], res["cast_used"] = _plain_cast(rm["swap"]), _plain_cast(rm.get("cast")) or REMAKE_CAST_DEFAULT
         if composite and not rm.get("gags") and (res.get("timeline") or {}).get("all"):
             gags_auto = _auto_gags(rm, res)               # 원본에서 찾은 개그(부딪힘·넘어짐 등)를 합성 지시에 '그대로 둘 것'으로(2026-10-09 사고: 점검만 하고 안 넣어 매번 멈춤)
             res["gags"] = gags_auto
@@ -3827,6 +3913,11 @@ def step_remake(ep, epdir, work, log, req):
             gone = {"segs": ["rm_seg*.mp4", "remake.mp4", "board.jpg", "board_*.jpg"], "ending": ["rm_end_start.png", "rm_end.mp4"],
                     "vo": ["rm_vo.wav"], "copy": [],
                     "body": ["rm_seg*.mp4", "remake.mp4"]}            # 본편만 다시(스토리보드는 그대로)
+            will = {f.name for part in redo for pat in gone.get(part, []) for f in work.glob(pat)}
+            need_redo = _need_usd(work, seg, n, end_sec, gen_res, will)
+            if float(res.get("spent", 0)) + need_redo > cap:          # ⛔ 지우기 전에 한도 확인(지운 뒤 멈추면 본편이 사라져 다시 조립도 못 함)
+                raise RuntimeError(f"다시 만들 비용(약 ${need_redo:.2f})이 한도 ${cap:.0f}를 넘어 아무것도 지우지 않고 멈췄습니다"
+                                   f"(지금까지 ${float(res.get('spent', 0)):.2f}). 수정 요청 화면에서 비용을 확인하면 한도가 올라갑니다.")
             for part in redo:
                 for pat in gone.get(part, []):
                     for f in work.glob(pat):
@@ -3843,9 +3934,10 @@ def step_remake(ep, epdir, work, log, req):
             return
         if mode == "full" and isinstance(res.get("board"), dict):
             res["board"].pop("wait", None)                # 확인받은 스토리보드로 진행
-        if mode == "full" and not (work / "rm_seg1.mp4").exists():
-            if float(res.get("spent", 0)) + est_all > cap:
-                raise RuntimeError(f"영상 예상 비용(약 ${est_all:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다. 더 짧은 원본으로 다시 해 주세요.")
+        if mode == "full":                                # 남은 제작 비용(이미 만든 것은 빼고)이 한도를 넘으면 돈 쓰기 전에 멈춘다
+            need0 = _need_usd(work, seg, n, end_sec, gen_res)
+            if float(res.get("spent", 0)) + need0 > cap:
+                raise RuntimeError(f"남은 제작 예상 비용(약 ${need0:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다(지금까지 ${float(res.get('spent', 0)):.2f}).")
         # 1) 시험(예전 방식): 첫 구간(본편에 그대로 쓴다)
         ref_gen = ref
         if rm.get("hide_spans"):                          # 영상 AI가 거절하는 장면(2026-10 아이스크림 편: 맨살에 흰 액체 클로즈업 → prohibited_content)은
@@ -3879,10 +3971,7 @@ def step_remake(ep, epdir, work, log, req):
                 return
             # 본편 전체 예상이 한도를 넘으면 시작하지 않는다 — 이미 만든 것(구간·끝 그림·끝 영상·내레이션)은 다시 만들지 않으니 빼고 센다
             # (2026-10-09: 얼굴 모자이크만 넣어 다시 조립하는데 이미 있는 끝 광고 값을 또 더해 한도에 걸려 멈춤)
-            need = (REMAKE_COST["omni_sec"] * seg * sum(1 for k in range(1, n) if not (work / f"rm_seg{k + 1}.mp4").exists())
-                    + (0 if (work / "rm_end_start.png").exists() else REMAKE_COST["image"])
-                    + (0 if (work / "rm_end.mp4").exists() else REMAKE_COST["omni_sec"] * end_sec)
-                    + (0 if (work / "rm_vo.wav").exists() else REMAKE_COST["tts"]))
+            need = _need_usd(work, seg, n, end_sec, gen_res)
             if float(res.get("spent", 0)) + need > cap:
                 raise RuntimeError(f"남은 제작 예상 비용(약 ${need:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다(지금까지 ${float(res.get('spent', 0)):.2f}).")
             segs = []
@@ -3963,8 +4052,13 @@ def step_remake(ep, epdir, work, log, req):
             r = gen_image(REMAKE_END_START.format(ending=ending), [last, prod], start, "9:16")
             if not r.get("ok"):
                 raise RuntimeError(f"끝 장면 그림 실패: {r.get('error')}")
-            if _panel_bands([start]):                     # ⛔ 광고 첫 장면도 꽉 찬 9:16인지(위아래 띠) — 영상 만들기 전에 멈춘다(2026-10-08)
-                raise RuntimeError("끝 광고 첫 장면 그림 위아래가 꽉 찬 화면이 아닙니다(흐린/빈 띠) — 영상 만들기 전에 멈춤")
+            if _panel_bands([start]):                     # 광고 첫 장면 위아래 띠 검사(2026-10-08) — 걸리면 한 번 다시 그린다(흰 벽·천장은 오탐일 수 있어 멈추지 않고 기록)
+                _remake_spend(res, REMAKE_COST["image"], "끝 장면 그림 다시(위아래 띠)", cap)
+                r = gen_image(REMAKE_END_START.format(ending=ending) + " The photo fills the whole vertical 9:16 frame edge to edge: "
+                              "no black, white, grey or blurred bars at the top or bottom.", [last, prod], start, "9:16")
+                if not r.get("ok"):
+                    raise RuntimeError(f"끝 장면 그림 실패: {r.get('error')}")
+                res["end_bands"] = "다시 그림" + (" — 그래도 밋밋한 위아래(흰 벽·천장일 수 있음), 완성본 9:16 검사로 확인" if _panel_bands([start]) else " → 통과")
         end_v = work / "rm_end.mp4"
         if not end_v.exists():
             # 끝 장면도 한 번만(다시 만들기·검사 없음 — 사용자 지시 2026-10)
@@ -3977,9 +4071,19 @@ def step_remake(ep, epdir, work, log, req):
             try:
                 raw.write_bytes(_omni_run(key, body))
             except RuntimeError as e:
-                if "HTTP 400" in str(e):
-                    res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * end_sec * (3 if gen_res == "720p" else 1), 3)
-                raise
+                if "HTTP 400" in str(e) and re.search(r"content_blocked|Input blocked|prohibited", str(e), re.I):   # 요금 없음 → 순한 글로 한 번 더
+                    res.setdefault("ledger", []).append({"what": "끝 장면 지시문 막힘 → 순한 글로 한 번 더(요금 없음)", "usd": 0})
+                    body["input"][-1] = {"type": "text", "text": REMAKE_END_PROMPT.format(
+                        ending="The Shiba Inu stands calmly next to the product and looks at the camera, tail wagging gently.", sec=end_sec)}
+                    try:
+                        raw.write_bytes(_omni_run(key, body))
+                    except RuntimeError as e2:
+                        res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * end_sec * (3 if gen_res == "720p" else 1), 3)
+                        raise RuntimeError("끝 장면 영상이 두 번 막혔습니다(요금 없음): " + str(e2)[:200]) from None
+                else:
+                    if "HTTP 400" in str(e):
+                        res["spent"] = round(float(res.get("spent", 0)) - REMAKE_COST["omni_sec"] * end_sec * (3 if gen_res == "720p" else 1), 3)
+                    raise
             _norm(raw, end_v, 1280 if gen_res == "720p" else 640)
         if _wh(end_v)[1] < H:                             # 끝 장면도 본편과 같은 화질로(업스케일)
             from upscale import upscale_video
@@ -3990,21 +4094,30 @@ def step_remake(ep, epdir, work, log, req):
         # 3) 느끼한 내레이션(Enceladus, 1.3배 — 사용자 확정 2026-10)
         vo = work / "rm_vo.wav"
         if not vo.exists():
-            _remake_spend(res, REMAKE_COST["tts"], "내레이션", cap)
             model = _pick_model(key, TTS_MODELS)
             body = {"contents": [{"role": "user", "parts": [{"text": f"{VO_DIRECTION} {VO_PACE}\n\n대사: {rm.get('vo', '')}"}]}],
                     "generationConfig": {"responseModalities": ["AUDIO"],
                                          "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": VOICE_NAME}}}}}
-            code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
-                              {"x-goog-api-key": key, "Content-Type": "application/json"})
-            parts = [p for c in json.loads(raw).get("candidates", []) for p in c.get("content", {}).get("parts", [])
-                     if "inlineData" in p] if code == 200 else []
-            if not parts:
-                raise RuntimeError(f"내레이션 녹음 실패(HTTP {code})")
-            _pcm_to_wav(base64.b64decode(parts[0]["inlineData"]["data"]), vo, float(rm.get("vo_speed", REMAKE_VO_SPEED)))
-            if _dur(vo) < 0.3:                            # 빈 녹음이면 조립이 끝나지 않고 멈춰 있는다(2026-10-09 점검에서 발견) — 바로 알린다
+            last_err = ""
+            for attempt in range(2):                      # 실패·빈 녹음이면 자동으로 한 번 더(2026-10-09 점검: 빈 녹음이면 조립이 멈춰 있었음)
+                _remake_spend(res, REMAKE_COST["tts"], "내레이션" + (" 다시" if attempt else ""), cap)
+                code, raw = _http(f"{API}/models/{model}:generateContent", json.dumps(body).encode(),
+                                  {"x-goog-api-key": key, "Content-Type": "application/json"})
+                try:
+                    parts = [p for c in json.loads(raw).get("candidates", []) for p in c.get("content", {}).get("parts", [])
+                             if "inlineData" in p] if code == 200 else []
+                except ValueError:
+                    parts = []
+                if not parts:
+                    last_err = f"내레이션 녹음 실패(HTTP {code})"
+                    continue
+                _pcm_to_wav(base64.b64decode(parts[0]["inlineData"]["data"]), vo, float(rm.get("vo_speed", REMAKE_VO_SPEED)))
+                if _dur(vo) >= 0.3:
+                    break
                 vo.unlink(missing_ok=True)
-                raise RuntimeError("내레이션 녹음이 비어 있습니다(소리 없음) — 다시 시도해 주세요")
+                last_err = "내레이션 녹음이 비어 있습니다(소리 없음)"
+            if not vo.exists():
+                raise RuntimeError(last_err + " — 두 번 실패, 다시 시도해 주세요")
         # 4) 조립: 리메이크 → (흰 번쩍) 끝 장면(느리게 + 마지막 장면 멈춤) + 문구 + 내레이션. 노래 없음
         Lb, vl = _dur(body_v), _dur(vo)
         # 강아지 낑낑 소리는 실패 직후 광고 화면이 시작될 때(사용자 지시 2026-10) → 내레이션은 낑낑 소리가 끝난 뒤

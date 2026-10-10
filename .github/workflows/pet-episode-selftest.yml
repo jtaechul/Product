@@ -1,0 +1,28 @@
+name: Pet Episode Selftest
+
+# 제작 프로그램을 고칠 때마다 돈 0원 자가 점검(사장님 지시 2026-10-10: 영상 만들다 오류 금지).
+# 새 편을 처음부터 끝까지 가짜 호출로 돌려 멈추는 곳이 있으면 여기서 먼저 빨간불이 켜진다(실제 제작은 pet-episode.yml).
+on:
+  push:
+    branches: [claude/book-carousel-auto-upload-xpwihz]
+    paths:
+      - "pet-episodes/tools/**"
+      - ".github/workflows/pet-episode-selftest.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: pet-episode-selftest
+  cancel-in-progress: true
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: 도구 설치
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-noto-cjk >/dev/null
+          pip install -q Pillow google-genai opencv-python-headless numpy
+      - name: 자가 점검(돈 0원)
+        run: python3 pet-episodes/tools/dry_run_remake.py "${RUNNER_TEMP}"
