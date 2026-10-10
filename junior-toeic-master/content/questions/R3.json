@@ -96,8 +96,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "[chat] Mina: Are we still meeting at the bus stop at 3?\nJun: Sorry, my piano lesson ends late. Can we meet at 4?\nMina: Sure! See you then.",
-      "translation_ko": "[대화] 미나: 우리 아직 3시에 버스 정류장에서 만나는 거지?\n준: 미안, 피아노 레슨이 늦게 끝나. 4시에 만날 수 있을까?\n미나: 그래! 그때 보자."
+      "content": "Mina: Are we still meeting at the bus stop at 3?\nJun: Sorry, my piano lesson ends late. Can we meet at 4?\nMina: Sure! See you then.",
+      "translation_ko": "미나: 우리 아직 3시에 버스 정류장에서 만나는 거지?\n준: 미안, 피아노 레슨이 늦게 끝나. 4시에 만날 수 있을까?\n미나: 그래! 그때 보자."
     },
     "questions": [
       {
@@ -412,8 +412,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "[chat] Sora: Did you see the news? It will rain all day tomorrow.\nMinho: Oh no. Then let's not go to the river park.\nSora: How about the science museum instead?\nMinho: Good idea!",
-      "translation_ko": "[대화] 소라: 뉴스 봤어? 내일 하루 종일 비 온대.\n민호: 이런. 그럼 강변 공원에 가지 말자.\n소라: 대신 과학관은 어때?\n민호: 좋은 생각이야!"
+      "content": "Sora: Did you see the news? It will rain all day tomorrow.\nMinho: Oh no. Then let's not go to the river park.\nSora: How about the science museum instead?\nMinho: Good idea!",
+      "translation_ko": "소라: 뉴스 봤어? 내일 하루 종일 비 온대.\n민호: 이런. 그럼 강변 공원에 가지 말자.\n소라: 대신 과학관은 어때?\n민호: 좋은 생각이야!"
     },
     "questions": [
       {
@@ -1152,8 +1152,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "[chat]\nYuna: Did you finish the group poster?\nMinjae: Almost. I still need to add the title.\nYuna: I can print it at my house tonight.\nMinjae: Great. I'll send you the file by 8.\nYuna: Then let's meet at the school gate at 8:30 tomorrow morning.",
-      "translation_ko": "[대화]\n유나: 모둠 포스터 다 했어?\n민재: 거의. 제목만 넣으면 돼.\n유나: 오늘 밤에 우리 집에서 내가 인쇄할 수 있어.\n민재: 좋아. 8시까지 파일 보낼게.\n유나: 그럼 내일 아침 8시 30분에 학교 정문에서 만나자."
+      "content": "Yuna: Did you finish the group poster?\nMinjae: Almost. I still need to add the title.\nYuna: I can print it at my house tonight.\nMinjae: Great. I'll send you the file by 8.\nYuna: Then let's meet at the school gate at 8:30 tomorrow morning.",
+      "translation_ko": "유나: 모둠 포스터 다 했어?\n민재: 거의. 제목만 넣으면 돼.\n유나: 오늘 밤에 우리 집에서 내가 인쇄할 수 있어.\n민재: 좋아. 8시까지 파일 보낼게.\n유나: 그럼 내일 아침 8시 30분에 학교 정문에서 만나자."
     },
     "status": "active",
     "questions": [
@@ -1251,7 +1251,7 @@
         "why_not": {
           "0": "주스는 금요일에만 나와요",
           "1": "요구르트는 수요일에만 나와요",
-          "3": "과일은 화·금요일에 나와요"
+          "3": "과일(오렌지)은 화요일에만 나와요"
         },
         "key_expr": {
           "en": "every day",
@@ -2174,8 +2174,8 @@
           "3": "이야기책 두 권 값이에요"
         },
         "key_expr": {
-          "en": "get one free",
-          "ko": "한 권을 덤으로 받다"
+          "en": "How much are ~?",
+          "ko": "~은 얼마예요?"
         },
         "miss_type": {
           "0": "M.number",
@@ -2304,7 +2304,7 @@
       {
         "stem": "Who wrote this message?",
         "choices": [
-          "A teacher",
+          "The principal",
           "The school nurse",
           "A student",
           "A parent"
@@ -2318,7 +2318,7 @@
         ],
         "evidence": "From: The school nurse",
         "why_not": {
-          "0": "선생님이라고 적혀 있지 않아요",
+          "0": "교장 선생님 이야기는 없어요",
           "2": "학생에게 보낸 글이에요",
           "3": "학부모 이야기는 없어요"
         },
@@ -2428,8 +2428,8 @@
           "3": "간식 이야기는 없어요"
         },
         "key_expr": {
-          "en": "after school",
-          "ko": "방과 후에"
+          "en": "Bring one book you love.",
+          "ko": "좋아하는 책 한 권을 가져오세요"
         },
         "miss_type": {
           "0": "M.notsaid",
@@ -2504,8 +2504,8 @@
           "2": "방 청소 이야기는 없어요"
         },
         "key_expr": {
-          "en": "move to a new house",
-          "ko": "새집으로 이사하다"
+          "en": "buy you ice cream",
+          "ko": "너에게 아이스크림을 사 주다"
         },
         "miss_type": {
           "0": "M.swap",
@@ -2835,7 +2835,7 @@
         "stem": "What can we guess about Ben?",
         "choices": [
           "He walked to the park.",
-          "He was late for soccer practice.",
+          "He was late for soccer.",
           "He played the whole game.",
           "He does not like soccer."
         ],
@@ -2955,7 +2955,7 @@
         ],
         "evidence": "The book return box by the front door is open as usual.",
         "why_not": {
-          "0": "문을 닫는다는 말과는 반대예요",
+          "0": "1층을 쓰라고 했으니 문을 열어요",
           "1": "반납함은 평소처럼 열려 있어요",
           "3": "금요일은 1층을 쓰는 마지막 날이에요"
         },
@@ -7389,8 +7389,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "[Text Message]\nN: Hello. This is Fast Box Delivery.\nN: Your package arrived at 2:00 p.m. today.\nN: I left the box next to the front door.\nN: Inside the box are the watercolor paints and brushes you ordered.\nN: Thank you for using our service.",
-      "translation_ko": "[문자 메시지]\n안내: 안녕하세요. 패스트 박스 택배입니다.\n안내: 고객님의 소포가 오늘 오후 2시에 도착했습니다.\n안내: 상자는 현관문 옆에 두었습니다.\n안내: 상자 안에는 고객님이 주문하신 수채화 물감과 붓이 들어 있습니다.\n안내: 저희 서비스를 이용해 주셔서 감사합니다."
+      "content": "[Text Message]\nHello. This is Fast Box Delivery.\nYour package arrived at 2:00 p.m. today.\nI left the box next to the front door.\nInside the box are the watercolor paints and brushes you ordered.\nThank you for using our service.",
+      "translation_ko": "[문자 메시지]\n안녕하세요. 패스트 박스 택배입니다.\n고객님의 소포가 오늘 오후 2시에 도착했습니다.\n상자는 현관문 옆에 두었습니다.\n상자 안에는 고객님이 주문하신 수채화 물감과 붓이 들어 있습니다.\n저희 서비스를 이용해 주셔서 감사합니다."
     },
     "questions": [
       {
@@ -9371,8 +9371,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "[chat]\nSujin: Minwoo, did you bring the big thick paper? We need it for our science presentation today.\nMinwoo: Oh, no. I thought you had it. I only brought the color pens and the glue.\nSujin: It is 8 o'clock now, and the stationery store near the school just opened. We have 20 minutes before class starts.\nMinwoo: I will run there right now! Wait for me at the gate.",
-      "translation_ko": "[채팅]\n수진: 민우야, 크고 두꺼운 종이 가져왔어? 오늘 과학 발표에 필요하잖아.\n민우: 아, 안 돼. 네가 가지고 있는 줄 알았어. 난 색펜이랑 풀만 가져왔거든.\n수진: 지금 8시고, 학교 근처 문방구가 방금 문을 열었어. 수업 시작 전까지 20분 남았어.\n민우: 지금 당장 거기로 뛰어갈게! 교문에서 나를 기다려 줘."
+      "content": "Sujin: Minwoo, did you bring the big thick paper? We need it for our science presentation today.\nMinwoo: Oh, no. I thought you had it. I only brought the color pens and the glue.\nSujin: It is 8 o'clock now, and the stationery store near the school just opened. We have 20 minutes before class starts.\nMinwoo: I will run there right now! Wait for me at the gate.",
+      "translation_ko": "수진: 민우야, 크고 두꺼운 종이 가져왔어? 오늘 과학 발표에 필요하잖아.\n민우: 아, 안 돼. 네가 가지고 있는 줄 알았어. 난 색펜이랑 풀만 가져왔거든.\n수진: 지금 8시고, 학교 근처 문방구가 방금 문을 열었어. 수업 시작 전까지 20분 남았어.\n민우: 지금 당장 거기로 뛰어갈게! 교문에서 나를 기다려 줘."
     },
     "questions": [
       {

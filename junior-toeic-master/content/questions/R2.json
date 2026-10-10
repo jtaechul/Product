@@ -490,7 +490,7 @@
         "miss_type": {
           "0": "G.clue",
           "1": "G.clue",
-          "3": "M.notsaid"
+          "3": "G.form"
         }
       },
       {
@@ -651,16 +651,16 @@
           "leaves"
         ],
         "answer_idx": 0,
-        "explanation_ko": "'또 두고 왔다'는 이미 지난 일이에요. again이 그 힌트예요.",
+        "explanation_ko": "엄마에게 체육복을 학교로 가져다 달라고 했으니 이미 집에 두고 온 거예요. 지난 일이라 left를 써요.",
         "difficulty_label": 2,
         "tags": [
           "G.tense"
         ],
-        "evidence": "at home again",
+        "evidence": "Can you bring them to school before lunch?",
         "why_not": {
           "1": "지난 일이라는 느낌이 없어요",
           "2": "혼자서는 문장을 만들 수 없어요",
-          "3": "늘 그런다는 뜻이 돼요"
+          "3": "I 뒤에는 s를 붙이지 않아요"
         },
         "key_expr": {
           "en": "leave ~ at home",
@@ -669,7 +669,7 @@
         "miss_type": {
           "1": "G.clue",
           "2": "G.form",
-          "3": "G.clue"
+          "3": "G.form"
         }
       },
       {
@@ -748,7 +748,7 @@
       {
         "stem": "Choose the best answer for (1).",
         "choices": [
-          "is being",
+          "being",
           "was",
           "has been",
           "will be"
@@ -761,7 +761,7 @@
         ],
         "evidence": "next Monday",
         "why_not": {
-          "0": "지금 닫는 중이라는 뜻이에요",
+          "0": "혼자서는 문장을 만들 수 없어요",
           "1": "이미 지난 일이 되어 버려요",
           "2": "지금까지 닫혀 있었다는 뜻이에요"
         },
@@ -770,7 +770,7 @@
           "ko": "닫을 예정이다"
         },
         "miss_type": {
-          "0": "G.clue",
+          "0": "G.form",
           "1": "G.clue",
           "2": "G.clue"
         }
@@ -1154,7 +1154,7 @@
     "passage": {
       "kind": "text",
       "content": "Yerin,\nI went to the market. There is soup in the fridge — please heat it (1) ______ you eat. Your brother will come home (2) ______ five. Don't forget to feed the cat. (3) ______\nMom",
-      "translation_ko": "예린아,\n엄마 시장에 갔다 올게. 냉장고에 국이 있으니 먹기 전에 데워 먹으렴. 형은 5시쯤 집에 올 거야. 고양이 밥 주는 것 잊지 마. 엄마는 6시까지 돌아올게.\n엄마가"
+      "translation_ko": "예린아,\n엄마 시장에 갔다 올게. 냉장고에 국이 있으니 먹기 전에 데워 먹으렴. 오빠는 5시쯤 집에 올 거야. 고양이 밥 주는 것 잊지 마. 엄마는 6시까지 돌아올게.\n엄마가"
     },
     "questions": [
       {
@@ -1502,11 +1502,11 @@
         "choices": [
           "on",
           "in",
-          "at",
+          "to",
           "of"
         ],
         "answer_idx": 1,
-        "explanation_ko": "등대 '안에서' 살았다는 뜻이라 in이 알맞아요. on은 위에, at은 한 지점을 가리켜요.",
+        "explanation_ko": "등대 '안에서' 살았다는 뜻이라 in이 알맞아요. on은 '위에', to는 '~쪽으로'를 나타내요.",
         "difficulty_label": 2,
         "tags": [
           "G.prep"
@@ -1514,7 +1514,7 @@
         "evidence": "a lighthouse",
         "why_not": {
           "0": "등대 위라는 뜻이 돼요",
-          "2": "등대라는 한 지점을 가리켜요",
+          "2": "'~쪽으로'라는 뜻이라 안 맞아요",
           "3": "'~의'라는 뜻이에요"
         },
         "key_expr": {
@@ -1853,7 +1853,7 @@
         "tags": [
           "RS.context"
         ],
-        "evidence": "and I",
+        "evidence": "School starts on Monday",
         "why_not": {
           "0": "이사 온 지 일주일이에요",
           "1": "옛 학교 이야기는 없어요",
@@ -1957,7 +1957,7 @@
         "tags": [
           "RS.context"
         ],
-        "evidence": "please",
+        "evidence": "A brown wallet was lost near the bus stop on Friday.",
         "why_not": {
           "0": "아직 못 찾았어요",
           "1": "카드가 들어 있다고 했어요",
@@ -1990,9 +1990,9 @@
       {
         "stem": "Choose the best answer for (1).",
         "choices": [
-          "so",
+          "or",
           "if",
-          "because",
+          "than",
           "and"
         ],
         "answer_idx": 3,
@@ -2003,9 +2003,9 @@
         ],
         "evidence": "sleeps during the day,",
         "why_not": {
-          "0": "앞말 때문에 생긴 일에 써요",
+          "0": "둘 중 하나를 고를 때 써요",
           "1": "'만약'이라는 뜻이에요",
-          "2": "까닭을 말할 때 써요"
+          "2": "'~보다' 하고 견줄 때 써요"
         },
         "key_expr": {
           "en": "sleep during the day",
@@ -2014,7 +2014,7 @@
         "miss_type": {
           "0": "G.clue",
           "1": "G.clue",
-          "2": "G.clue"
+          "2": "G.form"
         }
       },
       {
@@ -2281,8 +2281,8 @@
           "3": "책 세 권을 빌릴 수 있어요"
         },
         "key_expr": {
-          "en": "borrow books",
-          "ko": "책을 빌리다"
+          "en": "get a bookmark",
+          "ko": "책갈피를 받다"
         },
         "miss_type": {
           "1": "M.opposite",

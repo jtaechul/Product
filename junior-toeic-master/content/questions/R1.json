@@ -74,7 +74,7 @@
       "2": "G.clue",
       "3": "M.swap"
     },
-    "translation_ko": "우리는 정오에 점심을 먹어요."
+    "translation_ko": "우리는 낮 12시에 점심을 먹어요."
   },
   {
     "type": "single",
@@ -127,7 +127,7 @@
       "cleaning"
     ],
     "answer_idx": 2,
-    "explanation_ko": "Yesterday(어제)는 지나간 일이라 cleaned를 써요. cleans는 지금 하는 일에 쓰는 말이에요.",
+    "explanation_ko": "Yesterday(어제)는 지나간 일이라 cleaned를 써요. clean이나 cleans로는 지나간 일을 말할 수 없어요.",
     "difficulty_label": 2,
     "tags": [
       "G.tense",
@@ -703,7 +703,7 @@
       "Him"
     ],
     "answer_idx": 1,
-    "explanation_ko": "Minho는 남자아이니까 '그의'라는 뜻의 His를 써요. He는 '그는'이라 이름 앞에 못 와요.",
+    "explanation_ko": "Minho는 남자아이니까 '그의'라는 뜻의 His를 써요. He는 '그는'이라 bag(가방) 앞에 못 와요.",
     "difficulty_label": 1,
     "tags": [
       "G.pronoun"
@@ -777,7 +777,7 @@
       "walk",
       "walks",
       "walking",
-      "walked"
+      "are walking"
     ],
     "answer_idx": 1,
     "explanation_ko": "Sumin 한 사람이 늘 하는 일이라 walks를 써요. every morning이 '늘 그런다'는 뜻이에요.",
@@ -792,7 +792,7 @@
     "why_not": {
       "0": "한 사람 이야기라 s가 빠졌어요",
       "2": "혼자서는 문장을 만들 수 없어요",
-      "3": "늘 하는 일이라 지난 일이 아니에요"
+      "3": "Sumin 한 사람이라 are를 못 써요"
     },
     "key_expr": {
       "en": "walk to school",
@@ -801,7 +801,7 @@
     "miss_type": {
       "0": "G.form",
       "2": "G.form",
-      "3": "G.clue"
+      "3": "G.form"
     },
     "translation_ko": "수민이는 매일 아침 걸어서 학교에 가요."
   },
@@ -849,7 +849,7 @@
     "tmp_id": "R1-0023",
     "section": "RC",
     "part": "R1",
-    "stem": "Look at me. I ______ a new hat now.",
+    "stem": "Look at me. I ______ a new hat right now.",
     "choices": [
       "wear",
       "wore",
@@ -857,7 +857,7 @@
       "wears"
     ],
     "answer_idx": 2,
-    "explanation_ko": "now는 '바로 지금'이라는 뜻이라, 지금 하고 있는 일을 말하는 am wearing을 써요.",
+    "explanation_ko": "right now는 '바로 지금'이라는 뜻이라, 지금 하고 있는 일을 말하는 am wearing을 써요.",
     "difficulty_label": 1,
     "tags": [
       "G.tense"
@@ -865,7 +865,7 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "now",
+    "evidence": "right now",
     "why_not": {
       "0": "지금 하는 중이라는 느낌이 없어요",
       "1": "이미 지난 일이 되어 버려요",
@@ -964,15 +964,15 @@
     "tmp_id": "R1-0026",
     "section": "RC",
     "part": "R1",
-    "stem": "You ______ be quiet in the library.",
+    "stem": "It's the rule. You ______ be quiet in the library.",
     "choices": [
       "must",
       "may",
-      "will",
+      "can't",
       "would"
     ],
     "answer_idx": 0,
-    "explanation_ko": "도서관에서는 반드시 조용히 해야 해요. 꼭 그래야 할 때 must를 써요.",
+    "explanation_ko": "규칙이라서 도서관에서는 꼭 조용히 해야 해요. 반드시 그래야 할 때 must를 써요.",
     "difficulty_label": 2,
     "tags": [
       "G.modal",
@@ -981,10 +981,10 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "in the library",
+    "evidence": "It's the rule",
     "why_not": {
-      "1": "'~해도 된다'는 허락하는 말이에요",
-      "2": "앞으로 할 일을 말할 때 써요",
+      "1": "'해도 된다'는 허락이라 규칙과 안 맞아요",
+      "2": "조용히 할 수 없다는 반대 뜻이에요",
       "3": "'~할 텐데'라는 다른 느낌이에요"
     },
     "key_expr": {
@@ -993,10 +993,10 @@
     },
     "miss_type": {
       "1": "W.meaning",
-      "2": "W.meaning",
+      "2": "M.opposite",
       "3": "W.meaning"
     },
-    "translation_ko": "도서관에서는 조용히 해야 해요."
+    "translation_ko": "규칙이에요. 도서관에서는 조용히 해야 해요."
   },
   {
     "type": "single",
@@ -1253,7 +1253,7 @@
     "why_not": {
       "0": "'~하러'라는 뜻이 되지 않아요",
       "1": "한 사람이 늘 하는 일에 쓰는 모양이에요",
-      "3": "까닭을 말하는 자리가 아니에요"
+      "3": "'~하러'라고 할 땐 -ing를 쓰지 않아요"
     },
     "key_expr": {
       "en": "to buy bread",
@@ -1271,7 +1271,7 @@
     "tmp_id": "R1-0034",
     "section": "RC",
     "part": "R1",
-    "stem": "Would you like juice ______ water?",
+    "stem": "Which would you like, juice ______ water?",
     "choices": [
       "and",
       "or",
@@ -1279,7 +1279,7 @@
       "but"
     ],
     "answer_idx": 1,
-    "explanation_ko": "둘 중에 하나를 고르라는 말이에요. 고를 때는 or를 써요.",
+    "explanation_ko": "Which(어느 것)는 둘 중에 하나를 고르라는 말이에요. 고를 때는 or를 써요.",
     "difficulty_label": 2,
     "tags": [
       "G.conj",
@@ -1288,22 +1288,22 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "Would you like",
+    "evidence": "Which would you like",
     "why_not": {
-      "0": "둘 다 준다는 뜻이 돼요",
+      "0": "Which는 하나만 고르라는 말이에요",
       "2": "까닭과 결과를 이을 때 써요",
       "3": "앞뒤가 반대일 때 써요"
     },
     "key_expr": {
-      "en": "Would you like ~?",
-      "ko": "~ 드릴까요?"
+      "en": "Which ~, A or B?",
+      "ko": "A와 B 중 어느 것?"
     },
     "miss_type": {
-      "0": "W.meaning",
+      "0": "G.clue",
       "2": "G.clue",
       "3": "G.clue"
     },
-    "translation_ko": "주스 드실래요, 아니면 물 드실래요?"
+    "translation_ko": "주스와 물 중에 어느 것을 드릴까요?"
   },
   {
     "type": "single",
@@ -1391,7 +1391,7 @@
     "stem": "When I called her, Yuna ______ dinner with her mom.",
     "choices": [
       "cooks",
-      "cooked",
+      "were cooking",
       "was cooking",
       "has cooked"
     ],
@@ -1407,7 +1407,7 @@
     "evidence": "When I called her",
     "why_not": {
       "0": "늘 하는 일이 되어 버려요",
-      "1": "그때 하는 중이라는 느낌이 없어요",
+      "1": "유나 한 사람이라 were는 못 써요",
       "3": "언제인지가 흐려져요"
     },
     "key_expr": {
@@ -1416,7 +1416,7 @@
     },
     "miss_type": {
       "0": "G.clue",
-      "1": "G.clue",
+      "1": "G.form",
       "3": "G.clue"
     },
     "translation_ko": "내가 전화했을 때, 유나는 엄마와 저녁을 만들고 있었어요."
@@ -1777,7 +1777,7 @@
     "choices": [
       "must",
       "might",
-      "should",
+      "won't",
       "can't"
     ],
     "answer_idx": 1,
@@ -1792,7 +1792,7 @@
     "evidence": "Take your umbrella",
     "why_not": {
       "0": "'틀림없이'라 너무 세요",
-      "2": "'~하는 게 좋다'는 권하는 말이에요",
+      "2": "비가 안 온다는 뜻이라 우산과 안 맞아요",
       "3": "비가 안 온다는 반대 뜻이 돼요"
     },
     "key_expr": {
@@ -1801,7 +1801,7 @@
     },
     "miss_type": {
       "0": "W.meaning",
-      "2": "W.meaning",
+      "2": "M.opposite",
       "3": "M.opposite"
     },
     "translation_ko": "우산을 가져가. 오늘 오후에 비가 올지도 몰라."
@@ -1811,7 +1811,7 @@
     "tmp_id": "R1-0048",
     "section": "RC",
     "part": "R1",
-    "stem": "Neither of the two boys ______ the answer.",
+    "stem": "One of the two boys ______ the answer.",
     "choices": [
       "know",
       "knows",
@@ -1819,7 +1819,7 @@
       "are knowing"
     ],
     "answer_idx": 1,
-    "explanation_ko": "Neither는 '둘 다 아니다'라는 뜻으로 하나처럼 봐요. 그래서 knows를 써요.",
+    "explanation_ko": "One of는 '~ 중 하나'라는 뜻이라 한 사람을 말해요. 그래서 knows를 써요.",
     "difficulty_label": 3,
     "tags": [
       "G.agreement"
@@ -1827,22 +1827,22 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "Neither of the two boys",
+    "evidence": "One of the two boys",
     "why_not": {
       "0": "여럿일 때 쓰는 모양이에요",
       "2": "혼자서는 문장을 만들 수 없어요",
       "3": "이런 말에는 쓰지 않아요"
     },
     "key_expr": {
-      "en": "Neither of ~",
-      "ko": "~ 둘 다 아니다"
+      "en": "One of ~",
+      "ko": "~ 중 한 명"
     },
     "miss_type": {
       "0": "G.form",
       "2": "G.form",
       "3": "G.form"
     },
-    "translation_ko": "그 두 남자아이 중 아무도 답을 몰라요."
+    "translation_ko": "그 두 남자아이 중 한 명이 답을 알아요."
   },
   {
     "type": "single",
@@ -2236,7 +2236,7 @@
     "type": "single",
     "section": "RC",
     "part": "R1",
-    "stem": "My little sister ______ swim very well for her age.",
+    "stem": "My little sister ______ very well for her age.",
     "choices": [
       "swims can",
       "cans swim",
@@ -2253,7 +2253,7 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "swim very well for her age",
+    "evidence": "My little sister",
     "why_not": {
       "0": "can은 swim 앞에 와야 해요",
       "1": "can에는 s를 붙이지 않아요",
@@ -3090,14 +3090,14 @@
     },
     "key_expr": {
       "en": "a clear explanation",
-      "ko": "쉬운 설명"
+      "ko": "알기 쉬운 설명"
     },
     "miss_type": {
       "0": "G.clue",
       "1": "G.form",
       "3": "G.form"
     },
-    "translation_ko": "선생님은 과학 시험 전에 우리에게 쉬운 설명을 해 주셨어요.",
+    "translation_ko": "선생님은 과학 시험 전에 우리에게 알기 쉬운 설명을 해 주셨어요.",
     "tmp_id": "R1-0080"
   },
   {
@@ -3221,7 +3221,7 @@
     "type": "single",
     "section": "RC",
     "part": "R1",
-    "stem": "Fresh bread ______ at this bakery every morning.",
+    "stem": "Fresh bread ______ by the baker at this bakery every morning.",
     "choices": [
       "bakes",
       "is baked",
@@ -3253,7 +3253,7 @@
       "2": "G.form",
       "3": "G.pair"
     },
-    "translation_ko": "이 빵집에서는 매일 아침 신선한 빵이 구워져요.",
+    "translation_ko": "이 빵집에서는 매일 아침 제빵사가 신선한 빵을 구워요.",
     "tmp_id": "R1-0084"
   },
   {
@@ -3262,7 +3262,7 @@
     "part": "R1",
     "stem": "The science project must ______ by next Monday.",
     "choices": [
-      "finish",
+      "be finish",
       "finished",
       "be finished",
       "finishing"
@@ -3279,7 +3279,7 @@
     "status": "draft",
     "evidence": "must",
     "why_not": {
-      "0": "프로젝트가 직접 끝낸다는 뜻이 돼요",
+      "0": "be 뒤에는 finished 모양을 써요",
       "1": "must 뒤에는 모양이 안 바뀐 말이 와야 해요",
       "3": "프로젝트가 직접 끝내고 있다는 뜻이 돼요"
     },
@@ -3288,7 +3288,7 @@
       "ko": "끝내져야 한다"
     },
     "miss_type": {
-      "0": "W.meaning",
+      "0": "G.form",
       "1": "G.form",
       "3": "W.meaning"
     },
@@ -3576,7 +3576,7 @@
     "choices": [
       "Its",
       "It",
-      "He",
+      "Him",
       "They"
     ],
     "answer_idx": 1,
@@ -3592,7 +3592,7 @@
     "evidence": "the little bird",
     "why_not": {
       "0": "그것의 라는 뜻이라서 안 어울려요",
-      "2": "주로 사람(남자)을 가리킬 때 써요",
+      "2": "'그를'이라는 뜻이라 맨 앞에 못 와요",
       "3": "여러 마리일 때 쓰는 말이에요"
     },
     "key_expr": {
@@ -3601,7 +3601,7 @@
     },
     "miss_type": {
       "0": "G.form",
-      "2": "W.meaning",
+      "2": "G.form",
       "3": "G.form"
     },
     "translation_ko": "창문에 있는 작은 새를 보세요. 그것은 달콤한 노래를 부르고 있어요.",
@@ -3613,13 +3613,13 @@
     "part": "R1",
     "stem": "Mr. Smith, ______ we play soccer on the grass here?",
     "choices": [
-      "Are",
-      "Do",
-      "May",
-      "Have"
+      "are",
+      "does",
+      "may",
+      "have"
     ],
     "answer_idx": 2,
-    "explanation_ko": "어른에게 행동을 해도 되는지 허락을 받을 때는 May를 써서 예의 바르게 물어봐요.",
+    "explanation_ko": "어른에게 행동을 해도 되는지 허락을 받을 때는 may를 써서 예의 바르게 물어봐요.",
     "difficulty_label": 1,
     "tags": [
       "G.modal",
@@ -3631,7 +3631,7 @@
     "evidence": "Mr. Smith",
     "why_not": {
       "0": "play 모양이 바뀌어야 쓸 수 있어요",
-      "1": "허락을 구하는 뜻이 아니에요",
+      "1": "we와 함께 쓰지 않는 모양이에요",
       "3": "문장 모양이 맞지 않아요"
     },
     "key_expr": {
@@ -3640,7 +3640,7 @@
     },
     "miss_type": {
       "0": "G.form",
-      "1": "W.meaning",
+      "1": "G.form",
       "3": "G.form"
     },
     "translation_ko": "스미스 선생님, 저희가 여기 잔디밭에서 축구를 해도 될까요?",
@@ -4137,7 +4137,7 @@
     "status": "draft",
     "evidence": "needs",
     "why_not": {
-      "1": "need 뒤에는 ing를 쓰지 않아요",
+      "1": "'청소해야 해'는 need to clean이에요",
       "2": "이 짝에서는 원래 모양을 쓰지 않아요",
       "3": "이미 지나간 일로 쓰지 않아요"
     },
