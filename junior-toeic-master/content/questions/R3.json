@@ -2117,7 +2117,7 @@
           "Sell something"
         ],
         "answer_idx": 0,
-        "explanation_ko": "햇빛이 땅까지 못 오게 막는다는 뜻이라 '막다'가 알맞아요.",
+        "explanation_ko": "햇빛이 땅까지 못 오게 막는다는 뜻이라 '막다'가 알맞아요. 'Stop something'의 stop은 '멈추다'뿐 아니라, 골키퍼가 공을 막듯 '무언가를 못 오게 막다'라는 뜻도 있어요.",
         "difficulty_label": 3,
         "tags": [
           "RS.vocab"
