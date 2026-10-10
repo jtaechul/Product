@@ -462,8 +462,10 @@ app.post('/api/answers', requireAuth, async (c) => {
     ).bind(session.id, u.id, new Date().toISOString()).run();
   }
 
+  // 듣기 문항을 몇 번 들었나(앱이 센다). 이상한 값은 '모름'(null)으로 — 실력 계산이 평소대로 간다
+  const listens = Number.isInteger(body.listens) && body.listens >= 0 && body.listens <= 50 ? body.listens : null;
   const { correct, graduated } = await recordAnswer(c.env.DB, {
-    user: u, question: q, chosenIdx: chosen_idx, timeMs: time_ms | 0, sessionId: session.id,
+    user: u, question: q, chosenIdx: chosen_idx, timeMs: time_ms | 0, sessionId: session.id, listens,
   });
   return c.json({
     correct, graduated, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko,

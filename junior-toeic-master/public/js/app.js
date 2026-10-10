@@ -142,20 +142,23 @@ try { pref = { ...pref, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') };
 const savePref = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(pref)); } catch { /* 무시 */ } };
 
 // ---------- 효과음 (Web Audio 합성 — 파일·외부 요청 0, 운영비 0원 원칙 유지) ----------
-let audioCtx = null;
+// 소리 장치(AudioContext)는 아래 audio() 하나만 쓴다. 예전엔 합성음이 따로 하나를 더 만들었는데,
+// 아이폰은 둘째 장치를 깨우지 못해 한쪽만 소리가 나는 일이 생길 수 있다.
 function sfxTone(seq, type = 'triangle', vol = 0.09) {
   try {
-    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
-    const t0 = audioCtx.currentTime;
+    const ctx = audio();
+    const t0 = ctx.currentTime;
     for (const [freq, at, dur] of seq) {
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
       o.type = type;
       o.frequency.value = freq;
       g.gain.setValueAtTime(0, t0 + at);
       g.gain.linearRampToValueAtTime(vol, t0 + at + 0.015);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
-      o.connect(g).connect(audioCtx.destination);
+      // connect() 를 이어 붙이지 않는다 — 옛 사파리는 connect 가 아무것도 돌려주지 않는다
+      o.connect(g);
+      g.connect(ctx.destination);
       o.start(t0 + at);
       o.stop(t0 + at + dur + 0.05);
     }
@@ -173,15 +176,29 @@ let actx = null;
 
 function audio() {
   actx ||= new (window.AudioContext || window.webkitAudioContext)();
-  if (actx.state === 'suspended') actx.resume().catch(() => { /* 곧 다시 시도된다 */ });
+  // ⚠ 아이폰·아이패드는 'suspended' 말고도 'interrupted'(화면 잠금·전화·알림음·다른 앱 소리 뒤)로
+  //   멈춘다. 예전엔 'suspended' 일 때만 깨워서, 한 번 멈추면 새로고침 전까지 ▶ 를 아무리 눌러도
+  //   소리가 안 났다(2026-10 "볼륨을 키워도 소리가 안 나와요" 제보).
+  if (actx.state !== 'running' && actx.state !== 'closed') {
+    try { actx.resume()?.catch?.(() => { /* 다음 터치에 다시 깨운다 */ }); } catch { /* 같은 이유 */ }
+  }
   return actx;
 }
+
+// 옛 아이패드(iOS 14.4 이하) 사파리는 decodeAudioData 를 콜백 방식으로만 부를 수 있다.
+// 약속(Promise) 방식만 쓰면 그 기기에서는 듣기 문항 소리가 한 번도 안 난다 — 둘 다 받는다.
+const decode = (arrayBuf) => new Promise((ok, no) => {
+  try {
+    const p = audio().decodeAudioData(arrayBuf, ok, no);
+    if (p && typeof p.then === 'function') p.then(ok, no);
+  } catch (e) { no(e); }
+});
 
 async function loadSfx(name) {
   try {
     const res = await fetch(`/sfx/${name}.mp3`);
     if (!res.ok) throw new Error('없음');
-    const buf = await audio().decodeAudioData(await res.arrayBuffer());
+    const buf = await decode(await res.arrayBuffer());
     // 최대 음량을 재서 정규화 배수를 구한다 (너무 작게 녹음된 파일 구제)
     let peak = 0;
     const d = buf.getChannelData(0);
@@ -201,53 +218,125 @@ const wakeSfx = () => {
 };
 addEventListener('pointerdown', wakeSfx, { once: true, capture: true });
 addEventListener('keydown', wakeSfx, { once: true, capture: true });
+// 소리 장치는 한 번 깨워도 다시 멈출 수 있다(위 audio() 주석). 그래서 화면을 건드릴 때마다,
+// 다른 앱에 갔다가 돌아올 때마다 깨운다. 아이폰은 touchend 를 '사람의 동작'으로 쳐 준다.
+const wakeAudio = () => { if (actx && actx.state !== 'running') audio(); };
+addEventListener('pointerdown', wakeAudio, { capture: true });
+addEventListener('touchend', wakeAudio, { capture: true });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) wakeAudio(); });
 
 function playSfx(name, fallback) {
   if (!pref.sound) return;
   wakeSfx();
   const item = sfxBuf[name];
   if (!item) return fallback();          // 아직 안 받았거나 못 쓰는 파일 → 합성음
-  const ctx = audio();
-  const src = ctx.createBufferSource();
-  const g = ctx.createGain();
-  src.buffer = item.buf;
-  g.gain.value = item.gain * (SFX_VOL[name] ?? 0.3);
-  src.connect(g).connect(ctx.destination);
-  src.start();
+  try {
+    const ctx = audio();
+    const src = ctx.createBufferSource();
+    const g = ctx.createGain();
+    src.buffer = item.buf;
+    g.gain.value = item.gain * (SFX_VOL[name] ?? 0.3);
+    src.connect(g);
+    g.connect(ctx.destination);
+    src.start(0);
+  } catch { /* 효과음이 안 나도 채점·해설은 그대로 보여야 한다 */ }
 }
 // ── 문항 음원 재생기 ──
 // <audio>를 쓰면 화면 위에 음악 컨트롤이 뜨고(폰에서는 듣던 음악까지 끊긴다),
 // 재생바를 잡아당겨 원하는 데로 건너뛸 수 있어 실전 듣기와 어긋난다.
-// 그래서 Web Audio로 직접 틀고, 버튼은 '다시 듣기' 하나만 둔다.
+// 그래서 기본은 Web Audio로 직접 틀고, 버튼은 '다시 듣기'(몇 번이든)와 '천천히'만 둔다.
+//
+// ⚠ 다만 Web Audio 로는 소리가 안 나는 기기가 있다(2026-10 제보 — 볼륨을 키워도 무소음).
+//   ① 아이폰·아이패드의 무음 스위치: Web Audio 는 무음 스위치를 따르고 <audio> 는 따르지 않는다.
+//      → 지원하는 기기는 audioSession 을 'playback'(음악 재생과 같은 취급)으로 바꾸고,
+//        그 기능이 없는 옛 아이폰·아이패드는 처음부터 <audio> 로 튼다.
+//   ② 소리 장치가 깨어나지 않거나 파일 해석에 실패하는 기기 → 그때부터 <audio> 로 바꿔 튼다.
+//   소리가 안 나는 것보다는 화면 위에 컨트롤이 뜨는 편이 백번 낫다.
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.platform || '')
+  || (/Mac/.test(navigator.platform || '') && navigator.maxTouchPoints > 1);   // iPadOS 는 Mac 이라고 한다
+let useHtmlAudio = IS_IOS && !('audioSession' in navigator);
+
 const clipCache = {};                       // 주소 → 디코드된 소리 (한 번만 받는다)
 const loadClip = (url) => (clipCache[url] ||= fetch(url)
-  .then((r) => { if (!r.ok) throw new Error('음원 없음'); return r.arrayBuffer(); })
-  .then((b) => audio().decodeAudioData(b)));
+  .catch(() => { throw Object.assign(new Error('받기 실패'), { network: true }); })
+  .then((r) => { if (!r.ok) throw Object.assign(new Error('음원 없음'), { missing: true }); return r.arrayBuffer(); })
+  .then((ab) => decode(ab).catch(() => { throw Object.assign(new Error('해석 실패'), { undecodable: true }); }))
+  // 실패는 기억하지 않는다. 예전엔 한 번 받기에 실패하면(잠깐 끊긴 와이파이 등) 그 실패가
+  // 그대로 남아서, ▶ 를 몇 번 눌러도 그 문제는 끝까지 소리가 안 났다.
+  .catch((e) => { delete clipCache[url]; throw e; }));
 
-const player = { src: null, url: null, startedAt: 0, rate: 1, buf: null, raf: 0, onTick: null };
+// onHeard: 한 번 재생에서 60% 넘게 흘러나왔을 때 한 번 부른다 — '몇 번 들었나'를 세는 기준.
+// (재생을 시작한 횟수로 세면, 자동 재생 중에 ▶ 를 잘못 누른 것까지 '다시 듣기'로 잡힌다)
+const HEARD_AT = 0.6;
+const player = { src: null, el: null, url: null, startedAt: 0, rate: 1, buf: null, raf: 0, onTick: null, onHeard: null };
 
 function stopClip() {
   if (player.src) { try { player.src.stop(); } catch { /* 이미 끝남 */ } player.src.onended = null; }
+  if (player.el) { try { player.el.pause(); } catch { /* 이미 멈춤 */ } player.el.onended = null; player.el.ontimeupdate = null; }
   player.src = null;
+  player.el = null;
   cancelAnimationFrame(player.raf);
   player.raf = 0;
 }
 
-// rate 1 = 보통 속도, 0.75 = 천천히
-async function playClip(url, rate = 1) {
-  const ctx = audio();
-  const buf = await loadClip(url);
+// <audio> 로 틀기. play() 는 첫 await 전에 부른다 — 아이폰은 '누른 바로 그 순간'에 부른 재생만 허락한다.
+function playHtml(url, rate) {
+  const el = new Audio(url);
+  el.playbackRate = rate;
+  player.el = el;
+  player.url = url;
+  let heard = false;
+  const hear = () => { if (!heard) { heard = true; player.onHeard?.(); } };
+  el.ontimeupdate = () => {
+    if (player.el !== el || !el.duration) return;
+    const p = Math.min(1, el.currentTime / el.duration);
+    if (p >= HEARD_AT) hear();
+    player.onTick?.(p, true);
+  };
+  el.onended = () => { if (player.el === el) { hear(); player.el = null; player.onTick?.(1, false); } };
+  return el.play();
+}
+
+// rate 1 = 보통 속도, 0.75 = 천천히. fromTap = 아이가 ▶ 를 직접 누른 재생인가(자동 재생이 아니라)
+async function playClip(url, rate = 1, fromTap = false) {
   stopClip();
+  // 무음 스위치를 켜 둬도 듣기 소리는 나야 한다 — 지원하는 기기는 '음악 재생'으로 취급받게 한다
+  try { if ('audioSession' in navigator) navigator.audioSession.type = 'playback'; } catch { /* 없는 기능 */ }
+  if (useHtmlAudio) return playHtml(url, rate);
+  const ctx = audio();                       // 누른 순간 깨운다(아래 await 전에)
+  let buf;
+  try {
+    buf = await loadClip(url);
+  } catch (e) {
+    // 파일이 없거나 받다가 끊긴 것 — 기기 탓이 아니다. 알려 주고 다음 ▶ 에서 다시 받는다.
+    if (e.missing || e.network) throw e;
+    useHtmlAudio = true;                     // 이 기기는 Web Audio 로 해석을 못 한다
+    return playHtml(url, rate);
+  }
+  if (ctx.state !== 'running') {
+    // 잠깐 깨워 보고, ▶ 를 눌렀는데도 안 깨어나면 이 기기는 <audio> 로 바꾼다.
+    // 자동 재생(누르지 않은 재생)에서 못 깨어난 건 당연한 일이라 바꾸지 않는다 — 다음 ▶ 에서 깨어난다.
+    await Promise.race([ctx.resume?.().catch(() => {}), new Promise((r) => setTimeout(r, 400))]);
+    if (ctx.state !== 'running') {
+      if (!fromTap) throw Object.assign(new Error('자동 재생 막힘'), { blocked: true });
+      useHtmlAudio = true;
+      return playHtml(url, rate);
+    }
+  }
+  stopClip();                                // 기다리는 사이 다른 소리가 시작됐을 수 있다
   const src = ctx.createBufferSource();
   src.buffer = buf;
   src.playbackRate.value = rate;
   src.connect(ctx.destination);
-  src.start();
+  src.start(0);
   Object.assign(player, { src, url, buf, rate, startedAt: ctx.currentTime });
-  src.onended = () => { if (player.src === src) { stopClip(); player.onTick?.(1, false); } };
+  let heard = false;
+  const hear = () => { if (!heard) { heard = true; player.onHeard?.(); } };
+  src.onended = () => { if (player.src === src) { hear(); stopClip(); player.onTick?.(1, false); } };
   const tick = () => {
     if (player.src !== src) return;
     const p = Math.min(1, ((ctx.currentTime - player.startedAt) * rate) / buf.duration);
+    if (p >= HEARD_AT) hear();
     player.onTick?.(p, true);
     player.raf = requestAnimationFrame(tick);
   };
@@ -1194,7 +1283,7 @@ const session = { questions: [], passages: {}, idx: 0, title: '', trackToday: fa
 
 function startSession(questions, passages, title, opts = {}) {
   Object.assign(session, {
-    questions, passages, title, correct: 0, times: [],
+    questions, passages, title, correct: 0, times: [], listens: {},
     trackToday: !!opts.trackToday, diag: null,
   });
   // 같은 지문(passage_id)을 잇달아 공유하는 문항을 한 화면(세트)으로 묶는다.
@@ -1457,7 +1546,7 @@ function renderQuestion() {
         </button>
         <div class="play-body">
           <div class="play-track"><div class="play-fill" data-fill></div></div>
-          <p class="notice" data-play-note>소리가 한 번 나와요</p>
+          <p class="notice" data-play-note>▶ 를 누르면 몇 번이든 다시 들을 수 있어요</p>
         </div>
         <button class="play-slow" data-slow>천천히</button>
       </div>`;
@@ -1517,8 +1606,11 @@ function renderQuestion() {
         lastGroup ? '끝내기' : '다음'}</button></div>`}
     </div>`;
 
-  // 음원 자동 재생 (세트당 1회 — 브라우저가 막으면 재생 버튼으로)
+  // 음원: 화면이 뜨면 한 번 자동으로 틀고, ▶·'천천히'로 몇 번이든 다시 듣는다(횟수 제한 없음).
+  // 몇 번 들었는지는 세어 두었다가 답과 함께 보낸다 — 다시 듣고 맞힌 문제는 실력에 반만 반영한다
+  // (engine.mjs recordAnswer). 다시 듣기를 막는 게 아니라, 막힌 자리를 실력 추정에 정직하게 남긴다.
   const playerBox = view.querySelector('[data-player]');
+  const listenKey = session.gidx;
   if (playerBox && audioUrl) {
     const fill = playerBox.querySelector('[data-fill]');
     const note = playerBox.querySelector('[data-play-note]');
@@ -1528,14 +1620,20 @@ function renderQuestion() {
       playerBox.classList.toggle('is-playing', playing);
       if (!playing) note.textContent = '다시 듣고 싶으면 ▶ 를 누르세요';
     };
-    const go = (rate) => playClip(audioUrl, rate).catch(() => {
-      note.textContent = '소리를 켜고 ▶ 를 눌러주세요';
+    player.onHeard = () => { const l = (session.listens ||= {}); l[listenKey] = (l[listenKey] || 0) + 1; };
+    // 왜 안 났는지에 따라 할 말이 다르다. 예전엔 무조건 "소리를 켜고"라고 해서,
+    // 소리를 이미 켜 둔 아이·부모는 무엇을 해야 할지 알 수 없었다.
+    const go = (rate, fromTap) => playClip(audioUrl, rate, fromTap).catch((e) => {
+      playerBox.classList.remove('is-playing');
+      note.textContent = (e?.missing || e?.network) ? '소리를 불러오지 못했어요 — ▶ 를 다시 눌러 주세요'
+        : (e?.blocked || e?.name === 'NotAllowedError') ? '▶ 를 눌러 들어 보세요'
+        : '소리가 나지 않았어요 — ▶ 를 다시 눌러 주세요';
     });
     // 기본 재생은 이 아이의 속도로. '천천히'는 거기서 한 번 더 늦춘다 —
     // 실전 속도를 쓰는 아이도 어려운 한 문항은 느리게 다시 들을 수 있어야 한다.
-    btn.addEventListener('click', () => go(audioRate));
-    playerBox.querySelector('[data-slow]').addEventListener('click', () => go(audioRate * 0.78));
-    go(audioRate);
+    btn.addEventListener('click', () => go(audioRate, true));
+    playerBox.querySelector('[data-slow]').addEventListener('click', () => go(audioRate * 0.78, true));
+    go(audioRate, false);
   }
 
   view.querySelector('[data-back]').addEventListener('click', () => {
@@ -1608,7 +1706,11 @@ function renderQuestion() {
 
       try {
         const spentMs = Date.now() - shownAt;
-        const payload = JSON.stringify({ question_id: q.id, chosen_idx: selected, time_ms: spentMs });
+        // listens: 이 문제를 답하기 전에 소리를 몇 번 들었나(듣기 문항만). 0 = 못 들음(소리 안 남)
+        const payload = JSON.stringify({
+          question_id: q.id, chosen_idx: selected, time_ms: spentMs,
+          listens: audioUrl ? (session.listens?.[listenKey] || 0) : undefined,
+        });
         let r = null;
         if (auth) {
           try {
@@ -1717,7 +1819,7 @@ function renderQuestion() {
         });
         if (expr) rememberExpr(q, expr, r.correct);
         block.querySelector('[data-replay]')?.addEventListener('click', () => {
-          if (audioUrl) playClip(audioUrl, 0.75).catch(() => { /* 소리 꺼짐 */ });
+          if (audioUrl) playClip(audioUrl, 0.75, true).catch(() => { /* 소리 꺼짐 */ });
         });
         (r.graduated ? sfx.done : r.correct ? sfx.correct : sfx.wrong)();
         if (r.correct) session.correct += 1;

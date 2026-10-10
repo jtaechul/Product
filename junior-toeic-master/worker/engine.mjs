@@ -208,23 +208,33 @@ export async function computeClimb(db, user) {
 // 채점 결과 하나를 학습 기록에 반영한다.
 // answers INSERT + user_tag_skills(Elo) UPSERT + review_queue(라이트너) UPSERT.
 // D1 batch(단일 트랜잭션)로 묶어 부분 반영을 막는다.
-export async function recordAnswer(db, { user, question, chosenIdx, timeMs, sessionId }) {
+// listens: 듣기 문항을 몇 번 들은 뒤 답했나(앱이 센다, 읽기는 null) — migrations/0016 참고.
+//   다시 듣고 맞힘(2번 이상) → 맞혀서 오를 실력 점수를 '반만' 올린다.
+//     운영자 결정(2026-10-10): 다시 듣기는 몇 번이든 허락하되, 한 번에 못 알아들은 것은
+//     '반쯤 아는 것'으로 본다. 정답 처리·복습 상자는 그대로다 — 아이 눈에는 맞힌 문제다.
+//     ⚠ Elo 결과값을 0.5로 넣으면 안 된다. 쉬운 문제(예상 정답률 85%)에서는 0.5가 기대보다
+//       낮아서, 맞혔는데 점수가 오히려 깎였다(실측 -11.2). '반만 인정'이지 '틀린 셈'이 아니다.
+//   소리를 끝까지 못 들음(0번) → 실력에 반영하지 않는다. 기기에서 소리가 안 난 건 실력이 아니다.
+export const REPLAY_CREDIT = 0.5;
+export async function recordAnswer(db, { user, question, chosenIdx, timeMs, sessionId, listens = null }) {
   const correct = chosenIdx === question.answer_idx;
   const guess = correct && timeMs > 0 && timeMs < GUESS_MS;
+  const unheard = listens === 0;
+  const replayed = correct && listens != null && listens >= 2;
   const now = new Date().toISOString();
   const stmts = [];
 
   stmts.push(db.prepare(
-    `INSERT INTO answers (id, session_id, user_id, question_id, chosen_idx, is_correct, time_ms, answered_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
-  ).bind(crypto.randomUUID(), sessionId, user.id, question.id, chosenIdx, correct ? 1 : 0, timeMs | 0, now));
+    `INSERT INTO answers (id, session_id, user_id, question_id, chosen_idx, is_correct, time_ms, answered_at, listens)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
+  ).bind(crypto.randomUUID(), sessionId, user.id, question.id, chosenIdx, correct ? 1 : 0, timeMs | 0, now, listens));
 
   stmts.push(db.prepare(
     'UPDATE questions SET times_answered = times_answered + 1, times_correct = times_correct + ?1 WHERE id = ?2'
   ).bind(correct ? 1 : 0, question.id));
 
-  // ── Elo-lite: 문항의 태그별로 학생 레이팅 갱신 (찍기 정답은 반영 안 함) ──
-  if (!guess) {
+  // ── Elo-lite: 문항의 태그별로 학생 레이팅 갱신 (찍기 정답·소리 못 들은 답은 반영 안 함) ──
+  if (!guess && !unheard) {
     const { results: tags } = await db.prepare(
       'SELECT tag_id FROM question_tags WHERE question_id = ?1'
     ).bind(question.id).all();
@@ -235,7 +245,8 @@ export async function recordAnswer(db, { user, question, chosenIdx, timeMs, sess
       const r = cur?.rating ?? DEFAULT_RATING;
       const attempts = cur?.attempts ?? 0;
       const expected = 1 / (1 + 10 ** ((question.rating - r) / ELO_SCALE));
-      const next = r + kFor(attempts) * ((correct ? 1 : 0) - expected);
+      const gain = kFor(attempts) * ((correct ? 1 : 0) - expected);
+      const next = r + (replayed ? gain * REPLAY_CREDIT : gain);
       stmts.push(db.prepare(
         `INSERT INTO user_tag_skills (user_id, tag_id, rating, attempts, correct, last_practiced_at)
          VALUES (?1, ?2, ?3, 1, ?4, ?5)
