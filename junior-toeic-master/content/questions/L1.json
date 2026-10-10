@@ -1466,30 +1466,30 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'blowing out the candles'는 촛불을 불어 끈다는 뜻이라 촛불이 켜진 케이크 사진이 정답이에요.",
-    "difficulty_label": 3,
+    "explanation_ko": "'a birthday cake'는 생일 케이크예요. 아이들이 생일 케이크 둘레에 앉아 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "UK",
-    "tts_script": "A girl is blowing out the birthday candles.",
+    "tts_script": "Children are sitting around a birthday cake.",
     "choice_image_prompts": [
       "A child opening a gift box",
       "Colorful party balloons",
       "Confetti falling at a party",
-      "A boy blowing out candles on a birthday cake"
+      "Children sitting around a birthday cake"
     ],
     "status": "active",
-    "evidence": "the birthday candles",
+    "evidence": "around a birthday cake",
     "why_not": {
-      "0": "선물을 여는 사진이에요",
+      "0": "선물 옆에 앉아 있는 아기 사진이에요",
       "1": "풍선만 있는 사진이에요",
       "2": "종이꽃가루가 날리는 사진이에요"
     },
     "key_expr": {
-      "en": "blow out candles",
-      "ko": "촛불을 불어 끄다"
+      "en": "birthday cake",
+      "ko": "생일 케이크"
     },
     "miss_type": {
       "0": "P.other",
@@ -1546,7 +1546,7 @@
         "avoid": []
       }
     ],
-    "translation_ko": "한 여자아이가 생일 촛불을 불어서 끄고 있어요."
+    "translation_ko": "아이들이 생일 케이크 둘레에 앉아 있어요."
   },
   {
     "type": "single",
@@ -2538,7 +2538,7 @@
       "A boy typing on a computer in a library",
       "A boy wearing a backpack, walking out the library door"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "choosing a book",
     "why_not": {
       "1": "책을 얼굴에 덮고 자는 사진이에요",
@@ -2625,26 +2625,26 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'playing badminton'은 배드민턴을 친다는 뜻이에요. 라켓을 들고 있는 사진을 골라보세요.",
+    "explanation_ko": "'playing badminton'은 배드민턴을 친다는 뜻이에요. 라켓을 든 여자아이 사진이 정답이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "UK",
-    "tts_script": "Two children are playing badminton in the park.",
+    "tts_script": "A girl is playing badminton.",
     "choice_image_prompts": [
       "Two children kicking a soccer ball on the grass in a park",
-      "Two children playing badminton with rackets in a park",
+      "A girl playing badminton with a racket in a park",
       "Two children sitting on a park bench, drinking water",
       "Two children riding bicycles on a path in a park"
     ],
     "status": "active",
     "evidence": "playing badminton",
     "why_not": {
-      "0": "축구공을 차고 있는 사진이에요",
-      "2": "벤치에 앉아 물을 마시는 사진이에요",
-      "3": "자전거를 타고 있는 사진이에요"
+      "0": "축구를 하는 사진이에요",
+      "2": "가족이 벤치에 앉아 있는 사진이에요",
+      "3": "작은 차를 타고 있는 사진이에요"
     },
     "key_expr": {
       "en": "play badminton",
@@ -2712,7 +2712,7 @@
         ]
       }
     ],
-    "translation_ko": "두 아이가 공원에서 배드민턴을 치고 있어요.",
+    "translation_ko": "한 여자아이가 배드민턴을 치고 있어요.",
     "tmp_id": "L1-0028"
   },
   {
@@ -2844,7 +2844,7 @@
       "A teacher erasing the chalkboard with an eraser",
       "A teacher standing and writing words on the chalkboard"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "writing on the board",
     "why_not": {
       "0": "학생들에게 책을 나눠주는 사진이에요",
@@ -2940,18 +2940,18 @@
       "V.leisure"
     ],
     "accent": "UK",
-    "tts_script": "A girl is taking a picture with a camera.",
+    "tts_script": "A woman is taking a picture with a camera.",
     "choice_image_prompts": [
       "A girl painting a picture on a canvas in a park",
-      "A girl holding a camera to her eye, taking a picture",
+      "A woman holding a camera to her eye, taking a picture",
       "A girl looking through binoculars at a bird",
       "A girl talking on a smartphone while walking"
     ],
     "status": "active",
     "evidence": "taking a picture",
     "why_not": {
-      "0": "붓으로 그림을 그리는 사진이에요",
-      "2": "망원경으로 새를 보는 사진이에요",
+      "0": "양과 함께 있는 소녀 그림이에요",
+      "2": "망원경으로 먼 곳을 보는 사진이에요",
       "3": "휴대폰으로 통화하는 사진이에요"
     },
     "key_expr": {
@@ -3019,7 +3019,7 @@
         ]
       }
     ],
-    "translation_ko": "한 소녀가 카메라로 사진을 찍고 있어요.",
+    "translation_ko": "한 여자가 카메라로 사진을 찍고 있어요.",
     "tmp_id": "L1-0031"
   },
   {
@@ -3048,7 +3048,7 @@
       "A boy sitting on a park bench eating an ice cream cone",
       "A boy lying down on a park bench taking a nap"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "sitting on a bench eating ice cream",
     "why_not": {
       "0": "햄버거를 먹고 있는 사진이에요",
@@ -3152,7 +3152,7 @@
       "A boy drawing a picture on a paper",
       "A boy reading a book on the floor"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "building a tower with blocks",
     "why_not": {
       "1": "블록을 장난감 상자에 정리하는 사진이에요",
@@ -3249,7 +3249,7 @@
       "A woman closing a suitcase",
       "A woman pulling a suitcase with wheels"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "pulling a suitcase",
     "why_not": {
       "0": "의자에 앉아 잠을 자고 있는 사진이에요",
@@ -3349,7 +3349,7 @@
       "A man washing dishes at the sink",
       "A man opening a window wide"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "washing the window",
     "why_not": {
       "0": "빗자루로 바닥을 쓸고 있는 사진이에요",
@@ -3447,7 +3447,7 @@
       "A girl putting on her sneakers",
       "A girl putting on colorful socks"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "putting on her shoes",
     "why_not": {
       "0": "머리에 모자를 쓰고 있는 사진이에요",
@@ -3545,7 +3545,7 @@
       "A chef carrying a delicious plate of food",
       "A chef washing apples under running water"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "cutting vegetables on the board",
     "why_not": {
       "0": "냄비에 든 뜨거운 수프를 젓고 있는 사진이에요",
@@ -3645,7 +3645,7 @@
       "Two friends setting up a camping tent with poles",
       "Two friends walking in the forest with heavy backpacks"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "setting up a tent",
     "why_not": {
       "0": "텐트 안에서 잠을 자고 있는 사진이에요",
@@ -3742,7 +3742,7 @@
       "A boy holding a frisbee with his dog",
       "A boy riding a bicycle in a park"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "throwing a ball",
     "why_not": {
       "0": "강아지가 풀밭에서 자고 있어요",
@@ -3839,7 +3839,7 @@
       "A girl putting a textbook into her open backpack",
       "A girl writing in a notebook with a pencil"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "putting a book",
     "why_not": {
       "0": "의자에 앉아서 책을 읽고 있어요",
@@ -3937,7 +3937,7 @@
       "Delicious food is placed on a table",
       "A man sweeping the floor with a broom"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "wiping the table",
     "why_not": {
       "1": "남자가 의자에 앉아서 쉬고 있어요",
@@ -4020,41 +4020,41 @@
       "Picture C",
       "Picture D"
     ],
-    "answer_idx": 3,
-    "explanation_ko": "'opening the window'는 창문을 연다는 뜻이에요. 여자가 창문을 여는 모습이 정답이에요.",
+    "answer_idx": 0,
+    "explanation_ko": "'sitting by the window'는 창가에 앉아 있다는 뜻이에요. 창문 옆에 앉아 있는 사진이 정답이에요.",
     "difficulty_label": 1,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "US",
-    "tts_script": "A woman is opening the window.",
+    "tts_script": "A woman is sitting by the window.",
     "choice_image_prompts": [
-      "A woman looking out the window silently",
+      "A woman sitting by a window",
       "A woman opening a wooden door",
       "A woman closing the curtains on a window",
-      "A woman opening a glass window"
+      "A woman sitting on a rock at the beach"
     ],
     "status": "active",
-    "evidence": "opening the window",
+    "evidence": "sitting by the window",
     "why_not": {
-      "0": "창문 밖을 가만히 내다보고 있어요",
-      "1": "여자가 창문이 아니라 문을 열고 있어요",
-      "2": "창문에 커튼을 치고 있어요"
+      "1": "창문이 아니라 문을 열고 있어요",
+      "2": "커튼 앞에 서 있는 사진이에요",
+      "3": "바닷가 바위에 앉아 있어요"
     },
     "key_expr": {
-      "en": "open the window",
-      "ko": "창문을 열다"
+      "en": "by the window",
+      "ko": "창가에"
     },
     "choice_image_queries": [
       {
-        "q": "woman looking out window",
+        "q": "woman sitting by window",
         "need": [
           "woman",
           "window"
         ],
         "prefer": [
-          "looking"
+          "sitting"
         ],
         "avoid": [
           "opening"
@@ -4087,23 +4087,24 @@
         ]
       },
       {
-        "q": "woman opening window",
+        "q": "woman sitting beach rock",
         "need": [
-          "woman",
-          "window"
+          "beach"
         ],
         "prefer": [
-          "opening"
+          "woman"
         ],
-        "avoid": []
+        "avoid": [
+          "window"
+        ]
       }
     ],
     "miss_type": {
-      "0": "P.other",
-      "1": "M.swap",
-      "2": "P.other"
+      "1": "P.other",
+      "2": "P.other",
+      "3": "M.swap"
     },
-    "translation_ko": "한 여자가 창문을 열고 있어요.",
+    "translation_ko": "한 여자가 창가에 앉아 있어요.",
     "tmp_id": "L1-0042"
   },
   {
@@ -4118,30 +4119,30 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'riding on a seesaw'는 시소를 탄다는 뜻이에요. 놀이터에서 시소를 타는 사진이 정답이에요.",
+    "explanation_ko": "'seesaw'는 시소예요. 풀밭 위에 시소가 있는 사진이 정답이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "UK",
-    "tts_script": "Two children are riding on a seesaw.",
+    "tts_script": "There is a seesaw on the grass.",
     "choice_image_prompts": [
       "Two children swinging on swings in a playground",
-      "Two children happily riding on a seesaw together",
+      "A spring seesaw standing on the grass in a park",
       "Two children sliding down a slide in a park",
       "Two children sitting and talking on a park bench"
     ],
     "status": "active",
-    "evidence": "riding on a seesaw",
+    "evidence": "a seesaw on the grass",
     "why_not": {
-      "0": "놀이터에서 그네를 타고 있어요",
-      "2": "미끄럼틀을 타고 내려오고 있어요",
-      "3": "벤치에 앉아서 이야기를 나누고 있어요"
+      "0": "그네가 있는 사진이에요",
+      "2": "미끄럼틀이 있는 사진이에요",
+      "3": "아이 둘이 벤치에 앉아 있어요"
     },
     "key_expr": {
-      "en": "ride on a seesaw",
-      "ko": "시소를 타다"
+      "en": "seesaw",
+      "ko": "시소"
     },
     "choice_image_queries": [
       {
@@ -4200,7 +4201,7 @@
       "2": "P.other",
       "3": "P.other"
     },
-    "translation_ko": "두 아이가 시소에 타고 있어요.",
+    "translation_ko": "풀밭 위에 시소가 있어요.",
     "tmp_id": "L1-0043"
   },
   {
@@ -4229,7 +4230,7 @@
       "A man carrying a large cardboard box in his arms",
       "A man carrying a small briefcase"
     ],
-    "status": "active",
+    "status": "retired",
     "evidence": "carrying a large box",
     "why_not": {
       "0": "상자를 열어서 안을 보고 있어요",
@@ -4325,7 +4326,7 @@
       "A child playing with toy blocks",
       "A child sleeping on a desk"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "drawing a picture",
     "why_not": {
       "0": "책을 읽는 사진이에요",
@@ -4423,9 +4424,9 @@
       "A man singing into a microphone",
       "A man playing the drums",
       "A man playing the piano",
-      "A man playing the guitar"
+      "A man playing the guitar on the street"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "playing the guitar",
     "why_not": {
       "0": "마이크에 대고 노래하는 사진이에요",
@@ -4510,30 +4511,30 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'slide'는 미끄럼틀이에요. 아이들이 미끄럼틀을 타고 내려오는 사진을 고르면 돼요.",
+    "explanation_ko": "'slide'는 미끄럼틀이에요. 공원에 미끄럼틀이 있는 사진이 정답이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "AU",
-    "tts_script": "Two children are going down a slide.",
+    "tts_script": "There is a slide in the park.",
     "choice_image_prompts": [
-      "Two children going down a slide",
+      "A red slide in a park",
       "Children swinging on swings",
       "Children playing in a sandbox",
       "Children running a race"
     ],
-    "status": "draft",
-    "evidence": "going down a slide",
+    "status": "active",
+    "evidence": "a slide in the park",
     "why_not": {
-      "1": "그네를 타는 사진이에요",
-      "2": "모래놀이를 하는 사진이에요",
-      "3": "달리기 경주를 하는 사진이에요"
+      "1": "그네가 있는 사진이에요",
+      "2": "모래 위 장난감 사진이에요",
+      "3": "아이 둘이 길을 걷고 있어요"
     },
     "key_expr": {
-      "en": "go down a slide",
-      "ko": "미끄럼틀을 타다"
+      "en": "slide",
+      "ko": "미끄럼틀"
     },
     "miss_type": {
       "1": "P.other",
@@ -4590,7 +4591,7 @@
         ]
       }
     ],
-    "translation_ko": "두 아이가 미끄럼틀을 타고 내려오고 있어요.",
+    "translation_ko": "공원에 미끄럼틀이 있어요.",
     "tmp_id": "L1-0047"
   },
   {
@@ -4619,7 +4620,7 @@
       "A woman picking apples from a tree",
       "A woman watering a tree"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "picking apples",
     "why_not": {
       "0": "도마 위에서 사과를 자르는 사진이에요",
@@ -4719,7 +4720,7 @@
       "A boy cooking an egg in a pan",
       "A boy pouring milk into a bowl"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "pouring milk",
     "why_not": {
       "0": "우유를 마시는 사진이에요",
@@ -4820,7 +4821,7 @@
       "A family sitting on a picnic blanket",
       "A family standing in front of a house"
     ],
-    "status": "draft",
+    "status": "retired",
     "evidence": "sitting on a picnic blanket",
     "why_not": {
       "0": "식당 식탁에서 밥을 먹는 사진이에요",
