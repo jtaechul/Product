@@ -2806,5 +2806,221 @@
     },
     "translation_ko": "왜 실내에서 재킷을 입고 있어?",
     "tmp_id": "L2-0078"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Sure, here you go.",
+      "It's on the second floor.",
+      "Yes, I like reading."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "사전을 빌릴 수 있는지 물었으니, 빌려준다고 대답해야 해요. 'here you go'는 '여기 있어'라는 뜻이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Can I borrow your dictionary?",
+    "status": "draft",
+    "evidence": "borrow your dictionary",
+    "why_not": {
+      "1": "장소를 묻는 말이 아니에요",
+      "2": "질문과 상관없는 이야기예요"
+    },
+    "key_expr": {
+      "en": "borrow",
+      "ko": "빌리다"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "네 사전 좀 빌릴 수 있을까?",
+    "tmp_id": "L2-0079"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "At the park.",
+      "This coming Saturday.",
+      "About three hours."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "경기가 언제인지 물었으므로, 때를 나타내는 요일이나 날짜로 답해야 해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "When is the next tennis match?",
+    "status": "draft",
+    "evidence": "When is",
+    "why_not": {
+      "0": "장소를 묻는 질문의 답이에요",
+      "2": "얼마나 걸리는지 물을 때 답이에요"
+    },
+    "key_expr": {
+      "en": "next tennis match",
+      "ko": "다음 테니스 경기"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "다음 테니스 경기는 언제야?",
+    "tmp_id": "L2-0080"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "An apple a day.",
+      "It is three dollars.",
+      "I do, please."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "누가 마실 것인지 물었으니 마시고 싶은 사람이 대답해야 해요. 'I do'는 '제가 할게요'라는 뜻이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "Who wants some fresh apple juice?",
+    "status": "draft",
+    "evidence": "Who wants",
+    "why_not": {
+      "0": "apple을 듣고 엉뚱하게 답했어요",
+      "1": "가격을 묻는 질문이 아니에요"
+    },
+    "key_expr": {
+      "en": "Who wants",
+      "ko": "누가 ~을 원하나요?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "신선한 사과 주스 마실 사람?",
+    "tmp_id": "L2-0081"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Let's just walk.",
+      "Yes, I like monkeys.",
+      "He is a bus driver."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "버스 탈지 걸어갈지 선택하라고 물었으니 둘 중 하나를 골라야 해요. 선택하는 물음에는 예, 아니오로 답하지 않아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.travel"
+    ],
+    "accent": "US",
+    "tts_script": "Should we take a bus or walk to the zoo?",
+    "status": "draft",
+    "evidence": "take a bus or walk",
+    "why_not": {
+      "1": "둘 중 고를 때는 예, 아니오를 쓰지 않아요",
+      "2": "bus를 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "take a bus or walk",
+      "ko": "버스를 탈지 걸어갈지"
+    },
+    "miss_type": {
+      "1": "A.yesno",
+      "2": "A.echo"
+    },
+    "translation_ko": "우리 동물원까지 버스 탈까 아니면 걸어갈까?",
+    "tmp_id": "L2-0082"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I am looking for my keys.",
+      "Wow, it's so beautiful.",
+      "No, it's not mine."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "밖에 눈이 오는 것을 보라고 했으니 눈을 보고 느낀 점이나 날씨에 관한 말을 이어가는 게 자연스러워요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Look at the snow outside!",
+    "status": "draft",
+    "evidence": "Look at the snow",
+    "why_not": {
+      "0": "look을 듣고 엉뚱하게 말했어요",
+      "2": "내 것이 아니라는 말은 어울리지 않아요"
+    },
+    "key_expr": {
+      "en": "outside",
+      "ko": "밖에"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "밖에 눈 오는 것 좀 봐!",
+    "tmp_id": "L2-0083"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It is very soft.",
+      "She is two years old.",
+      "We call her Lucy."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "고양이 이름을 물었으니, 고양이를 부르는 이름으로 대답해야 해요. 'call'은 '~라고 부르다'라는 뜻이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "What is your cat's name?",
+    "status": "draft",
+    "evidence": "cat's name",
+    "why_not": {
+      "0": "이름을 물었는데 부드럽다고 했어요",
+      "1": "나이를 물을 때 하는 대답이에요"
+    },
+    "key_expr": {
+      "en": "call",
+      "ko": "부르다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "너희 고양이 이름이 뭐야?",
+    "tmp_id": "L2-0084"
   }
 ]

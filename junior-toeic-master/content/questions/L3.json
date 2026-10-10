@@ -5947,5 +5947,491 @@
       }
     ],
     "tmp_id": "L3-0074"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Hello. Do you have strings for an acoustic guitar?\nW: Yes, we do. Did one of yours break?\nM: Exactly. It broke while I was practicing for the school festival.\nW: I see. These silver strings are very good. They sound beautiful.",
+      "accent": "US",
+      "tts_voices": {
+        "M": "male",
+        "W": "female"
+      },
+      "translation_ko": "남: 안녕하세요. 통기타 줄 있나요?\n여: 네, 있습니다. 혹시 줄이 끊어졌나요?\n남: 맞아요. 학교 축제 연습을 하다가 끊어졌어요.\n여: 그렇군요. 이 은색 줄이 아주 좋아요. 소리가 아름답게 나거든요."
+    },
+    "questions": [
+      {
+        "stem": "What does the man want to buy?",
+        "choices": [
+          "A guitar case",
+          "Guitar strings",
+          "A music book",
+          "A school bag"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "남자가 통기타 줄이 있는지 물어보고 있어요. 줄이 끊어져서 새로 사러 온 거예요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.shopping"
+        ],
+        "evidence": "Do you have strings for an acoustic guitar?",
+        "why_not": {
+          "0": "기타 가방 이야기는 없었어요",
+          "2": "음악 책 이야기는 없었어요",
+          "3": "학교 가방은 사려는 게 아니에요"
+        },
+        "key_expr": {
+          "en": "strings for a guitar",
+          "ko": "기타 줄"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why did the man come to the store?",
+        "choices": [
+          "To practice the guitar",
+          "To fix a broken window",
+          "To buy a festival ticket",
+          "To replace a broken string"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "학교 축제 연습을 하다가 기타 줄이 끊어져서 새로운 줄로 바꾸기 위해 가게에 왔어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "It broke while I was practicing for the school festival.",
+        "why_not": {
+          "0": "연습은 다른 곳에서 하고 왔어요",
+          "1": "창문 이야기는 없었어요",
+          "2": "축제 표를 사는 게 아니에요"
+        },
+        "key_expr": {
+          "en": "broke while I was practicing",
+          "ko": "연습하는 동안 끊어졌다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L3-0075"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Hi, I'd like to send this box to Jeju Island.\nM: Sure. Please put it on the scale. Is it a gift?\nW: Yes, it's a scarf for my grandmother's birthday.\nM: It's quite light. It will arrive there by this Friday.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 안녕하세요, 이 상자를 제주도에 보내고 싶어요.\n남: 네. 저울 위에 올려주세요. 선물인가요?\n여: 네, 할머니 생신 선물로 드릴 스카프예요.\n남: 꽤 가볍네요. 이번 주 금요일까지는 그곳에 도착할 거예요."
+    },
+    "questions": [
+      {
+        "stem": "What is the main purpose of the woman's visit?",
+        "choices": [
+          "To send a box",
+          "To buy a scale",
+          "To visit her grandmother",
+          "To go to Jeju Island"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "여자는 상자를 제주도로 보내고 싶어서 우체국 같은 곳에 왔어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "I'd like to send this box to Jeju Island.",
+        "why_not": {
+          "1": "저울을 사려는 게 아니에요",
+          "2": "할머니를 직접 만나러 가는 건 아니에요",
+          "3": "제주도에 가는 게 아니라 물건을 보내요"
+        },
+        "key_expr": {
+          "en": "send this box",
+          "ko": "이 상자를 보내다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What is the box for?",
+        "choices": [
+          "A school project",
+          "A travel bag",
+          "A birthday gift",
+          "A winter coat"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "할머니 생신 선물로 드릴 스카프를 상자에 담았다고 말했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "Yes, it's a scarf for my grandmother's birthday.",
+        "why_not": {
+          "0": "학교 숙제 이야기는 없었어요",
+          "1": "여행 가방 이야기는 안 나왔어요",
+          "3": "겨울 코트가 아니라 스카프예요"
+        },
+        "key_expr": {
+          "en": "for my grandmother's birthday",
+          "ko": "할머니 생신을 위해"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L3-0076"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Hi, I'm looking for some flowers for my friend's graduation.\nW: Congratulations! How about these yellow tulips?\nM: They look pretty, but my friend loves pink. Do you have pink roses?\nW: Of course. I can make a nice bunch with pink roses and white ribbons.",
+      "accent": "AU",
+      "tts_voices": {
+        "M": "male",
+        "W": "female"
+      },
+      "translation_ko": "남: 안녕하세요, 친구 졸업식에 줄 꽃을 찾고 있어요.\n여: 축하할 일이네요! 이 노란색 튤립은 어때요?\n남: 예뻐 보이지만, 제 친구는 분홍색을 좋아해요. 분홍색 장미도 있나요?\n여: 당연하죠. 분홍색 장미와 하얀 리본으로 멋진 꽃다발을 만들어 드릴게요."
+    },
+    "questions": [
+      {
+        "stem": "What are the two people talking about?",
+        "choices": [
+          "Growing yellow tulips",
+          "Making a pink dress",
+          "Buying a graduation gift",
+          "Inviting a friend to a party"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "남자가 친구의 졸업을 축하하기 위해 줄 꽃 선물을 찾고 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.shopping"
+        ],
+        "evidence": "I'm looking for some flowers for my friend's graduation.",
+        "why_not": {
+          "0": "튤립을 직접 키우는 이야기가 아니에요",
+          "1": "분홍색 옷을 만드는 게 아니에요",
+          "3": "친구를 파티에 초대하는 상황이 아니에요"
+        },
+        "key_expr": {
+          "en": "looking for some flowers",
+          "ko": "꽃을 찾고 있다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will the woman probably do next?",
+        "choices": [
+          "Go to a graduation",
+          "Buy a white ribbon",
+          "Take a photo of the flowers",
+          "Make a bunch of flowers"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "여자가 분홍색 장미와 하얀 리본으로 다발을 만들어 주겠다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.infer"
+        ],
+        "evidence": "I can make a nice bunch with pink roses and white ribbons.",
+        "why_not": {
+          "0": "여자가 졸업식에 가는 건 아니에요",
+          "1": "리본을 사러 가는 게 아니라 리본으로 묶어줄 거예요",
+          "2": "사진을 찍는다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "make a nice bunch",
+          "ko": "멋진 다발을 만들다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "W.meaning",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L3-0077"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Are we ready for the magic show this afternoon?\nW: Almost. We just need to put these red chairs in the hall.\nM: Let me help you. Where should I put them?\nW: Please put them in front of the stage. The kids will sit there.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 오늘 오후 마술 쇼 준비 다 됐나요?\n여: 거의 다 됐어요. 강당에 이 빨간색 의자들만 놓으면 돼요.\n남: 제가 도와줄게요. 의자를 어디에 둘까요?\n여: 무대 앞에 놓아 주세요. 아이들이 거기에 앉을 거예요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What are the speakers mainly talking about?",
+        "choices": [
+          "Buying some chairs",
+          "Learning magic tricks",
+          "Preparing for a show",
+          "Cleaning the stage"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "마술 쇼를 위해 의자를 놓는 준비를 하고 있어서 쇼 준비하기가 정답이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "ready for the magic show",
+        "why_not": {
+          "0": "의자를 사는 것이 아니에요",
+          "1": "마술을 배우는 내용이 아니에요",
+          "3": "무대를 청소한다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "magic show",
+          "ko": "마술 쇼"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "A.echo",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where will the red chairs be placed?",
+        "choices": [
+          "In front of the stage",
+          "Outside the hall",
+          "Next to the windows",
+          "At the back of the room"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "여자가 의자를 무대 앞에 놓아 달라고 말했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "put them in front of the stage",
+        "why_not": {
+          "1": "강당 밖이 아니라 안에 놓는 거예요",
+          "2": "창문 옆이라는 말은 없었어요",
+          "3": "방 뒤쪽이라는 말은 안 나왔어요"
+        },
+        "key_expr": {
+          "en": "in front of ~",
+          "ko": "~의 앞에"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0078"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Mr. Davis is moving to another school next week. Should we get him a gift?\nM: Yes! How about a new coffee cup? He drinks coffee every day.\nW: I think a book about gardening is better. He loves growing flowers.\nM: That's a great idea. Let's go to the bookstore after school.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 데이비스 선생님이 다음 주에 다른 학교로 가셔. 우리 선물 하나 사 드릴까?\n남: 응! 새 커피 컵은 어때? 매일 커피를 드시잖아.\n여: 원예에 관한 책이 더 좋을 것 같아. 선생님은 꽃 키우는 걸 좋아하시거든.\n남: 정말 좋은 생각이야. 방과 후에 서점에 가자."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the conversation mainly about?",
+        "choices": [
+          "Growing beautiful flowers",
+          "Choosing a gift for a teacher",
+          "Moving to a new school",
+          "Making a cup of coffee"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "다른 학교로 가시는 선생님을 위해 무슨 선물을 살지 고르고 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "Should we get him a gift?",
+        "why_not": {
+          "0": "꽃을 키우는 것은 선생님의 취미예요",
+          "2": "새 학교로 가는 것은 선생님이에요",
+          "3": "커피를 타는 이야기가 아니에요"
+        },
+        "key_expr": {
+          "en": "get a gift",
+          "ko": "선물을 사다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "A.echo",
+          "3": "A.echo"
+        }
+      },
+      {
+        "stem": "What will the speakers probably buy?",
+        "choices": [
+          "A coffee cup",
+          "Some flowers",
+          "A new desk",
+          "A book"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "꽃 키우는 걸 좋아하는 선생님께 책을 사드리기로 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.infer"
+        ],
+        "evidence": "a book about gardening is better",
+        "why_not": {
+          "0": "커피 컵 대신 다른 걸 사기로 했어요",
+          "1": "꽃을 산다는 말은 없었어요",
+          "2": "새 책상 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "bookstore",
+          "ko": "서점"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0079"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Wow, your poster looks great! The Earth drawing is so cute.\nW: Thanks. It's for the recycling campaign at school tomorrow.\nM: Is it finished? It looks like it needs some words at the top.\nW: You're right. I'm going to write 'Save Our Planet' in big green letters.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 와, 네 포스터 멋지다! 지구 그림이 너무 귀여워.\n여: 고마워. 내일 학교 재활용 캠페인에 쓸 거야.\n남: 다 만든 거야? 맨 위에 글씨가 조금 들어가야 할 것 같은데.\n여: 네 말이 맞아. 초록색 큰 글씨로 '지구를 지켜요'라고 쓸 거야."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the girl making?",
+        "choices": [
+          "A cute school uniform",
+          "A map of the school",
+          "A campaign poster",
+          "A big green shirt"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "여자는 학교 재활용 캠페인에 쓸 포스터를 만들고 있다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "It's for the recycling campaign at school tomorrow.",
+        "why_not": {
+          "0": "교복 이야기는 안 나왔어요",
+          "1": "학교 지도를 그리는 게 아니에요",
+          "3": "초록색은 셔츠가 아니라 글씨 색깔이에요"
+        },
+        "key_expr": {
+          "en": "recycling",
+          "ko": "재활용"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What will the girl add to her poster?",
+        "choices": [
+          "A picture of the school",
+          "Some green letters",
+          "A drawing of the Earth",
+          "A photo of her friend"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여자가 초록색 큰 글씨로 말을 적어 넣을 거라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "write 'Save Our Planet' in big green letters",
+        "why_not": {
+          "0": "학교 사진을 붙인다는 말은 없었어요",
+          "2": "지구 그림은 이미 그렸어요",
+          "3": "친구 사진 이야기는 안 나왔어요"
+        },
+        "key_expr": {
+          "en": "letter",
+          "ko": "글자, 글씨"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0080"
   }
 ]
