@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "items": [
+    {
+      "name": "hook",
+      "http": 200,
+      "rate": "120%",
+      "file": "hook.wav",
+      "sec": 2.53,
+      "timepoints": [
+        {
+          "seg": "うみのなかにいる、",
+          "start": 0.015,
+          "end": 1.132
+        },
+        {
+          "seg": "しょくちゅうしょくぶつ？",
+          "start": 1.132,
+          "end": 2.531
+        }
+      ]
+    }
+  ],
+  "request": "r1010144401_trial_tts.json",
+  "kind": "gen_tts",
+  "ran_at": "2026-10-10T14:44:01Z"
+}

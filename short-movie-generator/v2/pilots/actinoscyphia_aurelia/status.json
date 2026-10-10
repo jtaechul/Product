@@ -757,6 +757,13 @@
       "at": "2026-10-10T11:04:26Z",
       "action": "make_video",
       "text": "영상 자동 제작 완료 — 승인 대기"
+    },
+    "upload": {
+      "stage": "upload",
+      "status": "running",
+      "at": "2026-10-10T14:44:00Z",
+      "action": "after_video",
+      "text": "시험 릴스 준비 중 — B 버전 조립 → 인스타에 A·B 게시(5~15분)"
     }
   },
   "cost": {
