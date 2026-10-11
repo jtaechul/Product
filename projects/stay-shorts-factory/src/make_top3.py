@@ -208,14 +208,33 @@ SCRIPT_SYSTEM = """너는 "데이터로 고른 호캉스" 쇼츠의 큐레이터
   (식당 사진 위에 "수영장" 금지. 외관·항공 사진 위에 "실내 온수풀 보유"는 괜찮다). 장면을 묘사만 하는 자막("바다 앞 리조트 단지", "조명 켜진 야외 전경")은 금지 — 팔리는 말이 아니다.
 - 시설은 '확인된 시설'과 객실 이름에 있는 것만. 혜택(benefit)은 테마와 관련된 것(워터파크·온수풀 이용권 포함, 조식 포함, 온천 객실)만 조건문 한 줄로. 관련 없는 사소한 것(취사 가능 등)이면 빈 문자열.
 - 나레이션 길이(공백 제외): hook 24자 이내 · 3위/2위는 narration+benefit 합쳐 38자 이내 · 1위는 48자 이내 · cta 32자 이내. 짧은 문장 1~2개.
+- 말투(운영자 2026-10-11): "골랐어요·뽑았어요" 대신 **"추천드려요·추천해요"** 를 쓴다. 훅 나레이션에 '추천' 이 한 번 들어간다.
+- 이름 공개 순서: 훅에는 숙소 이름이 없다. 3위·2위 나레이션은 이름을 먼저 말한다. **1위 나레이션은 숙소 이름을 문장 맨 끝에** 둔다
+  (예: "최근 한 달 후기 칠백 건, 1위는 소노펠리체 비발디파크예요") — 끝까지 보게 만드는 장치.
+- cta: 저장 유도 + 입력의 '프로필 폴더 이름' 을 말하고, 폴더에 있는 것(이용권 포함 객실·가격대·링크)으로 궁금하게 한다. 가격 숫자는 여기서도 금지.
 출력 JSON 만:
-{"hook":{"caption":"...","narration":"..."},            ← 질문형 훅, 테마를 넣는다. 예: 자막 "11월 온수풀 후기 1위는?" / 나레이션 "강원 온수풀, 후기 데이터로 세 곳 골랐어요"
+{"hook":{"caption":"...","narration":"..."},            ← 질문형 훅, 테마를 넣는다. 예: 자막 "11월 온수풀 후기 1위는?" / 나레이션 "11월 강원 온수풀, 후기 데이터로 세 곳 추천드려요"
  "ranks":[{"rank":3,"captions":["...","..."],"narration":"...","benefit":"조건문 한 줄 또는 빈 문자열"},
           {"rank":2,"captions":["...","..."],"narration":"...","benefit":"..."},
           {"rank":1,"captions":["...","..."],"narration":"...","benefit":"...","honest":"입력의 아쉬움이 있으면 그대로, 없으면 빈 문자열"}],
- "cta":{"caption":"...","narration":"..."},             ← 저장 + 프로필 링크. 예: 자막 "저장해두고 비교하세요" / 나레이션 "세 곳 링크는 프로필에 있어요. 저장해 두고 비교해 보세요"
+ "cta":{"caption":"...","narration":"..."},             ← 예: 자막 "저장해두고 비교하세요" / 나레이션 "이용권 포함 객실과 가격대는 프로필 폴더 '11월 실내 온수풀' 에 있어요"
  "title":"유튜브 제목 12~25자","caption":"인스타 캡션 2문장(고지문·링크는 시스템이 붙임)","hashtags":["#..","#..","#..","#..","#.."]}"""
-NARR_MAX = {"hook": 24, "r3": 38, "r2": 38, "r1": 48, "cta": 32}
+NARR_MAX = {"hook": 24, "r3": 38, "r2": 38, "r1": 48, "cta": 36}
+WORDING_BAN = ("골랐", "골라", "뽑았", "뽑아")                    # 운영자 2026-10-11: '골랐어요' 대신 '추천'
+
+
+def folder_name(req: dict) -> str:
+    """프로필 링크 페이지의 테마 폴더 이름 — 영상·캡션·CTA 가 같은 이름을 가리킨다. request.json "folder" 로 바꿀 수 있다."""
+    if req.get("folder"):
+        return str(req["folder"]).strip()
+    month = str(req.get("month") or "")
+    m = re.search(r"-(\d{1,2})$", month)
+    theme = re.sub(r"[·/,]+", " ", str(req.get("theme") or "")).strip()
+    return (f"{int(m.group(1))}월 " if m else "") + theme
+
+
+def _name_tokens(name: str) -> list[str]:
+    return [t for t in re.split(r"[\s·\-()]+", name) if len(t) >= 2]
 
 
 def check_script(s: dict, hotels: list[dict]) -> list[str]:
@@ -239,9 +258,28 @@ def check_script(s: dict, hotels: list[dict]) -> list[str]:
         if not n or total > NARR_MAX.get(key, 40):
             errs.append(f"{key} 나레이션 {total}자 (한도 {NARR_MAX.get(key, 40)})")
         joined += " ".join(map(str, caps)) + n + str(g.get("benefit", "")) + str(g.get("honest", ""))
+        if key == "hook":
+            for h in hotels:
+                if any(t in (n + " ".join(map(str, caps))) for t in _name_tokens(h["name"])):
+                    errs.append(f"훅에 숙소 이름 금지 ({h['name']})")
+            if "추천" not in n:
+                errs.append("훅 나레이션에 '추천' 넣기")
+        if key == "r1" and hotels:
+            top = hotels[-1]                                   # hotels 는 3위→1위 순
+            pos = [n.rfind(t) for t in _name_tokens(top["name"]) if n.rfind(t) >= 0]
+            if not pos:
+                errs.append(f"1위 나레이션에 숙소 이름({top['name']}) 넣기")
+            elif max(pos) < len(n) * 0.45:
+                errs.append("1위 나레이션은 숙소 이름을 문장 끝에")
+        for w in WORDING_BAN:
+            if w in n:
+                errs.append(f"'{w}' 대신 '추천' 표현 ({key})")
     joined += str(s.get("title", "")) + str(s.get("caption", ""))
+    if re.search(r"(만족도|인기|평점|국내|업계|지역|강원|전국)\s*1위", joined):        # 순위 표기("1위는 ○○")는 허용, 과장 주장("국내 1위")만 금지
+        errs.append("'○○ 1위' 과장 표현")
+    plain = re.sub(r"[123]\s*위", "", joined)
     for b in BANNED:
-        if b in joined:
+        if b in plain:
             errs.append(f"금지 표현 '{b}'")
     if re.search(r"\d[\d,]*\s*(원|만원|만 원|%)", joined):
         errs.append("가격·할인 숫자")
@@ -249,7 +287,7 @@ def check_script(s: dict, hotels: list[dict]) -> list[str]:
 
 
 def write_script(model: str, req: dict, hotels: list[dict]) -> dict:
-    lines = [f"테마: {req.get('theme')} · 지역: {req.get('region')} · 시기: {req.get('month')}", ""]
+    lines = [f"테마: {req.get('theme')} · 지역: {req.get('region')} · 시기: {req.get('month')}", f"프로필 폴더 이름: {folder_name(req)}", ""]
     for rank, h in zip((3, 2, 1), hotels):
         lines += [f"[{rank}위] {h['name']}",
                   f"  화면 A 장면: {h['shots'][0].get('description') or h['shots'][0].get('category')} / 화면 B 장면: {h['shots'][1].get('description') or h['shots'][1].get('category')}",
@@ -348,8 +386,8 @@ def counter_frames(n: int, out_dir: Path, sec: float = 1.0, label: str = "최근
     return frames
 
 
-def cta_card(path: Path, hotels: list[dict], caption: str):
-    """마지막 카드: 어두운 배경 + 1~3위 이름 + 손글씨 자막 + 직접 그린 아이콘(북마크·링크). 이모지 금지."""
+def cta_card(path: Path, hotels: list[dict], caption: str, folder: str = ""):
+    """마지막 카드: 어두운 배경 + 1~3위 이름 + 손글씨 자막 + 직접 그린 아이콘(북마크·링크 → 프로필 폴더 이름). 이모지 금지."""
     from PIL import Image, ImageDraw
     ImageFont, g, hand = _fonts()
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -373,6 +411,11 @@ def cta_card(path: Path, hotels: list[dict], caption: str):
     d.rounded_rectangle([lx, ly + 22, lx + 60, ly + 62], 20, outline=(255, 232, 107, 255), width=9)
     d.rounded_rectangle([lx + 36, ly + 36, lx + 96, ly + 76], 20, outline=(255, 232, 107, 255), width=9)
     d.text((lx + 120, ly + 22), "프로필 링크", font=fy, fill=(255, 255, 255, 255))
+    if folder:                                   # 어느 폴더로 가면 되는지 — 운영자 2026-10-11 "폴더를 만들어서 들어가서 볼 수 있게"
+        line = f"폴더  {folder}"
+        ff = _fit(d, line, g, 44, W - 240, ImageFont)
+        tw = d.textlength(line, font=ff)
+        d.text(((W - tw) / 2, ly + 120), line, font=ff, fill=(255, 232, 107, 255), stroke_width=3, stroke_fill=(0, 0, 0, 200))
     im.save(path)
 
 
@@ -532,8 +575,8 @@ def preview_top3(req: dict, models: dict, report: dict) -> dict:
     ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", "0.6", "-i", "anullsrc=r=24000:cl=mono", str(BUILD / "gap.wav")])
     ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(BUILD / "narr_list.txt"), "-c:a", "libmp3lame", "-b:a", "96k", str(prev / "narration_preview.mp3")])
     preview_sheet(hotels, script, prev / "preview_shots.jpg")
-    md = [f"# 미리보기 — {region} · {theme} · {month}", "", "## 대사·자막", "",
-          f"- 훅 자막: **{script['hook']['caption']}** / 나레이션: {script['hook']['narration']}"]
+    md = [f"# 미리보기 — {region} · {theme} · {month}", f"프로필 폴더 이름: **{folder_name(req)}** (영상 CTA·캡션이 이 이름을 가리킨다 — 프로필 링크 페이지에 같은 이름의 폴더가 있어야 한다)", "",
+          "## 대사·자막", "", f"- 훅 자막: **{script['hook']['caption']}** / 나레이션: {script['hook']['narration']}"]
     for r in script["ranks"]:
         md.append(f"- {r['rank']}위 자막: **{r['captions'][0]}** → **{r['captions'][1]}** / 나레이션: {r['narration']}" + (f" / 혜택: {r['benefit']}" if r.get("benefit") else "") + (f" / 아쉬움: {r['honest']}" if r.get("honest") else ""))
     md += [f"- CTA 자막: **{script['cta']['caption']}** / 나레이션: {script['cta']['narration']}", "", "## 나레이션 받아쓰기 검증 (Gemini 가 음성을 듣고 적은 것)", "",
@@ -663,13 +706,15 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
         seglen_guess = max(planned, narr[key] + 0.35)
         half = seglen_guess / 2
         badge = f"{rank}위  {h['name']}"
-        o1 = BUILD / f"ov_{key}_a.png"; overlay(o1, r["captions"][0], badge=badge, data=data_of(h), sub="네이버 블로그 기준" if data_of(h) else "")
+        # 1위는 앞 절반 동안 이름을 숨기고("1위") 뒤 절반에서 공개 — 나레이션도 이름을 문장 끝에 둔다 (끝까지 보게 하는 장치, 운영자 2026-10-11 논의)
+        o1 = BUILD / f"ov_{key}_a.png"; overlay(o1, r["captions"][0], badge=(f"{rank}위" if rank == 1 else badge), data=data_of(h), sub="네이버 블로그 기준" if data_of(h) else "")
         o2 = BUILD / f"ov_{key}_b.png"; overlay(o2, r["captions"][1], badge=badge, data=data_of(h), sub="네이버 블로그 기준" if data_of(h) else "",
                                                  honest=(f"후기 속 아쉬움: {r.get('honest')}" if rank == 1 and r.get("honest") else ""))
         seg, L = segment(rank, cl, BUILD / f"narr_{key}.wav", narr[key], planned, [(o1, 0, half), (o2, half, 99)])
         segs.append(seg)
     # CTA: 1위 컷 위에 어두운 카드
-    card = BUILD / "ov_cta.png"; cta_card(card, hotels, script["cta"]["caption"])
+    folder = folder_name(req)
+    card = BUILD / "ov_cta.png"; cta_card(card, hotels, script["cta"]["caption"], folder)
     seg, L = segment(9, [(Bc, CUT, CUT), (A, CUT, CUT)], BUILD / "narr_cta.wav", narr["cta"], PLAN["cta"], [(card, 0, 99)])
     segs.append(seg)
 
@@ -686,8 +731,8 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     ms.compare_images([s for h in hotels for s in h["shots"]], clips, BUILD, ms.PREVIEW)
     names = [h["name"] for h in hotels[::-1]]
     caption = (ms.DISCLOSURE + "\n\n" + str(script.get("caption", "")).strip() + "\n\n"
-               + "\n".join(f"{i + 1}위 {n}" for i, n in enumerate(names)) + "\n세 곳 링크는 프로필에 있어요\n\n" + " ".join(script.get("hashtags") or []))
-    meta = {"mode": "top3", "stay": " / ".join(names), "title": script.get("title"), "caption": caption,
+               + "\n".join(f"{i + 1}위 {n}" for i, n in enumerate(names)) + f"\n이용권 포함 객실·가격대·링크는 프로필 폴더 '{folder}' 에 있어요\n\n" + " ".join(script.get("hashtags") or []))
+    meta = {"mode": "top3", "stay": " / ".join(names), "title": script.get("title"), "caption": caption, "folder": folder,
             "affiliate_urls": {h["name"]: h["affiliate_url"] for h in hotels},
             "lines": [script["hook"]["narration"]] + [r["narration"] for r in script["ranks"]] + [script["cta"]["narration"]],
             "veo": {"model": veo.MODEL, "fake": veo.FAKE, "clips_ok": sum(1 for r in results if r["ok"] and not r.get("fake")),
