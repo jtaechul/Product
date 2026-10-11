@@ -255,12 +255,19 @@ SCRIPT_SYSTEM = """너는 "데이터로 고른 호캉스" 쇼츠의 큐레이터
   (식당 사진 위에 "수영장" 금지. 외관·항공 사진 위에 "실내 온수풀 보유"는 괜찮다). 장면을 묘사만 하는 자막("바다 앞 리조트 단지", "조명 켜진 야외 전경")은 금지 — 팔리는 말이 아니다.
 - 시설은 '확인된 시설'과 객실 이름에 있는 것만. 혜택(benefit)은 테마와 관련된 것(워터파크·온수풀 이용권 포함, 조식 포함, 온천 객실)만 조건문 한 줄로. 관련 없는 사소한 것(취사 가능 등)이면 빈 문자열.
 - 나레이션 길이(공백 제외): hook 24자 이내 · 3위/2위는 narration+benefit 합쳐 **55~85자** · 1위는 **75~115자** · cta 36자 이내. benefit 은 narration 에 녹였으면 빈 문자열.
-- 말투(운영자 2026-10-11): "골랐어요·뽑았어요" 대신 **"추천드려요·추천해요"** 를 쓴다. 훅 나레이션에 '추천' 이 한 번 들어간다.
+- 말투(운영자 2026-10-11): "골랐어요·뽑았어요" 대신 **"추천드려요·추천해요"** 를 쓴다 (영상 어딘가에 한 번).
+- **훅(첫 1초) 규칙 — 시청자 관점(2026-10-11 재설계)**: 훅은 **시청자의 상황이나 몸의 감각**으로 멈추게 한다. "데이터·후기·분석·추천·1위" 같은 말은 훅에 쓰지 않는다
+  (그건 끝에서 신뢰를 주는 말이지 멈추게 하는 말이 아니다). 계절·테마 맥락을 반드시 담는다. 네 가지 중 테마와 1위 장면에 맞는 하나를 고른다:
+  ① 상황 공감 — 자막 "11월에도 수영 되는 곳" / 나레이션 "밖은 패딩, 안은 수영복. 11월에 되는 온수풀이에요."
+  ② 감각 대비 — 자막 "밖은 영하, 물은 온천수" / 나레이션 "찬바람 맞다가 따뜻한 물에 들어가는 그 순간, 강원에 있어요."
+  ③ 문제 해결(가족) — 자막 "추운 날 애들 풀어놓을 곳" / 나레이션 "추운데 애들 어디 데려가지? 실내 온수풀 세 곳이면 돼요."
+  ④ 반전·궁금증 — 자막 "온수풀 1위, 바다 아님" / 나레이션 "강원 온수풀 1위가 바다가 아니라 산속이에요." (입력 사실로 확인될 때만)
+  훅 나레이션은 24자 이내, 숙소 이름 없음. 자막은 3~10자.
 - 이름 공개 순서: 훅에는 숙소 이름이 없다. 3위·2위 나레이션은 이름을 먼저 말한다. **1위 나레이션은 숙소 이름을 문장 맨 끝에** 둔다
   (예: "최근 한 달 후기 칠백 건, 1위는 소노펠리체 비발디파크예요") — 끝까지 보게 만드는 장치.
 - cta: 저장 유도 + 입력의 '프로필 폴더 이름' 을 말하고, 폴더에 있는 것(이용권 포함 객실·가격대·링크)으로 궁금하게 한다. 가격 숫자는 여기서도 금지.
 출력 JSON 만:
-{"hook":{"caption":"...","narration":"..."},            ← 질문형 훅, 테마를 넣는다. 예: 자막 "11월 온수풀 후기 1위는?" / 나레이션 "11월 강원 온수풀, 후기 데이터로 세 곳 추천드려요"
+{"hook":{"caption":"...","narration":"...","pattern":"상황|감각|가족|반전"},   ← 위 훅 규칙의 네 가지 중 하나. 데이터·후기·추천 금지
  "ranks":[{"rank":3,"captions":["장면 A 자막","장면 B 자막","장면 C 자막(장면이 3개일 때)"],"narration":"2~3문장","benefit":"조건문 한 줄 또는 빈 문자열"},
           {"rank":2,"captions":["...","...","..."],"narration":"...","benefit":"..."},
           {"rank":1,"captions":["...","...","..."],"narration":"...","benefit":"...","honest":"입력의 아쉬움이 있으면 그대로, 없으면 빈 문자열"}],
@@ -313,8 +320,9 @@ def check_script(s: dict, hotels: list[dict]) -> list[str]:
             for h in hotels:
                 if any(t in (n + " ".join(map(str, caps))) for t in _name_tokens(h["name"])):
                     errs.append(f"훅에 숙소 이름 금지 ({h['name']})")
-            if "추천" not in n:
-                errs.append("훅 나레이션에 '추천' 넣기")
+            bad = [w for w in ("데이터", "후기", "분석", "추천", "AI", "인공지능", "빅데이터") if w in (n + " ".join(map(str, caps)))]
+            if bad:
+                errs.append(f"훅에 {'/'.join(bad)} 금지 — 상황·감각으로 시작 (2026-10-11 훅 규칙)")
         if key == "r1" and hotels:
             top = hotels[-1]                                   # hotels 는 3위→1위 순
             pos = [n.rfind(t) for t in _name_tokens(top["name"]) if n.rfind(t) >= 0]
@@ -325,6 +333,9 @@ def check_script(s: dict, hotels: list[dict]) -> list[str]:
         for w in WORDING_BAN:
             if w in n:
                 errs.append(f"'{w}' 대신 '추천' 표현 ({key})")
+    all_narr = " ".join(str((g or {}).get("narration", "")) for _, g in segs)
+    if "추천" not in all_narr:
+        errs.append("나레이션 어딘가에 '추천' 한 번 (운영자 말투 규칙)")
     joined += str(s.get("title", "")) + str(s.get("caption", ""))
     if re.search(r"(만족도|인기|평점|국내|업계|지역|강원|전국)\s*1위", joined):        # 순위 표기("1위는 ○○")는 허용, 과장 주장("국내 1위")만 금지
         errs.append("'○○ 1위' 과장 표현")
@@ -526,7 +537,9 @@ def segment(idx: int, pieces: list, wav: Path | None, narr: float, planned: floa
         fc += f"[{cur}][{k}:v]overlay=0:0:format=auto:enable='gte(t,{a:.3f})*lt(t,{b:.3f})'[v{j + 2}];"
         cur = f"v{j + 2}"; k += 1
     if counter:
-        fc += f"[{cur}][{k}:v]overlay=0:0:format=auto:eof_action=repeat[vc];"
+        # counter = (프레임 폴더, 시작 초): 시작 초부터 숫자가 올라가고 마지막 프레임이 끝까지 남는다 (1위 이름 공개 순간에 쓴다)
+        st = float(counter[1] or 0)
+        fc += f"[{k}:v]setpts=PTS-STARTPTS+{st:.3f}/TB[cnt];[{cur}][cnt]overlay=0:0:format=auto:eof_action=repeat:enable='gte(t,{st:.3f})'[vc];"
         cur = "vc"; k += 1
     fc += f"[{cur}]format=yuv420p[v];[{k}:a]apad[a]"
     out = BUILD / f"seg_{idx}.mp4"
@@ -757,14 +770,13 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     segs = []
     top = hotels[2]
     data_of = lambda h: (f"최근 30일 후기 {h['blog_30d']:,}건{'+' if (h['blog_30d'] or 0) >= 1000 else ''}" if h.get("blog_30d") else "")
-    # 훅: 1위의 물놀이 컷 (이름 숨김) + 손글씨 자막 + 카운터
+    # 훅: 1위의 물놀이 컷 (이름 숨김) + 손글씨 자막. 2026-10-11 훅 재설계: 훅은 상황·감각 한 문장만 — 후기 카운터는 1위 이름 공개 순간으로 옮겼다
     ov = BUILD / "ov_hook.png"; overlay(ov, script["hook"]["caption"], hand=True)
     cdir = None
     if top.get("blog_30d"):
         cdir = BUILD / "counter"; counter_frames(int(top["blog_30d"]), cdir, 1.2)
     A, Bc = clips[top["shots"][0]["n"]], clips[top["shots"][1]["n"]]
-    seg, L = segment(0, [(A, 0, CUT), (Bc, 0, CUT)], BUILD / "narr_hook.wav", narr["hook"], PLAN["hook"],
-                     [(ov, 0, 99)], (cdir, 1) if cdir else None)
+    seg, L = segment(0, [(A, 0, CUT), (Bc, 0, CUT)], BUILD / "narr_hook.wav", narr["hook"], PLAN["hook"], [(ov, 0, 99)])
     segs.append(seg)
     # 3위 → 2위 → 1위: [A 앞 2초, B롤 1초, B 앞 2초, C 앞 2초, A 뒤 2초] (1위는 B·C 뒤 2초까지) — 2초 템포, 장면당 Veo 클립 1개(앞·뒤 반)
     for i, (h, r) in enumerate(zip(hotels, script["ranks"])):
@@ -786,14 +798,18 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
         caps = list(r["captions"])[:len(sh)] or [""]
         badge = f"{rank}위  {h['name']}"
         ovs = []
+        reveal_at = seglen_guess * (len(caps) - 1) / len(caps)          # 마지막 자막 = 1위 이름 공개 순간
         for k, cap in enumerate(caps):
             # 1위는 첫 자막 동안 이름을 숨기고("1위") 그 뒤에 공개 — 나레이션도 이름을 문장 끝에 둔다 (끝까지 보게 하는 장치, 운영자 2026-10-11 논의)
             o = BUILD / f"ov_{key}_{k}.png"
-            overlay(o, cap, badge=(f"{rank}위" if rank == 1 and k == 0 else badge), data=data_of(h), sub="네이버 블로그 기준" if data_of(h) else "",
-                    honest=(f"후기 속 아쉬움: {r.get('honest')}" if rank == 1 and k == len(caps) - 1 and r.get("honest") else ""))
+            last = k == len(caps) - 1
+            use_counter = rank == 1 and last and cdir is not None       # 그 순간엔 정적 뱃지 대신 숫자가 올라가는 카운터(증거)
+            overlay(o, cap, badge=(f"{rank}위" if rank == 1 and k == 0 else badge), data=("" if use_counter else data_of(h)),
+                    sub=("" if use_counter or not data_of(h) else "네이버 블로그 기준"),
+                    honest=(f"후기 속 아쉬움: {r.get('honest')}" if rank == 1 and last and r.get("honest") else ""))
             a, b = seglen_guess * k / len(caps), (seglen_guess * (k + 1) / len(caps) if k < len(caps) - 1 else 99)
             ovs.append((o, a, b))
-        seg, L = segment(rank, cl, BUILD / f"narr_{key}.wav", narr[key], planned, ovs)
+        seg, L = segment(rank, cl, BUILD / f"narr_{key}.wav", narr[key], planned, ovs, (cdir, reveal_at) if rank == 1 and cdir else None)
         segs.append(seg)
     # CTA: 1위 컷 위에 어두운 카드
     A, Bc = clips[top["shots"][0]["n"]], clips[top["shots"][-1]["n"]]
