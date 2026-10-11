@@ -107,12 +107,12 @@ jobs:
           L=$P/data/runs/latest
           if [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$L/narration_preview.mp3" ] && [ ! -f "$V" ]; then
             # 미리보기 단계: 사진 시트 + 나레이션 음성 + 받아쓰기 판정
-            QA=$(python3 -c "import json;r=json.load(open('$L/report.json',encoding='utf-8'));qa=r.get('narration_qa') or [];print(('나레이션 받아쓰기 ' + ('전부 통과' if all(q['ok'] for q in qa) else '실패 있음')) + ' · ' + ' / '.join(f\"{q['segment']} {q['similarity']}\" for q in qa))" 2>/dev/null || echo "미리보기")
+            QA=$(python3 -c "import json;r=json.load(open('$L/report.json',encoding='utf-8'));qa=r.get('narration_qa') or [];sq=r.get('screen_qa') or [];sqs=[q for q in sq if q.get('score') is not None];print(('나레이션 받아쓰기 ' + ('전부 통과' if all(q['ok'] for q in qa) else '실패 있음')) + ' · ' + ' / '.join(f\"{q['segment']} {q['similarity']}\" for q in qa) + (f\" · 화면 검수 {sum(1 for q in sqs if q['score']>=q.get('threshold',7))}/{len(sqs)} 통과\" if sqs else ''))" 2>/dev/null || echo "미리보기")
             COST=$(python3 -c "import json;r=json.load(open('$L/report.json',encoding='utf-8'));g=r.get('gemini_usage') or {};print(f\"비용: Veo 0원 · AI 글·음성 추정 {g.get('krw_est',0):,}원({g.get('calls',0)}회)\")" 2>/dev/null || echo "비용: Veo 0원")
             curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$L/preview_shots.jpg" \
               -F caption="미리보기(영상 없음) — 숙소별 장면과 자막. $QA · $COST" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
             curl -s -o /dev/null -w "telegram audio http %{http_code}\n" -F chat_id="$TG_CHAT" -F audio=@"$L/narration_preview.mp3" \
-              -F caption="나레이션 미리듣기 (단일 숙소: 훅 → 물놀이 → 객실 → 특별 공간 → 조건 → CTA)" "https://api.telegram.org/bot$TG_TOKEN/sendAudio" || true
+              -F caption="나레이션 미리듣기 (컷 순서: 훅 → 물놀이 2 → 객실 2 → 특별 공간 2 → 조건·추천 2 → 끝 카드)" "https://api.telegram.org/bot$TG_TOKEN/sendAudio" || true
           elif [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$V" ]; then
             CAP=$(python3 - <<'PY' || echo "숙소 쇼츠 시험 제작본입니다 (미발행 · 검수용)"
           import json
