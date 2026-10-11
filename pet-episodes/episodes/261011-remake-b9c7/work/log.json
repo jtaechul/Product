@@ -9,93 +9,12 @@
     "lipsync": false,
     "allow_i2v": false,
     "use_timeline": true,
-    "src_sig": "a86cb9b0b6c7-5.7",
+    "src_sig": "c09d297d1772-5.7",
     "src_full_sec": 5.67,
     "src_sec": 5.67,
     "segments": 1,
     "one_shot": true,
     "method": "gen",
-    "timeline": {
-      "all": [
-        {
-          "t": "0.0-0.5",
-          "action": "A boy in a grey hoodie and light blue jeans lies face-down on a running treadmill, gripping the front frame with both hands as his legs drag. A second boy in a ",
-          "mouth": "The first boy's face is obscured facing downward; the second boy's mouth is closed.",
-          "sound": "Cameraman laughs and begins speaking: 'Look at what's...'",
-          "camera": "Handheld, slightly high angle, following the treadmill."
-        },
-        {
-          "t": "0.5-1.0",
-          "action": "The first boy loses his grip and slides backward off the moving belt, falling off the rear onto the carpeted floor. The second boy stops beside the front of the",
-          "mouth": "The second boy's mouth is slightly open in curiosity/amusement.",
-          "sound": "Cameraman continues speaking and laughing: '...funny, look at what...'",
-          "camera": "Handheld pan slightly right and down tracking the falling boy."
-        },
-        {
-          "t": "1.0-1.5",
-          "action": "The first boy rolls onto his back on the carpet between the treadmill and the green wall. The second boy turns and takes a step toward the edge of the running t",
-          "mouth": "The first boy smiles with mouth slightly open; the second boy has his mouth slightly open.",
-          "sound": "Cameraman chuckles in amusement.",
-          "camera": "Handheld, tilting slightly downward toward the two boys."
-        },
-        {
-          "t": "1.5-2.0",
-          "action": "The first boy lies on his back with legs raised playfully. The second boy bends his knees and prepares to jump or place his hands onto the running treadmill bel",
-          "mouth": "The second boy's mouth is slightly open with anticipation; the first boy's mouth is open laughing.",
-          "sound": "Mechanical whirring of the treadmill belt and faint breathing.",
-          "camera": "Handheld, centered on the treadmill and the floor space."
-        },
-        {
-          "t": "2.0-2.5",
-          "action": "The second boy leaps forward, placing both hands flat onto the moving treadmill belt. The belt instantly flings his arms backward under his torso, pulling his l",
-          "mouth": "The second boy's mouth opens wide in surprise.",
-          "sound": "Loud slap of hands hitting the belt, followed by a sudden thud.",
-          "camera": "Handheld, shaking slightly as action unfolds."
-        },
-        {
-          "t": "2.5-3.0",
-          "action": "The second boy is violently thrown backward off the treadmill, flipping onto his back and crashing directly on top of the first boy lying on the floor.",
-          "mouth": "Both boys have wide open mouths grimacing and yelling.",
-          "sound": "Heavy thud of body impact and collision on the floor.",
-          "camera": "Handheld, slight shake tracking the collision."
-        },
-        {
-          "t": "3.0-3.5",
-          "action": "The second boy lands fully across the first boy's chest and torso. The first boy flails his arms upward to push him off as they both recoil in pain and surprise",
-          "mouth": "The second boy's mouth is open grimacing; the first boy's mouth is open in shock.",
-          "sound": "Cameraman gasps and bursts into suppressed laughter.",
-          "camera": "Handheld, angled down at the tangled boys."
-        },
-        {
-          "t": "3.5-4.0",
-          "action": "The second boy rolls off to the side onto the carpet, lifting his hand toward the back of his neck/head. The first boy pushes himself away along the green wall.",
-          "mouth": "The second boy's mouth is wide open grimacing; the first boy's mouth is open panting.",
-          "sound": "Cameraman wheezes and laughs loudly.",
-          "camera": "Handheld, holding frame on both boys on the carpet."
-        },
-        {
-          "t": "4.0-4.5",
-          "action": "The second boy rolls onto his side clutching his neck/shoulder in pain. The first boy sits up slightly against the wall.",
-          "mouth": "The second boy opens his mouth wide to groan.",
-          "sound": "Soft groan of pain beginning from the second boy.",
-          "camera": "Handheld, panning slightly down toward the second boy."
-        },
-        {
-          "t": "4.5-5.0",
-          "action": "The second boy lies on his side, curling his torso and holding his neck, letting out an audible cry of pain.",
-          "mouth": "The second boy's mouth is wide open shouting 'Ah!'.",
-          "sound": "Second boy shouts 'Ah!' in pain.",
-          "camera": "Handheld, steady on the boys on the floor."
-        },
-        {
-          "t": "5.0-5.7",
-          "action": "The second boy continues holding his neck, rolling slightly onto his back in distress as the first boy watches from beside him.",
-          "mouth": "The second boy grimaces with mouth open, groaning 'Ah!'; the first boy's mouth is slightly open.",
-          "sound": "Second boy groans 'Ah!' followed by cameraman snickering.",
-          "camera": "Handheld, tilting slightly up from the floor before ending."
-        }
-      ]
-    },
     "spent": 0.32,
     "ledger": [
       {
@@ -217,11 +136,14 @@
     "vertical": {
       "mode": "new 9:16",
       "src": "720x1280"
-    }
+    },
+    "timeline_reset": "원본이 바뀌어 시간표를 다시 만듦",
+    "timeline": {}
   },
   "last_request": {
-    "file": "02_remake_board.json",
-    "ran_at": "2026-10-11T13:26:47Z",
-    "ok": true
-  }
+    "file": "03_remake_board.json",
+    "ran_at": "2026-10-11T13:35:40Z",
+    "ok": false
+  },
+  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
 }
