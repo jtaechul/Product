@@ -4466,8 +4466,8 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
                 info.append({"scene": k + 1, "seg": j + 1, "asked": sec, "got": round(got, 2), "used": d, "speed": round(1 / k_t, 3) if vf else 1.0,
                              "last_frame": len(ins) > 1, "bad": bad})
                 res["gen"] = {**(res.get("gen") or {}), "clips": info}
-                if bad:                                    # ⛔ 몸이 엉킨 구간은 완성본에 넣지 않는다 — 그 구간 파일만 지우고 멈춘다(다시 만들기는 사장님 확인 후)
-                    o.unlink(missing_ok=True)
+                if bad:                                    # ⛔ 몸이 엉킨 구간은 완성본에 넣지 않는다 — 그 구간은 bad_로 옮겨 두고 멈춘다(다시 만들기는 사장님 확인 후)
+                    o.replace(work / f"bad_scene{k + 1}_{j + 1}.mp4")   # 검사가 맞았는지 눈으로 확인할 수 있게 남긴다(우리가 만든 영상이라 저장소에 둬도 됨)
                     redo_usd = round(usd, 2)
                     res["gen_bad"] = {"scene": k + 1, "seg": j + 1, "range": [float(ta), float(tb)], "frames": bad, "redo_usd": redo_usd}
                     raise RuntimeError(f"{tag}에서 개 몸이 엉켜 보여({', '.join(f'{t}초 {w}' for t, w in bad[:3])}) 완성하지 않고 멈췄습니다. "
