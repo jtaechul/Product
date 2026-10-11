@@ -25,7 +25,8 @@
     "res": "720p",
     "pre_enhance": false,
     "upscale": 0,
-    "cap": 5
+    "cap": 5,
+    "gen_model": "veo-lite"
   },
   "caption": "주인님 트레드밀 타다가 아주 잘못되버렸어.\n\n집에서도 완벽한 실내 산책 안전한 반려견 전용 트레드밀로 시작하세요\n\n구매는 프로필 링크에서.",
   "hashtags": [
