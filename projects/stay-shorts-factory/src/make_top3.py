@@ -90,6 +90,10 @@ def official_photos(name: str, city: str, out: Path, models: dict, req: dict) ->
         return [], {"reason": f"오류 {str(e)[:120]}"}
     info = {k: cr.get(k) for k in ("url", "resolved_by", "reason", "pages", "tried")} | {"photos": len(cr["photos"])}
     log(f"{name}: 공식 홈페이지 사진 {len(cr['photos'])}장" + (f" — {cr['reason']}" if cr.get("reason") else f" ({cr.get('url')})"))
+    try:   # 검수용 한 장 (build/ 에만 — 텔레그램으로만 보내고 저장소·Release 엔 올리지 않는다)
+        crawl.contact_sheet(cr["photos"], out / "sheet.jpg")
+    except Exception as e:  # noqa: BLE001
+        log(f"{name}: 수집 사진 시트 실패 ({str(e)[:60]})")
     return cr["photos"], info
 
 
