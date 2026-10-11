@@ -181,8 +181,11 @@ USED = {}
 
 
 def _try_models(kind: str, models: list, fn):
-    """목록에 있어도 이 키로는 못 쓰는 모델이 있다(실측: 2.5-flash 404). 되는 것이 나올 때까지 넘긴다."""
+    """목록에 있어도 이 키로는 못 쓰는 모델이 있다(실측: 2.5-flash 404). 되는 것이 나올 때까지 넘긴다.
+    한 번 성공한 모델은 같은 실행 안에서 **먼저** 다시 쓴다 — 특히 음성(tts)은 중간에 모델이 바뀌면 목소리가 바뀐다(판결극장 NO_FALLBACK 과 같은 뜻)."""
     last = None
+    if USED.get(kind) in models:
+        models = [USED[kind]] + [m for m in models if m != USED[kind]]
     for m in models:
         try:
             out = fn(m)
@@ -282,23 +285,50 @@ def clean_tts_wav(src: Path, dst: Path, frame_ms: int = 10) -> dict:
     return info
 
 
-def gemini_tts(model: str, text: str, voice: str, style: str, out_wav: Path) -> float:
-    # ⚠️ 2026-10-11 실측: style 지시문을 본문 앞에 붙이면 TTS 가 **지시문까지 읽는다** (구간마다 약 6초, 무음 분석으로 확인).
-    #    stay-run-4·5 모두 그랬다. 이제 지시문은 붙이지 않는다 — style 은 빈 문자열로 둔다.
-    body = {"contents": [{"parts": [{"text": (f"{style}:\n{text}" if style else text)}]}],
+# ── 목소리·톤 (2026-10-11 운영자 "중간에 목소리가 바뀐다 — 판결극장처럼 여자 목소리 코드·톤을 지정해 똑같이 나오게") ──
+# 판결극장(verdict-theater/src/tts.py) 방식을 그대로 가져온다:
+#   ① 목소리 코드 고정 — 여자 나레이션은 "Kore"(단단하고 또렷, 판결극장에서 운영자가 자연스럽다고 고른 여성 목소리). request.json "voice" 로만 바꾼다
+#   ② 톤 지시는 구글 권장 모양 "지시 … 다음 큰따옴표 안의 말만 그대로: "대사"" 로 보낸다
+#   ③ 지시문까지 소리 내어 읽는 모델이 있다(gemini-3.8-flash-tts 실측 · stay-run-4·5 도 그랬다) → **소리 길이로 감지**(글자당 0.24초 + 0.9초를 넘으면 읽은 것)
+#      → 그 모델은 이번 실행 내내 대사만 보낸다(READS_ALOUD). 한 편 안에서 모델·목소리는 바꾸지 않는다(_try_models 가 성공 모델을 먼저 다시 씀)
+VOICE_DEFAULT = "Kore"
+TTS_STYLE = "숙소를 소개하는 여행 쇼츠 나레이션이다. 서울 말씨의 30대 여성이 차분하고 따뜻하게, 친구에게 추천하듯 또박또박 말한다."
+READ_SEC_PER_CHAR, READ_SEC_SLACK = 0.24, 0.9
+READS_ALOUD: set = set()
+
+
+def _tts_once(model: str, prompt: str, voice: str) -> tuple[bytes, int]:
+    body = {"contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {"responseModalities": ["AUDIO"],
                                  "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}}}}
+    data = _gpost(f"models/{model}:generateContent", body, 180)
+    parts = (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or [])
+    inline = next((p.get("inlineData") for p in parts if p.get("inlineData")), None)
+    if not inline or not inline.get("data"):
+        raise RuntimeError(f"음성 응답에 오디오 없음: {str(data)[:160]}")
+    pcm = base64.b64decode(inline["data"])
+    m = re.search(r"rate=(\d+)", inline.get("mimeType", "") or "")
+    return pcm, (int(m.group(1)) if m else 24000)
+
+
+def _tts_prompt(model: str, text: str, style: str) -> str:
+    if not style or model in READS_ALOUD:
+        return text
+    t = re.sub(r'^["“”]+|["“”]+$', "", text.strip())
+    return f'{style} 다음 큰따옴표 안의 말만 그대로: "{t}"'
+
+
+def gemini_tts(model: str, text: str, voice: str, style: str, out_wav: Path) -> float:
     last = None
     for attempt in range(3):
         try:
-            data = _gpost(f"models/{model}:generateContent", body, 180)
-            parts = (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or [])
-            inline = next((p.get("inlineData") for p in parts if p.get("inlineData")), None)
-            if not inline or not inline.get("data"):
-                raise RuntimeError(f"음성 응답에 오디오 없음: {str(data)[:160]}")
-            pcm = base64.b64decode(inline["data"])
-            m = re.search(r"rate=(\d+)", inline.get("mimeType", "") or "")
-            rate = int(m.group(1)) if m else 24000
+            prompt = _tts_prompt(model, text, style)
+            pcm, rate = _tts_once(model, prompt, voice)
+            k = len(re.sub(r"[^0-9A-Za-z가-힣]", "", text))
+            if prompt != text and k and len(pcm) / 2.0 / rate > k * READ_SEC_PER_CHAR + READ_SEC_SLACK:
+                log(f"⚠️ {model} 이(가) 톤 지시문까지 읽었다({len(pcm) / 2.0 / rate:.1f}초 / {k}자) — 이번 실행은 대사만 보낸다")
+                READS_ALOUD.add(model)
+                pcm, rate = _tts_once(model, text, voice)
             with wave.open(str(out_wav), "wb") as wf:
                 wf.setnchannels(1); wf.setsampwidth(2); wf.setframerate(rate); wf.writeframes(pcm)
             info = clean_tts_wav(out_wav, out_wav)          # 앞·뒤 잡음 덩어리 제거 (운영자 "치지직" 지적)

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -62,6 +63,10 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터이자 편집자�
 - **숙소 이름을 절대 쓰지 않는다** (나레이션·자막 모두). 대신 "강원 홍천의 대형 워터파크 리조트"처럼 **지역 + 유형**으로 부른다 — 컷 2 문장에서 한 번.
 - 1인칭 "~해요"체, 광고 말투 금지, 유행어 전체 1개 이하. "최고·유일·최저가·1위·완벽·보장·최장·최대" 금지. "골랐어요·뽑았어요" 금지. 마지막 컷에 "추천해요".
 - 문장마다 새 정보. 같은 시설·같은 표현을 두 컷에서 반복하지 않는다. 글자 한도(공백 제외)를 지킨다 — Veo 컷은 4초라 짧다.
+- **이어지는 한 편의 이야기**로 쓴다 (2026-10-11 운영자 "특징을 단순 나열만 해서 앞뒤 연결이 어색하다"): 한 사람이 숙소를 안내하며 걸어가듯,
+  컷 2부터는 문장이 **앞 컷을 받는 연결어·장면 전환어**로 시작한다 — 예: "안으로 들어가면", "그 옆엔", "객실로 올라오면", "창밖엔", "밤이 되면", "여기에", "그래서",
+  "덕분에", "다만", "특히", "이렇게", "저녁엔", "아침엔", "한 층 내려가면". "A가 있어요. B가 있어요." 식 나열 금지. 같은 연결어를 두 번 쓰지 않고,
+  문장 끝(~있어요 / ~이에요 / ~좋아요 / ~돼요 / ~해요)도 연속으로 같은 것을 쓰지 않는다. 마지막 컷은 앞 내용을 받아 "그래서 …에게 추천해요"로 닫는다.
 - 입력에 "사진 없는 시그니처"가 있으면(없으면 이 규칙 무시): 그 시설은 사진이 없지만 이 숙소의 대표 포인트라 **딱 한 번** 말해도 된다.
   입력이 지정한 컷(사진 컷)의 문장 **끝에** "…도 있어요", "…까지 이용돼요" 식의 짧은 절로 덧붙인다. 그 컷의 자막은 화면에 보이는 것 그대로 둔다. 다른 컷에서는 말하지 않는다.
   출력에 "extra": {"i": 그 컷 번호, "tag": "+ 시설 이름(2~10자)"} 를 적는다 — 화면에 '+ 히노키 사우나' 같은 작은 태그로 표시된다.
@@ -315,6 +320,53 @@ def pick_signature(h: dict, cuts: list[dict]) -> dict | None:
     return {"fact": pick, "i": host["i"]}
 
 
+CONNECTORS = ("그리고", "그 옆", "옆엔", "옆에는", "안으로", "들어가면", "들어서면", "올라오면", "올라가면", "내려가면", "나가면", "나오면", "창밖", "밤이", "밤엔", "저녁",
+              "아침", "낮엔", "여기에", "여기서", "여긴", "그래서", "덕분에", "다만", "특히", "이렇게", "게다가", "그러면", "그럼", "그러니", "거기에", "한편", "바로",
+              "그 뒤", "그다음", "다음은", "이제", "마지막", "참고로", "대신", "무엇보다", "특별히", "실내", "밖으로", "위로", "아래")
+
+
+def flow_errs(s: dict, cuts: list[dict]) -> list[str]:
+    """나열 방지 검사: 컷 2 이후 문장의 60% 이상이 연결어로 시작하고, 같은 문장 끝이 3번 연속 나오지 않는다."""
+    got = {int(x.get("i", 0)): str(x.get("narration", "")).strip() for x in (s.get("cuts") or []) if isinstance(x, dict)}
+    rest = [got.get(c["i"], "") for c in cuts[1:]]
+    if not rest:
+        return []
+    errs = []
+    linked = sum(1 for n in rest if any(w in n[:10] for w in CONNECTORS))     # 연결어가 문장 첫 10자 안에
+    if linked < max(1, int(round(len(rest) * 0.6))):
+        errs.append(f"컷 2부터는 앞 컷을 받는 연결어로 시작 (지금 {linked}/{len(rest)}) — 나열 금지")
+    ends = [re.sub(r"[.!?~\s]+$", "", n)[-3:] for n in [got.get(c["i"], "") for c in cuts]]
+    for k in range(2, len(ends)):
+        if ends[k] and ends[k] == ends[k - 1] == ends[k - 2]:
+            errs.append(f"문장 끝 '{ends[k]}' 3번 연속 — 끝맺음을 바꾼다")
+            break
+    return errs
+
+
+POLISH_SYSTEM = """너는 쇼츠 나레이션 편집자다. 아래 JSON 대본을 **소리 내어 읽었을 때 한 사람이 한 호흡으로 안내하듯 이어지게** 다듬는다.
+지켜야 할 것: 컷 수·순서·각 컷의 사실(시설·전망·조건)·자막(caption)·extra·title·caption·hashtags 는 그대로. 숙소 이름 금지. 가격·과장 금지. 각 컷의 글자 한도(공백 제외, 입력에 적힘)를 지킨다.
+바꿀 것: 컷 2부터 앞 컷을 받는 연결어·장면 전환어로 시작하게 하고("안으로 들어가면", "그 옆엔", "객실로 올라오면", "밤이 되면", "그래서", "다만" …), 같은 연결어·같은 문장 끝을 연속해서 쓰지 않는다.
+마지막 컷은 "…에게 추천해요"로 닫는다. 출력은 입력과 같은 구조의 JSON 만."""
+
+
+def polish_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, sig: dict | None) -> dict:
+    """연결성 다듬기 한 번 — 통과하면 다듬은 것을, 아니면 원본을 쓴다 (사실·길이 규칙은 check_script 가 다시 본다)."""
+    limits = "\n".join(f"컷 {c['i']}: {c['lo']}~{c['hi'] + (EXTRA_BONUS if sig and sig['i'] == c['i'] else 0)}자" for c in cuts)
+    try:
+        t = ms.gemini_json(model, POLISH_SYSTEM, "글자 한도:\n" + limits + "\n\n대본 JSON:\n" + json.dumps(s, ensure_ascii=False))
+    except Exception as e:  # noqa: BLE001
+        log(f"다듬기 실패(원본 유지): {str(e)[:80]}")
+        return s
+    for k in ("title", "caption", "hashtags", "extra"):
+        t.setdefault(k, s.get(k))
+    errs = check_script(t, h, cuts, req, sig) + flow_errs(t, cuts)
+    if errs:
+        log("다듬은 대본이 규칙에 걸려 원본 유지:", errs[:3])
+        return s
+    t["cuts"] = sorted(t["cuts"], key=lambda x: int(x["i"]))
+    return t
+
+
 def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
     lines = [f"테마: {req.get('theme')} · 지역: {req.get('region')} · 시기: {req.get('month')}", f"프로필 폴더 이름: {mt.folder_name(req)}",
              f"숙소(영상에서는 말하지 말 것 · 제목·캡션에만): {h['name']}" + (f" ({h.get('city')})" if h.get("city") else "") + (f" — {h['signature']}" if h.get("signature") else ""),
@@ -335,10 +387,12 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
         s = ms.gemini_json(model, SCRIPT_SYSTEM, content + extra)
         errs = check_script(s, h, cuts, req, sig)
         if not errs:
+            errs = flow_errs(s, cuts)
+        if not errs:
             s["cuts"] = sorted(s["cuts"], key=lambda x: int(x["i"]))
             if not sig:
                 s["extra"] = None
-            return s
+            return polish_script(model, s, cuts, h, req, sig)
         log(f"대본 검사 실패({attempt + 1}):", errs)
     raise RuntimeError("대본이 규칙을 통과하지 못함: " + " / ".join(errs))
 
@@ -405,7 +459,50 @@ def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) 
 
 
 # ── 음성 ───────────────────────────────────────────────────────────────────────────────
+def silences(wav: Path, noise_db: int, min_sec: float) -> list[tuple[float, float]]:
+    out = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(wav), "-af", f"silencedetect=noise={noise_db}dB:d={min_sec}", "-f", "null", "-"],
+                         capture_output=True, text=True).stderr
+    starts = [float(m) for m in re.findall(r"silence_start: ([0-9.]+)", out)]
+    ends = [float(m) for m in re.findall(r"silence_end: ([0-9.]+)", out)]
+    return list(zip(starts, ends))
+
+
+def split_narration(full: Path, keys: list, tempo_done: bool = True) -> dict | None:
+    """전체 나레이션 wav 를 문장 사이 무음에서 n 조각으로 자른다. 정확히 n-1 개의 무음이 잡히는 기준(dB·길이)을 찾지 못하면 None.
+    조각 이름: narr_c{i}.wav / narr_cta.wav (컷 단위 합성과 같은 파일 이름이라 뒤 단계는 그대로)."""
+    n = len(keys)
+    total = ms.probe_duration(full)
+    for noise, d in ((-38, 0.30), (-35, 0.30), (-40, 0.26), (-38, 0.22), (-35, 0.36), (-42, 0.20), (-32, 0.30)):
+        sil = [(a, b) for a, b in silences(full, noise, d) if a > 0.15 and b < total - 0.15]
+        if len(sil) == n - 1:
+            bounds = [0.0] + [(a + b) / 2 for a, b in sil] + [total]
+            narr = {}
+            for k, key in enumerate(keys):
+                a, b = bounds[k], bounds[k + 1]
+                out = B() / (f"narr_c{key}.wav" if isinstance(key, int) else f"narr_{key}.wav")
+                ms.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{a:.3f}", "-t", f"{b - a:.3f}", "-i", str(full),
+                        "-af", "afade=t=in:d=0.02,afade=t=out:st=" + f"{max(0.0, b - a - 0.04):.3f}" + ":d=0.04", str(out)])
+                narr[key] = round(b - a, 3)
+            log(f"나레이션 한 번 합성 → {n}조각 분할 (무음 기준 {noise}dB·{d}s · 전체 {total:.1f}초)")
+            return narr
+    return None
+
+
 def narrate(models: dict, script: dict, voice: str, tempo: float) -> dict:
+    """나레이션 전체를 **한 번에** 합성해 문장 사이 무음에서 자른다 → 한 목소리·한 호흡(운영자 "중간에 목소리가 바뀐다, 나열처럼 들린다").
+    분할이 안 맞으면(무음 수 ≠ 문장 수-1) 예전처럼 컷마다 따로 합성한다."""
+    keys = [int(x["i"]) for x in script["cuts"]] + ["cta"]
+    texts = [x["narration"].strip() for x in script["cuts"]] + [script["cta"]["narration"].strip()]
+    if len(keys) >= 3:
+        try:
+            full = B() / "narr_full.wav"
+            mt.tts(models, "\n\n".join(texts), full, voice, tempo)
+            got = split_narration(full, keys)
+            if got:
+                return got
+            log("⚠️ 무음 분할이 문장 수와 안 맞아 컷마다 따로 합성한다")
+        except Exception as e:  # noqa: BLE001
+            log(f"⚠️ 전체 합성 실패 → 컷마다 따로: {str(e)[:100]}")
     narr = {}
     for x in script["cuts"]:
         narr[int(x["i"])] = mt.tts(models, x["narration"], B() / f"narr_c{int(x['i'])}.wav", voice, tempo)
@@ -419,7 +516,7 @@ def qa_items(script: dict) -> list[tuple[str, str, Path]]:
 
 # ── 공통 준비 (미리보기·제작) ────────────────────────────────────────────────────────────
 def prepare(req: dict, models: dict, report: dict) -> dict:
-    voice, tempo = str(req.get("voice") or "Erinome"), float(req.get("tempo") or mt.TEMPO)
+    voice, tempo = str(req.get("voice") or ms.VOICE_DEFAULT), float(req.get("tempo") or mt.TEMPO)
     B().mkdir(parents=True, exist_ok=True)
     h, pos0 = assets(req, models, report)
     cuts = plan_cuts(h, int(req.get("max_veo_cuts") or 4))
@@ -513,13 +610,17 @@ def preview_solo(req: dict, models: dict, report: dict) -> dict:
     p = prepare(req, models, report)
     prev = ms.PREVIEW
     prev.mkdir(parents=True, exist_ok=True)
-    names = [f"narr_c{int(x['i'])}.wav" for x in p["script"]["cuts"]] + ["narr_cta.wav"]
-    (B() / "narr_list.txt").write_text("".join(f"file '{n}'\nfile 'gap.wav'\n" for n in names), encoding="utf-8")
-    ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", "0.4", "-i", "anullsrc=r=24000:cl=mono", str(B() / "gap.wav")])
-    ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(B() / "narr_list.txt"), "-c:a", "libmp3lame", "-b:a", "96k", str(prev / "narration_preview.mp3")])
+    if (B() / "narr_full.wav").exists():                        # 한 번에 합성한 원본 그대로 들려준다 (한 호흡)
+        ms.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(B() / "narr_full.wav"), "-c:a", "libmp3lame", "-b:a", "96k", str(prev / "narration_preview.mp3")])
+    else:
+        names = [f"narr_c{int(x['i'])}.wav" for x in p["script"]["cuts"]] + ["narr_cta.wav"]
+        (B() / "narr_list.txt").write_text("".join(f"file '{n}'\nfile 'gap.wav'\n" for n in names), encoding="utf-8")
+        ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", "0.4", "-i", "anullsrc=r=24000:cl=mono", str(B() / "gap.wav")])
+        ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(B() / "narr_list.txt"), "-c:a", "libmp3lame", "-b:a", "96k", str(prev / "narration_preview.mp3")])
     preview_sheet(p["h"], p["cuts"], p["script"], p["qa"], prev / "preview_shots.jpg")
     (prev / "preview.md").write_text(preview_md(req, p), encoding="utf-8")
     meta = {"mode": "solo", "stage": "preview", "stay": p["h"]["name"], "title": p["script"].get("title"), "folder": p["folder"], "folder_pos": p["pos"],
+            "voice": p["voice"], "narration_mode": ("single_pass" if (B() / "narr_full.wav").exists() else "per_cut"),
             "narration_qa_ok": all(q["ok"] for q in p["nqa"]), "screen_qa_ok": all((q.get("score") or 0) >= q.get("threshold", 7) for q in p["qa"] if q.get("score") is not None),
             "cuts": len(p["cuts"]), "veo_cuts": sum(1 for c in p["cuts"] if c["veo"]), "files": ["preview.md", "preview_shots.jpg", "narration_preview.mp3"]}
     (B() / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -644,7 +745,7 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     segs, timeline, k_pattern = [], [], 0
     for c in cuts:
         x = by_i[c["i"]]
-        L = max(MIN_CUT, narr[c["i"]] + GAP)
+        L = max(MIN_CUT, narr[c["i"]] + (0.12 if (B() / "narr_full.wav").exists() else GAP))
         cap = B() / f"ov_cap_{c['i']:02d}.png"
         design.caption_png(cap, x["caption"], style, hook=(c["section"] == "hook"), sub=(honest if c["i"] == first_offer else ""))
         overlays = [{"path": frame, "a": 0, "b": 99, "anim": False}, {"path": cap, "a": 0.0, "b": 99, "anim": True}]

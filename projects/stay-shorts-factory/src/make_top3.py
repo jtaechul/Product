@@ -547,7 +547,7 @@ def cta_card(path: Path, hotels: list[dict], caption: str, folder: str = ""):
 def tts(models: dict, text: str, out: Path, voice: str, tempo: float) -> float:
     """구간 나레이션 한 개. 지시문 없이 본문만 보내고(읽어 버리는 버그), 앞뒤 무음을 잘라 자막과 맞춘다."""
     raw = out.with_suffix(".raw.wav")
-    ms._try_models("tts", models["tts"], lambda m: ms.gemini_tts(m, text, voice, "", raw))
+    ms._try_models("tts", models["tts"], lambda m: ms.gemini_tts(m, text, voice, ms.TTS_STYLE, raw))   # 톤 지시(읽어 버리는 모델은 자동으로 대사만)
     trim = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.12,areverse,"
             "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.25,areverse")
     ms.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-filter:a", f"{trim},atempo={tempo:.3f}", str(out)])
