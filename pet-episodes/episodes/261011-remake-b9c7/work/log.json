@@ -15,7 +15,7 @@
     "segments": 1,
     "one_shot": true,
     "method": "gen",
-    "spent": 1.42,
+    "spent": 1.73,
     "ledger": [
       {
         "what": "all 0.5초 시간표 만들기",
@@ -120,6 +120,14 @@
       {
         "what": "컷1-1(0.0~5.7초) Veo 실패(요금 없음)",
         "usd": -0.3
+      },
+      {
+        "what": "컷1-1(0.0~5.7초) 새로 만들기(Veo 3.1 Lite 6초)",
+        "usd": 0.3
+      },
+      {
+        "what": "컷1-1(0.0~5.7초) 몸 엉킴 검사",
+        "usd": 0.01
       }
     ],
     "timeline_src": "a86cb9b0b6c7-5.7",
@@ -623,7 +631,7 @@
       ]
     },
     "gen_prompts_used": {
-      "scene1_1": "Vertical 9:16 photorealistic phone video, 6 seconds. The first image is the first frame and the second image is the last frame. SHOT: High-angle handheld medium shot looking downward at the treadmill and floor, tilting and following the action in one continuous take. SET: as in the first image. CHARACTERS: A reddish-tan and white Shiba Inu (medium-sized dog) and a compact fawn French Bulldog (small dog), both natural four-legged dogs without clothes - real four-legged dogs with natural dog anatomy. ACTION, every 0.5 seconds: 러닝머신에 매달렸던 시바견이 튕겨 나가고, 뒤따라온 프렌치 불독마저 벨트에 발을 댔다가 연달아 날아가 나란히 쓰러진다. RULES: each dog is one complete separate animal (one head, four legs, one tail); never one dog on top of the other, legs never cross; real weight and gravity, nothing passes through anything; the same dogs, sizes and colours in every frame; no text, logos or watermarks; no music."
+      "scene1_1": "Vertical 9:16 photorealistic phone video, 6 seconds. The first image is the first frame and the second image is the last frame (end exactly on it). SHOT: High-angle handheld medium shot looking downward at the treadmill and floor, tilting and following the action in one continuous take. SET: Indoor fitness gym with grey carpeting, bright overhead fluorescent lights, a light green wall in background, and modern black running treadmills lined up in a row. CHARACTERS: A reddish-tan and white Shiba Inu (medium-sized dog) and a compact fawn French Bulldog (small dog), both natural four-legged dogs without clothes - real four-legged dogs with natural dog anatomy. ACTION, every 0.5 seconds: [0.0s] The Shiba Inu hooks its front paws over the treadmill console bar while its hind legs slide backward on the belt, as the French Bulldog trots forward along the floor. [0.5s] The Shiba Inu loses its grip, shoots backward off the belt onto the carpet, while the French Bulldog walks toward the treadmill base. [1.1s] The Shiba Inu slides onto its back against the green wall, while the French Bulldog stops and turns its head toward it. [1.6s] The Shiba Inu lies on its back by the wall as the French Bulldog steps up and leans its chest over the front of the moving belt. [2.1s] The French Bulldog puts both front paws on the fast belt, which yanks its paws backward and flips its hindquarters airborne. [2.6s] The French Bulldog flies backward through the air, bumps lightly against the Shiba Inu's side, and lands next to it on the carpet. [3.2s] The French Bulldog rolls onto its back beside the Shiba Inu with a clear gap between them, while the Shiba Inu curls its paws. [3.7s] The French Bulldog lies flat on its back with all four paws upward, while the Shiba Inu rests motionless on its back. [4.2s] The French Bulldog rolls slightly onto its side on the carpet, while the Shiba Inu stays motionless against the wall. [4.8s] Both dogs lie side by side on the floor looking up dazed, keeping their paws to themselves. [5.3s] The French Bulldog and Shiba Inu remain sprawled side by side on the gym floor, staring blankly ahead. RULES: each dog is one complete separate animal (one head, four legs, one tail); never one dog on top of the other, legs never cross; real weight and gravity, nothing passes through anything; the same dogs, sizes and colours in every frame; no text, logos or watermarks; no music."
     },
     "blocked": [
       {
@@ -654,12 +662,54 @@
     "vertical": {
       "mode": "new 9:16",
       "src": "720x1280"
+    },
+    "gen": {
+      "clips": [
+        {
+          "scene": 1,
+          "seg": 1,
+          "asked": 6,
+          "got": 6.0,
+          "used": 5.67,
+          "speed": 1.058,
+          "last_frame": false,
+          "bad": [
+            [
+              2.25,
+              "deformed second dog with abnormal spherical growth and missing limbs behind the front dog"
+            ],
+            [
+              2.75,
+              "dog standing upright with distorted and fused lower body"
+            ]
+          ]
+        }
+      ]
+    },
+    "gen_bad": {
+      "scene": 1,
+      "seg": 1,
+      "range": [
+        0.0,
+        5.67
+      ],
+      "frames": [
+        [
+          2.25,
+          "deformed second dog with abnormal spherical growth and missing limbs behind the front dog"
+        ],
+        [
+          2.75,
+          "dog standing upright with distorted and fused lower body"
+        ]
+      ],
+      "redo_usd": 0.3
     }
   },
   "last_request": {
-    "file": "07_remake_full.json",
-    "ran_at": "2026-10-11T15:37:45Z",
+    "file": "08_remake_full.json",
+    "ran_at": "2026-10-11T15:47:07Z",
     "ok": false
   },
-  "error": "컷1-1(0.0~5.7초): Veo가 두 번 만들지 못했습니다(요금 없음) — 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Your use case is currently not supported.  Please refer to Gemini API documentation for current model "
+  "error": "컷1-1(0.0~5.7초)에서 개 몸이 엉켜 보여(2.25초 deformed second dog with abnormal spherical growth and missing limbs behind the front dog, 2.75초 dog standing upright with distorted and fused lower body) 완성하지 않고 멈췄습니다. 이 구간만 다시 만들려면 '다시 시도'(약 $0.30)를 눌러 주세요 — 나머지 구간은 그대로 씁니다."
 }
