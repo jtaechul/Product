@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>데이터 호캉스 폴더</title>
+<meta name="description" content="후기 데이터로 고른 숙소를 테마별 폴더로 정리한 프로필 링크 페이지">
+<meta name="theme-color" content="#0f766e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M7 11h7l2 2h9v10H7z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --ink:#1c1b19; --mute:#6b6760; --line:#e6e2d9;
+    --brand:#0f766e; --brand-ink:#ffffff; --gold:#b7791f; --gold-bg:#fff6df; --chip:#eef3f1; --chip-ink:#19534d;
+    --coupang:#e02b2b; --agoda:#5c3bff; --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(28,27,25,.06);
+    --r:16px; --gap:16px; --max:560px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#121311; --card:#1b1d1a; --ink:#f1efe9; --mute:#a39f95; --line:#2b2e29;
+      --brand:#2dd4bf; --brand-ink:#06201c; --gold:#f2c14e; --gold-bg:#2a2410; --chip:#1f2a27; --chip-ink:#a7e8dc;
+      --coupang:#ff5a5a; --agoda:#9b86ff; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#121311; --card:#1b1d1a; --ink:#f1efe9; --mute:#a39f95; --line:#2b2e29;
+    --brand:#2dd4bf; --brand-ink:#06201c; --gold:#f2c14e; --gold-bg:#2a2410; --chip:#1f2a27; --chip-ink:#a7e8dc;
+    --coupang:#ff5a5a; --agoda:#9b86ff; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  body{padding:0 16px calc(32px + env(safe-area-inset-bottom))}
+  .wrap{max-width:var(--max);margin:0 auto}
+  header{padding:28px 0 12px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:44px;height:44px;border-radius:12px;background:var(--brand);display:grid;place-items:center;flex:none}
+  .logo svg{width:24px;height:24px}
+  h1{font-size:22px;margin:0;letter-spacing:-.01em}
+  .tag{margin:2px 0 0;color:var(--mute);font-size:14px}
+  .disc{font-size:12px;color:var(--mute);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:14px 0 0}
+  .list{display:grid;gap:12px;margin:18px 0 0}
+  .folder{display:block;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);text-decoration:none;color:inherit;transition:transform .12s ease}
+  .folder:active{transform:scale(.99)}
+  .folder .top{display:flex;align-items:center;gap:12px}
+  .ficon{width:40px;height:40px;border-radius:10px;background:var(--chip);display:grid;place-items:center;flex:none}
+  .ficon svg{width:22px;height:22px}
+  .ftitle{font-weight:700;font-size:17px;margin:0}
+  .fmeta{color:var(--mute);font-size:13px;margin:2px 0 0}
+  .fhotels{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+  .fhotels li{display:flex;gap:8px;align-items:center;font-size:14px}
+  .rk{width:22px;height:22px;border-radius:7px;background:var(--chip);color:var(--chip-ink);font-size:12px;font-weight:800;display:grid;place-items:center;flex:none}
+  .rk.r1{background:var(--gold-bg);color:var(--gold)}
+  .arrow{margin-left:auto;color:var(--mute)}
+  .back{display:inline-flex;align-items:center;gap:6px;color:var(--mute);text-decoration:none;font-size:14px;margin:14px 0 6px}
+  .back svg{width:16px;height:16px}
+  .ftop{margin:4px 0 0}
+  .ftop h2{font-size:21px;margin:0;letter-spacing:-.01em}
+  .ftop p{margin:6px 0 0;color:var(--mute);font-size:14px}
+  .hotel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin:14px 0 0}
+  .hero{position:relative;aspect-ratio:16/10;background:linear-gradient(135deg,#0f766e,#134e4a);overflow:hidden}
+  .hero img{width:100%;height:100%;object-fit:cover;display:block}
+  .hero .badge{position:absolute;left:12px;top:12px;background:rgba(0,0,0,.6);color:#fff;font-weight:800;font-size:13px;padding:6px 10px;border-radius:999px;backdrop-filter:blur(6px)}
+  .hero .badge.r1{background:rgba(183,121,31,.92)}
+  .hero .nophoto{position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.85);font-size:13px;letter-spacing:.02em}
+  .body{padding:14px 16px 16px}
+  .name{font-size:19px;font-weight:800;margin:0;letter-spacing:-.01em}
+  .city{color:var(--mute);font-size:13px;margin:2px 0 0}
+  .hook{margin:8px 0 0;font-size:15px}
+  .data{display:inline-flex;align-items:center;gap:6px;margin:10px 0 0;font-size:12px;color:var(--chip-ink);background:var(--chip);padding:5px 10px;border-radius:999px}
+  .data b{font-size:13px}
+  .data svg{width:14px;height:14px;flex:none}
+  .hero.nopic{aspect-ratio:16/5;background:linear-gradient(135deg,var(--chip),var(--card))}
+  .hero.nopic .nophoto{color:var(--mute)}
+  .facts{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+  .facts li{display:flex;gap:8px;font-size:14px}
+  .facts li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--brand);margin-top:9px;flex:none}
+  .rooms{margin:12px 0 0;display:flex;flex-wrap:wrap;gap:6px}
+  .room{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--mute)}
+  .room.t{border-color:transparent;background:var(--gold-bg);color:var(--gold);font-weight:700}
+  .honest{margin:12px 0 0;font-size:13px;color:var(--mute);border-left:3px solid var(--line);padding-left:10px}
+  .price{margin:10px 0 0;font-size:13px;color:var(--mute)}
+  .btns{display:grid;gap:8px;margin:14px 0 0}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:12px;font-weight:800;font-size:15px;text-decoration:none;color:#fff}
+  .btn svg{width:18px;height:18px}
+  .btn.coupang{background:var(--coupang)}
+  .btn.agoda{background:var(--agoda)}
+  .btn.official{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:700}
+  .btn.disabled{opacity:.45;pointer-events:none}
+  .share{display:flex;gap:8px;margin:18px 0 0}
+  .share button{flex:1;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:14px;font-weight:700;cursor:pointer}
+  footer{margin:28px 0 0;color:var(--mute);font-size:12px;line-height:1.6}
+  footer p{margin:6px 0}
+  .empty{background:var(--card);border:1px dashed var(--line);border-radius:var(--r);padding:28px 16px;text-align:center;color:var(--mute);margin:18px 0 0}
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h6l2 2h10v10H3z"/><path d="M3 7V5h7"/></svg></div>
+      <div><h1 id="chName">데이터 호캉스</h1><p class="tag" id="chTag">후기 데이터로 고른 숙소 폴더</p></div>
+    </div>
+    <div class="disc" id="disc">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다</div>
+  </header>
+  <main id="main"></main>
+  <footer id="foot"></footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+  const DISC = "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다";
+  const main = document.getElementById("main"), foot = document.getElementById("foot");
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const num = n => (n == null ? "" : Number(n).toLocaleString("ko-KR"));
+  const ICON = {
+    folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--chip-ink)"><path d="M3 7h6l2 2h10v10H3z"/><path d="M3 7V5h7"/></svg>',
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+    cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.5L21 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>',
+    bed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18V8"/><path d="M3 13h18v5"/><path d="M7 13V9h6v4"/><path d="M21 18v-3"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19H2"/></svg>'
+  };
+  let DATA = {channel:{}, folders:[]};
+
+  function toast(t){ const el = document.getElementById("toast"); el.textContent = t; el.classList.add("on"); setTimeout(()=>el.classList.remove("on"), 1600); }
+
+  function renderList(){
+    const fs = DATA.folders || [];
+    if(!fs.length){ main.innerHTML = '<div class="empty">아직 올라온 폴더가 없습니다. 첫 번째 테마가 곧 올라옵니다.</div>'; return; }
+    main.innerHTML = '<div class="list">' + fs.map(f => `
+      <a class="folder" href="#/f/${encodeURIComponent(f.slug)}">
+        <div class="top"><div class="ficon" aria-hidden="true">${ICON.folder}</div>
+          <div><p class="ftitle">${esc(f.title)}</p><p class="fmeta">${esc(f.region)} · 숙소 ${f.hotels.length}곳 · ${esc(f.updated)} 갱신</p></div>
+          <span class="arrow" aria-hidden="true">›</span></div>
+        <ul class="fhotels">${f.hotels.map(h => `<li><span class="rk ${h.rank===1?'r1':''}">${h.rank}</span><span>${esc(h.name)}</span></li>`).join("")}</ul>
+      </a>`).join("") + '</div>';
+  }
+
+  function hotelCard(h){
+    const r1 = h.rank === 1;
+    const hero = h.image ? `<img src="${esc(h.image)}" alt="${esc(h.name)} 객실 사진 (쿠팡)" loading="lazy">` : `<div class="nophoto">사진은 쿠팡·공식 홈페이지에서 확인하세요</div>`;
+    const facts = (h.facts||[]).map(x => `<li>${esc(x)}</li>`).join("");
+    const rooms = (h.rooms||[]).map(r => `<span class="room ${r.tags&&r.tags.length?'t':''}">${esc(r.name)}${r.tags&&r.tags.length?' · '+esc(r.tags.join(' · ')):''}</span>`).join("");
+    const L = h.links || {};
+    const btn = (cls, url, label, icon) => url ? `<a class="btn ${cls}" href="${esc(url)}" target="_blank" rel="noopener sponsored">${icon}${label}</a>` : "";
+    return `<article class="hotel">
+      <div class="hero ${h.image?'':'nopic'}"><span class="badge ${r1?'r1':''}">${h.rank}위</span>${hero}</div>
+      <div class="body">
+        <h3 class="name">${esc(h.name)}</h3>
+        ${h.city?`<p class="city">${esc(h.city)}</p>`:""}
+        ${h.hook?`<p class="hook">${esc(h.hook)}</p>`:""}
+        ${h.blog_30d?`<span class="data">${ICON.chart}최근 30일 후기 <b>${num(h.blog_30d)}${h.blog_30d>=1000?'+':''}건</b> · 네이버 블로그 기준</span>`:""}
+        ${facts?`<ul class="facts">${facts}</ul>`:""}
+        ${rooms?`<div class="rooms">${rooms}</div>`:""}
+        ${h.price_band?`<p class="price">가격대 ${esc(h.price_band)} — 날짜·객실에 따라 달라집니다</p>`:""}
+        ${h.honest?`<p class="honest">후기 속 아쉬움: ${esc(h.honest)}</p>`:""}
+        <div class="btns">
+          ${btn("coupang", L.coupang, "쿠팡에서 객실·가격 보기", ICON.cart)}
+          ${btn("agoda", L.agoda, "아고다에서 보기", ICON.bed)}
+          ${btn("official", L.official, "공식 홈페이지", ICON.link)}
+        </div>
+      </div></article>`;
+  }
+
+  function renderFolder(slug){
+    const f = (DATA.folders||[]).find(x => x.slug === slug);
+    if(!f){ location.hash = ""; return; }
+    const hotels = [...f.hotels].sort((a,b) => a.rank - b.rank);
+    main.innerHTML = `
+      <a class="back" href="#">${ICON.back}폴더 목록</a>
+      <div class="ftop"><h2>${esc(f.title)}</h2><p>${esc(f.region)} · ${esc(f.updated)} 기준${f.intro?' — '+esc(f.intro):''}</p></div>
+      ${hotels.map(hotelCard).join("")}
+      <div class="share"><button type="button" id="copyBtn">이 폴더 링크 복사</button></div>`;
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(location.href); toast("링크를 복사했습니다"); } catch(e){ toast("주소창의 링크를 복사해 주세요"); }
+    });
+    window.scrollTo(0, 0);
+  }
+
+  function route(){
+    const m = location.hash.match(/^#\/f\/(.+)$/);
+    if(m) renderFolder(decodeURIComponent(m[1])); else renderList();
+  }
+
+  function renderFooter(){
+    foot.innerHTML = `<p>${esc(DISC)}</p><p>${esc((DATA.channel||{}).note||"")}</p><p>가격·재고는 예약 사이트 기준이며 이 페이지는 링크만 안내합니다. 사진은 쿠팡 상품 사진입니다.</p>`;
+  }
+
+  fetch("data/folders.json?v=" + Date.now(), {cache:"no-store"}).then(r => r.ok ? r.json() : {}).then(d => {
+    DATA = d && d.folders ? d : DATA;
+    if(DATA.channel && DATA.channel.name){ document.getElementById("chName").textContent = DATA.channel.name; document.title = DATA.channel.name + " 폴더"; }
+    if(DATA.channel && DATA.channel.tagline) document.getElementById("chTag").textContent = DATA.channel.tagline;
+    renderFooter(); route();
+  }).catch(() => { main.innerHTML = '<div class="empty">폴더 데이터를 불러오지 못했습니다. 잠시 후 다시 열어 주세요.</div>'; renderFooter(); });
+  window.addEventListener("hashchange", route);
+})();
+</script>
+</body>
+</html>

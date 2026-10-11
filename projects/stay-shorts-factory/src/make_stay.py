@@ -117,7 +117,9 @@ def _gpost(path: str, body: dict, timeout: int = 180) -> dict:
 # ── Gemini 사용량 → 추정 비용 (운영자 2026-10-11 "돈 얼마 썼는지 확인해봐") ─────────────────
 # Gemini 응답의 usageMetadata(토큰 수)를 모두 더해 실행마다 추정 원화를 report·장부·텔레그램에 남긴다.
 # 단가는 추정값(2.5 Flash 공개 단가 기준, 환경변수로 조정) — 실제 청구는 Google 사용량 화면이 기준이다.
-USAGE = {"calls": 0, "prompt_text": 0, "prompt_image": 0, "prompt_audio": 0, "output_text": 0, "output_audio": 0, "thoughts": 0}
+# p7 실측: 이 파일은 __main__ 으로도 돌고 make_top3 가 `import make_stay` 로 한 번 더 불러 **모듈이 둘**이 된다 → 각자 USAGE 를 가지면 __main__ 쪽은 0.
+# 그래서 카운터는 모두가 같은 객체를 쓰는 photos 모듈에 둔다.
+USAGE = photos.__dict__.setdefault("USAGE", {"calls": 0, "prompt_text": 0, "prompt_image": 0, "prompt_audio": 0, "output_text": 0, "output_audio": 0, "thoughts": 0})
 PRICE_USD_PER_M = {"prompt_text": float(os.environ.get("GEMINI_IN_USD") or 0.30), "prompt_image": float(os.environ.get("GEMINI_IN_USD") or 0.30),
                    "prompt_audio": float(os.environ.get("GEMINI_AUDIO_IN_USD") or 1.00), "output_text": float(os.environ.get("GEMINI_OUT_USD") or 2.50),
                    "output_audio": float(os.environ.get("GEMINI_TTS_OUT_USD") or 10.00), "thoughts": float(os.environ.get("GEMINI_OUT_USD") or 2.50)}

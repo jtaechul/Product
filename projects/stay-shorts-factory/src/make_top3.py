@@ -33,6 +33,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import crawl_photos as crawl  # noqa: E402
 import discover as dc  # noqa: E402
+import make_folder  # noqa: E402
 import make_stay as ms  # noqa: E402
 import photos  # noqa: E402
 import stock  # noqa: E402
@@ -202,7 +203,9 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None) -> di
             "blog_30d": (c.get("demand") or {}).get("blog_30d"), "blog_total": (c.get("demand") or {}).get("blog_total"),
             "min_price": min(prices) if prices else None, "affiliate_url": str(rooms[0].get("productUrl", "")),
             "hook": (c.get("ai") or {}).get("hook", ""), "classified": cl, "crawl": crawl_info,
-            "official_facts": fd["facts"], "signature": fd["signature"],
+            "official_facts": fd["facts"], "signature": fd["signature"], "city": c.get("city", ""), "official_site": crawl_info.get("url"),
+            "rooms": [{"name": str(it.get("productName", ""))[:60], "price": float(it.get("productPrice") or 0) or None,
+                       "image": it.get("productImage") or None, "url": str(it.get("productUrl", "")) or None} for it in rooms[:8]],
             "photo_counts": {k: sum(p["source"] == k for p in cands) for k in SRC_KO} | {"mismatch": len(mism)}}
 
 
@@ -617,10 +620,14 @@ def preview_top3(req: dict, models: dict, report: dict) -> dict:
         raise RuntimeError(f"사진 2장 이상 확보된 숙소가 {len(hotels)}곳 — 3곳 필요")
     hotels = hotels[:3][::-1]
     hotels[2]["honest"] = ms._try_models("text", models["text"], lambda m: honest_line(m, hotels[2]["name"]))
-    report["hotels"] = [{k: h[k] for k in ("name", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest", "photo_counts") if k in h} for h in hotels]
+    report["hotels"] = [{k: h[k] for k in ("name", "city", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest", "photo_counts", "official_facts", "signature", "hook", "affiliate_url", "official_site", "rooms") if k in h} for h in hotels]
     record_sources(hotels, report)
     script = ms._try_models("text", models["text"], lambda m: write_script(m, req, hotels))
     report["script"] = script
+    try:   # 프로필 링크 페이지의 테마 폴더(link/data/folders.json) — 영상 CTA 가 가리키는 그 폴더
+        make_folder.update(req, hotels, script)
+    except Exception as e:  # noqa: BLE001
+        log(f"폴더 데이터 갱신 실패 ({str(e)[:80]})")
     segs_text = [("hook", script["hook"]["narration"])] + [(f"r{r['rank']}", r["narration"] + (" " + r["benefit"] if r.get("benefit") else "")) for r in script["ranks"]] + [("cta", script["cta"]["narration"])]
     wavs = []
     for key, text in segs_text:
@@ -682,7 +689,7 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
         raise RuntimeError(f"사진 2장 이상 확보된 숙소가 {len(hotels)}곳 — 3곳 필요")
     hotels = hotels[:3][::-1]                       # 입력 순서가 1위→3위 이므로 뒤집어 3위→1위
     hotels[2]["honest"] = ms._try_models("text", models["text"], lambda m: honest_line(m, hotels[2]["name"]))
-    report["hotels"] = [{k: h[k] for k in ("name", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest", "photo_counts")
+    report["hotels"] = [{k: h[k] for k in ("name", "city", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest", "photo_counts", "official_facts", "signature", "hook", "affiliate_url", "official_site", "rooms")
                          if k in h} for h in hotels]
     record_sources(hotels, report)
     log("순서(3→1위):", " · ".join(h["name"] for h in hotels))
@@ -690,6 +697,10 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     # 2) 대본 + 구간별 나레이션 (싼 단계 — 여기서 실패하면 영상값을 안 쓴다)
     script = ms._try_models("text", models["text"], lambda m: write_script(m, req, hotels))
     report["script"] = script
+    try:   # 프로필 링크 페이지의 테마 폴더(link/data/folders.json) — 영상 CTA 가 가리키는 그 폴더
+        make_folder.update(req, hotels, script)
+    except Exception as e:  # noqa: BLE001
+        log(f"폴더 데이터 갱신 실패 ({str(e)[:80]})")
     segs_text = [("hook", script["hook"]["narration"])] + [(f"r{r['rank']}", r["narration"] + (" " + r["benefit"] if r.get("benefit") else "")) for r in script["ranks"]] + [("cta", script["cta"]["narration"])]
     narr = {}
     for key, text in segs_text:
