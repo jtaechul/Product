@@ -103,7 +103,7 @@ jobs:
           import json
           m = json.load(open("projects/stay-shorts-factory/build/meta.json", encoding="utf-8"))
           v = m.get("veo") or {}
-          s = ("Veo 7컷 방식" if m.get("mode") == "veo" else "사진 확대 방식") + f" · {m.get('stay')} · {m.get('duration_sec')}초"
+          s = {"veo": "Veo 7컷 방식", "top3": "TOP3", "solo": "단일 숙소 Veo"}.get(m.get("mode"), "사진 확대 방식") + f" · {m.get('stay')} · {m.get('duration_sec')}초"
           if v:
               s += f" · 클립 {v.get('clips_ok')}/{v.get('clips_total')} · Veo 이번 실행 약 {v.get('spent_krw', 0):,}원 · 이번 달 누적 {v.get('month_total_krw', 0):,}원"
           g = m.get("gemini_usage") or {}
