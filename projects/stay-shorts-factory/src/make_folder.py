@@ -13,14 +13,19 @@
 
 from __future__ import annotations
 
+import argparse
+import hashlib
+import io
 import json
 import re
 import sys
+import urllib.request
 from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "link" / "data" / "folders.json"
+IMG_DIR = ROOT / "link" / "img"                 # 대표 이미지(쿠팡 객실 사진) 저장본 — 운영자 2026-10-11 "대표 이미지 하나 들어가야 한다"
 PRICES = ROOT / "data" / "discover" / "prices"
 REPORT = ROOT / "data" / "runs" / "latest" / "report.json"
 CANDS = ROOT / "data" / "discover" / "latest" / "candidates.json"
@@ -69,11 +74,47 @@ def price_band(name: str) -> str | None:
     return f"{b * 10}만 원대 (조회 기준 {recs[-1][0][5:]})" if b >= 1 else f"10만 원 미만 (조회 기준 {recs[-1][0][5:]})"
 
 
+def localize_image(url: str | None, slug: str, rank: int) -> str | None:
+    """쿠팡 객실 사진(제휴 홍보용 API 사진)을 내려받아 link/img/<폴더>/<순위>.jpg 로 저장하고 상대 경로를 돌려준다.
+    (쿠팡 CDN 주소를 그대로 쓰면 주소가 바뀌거나 막힐 때 그림이 사라진다 — 쿠팡 팩토리 스토어 페이지에서 겪은 문제. 저장본이 안전하다)"""
+    if not url or not str(url).startswith("http"):
+        return None
+    try:
+        from PIL import Image
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (stay-shorts-factory)"})
+        with urllib.request.urlopen(req, timeout=40) as r:
+            data = r.read()
+        with Image.open(io.BytesIO(data)) as im:
+            im = im.convert("RGB")
+            if max(im.size) > 1000:
+                im.thumbnail((1000, 1000), Image.LANCZOS)
+            d = IMG_DIR / slug
+            d.mkdir(parents=True, exist_ok=True)
+            dest = d / f"{rank}.jpg"
+            im.save(dest, "JPEG", quality=86, optimize=True)
+        return f"img/{slug}/{rank}.jpg"
+    except Exception as e:  # noqa: BLE001
+        log(f"대표 이미지 저장 실패 ({url[-50:]}): {str(e)[:60]}")
+        return None
+
+
+def pick_image(rooms: list[dict], theme: str = "") -> str | None:
+    """대표 이미지 고르기 — 테마 낱말(온수풀·워터파크…)이 이름에 있는 객실 사진을 먼저, 없으면 첫 사진."""
+    rooms = [r for r in rooms if r.get("image")]
+    if not rooms:
+        return None
+    words = [w for w in re.split(r"[\s·/,]+", theme) if len(w) >= 2]
+    for r in rooms:
+        if any(w in str(r.get("name") or "") for w in words):
+            return r["image"]
+    return rooms[0]["image"]
+
+
 def room_tags(name: str) -> list[str]:
     return [t for t, rx in ROOM_TAGS if re.search(rx, name or "", re.I)]
 
 
-def hotel_entry(rank: int, h: dict, r: dict | None) -> dict:
+def hotel_entry(rank: int, h: dict, r: dict | None, slug: str = "", theme: str = "") -> dict:
     rooms = []
     for it in (h.get("rooms") or [])[:6]:
         if isinstance(it, str):
@@ -86,7 +127,7 @@ def hotel_entry(rank: int, h: dict, r: dict | None) -> dict:
         if rm["name"] and rm["name"] not in seen:
             seen.add(rm["name"]); uniq.append(rm)
     facts = list(dict.fromkeys([*(h.get("official_facts") or []), *(h.get("verified_facilities") or [])]))[:6]
-    image = next((rm["image"] for rm in uniq if rm.get("image")), None)
+    image = h.get("image_local") or localize_image(pick_image(uniq, theme), slug, rank) if slug else None
     return {"rank": rank, "name": h["name"], "city": h.get("city") or "", "hook": h.get("hook") or h.get("signature") or "",
             "blog_30d": h.get("blog_30d"), "facts": facts, "rooms": uniq[:5], "image": image,
             "links": {"coupang": h.get("affiliate_url") or None, "agoda": h.get("agoda_url") or None, "official": h.get("official_site") or None},
@@ -97,10 +138,10 @@ def hotel_entry(rank: int, h: dict, r: dict | None) -> dict:
 def build(req: dict, hotels: list[dict], script: dict | None) -> dict:
     """hotels 는 3위→1위 순(make_top3 와 같음). script 가 있으면 순위별 자막·아쉬움을 붙인다."""
     ranks = {r.get("rank"): r for r in ((script or {}).get("ranks") or [])}
-    entries = [hotel_entry(rank, h, ranks.get(rank)) for rank, h in zip((3, 2, 1), hotels)]
+    slug = slug_of(str(req.get("month") or ""), str(req.get("theme") or ""), str(req.get("region") or ""))
+    entries = [hotel_entry(rank, h, ranks.get(rank), slug, str(req.get("theme") or "")) for rank, h in zip((3, 2, 1), hotels)]
     entries.sort(key=lambda e: e["rank"])
-    return {"slug": slug_of(str(req.get("month") or ""), str(req.get("theme") or ""), str(req.get("region") or "")),
-            "title": title_of(req), "month": str(req.get("month") or ""), "theme": str(req.get("theme") or ""), "region": str(req.get("region") or ""),
+    return {"slug": slug, "title": title_of(req), "month": str(req.get("month") or ""), "theme": str(req.get("theme") or ""), "region": str(req.get("region") or ""),
             "updated": date.today().isoformat(), "intro": (script or {}).get("caption") or "", "hotels": entries}
 
 
@@ -113,6 +154,11 @@ def update(req: dict, hotels: list[dict], script: dict | None) -> Path:
         except Exception:  # noqa: BLE001
             pass
     data["channel"] = CHANNEL
+    old = next((f for f in (data.get("folders") or []) if f.get("slug") == folder["slug"]), None)
+    if old:   # 새 데이터에 사진이 없으면 이전 저장본을 유지한다
+        prev = {h.get("name"): h.get("image") for h in old.get("hotels") or []}
+        for h in folder["hotels"]:
+            h["image"] = h.get("image") or prev.get(h["name"])
     data["folders"] = [f for f in (data.get("folders") or []) if f.get("slug") != folder["slug"]] + [folder]
     data["folders"].sort(key=lambda f: (f.get("month") or ""), reverse=True)
     data["updated"] = date.today().isoformat()
@@ -146,6 +192,42 @@ def from_report() -> Path:
     return update(req, hotels, rep.get("script"))
 
 
+def fill_images() -> int:
+    """사진이 없는 숙소에 쿠팡 객실 사진을 채운다 (쿠팡 API 만, 0원 · Gemini 없음). 워크플로 stay-shorts-folder 가 부른다."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import discover as dc
+    if not OUT.exists():
+        log("folders.json 이 없다"); return 1
+    data = json.loads(OUT.read_text(encoding="utf-8"))
+    cands = {}
+    if CANDS.exists():
+        cands = {c["name"]: c for c in (json.loads(CANDS.read_text(encoding="utf-8")).get("candidates") or [])}
+    filled = 0
+    for f in data.get("folders") or []:
+        for h in f.get("hotels") or []:
+            if h.get("image"):
+                continue
+            v = dc.coupang_verify(h["name"])
+            rooms = [{"name": str(it.get("productName", "")), "image": it.get("productImage")} for it in (v.get("rooms") or [])]
+            # 순위표(candidates.json)에 Gemini 가 '이 숙소 객실'로 확인한 이름이 있으면 그 객실만 쓴다 (다른 숙소 사진 혼입 방지)
+            known = set((cands.get(h["name"]) or {}).get("coupang", {}).get("room_names") or [])
+            if known:
+                same = [r for r in rooms if r["name"][:40] in {k[:40] for k in known}]
+                rooms = same or rooms
+            img = localize_image(pick_image(rooms, f.get("theme") or ""), f["slug"], int(h["rank"]))
+            if img:
+                h["image"] = img; filled += 1
+                if not h.get("rooms"):
+                    h["rooms"] = [{"name": r["name"][:60], "tags": room_tags(r["name"]), "image": None} for r in rooms[:5]]
+            log(f"{h['name']}: 쿠팡 객실 {len(rooms)}개 → 대표 이미지 {'저장' if img else '없음'}")
+    data["updated"] = date.today().isoformat()
+    OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    log(f"대표 이미지 {filled}장 채움")
+    return 0
+
+
 if __name__ == "__main__":
-    print(from_report())
-    sys.exit(0)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--fill-images", action="store_true", help="사진 없는 숙소에 쿠팡 객실 사진을 채운다 (COUPANG 키 필요)")
+    a = ap.parse_args()
+    sys.exit(fill_images() if a.fill_images else (print(from_report()) or 0))
