@@ -107,9 +107,48 @@ def _gpost(path: str, body: dict, timeout: int = 180) -> dict:
                                  headers={"x-goog-api-key": _gkey(), "Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
-            return json.loads(r.read().decode("utf-8"))
+            data = json.loads(r.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"Gemini 오류 HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}")
+    track_usage(data)
+    return data
+
+
+# ── Gemini 사용량 → 추정 비용 (운영자 2026-10-11 "돈 얼마 썼는지 확인해봐") ─────────────────
+# Gemini 응답의 usageMetadata(토큰 수)를 모두 더해 실행마다 추정 원화를 report·장부·텔레그램에 남긴다.
+# 단가는 추정값(2.5 Flash 공개 단가 기준, 환경변수로 조정) — 실제 청구는 Google 사용량 화면이 기준이다.
+USAGE = {"calls": 0, "prompt_text": 0, "prompt_image": 0, "prompt_audio": 0, "output_text": 0, "output_audio": 0, "thoughts": 0}
+PRICE_USD_PER_M = {"prompt_text": float(os.environ.get("GEMINI_IN_USD") or 0.30), "prompt_image": float(os.environ.get("GEMINI_IN_USD") or 0.30),
+                   "prompt_audio": float(os.environ.get("GEMINI_AUDIO_IN_USD") or 1.00), "output_text": float(os.environ.get("GEMINI_OUT_USD") or 2.50),
+                   "output_audio": float(os.environ.get("GEMINI_TTS_OUT_USD") or 10.00), "thoughts": float(os.environ.get("GEMINI_OUT_USD") or 2.50)}
+FX_KRW = float(os.environ.get("USD_KRW") or 1470)
+
+
+def track_usage(data: dict) -> None:
+    u = (data or {}).get("usageMetadata") or {}
+    if not u:
+        return
+    pd = {str(d.get("modality")): int(d.get("tokenCount") or 0) for d in (u.get("promptTokensDetails") or [])}
+    cd = {str(d.get("modality")): int(d.get("tokenCount") or 0) for d in (u.get("candidatesTokensDetails") or [])}
+    pt, ct = int(u.get("promptTokenCount") or 0), int(u.get("candidatesTokenCount") or 0)
+    USAGE["calls"] += 1
+    USAGE["prompt_image"] += pd.get("IMAGE", 0)
+    USAGE["prompt_audio"] += pd.get("AUDIO", 0)
+    USAGE["prompt_text"] += max(0, pt - pd.get("IMAGE", 0) - pd.get("AUDIO", 0))
+    USAGE["output_audio"] += cd.get("AUDIO", 0)
+    USAGE["output_text"] += max(0, ct - cd.get("AUDIO", 0))
+    USAGE["thoughts"] += int(u.get("thoughtsTokenCount") or 0)
+
+
+def usage_krw() -> float:
+    return sum(USAGE[k] / 1e6 * PRICE_USD_PER_M[k] for k in PRICE_USD_PER_M) * FX_KRW
+
+
+def usage_block() -> dict:
+    return {**USAGE, "krw_est": round(usage_krw()), "note": "토큰 수는 실측, 단가는 추정 — 실제 청구는 Google 사용량 화면 기준"}
+
+
+photos.USAGE_HOOK = track_usage
 
 
 def pick_models() -> dict:
@@ -647,9 +686,12 @@ def main() -> int:
             meta = make_top3.preview_top3(req, models, report)
             report["models_used"] = dict(USED)
             report.update({"ok": True, "stage": "preview", "narration_qa_ok": meta["narration_qa_ok"]})
+            report["gemini_usage"] = usage_block()
+            veo.record_est("gemini_est", usage_krw(), f"{req.get('nonce')} 미리보기 AI 글·음성 {USAGE['calls']}회 (추정)")
+            log(f"이번 실행 AI 글·음성 추정 {usage_krw():,.0f}원 ({USAGE['calls']}회 호출) · Veo 0원")
             out = PREVIEW / "report.json"
             out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-            print(json.dumps({k: report[k] for k in ("ok", "stage", "narration_qa_ok", "narration_qa", "script")}, ensure_ascii=False, indent=1))
+            print(json.dumps({k: report[k] for k in ("ok", "stage", "narration_qa_ok", "narration_qa", "script", "gemini_usage")}, ensure_ascii=False, indent=1))
             return 0
         if mode == "top3":
             import make_top3
@@ -670,7 +712,7 @@ def main() -> int:
             run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{max(t, 0):.2f}", "-i", str(video), "-frames:v", "1",
                  "-vf", "scale=360:640", "-q:v", "5", str(PREVIEW / f"frame_{k}.jpg")])
 
-        meta.update({"stay": stay, "duration_sec": round(dur_total, 2), "models": dict(USED)})
+        meta.update({"stay": stay, "duration_sec": round(dur_total, 2), "models": dict(USED), "gemini_usage": usage_block()})
         (BUILD / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
         assert DISCLOSURE in meta["caption"], "고지문 누락 — 중단"
         report["models_used"] = dict(USED)
@@ -680,6 +722,9 @@ def main() -> int:
         if mode == "veo":
             report.setdefault("veo", {})["spent_krw"] = round(veo.spent_this_run())
         log("실패:", report["error"])
+    report["gemini_usage"] = usage_block()
+    veo.record_est("gemini_est", usage_krw(), f"{req.get('nonce')} {mode} AI 글·음성 {USAGE['calls']}회 (추정)")
+    log(f"이번 실행 AI 글·음성 추정 {usage_krw():,.0f}원 ({USAGE['calls']}회 호출) · Veo {veo.spent_this_run():,.0f}원")
     out = PREVIEW / "report.json"
     out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=1))

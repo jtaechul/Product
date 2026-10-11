@@ -114,9 +114,24 @@ def record(krw: float, note: str):
         log("장부에 못 적었다:", e)
 
 
-def month_total() -> float:
+def record_est(kind: str, krw: float, note: str):
+    """Veo 가 아닌 추정 비용(예: gemini_est — AI 글·음성 토큰 추정)을 장부에 남긴다. Veo 한도 계산에는 넣지 않는다."""
+    try:
+        if krw <= 0:
+            return
+        rows = _ledger()
+        rows.append({"date": date.today().isoformat(), "kind": kind, "krw": round(krw), "note": note[:120]})
+        LEDGER.parent.mkdir(parents=True, exist_ok=True)
+        LEDGER.write_text(json.dumps(rows[-2000:], ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    except Exception as e:  # noqa: BLE001
+        log("장부에 못 적었다:", e)
+
+
+def month_total(kind: str = "veo") -> float:
+    """이번 달 합계. 기본은 Veo 만 (한도 판단용). kind="all" 이면 추정 비용까지 전부."""
     ym = date.today().isoformat()[:7]
-    return float(sum(r.get("krw", 0) for r in _ledger() if str(r.get("date", "")).startswith(ym)))
+    return float(sum(r.get("krw", 0) for r in _ledger()
+                     if str(r.get("date", "")).startswith(ym) and (kind == "all" or r.get("kind", "veo") == kind)))
 
 
 def spent_this_run() -> float:

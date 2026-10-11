@@ -132,6 +132,9 @@ def gather(items: list, operator_dir: Path, build: Path, official: list[dict] | 
 
 
 # ── Gemini 비전 ────────────────────────────────────────────────────────
+USAGE_HOOK = None                            # make_stay.track_usage 가 꽂힌다 (비용 추정)
+
+
 def _gpost(path: str, body: dict, timeout: int = 180) -> dict:
     key = (os.environ.get("GEMINI_API_KEY") or "").strip()
     if not key:
@@ -140,7 +143,10 @@ def _gpost(path: str, body: dict, timeout: int = 180) -> dict:
                                  headers={"x-goog-api-key": key, "Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
-            return json.loads(r.read().decode("utf-8"))
+            data = json.loads(r.read().decode("utf-8"))
+        if USAGE_HOOK:                       # make_stay 가 토큰 수를 모아 추정 비용을 낸다
+            USAGE_HOOK(data)
+        return data
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"Gemini 오류 HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}")
 
