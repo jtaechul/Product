@@ -21,12 +21,12 @@
      "hook": "프라이빗 실내풀과 오션월드",
      "blog_30d": 719,
      "facts": [
-      "실버·골드·로얄·프레지덴셜 스위트 객실 구성",
-      "캠핑테마·게이밍룸·홈바룸 등 다양한 테마 객실",
-      "오션월드 파도풀·유수풀·키즈풀 등 실내외 시설",
-      "옥돌 습식·히노키 건식 발한실과 노천탕 사우나",
-      "클럽하우스 내 키즈풀·수영장·바스풀 구비",
-      "영유아와 어린이를 위한 보노 키즈 클럽 운영"
+      "노천탕·옥돌 습식·히노키 건식 사우나 구비",
+      "키즈풀과 바스풀 갖춘 클럽하우스 수영장",
+      "실버·골드·로얄·프레지덴셜 스위트 객실",
+      "캠핑테마·게이밍룸·홈바룸 등 테마 객실",
+      "초등 3학년 이하 전용 보노 키즈 클럽 운영",
+      "슬로프 활용한 루지월드 및 스노위랜드 보유"
      ],
      "rooms": [
       {
@@ -35,26 +35,34 @@
         "취사 가능",
         "스위트"
        ],
-       "image": "https://ads-partners.coupang.com/image1/XJyKErDusk0Im0S7XDNECNNAF2P1eJoCIKUpitA_ZRppmpK0LOOx6gzV6mwCUepEoTi4Aoy9qywIMk02X-a818CBY0xvLYq5_OfWjw3Sof2Ys8T8FnbV9L073Jug5nyBqcUR8e1QlJg6m4wv9FVgyYXqtnc0M649ZIcUkRoKVoRlprkoy9rjokLf1t7J73PbSKKWxnT64KjvN9R4bpqxxyhQTGmcSPqi62wGw0eA9m7TetuKYcV1WZxLFzIhB3_tnQfZ2yii3po9LQpjO_8simYvMfqmrdvcaX5mC1N162DFjF9FXeHhI2t4jwMksCBUOzhxzFTOHQ-ZRrh-kXF-Mwp1MLIndGUavCIuoVY_aPB7mRx-tmdrl_icfDHbg2pT_a1NRDgQkQjLCzVru8hhTQVe7RGCzEhaY2HnfVcqUsDv0cspXHce7SHl7Pyy4My2w1FsN1LJsAqYOjJlW6YxCb685_nrAKapg3VzULHeM_nkh0f99dX0DnbMbHPLG-B8wRwoHl0CQoUb2lruggyU62C4M7P2o0WWfKAAqUhBjqxNWJM="
+       "image": "https://ads-partners.coupang.com/image1/4k7yA_Wt5Rl3povy4hgQ1XWsi_4-hZ9gnCpRwcnHByRwLzTYhnu7sX1LhwmCFiBWE-3LeWAlWYFBSmIzL8lMoiqx1vynizCLTSKIwrx0IpCk4ijcpBPzF21gDxuaRwcLuCU287PeoYLznzCVgc6Z8E97Q3_t-npfL2iQzXIFPgIQ9sVuEgZMm0tgkjDmfi5Uo2-P-gicdxtjqZ6xuCXP44haQ0kCavGcZNZz8H9SxaZZJ9K_RjaUIpXNtuGcutXGmGQAFoHf-JF0HnT2GchxZDyFjMwULzua5xwwKLFSYsIruEozAU3gkiMwPCSknp2outIr_ItZJhfTlRHgp2796QwPFpAmidUl6efpZ5k8Ikqucbn0LcRe1IUeTiavTx0oeagTqSQOPxdMyqos6UvWEuONXLeY4dsXyFElqzcvngzSVip2HVQkqXPRlIOYuNyLjjSIS4H358yryuGfQt5Rild8O1N8teocFCXzPUzUNsaqO3ceeWIsDEDkaDTOOxoLZiVw5k_boxFomtgNtIOv6IUfnxRz3pDrsDFqTCA-eTnsD9A="
       },
       {
        "name": "실버 (취사/파크뷰/침대)",
        "tags": [
         "취사 가능"
        ],
-       "image": "https://ads-partners.coupang.com/image1/V_ZTYyXScRHNrwezV6xvCi-ATQH2UXJx-3sjnO3ncFvF3oVXIei2198Q6Koxk3tfyK_hbVWdwlkCEqXQoNajOL3196kjRpCGv3vQcRPMiew5A3AuR8afqq9JFEPbuSVhcv63FI5tXH9jRr-OsqkkQXNvvk_D4w0Rq6EUjkG6HF60zuIo-ckDNCH-1zqygZHzFzjmavMRO7Z2ZQxXdy3QuY_FawPe7CTkTh6DkXHmkmOkMa90sqrzm-kbCoUy1r0pRW_MRKc-5R9pQB6cZCmJdAUyoZWu6jSNIfZ-cP0eCTtgUqOUZWa1x5sdU68pnKk9fl5Bb7RdLGMKFhz2COMmVVuBwv5yCtqj4TVDcS26Fz4NrQmZq6ydPs2y0sg0ADWOae2-U4f9RUmq6bpNlH_gR0jhH_uwmE6Ui6FWR5QYl1hVVlpj_2AdJTH8Np4BcaZU6rs-Z5CcjzYATJampyhFP10NZrFiGhvEyQYXWBxsx6KvKp3PfySz8PkZswdrfN7K4AZ2uClsz-dRS_WjaqTXuuvoZIPr1MPCFqPkNMxwSveZNQ=="
+       "image": "https://ads-partners.coupang.com/image1/77WfOHI3vlaMsIZz755dq_8gdq42GVQTlJbaIHutaHW8LayW9vltb0FCrVRicSCM0AcoXrJMQrLzsqK-vK982OD5Q-xP6mQf5xQQnxql4Yu_QxWJIDJZRRcsQ_6kSxfkRDXSKEROdvncx9HkBKYxjbk1S-atk2y2WfvJgkAd3Bl4TV5pf1Uvx3ZteuZVIYkHXARLfJ_a4JMGEoyRklofM7f_nD9tRANJh7yyFfQemIE_GYK13TvRseix0Cag_7j6Kr3Zf4hqgPv3QjMspCrZN_jYprEXj1sToTBwJ2LoYqAZpw2YxZN-XZ4EF55dDEjhz3RV5yLWyJ8f14QADUMRwrwBG0PoQmysPlvY3bhBEXPaIWOPBCfFf0mqFndeC2rIIs6je6c0rUsmyvTQucpPDhsLppxabCeHp0VWePc40_SYGASqFW_bf_Cqhzyuq2uHhi3OkGjlGRKGP9RVTt8Kfdrdq7IchkD6OcPe4uoP4NZCOCUZPI_KqrbL3tohbQN9pUDdPccoAQeRSIKH9CIaNJZzQ7P8A4GJ6kUE3bfTwJ0_UNE="
+      },
+      {
+       "name": "실버 스위트 (취사/파크뷰/침대)",
+       "tags": [
+        "취사 가능",
+        "스위트"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/AeakJysDp3RVyjU2AQ-Or_KutA3-rczRUYKv-3jeDX_9-GVyQYn_H9dfGCZhQD2iaZARmph_2js05xPqt3O1DMUX4otOLOBBfzL8UY7LE7geY4YnkGi04pwCylBLCbz5n2Yiyjg4I2c6bvmxF8ngUBQz7Ks7633pXgCm202pQxxpLi4JJ6Ntdr3OhXLOsKUn9RUA3_0ifwulc2myXlULZcciK40o4LS3-3run8maHP_fSTFifwpivPAjb-rlMR1Ahe2Z4vlmK5Z5d6o1RwoVV5y4E0tKV4t3gwdv3EViClsoRKqVZ9fwYixttb_K1mx5QNqmvGb2f96osdI7ngo5R-1Cl1UkD98KgRXmhq67TZ2ABjoWAhm4QOsn4CAXW6CbHs8dmQlZBMdF-1g24F-dqj5FJzk9FAhRTAsnhOBjoBM47wm5I9Kn2kTcaswyTKo3FXZPO87tGvLGOTQFJmMPQWtOpwH-dkS24kASqfW-blotgOhtSx5ZN-Uf80_t_ZJExeF5oC1_2YEE0RunimVeQiQvT7UVY5_3yqo0pOZS4tHFfhk="
       },
       {
        "name": "실버스위트(클린/파크뷰/침대)",
        "tags": [
         "스위트"
        ],
-       "image": "https://ads-partners.coupang.com/image1/A6Nwn24LJJ2h42dYAyUrCYg7WBA7SoFzNDQdz0Yu_zCVI3DK2BfK5cac2DcU1rY2JNeeOxEpsLI_reN6moJ0PMplMOtdsHfFhXUbooH7ZoPvp0P8_b1xwjdArIT7hbPV8LP1xjUQeQCTAx-hXrVaR6V22zj80iZAVhkLk2RNRW-MnU2Psorapa_MODVksTGle6vY-J1qNJxnSZ8wffw7vozf1h57l8XsKt6q5hXEZm5d-TMZ-xboaeea9_18xevrFb7x56JCGGfWNWrT5JUkroTMe7M69awhnQbZdQaWyK8qDlA1_MEMhsBf-FkPAVtdkMnBPZxHHXRU8j2oA9keSTAP4Utq2L_GJuvL0e7WygNT95pRe4ykSpy-2gmo1xHX3QNZiTOKotgxoc8h1eZjkoHWhgMKPcIjz0DkUXa_A92lUE3loEFwMvjceqMs8I3MCpNgwr8TC_Lor9FNFohRcjSRs-WOKuLTNNY3slqBZQpr6Wv55w6u3gpojOWWfkqBKelpu_6LEwwwca8pQlNRTdNPbVAOx8W46IVgDpL_hdWAPQ=="
+       "image": "https://ads-partners.coupang.com/image1/U8m-RsvAVpnw5nVBU80-qy5nla1TVGqtTYPHCARorizo4NJtWrYuWS63F6Is4oSbKFpBNZ7vQFVTn884ZIJiWiu4wrUiQCY5FSfLCX5H-NMfnKKT0kG6OAdF1YgbzVB4Y8aTjsY92FrFZJTez6a4UeEh2R09LTPwXYHemgtfy3HPzHQN5zrCe-2W_w7okFsFl9liLKAvR9TlfDMTH0KSAlT8WG0BFQzeKirD3yPKDvdr5fh0mpByJLV005kiSu0dFeF3eBtYm6-0vovhne8hnAsrcDaIXoj2RQNIoiz4_J-ZzWNvmB_dJ3e6tC6kMtTBynT_us3YLXbmSHFvUoH51OPL80aV-sv0D52ND5uXevPLYzTqP2gFzA9_jwrGLVc9Uj4Rd7k_vZBCN0sbKVQ8cPdNGXJDttA5GHruy7Tfn_8JZPB64gGb9MTEBTEamSBgh_vFnVma3rmzDlpJPIUru6Jay366urR8Fzt0g1krUMnOwXbrOAk54eNPpUmM8NCGxol9OdfSa-XWSjJyEw3s01aKH9W45az4xPrBBUng0BZeo0A="
       }
      ],
      "image": "img/2026-11-강원-실내-온수풀-온천/1.jpg",
      "links": {
-      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010791582&vendorItemId=70000146598875&itemId=20002051990762&traceid=V0-153-f26197bd66ef2828&requestid=20261012002007463314177350&token=31850C%7CGM&pt=0&slot=1",
+      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010791582&vendorItemId=70000146598875&itemId=20002051990762&traceid=V0-153-f26197bd66ef2828&requestid=20261012081132438212627966&token=31850C%7CGM&pt=0&slot=1",
       "agoda": null,
       "official": "https://www.sonohotelsresorts.com/felice_vp"
      },
