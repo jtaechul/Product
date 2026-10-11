@@ -188,6 +188,42 @@ def parse(html: str) -> _Links:
     return p
 
 
+class _Text(HTMLParser):
+    """보이는 글만 — 시설 설명(수온·길이·운영시간·전망)을 나레이션 사실로 쓰기 위해 (운영자 2026-10-11 "설명이 너무 짧다")."""
+    SKIP = ("script", "style", "noscript", "svg", "template", "head")
+    BLOCK = ("p", "div", "li", "h1", "h2", "h3", "h4", "h5", "br", "tr", "section", "article", "dd", "dt")
+
+    def __init__(self):
+        super().__init__()
+        self.out: list[str] = []
+        self._skip = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.SKIP:
+            self._skip += 1
+        elif tag in self.BLOCK:
+            self.out.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag in self.SKIP and self._skip:
+            self._skip -= 1
+
+    def handle_data(self, data):
+        if not self._skip:
+            self.out.append(data)
+
+
+def page_text(html: str) -> str:
+    p = _Text()
+    try:
+        p.feed(html)
+    except Exception:  # noqa: BLE001
+        pass
+    t = re.sub(r"[ \t \r]+", " ", "".join(p.out))
+    t = re.sub(r"\n\s*\n+", "\n", t)
+    return t.strip()
+
+
 def _norm(u: str) -> str:
     s = urllib.parse.urlsplit(u.strip())
     return urllib.parse.urlunsplit((s.scheme, s.netloc, s.path.rstrip("/"), s.query, ""))
@@ -342,11 +378,10 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
             shared = set(image_urls(home, render(home, chrome)))
             log(f"  그룹 홈 {home} 의 공용 사진 {len(shared)}장은 제외 (다른 지점 사진 혼입 방지)")
     res["shared_excluded"] = 0
+    res["text"] = {}                              # 페이지별 보이는 글 — 시설 사실(수온·길이·전망) 추출용. 사진 한도와 무관하게 모은다
     seen_url, seen_hash = set(), set()
     htmls = {_norm(url): html}
     for i, page in enumerate(pages):
-        if len(res["photos"]) >= max_images:
-            break
         if page not in htmls:
             if not allowed(page):
                 continue
@@ -354,6 +389,10 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
             htmls[page] = render(page, chrome)
             if blocked(htmls[page]):
                 continue
+        if len(res["text"]) < 12:
+            res["text"][page] = page_text(htmls[page])[:2500]
+        if len(res["photos"]) >= max_images:
+            continue
         found = [u for u in image_urls(page, htmls[page]) if u not in seen_url]
         urls = [u for u in found if u not in shared]
         res["shared_excluded"] += len(found) - len(urls)
@@ -391,8 +430,9 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
         res["reason"] = "사진 주소를 하나도 못 찾음 (봇 차단·빈 페이지 가능성)"
     else:
         res["reason"] = "조건(해상도 900px↑)에 맞는 사진이 없음"
-    (out_dir / "photo_sources.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
-    log(f"{name}: 사진 {len(res['photos'])}장 (시도 {res['tried']}) · 장부 {out_dir / 'photo_sources.json'}")
+    (out_dir / "text.json").write_text(json.dumps(res["text"], ensure_ascii=False, indent=1), encoding="utf-8")
+    (out_dir / "photo_sources.json").write_text(json.dumps({k: v for k, v in res.items() if k != "text"}, ensure_ascii=False, indent=1), encoding="utf-8")
+    log(f"{name}: 사진 {len(res['photos'])}장 (시도 {res['tried']}) · 글 {sum(len(t) for t in res['text'].values()):,}자 · 장부 {out_dir / 'photo_sources.json'}")
     return res
 
 
