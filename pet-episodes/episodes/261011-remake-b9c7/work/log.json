@@ -104,6 +104,22 @@
       {
         "what": "컷1-1(0.0~5.7초) Veo 실패(요금 없음)",
         "usd": -0.3
+      },
+      {
+        "what": "컷1-1(0.0~5.7초) 새로 만들기(Veo 3.1 Lite 6초)",
+        "usd": 0.3
+      },
+      {
+        "what": "컷1-1(0.0~5.7초) Veo 실패(요금 없음)",
+        "usd": -0.3
+      },
+      {
+        "what": "컷1-1(0.0~5.7초) 새로 만들기(Veo 3.1 Lite 6초)",
+        "usd": 0.3
+      },
+      {
+        "what": "컷1-1(0.0~5.7초) Veo 실패(요금 없음)",
+        "usd": -0.3
       }
     ],
     "timeline_src": "a86cb9b0b6c7-5.7",
@@ -606,10 +622,6 @@
         }
       ]
     },
-    "vertical": {
-      "mode": "new 9:16",
-      "src": "720x1280"
-    },
     "gen_prompts_used": {
       "scene1_1": "Vertical 9:16 photorealistic phone video, 6 seconds. The first image is the first frame and the second image is the last frame. SHOT: High-angle handheld medium shot looking downward at the treadmill and floor, tilting and following the action in one continuous take. SET: as in the first image. CHARACTERS: A reddish-tan and white Shiba Inu (medium-sized dog) and a compact fawn French Bulldog (small dog), both natural four-legged dogs without clothes - real four-legged dogs with natural dog anatomy. ACTION, every 0.5 seconds: 러닝머신에 매달렸던 시바견이 튕겨 나가고, 뒤따라온 프렌치 불독마저 벨트에 발을 댔다가 연달아 날아가 나란히 쓰러진다. RULES: each dog is one complete separate animal (one head, four legs, one tail); never one dog on top of the other, legs never cross; real weight and gravity, nothing passes through anything; the same dogs, sizes and colours in every frame; no text, logos or watermarks; no music."
     },
@@ -625,13 +637,29 @@
         "seg": 1,
         "short": true,
         "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.\", 'status': 'IN"
+      },
+      {
+        "scene": 1,
+        "seg": 1,
+        "short": false,
+        "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Your use case is currently not supported.  Please refer to Gemini API documentation for current model offering.', 'status': 'INVALID_ARGUMENT'"
+      },
+      {
+        "scene": 1,
+        "seg": 1,
+        "short": true,
+        "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Your use case is currently not supported.  Please refer to Gemini API documentation for current model offering.', 'status': 'INVALID_ARGUMENT'"
       }
-    ]
+    ],
+    "vertical": {
+      "mode": "new 9:16",
+      "src": "720x1280"
+    }
   },
   "last_request": {
-    "file": "06_remake_full.json",
-    "ran_at": "2026-10-11T15:30:04Z",
+    "file": "07_remake_full.json",
+    "ran_at": "2026-10-11T15:37:45Z",
     "ok": false
   },
-  "error": "컷1-1(0.0~5.7초): Veo가 두 번 만들지 못했습니다(요금 없음) — 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': \"`negativePrompt` isn't supported by this model. Please remove it or refer to the Gemini API documentat"
+  "error": "컷1-1(0.0~5.7초): Veo가 두 번 만들지 못했습니다(요금 없음) — 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Your use case is currently not supported.  Please refer to Gemini API documentation for current model "
 }
