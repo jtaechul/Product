@@ -470,6 +470,13 @@ def produce_veo(req: dict, stay: str, items: list, models: dict, report: dict) -
         raise RuntimeError("쓸 사진이 한 장도 없습니다 (쿠팡 사진 없음 · requests/produce/photos/ 비어 있음)")
     classified = _try_models("vision", models["text"], lambda m: photos.classify(m, cands))
     shots, notes = photos.select(classified)
+    # ⭐ 테스트 비용 규칙 (2026-10-11 운영자): Veo 는 720p 가 최저 화질·최저가(320p 없음, 초당 과금)라
+    #    테스트는 해상도가 아니라 **컷 수**로 아낀다. request.json 의 max_veo_cuts (기본 3) 만큼만 산다.
+    #    정식 제작(7컷)은 "max_veo_cuts": 7 을 명시할 때만.
+    max_cuts = int(req.get("max_veo_cuts") or 3)
+    if len(shots) > max_cuts:
+        notes.append(f"테스트 규칙: {len(shots)}컷 중 앞 {max_cuts}컷만 Veo 로 만든다 (max_veo_cuts={max_cuts})")
+        shots = shots[:max_cuts]
     for s in shots:
         photos.crop_9x16(s["path"], BUILD / f"shot_{s['n']}.png", s["focus_x"], s["focus_y"])
         s["prompt"] = photos.prompt_for(s)

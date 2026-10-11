@@ -286,7 +286,7 @@ def photo_check(model: str, name: str, rooms: list, build: Path) -> dict:
 #
 #   순위 = "소비자가 지금 찾고 있고, 사면 만족할 숙소" 순. 100점 만점.
 #     수요 40 = 블로그 최근 12개월 글 수(후보 중 상대값, 로그) 25 + 뉴스 최근 90일 5 + 테마 계절성(달력 기준) 10
-#     적합 20 = 확인된 근거(객실 이름 8 · TourAPI 시설 6) 14 + AI 지식의 테마 적합(검증 필요 표시) 6
+#     적합 20 = 확인된 근거(객실 이름 8 · TourAPI 시설 6) 14 + AI 가 말한 시설을 블로그로 교차 확인(5건 이상) 6 (미확인이면 최대 2)
 #     훅   10 = "한 줄로 말할 거리" 강도 (AI 판정)
 #     가격 20 = 타깃 가격대(1박 10~30만 원) 10 + 자체 기록 대비 하락(15% 이상) 10
 #     기회  5 = 최근 180일 신규·리뉴얼·오픈 뉴스
@@ -304,13 +304,13 @@ SEASON = [  # (테마 키워드 조각, 성수기 달 → 10점, 준성수기 �
 NEWS_FRESH_RE = re.compile(r"리뉴얼|재개장|오픈|개장|신규|새단장|리모델링")
 
 
-def _naver_search(kind: str, query: str, display: int = 100) -> dict | None:
+def _naver_search(kind: str, query: str, display: int = 100, start: int = 1) -> dict | None:
     cid = (os.environ.get("NAVER_CLIENT_ID") or "").strip()
     sec = (os.environ.get("NAVER_CLIENT_SECRET") or "").strip()
     if not cid or not sec:
         return None
     url = f"https://openapi.naver.com/v1/search/{kind}.json?" + urllib.parse.urlencode(
-        {"query": query, "display": display, "start": 1, "sort": "date"})
+        {"query": query, "display": display, "start": start, "sort": "date"})
     req = urllib.request.Request(url, headers={"X-Naver-Client-Id": cid, "X-Naver-Client-Secret": sec})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
@@ -320,22 +320,38 @@ def _naver_search(kind: str, query: str, display: int = 100) -> dict | None:
         return None
 
 
+BLOG_MAX = 1000          # 네이버 블로그 API 가 최신순으로 줄 수 있는 상한 (start ≤ 1000)
+
+
 def naver_demand(name: str) -> dict:
-    """블로그 최근 12개월 글 수(최대 100, 최신순 100건 안에서 센다) · 뉴스 최근 90일 수 · 신규·리뉴얼 뉴스."""
+    """블로그 최근 12개월 글 수(최신순 페이지를 넘겨 최대 1,000건까지 센다) · 뉴스 최근 90일 수 · 신규·리뉴얼 뉴스.
+
+    v3 실측: 한 페이지(100건)만 보니 상위 12곳이 전부 100건+ 로 같아져 수요 점수 변별력이 없었다 → v3.1 에서 페이지를 넘긴다."""
     out = {"blog_total": None, "blog_12m": None, "news_90d": None, "fresh_news": []}
     today = date.today()
-    js = _naver_search("blog", f'"{name}"')
-    if js is not None:
-        out["blog_total"] = int(js.get("total") or 0)
-        n = 0
-        for it in js.get("items") or []:
+    n, start = 0, 1
+    while start <= BLOG_MAX - 99:
+        js = _naver_search("blog", f'"{name}"', 100, start)
+        if js is None:
+            break
+        if out["blog_total"] is None:
+            out["blog_total"] = int(js.get("total") or 0)
+        items = js.get("items") or []
+        older = False
+        for it in items:
             try:
                 d = date(int(it["postdate"][:4]), int(it["postdate"][4:6]), int(it["postdate"][6:8]))
-                n += (today - d).days <= 365
             except Exception:  # noqa: BLE001
                 continue
-        out["blog_12m"] = n
-    time.sleep(0.15)
+            if (today - d).days <= 365:
+                n += 1
+            else:
+                older = True
+        time.sleep(0.12)
+        if older or len(items) < 100:
+            break
+        start += 100
+    out["blog_12m"] = n if out["blog_total"] is not None else None
     js = _naver_search("news", f'"{name}"', 50)
     if js is not None:
         n, fresh = 0, []
@@ -380,6 +396,24 @@ def hook_judge(model: str, c: dict, theme: str, region: str) -> dict:
     return {"theme_fit": n10(data.get("theme_fit")), "known_facilities": [str(x)[:30] for x in (data.get("known_facilities") or [])][:4],
             "hook": str(data.get("hook", ""))[:40], "hook_strength": n10(data.get("hook_strength")),
             "target_fit": n10(data.get("target_fit")), "note": str(data.get("note", ""))[:80]}
+
+
+FACILITY_MIN_POSTS = 5
+
+
+def verify_facilities(name: str, facilities: list[str]) -> list[dict]:
+    """AI 가 말한 시설을 블로그로 교차 검증: "숙소명" 시설명 으로 검색해 글이 FACILITY_MIN_POSTS 이상이면 확인."""
+    out = []
+    for f in facilities[:3]:
+        core = re.sub(r"\(.*?\)", "", f).strip()
+        core = re.split(r"[·,/]", core)[0].strip()[:14]
+        if not core:
+            continue
+        js = _naver_search("blog", f'"{name}" {core}', 1)
+        total = int(js.get("total") or 0) if js else 0
+        out.append({"facility": f, "query": core, "posts": total, "verified": total >= FACILITY_MIN_POSTS})
+        time.sleep(0.12)
+    return out
 
 
 def season_score(theme: str, keywords: list[str], month: str) -> int:
@@ -432,9 +466,15 @@ def score_v3(c: dict, blog_max: int, theme: str, keywords: list[str], month: str
     b["fit_tour"] = 6 if c.get("tour_themed") else 0
     if c.get("tour_themed"):
         why.append("TourAPI 시설: " + ", ".join(c.get("tour_facts") or []))
-    b["fit_ai"] = round(6 * ai.get("theme_fit", 0) / 10)
-    if ai.get("known_facilities"):
-        why.append("AI 지식(검증 필요): " + ", ".join(ai["known_facilities"]))
+    checks = c.get("facility_checks") or []
+    verified = [k for k in checks if k.get("verified")]
+    if verified:                                   # 블로그에서 확인된 시설 → 확인된 근거로 친다
+        b["fit_ai"] = 6
+        why.append("블로그 확인 시설: " + ", ".join(f"{k['facility']}({k['posts']}건)" for k in verified[:2]))
+    else:                                          # AI 지식만 → 최대 2점
+        b["fit_ai"] = min(2, round(ai.get("theme_fit", 0) / 5))
+        if ai.get("known_facilities"):
+            why.append("AI 지식(블로그 미확인): " + ", ".join(ai["known_facilities"][:2]))
     # 훅 10
     b["hook"] = ai.get("hook_strength", 0)
     # 가격 20
@@ -565,6 +605,7 @@ def run(req: dict) -> dict:
             c["ai"] = ms._try_models("text", models["text"], lambda m: hook_judge(m, c, theme, region))
         except Exception as e:  # noqa: BLE001
             c["ai"] = {"error": str(e)[:80]}
+        c["facility_checks"] = verify_facilities(c["name"], (c["ai"] or {}).get("known_facilities") or [])
     blog_max = max((c["demand"].get("blog_12m") or 0 for c in passed), default=0)
     for c in passed:
         c["score"], c["breakdown"], c["reasons"] = score_v3(c, blog_max, theme, keywords, month)
