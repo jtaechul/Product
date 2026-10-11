@@ -2,10 +2,14 @@ name: stay-shorts-folder
 
 # 프로필 링크 페이지의 테마 폴더에 **대표 이미지(쿠팡 객실 사진)** 를 채운다 — 운영자 2026-10-11 "대표 이미지 하나 들어가야 한다".
 # 쿠팡 API 만 쓴다 (0원 · Gemini 없음). 저장본(link/img/)을 커밋하고 deploy-stay-links 를 불러 페이지를 다시 배포한다.
-# 실행: Run workflow (수동). 제작·미리보기 실행 때는 make_top3 가 같은 일을 자동으로 한다.
+# 실행: requests/folder/request.json 의 nonce 를 바꿔 푸시, 또는 Run workflow (수동). 제작·미리보기 실행 때는 make_top3 가 같은 일을 자동으로 한다.
+# (이 세션의 GitHub 연결은 workflow_dispatch 호출 권한이 없어 403 — 그래서 푸시 트리거를 둔다)
 
 on:
   workflow_dispatch: {}
+  push:
+    branches: ["main", "claude/stay-shorts-factory", "claude/stay-shorts-video-conversion-67hiin"]
+    paths: ["projects/stay-shorts-factory/requests/folder/*.json"]
 
 permissions:
   contents: write
