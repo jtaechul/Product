@@ -23,8 +23,16 @@ FONT_X = ROOT / "assets" / "fonts" / "Pretendard-ExtraBold.otf"
 FONT_S = ROOT / "assets" / "fonts" / "Pretendard-SemiBold.otf"
 FALLBACK = [ROOT.parent / "coupang-shorts-factory" / "assets" / "fonts" / "GmarketSansBold.ttf", ROOT / "assets" / "fonts" / "GmarketSansBold.ttf"]
 
+# 디자인 토큰 (2026-10-11 운영자 "UI·화면 구성을 촌스럽게 하지 마라, 제대로 세련되게" → 아래 값 외의 임의 색·크기·여백 금지)
+INK = (11, 13, 18)                                    # 글자·배경 어두운색
+ACCENT = (255, 138, 91)                               # 포인트 색 하나 — 웜 코랄 (청록 물 사진의 보색이라 민트보다 또렷하다). 화면당 1~2곳만
+MARGIN = 72                                           # 좌우 여백 그리드
+RADIUS = 28                                           # 카드·칩 모서리
+SAFE_RIGHT = 180                                      # 릴스·쇼츠 오른쪽 아이콘 영역 — 카드는 이 안으로 들어가지 않는다
+TYPE = {"eyebrow": 34, "body": 40, "label": 44, "caption": 84, "headline": 88, "hook": 100, "fine": 26}   # 화면당 3단계까지만 섞는다
+
 STYLES = {
-    "shadow": {"ko": "그림자형", "accent": (94, 234, 212), "desc": "흰 글자 + 얇은 어두운 선 + 2겹 그림자 + 은은한 어둡기 띠 (확정 · 기본)"},
+    "shadow": {"ko": "그림자형", "accent": ACCENT, "desc": "흰 글자 + 얇은 어두운 선 + 2겹 그림자 + 은은한 어둡기 띠 (확정 · 기본)"},
     "bar": {"ko": "바형", "accent": (255, 179, 107), "desc": "줄마다 반투명 어두운 바 위 흰 글자"},
     "highlight": {"ko": "형광펜형", "accent": (255, 107, 107), "desc": "흰 박스 위 어두운 글자 (잡지 느낌)"},
     "glass": {"ko": "패널형", "accent": (94, 234, 212), "desc": "한 장의 어두운 패널 + 얇은 테두리 안에 글자"},
@@ -151,6 +159,64 @@ def _scrim(im: Image.Image, top: int, bottom: int, peak: float = 0.30):
     im.alpha_composite(band, (0, top))
 
 
+def glass(im: Image.Image, box, radius: int = 999, fill=(255, 255, 255, 30), border=(255, 255, 255, 60)):
+    """유리 칩: 반투명 흰 면 + 1px 밝은 테두리. 검은 반투명 박스보다 사진 위에서 가볍고 고급스럽다."""
+    layer = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    ImageDraw.Draw(layer).rounded_rectangle(box, radius, fill=fill, outline=border, width=2)
+    im.alpha_composite(layer)                           # 불투명 사진 위에서도 '섞이게' (ImageDraw 는 알파를 덮어쓴다)
+    return im
+
+
+def gradient(im: Image.Image, y_from: int, y_to: int, a_from: float, a_to: float, color=INK):
+    """세로 그라데이션 어둡기(위→아래). 사진을 흐리게 뭉개지 않고도 글자 자리를 어둡게 만든다 (블러는 사진을 버리는 짓이다)."""
+    y_from, y_to = max(0, y_from), min(H, y_to)
+    hgt = y_to - y_from
+    if hgt <= 0:
+        return im
+    rows = []
+    for y in range(hgt):
+        t = y / max(1, hgt - 1)
+        t = t * t * (3 - 2 * t)
+        rows.append(int(255 * (a_from + (a_to - a_from) * t)))
+    mask = Image.new("L", (1, hgt)); mask.putdata(rows); mask = mask.resize((W, hgt))
+    band = Image.new("RGBA", (W, hgt), (*color, 255)); band.putalpha(mask)
+    im.alpha_composite(band, (0, y_from))
+    if y_to < H and a_to > 0:
+        tail = Image.new("RGBA", (W, H - y_to), (*color, int(255 * a_to)))
+        im.alpha_composite(tail, (0, y_to))
+    return im
+
+
+def folder_icon(d: ImageDraw.ImageDraw, x: int, y: int, size: int = 56, color=(255, 255, 255, 235)):
+    """벡터 폴더 아이콘 (이모지 금지)."""
+    tab_w, tab_h = int(size * 0.42), int(size * 0.16)
+    d.rounded_rectangle([x, y + tab_h, x + size, y + int(size * 0.8)], int(size * 0.14), fill=color)
+    d.rounded_rectangle([x, y, x + tab_w, y + tab_h * 2], int(size * 0.1), fill=color)
+
+
+def draw_folder_row(im: Image.Image, x: int, y: int, w: int, folder: str, pos: int):
+    """프로필 폴더 페이지의 한 줄을 그대로 닮은 카드: [폴더 아이콘] 폴더 이름 / '테마 폴더' ... [N번] — 시청자가 페이지에서 바로 알아본다."""
+    hgt = 160
+    glass(im, [x, y, x + w, y + hgt], RADIUS, fill=(255, 255, 255, 26), border=(255, 255, 255, 56))
+    d = ImageDraw.Draw(im)
+    folder_icon(d, x + 36, y + 52, 56)
+    f1 = font(TYPE["label"]); f2 = font(26, bold=False); fb = font(36)
+    badge = f"{pos}번"
+    bw = d.textlength(badge, font=fb) + 44
+    bx = x + w - 36 - bw
+    name_w = bx - (x + 120) - 24
+    name = folder
+    while d.textlength(name, font=f1) > name_w and len(name) > 3:
+        name = name[:-1]
+    if name != folder:
+        name = name[:-1] + "…"
+    d.text((x + 120, y + 38), name, font=f1, fill=(255, 255, 255, 255))
+    d.text((x + 120, y + 38 + f1.size + 8), "테마 폴더", font=f2, fill=(255, 255, 255, 140))
+    d.rounded_rectangle([bx, y + hgt / 2 - 30, bx + bw, y + hgt / 2 + 30], 999, fill=(*ACCENT, 255))
+    d.text((bx + 22, y + hgt / 2 - 22), badge, font=fb, fill=(*INK, 255))
+    return im
+
+
 def draw_caption(im: Image.Image, text: str, style: str = DEFAULT_STYLE, size: int = 76, cy: float = CY, sub: str = "", max_w: int | None = None):
     """자막 본문(최대 2줄)과 보조 줄을 그린다. im 은 RGBA."""
     st = STYLES.get(style) or STYLES[DEFAULT_STYLE]
@@ -219,9 +285,11 @@ def draw_pill(im: Image.Image, text: str, y: int = 118):
     d = ImageDraw.Draw(im)
     f = font(32, bold=False)
     tw = d.textlength(text, font=f)
-    x = 44
-    d.rounded_rectangle([x, y, x + tw + 44, y + f.size + 24], 999, fill=(0, 0, 0, 135))
-    d.text((x + 22, y + 11), text, font=f, fill=(255, 255, 255, 235))
+    x = MARGIN - 16
+    glass(im, [x, y, x + tw + 44 + 30, y + f.size + 24])
+    d = ImageDraw.Draw(im)
+    d.ellipse([x + 20, y + f.size / 2 + 5, x + 34, y + f.size / 2 + 19], fill=(*ACCENT, 255))     # 포인트 점 하나
+    d.text((x + 48, y + 11), text, font=f, fill=(255, 255, 255, 235))
     return im
 
 
@@ -230,12 +298,13 @@ def draw_chip(im: Image.Image, text: str, sub: str = "", y: int = 118):
     d = ImageDraw.Draw(im)
     f = font(34, bold=False); f2 = font(22, bold=False)
     tw = max(d.textlength(text, font=f), d.textlength(sub, font=f2) if sub else 0)
-    x2 = W - 44
+    x2 = W - (MARGIN - 16)
     hgt = f.size + 22 + (f2.size + 6 if sub else 0)
-    d.rounded_rectangle([x2 - tw - 40, y, x2, y + hgt], 20, fill=(255, 255, 255, 232))
-    d.text((x2 - tw - 20, y + 10), text, font=f, fill=(20, 22, 30, 255))
+    glass(im, [x2 - tw - 40, y, x2, y + hgt])
+    d = ImageDraw.Draw(im)
+    d.text((x2 - tw - 20, y + 10), text, font=f, fill=(255, 255, 255, 255))
     if sub:
-        d.text((x2 - tw - 20, y + f.size + 14), sub, font=f2, fill=(90, 94, 104, 255))
+        d.text((x2 - tw - 20, y + f.size + 14), sub, font=f2, fill=(255, 255, 255, 175))
     return im
 
 
@@ -289,42 +358,44 @@ def cover(im: Image.Image, w: int = W, h: int = H) -> Image.Image:
     return im.crop((x, y, x + cw, y + ch)).resize((w, h), Image.LANCZOS)
 
 
-def end_card(out: Path, bg: Path | None, folder: str, pos: int, style: str = DEFAULT_STYLE, disclosure: str = "", label: str = "객실 타입 · 가격대 · 링크는"):
-    """끝 카드: 대표 사진 블러 배경 + '프로필 링크 → 폴더 N번'. 숙소 이름은 쓰지 않는다 (영상 비공개·텍스트 공개 결정)."""
-    st = STYLES.get(style) or STYLES[DEFAULT_STYLE]
-    accent = (*st["accent"], 255)
+def end_card(out: Path, bg: Path | None, folder: str, pos: int, style: str = DEFAULT_STYLE, disclosure: str = "", label: str = "객실 타입 · 가격대 · 예약 링크"):
+    """끝 카드 (2026-10-11 재설계 — 운영자 "이 카드처럼 촌스럽게 하지 마라"):
+    흐린 배경·가운데 정렬·화살표 폐기 → **선명한 사진 + 아래쪽 어둡기 그라데이션**, 왼쪽 정렬 편집 타이포(작은 안내 → 큰 제목 2줄),
+    그 아래 **프로필 폴더 페이지의 한 줄을 닮은 카드**(아이콘 · 폴더 이름 · N번 코랄 뱃지). 오른쪽 아이콘 영역(180px)은 비운다. 숙소 이름 없음."""
     if bg and Path(bg).exists():
-        base = cover(Image.open(bg).convert("RGB")).filter(ImageFilter.GaussianBlur(26))
-        base = Image.blend(base, Image.new("RGB", (W, H), (8, 10, 16)), 0.55)
+        base = cover(Image.open(bg).convert("RGB"))
     else:
-        base = Image.new("RGB", (W, H), (14, 16, 24))
+        base = Image.new("RGB", (W, H), INK)
     im = base.convert("RGBA")
-    d = ImageDraw.Draw(im)
-    f1 = font(46, bold=False)
-    tw = d.textlength(label, font=f1)
-    d.text(((W - tw) / 2, 640), label, font=f1, fill=(255, 255, 255, 220))
-    f2 = font(68)
-    t2 = "프로필 링크"
-    tw = d.textlength(t2, font=f2)
-    d.text(((W - tw) / 2, 720), t2, font=f2, fill=(255, 255, 255, 255))
-    # 화살표(아래) — 벡터로 그린다 (이모지 금지)
-    cx, ay = W / 2, 830
-    d.line([(cx, ay), (cx, ay + 70)], fill=(255, 255, 255, 230), width=8)
-    d.polygon([(cx - 26, ay + 56), (cx + 26, ay + 56), (cx, ay + 92)], fill=(255, 255, 255, 230))
-    f3, lines = fit_font(d, folder, 84, W - 200, min_size=60)
-    y = 960
-    for ln in lines:
-        lw = _width(d, ln, f3)
-        _draw_segs(d, (W - lw) / 2, y, ln, f3, accent, accent)
-        y += int(f3.size * 1.2)
-    t4 = f"{pos}번째 숙소"
-    f4 = font(60)
-    tw = d.textlength(t4, font=f4)
-    pad = 26
-    d.rounded_rectangle([(W - tw) / 2 - pad, y + 18, (W + tw) / 2 + pad, y + 18 + f4.size + 28], 999, fill=(255, 255, 255, 235))
-    d.text(((W - tw) / 2, y + 32), t4, font=f4, fill=(20, 22, 30, 255))
+    gradient(im, 0, 420, 0.28, 0.0)                     # 위쪽은 살짝만 (폴더 표시 자리)
+    gradient(im, 640, 1150, 0.0, 0.80)                  # 글자 자리(제목 1056~)부터 아래는 고르게 어둡게, 사진은 위쪽에 선명하게 남긴다
+    ov = Image.new("RGBA", (W, H), (0, 0, 0, 0))        # 반투명 글자·칩은 투명 층에 그려 합성한다
+    d = ImageDraw.Draw(ov)
+    x = MARGIN
+    card_w = W - MARGIN - SAFE_RIGHT - MARGIN // 2        # 오른쪽 아이콘 영역 회피
+    f_eye = font(TYPE["eyebrow"], bold=False)
+    d.text((x, 1004), label, font=f_eye, fill=(255, 255, 255, 180))
+    f_h = font(TYPE["headline"])
+    lh = int(f_h.size * 1.14)
+    for k, line in enumerate(("프로필 링크에서", "폴더를 열어 보세요")):
+        d.text((x, 1056 + k * lh), line, font=f_h, fill=(255, 255, 255, 255))
+    draw_folder_row(ov, x, 1056 + 2 * lh + 44, card_w, folder, pos)
+    d = ImageDraw.Draw(ov)
     if disclosure:
-        draw_disclosure(im, disclosure, y=1560, size=30)
+        f_fine = font(TYPE["fine"], bold=False)
+        y = 1700
+        words, lines, cur = disclosure.split(" "), [], ""
+        for wd in words:
+            t = (cur + " " + wd).strip()
+            if d.textlength(t, font=f_fine) <= card_w:
+                cur = t
+            else:
+                lines.append(cur); cur = wd
+        if cur:
+            lines.append(cur)
+        for ln in lines:
+            d.text((x, y), ln, font=f_fine, fill=(255, 255, 255, 135)); y += TYPE["fine"] + 8
+    im.alpha_composite(ov)
     im.convert("RGB").save(out, "JPEG", quality=92)
     return out
 
