@@ -1,0 +1,46 @@
+{
+  "kind": "remake",
+  "menuName": "리메이크 · d165c034a9bc4f6a86ed1eadd1d9",
+  "clips": [],
+  "source": {
+    "youtube": "",
+    "title": "d165c034a9bc4f6a86ed1eadd1d93f71.mp4",
+    "music": ""
+  },
+  "remake": {
+    "swap": "1) replace the first boy on the treadmill with the Shiba Inu from image 1, turning his head, arms, and legs into furry Shiba paws and head; 2) replace the second running boy with a small puppy dog of another breed, keeping the exact running and tumbling motion",
+    "keep_people": false,
+    "cast": "exactly two dogs: one Shiba Inu from image 1 and one small dog of another breed",
+    "swap_ko": "러닝머신에서 튕겨 나가는 아이 → 우리 시바견, 달려오다 같이 넘어지는 아이 → 다른 품종의 강아지로 교체",
+    "ending": "The Shiba Inu proudly sits on the treadmill while desperately pressing the emergency stop button with its nose.",
+    "big": "민망함은 잠시\n운동은 확실하게",
+    "sub": "집에서도 멈추지 않는 완벽한 실내 러닝\n오늘부터 날렵한 댕댕이로 거듭나세요",
+    "vo": "어서와, 트레드밀은 처음이지? 구매는 프로필 링크.",
+    "cut": "",
+    "whimper": true,
+    "music_pick": "The Pink Panther Theme – Henry Mancini (살금살금 다가오다 미끄러지는 도입부 구간, 엉뚱한 슬랩스틱 장면에 어울림)",
+    "ad": "vo",
+    "ad_copy": true,
+    "method": "gen",
+    "res": "720p",
+    "pre_enhance": false,
+    "upscale": 0,
+    "cap": 5
+  },
+  "caption": "민망함은 잠시 운동은 확실하게\n\n집에서도 멈추지 않는 완벽한 실내 러닝 오늘부터 날렵한 댕댕이로 거듭나세요\n\n구매는 프로필 링크에서.",
+  "hashtags": [
+    "#강아지런닝머신",
+    "#반려견실내운동기구",
+    "#강아지홈트",
+    "#펫트레드밀",
+    "#실내강아지산책"
+  ],
+  "product": {
+    "title": "아굴라 반려견 런닝머신 강아지 산책머신 실내 운동기구 펫 트레드밀 C100",
+    "brand": "",
+    "category": "산책용품",
+    "reason": "집에서도 멈추지 않는 완벽한 실내 러닝 오늘부터 날렵한 댕댕이로 거듭나세요",
+    "link": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=9695868268&itemId=29001408007&vendorItemId=95929863221&traceid=V0-153-429a25ec3260c71f&requestid=20261011215617235027069864&token=31850C%7CGM&pt=0&slot=1",
+    "image": "https://ads-partners.coupang.com/image1/uf6tlXy7jnismxUIuewTr94AaqsrMQTgXi9hTVW2EIPCgXqRx7N_ON8aZRcVKXel05IZuJ2_fUI2YEGd44chT7fiY5WjbS4AHcB5ewaRzFTVzONe1U4U78yTtbaf4qzYsnuOgz40VeKav3AM3zGUW4lNwrOWr52pF_ylf3SHvvp7YLReWcuKSpM3U2iAn_Ajqd8ShTnhFjgfLz8Rz-FF8Vnn5g6zvfUEUqE3sY8tgxfXNMY9g82n_TA7mEQVmhsnPtkHq3x_4MCZ9MuM9o7UyFllxFMHjzTmK0CNEtZUXspU8rc9AH_XJAmjU31zV_5G2ErMWc9HgqBHoZlBMnFkYhT02vX7_cAsvrKBNV5aL9IUpd8wh04pha064Zm3ygh2Oawq7HFneaRRPuJQLq-uGl7jXrgSXygcvvYREPW6otTtA1ra4EXbm6gy-mZ_Ji141WCnhi8Ps8PNZ0Z7liZaWZjE453D5ZQcjvic00QxA9wLvDnib5U0LCIWo1lqWcZKdBNc1nrzj8jTZpr9TEGVoOdMV-SloDLPj2_nEFlg1UoD"
+  }
+}
