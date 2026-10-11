@@ -678,6 +678,10 @@ def main() -> int:
         old.unlink()
     report = {"nonce": req.get("nonce"), "stay": stay, "mode": mode, "fake": bool(req.get("fake")), "ok": False, "steps": {}}
     try:
+        # ⭐ 운영자 2026-10-11 "돈 쓰지 마, 쓸 거면 허락받아" — 유료 Veo 가 도는 조합(veo/top3 · fake 아님 · 미리보기 아님)은
+        #    request.json 에 "veo_approved": true 가 있어야 한다. 없으면 돈을 쓰기 전에 멈춘다. 미리보기·가짜 클립은 Veo 0원이라 통과
+        if mode in ("veo", "top3") and not veo.FAKE and str(req.get("stage") or "") != "preview" and req.get("veo_approved") is not True:
+            raise RuntimeError('유료 Veo 제작은 운영자 허락이 필요합니다 — request.json 에 "veo_approved": true 를 넣어 주세요 (미리보기는 "stage": "preview")')
         models = pick_models()
         report["models"] = models
         if mode == "top3" and str(req.get("stage") or "") == "preview":
