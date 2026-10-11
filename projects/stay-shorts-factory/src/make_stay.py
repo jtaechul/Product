@@ -216,6 +216,72 @@ def gemini_json(model: str, system: str, content: str) -> dict:
     return json.loads(txt)
 
 
+def clean_tts_wav(src: Path, dst: Path, frame_ms: int = 10) -> dict:
+    """Gemini TTS 음성의 앞·뒤 잡음을 잘라낸다 — 2026-10-11 운영자 "사이사이 치지직 소리 당장 없애".
+
+    실측(p7 narration_preview.mp3 스펙트로그램·RMS): 각 구간 음성이 끝나고 0.1~0.2초 무음 뒤에 **0.15초짜리 전대역 백색잡음 덩어리**
+    (RMS 13,000~18,000, 말소리보다 큼)가 붙어 있고, 시작 부분에도 짧은 클릭이 있다. 기존 무음 자르기(-45dB)는 잡음이 커서 거기서 멈춰
+    잡음을 남겼다. 규칙: 10ms 프레임 RMS 로 소리 구간을 찾고, 맨 앞·맨 뒤의 **짧고(0.4초 미만) 고립된(앞뒤 60ms 이상 무음) 구간**은
+    잡음으로 보고 버린다(최대 3번 반복). 남은 구간 앞 40ms·뒤 60ms 만 두고 자르고 8ms/25ms 페이드를 건다. 돌려주는 것: 잘라낸 길이 기록."""
+    import array
+    with wave.open(str(src), "rb") as wf:
+        sr, ch, sw, n = wf.getframerate(), wf.getnchannels(), wf.getsampwidth(), wf.getnframes()
+        raw = wf.readframes(n)
+    if sw != 2 or ch != 1:
+        if src != dst:
+            dst.write_bytes(src.read_bytes())
+        return {"skipped": f"형식 {ch}ch {sw * 8}bit"}
+    a = array.array("h"); a.frombytes(raw)
+    fl = max(1, int(sr * frame_ms / 1000))
+    rms, en, den = [], [], []
+    for i in range(0, len(a), fl):
+        seg = a[i:i + fl]
+        e = sum(x * x for x in seg)
+        rms.append((e / max(1, len(seg))) ** 0.5)
+        en.append(e); den.append(sum((seg[j + 1] - seg[j]) ** 2 for j in range(len(seg) - 1)))
+    quiet = 120.0                                   # ≈ -49 dBFS 미만이면 무음
+    runs, start = [], None
+    for k, v in enumerate(rms + [0.0]):
+        if v >= quiet and start is None:
+            start = k
+        elif v < quiet and start is not None:
+            if runs and (start - runs[-1][1]) * frame_ms < 40:      # 40ms 미만 틈은 같은 말로 본다
+                runs[-1] = (runs[-1][0], k)
+            else:
+                runs.append((start, k))
+            start = None
+    info = {"head_ms": 0, "tail_ms": 0, "runs": len(runs)}
+    if not runs:
+        if src != dst:
+            dst.write_bytes(src.read_bytes())
+        return info
+    short, gap = 400 / frame_ms, 60 / frame_ms       # 0.4초 미만 · 60ms 이상 고립
+
+    def noisy(run):                                  # 구간 전체의 고주파 비율 — 말소리(모음 포함)는 0.5 미만, 클릭·백색잡음은 1 안팎
+        e = sum(en[run[0]:run[1]]) or 1
+        return sum(den[run[0]:run[1]]) / e >= 0.5
+
+    for _ in range(3):                               # 실측: 1위 구간 앞의 "이" 220ms 가 고립돼 있어 고주파 조건 없이는 첫 음절을 잘랐다
+        if len(runs) >= 2 and (runs[-1][1] - runs[-1][0]) < short and (runs[-1][0] - runs[-2][1]) >= gap and noisy(runs[-1]):
+            info["tail_ms"] += (runs[-1][1] - runs[-1][0]) * frame_ms; runs.pop()
+        if len(runs) >= 2 and (runs[0][1] - runs[0][0]) < short and (runs[1][0] - runs[0][1]) >= gap and noisy(runs[0]):
+            info["head_ms"] += (runs[0][1] - runs[0][0]) * frame_ms; runs.pop(0)
+    s = max(0, runs[0][0] * fl - int(sr * 0.04))
+    e = min(len(a), runs[-1][1] * fl + int(sr * 0.06))
+    out = a[s:e]
+    fi, fo = int(sr * 0.008), int(sr * 0.025)
+    for i in range(min(fi, len(out))):
+        out[i] = int(out[i] * i / fi)
+    for i in range(min(fo, len(out))):
+        out[len(out) - 1 - i] = int(out[len(out) - 1 - i] * i / fo)
+    with wave.open(str(dst), "wb") as wf:
+        wf.setnchannels(1); wf.setsampwidth(2); wf.setframerate(sr); wf.writeframes(out.tobytes())
+    info["sec"] = round(len(out) / sr, 2)
+    if info["head_ms"] or info["tail_ms"]:
+        log(f"음성 잡음 제거: 앞 {info['head_ms']}ms · 뒤 {info['tail_ms']}ms ({src.name})")
+    return info
+
+
 def gemini_tts(model: str, text: str, voice: str, style: str, out_wav: Path) -> float:
     # ⚠️ 2026-10-11 실측: style 지시문을 본문 앞에 붙이면 TTS 가 **지시문까지 읽는다** (구간마다 약 6초, 무음 분석으로 확인).
     #    stay-run-4·5 모두 그랬다. 이제 지시문은 붙이지 않는다 — style 은 빈 문자열로 둔다.
@@ -235,7 +301,8 @@ def gemini_tts(model: str, text: str, voice: str, style: str, out_wav: Path) -> 
             rate = int(m.group(1)) if m else 24000
             with wave.open(str(out_wav), "wb") as wf:
                 wf.setnchannels(1); wf.setsampwidth(2); wf.setframerate(rate); wf.writeframes(pcm)
-            return len(pcm) / 2 / rate
+            info = clean_tts_wav(out_wav, out_wav)          # 앞·뒤 잡음 덩어리 제거 (운영자 "치지직" 지적)
+            return float(info.get("sec") or len(pcm) / 2 / rate)
         except Exception as e:  # noqa: BLE001
             last = e
             if any(c in str(e) for c in ("HTTP 404", "HTTP 400", "HTTP 403")):
