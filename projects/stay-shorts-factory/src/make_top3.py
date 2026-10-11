@@ -152,6 +152,8 @@ SCRIPT_SYSTEM = """너는 "데이터로 고른 호캉스" 쇼츠의 큐레이터
 - 입력에 없는 시설·서비스·가격·할인을 말하지 않는다. 가격 숫자 금지. "최고·유일·최저가·1위(순위 외)·완벽·보장·최장·최대" 금지.
 - 블로그 글 수는 화면 뱃지가 따로 보여 준다. **자막(caption)에는 숫자·'후기 N건'을 쓰지 않는다.** 나레이션에서는 1위 구간에서만 한 번 말해도 된다.
 - 자막은 시설·혜택·느낌 키워드 3~10자 한 줄 (예: "사계절 온수 인피니티풀", "객실 전부 오션뷰", "조식 포함 객실"). 느낌표·이모지 금지. 세 숙소의 자막이 서로 다른 내용이어야 한다.
+- 각 숙소에는 '화면 A·B 장면 설명'이 있다. captions[0] 은 장면 A 에, captions[1] 은 장면 B 에 **보이는 것과 어긋나지 않게** 쓴다
+  (식당 사진 위에 "수영장" 자막 금지). 장면과 무관한 시설은 나레이션으로만 말한다.
 - 시설은 '확인된 시설'과 객실 이름에 있는 것만. 혜택(benefit)은 테마와 관련된 것(워터파크·온수풀 이용권 포함, 조식 포함, 온천 객실)만 조건문 한 줄로. 관련 없는 사소한 것(취사 가능 등)이면 빈 문자열.
 - 나레이션 길이(공백 제외): hook 24자 이내 · 3위/2위는 narration+benefit 합쳐 38자 이내 · 1위는 48자 이내 · cta 32자 이내. 짧은 문장 1~2개.
 출력 JSON 만:
@@ -198,6 +200,7 @@ def write_script(model: str, req: dict, hotels: list[dict]) -> dict:
     lines = [f"테마: {req.get('theme')} · 지역: {req.get('region')} · 시기: {req.get('month')}", ""]
     for rank, h in zip((3, 2, 1), hotels):
         lines += [f"[{rank}위] {h['name']}",
+                  f"  화면 A 장면: {h['shots'][0].get('description') or h['shots'][0].get('category')} / 화면 B 장면: {h['shots'][1].get('description') or h['shots'][1].get('category')}",
                   f"  쿠팡 객실 이름: {', '.join(h['room_names'])}",
                   f"  확인된 시설: {', '.join(h['verified_facilities']) or '없음'} / 객실 이름의 테마 단어: {', '.join(h['theme_hits']) or '없음'}",
                   f"  최근 30일 블로그 글 수: {h['blog_30d'] if h['blog_30d'] is not None else '모름'}",
