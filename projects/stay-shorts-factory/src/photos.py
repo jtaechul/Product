@@ -162,11 +162,20 @@ def classify(model: str, cands: list[dict]) -> list[dict]:
         cand = (data.get("candidates") or [{}])[0]
         txt = "".join(p.get("text", "") for p in ((cand.get("content") or {}).get("parts") or []))
         txt = re.sub(r"^```(?:json)?|```$", "", txt.strip()).strip()
-        if "{" in txt and "}" in txt:
-            txt = txt[txt.index("{"): txt.rindex("}") + 1]
+        # 실측(stay-run-8): {"photos":[...]} 대신 맨 바깥이 리스트([{"k":0,...}])로 올 때가 있다 → 둘 다 받는다
+        starts = [i for i in (txt.find("{"), txt.find("[")) if i >= 0]
+        if starts:
+            s0 = min(starts)
+            e0 = max(txt.rfind("}"), txt.rfind("]"))
+            if e0 > s0:
+                txt = txt[s0:e0 + 1]
         try:
-            got = {int(p.get("k", -1)): p for p in (json.loads(txt).get("photos") or []) if isinstance(p, dict)}
-            break
+            js = json.loads(txt)
+            items_js = js if isinstance(js, list) else (js.get("photos") or []) if isinstance(js, dict) else []
+            got = {int(p.get("k", -1)): p for p in items_js if isinstance(p, dict)}
+            if got:
+                break
+            raise ValueError("항목 없음")
         except (ValueError, AttributeError) as e:
             # 출력이 잘렸으면(MAX_TOKENS) 완성된 항목만 건진다
             items = re.findall(r"\{[^{}]*\"k\"\s*:\s*\d+[^{}]*\}", txt)
