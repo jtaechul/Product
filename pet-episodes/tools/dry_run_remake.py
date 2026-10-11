@@ -179,6 +179,15 @@ def install_mocks(flags: dict) -> list:
         return (BODY if task == "edit" else END).read_bytes()
     E._omni_run = omni
 
+    def veo(key, start, prompt, setimg=None, secs=8, last=None, negative=""):
+        calls.append("veo" + ("+last" if last is not None else ""))
+        if secs not in (4, 6, 8):
+            raise RuntimeError(f"Veo 길이 {secs}초는 안 됨(4·6·8)")
+        if re.search(RISKY_GEN, prompt, re.I):
+            raise RuntimeError("위험 낱말이 Veo 지시문에 있음")
+        return clip_of(float(secs))
+    E._veo = veo
+
     def gi(prompt, refs, out, aspect="9:16", size=""):
         calls.append("image")
         bad = re.search(r"typography|quote wall|account handle|ANNGRI|social media icon|instagram", prompt, re.I)
@@ -381,6 +390,15 @@ spent_before = float(log["remake"].get("spent", 0))
 log = run(d, ep, {"remake": {"mode": "full", "cap_add": bad20.get("redo_usd", 0.75)}}, {}, "⑳ 새로 만들기: '엉킨 구간만 다시'(확인한 비용만큼 한도 올림) → 그 구간만 다시")
 if log["remake"].get("gen_bad") or not (d / "work" / "final.mp4").exists() or log["remake"].get("cap_added") != bad20.get("redo_usd"):
     FAILS.append("⑳ 엉킨 구간 다시 만들기가 끝나지 않았거나 한도를 확인한 만큼만 올리지 않음")
+d, ep = make_ep("genveo", method="gen", gen_model="veo-lite")
+run(d, ep, {"remake": {"mode": "board"}}, {"outro": True}, "㉑ 새로 만들기 Veo 3.1 Lite: 스토리보드")
+log = run(d, ep, {"remake": {"mode": "full"}}, {"outro": True}, "㉑ 새로 만들기 Veo 3.1 Lite: 영상(영상 AI는 Veo만, 끝 장면도 Veo)")
+r21 = log["remake"]
+omni_used = [x for x in r21.get("ledger", []) if "Veo" not in x["what"] and ("새로 만들기" in x["what"] or "끝 장면 영상" in x["what"])]
+vid_usd = sum(x["usd"] for x in r21.get("ledger", []) if "Veo" in x["what"])
+print("    Veo 장부:", [x["what"] + f" ${x['usd']}" for x in r21.get("ledger", []) if "Veo" in x["what"]], "| 합계", round(vid_usd, 2), "| 전체", r21.get("spent"))
+if omni_used or vid_usd > 0.61 or not r21.get("gen", {}).get("ok"):
+    FAILS.append("㉑ Veo로만 만들지 않았거나 영상 값이 예상(0.5달러)보다 큼")
 d, ep = make_ep("gentest", method="gen")
 log = run(d, ep, {"remake": {"mode": "test"}}, {}, "⑰ 새로 만들기: 예전 '시험' 요청 → 스토리보드만(영상 안 만듦)")
 if log["remake"].get("gen") or not (d / "work" / "board.jpg").exists():

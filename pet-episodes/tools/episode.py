@@ -517,14 +517,22 @@ def _omni(key, start: Path, prompt: str, setimg: Path | None = None) -> bytes:
     return vid
 
 
-def _veo(key, start: Path, prompt: str, setimg: Path | None = None, secs: int = 8) -> bytes:
+def _veo(key, start: Path, prompt: str, setimg: Path | None = None, secs: int = 8, last: Path | None = None, negative: str = "") -> bytes:
+    """Veo 3.1 Lite(720p 1초 약 0.05달러, 길이 4·6·8초). last = 마지막 장면 그림(처음→끝 사이를 이어 그림), negative = 피할 것."""
     from google import genai
     from google.genai import types
+    _check_stop()
     client = genai.Client(api_key=key)
+    mime = lambda p: "image/jpeg" if p.suffix.lower() in (".jpg", ".jpeg") else "image/png"
+    cfg = dict(aspect_ratio="9:16", resolution="720p", duration_seconds=int(secs), number_of_videos=1)
+    if last is not None:
+        cfg["last_frame"] = types.Image(image_bytes=last.read_bytes(), mime_type=mime(last))
+    if negative:
+        cfg["negative_prompt"] = negative
     op = client.models.generate_videos(
         model=VEO_FALLBACK, prompt=prompt,
-        image=types.Image(image_bytes=start.read_bytes(), mime_type="image/png"),
-        config=types.GenerateVideosConfig(aspect_ratio="9:16", resolution="720p", duration_seconds=int(secs), number_of_videos=1))
+        image=types.Image(image_bytes=start.read_bytes(), mime_type=mime(start)),
+        config=types.GenerateVideosConfig(**cfg))
     t0 = time.time()
     while not op.done:
         if time.time() - t0 > 900:
@@ -2085,7 +2093,7 @@ SAY_SPEED_MIN, SAY_SPEED_MAX = 1.2, 1.3   # ⛔ 핵심 규칙: 녹음 속도는 
 REMAKE_BODY_SEC = 10.0         # 본편은 10초(사용자 확정 2026-10: 비용 최소·한 번에) — AI가 가장 웃긴 10초를 고른다. 편마다 remake.max_sec
 REMAKE_END_SEC = 6             # 광고 끝 장면은 처음부터 6초로(사용자 확정 2026-10, 예전 4초×1.6배 늘리기 대신)
 REMAKE_END_SEC_VO = 4          # 글씨 없는 광고(remake.ad="vo"): 웃긴 장면 4초 + 웃긴 내레이션만(사용자 확정 2026-10, 헬기 편 광고 시작에서 절반 이탈)
-REMAKE_COST = {"omni_sec": 0.10, "image": 0.15, "image4k": 0.25, "check": 0.01, "tts": 0.02}   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
+REMAKE_COST = {"omni_sec": 0.10, "veo_lite_sec": 0.05, "image": 0.15, "image4k": 0.25, "check": 0.01, "tts": 0.02}   # veo_lite = Veo 3.1 Lite 720p(구글 공지 1초 0.05달러)   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
 REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
 REMAKE_EXTEND = (" VERTICAL FRAME: the input is a {src} shot placed in the middle of a vertical 9:16 frame; the dark blurred bands "
                  "above and below are only placeholders. Replace them by naturally extending the same scene so it looks filmed "
@@ -3892,6 +3900,9 @@ GEN_ANATOMY = (" ANATOMY: every animal is one complete, separate, real animal - 
                "every frame (no morphing between the two dogs).")
 GEN_LAST = (" Image 2 is the LAST FRAME of this clip: the clip ends exactly on image 2 (same poses, positions and framing) - move "
             "naturally and physically from image 1 to image 2.")
+VEO_SECS = (4, 6, 8)             # Veo 3.1 Lite가 만드는 길이(초)
+VEO_NEG = ("merged bodies, fused animals, two dogs melting together, extra legs, missing legs, extra heads, dog with human body, "
+           "dog standing on two legs, text, letters, logo, watermark, subtitles, morphing, distorted anatomy")
 GEN_SEG_LEN = 2.2                # 검사한 스토리보드 칸 두 장(처음·끝) 사이를 이 길이쯤으로 나눠 만든다 — 영상 AI가 부딪힘을 처음부터 지어내지 않게
 FRAME_CHECK_ASK = ("This is one frame of an AI video. Check two things. 1) BODY: is any animal clearly anatomically broken - two animals "
                    "merged or fused into one shape, sharing legs or passing through each other, one animal lying on top of another so "
@@ -4161,9 +4172,10 @@ def _gen_budget(res: dict, cap: float, end_sec: float, gen_res: str, work: Path)
 
 
 def _gen_need(work: Path, res: dict, end_sec: float, gen_res: str, gone: set | None = None) -> float:
-    """새로 만들기 방식의 남은 비용(이미 만든 구간·그림은 빼고, gone은 지울 예정)."""
+    """새로 만들기 방식의 남은 비용(이미 만든 구간·그림은 빼고, gone은 지울 예정). Veo 3.1 Lite면 Veo 값(1초 0.05달러, 4·6·8초)."""
     gone = gone or set()
     mult = 3 if gen_res == "720p" else 1
+    veo = res.get("gen_model") == "veo-lite"
 
     def have(name):
         return (work / name).exists() and name not in gone
@@ -4171,12 +4183,14 @@ def _gen_need(work: Path, res: dict, end_sec: float, gen_res: str, gone: set | N
     usd = 0 if have("board.jpg") else REMAKE_COST["image4k"]
     if not have("remake.mp4"):
         for k, s in enumerate(scenes):
-            segs = s.get("segs") or _segs_snap(s, [float(t) for t in (res.get("gen_plan") or {}).get("board_times") or []])
+            times_b = [float(t) for t in (res.get("gen_plan") or {}).get("board_times") or []]
+            segs = _veo_segs(s, times_b) if veo else (s.get("segs") or _segs_snap(s, times_b))
             for j, g in enumerate(segs):
                 if not have(f"rm_scene{k + 1}_{j + 1}.mp4"):
-                    usd += REMAKE_COST["omni_sec"] * _gen_sec(float(g[1]) - float(g[0])) * mult
+                    d = float(g[1]) - float(g[0])
+                    usd += REMAKE_COST["veo_lite_sec"] * _veo_sec(d) if veo else REMAKE_COST["omni_sec"] * _gen_sec(d) * mult
     usd += 0 if have("rm_end_start.png") else REMAKE_COST["image"]
-    usd += 0 if have("rm_end.mp4") else REMAKE_COST["omni_sec"] * end_sec * mult
+    usd += 0 if have("rm_end.mp4") else (REMAKE_COST["veo_lite_sec"] * _veo_sec(end_sec) if veo else REMAKE_COST["omni_sec"] * end_sec * mult)
     usd += 0 if have("rm_vo.wav") else REMAKE_COST["tts"]
     return round(usd, 2)
 
@@ -4267,6 +4281,53 @@ def _segs_snap(sc: dict, times: list) -> list:
     return segs
 
 
+def _veo_sec(d: float) -> int:
+    return next((c for c in VEO_SECS if c >= d - 1e-6), VEO_SECS[-1])
+
+
+def _veo_segs(sc: dict, times: list) -> list:
+    """Veo 3.1 Lite용 구간 — 4·6·8초만 되므로 2초 구간은 돈 낭비. 컷 하나를 한 번에 처음 칸 → 컷 끝 칸(있으면)으로, 8초가 넘으면
+    검사한 칸 중 가운데에 가까운 칸에서 나눈다."""
+    a, b = float(sc["t0"]), float(sc["t1"])
+    inside = [t for t in times if a - 1e-6 <= t < b]
+    pidx = lambda t: times.index(t) + 1
+    if not inside:
+        return [[a, b, int(sc.get("panel", 1)), 0]]
+    pts = [inside[0]]
+    n = max(1, math.ceil((b - a) / 8 - 1e-6))
+    for k in range(1, n):
+        want = a + (b - a) * k / n
+        t = min(inside, key=lambda x: abs(x - want))
+        if t - pts[-1] >= 2.0:
+            pts.append(t)
+    segs = [[pts[j], pts[j + 1], pidx(pts[j]), pidx(pts[j + 1])] for j in range(len(pts) - 1)]
+    end = [t for t in times if abs(t - b) <= 0.25 and t > pts[-1] + 0.5]
+    segs.append([pts[-1], b, pidx(pts[-1]), pidx(end[0]) if end else 0])
+    return segs
+
+
+VEO_PROMPT = ("Vertical 9:16 photorealistic phone video, {sec} seconds. The first image is the first frame{last}. SHOT: {shot}. SET: {set}. "
+              "CHARACTERS: {cast} - real four-legged dogs with natural dog anatomy. ACTION, every 0.5 seconds: {beats} RULES: each dog is "
+              "one complete separate animal (one head, four legs, one tail); never one dog on top of the other, legs never cross; real "
+              "weight and gravity, nothing passes through anything; the same dogs, sizes and colours in every frame; no text, logos or "
+              "watermarks; no music.")
+
+
+def _veo_prompt(sub: dict, rows: list, plan: dict, sec: int, last: bool) -> str:
+    a, b = float(sub["t0"]), float(sub["t1"])
+    k = sec / max(0.1, b - a)                           # Veo는 {sec}초로 만들고 조립 때 원본 길이에 맞춘다 → 시각도 늘려서 알려 준다
+    beats = []
+    for x in plan.get("beats") or []:
+        if x["t1"] > a + 0.05 and x["t0"] < b - 0.05:
+            beats.append(f"[{max(0.0, x['t0'] - a) * k:.1f}s] {x['action'].rstrip('. ')}.")
+    if not beats:
+        beats = [ln.split("; mouth")[0] + "." for ln in _gen_rows(rows, a, b, plan.get("beats"))]
+    p = VEO_PROMPT.format(sec=sec, last=" and the second image is the last frame (end exactly on it)" if last else "",
+                          shot=sub.get("shot") or "as in the first image", set=plan.get("set") or "as in the first image",
+                          cast=plan.get("cast") or "as in the first image", beats=" ".join(beats))
+    return _soften(p)[:3500]
+
+
 def _gen_frame_check(clip: Path, d: float, res: dict, cap: float, tag: str, work: Path) -> list:
     """만든 구간을 0.5초마다 한 장씩 AI가 보고 개 몸 엉킴·글씨를 찾는다(약 0.01달러). → [(초, 무엇)]"""
     _remake_spend(res, REMAKE_COST["check"], f"{tag} 몸 엉킴 검사", cap)
@@ -4282,7 +4343,7 @@ def _gen_frame_check(clip: Path, d: float, res: dict, cap: float, tag: str, work
     return bad
 
 
-def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict, swap: str, gen_res: str) -> Path:
+def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict, swap: str, gen_res: str, veo: bool = False) -> Path:
     """확인받은 스토리보드의 '고정 칸' 두 장(처음·끝 장면) 사이를 구간(약 2초)마다 새 영상으로 만든다(image_to_video, 원본 영상은 넣지 않음)
     → 구간마다 0.5초 간격으로 몸 엉킴 검사 → 원본과 같은 길이로 이어 붙인다. 영상 AI가 부딪힘·넘어짐을 처음부터 지어내면 몸이 엉킨다
     (2026-10-11 러닝머신 편) — 검사한 칸이 2초마다 자세를 잡아 준다. 구간마다 한 번만 만든다(자동으로 다시 만들지 않음): 엉킨 구간이 나오면
@@ -4299,8 +4360,13 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
     parts, info = [], []
     res.pop("gen_bad", None)
     for k, sc in enumerate(scenes):
-        segs = sc.get("segs") or _segs_snap(sc, [float(t) for t in plan.get("board_times") or []])   # 예전 분석으로 그린 스토리보드: 검사한 칸 중에서 고른다
-        sc["segs"] = segs
+        times_b = [float(t) for t in plan.get("board_times") or []]
+        if veo:                                         # Veo 3.1 Lite: 컷 하나를 한 번에(4·6·8초) 처음 칸 → 끝 칸
+            segs = _veo_segs(sc, times_b)
+            sc["veo_segs"] = segs
+        else:
+            segs = sc.get("segs") or _segs_snap(sc, times_b)   # 예전 분석으로 그린 스토리보드: 검사한 칸 중에서 고른다
+            sc["segs"] = segs
         for j, (ta, tb, pa, pb) in enumerate(segs):
             o = work / f"rm_scene{k + 1}_{j + 1}.mp4"
             d = round(float(tb) - float(ta), 3)
@@ -4313,12 +4379,33 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
                 ins = [{"type": "image", **_b64img(first)}]
                 if pb and (work / f"board_{int(pb):02d}.jpg").exists():
                     ins.append({"type": "image", **_b64img(_crop_bars(work / f"board_{int(pb):02d}.jpg", work / f"_gen_last{k + 1}_{j + 1}.png"))})
-                sec = _gen_sec(d)
-                usd = REMAKE_COST["omni_sec"] * sec * mult
+                sec = _veo_sec(d) if veo else _gen_sec(d)
+                usd = (REMAKE_COST["veo_lite_sec"] * sec) if veo else REMAKE_COST["omni_sec"] * sec * mult
                 raw = work / f"_gen_raw{k + 1}_{j + 1}.mp4"
                 sub = {**sc, "t0": float(ta), "t1": float(tb),
                        "cuts": [c for c in sc.get("cuts") or [] if float(ta) <= float(c["t"]) < float(tb)]}
-                for short in (False, True):
+                last_img = _crop_bars(work / f"board_{int(pb):02d}.jpg", work / f"_gen_last{k + 1}_{j + 1}.png") \
+                    if (pb and (work / f"board_{int(pb):02d}.jpg").exists()) else None
+                for short in ((False, True) if veo else ()):     # Veo 3.1 Lite(사장님 지시 2026-10-11: 싸게) — 실패(거절)하면 짧은 지시문으로 한 번 더
+                    use_last = last_img is not None and d / sec >= 0.8
+                    prompt = _veo_prompt(sub, rows, plan, sec, use_last) if not short else _soften(
+                        VEO_PROMPT.format(sec=sec, last=" and the second image is the last frame" if use_last else "",
+                                          shot=sub.get("shot") or "as in the first image", set="as in the first image",
+                                          cast=plan.get("cast") or "as in the first image", beats=str(sc.get("ko") or sc.get("frame") or "")))
+                    res.setdefault("gen_prompts_used", {})[f"scene{k + 1}_{j + 1}"] = prompt
+                    _remake_spend(res, usd, f"{tag} 새로 만들기(Veo 3.1 Lite {sec}초)", cap)
+                    try:
+                        raw.write_bytes(_veo(key, first, prompt, secs=sec, last=last_img if use_last else None, negative=VEO_NEG))
+                        break
+                    except Exception as e:  # noqa: BLE001
+                        res["spent"] = round(float(res.get("spent", 0)) - usd, 3)     # 영상이 안 나오면 요금 없음
+                        res.setdefault("ledger", []).append({"what": f"{tag} Veo 실패(요금 없음)", "usd": -round(usd, 3)})
+                        res.setdefault("blocked", []).append({"scene": k + 1, "seg": j + 1, "short": short, "error": str(e)[:200]})
+                        if short:
+                            raise RuntimeError(f"{tag}: Veo가 두 번 만들지 못했습니다(요금 없음) — {str(e)[:160]}")
+                if veo:
+                    ins = [ins[0]] + ([{"type": "image"}] if (last_img is not None and d / sec >= 0.8) else [])
+                for short in (() if veo else (False, True)):
                     prompt = _gen_prompt(sub, rows, plan, sec, swap, bool(rm.get("keep_people")), short) + (GEN_LAST if len(ins) > 1 else "")
                     res.setdefault("gen_prompts_used", {})[f"scene{k + 1}_{j + 1}"] = prompt
                     _remake_spend(res, usd, f"{tag} 새로 만들기({sec:g}초, {gen_res})", cap)
@@ -4339,7 +4426,7 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
                 _assert_vertical(raw, tag)
                 got = _dur(raw)
                 if got > sec + 0.6:                       # 주문보다 길게 왔으면 실제 길이만큼 장부에 더 적는다(정직한 비용)
-                    extra = round(REMAKE_COST["omni_sec"] * (got - sec) * mult, 3)
+                    extra = round((REMAKE_COST["veo_lite_sec"] if veo else REMAKE_COST["omni_sec"] * mult) * (got - sec), 3)
                     res["spent"] = round(float(res.get("spent", 0)) + extra, 3)
                     res.setdefault("ledger", []).append({"what": f"{tag} 실제 {got:.1f}초로 옴", "usd": extra})
                 if got * GEN_SLOW_MAX < d:
@@ -4385,6 +4472,8 @@ def step_remake(ep, epdir, work, log, req):
     import math
     res = log.setdefault("remake", {})
     rm = ep.get("remake") or {}
+    veo = ((req.get("remake") or {}).get("gen_model") or rm.get("gen_model")) == "veo-lite"   # 새로 만들기를 Veo 3.1 Lite로(사장님 지시 2026-10-11: 싸게)
+    res["gen_model"] = "veo-lite" if veo else "omni"
     add = float((req.get("remake") or {}).get("cap_add") or 0)
     if 0 < add <= 3:                                     # 사장님이 확인창에서 본 비용만큼만 이 편의 한도를 올린다(엉킨 구간 다시 만들기 등) — 기록에 남겨 다음 실행에도 유지
         res["cap_added"] = round(float(res.get("cap_added", 0)) + add, 2)
@@ -4624,7 +4713,7 @@ def step_remake(ep, epdir, work, log, req):
         if mode == "full" and not (work / "rm_end.mp4").exists() and not (ep.get("product") or {}).get("image"):
             raise RuntimeError("상품 사진이 없습니다 — 끝 광고 장면에 실제 상품 사진이 필요합니다. 상품(쿠팡 링크)을 먼저 정해 주세요(돈 안 씀)")
         if gen and mode == "full":                        # 새로 만들기: 컷마다 확인받은 칸 + 0.5초 지시 → 새 영상(원본 영상은 넣지 않음)
-            body_v = _remake_gen(key, work, res, cap, W, H, rm, res["swap_used"], gen_res)
+            body_v = _remake_gen(key, work, res, cap, W, H, rm, res["swap_used"], gen_res, veo)
         elif motion and mode == "full":                   # 동작 따라 만들기(Genjutsu 방식): 원본 = 동작 참고, 스토리보드 1번 칸 = 모습 참고
             body_v = _remake_motion(key, ref, L, work, res, cap, W, H, rm, swap_txt)
         elif shots_mode:                                  # 원본 영상을 영상 AI에 넣지 않고 스토리보드 칸 + 초 단위 지시로 장면마다 만든다
@@ -4739,6 +4828,21 @@ def step_remake(ep, epdir, work, log, req):
                     raise RuntimeError(f"끝 장면 그림 실패: {r.get('error')}")
                 res["end_bands"] = "다시 그림" + (" — 그래도 밋밋한 위아래(흰 벽·천장일 수 있음), 완성본 9:16 검사로 확인" if _panel_bands([start]) else " → 통과")
         end_v = work / "rm_end.mp4"
+        if not end_v.exists() and gen and veo:            # 새로 만들기 + Veo 3.1 Lite: 끝 장면도 Veo(4초, 약 0.2달러)
+            usd_e = REMAKE_COST["veo_lite_sec"] * _veo_sec(end_sec)
+            raw = work / "_rm_end_raw.mp4"
+            for k_e, txt in enumerate((ending, "The Shiba Inu stands calmly next to the product and looks at the camera, tail wagging gently.")):
+                _remake_spend(res, usd_e, "끝 장면 영상(Veo 3.1 Lite)" + (" 순한 글로 한 번 더" if k_e else ""), cap)
+                try:
+                    raw.write_bytes(_veo(key, start, REMAKE_END_PROMPT.format(ending=txt, sec=_veo_sec(end_sec)) + " No music.",
+                                         secs=_veo_sec(end_sec), negative=VEO_NEG))
+                    break
+                except Exception as e:  # noqa: BLE001
+                    res["spent"] = round(float(res.get("spent", 0)) - usd_e, 3)
+                    res.setdefault("ledger", []).append({"what": "끝 장면 Veo 실패(요금 없음)", "usd": -round(usd_e, 3)})
+                    if k_e:
+                        raise RuntimeError("끝 장면 영상을 Veo가 두 번 만들지 못했습니다(요금 없음): " + str(e)[:200]) from None
+            _norm(raw, end_v, 1280)
         if not end_v.exists():
             # 끝 장면도 한 번만(다시 만들기·검사 없음 — 사용자 지시 2026-10)
             _remake_spend(res, REMAKE_COST["omni_sec"] * end_sec * (3 if gen_res == "720p" else 1), f"끝 장면 영상({gen_res})", cap)
