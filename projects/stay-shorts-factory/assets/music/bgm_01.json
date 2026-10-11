@@ -1,0 +1,17 @@
+{
+ "name": "bgm_01",
+ "model": "lyria-3.5",
+ "date": "2026-10-11",
+ "nonce": "2026-10-11-m1",
+ "seconds": 60.0,
+ "prompt": "Instrumental only, no vocals, no lyrics, no spoken words. Warm, cozy and hopeful background music for a short vertical travel video about a hotel with a heated indoor pool on a cold late-autumn day in Korea. Soft felt piano, light acoustic guitar, gentle lo-fi drums, subtle warm synth pads, 92 bpm, major key, steady loopable groove, no drops, no dramatic changes, no sound effects, consistent energy from start to end, about 70 seconds long.",
+ "krw_est": 118,
+ "ok": true,
+ "mime": "audio/mpeg",
+ "bytes": 1820483,
+ "id": "v1_ChdDUkxNYXAyZEdvZjQtOFlQdTZiaG1BbxIXQ1JMTWFwMmRHb2Y0LThZUHU2YmhtQW8",
+ "text": "[[A0]]\n[[B1]]\n[[C2]]\n[[D3]]\n[[C4]]\n[[E5]]",
+ "raw_sec": 75.6,
+ "out_sec": 60.03,
+ "representative": "bgm.mp3"
+}
