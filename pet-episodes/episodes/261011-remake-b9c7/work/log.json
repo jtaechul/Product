@@ -9,13 +9,13 @@
     "lipsync": false,
     "allow_i2v": false,
     "use_timeline": true,
-    "src_sig": "c09d297d1772-5.7",
+    "src_sig": "a86cb9b0b6c7-5.7",
     "src_full_sec": 5.67,
     "src_sec": 5.67,
     "segments": 1,
     "one_shot": true,
     "method": "gen",
-    "spent": 0.32,
+    "spent": 1.12,
     "ledger": [
       {
         "what": "all 0.5초 시간표 만들기",
@@ -32,37 +32,133 @@
       {
         "what": "스토리보드 그림",
         "usd": 0.15
+      },
+      {
+        "what": "all 0.5초 시간표 만들기",
+        "usd": 0.01
+      },
+      {
+        "what": "연출 분석(흥행 요소·컷 나누기)",
+        "usd": 0.01
+      },
+      {
+        "what": "스토리보드 그림 4K",
+        "usd": 0.25
+      },
+      {
+        "what": "스토리보드 칸 검사(글씨·몸 엉킴)",
+        "usd": 0.01
+      },
+      {
+        "what": "스토리보드 다시(글씨·로고)",
+        "usd": 0.25
+      },
+      {
+        "what": "스토리보드 칸 검사(글씨·몸 엉킴)",
+        "usd": 0.01
+      },
+      {
+        "what": "스토리보드 다시(글씨·로고)",
+        "usd": 0.25
+      },
+      {
+        "what": "스토리보드 칸 검사(글씨·몸 엉킴)",
+        "usd": 0.01
       }
     ],
     "timeline_src": "a86cb9b0b6c7-5.7",
     "gen_plan": {
+      "v": 3,
+      "beats": [
+        {
+          "t0": 0.0,
+          "t1": 0.5,
+          "action": "The Shiba Inu lies on its belly on the moving treadmill belt with front paws hooking over the front bar as its hindquarters slide backward, while the French Bulldog trots forward in the background."
+        },
+        {
+          "t0": 0.5,
+          "t1": 1.0,
+          "action": "The Shiba Inu loses its grip and tumbles off the rear of the belt onto the carpet, while the French Bulldog trots up beside the treadmill."
+        },
+        {
+          "t0": 1.0,
+          "t1": 1.5,
+          "action": "The Shiba Inu rolls onto its back on the carpet with paws in the air, while the French Bulldog inspects the rear edge of the moving belt."
+        },
+        {
+          "t0": 1.5,
+          "t1": 2.0,
+          "action": "The Shiba Inu wiggles playfully on its back beside a gym bench, while the French Bulldog crouches to pounce onto the running treadmill."
+        },
+        {
+          "t0": 2.0,
+          "t1": 2.5,
+          "action": "The French Bulldog leaps all four paws forward onto the fast-moving belt as the Shiba Inu watches from the floor."
+        },
+        {
+          "t0": 2.5,
+          "t1": 3.0,
+          "action": "The moving belt sweeps the French Bulldog's paws backward, causing it to slide helplessly toward the end."
+        },
+        {
+          "t0": 3.0,
+          "t1": 3.5,
+          "action": "The French Bulldog is thrown off the back of the belt, crashing onto its side directly on top of the Shiba Inu's flank."
+        },
+        {
+          "t0": 3.5,
+          "t1": 4.0,
+          "action": "The French Bulldog tumbles onto its back beside the Shiba Inu, shaking its head, while the Shiba Inu rolls slightly under its weight."
+        },
+        {
+          "t0": 4.0,
+          "t1": 4.5,
+          "action": "The French Bulldog sits up awkwardly on its haunches rubbing its shoulder against the floor, while the Shiba Inu lies beside it."
+        },
+        {
+          "t0": 4.5,
+          "t1": 5.0,
+          "action": "The French Bulldog rests seated next to the treadmill base looking dazed, beside the resting Shiba Inu."
+        },
+        {
+          "t0": 5.0,
+          "t1": 5.67,
+          "action": "Both dogs lie on the gray gym carpet side by side recovering from the impact."
+        }
+      ],
+      "mapping": "the hanging child -> the Shiba Inu (a real four-legged dog); the running child -> the French Bulldog (a real four-legged dog)",
       "src": "a86cb9b0b6c7-5.7",
       "L": 5.67,
       "by": "ai",
+      "trim": null,
+      "len": 5.67,
+      "cut_out": [],
       "hook": [
-        "시바견이 러닝머신에 위태롭게 매달려 버티는 황당한 오프닝",
-        "버티다 튕겨 나가자마자 달려온 프렌치 불독까지 미끄러지는 연쇄 슬랩스틱",
-        "찰나의 타이밍으로 완성되는 덤앤더머식 몸개그와 폭소 반응"
+        "런닝머신에서 튕겨 나간 개를 보고도 똑같이 뛰어들었다가 날아가는 슬랩스틱 코미디",
+        "0초부터 바로 시작되는 예측 불가한 몸개그와 충돌 액션",
+        "경고를 무시하고 그대로 따라 하다 연쇄 사고를 내는 폭소 유발 상황"
       ],
-      "structure": "0~1.5초 후킹(러닝머신에 매달려 버티기), 1.5~3.0초 1차 낙하 및 구경꾼 진입, 3.0~5.7초 2차 연쇄 추락과 뒹굴기",
-      "set": "Indoor gym fitness studio, lime green wall covered in large motivational typography, grey carpeted floor, row of black commercial treadmills running, bright fluorescent ceiling lighting",
-      "cast": "Anthropomorphic child with Shiba Inu head, thick furry Shiba paws and legs; a small energetic French Bulldog running nearby",
+      "structure": "0~1.0초 첫 번째 개의 탈락, 1.0~2.0초 두 번째 개 접근, 2.0~3.5초 두 번째 개 낙하 및 충돌, 3.5~5.7초 바닥에 뒤엉킨 반응",
+      "set": "Modern commercial fitness center with running treadmills on gray commercial carpet, bright fluorescent overhead lighting, and a green motivational wall in the background",
+      "cast": "A red Shiba Inu dog with front paws and natural fur; a fawn French Bulldog with natural four-legged build",
       "scenes": [
         {
           "t0": 0.0,
           "t1": 5.67,
-          "shot": "High-angle medium shot, handheld, tracking downward and panning slightly left following the fall",
-          "frame": "High-angle view of a grey treadmill running at full speed; a character with a Shiba Inu head and furry paws clings horizontally to the console handles over the moving belt while a French bulldog stands behind on the carpet.",
-          "ko": "시바견이 러닝머신 손잡이에 매달려 버티다 미끄러져 바닥에 나뒹굴고, 달려오던 프렌치 불독도 벨트를 밟고 미끄러져 함께 겹쳐 쓰러진다."
+          "outro": false,
+          "shot": "High-angle continuous medium handheld shot tracking downward and slightly right following the action",
+          "frame": "A Shiba Inu sprawls stomach-down on a moving treadmill belt with its front paws clinging to the console, while a French Bulldog trots in the background across the gym floor.",
+          "ko": "런닝머신에서 미끄러져 떨어진 시바견을 보고도 프렌치 불독이 벨트 위로 뛰어들었다가 날아가 부딪힌다."
         }
       ],
       "fit": [
         {
           "t0": 0.0,
           "t1": 5.67,
-          "shot": "High-angle medium shot, handheld, tracking downward and panning slightly left following the fall",
-          "frame": "High-angle view of a grey treadmill running at full speed; a character with a Shiba Inu head and furry paws clings horizontally to the console handles over the moving belt while a French bulldog stands behind on the carpet.",
-          "ko": "시바견이 러닝머신 손잡이에 매달려 버티다 미끄러져 바닥에 나뒹굴고, 달려오던 프렌치 불독도 벨트를 밟고 미끄러져 함께 겹쳐 쓰러진다.",
+          "outro": false,
+          "shot": "High-angle continuous medium handheld shot tracking downward and slightly right following the action",
+          "frame": "A Shiba Inu sprawls stomach-down on a moving treadmill belt with its front paws clinging to the console, while a French Bulldog trots in the background across the gym floor.",
+          "ko": "런닝머신에서 미끄러져 떨어진 시바견을 보고도 프렌치 불독이 벨트 위로 뛰어들었다가 날아가 부딪힌다.",
           "cuts": [],
           "panel": 1
         }
@@ -80,15 +176,15 @@
         4.54
       ],
       "board_notes": [
-        "FIRST FRAME of shot 1 (0.0s): High-angle view of a grey treadmill running at full speed; a character with a Shiba Inu head and furry paws clings horizontally to the console handles over the moving belt while a French bulldog stands behind on the carpet. Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall.",
-        "0.6s, inside shot 1: The first boy loses his grip and slides backward off the moving belt, falling off the rear onto the carpeted floor. The second boy stops beside the front of the Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-        "1.1s, inside shot 1: The first boy rolls onto his back on the carpet between the treadmill and the green wall. The second boy turns and takes a step toward the edge of the running t Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-        "1.7s, inside shot 1: The first boy lies on his back with legs raised playfully. The second boy bends his knees and prepares to jump or place his hands onto the running treadmill bel Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-        "2.3s, inside shot 1: The second boy leaps forward, placing both hands flat onto the moving treadmill belt. The belt instantly flings his arms backward under his torso, pulling his l Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-        "2.8s, inside shot 1: The second boy is violently thrown backward off the treadmill, flipping onto his back and crashing directly on top of the first boy lying on the floor. Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-        "3.4s, inside shot 1: The second boy lands fully across the first boy's chest and torso. The first boy flails his arms upward to push him off as they both recoil in pain and surprise Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-        "4.0s, inside shot 1: The second boy rolls off to the side onto the carpet, lifting his hand toward the back of his neck/head. The first boy pushes himself away along the green wall. Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-        "4.5s, inside shot 1: The second boy lies on his side, curling his torso and holding his neck, letting out an audible cry of pain. Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement."
+        "FIRST FRAME of shot 1 (0.0s): A Shiba Inu sprawls stomach-down on a moving treadmill belt with its front paws clinging to the console, while a French Bulldog trots in the background across the gym floor. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+        "0.6s, inside shot 1: The Shiba Inu loses its grip and tumbles off the rear of the belt onto the carpet, while the French Bulldog trots up beside the treadmill. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+        "1.1s, inside shot 1: The Shiba Inu rolls onto its back on the carpet with paws in the air, while the French Bulldog inspects the rear edge of the moving belt. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+        "1.7s, inside shot 1: The Shiba Inu wiggles playfully on its back beside a gym bench, while the French Bulldog crouches to pounce onto the running treadmill. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+        "2.3s, inside shot 1: The French Bulldog leaps all four paws forward onto the fast-moving belt as the Shiba Inu watches from the floor. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+        "2.8s, inside shot 1: The moving belt sweeps the French Bulldog's paws backward, causing it to slide helplessly toward the end. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+        "3.4s, inside shot 1: The French Bulldog is thrown off the back of the belt, crashing onto its side directly on top of the Shiba Inu's flank. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+        "4.0s, inside shot 1: The French Bulldog tumbles onto its back beside the Shiba Inu, shaking its head, while the Shiba Inu rolls slightly under its weight. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+        "4.5s, inside shot 1: The French Bulldog rests seated next to the treadmill base looking dazed, beside the resting Shiba Inu. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action."
       ]
     },
     "board_times_auto": [
@@ -103,18 +199,18 @@
       4.54
     ],
     "board_notes_auto": [
-      "FIRST FRAME of shot 1 (0.0s): High-angle view of a grey treadmill running at full speed; a character with a Shiba Inu head and furry paws clings horizontally to the console handles over the moving belt while a French bulldog stands behind on the carpet. Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall.",
-      "0.6s, inside shot 1: The first boy loses his grip and slides backward off the moving belt, falling off the rear onto the carpeted floor. The second boy stops beside the front of the Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-      "1.1s, inside shot 1: The first boy rolls onto his back on the carpet between the treadmill and the green wall. The second boy turns and takes a step toward the edge of the running t Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-      "1.7s, inside shot 1: The first boy lies on his back with legs raised playfully. The second boy bends his knees and prepares to jump or place his hands onto the running treadmill bel Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-      "2.3s, inside shot 1: The second boy leaps forward, placing both hands flat onto the moving treadmill belt. The belt instantly flings his arms backward under his torso, pulling his l Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-      "2.8s, inside shot 1: The second boy is violently thrown backward off the treadmill, flipping onto his back and crashing directly on top of the first boy lying on the floor. Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-      "3.4s, inside shot 1: The second boy lands fully across the first boy's chest and torso. The first boy flails his arms upward to push him off as they both recoil in pain and surprise Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-      "4.0s, inside shot 1: The second boy rolls off to the side onto the carpet, lifting his hand toward the back of his neck/head. The first boy pushes himself away along the green wall. Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement.",
-      "4.5s, inside shot 1: The second boy lies on his side, curling his torso and holding his neck, letting out an audible cry of pain. Shot: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. Changes: 1) replace the hanging child's head with the head of the Shiba Inu from image 2; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement."
+      "FIRST FRAME of shot 1 (0.0s): A Shiba Inu sprawls stomach-down on a moving treadmill belt with its front paws clinging to the console, while a French Bulldog trots in the background across the gym floor. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+      "0.6s, inside shot 1: The Shiba Inu loses its grip and tumbles off the rear of the belt onto the carpet, while the French Bulldog trots up beside the treadmill. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+      "1.1s, inside shot 1: The Shiba Inu rolls onto its back on the carpet with paws in the air, while the French Bulldog inspects the rear edge of the moving belt. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+      "1.7s, inside shot 1: The Shiba Inu wiggles playfully on its back beside a gym bench, while the French Bulldog crouches to pounce onto the running treadmill. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+      "2.3s, inside shot 1: The French Bulldog leaps all four paws forward onto the fast-moving belt as the Shiba Inu watches from the floor. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+      "2.8s, inside shot 1: The moving belt sweeps the French Bulldog's paws backward, causing it to slide helplessly toward the end. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+      "3.4s, inside shot 1: The French Bulldog is thrown off the back of the belt, crashing onto its side directly on top of the Shiba Inu's flank. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+      "4.0s, inside shot 1: The French Bulldog tumbles onto its back beside the Shiba Inu, shaking its head, while the Shiba Inu rolls slightly under its weight. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action.",
+      "4.5s, inside shot 1: The French Bulldog rests seated next to the treadmill base looking dazed, beside the resting Shiba Inu. Shot: High-angle continuous medium handheld shot tracking downward and slightly right following the action."
     ],
     "gen_prompts": [
-      "DURATION: 6 seconds. Image 1 is the FIRST FRAME of this shot: keep exactly its framing, characters, set and light. Re-create this shot of a viral video as new, clean, photorealistic vertical 9:16 footage that matches the original shot action for action. SHOT: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. SET (the same in every shot): Indoor gym fitness studio, lime green wall covered in large motivational typography, grey carpeted floor, row of black commercial treadmills running, bright fluorescent ceiling lighting. CHARACTERS: Anthropomorphic child with Shiba Inu head, thick furry Shiba paws and legs; a small energetic French Bulldog running nearby. CHANGES from the original: 1) replace the hanging child's head with the head of the Shiba Inu from image 1; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement. 0.5-SECOND TIMELINE of this shot (follow it exactly - every action, contact, fall, head turn and mouth opening happens at exactly these times; positions are as in image 1): [0.0-0.5s] A boy lies face-down on a running treadmill, gripping the front frame with both hands as his legs drag. A second boy in a; mouth: The first boy's face is obscured facing downward; the second boy's mouth is closed; camera: Handheld, slightly high angle, following the treadmill. [0.5-1.0s] The first boy loses his grip and slides backward off the moving belt, falling off the rear onto the carpeted floor. The second boy stops beside the front of the; mouth: The second boy's mouth is slightly open in curiosity/amusement; camera: Handheld pan slightly right and down tracking the falling boy. [1.0-1.5s] The first boy rolls onto his back on the carpet between the treadmill and the green wall. The second boy turns and takes a step toward the edge of the running t; mouth: The first boy smiles with mouth slightly open; the second boy has his mouth slightly open; camera: Handheld, tilting slightly downward toward the two boys. [1.5-2.0s] The first boy lies on his back with legs raised playfully. The second boy bends his knees and prepares to jump or place his hands onto the running treadmill bel; mouth: The second boy's mouth is slightly open with anticipation; the first boy's mouth is open laughing; camera: Handheld, centered on the treadmill and the floor space. [2.0-2.5s] The second boy leaps forward, placing both hands flat onto the moving treadmill belt. The belt instantly flings his arms backward under his torso, pulling his l; mouth: The second boy's mouth opens wide in surprise; camera: Handheld, shaking slightly as action unfolds. [2.5-3.0s] The second boy is violently thrown backward off the treadmill, flipping onto his back and crashing directly on top of the first boy lying on the floor; mouth: Both boys have wide open mouths grimacing and yelling; camera: Handheld, slight shake tracking the collision. [3.0-3.5s] The second boy lands fully across the first boy's chest and torso. The first boy flails his arms upward to push him off as they both recoil in pain and surprise; mouth: The second boy's mouth is open grimacing; the first boy's mouth is open in shock; camera: Handheld, angled down at the tangled boys. [3.5-4.0s] The second boy rolls off to the side onto the carpet, lifting his hand toward the back of his neck/head. The first boy pushes himself away along the green wall; mouth: The second boy's mouth is wide open grimacing; the first boy's mouth is open panting; camera: Handheld, holding frame on both boys on the carpet. [4.0-4.5s] The second boy rolls onto his side clutching his neck/shoulder in pain. The first boy sits up slightly against the wall; mouth: The second boy opens his mouth wide to groan; camera: Handheld, panning slightly down toward the second boy. [4.5-5.0s] The second boy lies on his side, curling his torso and holding his neck, letting out an audible cry of pain; mouth: The second boy's mouth is wide open shouting 'Ah!'; camera: Handheld, steady on the boys on the floor. [5.0-5.7s] The second boy continues holding his neck, rolling slightly onto his back in distress as the first boy watches from beside him; mouth: The second boy grimaces with mouth open, groaning 'Ah!'; the first boy's mouth is slightly open; camera: Handheld, tilting slightly up from the floor before ending. No humans and no human skin anywhere: every leg is a thick, fully furry dog leg with a round paw and anything held is held by a paw. OUTPUT: photorealistic, sharp, clean, high-detail modern phone footage with natural colours and steady exposure, filling the whole vertical 9:16 frame edge to edge. The same characters as in image 1 in every frame. No added text, captions, watermark, borders or split screen, no morphing, no extra animals or people."
+      "DURATION: 6 seconds. Image 1 is the FIRST FRAME of this shot: keep exactly its framing, characters, set and light. Re-create this shot of a viral video as new, clean, photorealistic vertical 9:16 footage that matches the original shot action for action. SHOT: High-angle continuous medium handheld shot tracking downward and slightly right following the action. SET (the same in every shot): Modern commercial fitness center with running treadmills on gray commercial carpet, bright fluorescent overhead lighting, and a green motivational wall in the background. CHARACTERS: A red Shiba Inu dog with front paws and natural fur; a fawn French Bulldog with natural four-legged build. CHANGES from the original: the hanging child -> the Shiba Inu (a real four-legged dog); the running child -> the French Bulldog (a real four-legged dog). 0.5-SECOND TIMELINE of this shot (follow it exactly - every action, contact, fall, head turn and mouth opening happens at exactly these times; positions are as in image 1): [0.0-0.5s] The Shiba Inu lies on its belly on the moving treadmill belt with front paws hooking over the front bar as its hindquarters slide backward, while the French Bulldog trots forward in the background; mouth: Boy 1's mouth is not clearly visible as his head faces down; Boy 2's mouth is slightly open in a smile; camera: Handheld high-angle view, slightly tilting and panning left following Boy 1. [0.5-1.0s] The Shiba Inu loses its grip and tumbles off the rear of the belt onto the carpet, while the French Bulldog trots up beside the treadmill; mouth: Boy 1's mouth opens as he slips; Boy 2's mouth is slightly open, smiling; camera: Handheld tilt down, following Boy 1 falling off the rear of the treadmill. [1.0-1.5s] The Shiba Inu rolls onto its back on the carpet with paws in the air, while the French Bulldog inspects the rear edge of the moving belt; mouth: Boy 1's mouth is open laughing; Boy 2's mouth is closed with an upturned grin; camera: Handheld shot pans slightly right and tilts down toward the boys on the floor. [1.5-2.0s] The Shiba Inu wiggles playfully on its back beside a gym bench, while the French Bulldog crouches to pounce onto the running treadmill; mouth: Boy 1's mouth is open in laughter; Boy 2's mouth is slightly open, focused; camera: Slight handheld shake, framing Boy 2 near the treadmill and Boy 1 on the floor. [2.0-2.5s] The French Bulldog leaps all four paws forward onto the fast-moving belt as the Shiba Inu watches from the floor; mouth: Boy 2's mouth opens wide as he lands on the moving belt; Boy 1's mouth is wide open laughing; camera: Handheld camera quickly pans slightly right to center Boy 2 landing on the treadmill. [2.5-3.0s] The moving belt sweeps the French Bulldog's paws backward, causing it to slide helplessly toward the end; mouth: Boy 2's mouth is wide open in surprise; Boy 1's mouth is wide open in a laugh; camera: Handheld tilt downward following Boy 2 being ejected backward. [3.0-3.5s] The French Bulldog is thrown off the back of the belt, crashing onto its side directly on top of the Shiba Inu's flank; mouth: Boy 2's mouth is wide open grimacing; Boy 1's mouth remains open in laughter; camera: Handheld camera jolts slightly with the impact, maintaining downward angle. [3.5-4.0s] The French Bulldog tumbles onto its back beside the Shiba Inu, shaking its head, while the Shiba Inu rolls slightly under its weight; mouth: Boy 2's mouth is open, corners pulled down in a grimace; Boy 1's mouth is wide open laughing; camera: Handheld camera steady, focused down on both boys tangled on the carpet. [4.0-4.5s] The French Bulldog sits up awkwardly on its haunches rubbing its shoulder against the floor, while the Shiba Inu lies beside it; mouth: Boy 2's mouth is open in pain; Boy 1's mouth is slightly open, smiling; camera: Handheld, tilting slightly lower towards Boy 2. [4.5-5.0s] The French Bulldog rests seated next to the treadmill base looking dazed, beside the resting Shiba Inu; mouth: Boy 2's mouth opens wide into a grimace; Boy 1's mouth is slightly open; camera: Handheld camera slowly tilts down, revealing cameraman's shoe at the bottom edge. [5.0-5.7s] Both dogs lie on the gray gym carpet side by side recovering from the impact; mouth: Boy 2's mouth is slightly open panting; Boy 1's mouth is closed; camera: Handheld shot remains stationary, angled down at the floor. No humans and no human skin anywhere: every character is a real four-legged dog with thick, fully furry legs and round paws; anything held is held by a paw or in the mouth. Every character who becomes a dog is a REAL four-legged dog with natural dog anatomy and posture - never a dog-headed human, never standing upright on two legs like a person, no human hands, no clothes - doing the closest natural dog version of the original action (for example a child gripping a handlebar becomes the dog with its front paws hooked over the bar). OUTPUT: photorealistic, sharp, clean, high-detail modern phone footage with natural colours and steady exposure, filling the whole vertical 9:16 frame edge to edge. The same characters as in image 1 in every frame. No added text, captions, watermark, borders or split screen, no morphing, no extra animals or people. ANATOMY: every animal is one complete, separate, real animal - one head, one body, one tail and exactly four legs with natural proportions. When two animals touch, collide or one lands on the other, both bodies stay complete and clearly separate, each with its own outline - never merged, fused, melted into one shape, sharing legs or passing through each other; no dog-headed humans. NO TEXT ANYWHERE: no letters, words, numbers, symbols, logos or watermarks in the picture - walls, posters, signs, clothes and screens are plain, with no writing."
     ],
     "preflight": [],
     "board_times": [
@@ -133,17 +229,315 @@
       "panels": 9
     },
     "est_full": 3.17,
+    "timeline_reset": "원본이 바뀌어 시간표를 다시 만듦",
+    "timeline": {
+      "all": [
+        {
+          "t": "0.0-0.5",
+          "action": "Boy 1 (grey sweatshirt, light jeans) lies stomach-down on a moving treadmill, clinging with both hands to the front console as the belt pulls his lower body bac",
+          "mouth": "Boy 1's mouth is not clearly visible as his head faces down; Boy 2's mouth is slightly open in a smile.",
+          "sound": "Adult male voice offscreen says 'You thought that was funny?' with rising laughter.",
+          "camera": "Handheld high-angle view, slightly tilting and panning left following Boy 1."
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "Boy 1 loses his handgrip and gets dragged off the back of the moving treadmill belt, dropping onto the carpet. Boy 2 slows his run and approaches the side of th",
+          "mouth": "Boy 1's mouth opens as he slips; Boy 2's mouth is slightly open, smiling.",
+          "sound": "Adult male offscreen continues laughing, saying 'You thought that was...'.",
+          "camera": "Handheld tilt down, following Boy 1 falling off the rear of the treadmill."
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "Boy 1 rolls onto his back on the carpet beside a gym bench, his legs slightly bent in the air. Boy 2 steps toward the rear side of the running treadmill belt, l",
+          "mouth": "Boy 1's mouth is open laughing; Boy 2's mouth is closed with an upturned grin.",
+          "sound": "Wheezing laughter from offscreen cameraman.",
+          "camera": "Handheld shot pans slightly right and tilts down toward the boys on the floor."
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "Boy 1 remains on his back on the floor, smiling and turning his head. Boy 2 squares up to the running treadmill, preparing to jump onto the moving belt.",
+          "mouth": "Boy 1's mouth is open in laughter; Boy 2's mouth is slightly open, focused.",
+          "sound": "Continuous giggling and chuckling from the cameraman offscreen.",
+          "camera": "Slight handheld shake, framing Boy 2 near the treadmill and Boy 1 on the floor."
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "Boy 2 dives forward with both hands and feet onto the fast-moving treadmill belt. Boy 1 stays lying on his back, raising his legs as he watches.",
+          "mouth": "Boy 2's mouth opens wide as he lands on the moving belt; Boy 1's mouth is wide open laughing.",
+          "sound": "Friction sound of sneakers and hands hitting the moving belt.",
+          "camera": "Handheld camera quickly pans slightly right to center Boy 2 landing on the treadmill."
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "The fast treadmill belt instantly sweeps Boy 2's feet and body backward; his hands slip off the belt and he slides rapidly toward the rear edge. Boy 1 laughs on",
+          "mouth": "Boy 2's mouth is wide open in surprise; Boy 1's mouth is wide open in a laugh.",
+          "sound": "Loud dragging/thud sound of Boy 2 sliding on the treadmill track.",
+          "camera": "Handheld tilt downward following Boy 2 being ejected backward."
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "Boy 2 is shot completely off the rear of the treadmill belt, crashing hard onto his back and side on the carpet, his lower body colliding directly into Boy 1's ",
+          "mouth": "Boy 2's mouth is wide open grimacing; Boy 1's mouth remains open in laughter.",
+          "sound": "Heavy dual impact thud as Boy 2 hits the carpet and Boy 1.",
+          "camera": "Handheld camera jolts slightly with the impact, maintaining downward angle."
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "Boy 2 rebounds off Boy 1 and rolls onto his back, gripping his left arm/elbow in pain. Boy 1 kicks his legs up and continues laughing beneath Boy 2's legs.",
+          "mouth": "Boy 2's mouth is open, corners pulled down in a grimace; Boy 1's mouth is wide open laughing.",
+          "sound": "Sudden stop of laughter from offscreen cameraman, silent intake of breath.",
+          "camera": "Handheld camera steady, focused down on both boys tangled on the carpet."
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "Boy 2 begins to roll onto his left side, grabbing his left shoulder/arm with his right hand. Boy 1 lowers his legs and sits up slightly.",
+          "mouth": "Boy 2's mouth is open in pain; Boy 1's mouth is slightly open, smiling.",
+          "sound": "Faint rustling on the carpet as Boy 2 shifts; quiet offscreen atmosphere.",
+          "camera": "Handheld, tilting slightly lower towards Boy 2."
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "Boy 2 clutches his left arm tightly with his right hand, sitting half-propped on the floor in distress. Boy 1 rests on the carpet beside him.",
+          "mouth": "Boy 2's mouth opens wide into a grimace; Boy 1's mouth is slightly open.",
+          "sound": "Boy 2 lets out a pained cry: 'Ah!'",
+          "camera": "Handheld camera slowly tilts down, revealing cameraman's shoe at the bottom edge."
+        },
+        {
+          "t": "5.0-5.7",
+          "action": "Boy 2 stays seated on the floor holding his injured arm, head turned down. Boy 1 stays on the floor beside the treadmill base.",
+          "mouth": "Boy 2's mouth is slightly open panting; Boy 1's mouth is closed.",
+          "sound": "Boy 2 quietly groans in pain.",
+          "camera": "Handheld shot remains stationary, angled down at the floor."
+        }
+      ],
+      "gen": [
+        {
+          "t": "0.0-0.5",
+          "action": "Boy 1 (grey sweatshirt, light jeans) lies stomach-down on a moving treadmill, clinging with both hands to the front console as the belt pulls his lower body bac",
+          "mouth": "Boy 1's mouth is not clearly visible as his head faces down; Boy 2's mouth is slightly open in a smile.",
+          "sound": "Adult male voice offscreen says 'You thought that was funny?' with rising laughter.",
+          "camera": "Handheld high-angle view, slightly tilting and panning left following Boy 1."
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "Boy 1 loses his handgrip and gets dragged off the back of the moving treadmill belt, dropping onto the carpet. Boy 2 slows his run and approaches the side of th",
+          "mouth": "Boy 1's mouth opens as he slips; Boy 2's mouth is slightly open, smiling.",
+          "sound": "Adult male offscreen continues laughing, saying 'You thought that was...'.",
+          "camera": "Handheld tilt down, following Boy 1 falling off the rear of the treadmill."
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "Boy 1 rolls onto his back on the carpet beside a gym bench, his legs slightly bent in the air. Boy 2 steps toward the rear side of the running treadmill belt, l",
+          "mouth": "Boy 1's mouth is open laughing; Boy 2's mouth is closed with an upturned grin.",
+          "sound": "Wheezing laughter from offscreen cameraman.",
+          "camera": "Handheld shot pans slightly right and tilts down toward the boys on the floor."
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "Boy 1 remains on his back on the floor, smiling and turning his head. Boy 2 squares up to the running treadmill, preparing to jump onto the moving belt.",
+          "mouth": "Boy 1's mouth is open in laughter; Boy 2's mouth is slightly open, focused.",
+          "sound": "Continuous giggling and chuckling from the cameraman offscreen.",
+          "camera": "Slight handheld shake, framing Boy 2 near the treadmill and Boy 1 on the floor."
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "Boy 2 dives forward with both hands and feet onto the fast-moving treadmill belt. Boy 1 stays lying on his back, raising his legs as he watches.",
+          "mouth": "Boy 2's mouth opens wide as he lands on the moving belt; Boy 1's mouth is wide open laughing.",
+          "sound": "Friction sound of sneakers and hands hitting the moving belt.",
+          "camera": "Handheld camera quickly pans slightly right to center Boy 2 landing on the treadmill."
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "The fast treadmill belt instantly sweeps Boy 2's feet and body backward; his hands slip off the belt and he slides rapidly toward the rear edge. Boy 1 laughs on",
+          "mouth": "Boy 2's mouth is wide open in surprise; Boy 1's mouth is wide open in a laugh.",
+          "sound": "Loud dragging/thud sound of Boy 2 sliding on the treadmill track.",
+          "camera": "Handheld tilt downward following Boy 2 being ejected backward."
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "Boy 2 is shot completely off the rear of the treadmill belt, crashing hard onto his back and side on the carpet, his lower body colliding directly into Boy 1's ",
+          "mouth": "Boy 2's mouth is wide open grimacing; Boy 1's mouth remains open in laughter.",
+          "sound": "Heavy dual impact thud as Boy 2 hits the carpet and Boy 1.",
+          "camera": "Handheld camera jolts slightly with the impact, maintaining downward angle."
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "Boy 2 rebounds off Boy 1 and rolls onto his back, gripping his left arm/elbow in pain. Boy 1 kicks his legs up and continues laughing beneath Boy 2's legs.",
+          "mouth": "Boy 2's mouth is open, corners pulled down in a grimace; Boy 1's mouth is wide open laughing.",
+          "sound": "Sudden stop of laughter from offscreen cameraman, silent intake of breath.",
+          "camera": "Handheld camera steady, focused down on both boys tangled on the carpet."
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "Boy 2 begins to roll onto his left side, grabbing his left shoulder/arm with his right hand. Boy 1 lowers his legs and sits up slightly.",
+          "mouth": "Boy 2's mouth is open in pain; Boy 1's mouth is slightly open, smiling.",
+          "sound": "Faint rustling on the carpet as Boy 2 shifts; quiet offscreen atmosphere.",
+          "camera": "Handheld, tilting slightly lower towards Boy 2."
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "Boy 2 clutches his left arm tightly with his right hand, sitting half-propped on the floor in distress. Boy 1 rests on the carpet beside him.",
+          "mouth": "Boy 2's mouth opens wide into a grimace; Boy 1's mouth is slightly open.",
+          "sound": "Boy 2 lets out a pained cry: 'Ah!'",
+          "camera": "Handheld camera slowly tilts down, revealing cameraman's shoe at the bottom edge."
+        },
+        {
+          "t": "5.0-5.7",
+          "action": "Boy 2 stays seated on the floor holding his injured arm, head turned down. Boy 1 stays on the floor beside the treadmill base.",
+          "mouth": "Boy 2's mouth is slightly open panting; Boy 1's mouth is closed.",
+          "sound": "Boy 2 quietly groans in pain.",
+          "camera": "Handheld shot remains stationary, angled down at the floor."
+        }
+      ]
+    },
     "vertical": {
       "mode": "new 9:16",
       "src": "720x1280"
     },
-    "timeline_reset": "원본이 바뀌어 시간표를 다시 만듦",
-    "timeline": {}
+    "board_check": [
+      {
+        "text": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "body": [],
+        "seen": [
+          {
+            "panel": 1,
+            "what": "text and logos on gym equipment"
+          },
+          {
+            "panel": 2,
+            "what": "Words written on the green wall in the gym"
+          },
+          {
+            "panel": 3,
+            "what": "text on wall and treadmill"
+          },
+          {
+            "panel": 4,
+            "what": "Text on the green wall and treadmill base"
+          },
+          {
+            "panel": 5,
+            "what": "text on the green wall"
+          },
+          {
+            "panel": 6,
+            "what": "motivational text on the green gym wall"
+          },
+          {
+            "panel": 7,
+            "what": "garbled motivational text on the gym wall"
+          },
+          {
+            "panel": 8,
+            "what": "garbled text on the green wall"
+          },
+          {
+            "panel": 9,
+            "what": "Garbled motivational text on the green wall"
+          }
+        ],
+        "failed": 0
+      },
+      {
+        "text": [
+          1,
+          2,
+          5,
+          6,
+          7
+        ],
+        "body": [],
+        "seen": [
+          {
+            "panel": 1,
+            "what": "logo on the treadmill belt"
+          },
+          {
+            "panel": 2,
+            "what": "logos and console markings on the treadmills"
+          },
+          {
+            "panel": 5,
+            "what": "treadmill brand logo and console markings"
+          },
+          {
+            "panel": 6,
+            "what": "Labels and logos visible on the treadmill equipment."
+          },
+          {
+            "panel": 7,
+            "what": "gym equipment brand logo and console markings"
+          }
+        ],
+        "failed": 0
+      },
+      {
+        "text": [
+          5,
+          6,
+          7,
+          9
+        ],
+        "body": [
+          2,
+          7
+        ],
+        "seen": [
+          {
+            "panel": 2,
+            "what": "The Shiba Inu appears to have only two legs, with the other two missing."
+          },
+          {
+            "panel": 5,
+            "what": "lettering on treadmill console"
+          },
+          {
+            "panel": 6,
+            "what": "treadmill console displays and logos"
+          },
+          {
+            "panel": 7,
+            "what": "Treadmill display has screen text; the bulldog is missing a hind leg and merged oddly with the other dog."
+          },
+          {
+            "panel": 9,
+            "what": "digital display on treadmill console"
+          }
+        ],
+        "failed": 0
+      }
+    ],
+    "board_text": {
+      "panels": [
+        5,
+        6,
+        7,
+        9
+      ],
+      "redrawn": 2
+    },
+    "board_body": {
+      "panels": [
+        2,
+        7
+      ],
+      "redrawn": 2
+    }
   },
   "last_request": {
-    "file": "03_remake_board.json",
-    "ran_at": "2026-10-11T13:35:40Z",
+    "file": "04_remake_board.json",
+    "ran_at": "2026-10-11T13:51:45Z",
     "ok": false
   },
-  "error": "중단 스위치로 멈췄습니다(pet-episodes/stop.json)"
+  "error": "스토리보드를 3번 그려도 2, 7번 칸 개 몸이 엉킴 / 5, 6, 7, 9번 칸 글씨·로고 — 보여 주지 않고 멈춤"
 }
