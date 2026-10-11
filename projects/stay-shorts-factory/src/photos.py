@@ -147,11 +147,11 @@ def classify(model: str, cands: list[dict]) -> list[dict]:
         parts.append({"inline_data": {"mime_type": "image/jpeg", "data": _small_jpeg_b64(c["path"])}})
     body = {"system_instruction": {"parts": [{"text": SYSTEM}]},
             "contents": [{"role": "user", "parts": parts}],
-            "generationConfig": {"maxOutputTokens": 4000, "temperature": 0.4,
+            "generationConfig": {"maxOutputTokens": 8000, "temperature": 0.4,
                                  "responseMimeType": "application/json",
                                  "thinkingConfig": {"thinkingBudget": 0}}}
     got = {}
-    for attempt in range(2):                      # 답이 JSON 이 아니면 한 번 더 (0원에 가까운 단계)
+    for attempt in range(3):                      # 답이 JSON 이 아니면 다시 (0원에 가까운 단계). 2026-10-11 stay-run-8 에서 2회 연속 실패 → 3회 + 잘린 JSON 복구
         try:
             data = _gpost(f"models/{model}:generateContent", body)
         except RuntimeError as e:
@@ -159,13 +159,28 @@ def classify(model: str, cands: list[dict]) -> list[dict]:
                 raise
             body["generationConfig"].pop("thinkingConfig", None)
             data = _gpost(f"models/{model}:generateContent", body)
-        txt = "".join(p.get("text", "") for p in (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []))
+        cand = (data.get("candidates") or [{}])[0]
+        txt = "".join(p.get("text", "") for p in ((cand.get("content") or {}).get("parts") or []))
         txt = re.sub(r"^```(?:json)?|```$", "", txt.strip()).strip()
+        if "{" in txt and "}" in txt:
+            txt = txt[txt.index("{"): txt.rindex("}") + 1]
         try:
             got = {int(p.get("k", -1)): p for p in (json.loads(txt).get("photos") or []) if isinstance(p, dict)}
             break
         except (ValueError, AttributeError) as e:
-            log(f"분류 답이 JSON 이 아님 (시도 {attempt + 1}): {str(e)[:80]} / {txt[:80]!r}")
+            # 출력이 잘렸으면(MAX_TOKENS) 완성된 항목만 건진다
+            items = re.findall(r"\{[^{}]*\"k\"\s*:\s*\d+[^{}]*\}", txt)
+            salvaged = []
+            for it in items:
+                try:
+                    salvaged.append(json.loads(it))
+                except ValueError:
+                    continue
+            if len(salvaged) >= max(1, len(cands) // 2):
+                got = {int(p.get("k", -1)): p for p in salvaged}
+                log(f"분류 JSON 이 잘려 {len(salvaged)}/{len(cands)}개만 복구 (finish={cand.get('finishReason')})")
+                break
+            log(f"분류 답이 JSON 이 아님 (시도 {attempt + 1}, finish={cand.get('finishReason')}): {str(e)[:60]} / {txt[:80]!r}")
     if not got:
         raise RuntimeError("사진 분류 답을 읽지 못했습니다 (JSON 아님)")
     out = []
