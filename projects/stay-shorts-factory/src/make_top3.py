@@ -89,6 +89,7 @@ def official_photos(name: str, city: str, out: Path, models: dict, req: dict) ->
         return [], {"skipped": "request.json crawl=false"}, {}
     try:
         cr = crawl.collect(name, city, out, official_url=(req.get("official_urls") or {}).get(name),
+                           max_images=int(req.get("crawl_max") or crawl.MAX_IMAGES),      # 단일 숙소 포맷은 장면 5개가 필요해 더 모은다
                            gemini_json=lambda m, s, c: ms._try_models("text", models["text"], lambda mm: ms.gemini_json(mm, s, c)), model="auto")
     except Exception as e:  # noqa: BLE001
         log(f"{name}: 공식 홈페이지 수집 오류 — 쿠팡 사진만 사용 ({str(e)[:80]})")

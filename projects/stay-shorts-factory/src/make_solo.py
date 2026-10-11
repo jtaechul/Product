@@ -57,7 +57,8 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터다. 영상 1편�
   ③ 가족 문제 해결 "추운데 애들 어디 데려가지? 여기 실내 온수풀이면 돼요." ④ 반전·궁금증 (입력 사실로 확인될 때만)
 - water (45~95자, 2문장): 첫 문장에 **숙소 이름**을 말한다("여기는 ○○이에요" 식). 물놀이 공간을 구체로 — 실내/야외, 온천수·온수, 전망(창·바다·산), 운영(사계절·투숙객), 파도풀·슬라이드 같은 구성.
 - room (25~65자, 1~2문장): 객실 — 뷰·침대·구성·테라스. 쿠팡 객실 이름에 있는 사실만.
-- special (30~75자, 1~2문장): 특별 공간 — 사우나·찜질·키즈·산책로·조식·라운지 중 입력에 있는 것.
+- special (30~75자, 1~2문장): **화면에 보이는 공간을 먼저** 말한다. 장면이 사우나·키즈·산책로·조식·라운지면 그 시설을, 장면이 외관·야경이면 "산속에 자리한", "밤이면 조명이 켜지는" 식으로
+  보이는 것을 말하고, 보이지 않는 시설은 "…도 있어요" 로 한 문장만 덧붙인다. 자막도 보이는 공간의 시설 키워드로.
 - offer (55~110자, 3문장): ① 혜택을 **조건문**으로 1문장(투숙객 무료·이용권 포함 객실·조식 포함 등 입력에 있는 것) ② 후기 아쉬움이 입력에 있으면 그대로 1문장(없으면 생략) ③ 누구에게·언제 좋은지 1문장(아이와, 커플, 부모님, 비 오는 날, 추운 날).
 - cta (36자 이내): 저장 유도 + 프로필 폴더 이름. 폴더에 있는 것(객실 타입·가격대·링크)으로 궁금하게.
 - 자막(captions): 구간마다 **장면 수만큼**(입력에 적힌 수) 3~10자 키워드 한 줄. 숫자·'후기' 금지, 느낌표·이모지 금지. 장면과 모순되지 않게(식당 사진 위에 "수영장" 금지). 묘사형("바다 앞 리조트") 금지, 시설·혜택 키워드.
@@ -87,10 +88,21 @@ def pick_hotel(req: dict) -> tuple[dict, int]:
     return rows[0], 1
 
 
+FACILITY_RX = re.compile(r"사우나|찜질|키즈|놀이|산책|정원|테라스|라운지|조식|레스토랑|식당|스파|온천|노천|족욕|카페|바비큐|바베큐|수영장|풀")
+EXTERIOR_RX = re.compile(r"외관|전경|건물|항공|야경|조명|단지|하늘|은하수|드론|멀리")
+
+
 def scenes_of(hotel: dict) -> dict:
-    """장면을 구간에 배정: water[A,B] · room[R] · special[A,B]. 모자라면 다른 분류로 채운다 (최소 2장)."""
+    """장면을 구간에 배정: water[A,B] · room[R] · special[A,B]. 모자라면 다른 분류로 채운다 (최소 2장).
+    p9b 실측: '특별 공간'에 리조트 외관·야경(쿠팡)이 뽑혀 나레이션(사우나·수영장)과 화면이 어긋났다 → 특별 공간은 시설(사우나·키즈·산책로…)
+    설명이 있는 사진을 먼저, 외관·야경은 맨 뒤로."""
     sh = list(hotel["shots"])
     by = {k: [s for s in sh if s["slot"] == k] for k in ("water", "room", "special")}
+
+    def special_key(s):
+        d = s.get("description") or ""
+        return (0 if FACILITY_RX.search(d) else 1 if not EXTERIOR_RX.search(d) else 2, -int(s.get("quality") or 0))
+    by["special"].sort(key=special_key)
     used = set()
 
     def take(cat, n):
@@ -266,6 +278,7 @@ def preview_sheet(hotel: dict, sc: dict, script: dict, out: Path):
 
 def assets(req: dict, models: dict, report: dict) -> tuple[dict, dict, int]:
     c, pos = pick_hotel(req)
+    req = {**req, "crawl_max": int(req.get("crawl_max") or 32)}        # 장면 5개(특별 공간 2)를 채우려면 사진 후보가 더 필요하다 (p9b: 24장 중 8장 제외)
     h = mt.hotel_assets(c, models, 1, req, quota=QUOTA)
     if not h:
         raise RuntimeError(f"{c['name']}: 쓸 수 있는 사진이 2장 미만이거나 쿠팡 객실이 없습니다")
