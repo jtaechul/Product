@@ -96,7 +96,7 @@
         }
       ]
     },
-    "spent": 0.17,
+    "spent": 0.32,
     "ledger": [
       {
         "what": "all 0.5초 시간표 만들기",
@@ -105,6 +105,10 @@
       {
         "what": "연출 분석(흥행 요소·컷 나누기)",
         "usd": 0.01
+      },
+      {
+        "what": "스토리보드 그림",
+        "usd": 0.15
       },
       {
         "what": "스토리보드 그림",
@@ -193,10 +197,6 @@
     "gen_prompts": [
       "DURATION: 6 seconds. Image 1 is the FIRST FRAME of this shot: keep exactly its framing, characters, set and light. Re-create this shot of a viral video as new, clean, photorealistic vertical 9:16 footage that matches the original shot action for action. SHOT: High-angle medium shot, handheld, tracking downward and panning slightly left following the fall. SET (the same in every shot): Indoor gym fitness studio, lime green wall covered in large motivational typography, grey carpeted floor, row of black commercial treadmills running, bright fluorescent ceiling lighting. CHARACTERS: Anthropomorphic child with Shiba Inu head, thick furry Shiba paws and legs; a small energetic French Bulldog running nearby. CHANGES from the original: 1) replace the hanging child's head with the head of the Shiba Inu from image 1; 2) turn the hanging child's visible arms and hands into thick furry Shiba front legs with round paws; 3) turn the hanging child's visible legs and feet into thick furry Shiba hind legs with round paws; 4) replace the running child with a real French Bulldog matching the original running and falling movement. 0.5-SECOND TIMELINE of this shot (follow it exactly - every action, contact, fall, head turn and mouth opening happens at exactly these times; positions are as in image 1): [0.0-0.5s] A boy lies face-down on a running treadmill, gripping the front frame with both hands as his legs drag. A second boy in a; mouth: The first boy's face is obscured facing downward; the second boy's mouth is closed; camera: Handheld, slightly high angle, following the treadmill. [0.5-1.0s] The first boy loses his grip and slides backward off the moving belt, falling off the rear onto the carpeted floor. The second boy stops beside the front of the; mouth: The second boy's mouth is slightly open in curiosity/amusement; camera: Handheld pan slightly right and down tracking the falling boy. [1.0-1.5s] The first boy rolls onto his back on the carpet between the treadmill and the green wall. The second boy turns and takes a step toward the edge of the running t; mouth: The first boy smiles with mouth slightly open; the second boy has his mouth slightly open; camera: Handheld, tilting slightly downward toward the two boys. [1.5-2.0s] The first boy lies on his back with legs raised playfully. The second boy bends his knees and prepares to jump or place his hands onto the running treadmill bel; mouth: The second boy's mouth is slightly open with anticipation; the first boy's mouth is open laughing; camera: Handheld, centered on the treadmill and the floor space. [2.0-2.5s] The second boy leaps forward, placing both hands flat onto the moving treadmill belt. The belt instantly flings his arms backward under his torso, pulling his l; mouth: The second boy's mouth opens wide in surprise; camera: Handheld, shaking slightly as action unfolds. [2.5-3.0s] The second boy is violently thrown backward off the treadmill, flipping onto his back and crashing directly on top of the first boy lying on the floor; mouth: Both boys have wide open mouths grimacing and yelling; camera: Handheld, slight shake tracking the collision. [3.0-3.5s] The second boy lands fully across the first boy's chest and torso. The first boy flails his arms upward to push him off as they both recoil in pain and surprise; mouth: The second boy's mouth is open grimacing; the first boy's mouth is open in shock; camera: Handheld, angled down at the tangled boys. [3.5-4.0s] The second boy rolls off to the side onto the carpet, lifting his hand toward the back of his neck/head. The first boy pushes himself away along the green wall; mouth: The second boy's mouth is wide open grimacing; the first boy's mouth is open panting; camera: Handheld, holding frame on both boys on the carpet. [4.0-4.5s] The second boy rolls onto his side clutching his neck/shoulder in pain. The first boy sits up slightly against the wall; mouth: The second boy opens his mouth wide to groan; camera: Handheld, panning slightly down toward the second boy. [4.5-5.0s] The second boy lies on his side, curling his torso and holding his neck, letting out an audible cry of pain; mouth: The second boy's mouth is wide open shouting 'Ah!'; camera: Handheld, steady on the boys on the floor. [5.0-5.7s] The second boy continues holding his neck, rolling slightly onto his back in distress as the first boy watches from beside him; mouth: The second boy grimaces with mouth open, groaning 'Ah!'; the first boy's mouth is slightly open; camera: Handheld, tilting slightly up from the floor before ending. No humans and no human skin anywhere: every leg is a thick, fully furry dog leg with a round paw and anything held is held by a paw. OUTPUT: photorealistic, sharp, clean, high-detail modern phone footage with natural colours and steady exposure, filling the whole vertical 9:16 frame edge to edge. The same characters as in image 1 in every frame. No added text, captions, watermark, borders or split screen, no morphing, no extra animals or people."
     ],
-    "vertical": {
-      "mode": "new 9:16",
-      "src": "720x1280"
-    },
     "preflight": [],
     "board_times": [
       0.0,
@@ -213,11 +213,15 @@
       "ok": true,
       "panels": 9
     },
-    "est_full": 3.17
+    "est_full": 3.17,
+    "vertical": {
+      "mode": "new 9:16",
+      "src": "720x1280"
+    }
   },
   "last_request": {
-    "file": "01_remake_board.json",
-    "ran_at": "2026-10-11T13:24:34Z",
+    "file": "02_remake_board.json",
+    "ran_at": "2026-10-11T13:26:47Z",
     "ok": true
   }
 }
