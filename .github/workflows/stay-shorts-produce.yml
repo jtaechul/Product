@@ -118,6 +118,13 @@ jobs:
             curl -s -o /dev/null -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
               --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=숙소 쇼츠 시험 제작 실패 — $ERR" || true
           fi
+          # 공식 홈페이지에서 모은 사진 전체(숙소별 한 장) — 검수용. 텔레그램으로만 보내고 저장소·Release 에는 올리지 않는다 (재배포 방지)
+          for s in $P/build/h*/official/sheet.jpg $P/build/official/sheet.jpg; do
+            [ -f "$s" ] || continue
+            NAME=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1],encoding='utf-8')).get('name',''))" "$(dirname "$s")/photo_sources.json" 2>/dev/null || echo "")
+            curl -s -o /dev/null -w "telegram official sheet http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$s" \
+              -F caption="$NAME — 공식 홈페이지에서 모은 사진 전체 (검수용 · 다른 숙소 사진이 섞였는지 확인)" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
+          done
 
       - name: 기록·미리보기·장부 커밋 (영상은 커밋하지 않는다)
         if: always()
