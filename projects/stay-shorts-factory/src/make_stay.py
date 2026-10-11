@@ -611,24 +611,31 @@ def main() -> int:
     req = json.loads(REQUEST.read_text(encoding="utf-8"))
     stay = str(req.get("stay") or "").strip()
     mode = str(req.get("mode") or "photo").strip().lower()
-    if not stay:
+    if not stay and mode != "top3":
         raise SystemExit("request.json 에 stay(숙소 이름)가 없습니다")
+    if req.get("fake"):                                 # 포맷 검토용: Veo 를 가짜 클립으로 (0원)
+        veo.FAKE = True
     BUILD.mkdir(parents=True, exist_ok=True)
     PREVIEW.mkdir(parents=True, exist_ok=True)
     for old in PREVIEW.glob("compare_*.jpg"):          # 지난 실행의 비교 사진은 지운다 (이번 것과 섞이지 않게)
         old.unlink()
-    report = {"nonce": req.get("nonce"), "stay": stay, "mode": mode, "ok": False, "steps": {}}
+    report = {"nonce": req.get("nonce"), "stay": stay, "mode": mode, "fake": bool(req.get("fake")), "ok": False, "steps": {}}
     try:
-        items = coupang_search(stay, 10)
-        report["steps"]["search"] = {"count": len(items)}
-        if len(items) < 2:
-            raise RuntimeError("검색 결과가 2개 미만")
         models = pick_models()
         report["models"] = models
-        if mode == "veo":
-            video, dur_total, meta = produce_veo(req, stay, items, models, report)
+        if mode == "top3":
+            import make_top3
+            video, dur_total, meta = make_top3.produce_top3(req, models, report)
+            stay = meta["stay"]
         else:
-            video, dur_total, meta = produce_photo(req, stay, items, models, report)
+            items = coupang_search(stay, 10)
+            report["steps"]["search"] = {"count": len(items)}
+            if len(items) < 2:
+                raise RuntimeError("검색 결과가 2개 미만")
+            if mode == "veo":
+                video, dur_total, meta = produce_veo(req, stay, items, models, report)
+            else:
+                video, dur_total, meta = produce_photo(req, stay, items, models, report)
 
         # 미리보기 사진 3장 (저장소에 커밋되는 것은 이것뿐 — 영상은 Release 로)
         for k, t in enumerate([0.6, dur_total * 0.45, dur_total - 1.2]):

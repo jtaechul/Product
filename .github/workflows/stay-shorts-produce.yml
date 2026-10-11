@@ -1,7 +1,8 @@
 name: stay-shorts-produce
 
-# 숙소 쇼핑쇼츠 — 숙소 이름 1개로 세로 영상 1편을 만든다.
-# request.json 의 mode 가 "veo" 면 운영자가 원하는 방식: 사진 7장(물놀이 3·객실 2·특별 공간 2) → Veo 이미지→영상 7컷 → 이어 붙이기
+# 숙소 쇼핑쇼츠 — 세로 영상 1편을 만든다.
+# request.json 의 mode 가 "top3" 면 메인 포맷 「데이터 호캉스 TOP3」(테마 1 · 숙소 3곳 · 25초 · 숙소당 Veo 2컷 + 실촬영 B롤). "fake": true 면 0원 가짜 클립.
+# mode 가 "veo" 면 사진 7장(물놀이 3·객실 2·특별 공간 2) → Veo 이미지→영상 7컷 → 이어 붙이기 (단일 숙소)
 #   (유료 · 1편 약 2,100원 · 한 번 실행 3,000원 / 한 달 50,000원 한도는 src/veo.py 가 지킨다 · 장부 state/spend.json)
 # mode 가 없으면 예전 시험 방식(사진 확대 + 자막, 유료 생성 없음).
 # 쿠팡 검색 → 사진 분류·대본(Gemini) → 음성(Gemini) → [Veo] → 합성(ffmpeg).
@@ -25,7 +26,7 @@ jobs:
   produce:
     name: 숙소 영상 1편 제작
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,6 +49,10 @@ jobs:
           COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
           COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           # 비어 있으면 코드의 기본값(veo-3.1-lite · 3,000원 · 50,000원)을 쓴다. 바꾸려면 저장소 Variables 에 넣는다.
           VEO_MODEL: ${{ vars.STAY_VEO_MODEL }}
           STAY_RUN_KRW: ${{ vars.STAY_RUN_KRW }}
