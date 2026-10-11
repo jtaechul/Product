@@ -518,7 +518,8 @@ def segment(idx: int, pieces: list, wav: Path | None, narr: float, planned: floa
     fc += f"[v0]setpts={factor:.4f}*PTS,fps={FPS},tpad=stop_mode=clone:stop_duration={pad:.3f}[v1];"
     cur, k = "v1", n_in
     for j, (_, a, b) in enumerate(overlays):
-        fc += f"[{cur}][{k}:v]overlay=0:0:format=auto:enable='between(t,{a:.3f},{b:.3f})'[v{j + 2}];"
+        # between() 은 양끝 포함이라 경계 프레임에 자막 두 장이 겹친다(실측) → [a, b) 반개구간
+        fc += f"[{cur}][{k}:v]overlay=0:0:format=auto:enable='gte(t,{a:.3f})*lt(t,{b:.3f})'[v{j + 2}];"
         cur = f"v{j + 2}"; k += 1
     if counter:
         fc += f"[{cur}][{k}:v]overlay=0:0:format=auto:eof_action=repeat[vc];"
