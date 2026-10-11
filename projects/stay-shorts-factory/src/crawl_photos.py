@@ -65,8 +65,8 @@ PAGE_KW = [
 PAGE_SKIP = re.compile(r"event|notice|board|news|login|member|join|reserv|book|faq|terms|privacy|recruit|career|\.pdf|download|"
                        r"cart|mypage|search|sitemap|/en\b|/eng\b|/jp\b|/jpn\b|/cn\b|/zh\b|/chn\b|lang=|mailto:|tel:|javascript:|"
                        r"wedding|group|shopping|bakery|bistro|restaurant|dining|livetalk|location|guidemap|aboutus|notice|"
-                       r"promotion|package|coupon|price|rate|regulation|policy|footer|intro|company|affiliate|history|"
-                       r"웨딩|단체|쇼핑|예약|공지|채용|이벤트|프로모션|패키지|요금|회사소개", re.I)
+                       r"promotion|package|coupon|price|rate|regulation|policy|footer|intro|company|affiliate|history|featured|"
+                       r"웨딩|단체|쇼핑|예약|공지|채용|이벤트|프로모션|패키지|요금|회사소개|추천상품", re.I)
 IMG_SKIP = re.compile(r"\.svg|\.gif|\.ico|\.mp4|\.webm|\.m3u8|/_nuxt/|facebook\.com/tr|google|analytics|pixel|icon|logo|btn_|"
                       r"button|arrow|label_|badge|sprite|blank|loading|spinner|qr|map_|/map|favicon|emoji", re.I)
 BLOCK_RE = re.compile(r"incapsula|request unsuccessful|access denied|cf-browser-verification|captcha|just a moment|"
@@ -328,8 +328,20 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
             log(f"{name}: {res['reason']}")
             return res
     pages = discover_pages(url, html, max_pages, extra)
+    # p3 실측(2026-10-11): 숙소 첫 페이지엔 그룹 전체 프로모션(다른 지점의 바다 인피니티풀)이 섞인다 → 시설·객실 페이지를 먼저 보고 첫 페이지는 맨 뒤
+    pages = pages[1:] + pages[:1]
     res["pages"] = pages
-    log(f"{name}: {url} ({how}) · 볼 페이지 {len(pages)}개")
+    log(f"{name}: {url} ({how}) · 볼 페이지 {len(pages)}개 (첫 페이지는 맨 뒤)")
+    # 그룹 홈(호스트 뿌리)에 걸린 사진은 여러 지점이 공유하는 배너일 가능성이 커서 제외한다
+    shared: set[str] = set()
+    base = urllib.parse.urlsplit(url)
+    if base.path.strip("/"):
+        home = urllib.parse.urlunsplit((base.scheme, base.netloc, "/", "", ""))
+        if allowed(home):
+            time.sleep(PAGE_PAUSE)
+            shared = set(image_urls(home, render(home, chrome)))
+            log(f"  그룹 홈 {home} 의 공용 사진 {len(shared)}장은 제외 (다른 지점 사진 혼입 방지)")
+    res["shared_excluded"] = 0
     seen_url, seen_hash = set(), set()
     htmls = {_norm(url): html}
     for i, page in enumerate(pages):
@@ -342,7 +354,9 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
             htmls[page] = render(page, chrome)
             if blocked(htmls[page]):
                 continue
-        urls = [u for u in image_urls(page, htmls[page]) if u not in seen_url]
+        found = [u for u in image_urls(page, htmls[page]) if u not in seen_url]
+        urls = [u for u in found if u not in shared]
+        res["shared_excluded"] += len(found) - len(urls)
         got = 0
         for u in urls:
             if len(res["photos"]) >= max_images:
@@ -371,7 +385,12 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
             time.sleep(0.25)
         log(f"  페이지 {i + 1}/{len(pages)} {urllib.parse.urlsplit(page).path or '/'} → 사진 {got}장 (누적 {len(res['photos'])})")
     res["ok"] = bool(res["photos"])
-    res["reason"] = "" if res["ok"] else "조건(해상도 900px↑)에 맞는 사진이 없음"
+    if res["ok"]:
+        res["reason"] = ""
+    elif res["tried"] == 0:
+        res["reason"] = "사진 주소를 하나도 못 찾음 (봇 차단·빈 페이지 가능성)"
+    else:
+        res["reason"] = "조건(해상도 900px↑)에 맞는 사진이 없음"
     (out_dir / "photo_sources.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     log(f"{name}: 사진 {len(res['photos'])}장 (시도 {res['tried']}) · 장부 {out_dir / 'photo_sources.json'}")
     return res

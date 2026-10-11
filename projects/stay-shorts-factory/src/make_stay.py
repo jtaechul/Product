@@ -480,8 +480,12 @@ def produce_veo(req: dict, stay: str, items: list, models: dict, report: dict) -
     cands = photos.gather(items, OPERATOR_PHOTOS, BUILD, official=official)
     if not cands:
         raise RuntimeError("쓸 사진이 한 장도 없습니다 (공식 홈페이지·쿠팡 사진 없음 · requests/produce/photos/ 비어 있음)")
-    classified = _try_models("vision", models["text"], lambda m: photos.classify(m, cands))
+    ctx = photos.context_for(stay, str(req.get("city") or ""))
+    classified = _try_models("vision", models["text"], lambda m: photos.classify(m, cands, ctx))
     shots, notes = photos.select(classified)
+    mism = [p for p in classified if p.get("mismatch")]
+    if mism:
+        notes.append(f"다른 지점 의심으로 제외 {len(mism)}장: " + " / ".join(p["mismatch"][:40] for p in mism[:4]))
     report["photo_sources"] = [{"slot": s.get("category"), "source": s.get("source"), "url": s.get("src_url"), "page": s.get("src_page")} for s in shots]
     (PREVIEW / "photo_sources.json").write_text(json.dumps(report["photo_sources"], ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     # ⭐ 테스트 비용 규칙 (2026-10-11 운영자): Veo 는 720p 가 최저 화질·최저가(320p 없음, 초당 과금)라

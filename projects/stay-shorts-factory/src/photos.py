@@ -51,7 +51,18 @@ SYSTEM = """너는 숙소 홍보 숏폼의 촬영 감독이다. 숙소 사진 �
 - people: 사람이 보이면 true
 - quality: 영상 소재로서의 품질 0~10 (해상도·구도·밝기)
 - veo_prompt: 이 사진을 4초 영상으로 움직일 때의 영어 지시문 1~2문장. 카메라 움직임 한 가지(drone glide / slow push-in / slow tracking / gentle tilt 등)와 자연스러운 움직임 한 가지(water ripples / curtains sway / leaves sway / light shimmer)만 적는다. 사진에 없는 사물·사람·건물·풍경을 추가하라고 쓰지 않는다. 빠른 움직임·흔들림·줌 급변 금지.
-JSON 만 출력한다: {"photos":[{"k":번호,"category":"...","description":"...","focus_x":0.5,"focus_y":0.5,"people":false,"quality":7,"veo_prompt":"..."}]}"""
+- mismatch: 사용자 메시지에 숙소 이름·지역이 주어졌을 때, 사진이 **그 숙소의 것이 아닐 가능성이 높으면**(지역 지리와 맞지 않음 — 예: 내륙 산간 리조트인데 바다가 보임, 알려진 건물 양식·시설과 다름, 다른 지점 이름의 간판) 그 이유를 한국어 한 줄로. 확실하지 않으면 빈 문자열. mismatch 를 적은 사진은 category 를 "skip" 으로 한다
+JSON 만 출력한다: {"photos":[{"k":번호,"category":"...","description":"...","focus_x":0.5,"focus_y":0.5,"people":false,"quality":7,"veo_prompt":"...","mismatch":""}]}"""
+
+
+def context_for(name: str, city: str = "", facts: list[str] | None = None) -> str:
+    """분류 호출에 붙이는 숙소 맥락 — 공식 홈페이지엔 같은 그룹 다른 지점 사진(프로모션)이 섞인다 (p3 실측: 홍천 비발디파크에 바다 인피니티풀)."""
+    s = (f"이 사진들은 숙소 '{name}'" + (f"({city})" if city else "") + " 의 공식 홈페이지와 쿠팡 상품 사진에서 모았다. "
+         "공식 홈페이지에는 같은 그룹의 다른 지점 사진(프로모션 배너)이 섞여 있을 수 있다. "
+         + (f"'{city}' 의 지리(바다·산·도시)와 " if city else "") + "이 숙소의 알려진 모습에 맞지 않는 사진은 mismatch 에 이유를 적고 category 를 skip 으로 한다. ")
+    if facts:
+        s += f"블로그로 확인된 이 숙소의 시설: {', '.join(facts)}. "
+    return s + "확실하지 않으면 mismatch 는 비워 둔다."
 
 
 def log(*a):
@@ -144,11 +155,19 @@ def _small_jpeg_b64(path: str, side: int = 640) -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
-def classify(model: str, cands: list[dict]) -> list[dict]:
-    """사진마다 분류·설명·초점·지시문. 돌려주는 목록은 cands 와 같은 순서(k 기준)."""
-    listing = "\n".join(f"사진 {c['k']}: " + ("운영자가 준 사진" if c["source"] == "operator" else f"쿠팡 객실 상품 '{c['name']}'")
-                        for c in cands)
-    parts = [{"text": f"사진 {len(cands)}장. 각 사진 앞에 번호를 적어 둔다.\n{listing}"}]
+def _src_label(c: dict) -> str:
+    if c["source"] == "operator":
+        return "운영자가 준 사진"
+    if c["source"] == "official":
+        return f"공식 홈페이지 사진 (페이지 {str(c.get('src_page') or '')[-40:]})"
+    return f"쿠팡 객실 상품 '{c['name']}'"
+
+
+def classify(model: str, cands: list[dict], context: str = "") -> list[dict]:
+    """사진마다 분류·설명·초점·지시문(+ 다른 지점 의심 mismatch). 돌려주는 목록은 cands 와 같은 순서(k 기준).
+    context: 숙소 이름·지역·확인된 시설 (context_for) — 있으면 지리에 안 맞는 사진을 걸러낸다."""
+    listing = "\n".join(f"사진 {c['k']}: {_src_label(c)}" for c in cands)
+    parts = [{"text": (context + "\n\n" if context else "") + f"사진 {len(cands)}장. 각 사진 앞에 번호를 적어 둔다.\n{listing}"}]
     for c in cands:
         parts.append({"text": f"사진 {c['k']}:"})
         parts.append({"inline_data": {"mime_type": "image/jpeg", "data": _small_jpeg_b64(c["path"])}})
@@ -205,6 +224,9 @@ def classify(model: str, cands: list[dict]) -> list[dict]:
         cat = str(p.get("category", "skip")).strip().lower()
         if cat not in CATS:
             cat = "skip"
+        mismatch = str(p.get("mismatch") or "").strip()[:100]
+        if mismatch:
+            cat = "skip"
 
         def f01(v, d=0.5):
             try:
@@ -214,9 +236,9 @@ def classify(model: str, cands: list[dict]) -> list[dict]:
         out.append({**c, "category": cat, "description": str(p.get("description", ""))[:120],
                     "focus_x": f01(p.get("focus_x")), "focus_y": f01(p.get("focus_y")),
                     "people": bool(p.get("people", False)), "quality": _q(p.get("quality")),
-                    "veo_prompt": str(p.get("veo_prompt", "")).strip()[:400]})
+                    "veo_prompt": str(p.get("veo_prompt", "")).strip()[:400], "mismatch": mismatch})
     for o in out:
-        log(f"사진 {o['k']} [{o['source']}] → {o['category']} q{o['quality']} {o['description'][:50]}")
+        log(f"사진 {o['k']} [{o['source']}] → {o['category']} q{o['quality']} {o['description'][:50]}" + (f" ⚠ 다른 지점 의심: {o['mismatch']}" if o["mismatch"] else ""))
     return out
 
 

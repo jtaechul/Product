@@ -130,9 +130,12 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None) -> di
     cands = photos.gather(rooms, ROOT / "requests" / "produce" / "photos_none", build, official=official)
     if not cands:
         return None
-    cl = ms._try_models("vision", models["text"], lambda m: photos.classify(m, cands))
+    facts = [k["facility"] for k in (c.get("facility_checks") or []) if k.get("verified")][:3]
+    ctx = photos.context_for(name, c.get("city", ""), facts)
+    cl = ms._try_models("vision", models["text"], lambda m: photos.classify(m, cands, ctx))
+    theme = str(req.get("theme") or "")
     usable = sorted([p for p in cl if p["category"] in photos.CATS and p["quality"] >= 4 and not p.get("people")],
-                    key=lambda p: -p["quality"])
+                    key=lambda p: (-theme_fit(p["description"], theme), -p["quality"]))   # 테마에 맞는 장면(실내·온수…)을 먼저
     water = [p for p in usable if p["category"] == "water"]
     other = [p for p in usable if p["category"] != "water"]
     chosen = []
@@ -154,13 +157,24 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None) -> di
         photos.crop_9x16(p["path"], BUILD / f"shot_{n}.png", p["focus_x"], p["focus_y"])
         shots.append({**p, "n": n, "slot": p["category"], "prompt": photos.prompt_for(p)})
     prices = [float(it.get("productPrice") or 0) for it in rooms if float(it.get("productPrice") or 0) > 0]
-    facts = [k["facility"] for k in (c.get("facility_checks") or []) if k.get("verified")][:3]
+    mism = [p for p in cl if p.get("mismatch")]
+    if mism:
+        log(f"{name}: 다른 지점 의심으로 제외 {len(mism)}장 — " + " / ".join(f"[{p['source']}] {p['mismatch'][:40]}" for p in mism[:4]))
     return {"name": name, "shots": shots, "room_names": [str(it.get("productName", ""))[:40] for it in rooms[:5]],
             "theme_hits": dc.theme_hits(rooms, dc.DEFAULT_KEYWORDS), "verified_facilities": facts,
             "blog_30d": (c.get("demand") or {}).get("blog_30d"), "blog_total": (c.get("demand") or {}).get("blog_total"),
             "min_price": min(prices) if prices else None, "affiliate_url": str(rooms[0].get("productUrl", "")),
             "hook": (c.get("ai") or {}).get("hook", ""), "classified": cl, "crawl": crawl_info,
-            "photo_counts": {k: sum(p["source"] == k for p in cands) for k in SRC_KO}}
+            "photo_counts": {k: sum(p["source"] == k for p in cands) for k in SRC_KO} | {"mismatch": len(mism)}}
+
+
+THEME_RX = {"실내": r"실내|인도어|indoor|돔", "온수": r"온수|온천|스파|사우나|따뜻|온탕|노천", "온천": r"온천|온탕|노천|스파",
+            "워터파크": r"워터파크|슬라이드|유수풀", "오션": r"바다|오션|해변", "자쿠지": r"자쿠지|욕조|노천|프라이빗", "키즈": r"키즈|아이|어린이"}
+
+
+def theme_fit(desc: str, theme: str) -> int:
+    """장면 설명이 이번 테마 낱말과 맞는 정도 (p3 실측: 테마가 '실내 온수풀'인데 야외 풀 사진이 뽑혔다 → 품질보다 먼저 본다)."""
+    return sum(1 for key, rx in THEME_RX.items() if key in theme and re.search(rx, desc or ""))
 
 
 HONEST_SYSTEM = """아래는 한 숙소에 대한 네이버 블로그 글 제목·요약 목록이다. 후기에서 반복되는 '아쉬운 점'이 있으면 한 줄(20자 내, 존댓말 없이 명사형)로 적는다.
@@ -531,7 +545,8 @@ def preview_top3(req: dict, models: dict, report: dict) -> dict:
         cr = h.get("crawl") or {}
         pc = h.get("photo_counts") or {}
         src = " · ".join(f"장면 {'AB'[k]}: {h['shots'][k].get('description')} [{SRC_KO.get(h['shots'][k].get('source'), '?')}]" for k in range(2))
-        got = f"공식 홈페이지 {pc.get('official', 0)}장 · 쿠팡 {pc.get('coupang', 0)}장" + (f" · 공식 홈페이지 수집 실패: {cr['reason']}" if cr.get("reason") else "")
+        got = (f"공식 홈페이지 {pc.get('official', 0)}장 · 쿠팡 {pc.get('coupang', 0)}장" + (f" · 다른 지점 의심 제외 {pc['mismatch']}장" if pc.get("mismatch") else "")
+               + (f" · 공식 홈페이지 수집 실패: {cr['reason']}" if cr.get("reason") else ""))
         md.append(f"- {r['rank']}위 {h['name']} — 확인된 시설: {', '.join(h['verified_facilities']) or '없음'} · 후기 30일 {h['blog_30d']} · 사진 후보 {got} · {src}")
     md += ["", "사진 출처 장부: `data/runs/latest/photo_sources.json` (어느 페이지의 어느 사진인지 — 호텔 요청 시 삭제 근거)"]
     (prev / "preview.md").write_text("\n".join(md) + "\n", encoding="utf-8")
