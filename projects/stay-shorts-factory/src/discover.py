@@ -285,7 +285,8 @@ def photo_check(model: str, name: str, rooms: list, build: Path) -> dict:
 # ── 3겹 점수 v3 (2026-10-09 운영자 지적 반영: 사진 수는 순위에서 뺀다) ──────────────
 #
 #   순위 = "소비자가 지금 찾고 있고, 사면 만족할 숙소" 순. 100점 만점.
-#     수요 40 = 블로그 최근 12개월 글 수(후보 중 상대값, 로그) 25 + 뉴스 최근 90일 5 + 테마 계절성(달력 기준) 10
+#     수요 40 = 블로그 최근 30일 글 수(모멘텀, 후보 중 상대값·로그) 20 + 전체 글 수(인지도, 상대·로그) 10 + 뉴스 최근 90일 5 + 테마 계절성(달력) 5
+#              (v3.1 실측: 12개월 글 수는 유명 숙소가 전부 상한 1,000건에 걸려 변별력이 없었다)
 #     적합 20 = 확인된 근거(객실 이름 8 · TourAPI 시설 6) 14 + AI 가 말한 시설을 블로그로 교차 확인(5건 이상) 6 (미확인이면 최대 2)
 #     훅   10 = "한 줄로 말할 거리" 강도 (AI 판정)
 #     가격 20 = 타깃 가격대(1박 10~30만 원) 10 + 자체 기록 대비 하락(15% 이상) 10
@@ -327,9 +328,9 @@ def naver_demand(name: str) -> dict:
     """블로그 최근 12개월 글 수(최신순 페이지를 넘겨 최대 1,000건까지 센다) · 뉴스 최근 90일 수 · 신규·리뉴얼 뉴스.
 
     v3 실측: 한 페이지(100건)만 보니 상위 12곳이 전부 100건+ 로 같아져 수요 점수 변별력이 없었다 → v3.1 에서 페이지를 넘긴다."""
-    out = {"blog_total": None, "blog_12m": None, "news_90d": None, "fresh_news": []}
+    out = {"blog_total": None, "blog_12m": None, "blog_30d": None, "news_90d": None, "fresh_news": []}
     today = date.today()
-    n, start = 0, 1
+    n12, n30, start = 0, 0, 1
     while start <= BLOG_MAX - 99:
         js = _naver_search("blog", f'"{name}"', 100, start)
         if js is None:
@@ -343,15 +344,19 @@ def naver_demand(name: str) -> dict:
                 d = date(int(it["postdate"][:4]), int(it["postdate"][4:6]), int(it["postdate"][6:8]))
             except Exception:  # noqa: BLE001
                 continue
-            if (today - d).days <= 365:
-                n += 1
+            days = (today - d).days
+            if days <= 365:
+                n12 += 1
+                n30 += days <= 30
             else:
                 older = True
         time.sleep(0.12)
         if older or len(items) < 100:
             break
         start += 100
-    out["blog_12m"] = n if out["blog_total"] is not None else None
+    if out["blog_total"] is not None:
+        # v3.1 실측: 유명 숙소는 1년치가 1,000건(상한)을 넘어 전부 같은 값이 됐다 → 최근 30일(모멘텀)과 전체 글 수(인지도)를 같이 쓴다
+        out["blog_12m"], out["blog_30d"] = n12, n30
     js = _naver_search("news", f'"{name}"', 50)
     if js is not None:
         n, fresh = 0, []
@@ -441,23 +446,26 @@ def price_drop(name: str, price: float) -> float | None:
                 past.append(float(v))
         except Exception:  # noqa: BLE001
             continue
-    if not past:
+    if len(past) < 3:              # 운영자 약속: 기록이 3회 이상 쌓인 숙소만 가격 변동을 말한다 (날짜별 요금 차이를 '하락'으로 오인하지 않게)
         return None
     past.sort()
     return price / past[len(past) // 2]
 
 
-def score_v3(c: dict, blog_max: int, theme: str, keywords: list[str], month: str) -> tuple[int, dict, list[str]]:
+def score_v3(c: dict, blog_max: dict, theme: str, keywords: list[str], month: str) -> tuple[int, dict, list[str]]:
+    """blog_max = {"30d": 후보 중 최근 30일 최대, "total": 후보 중 전체 글 수 최대} — 상대 척도(로그)."""
     import math
+
+    def rel(v, hi, pts):
+        return round(pts * math.log1p(v) / math.log1p(hi)) if v and hi else 0
     v, dm, ai = c.get("coupang") or {}, c.get("demand") or {}, c.get("ai") or {}
     b, why = {}, []
-    # 수요 40
-    blog = dm.get("blog_12m")
-    b["blog"] = round(25 * math.log1p(blog) / math.log1p(blog_max)) if blog and blog_max else 0
-    if blog is not None:
-        why.append(f"블로그 12개월 {blog}건" + ("+" if blog >= 100 else ""))
+    # 수요 40 = 모멘텀(최근 30일 블로그) 20 + 인지도(전체 블로그 글 수) 10 + 뉴스 5 + 계절 5
+    b["blog"] = rel(dm.get("blog_30d") or 0, blog_max.get("30d", 0), 20) + rel(dm.get("blog_total") or 0, blog_max.get("total", 0), 10)
+    if dm.get("blog_30d") is not None:
+        why.append(f"블로그 최근 30일 {dm['blog_30d']}건 · 전체 {dm.get('blog_total', 0):,}건")
     b["news"] = min(5, dm.get("news_90d") or 0)
-    b["season"] = season_score(theme, keywords, month)
+    b["season"] = round(season_score(theme, keywords, month) / 2)
     # 적합 20
     hits = v.get("theme_hits") or []
     b["fit_rooms"] = 8 if hits else 0
@@ -485,7 +493,7 @@ def score_v3(c: dict, blog_max: int, theme: str, keywords: list[str], month: str
         r = price_drop(c["name"], p)
         b["price_drop"] = 10 if r is not None and r <= 0.85 else 0
         if r is not None:
-            why.append(f"자체 기록 대비 {r:.0%}")
+            why.append(f"자체 기록(3회 이상) 대비 {r:.0%}")
     else:
         b["price_band"] = b["price_drop"] = 0
     # 기회 5
@@ -606,7 +614,8 @@ def run(req: dict) -> dict:
         except Exception as e:  # noqa: BLE001
             c["ai"] = {"error": str(e)[:80]}
         c["facility_checks"] = verify_facilities(c["name"], (c["ai"] or {}).get("known_facilities") or [])
-    blog_max = max((c["demand"].get("blog_12m") or 0 for c in passed), default=0)
+    blog_max = {"30d": max((c["demand"].get("blog_30d") or 0 for c in passed), default=0),
+                "total": max((c["demand"].get("blog_total") or 0 for c in passed), default=0)}
     for c in passed:
         c["score"], c["breakdown"], c["reasons"] = score_v3(c, blog_max, theme, keywords, month)
         log(f"  점수 {c['score']:3d} {c['name']} — {c['breakdown']}")
@@ -627,8 +636,8 @@ def run(req: dict) -> dict:
     for c in merged:
         c.pop("_rooms", None)
     report["candidates"] = passed + [c for c in merged if c not in passed]
-    report["summary"] = {"generated": len(merged), "coupang_ok": len(passed), "blog_max_12m": blog_max, "models": dict(ms.USED),
-                         "scoring": "v3: 수요40(블로그25·뉴스5·계절10) 적합20 훅10 가격20 기회5 · 미측정5 · mid -4 · 사진 제외"}
+    report["summary"] = {"generated": len(merged), "coupang_ok": len(passed), "blog_max": blog_max, "models": dict(ms.USED),
+                         "scoring": "v3.2: 수요40(최근30일 블로그20·전체 글 수10·뉴스5·계절5) 적합20 훅10 가격20 기회5 · 미측정5 · mid -4 · 사진 제외"}
 
     # 기록
     (LATEST / "candidates.json").write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
@@ -641,7 +650,7 @@ def run(req: dict) -> dict:
     md = [f"# 숙소 후보 — {region} · {theme} · {month} ({report['ran_at']})", "",
           f"- 후보 {len(merged)}곳 (Gemini {report['layers']['gemini']} / 네이버 {report['layers']['naver']} / TourAPI {report['layers']['tourapi']})",
           f"- 쿠팡 판매 확인(여행 카테고리 · 객실 {MIN_ROOMS}개 이상 · 숙소 동일성 high/mid) {len(passed)}곳",
-          "- 점수 v3 (100점): 수요 40(블로그 12개월 글 수 25 · 뉴스 5 · 계절 10) + 테마 적합 20 + 훅 10 + 가격 20 + 기회 5 (+미측정 5). "
+          "- 점수 v3.2 (100점): 수요 40(최근 30일 블로그 20 · 전체 글 수 10 · 뉴스 5 · 계절 5) + 테마 적합 20 + 훅 10 + 가격 20 + 기회 5 (+미측정 5). "
           "동일성 mid -4. **사진은 순위에 안 들어간다** — 상위 5곳만 '제작 가능' 확인", "",
           "| 순위 | 숙소 | 총점 | 수요 | 적합 | 훅 | 가격 | 확신 | 훅 문장 | 근거 | 최저가(조회) | 제작(사진 물/객실/특별) |",
           "|---|---|---|---|---|---|---|---|---|---|---|---|"]
