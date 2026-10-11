@@ -27,7 +27,12 @@ PIXABAY_API = "https://pixabay.com/api/videos/"
 W, H, FPS = 1080, 1920, 30
 UA = "Mozilla/5.0 (stay-shorts-factory)"
 PEOPLE = {"man", "men", "woman", "women", "people", "person", "boy", "girl", "child", "kids", "family", "couple",
-          "crowd", "portrait", "model", "hand", "hands", "face", "feet", "legs", "swimmer", "swimming", "bikini", "body"}
+          "crowd", "portrait", "model", "hand", "hands", "face", "feet", "legs", "swimmer", "bikini", "body"}
+# 2026-10-11 실측(stay-run-6): "hot spring water steam close up" 검색에 **삼겹살 클로즈업**이 왔다. 설명에 물 낱말이 있어야 하고,
+# 음식·불·연기 낱말이 있으면 버린다. 그래도 받은 뒤 첫 프레임을 Gemini 비전으로 한 번 더 본다(verify 콜백).
+WATER_WORDS = {"pool", "water", "ripple", "ripples", "wave", "waves", "sea", "ocean", "lake", "spa", "hot", "spring", "surface", "blue", "underwater"}
+BAD_WORDS = {"meat", "pork", "beef", "food", "cook", "cooking", "kitchen", "grill", "bbq", "smoke", "fire", "cigarette", "coffee",
+             "tea", "soup", "chicken", "fish", "dish", "plate", "restaurant", "drink", "beer", "wine", "glass", "bath", "shower", "toilet"}
 # 참고 영상의 색감에 가깝게: 채도 살짝 낮추고 어둡지 않게
 GRADE = "eq=saturation=0.9:contrast=1.02"
 
@@ -74,7 +79,10 @@ def search(query: str, per: int = 12) -> list[dict]:
 
 
 def _ok(v: dict) -> bool:
-    return not (set(str(v.get("desc", "")).lower().split()) & PEOPLE)
+    words = set(re.split(r"[\s,_-]+", str(v.get("desc", "")).lower()))
+    if words & PEOPLE or words & BAD_WORDS:
+        return False
+    return bool(words & WATER_WORDS)              # 설명에 물 낱말이 하나는 있어야 한다 (설명이 비면 탈락)
 
 
 def _best_file(v: dict) -> dict | None:
@@ -87,11 +95,17 @@ def _best_file(v: dict) -> dict | None:
     return got[0]
 
 
-def cutaway(query: str, sec: float, out: Path) -> Path | None:
-    """질의에 맞는 세로 실촬영 클립 하나를 받아 sec 초로 잘라 1080x1920 30fps 무음으로 맞춘다. 키 없음·실패면 None."""
+def cutaway(query: str, sec: float, out: Path, verify=None, tries: int = 4) -> Path | None:
+    """질의에 맞는 세로 실촬영 클립 하나를 받아 sec 초로 잘라 1080x1920 30fps 무음으로 맞춘다. 키 없음·실패면 None.
+
+    verify(frame_png_path) -> bool 를 주면 받은 클립의 첫 프레임을 검사해 통과한 것만 쓴다 (Gemini 비전)."""
+    seen = 0
     for v in search(query):
         if not _ok(v) or (v.get("dur") or 0) < sec:
             continue
+        if seen >= tries:
+            break
+        seen += 1
         f = _best_file(v)
         if not f:
             continue
@@ -108,6 +122,13 @@ def cutaway(query: str, sec: float, out: Path) -> Path | None:
                             "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},{GRADE},fps={FPS},setsar=1",
                             "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p", str(out)], check=True)
             raw.unlink(missing_ok=True)
+            if verify is not None:
+                frame = out.with_suffix(".check.png")
+                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(out), "-frames:v", "1", "-vf", "scale=360:640", str(frame)], check=True)
+                if not verify(frame):
+                    log(f"B롤 탈락(비전 검사): {v['where']} '{v.get('desc', '')[:40]}'")
+                    out.unlink(missing_ok=True)
+                    continue
             log(f"B롤 {out.name} ← {v['where']} '{v.get('desc', '')[:40]}'")
             return out
         except Exception as e:  # noqa: BLE001

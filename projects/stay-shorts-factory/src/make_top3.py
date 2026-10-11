@@ -42,7 +42,7 @@ FONT_HAND = ROOT / "assets" / "fonts" / "NanumPenScript-Regular.ttf"
 W, H, FPS = ms.W, ms.H, ms.FPS
 CUT = 2.0                                   # 컷 길이(초) — Veo 4초 클립을 앞 2초·뒤 2초로 나눠 쓴다 (템포 2초, 추가 비용 0)
 PLAN = {"hook": 4.0, "rank": 7.0, "top": 9.0, "cta": 4.5}     # 구간 계획 길이 — 나레이션이 더 길면 그만큼 늘어난다
-BROLL = ["swimming pool water surface ripples sunlight", "hot spring water steam close up", "blue pool water texture"]
+BROLL = ["swimming pool water surface ripples", "calm blue pool water close up", "gentle ocean waves water surface"]
 BANNED = ms.BANNED + ["최장", "최대", "국내 유일"]
 
 
@@ -130,8 +130,12 @@ HONEST_SYSTEM = """아래는 한 숙소에 대한 네이버 블로그 글 제목
 
 
 def honest_line(model: str, name: str) -> str:
-    js = dc._naver_search("blog", f'"{name}" 아쉬운 점', 15)
-    items = (js or {}).get("items") or []
+    items = []
+    for q in (f'"{name}" 아쉬운 점', f'"{name}" 단점', f'"{name}" 아쉬웠'):
+        js = dc._naver_search("blog", q, 10)
+        items += (js or {}).get("items") or []
+        if len(items) >= 8:
+            break
     if len(items) < 3:
         return ""
     text = "\n".join(re.sub(r"<[^>]+>", "", f"{it.get('title', '')} — {it.get('description', '')}")[:160] for it in items)
@@ -443,10 +447,17 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     report["veo"] = {"model": veo.MODEL, "fake": veo.FAKE, "clips": results, "spent_krw": round(veo.spent_this_run()),
                      "month_total_krw": round(veo.month_total())}
 
-    # 4) B롤 (0원) — 숙소 사이에 1초씩
+    # 4) B롤 (0원) — 숙소 사이에 1초씩. 설명 낱말 + Gemini 비전으로 '물 장면'만 통과 (삼겹살 사고 재발 방지)
+    def water_frame(frame: Path) -> bool:
+        try:
+            cl = ms._try_models("vision", models["text"], lambda m: photos.classify(m, [{"k": 0, "source": "stock", "name": "broll", "path": str(frame)}]))
+            return bool(cl) and cl[0]["category"] == "water" and not cl[0].get("people")
+        except Exception as e:  # noqa: BLE001
+            log(f"B롤 비전 검사 실패 → 탈락 처리: {str(e)[:60]}")
+            return False
     brolls = []
     for i, q in enumerate(BROLL[:2]):
-        p = stock.cutaway(q, 1.0, BUILD / f"broll_{i}.mp4")
+        p = stock.cutaway(q, 1.0, BUILD / f"broll_{i}.mp4", verify=water_frame)
         brolls.append(p)
     report["broll"] = [str(p.name) if p else None for p in brolls]
 
