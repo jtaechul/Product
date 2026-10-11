@@ -29,6 +29,7 @@ ACCENT = (255, 138, 91)                               # 포인트 색 하나 —
 MARGIN = 72                                           # 좌우 여백 그리드
 RADIUS = 28                                           # 카드·칩 모서리
 SAFE_RIGHT = 180                                      # 릴스·쇼츠 오른쪽 아이콘 영역 — 카드는 이 안으로 들어가지 않는다
+CHIP_FILL, CHIP_BORDER = (*INK, 130), (255, 255, 255, 75)   # 사진 위 칩(폴더 표시·후기·태그)은 어두운 유리 — 흰 유리는 밝은 물 사진에서 묻힌다(실측)
 TYPE = {"eyebrow": 34, "body": 40, "label": 44, "caption": 84, "headline": 88, "hook": 100, "fine": 26}   # 화면당 3단계까지만 섞는다
 
 STYLES = {
@@ -286,7 +287,7 @@ def draw_pill(im: Image.Image, text: str, y: int = 118):
     f = font(32, bold=False)
     tw = d.textlength(text, font=f)
     x = MARGIN - 16
-    glass(im, [x, y, x + tw + 44 + 30, y + f.size + 24])
+    glass(im, [x, y, x + tw + 44 + 30, y + f.size + 24], fill=CHIP_FILL, border=CHIP_BORDER)
     d = ImageDraw.Draw(im)
     d.ellipse([x + 20, y + f.size / 2 + 5, x + 34, y + f.size / 2 + 19], fill=(*ACCENT, 255))     # 포인트 점 하나
     d.text((x + 48, y + 11), text, font=f, fill=(255, 255, 255, 235))
@@ -300,7 +301,7 @@ def draw_chip(im: Image.Image, text: str, sub: str = "", y: int = 118):
     tw = max(d.textlength(text, font=f), d.textlength(sub, font=f2) if sub else 0)
     x2 = W - (MARGIN - 16)
     hgt = f.size + 22 + (f2.size + 6 if sub else 0)
-    glass(im, [x2 - tw - 40, y, x2, y + hgt])
+    glass(im, [x2 - tw - 40, y, x2, y + hgt], 24, fill=CHIP_FILL, border=CHIP_BORDER)
     d = ImageDraw.Draw(im)
     d.text((x2 - tw - 20, y + 10), text, font=f, fill=(255, 255, 255, 255))
     if sub:
@@ -343,12 +344,12 @@ def caption_png(out: Path, text: str, style: str = DEFAULT_STYLE, hook: bool = F
 def draw_tag(im: Image.Image, text: str, cy: float = CY):
     """자막 아래 작은 태그 칩 — '+ 히노키 사우나' (사진에 없는 시그니처를 "이것도 있다"로 표시). 유리 칩 + 코랄 점."""
     d = ImageDraw.Draw(im)
-    f = font(36, bold=False)
+    f = font(40)
     text = text if text.startswith("+") else "+ " + text
     tw = d.textlength(text, font=f)
     x = (W - tw - 64) / 2
     y = int(H * cy) + 150
-    glass(im, [x, y, x + tw + 64, y + f.size + 26], fill=(255, 255, 255, 34), border=(255, 255, 255, 70))
+    glass(im, [x, y, x + tw + 64, y + f.size + 26], fill=CHIP_FILL, border=CHIP_BORDER)
     d = ImageDraw.Draw(im)
     d.ellipse([x + 20, y + f.size / 2 + 6, x + 34, y + f.size / 2 + 20], fill=(*ACCENT, 255))
     d.text((x + 46, y + 12), text.lstrip("+ "), font=f, fill=(255, 255, 255, 245))
