@@ -139,9 +139,9 @@ jobs:
           P=projects/stay-shorts-factory
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for d in data/runs state link/data; do [ -e "$P/$d" ] && git add "$P/$d"; done
+          for d in data/runs state link; do [ -e "$P/$d" ] && git add "$P/$d"; done
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
-          FOLDER_CHANGED=0; git diff --cached --quiet -- "$P/link/data" || FOLDER_CHANGED=1
+          FOLDER_CHANGED=0; git diff --cached --quiet -- "$P/link" || FOLDER_CHANGED=1
           git commit -m "stay-shorts: 시험 제작 기록 [skip ci]"
           for i in 1 2 3 4 5; do
             git push origin "HEAD:${GITHUB_REF_NAME}" && { echo "저장 완료"; echo "FOLDER_CHANGED=$FOLDER_CHANGED" >> "$GITHUB_ENV"; exit 0; }

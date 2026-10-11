@@ -1,0 +1,54 @@
+name: stay-shorts-folder
+
+# 프로필 링크 페이지의 테마 폴더에 **대표 이미지(쿠팡 객실 사진)** 를 채운다 — 운영자 2026-10-11 "대표 이미지 하나 들어가야 한다".
+# 쿠팡 API 만 쓴다 (0원 · Gemini 없음). 저장본(link/img/)을 커밋하고 deploy-stay-links 를 불러 페이지를 다시 배포한다.
+# 실행: Run workflow (수동). 제작·미리보기 실행 때는 make_top3 가 같은 일을 자동으로 한다.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: stay-shorts-folder
+  cancel-in-progress: false
+
+jobs:
+  fill:
+    name: 폴더 대표 이미지 채우기
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            projects/stay-shorts-factory
+          sparse-checkout-cone-mode: true
+
+      - name: 준비
+        run: python3 -m pip install -q pillow
+
+      - name: 쿠팡 객실 사진으로 대표 이미지 채우기
+        working-directory: projects/stay-shorts-factory
+        env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+        run: python3 src/make_folder.py --fill-images
+
+      - name: 커밋 · 배포 호출
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          P=projects/stay-shorts-factory
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$P/link"
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git commit -m "stay-shorts: 폴더 대표 이미지 채움 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git push origin "HEAD:${GITHUB_REF_NAME}" && break
+            echo "재시도 $i"; git pull --rebase origin "${GITHUB_REF_NAME}" || true; sleep 3
+          done
+          gh workflow run deploy-stay-links.yml --ref "${GITHUB_REF_NAME}" --repo "$GITHUB_REPOSITORY" && echo "deploy-stay-links 호출"
