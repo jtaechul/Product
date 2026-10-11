@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-11-p2",
+ "nonce": "2026-10-11-p3",
  "stay": "",
  "mode": "top3",
  "fake": false,
@@ -39,7 +39,12 @@
    ],
    "theme_hits": [],
    "blog_30d": 1000,
-   "min_price": 194000.0
+   "min_price": 194000.0,
+   "photo_counts": {
+    "official": 24,
+    "coupang": 4,
+    "operator": 0
+   }
   },
   {
    "name": "롯데리조트 속초",
@@ -57,7 +62,12 @@
    ],
    "theme_hits": [],
    "blog_30d": 931,
-   "min_price": 286000.0
+   "min_price": 286000.0,
+   "photo_counts": {
+    "official": 0,
+    "coupang": 5,
+    "operator": 0
+   }
   },
   {
    "name": "소노펠리체 비발디파크",
@@ -76,102 +86,223 @@
    "theme_hits": [],
    "blog_30d": 719,
    "min_price": 250463.0,
-   "honest": ""
+   "honest": "",
+   "photo_counts": {
+    "official": 24,
+    "coupang": 8,
+    "operator": 0
+   }
+  }
+ ],
+ "photo_sources": [
+  {
+   "hotel": "쏠비치 삼척",
+   "official_site": "https://www.sonohotelsresorts.com/solbeach_sc",
+   "crawl": {
+    "url": "https://www.sonohotelsresorts.com/solbeach_sc",
+    "resolved_by": "request.json official_urls",
+    "reason": "",
+    "pages": [
+     "https://www.sonohotelsresorts.com/solbeach_sc",
+     "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000527",
+     "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
+     "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000536",
+     "https://www.sonohotelsresorts.com/solbeach_sc/featured",
+     "https://www.sonohotelsresorts.com/solbeach_sc/entertainment",
+     "https://www.sonohotelsresorts.com/solbeach_sc/sauna",
+     "https://www.sonohotelsresorts.com/solbeach_sc/resort",
+     "https://www.sonohotelsresorts.com/solbeach_sc/hotel",
+     "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall"
+    ],
+    "tried": 28,
+    "photos": 24
+   },
+   "shots": [
+    {
+     "n": 31,
+     "slot": "water",
+     "source": "official",
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/e3JhmjkrIV05MhcrX_7TuA==/1",
+     "page": "https://www.sonohotelsresorts.com/solbeach_sc",
+     "description": "야자수와 워터 슬라이드가 있는 야외 수영장 뒤로 리조트 건물이 서 있다."
+    },
+    {
+     "n": 32,
+     "slot": "room",
+     "source": "official",
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/-tMtryLq7WGawlZIhYul4A==/1",
+     "page": "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
+     "description": "두 개의 침대와 함께 통창으로 파란 바다가 조망되는 침실이다."
+    }
+   ]
+  },
+  {
+   "hotel": "롯데리조트 속초",
+   "official_site": "https://www.lottehotel.com/resort-sokcho/ko",
+   "crawl": {
+    "url": "https://www.lottehotel.com/resort-sokcho/ko",
+    "resolved_by": "네이버 지역검색 '롯데리조트 속초' link",
+    "reason": "조건(해상도 900px↑)에 맞는 사진이 없음",
+    "pages": [
+     "https://www.lottehotel.com/resort-sokcho/ko"
+    ],
+    "tried": 0,
+    "photos": 0
+   },
+   "shots": [
+    {
+     "n": 21,
+     "slot": "water",
+     "source": "coupang",
+     "url": null,
+     "page": null,
+     "description": "푸른 바다로 둘러싸인 리조트 전경과 하단에 야외 수영장이 보인다."
+    },
+    {
+     "n": 22,
+     "slot": "special",
+     "source": "coupang",
+     "url": null,
+     "page": null,
+     "description": "맑은 하늘 아래 높고 현대적인 호텔 외관 건물이 우뚝 솟아 있다."
+    }
+   ]
+  },
+  {
+   "hotel": "소노펠리체 비발디파크",
+   "official_site": "https://www.sonohotelsresorts.com/felice_vp",
+   "crawl": {
+    "url": "https://www.sonohotelsresorts.com/felice_vp",
+    "resolved_by": "request.json official_urls",
+    "reason": "",
+    "pages": [
+     "https://www.sonohotelsresorts.com/felice_vp",
+     "https://www.sonohotelsresorts.com/oceanWorld",
+     "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
+     "https://www.sonohotelsresorts.com/felice_vp/featured",
+     "https://www.sonohotelsresorts.com/felice_vp/entertainment",
+     "https://www.sonohotelsresorts.com/felice_vp/spa",
+     "https://www.sonohotelsresorts.com/felice_vp/resort",
+     "https://www.sonohotelsresorts.com/felice_vp/facilitiesviewall",
+     "https://www.sonohotelsresorts.com/felice_vp/conveniences",
+     "https://www.sonohotelsresorts.com/felice_vp/highlight"
+    ],
+    "tried": 30,
+    "photos": 24
+   },
+   "shots": [
+    {
+     "n": 11,
+     "slot": "water",
+     "source": "official",
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vb-Irtwc5assCDZCtu_d8g==/1",
+     "page": "https://www.sonohotelsresorts.com/felice_vp",
+     "description": "바다가 내려다보이는 야외 인피니티 풀가에 파라솔과 선베드가 놓여 있다."
+    },
+    {
+     "n": 12,
+     "slot": "special",
+     "source": "official",
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/dGW1JyPftxrRobAJG2MOKw==/1",
+     "page": "https://www.sonohotelsresorts.com/felice_vp",
+     "description": "골프장 잔디 너머로 곡선형 리조트 본관과 산이 보인다."
+    }
+   ]
   }
  ],
  "script": {
   "hook": {
    "caption": "11월 강원 온수풀 어디 갈까",
-   "narration": "강원 온수풀 호캉스, 데이터로 세 곳 골랐어요."
+   "narration": "쌀쌀한 11월 강원 온수풀 숙소 세 곳 골랐어요."
   },
   "ranks": [
    {
     "rank": 3,
     "captions": [
-     "바다 앞 리조트 단지",
-     "조명 켜진 야외 전경"
+     "실내 온수풀 보유",
+     "파셜오션뷰 객실"
     ],
-    "narration": "오션플레이와 실내 온수풀을 갖춘 쏠비치 삼척이에요.",
+    "narration": "오션플레이와 실내 온수풀이 있는 쏠비치 삼척이에요.",
     "benefit": ""
    },
    {
     "rank": 2,
     "captions": [
-     "바다 품은 야외 수영장",
-     "웅장한 고층 리조트 외관"
+     "사계절 온수 인피니티풀",
+     "실내 워터파크 보유"
     ],
-    "narration": "실내 워터파크와 온수풀이 있는 롯데리조트 속초예요.",
+    "narration": "실내 워터파크와 사계절 온수 인피니티풀이 있어요.",
     "benefit": ""
    },
    {
     "rank": 1,
     "captions": [
-     "산자락 품은 대단지 전경",
-     "밤하늘 아래 수놓은 야경"
+     "클럽하우스 실내수영장",
+     "스파 테라피 시설"
     ],
-    "narration": "블로그 언급 700건 넘은 소노펠리체예요. 오션월드와 실내 수영장을 즐길 수 있어요.",
+    "narration": "최근 후기 칠백 건 넘는 곳으로, 실내수영장과 스파를 갖췄어요.",
     "benefit": "",
     "honest": ""
    }
   ],
   "cta": {
    "caption": "저장해두고 비교하세요",
-   "narration": "세 곳 정보는 프로필에 있어요. 저장해 두고 비교해 보세요."
+   "narration": "세 곳 정보는 프로필에 남겨둘게요. 저장해두고 확인해보세요."
   },
-  "title": "강원 실내 온수풀 호캉스 TOP 3",
-  "caption": "따뜻하게 물놀이 즐기기 좋은 강원 온수풀 숙소를 데이터로 정리했습니다. 늦가을 힐링 여행을 계획 중이라면 미리 확인해 보세요.",
+  "title": "11월 강원 실내 온수풀 숙소 추천",
+  "caption": "따뜻하게 물놀이하기 좋은 강원 온수풀 숙소 모음이에요. 가을 겨울 호캉스 계획할 때 참고해보세요.",
   "hashtags": [
    "#강원도호캉스",
-   "#온수풀호텔",
-   "#실내수영장",
-   "#호캉스추천",
-   "#강원도여행"
+   "#실내온수풀",
+   "#온천호텔",
+   "#강원도여행",
+   "#온수풀리조트"
   ]
  },
  "narration_sec": {
-  "hook": 3.99,
-  "r3": 4.41,
-  "r2": 4.54,
-  "r1": 6.5,
-  "cta": 4.24
+  "hook": 4.15,
+  "r3": 4.6,
+  "r2": 4.57,
+  "r1": 5.02,
+  "cta": 4.27
  },
  "narration_qa": [
   {
    "segment": "hook",
-   "script": "강원 온수풀 호캉스, 데이터로 세 곳 골랐어요.",
-   "heard": "강원 온수풀 호캉스, 데이터로 세 곳 골랐어요.",
+   "script": "쌀쌀한 11월 강원 온수풀 숙소 세 곳 골랐어요.",
+   "heard": "쌀쌀한 11월 강원 온수풀 숙소 세 곳 골랐어요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r3",
-   "script": "오션플레이와 실내 온수풀을 갖춘 쏠비치 삼척이에요.",
-   "heard": "오션플레이와 실내 온수풀을 갖춘 쏠비치 삼척이에요.",
+   "script": "오션플레이와 실내 온수풀이 있는 쏠비치 삼척이에요.",
+   "heard": "오션 플레이와 실내 온수풀이 있는 쏠비치 삼척이에요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r2",
-   "script": "실내 워터파크와 온수풀이 있는 롯데리조트 속초예요.",
-   "heard": "실내 워터파크와 온수풀이 있는 롯데리조트 속초예요.",
+   "script": "실내 워터파크와 사계절 온수 인피니티풀이 있어요.",
+   "heard": "실내 워터파크와 사계절 온수 인피니티 풀이 있어요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r1",
-   "script": "블로그 언급 700건 넘은 소노펠리체예요. 오션월드와 실내 수영장을 즐길 수 있어요.",
-   "heard": "블로그 언급 700건 넘은 소노펠리체예요. 오션월드와 실내 수영장을 즐길 수 있어요.",
-   "similarity": 1.0,
+   "script": "최근 후기 칠백 건 넘는 곳으로, 실내수영장과 스파를 갖췄어요.",
+   "heard": "최근 후기 700건 넘는 곳으로 실내 수영장과 스파를 갖췄어요.",
+   "similarity": 0.9,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "cta",
-   "script": "세 곳 정보는 프로필에 있어요. 저장해 두고 비교해 보세요.",
-   "heard": "세 곳 정보는 프로필에 있어요. 저장해 두고 비교해 보세요.",
+   "script": "세 곳 정보는 프로필에 남겨둘게요. 저장해두고 확인해보세요.",
+   "heard": "세 곳 정보는 프로필에 남겨둘게요. 저장해 두고 확인해 보세요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
