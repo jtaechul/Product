@@ -5,7 +5,7 @@ v1 까지의 자막: 지마켓산스 68px 흰 글자 + 6px 검은 외곽선, 훅
 바꾼 원칙:
   - 글꼴 하나: Pretendard ExtraBold(자막) / SemiBold(작은 글). OFL 무료 → assets/fonts 에 둔다. 손글씨·노란색 폐기.
   - 두꺼운 외곽선 대신 부드러운 그림자(또는 반투명 바). 포인트 색은 [대괄호] 한 단어에만.
-  - 최대 2줄, 줄당 11자 안, 글자 72~80px, 화면 높이 58% 자리(플랫폼 UI·엄지 영역 회피). 한 줄 강제로 글자를 줄이는 짓 금지.
+  - 최대 2줄, 줄당 10자 안, 글자 84px(훅 100px), 화면 높이 58% 자리(플랫폼 UI·엄지 영역 회피). 한 줄 강제로 글자를 줄이는 짓 금지.
   - 화면 요소는 자막 + 작은 폴더 표시(왼쪽 위) + 고지문(아래 작게) 만. 후기 숫자는 작은 칩으로 1~2초만.
   - 끝 카드: 대표 사진 블러 배경 + "프로필 링크 → 폴더 N번" 한 가지 메시지. 버튼 그림 폐기.
 네 가지 시안(STYLES)을 PNG 로 만들어 운영자가 고른다 → request.json "caption_style" (기본 shadow)."""
@@ -24,7 +24,7 @@ FONT_S = ROOT / "assets" / "fonts" / "Pretendard-SemiBold.otf"
 FALLBACK = [ROOT.parent / "coupang-shorts-factory" / "assets" / "fonts" / "GmarketSansBold.ttf", ROOT / "assets" / "fonts" / "GmarketSansBold.ttf"]
 
 STYLES = {
-    "shadow": {"ko": "그림자형", "accent": (94, 234, 212), "desc": "흰 글자 + 부드러운 그림자, 외곽선 없음 (기본)"},
+    "shadow": {"ko": "그림자형", "accent": (94, 234, 212), "desc": "흰 글자 + 얇은 어두운 선 + 2겹 그림자 + 은은한 어둡기 띠 (확정 · 기본)"},
     "bar": {"ko": "바형", "accent": (255, 179, 107), "desc": "줄마다 반투명 어두운 바 위 흰 글자"},
     "highlight": {"ko": "형광펜형", "accent": (255, 107, 107), "desc": "흰 박스 위 어두운 글자 (잡지 느낌)"},
     "glass": {"ko": "패널형", "accent": (94, 234, 212), "desc": "한 장의 어두운 패널 + 얇은 테두리 안에 글자"},
@@ -132,6 +132,25 @@ def _draw_segs(d, x, y, segs, f, fill, accent, stroke=0, stroke_fill=None):
         x += d.textlength(t, font=f)
 
 
+def _scrim(im: Image.Image, top: int, bottom: int, peak: float = 0.30):
+    """자막 뒤 세로 띠: 가운데가 가장 어둡고(peak) 위아래로 부드럽게 사라진다. 박스처럼 보이지 않으면서 밝은 사진 위 대비를 보장한다."""
+    top, bottom = max(0, top), min(H, bottom)
+    hgt = bottom - top
+    if hgt <= 0:
+        return
+    mid = hgt / 2
+    rows = []
+    for y in range(hgt):
+        t = 1 - abs(y - mid) / mid                 # 0(가장자리) → 1(가운데)
+        rows.append(int(255 * peak * (t * t * (3 - 2 * t))))   # smoothstep
+    mask = Image.new("L", (1, hgt))
+    mask.putdata(rows)
+    mask = mask.resize((W, hgt))
+    band = Image.new("RGBA", (W, hgt), (0, 0, 0, 255))
+    band.putalpha(mask)
+    im.alpha_composite(band, (0, top))
+
+
 def draw_caption(im: Image.Image, text: str, style: str = DEFAULT_STYLE, size: int = 76, cy: float = CY, sub: str = "", max_w: int | None = None):
     """자막 본문(최대 2줄)과 보조 줄을 그린다. im 은 RGBA."""
     st = STYLES.get(style) or STYLES[DEFAULT_STYLE]
@@ -145,15 +164,21 @@ def draw_caption(im: Image.Image, text: str, style: str = DEFAULT_STYLE, size: i
     widths = [_width(d, ln, f) for ln in lines]
 
     if style == "shadow":
-        sh = Image.new("RGBA", im.size, (0, 0, 0, 0))
-        ds = ImageDraw.Draw(sh)
-        for k, ln in enumerate(lines):
-            _draw_segs(ds, (W - widths[k]) / 2, y0 + k * lh + 8, ln, f, (0, 0, 0, 190), (0, 0, 0, 190))
-        sh = sh.filter(ImageFilter.GaussianBlur(14))
-        im.alpha_composite(sh)
+        # 운영자 2026-10-11 "A 로 가되 자막 더 크게, 글자 잘 보이게(그림자·외곽선 활용, 더 좋은 방법은 네가 골라)":
+        # 외곽선만 두껍게 하면 v1 처럼 싸 보이고, 그림자만으로는 밝은 물·하늘 위에서 흰 글자가 묻힌다(실측: 파도풀 사진).
+        # → 넷플릭스·유튜브 자막처럼 **자막 뒤에 눈에 안 띄는 어둡기 띠(scrim, 최대 30%)** 로 대비를 보장하고,
+        #   얇은 어두운 선(3px·65%) + 가까운 그림자(또렷함) + 넓은 그림자(후광) 2겹으로 가장자리를 세운다. 사진이 어두우면 띠는 거의 안 보인다.
+        band_top, band_bot = y0 - int(lh * 1.1), y0 + lh * len(lines) + int(lh * 1.0) + (58 if sub else 0)
+        _scrim(im, band_top, band_bot, 0.30)
+        for blur, alpha, dy in ((5, 170, 4), (18, 120, 10)):
+            sh = Image.new("RGBA", im.size, (0, 0, 0, 0))
+            ds = ImageDraw.Draw(sh)
+            for k, ln in enumerate(lines):
+                _draw_segs(ds, (W - widths[k]) / 2, y0 + k * lh + dy, ln, f, (0, 0, 0, alpha), (0, 0, 0, alpha), stroke=3, stroke_fill=(0, 0, 0, alpha))
+            im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(blur)))
         d = ImageDraw.Draw(im)
         for k, ln in enumerate(lines):
-            _draw_segs(d, (W - widths[k]) / 2, y0 + k * lh, ln, f, (255, 255, 255, 255), accent, stroke=2, stroke_fill=(0, 0, 0, 90))
+            _draw_segs(d, (W - widths[k]) / 2, y0 + k * lh, ln, f, (255, 255, 255, 255), accent, stroke=3, stroke_fill=(12, 14, 20, 165))
     elif style == "bar":
         padx, pady, r = 30, 14, 24
         for k, ln in enumerate(lines):
@@ -237,7 +262,7 @@ def caption_png(out: Path, text: str, style: str = DEFAULT_STYLE, hook: bool = F
     """컷 하나의 자막 겹침판(투명 PNG). hook 은 더 크고 가운데에 가깝게."""
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     if text:
-        draw_caption(im, text, style, size=92 if hook else 76, cy=0.52 if hook else CY, sub=sub)
+        draw_caption(im, text, style, size=100 if hook else 84, cy=0.52 if hook else CY, sub=sub)
     if pill:
         draw_pill(im, pill)
     if disclosure:
@@ -313,7 +338,7 @@ def mockups(photo: Path, out_dir: Path, caption: str = "실내 [파도풀]은 11
     for key, st in STYLES.items():
         im = base.convert("RGBA")
         ov = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        draw_caption(ov, caption, key, sub="아쉬움: 주말엔 붐빈다는 후기" if key == "bar" else "")
+        draw_caption(ov, caption, key, size=84, sub="아쉬움: 주말엔 붐빈다는 후기" if key == "bar" else "")
         draw_pill(ov, pill)
         if key == "shadow":
             draw_chip(ov, "최근 30일 후기 719건", "네이버 블로그 기준")
@@ -324,7 +349,7 @@ def mockups(photo: Path, out_dir: Path, caption: str = "실내 [파도풀]은 11
         tiles.append((f"{'ABCD'[len(tiles)]}  {st['ko']} — {st['desc']}", p))
     hook = base.convert("RGBA")
     ov = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    draw_caption(ov, "추운데 애들 [어디] 데려가지?", "shadow", size=92, cy=0.52)
+    draw_caption(ov, "추운데 애들 [어디] 데려가지?", "shadow", size=100, cy=0.52)
     draw_disclosure(ov, disclosure)
     hook.alpha_composite(ov)
     ph = out_dir / "mock_hook.jpg"; hook.convert("RGB").save(ph, "JPEG", quality=90)
