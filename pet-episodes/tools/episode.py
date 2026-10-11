@@ -565,10 +565,14 @@ def _veo(key, start: Path, prompt: str, setimg: Path | None = None, secs: int = 
         except Exception as e:  # noqa: BLE001
             m = re.search(r"`(\w+)` isn't supported|(\w+) is not supported", str(e))
             name = VEO_FIELD.get((m.group(1) or m.group(2)) if m else "")
+            if not name and "use case is currently not supported" in str(e) and opts.get("last"):
+                name = "last"                             # 2026-10-11 실측: Veo 3.1 Lite(Gemini API)는 마지막 장면 지정을 이 문구로 거절(첫 장면만은 됨)
             if not name or not opts.get(name):
                 raise
             VEO_DROPPED.add(name)
             opts[name] = None
+            if name == "last":                            # 지시문에서도 '두 번째 그림 = 마지막 장면' 말을 뺀다
+                prompt = re.sub(r" and the second image is the last frame( \(end exactly on it\))?", "", prompt)
     raise RuntimeError("Veo: 지원 안 되는 설정을 빼고도 만들지 못했습니다")
 
 

@@ -182,7 +182,9 @@ def install_mocks(flags: dict) -> list:
     def veo_once(key, start, prompt, secs, last, negative):   # 실제 Veo 3.1 Lite처럼: negativePrompt는 400(요금 없음)
         if negative:
             raise RuntimeError("400 INVALID_ARGUMENT. `negativePrompt` isn't supported by this model.")
-        calls.append("veo" + ("+last" if last is not None else ""))
+        if last is not None:                              # 실제 Veo 3.1 Lite(Gemini API): 마지막 장면 지정은 이 문구로 거절(2026-10-11 실측)
+            raise RuntimeError("400 INVALID_ARGUMENT. {'message': 'Your use case is currently not supported.  Please refer to Gemini API documentation'}")
+        calls.append("veo")
         if secs not in (4, 6, 8):
             raise RuntimeError(f"Veo 길이 {secs}초는 안 됨(4·6·8)")
         if re.search(RISKY_GEN, prompt, re.I):
