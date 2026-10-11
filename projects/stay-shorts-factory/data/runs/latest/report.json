@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-11-p3",
+ "nonce": "2026-10-11-p4",
  "stay": "",
  "mode": "top3",
  "fake": false,
@@ -43,7 +43,8 @@
    "photo_counts": {
     "official": 24,
     "coupang": 4,
-    "operator": 0
+    "operator": 0,
+    "mismatch": 0
    }
   },
   {
@@ -66,7 +67,8 @@
    "photo_counts": {
     "official": 0,
     "coupang": 5,
-    "operator": 0
+    "operator": 0,
+    "mismatch": 1
    }
   },
   {
@@ -90,7 +92,8 @@
    "photo_counts": {
     "official": 24,
     "coupang": 8,
-    "operator": 0
+    "operator": 0,
+    "mismatch": 3
    }
   }
  ],
@@ -103,18 +106,18 @@
     "resolved_by": "request.json official_urls",
     "reason": "",
     "pages": [
-     "https://www.sonohotelsresorts.com/solbeach_sc",
      "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000527",
      "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
      "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000536",
-     "https://www.sonohotelsresorts.com/solbeach_sc/featured",
      "https://www.sonohotelsresorts.com/solbeach_sc/entertainment",
      "https://www.sonohotelsresorts.com/solbeach_sc/sauna",
      "https://www.sonohotelsresorts.com/solbeach_sc/resort",
      "https://www.sonohotelsresorts.com/solbeach_sc/hotel",
-     "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall"
+     "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall",
+     "https://www.sonohotelsresorts.com/solbeach_sc/conveniences",
+     "https://www.sonohotelsresorts.com/solbeach_sc"
     ],
-    "tried": 28,
+    "tried": 25,
     "photos": 24
    },
    "shots": [
@@ -122,17 +125,17 @@
      "n": 31,
      "slot": "water",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/e3JhmjkrIV05MhcrX_7TuA==/1",
-     "page": "https://www.sonohotelsresorts.com/solbeach_sc",
-     "description": "야자수와 워터 슬라이드가 있는 야외 수영장 뒤로 리조트 건물이 서 있다."
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/yvhKloOFB3yOw-1m9U0VMA==/1",
+     "page": "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000527",
+     "description": "실내 온수풀과 유리 사우나가 보인다."
     },
     {
      "n": 32,
      "slot": "room",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/-tMtryLq7WGawlZIhYul4A==/1",
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/tOJSUzyUQOll3rhL2Hqi5w==/1",
      "page": "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
-     "description": "두 개의 침대와 함께 통창으로 파란 바다가 조망되는 침실이다."
+     "description": "따뜻한 조명의 거실 소파와 테이블, 안쪽 침실이 연결되어 있다."
     }
    ]
   },
@@ -142,7 +145,7 @@
    "crawl": {
     "url": "https://www.lottehotel.com/resort-sokcho/ko",
     "resolved_by": "네이버 지역검색 '롯데리조트 속초' link",
-    "reason": "조건(해상도 900px↑)에 맞는 사진이 없음",
+    "reason": "사진 주소를 하나도 못 찾음 (봇 차단·빈 페이지 가능성)",
     "pages": [
      "https://www.lottehotel.com/resort-sokcho/ko"
     ],
@@ -156,15 +159,15 @@
      "source": "coupang",
      "url": null,
      "page": null,
-     "description": "푸른 바다로 둘러싸인 리조트 전경과 하단에 야외 수영장이 보인다."
+     "description": "푸른 바다로 둘러싸인 리조트 외관과 야외 워터파크가 보인다."
     },
     {
      "n": 22,
-     "slot": "special",
+     "slot": "water",
      "source": "coupang",
      "url": null,
      "page": null,
-     "description": "맑은 하늘 아래 높고 현대적인 호텔 외관 건물이 우뚝 솟아 있다."
+     "description": "해안가 언덕 위 리조트 건물과 야외 워터파크 시설이 보인다."
     }
    ]
   },
@@ -176,18 +179,18 @@
     "resolved_by": "request.json official_urls",
     "reason": "",
     "pages": [
-     "https://www.sonohotelsresorts.com/felice_vp",
      "https://www.sonohotelsresorts.com/oceanWorld",
      "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-     "https://www.sonohotelsresorts.com/felice_vp/featured",
      "https://www.sonohotelsresorts.com/felice_vp/entertainment",
      "https://www.sonohotelsresorts.com/felice_vp/spa",
      "https://www.sonohotelsresorts.com/felice_vp/resort",
      "https://www.sonohotelsresorts.com/felice_vp/facilitiesviewall",
      "https://www.sonohotelsresorts.com/felice_vp/conveniences",
-     "https://www.sonohotelsresorts.com/felice_vp/highlight"
+     "https://www.sonohotelsresorts.com/felice_vp/highlight",
+     "https://www.sonohotelsresorts.com/felice_vp/discover",
+     "https://www.sonohotelsresorts.com/felice_vp"
     ],
-    "tried": 30,
+    "tried": 28,
     "photos": 24
    },
    "shots": [
@@ -195,115 +198,115 @@
      "n": 11,
      "slot": "water",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vb-Irtwc5assCDZCtu_d8g==/1",
-     "page": "https://www.sonohotelsresorts.com/felice_vp",
-     "description": "바다가 내려다보이는 야외 인피니티 풀가에 파라솔과 선베드가 놓여 있다."
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
+     "page": "https://www.sonohotelsresorts.com/oceanWorld",
+     "description": "스핑크스 조각상과 이집트풍 벽화가 어우러진 노천 스파 공간이다."
     },
     {
      "n": 12,
-     "slot": "special",
+     "slot": "room",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/dGW1JyPftxrRobAJG2MOKw==/1",
-     "page": "https://www.sonohotelsresorts.com/felice_vp",
-     "description": "골프장 잔디 너머로 곡선형 리조트 본관과 산이 보인다."
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
+     "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
+     "description": "산 전망이 보이는 넓은 거실에 가죽 소파와 테이블이 놓여 있다."
     }
    ]
   }
  ],
  "script": {
   "hook": {
-   "caption": "11월 강원 온수풀 어디 갈까",
-   "narration": "쌀쌀한 11월 강원 온수풀 숙소 세 곳 골랐어요."
+   "caption": "강원 온수풀 숙소 어디 갈까",
+   "narration": "강원 실내 온수풀 숙소 세 곳 골랐어요."
   },
   "ranks": [
    {
     "rank": 3,
     "captions": [
-     "실내 온수풀 보유",
-     "파셜오션뷰 객실"
+     "사계절 실내 온수풀",
+     "탁 트인 오션뷰 객실"
     ],
-    "narration": "오션플레이와 실내 온수풀이 있는 쏠비치 삼척이에요.",
+    "narration": "삼척 쏠비치는 실내 오션플레이와 따뜻한 온수풀을 즐겨요.",
     "benefit": ""
    },
    {
     "rank": 2,
     "captions": [
      "사계절 온수 인피니티풀",
-     "실내 워터파크 보유"
+     "전 객실 바다 전망"
     ],
-    "narration": "실내 워터파크와 사계절 온수 인피니티풀이 있어요.",
+    "narration": "롯데리조트 속초는 실내 워터파크와 온수 인피니티풀이 있어요.",
     "benefit": ""
    },
    {
     "rank": 1,
     "captions": [
-     "클럽하우스 실내수영장",
-     "스파 테라피 시설"
+     "노천 스파와 실내 수영장",
+     "여유로운 파크뷰 스위트"
     ],
-    "narration": "최근 후기 칠백 건 넘는 곳으로, 실내수영장과 스파를 갖췄어요.",
+    "narration": "최근 후기 많은 소노펠리체는 오션월드 스파와 클럽하우스 수영장이 매력이에요.",
     "benefit": "",
     "honest": ""
    }
   ],
   "cta": {
    "caption": "저장해두고 비교하세요",
-   "narration": "세 곳 정보는 프로필에 남겨둘게요. 저장해두고 확인해보세요."
+   "narration": "세 곳 정보는 프로필 링크에서 확인하세요."
   },
-  "title": "11월 강원 실내 온수풀 숙소 추천",
-  "caption": "따뜻하게 물놀이하기 좋은 강원 온수풀 숙소 모음이에요. 가을 겨울 호캉스 계획할 때 참고해보세요.",
+  "title": "강원 실내 온수풀 호캉스 추천 BEST 3",
+  "caption": "쌀쌀한 날씨에 가기 좋은 강원도 온수풀 숙소를 모았습니다. 데이터로 엄선한 세 곳을 지금 비교해 보세요.",
   "hashtags": [
-   "#강원도호캉스",
-   "#실내온수풀",
-   "#온천호텔",
+   "#강원도숙소",
+   "#온수풀호텔",
    "#강원도여행",
-   "#온수풀리조트"
+   "#호캉스추천",
+   "#실내워터파크"
   ]
  },
  "narration_sec": {
-  "hook": 4.15,
-  "r3": 4.6,
-  "r2": 4.57,
-  "r1": 5.02,
-  "cta": 4.27
+  "hook": 3.38,
+  "r3": 5.31,
+  "r2": 5.39,
+  "r1": 6.43,
+  "cta": 3.09
  },
  "narration_qa": [
   {
    "segment": "hook",
-   "script": "쌀쌀한 11월 강원 온수풀 숙소 세 곳 골랐어요.",
-   "heard": "쌀쌀한 11월 강원 온수풀 숙소 세 곳 골랐어요.",
+   "script": "강원 실내 온수풀 숙소 세 곳 골랐어요.",
+   "heard": "강원 실내 온수풀 숙소 세 곳 골랐어요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r3",
-   "script": "오션플레이와 실내 온수풀이 있는 쏠비치 삼척이에요.",
-   "heard": "오션 플레이와 실내 온수풀이 있는 쏠비치 삼척이에요.",
+   "script": "삼척 쏠비치는 실내 오션플레이와 따뜻한 온수풀을 즐겨요.",
+   "heard": "삼척 쏠비치는 실내 오션플레이와 따뜻한 온수풀을 즐겨요",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r2",
-   "script": "실내 워터파크와 사계절 온수 인피니티풀이 있어요.",
-   "heard": "실내 워터파크와 사계절 온수 인피니티 풀이 있어요.",
+   "script": "롯데리조트 속초는 실내 워터파크와 온수 인피니티풀이 있어요.",
+   "heard": "롯데리조트 속초는 실내 워터파크와 온수 인피니티 풀이 있어요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r1",
-   "script": "최근 후기 칠백 건 넘는 곳으로, 실내수영장과 스파를 갖췄어요.",
-   "heard": "최근 후기 700건 넘는 곳으로 실내 수영장과 스파를 갖췄어요.",
-   "similarity": 0.9,
+   "script": "최근 후기 많은 소노펠리체는 오션월드 스파와 클럽하우스 수영장이 매력이에요.",
+   "heard": "최근 후기 많은 소노펠리체는 오션월드 스파와 클럽하우스 수영장이 매력이에요.",
+   "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "cta",
-   "script": "세 곳 정보는 프로필에 남겨둘게요. 저장해두고 확인해보세요.",
-   "heard": "세 곳 정보는 프로필에 남겨둘게요. 저장해 두고 확인해 보세요.",
-   "similarity": 1.0,
+   "script": "세 곳 정보는 프로필 링크에서 확인하세요.",
+   "heard": "새 옷 정보는 프로필 링크에서 확인하세요.",
+   "similarity": 0.88,
    "ok": true,
    "instruction_words": []
   }
