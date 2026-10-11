@@ -43,7 +43,8 @@ BUILD = ms.BUILD
 FONT_HAND = ROOT / "assets" / "fonts" / "NanumPenScript-Regular.ttf"
 W, H, FPS = ms.W, ms.H, ms.FPS
 CUT = 2.0                                   # 컷 길이(초) — Veo 4초 클립을 앞 2초·뒤 2초로 나눠 쓴다 (템포 2초, 추가 비용 0)
-PLAN = {"hook": 4.0, "rank": 9.0, "top": 13.0, "cta": 4.5}    # 구간 계획 길이 — 숙소당 장면 3개(2초 컷) + B롤 1초. 나레이션이 더 길면 그만큼 늘어난다
+PLAN = {"hook": 4.0, "rank": 11.0, "top": 14.0, "cta": 4.5}   # 구간 계획 길이 — 숙소당 장면 3개(각 2초 앞·뒤 반) + B롤 1초. 나레이션이 더 길면 그만큼 늘어난다
+TEMPO = 1.15                                # TTS 배속 (p6 실측: 1.08 에서 글자당 0.13초 → 3위 13.7초. 벤치마크는 더 빠르다)
 SHOTS_PER_HOTEL = 3                         # 운영자 2026-10-11 "설명이 너무 짧다" → 장면 3개(물놀이·객실·특별)와 2~3문장 나레이션
 BROLL = ["swimming pool water surface ripples", "calm blue pool water close up", "gentle ocean waves water surface"]
 BANNED = ms.BANNED + ["최장", "최대", "국내 유일"]
@@ -250,7 +251,7 @@ SCRIPT_SYSTEM = """너는 "데이터로 고른 호캉스" 쇼츠의 큐레이터
 - 각 숙소에는 '화면 장면 설명'이 있다. 자막은 **시설·혜택 키워드가 우선**이고, 장면과 **모순될 때만** 바꾼다
   (식당 사진 위에 "수영장" 금지. 외관·항공 사진 위에 "실내 온수풀 보유"는 괜찮다). 장면을 묘사만 하는 자막("바다 앞 리조트 단지", "조명 켜진 야외 전경")은 금지 — 팔리는 말이 아니다.
 - 시설은 '확인된 시설'과 객실 이름에 있는 것만. 혜택(benefit)은 테마와 관련된 것(워터파크·온수풀 이용권 포함, 조식 포함, 온천 객실)만 조건문 한 줄로. 관련 없는 사소한 것(취사 가능 등)이면 빈 문자열.
-- 나레이션 길이(공백 제외): hook 24자 이내 · 3위/2위는 narration+benefit 합쳐 **60~95자** · 1위는 **80~135자** · cta 36자 이내. benefit 은 narration 에 녹였으면 빈 문자열.
+- 나레이션 길이(공백 제외): hook 24자 이내 · 3위/2위는 narration+benefit 합쳐 **55~85자** · 1위는 **75~115자** · cta 36자 이내. benefit 은 narration 에 녹였으면 빈 문자열.
 - 말투(운영자 2026-10-11): "골랐어요·뽑았어요" 대신 **"추천드려요·추천해요"** 를 쓴다. 훅 나레이션에 '추천' 이 한 번 들어간다.
 - 이름 공개 순서: 훅에는 숙소 이름이 없다. 3위·2위 나레이션은 이름을 먼저 말한다. **1위 나레이션은 숙소 이름을 문장 맨 끝에** 둔다
   (예: "최근 한 달 후기 칠백 건, 1위는 소노펠리체 비발디파크예요") — 끝까지 보게 만드는 장치.
@@ -262,7 +263,7 @@ SCRIPT_SYSTEM = """너는 "데이터로 고른 호캉스" 쇼츠의 큐레이터
           {"rank":1,"captions":["...","...","..."],"narration":"...","benefit":"...","honest":"입력의 아쉬움이 있으면 그대로, 없으면 빈 문자열"}],
  "cta":{"caption":"...","narration":"..."},             ← 예: 자막 "저장해두고 비교하세요" / 나레이션 "이용권 포함 객실과 가격대는 프로필 폴더 '11월 실내 온수풀' 에 있어요"
  "title":"유튜브 제목 12~25자","caption":"인스타 캡션 2문장(고지문·링크는 시스템이 붙임)","hashtags":["#..","#..","#..","#..","#.."]}"""
-NARR_MAX = {"hook": 24, "r3": 95, "r2": 95, "r1": 135, "cta": 36}
+NARR_MAX = {"hook": 24, "r3": 85, "r2": 85, "r1": 115, "cta": 36}   # p6 실측: 95/135자는 13.7/17.1초 → 영상 54초. 85/115자 + 배속 1.15 ≈ 11/15초
 NARR_MIN = {"r3": 50, "r2": 50, "r1": 70}                     # 너무 짧으면(운영자 지적) 다시 쓰게 한다
 WORDING_BAN = ("골랐", "골라", "뽑았", "뽑아")                    # 운영자 2026-10-11: '골랐어요' 대신 '추천'
 
@@ -538,8 +539,15 @@ def transcribe(model: str, wav: Path) -> str:
     body = {"contents": [{"role": "user", "parts": [
         {"text": "이 음성을 들리는 그대로 한국어로 받아 적어라. 설명·따옴표 없이 받아 적은 문장만 출력한다."},
         {"inline_data": {"mime_type": "audio/wav", "data": base64.b64encode(wav.read_bytes()).decode()}}]}],
-        "generationConfig": {"maxOutputTokens": 400, "temperature": 0.0}}
-    data = ms._gpost(f"models/{model}:generateContent", body, 120)
+        # p6 실측: 14초 음성에서 받아쓰기가 중간에 잘렸다(0.54) — 생각 토큰이 출력 한도를 먹는다 → 생각 끄고 한도 확대
+        "generationConfig": {"maxOutputTokens": 1500, "temperature": 0.0, "thinkingConfig": {"thinkingBudget": 0}}}
+    try:
+        data = ms._gpost(f"models/{model}:generateContent", body, 120)
+    except RuntimeError as e:
+        if "thinking" not in str(e).lower():
+            raise
+        body["generationConfig"].pop("thinkingConfig", None)
+        data = ms._gpost(f"models/{model}:generateContent", body, 120)
     parts = (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or [])
     return "".join(p.get("text", "") for p in parts).strip()
 
@@ -596,7 +604,7 @@ def preview_sheet(hotels: list[dict], script: dict, out: Path):
 def preview_top3(req: dict, models: dict, report: dict) -> dict:
     """영상 없이 ① 사진 ② 대사·자막 ③ 나레이션 음성(받아쓰기 검증)만 만든다. 운영자가 보고 듣고 승인하면 그때 영상."""
     theme, region, month = str(req.get("theme") or ""), str(req.get("region") or ""), str(req.get("month") or "")
-    voice, tempo = str(req.get("voice") or "Erinome"), float(req.get("tempo") or 1.08)
+    voice, tempo = str(req.get("voice") or "Erinome"), float(req.get("tempo") or TEMPO)
     BUILD.mkdir(parents=True, exist_ok=True)
     hotels = []
     for i, c in enumerate(pick_candidates(req)):
@@ -659,7 +667,7 @@ def preview_top3(req: dict, models: dict, report: dict) -> dict:
 # ── 5) 전체 ───────────────────────────────────────────────────────────
 def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, dict]:
     theme, region, month = str(req.get("theme") or ""), str(req.get("region") or ""), str(req.get("month") or "")
-    voice, tempo = str(req.get("voice") or "Erinome"), float(req.get("tempo") or 1.08)
+    voice, tempo = str(req.get("voice") or "Erinome"), float(req.get("tempo") or TEMPO)
     BUILD.mkdir(parents=True, exist_ok=True)
 
     # 1) 숙소 3곳 + 사진 2장씩 (싼 단계)
@@ -753,12 +761,15 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
         planned = PLAN["top"] if rank == 1 else PLAN["rank"]
         sh = h["shots"]
         A = clips[sh[0]["n"]]
+        # 장면 3개의 앞 2초 → 다시 앞에서부터 뒤 2초: 3위/2위 11초(A·B롤·B·C·A'·B'), 1위 14초(+C'·B롤). 나레이션 11~15초와 맞춰 느리게 늘리는 일을 줄인다
         cl = [(A, 0, CUT)]
         if brolls[i % 2]:
             cl.append((brolls[i % 2], 0, 1.0))
-        cl += [(clips[s["n"]], 0, CUT) for s in sh[1:]] + [(A, CUT, CUT)]
+        cl += [(clips[s["n"]], 0, CUT) for s in sh[1:]] + [(A, CUT, CUT)] + [(clips[s["n"]], CUT, CUT) for s in sh[1:2]]
         if rank == 1:
-            cl += [(clips[s["n"]], CUT, CUT) for s in sh[1:]]
+            cl += [(clips[s["n"]], CUT, CUT) for s in sh[2:]]
+            if brolls[(i + 1) % 2]:
+                cl.append((brolls[(i + 1) % 2], 0, 1.0))
         key = f"r{rank}"
         seglen_guess = max(planned, narr[key] + 0.35)
         caps = list(r["captions"])[:len(sh)] or [""]
