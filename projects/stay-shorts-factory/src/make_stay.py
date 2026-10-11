@@ -47,6 +47,7 @@ import wave
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import crawl_photos as crawl  # noqa: E402
 import photos  # noqa: E402
 import veo  # noqa: E402
 
@@ -467,11 +468,22 @@ def compare_images(shots: list, clips: dict, build: Path, outdir: Path) -> Path:
 def produce_veo(req: dict, stay: str, items: list, models: dict, report: dict) -> tuple[Path, float, dict]:
     """사진 7장 → Veo 7컷 → 이어 붙이기. 돌려주는 것: (영상, 길이, meta 에 넣을 것)."""
     # 1) 사진 수집·분류·선정 (0원에 가까움)
-    cands = photos.gather(items, OPERATOR_PHOTOS, BUILD)
+    official = []
+    if req.get("crawl", True):                      # 2026-10-11 운영자 결정: 공식 홈페이지 사진을 크롤링으로 확보 (쿠팡·OTA 는 계속 금지)
+        try:
+            cr = crawl.collect(stay, "", BUILD / "official", official_url=(req.get("official_urls") or {}).get(stay),
+                               gemini_json=lambda m, s, c: _try_models("text", models["text"], lambda mm: gemini_json(mm, s, c)), model="auto")
+            official = cr["photos"]
+            report["crawl"] = {k: cr.get(k) for k in ("url", "resolved_by", "reason", "pages", "tried")} | {"photos": len(official)}
+        except Exception as e:  # noqa: BLE001
+            report["crawl"] = {"reason": f"오류 {str(e)[:120]}"}
+    cands = photos.gather(items, OPERATOR_PHOTOS, BUILD, official=official)
     if not cands:
-        raise RuntimeError("쓸 사진이 한 장도 없습니다 (쿠팡 사진 없음 · requests/produce/photos/ 비어 있음)")
+        raise RuntimeError("쓸 사진이 한 장도 없습니다 (공식 홈페이지·쿠팡 사진 없음 · requests/produce/photos/ 비어 있음)")
     classified = _try_models("vision", models["text"], lambda m: photos.classify(m, cands))
     shots, notes = photos.select(classified)
+    report["photo_sources"] = [{"slot": s.get("category"), "source": s.get("source"), "url": s.get("src_url"), "page": s.get("src_page")} for s in shots]
+    (PREVIEW / "photo_sources.json").write_text(json.dumps(report["photo_sources"], ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     # ⭐ 테스트 비용 규칙 (2026-10-11 운영자): Veo 는 720p 가 최저 화질·최저가(320p 없음, 초당 과금)라
     #    테스트는 해상도가 아니라 **컷 수**로 아낀다. request.json 의 max_veo_cuts (기본 3) 만큼만 산다.
     #    정식 제작(7컷)은 "max_veo_cuts": 7 을 명시할 때만.

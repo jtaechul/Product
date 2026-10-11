@@ -75,11 +75,12 @@ def _store(data: bytes, dest: Path) -> tuple[int, int]:
         return im.size
 
 
-def gather(items: list, operator_dir: Path, build: Path) -> list[dict]:
-    """후보 사진 목록. 운영자 폴더 사진이 앞, 쿠팡 사진이 뒤. 같은 사진(내용 해시)은 한 번만."""
+def gather(items: list, operator_dir: Path, build: Path, official: list[dict] | None = None) -> list[dict]:
+    """후보 사진 목록. 운영자 폴더 → 공식 홈페이지 수집본(src/crawl_photos.py, 2026-10-11 운영자 결정) → 쿠팡 순.
+    같은 사진(내용 해시)은 한 번만. 공식 홈페이지 사진은 출처(url·page)를 함께 들고 다닌다 (장부용)."""
     cands, seen = [], set()
 
-    def add(data: bytes, source: str, name: str, index=None):
+    def add(data: bytes, source: str, name: str, index=None, extra: dict | None = None):
         h = hashlib.sha1(data).hexdigest()
         if h in seen:
             return
@@ -94,12 +95,18 @@ def gather(items: list, operator_dir: Path, build: Path) -> list[dict]:
             log(f"너무 작은 사진 제외 ({name}): {size}")
             return
         seen.add(h)
-        cands.append({"k": k, "source": source, "name": name, "index": index, "path": str(dest), "size": list(size)})
+        cands.append({"k": k, "source": source, "name": name, "index": index, "path": str(dest), "size": list(size), **(extra or {})})
 
     if operator_dir.is_dir():
         for p in sorted(operator_dir.iterdir()):
             if p.suffix.lower() in EXTS and p.is_file():
                 add(p.read_bytes(), "operator", p.name)
+    for i, p in enumerate(official or []):
+        try:
+            add(Path(p["path"]).read_bytes(), "official", str(p.get("url", ""))[-60:], i,
+                {"src_url": p.get("url"), "src_page": p.get("page")})
+        except Exception as e:  # noqa: BLE001
+            log(f"공식 홈페이지 사진 읽기 실패 ({i}): {e}")
     for i, it in enumerate(items):
         url = str(it.get("productImage") or "")
         if not url.startswith("http"):
@@ -109,7 +116,7 @@ def gather(items: list, operator_dir: Path, build: Path) -> list[dict]:
         except Exception as e:  # noqa: BLE001
             log(f"쿠팡 사진 내려받기 실패 ({i}): {e}")
     log(f"후보 사진 {len(cands)}장 (운영자 {sum(c['source'] == 'operator' for c in cands)} · "
-        f"쿠팡 {sum(c['source'] == 'coupang' for c in cands)})")
+        f"공식 홈페이지 {sum(c['source'] == 'official' for c in cands)} · 쿠팡 {sum(c['source'] == 'coupang' for c in cands)})")
     return cands
 
 

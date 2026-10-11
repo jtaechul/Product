@@ -30,6 +30,7 @@ import wave
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import crawl_photos as crawl  # noqa: E402
 import discover as dc  # noqa: E402
 import make_stay as ms  # noqa: E402
 import photos  # noqa: E402
@@ -73,9 +74,40 @@ def pick_candidates(req: dict) -> list[dict]:
     return out
 
 
-def hotel_assets(c: dict, models: dict, idx: int) -> dict | None:
-    """쿠팡 검색 → 규칙·동일성으로 '이 숙소 객실'만 → 사진 분류 → 물놀이 1 + 객실/특별 1 선택 → 9:16 크롭 + Veo 지시문."""
+SRC_KO = {"official": "공식 홈페이지", "coupang": "쿠팡", "operator": "운영자"}
+
+
+def official_photos(name: str, city: str, out: Path, models: dict, req: dict) -> tuple[list[dict], dict]:
+    """공식 홈페이지 사진 수집 (2026-10-11 운영자 결정 · src/crawl_photos.py — 크롬 렌더 · robots 준수 · 차단이면 포기).
+    실패해도 제작은 쿠팡 사진으로 이어간다. request.json "crawl": false 면 생략, "official_urls": {이름: 주소} 로 주소를 줄 수 있다."""
+    if not req.get("crawl", True):
+        return [], {"skipped": "request.json crawl=false"}
+    try:
+        cr = crawl.collect(name, city, out, official_url=(req.get("official_urls") or {}).get(name),
+                           gemini_json=lambda m, s, c: ms._try_models("text", models["text"], lambda mm: ms.gemini_json(mm, s, c)), model="auto")
+    except Exception as e:  # noqa: BLE001
+        log(f"{name}: 공식 홈페이지 수집 오류 — 쿠팡 사진만 사용 ({str(e)[:80]})")
+        return [], {"reason": f"오류 {str(e)[:120]}"}
+    info = {k: cr.get(k) for k in ("url", "resolved_by", "reason", "pages", "tried")} | {"photos": len(cr["photos"])}
+    log(f"{name}: 공식 홈페이지 사진 {len(cr['photos'])}장" + (f" — {cr['reason']}" if cr.get("reason") else f" ({cr.get('url')})"))
+    return cr["photos"], info
+
+
+def record_sources(hotels: list[dict], report: dict) -> None:
+    """어느 사진을 어디서 가져왔는지 장부 — report 와 data/runs/latest/photo_sources.json. 호텔이 삭제를 요청하면 여기서 찾는다."""
+    rows = [{"hotel": h["name"], "official_site": (h.get("crawl") or {}).get("url"), "crawl": h.get("crawl"),
+             "shots": [{"n": s["n"], "slot": s.get("slot"), "source": s.get("source"), "url": s.get("src_url"), "page": s.get("src_page"),
+                        "description": s.get("description")} for s in h["shots"]]} for h in hotels]
+    report["photo_sources"] = rows
+    ms.PREVIEW.mkdir(parents=True, exist_ok=True)
+    (ms.PREVIEW / "photo_sources.json").write_text(json.dumps(rows, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
+
+def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None) -> dict | None:
+    """쿠팡 검색 → 규칙·동일성으로 '이 숙소 객실'만 → 공식 홈페이지 사진 수집 → 사진 분류 → 물놀이 1 + 객실/특별 1 선택 → 9:16 크롭 + Veo 지시문.
+    사진 출처 우선순위: 공식 홈페이지(2026-10-11 운영자 결정) → 쿠팡."""
     name = c["name"]
+    req = req or {}
     v = dc.coupang_verify(name)
     rooms = v.get("rooms") or []
     if len(rooms) >= dc.MIN_ROOMS:
@@ -90,7 +122,8 @@ def hotel_assets(c: dict, models: dict, idx: int) -> dict | None:
         return None
     build = BUILD / f"h{idx}"
     build.mkdir(parents=True, exist_ok=True)
-    cands = photos.gather(rooms, ROOT / "requests" / "produce" / "photos_none", build)
+    official, crawl_info = official_photos(name, c.get("city", ""), build / "official", models, req)
+    cands = photos.gather(rooms, ROOT / "requests" / "produce" / "photos_none", build, official=official)
     if not cands:
         return None
     cl = ms._try_models("vision", models["text"], lambda m: photos.classify(m, cands))
@@ -122,7 +155,8 @@ def hotel_assets(c: dict, models: dict, idx: int) -> dict | None:
             "theme_hits": dc.theme_hits(rooms, dc.DEFAULT_KEYWORDS), "verified_facilities": facts,
             "blog_30d": (c.get("demand") or {}).get("blog_30d"), "blog_total": (c.get("demand") or {}).get("blog_total"),
             "min_price": min(prices) if prices else None, "affiliate_url": str(rooms[0].get("productUrl", "")),
-            "hook": (c.get("ai") or {}).get("hook", ""), "classified": cl}
+            "hook": (c.get("ai") or {}).get("hook", ""), "classified": cl, "crawl": crawl_info,
+            "photo_counts": {k: sum(p["source"] == k for p in cands) for k in SRC_KO}}
 
 
 HONEST_SYSTEM = """아래는 한 숙소에 대한 네이버 블로그 글 제목·요약 목록이다. 후기에서 반복되는 '아쉬운 점'이 있으면 한 줄(20자 내, 존댓말 없이 명사형)로 적는다.
@@ -438,7 +472,8 @@ def preview_sheet(hotels: list[dict], script: dict, out: Path):
             im.paste(t, (x, y0 + 74))
             d.rectangle([x, y0 + 74 + h - 40, x + w, y0 + 74 + h], fill=(0, 0, 0))
             d.text((x + 8, y0 + 74 + h - 34), f"자막: {cap}", font=f2, fill=(255, 255, 255))
-            d.text((x + 8, y0 + 74 + 8), f"{photos.KO.get(s['category'], '')}", font=f2, fill=(255, 255, 255), stroke_width=2, stroke_fill=(0, 0, 0))
+            d.text((x + 8, y0 + 74 + 8), f"{photos.KO.get(s['category'], '')} · {SRC_KO.get(s.get('source'), '')}", font=f2,
+                   fill=(255, 255, 255), stroke_width=2, stroke_fill=(0, 0, 0))
     im.save(out, "JPEG", quality=85)
 
 
@@ -451,14 +486,15 @@ def preview_top3(req: dict, models: dict, report: dict) -> dict:
     for i, c in enumerate(pick_candidates(req)):
         if len(hotels) >= 3:
             break
-        h = hotel_assets(c, models, i + 1)
+        h = hotel_assets(c, models, i + 1, req)
         if h:
             hotels.append(h)
     if len(hotels) < 3:
         raise RuntimeError(f"사진 2장 이상 확보된 숙소가 {len(hotels)}곳 — 3곳 필요")
     hotels = hotels[:3][::-1]
     hotels[2]["honest"] = ms._try_models("text", models["text"], lambda m: honest_line(m, hotels[2]["name"]))
-    report["hotels"] = [{k: h[k] for k in ("name", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest") if k in h} for h in hotels]
+    report["hotels"] = [{k: h[k] for k in ("name", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest", "photo_counts") if k in h} for h in hotels]
+    record_sources(hotels, report)
     script = ms._try_models("text", models["text"], lambda m: write_script(m, req, hotels))
     report["script"] = script
     segs_text = [("hook", script["hook"]["narration"])] + [(f"r{r['rank']}", r["narration"] + (" " + r["benefit"] if r.get("benefit") else "")) for r in script["ranks"]] + [("cta", script["cta"]["narration"])]
@@ -488,7 +524,12 @@ def preview_top3(req: dict, models: dict, report: dict) -> dict:
         md.append(f"| {q['segment']} | {q['script']} | {q['heard']} | {q['similarity']} | {'통과' if q['ok'] else '실패 ' + ','.join(q['instruction_words'])} |")
     md += ["", "## 숙소·사진", ""]
     for h, r in zip(hotels, script["ranks"]):
-        md.append(f"- {r['rank']}위 {h['name']} — 확인된 시설: {', '.join(h['verified_facilities']) or '없음'} · 후기 30일 {h['blog_30d']} · 장면 A: {h['shots'][0].get('description')} · 장면 B: {h['shots'][1].get('description')}")
+        cr = h.get("crawl") or {}
+        pc = h.get("photo_counts") or {}
+        src = " · ".join(f"장면 {'AB'[k]}: {h['shots'][k].get('description')} [{SRC_KO.get(h['shots'][k].get('source'), '?')}]" for k in range(2))
+        got = f"공식 홈페이지 {pc.get('official', 0)}장 · 쿠팡 {pc.get('coupang', 0)}장" + (f" · 공식 홈페이지 수집 실패: {cr['reason']}" if cr.get("reason") else "")
+        md.append(f"- {r['rank']}위 {h['name']} — 확인된 시설: {', '.join(h['verified_facilities']) or '없음'} · 후기 30일 {h['blog_30d']} · 사진 후보 {got} · {src}")
+    md += ["", "사진 출처 장부: `data/runs/latest/photo_sources.json` (어느 페이지의 어느 사진인지 — 호텔 요청 시 삭제 근거)"]
     (prev / "preview.md").write_text("\n".join(md) + "\n", encoding="utf-8")
     names = [h["name"] for h in hotels[::-1]]
     meta = {"mode": "top3", "stage": "preview", "stay": " / ".join(names), "title": script.get("title"),
@@ -508,15 +549,16 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     for i, c in enumerate(pick_candidates(req)):
         if len(hotels) >= 3:
             break
-        h = hotel_assets(c, models, i + 1)
+        h = hotel_assets(c, models, i + 1, req)
         if h:
             hotels.append(h)
     if len(hotels) < 3:
         raise RuntimeError(f"사진 2장 이상 확보된 숙소가 {len(hotels)}곳 — 3곳 필요")
     hotels = hotels[:3][::-1]                       # 입력 순서가 1위→3위 이므로 뒤집어 3위→1위
     hotels[2]["honest"] = ms._try_models("text", models["text"], lambda m: honest_line(m, hotels[2]["name"]))
-    report["hotels"] = [{k: h[k] for k in ("name", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest")
+    report["hotels"] = [{k: h[k] for k in ("name", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest", "photo_counts")
                          if k in h} for h in hotels]
+    record_sources(hotels, report)
     log("순서(3→1위):", " · ".join(h["name"] for h in hotels))
 
     # 2) 대본 + 구간별 나레이션 (싼 단계 — 여기서 실패하면 영상값을 안 쓴다)
