@@ -76,6 +76,8 @@ PLAN = {"hook": ["첫 1초에 두 강아지가 동시에 달려들어 시선을 
                    {"t0": 2.5, "t1": 4.0, "shot": "wide, low angle, fixed", "frame": "Two Shibas sprint in from the right.", "ko": "두 마리가 달려옴"},
                    {"t0": 4.0, "t1": 6.5, "shot": "medium, fixed", "frame": "The red Shiba slides into the cream Shiba on the tiles.", "ko": "미끄러지며 부딪힘"},
                    {"t0": 6.5, "t1": 9.5, "shot": "close-up, fixed", "frame": "Both Shibas eat from the bowls.", "ko": "둘 다 먹음"}]}
+PLAN["mapping"] = "the tan dog -> the Shiba Inu; the white dog -> a cream Shiba Inu"
+PLAN["beats"] = [{"t": f"{i / 2:.1f}-{(i + 1) / 2:.1f}", "action": f"BEAT{i}: the red Shiba lies on its side, the cream Shiba stands next to it"} for i in range(19)]
 PLAN_OUTRO = {**PLAN, "set": "Indoor gym with a green motivational typography wall and black treadmills", "content": [0, 5.8],
               "scenes": [{"t0": 0, "t1": 5.8, "outro": False, "shot": "high angle handheld", "frame": "A Shiba grips the treadmill bar, with a green quote wall behind.", "ko": "러닝머신에서 미끄러짐"},
                          {"t0": 5.8, "t1": 9.5, "shot": "static, darkened frame with centered social media icon overlay",
@@ -133,12 +135,19 @@ def install_mocks(flags: dict) -> list:
         return {} if flags.get("tl_fail") else {"steps": TL}
     E._video_json = vj
     def vis(img, prompt):
-        calls.append("vision")
-        if "storyboard grid" in prompt:                   # 스토리보드 글씨·로고 검사: text_once면 첫 그림에만 3번 칸에 글씨
-            if flags.get("text_once") and not flags.get("_texted"):
+        if "storyboard panel" in prompt:                  # 칸마다 글씨·몸 엉킴 검사: text_once면 첫 그림의 3번 칸 글씨, body_once면 6번 칸 엉킴
+            calls.append("check")
+            name = Path(img).name
+            if flags.get("text_once") and not flags.get("_texted") and name == "board_03.jpg":
                 flags["_texted"] = True
-                return {"panels": [3], "what": "garbled letters on the wall"}
-            return {"panels": []}
+                return {"text": True, "body": False, "what": "garbled letters on the wall"}
+            if flags.get("body_once") and not flags.get("_bodied") and name == "board_06.jpg":
+                flags["_bodied"] = True
+                return {"text": False, "body": True, "what": "two dogs fused"}
+            if flags.get("body_always") and name == "board_06.jpg":
+                return {"text": False, "body": True, "what": "two dogs fused"}
+            return {"text": False, "body": False}
+        calls.append("vision")
         return {"place": "top", "why": "t"}
     E._vision_json = vis
     n_omni = {"n": 0}
@@ -287,6 +296,13 @@ def gen_check(log, title, n_min=1):
     r = log.get("remake", {})
     g, gp = r.get("gen") or {}, r.get("gen_plan") or {}
     probs = []
+    used = json.dumps(r.get("gen_prompts_used") or {})
+    if re.search(r"head with the head|dog-headed human(?! )|anthropomorphic child", used.replace("no dog-headed humans", ""), re.I):
+        probs.append("영상 지시에 '사람 몸에 개 머리' 표현이 남음")
+    if "ANATOMY" not in used:
+        probs.append("영상 지시에 몸 엉킴 금지(ANATOMY)가 없음")
+    if gp.get("beats") and "BEAT" not in used:
+        probs.append("바뀐 등장인물 기준 자세(beats)가 영상 지시에 안 들어감")
     if r.get("method") != "gen":
         probs.append(f"방식이 {r.get('method')}")
     if g.get("scenes", 0) < n_min:
@@ -319,10 +335,12 @@ if not log["remake"].get("blocked"):
 run(d, ep, {"remake": {"mode": "full", "redo": ["body"]}}, {}, "⑯ 새로 만들기: 본편만 다시(한도 5: 지우기 전에 멈춰야)", expect_stop="아무것도 지우지 않고")
 run(d, ep, {"remake": {"mode": "full"}}, {}, "⑯ 새로 만들기: 다시 조립(돈 0)")
 d, ep = make_ep("genoutro", method="gen")
-log = run(d, ep, {"remake": {"mode": "board"}}, {"outro": True, "text_once": True}, "⑱ 새로 만들기: 끝 4초 아웃트로(계정·로고 화면) + 벽 글씨 → 다시 그림 스토리보드")
-if not (log["remake"].get("board_text") or {}).get("redrawn") is False and not log["remake"].get("board_text"):
-    FAILS.append("⑱ 글씨 칸을 못 잡음")
-print("    글씨 검사:", log["remake"].get("board_text"), "| 장부", log["remake"].get("spent"))
+log = run(d, ep, {"remake": {"mode": "board"}}, {"outro": True, "text_once": True, "body_once": True},
+          "⑱ 새로 만들기: 끝 4초 아웃트로(계정·로고 화면) + 벽 글씨 + 개 몸 엉킴 → 다시 그림 스토리보드")
+if not log["remake"].get("board_text") or not log["remake"].get("board_body") or (log["remake"].get("board") or {}).get("tries", 0) < 2:
+    FAILS.append("⑱ 글씨·몸 엉킴 칸을 못 잡거나 다시 그리지 않음")
+print("    검사:", log["remake"].get("board_text"), log["remake"].get("board_body"), "| 그린 횟수", (log["remake"].get("board") or {}).get("tries"),
+      "| 장부", log["remake"].get("spent"))
 log = run(d, ep, {"remake": {"mode": "full"}}, {"outro": True}, "⑱ 새로 만들기: 아웃트로 빼고 영상")
 r18 = log["remake"]
 body18 = sum(float(c.get("used", 0)) for c in (r18.get("gen") or {}).get("clips", []))
@@ -331,6 +349,12 @@ if not r18.get("gen_trim") or abs(body18 - 5.8) > 0.15 or re.search(r"ANNGRI|acc
     print("FAIL ⑱", r18.get("gen_trim"), body18)
 else:
     print("    아웃트로 뺌:", r18["gen_trim"], "| 본편", round(body18, 2), "초 | 칸", (log["remake"].get("board") or {}).get("panels"))
+d, ep = make_ep("genbody", method="gen")
+log = run(d, ep, {"remake": {"mode": "board"}}, {"body_always": True}, "⑲ 새로 만들기: 세 번 그려도 몸 엉킴 → 보여 주지 않고 멈춤(돈 한도 안)",
+          expect_stop="개 몸이 엉킴")
+if (d / "work" / "board.jpg").exists() or float(log["remake"].get("spent", 0)) > 1.0:
+    FAILS.append("⑲ 엉킨 스토리보드를 남겼거나 돈을 너무 씀")
+print("    장부", log["remake"].get("spent"), [x["what"] for x in log["remake"].get("ledger", [])])
 d, ep = make_ep("gentest", method="gen")
 log = run(d, ep, {"remake": {"mode": "test"}}, {}, "⑰ 새로 만들기: 예전 '시험' 요청 → 스토리보드만(영상 안 만듦)")
 if log["remake"].get("gen") or not (d / "work" / "board.jpg").exists():

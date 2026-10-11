@@ -5844,8 +5844,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
           if(!confirm('이 스토리보드대로 영상을 만듭니다. 예상 약 $'+Number(m.est_full||0).toFixed(2)+', 10~20분 걸립니다. 시작할까요?')) return;
           epAsk(e.id,'remake_full',{}, '영상을 만들고 있습니다(10~20분). 끝나면 이 화면에 완성 영상이 나옵니다.');
         },true));
-        b.appendChild(epBtn('스토리보드 다시 그리기 (약 $0.16)',function(){
-          if(!confirm('스토리보드를 다시 그립니다(약 0.16달러, 5~10분). 할까요?')) return;
+        var bdUsd=(gp&&gp.scenes)?'0.3':'0.16';           // 새로 만들기는 4K 스토리보드 + 칸마다 글씨·몸 엉킴 검사(걸리면 다시 그림)
+        b.appendChild(epBtn('스토리보드 다시 그리기 (약 $'+bdUsd+')',function(){
+          if(!confirm('스토리보드를 다시 그립니다(약 '+bdUsd+'달러, 5~10분). 할까요?')) return;
           epAsk(e.id,'remake_board',{redo:true}, '스토리보드를 다시 그리고 있습니다(5~10분).');
         }));
       }
