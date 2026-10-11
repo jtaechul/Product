@@ -41,6 +41,8 @@ jobs:
           # 러너에 ffmpeg 가 기본으로 없다 (2026-10-09 실측) — 없을 때만 설치한다
           command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null; }
           command -v ffmpeg && ffmpeg -version 2>/dev/null | sed -n '1p'
+          # 공식 홈페이지 사진 수집(src/crawl_photos.py)은 러너에 기본 탑재된 크롬으로 페이지를 그린다 — 없으면 쿠팡 사진만 쓴다
+          command -v google-chrome >/dev/null && google-chrome --version || echo "크롬 없음 — 공식 홈페이지 사진 수집은 건너뛴다"
 
       - name: 제작
         id: make
