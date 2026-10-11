@@ -179,14 +179,16 @@ def install_mocks(flags: dict) -> list:
         return (BODY if task == "edit" else END).read_bytes()
     E._omni_run = omni
 
-    def veo(key, start, prompt, setimg=None, secs=8, last=None, negative=""):
+    def veo_once(key, start, prompt, secs, last, negative):   # 실제 Veo 3.1 Lite처럼: negativePrompt는 400(요금 없음)
+        if negative:
+            raise RuntimeError("400 INVALID_ARGUMENT. `negativePrompt` isn't supported by this model.")
         calls.append("veo" + ("+last" if last is not None else ""))
         if secs not in (4, 6, 8):
             raise RuntimeError(f"Veo 길이 {secs}초는 안 됨(4·6·8)")
         if re.search(RISKY_GEN, prompt, re.I):
             raise RuntimeError("위험 낱말이 Veo 지시문에 있음")
         return clip_of(float(secs))
-    E._veo = veo
+    E._veo_once = veo_once
 
     def gi(prompt, refs, out, aspect="9:16", size=""):
         calls.append("image")

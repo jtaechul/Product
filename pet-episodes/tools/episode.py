@@ -517,11 +517,13 @@ def _omni(key, start: Path, prompt: str, setimg: Path | None = None) -> bytes:
     return vid
 
 
-def _veo(key, start: Path, prompt: str, setimg: Path | None = None, secs: int = 8, last: Path | None = None, negative: str = "") -> bytes:
-    """Veo 3.1 Lite(720p 1초 약 0.05달러, 길이 4·6·8초). last = 마지막 장면 그림(처음→끝 사이를 이어 그림), negative = 피할 것."""
+VEO_DROPPED: set = set()           # Veo가 '지원 안 함'이라고 돌려준 설정(2026-10-11: Veo 3.1 Lite는 negativePrompt를 안 받음) — 다음부터 빼고 보낸다
+VEO_FIELD = {"negativePrompt": "negative", "lastFrame": "last", "negative_prompt": "negative", "last_frame": "last"}
+
+
+def _veo_once(key, start: Path, prompt: str, secs: int, last: Path | None, negative: str) -> bytes:
     from google import genai
     from google.genai import types
-    _check_stop()
     client = genai.Client(api_key=key)
     mime = lambda p: "image/jpeg" if p.suffix.lower() in (".jpg", ".jpeg") else "image/png"
     cfg = dict(aspect_ratio="9:16", resolution="720p", duration_seconds=int(secs), number_of_videos=1)
@@ -547,6 +549,27 @@ def _veo(key, start: Path, prompt: str, setimg: Path | None = None, secs: int = 
     tmp = Path("/tmp") / f"veo_{int(time.time())}.mp4"
     v.save(str(tmp))
     return tmp.read_bytes()
+
+
+def _veo(key, start: Path, prompt: str, setimg: Path | None = None, secs: int = 8, last: Path | None = None, negative: str = "") -> bytes:
+    """Veo 3.1 Lite(720p 1초 약 0.05달러, 길이 4·6·8초). last = 마지막 장면 그림(처음→끝 사이를 이어 그림), negative = 피할 것.
+    Veo가 '이 설정은 지원 안 함'(400, 요금 없음)이라고 하면 그 설정만 빼고 다시 보낸다 — 마지막 장면을 뺐으면 VEO_DROPPED에 남는다."""
+    _check_stop()
+    opts = {"last": last, "negative": negative}
+    for k in list(opts):
+        if k in VEO_DROPPED:
+            opts[k] = None
+    for _ in range(3):
+        try:
+            return _veo_once(key, start, prompt, secs, opts["last"], opts["negative"] or "")
+        except Exception as e:  # noqa: BLE001
+            m = re.search(r"`(\w+)` isn't supported|(\w+) is not supported", str(e))
+            name = VEO_FIELD.get((m.group(1) or m.group(2)) if m else "")
+            if not name or not opts.get(name):
+                raise
+            VEO_DROPPED.add(name)
+            opts[name] = None
+    raise RuntimeError("Veo: 지원 안 되는 설정을 빼고도 만들지 못했습니다")
 
 
 CLIP_TAIL = ("\nThe attached image is the FIRST FRAME: the room, door, walls, floor, table, seat, lamp and props must stay "
@@ -4395,7 +4418,7 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
                     res.setdefault("gen_prompts_used", {})[f"scene{k + 1}_{j + 1}"] = prompt
                     _remake_spend(res, usd, f"{tag} 새로 만들기(Veo 3.1 Lite {sec}초)", cap)
                     try:
-                        raw.write_bytes(_veo(key, first, prompt, secs=sec, last=last_img if use_last else None, negative=VEO_NEG))
+                        raw.write_bytes(_veo(key, first, prompt + " Avoid: " + VEO_NEG + ".", secs=sec, last=last_img if use_last else None))
                         break
                     except Exception as e:  # noqa: BLE001
                         res["spent"] = round(float(res.get("spent", 0)) - usd, 3)     # 영상이 안 나오면 요금 없음
@@ -4404,7 +4427,7 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
                         if short:
                             raise RuntimeError(f"{tag}: Veo가 두 번 만들지 못했습니다(요금 없음) — {str(e)[:160]}")
                 if veo:
-                    ins = [ins[0]] + ([{"type": "image"}] if (last_img is not None and d / sec >= 0.8) else [])
+                    ins = [ins[0]] + ([{"type": "image"}] if (last_img is not None and d / sec >= 0.8 and "last" not in VEO_DROPPED) else [])
                 for short in (() if veo else (False, True)):
                     prompt = _gen_prompt(sub, rows, plan, sec, swap, bool(rm.get("keep_people")), short) + (GEN_LAST if len(ins) > 1 else "")
                     res.setdefault("gen_prompts_used", {})[f"scene{k + 1}_{j + 1}"] = prompt
@@ -4834,8 +4857,8 @@ def step_remake(ep, epdir, work, log, req):
             for k_e, txt in enumerate((ending, "The Shiba Inu stands calmly next to the product and looks at the camera, tail wagging gently.")):
                 _remake_spend(res, usd_e, "끝 장면 영상(Veo 3.1 Lite)" + (" 순한 글로 한 번 더" if k_e else ""), cap)
                 try:
-                    raw.write_bytes(_veo(key, start, REMAKE_END_PROMPT.format(ending=txt, sec=_veo_sec(end_sec)) + " No music.",
-                                         secs=_veo_sec(end_sec), negative=VEO_NEG))
+                    raw.write_bytes(_veo(key, start, REMAKE_END_PROMPT.format(ending=txt, sec=_veo_sec(end_sec)) + " No music. Avoid: "
+                                         + VEO_NEG + ".", secs=_veo_sec(end_sec)))
                     break
                 except Exception as e:  # noqa: BLE001
                     res["spent"] = round(float(res.get("spent", 0)) - usd_e, 3)
