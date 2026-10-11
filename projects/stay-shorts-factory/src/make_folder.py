@@ -199,6 +199,48 @@ def update_hotel(req: dict, h: dict, rank: int) -> Path:
     return OUT
 
 
+def save_cover(path: str | Path, slug: str, rank: int) -> str | None:
+    """영상에 쓴 사진(로컬 파일)을 폴더 대표 이미지로 저장한다 — 쿠팡 API 사진일 때만 부른다 (공식 홈페이지 사진은 페이지에 올리지 않는 규칙 유지)."""
+    try:
+        from PIL import Image
+        with Image.open(path) as im:
+            im = im.convert("RGB")
+            if max(im.size) > 1000:
+                im.thumbnail((1000, 1000), Image.LANCZOS)
+            d = IMG_DIR / slug
+            d.mkdir(parents=True, exist_ok=True)
+            im.save(d / f"{rank}.jpg", "JPEG", quality=86, optimize=True)
+        return f"img/{slug}/{rank}.jpg"
+    except Exception as e:  # noqa: BLE001
+        log(f"대표 이미지 저장 실패: {str(e)[:60]}")
+        return None
+
+
+def place_hotel(req: dict, h: dict, rank: int, cover: str | Path | None = None) -> int:
+    """단일 숙소 영상용: 숙소를 테마 폴더에 넣고(update_hotel) **페이지에 보이는 순번(1부터)** 을 돌려준다.
+    영상 끝 카드·나레이션의 "폴더 N번" 은 이 값이다 (순위표 번호가 아니라 페이지 정렬 순서). 2026-10-11 이름 비공개 결정."""
+    slug = slug_of(str(req.get("month") or ""), str(req.get("theme") or ""), str(req.get("region") or ""))
+    data = {}
+    if OUT.exists():
+        try:
+            data = json.loads(OUT.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            data = {}
+    folder = next((f for f in (data.get("folders") or []) if f.get("slug") == slug), None) or {"hotels": []}
+    prev = next((x for x in folder["hotels"] if x.get("name") == h["name"]), None)
+    rank = int(rank or (prev or {}).get("rank") or (len(folder["hotels"]) + 1))
+    hh = dict(h)
+    if cover:
+        img = save_cover(cover, slug, rank)
+        if img:
+            hh["image_local"] = img
+    update_hotel(req, hh, rank)
+    data = json.loads(OUT.read_text(encoding="utf-8"))
+    folder = next(f for f in data["folders"] if f.get("slug") == slug)
+    names = [x["name"] for x in sorted(folder["hotels"], key=lambda e: e.get("rank") or 99)]
+    return names.index(h["name"]) + 1
+
+
 def from_report() -> Path:
     """최근 report.json(미리보기·제작 기록) + 순위표로 폴더를 만든다 (report 에 없는 지역·제휴 링크는 순위표에서 채운다)."""
     rep = json.loads(REPORT.read_text(encoding="utf-8"))

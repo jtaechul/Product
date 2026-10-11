@@ -145,7 +145,7 @@
     const L = h.links || {};
     const btn = (cls, url, label, icon) => url ? `<a class="btn ${cls}" href="${esc(url)}" target="_blank" rel="noopener sponsored">${icon}${label}</a>` : "";
     return `<article class="hotel">
-      <div class="hero ${h.image?'':'nopic'}"><span class="badge ${r1?'r1':''}">${h.rank}위</span>${hero}</div>
+      <div class="hero ${h.image?'':'nopic'}"><span class="badge ${r1?'r1':''}">${h.rank}번</span>${hero}</div>
       <div class="body">
         <h3 class="name">${esc(h.name)}</h3>
         ${h.city?`<p class="city">${esc(h.city)}</p>`:""}
