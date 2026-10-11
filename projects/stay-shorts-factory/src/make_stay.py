@@ -175,7 +175,9 @@ def gemini_json(model: str, system: str, content: str) -> dict:
 
 
 def gemini_tts(model: str, text: str, voice: str, style: str, out_wav: Path) -> float:
-    body = {"contents": [{"parts": [{"text": f"{style}:\n{text}"}]}],
+    # ⚠️ 2026-10-11 실측: style 지시문을 본문 앞에 붙이면 TTS 가 **지시문까지 읽는다** (구간마다 약 6초, 무음 분석으로 확인).
+    #    stay-run-4·5 모두 그랬다. 이제 지시문은 붙이지 않는다 — style 은 빈 문자열로 둔다.
+    body = {"contents": [{"parts": [{"text": (f"{style}:\n{text}" if style else text)}]}],
             "generationConfig": {"responseModalities": ["AUDIO"],
                                  "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}}}}
     last = None
@@ -495,7 +497,7 @@ def produce_veo(req: dict, stay: str, items: list, models: dict, report: dict) -
     wav, raw = BUILD / "narration.wav", BUILD / "narration_raw.wav"
     _try_models("tts", models["tts"], lambda m: gemini_tts(
         m, "\n".join(lines), str(req.get("voice") or "Erinome"),
-        "다음 대사를 밝고 설레는 여행 추천 내레이션 톤으로, 또렷하고 리듬감 있게 읽어줘", raw))
+        "", raw))   # 지시문 없이 (읽어 버리는 버그)
     tempo = float(req.get("tempo") or 1.12)
     run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-filter:a", f"atempo={tempo:.3f}", str(wav)])
     with wave.open(str(wav), "rb") as wf:
@@ -576,7 +578,7 @@ def produce_photo(req: dict, stay: str, items: list, models: dict, report: dict)
     wav, raw = BUILD / "narration.wav", BUILD / "narration_raw.wav"
     _try_models("tts", models["tts"], lambda m: gemini_tts(
         m, "\n".join(lines), str(req.get("voice") or "Erinome"),
-        "다음 대사를 밝고 설레는 여행 추천 내레이션 톤으로, 또렷하고 리듬감 있게 읽어줘", raw))
+        "", raw))   # 지시문 없이 (읽어 버리는 버그)
     tempo = float(req.get("tempo") or 1.12)
     run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-filter:a", f"atempo={tempo:.3f}", str(wav)])
     with wave.open(str(wav), "rb") as wf:

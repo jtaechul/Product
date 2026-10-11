@@ -40,9 +40,9 @@ ROOT = ms.ROOT
 BUILD = ms.BUILD
 FONT_HAND = ROOT / "assets" / "fonts" / "NanumPenScript-Regular.ttf"
 W, H, FPS = ms.W, ms.H, ms.FPS
-CUT = 2.0                                   # 컷 길이(초) — Veo 4초 클립의 앞 2초
-PLAN = {"hook": 2.5, "rank": 5.0, "top": 6.0, "cta": 3.5}
-BROLL = ["calm pool water surface ripples close up", "steam rising from hot spring water", "sunlight reflecting on blue pool water"]
+CUT = 2.0                                   # 컷 길이(초) — Veo 4초 클립을 앞 2초·뒤 2초로 나눠 쓴다 (템포 2초, 추가 비용 0)
+PLAN = {"hook": 4.0, "rank": 7.0, "top": 9.0, "cta": 4.5}     # 구간 계획 길이 — 나레이션이 더 길면 그만큼 늘어난다
+BROLL = ["swimming pool water surface ripples sunlight", "hot spring water steam close up", "blue pool water texture"]
 BANNED = ms.BANNED + ["최장", "최대", "국내 유일"]
 
 
@@ -146,16 +146,18 @@ SCRIPT_SYSTEM = """너는 "데이터로 고른 호캉스" 쇼츠의 큐레이터
 입력: 테마·지역·시기, 숙소 3곳(3위→1위 순)의 확인된 사실(쿠팡 객실 이름, 블로그로 확인된 시설, 최근 30일 블로그 글 수, 후기 아쉬움).
 절대 규칙
 - 입력에 없는 시설·서비스·가격·할인을 말하지 않는다. 가격 숫자 금지. "최고·유일·최저가·1위(순위 외)·완벽·보장·최장·최대" 금지.
-- 숫자는 입력의 블로그 글 수만 쓴다 ("최근 30일 후기 931건"). 시설은 '확인된 시설'과 객실 이름에 있는 것만.
-- 혜택은 조건문으로 쓴다 (예: "조식 포함 객실을 고르면", "워터파크 이용권이 묶인 객실이 있어요").
-- 자막(caption)은 3~10자, 한 줄, 느낌표·이모지 금지. 나레이션(narration)은 한 구간에 최대 2문장·합쳐 34자 이내.
+- 블로그 글 수는 화면 뱃지가 따로 보여 준다. **자막(caption)에는 숫자·'후기 N건'을 쓰지 않는다.** 나레이션에서는 1위 구간에서만 한 번 말해도 된다.
+- 자막은 시설·혜택·느낌 키워드 3~10자 한 줄 (예: "사계절 온수 인피니티풀", "객실 전부 오션뷰", "조식 포함 객실"). 느낌표·이모지 금지. 세 숙소의 자막이 서로 다른 내용이어야 한다.
+- 시설은 '확인된 시설'과 객실 이름에 있는 것만. 혜택(benefit)은 테마와 관련된 것(워터파크·온수풀 이용권 포함, 조식 포함, 온천 객실)만 조건문 한 줄로. 관련 없는 사소한 것(취사 가능 등)이면 빈 문자열.
+- 나레이션 길이(공백 제외): hook 24자 이내 · 3위/2위는 narration+benefit 합쳐 38자 이내 · 1위는 48자 이내 · cta 32자 이내. 짧은 문장 1~2개.
 출력 JSON 만:
-{"hook":{"caption":"...","narration":"..."},            ← 질문형 훅. 예: 자막 "후기 제일 많은 온수풀은?" / 나레이션 "11월 강원 온수풀, 후기 데이터로 세 곳 골랐어요"
- "ranks":[{"rank":3,"captions":["...","..."],"narration":"...","benefit":"조건문 한 줄"},
+{"hook":{"caption":"...","narration":"..."},            ← 질문형 훅, 테마를 넣는다. 예: 자막 "11월 온수풀 후기 1위는?" / 나레이션 "강원 온수풀, 후기 데이터로 세 곳 골랐어요"
+ "ranks":[{"rank":3,"captions":["...","..."],"narration":"...","benefit":"조건문 한 줄 또는 빈 문자열"},
           {"rank":2,"captions":["...","..."],"narration":"...","benefit":"..."},
           {"rank":1,"captions":["...","..."],"narration":"...","benefit":"...","honest":"입력의 아쉬움이 있으면 그대로, 없으면 빈 문자열"}],
  "cta":{"caption":"...","narration":"..."},             ← 저장 + 프로필 링크. 예: 자막 "저장해두고 비교하세요" / 나레이션 "세 곳 링크는 프로필에 있어요. 저장해 두고 비교해 보세요"
  "title":"유튜브 제목 12~25자","caption":"인스타 캡션 2문장(고지문·링크는 시스템이 붙임)","hashtags":["#..","#..","#..","#..","#.."]}"""
+NARR_MAX = {"hook": 24, "r3": 38, "r2": 38, "r1": 48, "cta": 32}
 
 
 def check_script(s: dict, hotels: list[dict]) -> list[str]:
@@ -163,16 +165,21 @@ def check_script(s: dict, hotels: list[dict]) -> list[str]:
     ranks = s.get("ranks") or []
     if [r.get("rank") for r in ranks] != [3, 2, 1]:
         errs.append("ranks 는 3,2,1 순서 3개")
-    segs = [s.get("hook") or {}, *ranks, s.get("cta") or {}]
+    segs = [("hook", s.get("hook") or {})] + [(f"r{r.get('rank')}", r) for r in ranks] + [("cta", s.get("cta") or {})]
     joined = ""
-    for g in segs:
+    for key, g in segs:
         caps = g.get("captions") or ([g.get("caption")] if g.get("caption") else [])
+        if key.startswith("r") and len(caps) != 2:
+            errs.append(f"{key} 자막은 2개")
         for cp in caps:
             if not (2 <= len(str(cp).replace(" ", "")) <= 12):
                 errs.append(f"자막 길이: '{cp}'")
-        n = str(g.get("narration", ""))
-        if not n or len(n.replace(" ", "")) > 40:
-            errs.append(f"나레이션 길이: '{n[:20]}'")
+            if key.startswith("r") and re.search(r"\d|후기", str(cp)):      # 순위 자막엔 숫자·후기 금지 (뱃지가 보여 준다). 훅은 허용
+                errs.append(f"순위 자막에 숫자·후기 금지: '{cp}'")
+        n = str(g.get("narration", "")).strip()
+        total = len((n + str(g.get("benefit", ""))).replace(" ", ""))
+        if not n or total > NARR_MAX.get(key, 40):
+            errs.append(f"{key} 나레이션 {total}자 (한도 {NARR_MAX.get(key, 40)})")
         joined += " ".join(map(str, caps)) + n + str(g.get("benefit", "")) + str(g.get("honest", ""))
     joined += str(s.get("title", "")) + str(s.get("caption", ""))
     for b in BANNED:
@@ -312,23 +319,31 @@ def cta_card(path: Path, hotels: list[dict], caption: str):
 
 # ── 4) 소리·합성 ──────────────────────────────────────────────────────
 def tts(models: dict, text: str, out: Path, voice: str, tempo: float) -> float:
+    """구간 나레이션 한 개. 지시문 없이 본문만 보내고(읽어 버리는 버그), 앞뒤 무음을 잘라 자막과 맞춘다."""
     raw = out.with_suffix(".raw.wav")
-    ms._try_models("tts", models["tts"], lambda m: ms.gemini_tts(
-        m, text, voice, "다음 대사를 친구에게 추천하듯 밝고 또렷하게, 너무 빠르지 않게 읽어줘", raw))
-    ms.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-filter:a", f"atempo={tempo:.3f}", str(out)])
+    ms._try_models("tts", models["tts"], lambda m: ms.gemini_tts(m, text, voice, "", raw))
+    trim = ("silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.12,areverse,"
+            "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.25,areverse")
+    ms.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-filter:a", f"{trim},atempo={tempo:.3f}", str(out)])
     with wave.open(str(out), "rb") as wf:
-        return wf.getnframes() / wf.getframerate()
+        sec = wf.getnframes() / wf.getframerate()
+    chars = len(text.replace(" ", ""))
+    if sec > 0.32 * chars + 2.0:                 # 글자 수 대비 너무 길면 지시문을 읽었거나 긴 공백 — 기록에 남긴다
+        log(f"⚠️ 나레이션이 글자 수 대비 깁니다: {chars}자 {sec:.1f}초 — '{text[:20]}'")
+    return sec
 
 
-def segment(idx: int, clips: list[Path], wav: Path | None, narr: float, planned: float, overlays: list[tuple[Path, float, float]],
+def segment(idx: int, pieces: list, wav: Path | None, narr: float, planned: float, overlays: list[tuple[Path, float, float]],
             counter: tuple[Path, int] | None = None) -> tuple[Path, float]:
-    """클립들을 이어 붙이고(각 CUT 초) 자막·뱃지를 시간대별로 얹고 구간 나레이션을 합친다 → seg_N.mp4."""
+    """조각(path 또는 (path, 시작초, 길이초))들을 이어 붙이고 자막·뱃지를 시간대별로 얹고 구간 나레이션을 합친다 → seg_N.mp4."""
     norm = []
-    for k, c in enumerate(clips):
+    for k, pc in enumerate(pieces):
+        c, start, dur = (pc, 0.0, CUT) if not isinstance(pc, tuple) else pc
+        avail = max(0.3, ms.probe_duration(c) - start)
         d = BUILD / f"n{idx}_{k}.mp4"
-        ms.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(c), "-an",
+        ms.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{start:.3f}", "-i", str(c), "-an",
                 "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase:flags=lanczos,crop={W}:{H},fps={FPS},setsar=1",
-                "-t", f"{CUT if ms.probe_duration(c) >= CUT else ms.probe_duration(c):.3f}",
+                "-t", f"{min(dur, avail):.3f}",
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p", str(d)])
         norm.append(d)
     vlen = sum(ms.probe_duration(d) for d in norm)
@@ -444,16 +459,21 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     cdir = None
     if top.get("blog_30d"):
         cdir = BUILD / "counter"; counter_frames(int(top["blog_30d"]), cdir, 1.2)
-    seg, L = segment(0, [clips[top["shots"][0]["n"]], clips[top["shots"][1]["n"]]], BUILD / "narr_hook.wav", narr["hook"], PLAN["hook"],
+    A, Bc = clips[top["shots"][0]["n"]], clips[top["shots"][1]["n"]]
+    seg, L = segment(0, [(A, 0, CUT), (Bc, 0, CUT)], BUILD / "narr_hook.wav", narr["hook"], PLAN["hook"],
                      [(ov, 0, 99)], (cdir, 1) if cdir else None)
     segs.append(seg)
-    # 3위 → 2위 → 1위
+    # 3위 → 2위 → 1위: [A 앞 2초, B롤 1초, B 앞 2초, A 뒤 2초] (1위는 B 뒤 2초까지) — 2초 템포, Veo 클립은 2개뿐
     for i, (h, r) in enumerate(zip(hotels, script["ranks"])):
         rank = r["rank"]
         planned = PLAN["top"] if rank == 1 else PLAN["rank"]
-        cl = [clips[h["shots"][0]["n"]], clips[h["shots"][1]["n"]]]
-        if rank != 1 and brolls[i % 2]:
-            cl.append(brolls[i % 2])
+        A, Bc = clips[h["shots"][0]["n"]], clips[h["shots"][1]["n"]]
+        cl = [(A, 0, CUT)]
+        if brolls[i % 2]:
+            cl.append((brolls[i % 2], 0, 1.0))
+        cl += [(Bc, 0, CUT), (A, CUT, CUT)]
+        if rank == 1:
+            cl.append((Bc, CUT, CUT))
         key = f"r{rank}"
         seglen_guess = max(planned, narr[key] + 0.35)
         half = seglen_guess / 2
@@ -465,7 +485,7 @@ def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, di
         segs.append(seg)
     # CTA: 1위 컷 위에 어두운 카드
     card = BUILD / "ov_cta.png"; cta_card(card, hotels, script["cta"]["caption"])
-    seg, L = segment(9, [clips[top["shots"][0]["n"]]], BUILD / "narr_cta.wav", narr["cta"], PLAN["cta"], [(card, 0, 99)])
+    seg, L = segment(9, [(Bc, CUT, CUT), (A, CUT, CUT)], BUILD / "narr_cta.wav", narr["cta"], PLAN["cta"], [(card, 0, 99)])
     segs.append(seg)
 
     (BUILD / "concat.txt").write_text("".join(f"file '{s.name}'\n" for s in segs), encoding="utf-8")
