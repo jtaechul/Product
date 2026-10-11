@@ -2828,10 +2828,27 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
                .replace("six grey", f"{N} grey").replace("six panels", f"{N} panels"))
     bad_text: list = []
     bad_body: list = []
-    tries = 3 if lead else 2                            # 새로 만들기: 몸 엉킴·글씨는 두 번까지 다시(위아래 띠는 예전처럼 한 번)
-    for attempt in range(tries):                        # 위아래 띠·글씨·몸 엉킴이 걸리면 더 강한 지시로 다시 그린다 — 그래도 걸리면 멈춤(보여 주지 않음)
-        if attempt:
-            if not (bad_text or bad_body) and attempt >= 2:
+    seen: dict = {}
+    tries = 3 if lead else 2                            # 새로 만들기: 몸 엉킴·글씨는 두 번까지 고치기(위아래 띠는 예전처럼 다시 그리기 한 번)
+    for attempt in range(tries):                        # 위아래 띠는 다시 그리고, 글씨·몸 엉킴은 그 칸만 고친다(다른 칸은 그대로) — 그래도 걸리면 멈춤(보여 주지 않음)
+        repair = bool(attempt and lead and not bad and (bad_text or bad_body) and len(bad_body) <= N // 2)
+        if repair:                                      # ⭐ 처음부터 다시 그리면 멀쩡한 칸까지 새로 그려 새 문제가 생긴다(2026-10-11 실측: 세 번 다 다른 칸에서 글씨·다리) → 고칠 칸만 고친다
+            fixes = []
+            for k in sorted(set(bad_text) | set(bad_body)):
+                parts = []
+                if k in bad_body:
+                    parts.append(f"{seen.get(k, 'the animals look broken')} - redraw the animals in this panel side by side with a clear "
+                                 "gap between them (never one on top of the other, legs not crossing), each one a complete, separate real dog "
+                                 "with one head, four legs and one tail, keeping the same moment of the story")
+                if k in bad_text:
+                    parts.append("erase every word, letter, number, logo and sign from the walls, machines and objects - leave plain surfaces")
+                fixes.append(f"Panel {k}: " + "; ".join(parts) + ".")
+            _remake_spend(res, img_usd, f"스토리보드 고치기({', '.join(str(k) for k in sorted(set(bad_text) | set(bad_body)))}번 칸)", cap)
+            r = gen_image(BOARD_REPAIR.format(cols=cols, rows=rows, fixes=" ".join(fixes)),
+                          [work / "board.jpg", ROOT / "pet-episodes" / "characters" / "dog.png"], out, aspect, "4K")
+            res.setdefault("board_repairs", []).append({"panels": sorted(set(bad_text) | set(bad_body)), "fixes": " ".join(fixes)[:600]})
+        elif attempt:
+            if not (bad_text or bad_body or bad):
                 break
             _remake_spend(res, img_usd, "스토리보드 다시(" + ("몸 엉킴" if bad_body else "글씨·로고" if bad_text else "위아래 띠") + ")", cap)
             if bad_body:
@@ -2845,7 +2862,8 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
                 ask += (" IMPORTANT: every panel must be one complete photo from its top edge to its bottom edge - the top and bottom "
                         "fifths of each panel are real room or scenery with the same detail, brightness and sharpness as the middle; "
                         "never a plain white, grey, black, blurred or empty area.")
-        r = gen_image(ask, [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, aspect, "4K" if lead else "2K")
+        if not repair:
+            r = gen_image(ask, [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, aspect, "4K" if lead else "2K")
         if not r.get("ok"):
             raise RuntimeError(f"스토리보드 그림 실패: {r.get('error')}")
         im = Image.open(out).convert("RGB")
@@ -2858,7 +2876,7 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
             im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
             frames.append(f)
         bad = _panel_bands(frames, painted=extend and not fresh, real=(res.get("vertical") or {}).get("mode") == "track" and not fresh)
-        bad_text, bad_body = _board_check(frames, res, cap) if (lead and not bad) else ([], [])   # 새로 만들기: 칸마다 글씨·로고·몸 엉킴 검사
+        bad_text, bad_body, seen = _board_check(frames, res, cap) if (lead and not bad) else ([], [], {})   # 새로 만들기: 칸마다 글씨·로고·몸 엉킴 검사
         if not bad and not bad_text and not bad_body:
             break
         if bad:
@@ -2876,20 +2894,26 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
         (work / "board.jpg").unlink(missing_ok=True)
         what = ([f"{', '.join(str(b) for b in bad_body)}번 칸 개 몸이 엉킴"] if bad_body else []) + \
                ([f"{', '.join(str(b) for b in bad_text)}번 칸 글씨·로고"] if bad_text else [])
-        raise RuntimeError(f"스토리보드를 {tries}번 그려도 {' / '.join(what)} — 보여 주지 않고 멈춤")
+        raise RuntimeError(f"스토리보드를 그리고 두 번 고쳐도 {' / '.join(what)} — 보여 주지 않고 멈춤")
     return {"ok": True, "panels": len(frames), "tries": attempt + 1}
 
 
-PANEL_CHECK_ASK = ("This is one storyboard panel (a photo). Check two things. 1) TEXT: does it show ANY visible letters, words, numbers, "
-                   "logos, watermarks, account names or app icons - including garbled or fake lettering on walls, posters, signs, "
-                   "screens or clothes? 2) BODY: is any animal anatomically broken - two animals merged or fused into one shape, sharing "
-                   "legs or passing through each other, extra or missing heads, legs or tails, a melted or twisted body, a dog-headed "
-                   "human, or a dog standing upright like a person? Two animals touching or lying on each other is fine when both "
-                   "bodies are complete and clearly separate. JSON only: {\"text\": false, \"body\": false, \"what\": \"short English\"}")
+PANEL_CHECK_ASK = ("This is one storyboard panel (a photo). Check two things. 1) TEXT: is there writing a viewer would notice - words or "
+                   "letters (readable or garbled) on walls, posters, signs, screens or clothes, a logo or brand name, a watermark, an "
+                   "account name or an app icon? Tiny unreadable markings, buttons and displays on machines do NOT count. 2) BODY: is any "
+                   "animal clearly anatomically broken - two animals merged or fused into one shape, sharing legs or passing through each "
+                   "other, one animal lying on top of another so their bodies overlap, legs crossed or intertwined so it is unclear which "
+                   "leg belongs to which animal, an extra head or extra legs, a melted or twisted body, a dog-headed human, or a dog "
+                   "standing upright like a person? Legs hidden behind the animal's own body or an object are fine; two animals briefly "
+                   "touching side by side is fine. JSON only: {\"text\": false, \"body\": false, \"what\": \"short English\"}")
+BOARD_REPAIR = ("Image 1 is a {cols}x{rows} storyboard grid of photos (panel 1 is top-left, numbered left to right, top row first). Return "
+                "the SAME grid: same layout, panel sizes, borders, framing, characters, poses, set and light, and keep every panel not "
+                "listed here exactly as it is. Fix ONLY these panels: {fixes} Image 2 is the Shiba Inu (same face, fur colour and "
+                "markings). Photorealistic, sharp, no text anywhere.")
 
 
 def _board_check(frames: list, res: dict, cap: float) -> tuple:
-    """스토리보드 칸마다 글씨·로고와 개 몸 엉킴(합쳐짐·다리 수·사람처럼 선 개)을 AI가 본다(칸 전체 약 0.01달러). → (글씨 칸, 몸 칸)"""
+    """스토리보드 칸마다 글씨·로고와 개 몸 엉킴(합쳐짐·다리 수·사람처럼 선 개)을 AI가 본다(칸 전체 약 0.01달러). → (글씨 칸, 몸 칸, {칸: 무엇})"""
     _remake_spend(res, REMAKE_COST["check"], "스토리보드 칸 검사(글씨·몸 엉킴)", cap)
     text, body, seen, failed = [], [], [], 0
     for i, f in enumerate(frames):
@@ -2904,7 +2928,7 @@ def _board_check(frames: list, res: dict, cap: float) -> tuple:
         if o.get("text") is True or o.get("body") is True:
             seen.append({"panel": i + 1, "what": str(o.get("what", ""))[:160]})
     res.setdefault("board_check", []).append({"text": text, "body": body, "seen": seen, "failed": failed})
-    return text, body
+    return text, body, {x["panel"]: x["what"] for x in seen}
 
 
 def _img2(swap: str) -> str:
@@ -3849,16 +3873,33 @@ GEN_PLAN_ASK = ("Watch AND listen to this whole clip ({L:.1f} s). It is a viral 
                 "subscribe / follow screen, credits, or a black or darkened screen with text or icons; \"content\" is the time range of "
                 "the story only (without those parts). IGNORE all on-screen text, captions, stickers, watermarks, logos, account handles and "
                 "app icons: never mention them in set, cast, shot or frame, and describe walls, posters, signs and screens as plain. "
-                "\"beats\" covers the story every 0.5 s. When two characters touch or one lands on another, describe two complete, "
-                "separate bodies side by side or one on top of the other (never merged). Never name or identify real people.")
+                "\"beats\" covers the story every 0.5 s." + "{contact}" + " Never name or identify real people.")
+GEN_CONTACT = (" CONTACT RULE (AI video cannot draw overlapping bodies - they melt together): never put one animal on top of or under "
+               "another and never let their legs cross or intertwine. Re-stage every collision, landing or pile-up as a side-by-side "
+               "moment that keeps the same joke and timing - one dog slides or tumbles INTO the other's side, they bump, both roll "
+               "over NEXT TO each other - touching only briefly, with a clear gap between the bodies the rest of the time, every leg "
+               "of each dog visible and attached to its own body.")
 GEN_REAL_DOG = (" Every character who becomes a dog is a REAL four-legged dog with natural dog anatomy and posture - never a dog-headed "
                 "human, never standing upright on two legs like a person, no human hands, no clothes - doing the closest natural dog "
                 "version of the original action (for example a child gripping a handlebar becomes the dog with its front paws hooked "
-                "over the bar).")
+                "over the bar). If the original stunt is impossible for a dog, use the simplest physically natural dog movement that "
+                "keeps the same joke and timing (slipping, tumbling, bumping into the other dog's side and rolling next to it).")
 GEN_ANATOMY = (" ANATOMY: every animal is one complete, separate, real animal - one head, one body, one tail and exactly four legs with "
                "natural proportions. When two animals touch, collide or one lands on the other, both bodies stay complete and clearly "
                "separate, each with its own outline - never merged, fused, melted into one shape, sharing legs or passing through each "
-               "other; no dog-headed humans.")
+               "other; no dog-headed humans. PHYSICS: real weight and gravity - bodies fall, slide and roll the way real dogs do, never "
+               "pass through each other, the floor or the machines, and each dog keeps exactly the same size, colour and markings in "
+               "every frame (no morphing between the two dogs).")
+GEN_LAST = (" Image 2 is the LAST FRAME of this clip: the clip ends exactly on image 2 (same poses, positions and framing) - move "
+            "naturally and physically from image 1 to image 2.")
+GEN_SEG_LEN = 2.2                # 검사한 스토리보드 칸 두 장(처음·끝) 사이를 이 길이쯤으로 나눠 만든다 — 영상 AI가 부딪힘을 처음부터 지어내지 않게
+FRAME_CHECK_ASK = ("This is one frame of an AI video. Check two things. 1) BODY: is any animal clearly anatomically broken - two animals "
+                   "merged or fused into one shape, sharing legs or passing through each other, one animal lying on top of another so "
+                   "their bodies overlap, legs intertwined so it is unclear which leg belongs to which animal, an extra head or extra legs, "
+                   "a melted or twisted body, a dog-headed human, or a dog standing upright like a person? Legs hidden behind the animal's "
+                   "own body or an object are fine; two animals briefly touching side by side is fine; motion blur alone is fine. 2) TEXT: writing a viewer would notice (words or garbled letters on walls, signs or screens, "
+                   "a logo, watermark or account name)? Tiny unreadable markings on machines do NOT count. JSON only: "
+                   "{\"body\": false, \"text\": false, \"what\": \"short English\"}")
 GEN_SCENE = ("DURATION: {sec:g} seconds. Image 1 is the FIRST FRAME of this shot: keep exactly its framing, characters, set and light. "
              "Re-create this shot of a viral video as new, clean, photorealistic vertical 9:16 footage that matches the original shot "
              "action for action. SHOT: {shot}. SET (the same in every shot): {set}. CHARACTERS: {cast}. CHANGES from the original: "
@@ -3875,10 +3916,12 @@ GEN_NO_TEXT = (" NO TEXT ANYWHERE: no letters, words, numbers, symbols, logos or
                "clothes and screens are plain, with no writing.")   # 금지할 것의 이름(계정·아이콘)을 적으면 오히려 그려서 이름은 쓰지 않는다
 GEN_LOOK = (" OUTPUT: photorealistic, sharp, clean, high-detail modern phone footage with natural colours and steady exposure, filling "
             "the whole vertical 9:16 frame edge to edge. The same characters as in image 1 in every frame. No added text, captions, "
-            "watermark, borders or split screen, no morphing, no extra animals or people." + GEN_ANATOMY + GEN_NO_TEXT)
+            "watermark, borders or split screen, no morphing, no extra animals or people." + GEN_ANATOMY + GEN_CONTACT + GEN_NO_TEXT)
 GEN_BOARD_LEAD = (" This storyboard RE-SHOOTS a viral video shot by shot as new photos (not a copy of its low-quality frames). SET in "
                   "every panel: {set}. CHARACTERS: {cast}.{people} Each panel is one moment, in time order (left to right, top row first)."
-                  "{no_text}{anatomy} Every panel is a clean, undistorted photo: straight lines stay straight, no warped, smeared or broken areas.")
+                  "{no_text} The walls are bare painted walls with nothing on them (no posters, quotes, decals or signs) and machine "
+                  "consoles are plain dark panels without brand names.{anatomy} Every panel is a clean, undistorted photo: straight lines "
+                  "stay straight, no warped, smeared or broken areas.")
 
 
 _CLOTH = (r"(?:crop top|tank top|top|shorts|skirt|dress|jeans|pants|trousers|shirt|t-shirt|tee|hoodie|slippers|sandals|heels|boots|"
@@ -3896,7 +3939,7 @@ def _drop_clothes(txt: str) -> str:
     return re.sub(r"\s{2,}", " ", t).strip(" ,;")
 
 
-GEN_PLAN_V = 3                   # 분석 판(2 = 아웃트로·로고 빼기·글씨 금지, 3 = 진짜 네발 개·바뀐 등장인물 기준 0.5초 자세 — 2026-10-11 러닝머신 편 엉킴) — 판이 바뀌면 다시 분석
+GEN_PLAN_V = 4                   # 분석 판(2 = 아웃트로·로고 빼기·글씨 금지, 3 = 진짜 네발 개·바뀐 등장인물 기준 0.5초 자세 — 2026-10-11 러닝머신 편 엉킴) — 판이 바뀌면 다시 분석
 HYBRID_RX = (r"\b(?:anthropomorphic|humanoid|dog-headed|bipedal)\s+|\b(?:a |an |the )?(?:child|kid|boy|girl|man|woman|person|human|character|figure|creature)\s+with\s+"
              r"(?:a |the )?(?=shiba|dog|french bulldog|puppy)")
 TEXT_RX = (r"\s*\b(?:with |showing |and )?(?:an? |the )?(?:centered |centred |semi-transparent |large |small |white |bold )*"
@@ -3943,6 +3986,17 @@ def _gen_sec(d: float) -> float:
     return max(GEN_MIN_SEC, math.ceil(d * 2 - 1e-6) / 2)
 
 
+def _scene_segs(d: float) -> int:
+    """컷을 몇 구간으로 나눌지 — 구간 하나 약 2.2초(1.65~3.3초). 2초보다 짧은 구간은 영상 AI 최소 길이(2초)를 너무 빨리 돌려야 해서 피한다."""
+    return max(1, round(d / GEN_SEG_LEN))
+
+
+def _scene_cost(d: float) -> float:
+    """컷 d초를 검사한 칸 사이 구간들로 만들 때 주문하는 초(구간마다 0.5초 단위 올림, 최소 2초)."""
+    n = _scene_segs(d)
+    return n * _gen_sec(d / n)
+
+
 def _gen_fix(scenes: list, L: float) -> list:
     """AI가 준 컷 목록을 0~L초에 빈틈·겹침 없이 맞춘다(0.25초 미만 컷은 앞 컷에 붙인다)."""
     out = []
@@ -3982,7 +4036,7 @@ def _gen_fit(scenes: list, budget_sec: float, max_n: int = GEN_MAX_SCENES) -> tu
     """컷이 max_n개를 넘거나 주문 길이 합이 예산(초)을 넘으면, 가장 짧은 컷을 더 짧은 이웃 컷에 '컷 전환 지시'로 합친다."""
     sc = [{**s, "cuts": list(s.get("cuts") or [])} for s in scenes]
     merged = 0
-    while len(sc) > 1 and (len(sc) > max_n or sum(_gen_sec(s["t1"] - s["t0"]) for s in sc) > budget_sec + 1e-6):
+    while len(sc) > 1 and (len(sc) > max_n or sum(_scene_cost(s["t1"] - s["t0"]) for s in sc) > budget_sec + 1e-6):
         ln = [s["t1"] - s["t0"] for s in sc]
         i = min(range(len(sc)), key=lambda k: (ln[k], k))
         j = 1 if i == 0 else i - 1 if i == len(sc) - 1 else (i - 1 if ln[i - 1] <= ln[i + 1] else i + 1)
@@ -3994,10 +4048,11 @@ def _gen_fit(scenes: list, budget_sec: float, max_n: int = GEN_MAX_SCENES) -> tu
     return sc, merged
 
 
-def _gen_plan(ref: Path, L: float, work: Path, res: dict, cap: float, swap: str, cast: str) -> dict:
-    """연출 분석(약 0.01달러) — 같은 원본·같은 길이면 log의 분석을 다시 쓴다(무료)."""
+def _gen_plan(ref: Path, L: float, work: Path, res: dict, cap: float, swap: str, cast: str, keep: bool = False) -> dict:
+    """연출 분석(약 0.01달러) — 같은 원본·같은 길이면 log의 분석을 다시 쓴다(무료). keep = 확인받은 스토리보드가 있어 그 분석을 그대로 쓴다."""
     plan = res.get("gen_plan") or {}
-    if plan.get("scenes") and plan.get("v") == GEN_PLAN_V and plan.get("src") == res.get("src_sig") and abs(float(plan.get("L", 0)) - L) < 0.05:
+    if plan.get("scenes") and (plan.get("v") == GEN_PLAN_V or (keep and plan.get("fit"))) and plan.get("src") == res.get("src_sig") \
+            and abs(float(plan.get("L", 0)) - L) < 0.05:
         return plan
     clip = work / "_gen_plan.mp4"
     _ff(["-i", str(ref), "-vf", "scale=-2:480", "-c:v", "libx264", "-crf", "26", "-c:a", "aac", "-b:a", "96k", str(clip)])
@@ -4005,7 +4060,8 @@ def _gen_plan(ref: Path, L: float, work: Path, res: dict, cap: float, swap: str,
     people = (f"Characters after the changes: {cast}." if cast else "")
     rows = (res.get("timeline") or {}).get("all") or []
     rows_txt = " ".join(f"[{x.get('t')}s] {_drop_clothes(str(x.get('action', '')))}" for x in rows)[:4000] or "(none)"
-    o = _video_json(clip, GEN_PLAN_ASK.format(L=L, swap=_gen_swap(swap), people=people, real_dog=GEN_REAL_DOG, rows=rows_txt)) or {}
+    o = _video_json(clip, GEN_PLAN_ASK.format(L=L, swap=_gen_swap(swap), people=people, real_dog=GEN_REAL_DOG, rows=rows_txt,
+                                              contact=GEN_CONTACT)) or {}
     scenes = []
     for x in o.get("scenes") if isinstance(o.get("scenes"), list) else []:
         try:
@@ -4105,7 +4161,7 @@ def _gen_budget(res: dict, cap: float, end_sec: float, gen_res: str, work: Path)
 
 
 def _gen_need(work: Path, res: dict, end_sec: float, gen_res: str, gone: set | None = None) -> float:
-    """새로 만들기 방식의 남은 비용(이미 만든 컷·그림은 빼고, gone은 지울 예정)."""
+    """새로 만들기 방식의 남은 비용(이미 만든 구간·그림은 빼고, gone은 지울 예정)."""
     gone = gone or set()
     mult = 3 if gen_res == "720p" else 1
 
@@ -4114,20 +4170,44 @@ def _gen_need(work: Path, res: dict, end_sec: float, gen_res: str, gone: set | N
     scenes = (res.get("gen_plan") or {}).get("fit") or (res.get("gen_plan") or {}).get("scenes") or []
     usd = 0 if have("board.jpg") else REMAKE_COST["image4k"]
     if not have("remake.mp4"):
-        usd += sum(REMAKE_COST["omni_sec"] * _gen_sec(s["t1"] - s["t0"]) * mult for k, s in enumerate(scenes) if not have(f"rm_scene{k + 1}.mp4"))
+        for k, s in enumerate(scenes):
+            segs = s.get("segs") or _segs_snap(s, [float(t) for t in (res.get("gen_plan") or {}).get("board_times") or []])
+            for j, g in enumerate(segs):
+                if not have(f"rm_scene{k + 1}_{j + 1}.mp4"):
+                    usd += REMAKE_COST["omni_sec"] * _gen_sec(float(g[1]) - float(g[0])) * mult
     usd += 0 if have("rm_end_start.png") else REMAKE_COST["image"]
     usd += 0 if have("rm_end.mp4") else REMAKE_COST["omni_sec"] * end_sec * mult
     usd += 0 if have("rm_vo.wav") else REMAKE_COST["tts"]
     return round(usd, 2)
 
 
-def _gen_board_spec(plan: dict, fit: list, rows: list, L: float, n_pan: int, swap: str) -> list:
-    """스토리보드 칸 시각·칸 글: 만들 컷(fit)의 첫 장면 칸 + 원본의 다른 컷 첫 장면 + 남는 칸은 긴 컷의 중간 장면(시간 순서).
-    fit의 컷마다 첫 장면 칸 번호(panel)를 적어 둔다. 돌려주는 값 = [시각], [칸 글]."""
-    anchor = [float(s["t0"]) for s in fit]
-    others = [float(s["t0"]) for s in plan["scenes"] if all(abs(float(s["t0"]) - a) > 1e-6 for a in anchor)]
-    starts = anchor + others[:max(0, n_pan - len(anchor))]
-    extra = [t for t in _scene_times(rows, L, n_pan) if all(abs(t - s) > 0.4 for s in starts)]
+def _gen_board_spec(plan: dict, fit: list, rows: list, L: float, n_pan: int, swap: str) -> tuple:
+    """스토리보드 칸 시각·칸 글. 만들 컷(fit)마다 '고정 칸'(컷 처음 + 약 2.2초 간격 + 컷 끝 바로 앞)을 먼저 두고 — 영상은 이 검사한 칸 두 장을
+    처음·끝 장면으로 구간마다 만든다(영상 AI가 부딪힘·넘어짐을 처음부터 지어내지 않게, 2026-10-11 몸 엉킴 사고) — 남는 칸은 원본의 다른 컷 처음·중간 장면.
+    fit의 컷마다 panel(첫 칸)·segs([시작, 끝, 처음 칸, 끝 칸(0 = 없음)])를 적는다. 돌려주는 값 = [시각], [칸 글]."""
+    nseg = {i: _scene_segs(float(s["t1"]) - float(s["t0"])) for i, s in enumerate(fit)}
+    ends = {i: True for i in range(len(fit))}
+
+    def anchor_count():
+        return sum(nseg[i] + (1 if ends[i] else 0) for i in nseg)
+    while anchor_count() > n_pan:                       # 칸이 모자라면: 구간 수를 줄이고(긴 컷부터), 그래도 모자라면 컷 끝 칸을 뺀다
+        i = max(nseg, key=lambda k: (nseg[k], float(fit[k]["t1"]) - float(fit[k]["t0"])))
+        if nseg[i] > 1:
+            nseg[i] -= 1
+            continue
+        j = next((k for k in sorted(ends, key=lambda k: -(float(fit[k]["t1"]) - float(fit[k]["t0"]))) if ends[k]), None)
+        if j is None:
+            break
+        ends[j] = False
+    anchors = []
+    for i, s in enumerate(fit):
+        a, b = float(s["t0"]), float(s["t1"])
+        pts = [round(a + (b - a) * k / nseg[i], 2) for k in range(nseg[i])] + ([round(max(a + 0.5, b - 0.08), 2)] if ends[i] else [])
+        s["_pts"], s["_n"] = pts, nseg[i]
+        anchors += pts
+    others = [float(s["t0"]) for s in plan["scenes"] if all(abs(float(s["t0"]) - x) > 0.05 for x in anchors)]
+    starts = anchors + others[:max(0, n_pan - len(anchors))]
+    extra = [t for t in _scene_times(rows, L, n_pan) if all(abs(t - x) > 0.4 for x in starts)]
     k = 0
     while len(starts) + len(extra) < n_pan and k < 4 * n_pan:   # 시간표가 없을 때 등: 고르게 채운다
         t = round(min(L - 0.1, L * (k + 0.5) / n_pan), 2)
@@ -4135,21 +4215,27 @@ def _gen_board_spec(plan: dict, fit: list, rows: list, L: float, n_pan: int, swa
             extra.append(t)
         k += 1
     times = sorted(starts + extra[:max(0, n_pan - len(starts))])
-    for s in fit:
-        s["panel"] = next(i + 1 for i, t in enumerate(times) if abs(t - float(s["t0"])) < 1e-6)
+    pidx = lambda t: next(i + 1 for i, x in enumerate(times) if abs(x - t) < 1e-6)
+    for s in fit:                                       # 구간 j = 고정 칸 j(처음) → 고정 칸 j+1(끝, 마지막 구간은 컷 끝 칸 — 없으면 끝 장면 지정 없음)
+        pts, n = s.pop("_pts"), s.pop("_n")
+        b = float(s["t1"])
+        s["segs"] = [[pts[j], pts[j + 1] if j + 1 < n else b, pidx(pts[j]), pidx(pts[j + 1]) if j + 1 < len(pts) else 0] for j in range(n)]
+        s["panel"] = pidx(pts[0])
+    key = {x for s in fit for g in s["segs"] for x in (g[0], g[1])}
     notes = []
     for t in times:
         sc = next((s for s in plan["scenes"] if float(s["t0"]) <= t < float(s["t1"])), plan["scenes"][-1])
         no = plan["scenes"].index(sc) + 1
+        pin = " KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate)." \
+            if any(abs(t - x) < 0.1 for x in key) else ""
+        act = _beat_at(plan.get("beats"), t)
         if abs(t - float(sc["t0"])) < 1e-6:
-            notes.append(_soften(f"FIRST FRAME of shot {no} ({t:.1f}s): {sc.get('frame', '')} Shot: {sc.get('shot', '')}."))
+            notes.append(_soften(f"FIRST FRAME of shot {no} ({t:.1f}s): {sc.get('frame', '')} Shot: {sc.get('shot', '')}.{pin}"))
+        elif act:
+            notes.append(_soften(f"{t:.1f}s, inside shot {no}: {act.rstrip('. ')}. Shot: {sc.get('shot', '')}.{pin}"))
         else:
-            act = _beat_at(plan.get("beats"), t)
-            if act:
-                notes.append(_soften(f"{t:.1f}s, inside shot {no}: {act.rstrip('. ')}. Shot: {sc.get('shot', '')}."))
-            else:
-                act = next((_drop_clothes(str(x.get("action", ""))) for x in rows or [] if _row_has(x, t)), "")
-                notes.append(_soften(f"{t:.1f}s, inside shot {no}: {act} Shot: {sc.get('shot', '')}. Changes: {swap}."))
+            act = next((_drop_clothes(str(x.get("action", ""))) for x in rows or [] if _row_has(x, t)), "")
+            notes.append(_soften(f"{t:.1f}s, inside shot {no}: {act} Shot: {sc.get('shot', '')}. Changes: {swap}.{pin}"))
     return times, notes
 
 
@@ -4161,9 +4247,46 @@ def _row_has(x: dict, t: float) -> bool:
     return a <= t < b
 
 
+def _segs_snap(sc: dict, times: list) -> list:
+    """구간 정보가 없는(예전 분석으로 그린) 스토리보드: 이미 검사한 칸 중 약 2.2초 간격에 가장 가까운 칸을 고정 칸으로 고른다."""
+    a, b = float(sc["t0"]), float(sc["t1"])
+    inside = [t for t in times if a - 1e-6 <= t < b]
+    if not inside:
+        return [[a, b, int(sc.get("panel", 1)), 0]]
+    pidx = lambda t: times.index(t) + 1
+    n = _scene_segs(b - a)
+    pts = [inside[0]]
+    for k in range(1, n):
+        want = a + (b - a) * k / n
+        t = min(inside, key=lambda x: abs(x - want))
+        if t - pts[-1] >= 1.2 and b - t >= 1.2:
+            pts.append(t)
+    segs = [[pts[j], pts[j + 1], pidx(pts[j]), pidx(pts[j + 1])] for j in range(len(pts) - 1)]
+    end = [t for t in times if abs(t - b) <= 0.25 and t > pts[-1] + 0.5]
+    segs.append([pts[-1], b, pidx(pts[-1]), pidx(end[0]) if end else 0])
+    return segs
+
+
+def _gen_frame_check(clip: Path, d: float, res: dict, cap: float, tag: str, work: Path) -> list:
+    """만든 구간을 0.5초마다 한 장씩 AI가 보고 개 몸 엉킴·글씨를 찾는다(약 0.01달러). → [(초, 무엇)]"""
+    _remake_spend(res, REMAKE_COST["check"], f"{tag} 몸 엉킴 검사", cap)
+    bad, t = [], 0.25
+    while t < d:
+        fr = work / f"_chk_{t:.2f}.jpg"
+        _ff(["-ss", f"{t:.3f}", "-i", str(clip), "-frames:v", "1", str(fr)])
+        o = _vision_json(fr, FRAME_CHECK_ASK) if fr.exists() else {}
+        fr.unlink(missing_ok=True)
+        if o.get("body") is True or o.get("text") is True:
+            bad.append((round(t, 2), str(o.get("what", ""))[:120]))
+        t += 0.5
+    return bad
+
+
 def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict, swap: str, gen_res: str) -> Path:
-    """확인받은 스토리보드의 컷 첫 장면 칸 → 컷마다 새 영상(image_to_video, 원본 영상은 넣지 않음) → 원본과 같은 길이로 이어 붙인다.
-    컷마다 한 번만(다시 만들기 없음) — 이미 만든 컷(rm_sceneN.mp4)은 그대로 쓴다. 막힌 요청(400)은 요금 없음 + 짧은 지시문으로 한 번만 다시."""
+    """확인받은 스토리보드의 '고정 칸' 두 장(처음·끝 장면) 사이를 구간(약 2초)마다 새 영상으로 만든다(image_to_video, 원본 영상은 넣지 않음)
+    → 구간마다 0.5초 간격으로 몸 엉킴 검사 → 원본과 같은 길이로 이어 붙인다. 영상 AI가 부딪힘·넘어짐을 처음부터 지어내면 몸이 엉킨다
+    (2026-10-11 러닝머신 편) — 검사한 칸이 2초마다 자세를 잡아 준다. 구간마다 한 번만 만든다(자동으로 다시 만들지 않음): 엉킨 구간이 나오면
+    그 구간 파일만 지우고 멈춘다 → 사장님이 '다시 시도'를 누르면 그 구간만 다시(나머지는 그대로). 막힌 요청(400)은 요금 없음 + 짧은 지시문으로 한 번 더."""
     out = work / "remake.mp4"
     if out.exists():
         return out
@@ -4174,51 +4297,71 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
     rows = (res.get("timeline") or {}).get("gen") or (res.get("timeline") or {}).get("all") or []
     mult = 3 if gen_res == "720p" else 1
     parts, info = [], []
+    res.pop("gen_bad", None)
     for k, sc in enumerate(scenes):
-        o = work / f"rm_scene{k + 1}.mp4"
-        d = round(float(sc["t1"]) - float(sc["t0"]), 3)
-        if not o.exists():
-            pnl = work / f"board_{int(sc.get('panel', 1)):02d}.jpg"
-            if not pnl.exists():
-                raise RuntimeError(f"스토리보드 {sc.get('panel')}번 칸이 없습니다 — 스토리보드를 다시 그려 주세요(돈 안 씀)")
-            first = _crop_bars(pnl, work / f"_gen_first{k + 1}.png")
-            sec = _gen_sec(d)
-            usd = REMAKE_COST["omni_sec"] * sec * mult
-            raw = work / f"_gen_raw{k + 1}.mp4"
-            for short in (False, True):
-                prompt = _gen_prompt(sc, rows, plan, sec, swap, bool(rm.get("keep_people")), short)
-                res.setdefault("gen_prompts_used", {})[f"scene{k + 1}"] = prompt
-                _remake_spend(res, usd, f"컷{k + 1} 새로 만들기({sec:g}초, {gen_res})", cap)
-                body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(first)}, {"type": "text", "text": prompt}],
-                        "response_format": {"type": "video", "resolution": gen_res, "aspect_ratio": "9:16"},
-                        "generation_config": {"video_config": {"task": "image_to_video"}}}
-                try:
-                    raw.write_bytes(_omni_run(key, body))
-                    break
-                except RuntimeError as e:
-                    if "HTTP 400" not in str(e):
-                        raise
-                    res["spent"] = round(float(res.get("spent", 0)) - usd, 3)     # 막힌 요청은 요금 없음
-                    res.setdefault("ledger", []).append({"what": f"컷{k + 1} 막힘(요금 없음)", "usd": -round(usd, 3)})
-                    res.setdefault("blocked", []).append({"scene": k + 1, "short": short, "error": str(e)[:200]})
-                    if short:
-                        raise RuntimeError(f"컷{k + 1}: 영상 AI가 지시문을 두 번 막았습니다(요금 없음) — {str(e)[:160]}")
-            _assert_vertical(raw, f"컷{k + 1}")
-            got = _dur(raw)
-            if got > sec + 0.6:                           # 주문보다 길게 왔으면 실제 길이만큼 장부에 더 적는다(정직한 비용)
-                extra = round(REMAKE_COST["omni_sec"] * (got - sec) * mult, 3)
-                res["spent"] = round(float(res.get("spent", 0)) + extra, 3)
-                res.setdefault("ledger", []).append({"what": f"컷{k + 1} 실제 {got:.1f}초로 옴", "usd": extra})
-            if got * GEN_SLOW_MAX < d:
-                raise RuntimeError(f"컷{k + 1}: 영상 AI가 {got:.1f}초만 만들었습니다(필요 {d:.1f}초). 늘리지 않고 멈춥니다.")
-            slow = d / got if got < d else 1.0
-            _ff(["-i", str(raw), "-an", "-vf", f"setpts=PTS*{slow:.5f},scale={W}:{H}:flags=lanczos,fps=24,setsar=1,format=yuv420p",
-                 "-t", f"{d:.3f}", "-c:v", "libx264", "-crf", "18", str(o)])
-            info.append({"scene": k + 1, "asked": sec, "got": round(got, 2), "used": d, "slow": round(slow, 3)})
-        parts.append(o)
-    ins = sum((["-i", str(p)] for p in parts), [])
+        segs = sc.get("segs") or _segs_snap(sc, [float(t) for t in plan.get("board_times") or []])   # 예전 분석으로 그린 스토리보드: 검사한 칸 중에서 고른다
+        sc["segs"] = segs
+        for j, (ta, tb, pa, pb) in enumerate(segs):
+            o = work / f"rm_scene{k + 1}_{j + 1}.mp4"
+            d = round(float(tb) - float(ta), 3)
+            tag = f"컷{k + 1}-{j + 1}({float(ta):.1f}~{float(tb):.1f}초)"
+            if not o.exists():
+                pnl = work / f"board_{int(pa):02d}.jpg"
+                if not pnl.exists():
+                    raise RuntimeError(f"스토리보드 {pa}번 칸이 없습니다 — 스토리보드를 다시 그려 주세요(돈 안 씀)")
+                first = _crop_bars(pnl, work / f"_gen_first{k + 1}_{j + 1}.png")
+                ins = [{"type": "image", **_b64img(first)}]
+                if pb and (work / f"board_{int(pb):02d}.jpg").exists():
+                    ins.append({"type": "image", **_b64img(_crop_bars(work / f"board_{int(pb):02d}.jpg", work / f"_gen_last{k + 1}_{j + 1}.png"))})
+                sec = _gen_sec(d)
+                usd = REMAKE_COST["omni_sec"] * sec * mult
+                raw = work / f"_gen_raw{k + 1}_{j + 1}.mp4"
+                sub = {**sc, "t0": float(ta), "t1": float(tb),
+                       "cuts": [c for c in sc.get("cuts") or [] if float(ta) <= float(c["t"]) < float(tb)]}
+                for short in (False, True):
+                    prompt = _gen_prompt(sub, rows, plan, sec, swap, bool(rm.get("keep_people")), short) + (GEN_LAST if len(ins) > 1 else "")
+                    res.setdefault("gen_prompts_used", {})[f"scene{k + 1}_{j + 1}"] = prompt
+                    _remake_spend(res, usd, f"{tag} 새로 만들기({sec:g}초, {gen_res})", cap)
+                    body = {"model": CLIP_MODEL, "input": [*ins, {"type": "text", "text": prompt}],
+                            "response_format": {"type": "video", "resolution": gen_res, "aspect_ratio": "9:16"},
+                            "generation_config": {"video_config": {"task": "image_to_video"}}}
+                    try:
+                        raw.write_bytes(_omni_run(key, body))
+                        break
+                    except RuntimeError as e:
+                        if "HTTP 400" not in str(e):
+                            raise
+                        res["spent"] = round(float(res.get("spent", 0)) - usd, 3)     # 막힌 요청은 요금 없음
+                        res.setdefault("ledger", []).append({"what": f"{tag} 막힘(요금 없음)", "usd": -round(usd, 3)})
+                        res.setdefault("blocked", []).append({"scene": k + 1, "seg": j + 1, "short": short, "error": str(e)[:200]})
+                        if short:
+                            raise RuntimeError(f"{tag}: 영상 AI가 지시문을 두 번 막았습니다(요금 없음) — {str(e)[:160]}")
+                _assert_vertical(raw, tag)
+                got = _dur(raw)
+                if got > sec + 0.6:                       # 주문보다 길게 왔으면 실제 길이만큼 장부에 더 적는다(정직한 비용)
+                    extra = round(REMAKE_COST["omni_sec"] * (got - sec) * mult, 3)
+                    res["spent"] = round(float(res.get("spent", 0)) + extra, 3)
+                    res.setdefault("ledger", []).append({"what": f"{tag} 실제 {got:.1f}초로 옴", "usd": extra})
+                if got * GEN_SLOW_MAX < d:
+                    raise RuntimeError(f"{tag}: 영상 AI가 {got:.1f}초만 만들었습니다(필요 {d:.1f}초). 늘리지 않고 멈춥니다.")
+                k_t = d / got                                  # 끝 칸에 정확히 닿게 길이를 맞춘다(조금 빠르게/느리게, 0.8~1.15배) — 그보다 길게 왔으면 뒤를 자른다
+                vf = f"setpts=PTS*{k_t:.5f}," if 0.8 <= k_t <= GEN_SLOW_MAX else ""
+                _ff(["-i", str(raw), "-an", "-vf", f"{vf}scale={W}:{H}:flags=lanczos,fps=24,setsar=1,format=yuv420p",
+                     "-t", f"{d:.3f}", "-c:v", "libx264", "-crf", "18", str(o)])
+                bad = _gen_frame_check(o, d, res, cap, tag, work)
+                info.append({"scene": k + 1, "seg": j + 1, "asked": sec, "got": round(got, 2), "used": d, "speed": round(1 / k_t, 3) if vf else 1.0,
+                             "last_frame": len(ins) > 1, "bad": bad})
+                res["gen"] = {**(res.get("gen") or {}), "clips": info}
+                if bad:                                    # ⛔ 몸이 엉킨 구간은 완성본에 넣지 않는다 — 그 구간 파일만 지우고 멈춘다(다시 만들기는 사장님 확인 후)
+                    o.unlink(missing_ok=True)
+                    redo_usd = round(usd, 2)
+                    res["gen_bad"] = {"scene": k + 1, "seg": j + 1, "range": [float(ta), float(tb)], "frames": bad, "redo_usd": redo_usd}
+                    raise RuntimeError(f"{tag}에서 개 몸이 엉켜 보여({', '.join(f'{t}초 {w}' for t, w in bad[:3])}) 완성하지 않고 멈췄습니다. "
+                                       f"이 구간만 다시 만들려면 '다시 시도'(약 ${redo_usd:.2f})를 눌러 주세요 — 나머지 구간은 그대로 씁니다.")
+            parts.append(o)
+    ins_ = sum((["-i", str(x)] for x in parts), [])
     joined = work / "_gen_join.mp4"
-    _ff([*ins, "-filter_complex", "".join(f"[{i}:v]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=1:a=0,format=yuv420p[v]",
+    _ff([*ins_, "-filter_complex", "".join(f"[{i}:v]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=1:a=0,format=yuv420p[v]",
          "-map", "[v]", "-c:v", "libx264", "-crf", "18", str(joined)])
     gags = rm.get("gags") or _gag_beats(rows)
     freezes = []                                          # 원본의 화면 정지(웃음 포인트)는 영상 AI가 못 살린다 → 조립 때 그 장면을 멈춘다
@@ -4233,7 +4376,8 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
         _apply_freeze(joined, out, freezes)
     else:
         _ff(["-i", str(joined), "-c", "copy", str(out)])
-    res["gen"] = {"ok": True, "scenes": len(parts), "sec": round(_dur(out), 2), "freezes": freezes, "clips": info or (res.get("gen") or {}).get("clips", [])}
+    res["gen"] = {"ok": True, "scenes": len(scenes), "parts": len(parts), "sec": round(_dur(out), 2), "freezes": freezes,
+                  "clips": info or (res.get("gen") or {}).get("clips", [])}
     return out
 
 
@@ -4241,7 +4385,11 @@ def step_remake(ep, epdir, work, log, req):
     import math
     res = log.setdefault("remake", {})
     rm = ep.get("remake") or {}
-    cap = float(rm.get("cap", 5))
+    add = float((req.get("remake") or {}).get("cap_add") or 0)
+    if 0 < add <= 3:                                     # 사장님이 확인창에서 본 비용만큼만 이 편의 한도를 올린다(엉킨 구간 다시 만들기 등) — 기록에 남겨 다음 실행에도 유지
+        res["cap_added"] = round(float(res.get("cap_added", 0)) + add, 2)
+        res.setdefault("ledger", []).append({"what": f"한도 올림(사장님 확인) +${add:.2f}", "usd": 0})
+    cap = float(rm.get("cap", 5)) + float(res.get("cap_added", 0))
     mode = (req.get("remake") or {}).get("mode", "test")
     if rm.get("method") == "gen" and not rm.get("shots") and mode == "test":
         mode = "board"                                   # 새로 만들기는 시험 영상 없이 스토리보드부터(확인 후 영상)
@@ -4357,7 +4505,9 @@ def step_remake(ep, epdir, work, log, req):
                 res.setdefault("timeline", {}).pop("all", None)
                 _timeline(ref, 0, L, work, res, cap, "all")
             rows_g = (res.get("timeline") or {}).get("all") or []
-            plan = _gen_plan(ref, L, work, res, cap, res["swap_used"], res.get("cast_used") or "")
+            redo_g = (req.get("remake") or {}).get("redo")
+            keep_g = mode == "full" and (work / "board.jpg").exists() and not (isinstance(redo_g, list) and "segs" in redo_g)
+            plan = _gen_plan(ref, L, work, res, cap, res["swap_used"], res.get("cast_used") or "", keep_g)
             if plan.get("trim"):                         # ⛔ 아웃트로·계정 이름·로고 화면은 본편에서 뺀다(2026-10-11 러닝머신 편: 인스타 계정 화면까지 그림)
                 ta, tb = plan["trim"]
                 trimmed = work / "_gen_trim.mp4"
@@ -4369,7 +4519,6 @@ def step_remake(ep, epdir, work, log, req):
                 n_pan = _board_panels(L, rm)
                 res.update({"src_sec": round(L, 2), "gen_trim": {"keep": plan["trim"], "cut_out": plan.get("cut_out")}})
             res.setdefault("timeline", {})["gen"] = rows_g
-            redo_g = (req.get("remake") or {}).get("redo")
             will_draw = not (work / "board.jpg").exists() or (mode == "board" and bool(redo_g)) or \
                 (mode == "full" and isinstance(redo_g, list) and "segs" in redo_g)
             if will_draw or not plan.get("fit"):           # 그릴 스토리보드에 맞춰 컷·칸을 정한다(확인받은 스토리보드가 있으면 그대로)
@@ -4424,7 +4573,7 @@ def step_remake(ep, epdir, work, log, req):
             gp = res.get("gen_plan") or {}
             b_lead = GEN_BOARD_LEAD.format(set=gp.get("set") or "as in the original", cast=gp.get("cast") or res.get("cast_used") or "as in the original",
                                            people=GEN_PEOPLE_KEEP if rm.get("keep_people") else GEN_PEOPLE_NONE + GEN_REAL_DOG, no_text=GEN_NO_TEXT,
-                                           anatomy=GEN_ANATOMY)
+                                           anatomy=GEN_ANATOMY + GEN_CONTACT)
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
                 res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast") or REMAKE_CAST_DEFAULT) if rm.get("keep_people") else "",

@@ -5837,13 +5837,20 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       var bi=document.createElement('img'); bi.alt='스토리보드'; bi.style.width='100%'; bi.style.borderRadius='10px';
       bi.src='/api/episode/video?board=1&id='+encodeURIComponent(e.id)+'&t='+encodeURIComponent(e.ranAt||''); b.appendChild(bi);
       if(m.board.human) b.appendChild(epEl('div','ep-err','검사: 사람 손·맨살이 보일 수 있음 — '+(m.board.where||'')));
-      if(m.board.over) b.appendChild(epEl('div','ep-err','영상 예상 비용이 한도(5달러)를 넘습니다. 더 짧은 원본으로 다시 해 주세요.'));
+      if(m.board.over) b.appendChild(epEl('div','ep-err','영상 예상 비용이 이 편의 남은 한도를 넘습니다(지금까지 $'+(Number(m.spent)||0).toFixed(2)+' + 예상 $'+Number(m.est_full||0).toFixed(2)+').'));
       if((!e.hasVideo||m.board.wait)&&e.state!=='running'){
         if(m.board.wait&&e.hasVideo) b.appendChild(epEl('div','ep-err','수정용 새 스토리보드입니다. 강아지가 한 마리인지 확인하고 눌러 주세요.'));
         if(!m.board.over) b.appendChild(epBtn('좋아요, 영상 만들기 (예상 약 $'+Number(m.est_full||0).toFixed(2)+')',function(){
           if(!confirm('이 스토리보드대로 영상을 만듭니다. 예상 약 $'+Number(m.est_full||0).toFixed(2)+', 10~20분 걸립니다. 시작할까요?')) return;
           epAsk(e.id,'remake_full',{}, '영상을 만들고 있습니다(10~20분). 끝나면 이 화면에 완성 영상이 나옵니다.');
         },true));
+        else {                                        // 한도를 조금 넘으면: 넘는 만큼만 확인받고 한도를 올려 만든다(3달러까지)
+          var capNow=Number(m.cap||5)+Number(m.cap_added||0), over=Math.ceil(((Number(m.spent)||0)+Number(m.est_full||0)-capNow)*10)/10+0.1;
+          if(over>0&&over<=3) b.appendChild(epBtn('한도를 $'+over.toFixed(2)+' 올리고 영상 만들기 (예상 약 $'+Number(m.est_full||0).toFixed(2)+')',function(){
+            if(!confirm('영상 예상 비용 약 $'+Number(m.est_full||0).toFixed(2)+'가 남은 한도를 넘어 이 편의 한도를 $'+over.toFixed(2)+' 올립니다. 10~20분 걸립니다. 시작할까요?')) return;
+            epAsk(e.id,'remake_full',{cap_add:over}, '영상을 만들고 있습니다(10~20분). 끝나면 이 화면에 완성 영상이 나옵니다.');
+          },true));
+        }
         var bdUsd=(gp&&gp.scenes)?'0.3':'0.16';           // 새로 만들기는 4K 스토리보드 + 칸마다 글씨·몸 엉킴 검사(걸리면 다시 그림)
         b.appendChild(epBtn('스토리보드 다시 그리기 (약 $'+bdUsd+')',function(){
           if(!confirm('스토리보드를 다시 그립니다(약 '+bdUsd+'달러, 5~10분). 할까요?')) return;
@@ -5873,7 +5880,14 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       },true);
       b.appendChild(fb); b.appendChild(fm);
     }
-    if(e.state==='failed'&&!e.hasVideo){
+    if(e.state==='failed'&&!e.hasVideo&&m.gen_bad&&m.board&&m.board.ok){   // 새로 만들기: 몸이 엉킨 구간이 나와 멈춤 → 그 구간만 다시(확인한 비용만큼 한도를 올림)
+      var gb=m.gen_bad, gu=Number(gb.redo_usd||0.75);
+      b.appendChild(epEl('div','ep-err','검사에서 컷'+gb.scene+'의 '+Number(gb.range[0]).toFixed(1)+'~'+Number(gb.range[1]).toFixed(1)+'초 구간 개 몸이 엉켜 보여 완성하지 않았습니다. 나머지 구간은 그대로 씁니다.'));
+      b.appendChild(epBtn('엉킨 구간만 다시 만들기 (약 $'+gu.toFixed(2)+')',function(){
+        if(!confirm('엉킨 구간만 다시 만듭니다(약 '+gu.toFixed(2)+'달러, 10~20분). 이 비용만큼 이 편의 한도를 올립니다. 할까요?')) return;
+        epAsk(e.id,'remake_full',{cap_add:gu}, '엉킨 구간을 다시 만들고 있습니다(10~20분).');
+      },true));
+    } else if(e.state==='failed'&&!e.hasVideo){
       b.appendChild(epBtn((m.board&&m.board.ok)?'영상 만들기 다시 시도':'스토리보드부터 다시 시도',function(){
         if(m.board&&m.board.ok) epAsk(e.id,'remake_full',{}, '다시 만들고 있습니다(30~50분).');
         else epAsk(e.id,'remake_board',{}, '스토리보드를 다시 그리고 있습니다(5~10분).');
@@ -6989,7 +7003,8 @@ async function handleEpisodeRequest(env, body) {
   } else if (kind === 'remake_full') {
     const log = JSON.parse((await ghText(env, `${EP_ROOT}/${id}/work/log.json`)) || '{}');
     if (log.assemble?.ok) throw new Error('이미 영상을 만들었습니다.');   // 스토리보드가 없으면 제작 쪽이 먼저 그린다
-    req = { steps: ['remake'], remake: { mode: 'full' } };
+    const add = Math.min(3, Math.max(0, Number(body.cap_add) || 0));   // 엉킨 구간 다시 만들기: 확인창에서 본 비용만큼만 한도를 올린다
+    req = { steps: ['remake'], remake: { mode: 'full', ...(add ? { cap_add: Math.round(add * 100) / 100 } : {}) } };
   } else if (kind === 'remake_fix_plan') {
     const note = String(body.note || '').trim();
     if (!note) throw new Error('수정 요청 사항을 적어 주세요.');

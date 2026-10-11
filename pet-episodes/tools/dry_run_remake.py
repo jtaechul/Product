@@ -147,6 +147,12 @@ def install_mocks(flags: dict) -> list:
             if flags.get("body_always") and name == "board_06.jpg":
                 return {"text": False, "body": True, "what": "two dogs fused"}
             return {"text": False, "body": False}
+        if "frame of an AI video" in prompt:             # 만든 구간 몸 엉킴 검사: vid_body_once면 처음 검사한 구간 하나에서 한 번 엉킴
+            calls.append("vcheck")
+            if flags.get("vid_body_once") and not flags.get("_vbodied"):
+                flags["_vbodied"] = True
+                return {"body": True, "text": False, "what": "two dogs fused"}
+            return {"body": False, "text": False}
         calls.append("vision")
         return {"place": "top", "why": "t"}
     E._vision_json = vis
@@ -303,6 +309,13 @@ def gen_check(log, title, n_min=1):
         probs.append("영상 지시에 몸 엉킴 금지(ANATOMY)가 없음")
     if gp.get("beats") and "BEAT" not in used:
         probs.append("바뀐 등장인물 기준 자세(beats)가 영상 지시에 안 들어감")
+    clips = g.get("clips") or []
+    if any(c.get("seg", 1) < len([x for x in clips if x.get("scene") == c.get("scene")]) and not c.get("last_frame") for c in clips):
+        probs.append("컷 안 구간이 검사한 끝 칸(마지막 장면) 없이 만들어짐")
+    if "PHYSICS" not in used:
+        probs.append("영상 지시에 물리 규칙(PHYSICS)이 없음")
+    if "CONTACT RULE" not in used:
+        probs.append("영상 지시에 겹침 금지(CONTACT RULE)가 없음")
     if r.get("method") != "gen":
         probs.append(f"방식이 {r.get('method')}")
     if g.get("scenes", 0) < n_min:
@@ -317,7 +330,7 @@ def gen_check(log, title, n_min=1):
         FAILS.append(title)
         print("FAIL", title, probs)
     else:
-        print("    컷", g.get("scenes"), "| 합친 컷", gp.get("merged"), "| 칸", [s.get("panel") for s in gp.get("fit") or []],
+        print("    컷", g.get("scenes"), "| 구간", g.get("parts"), "| 합친 컷", gp.get("merged"), "| 칸", [s.get("panel") for s in gp.get("fit") or []],
               "| 후킹", (gp.get("hook") or [""])[0][:30], "| 장부", r.get("spent"))
 
 
@@ -337,8 +350,9 @@ run(d, ep, {"remake": {"mode": "full"}}, {}, "⑯ 새로 만들기: 다시 조�
 d, ep = make_ep("genoutro", method="gen")
 log = run(d, ep, {"remake": {"mode": "board"}}, {"outro": True, "text_once": True, "body_once": True},
           "⑱ 새로 만들기: 끝 4초 아웃트로(계정·로고 화면) + 벽 글씨 + 개 몸 엉킴 → 다시 그림 스토리보드")
-if not log["remake"].get("board_text") or not log["remake"].get("board_body") or (log["remake"].get("board") or {}).get("tries", 0) < 2:
-    FAILS.append("⑱ 글씨·몸 엉킴 칸을 못 잡거나 다시 그리지 않음")
+if not log["remake"].get("board_text") or not log["remake"].get("board_body") or not log["remake"].get("board_repairs"):
+    FAILS.append("⑱ 글씨·몸 엉킴 칸을 못 잡거나 그 칸만 고치지 않음")
+print("    고친 칸:", [x["panels"] for x in log["remake"].get("board_repairs") or []])
 print("    검사:", log["remake"].get("board_text"), log["remake"].get("board_body"), "| 그린 횟수", (log["remake"].get("board") or {}).get("tries"),
       "| 장부", log["remake"].get("spent"))
 log = run(d, ep, {"remake": {"mode": "full"}}, {"outro": True}, "⑱ 새로 만들기: 아웃트로 빼고 영상")
@@ -355,6 +369,18 @@ log = run(d, ep, {"remake": {"mode": "board"}}, {"body_always": True}, "⑲ 새�
 if (d / "work" / "board.jpg").exists() or float(log["remake"].get("spent", 0)) > 1.0:
     FAILS.append("⑲ 엉킨 스토리보드를 남겼거나 돈을 너무 씀")
 print("    장부", log["remake"].get("spent"), [x["what"] for x in log["remake"].get("ledger", [])])
+d, ep = make_ep("genvid", method="gen")
+run(d, ep, {"remake": {"mode": "board"}}, {}, "⑳ 새로 만들기: 영상 구간 몸 엉킴 스토리보드")
+log = run(d, ep, {"remake": {"mode": "full"}}, {"vid_body_once": True}, "⑳ 새로 만들기: 영상 구간 몸 엉킴 → 그 구간만 지우고 멈춤", expect_stop="개 몸이 엉켜")
+bad20 = log["remake"].get("gen_bad") or {}
+kept = sorted(x.name for x in (d / "work").glob("rm_scene*.mp4"))
+print("    엉킨 구간:", bad20.get("scene"), bad20.get("seg"), bad20.get("range"), "| 다시 비용", bad20.get("redo_usd"), "| 남은 구간", kept)
+if not bad20 or (d / "work" / f"rm_scene{bad20.get('scene')}_{bad20.get('seg')}.mp4").exists():
+    FAILS.append("⑳ 엉킨 구간을 지우지 않음")
+spent_before = float(log["remake"].get("spent", 0))
+log = run(d, ep, {"remake": {"mode": "full", "cap_add": bad20.get("redo_usd", 0.75)}}, {}, "⑳ 새로 만들기: '엉킨 구간만 다시'(확인한 비용만큼 한도 올림) → 그 구간만 다시")
+if log["remake"].get("gen_bad") or not (d / "work" / "final.mp4").exists() or log["remake"].get("cap_added") != bad20.get("redo_usd"):
+    FAILS.append("⑳ 엉킨 구간 다시 만들기가 끝나지 않았거나 한도를 확인한 만큼만 올리지 않음")
 d, ep = make_ep("gentest", method="gen")
 log = run(d, ep, {"remake": {"mode": "test"}}, {}, "⑰ 새로 만들기: 예전 '시험' 요청 → 스토리보드만(영상 안 만듦)")
 if log["remake"].get("gen") or not (d / "work" / "board.jpg").exists():
