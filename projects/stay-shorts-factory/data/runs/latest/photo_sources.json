@@ -28,7 +28,7 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/yvhKloOFB3yOw-1m9U0VMA==/1",
     "page": "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000527",
-    "description": "유리벽 사우나와 실내 온수풀 스파가 보인다."
+    "description": "실내 스파 욕조와 유리 벽의 사우나가 보인다."
    },
    {
     "n": 32,
@@ -36,7 +36,7 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/al4LqGI_YPQlqkNjaEO-gg==/1",
     "page": "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
-    "description": "바다 전망 발코니가 딸린 침실에 더블 침대가 놓여 있다."
+    "description": "더블 침대 너머로 오션뷰 발코니가 보인다."
    },
    {
     "n": 33,
@@ -44,7 +44,7 @@
     "source": "coupang",
     "url": null,
     "page": null,
-    "description": "밤바다와 조명이 켜진 리조트 및 야외 산책로의 야경이다."
+    "description": "에메랄드빛 바다 너머로 쏠비치 리조트 전경이 보인다."
    }
   ]
  },
@@ -77,7 +77,7 @@
     "source": "official",
     "url": "https://img.lottehotel.com/cms/asset/2026/06/17/42275/img_TP_pc_LR_sokcho_01_KV_1x.webp",
     "page": "https://www.lottehotel.com/resort-sokcho/ko/themepark/water-park",
-    "description": "실내 워터파크의 파도풀과 슬라이드 시설이 보인다."
+    "description": "실내 워터파크의 파도풀과 대형 슬라이드가 보인다."
    },
    {
     "n": 22,
@@ -85,7 +85,7 @@
     "source": "official",
     "url": "https://img.lottehotel.com/cms/asset/2026/07/08/43627/img_ID_pc_LR_sokcho_timeline01_1x%20(1).webp",
     "page": "https://www.lottehotel.com/resort-sokcho",
-    "description": "통창 너머로 바다가 보이는 아늑한 더블베드 객실이다."
+    "description": "오션뷰 테라스를 갖춘 깔끔하고 화사한 더블 침실 내부다."
    },
    {
     "n": 23,
@@ -93,7 +93,7 @@
     "source": "official",
     "url": "https://img.lottehotel.com/cms/asset/2026/06/17/42321/img_FC_PC_LR_sokcho_06_1x.webp",
     "page": "https://www.lottehotel.com/resort-sokcho/ko/facilities/weekend-spa",
-    "description": "WEEKEND SPA 로고가 있는 스파 안내 데스크 전경이다."
+    "description": "화이트 톤의 아늑한 스파 리셉션 데스크와 제품 진열대다."
    }
   ]
  },
@@ -126,7 +126,7 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
     "page": "https://www.sonohotelsresorts.com/oceanWorld",
-    "description": "스핑크스 조각상과 이집트 부조 벽화가 있는 스파 풀이다."
+    "description": "스핑크스 석상과 벽화로 꾸며진 야외 스파 공간이 보인다."
    },
    {
     "n": 12,
@@ -134,15 +134,15 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
     "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "산 전망 통창과 소파가 배치된 객실 거실 내부이다."
+    "description": "통창으로 산 전망이 펼쳐진 넓은 거실과 소파가 보인다."
    },
    {
     "n": 13,
     "slot": "special",
-    "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/o4adYnfDv1FqVqNaEkT7Mw==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "인조잔디가 깔린 테라스에 해먹과 캠핑 텐트가 설치되어 있다."
+    "source": "coupang",
+    "url": null,
+    "page": null,
+    "description": "푸른 산을 등지고 늘어선 소노펠리체 단지 전경이 보인다."
    }
   ]
  }
