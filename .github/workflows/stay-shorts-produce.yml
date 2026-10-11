@@ -92,8 +92,9 @@ jobs:
           if [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$L/narration_preview.mp3" ] && [ ! -f "$V" ]; then
             # 미리보기 단계: 사진 시트 + 나레이션 음성 + 받아쓰기 판정
             QA=$(python3 -c "import json;r=json.load(open('$L/report.json',encoding='utf-8'));qa=r.get('narration_qa') or [];print(('나레이션 받아쓰기 ' + ('전부 통과' if all(q['ok'] for q in qa) else '실패 있음')) + ' · ' + ' / '.join(f\"{q['segment']} {q['similarity']}\" for q in qa))" 2>/dev/null || echo "미리보기")
+            COST=$(python3 -c "import json;r=json.load(open('$L/report.json',encoding='utf-8'));g=r.get('gemini_usage') or {};print(f\"비용: Veo 0원 · AI 글·음성 추정 {g.get('krw_est',0):,}원({g.get('calls',0)}회)\")" 2>/dev/null || echo "비용: Veo 0원")
             curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$L/preview_shots.jpg" \
-              -F caption="미리보기(영상 없음) — 사진 6장과 자막. $QA" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
+              -F caption="미리보기(영상 없음) — 숙소별 장면과 자막. $QA · $COST" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
             curl -s -o /dev/null -w "telegram audio http %{http_code}\n" -F chat_id="$TG_CHAT" -F audio=@"$L/narration_preview.mp3" \
               -F caption="나레이션 미리듣기 (훅 → 3위 → 2위 → 1위 → CTA)" "https://api.telegram.org/bot$TG_TOKEN/sendAudio" || true
           elif [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$V" ]; then
@@ -103,7 +104,10 @@ jobs:
           v = m.get("veo") or {}
           s = ("Veo 7컷 방식" if m.get("mode") == "veo" else "사진 확대 방식") + f" · {m.get('stay')} · {m.get('duration_sec')}초"
           if v:
-              s += f" · 클립 {v.get('clips_ok')}/{v.get('clips_total')} · 이번 실행 약 {v.get('spent_krw', 0):,}원 · 이번 달 누적 {v.get('month_total_krw', 0):,}원"
+              s += f" · 클립 {v.get('clips_ok')}/{v.get('clips_total')} · Veo 이번 실행 약 {v.get('spent_krw', 0):,}원 · 이번 달 누적 {v.get('month_total_krw', 0):,}원"
+          g = m.get("gemini_usage") or {}
+          if g:
+              s += f" · AI 글·음성 추정 {g.get('krw_est', 0):,}원"
           print(s + " (미발행 · 검수용)")
           PY
           )
