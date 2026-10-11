@@ -2788,6 +2788,8 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
     cols, rows, aspect = _board_grid(panels)
     N = cols * rows
     W0, H0 = BOARD_CW * cols, BOARD_CH * rows
+    for f in work.glob("board_*.jpg"):                  # 칸 수가 바뀌면 옛 칸 그림이 남지 않게
+        f.unlink(missing_ok=True)
     fit = f"scale={BOARD_CW}:{BOARD_CH}:force_original_aspect_ratio=decrease,pad={BOARD_CW}:{BOARD_CH}:(ow-iw)/2:(oh-ih)/2" + \
         (":color=0x808080" if extend else "")            # 가로 원본: 위아래는 '빈 회색 캔버스'(흐린 복사본을 깔면 그림 AI가 그대로 남김 — 2026-10-08 사고)
     cells = []
@@ -2823,12 +2825,17 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
     if N != 6:                                          # 칸 수에 맞게 지시문의 '3x2·여섯 칸'을 바꾼다
         ask = (ask.replace("3x2", f"{cols}x{rows}").replace("ALL six panels", f"ALL {N} panels").replace("six frames", f"{N} frames")
                .replace("six grey", f"{N} grey").replace("six panels", f"{N} panels"))
-    for attempt in range(2):                            # 위아래 띠가 걸리면 더 강한 지시로 딱 한 번 다시 그린다(약 0.15달러) — 그래도 걸리면 멈춤
+    bad_text: list = []
+    for attempt in range(2):                            # 위아래 띠·글씨가 걸리면 더 강한 지시로 딱 한 번 다시 그린다(약 0.15달러) — 그래도 걸리면 멈춤
         if attempt:
-            _remake_spend(res, REMAKE_COST["image"], "스토리보드 다시(위아래 띠)", cap)
-            ask += (" IMPORTANT: every panel must be one complete photo from its top edge to its bottom edge - the top and bottom "
-                    "fifths of each panel are real room or scenery with the same detail, brightness and sharpness as the middle; "
-                    "never a plain white, grey, black, blurred or empty area.")
+            _remake_spend(res, REMAKE_COST["image"], "스토리보드 다시(" + ("글씨·로고" if bad_text else "위아래 띠") + ")", cap)
+            if bad_text:
+                ask += (f" IMPORTANT: panels {', '.join(str(x) for x in bad_text)} showed writing or a logo - in every panel all walls, "
+                        "posters, signs, screens and clothes are completely plain, with no letters, numbers, symbols or logos at all.")
+            else:
+                ask += (" IMPORTANT: every panel must be one complete photo from its top edge to its bottom edge - the top and bottom "
+                        "fifths of each panel are real room or scenery with the same detail, brightness and sharpness as the middle; "
+                        "never a plain white, grey, black, blurred or empty area.")
         r = gen_image(ask, [src_tile, ROOT / "pet-episodes" / "characters" / "dog.png"], out, aspect, "2K")
         if not r.get("ok"):
             raise RuntimeError(f"스토리보드 그림 실패: {r.get('error')}")
@@ -2842,13 +2849,43 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
             im.crop((round(x), round(y), round(x + BOARD_CW * k), round(y + BOARD_CH * k))).save(f, quality=90)
             frames.append(f)
         bad = _panel_bands(frames, painted=extend and not fresh, real=(res.get("vertical") or {}).get("mode") == "track" and not fresh)
-        if not bad:
+        bad_text = _board_text(work / "board.jpg", cols, rows, res, cap) if (lead and not bad) else []   # 새로 만들기: 글씨·로고·깨진 문구 칸
+        if not bad and not bad_text:
             break
-        res["board_bands"] = {"panels": bad, "redrawn": bool(attempt)}
+        if bad:
+            res["board_bands"] = {"panels": bad, "redrawn": bool(attempt)}
+        if bad_text:
+            res["board_text"] = {"panels": bad_text, "redrawn": bool(attempt)}
     if bad:                                             # ⛔ 9:16 꽉 찬 화면이 아닌 칸(위아래 흐림·회색·검정·하얗게 날아간 띠)은 보여 주지 않고 멈춘다(2026-10-08·10-09 사고)
         (work / "board.jpg").unlink(missing_ok=True)
         raise RuntimeError(f"스토리보드 {', '.join(str(b) for b in bad)}번 칸 위아래가 진짜 장면이 아닙니다(흐린/빈/하얗게 날아간 띠, 다시 그려도 같음) — 보여 주지 않고 멈춤")
+    if bad_text:                                        # ⛔ 글씨·로고·계정 이름이 남은 스토리보드는 보여 주지 않는다(2026-10-11 러닝머신 편 사고)
+        (work / "board.jpg").unlink(missing_ok=True)
+        raise RuntimeError(f"스토리보드 {', '.join(str(b) for b in bad_text)}번 칸에 글씨·로고가 남았습니다(다시 그려도 같음) — 보여 주지 않고 멈춤")
     return {"ok": True, "panels": len(frames)}
+
+
+BOARD_TEXT_ASK = ("This image is a storyboard grid of {n} panels ({cols} columns x {rows} rows; panel 1 is top-left, numbered left to right, "
+                  "top row first). List every panel that shows ANY visible letters, words, numbers, logos, watermarks, account names or "
+                  "app icons - including garbled or fake lettering on walls, posters, signs, screens or clothes. Ignore plain shapes and "
+                  "patterns. JSON only: {{\"panels\": [numbers], \"what\": \"short English\"}}")
+
+
+def _board_text(board: Path, cols: int, rows: int, res: dict, cap: float) -> list:
+    """스토리보드 칸에 글씨·로고가 있는지 AI가 본다(약 0.01달러). 있으면 칸 번호 목록."""
+    _remake_spend(res, REMAKE_COST["check"], "스토리보드 글씨·로고 검사", cap)
+    o = _vision_json(board, BOARD_TEXT_ASK.format(n=cols * rows, cols=cols, rows=rows)) or {}
+    out = []
+    for x in o.get("panels") or []:
+        try:
+            k = int(x)
+        except (TypeError, ValueError):
+            continue
+        if 1 <= k <= cols * rows and k not in out:
+            out.append(k)
+    if out:
+        res.setdefault("board_text_seen", []).append({"panels": out, "what": str(o.get("what", ""))[:160]})
+    return out
 
 
 def _img2(swap: str) -> str:
@@ -2973,7 +3010,8 @@ PICK_ASK = ("Watch AND listen to this whole clip ({L:.1f} s). We must shorten it
             "punchline (the hit, surprise, reaction or best line) ends within the first {T:.0f} s, keep the clip from 0 as one piece; "
             "2) otherwise keep the opening hook from 0 (2-4 s) and the punchline part with its short setup and reaction as a second "
             "piece, removing only the middle; at most 2 pieces, total {T:.0f} s or less; 3) cut only at natural pauses or beats, "
-            "never in the middle of a word, lyric or movement. Return JSON {{\"pieces\": [[start, end], ...], \"hook\": \"원본 후킹 "
+            "never in the middle of a word, lyric or movement; 4) never keep an outro, end card, account name / logo / subscribe screen "
+            "or a black or darkened ending - the pieces hold only the story. Return JSON {{\"pieces\": [[start, end], ...], \"hook\": \"원본 후킹 "
             "포인트 한국어 한 줄\", \"why\": \"어떻게 줄였는지 한국어 한 줄\"}}.")
 
 
@@ -3778,10 +3816,15 @@ GEN_PLAN_ASK = ("Watch AND listen to this whole clip ({L:.1f} s). It is a viral 
                 "소리, 반응)\"], \"structure\": \"한국어 한 줄: 초 단위 구성(예: 0~1.5초 후킹, 1.5~6초 준비, 6~7초 펀치라인, 7~10초 반응)\", "
                 "\"set\": \"English: the place, props, light and time of day, concrete enough to rebuild the same set\", "
                 "\"cast\": \"English: every character AFTER the changes - position and look (no brand names)\", "
-                "\"scenes\": [{{\"t0\": 0.0, \"t1\": 2.4, \"shot\": \"English: shot size, angle, lens and camera move\", "
+                "\"content\": [start, end], "
+                "\"scenes\": [{{\"t0\": 0.0, \"t1\": 2.4, \"outro\": false, \"shot\": \"English: shot size, angle, lens and camera move\", "
                 "\"frame\": \"English: the exact FIRST FRAME of this shot after the changes, written as a photo description - who is "
                 "where, pose, facing, what they hold, framing\", \"ko\": \"한국어 한 줄: 이 컷에서 일어나는 일\"}}]}}. A new scene starts "
                 "ONLY at a real camera cut or jump; one continuous take is one scene. Scenes cover 0 to {L:.1f} s with no gaps. "
+                "\"outro\": true marks any part that is NOT the story itself - an end card, outro, intro title card, account name / logo / "
+                "subscribe / follow screen, credits, or a black or darkened screen with text or icons; \"content\" is the time range of "
+                "the story only (without those parts). IGNORE all on-screen text, captions, stickers, watermarks, logos, account handles and "
+                "app icons: never mention them in set, cast, shot or frame, and describe walls, posters, signs and screens as plain. "
                 "Never name or identify real people.")
 GEN_SCENE = ("DURATION: {sec:g} seconds. Image 1 is the FIRST FRAME of this shot: keep exactly its framing, characters, set and light. "
              "Re-create this shot of a viral video as new, clean, photorealistic vertical 9:16 footage that matches the original shot "
@@ -3795,11 +3838,14 @@ GEN_PEOPLE_KEEP = (" Every person is an ordinary, anonymous human with a human f
                    "round paws.")
 GEN_PEOPLE_NONE = (" No humans and no human skin anywhere: every leg is a thick, fully furry dog leg with a round paw and anything held "
                    "is held by a paw.")
+GEN_NO_TEXT = (" NO TEXT ANYWHERE: no letters, words, numbers, symbols, logos or watermarks in the picture - walls, posters, signs, "
+               "clothes and screens are plain, with no writing.")   # 금지할 것의 이름(계정·아이콘)을 적으면 오히려 그려서 이름은 쓰지 않는다
 GEN_LOOK = (" OUTPUT: photorealistic, sharp, clean, high-detail modern phone footage with natural colours and steady exposure, filling "
             "the whole vertical 9:16 frame edge to edge. The same characters as in image 1 in every frame. No added text, captions, "
-            "watermark, borders or split screen, no morphing, no extra animals or people.")
+            "watermark, borders or split screen, no morphing, no extra animals or people." + GEN_NO_TEXT)
 GEN_BOARD_LEAD = (" This storyboard RE-SHOOTS a viral video shot by shot as new photos (not a copy of its low-quality frames). SET in "
-                  "every panel: {set}. CHARACTERS: {cast}.{people} Each panel is one moment, in time order (left to right, top row first).")
+                  "every panel: {set}. CHARACTERS: {cast}.{people} Each panel is one moment, in time order (left to right, top row first)."
+                  "{no_text} Every panel is a clean, undistorted photo: straight lines stay straight, no warped, smeared or broken areas.")
 
 
 _CLOTH = (r"(?:crop top|tank top|top|shorts|skirt|dress|jeans|pants|trousers|shirt|t-shirt|tee|hoodie|slippers|sandals|heels|boots|"
@@ -3814,6 +3860,22 @@ def _drop_clothes(txt: str) -> str:
     t = re.sub(_CLOTH_RX, "", str(txt or ""), flags=re.I)
     t = re.sub(r"\b(bare|naked|exposed) (legs?|arms?|skin|thighs?|shoulders?|midriff|back|feet)\b", r"\2", t, flags=re.I)
     t = re.sub(r"\s+([,.;)])", r"\1", _soften(t))
+    return re.sub(r"\s{2,}", " ", t).strip(" ,;")
+
+
+GEN_PLAN_V = 2                   # 분석 판(2 = 아웃트로·로고 화면 빼기 + 글씨 묘사 금지, 2026-10-11 러닝머신 편 사고) — 판이 바뀌면 다시 분석
+TEXT_RX = (r"\s*\b(?:with |showing |and )?(?:an? |the )?(?:centered |centred |semi-transparent |large |small |white |bold )*"
+           r"(?:motivational |inspirational )?(?:typography|lettering|quotes?|slogans?|text|writing|captions?|subtitles?|watermarks?|"
+           r"logos?|account (?:handles?|names?)|usernames?|@\w+|(?:social media |instagram |tiktok |youtube |app )icons?|"
+           r"(?:social media |instagram |tiktok |youtube )?overlays?|stickers?)\b(?: overlay)?")
+OUTRO_RX = (r"\b(outro|end ?card|end screen|ending screen|credits|subscribe|follow (?:me|us)|account (?:handle|name)|logo|watermark|"
+            r"instagram|tiktok|social media icon)\b|아웃트로|엔딩 ?화면|계정|로고|구독|팔로우|워터마크")
+
+
+def _no_text(t: str) -> str:
+    """연출 분석 글에서 화면 글씨·로고·계정 이름 묘사를 지운다(2026-10-11: '초록 문구 벽'을 그대로 그려 글씨가 깨지고, 아웃트로의 인스타 계정까지 그림)."""
+    t = re.sub(TEXT_RX, "", str(t or ""), flags=re.I)
+    t = re.sub(r"\s+([,.;)])", r"\1", t)
     return re.sub(r"\s{2,}", " ", t).strip(" ,;")
 
 
@@ -3876,7 +3938,7 @@ def _gen_fit(scenes: list, budget_sec: float, max_n: int = GEN_MAX_SCENES) -> tu
 def _gen_plan(ref: Path, L: float, work: Path, res: dict, cap: float, swap: str, cast: str) -> dict:
     """연출 분석(약 0.01달러) — 같은 원본·같은 길이면 log의 분석을 다시 쓴다(무료)."""
     plan = res.get("gen_plan") or {}
-    if plan.get("scenes") and plan.get("src") == res.get("src_sig") and abs(float(plan.get("L", 0)) - L) < 0.05:
+    if plan.get("scenes") and plan.get("v") == GEN_PLAN_V and plan.get("src") == res.get("src_sig") and abs(float(plan.get("L", 0)) - L) < 0.05:
         return plan
     clip = work / "_gen_plan.mp4"
     _ff(["-i", str(ref), "-vf", "scale=-2:480", "-c:v", "libx264", "-crf", "26", "-c:a", "aac", "-b:a", "96k", str(clip)])
@@ -3890,18 +3952,46 @@ def _gen_plan(ref: Path, L: float, work: Path, res: dict, cap: float, swap: str,
         except (TypeError, ValueError):
             continue
         if b > a:
-            scenes.append({"t0": a, "t1": b, "shot": _drop_clothes(str(x.get("shot", ""))).rstrip(". ")[:200],
-                           "frame": _drop_clothes(str(x.get("frame", "")))[:400], "ko": str(x.get("ko", ""))[:120]})
+            outro = x.get("outro") is True or bool(re.search(OUTRO_RX, " ".join(str(x.get(k, "")) for k in ("shot", "frame", "ko")), re.I))
+            scenes.append({"t0": a, "t1": b, "outro": outro, "shot": _no_text(_drop_clothes(str(x.get("shot", "")))).rstrip(". ")[:200],
+                           "frame": _no_text(_drop_clothes(str(x.get("frame", ""))))[:400], "ko": str(x.get("ko", ""))[:120]})
     rows = (res.get("timeline") or {}).get("all") or []
     by = "ai" if scenes else "timeline"
     if not scenes:
         scenes = _gen_from_rows(rows, L)
-    plan = {"src": res.get("src_sig", ""), "L": round(L, 2), "by": by,
+    story = [x for x in scenes if not x.get("outro")] or scenes
+    a0, b0 = min(x["t0"] for x in story), max(x["t1"] for x in story)
+    ct = o.get("content")
+    if isinstance(ct, list) and len(ct) == 2:          # AI가 따로 적은 '이야기 구간'과 겹치는 만큼만
+        try:
+            a0, b0 = max(a0, float(ct[0])), min(b0, float(ct[1]))
+        except (TypeError, ValueError):
+            pass
+    a0, b0 = max(0.0, a0), min(L, b0)
+    if b0 - a0 < 1.0:                                   # 이상한 값이면 자르지 않는다
+        a0, b0 = 0.0, L
+    trim = [round(a0, 2), round(b0, 2)] if (a0 > 0.2 or b0 < L - 0.2) else None
+    story = [{**x, "t0": x["t0"] - a0, "t1": x["t1"] - a0} for x in story if x["t1"] > a0 + 0.05 and x["t0"] < b0 - 0.05]
+    plan = {"v": GEN_PLAN_V, "src": res.get("src_sig", ""), "L": round(L, 2), "by": by, "trim": trim, "len": round(b0 - a0, 2),
+            "cut_out": [[x["t0"], x["t1"], x.get("ko", "")] for x in scenes if x.get("outro")],
             "hook": [str(h)[:120] for h in (o.get("hook") or []) if str(h).strip()][:5] if isinstance(o.get("hook"), list) else [],
-            "structure": str(o.get("structure", ""))[:200], "set": _drop_clothes(str(o.get("set", ""))).rstrip(". ")[:400],
-            "cast": _drop_clothes(str(o.get("cast", "")) or cast).rstrip(". ")[:400], "scenes": _gen_fix(scenes, L)}
+            "structure": str(o.get("structure", ""))[:200], "set": _no_text(_drop_clothes(str(o.get("set", "")))).rstrip(". ")[:400],
+            "cast": _no_text(_drop_clothes(str(o.get("cast", "")) or cast)).rstrip(". ")[:400], "scenes": _gen_fix(story, b0 - a0)}
     res["gen_plan"] = plan
     return plan
+
+
+def _rows_trim(rows: list, a: float, b: float) -> list:
+    """0.5초 시간표를 a~b초만 남기고 0초부터 다시 센다(아웃트로를 뺀 본편용)."""
+    out = []
+    for x in rows or []:
+        try:
+            x0, x1 = (float(v) for v in str(x.get("t", "")).split("-")[:2])
+        except ValueError:
+            continue
+        if x1 > a + 0.05 and x0 < b - 0.05:
+            out.append({**x, "t": f"{max(0.0, x0 - a):.1f}-{min(b, x1) - a:.1f}"})
+    return out
 
 
 def _gen_rows(rows: list, a: float, b: float) -> list:
@@ -4001,7 +4091,7 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
     scenes = plan.get("fit") or []
     if not scenes:
         raise RuntimeError("연출 분석(컷 나누기)이 없습니다 — 스토리보드부터 다시 그려 주세요(돈 안 씀)")
-    rows = (res.get("timeline") or {}).get("all") or []
+    rows = (res.get("timeline") or {}).get("gen") or (res.get("timeline") or {}).get("all") or []
     mult = 3 if gen_res == "720p" else 1
     parts, info = [], []
     for k, sc in enumerate(scenes):
@@ -4056,7 +4146,7 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
         if g.get("kind") == "정지":
             try:
                 a, b = (float(v) for v in str(g.get("t", "")).split("-")[:2])
-                freezes.append([a, min(float(plan.get("L", 99)), max(b, a + 0.6))])
+                freezes.append([a, min(float(plan.get("len") or plan.get("L", 99)), max(b, a + 0.6))])
             except ValueError:
                 pass
     if freezes and rm.get("gag_fx", True):
@@ -4188,6 +4278,17 @@ def step_remake(ep, epdir, work, log, req):
                 _timeline(ref, 0, L, work, res, cap, "all")
             rows_g = (res.get("timeline") or {}).get("all") or []
             plan = _gen_plan(ref, L, work, res, cap, res["swap_used"], res.get("cast_used") or "")
+            if plan.get("trim"):                         # ⛔ 아웃트로·계정 이름·로고 화면은 본편에서 뺀다(2026-10-11 러닝머신 편: 인스타 계정 화면까지 그림)
+                ta, tb = plan["trim"]
+                trimmed = work / "_gen_trim.mp4"
+                _ff(["-ss", f"{ta:.3f}", "-t", f"{tb - ta:.3f}", "-i", str(ref), "-c:v", "libx264", "-crf", "16", "-c:a", "aac", "-b:a", "160k", str(trimmed)])
+                ref, L = trimmed, _dur(trimmed)
+                rows_g = _rows_trim(rows_g, ta, tb)
+                nb = max(1, math.ceil(L / REMAKE_SEG))
+                bseg, n, seg = L / nb, 1, L
+                n_pan = _board_panels(L, rm)
+                res.update({"src_sec": round(L, 2), "gen_trim": {"keep": plan["trim"], "cut_out": plan.get("cut_out")}})
+            res.setdefault("timeline", {})["gen"] = rows_g
             redo_g = (req.get("remake") or {}).get("redo")
             will_draw = not (work / "board.jpg").exists() or (mode == "board" and bool(redo_g)) or \
                 (mode == "full" and isinstance(redo_g, list) and "segs" in redo_g)
@@ -4242,7 +4343,7 @@ def step_remake(ep, epdir, work, log, req):
         if gen:
             gp = res.get("gen_plan") or {}
             b_lead = GEN_BOARD_LEAD.format(set=gp.get("set") or "as in the original", cast=gp.get("cast") or res.get("cast_used") or "as in the original",
-                                           people=GEN_PEOPLE_KEEP if rm.get("keep_people") else GEN_PEOPLE_NONE)
+                                           people=GEN_PEOPLE_KEEP if rm.get("keep_people") else GEN_PEOPLE_NONE, no_text=GEN_NO_TEXT)
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
                 res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast") or REMAKE_CAST_DEFAULT) if rm.get("keep_people") else "",

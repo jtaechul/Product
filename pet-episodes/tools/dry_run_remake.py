@@ -76,6 +76,10 @@ PLAN = {"hook": ["첫 1초에 두 강아지가 동시에 달려들어 시선을 
                    {"t0": 2.5, "t1": 4.0, "shot": "wide, low angle, fixed", "frame": "Two Shibas sprint in from the right.", "ko": "두 마리가 달려옴"},
                    {"t0": 4.0, "t1": 6.5, "shot": "medium, fixed", "frame": "The red Shiba slides into the cream Shiba on the tiles.", "ko": "미끄러지며 부딪힘"},
                    {"t0": 6.5, "t1": 9.5, "shot": "close-up, fixed", "frame": "Both Shibas eat from the bowls.", "ko": "둘 다 먹음"}]}
+PLAN_OUTRO = {**PLAN, "set": "Indoor gym with a green motivational typography wall and black treadmills", "content": [0, 5.8],
+              "scenes": [{"t0": 0, "t1": 5.8, "outro": False, "shot": "high angle handheld", "frame": "A Shiba grips the treadmill bar, with a green quote wall behind.", "ko": "러닝머신에서 미끄러짐"},
+                         {"t0": 5.8, "t1": 9.5, "shot": "static, darkened frame with centered social media icon overlay",
+                          "frame": "Dimmed floor under a dark vignette with centered account handle @ANNGRI_BIRRDS.", "ko": "화면이 어두워지며 계정 아이콘이 나오는 아웃트로"}]}
 PLAN_MANY = {**PLAN, "scenes": [{"t0": round(i * 9.5 / 9, 2), "t1": round((i + 1) * 9.5 / 9, 2), "shot": f"shot {i + 1}", "frame": f"frame {i + 1}", "ko": f"컷{i + 1}"} for i in range(9)]}
 _clips: dict = {}
 
@@ -122,13 +126,21 @@ def install_mocks(flags: dict) -> list:
             return {"pieces": [[0, 9.5]], "hook": "h", "why": "w"}
         if "film director" in prompt:
             calls.append("plan")
-            return {} if flags.get("plan_fail") else (PLAN_MANY if flags.get("many") else PLAN)
+            return {} if flags.get("plan_fail") else (PLAN_MANY if flags.get("many") else PLAN_OUTRO if flags.get("outro") else PLAN)
         calls.append("timeline")
         if flags.get("tl_cuts"):
             return {"steps": [{**x, "camera": "Cut to close-up." if i in (5, 9) else "Fixed."} for i, x in enumerate(TL)]}
         return {} if flags.get("tl_fail") else {"steps": TL}
     E._video_json = vj
-    E._vision_json = lambda img, prompt: (calls.append("vision"), {"place": "top", "why": "t"})[1]
+    def vis(img, prompt):
+        calls.append("vision")
+        if "storyboard grid" in prompt:                   # 스토리보드 글씨·로고 검사: text_once면 첫 그림에만 3번 칸에 글씨
+            if flags.get("text_once") and not flags.get("_texted"):
+                flags["_texted"] = True
+                return {"panels": [3], "what": "garbled letters on the wall"}
+            return {"panels": []}
+        return {"place": "top", "why": "t"}
+    E._vision_json = vis
     n_omni = {"n": 0}
 
     def omni(k, body):
@@ -154,6 +166,9 @@ def install_mocks(flags: dict) -> list:
 
     def gi(prompt, refs, out, aspect="9:16", size=""):
         calls.append("image")
+        bad = re.search(r"typography|quote wall|account handle|ANNGRI|social media icon|instagram", prompt, re.I)
+        if bad:
+            raise RuntimeError(f"그림 지시에 글씨·로고 묘사가 남음: {bad.group(0)}")
         if "grid" in prompt:
             shutil.copy(BOARD, out)
         elif flags.get("end_band") and "real product" in prompt and not flags.get("_banded"):
@@ -303,6 +318,19 @@ if not log["remake"].get("blocked"):
     FAILS.append("⑯ 막힘 기록 없음")
 run(d, ep, {"remake": {"mode": "full", "redo": ["body"]}}, {}, "⑯ 새로 만들기: 본편만 다시(한도 5: 지우기 전에 멈춰야)", expect_stop="아무것도 지우지 않고")
 run(d, ep, {"remake": {"mode": "full"}}, {}, "⑯ 새로 만들기: 다시 조립(돈 0)")
+d, ep = make_ep("genoutro", method="gen")
+log = run(d, ep, {"remake": {"mode": "board"}}, {"outro": True, "text_once": True}, "⑱ 새로 만들기: 끝 4초 아웃트로(계정·로고 화면) + 벽 글씨 → 다시 그림 스토리보드")
+if not (log["remake"].get("board_text") or {}).get("redrawn") is False and not log["remake"].get("board_text"):
+    FAILS.append("⑱ 글씨 칸을 못 잡음")
+print("    글씨 검사:", log["remake"].get("board_text"), "| 장부", log["remake"].get("spent"))
+log = run(d, ep, {"remake": {"mode": "full"}}, {"outro": True}, "⑱ 새로 만들기: 아웃트로 빼고 영상")
+r18 = log["remake"]
+body18 = sum(float(c.get("used", 0)) for c in (r18.get("gen") or {}).get("clips", []))
+if not r18.get("gen_trim") or abs(body18 - 5.8) > 0.15 or re.search(r"ANNGRI|account handle|typography", json.dumps(r18.get("gen_prompts_used"))):
+    FAILS.append("⑱ 아웃트로를 빼지 못했거나 글씨 묘사가 남음")
+    print("FAIL ⑱", r18.get("gen_trim"), body18)
+else:
+    print("    아웃트로 뺌:", r18["gen_trim"], "| 본편", round(body18, 2), "초 | 칸", (log["remake"].get("board") or {}).get("panels"))
 d, ep = make_ep("gentest", method="gen")
 log = run(d, ep, {"remake": {"mode": "test"}}, {}, "⑰ 새로 만들기: 예전 '시험' 요청 → 스토리보드만(영상 안 만듦)")
 if log["remake"].get("gen") or not (d / "work" / "board.jpg").exists():
