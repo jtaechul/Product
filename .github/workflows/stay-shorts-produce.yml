@@ -80,6 +80,21 @@ jobs:
             --notes "숙소 쇼핑쇼츠 시험 제작본 (검수용 · 미발행). compare_sheet.jpg = 원본 사진과 AI 영상 첫 장면 비교"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
+      - name: 완성본 보관 (Actions 아티팩트 · 90일) — Release 가 403 일 때의 보관처
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stay-run-${{ github.run_number }}
+          path: |
+            projects/stay-shorts-factory/build/video.mp4
+            projects/stay-shorts-factory/build/meta.json
+            projects/stay-shorts-factory/data/runs/latest/compare_sheet.jpg
+            projects/stay-shorts-factory/data/runs/latest/preview_shots.jpg
+            projects/stay-shorts-factory/data/runs/latest/narration_preview.mp3
+            projects/stay-shorts-factory/data/runs/latest/report.json
+          if-no-files-found: ignore
+          retention-days: 90
+
       - name: 텔레그램으로 영상 전달
         if: always()
         env:
@@ -139,15 +154,21 @@ jobs:
           P=projects/stay-shorts-factory
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for d in data/runs state link; do [ -e "$P/$d" ] && git add "$P/$d"; done
-          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
-          FOLDER_CHANGED=0; git diff --cached --quiet -- "$P/link" || FOLDER_CHANGED=1
-          git commit -m "stay-shorts: 시험 제작 기록 [skip ci]"
+          # stay-run-18 실측: 실행 중에 다른 푸시가 들어오면 pull --rebase 가 충돌(report·장부·폴더) → 기록·Veo 장부가 통째로 유실됐다.
+          # 그래서 이 실행의 결과 파일을 따로 보관했다가, 원격 최신 위에 **덮어쓰는** 방식으로 커밋한다 (충돌 없음).
+          SAVE=$(mktemp -d)
+          for d in data/runs state link; do [ -e "$P/$d" ] && { mkdir -p "$SAVE/$(dirname "$d")"; cp -r "$P/$d" "$SAVE/$d"; }; done
           for i in 1 2 3 4 5; do
-            git push origin "HEAD:${GITHUB_REF_NAME}" && { echo "저장 완료"; echo "FOLDER_CHANGED=$FOLDER_CHANGED" >> "$GITHUB_ENV"; exit 0; }
-            echo "재시도 $i"; git pull --rebase origin "${GITHUB_REF_NAME}" || true; sleep 3
+            git fetch origin "${GITHUB_REF_NAME}" && git reset -q --hard "origin/${GITHUB_REF_NAME}" || { sleep 3; continue; }
+            for d in data/runs state link; do [ -e "$SAVE/$d" ] && { mkdir -p "$P/$d"; cp -a "$SAVE/$d/." "$P/$d/"; }; done
+            git add "$P/data/runs" "$P/state" "$P/link" 2>/dev/null || true
+            if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+            FOLDER_CHANGED=0; git diff --cached --quiet -- "$P/link" || FOLDER_CHANGED=1
+            git commit -q -m "stay-shorts: 시험 제작 기록 [skip ci]"
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then echo "저장 완료"; echo "FOLDER_CHANGED=$FOLDER_CHANGED" >> "$GITHUB_ENV"; exit 0; fi
+            echo "재시도 $i (원격이 바뀜)"; sleep 3
           done
-          echo "저장 실패"; exit 1
+          echo "::error::기록 저장 실패 — 결과는 텔레그램·Release 에만 남았다"; exit 1
 
       - name: 폴더 페이지 재배포 (폴더 데이터가 바뀐 경우)
         if: always() && env.FOLDER_CHANGED == '1'
