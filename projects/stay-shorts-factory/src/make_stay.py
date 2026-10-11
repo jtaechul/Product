@@ -625,6 +625,16 @@ def main() -> int:
     try:
         models = pick_models()
         report["models"] = models
+        if mode == "top3" and str(req.get("stage") or "") == "preview":
+            # 영상 없이 사진·대사·나레이션(받아쓰기 검증)만 — 운영자가 보고 듣고 승인한 뒤에 영상
+            import make_top3
+            meta = make_top3.preview_top3(req, models, report)
+            report["models_used"] = dict(USED)
+            report.update({"ok": True, "stage": "preview", "narration_qa_ok": meta["narration_qa_ok"]})
+            out = PREVIEW / "report.json"
+            out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+            print(json.dumps({k: report[k] for k in ("ok", "stage", "narration_qa_ok", "narration_qa", "script")}, ensure_ascii=False, indent=1))
+            return 0
         if mode == "top3":
             import make_top3
             video, dur_total, meta = make_top3.produce_top3(req, models, report)

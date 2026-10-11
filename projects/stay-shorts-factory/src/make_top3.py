@@ -387,6 +387,116 @@ def segment(idx: int, pieces: list, wav: Path | None, narr: float, planned: floa
     return out, seglen
 
 
+# ── 4-1) 나레이션 검증: 음성을 받아 적어 대본과 비교 (2026-10-11 운영자 지적 "이상한 워딩이 들린다") ──
+def transcribe(model: str, wav: Path) -> str:
+    import base64
+    body = {"contents": [{"role": "user", "parts": [
+        {"text": "이 음성을 들리는 그대로 한국어로 받아 적어라. 설명·따옴표 없이 받아 적은 문장만 출력한다."},
+        {"inline_data": {"mime_type": "audio/wav", "data": base64.b64encode(wav.read_bytes()).decode()}}]}],
+        "generationConfig": {"maxOutputTokens": 400, "temperature": 0.0}}
+    data = ms._gpost(f"models/{model}:generateContent", body, 120)
+    parts = (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or [])
+    return "".join(p.get("text", "") for p in parts).strip()
+
+
+def narration_qa(models: dict, items: list[tuple[str, str, Path]]) -> list[dict]:
+    """(구간, 대본, wav) → 받아쓰기·유사도. 유사도 0.75 미만이거나 '읽어줘·대사' 같은 지시문 낱말이 들리면 실패."""
+    import difflib
+    out = []
+    for key, text, wav in items:
+        try:
+            heard = ms._try_models("text", models["text"], lambda m: transcribe(m, wav))
+        except Exception as e:  # noqa: BLE001
+            heard = f"(받아쓰기 실패: {str(e)[:60]})"
+        a, b = re.sub(r"[\s.,!?~]", "", text), re.sub(r"[\s.,!?~]", "", heard)
+        sim = difflib.SequenceMatcher(None, a, b).ratio() if b else 0.0
+        bad = [w for w in ("읽어줘", "읽어 줘", "대사를", "톤으로", "추천하듯", "나레이션 톤") if w in heard]
+        out.append({"segment": key, "script": text, "heard": heard, "similarity": round(sim, 2),
+                    "ok": sim >= 0.75 and not bad, "instruction_words": bad})
+    return out
+
+
+def preview_sheet(hotels: list[dict], script: dict, out: Path):
+    """사진 6장(3위→1위, 각 A·B) + 그 위에 들어갈 자막을 한 장으로 — 영상 전에 눈으로 판단."""
+    from PIL import Image, ImageDraw, ImageFont
+    g = ms.font_path()
+    f = ImageFont.truetype(g, 30); f2 = ImageFont.truetype(g, 24)
+    w, h = 300, 533
+    im = Image.new("RGB", (w * 2 + 60, (h + 140) * 3 + 20), (18, 18, 18))
+    d = ImageDraw.Draw(im)
+    for row, (hh, r) in enumerate(zip(hotels, script["ranks"])):
+        y0 = 20 + row * (h + 140)
+        d.text((20, y0), f"{r['rank']}위  {hh['name']}", font=f, fill=(255, 232, 107))
+        narr = r["narration"] + (f" / {r['benefit']}" if r.get("benefit") else "")
+        d.text((20, y0 + 38), ("나레이션: " + narr)[:48], font=f2, fill=(220, 220, 220))
+        for col, (s, cap) in enumerate(zip(hh["shots"], r["captions"])):
+            try:
+                t = Image.open(BUILD / f"shot_{s['n']}.png").convert("RGB").resize((w, h), Image.LANCZOS)
+            except Exception:  # noqa: BLE001
+                continue
+            x = 20 + col * (w + 20)
+            im.paste(t, (x, y0 + 74))
+            d.rectangle([x, y0 + 74 + h - 40, x + w, y0 + 74 + h], fill=(0, 0, 0))
+            d.text((x + 8, y0 + 74 + h - 34), f"자막: {cap}", font=f2, fill=(255, 255, 255))
+            d.text((x + 8, y0 + 74 + 8), f"{photos.KO.get(s['category'], '')}", font=f2, fill=(255, 255, 255), stroke_width=2, stroke_fill=(0, 0, 0))
+    im.save(out, "JPEG", quality=85)
+
+
+def preview_top3(req: dict, models: dict, report: dict) -> dict:
+    """영상 없이 ① 사진 ② 대사·자막 ③ 나레이션 음성(받아쓰기 검증)만 만든다. 운영자가 보고 듣고 승인하면 그때 영상."""
+    theme, region, month = str(req.get("theme") or ""), str(req.get("region") or ""), str(req.get("month") or "")
+    voice, tempo = str(req.get("voice") or "Erinome"), float(req.get("tempo") or 1.08)
+    BUILD.mkdir(parents=True, exist_ok=True)
+    hotels = []
+    for i, c in enumerate(pick_candidates(req)):
+        if len(hotels) >= 3:
+            break
+        h = hotel_assets(c, models, i + 1)
+        if h:
+            hotels.append(h)
+    if len(hotels) < 3:
+        raise RuntimeError(f"사진 2장 이상 확보된 숙소가 {len(hotels)}곳 — 3곳 필요")
+    hotels = hotels[:3][::-1]
+    hotels[2]["honest"] = ms._try_models("text", models["text"], lambda m: honest_line(m, hotels[2]["name"]))
+    report["hotels"] = [{k: h[k] for k in ("name", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest") if k in h} for h in hotels]
+    script = ms._try_models("text", models["text"], lambda m: write_script(m, req, hotels))
+    report["script"] = script
+    segs_text = [("hook", script["hook"]["narration"])] + [(f"r{r['rank']}", r["narration"] + (" " + r["benefit"] if r.get("benefit") else "")) for r in script["ranks"]] + [("cta", script["cta"]["narration"])]
+    wavs = []
+    for key, text in segs_text:
+        wav = BUILD / f"narr_{key}.wav"
+        sec = tts(models, text, wav, voice, tempo)
+        wavs.append((key, text, wav, sec))
+    report["narration_sec"] = {k: round(s, 2) for k, _, _, s in wavs}
+    qa = narration_qa(models, [(k, t, w) for k, t, w, _ in wavs])
+    report["narration_qa"] = qa
+
+    prev = ms.PREVIEW
+    prev.mkdir(parents=True, exist_ok=True)
+    # 들어볼 수 있게 한 파일로 (구간 사이 0.6초 쉼)
+    (BUILD / "narr_list.txt").write_text("".join(f"file '{w.name}'\nfile 'gap.wav'\n" for _, _, w, _ in wavs), encoding="utf-8")
+    ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", "0.6", "-i", "anullsrc=r=24000:cl=mono", str(BUILD / "gap.wav")])
+    ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(BUILD / "narr_list.txt"), "-c:a", "libmp3lame", "-b:a", "96k", str(prev / "narration_preview.mp3")])
+    preview_sheet(hotels, script, prev / "preview_shots.jpg")
+    md = [f"# 미리보기 — {region} · {theme} · {month}", "", "## 대사·자막", "",
+          f"- 훅 자막: **{script['hook']['caption']}** / 나레이션: {script['hook']['narration']}"]
+    for r in script["ranks"]:
+        md.append(f"- {r['rank']}위 자막: **{r['captions'][0]}** → **{r['captions'][1]}** / 나레이션: {r['narration']}" + (f" / 혜택: {r['benefit']}" if r.get("benefit") else "") + (f" / 아쉬움: {r['honest']}" if r.get("honest") else ""))
+    md += [f"- CTA 자막: **{script['cta']['caption']}** / 나레이션: {script['cta']['narration']}", "", "## 나레이션 받아쓰기 검증 (Gemini 가 음성을 듣고 적은 것)", "",
+           "| 구간 | 대본 | 들린 것 | 일치 | 판정 |", "|---|---|---|---|---|"]
+    for q in qa:
+        md.append(f"| {q['segment']} | {q['script']} | {q['heard']} | {q['similarity']} | {'통과' if q['ok'] else '실패 ' + ','.join(q['instruction_words'])} |")
+    md += ["", "## 숙소·사진", ""]
+    for h, r in zip(hotels, script["ranks"]):
+        md.append(f"- {r['rank']}위 {h['name']} — 확인된 시설: {', '.join(h['verified_facilities']) or '없음'} · 후기 30일 {h['blog_30d']} · 장면 A: {h['shots'][0].get('description')} · 장면 B: {h['shots'][1].get('description')}")
+    (prev / "preview.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+    names = [h["name"] for h in hotels[::-1]]
+    meta = {"mode": "top3", "stage": "preview", "stay": " / ".join(names), "title": script.get("title"),
+            "narration_qa_ok": all(q["ok"] for q in qa), "files": ["preview.md", "preview_shots.jpg", "narration_preview.mp3"]}
+    (BUILD / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
+    return meta
+
+
 # ── 5) 전체 ───────────────────────────────────────────────────────────
 def produce_top3(req: dict, models: dict, report: dict) -> tuple[Path, float, dict]:
     theme, region, month = str(req.get("theme") or ""), str(req.get("region") or ""), str(req.get("month") or "")

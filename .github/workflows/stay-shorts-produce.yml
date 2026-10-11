@@ -66,8 +66,10 @@ jobs:
         run: |
           cd projects/stay-shorts-factory/build
           TAG="stay-run-${{ github.run_number }}"
-          FILES="video.mp4 meta.json"
+          FILES="meta.json"
+          [ -f video.mp4 ] && FILES="$FILES video.mp4"
           [ -f ../data/runs/latest/compare_sheet.jpg ] && FILES="$FILES ../data/runs/latest/compare_sheet.jpg"
+          for f in preview.md preview_shots.jpg narration_preview.mp3; do [ -f "../data/runs/latest/$f" ] && FILES="$FILES ../data/runs/latest/$f"; done
           gh release create "$TAG" $FILES --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" --prerelease --title "숙소 쇼츠 시험 제작 $TAG" \
             --notes "숙소 쇼핑쇼츠 시험 제작본 (검수용 · 미발행). compare_sheet.jpg = 원본 사진과 AI 영상 첫 장면 비교"
@@ -82,7 +84,15 @@ jobs:
           [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ] && { echo "텔레그램 키 없음 — 건너뜀"; exit 0; }
           P=projects/stay-shorts-factory
           V=$P/build/video.mp4
-          if [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$V" ]; then
+          L=$P/data/runs/latest
+          if [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$L/narration_preview.mp3" ] && [ ! -f "$V" ]; then
+            # 미리보기 단계: 사진 시트 + 나레이션 음성 + 받아쓰기 판정
+            QA=$(python3 -c "import json;r=json.load(open('$L/report.json',encoding='utf-8'));qa=r.get('narration_qa') or [];print(('나레이션 받아쓰기 ' + ('전부 통과' if all(q['ok'] for q in qa) else '실패 있음')) + ' · ' + ' / '.join(f\"{q['segment']} {q['similarity']}\" for q in qa))" 2>/dev/null || echo "미리보기")
+            curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$L/preview_shots.jpg" \
+              -F caption="미리보기(영상 없음) — 사진 6장과 자막. $QA" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
+            curl -s -o /dev/null -w "telegram audio http %{http_code}\n" -F chat_id="$TG_CHAT" -F audio=@"$L/narration_preview.mp3" \
+              -F caption="나레이션 미리듣기 (훅 → 3위 → 2위 → 1위 → CTA)" "https://api.telegram.org/bot$TG_TOKEN/sendAudio" || true
+          elif [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$V" ]; then
             CAP=$(python3 - <<'PY' || echo "숙소 쇼츠 시험 제작본입니다 (미발행 · 검수용)"
           import json
           m = json.load(open("projects/stay-shorts-factory/build/meta.json", encoding="utf-8"))
