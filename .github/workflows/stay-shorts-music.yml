@@ -1,0 +1,79 @@
+name: stay-shorts-music
+
+# 대표 배경음악 1곡을 Gemini API(Lyria 3.5)로 만든다 — 운영자 2026-10-11 "제미나이로 대표 배경음악 하나, 1분짜리".
+# 비용: 한 곡 $0.08 ≈ 118원 (공개 가격표). 실행은 requests/music/request.json 의 nonce 를 바꿔 푸시할 때만 (운영자 지시가 곧 승인).
+# 결과: assets/music/<name>.mp3 + bgm.mp3(대표) 커밋 · 텔레그램으로 들어볼 수 있게 전송 · 장부(state/spend.json) 기록.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: ["main", "claude/stay-shorts-factory", "claude/stay-shorts-video-conversion-67hiin"]
+    paths: ["projects/stay-shorts-factory/requests/music/*.json"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stay-shorts-music
+  cancel-in-progress: false
+
+jobs:
+  music:
+    name: 배경음악 만들기
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            projects/stay-shorts-factory
+          sparse-checkout-cone-mode: true
+
+      - name: 준비 (ffmpeg)
+        run: |
+          command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null; }
+          ffmpeg -version | head -1
+
+      - name: 음악 생성 (Lyria 3.5 · 약 118원)
+        id: gen
+        working-directory: projects/stay-shorts-factory
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python3 src/make_music.py
+
+      - name: 텔레그램으로 들려주기
+        if: always()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          P=projects/stay-shorts-factory
+          NAME=$(python3 -c "import json;print(json.load(open('$P/requests/music/request.json',encoding='utf-8')).get('name','bgm_01'))" 2>/dev/null || echo bgm_01)
+          J="$P/assets/music/$NAME.json"
+          if [ -f "$P/assets/music/$NAME.mp3" ]; then
+            CAP=$(python3 -c "import json;i=json.load(open('$J',encoding='utf-8'));print(f\"배경음악 {i['name']} · {i.get('out_sec')}초 (원곡 {i.get('raw_sec')}초) · {i['model']} · 약 {i['krw_est']:,}원 · 대표곡으로 저장(bgm.mp3) — 제작 때 나레이션 아래로 자동 덕킹\")" 2>/dev/null || echo "배경음악")
+            curl -s -o /dev/null -w "telegram audio http %{http_code}\n" -F chat_id="$TG_CHAT" -F audio=@"$P/assets/music/$NAME.mp3" -F title="$NAME" \
+              -F caption="$CAP" "https://api.telegram.org/bot$TG_TOKEN/sendAudio" || true
+          else
+            ERR=$(python3 -c "import json;print(json.load(open('$J',encoding='utf-8')).get('error',''))" 2>/dev/null || echo "기록 없음")
+            curl -s -o /dev/null -w "telegram msg http %{http_code}\n" -F chat_id="$TG_CHAT" -F text="배경음악 생성 실패: $ERR" "https://api.telegram.org/bot$TG_TOKEN/sendMessage" || true
+          fi
+
+      - name: 커밋 (음악 파일 · 장부)
+        if: always()
+        run: |
+          P=projects/stay-shorts-factory
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          SAVE=$(mktemp -d)
+          for d in assets/music state; do [ -e "$P/$d" ] && { mkdir -p "$SAVE/$(dirname "$d")"; cp -r "$P/$d" "$SAVE/$d"; }; done
+          for i in 1 2 3 4 5; do
+            git fetch origin "${GITHUB_REF_NAME}" && git reset -q --hard "origin/${GITHUB_REF_NAME}" || { sleep 3; continue; }
+            for d in assets/music state; do [ -e "$SAVE/$d" ] && { mkdir -p "$P/$d"; cp -a "$SAVE/$d/." "$P/$d/"; }; done
+            git add "$P/assets/music" "$P/state" 2>/dev/null || true
+            if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+            git commit -q -m "stay-shorts: 배경음악 생성 기록 [skip ci]"
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then echo "저장 완료"; exit 0; fi
+            echo "재시도 $i"; sleep 3
+          done
+          echo "::error::기록 저장 실패"; exit 1
