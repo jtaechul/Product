@@ -63,8 +63,10 @@
   영상 CTA·캡션이 말하는 "프로필 폴더 '11월 실내 온수풀 온천'" 이 바로 이것 — `make_top3.folder_name` 과 `make_folder.title_of` 가 같은 규칙
 - 파일: `link/index.html`(정적, 의존성 없음, 다크모드, 이모지 없음·SVG 아이콘) + `link/data/folders.json`(데이터). 데이터는 `src/make_folder.py` 가 만든다 —
   미리보기·제작이 대본을 뽑은 직후 `update()` 로 같은 slug 폴더를 덮어쓰고, 손으로는 `python3 src/make_folder.py`(최근 report.json + 순위표)
-- 배포: `.github/workflows/deploy-stay-links.yml` → Cloudflare Pages (무료, 시크릿은 기존 `CF_API_TOKEN`). 프로젝트 이름 후보 `stay-folders` → `stay-links` → `data-hocance`
-  (선점되면 다음 후보). 주소는 배포 요약·텔레그램에 찍힌다. produce 워크플로가 folders.json 을 커밋하면([skip ci]) `gh workflow run` 으로 배포를 부른다
+- 배포: `.github/workflows/deploy-stay-links.yml` → Cloudflare Pages (무료, 시크릿은 기존 `CF_API_TOKEN`). **주소: https://stay-folders.pages.dev** (2026-10-11 첫 배포 성공, 30초).
+  이름 후보 `stay-folders` → `stay-links` → `data-hocance` 순(선점되면 다음). produce 워크플로가 folders.json 을 커밋하면([skip ci]) `gh workflow run` 으로 배포를 부른다
+- 상태(2026-10-11): 폴더 1개(11월 실내 온수풀 온천 · 비발디파크·롯데속초·쏠비치삼척). p7 기준 데이터라 **객실 사진·공식 홈페이지 사실이 아직 비어 있다** —
+  다음 제작·미리보기 실행(새 코드) 때 자동으로 채워진다 (운영자 허락 뒤 실행)
 - 규칙: ① 가격은 자체 기록 3회 이상 같은 10만 원대일 때만 "20만 원대(조회 기준)" ② 사진은 **쿠팡 API 객실 사진만**(공식 홈페이지 사진은 페이지에 안 올림 — 재배포 범위를 영상으로 한정)
   ③ 고지문은 머리·꼬리 항상 ④ 아고다 버튼은 `agoda_url` 이 있을 때만 보인다(가입·`AGODA_CID` 등록 뒤 링크 생성 코드 추가) ⑤ 채널 이름 "데이터 호캉스"는 임시(미정)
 - 쓰임: 아고다 파트너스 가입 때 "여행 원본 콘텐츠가 있는 사이트" 로 이 주소를 적는다. 발행 전 필수
