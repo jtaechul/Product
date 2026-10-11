@@ -89,7 +89,8 @@ def official_photos(name: str, city: str, out: Path, models: dict, req: dict) ->
         return [], {"skipped": "request.json crawl=false"}, {}
     try:
         cr = crawl.collect(name, city, out, official_url=(req.get("official_urls") or {}).get(name),
-                           max_images=int(req.get("crawl_max") or crawl.MAX_IMAGES),      # 단일 숙소 포맷은 장면 5개가 필요해 더 모은다
+                           max_images=int(req.get("crawl_max") or crawl.MAX_IMAGES),      # 단일 숙소 포맷은 컷 9개가 필요해 더 모은다
+                           max_pages=int(req.get("crawl_pages") or 14), want=list(req.get("want_pages") or []),   # 시설 페이지(사우나·키즈…)를 먼저
                            gemini_json=lambda m, s, c: ms._try_models("text", models["text"], lambda mm: ms.gemini_json(mm, s, c)), model="auto")
     except Exception as e:  # noqa: BLE001
         log(f"{name}: 공식 홈페이지 수집 오류 — 쿠팡 사진만 사용 ({str(e)[:80]})")
@@ -166,16 +167,16 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None, quota
         return None
     build = BUILD / f"h{idx}"
     build.mkdir(parents=True, exist_ok=True)
-    official, crawl_info, site_text = official_photos(name, c.get("city", ""), build / "official", models, req)
+    facts = [k["facility"] for k in (c.get("facility_checks") or []) if k.get("verified")][:3]
+    official, crawl_info, site_text = official_photos(name, c.get("city", ""), build / "official", models, {**req, "want_pages": facts})
     cands = photos.gather(rooms, ROOT / "requests" / "produce" / "photos_none", build, official=official)
     if not cands:
         return None
-    facts = [k["facility"] for k in (c.get("facility_checks") or []) if k.get("verified")][:3]
     ctx = photos.context_for(name, c.get("city", ""), facts)
     cl = ms._try_models("vision", models["text"], lambda m: photos.classify(m, cands, ctx))
     theme = str(req.get("theme") or "")
     usable = sorted([p for p in cl if p["category"] in photos.CATS and p["quality"] >= 4 and not p.get("people")],
-                    key=lambda p: (-theme_fit(p["description"], theme), -p["quality"]))   # 테마에 맞는 장면(실내·온수…)을 먼저
+                    key=lambda p: (-theme_fit(p["description"], theme), -facility_hit(p, facts), -p["quality"]))   # 테마에 맞는 장면 → 시설(사우나·키즈…) → 품질
     # 장면 선택: 분류별 quota 만큼 (물놀이 → 객실 → 특별 순, 없으면 남은 것으로 채움). 2개 미만이면 제외
     chosen = []
     for cat in ("water", "room", "special"):
@@ -216,6 +217,21 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None, quota
 
 THEME_RX = {"실내": r"실내|인도어|indoor|돔", "온수": r"온수|온천|스파|사우나|따뜻|온탕|노천", "온천": r"온천|온탕|노천|스파",
             "워터파크": r"워터파크|슬라이드|유수풀", "오션": r"바다|오션|해변", "자쿠지": r"자쿠지|욕조|노천|프라이빗", "키즈": r"키즈|아이|어린이"}
+
+
+FACILITY_RX = re.compile(r"사우나|찜질|키즈|놀이|산책|정원|테라스|라운지|조식|레스토랑|식당|스파|온천|노천|족욕|카페|바비큐|바베큐|수영장|풀|자쿠지|피트니스")
+
+
+def facility_hit(p: dict, facts: list[str] | None = None) -> int:
+    """'특별 공간' 후보 중 시설(사우나·키즈·산책로…)이 보이는 사진을 외관·야경보다 먼저 — 2026-10-11 운영자 "사우나 같은 필요한 사진을 다 반영".
+    확인된 시설 이름("히노키 사우나")의 낱말이 설명에 있으면 2, 일반 시설 낱말이면 1."""
+    if p.get("category") != "special":
+        return 0
+    d = p.get("description") or ""
+    for f in facts or []:
+        if any(len(t) >= 2 and t in d for t in re.split(r"[\s·/,()]+", str(f))):
+            return 2
+    return 1 if FACILITY_RX.search(d) else 0
 
 
 def theme_fit(desc: str, theme: str) -> int:

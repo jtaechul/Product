@@ -30,7 +30,7 @@ import make_top3 as mt  # noqa: E402
 import photos  # noqa: E402
 import veo  # noqa: E402
 
-QUOTA = {"water": 3, "room": 3, "special": 3}                 # 사진 9장 → 훅1 · 물2 · 객실2 · 특별2 · 조건2
+QUOTA = {"water": 3, "room": 3, "special": 4}                 # 사진 10장 후보 → 훅1 · 물2 · 객실2 · 특별2~3(시설 사진 우선) · 조건1~2 = 컷 9~10
 LIM = {"hook": (10, 22), "veo": (12, 24), "photo": (14, 30)}  # 컷 문장 길이(공백 제외). 1.28배속 실측 약 6.6자/초 → Veo 4초 컷은 24자까지
 MIN_CUT, GAP, VEO_SEC, MAX_SLOW = 1.6, 0.30, 4, 1.25
 PATTERNS = ("push", "pan", "tilt", "pull")                     # 사진 컷 카메라 무빙 4종 순환
@@ -40,6 +40,8 @@ FACILITY_RX = re.compile(r"사우나|찜질|키즈|놀이|산책|정원|테라�
 EXTERIOR_RX = re.compile(r"외관|전경|건물|항공|야경|조명|단지|하늘|은하수|드론|멀리")
 WATER_RX = re.compile(r"물|풀|탕|스파|사우나|온천|폭포|분수|파도|슬라이드|바다|강|호수")
 QA_THR = {"offer": 5}                                          # 조건 컷은 느슨하게(5), 나머지 7
+BGM = mt.ROOT / "assets" / "music" / "bgm.mp3"           # 대표 배경음악 (make_music.py 가 만든다) — 있으면 자동으로 깐다, request.json "bgm": false 면 생략
+BGM_LEVEL = 0.22                                               # 나레이션 대비 배경음악 크기(선형). 말할 땐 사이드체인으로 더 내려간다
 
 
 def log(*a):
@@ -116,9 +118,10 @@ def assets(req: dict, models: dict, report: dict) -> tuple[dict, int]:
     return h, pos
 
 
-def _special_key(s):
+def _special_key(s, facts=()):
     d = s.get("description") or ""
-    return (0 if FACILITY_RX.search(d) else 1 if not EXTERIOR_RX.search(d) else 2, -int(s.get("quality") or 0))
+    named = any(len(t) >= 2 and t in d for f in facts for t in re.split(r"[\s·/,()]+", str(f)))
+    return (0 if named else 1 if FACILITY_RX.search(d) else 2 if not EXTERIOR_RX.search(d) else 3, -int(s.get("quality") or 0))
 
 
 def plan_cuts(h: dict, max_veo: int) -> list[dict]:
@@ -126,7 +129,8 @@ def plan_cuts(h: dict, max_veo: int) -> list[dict]:
     Veo 는 움직임이 중요한 순서(훅 → 물 → 물이 있는 특별 공간 → 나머지)로 max_veo 개."""
     shots = list(h["shots"])
     by = {k: [s for s in shots if s["slot"] == k] for k in photos.CATS}
-    by["special"].sort(key=_special_key)
+    facts = list(h.get("verified_facilities") or [])
+    by["special"].sort(key=lambda s: _special_key(s, facts))
     used = set()
 
     def take(cat, n):
@@ -139,6 +143,10 @@ def plan_cuts(h: dict, max_veo: int) -> list[dict]:
         return out
     hook = take("water", 1) or take("special", 1) or take("room", 1)
     water, room, special = take("water", 2), take("room", 2), take("special", 2)
+    # 운영자 2026-10-11 "사우나 같은 필요한 사진을 다 반영": 시설이 보이는 특별 공간 사진이 더 있으면 3컷째까지 넣는다 (외관·야경은 제외)
+    extra_fac = [s for s in by["special"] if id(s) not in used and _special_key(s, facts)[0] <= 1][:1]
+    for s in extra_fac:
+        used.add(id(s)); special.append(s)
     rest = [s for s in shots if id(s) not in used]
     rest.sort(key=lambda s: (1 if EXTERIOR_RX.search(s.get("description") or "") else 0))
     offer = rest[:2]
@@ -507,6 +515,19 @@ def cut_segment(idx: int, src: Path, L: float, wav: Path | None, overlays: list[
     return out
 
 
+def mix_bgm(video: Path, bgm: Path, out: Path, total: float, level: float = BGM_LEVEL) -> Path:
+    """배경음악을 영상 길이만큼 반복해 깔고, 나레이션이 나올 때는 사이드체인 압축으로 자동으로 낮춘다(덕킹). 끝 1.5초 페이드아웃."""
+    T = max(1.0, total)
+    fc = (f"[1:a]aformat=sample_rates=44100:channel_layouts=stereo,volume={level:.3f},atrim=0:{T:.3f},asetpts=PTS-STARTPTS,"
+          f"afade=t=in:st=0:d=0.8,afade=t=out:st={max(0.0, T - 1.5):.3f}:d=1.5[bg];"
+          f"[0:a]aformat=sample_rates=44100:channel_layouts=stereo,asplit=2[v1][v2];"
+          f"[bg][v2]sidechaincompress=threshold=0.015:ratio=6:attack=30:release=500[bgd];"
+          f"[v1][bgd]amix=inputs=2:duration=first:normalize=0[a]")
+    ms.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(video), "-stream_loop", "-1", "-i", str(bgm), "-filter_complex", fc,
+            "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", str(out)])
+    return out
+
+
 def make_veo(cuts: list[dict], theme: str, report: dict) -> dict:
     """Veo 컷 생성 (돈). 실패하면 그 컷은 사진 무빙으로 내려간다. 돌려주는 것: n → 클립 경로."""
     clips, results = {}, []
@@ -584,6 +605,17 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     video = B() / "video.mp4"
     ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(B() / "concat.txt"), "-c", "copy", "-movflags", "+faststart", str(video)])
     total = ms.probe_duration(video)
+    # 배경음악 (2026-10-11 운영자 "대표 배경음악 하나"): assets/music/bgm.mp3 가 있으면 깔고 나레이션 아래로 덕킹. request.json "bgm": false 로 끌 수 있다
+    bgm_req = req.get("bgm", True)
+    bgm_path = BGM if bgm_req is True else (mt.ROOT / "assets" / "music" / f"{bgm_req}.mp3" if isinstance(bgm_req, str) else None)
+    if bgm_path and bgm_path.exists():
+        nob = B() / "video_nobgm.mp4"
+        nob.unlink(missing_ok=True); video.rename(nob)
+        mix_bgm(nob, bgm_path, video, total)
+        report["bgm"] = bgm_path.name
+        log(f"배경음악 {bgm_path.name} 적용 (레벨 {BGM_LEVEL} · 덕킹)")
+    else:
+        report["bgm"] = None
     veo_shots = [c["shot"] for c in cuts if c["n"] in clips]
     if veo_shots:
         ms.compare_images(veo_shots, clips, B(), ms.PREVIEW)
@@ -597,7 +629,7 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
                + f"\n객실 타입·가격대·링크는 프로필 링크 → '{folder}' 폴더 {pos}번"
                + ("\n사진: 숙소 공식 홈페이지" if pc.get("official") else "")
                + "\n\n" + " ".join(script.get("hashtags") or []))
-    meta = {"mode": "solo", "stay": name, "title": script.get("title"), "caption": caption, "folder": folder, "folder_pos": pos, "caption_style": style,
+    meta = {"mode": "solo", "stay": name, "title": script.get("title"), "caption": caption, "folder": folder, "folder_pos": pos, "caption_style": style, "bgm": report.get("bgm"),
             "pinned_comment": f"{name} — 객실 타입·링크는 프로필 링크 → '{folder}' 폴더 {pos}번 (쿠팡 파트너스 링크 포함)",
             "affiliate_urls": {name: h["affiliate_url"]}, "lines": [x["narration"] for x in script["cuts"]] + [script["cta"]["narration"]],
             "cuts": timeline, "screen_qa_ok": all((q.get("score") or 0) >= q.get("threshold", 7) for q in p["qa"] if q.get("score") is not None),

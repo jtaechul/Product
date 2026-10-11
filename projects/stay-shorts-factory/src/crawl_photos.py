@@ -233,7 +233,21 @@ def _first_seg(path: str) -> str:
     return path.strip("/").split("/")[0] if path.strip("/") else ""
 
 
-def discover_pages(root: str, html: str, limit: int = MAX_PAGES, extra: list[str] | None = None) -> list[str]:
+FACILITY_WORDS = ("사우나", "찜질", "스파", "온천", "노천", "키즈", "조식", "산책", "라운지", "피트니스", "수영장", "워터파크", "파도풀", "유수풀", "자쿠지",
+                  "sauna", "spa", "kids", "breakfast", "trail", "lounge", "fitness", "pool", "waterpark", "jacuzzi")
+
+
+def _want_words(want) -> list[str]:
+    """운영자가 원하는 시설 낱말: 확인된 시설("실내 온수풀", "히노키 사우나")을 2자 이상 낱말로 쪼갠 것 + 기본 시설 낱말."""
+    out = list(FACILITY_WORDS)
+    for w in want or []:
+        for t in re.split(r"[\s·/,()]+", str(w)):
+            if len(t) >= 2 and t not in out:
+                out.append(t)
+    return out
+
+
+def discover_pages(root: str, html: str, limit: int = MAX_PAGES, extra: list[str] | None = None, want: list[str] | None = None) -> list[str]:
     """같은 사이트 안에서 시설·객실·사진 페이지를 점수순으로 고른다. 뿌리 페이지가 항상 첫째, 운영자가 준 추가 페이지가 그 다음.
 
     한 사이트에 여러 숙소가 있는 경우(소노: /felice_vp, /solbeach_sc, /village_dp …)가 많아, 뿌리 주소에 경로가 있으면
@@ -257,6 +271,8 @@ def discover_pages(root: str, html: str, limit: int = MAX_PAGES, extra: list[str
             continue
         hay = s.path + " " + text
         score = sum(w for w, rx in PAGE_KW if rx.search(hay))
+        # 2026-10-11 운영자 "사우나 같은 필요한 사진을 공식 홈페이지에서 다 반영": 이 숙소의 확인된 시설·테마 낱말이 링크에 있으면 그 페이지를 가장 먼저 본다
+        score += sum(4 for w in _want_words(want) if w.lower() in hay.lower())
         if score:
             scored[u] = max(scored.get(u, 0), score - s.path.count("/") * 0.1)
     ranked = sorted(scored, key=lambda k: -scored[k])
@@ -325,7 +341,7 @@ def resolve_official(name: str, city: str = "", gemini_json=None, model: str | N
 
 # ── 수집 본체 ─────────────────────────────────────────────────────
 def collect(name: str, city: str, out_dir: Path, official_url: str | list | None = None, max_images: int = MAX_IMAGES,
-            max_pages: int = MAX_PAGES, gemini_json=None, model: str | None = None) -> dict:
+            max_pages: int = MAX_PAGES, gemini_json=None, model: str | None = None, want: list[str] | None = None) -> dict:
     """공식 홈페이지에서 사진을 모아 out_dir 에 저장. official_url 은 문자열 하나 또는 [뿌리, 추가 페이지…] 목록. 돌려주는 것:
     {"ok", "url", "reason", "pages": [..], "photos": [{"path","url","page","size","sha1"}], "tried": n}"""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -363,7 +379,7 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
             res["reason"] = f"추정 주소 {url} 에 숙소 이름이 없음 — 포기"
             log(f"{name}: {res['reason']}")
             return res
-    pages = discover_pages(url, html, max_pages, extra)
+    pages = discover_pages(url, html, max_pages, extra, want)
     # p3 실측(2026-10-11): 숙소 첫 페이지엔 그룹 전체 프로모션(다른 지점의 바다 인피니티풀)이 섞인다 → 시설·객실 페이지를 먼저 보고 첫 페이지는 맨 뒤
     pages = pages[1:] + pages[:1]
     res["pages"] = pages
