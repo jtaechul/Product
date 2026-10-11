@@ -5042,7 +5042,36 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   function hide(el){ $(el).className='msg'; }
   function post(path,payload){
     return fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload||{})})
-      .then(function(r){return r.json();});
+      .catch(function(){ throw new Error('연결이 끊겼습니다(휴대폰 통신). 잠시 뒤 다시 눌러 주세요.'); })
+      .then(function(r){ return r.text().then(function(t){
+        try{ return JSON.parse(t); }catch(e){ throw new Error('서버 응답 오류(HTTP '+r.status+'). 잠시 뒤 다시 눌러 주세요.'); }
+      }); });
+  }
+  // 오래 걸리는 요청(AI 분석·문구·계획): 서버가 뒤에서 하고 화면은 3초마다 상태만 확인 — 휴대폰이 1분쯤에 연결을 끊는 'Load failed' 방지(2026-10-11).
+  // 결과는 post()와 똑같은 모양으로 돌려준다. 화면을 꺼도 서버는 계속하고, 통신이 잠깐 끊겨도 기다린다.
+  function longPost(path,payload,onWait){
+    return post('/api/job',{path:path,body:payload||{}}).then(function(r){
+      if(!r||!r.id) throw new Error((r&&r.error)||'시작하지 못했습니다.');
+      post('/api/video-prompts-run',{id:r.id}).catch(function(){});
+      var t0=Date.now(), fails=0;
+      return new Promise(function(resolve,reject){
+        (function poll(){
+          var sec=Math.round((Date.now()-t0)/1000);
+          if(sec>480){ reject(new Error('8분이 지나도 끝나지 않았습니다. 다시 눌러 주세요.')); return; }
+          post('/api/video-prompts-status',{id:r.id}).then(function(st){
+            fails=0;
+            if(st&&st.status==='done') return resolve(st.result);
+            if(st&&st.status==='failed') return reject(new Error(st.error||'실패했습니다.'));
+            if(st&&st.status==='missing') return reject(new Error(st.error||'작업을 찾지 못했습니다.'));
+            if(onWait) onWait(sec,false);
+            setTimeout(poll,3000);
+          }).catch(function(){
+            fails++; if(onWait) onWait(sec,true);
+            setTimeout(poll,Math.min(15000,3000+fails*2000));
+          });
+        })();
+      });
+    });
   }
   function won(n){ return (Number(n)||0).toLocaleString('ko-KR')+'원'; }
   function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(ch){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]; }); }
@@ -5203,7 +5232,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(!title){ say('insMsg','먼저 상품을 고르거나 상품 이름을 적어주세요.','no'); return; }
     $('ins').disabled=true; $('insOut').textContent=''; lastPains=[];
     say('insMsg','후기를 찾아 읽는 중… 30초쯤 걸립니다.','wait');
-    post('/api/product-insight',{title:title,category:$('c').value}).then(function(r){
+    longPost('/api/product-insight',{title:title,category:$('c').value},function(sec){ say('insMsg','후기를 찾아 읽는 중… '+sec+'초 (화면을 꺼도 서버에서 계속합니다)','wait'); }).then(function(r){
       $('ins').disabled=false;
       if(!r||!r.success){ say('insMsg',(r&&r.error)||'분석하지 못했습니다.','no'); return; }
       lastPains=(r.pains||[]).map(function(x){ return x.text; });
@@ -5261,7 +5290,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     btn.addEventListener('click', function(){
       var title=$('pt').value.trim() || $('t').value.trim();
       btn.disabled=true; msg.textContent='만드는 중… 20~40초 걸립니다.'; holder.textContent='';
-      post('/api/food-reference',{title:title, image:$('img').value.trim()}).then(function(r){
+      longPost('/api/food-reference',{title:title, image:$('img').value.trim()},function(sec){ msg.textContent='만드는 중… '+sec+'초'; }).then(function(r){
         btn.disabled=false;
         if(!(r&&r.success&&r.image)){ msg.textContent=(r&&r.error)||'만들지 못했습니다.'; return; }
         msg.textContent=r.usedPhotos?'실제 상품 사진 '+r.usedPhotos+'장을 보고 만들었습니다.':'상품 사진을 못 받아 글 묘사로만 만들었습니다. 실제와 다르면 쓰지 마세요.';
@@ -5646,7 +5675,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   function trNum(n){ n=Number(n)||0; return n>=10000?(Math.round(n/1000)/10)+'만':n.toLocaleString('ko-KR'); }
   function trLoad(refresh){
     say('trMsg','유튜브에서 불러오는 중…','wait'); $('trList').textContent='';
-    post('/api/trend/list',{refresh:!!refresh,region:$('trRegion').value}).then(function(r){
+    longPost('/api/trend/list',{refresh:!!refresh,region:$('trRegion').value},function(sec){ say('trMsg','유튜브에서 불러오는 중… '+sec+'초','wait'); }).then(function(r){
       if(!r||!r.success){ say('trMsg',(r&&r.error)||'불러오지 못했습니다.','no'); return; }
       hide('trMsg');
       r.items.forEach(function(v){
@@ -5658,7 +5687,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
         var yt=epEl('a','btn btn-2 btn-sm','보기'); yt.href='https://www.youtube.com/shorts/'+v.id; yt.target='_blank'; yt.rel='noopener'; yt.style.flex='none';
         var ab=epBtn('분석',function(){
           ab.disabled=true; an.textContent='AI가 영상을 보는 중… (20~40초)';
-          post('/api/trend/analyze',{id:v.id,title:v.title}).then(function(x){
+          longPost('/api/trend/analyze',{id:v.id,title:v.title},function(sec){ an.textContent='AI가 영상을 보는 중… '+sec+'초 (화면을 꺼도 서버에서 계속합니다)'; }).then(function(x){
             ab.disabled=false;
             if(!x||!x.success){ an.textContent=(x&&x.error)||'분석하지 못했습니다.'; return; }
             var a=x.analysis; v._a=a;
@@ -5705,7 +5734,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     var u=$('trUrl').value.trim(), m=u.match(/(?:shorts[/]|v=|youtu[.]be[/])([A-Za-z0-9_-]{6,})/);
     if(!m){ say('trMsg','유튜브 영상 링크를 넣어 주세요.','no'); return; }
     say('trMsg','AI가 영상을 보는 중… (20~40초)','wait');
-    post('/api/trend/analyze',{id:m[1],title:''}).then(function(x){
+    longPost('/api/trend/analyze',{id:m[1],title:''},function(sec){ say('trMsg','AI가 영상을 보는 중… '+sec+'초 (화면을 꺼도 서버에서 계속합니다)','wait'); }).then(function(x){
       if(!x||!x.success){ say('trMsg',(x&&x.error)||'분석하지 못했습니다.','no'); return; }
       var a=x.analysis; trPick({id:m[1],title:a.meme.slice(0,40)},a);
       say('trMsg','리메이크 점수 '+a.remakeScore+'점 · '+a.meme+(a.swapKo?' · 바꿀 것: '+a.swapKo:'')+(a.music?' · 노래: '+a.music:'')+' · '+a.why+(a.risk?' · 주의: '+a.risk:''),'ok');
@@ -5719,7 +5748,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
   $('trCopyGo').addEventListener('click',function(){
     if(!tr.product){ say('trCMsg','상품(03)을 먼저 골라 주세요.','no'); return; }
     say('trCMsg','문구를 쓰는 중…','wait');
-    post('/api/remake/copy',{analysis:tr.analysis||{},product:tr.product}).then(function(r){
+    longPost('/api/remake/copy',{analysis:tr.analysis||{},product:tr.product},function(sec){ say('trCMsg','문구를 쓰는 중… '+sec+'초','wait'); }).then(function(r){
       if(!r||!r.success){ say('trCMsg',(r&&r.error)||'만들지 못했습니다.','no'); return; }
       $('trBig').value=r.copy.big; $('trSub').value=r.copy.sub; $('trVo').value=r.copy.vo; $('trEnd').value=r.copy.ending; $('trTags').value=(r.copy.hashtags||[]).join(' '); $('trWhimper').checked=!!r.copy.whimper; $('trMusic').value=r.copy.music||''; hide('trCMsg');
     }).catch(function(e){ say('trCMsg','만들지 못했습니다: '+e.message,'no'); });
@@ -5733,8 +5762,17 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       function next(){
         if(n>=s.chunks){ tr.up={file:f,id:s.id}; return s.id; }
         say(msgId,'원본을 올리는 중… '+Math.round(n/s.chunks*100)+'%','wait');
-        return fetch('/api/remake/upload?id='+encodeURIComponent(s.id)+'&n='+n,{method:'POST',body:f.slice(n*s.chunkSize,(n+1)*s.chunkSize)})
-          .then(function(r){return r.json();}).then(function(u){ if(!u||!u.success) throw new Error((u&&u.error)||'올리지 못했습니다.'); n++; return next(); });
+        function put(tries){                          // 통신이 흔들려도 조각마다 3번까지 다시(2026-10-11)
+          return fetch('/api/remake/upload?id='+encodeURIComponent(s.id)+'&n='+n,{method:'POST',body:f.slice(n*s.chunkSize,(n+1)*s.chunkSize)})
+            .then(function(r){ return r.json(); })
+            .then(function(u){ if(!u||!u.success) throw new Error((u&&u.error)||'올리지 못했습니다.'); })
+            .catch(function(e){
+              if(tries>=3) throw new Error('원본 '+(n+1)+'/'+s.chunks+'번째 조각을 올리지 못했습니다('+e.message+'). 통신이 좋은 곳에서 다시 눌러 주세요.');
+              say(msgId,'원본을 올리는 중… 통신이 흔들려 다시 시도('+(tries+1)+'/3)','wait');
+              return new Promise(function(ok){ setTimeout(ok,1500*(tries+1)); }).then(function(){ return put(tries+1); });
+            });
+        }
+        return put(0).then(function(){ n++; return next(); });
       }
       return next();
     });
@@ -5745,8 +5783,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(f.size>45*1024*1024){ say('trFMsg','분석은 45MB까지 됩니다. 앞부분만 잘라서 올려 주세요.','no'); return; }
     $('trFileGo').disabled=true; say('trFMsg','원본을 올리는 중…','wait');
     trUpload(f,'trFMsg').then(function(id){
-      say('trFMsg','AI가 영상을 보는 중… (30초~1분)','wait');
-      return post('/api/trend/analyze-file',{id:id,title:f.name});
+      say('trFMsg','AI가 영상을 보는 중… (보통 1~2분, 화면을 꺼도 서버에서 계속합니다)','wait');
+      return longPost('/api/trend/analyze-file',{id:id,title:f.name},function(sec,flaky){ say('trFMsg','AI가 영상을 보는 중… '+sec+'초'+(flaky?' (연결 다시 확인 중)':' (보통 1~2분, 화면을 꺼도 서버에서 계속합니다)'),'wait'); });
     }).then(function(x){
       $('trFileGo').disabled=false;
       if(!x||!x.success) throw new Error((x&&x.error)||'분석하지 못했습니다.');
@@ -5808,7 +5846,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
       var fb=epBtn('수정해서 다시 만들기',function(){
         var note=fx.value.trim(); if(!note){ fm.textContent='수정 요청 사항을 적어 주세요.'; return; }
         fb.disabled=true; fm.textContent='AI가 요청을 읽고 다시 만들 부분을 정하는 중…';
-        post('/api/episode/request',{id:e.id,kind:'remake_fix_plan',note:note}).then(function(r){
+        longPost('/api/episode/request',{id:e.id,kind:'remake_fix_plan',note:note},function(sec){ fm.textContent='AI가 요청을 읽고 다시 만들 부분을 정하는 중… '+sec+'초'; }).then(function(r){
           fb.disabled=false;
           if(!r||!r.success){ fm.textContent=(r&&r.error)||'계획을 만들지 못했습니다.'; return; }
           var p=r.plan, names={segs:'앞부분 영상',ending:'끝 장면',vo:'내레이션',copy:'화면 문구'};
@@ -7038,6 +7076,19 @@ async function handleEpisodeVideo(env, url, request) {
 const VP_JOB_TTL = 3600;
 const VP_STALE_MS = 150 * 1000;                     // 크론 실행이 이만큼 멈춰 있으면 죽은 것으로 보고 다시
 
+// 오래 걸리는(30초~2분) 관리자 요청은 모두 뒤 작업으로(사장님 지적 2026-10-11: '이 파일로 분석하기'가 휴대폰에서 Load failed).
+// 휴대폰 브라우저는 응답을 1분쯤 기다리면 연결을 끊는다 → 화면은 작업 번호만 받고 상태를 3초마다 확인, 서버는 뒤에서 끝까지 한다.
+const LONG_JOBS = {
+  '/api/trend/list': (env, b) => handleTrendList(env, b),
+  '/api/trend/analyze': (env, b) => handleTrendAnalyze(env, b),
+  '/api/trend/analyze-file': (env, b) => handleTrendAnalyzeFile(env, b),
+  '/api/remake/copy': (env, b) => handleRemakeCopy(env, b),
+  '/api/product-insight': (env, b) => handleProductInsight(env, b),
+  '/api/food-reference': (env, b) => handleFoodReference(env, b),
+  '/api/episode/request': (env, b) => handleEpisodeRequest(env, b),   // 수정 요청 계획(remake_fix_plan)만 — 아래에서 거른다
+};
+const LONG_EP_KINDS = ['remake_fix_plan'];
+
 async function vpJobSet(env, id, patch) {
   const cur = (await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null)) || {};
   const next = { ...cur, ...patch, updatedAt: Date.now() };
@@ -7056,6 +7107,10 @@ async function runVpJob(env, id) {
       const r = await runFoodJob(env, id, job);
       if (r.next) { await vpJobSet(env, id, { status: 'queued', createdAt: 0, tries: 0, ...r.next }); return; }
       result = r.done;
+    } else if (job.kind === 'long') {
+      const fn = LONG_JOBS[job.path];
+      if (!fn) throw new Error('알 수 없는 작업입니다.');
+      result = await fn(env, job.body || {});
     } else result = await handleVideoPrompts(env, job.body || {});
     await vpJobSet(env, id, { status: 'done', result, body: null });
   } catch (e) {
@@ -7673,12 +7728,34 @@ export default {
           await vpJobIndex(env, id, true);          // 만들기는 매분 크론이 맡는다(waitUntil은 30초에 끊겨 두 번 돈다 — 실측 250초)
           result = { success: true, id };
         }
+        else if (url.pathname === '/api/job') {
+          // 오래 걸리는 요청을 뒤 작업으로 맡긴다 — 화면은 /api/video-prompts-run(바로 시작)과 /api/video-prompts-status(확인)를 쓴다
+          if (!env.PENDING_POSTS) throw new Error('저장소가 없습니다.');
+          const path = String(body.path || ''), jb = body.body || {};
+          if (!LONG_JOBS[path]) throw new Error('뒤에서 할 수 없는 요청입니다.');
+          if (path === '/api/episode/request' && !LONG_EP_KINDS.includes(String(jb.kind || ''))) throw new Error('뒤에서 할 수 없는 요청입니다.');
+          const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+          await vpJobSet(env, id, { status: 'queued', kind: 'long', path, body: jb, createdAt: Date.now() });
+          await vpJobIndex(env, id, true);
+          result = { success: true, id };
+        }
         else if (url.pathname === '/api/video-prompts-run') {
           // 화면이 작업 번호를 받은 직후 따로 부르는 '바로 만들기'. 이 요청이 끝까지 붙잡혀 있어야 해서 휴대폰이 끊을 수 있지만,
           // 결과는 저장소에 남고 화면은 상태 확인으로 받는다. 끊겨서 서버도 멈추면 크론이 이어서 만든다.
           const id = String(body.id || '').replace(/[^a-f0-9]/g, '');
           const job = id ? await env.PENDING_POSTS.get('vp_job:' + id, 'json').catch(() => null) : null;
-          if (job && job.status === 'queued' && !job.kind) await runVpJob(env, id);   // 영상 시작 작업은 크론만(단계형)
+          if (job && job.status === 'queued' && (!job.kind || job.kind === 'long')) {   // 영상 시작 작업은 크론만(단계형)
+            // 10초마다 빈칸 한 글자를 흘려보내 휴대폰이 '응답 없음'으로 연결을 끊지 않게 한다(2026-10-11: 1분쯤 끊겨 Load failed).
+            // 연결이 살아 있는 동안 서버는 계속 일하고, 화면을 꺼서 끊기면 크론이 이어서 한다.
+            const { readable, writable } = new TransformStream();
+            const w = writable.getWriter(), enc = new TextEncoder();
+            const tick = setInterval(() => { w.write(enc.encode(' ')).catch(() => {}); }, 10000);
+            runVpJob(env, id).catch(() => {}).then(async () => {
+              clearInterval(tick);
+              try { await w.write(enc.encode('{"success":true}')); await w.close(); } catch (e) {}
+            });
+            return new Response(readable, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...CORS } });
+          }
           result = { success: true };
         }
         else if (url.pathname === '/api/video-prompts-status') {
