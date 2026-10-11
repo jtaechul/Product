@@ -737,7 +737,7 @@ def main() -> int:
     req = json.loads(REQUEST.read_text(encoding="utf-8"))
     stay = str(req.get("stay") or "").strip()
     mode = str(req.get("mode") or "photo").strip().lower()
-    if not stay and mode != "top3":
+    if not stay and mode not in ("top3", "solo"):          # solo 는 stay 가 없으면 순위표 1위를 쓴다 (p9 실측: 여기서 막혀 실패)
         raise SystemExit("request.json 에 stay(숙소 이름)가 없습니다")
     if req.get("fake"):                                 # 포맷 검토용: Veo 를 가짜 클립으로 (0원)
         veo.FAKE = True
