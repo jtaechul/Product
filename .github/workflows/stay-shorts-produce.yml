@@ -97,7 +97,7 @@ jobs:
             curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$L/preview_shots.jpg" \
               -F caption="미리보기(영상 없음) — 숙소별 장면과 자막. $QA · $COST" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
             curl -s -o /dev/null -w "telegram audio http %{http_code}\n" -F chat_id="$TG_CHAT" -F audio=@"$L/narration_preview.mp3" \
-              -F caption="나레이션 미리듣기 (훅 → 3위 → 2위 → 1위 → CTA)" "https://api.telegram.org/bot$TG_TOKEN/sendAudio" || true
+              -F caption="나레이션 미리듣기 (단일 숙소: 훅 → 물놀이 → 객실 → 특별 공간 → 조건 → CTA)" "https://api.telegram.org/bot$TG_TOKEN/sendAudio" || true
           elif [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$V" ]; then
             CAP=$(python3 - <<'PY' || echo "숙소 쇼츠 시험 제작본입니다 (미발행 · 검수용)"
           import json
