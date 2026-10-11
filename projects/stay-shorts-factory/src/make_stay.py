@@ -553,7 +553,7 @@ def produce_veo(req: dict, stay: str, items: list, models: dict, report: dict) -
     _try_models("tts", models["tts"], lambda m: gemini_tts(
         m, "\n".join(lines), str(req.get("voice") or "Erinome"),
         "", raw))   # 지시문 없이 (읽어 버리는 버그)
-    tempo = float(req.get("tempo") or 1.12)
+    tempo = float(req.get("tempo") or 1.28)
     run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-filter:a", f"atempo={tempo:.3f}", str(wav)])
     with wave.open(str(wav), "rb") as wf:
         narr_total = wf.getnframes() / wf.getframerate()
@@ -634,7 +634,7 @@ def produce_photo(req: dict, stay: str, items: list, models: dict, report: dict)
     _try_models("tts", models["tts"], lambda m: gemini_tts(
         m, "\n".join(lines), str(req.get("voice") or "Erinome"),
         "", raw))   # 지시문 없이 (읽어 버리는 버그)
-    tempo = float(req.get("tempo") or 1.12)
+    tempo = float(req.get("tempo") or 1.28)
     run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(raw), "-filter:a", f"atempo={tempo:.3f}", str(wav)])
     with wave.open(str(wav), "rb") as wf:
         total = wf.getnframes() / wf.getframerate()
