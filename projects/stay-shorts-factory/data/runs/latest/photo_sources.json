@@ -1,5 +1,46 @@
 [
  {
+  "hotel": "세인트존스 호텔",
+  "official_site": "https://new.stjohns.co.kr/",
+  "crawl": {
+   "url": "https://new.stjohns.co.kr/",
+   "resolved_by": "request.json official_urls",
+   "reason": "",
+   "pages": [
+    "https://new.stjohns.co.kr/post/3789",
+    "https://new.stjohns.co.kr/post/3790",
+    "https://new.stjohns.co.kr/post/161",
+    "https://new.stjohns.co.kr/post/1521",
+    "https://new.stjohns.co.kr/post/3909",
+    "https://new.stjohns.co.kr/accommodation/index/KID",
+    "https://new.stjohns.co.kr/accommodation/index/PER",
+    "https://new.stjohns.co.kr/post/1248",
+    "https://new.stjohns.co.kr/post/139",
+    "https://new.stjohns.co.kr"
+   ],
+   "tried": 39,
+   "photos": 24
+  },
+  "shots": [
+   {
+    "n": 41,
+    "slot": "room",
+    "source": "official",
+    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/114f34599d49ced4ad2f61db33bb05d2.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+    "description": "바다 동물 벽화와 더블 침대, 어린이용 싱글 침대가 있는 키즈룸."
+   },
+   {
+    "n": 42,
+    "slot": "room",
+    "source": "official",
+    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/15d1764c6ee38ee8beab253bddddf66c.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+    "description": "동물 그림 벽지와 침대, 유아용 테이블이 배치된 키즈 객실 전경."
+   }
+  ]
+ },
+ {
   "hotel": "쏠비치 삼척",
   "official_site": "https://www.sonohotelsresorts.com/solbeach_sc",
   "crawl": {
@@ -28,47 +69,15 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/yvhKloOFB3yOw-1m9U0VMA==/1",
     "page": "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000527",
-    "description": "실내 온수풀과 유리 사우나가 보인다."
+    "description": "실내 온수풀과 유리 통창의 사우나 공간이 보인다."
    },
    {
     "n": 32,
     "slot": "room",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/tOJSUzyUQOll3rhL2Hqi5w==/1",
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/d5bE4QiLQVSCwoLBQ4mXiA==/1",
     "page": "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
-    "description": "따뜻한 조명의 거실 소파와 테이블, 안쪽 침실이 연결되어 있다."
-   }
-  ]
- },
- {
-  "hotel": "롯데리조트 속초",
-  "official_site": "https://www.lottehotel.com/resort-sokcho/ko",
-  "crawl": {
-   "url": "https://www.lottehotel.com/resort-sokcho/ko",
-   "resolved_by": "네이버 지역검색 '롯데리조트 속초' link",
-   "reason": "사진 주소를 하나도 못 찾음 (봇 차단·빈 페이지 가능성)",
-   "pages": [
-    "https://www.lottehotel.com/resort-sokcho/ko"
-   ],
-   "tried": 0,
-   "photos": 0
-  },
-  "shots": [
-   {
-    "n": 21,
-    "slot": "water",
-    "source": "coupang",
-    "url": null,
-    "page": null,
-    "description": "푸른 바다로 둘러싸인 리조트 외관과 야외 워터파크가 보인다."
-   },
-   {
-    "n": 22,
-    "slot": "water",
-    "source": "coupang",
-    "url": null,
-    "page": null,
-    "description": "해안가 언덕 위 리조트 건물과 야외 워터파크 시설이 보인다."
+    "description": "고급스러운 샹들리에와 소파가 놓인 스위트 거실이다."
    }
   ]
  },
@@ -101,7 +110,7 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
     "page": "https://www.sonohotelsresorts.com/oceanWorld",
-    "description": "스핑크스 조각상과 이집트풍 벽화가 어우러진 노천 스파 공간이다."
+    "description": "이집트 벽화와 스핑크스 조형물 곁에 스파 노천탕이 마련되어 있다."
    },
    {
     "n": 12,
@@ -109,7 +118,7 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
     "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "산 전망이 보이는 넓은 거실에 가죽 소파와 테이블이 놓여 있다."
+    "description": "통창 너머 푸른 산봉우리가 한눈에 내려다보이는 고급스러운 객실 거실."
    }
   ]
  }

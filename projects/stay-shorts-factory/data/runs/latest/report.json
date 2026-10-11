@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-11-p4",
+ "nonce": "2026-10-11-p5",
  "stay": "",
  "mode": "top3",
  "fake": false,
@@ -23,6 +23,30 @@
   ]
  },
  "hotels": [
+  {
+   "name": "세인트존스 호텔",
+   "room_names": [
+    "슈페리어더블or헐리우드 트윈 도시전망",
+    "10월특가★슈페리어→골져스 파셜★UP 더블룸",
+    "슈페리어 헐리우드 노오션뷰"
+   ],
+   "verified_facilities": [
+    "개폐식 돔 인피니티풀",
+    "실내 온수풀",
+    "사우나"
+   ],
+   "theme_hits": [
+    "스파"
+   ],
+   "blog_30d": 1000,
+   "min_price": 90000.0,
+   "photo_counts": {
+    "official": 24,
+    "coupang": 3,
+    "operator": 0,
+    "mismatch": 0
+   }
+  },
   {
    "name": "쏠비치 삼척",
    "room_names": [
@@ -48,30 +72,6 @@
    }
   },
   {
-   "name": "롯데리조트 속초",
-   "room_names": [
-    "디럭스 더블 바다전망",
-    "디럭스 더블",
-    "디럭스 더블, 바다 전망",
-    "디럭스 더블, 바다 전망",
-    "[특가]수페리어 트윈 항구전망"
-   ],
-   "verified_facilities": [
-    "실내 워터파크",
-    "사계절 온수 인피니티풀",
-    "스파"
-   ],
-   "theme_hits": [],
-   "blog_30d": 931,
-   "min_price": 286000.0,
-   "photo_counts": {
-    "official": 0,
-    "coupang": 5,
-    "operator": 0,
-    "mismatch": 1
-   }
-  },
-  {
    "name": "소노펠리체 비발디파크",
    "room_names": [
     "실버스위트(취사/파크뷰/침대)",
@@ -93,11 +93,52 @@
     "official": 24,
     "coupang": 8,
     "operator": 0,
-    "mismatch": 3
+    "mismatch": 1
    }
   }
  ],
  "photo_sources": [
+  {
+   "hotel": "세인트존스 호텔",
+   "official_site": "https://new.stjohns.co.kr/",
+   "crawl": {
+    "url": "https://new.stjohns.co.kr/",
+    "resolved_by": "request.json official_urls",
+    "reason": "",
+    "pages": [
+     "https://new.stjohns.co.kr/post/3789",
+     "https://new.stjohns.co.kr/post/3790",
+     "https://new.stjohns.co.kr/post/161",
+     "https://new.stjohns.co.kr/post/1521",
+     "https://new.stjohns.co.kr/post/3909",
+     "https://new.stjohns.co.kr/accommodation/index/KID",
+     "https://new.stjohns.co.kr/accommodation/index/PER",
+     "https://new.stjohns.co.kr/post/1248",
+     "https://new.stjohns.co.kr/post/139",
+     "https://new.stjohns.co.kr"
+    ],
+    "tried": 39,
+    "photos": 24
+   },
+   "shots": [
+    {
+     "n": 41,
+     "slot": "room",
+     "source": "official",
+     "url": "https://new.stjohns.co.kr/uploads/room/2021/08/114f34599d49ced4ad2f61db33bb05d2.jpg",
+     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+     "description": "바다 동물 벽화와 더블 침대, 어린이용 싱글 침대가 있는 키즈룸."
+    },
+    {
+     "n": 42,
+     "slot": "room",
+     "source": "official",
+     "url": "https://new.stjohns.co.kr/uploads/room/2021/08/15d1764c6ee38ee8beab253bddddf66c.jpg",
+     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+     "description": "동물 그림 벽지와 침대, 유아용 테이블이 배치된 키즈 객실 전경."
+    }
+   ]
+  },
   {
    "hotel": "쏠비치 삼척",
    "official_site": "https://www.sonohotelsresorts.com/solbeach_sc",
@@ -127,47 +168,15 @@
      "source": "official",
      "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/yvhKloOFB3yOw-1m9U0VMA==/1",
      "page": "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000527",
-     "description": "실내 온수풀과 유리 사우나가 보인다."
+     "description": "실내 온수풀과 유리 통창의 사우나 공간이 보인다."
     },
     {
      "n": 32,
      "slot": "room",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/tOJSUzyUQOll3rhL2Hqi5w==/1",
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/d5bE4QiLQVSCwoLBQ4mXiA==/1",
      "page": "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
-     "description": "따뜻한 조명의 거실 소파와 테이블, 안쪽 침실이 연결되어 있다."
-    }
-   ]
-  },
-  {
-   "hotel": "롯데리조트 속초",
-   "official_site": "https://www.lottehotel.com/resort-sokcho/ko",
-   "crawl": {
-    "url": "https://www.lottehotel.com/resort-sokcho/ko",
-    "resolved_by": "네이버 지역검색 '롯데리조트 속초' link",
-    "reason": "사진 주소를 하나도 못 찾음 (봇 차단·빈 페이지 가능성)",
-    "pages": [
-     "https://www.lottehotel.com/resort-sokcho/ko"
-    ],
-    "tried": 0,
-    "photos": 0
-   },
-   "shots": [
-    {
-     "n": 21,
-     "slot": "water",
-     "source": "coupang",
-     "url": null,
-     "page": null,
-     "description": "푸른 바다로 둘러싸인 리조트 외관과 야외 워터파크가 보인다."
-    },
-    {
-     "n": 22,
-     "slot": "water",
-     "source": "coupang",
-     "url": null,
-     "page": null,
-     "description": "해안가 언덕 위 리조트 건물과 야외 워터파크 시설이 보인다."
+     "description": "고급스러운 샹들리에와 소파가 놓인 스위트 거실이다."
     }
    ]
   },
@@ -200,7 +209,7 @@
      "source": "official",
      "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
      "page": "https://www.sonohotelsresorts.com/oceanWorld",
-     "description": "스핑크스 조각상과 이집트풍 벽화가 어우러진 노천 스파 공간이다."
+     "description": "이집트 벽화와 스핑크스 조형물 곁에 스파 노천탕이 마련되어 있다."
     },
     {
      "n": 12,
@@ -208,105 +217,105 @@
      "source": "official",
      "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
      "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-     "description": "산 전망이 보이는 넓은 거실에 가죽 소파와 테이블이 놓여 있다."
+     "description": "통창 너머 푸른 산봉우리가 한눈에 내려다보이는 고급스러운 객실 거실."
     }
    ]
   }
  ],
  "script": {
   "hook": {
-   "caption": "강원 온수풀 숙소 어디 갈까",
-   "narration": "강원 실내 온수풀 숙소 세 곳 골랐어요."
+   "caption": "11월 강원 온수풀 1위는?",
+   "narration": "11월 강원 온수풀, 후기 데이터로 추천드려요."
   },
   "ranks": [
    {
     "rank": 3,
     "captions": [
-     "사계절 실내 온수풀",
-     "탁 트인 오션뷰 객실"
+     "개폐식 돔 인피니티풀",
+     "사계절 실내 온수풀"
     ],
-    "narration": "삼척 쏠비치는 실내 오션플레이와 따뜻한 온수풀을 즐겨요.",
+    "narration": "3위 세인트존스 호텔, 돔 인피니티풀이 있어요.",
     "benefit": ""
    },
    {
     "rank": 2,
     "captions": [
-     "사계절 온수 인피니티풀",
-     "전 객실 바다 전망"
+     "사계절 오션플레이",
+     "온수 아쿠아풀 구비"
     ],
-    "narration": "롯데리조트 속초는 실내 워터파크와 온수 인피니티풀이 있어요.",
+    "narration": "2위 쏠비치 삼척, 따뜻한 오션플레이를 즐겨요.",
     "benefit": ""
    },
    {
     "rank": 1,
     "captions": [
-     "노천 스파와 실내 수영장",
-     "여유로운 파크뷰 스위트"
+     "야외 스파 노천탕",
+     "클럽하우스 실내수영장"
     ],
-    "narration": "최근 후기 많은 소노펠리체는 오션월드 스파와 클럽하우스 수영장이 매력이에요.",
+    "narration": "최근 한 달 후기 칠백 건, 1위는 소노펠리체 비발디파크예요.",
     "benefit": "",
     "honest": ""
    }
   ],
   "cta": {
    "caption": "저장해두고 비교하세요",
-   "narration": "세 곳 정보는 프로필 링크에서 확인하세요."
+   "narration": "상세 객실과 가격대는 프로필 폴더 '11월 실내 온수풀 온천'에 있어요."
   },
-  "title": "강원 실내 온수풀 호캉스 추천 BEST 3",
-  "caption": "쌀쌀한 날씨에 가기 좋은 강원도 온수풀 숙소를 모았습니다. 데이터로 엄선한 세 곳을 지금 비교해 보세요.",
+  "title": "11월 강원 실내 온수풀 온천 숙소 추천",
+  "caption": "11월 강원 실내 온수풀과 스파 숙소를 데이터로 정리했어요. 따뜻한 휴식을 원할 때 저장해두고 비교해보세요.",
   "hashtags": [
    "#강원도숙소",
-   "#온수풀호텔",
+   "#실내온수풀",
+   "#온천호텔",
    "#강원도여행",
-   "#호캉스추천",
-   "#실내워터파크"
+   "#호캉스추천"
   ]
  },
  "narration_sec": {
-  "hook": 3.38,
-  "r3": 5.31,
-  "r2": 5.39,
-  "r1": 6.43,
-  "cta": 3.09
+  "hook": 3.72,
+  "r3": 4.02,
+  "r2": 4.54,
+  "r1": 4.8,
+  "cta": 5.68
  },
  "narration_qa": [
   {
    "segment": "hook",
-   "script": "강원 실내 온수풀 숙소 세 곳 골랐어요.",
-   "heard": "강원 실내 온수풀 숙소 세 곳 골랐어요.",
+   "script": "11월 강원 온수풀, 후기 데이터로 추천드려요.",
+   "heard": "11월 강원 온수풀 후기 데이터로 추천드려요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r3",
-   "script": "삼척 쏠비치는 실내 오션플레이와 따뜻한 온수풀을 즐겨요.",
-   "heard": "삼척 쏠비치는 실내 오션플레이와 따뜻한 온수풀을 즐겨요",
+   "script": "3위 세인트존스 호텔, 돔 인피니티풀이 있어요.",
+   "heard": "3위 세인트존스 호텔. 돔 인피니티 풀이 있어요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r2",
-   "script": "롯데리조트 속초는 실내 워터파크와 온수 인피니티풀이 있어요.",
-   "heard": "롯데리조트 속초는 실내 워터파크와 온수 인피니티 풀이 있어요.",
+   "script": "2위 쏠비치 삼척, 따뜻한 오션플레이를 즐겨요.",
+   "heard": "2위 쏠비치 삼척 따뜻한 오션플레이를 즐겨요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r1",
-   "script": "최근 후기 많은 소노펠리체는 오션월드 스파와 클럽하우스 수영장이 매력이에요.",
-   "heard": "최근 후기 많은 소노펠리체는 오션월드 스파와 클럽하우스 수영장이 매력이에요.",
-   "similarity": 1.0,
+   "script": "최근 한 달 후기 칠백 건, 1위는 소노펠리체 비발디파크예요.",
+   "heard": "최근 한 달 후기 700건, 1위는 소노펠리체 비발디파크예요.",
+   "similarity": 0.9,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "cta",
-   "script": "세 곳 정보는 프로필 링크에서 확인하세요.",
-   "heard": "새 옷 정보는 프로필 링크에서 확인하세요.",
-   "similarity": 0.88,
+   "script": "상세 객실과 가격대는 프로필 폴더 '11월 실내 온수풀 온천'에 있어요.",
+   "heard": "상세 객실과 가격대는 프로필 폴더 11월 실내 온수풀 온천에 있어요.",
+   "similarity": 0.97,
    "ok": true,
    "instruction_words": []
   }
