@@ -61,8 +61,10 @@ PAGE_KW = [
     (2, re.compile(r"facilit|amenit|gallery|photo|highlight|view|ocean|sea|garden|terrace|lounge|resort|"
                    r"시설|갤러리|사진|전망|오션|바다|정원|테라스|라운지|리조트|산책|둘러보기|소개", re.I)),
     (1, re.compile(r"entertain|discover|featured|relax|pet|kids|키즈|엔터|휴식|즐길", re.I)),
+    # 2026-10-11 운영자 "사진을 찾을 방법을 어떻게든": 같은 도메인의 보도자료·뉴스룸·미디어 페이지(시그니처 시설 사진이 자주 있다). 외부 언론사는 DENY 로 계속 금지
+    (1, re.compile(r"press|newsroom|media|보도|뉴스룸|미디어|pr\b", re.I)),
 ]
-PAGE_SKIP = re.compile(r"event|notice|board|news|login|member|join|reserv|book|faq|terms|privacy|recruit|career|\.pdf|download|"
+PAGE_SKIP = re.compile(r"event|notice|board|login|member|join|reserv|book|faq|terms|privacy|recruit|career|\.pdf|download|"
                        r"cart|mypage|search|sitemap|/en\b|/eng\b|/jp\b|/jpn\b|/cn\b|/zh\b|/chn\b|lang=|mailto:|tel:|javascript:|"
                        r"wedding|group|shopping|bakery|bistro|restaurant|dining|livetalk|location|guidemap|aboutus|notice|"
                        r"promotion|package|coupon|price|rate|regulation|policy|footer|intro|company|affiliate|history|featured|"

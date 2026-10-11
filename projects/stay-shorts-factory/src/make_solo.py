@@ -40,6 +40,7 @@ FACILITY_RX = re.compile(r"사우나|찜질|키즈|놀이|산책|정원|테라�
 EXTERIOR_RX = re.compile(r"외관|전경|건물|항공|야경|조명|단지|하늘|은하수|드론|멀리")
 WATER_RX = re.compile(r"물|풀|탕|스파|사우나|온천|폭포|분수|파도|슬라이드|바다|강|호수")
 QA_THR = {"offer": 5}                                          # 조건 컷은 느슨하게(5), 나머지 7
+EXTRA_BONUS = 12                                               # 시그니처 덧붙임이 들어간 컷의 글자 한도 추가(공백 제외)
 BGM = mt.ROOT / "assets" / "music" / "bgm.mp3"           # 대표 배경음악 (make_music.py 가 만든다) — 있으면 자동으로 깐다, request.json "bgm": false 면 생략
 BGM_LEVEL = 0.22                                               # 나레이션 대비 배경음악 크기(선형). 말할 땐 사이드체인으로 더 내려간다
 
@@ -61,6 +62,9 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터이자 편집자�
 - **숙소 이름을 절대 쓰지 않는다** (나레이션·자막 모두). 대신 "강원 홍천의 대형 워터파크 리조트"처럼 **지역 + 유형**으로 부른다 — 컷 2 문장에서 한 번.
 - 1인칭 "~해요"체, 광고 말투 금지, 유행어 전체 1개 이하. "최고·유일·최저가·1위·완벽·보장·최장·최대" 금지. "골랐어요·뽑았어요" 금지. 마지막 컷에 "추천해요".
 - 문장마다 새 정보. 같은 시설·같은 표현을 두 컷에서 반복하지 않는다. 글자 한도(공백 제외)를 지킨다 — Veo 컷은 4초라 짧다.
+- 입력에 "사진 없는 시그니처"가 있으면(없으면 이 규칙 무시): 그 시설은 사진이 없지만 이 숙소의 대표 포인트라 **딱 한 번** 말해도 된다.
+  입력이 지정한 컷(사진 컷)의 문장 **끝에** "…도 있어요", "…까지 이용돼요" 식의 짧은 절로 덧붙인다. 그 컷의 자막은 화면에 보이는 것 그대로 둔다. 다른 컷에서는 말하지 않는다.
+  출력에 "extra": {"i": 그 컷 번호, "tag": "+ 시설 이름(2~10자)"} 를 적는다 — 화면에 '+ 히노키 사우나' 같은 작은 태그로 표시된다.
 
 컷별 규칙
 - 컷 1 (훅): 시청자의 상황·몸의 감각으로 멈추게 하는 한 문장. 숙소 이름·지역·"데이터·후기·분석·추천·AI" 금지. 계절·테마 맥락 필수. 네 가지 중 하나:
@@ -73,6 +77,7 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터이자 편집자�
 - 자막: 컷마다 2~10자 키워드(명사형). 강조할 한 단어를 [대괄호]로 감싼다(선택, 컷당 1개). 숫자·'후기'·느낌표·이모지 금지(훅 자막의 월 숫자는 허용). 화면과 모순 금지. 묘사형 문장 금지.
 출력 JSON 만:
 {"cuts":[{"i":1,"narration":"...","caption":"..."}, ... 컷 수만큼 순서대로],
+ "extra": {"i": 컷 번호, "tag": "+ 시설 이름"} 또는 null,
  "title":"유튜브 제목 12~25자 (숙소 이름 포함 — 제목·캡션은 텍스트라 이름을 쓴다)",
  "caption":"인스타 캡션 2문장 (숙소 이름 포함 가능. 고지문·링크·폴더 안내는 시스템이 붙임)","hashtags":["#..","#..","#..","#..","#.."]}"""
 
@@ -220,7 +225,7 @@ def sentence_errs(text: str, c: dict, h: dict, req: dict) -> list[str]:
     return errs
 
 
-def check_script(s: dict, h: dict, cuts: list[dict], req: dict) -> list[str]:
+def check_script(s: dict, h: dict, cuts: list[dict], req: dict, sig: dict | None = None) -> list[str]:
     errs = []
     got = {int(x.get("i", 0)): x for x in (s.get("cuts") or []) if isinstance(x, dict)}
     if len(got) != len(cuts) or any(c["i"] not in got for c in cuts):
@@ -228,11 +233,26 @@ def check_script(s: dict, h: dict, cuts: list[dict], req: dict) -> list[str]:
         return errs
     toks = name_tokens(h["name"], req, h)
     all_text = ""
+    ex = s.get("extra") if isinstance(s.get("extra"), dict) else None
+    ex_i = int(ex.get("i", 0)) if ex else 0
+    if sig and not ex:
+        errs.append(f"사진 없는 시그니처를 컷 {sig['i']} 끝에 덧붙이고 extra 를 적는다")
+    if ex and not sig:
+        errs.append("extra 는 null (사진 없는 시그니처가 없다)")
+    if ex and sig and ex_i != sig["i"]:
+        errs.append(f"extra 는 컷 {sig['i']} 에만")
+    if ex and not (2 <= _len(design.plain(str(ex.get("tag", "")).lstrip("+ "))) <= 10):
+        errs.append("extra.tag 는 '+ 시설 이름' 2~10자")
     for c in cuts:
         x = got[c["i"]]
         n, cap = str(x.get("narration", "")).strip(), str(x.get("caption", "")).strip()
         all_text += " " + n
-        errs += sentence_errs(n, c, h, req)
+        cc = {**c, "hi": c["hi"] + EXTRA_BONUS} if (sig and c["i"] == sig["i"]) else c
+        errs += sentence_errs(n, cc, h, req)
+        if sig and c["i"] == sig["i"]:
+            ws = [w for w in _words(sig["fact"]) if FACILITY_RX.search(w) or len(w) >= 3]
+            if ws and not any(w in n for w in ws):
+                errs.append(f"컷 {c['i']} 문장 끝에 시그니처({sig['fact']})를 한 절로 덧붙인다")
         pc = design.plain(cap)
         if not (2 <= _len(pc) <= 10):
             errs.append(f"컷 {c['i']} 자막 길이: '{cap}' (2~10자)")
@@ -261,6 +281,32 @@ def check_script(s: dict, h: dict, cuts: list[dict], req: dict) -> list[str]:
     return errs
 
 
+def _words(t: str) -> list[str]:
+    return [w for w in re.split(r"[\s·/,()]+", str(t)) if len(w) >= 2]
+
+
+def pick_signature(h: dict, cuts: list[dict]) -> dict | None:
+    """사진이 없는 시그니처 1개 (운영자 2026-10-11 "사진이 없어도 시그니처는 한두 문장 넣자" → 조건부 반영: 영상당 1개 · 확인된 사실만 · 사진 컷 끝에 한 절 · 태그 칩).
+    후보 = 블로그 교차확인 시설 + 공식 홈페이지 사실 중 **어느 컷 설명에도 안 보이는 시설 낱말**이 있는 것. 들어갈 컷 = 조건 컷 ①(아쉬움 줄 자리)을 뺀 사진 컷 중 물·특별 공간 쪽."""
+    seen = " ".join(c["shot"].get("description") or "" for c in cuts)
+    cands = list(h.get("verified_facilities") or []) + [f for f in (h.get("official_facts") or []) if FACILITY_RX.search(f)]
+    pick = None
+    for f in cands:
+        ws = [w for w in _words(f) if FACILITY_RX.search(w) or len(w) >= 3]
+        if ws and not any(w in seen for w in ws):
+            pick = f; break
+    if not pick:
+        return None
+    photo_cuts = [c for c in cuts if not c["veo"] and c["section"] != "hook"]
+    first_offer = next((c["i"] for c in cuts if c["section"] == "offer"), None)
+    photo_cuts = [c for c in photo_cuts if c["i"] != first_offer] or photo_cuts
+    if not photo_cuts:
+        return None
+    order = {"special": 0, "water": 1, "offer": 2, "room": 3}
+    host = sorted(photo_cuts, key=lambda c: (order.get(c["section"], 9), c["i"]))[0]
+    return {"fact": pick, "i": host["i"]}
+
+
 def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
     lines = [f"테마: {req.get('theme')} · 지역: {req.get('region')} · 시기: {req.get('month')}", f"프로필 폴더 이름: {mt.folder_name(req)}",
              f"숙소(영상에서는 말하지 말 것 · 제목·캡션에만): {h['name']}" + (f" ({h.get('city')})" if h.get("city") else "") + (f" — {h['signature']}" if h.get("signature") else ""),
@@ -268,18 +314,22 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
              "컷 목록 (화면에 실제로 보이는 것 — 이 순서대로 문장 1개씩):"]
     for c in cuts:
         lines.append(f"  {cut_label(c)}: {c['shot'].get('description') or photos.KO[c['shot']['category']]}  [{mt.SRC_KO.get(c['shot'].get('source'), '')}]")
+    sig = pick_signature(h, cuts)
     lines += [f"쿠팡 객실 이름: {', '.join(h['room_names'])}",
               f"확인된 시설: {', '.join(h['verified_facilities']) or '없음'} / 객실 이름의 테마 단어: {', '.join(h['theme_hits']) or '없음'}",
               f"공식 홈페이지 사실: {', '.join(h.get('official_facts') or []) or '없음'}",
-              f"후기 아쉬움: {h.get('honest') or '없음'}"]
+              f"후기 아쉬움: {h.get('honest') or '없음'}",
+              (f"사진 없는 시그니처(컷 {sig['i']} 문장 끝에 한 절로 덧붙이기 · 한도 +{EXTRA_BONUS}자): {sig['fact']}" if sig else "사진 없는 시그니처: 없음 (extra 는 null)")]
     content = "\n".join(lines)
     errs = []
     for attempt in range(3):
         extra = ("\n\n직전 답의 문제(고쳐서 다시): " + " / ".join(errs)) if errs else ""
         s = ms.gemini_json(model, SCRIPT_SYSTEM, content + extra)
-        errs = check_script(s, h, cuts, req)
+        errs = check_script(s, h, cuts, req, sig)
         if not errs:
             s["cuts"] = sorted(s["cuts"], key=lambda x: int(x["i"]))
+            if not sig:
+                s["extra"] = None
             return s
         log(f"대본 검사 실패({attempt + 1}):", errs)
     raise RuntimeError("대본이 규칙을 통과하지 못함: " + " / ".join(errs))
@@ -317,15 +367,17 @@ def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) 
         thr = QA_THR.get(c["section"], 7)
         row = {"i": c["i"], "section": c["section"], "threshold": thr, "narration": x["narration"], "caption": x["caption"]}
         img = B() / f"shot_{c['n']}.png"
+        ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
+        note = (f"\n덧붙임(허용 · 감점 금지): 이 문장 끝의 '{ex.get('tag', '')}' 시설은 사진에 없지만 화면에 태그로 표시된다" if ex and int(ex.get("i", 0)) == c["i"] else "")
         try:
-            r = ms._try_models("vision", models["text"], lambda m: _vision_json(m, SCREEN_SYSTEM.format(lo=c["lo"], hi=c["hi"]),
-                                                                                f"구간: {KO[c['section']]}\n나레이션: {x['narration']}\n자막: {design.plain(x['caption'])}", img))
+            r = ms._try_models("vision", models["text"], lambda m: _vision_json(m, SCREEN_SYSTEM.format(lo=c["lo"], hi=c["hi"] + (EXTRA_BONUS if note else 0)),
+                                                                                f"구간: {KO[c['section']]}\n나레이션: {x['narration']}\n자막: {design.plain(x['caption'])}{note}", img))
             row.update({"score": int(r.get("score", -1)), "seen": str(r.get("seen", ""))[:80], "problem": str(r.get("problem", ""))[:120]})
         except Exception as e:  # noqa: BLE001
             row.update({"score": None, "error": str(e)[:100]})
             out.append(row); continue
         fix = str(r.get("fix", "")).strip()
-        if row["score"] is not None and 0 <= row["score"] < thr and fix and not sentence_errs(fix, c, h, req):
+        if row["score"] is not None and 0 <= row["score"] < thr and fix and not note and not sentence_errs(fix, c, h, req):
             x["narration"] = fix
             row["fixed"] = fix
             try:
@@ -427,7 +479,9 @@ def preview_md(req: dict, p: dict) -> str:
         x = by_i[c["i"]]; q = qa_i.get(c["i"], {})
         sc = q.get("score"); mark = "" if sc is None else ("통과" if sc >= q.get("threshold", 7) else "미달")
         fx = f" → 교체 {q.get('score2')}" if q.get("fixed") else ""
-        md.append(f"| {c['i']}{' (Veo)' if c['veo'] else ''} | {KO[c['section']]} | {c['shot'].get('description', '')} [{mt.SRC_KO.get(c['shot'].get('source'), '?')}] | {x['caption']} | {x['narration']} | {sc if sc is not None else '-'} {mark}{fx} | {p['narr'][c['i']]:.1f} |")
+        ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
+        tag = f" 〔태그 {ex.get('tag')}〕" if ex and int(ex.get("i", 0)) == c["i"] else ""
+        md.append(f"| {c['i']}{' (Veo)' if c['veo'] else ''} | {KO[c['section']]} | {c['shot'].get('description', '')} [{mt.SRC_KO.get(c['shot'].get('source'), '?')}] | {x['caption']}{tag} | {x['narration']} | {sc if sc is not None else '-'} {mark}{fx} | {p['narr'][c['i']]:.1f} |")
     md.append(f"| 끝 | 끝 카드 | 대표 사진 블러 | {script['cta']['caption']} | {script['cta']['narration']} | - | {p['narr']['cta']:.1f} |")
     md += ["", "## 나레이션 받아쓰기 검증", "", "| 컷 | 대본 | 들린 것 | 일치 | 판정 |", "|---|---|---|---|---|"]
     for q in nqa:
@@ -581,6 +635,11 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
         cap = B() / f"ov_cap_{c['i']:02d}.png"
         design.caption_png(cap, x["caption"], style, hook=(c["section"] == "hook"), sub=(honest if c["i"] == first_offer else ""))
         overlays = [{"path": frame, "a": 0, "b": 99, "anim": False}, {"path": cap, "a": 0.0, "b": 99, "anim": True}]
+        ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
+        if ex and int(ex.get("i", 0)) == c["i"]:                      # 사진 없는 시그니처: 문장 후반에 '+ 시설' 태그 칩 — "이것도 있다"로 읽히게
+            tag = B() / f"ov_tag_{c['i']:02d}.png"
+            design.tag_png(tag, str(ex.get("tag", "")))
+            overlays.append({"path": tag, "a": round(L * 0.45, 2), "b": 99, "anim": True})
         if chip and c["i"] == 2:
             overlays.append({"path": chip, "a": 0.3, "b": min(L, 2.1), "anim": True})
         slow = 1.0
@@ -594,7 +653,8 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
             src = photo_clip(B() / f"shotHD_{c['n']}.png", L, B() / f"pan_{c['n']}.mp4", pattern)
             kind = f"사진·{pattern}"
         segs.append(cut_segment(c["i"], src, L, B() / f"narr_c{c['i']}.wav", overlays, slow))
-        timeline.append({"i": c["i"], "section": c["section"], "kind": kind, "sec": round(L, 2), "slow": round(slow, 2), "narration": x["narration"], "caption": x["caption"]})
+        timeline.append({"i": c["i"], "section": c["section"], "kind": kind, "sec": round(L, 2), "slow": round(slow, 2), "narration": x["narration"], "caption": x["caption"],
+                         "extra": (ex.get("tag") if ex and int(ex.get("i", 0)) == c["i"] else None)})
     # 끝 카드 — 훅 사진 블러 배경, "프로필 링크 → 폴더 N번"
     card = design.end_card(B() / "end_card.jpg", B() / f"shotHD_{cuts[0]['n']}.png", folder, pos, style, ms.DISCLOSURE)
     Lc = max(3.6, narr["cta"] + 0.7)

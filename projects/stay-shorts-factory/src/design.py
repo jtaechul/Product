@@ -340,6 +340,28 @@ def caption_png(out: Path, text: str, style: str = DEFAULT_STYLE, hook: bool = F
     return out
 
 
+def draw_tag(im: Image.Image, text: str, cy: float = CY):
+    """자막 아래 작은 태그 칩 — '+ 히노키 사우나' (사진에 없는 시그니처를 "이것도 있다"로 표시). 유리 칩 + 코랄 점."""
+    d = ImageDraw.Draw(im)
+    f = font(36, bold=False)
+    text = text if text.startswith("+") else "+ " + text
+    tw = d.textlength(text, font=f)
+    x = (W - tw - 64) / 2
+    y = int(H * cy) + 150
+    glass(im, [x, y, x + tw + 64, y + f.size + 26], fill=(255, 255, 255, 34), border=(255, 255, 255, 70))
+    d = ImageDraw.Draw(im)
+    d.ellipse([x + 20, y + f.size / 2 + 6, x + 34, y + f.size / 2 + 20], fill=(*ACCENT, 255))
+    d.text((x + 46, y + 12), text.lstrip("+ "), font=f, fill=(255, 255, 255, 245))
+    return im
+
+
+def tag_png(out: Path, text: str):
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw_tag(im, text)
+    im.save(out)
+    return out
+
+
 def chip_png(out: Path, text: str, sub: str = ""):
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw_chip(im, text, sub)
