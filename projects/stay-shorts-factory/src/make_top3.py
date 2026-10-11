@@ -144,11 +144,13 @@ def record_sources(hotels: list[dict], report: dict) -> None:
     (ms.PREVIEW / "photo_sources.json").write_text(json.dumps(rows, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
-def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None) -> dict | None:
-    """쿠팡 검색 → 규칙·동일성으로 '이 숙소 객실'만 → 공식 홈페이지 사진 수집 → 사진 분류 → 물놀이 1 + 객실/특별 1 선택 → 9:16 크롭 + Veo 지시문.
-    사진 출처 우선순위: 공식 홈페이지(2026-10-11 운영자 결정) → 쿠팡."""
+def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None, quota: dict | None = None) -> dict | None:
+    """쿠팡 검색 → 규칙·동일성으로 '이 숙소 객실'만 → 공식 홈페이지 사진 수집 → 사진 분류 → 장면 선택(quota: 분류별 장 수, 기본 물놀이1·객실1·특별1)
+    → 9:16 크롭 + Veo 지시문. 사진 출처 우선순위: 공식 홈페이지(2026-10-11 운영자 결정) → 쿠팡."""
     name = c["name"]
     req = req or {}
+    quota = quota or {"water": 1, "room": 1, "special": 1}
+    want_total = sum(quota.values())
     v = dc.coupang_verify(name)
     rooms = v.get("rooms") or []
     if len(rooms) >= dc.MIN_ROOMS:
@@ -173,18 +175,20 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None) -> di
     theme = str(req.get("theme") or "")
     usable = sorted([p for p in cl if p["category"] in photos.CATS and p["quality"] >= 4 and not p.get("people")],
                     key=lambda p: (-theme_fit(p["description"], theme), -p["quality"]))   # 테마에 맞는 장면(실내·온수…)을 먼저
-    # 장면 3개: 물놀이 → 객실 → 특별 공간 (없으면 남은 것으로 채움). 2개 미만이면 제외
+    # 장면 선택: 분류별 quota 만큼 (물놀이 → 객실 → 특별 순, 없으면 남은 것으로 채움). 2개 미만이면 제외
     chosen = []
     for cat in ("water", "room", "special"):
-        hit = next((p for p in usable if p["category"] == cat and p not in chosen), None)
-        if hit:
-            chosen.append(hit)
+        for p in usable:
+            if sum(1 for q in chosen if q["category"] == cat) >= quota.get(cat, 0):
+                break
+            if p["category"] == cat and p not in chosen:
+                chosen.append(p)
     for p in usable:
-        if len(chosen) >= SHOTS_PER_HOTEL:
+        if len(chosen) >= want_total:
             break
         if p not in chosen:
             chosen.append(p)
-    chosen = chosen[:SHOTS_PER_HOTEL]
+    chosen = chosen[:want_total]
     if len(chosen) < 2:
         log(f"{name}: 쓸 수 있는 사진 {len(chosen)}장 — 제외")
         return None

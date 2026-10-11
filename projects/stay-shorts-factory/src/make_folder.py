@@ -168,6 +168,37 @@ def update(req: dict, hotels: list[dict], script: dict | None) -> Path:
     return OUT
 
 
+def update_hotel(req: dict, h: dict, rank: int) -> Path:
+    """숙소 하나만 테마 폴더에 넣거나 갱신한다 (단일 숙소 영상 모드). 같은 폴더의 다른 숙소는 그대로 둔다."""
+    slug = slug_of(str(req.get("month") or ""), str(req.get("theme") or ""), str(req.get("region") or ""))
+    data = {"channel": CHANNEL, "folders": []}
+    if OUT.exists():
+        try:
+            data = json.loads(OUT.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            pass
+    data["channel"] = CHANNEL
+    folder = next((f for f in (data.get("folders") or []) if f.get("slug") == slug), None)
+    if not folder:
+        folder = {"slug": slug, "title": title_of(req), "month": str(req.get("month") or ""), "theme": str(req.get("theme") or ""),
+                  "region": str(req.get("region") or ""), "updated": date.today().isoformat(), "intro": "", "hotels": []}
+        data["folders"] = (data.get("folders") or []) + [folder]
+    prev = next((x for x in folder["hotels"] if x.get("name") == h["name"]), None)
+    rank = int(rank or (prev or {}).get("rank") or (len(folder["hotels"]) + 1))
+    entry = hotel_entry(rank, h, None, slug, folder.get("theme") or "")
+    if prev and not entry.get("image"):
+        entry["image"] = prev.get("image")
+    folder["hotels"] = [x for x in folder["hotels"] if x.get("name") != h["name"]] + [entry]
+    folder["hotels"].sort(key=lambda e: e.get("rank") or 99)
+    folder["updated"] = date.today().isoformat()
+    data["folders"].sort(key=lambda f: (f.get("month") or ""), reverse=True)
+    data["updated"] = date.today().isoformat()
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    log(f"폴더 '{folder['title']}' 에 {h['name']} 갱신 (순위 {rank}) → 숙소 {len(folder['hotels'])}곳")
+    return OUT
+
+
 def from_report() -> Path:
     """최근 report.json(미리보기·제작 기록) + 순위표로 폴더를 만든다 (report 에 없는 지역·제휴 링크는 순위표에서 채운다)."""
     rep = json.loads(REPORT.read_text(encoding="utf-8"))

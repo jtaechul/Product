@@ -749,14 +749,18 @@ def main() -> int:
     try:
         # ⭐ 운영자 2026-10-11 "돈 쓰지 마, 쓸 거면 허락받아" — 유료 Veo 가 도는 조합(veo/top3 · fake 아님 · 미리보기 아님)은
         #    request.json 에 "veo_approved": true 가 있어야 한다. 없으면 돈을 쓰기 전에 멈춘다. 미리보기·가짜 클립은 Veo 0원이라 통과
-        if mode in ("veo", "top3") and not veo.FAKE and str(req.get("stage") or "") != "preview" and req.get("veo_approved") is not True:
+        if mode in ("veo", "top3", "solo") and not veo.FAKE and str(req.get("stage") or "") != "preview" and req.get("veo_approved") is not True:
             raise RuntimeError('유료 Veo 제작은 운영자 허락이 필요합니다 — request.json 에 "veo_approved": true 를 넣어 주세요 (미리보기는 "stage": "preview")')
         models = pick_models()
         report["models"] = models
-        if mode == "top3" and str(req.get("stage") or "") == "preview":
+        if mode in ("top3", "solo") and str(req.get("stage") or "") == "preview":
             # 영상 없이 사진·대사·나레이션(받아쓰기 검증)만 — 운영자가 보고 듣고 승인한 뒤에 영상
-            import make_top3
-            meta = make_top3.preview_top3(req, models, report)
+            if mode == "solo":                              # 2026-10-11 운영자 결정: TOP3 폐기 → 한 번에 한 숙소
+                import make_solo
+                meta = make_solo.preview_solo(req, models, report)
+            else:
+                import make_top3
+                meta = make_top3.preview_top3(req, models, report)
             report["models_used"] = dict(USED)
             report.update({"ok": True, "stage": "preview", "narration_qa_ok": meta["narration_qa_ok"]})
             report["gemini_usage"] = usage_block()
@@ -766,7 +770,11 @@ def main() -> int:
             out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
             print(json.dumps({k: report[k] for k in ("ok", "stage", "narration_qa_ok", "narration_qa", "script", "gemini_usage")}, ensure_ascii=False, indent=1))
             return 0
-        if mode == "top3":
+        if mode == "solo":
+            import make_solo
+            video, dur_total, meta = make_solo.produce_solo(req, models, report)
+            stay = meta["stay"]
+        elif mode == "top3":
             import make_top3
             video, dur_total, meta = make_top3.produce_top3(req, models, report)
             stay = meta["stay"]
