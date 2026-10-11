@@ -401,8 +401,10 @@ r21 = log["remake"]
 omni_used = [x for x in r21.get("ledger", []) if "Veo" not in x["what"] and ("새로 만들기" in x["what"] or "끝 장면 영상" in x["what"])]
 vid_usd = sum(x["usd"] for x in r21.get("ledger", []) if "Veo" in x["what"])
 print("    Veo 장부:", [x["what"] + f" ${x['usd']}" for x in r21.get("ledger", []) if "Veo" in x["what"]], "| 합계", round(vid_usd, 2), "| 전체", r21.get("spent"))
-if omni_used or vid_usd > 0.61 or not r21.get("gen", {}).get("ok"):
-    FAILS.append("㉑ Veo로만 만들지 않았거나 영상 값이 예상(0.5달러)보다 큼")
+body21 = E._dur(d / "work" / "remake.mp4") if (d / "work" / "remake.mp4").exists() else 0
+print("    Veo 고정 칸 구간:", [s_.get("veo_segs") for s_ in (r21.get("gen_plan") or {}).get("fit", [])], "| 본편", round(body21, 2), "초")
+if omni_used or vid_usd > 0.81 or not r21.get("gen", {}).get("ok") or abs(body21 - 5.8) > 0.1:
+    FAILS.append("㉑ Veo로만 만들지 않았거나 영상 값이 예상(0.8달러)보다 크거나 본편 길이가 원본과 다름")
 d, ep = make_ep("gentest", method="gen")
 log = run(d, ep, {"remake": {"mode": "test"}}, {}, "⑰ 새로 만들기: 예전 '시험' 요청 → 스토리보드만(영상 안 만듦)")
 if log["remake"].get("gen") or not (d / "work" / "board.jpg").exists():

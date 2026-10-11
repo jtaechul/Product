@@ -3928,6 +3928,7 @@ GEN_ANATOMY = (" ANATOMY: every animal is one complete, separate, real animal - 
 GEN_LAST = (" Image 2 is the LAST FRAME of this clip: the clip ends exactly on image 2 (same poses, positions and framing) - move "
             "naturally and physically from image 1 to image 2.")
 VEO_SECS = (4, 6, 8)             # Veo 3.1 Lite가 만드는 길이(초)
+VEO_XF = 0.12                    # Veo 고정 칸 방식: 구간 사이를 이만큼 겹쳐 부드럽게 잇는다(끝 장면 지정이 안 돼 이음새 자세가 조금 다름)
 VEO_NEG = ("merged bodies, fused animals, two dogs melting together, extra legs, missing legs, extra heads, dog with human body, "
            "dog standing on two legs, text, letters, logo, watermark, subtitles, morphing, distorted anatomy")
 GEN_SEG_LEN = 2.2                # 검사한 스토리보드 칸 두 장(처음·끝) 사이를 이 길이쯤으로 나눠 만든다 — 영상 AI가 부딪힘을 처음부터 지어내지 않게
@@ -4211,7 +4212,8 @@ def _gen_need(work: Path, res: dict, end_sec: float, gen_res: str, gone: set | N
     if not have("remake.mp4"):
         for k, s in enumerate(scenes):
             times_b = [float(t) for t in (res.get("gen_plan") or {}).get("board_times") or []]
-            segs = _veo_segs(s, times_b) if veo else (s.get("segs") or _segs_snap(s, times_b))
+            segs = ((s["segs"] if (s.get("segs") and len(s["segs"]) > 1) else _veo_segs(s, times_b)) if veo
+                    else (s.get("segs") or _segs_snap(s, times_b)))
             for j, g in enumerate(segs):
                 if not have(f"rm_scene{k + 1}_{j + 1}.mp4"):
                     d = float(g[1]) - float(g[0])
@@ -4340,9 +4342,10 @@ VEO_PROMPT = ("Vertical 9:16 photorealistic phone video, {sec} seconds. The firs
               "watermarks; no music.")
 
 
-def _veo_prompt(sub: dict, rows: list, plan: dict, sec: int, last: bool) -> str:
+def _veo_prompt(sub: dict, rows: list, plan: dict, sec: int, last: bool, head: bool = False) -> str:
+    """head = 고정 칸 방식(만든 영상의 앞 몇 초만 씀) — 시각을 늘리지 않고 '처음 d초 안에 이 동작'으로 알려 준다."""
     a, b = float(sub["t0"]), float(sub["t1"])
-    k = sec / max(0.1, b - a)                           # Veo는 {sec}초로 만들고 조립 때 원본 길이에 맞춘다 → 시각도 늘려서 알려 준다
+    k = 1.0 if head else sec / max(0.1, b - a)          # Veo는 {sec}초로 만들고 조립 때 원본 길이에 맞춘다 → 시각도 늘려서 알려 준다
     beats = []
     for x in plan.get("beats") or []:
         if x["t1"] > a + 0.05 and x["t0"] < b - 0.05:
@@ -4352,6 +4355,8 @@ def _veo_prompt(sub: dict, rows: list, plan: dict, sec: int, last: bool) -> str:
     p = VEO_PROMPT.format(sec=sec, last=" and the second image is the last frame (end exactly on it)" if last else "",
                           shot=sub.get("shot") or "as in the first image", set=plan.get("set") or "as in the first image",
                           cast=plan.get("cast") or "as in the first image", beats=" ".join(beats))
+    if head:
+        p += f" All of this action happens within the first {b - a:.1f} seconds, starting immediately from the first image; afterwards keep moving naturally."
     return _soften(p)[:3500]
 
 
@@ -4388,9 +4393,11 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
     res.pop("gen_bad", None)
     for k, sc in enumerate(scenes):
         times_b = [float(t) for t in plan.get("board_times") or []]
-        if veo:                                         # Veo 3.1 Lite: 컷 하나를 한 번에(4·6·8초) 처음 칸 → 끝 칸
-            segs = _veo_segs(sc, times_b)
-            sc["veo_segs"] = segs
+        vkey = False
+        if veo:                                         # Veo 3.1 Lite: 끝 장면 지정이 안 됨(2026-10-11 실측) → 고정 칸이 있으면 구간마다 그 칸에서 다시 시작(사장님 제안: 그림은 그림 AI, 영상만 Veo)
+            vkey = bool(sc.get("segs")) and len(sc["segs"]) > 1
+            segs = [[a, b, pa, 0] for a, b, pa, _ in sc["segs"]] if vkey else _veo_segs(sc, times_b)
+            sc["veo_segs"], sc["veo_key"] = segs, vkey
         else:
             segs = sc.get("segs") or _segs_snap(sc, times_b)   # 예전 분석으로 그린 스토리보드: 검사한 칸 중에서 고른다
             sc["segs"] = segs
@@ -4414,8 +4421,8 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
                 last_img = _crop_bars(work / f"board_{int(pb):02d}.jpg", work / f"_gen_last{k + 1}_{j + 1}.png") \
                     if (pb and (work / f"board_{int(pb):02d}.jpg").exists()) else None
                 for short in ((False, True) if veo else ()):     # Veo 3.1 Lite(사장님 지시 2026-10-11: 싸게) — 실패(거절)하면 짧은 지시문으로 한 번 더
-                    use_last = last_img is not None and d / sec >= 0.8
-                    prompt = _veo_prompt(sub, rows, plan, sec, use_last) if not short else _soften(
+                    use_last = last_img is not None and d / sec >= 0.8 and not vkey
+                    prompt = _veo_prompt(sub, rows, plan, sec, use_last, head=vkey) if not short else _soften(
                         VEO_PROMPT.format(sec=sec, last=" and the second image is the last frame" if use_last else "",
                                           shot=sub.get("shot") or "as in the first image", set="as in the first image",
                                           cast=plan.get("cast") or "as in the first image", beats=str(sc.get("ko") or sc.get("frame") or "")))
@@ -4459,10 +4466,11 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
                 if got * GEN_SLOW_MAX < d:
                     raise RuntimeError(f"{tag}: 영상 AI가 {got:.1f}초만 만들었습니다(필요 {d:.1f}초). 늘리지 않고 멈춥니다.")
                 k_t = d / got                                  # 끝 칸에 정확히 닿게 길이를 맞춘다(조금 빠르게/느리게, 0.8~1.15배) — 그보다 길게 왔으면 뒤를 자른다
-                vf = f"setpts=PTS*{k_t:.5f}," if 0.8 <= k_t <= GEN_SLOW_MAX else ""
+                vf = f"setpts=PTS*{k_t:.5f}," if (0.8 <= k_t <= GEN_SLOW_MAX and not vkey) else ""
+                take = d + (VEO_XF if (vkey and j < len(segs) - 1) else 0.0)   # 고정 칸 방식: 다음 구간과 겹칠 만큼 조금 더(앞부분만 씀)
                 _ff(["-i", str(raw), "-an", "-vf", f"{vf}scale={W}:{H}:flags=lanczos,fps=24,setsar=1,format=yuv420p",
-                     "-t", f"{d:.3f}", "-c:v", "libx264", "-crf", "18", str(o)])
-                bad = _gen_frame_check(o, d, res, cap, tag, work)
+                     "-t", f"{take:.3f}", "-c:v", "libx264", "-crf", "18", str(o)])
+                bad = _gen_frame_check(o, take, res, cap, tag, work)
                 info.append({"scene": k + 1, "seg": j + 1, "asked": sec, "got": round(got, 2), "used": d, "speed": round(1 / k_t, 3) if vf else 1.0,
                              "last_frame": len(ins) > 1, "bad": bad})
                 res["gen"] = {**(res.get("gen") or {}), "clips": info}
@@ -4473,6 +4481,18 @@ def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict
                     raise RuntimeError(f"{tag}에서 개 몸이 엉켜 보여({', '.join(f'{t}초 {w}' for t, w in bad[:3])}) 완성하지 않고 멈췄습니다. "
                                        f"이 구간만 다시 만들려면 '다시 시도'(약 ${redo_usd:.2f})를 눌러 주세요 — 나머지 구간은 그대로 씁니다.")
             parts.append(o)
+        if vkey and len(segs) > 1:                      # 같은 컷의 구간들을 0.12초씩 겹쳐 하나로(이음새의 작은 자세 차이를 부드럽게)
+            mine = parts[-len(segs):]
+            durs = [_dur(x) for x in mine]
+            fc, cur, off = [], "0:v", 0.0
+            for i in range(1, len(mine)):
+                off += durs[i - 1] - VEO_XF
+                fc.append(f"[{cur}][{i}:v]xfade=transition=fade:duration={VEO_XF}:offset={off:.3f}[x{i}]")
+                cur = f"x{i}"
+            sj = work / f"_veo_scene{k + 1}.mp4"
+            _ff([*sum((["-i", str(x)] for x in mine), []), "-filter_complex", ";".join(fc) + f";[{cur}]format=yuv420p[v]", "-map", "[v]",
+                 "-c:v", "libx264", "-crf", "18", str(sj)])
+            parts[-len(segs):] = [sj]
     ins_ = sum((["-i", str(x)] for x in parts), [])
     joined = work / "_gen_join.mp4"
     _ff([*ins_, "-filter_complex", "".join(f"[{i}:v]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=1:a=0,format=yuv420p[v]",
