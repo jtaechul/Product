@@ -178,19 +178,35 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None, quota
     usable = sorted([p for p in cl if p["category"] in photos.CATS and p["quality"] >= 4 and not p.get("people")],
                     key=lambda p: (-theme_fit(p["description"], theme), -facility_hit(p, facts), -p["quality"]))   # 테마에 맞는 장면 → 시설(사우나·키즈…) → 품질
     # 장면 선택: 분류별 quota 만큼 (물놀이 → 객실 → 특별 순, 없으면 남은 것으로 채움). 2개 미만이면 제외
-    chosen = []
+    hashes = {}
+    for p in usable:
+        try:
+            hashes[id(p)] = dhash(p["path"])
+        except Exception:  # noqa: BLE001
+            hashes[id(p)] = None
+
+    def dup_of_chosen(p):
+        h = hashes.get(id(p))
+        return h is not None and any(hashes.get(id(q)) is not None and near_dup(h, hashes[id(q)]) for q in chosen)
+    chosen, dups = [], 0
     for cat in ("water", "room", "special"):
         for p in usable:
             if sum(1 for q in chosen if q["category"] == cat) >= quota.get(cat, 0):
                 break
             if p["category"] == cat and p not in chosen:
+                if dup_of_chosen(p):
+                    dups += 1; continue
                 chosen.append(p)
     for p in usable:
         if len(chosen) >= want_total:
             break
         if p not in chosen:
+            if dup_of_chosen(p):
+                dups += 1; continue
             chosen.append(p)
     chosen = chosen[:want_total]
+    if dups:
+        log(f"{name}: 거의 같은 사진 {dups}장 제외 (dHash)")
     if len(chosen) < 2:
         log(f"{name}: 쓸 수 있는 사진 {len(chosen)}장 — 제외")
         return None
@@ -212,7 +228,9 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None, quota
             "official_facts": fd["facts"], "signature": fd["signature"], "city": c.get("city", ""), "official_site": crawl_info.get("url"),
             "rooms": [{"name": str(it.get("productName", ""))[:60], "price": float(it.get("productPrice") or 0) or None,
                        "image": it.get("productImage") or None, "url": str(it.get("productUrl", "")) or None} for it in rooms[:8]],
-            "photo_counts": {k: sum(p["source"] == k for p in cands) for k in SRC_KO} | {"mismatch": len(mism)}}
+            "photo_counts": {k: sum(p["source"] == k for p in cands) for k in SRC_KO} | {"mismatch": len(mism), "near_dup": dups},
+            "classified_summary": [{"k": p.get("k"), "src": p.get("source"), "cat": p.get("category"), "q": p.get("quality"), "people": bool(p.get("people")),
+                                    "mismatch": (p.get("mismatch") or "")[:30], "desc": (p.get("description") or "")[:40]} for p in cl]}
 
 
 THEME_RX = {"실내": r"실내|인도어|indoor|돔", "온수": r"온수|온천|스파|사우나|따뜻|온탕|노천", "온천": r"온천|온탕|노천|스파",
@@ -220,14 +238,35 @@ THEME_RX = {"실내": r"실내|인도어|indoor|돔", "온수": r"온수|온천|
 
 
 FACILITY_RX = re.compile(r"사우나|찜질|키즈|놀이|산책|정원|테라스|라운지|조식|레스토랑|식당|스파|온천|노천|족욕|카페|바비큐|바베큐|수영장|풀|자쿠지|피트니스")
+EXTERIOR_RX = re.compile(r"외관|전경|건물|항공|야경|조명|단지|하늘|은하수|드론|멀리")
+
+
+def dhash(path: str, size: int = 8) -> int:
+    """비슷한 사진 찾기용 지문 (p10 실측: 쿠팡 클럽하우스 연못 사진 2장이 거의 같은 구도로 연속 컷에 들어갔다)."""
+    from PIL import Image
+    with Image.open(path) as im:
+        im = im.convert("L").resize((size + 1, size), Image.LANCZOS)
+        px = list(im.getdata())
+    bits = 0
+    for r in range(size):
+        for c in range(size):
+            bits = (bits << 1) | (1 if px[r * (size + 1) + c] > px[r * (size + 1) + c + 1] else 0)
+    return bits
+
+
+def near_dup(a: int, b: int, thr: int = 6) -> bool:
+    return bin(a ^ b).count("1") <= thr
 
 
 def facility_hit(p: dict, facts: list[str] | None = None) -> int:
     """'특별 공간' 후보 중 시설(사우나·키즈·산책로…)이 보이는 사진을 외관·야경보다 먼저 — 2026-10-11 운영자 "사우나 같은 필요한 사진을 다 반영".
-    확인된 시설 이름("히노키 사우나")의 낱말이 설명에 있으면 2, 일반 시설 낱말이면 1."""
+    확인된 시설 이름("히노키 사우나")의 낱말이 설명에 있으면 2, 일반 시설 낱말이면 1. **외관·전경 사진은 시설 이름이 들어 있어도 0**
+    (p10 실측: '클럽하우스 실내수영장'의 '클럽하우스'가 외관 설명에 걸려 외관 3장이 시설 사진으로 뽑혔다)."""
     if p.get("category") != "special":
         return 0
     d = p.get("description") or ""
+    if EXTERIOR_RX.search(d):
+        return 0
     for f in facts or []:
         if any(len(t) >= 2 and t in d for t in re.split(r"[\s·/,()]+", str(f))):
             return 2

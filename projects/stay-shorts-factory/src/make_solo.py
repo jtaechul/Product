@@ -117,7 +117,7 @@ def assets(req: dict, models: dict, report: dict) -> tuple[dict, int]:
     for s in h["shots"]:                                       # 사진 컷용 고해상 크롭 (Veo 입력은 720x1280 shot_N.png 그대로)
         photos.crop_9x16(s["path"], B() / f"shotHD_{s['n']}.png", s["focus_x"], s["focus_y"], 1080, 1920)
     report["hotels"] = [{k: h[k] for k in ("name", "city", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest", "photo_counts",
-                                            "official_facts", "signature", "hook", "affiliate_url", "official_site", "rooms") if k in h}]
+                                            "official_facts", "signature", "hook", "affiliate_url", "official_site", "rooms", "classified_summary") if k in h}]
     mt.record_sources([h], report)
     log(f"{h['name']}: 사진 {len(h['shots'])}장 (순위표 {pos}위)")
     return h, pos
@@ -125,8 +125,9 @@ def assets(req: dict, models: dict, report: dict) -> tuple[dict, int]:
 
 def _special_key(s, facts=()):
     d = s.get("description") or ""
-    named = any(len(t) >= 2 and t in d for f in facts for t in re.split(r"[\s·/,()]+", str(f)))
-    return (0 if named else 1 if FACILITY_RX.search(d) else 2 if not EXTERIOR_RX.search(d) else 3, -int(s.get("quality") or 0))
+    exterior = bool(EXTERIOR_RX.search(d))
+    named = (not exterior) and any(len(t) >= 2 and t in d for f in facts for t in re.split(r"[\s·/,()]+", str(f)))
+    return (0 if named else 1 if (FACILITY_RX.search(d) and not exterior) else 2 if not exterior else 3, -int(s.get("quality") or 0))
 
 
 def plan_cuts(h: dict, max_veo: int) -> list[dict]:
@@ -165,8 +166,15 @@ def plan_cuts(h: dict, max_veo: int) -> list[dict]:
         cuts[-1]["section"] = "offer"
 
     def motion_rank(c):
+        # Veo 는 훅 → 물놀이 → 물이 보이는 실내·시설 컷 → 객실 → 외관(맨 뒤) 순. p10 실측: '분수 연못 외관'이 물 낱말로 Veo 를 받아 아까웠다
         d = c["shot"].get("description") or ""
-        return 0 if c["section"] == "hook" else 1 if c["section"] == "water" else 2 if WATER_RX.search(d) else 3
+        if c["section"] == "hook":
+            return 0
+        if c["section"] == "water":
+            return 1
+        if EXTERIOR_RX.search(d):
+            return 4
+        return 2 if WATER_RX.search(d) else 3
     for c in sorted(cuts, key=lambda c: (motion_rank(c), c["i"]))[:max(0, int(max_veo))]:
         c["veo"] = True
     for c in cuts:
@@ -369,6 +377,8 @@ def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) 
         img = B() / f"shot_{c['n']}.png"
         ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
         note = (f"\n덧붙임(허용 · 감점 금지): 이 문장 끝의 '{ex.get('tag', '')}' 시설은 사진에 없지만 화면에 태그로 표시된다" if ex and int(ex.get("i", 0)) == c["i"] else "")
+        if c["i"] == cuts[-1]["i"]:
+            note += "\n이 컷은 마지막 컷이라 수정 문장에도 '추천해요'가 들어가야 한다"
         try:
             r = ms._try_models("vision", models["text"], lambda m: _vision_json(m, SCREEN_SYSTEM.format(lo=c["lo"], hi=c["hi"] + (EXTRA_BONUS if note else 0)),
                                                                                 f"구간: {KO[c['section']]}\n나레이션: {x['narration']}\n자막: {design.plain(x['caption'])}{note}", img))
@@ -377,6 +387,9 @@ def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) 
             row.update({"score": None, "error": str(e)[:100]})
             out.append(row); continue
         fix = str(r.get("fix", "")).strip()
+        last = (c["i"] == cuts[-1]["i"])
+        if last and fix and "추천" not in fix:                           # p10 실측: 마지막 컷 교체문에서 '추천해요'가 빠졌다 → 교체 거부
+            row["fix_rejected"] = fix; fix = ""
         if row["score"] is not None and 0 <= row["score"] < thr and fix and not note and not sentence_errs(fix, c, h, req):
             x["narration"] = fix
             row["fixed"] = fix
