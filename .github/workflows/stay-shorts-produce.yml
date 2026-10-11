@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  actions: write     # 폴더 데이터가 바뀌면 deploy-stay-links 를 불러 페이지를 다시 배포한다
 
 concurrency:
   group: stay-shorts-produce
@@ -138,11 +139,20 @@ jobs:
           P=projects/stay-shorts-factory
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for d in data/runs state; do [ -e "$P/$d" ] && git add "$P/$d"; done
+          for d in data/runs state link/data; do [ -e "$P/$d" ] && git add "$P/$d"; done
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          FOLDER_CHANGED=0; git diff --cached --quiet -- "$P/link/data" || FOLDER_CHANGED=1
           git commit -m "stay-shorts: 시험 제작 기록 [skip ci]"
           for i in 1 2 3 4 5; do
-            git push origin "HEAD:${GITHUB_REF_NAME}" && { echo "저장 완료"; exit 0; }
+            git push origin "HEAD:${GITHUB_REF_NAME}" && { echo "저장 완료"; echo "FOLDER_CHANGED=$FOLDER_CHANGED" >> "$GITHUB_ENV"; exit 0; }
             echo "재시도 $i"; git pull --rebase origin "${GITHUB_REF_NAME}" || true; sleep 3
           done
           echo "저장 실패"; exit 1
+
+      - name: 폴더 페이지 재배포 (폴더 데이터가 바뀐 경우)
+        if: always() && env.FOLDER_CHANGED == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 위 커밋은 [skip ci] 라 push 트리거가 안 걸린다 → 배포 워크플로를 직접 부른다
+          gh workflow run deploy-stay-links.yml --ref "${GITHUB_REF_NAME}" --repo "$GITHUB_REPOSITORY" && echo "deploy-stay-links 호출" || echo "::warning::배포 워크플로 호출 실패 — link/ 변경을 푸시하면 자동 배포된다"
