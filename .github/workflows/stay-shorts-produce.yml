@@ -63,6 +63,8 @@ jobs:
 
       - name: 완성본을 Release 로 올린다
         if: success()
+        # stay-run-10 에서 releases API 가 403(Resource not accessible by integration)을 냈다 — 텔레그램 전달이 본선이므로 Release 실패로 실행을 빨갛게 만들지 않는다
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
