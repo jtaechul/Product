@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-11-p6",
+ "nonce": "2026-10-11-p7",
  "stay": "",
  "mode": "top3",
  "fake": false,
@@ -93,7 +93,7 @@
     "official": 24,
     "coupang": 8,
     "operator": 0,
-    "mismatch": 4
+    "mismatch": 3
    }
   }
  ],
@@ -127,15 +127,15 @@
      "source": "official",
      "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/yvhKloOFB3yOw-1m9U0VMA==/1",
      "page": "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000527",
-     "description": "실내 온수풀 및 스파 공간 너머로 창문이 보인다."
+     "description": "유리벽 사우나와 실내 온수풀 스파가 보인다."
     },
     {
      "n": 32,
      "slot": "room",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/-tMtryLq7WGawlZIhYul4A==/1",
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/al4LqGI_YPQlqkNjaEO-gg==/1",
      "page": "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
-     "description": "오션뷰 창가 옆으로 더블 침대 두 개가 놓여 있다."
+     "description": "바다 전망 발코니가 딸린 침실에 더블 침대가 놓여 있다."
     },
     {
      "n": 33,
@@ -143,7 +143,7 @@
      "source": "coupang",
      "url": null,
      "page": null,
-     "description": "노을 진 하늘 아래로 삼척 쏠비치 리조트와 바다가 펼쳐진다."
+     "description": "밤바다와 조명이 켜진 리조트 및 야외 산책로의 야경이다."
     }
    ]
   },
@@ -176,7 +176,7 @@
      "source": "official",
      "url": "https://img.lottehotel.com/cms/asset/2026/06/17/42275/img_TP_pc_LR_sokcho_01_KV_1x.webp",
      "page": "https://www.lottehotel.com/resort-sokcho/ko/themepark/water-park",
-     "description": "실내 워터파크의 파도풀과 워터슬라이드가 보인다."
+     "description": "실내 워터파크의 파도풀과 슬라이드 시설이 보인다."
     },
     {
      "n": 22,
@@ -184,7 +184,7 @@
      "source": "official",
      "url": "https://img.lottehotel.com/cms/asset/2026/07/08/43627/img_ID_pc_LR_sokcho_timeline01_1x%20(1).webp",
      "page": "https://www.lottehotel.com/resort-sokcho",
-     "description": "발코니 너머로 바다가 보이는 침실에 더블 침대와 가구가 정돈되어 있다."
+     "description": "통창 너머로 바다가 보이는 아늑한 더블베드 객실이다."
     },
     {
      "n": 23,
@@ -192,7 +192,7 @@
      "source": "official",
      "url": "https://img.lottehotel.com/cms/asset/2026/06/17/42321/img_FC_PC_LR_sokcho_06_1x.webp",
      "page": "https://www.lottehotel.com/resort-sokcho/ko/facilities/weekend-spa",
-     "description": "은은한 조명이 켜진 깔끔한 스파 리셉션 데스크가 보인다."
+     "description": "WEEKEND SPA 로고가 있는 스파 안내 데스크 전경이다."
     }
    ]
   },
@@ -225,7 +225,7 @@
      "source": "official",
      "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
      "page": "https://www.sonohotelsresorts.com/oceanWorld",
-     "description": "스핑크스 조각상이 설치된 야외 스파 온수풀이다."
+     "description": "스핑크스 조각상과 이집트 부조 벽화가 있는 스파 풀이다."
     },
     {
      "n": 12,
@@ -233,7 +233,7 @@
      "source": "official",
      "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
      "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-     "description": "넓은 거실 창밖으로 푸른 산맥 풍경이 펼쳐져 있다."
+     "description": "산 전망 통창과 소파가 배치된 객실 거실 내부이다."
     },
     {
      "n": 13,
@@ -241,113 +241,124 @@
      "source": "official",
      "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/o4adYnfDv1FqVqNaEkT7Mw==/1",
      "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-     "description": "잔디 정원이 내려다보이는 테라스에 해먹과 캠핑 텐트가 설치되어 있다."
+     "description": "인조잔디가 깔린 테라스에 해먹과 캠핑 텐트가 설치되어 있다."
     }
    ]
   }
  ],
  "script": {
   "hook": {
-   "caption": "11월 강원 온수풀 1위는?",
-   "narration": "11월 강원 온수풀, 후기 데이터로 세 곳 추천해요."
+   "caption": "11월 온수풀 후기 1위는?",
+   "narration": "11월 강원 온수풀 숙소, 후기 데이터로 세 곳 추천해요."
   },
   "ranks": [
    {
     "rank": 3,
     "captions": [
-     "실내 온수풀 오션플레이",
-     "동해 바다 전망 객실",
-     "사우나 릴렉스룸 운영"
+     "실내 온수풀 스파",
+     "동해 전망 발코니 객실",
+     "바다 산책로 보유"
     ],
-    "narration": "3위는 쏠비치 삼척이에요. 통창으로 바다를 바라보며 즐기는 실내 온수풀 오션플레이가 갖춰져 있어요. 사우나와 전용 릴렉스룸까지 이어져서 쌀쌀한 날 가족과 쉬어가기 딱 좋아요.",
+    "narration": "3위는 쏠비치 삼척이에요. 유리벽 너머로 바다를 보며 즐기는 실내 온수풀 스파가 매력적이에요. 동해 조망 릴렉스룸과 사우나까지 갖춰 쌀쌀한 날 가족과 쉬기 좋아요.",
     "benefit": ""
    },
    {
     "rank": 2,
     "captions": [
-     "실내 파도풀 워터파크",
-     "전 객실 오션뷰 침실",
-     "스파 사우나 시설"
+     "실내 워터파크 파도풀",
+     "전 객실 오션뷰",
+     "사우나 찜질방 운영"
     ],
-    "narration": "2위는 롯데리조트 속초예요. 파도풀과 슬라이드가 있는 실내 워터파크에서 날씨 걱정 없이 물놀이할 수 있어요. 찜질방과 스파 시설도 잘 갖춰져서 부모님 모시고 가도 만족스러워요.",
+    "narration": "2위는 롯데리조트 속초예요. 날씨 걱정 없는 실내 워터파크에서 파도풀을 즐길 수 있어요. 바다 전망 객실과 체온유지실이 있어 늦가을 힐링 여행으로 제격이에요.",
     "benefit": ""
    },
    {
     "rank": 1,
     "captions": [
-     "사계절 야외 스파 노천탕",
-     "클럽하우스 실내 수영장",
-     "캠핑 테마 스위트룸"
+     "이집트 테마 스파풀",
+     "산 전망 스위트 거실",
+     "테라스 캠핑 테마룸"
     ],
-    "narration": "노천탕과 사우나를 갖춘 야외 스파존에서 가을 산을 바라보며 따뜻하게 몸을 녹일 수 있어요. 키즈풀과 실내 수영장까지 알차게 즐길 수 있어 아이 동반 여행에 제격이에요. 최근 한 달 후기 칠백 건, 1위는 소노펠리체 비발디파크예요.",
+    "narration": "이국적인 부조 벽화 아래에서 즐기는 실내 스파풀과 유수풀이 갖춰져 있어요. 통창 너머 마운틴뷰를 보며 쉬는 대형 스위트 객실도 매력적이에요. 최근 한 달 후기 칠백 건, 1위는 소노펠리체 비발디파크예요.",
     "benefit": "",
     "honest": ""
    }
   ],
   "cta": {
    "caption": "저장해두고 비교하세요",
-   "narration": "객실 타입과 가격대는 프로필 폴더 '11월 실내 온수풀 온천'에 정리해 뒀어요."
+   "narration": "객실 타입과 상세 정보는 프로필 폴더 11월 실내 온수풀 온천에서 확인하세요."
   },
-  "title": "11월 강원 온수풀 추천 숙소 TOP3",
-  "caption": "쌀쌀해지는 11월에 따뜻하게 즐기기 좋은 강원 실내 온수풀 리조트예요. 빅데이터로 검증된 인기 숙소를 확인해 보세요.",
+  "title": "11월 강원 실내 온수풀 리조트 TOP 3",
+  "caption": "쌀쌀해진 날씨에 따뜻하게 즐기기 좋은 강원 실내 온수풀 리조트를 모았습니다. 실제 방문 후기 데이터를 바탕으로 추천해 드려요.",
   "hashtags": [
-   "#강원도숙소",
+   "#강원도여행",
    "#실내온수풀",
-   "#온천호텔",
-   "#강원도호캉스",
-   "#가족여행숙소"
+   "#온천여행",
+   "#강원도리조트",
+   "#호캉스추천"
   ]
  },
  "narration_sec": {
-  "hook": 4.14,
-  "r3": 13.65,
-  "r2": 13.1,
-  "r1": 17.12,
-  "cta": 5.53
+  "hook": 3.9,
+  "r3": 9.76,
+  "r2": 9.92,
+  "r1": 12.32,
+  "cta": 5.1
  },
  "narration_qa": [
   {
    "segment": "hook",
-   "script": "11월 강원 온수풀, 후기 데이터로 세 곳 추천해요.",
-   "heard": "11월 강원 온수풀 후기 데이터로 세 곳 추천해요.",
+   "script": "11월 강원 온수풀 숙소, 후기 데이터로 세 곳 추천해요.",
+   "heard": "11월 강원 온수풀 숙소 후기 데이터로 세 곳 추천해요",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r3",
-   "script": "3위는 쏠비치 삼척이에요. 통창으로 바다를 바라보며 즐기는 실내 온수풀 오션플레이가 갖춰져 있어요. 사우나와 전용 릴렉스룸까지 이어져서 쌀쌀한 날 가족과 쉬어가기 딱 좋아요.",
-   "heard": "3위는 쏠비치 삼척이에요. 통창으로 바다를 바라보며 즐기는 실내",
-   "similarity": 0.54,
-   "ok": false,
+   "script": "3위는 쏠비치 삼척이에요. 유리벽 너머로 바다를 보며 즐기는 실내 온수풀 스파가 매력적이에요. 동해 조망 릴렉스룸과 사우나까지 갖춰 쌀쌀한 날 가족과 쉬기 좋아요.",
+   "heard": "3위는 쏠비치 삼척이에요. 유리벽 너머로 바다를 보며 즐기는 실내 온수풀 스파가 매력적이에요. 동해 조망 릴랙스 룸과 사우나까지 갖춰 쌀쌀한 날 가족과 쉬기 좋아요.",
+   "similarity": 0.99,
+   "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r2",
-   "script": "2위는 롯데리조트 속초예요. 파도풀과 슬라이드가 있는 실내 워터파크에서 날씨 걱정 없이 물놀이할 수 있어요. 찜질방과 스파 시설도 잘 갖춰져서 부모님 모시고 가도 만족스러워요.",
-   "heard": "2위는 롯데리조트 속초예요. 파도 풀과 슬라이드가 있는 실내 워터파크에서 날씨 걱정 없이 물놀이할 수 있어요. 찜질방과 스파 시설도 잘 갖춰져서 부모님 모시고 가도 만족스러워요.",
-   "similarity": 1.0,
+   "script": "2위는 롯데리조트 속초예요. 날씨 걱정 없는 실내 워터파크에서 파도풀을 즐길 수 있어요. 바다 전망 객실과 체온유지실이 있어 늦가을 힐링 여행으로 제격이에요.",
+   "heard": "2위는 롯데 리조트 속초에요. 날씨 걱정 없는 실내 워터파크에서 파도풀을 즐길 수 있어요. 바다 전망 객실과 체온 유지실이 있어 늦가을 힐링 여행으로 제격이에요.",
+   "similarity": 0.98,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "r1",
-   "script": "노천탕과 사우나를 갖춘 야외 스파존에서 가을 산을 바라보며 따뜻하게 몸을 녹일 수 있어요. 키즈풀과 실내 수영장까지 알차게 즐길 수 있어 아이 동반 여행에 제격이에요. 최근 한 달 후기 칠백 건, 1위는 소노펠리체 비발디파크예요.",
-   "heard": "노천탕과 사우나를 갖춘 야외 스파존에서 가을 산을 바라보며 따뜻하게 몸을 녹일 수 있어요. 키즈 풀과 실내 수영장까지 알차게 즐길 수 있어 아이 동반 여행에 제격이에요. 최근 한 달 후기 700건, 1위는 소노펠리체 비발디파크예요.",
-   "similarity": 0.97,
+   "script": "이국적인 부조 벽화 아래에서 즐기는 실내 스파풀과 유수풀이 갖춰져 있어요. 통창 너머 마운틴뷰를 보며 쉬는 대형 스위트 객실도 매력적이에요. 최근 한 달 후기 칠백 건, 1위는 소노펠리체 비발디파크예요.",
+   "heard": "이국적인 부조벽화 아래서 즐기는 실내 스파풀과 유수풀이 갖춰져 있어요. 통창 너머 마운틴 뷰를 보며 쉬는 대형 스위트 객실도 매력적이에요. 최근 한 달 후기 700건. 1위는 소노펠리체 비발디파크예요.",
+   "similarity": 0.96,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "cta",
-   "script": "객실 타입과 가격대는 프로필 폴더 '11월 실내 온수풀 온천'에 정리해 뒀어요.",
-   "heard": "객실 타입과 가격대는 프로필 폴더 11월 실내 온수풀 온천에 정리해 뒀어요.",
-   "similarity": 0.97,
+   "script": "객실 타입과 상세 정보는 프로필 폴더 11월 실내 온수풀 온천에서 확인하세요.",
+   "heard": "객실 타입과 상세 정보는 프로필 폴더 11월 실내 온수풀 온천에서 확인하세요.",
+   "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   }
  ],
  "models_used": {},
  "stage": "preview",
- "narration_qa_ok": false
+ "narration_qa_ok": true,
+ "gemini_usage": {
+  "calls": 0,
+  "prompt_text": 0,
+  "prompt_image": 0,
+  "prompt_audio": 0,
+  "output_text": 0,
+  "output_audio": 0,
+  "thoughts": 0,
+  "krw_est": 0,
+  "note": "토큰 수는 실측, 단가는 추정 — 실제 청구는 Google 사용량 화면 기준"
+ }
 }
