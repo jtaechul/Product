@@ -7330,6 +7330,7 @@ async function handleTrendAnalyzeFile(env, body) {
       return { success: true, analysis: a };
     } catch (e) { last = e.message; }
   }
+  await fetch(`${G}/v1beta/${file.name}?key=${key}`, { method: 'DELETE' }).catch(() => {});        // 실패해도 남의 영상은 지운다
   throw new Error('영상을 분석하지 못했습니다: ' + last);
 }
 
