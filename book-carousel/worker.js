@@ -5821,8 +5821,19 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(m.swap_fixed) b.appendChild(epEl('div','ep-sub','바꿀 것: 원본의 동물 → 시바견, 사람은 사람 그대로 (원본에 동물이 있어 자동으로 바로잡음)'));
     else if(m.swap_ko) b.appendChild(epEl('div','ep-sub','바꿀 것: '+m.swap_ko));
     if(m.music_pick) b.appendChild(epEl('div','ep-sub','추천 노래(인스타 앱에서 얹기): '+m.music_pick));
+    var gp=m.gen_plan;
+    if(gp&&gp.scenes){                                  // 새로 만들기: 원본 분석(흥행 요소·초 단위 구성·컷) — 스토리보드와 함께 확인
+      b.appendChild(epEl('div','ep-post-lb','원본 분석 (이대로 새로 만듭니다 — 원본 영상 위에 합성하지 않음)'));
+      (gp.hook||[]).forEach(function(h){ b.appendChild(epEl('div','ep-sub','흥행 요소: '+h)); });
+      if(gp.structure) b.appendChild(epEl('div','ep-sub','초 단위 구성: '+gp.structure));
+      var tlN=((m.timeline||{}).all||[]).length;
+      b.appendChild(epEl('div','ep-sub','원본 컷 '+gp.scenes.length+'개'+(tlN?' · 0.5초 동작·입모양·카메라 '+tlN+'줄':'')+(gp.merged?' · 비용 한도 때문에 짧은 컷 '+gp.merged+'개를 이웃 컷에 합침':'')));
+      (gp.fit||gp.scenes).forEach(function(s,i){
+        b.appendChild(epEl('div','ep-sub','컷'+(i+1)+' '+Number(s.t0).toFixed(1)+'~'+Number(s.t1).toFixed(1)+'초'+(s.panel?' (스토리보드 '+s.panel+'번 칸에서 시작)':'')+(s.ko?': '+s.ko:'')));
+      });
+    }
     if(m.board&&m.board.ok){
-      b.appendChild(epEl('div','ep-post-lb','스토리보드 (영상에서 장면마다 뽑아 강아지로 바꾼 그림 — 영상은 이 그림을 기준으로 만듭니다)'));
+      b.appendChild(epEl('div','ep-post-lb',gp&&gp.scenes?'스토리보드 (원본을 분석해 깨끗하게 새로 그린 그림 — 컷마다 이 칸을 첫 장면으로 새 영상을 만듭니다)':'스토리보드 (영상에서 장면마다 뽑아 강아지로 바꾼 그림 — 영상은 이 그림을 기준으로 만듭니다)'));
       var bi=document.createElement('img'); bi.alt='스토리보드'; bi.style.width='100%'; bi.style.borderRadius='10px';
       bi.src='/api/episode/video?board=1&id='+encodeURIComponent(e.id)+'&t='+encodeURIComponent(e.ranAt||''); b.appendChild(bi);
       if(m.board.human) b.appendChild(epEl('div','ep-err','검사: 사람 손·맨살이 보일 수 있음 — '+(m.board.where||'')));
@@ -7428,7 +7439,7 @@ async function handleRemakeCommit(env, body) {
   if (!c.big || !c.vo) throw new Error('광고 문구와 내레이션을 채워 주세요.');
   const ep = { kind: 'remake', menuName: `리메이크 · ${String(v.title || a.meme || '').slice(0, 28)}`, clips: [],
     source: { youtube: v.id ? `https://www.youtube.com/watch?v=${v.id}` : '', title: v.title || '', music: a.music || '' },
-    remake: { swap: a.swap || '', keep_people: a.keepPeople === true, cast: String(a.cast || '').slice(0, 300), swap_ko: String(a.swapKo || '').slice(0, 160), ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, music_pick: String(c.music || '').slice(0, 160), ad: 'vo', ad_copy: true, method: 'composite', res: '720p', pre_enhance: false, upscale: 0, cap: REMAKE_CAP_USD },   // ad_copy: 끝 광고 화면에 캡션 문구도 올림. pre_enhance는 CPU 40분이라 끔(사장님 지시 2026-10-07: 느려 터짐) — 720p 합성만으로 선명   // Genjutsu식(사용자 확정 2026-10 사과 도둑 편): 원본 그대로 두고 대상만 합성, 처음부터 720p + 합성 전 원본 AI 복원(무료) — '아예 안 흐리게'   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
+    remake: { swap: a.swap || '', keep_people: a.keepPeople === true, cast: String(a.cast || '').slice(0, 300), swap_ko: String(a.swapKo || '').slice(0, 160), ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, music_pick: String(c.music || '').slice(0, 160), ad: 'vo', ad_copy: true, method: 'gen', res: '720p', pre_enhance: false, upscale: 0, cap: REMAKE_CAP_USD },   // method 'gen' = 새로 만들기(사장님 지시 2026-10-11: 합성은 화질이 떨어짐 → 원본은 분석만, 흥행 요소·초 단위 구성을 분석해 컷마다 0.5초 지시로 거의 똑같이 새로 생성, 720p). ad_copy: 끝 광고 화면에 캡션 문구도 올림. pre_enhance는 CPU 40분이라 끔(사장님 지시 2026-10-07: 느려 터짐) — 720p 합성만으로 선명   // Genjutsu식(사용자 확정 2026-10 사과 도둑 편): 원본 그대로 두고 대상만 합성, 처음부터 720p + 합성 전 원본 AI 복원(무료) — '아예 안 흐리게'   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
     caption: `${String(c.big).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
     hashtags: cleanHashtags(Array.isArray(c.hashtags) ? c.hashtags : String(c.hashtags || '').split(/\s+/), remakeBanned(p.title)),
     product: { title: p.title, brand: p.brand || '', category: p.category || '기타', reason: String(c.sub || '').replace(/\n/g, ' '), link: p.link, image: p.image || '' } };

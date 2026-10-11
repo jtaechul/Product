@@ -68,6 +68,25 @@ TL = [{"t": f"{i / 2:.1f}-{(i + 1) / 2:.1f}", "action": a, "mouth": "closed", "s
      "Dogs separate.", "Tan dog recovers.", "White dog hits the cabinet.", "Tan dog eats.", "White dog gets up.", "Both dogs eat.",
      "Both dogs eat.", "Both dogs eat.", "Both dogs lick bowls.", "Both dogs lick bowls.", "Both dogs lick bowls.", "Both dogs lick bowls."])]
 RISKY_WORDS = r"collid\w*|crash\w*|\bhits?\b|crop top|shorts|slippers|replace the people|bare legs"
+RISKY_GEN = r"crop top|shorts|slippers|replace the people|bare legs"     # 새로 만들기는 동작(부딪힘 등)을 글로 써야 한다 — 옷차림 낱말만 막는다
+PLAN = {"hook": ["첫 1초에 두 강아지가 동시에 달려들어 시선을 잡음", "부딪히고 미끄러지는 반전"], "structure": "0~2.5초 준비, 2.5~4초 질주, 4~6.5초 충돌, 6.5~9.5초 먹기",
+        "set": "a bright kitchen with a white tile floor, a wooden cabinet on the left, daylight from a window",
+        "cast": "one woman in a grey crop top, black shorts and slippers (the owner) and two Shiba Inus (one red, one cream)",
+        "scenes": [{"t0": 0, "t1": 2.5, "shot": "wide, eye level, fixed", "frame": "The woman in a grey crop top walks in from the right carrying two bowls.", "ko": "주인이 그릇을 들고 들어옴"},
+                   {"t0": 2.5, "t1": 4.0, "shot": "wide, low angle, fixed", "frame": "Two Shibas sprint in from the right.", "ko": "두 마리가 달려옴"},
+                   {"t0": 4.0, "t1": 6.5, "shot": "medium, fixed", "frame": "The red Shiba slides into the cream Shiba on the tiles.", "ko": "미끄러지며 부딪힘"},
+                   {"t0": 6.5, "t1": 9.5, "shot": "close-up, fixed", "frame": "Both Shibas eat from the bowls.", "ko": "둘 다 먹음"}]}
+PLAN_MANY = {**PLAN, "scenes": [{"t0": round(i * 9.5 / 9, 2), "t1": round((i + 1) * 9.5 / 9, 2), "shot": f"shot {i + 1}", "frame": f"frame {i + 1}", "ko": f"컷{i + 1}"} for i in range(9)]}
+_clips: dict = {}
+
+
+def clip_of(sec: float) -> bytes:
+    """영상 AI가 주문한 길이로 돌려주는 가짜 영상(새로 만들기용)."""
+    if sec not in _clips:
+        f = ROOT / f"clip_{sec:g}.mp4"
+        vid(f, sec, 720, 1280)
+        _clips[sec] = f.read_bytes()
+    return _clips[sec]
 
 
 def make_ep(name: str, **over):
@@ -101,7 +120,12 @@ def install_mocks(flags: dict) -> list:
         if "pieces" in prompt:
             calls.append("pick")
             return {"pieces": [[0, 9.5]], "hook": "h", "why": "w"}
+        if "film director" in prompt:
+            calls.append("plan")
+            return {} if flags.get("plan_fail") else (PLAN_MANY if flags.get("many") else PLAN)
         calls.append("timeline")
+        if flags.get("tl_cuts"):
+            return {"steps": [{**x, "camera": "Cut to close-up." if i in (5, 9) else "Fixed."} for i, x in enumerate(TL)]}
         return {} if flags.get("tl_fail") else {"steps": TL}
     E._video_json = vj
     E._vision_json = lambda img, prompt: (calls.append("vision"), {"place": "top", "why": "t"})[1]
@@ -111,12 +135,20 @@ def install_mocks(flags: dict) -> list:
         n_omni["n"] += 1
         calls.append("omni")
         text = [x["text"] for x in body["input"] if x.get("type") == "text"][0]
-        bad = re.search(RISKY_WORDS, text, re.I)
+        task = body["generation_config"]["video_config"]["task"]
+        gen = "Re-create this shot" in text
+        bad = re.search(RISKY_GEN if gen else RISKY_WORDS, text, re.I)
         if bad:
             raise RuntimeError(f"위험 낱말이 지시문에 있음: {bad.group(0)}")
         if flags.get("block_once") and n_omni["n"] == 1:
             raise RuntimeError('Omni HTTP 400: {"error":{"message":"Input blocked","code":"content_blocked"}}')
-        task = body["generation_config"]["video_config"]["task"]
+        if gen:
+            calls.append("gen")
+            if body["response_format"].get("aspect_ratio") != "9:16":
+                raise RuntimeError("새로 만들기 영상이 9:16이 아님")
+            if any(x.get("type") == "video" for x in body["input"]):
+                raise RuntimeError("새로 만들기에 원본 영상이 들어감")
+            return clip_of(float(re.search(r"DURATION: ([\d.]+) seconds", text).group(1)))
         return (BODY if task == "edit" else END).read_bytes()
     E._omni_run = omni
 
@@ -234,5 +266,46 @@ run(d8, ep8, {"remake": {"mode": "board"}}, {}, "⑫ 사람을 시바견으로(�
 log = run(d8, ep8, {"remake": {"mode": "full"}}, {}, "⑫ 영상")
 if not log["remake"].get("swap_fixed"):
     FAILS.append("⑫ 동물 있는 원본인데 사람을 바꾸게 둠")
+
+# ── 새로 만들기(remake.method "gen", 새 편 기본 2026-10-11): 원본 영상은 영상 AI에 넣지 않고 분석 → 컷마다 칸 + 0.5초 지시로 새로 ──
+def gen_check(log, title, n_min=1):
+    r = log.get("remake", {})
+    g, gp = r.get("gen") or {}, r.get("gen_plan") or {}
+    probs = []
+    if r.get("method") != "gen":
+        probs.append(f"방식이 {r.get('method')}")
+    if g.get("scenes", 0) < n_min:
+        probs.append(f"컷 {g.get('scenes')}개")
+    if r.get("faces"):
+        probs.append("새로 그린 사람 얼굴을 흐림(불필요)")
+    if float(r.get("spent", 0)) > 5.0001:
+        probs.append(f"한도 넘음 {r.get('spent')}")
+    if [s.get("panel") for s in gp.get("fit") or []] != sorted({s.get("panel") for s in gp.get("fit") or []}):
+        probs.append("컷 첫 장면 칸 번호가 시간 순서가 아님")
+    if probs:
+        FAILS.append(title)
+        print("FAIL", title, probs)
+    else:
+        print("    컷", g.get("scenes"), "| 합친 컷", gp.get("merged"), "| 칸", [s.get("panel") for s in gp.get("fit") or []],
+              "| 후킹", (gp.get("hook") or [""])[0][:30], "| 장부", r.get("spent"))
+
+
+for nm, fl, title, nmin in (("gen", {}, "⑬ 새로 만들기", 4), ("genplanfail", {"plan_fail": True, "tl_cuts": True}, "⑭ 새로 만들기: 연출 분석 실패 → 시간표 컷으로", 2),
+                            ("genmany", {"many": True}, "⑮ 새로 만들기: 컷 9개 → 한도 안으로 합침", 1)):
+    d, ep = make_ep(nm, method="gen")
+    run(d, ep, {"remake": {"mode": "board"}}, fl, title + " 스토리보드")
+    log = run(d, ep, {"remake": {"mode": "full"}}, fl, title + " 영상")
+    gen_check(log, title, nmin)
+d, ep = make_ep("genblock", method="gen")
+run(d, ep, {"remake": {"mode": "board"}}, {}, "⑯ 새로 만들기: 지시문 막힘 스토리보드")
+log = run(d, ep, {"remake": {"mode": "full"}}, {"block_once": True}, "⑯ 새로 만들기: 지시문 막힘 → 짧은 지시문으로 한 번 더")
+if not log["remake"].get("blocked"):
+    FAILS.append("⑯ 막힘 기록 없음")
+run(d, ep, {"remake": {"mode": "full", "redo": ["body"]}}, {}, "⑯ 새로 만들기: 본편만 다시(한도 5: 지우기 전에 멈춰야)", expect_stop="아무것도 지우지 않고")
+run(d, ep, {"remake": {"mode": "full"}}, {}, "⑯ 새로 만들기: 다시 조립(돈 0)")
+d, ep = make_ep("gentest", method="gen")
+log = run(d, ep, {"remake": {"mode": "test"}}, {}, "⑰ 새로 만들기: 예전 '시험' 요청 → 스토리보드만(영상 안 만듦)")
+if log["remake"].get("gen") or not (d / "work" / "board.jpg").exists():
+    FAILS.append("⑰ 시험 요청에 영상을 만들었거나 스토리보드가 없음")
 print("\n결과:", "모두 통과" if not FAILS else "실패 " + ", ".join(FAILS))
 sys.exit(1 if FAILS else 0)

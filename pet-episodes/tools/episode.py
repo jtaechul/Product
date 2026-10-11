@@ -15,6 +15,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -2782,7 +2783,7 @@ def _remake_shots(key, rm: dict, work: Path, res: dict, cap: float, W: int, H: i
 
 def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path, res: dict, cap: float,
                   times: list | None = None, notes: list | None = None, fresh: bool = False, cast: str = "", extend: bool = False,
-                  panels: int = 6):
+                  panels: int = 6, lead: str = ""):
     """times = 칸마다 원본에서 뽑을 시각(웃음 포인트를 사람이 골라 줄 때, remake.board_times), notes = 칸마다 바꿀 내용(remake.board_notes)."""
     cols, rows, aspect = _board_grid(panels)
     N = cols * rows
@@ -2816,6 +2817,7 @@ def _remake_board(ref: Path, L: float, n: int, seg: float, swap: str, work: Path
         (REMAKE_BOARD_KEEP.format(swap=_img2(swap), cast=cast) if cast else REMAKE_BOARD.format(swap=_img2(swap)))
     if extend and not fresh:                            # 가로 원본: 위아래 흐린 자리표시를 장면으로 이어 그린다(영상과 같게, 2026-10-08)
         ask += REMAKE_BOARD_EXTEND
+    ask += lead                                         # 새로 만들기: 세트·등장인물(모든 칸 공통)
     if notes:                                           # 칸마다 무엇을 바꾸는지(사용자 지적 2026-10: 사람 맨살·팔이 그대로 남음)
         ask += " PANEL-BY-PANEL (left to right, top row first): " + " ".join(f"Panel {k + 1}: {str(x).strip()}" for k, x in enumerate(notes[:N]))
     if N != 6:                                          # 칸 수에 맞게 지시문의 '3x2·여섯 칸'을 바꾼다
@@ -3478,18 +3480,20 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
     shots = rm.get("shots") or []
     motion = rm.get("method") == "motion" and not shots
     composite = rm.get("method") == "composite" and not shots
+    gen = rm.get("method") == "gen" and not shots
+    auto = [str(x) for x in (res.get("gen_prompts") or [])] if gen else \
+        ([str(res.get("motion_prompt", ""))] if motion else [str(res.get("edit_prompt", ""))] if composite else [])
     texts = [str(sh.get("prompt", "")) for sh in shots] + [str(x) for x in (rm.get("board_notes") or [])] + \
-            [str(b.get("text", "")) for b in (rm.get("beats") or [])] + \
-            ([str(res.get("motion_prompt", ""))] if motion else [str(res.get("edit_prompt", ""))] if composite else [])
+            [str(b.get("text", "")) for b in (rm.get("beats") or [])] + auto
     allt = " ".join(texts)
     # 1) 시간표가 지금 원본 것인가(원본 지문 src_sig = step_remake가 기록, timeline_src = 시간표를 만들 때의 지문)
-    if res.get("timeline") and (shots or rm.get("board_fresh") or motion or composite):
+    if res.get("timeline") and (shots or rm.get("board_fresh") or motion or composite or gen):
         if not res.get("timeline_src"):
             probs.append("0.5초 시간표가 지금 원본 것인지 확인할 수 없습니다(지문 없음) — 지금 원본으로 다시 분석해야 합니다")
         elif res.get("src_sig") and res["timeline_src"] != res["src_sig"]:
             probs.append("0.5초 시간표가 예전 원본 것입니다(원본이 바뀜) — 지금 원본으로 다시 분석해야 합니다")
     # 2) 개그 포인트가 지시에 다 살아 있나(사장님이 적은 rm.gags가 우선, 없으면 시간표에서 자동) — 원본을 글로 옮겨 새로 만드는 방식에만
-    newway = bool(shots) or bool(rm.get("board_fresh")) or motion or composite
+    newway = bool(shots) or bool(rm.get("board_fresh")) or motion or composite or gen
     gags = _auto_gags(rm, res) if (newway and not composite) else []   # 합성은 동작이 원본 영상에서 온다 — 개그를 글로 풀면 오히려 막힘(2026-10-09)
     for g in gags:
         kind = g.get("kind", "")
@@ -3500,7 +3504,7 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
             or (_soften(str(g.get("text", "")))[:50].lower() in low if g.get("text") else False)   # 사장님이 적은 개그(words 없음)는 글 그대로 있는지
         if not ok:
             probs.append(f"개그 포인트가 지시에서 빠졌습니다: [{g.get('t', '')}] {kind} — {g.get('text', g.get('what', ''))[:80]}")
-    for t in texts[:len(texts) - (1 if (motion or composite) else 0)]:     # 비켜 가기 검사는 사람이 쓴 지시문만(자동 지시문은 시간표 그대로라 제외)
+    for t in texts[:len(texts) - len(auto)]:             # 비켜 가기 검사는 사람이 쓴 지시문만(자동 지시문은 시간표 그대로라 제외)
         if re.search(GAG_KINDS["맞힘"], " ".join(g.get("text", "") for g in gags if g.get("kind") == "맞힘"), re.I) and re.search(GAG_DODGE, t, re.I):
             probs.append(f"맞히는 개그를 비켜 가게 순화했습니다('{re.search(GAG_DODGE, t, re.I).group(0)}') — 맞는 부위만 바꾸고 맞는 건 남겨야 합니다")
             break
@@ -3508,6 +3512,11 @@ def _remake_preflight(rm: dict, res: dict, ref: Path | None, mode: str) -> list:
         probs.append("원본 0.5초 시간표가 없습니다 — 동작 따라 만들기는 시간표(개그 포인트)가 있어야 합니다")
     if motion and not res.get("motion_prompt"):
         probs.append("동작 따라 만들기 지시문이 아직 만들어지지 않았습니다")
+    if gen and mode != "check":
+        if not (res.get("timeline") or {}).get("all") and (res.get("gen_plan") or {}).get("by") != "ai":
+            probs.append("원본 분석(0.5초 시간표·컷 나누기)이 모두 비었습니다 — 원본과 비슷하게 만들 수 없어 멈춥니다(돈 안 씀). 다시 시도해 주세요")
+        if not res.get("gen_prompts"):
+            probs.append("컷별 지시문이 아직 만들어지지 않았습니다(연출 분석 실패)")
     # 3) 막힐 만한 낱말(맞는 장면은 남기고 부위·표현만 바꾼다)
     for rx, fix in RISKY.items():
         m = re.search(rx, allt, re.I)
@@ -3752,12 +3761,320 @@ def _remake_motion(key, ref: Path, L: float, work: Path, res: dict, cap: float, 
     res["motion"] = {"ok": True, "sec": round(_dur(out), 2), "gags": gags, "fx": fx, "masked": bool(res.get("mask_faces"))}
     return out
 
+
+# ── 새로 만들기(remake.method "gen", 새 편 기본 — 사장님 지시 2026-10-11: "합성하니까 화질이 너무 떨어진다. 흥행 요소와 초 단위 구성을
+# 상세하게 분석해 0.5초 단위로 풀어서, 기존 영상과 거의 흡사한 새 영상을") ── 원본 영상은 영상 AI에 넣지 않는다(분석 자료로만).
+# ① 원본 전체 0.5초 시간표(동작·입모양·소리·카메라) ② 연출 분석(흥행 요소·초 단위 구성·세트·등장인물·컷마다 첫 장면)
+# ③ 깨끗한 새 스토리보드(컷마다 첫 장면 칸 + 중간 장면) → 사장님 확인 ④ 컷마다 그 칸을 첫 장면으로, 그 컷의 0.5초 시간표를 지시로 새 영상
+# (9:16, 처음부터 생성 해상도) ⑤ 이어 붙여 원본과 같은 길이 → 원본 소리를 그대로 깐다. 컷이 많거나 한도를 넘으면 짧은 컷을 이웃 컷에
+# '컷 전환 지시'로 합친다(돈). 사람은 새로 그린 평범한 사람(실제 인물 아님)이라 얼굴을 흐리지 않는다.
+GEN_MIN_SEC = 2.0                # 컷 하나를 만드는 최소 길이(짧은 컷은 2초로 만들어 필요한 만큼만 쓴다)
+GEN_MAX_SCENES = 6               # 컷이 더 많으면 짧은 컷부터 이웃 컷에 합친다
+GEN_SLOW_MAX = 1.15              # 영상 AI가 조금 짧게 주면 이만큼까지만 천천히(넘으면 늘리지 않고 멈춤)
+GEN_PLAN_ASK = ("Watch AND listen to this whole clip ({L:.1f} s). It is a viral short that we will RE-SHOOT from scratch as a new, "
+                "clean, photorealistic vertical 9:16 video that looks almost identical to it: the same shots in the same order, the same "
+                "timing to the half second, the same actions, jokes and camera work. The only changes: {swap}. {people} Analyse it like "
+                "a film director and return JSON {{\"hook\": [\"한국어 한 줄씩: 이 영상이 뜨는 이유(첫 1초 후킹, 반전·펀치라인, 타이밍, "
+                "소리, 반응)\"], \"structure\": \"한국어 한 줄: 초 단위 구성(예: 0~1.5초 후킹, 1.5~6초 준비, 6~7초 펀치라인, 7~10초 반응)\", "
+                "\"set\": \"English: the place, props, light and time of day, concrete enough to rebuild the same set\", "
+                "\"cast\": \"English: every character AFTER the changes - position and look (no brand names)\", "
+                "\"scenes\": [{{\"t0\": 0.0, \"t1\": 2.4, \"shot\": \"English: shot size, angle, lens and camera move\", "
+                "\"frame\": \"English: the exact FIRST FRAME of this shot after the changes, written as a photo description - who is "
+                "where, pose, facing, what they hold, framing\", \"ko\": \"한국어 한 줄: 이 컷에서 일어나는 일\"}}]}}. A new scene starts "
+                "ONLY at a real camera cut or jump; one continuous take is one scene. Scenes cover 0 to {L:.1f} s with no gaps. "
+                "Never name or identify real people.")
+GEN_SCENE = ("DURATION: {sec:g} seconds. Image 1 is the FIRST FRAME of this shot: keep exactly its framing, characters, set and light. "
+             "Re-create this shot of a viral video as new, clean, photorealistic vertical 9:16 footage that matches the original shot "
+             "action for action. SHOT: {shot}. SET (the same in every shot): {set}. CHARACTERS: {cast}. CHANGES from the original: "
+             "{swap}.{cuts}")
+GEN_TL = (" 0.5-SECOND TIMELINE of this shot (follow it exactly - every action, contact, fall, head turn and mouth opening happens at "
+          "exactly these times; positions are as in image 1):")
+GEN_CUT = " HARD CUT at {t:.1f} s to: {shot} - {frame}."
+GEN_PEOPLE_KEEP = (" Every person is an ordinary, anonymous human with a human face, hands and clothes - a new person, not any real or "
+                   "famous person - doing exactly that person's action. Every animal is a real Shiba Inu with thick furry legs and "
+                   "round paws.")
+GEN_PEOPLE_NONE = (" No humans and no human skin anywhere: every leg is a thick, fully furry dog leg with a round paw and anything held "
+                   "is held by a paw.")
+GEN_LOOK = (" OUTPUT: photorealistic, sharp, clean, high-detail modern phone footage with natural colours and steady exposure, filling "
+            "the whole vertical 9:16 frame edge to edge. The same characters as in image 1 in every frame. No added text, captions, "
+            "watermark, borders or split screen, no morphing, no extra animals or people.")
+GEN_BOARD_LEAD = (" This storyboard RE-SHOOTS a viral video shot by shot as new photos (not a copy of its low-quality frames). SET in "
+                  "every panel: {set}. CHARACTERS: {cast}.{people} Each panel is one moment, in time order (left to right, top row first).")
+
+
+_CLOTH = (r"(?:crop top|tank top|top|shorts|skirt|dress|jeans|pants|trousers|shirt|t-shirt|tee|hoodie|slippers|sandals|heels|boots|"
+          r"sneakers|bikini|swimsuit|leggings|tights|socks|stockings|underwear|lingerie|pajamas|robe|towel)s?")
+_CLOTH_ITEM = rf"(?:(?:a|an|the|her|his|their)\s+)?(?:[\w-]+\s+){{0,3}}?{_CLOTH}"
+_CLOTH_RX = rf"\s*,?\s*\b(?:wearing|dressed in|in|with)\s+{_CLOTH_ITEM}(?:\s*(?:,|and|&)\s*{_CLOTH_ITEM})*\b"
+
+
+def _drop_clothes(txt: str) -> str:
+    """옷차림 구절만 뺀다(동작은 그대로) — 'The woman in a grey crop top walks in' → 'The woman walks in'.
+    합성용 _plain_cast는 옷 뒤의 동작까지 지워 새로 만들기 지시가 비었다(2026-10-11 자가 점검에서 발견). 모습은 첫 장면 그림이 정한다."""
+    t = re.sub(_CLOTH_RX, "", str(txt or ""), flags=re.I)
+    t = re.sub(r"\b(bare|naked|exposed) (legs?|arms?|skin|thighs?|shoulders?|midriff|back|feet)\b", r"\2", t, flags=re.I)
+    t = re.sub(r"\s+([,.;)])", r"\1", _soften(t))
+    return re.sub(r"\s{2,}", " ", t).strip(" ,;")
+
+
+def _gen_sec(d: float) -> float:
+    """컷 길이 d초를 만들 때 주문할 길이(0.5초 단위로 올림, 최소 GEN_MIN_SEC)."""
+    return max(GEN_MIN_SEC, math.ceil(d * 2 - 1e-6) / 2)
+
+
+def _gen_fix(scenes: list, L: float) -> list:
+    """AI가 준 컷 목록을 0~L초에 빈틈·겹침 없이 맞춘다(0.25초 미만 컷은 앞 컷에 붙인다)."""
+    out = []
+    for s in sorted(scenes, key=lambda x: x["t0"]):
+        a = out[-1]["t1"] if out else 0.0
+        b = max(0.0, min(L, s["t1"]))
+        if b - a < 0.25:
+            if out:
+                out[-1]["t1"] = max(out[-1]["t1"], b)
+            continue
+        out.append({**s, "t0": round(a, 2), "t1": round(b, 2)})
+    if not out:
+        out = [{"t0": 0.0, "t1": round(L, 2), "shot": "", "frame": "", "ko": ""}]
+    out[0]["t0"], out[-1]["t1"] = 0.0, round(L, 2)
+    return out
+
+
+def _gen_from_rows(rows: list, L: float) -> list:
+    """연출 분석이 비었을 때: 0.5초 시간표의 컷(camera에 cut)으로 나눈다. 첫 장면 글은 그 시각의 동작."""
+    cuts = [0.0]
+    for x in rows or []:
+        if re.search(r"\bcut\b", str(x.get("camera", "")), re.I):
+            try:
+                a = float(str(x.get("t", "")).split("-")[0])
+            except ValueError:
+                continue
+            if a - cuts[-1] >= 0.5:
+                cuts.append(a)
+    out = []
+    for a, b in zip(cuts, cuts[1:] + [L]):
+        row = next((x for x in rows or [] if str(x.get("t", "")).split("-")[0] in (f"{a:.1f}", f"{a:g}")), {})
+        out.append({"t0": a, "t1": b, "shot": str(row.get("camera", "")).rstrip(". "), "frame": _drop_clothes(str(row.get("action", ""))), "ko": ""})
+    return out
+
+
+def _gen_fit(scenes: list, budget_sec: float, max_n: int = GEN_MAX_SCENES) -> tuple:
+    """컷이 max_n개를 넘거나 주문 길이 합이 예산(초)을 넘으면, 가장 짧은 컷을 더 짧은 이웃 컷에 '컷 전환 지시'로 합친다."""
+    sc = [{**s, "cuts": list(s.get("cuts") or [])} for s in scenes]
+    merged = 0
+    while len(sc) > 1 and (len(sc) > max_n or sum(_gen_sec(s["t1"] - s["t0"]) for s in sc) > budget_sec + 1e-6):
+        ln = [s["t1"] - s["t0"] for s in sc]
+        i = min(range(len(sc)), key=lambda k: (ln[k], k))
+        j = 1 if i == 0 else i - 1 if i == len(sc) - 1 else (i - 1 if ln[i - 1] <= ln[i + 1] else i + 1)
+        a, b = sorted((i, j))
+        A, B = sc[a], sc[b]
+        sc[a:b + 1] = [{**A, "t1": B["t1"], "ko": " / ".join(x for x in (A.get("ko", ""), B.get("ko", "")) if x),
+                        "cuts": A["cuts"] + [{"t": B["t0"], "shot": B.get("shot", ""), "frame": B.get("frame", "")}] + B["cuts"]}]
+        merged += 1
+    return sc, merged
+
+
+def _gen_plan(ref: Path, L: float, work: Path, res: dict, cap: float, swap: str, cast: str) -> dict:
+    """연출 분석(약 0.01달러) — 같은 원본·같은 길이면 log의 분석을 다시 쓴다(무료)."""
+    plan = res.get("gen_plan") or {}
+    if plan.get("scenes") and plan.get("src") == res.get("src_sig") and abs(float(plan.get("L", 0)) - L) < 0.05:
+        return plan
+    clip = work / "_gen_plan.mp4"
+    _ff(["-i", str(ref), "-vf", "scale=-2:480", "-c:v", "libx264", "-crf", "26", "-c:a", "aac", "-b:a", "96k", str(clip)])
+    _remake_spend(res, REMAKE_COST["check"], "연출 분석(흥행 요소·컷 나누기)", cap)
+    people = (f"Characters after the changes: {cast}." if cast else "")
+    o = _video_json(clip, GEN_PLAN_ASK.format(L=L, swap=swap, people=people)) or {}
+    scenes = []
+    for x in o.get("scenes") if isinstance(o.get("scenes"), list) else []:
+        try:
+            a, b = float(x.get("t0")), float(x.get("t1"))
+        except (TypeError, ValueError):
+            continue
+        if b > a:
+            scenes.append({"t0": a, "t1": b, "shot": _drop_clothes(str(x.get("shot", ""))).rstrip(". ")[:200],
+                           "frame": _drop_clothes(str(x.get("frame", "")))[:400], "ko": str(x.get("ko", ""))[:120]})
+    rows = (res.get("timeline") or {}).get("all") or []
+    by = "ai" if scenes else "timeline"
+    if not scenes:
+        scenes = _gen_from_rows(rows, L)
+    plan = {"src": res.get("src_sig", ""), "L": round(L, 2), "by": by,
+            "hook": [str(h)[:120] for h in (o.get("hook") or []) if str(h).strip()][:5] if isinstance(o.get("hook"), list) else [],
+            "structure": str(o.get("structure", ""))[:200], "set": _drop_clothes(str(o.get("set", ""))).rstrip(". ")[:400],
+            "cast": _drop_clothes(str(o.get("cast", "")) or cast).rstrip(". ")[:400], "scenes": _gen_fix(scenes, L)}
+    res["gen_plan"] = plan
+    return plan
+
+
+def _gen_rows(rows: list, a: float, b: float) -> list:
+    """원본 0.5초 시간표에서 a~b초 줄만, 컷 안 시각으로(옷차림 낱말은 뺀다 — 모습은 첫 장면 그림이 정한다)."""
+    out = []
+    for x in rows or []:
+        try:
+            x0, x1 = (float(v) for v in str(x.get("t", "")).split("-")[:2])
+        except ValueError:
+            continue
+        if x1 > a + 0.05 and x0 < b - 0.05:
+            out.append(f"[{max(0.0, x0 - a):.1f}-{min(b, x1) - a:.1f}s] {_drop_clothes(str(x.get('action', ''))).rstrip('. ')}; "
+                       f"mouth: {str(x.get('mouth', '')).rstrip('. ')}; camera: {str(x.get('camera', '')).rstrip('. ')}.")
+    return out
+
+
+def _gen_prompt(sc: dict, rows: list, plan: dict, sec: float, swap: str, keep_people: bool, short: bool = False) -> str:
+    a, b = float(sc["t0"]), float(sc["t1"])
+    cuts = "".join(GEN_CUT.format(t=float(c["t"]) - a, shot=c.get("shot", ""), frame=c.get("frame", "")) for c in sc.get("cuts") or [])
+    p = GEN_SCENE.format(sec=sec, shot=sc.get("shot") or "as in image 1", set=plan.get("set") or "as in image 1",
+                         cast=plan.get("cast") or "as in image 1", swap=(_drop_clothes(swap) or swap).rstrip(". "), cuts=cuts)
+    if not short:                                         # 막혔을 때 다시 보내는 짧은 지시문은 시간표 없이(컷 설명만)
+        tl = _gen_rows(rows, a, b)
+        p += (GEN_TL + " " + " ".join(tl)) if tl else (" ACTION: " + str(sc.get("frame", "")))
+    p += (GEN_PEOPLE_KEEP if keep_people else GEN_PEOPLE_NONE) + GEN_LOOK
+    return _soften(p)[:6000]
+
+
+def _gen_budget(res: dict, cap: float, end_sec: float, gen_res: str, work: Path) -> float:
+    """본편 컷들에 쓸 수 있는 초(한도 - 지금까지 - 스토리보드·끝 그림·끝 영상·내레이션 - 다시 그림 한 번 여유)."""
+    mult = 3 if gen_res == "720p" else 1
+    fixed = (0 if (work / "board.jpg").exists() else REMAKE_COST["image"]) + REMAKE_COST["image"] * 2 \
+        + REMAKE_COST["omni_sec"] * end_sec * mult + REMAKE_COST["tts"]
+    return max(GEN_MIN_SEC, (cap - float(res.get("spent", 0)) - fixed) / (REMAKE_COST["omni_sec"] * mult))
+
+
+def _gen_need(work: Path, res: dict, end_sec: float, gen_res: str, gone: set | None = None) -> float:
+    """새로 만들기 방식의 남은 비용(이미 만든 컷·그림은 빼고, gone은 지울 예정)."""
+    gone = gone or set()
+    mult = 3 if gen_res == "720p" else 1
+
+    def have(name):
+        return (work / name).exists() and name not in gone
+    scenes = (res.get("gen_plan") or {}).get("fit") or (res.get("gen_plan") or {}).get("scenes") or []
+    usd = 0 if have("board.jpg") else REMAKE_COST["image"]
+    if not have("remake.mp4"):
+        usd += sum(REMAKE_COST["omni_sec"] * _gen_sec(s["t1"] - s["t0"]) * mult for k, s in enumerate(scenes) if not have(f"rm_scene{k + 1}.mp4"))
+    usd += 0 if have("rm_end_start.png") else REMAKE_COST["image"]
+    usd += 0 if have("rm_end.mp4") else REMAKE_COST["omni_sec"] * end_sec * mult
+    usd += 0 if have("rm_vo.wav") else REMAKE_COST["tts"]
+    return round(usd, 2)
+
+
+def _gen_board_spec(plan: dict, fit: list, rows: list, L: float, n_pan: int, swap: str) -> list:
+    """스토리보드 칸 시각·칸 글: 만들 컷(fit)의 첫 장면 칸 + 원본의 다른 컷 첫 장면 + 남는 칸은 긴 컷의 중간 장면(시간 순서).
+    fit의 컷마다 첫 장면 칸 번호(panel)를 적어 둔다. 돌려주는 값 = [시각], [칸 글]."""
+    anchor = [float(s["t0"]) for s in fit]
+    others = [float(s["t0"]) for s in plan["scenes"] if all(abs(float(s["t0"]) - a) > 1e-6 for a in anchor)]
+    starts = anchor + others[:max(0, n_pan - len(anchor))]
+    extra = [t for t in _scene_times(rows, L, n_pan) if all(abs(t - s) > 0.4 for s in starts)]
+    k = 0
+    while len(starts) + len(extra) < n_pan and k < 4 * n_pan:   # 시간표가 없을 때 등: 고르게 채운다
+        t = round(min(L - 0.1, L * (k + 0.5) / n_pan), 2)
+        if all(abs(t - x) > 0.2 for x in starts + extra):
+            extra.append(t)
+        k += 1
+    times = sorted(starts + extra[:max(0, n_pan - len(starts))])
+    for s in fit:
+        s["panel"] = next(i + 1 for i, t in enumerate(times) if abs(t - float(s["t0"])) < 1e-6)
+    notes = []
+    for t in times:
+        sc = next((s for s in plan["scenes"] if float(s["t0"]) <= t < float(s["t1"])), plan["scenes"][-1])
+        no = plan["scenes"].index(sc) + 1
+        if abs(t - float(sc["t0"])) < 1e-6:
+            notes.append(_soften(f"FIRST FRAME of shot {no} ({t:.1f}s): {sc.get('frame', '')} Shot: {sc.get('shot', '')}."))
+        else:
+            act = next((_drop_clothes(str(x.get("action", ""))) for x in rows or [] if _row_has(x, t)), "")
+            notes.append(_soften(f"{t:.1f}s, inside shot {no}: {act} Shot: {sc.get('shot', '')}. Changes: {swap}."))
+    return times, notes
+
+
+def _row_has(x: dict, t: float) -> bool:
+    try:
+        a, b = (float(v) for v in str(x.get("t", "")).split("-")[:2])
+    except ValueError:
+        return False
+    return a <= t < b
+
+
+def _remake_gen(key, work: Path, res: dict, cap: float, W: int, H: int, rm: dict, swap: str, gen_res: str) -> Path:
+    """확인받은 스토리보드의 컷 첫 장면 칸 → 컷마다 새 영상(image_to_video, 원본 영상은 넣지 않음) → 원본과 같은 길이로 이어 붙인다.
+    컷마다 한 번만(다시 만들기 없음) — 이미 만든 컷(rm_sceneN.mp4)은 그대로 쓴다. 막힌 요청(400)은 요금 없음 + 짧은 지시문으로 한 번만 다시."""
+    out = work / "remake.mp4"
+    if out.exists():
+        return out
+    plan = res.get("gen_plan") or {}
+    scenes = plan.get("fit") or []
+    if not scenes:
+        raise RuntimeError("연출 분석(컷 나누기)이 없습니다 — 스토리보드부터 다시 그려 주세요(돈 안 씀)")
+    rows = (res.get("timeline") or {}).get("all") or []
+    mult = 3 if gen_res == "720p" else 1
+    parts, info = [], []
+    for k, sc in enumerate(scenes):
+        o = work / f"rm_scene{k + 1}.mp4"
+        d = round(float(sc["t1"]) - float(sc["t0"]), 3)
+        if not o.exists():
+            pnl = work / f"board_{int(sc.get('panel', 1)):02d}.jpg"
+            if not pnl.exists():
+                raise RuntimeError(f"스토리보드 {sc.get('panel')}번 칸이 없습니다 — 스토리보드를 다시 그려 주세요(돈 안 씀)")
+            first = _crop_bars(pnl, work / f"_gen_first{k + 1}.png")
+            sec = _gen_sec(d)
+            usd = REMAKE_COST["omni_sec"] * sec * mult
+            raw = work / f"_gen_raw{k + 1}.mp4"
+            for short in (False, True):
+                prompt = _gen_prompt(sc, rows, plan, sec, swap, bool(rm.get("keep_people")), short)
+                res.setdefault("gen_prompts_used", {})[f"scene{k + 1}"] = prompt
+                _remake_spend(res, usd, f"컷{k + 1} 새로 만들기({sec:g}초, {gen_res})", cap)
+                body = {"model": CLIP_MODEL, "input": [{"type": "image", **_b64img(first)}, {"type": "text", "text": prompt}],
+                        "response_format": {"type": "video", "resolution": gen_res, "aspect_ratio": "9:16"},
+                        "generation_config": {"video_config": {"task": "image_to_video"}}}
+                try:
+                    raw.write_bytes(_omni_run(key, body))
+                    break
+                except RuntimeError as e:
+                    if "HTTP 400" not in str(e):
+                        raise
+                    res["spent"] = round(float(res.get("spent", 0)) - usd, 3)     # 막힌 요청은 요금 없음
+                    res.setdefault("ledger", []).append({"what": f"컷{k + 1} 막힘(요금 없음)", "usd": -round(usd, 3)})
+                    res.setdefault("blocked", []).append({"scene": k + 1, "short": short, "error": str(e)[:200]})
+                    if short:
+                        raise RuntimeError(f"컷{k + 1}: 영상 AI가 지시문을 두 번 막았습니다(요금 없음) — {str(e)[:160]}")
+            _assert_vertical(raw, f"컷{k + 1}")
+            got = _dur(raw)
+            if got > sec + 0.6:                           # 주문보다 길게 왔으면 실제 길이만큼 장부에 더 적는다(정직한 비용)
+                extra = round(REMAKE_COST["omni_sec"] * (got - sec) * mult, 3)
+                res["spent"] = round(float(res.get("spent", 0)) + extra, 3)
+                res.setdefault("ledger", []).append({"what": f"컷{k + 1} 실제 {got:.1f}초로 옴", "usd": extra})
+            if got * GEN_SLOW_MAX < d:
+                raise RuntimeError(f"컷{k + 1}: 영상 AI가 {got:.1f}초만 만들었습니다(필요 {d:.1f}초). 늘리지 않고 멈춥니다.")
+            slow = d / got if got < d else 1.0
+            _ff(["-i", str(raw), "-an", "-vf", f"setpts=PTS*{slow:.5f},scale={W}:{H}:flags=lanczos,fps=24,setsar=1,format=yuv420p",
+                 "-t", f"{d:.3f}", "-c:v", "libx264", "-crf", "18", str(o)])
+            info.append({"scene": k + 1, "asked": sec, "got": round(got, 2), "used": d, "slow": round(slow, 3)})
+        parts.append(o)
+    ins = sum((["-i", str(p)] for p in parts), [])
+    joined = work / "_gen_join.mp4"
+    _ff([*ins, "-filter_complex", "".join(f"[{i}:v]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=1:a=0,format=yuv420p[v]",
+         "-map", "[v]", "-c:v", "libx264", "-crf", "18", str(joined)])
+    gags = rm.get("gags") or _gag_beats(rows)
+    freezes = []                                          # 원본의 화면 정지(웃음 포인트)는 영상 AI가 못 살린다 → 조립 때 그 장면을 멈춘다
+    for g in gags:
+        if g.get("kind") == "정지":
+            try:
+                a, b = (float(v) for v in str(g.get("t", "")).split("-")[:2])
+                freezes.append([a, min(float(plan.get("L", 99)), max(b, a + 0.6))])
+            except ValueError:
+                pass
+    if freezes and rm.get("gag_fx", True):
+        _apply_freeze(joined, out, freezes)
+    else:
+        _ff(["-i", str(joined), "-c", "copy", str(out)])
+    res["gen"] = {"ok": True, "scenes": len(parts), "sec": round(_dur(out), 2), "freezes": freezes, "clips": info or (res.get("gen") or {}).get("clips", [])}
+    return out
+
+
 def step_remake(ep, epdir, work, log, req):
     import math
     res = log.setdefault("remake", {})
     rm = ep.get("remake") or {}
     cap = float(rm.get("cap", 5))
     mode = (req.get("remake") or {}).get("mode", "test")
+    if rm.get("method") == "gen" and not rm.get("shots") and mode == "test":
+        mode = "board"                                   # 새로 만들기는 시험 영상 없이 스토리보드부터(확인 후 영상)
     if mode == "check":
         os.environ["PET_NO_SPEND"] = "1"
     key = _key("GEMINI_API_KEY")
@@ -3827,11 +4144,12 @@ def step_remake(ep, epdir, work, log, req):
         res.update({"src_sec": round(L, 2), "segments": n, "one_shot": bool(one)})
         ref_board = None
         motion = rm.get("method") == "motion" and not rm.get("shots")   # 동작 따라 만들기(원본은 참고만, 새로 렌더링)
-        composite = rm.get("method") == "composite" and not rm.get("shots")   # Genjutsu식 합성: 원본 영상 그대로 + 동물만 바꿈 + 업스케일(새 편 기본, 사용자 지시 2026-10)
-        res["method"] = "motion" if motion else ("composite" if composite else ("shots" if rm.get("shots") else "edit"))
-        if composite and mode in ("board", "full", "check") and not (res.get("timeline") or {}).get("all") and mode != "check":
+        composite = rm.get("method") == "composite" and not rm.get("shots")   # Genjutsu식 합성: 원본 영상 그대로 + 동물만 바꿈(예전 편)
+        gen = rm.get("method") == "gen" and not rm.get("shots")   # 새로 만들기(새 편 기본, 사장님 지시 2026-10-11): 원본은 분석 자료로만
+        res["method"] = "gen" if gen else "motion" if motion else ("composite" if composite else ("shots" if rm.get("shots") else "edit"))
+        if (composite or gen) and mode in ("board", "full", "check") and not (res.get("timeline") or {}).get("all") and mode != "check":
             _timeline(ref, 0, L, work, res, cap, "all")   # 원본 전체 0.5초 시간표(약 0.01달러) — 프레임으로 검증해 remake.timeline으로 바로잡을 수 있다
-        if composite and not rm.get("keep_people") and not rm.get("swap_people_ok") and _has_animals((res.get("timeline") or {}).get("all")):
+        if (composite or gen) and not rm.get("keep_people") and not rm.get("swap_people_ok") and _has_animals((res.get("timeline") or {}).get("all")):
             # ⛔ 원본에 동물이 있으면 동물을 시바견으로, 사람은 그대로(사장님 확정 2026-10-09: 주인이 시바견이 되고 강아지는 그대로인 사고)
             old_swap = str(rm.get("swap") or "")
             rm = {**rm, "keep_people": True, "cast": rm.get("cast") or REMAKE_CAST_DEFAULT,
@@ -3863,6 +4181,23 @@ def step_remake(ep, epdir, work, log, req):
             if not rm.get("board_notes"):
                 res["board_notes_auto"] = _board_notes_auto(rows, rm.get("board_times") or res.get("board_times_auto") or [], swap_txt)
             res["motion_prompt"] = _motion_prompt(rm, res, L, swap_txt)
+        if gen and mode in ("board", "full"):
+            if not (res.get("timeline") or {}).get("all") and not res.get("timeline_retry"):   # AI 시간표가 비면 한 번만 다시(약 0.01달러)
+                res["timeline_retry"] = True
+                res.setdefault("timeline", {}).pop("all", None)
+                _timeline(ref, 0, L, work, res, cap, "all")
+            rows_g = (res.get("timeline") or {}).get("all") or []
+            plan = _gen_plan(ref, L, work, res, cap, res["swap_used"], res.get("cast_used") or "")
+            redo_g = (req.get("remake") or {}).get("redo")
+            will_draw = not (work / "board.jpg").exists() or (mode == "board" and bool(redo_g)) or \
+                (mode == "full" and isinstance(redo_g, list) and "segs" in redo_g)
+            if will_draw or not plan.get("fit"):           # 그릴 스토리보드에 맞춰 컷·칸을 정한다(확인받은 스토리보드가 있으면 그대로)
+                fit, merged = _gen_fit(plan["scenes"], _gen_budget(res, cap, end_sec, gen_res, work))
+                times, notes = _gen_board_spec(plan, fit, rows_g, L, n_pan, _img2(_drop_clothes(res["swap_used"])))   # 스토리보드에선 우리 시바견이 그림 2
+                plan.update(fit=fit, merged=merged, board_times=times, board_notes=notes)
+            res["board_times_auto"], res["board_notes_auto"] = plan["board_times"], plan["board_notes"]
+            res["gen_prompts"] = [_gen_prompt(sc, rows_g, plan, _gen_sec(sc["t1"] - sc["t0"]), res["swap_used"], bool(rm.get("keep_people")))
+                                  for sc in plan["fit"]]
         # 세로 9:16: 가로 원본은 움직임을 따라가는 세로 화면으로 잘라 키운다(합성 기본, 사장님 확정 2026-10-09 — 위아래를 이어 그리면
         # 강아지가 작고 아래가 하얗게 가린 것처럼 보임). 예전 '위아래 이어 그리기'는 remake.vertical="extend"일 때만
         sw, sh = _wh(ref)
@@ -3871,7 +4206,9 @@ def step_remake(ep, epdir, work, log, req):
             ref = _track_crop(ref, work, res, _subject_boxes(ref, work, res, cap))
             res["vertical"] = {"mode": "track", "src": f"{sw}x{sh}"}
         elif motion:
-            res["vertical"] = {"mode": "reference_to_video 9:16", "src": f"{sw}x{sh}"}   # 참고 영상은 비율 그대로 넣고 출력만 9:16으로 받는다
+            res["vertical"] = {"mode": "reference_to_video 9:16", "src": f"{sw}x{sh}"}
+        elif gen:
+            res["vertical"] = {"mode": "new 9:16", "src": f"{sw}x{sh}"}   # 원본은 분석만 — 스토리보드·영상을 처음부터 꽉 찬 세로로 그린다   # 참고 영상은 비율 그대로 넣고 출력만 9:16으로 받는다
         elif sw * 16 > sh * 9 * 1.05:                       # ⛔ 핵심 규칙: 원본 비율과 상관없이 무조건 9:16(늘리기·흐린 배경 금지, AI가 새로 그려 채움)
             ref_v = work / "_src_v.mp4"
             if not ref_v.exists():
@@ -3885,7 +4222,9 @@ def step_remake(ep, epdir, work, log, req):
             ref = ref_v
         est_all = round(REMAKE_COST["omni_sec"] * L + REMAKE_COST["image"] + REMAKE_COST["omni_sec"] * end_sec
                         + REMAKE_COST["tts"], 2)
-        if mode in ("board", "full", "check") and (rm.get("shots") or rm.get("board_fresh") or motion or composite):   # 사전 점검(무료) — 통과해야 돈을 쓴다
+        if gen:
+            est_all = _gen_need(work, res, end_sec, gen_res)
+        if mode in ("board", "full", "check") and (rm.get("shots") or rm.get("board_fresh") or motion or composite or gen):   # 사전 점검(무료) — 통과해야 돈을 쓴다
             if mode != "check" and not (res.get("timeline") or {}).get("all") and not rm.get("gags"):
                 _timeline(ref, 0, L, work, res, cap, "all")   # 원본 전체 0.5초 시간표(약 0.01달러) — 개그 포인트 자동 뽑기용
             res["preflight"] = _remake_preflight(rm, res, ref, mode)
@@ -3898,23 +4237,28 @@ def step_remake(ep, epdir, work, log, req):
             return
         b_times = rm.get("board_times") or res.get("board_times_auto")
         b_notes = rm.get("board_notes") or res.get("board_notes_auto")
-        b_fresh = bool(rm.get("board_fresh")) or motion   # 동작 따라 만들기는 스토리보드도 원본 합성 없이 깨끗하게
+        b_fresh = bool(rm.get("board_fresh")) or motion or gen   # 동작 따라 만들기·새로 만들기는 스토리보드도 원본 합성 없이 깨끗하게
+        b_lead = ""
+        if gen:
+            gp = res.get("gen_plan") or {}
+            b_lead = GEN_BOARD_LEAD.format(set=gp.get("set") or "as in the original", cast=gp.get("cast") or res.get("cast_used") or "as in the original",
+                                           people=GEN_PEOPLE_KEEP if rm.get("keep_people") else GEN_PEOPLE_NONE)
         if mode == "board":                               # 그림으로 먼저 확인(영상은 만들지 않음)
             if (req.get("remake") or {}).get("redo") or not (work / "board.jpg").exists():
                 res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast") or REMAKE_CAST_DEFAULT) if rm.get("keep_people") else "",
-                                              (res.get("vertical") or {}).get("mode") == "extend", n_pan)
-            res["est_full"] = est_all
-            if float(res.get("spent", 0)) + est_all > cap:
+                                              (res.get("vertical") or {}).get("mode") == "extend", n_pan, b_lead)
+            res["est_full"] = _gen_need(work, res, end_sec, gen_res) if gen else est_all
+            if float(res.get("spent", 0)) + res["est_full"] > cap:
                 res["board"]["over"] = True
             return
         # 수정 요청(사용자 요청 2026-10): 고를 부분의 결과만 지우고 다시 만든다 — 나머지는 그대로 재사용(돈 절약)
         redo = (req.get("remake") or {}).get("redo") if mode == "full" else None
         if isinstance(redo, list) and redo:
-            gone = {"segs": ["rm_seg*.mp4", "remake.mp4", "board.jpg", "board_*.jpg"], "ending": ["rm_end_start.png", "rm_end.mp4"],
+            gone = {"segs": ["rm_seg*.mp4", "rm_scene*.mp4", "remake.mp4", "board.jpg", "board_*.jpg"], "ending": ["rm_end_start.png", "rm_end.mp4"],
                     "vo": ["rm_vo.wav"], "copy": [],
-                    "body": ["rm_seg*.mp4", "remake.mp4"]}            # 본편만 다시(스토리보드는 그대로)
+                    "body": ["rm_seg*.mp4", "rm_scene*.mp4", "remake.mp4"]}            # 본편만 다시(스토리보드는 그대로)
             will = {f.name for part in redo for pat in gone.get(part, []) for f in work.glob(pat)}
-            need_redo = _need_usd(work, seg, n, end_sec, gen_res, will)
+            need_redo = _gen_need(work, res, end_sec, gen_res, will) if gen else _need_usd(work, seg, n, end_sec, gen_res, will)
             if float(res.get("spent", 0)) + need_redo > cap:          # ⛔ 지우기 전에 한도 확인(지운 뒤 멈추면 본편이 사라져 다시 조립도 못 함)
                 raise RuntimeError(f"다시 만들 비용(약 ${need_redo:.2f})이 한도 ${cap:.0f}를 넘어 아무것도 지우지 않고 멈췄습니다"
                                    f"(지금까지 ${float(res.get('spent', 0)):.2f}). 수정 요청 화면에서 비용을 확인하면 한도가 올라갑니다.")
@@ -3923,19 +4267,21 @@ def step_remake(ep, epdir, work, log, req):
                     for f in work.glob(pat):
                         f.unlink(missing_ok=True)
             res.setdefault("fixes", []).append({"parts": redo, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
-            if {"segs", "body"} & set(redo) and not res.get("timeline_manual"):
+            if {"segs", "body"} & set(redo) and not res.get("timeline_manual") and not gen:   # 새로 만들기는 확인받은 컷·칸이 시간표에 묶여 있어 유지
                 res.pop("timeline", None)                 # 본편을 다시 만들면 0.5초 시간표도 새로(구간이 바뀌었을 수 있음) — 직접 확인한 시간표는 유지
         if mode == "full" and not (work / "board.jpg").exists():   # 스토리보드 없이 바로 영상을 누르면 먼저 그린다(약 0.16달러, 영상 품질 기준)
             res["board"] = _remake_board(ref_board or ref, L, nb, bseg, swap_txt, work, res, cap, b_times, b_notes, b_fresh, str(rm.get("cast") or REMAKE_CAST_DEFAULT) if rm.get("keep_people") else "",
-                                              (res.get("vertical") or {}).get("mode") == "extend", n_pan)
+                                              (res.get("vertical") or {}).get("mode") == "extend", n_pan, b_lead)
             # 새로 그린 스토리보드는 확인받은 뒤에 영상으로(사용자 지적 2026-10 헬기 편: 확인 안 한 그림에 개가 두 마리 → 영상도 두 마리)
             res["est_full"] = est_all
             res["board"]["wait"] = True
+            if gen:
+                res["est_full"] = _gen_need(work, res, end_sec, gen_res)
             return
         if mode == "full" and isinstance(res.get("board"), dict):
             res["board"].pop("wait", None)                # 확인받은 스토리보드로 진행
         if mode == "full":                                # 남은 제작 비용(이미 만든 것은 빼고)이 한도를 넘으면 돈 쓰기 전에 멈춘다
-            need0 = _need_usd(work, seg, n, end_sec, gen_res)
+            need0 = _gen_need(work, res, end_sec, gen_res) if gen else _need_usd(work, seg, n, end_sec, gen_res)
             if float(res.get("spent", 0)) + need0 > cap:
                 raise RuntimeError(f"남은 제작 예상 비용(약 ${need0:.2f})이 한도 ${cap:.0f}를 넘어 시작하지 않았습니다(지금까지 ${float(res.get('spent', 0)):.2f}).")
         # 1) 시험(예전 방식): 첫 구간(본편에 그대로 쓴다)
@@ -3946,7 +4292,9 @@ def step_remake(ep, epdir, work, log, req):
         shots_mode = mode == "full" and rm.get("source_video") is False and bool(rm.get("shots"))
         if mode == "full" and not (work / "rm_end.mp4").exists() and not (ep.get("product") or {}).get("image"):
             raise RuntimeError("상품 사진이 없습니다 — 끝 광고 장면에 실제 상품 사진이 필요합니다. 상품(쿠팡 링크)을 먼저 정해 주세요(돈 안 씀)")
-        if motion and mode == "full":                     # 동작 따라 만들기(Genjutsu 방식): 원본 = 동작 참고, 스토리보드 1번 칸 = 모습 참고
+        if gen and mode == "full":                        # 새로 만들기: 컷마다 확인받은 칸 + 0.5초 지시 → 새 영상(원본 영상은 넣지 않음)
+            body_v = _remake_gen(key, work, res, cap, W, H, rm, res["swap_used"], gen_res)
+        elif motion and mode == "full":                   # 동작 따라 만들기(Genjutsu 방식): 원본 = 동작 참고, 스토리보드 1번 칸 = 모습 참고
             body_v = _remake_motion(key, ref, L, work, res, cap, W, H, rm, swap_txt)
         elif shots_mode:                                  # 원본 영상을 영상 AI에 넣지 않고 스토리보드 칸 + 초 단위 지시로 장면마다 만든다
             body_v = _remake_shots(key, rm, work, res, cap, W, H, ref, prompt)
@@ -4025,7 +4373,7 @@ def step_remake(ep, epdir, work, log, req):
                 _ff([*ins, "-filter_complex", ";".join(fc) + f";[{cur}]format=yuv420p[v]", "-map", "[v]", "-t", f"{_dur(body_v):.2f}",
                      "-c:v", "libx264", "-crf", "20", str(hid)])
                 body_v = hid
-        if rm.get("keep_people") and rm.get("blur_faces", True):   # ⛔ 사람은 그대로 두는 편: 사람 얼굴은 항상 모자이크(사장님 확정 2026-10-09)
+        if rm.get("keep_people") and rm.get("blur_faces", not gen):   # 새로 만들기는 AI가 새로 그린 사람이라 기본으로 흐리지 않는다   # ⛔ 사람은 그대로 두는 편: 사람 얼굴은 항상 모자이크(사장님 확정 2026-10-09)
             fb = work / "remake_faces.mp4"
             if not fb.exists() or res.get("faces_src") != _src_sig(body_v) or res.get("faces_v") != 5:
                 old = res.get("faces") or {}
