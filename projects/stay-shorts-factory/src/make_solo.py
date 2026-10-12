@@ -37,6 +37,7 @@ QUOTA = {"water": 3, "room": 3, "special": 4}                 # 사진 10장 후
 LIM = {"hook": (10, 24), "veo": (12, 28), "photo": (14, 32)}  # 컷 문장 길이(공백 제외). 1.28배속 실측 약 6.6자/초. p10c 실측: 연결어가 붙으니 Veo 컷이 25~26자로 3번 연속 탈락 → 28자(≈4.2초, 1.1배 슬로우 허용)
 MIN_CUT, GAP, VEO_SEC, MAX_SLOW = 1.6, 0.30, 4, 1.25
 MIN_HOOK = 3.2                                                  # 훅 컷 최소 길이 — v2 실측 2.78초는 훅 문장을 읽을 틈이 없었다
+MIN_MINI = 3.4                                                  # 미니어처 컷 최소 길이 — 개그 반응(1.5~3초)·시그니처 하트(1.5~3초 완성)가 잘리지 않게 (2026-10-12 검수: 나레이션 2초면 하트 전에 끊겼다)
 PUNCT_PAUSE = 1.6                                               # 가라오케 타이밍: 쉼표·마침표 뒤 쉼 = 글자 1.6개 분량
 PATTERNS = ("push", "pan", "diag", "tilt", "pull")             # 사진 컷 카메라 무빙 5종 순환 (2026-10-12 역동화)
 KO = {"hook": "훅", "water": "물놀이", "room": "객실", "special": "특별 공간", "offer": "조건·추천", "cta": "끝 카드"}
@@ -214,21 +215,28 @@ def cut_label(c: dict) -> str:
 # ── 미니어처 컷 (2026-10-12 운영자 결정 · 규칙 원본: data/prompts/miniature.md) ─────────────────────
 MINI_GAGS = mt.ROOT / "state" / "mini_gags.json"
 # 2026-10-12 운영자 "물결·김은 비오 라이트로 진짜 움직이게" — 미니어처 편의 사람 없는 환경 컷(편당 1개, 294원)에 붙인다
-ENV_BOOST = (" The water must be clearly alive: visible ripples or rolling waves moving across the whole surface, sparkling light on the water, "
-             "and if the water is warm, soft white steam rising and drifting slowly. No people, no figures, nothing added.")
+ENV_PROMPT = ("Camera: locked-off with a very slow, steady push-in of about 5 percent, staying inside the photo the whole time; no other camera movement. "
+              "The water that is already in the photo moves naturally and visibly: gentle ripples drifting across it, sparkling light on the surface, "
+              "and if the water is warm, soft white steam rising and drifting slowly. Only the existing water, steam and light move. "
+              "No people, no figures.")   # 2026-10-12 검수: 비전이 쓴 'drone glide' 카메라 + 'rolling waves·whole surface' 는 잔잔한 풀에 없는 파도·사진 밖 풍경을 부른다
 MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙소 사진 1장과 역할(gag 또는 signature)을 받는다.
-두 인형 Mina(여)·Jun(남)은 손조각 피규어이고, 이 사진 안에 **실제로 있는** 물·풀 가장자리·바닥·데크·침대·소파 위에만 둔다.
-사진에 없는 수영장·물·가구·구조물을 만들거나 키우지 않는다. 그 자리가 카메라에서 멀면 인형은 작게 보이는 것이 맞다.
-먼저 이 사진이 미니어처에 맞는지 판단한다 — suitable=true 는 **화면 아래쪽 40% 안, 카메라 가까이**에 인형이 실제로 앉거나 서거나 들어갈 실제 표면
-(물·풀 가장자리·바닥·데크·소파·침대)이 있어 인형이 화면 높이의 약 1/3 크기로 자연스럽게 보일 때만. 멀리 찍은 외관·전경·항공·조감 사진, 아래쪽이 비어 있거나 잔디·도로뿐인 사진은 false.
-인형은 그 가까운 실제 표면 위에 크게(화면 높이 약 1/3) 둔다.
-역할 gag: 아래 장소 개그 사전에서 이 사진의 장소에 맞는 개그 하나를 고른다(최근 사용 개그는 고르지 않는다. 맞는 것이 없으면 같은 결의 새 개그를 만든다).
-  4초 동안 동작 1~2개, 크고 단순하게. 웃음·놀람 때 입 벌림은 허용. 위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기)·시설 오용·다른 사람·유행 챌린지·유명인·상표 금지.
-역할 signature: 동작은 시스템이 고정 블록으로 넣는다. scene 에는 둘이 크림색 양머리 수건을 쓰고 나란히 서서 카메라를 보는 첫 자세와, 서 있을 **실제 마른 자리**(풀 가장자리 데크·바닥·침대 앞)만 쓴다. motion 은 빈 문자열.
-scene 은 영어로: 사진에 보이는 장소 한 문장 + 인형의 정확한 위치·자세(첫 장면) + 'Nothing else in the photograph changes.'
-motion 은 영어 4초 타임라인: '0 to 1.5 seconds: ... 1.5 to 3 seconds: ... 3 to 4 seconds: ...'
-box: 인형 두 명과 그 물보라·그림자가 들어갈 영역을 화면 비율로 [x0, y0, x1, y1](0~1, 왼쪽 위 기준)로 넉넉히 — 이 영역 밖은 원본 사진으로 되돌린다.
-water: 인형이 물 안이나 물가에 있으면 true(물 반응을 넣는다), 마른 장소면 false.
+두 인형 Mina(여)·Jun(남)을 이 사진 안에 **실제로 있는** 표면(물·풀 가장자리·바닥·데크·침대·소파) 위에만 둔다. 사진에 없는 수영장·물·가구·구조물을 만들거나 키우지 않는다.
+
+[적합 판단] suitable=true 는 아래를 **모두** 만족할 때만:
+- 화면 높이 25~60% 띠(위에서부터) 안에 인형이 실제로 서거나 앉거나 들어갈 실제 표면이 있다 — 60% 아래는 자막·앱 버튼이 덮고, 오른쪽 15% 는 앱 버튼 자리라 쓰지 않는다
+- 그 표면이 카메라에서 가까워 인형이 화면 높이의 1/4~1/3 크기로 자연스럽게 보인다
+- 멀리 찍은 외관·전경·항공·조감 사진, 그 띠가 하늘·벽·잔디·도로뿐인 사진은 false
+[역할 gag] 아래 장소 개그 사전에서 이 사진의 장소에 맞는 개그 하나(최근 사용 개그 제외 · 맞는 것이 없으면 같은 결의 새 개그).
+  개그는 **이 사진에 보이는 것만으로 가능**해야 한다(잔잔한 풀에서 파도 개그 금지, 침대가 없으면 침대 개그 금지). 4초 동안 동작 1~2개, 크고 단순하게. 웃음·놀람 때 입 벌림 허용.
+  위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기)·시설 오용·다른 사람·유행 챌린지·유명인·상표 금지.
+[역할 signature] 동작은 시스템이 고정 블록으로 넣는다. scene 에는 둘이 크림색 양머리 수건을 쓰고 나란히 서서 카메라를 보는 첫 자세와, 서 있을 **실제 마른 자리**(풀 가장자리 데크·바닥·침대 앞)만 쓴다. motion 은 빈 문자열. water 는 그 자리가 풀 가장자리 데크처럼 물가면 true(수영복), 객실·바닥처럼 마른 실내면 false(가운).
+[쓰는 법 — 어기면 버린다]
+- scene(영어): 사진에 보이는 장소 한 문장 + Mina 와 Jun 의 정확한 위치·자세(첫 장면) + 'Nothing else in the photograph changes.'
+- 인형은 이름(Mina, Jun)으로만 부른다. **생김새·재질·크기·옷·머리를 쓰지 않는다**(wooden·carved·tiny·clay·swimsuit·robe 등 금지 — 생김새는 시스템이 정한다).
+- water=false(마른 장소)면 scene·motion 에 water·pool·swim·splash·wave·ripple·wet·spa·bath·tub·jacuzzi·steam 같은 물 낱말을 **하나도** 쓰지 않는다(부정문 'no water' 도 금지 — 낱말 자체가 영상 모델에 물을 부른다). 손 인사도 wave 대신 'sway a raised hand' 로 쓴다.
+- motion(영어, gag 만): 정확히 '0 to 1.5 seconds: ... 1.5 to 3 seconds: ... 3 to 4 seconds: ...' 형식. 인형 동작만 — 카메라 움직임(zoom·push·pan·dolly·close-up)은 쓰지 않는다(시스템이 고정).
+- box: 인형 두 명의 머리끝~발끝과 그림자(물이면 물보라)가 들어갈 영역 [x0, y0, x1, y1](0~1, 왼쪽 위 기준)을 넉넉히 — y0 은 0.15 이상, y1 은 0.66 이하, x1 은 0.90 이하. 이 영역 밖은 원본 사진으로 되돌린다.
+- water: 인형이 물 안이나 물가에 있으면 true(물 반응을 넣는다), 마른 장소면 false.
 JSON 만: {"suitable":true|false,"why":"한 줄","water":true|false,"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1]}"""
 
 
@@ -261,6 +269,36 @@ def mini_scene(model: str, c: dict, recent: list[str], role: str | None = None) 
     return r
 
 
+DRY_BAN = re.compile(r"\b(water|pool|swim\w*|splash\w*|wave\w*|ripple\w*|wet|spa|bath(?:e|es|ing|tub|tubs)?|tub|jacuzzi|steam\w*|drip\w*|soak\w*|float\w*)\b", re.I)   # bathrobe 는 통과
+CAMERA_WORDS = re.compile(r"\b(zoom\w*|push(?:es|ing)?[- ]in|dolly|pan(?:s|ning)?|close-?ups?|camera|tracking|orbit\w*|crane)\b", re.I)
+TIMELINE = re.compile(r"0\s*to\s*1\.5\s*seconds?.*1\.5\s*to\s*3\s*seconds?.*3\s*to\s*4\s*seconds?", re.I | re.S)
+
+
+def mini_errs(sc: dict, role: str) -> list[str]:
+    """비전 답을 쓰기 전에 거른다(0원). 2026-10-12 검수 — run-27 의 없는 수영장은 '마른 장소 지시문의 물 낱말' + '크게 당기는 카메라' + '멀고 작은 인형' 이 겹친 것:
+    마른 장소에 물 낱말, 동작에 카메라 지시, 타임라인 형식 위반, 자막 띠·앱 버튼 자리에 걸치는 상자를 여기서 막는다."""
+    errs = []
+    wet = bool(sc.get("water"))
+    text = f"{sc.get('scene', '')} {sc.get('motion', '')}"
+    if not wet and DRY_BAN.search(text):
+        errs.append(f"마른 장소인데 물 낱말 '{DRY_BAN.search(text).group(0)}'")
+    if CAMERA_WORDS.search(str(sc.get("motion") or "")):
+        errs.append(f"동작에 카메라 지시 '{CAMERA_WORDS.search(str(sc.get('motion'))).group(0)}'")
+    if role == "gag" and not TIMELINE.search(str(sc.get("motion") or "")):
+        errs.append("동작 타임라인 형식(0 to 1.5 / 1.5 to 3 / 3 to 4 seconds) 아님")
+    box = sc.get("box")
+    if not (isinstance(box, list) and len(box) == 4 and all(isinstance(v, (int, float)) for v in box)
+            and 0 <= box[0] < box[2] <= 1 and 0 <= box[1] < box[3] <= 1 and box[2] - box[0] > 0.1 and box[3] - box[1] > 0.1):
+        errs.append(f"box 형식 오류 {box}")
+    else:
+        top, bottom, right = make_mini.ZONE
+        if box[3] > bottom or box[1] < top or box[0] > right:
+            errs.append(f"box {box} 가 자막 띠·앱 버튼 자리에 걸침(세로 {top}~{bottom}, 오른쪽 {right} 안쪽)")
+        if box[3] - box[1] < 0.15:                                       # run-27 객실 컷: 상자 높이 12% = 인형이 작아 옴니가 크게 당기며 주변을 지어냄
+            errs.append(f"box 높이 {box[3] - box[1]:.2f} — 인형이 너무 작다(화면 높이 0.15 이상)")
+    return errs
+
+
 def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
     """대본을 쓰기 **전에** 미니어처 3컷을 고른다(비전 · 컷당 몇 원). run-27 실측: 멀리 찍은 객실·리조트 전경에 인형을 넣으니 아주 작게 들어갔고,
     옴니가 크게 당기며 **없는 수영장을 지어냈다** → 카메라 가까이 실제 표면이 있는 사진만 쓴다. 시그니처 컷은 맨 뒤로 옮긴다(나레이션은 이 순서로 쓴다)."""
@@ -276,6 +314,10 @@ def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
                 sc = ms._try_models("vision", models["text"], lambda m: mini_scene(m, c, recent, role))
             except Exception as e:  # noqa: BLE001
                 log(f"컷 {c['i']} 미니어처 판단 실패: {str(e)[:80]}"); continue
+            bad = mini_errs(sc, role) if sc.get("suitable") is True and sc.get("scene") else []
+            if bad:
+                log(f"컷 {c['i']} 미니어처 답 거름: {' / '.join(bad)[:160]}")
+                continue
             if sc.get("suitable") is True and sc.get("scene"):
                 used.add(c["n"]); c["mini"] = role; c["mini_scene"] = sc
                 if role == "gag" and sc.get("gag"):
@@ -319,29 +361,46 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
             row.update({"place": sc.get("place"), "gag": sc.get("gag")})
             motion = make_mini.signature_block() if c["mini"] == "signature" else str(sc.get("motion") or "")
             base = make_mini.crop916(B() / f"shotHD_{c['n']}.png", mdir / f"{c['n']}_base.jpg")
-            ep = make_mini.edit_prompt(sc["scene"])
+            if not c.get("mini_scene"):                                       # choose_minis 를 거치지 않은 경우에도 같은 검사
+                bad = mini_errs(sc, c["mini"]) if sc.get("suitable") is not False else ["부적합"]
+                if bad:
+                    raise RuntimeError("미니어처 답 거름: " + " / ".join(bad)[:160])
+            wet = bool(sc.get("water"))                                       # 비전이 정한 물 여부 — 없으면 마른 장소(물 낱말이 없는 쪽이 안전)
+            sig = c["mini"] == "signature"
+            ep = make_mini.edit_prompt(sc["scene"], water=wet, signature=sig)
             (mdir / f"{c['n']}_edit_prompt.txt").write_text(ep, encoding="utf-8")
             frame = make_mini.composite(base, ep, mdir / f"{c['n']}_frame.png", img_models, row)
             box = sc.get("box")
             if isinstance(box, list) and len(box) == 4 and all(isinstance(v, (int, float)) for v in box) and box[2] - box[0] > 0.1 and box[3] - box[1] > 0.1:
                 # omni-1 실측: 합성 모델이 인형은 잘 넣고 위쪽 건물·야자수를 다시 그렸다 → 인형 영역 밖은 원본 픽셀로 되돌린다
                 box = make_mini.refine_box(base, frame, [max(0.0, min(1.0, float(v))) for v in box])
+                if (box[1] + box[3]) / 2 > make_mini.ZONE[1] + 0.04:            # 상자(여백 포함) 중심이 자막 띠 안 = 인형 대부분이 글자에 가려진다 → 옴니 620원을 쓰지 않는다 (run-27 시그니처 0.86)
+                    raise RuntimeError(f"인형이 자막 띠에 들어감(상자 {[round(v, 2) for v in box]}) — 옴니 생략")
+                if box[3] - box[1] < 0.12:                                        # 합성 결과 인형이 아주 작음(run-27 객실·전경) → 옴니가 당기며 주변을 지어낼 위험
+                    raise RuntimeError(f"인형이 너무 작음(상자 높이 {box[3] - box[1]:.2f}) — 옴니 생략")
                 frame, seam = make_mini.paste_back(base, frame, box, mdir / f"{c['n']}_frame_pb.png")
                 row.update({"box": box, "seam": round(seam, 3)})
                 if seam > make_mini.MAX_SEAM:
                     raise RuntimeError(f"이음매 어긋남 {seam:.0%} — 옴니 생략")
             ch = make_mini.changed_ratio(base, frame); row["changed"] = round(ch, 3)
+            if row.get("box") and ch > make_mini.MAX_CHANGED:                 # 원본 복원 뒤에도 많이 바뀜 = 상자 안을 통째로 다시 그림 → 옴니에 넘기지 않는다
+                raise RuntimeError(f"원본 복원 뒤에도 {ch:.0%} 변경 — 옴니 생략")
             if not row.get("box") and ch > make_mini.MAX_CHANGED:
                 frame = make_mini.composite(base, ep + "\n\nPREVIOUS ATTEMPT FAILED: it redrew or reframed the photograph. Keep every pixel of the photograph except where the figurines are.",
                                             mdir / f"{c['n']}_frame.png", img_models, row)
                 ch = make_mini.changed_ratio(base, frame); row["changed_retry"] = round(ch, 3)
                 if ch > make_mini.MAX_CHANGED:
                     raise RuntimeError(f"배경 보존 실패 {ch:.0%} — 옴니 생략")
-            vp = make_mini.omni_prompt(motion, water=bool(sc.get("water", c["section"] in ("hook", "water"))))
+            vp = make_mini.omni_prompt(motion, water=wet and not sig)          # 시그니처는 물가여도 마른 데크에 서 있다 — 물 반응 문장 없음
             (mdir / f"{c['n']}_omni_prompt.txt").write_text(vp, encoding="utf-8")
             res = omni.make_clip(vp, frame, 4, mdir / f"{c['n']}.mp4")
             clips[c["n"]] = mdir / f"{c['n']}.mp4"
             row.update({"ok": True, "omni_krw": res["krw"], "clip_sec": res["sec"], "model": res["model"]})
+            try:                                                              # 기록만(0원): 끝 장면이 첫 장면과 얼마나 다른지 — 카메라 고정 뒤의 기준값을 모아 나중에 자동 거름 기준으로 쓴다
+                last = make_mini.frame_at(clips[c["n"]], max(0.1, (res["sec"] or 4.0) - 0.15), mdir / f"{c['n']}_last.jpg")
+                row["drift_last"] = round(make_mini.changed_ratio(frame, last), 3)
+            except Exception as e:  # noqa: BLE001
+                row["drift_last"] = f"측정 실패: {str(e)[:60]}"
             if c["mini"] == "gag" and sc.get("gag"):
                 used.append(str(sc["gag"]))
         except Exception as e:  # noqa: BLE001
@@ -996,7 +1055,7 @@ def make_veo(cuts: list[dict], theme: str, report: dict) -> dict:
         seed = veo.seed_for(theme, n)
         for attempt in range(2):
             try:
-                vp = c["shot"]["prompt"] + (ENV_BOOST if c.get("env") else "")
+                vp = (ENV_PROMPT + photos.SUFFIX) if c.get("env") else c["shot"]["prompt"]
                 veo.make_clip(vp, B() / f"shot_{n}.png", VEO_SEC, out, seed + attempt)
                 row["ok"] = True; clips[n] = out; break
             except veo.RaiFiltered as e:
@@ -1033,7 +1092,8 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     for c in cuts:
         x = by_i[c["i"]]
         is_hook = (c["section"] == "hook")
-        L = max(MIN_HOOK if is_hook else MIN_CUT, narr[c["i"]] + (0.12 if (B() / "narr_full.wav").exists() else GAP))
+        L = max(MIN_HOOK if is_hook else MIN_CUT, MIN_MINI if (c.get("mini") and c["n"] in clips) else 0.0,
+                narr[c["i"]] + (0.12 if (B() / "narr_full.wav").exists() else GAP))
         label = design.plain(x["caption"])
         overlays = [{"path": frame, "a": 0, "b": 99, "anim": False}]
         chunks = []

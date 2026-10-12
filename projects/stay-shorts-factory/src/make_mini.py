@@ -47,21 +47,27 @@ W, H = 720, 1280
 
 KEEP_LINE = ("Keep both figures exactly identical to the attached reference figurines — same faces, hairstyles, "
              "body proportions, skin tone and swimwear.")
-EDIT_HEAD = ("TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real place). Keep the photograph exactly as it is — same framing, walls, "
-             "water, furniture, decorations, colors, lighting and focus; do not blur, recolor, crop, extend, clean up or redraw anything, "
-             "and do not add or remove any object. Only add the two miniature figurines shown in the attached REFERENCE IMAGE (two figurines sitting on a pool edge), "
-             "placed into the scene as described below, with correct contact shadows, reflections and water interaction so they look "
-             "physically present in the photograph.")
-EDIT_SCALE = ("SCALE AND PLACEMENT: the figurines are 10 cm toys placed on the real surface described in SCENE in the lower part of the frame, "
-              "close to the camera (forced perspective), so each figure appears about one third of the frame height and is clearly readable. "
-              "The real place keeps its true size and stays clearly recognizable behind them. Never enlarge or shrink anything in the photograph.")
+KEEP_LINE_DRY = ("Keep both figures exactly identical to the attached reference figurines — same faces, hairstyles, "
+                 "body proportions and skin tone.")   # 2026-10-12 검수: 마른 장소에 'swimwear' 가 남아 가운 지시와 충돌하고 물을 부르는 단서가 됐다
+EDIT_HEAD = ("TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real place). Keep the photograph exactly as it is — same framing, "
+             "every surface, object and decoration, colors, lighting and focus; do not blur, recolor, crop, extend, clean up or redraw anything, "
+             "and do not add or remove any object. Only add the two miniature figurines from the attached CHARACTER REFERENCE IMAGE — take only "
+             "the figurines' design from it and ignore everything else in that image — placed into the scene as described below, with correct "
+             "contact shadows so they look physically present in the photograph.")
+EDIT_WATER = "They interact naturally with the water that is already in the photograph (correct reflections, a faint wet sheen)."
+EDIT_SCALE = ("SCALE AND PLACEMENT: the figurines are toys placed on the real surface described in SCENE, close to the camera "
+              "(forced perspective), so each figure appears about a quarter to a third of the frame height and is clearly readable. "
+              "Their whole bodies, from the top of the head to the feet, stay inside the band between 25% and 60% of the frame height "
+              "measured from the top, and out of the right-most 15% of the frame — the strip below 60% and the right edge are covered by captions "
+              "and app buttons. The real place keeps its true size and stays clearly recognizable behind them. "
+              "Never enlarge or shrink anything in the photograph.")
+ZONE = (0.15, 0.66, 0.90)   # (위 한계, 아래 한계, 오른쪽 한계) — 비전 box 검사용. design.GRID 띠 위쪽 1150/1920 = 0.60 + 여유
 EDIT_PHOTO = ("PHOTOGRAPHY: realistic toy photography matched to the photograph's own light direction, color temperature and grain; "
               "figures tack-sharp; the background keeps the photograph's existing sharpness (at most a very gentle natural softness right "
               "behind the figures). Vertical 9:16, same size as the hotel photograph.")
-EDIT_TAIL = ("PLACEMENT RULE: put the figurines only where that kind of place really exists in the photograph (real water, real pool rim, "
-             "real floor). Never add, extend, enlarge, move or replace any pool, water area, floor, wall or structure to make room for them; "
-             "if the described spot is farther from the camera, place them there and let them appear smaller. Do not zoom, reframe or shift "
-             "the photograph. OUTPUT: exactly one photorealistic image. No text, no captions, no logos, no watermark, no borders.")
+EDIT_TAIL = ("PLACEMENT RULE: put the figurines only on a surface that really exists in the photograph, exactly where SCENE says. Never add, "
+             "extend, enlarge, move or replace any surface, structure or object to make room for them. Do not zoom, reframe or shift the "
+             "photograph. OUTPUT: exactly one photorealistic image. No text, no captions, no logos, no watermark, no borders.")
 MAX_CHANGED = 0.30          # 배경 보존 검사(0원): 원본 대비 바뀐 화면 비율 상한. 실측 mini-1: 잘 된 파도풀 11% · 배경을 다시 그린 스파 67%
 
 VEO_HEAD = ("The first frame is a real hotel photograph with two small hand-sculpted, hand-painted polymer-clay art-doll figurines of a "
@@ -81,18 +87,60 @@ def log(*a):
     print("[mini]", *a, flush=True)
 
 
-def character_block() -> str:
-    """miniature.md 의 첫 코드 블록(캐릭터 블록) — 사진 편집용으로 SCALE·PHOTOGRAPHY 문단만 바꾼다."""
+OUTFIT_WATER = "OUTFIT IN THIS SCENE: their swimwear exactly as described in CLOTHING."
+OUTFIT_DRY = ("OUTFIT IN THIS SCENE: both wear plain cream waffle-texture bathrobes, tied at the waist, over their clothes; "
+              "faces, hair and body proportions exactly as described.")
+
+
+def character_block(water: bool = True) -> str:
+    """miniature.md 의 첫 코드 블록(캐릭터 블록) — 사진 편집용으로 SCALE·PHOTOGRAPHY 문단만 바꾼다.
+    2026-10-12 검수: 마른 장소(객실·로비·잔디)에도 'waterline·wet·swimsuit straps' 문장이 그대로 들어가 물을 부르는 단서가 됐다 →
+    마른 장소용은 물·수영복 문장을 빼고 목욕 가운으로 고정한다(캐릭터 블록의 '객실·사우나 등은 가운' 규칙을 코드로 강제)."""
     t = RULES.read_text(encoding="utf-8")
     m = re.search(r"## 1\. 캐릭터 블록.*?```\n(.*?)```", t, re.S)
     if not m:
         raise RuntimeError("miniature.md 에서 캐릭터 블록을 못 찾음")
     paras = [p for p in m.group(1).strip().split("\n\n") if not p.startswith(("SCALE:", "PHOTOGRAPHY:"))]
+    if not water:
+        out = []
+        for p in paras:
+            if p.startswith("CLOTHING"):
+                continue                                              # 옷은 OUTFIT_DRY 가 정한다
+            p = re.sub(r"\s*When wet,[^.]*\.", "", p)
+            p = p.replace("nudity or missing swimsuit straps, patterned or colorful swimwear, ", "nudity, ")
+            p = p.replace("never changes, wet or dry, from any angle", "never changes, from any angle").replace("no messy or wet-look texture", "no messy texture")
+            out.append(p)
+        paras = out
     return "\n\n".join(paras)
 
 
-def edit_prompt(scene: str) -> str:
-    return "\n\n".join([EDIT_HEAD, KEEP_LINE, character_block(), EDIT_SCALE, EDIT_PHOTO, "SCENE: " + scene.strip(), EDIT_TAIL])
+FIGURE_WORDS = re.compile(r"\b(two\s+)?((tiny|small|little|hand-?carved|carved|wooden|miniature|toy|clay|plastic|resin|sculpted)\s+)+(figures?|figurines?|dolls?|toys?)\b", re.I)
+WATER_WORDS = re.compile(r"\b(water|pool|swim\w*|splash\w*|wave\w*|ripple\w*|wet|bath(?:e|ing)?|spa|jacuzzi|tub|steam)\b", re.I)
+
+
+def clean_scene(scene: str) -> str:
+    """비전이 인형 생김새를 제멋대로 적는 것을 막는다(run-27: 'hand-carved wooden figures' → 나무 인형이 나옴). 생김새는 캐릭터 블록만 정한다."""
+    return re.sub(r"Mina and Jun,?\s*(?:named\s+)?Mina and Jun,?", "Mina and Jun", FIGURE_WORDS.sub("Mina and Jun", scene))
+
+
+PROPS_SIGNATURE = ("PROPS IN THIS SHOT ONLY: both wear a cream terry-towel \"sheep-head\" wrap (a towel rolled into two small round ears) "
+                   "on top of their usual hair — this towel wrap is allowed here even though hats are otherwise not.")
+
+
+def edit_prompt(scene: str, water: bool = True, signature: bool = False) -> str:
+    """사진 편집 지시문. water=False(마른 장소)면 물·수영복 낱말이 하나도 없다(검사: WATER_WORDS). signature 면 양머리 수건 허용 줄을 붙인다
+    (캐릭터 블록의 'no hats' 와 충돌해 모델이 수건을 빼먹을 수 있었다)."""
+    parts = [EDIT_HEAD, KEEP_LINE if water else KEEP_LINE_DRY, character_block(water), OUTFIT_WATER if water else OUTFIT_DRY, EDIT_SCALE, EDIT_PHOTO,
+             "SCENE: " + clean_scene(scene).strip()]
+    if signature:
+        parts.append(PROPS_SIGNATURE)
+    elif water:                                                       # 시그니처는 물가여도 마른 데크에 선다 — 물과 닿는 문장 없음
+        parts.append(EDIT_WATER)
+    parts.append(EDIT_TAIL)
+    out = "\n\n".join(parts)
+    if not water and WATER_WORDS.search(out):
+        raise RuntimeError(f"마른 장소 합성 지시문에 물 낱말 '{WATER_WORDS.search(out).group(0)}' — miniature.md 캐릭터 블록을 확인")
+    return out
 
 
 def veo_prompt(motion: str) -> str:
@@ -110,7 +158,10 @@ DRY_LINE = "The floor, furniture and surroundings stay exactly as they are in th
 def omni_prompt(motion: str, water: bool = True) -> str:
     """옴니 플래시용 — 비오 지시문 + 첫 장면 고정·길이·소리 지시(옴니는 길이 필드가 없고 소리를 늘 만든다).
     run-27 실측: 객실·외관 컷에서 '물 반응' 문장 + 크게 당기기 지시 때문에 옴니가 **없는 수영장을 지어냄** → 물 문장은 물 장소에서만, 마른 장소는 물 금지를 명시."""
-    return OMNI_HEAD + " " + veo_prompt(motion) + " " + (WATER_LINE if water else DRY_LINE)
+    out = OMNI_HEAD + " " + veo_prompt(motion) + " " + (WATER_LINE if water else DRY_LINE)
+    if not water and WATER_WORDS.search(out):                         # 2026-10-12 검수: 마른 장소 옴니 지시문은 물 낱말 0 — 어기면 돈 쓰기 전에 멈춘다
+        raise RuntimeError(f"마른 장소 옴니 지시문에 물 낱말 '{WATER_WORDS.search(out).group(0)}'")
+    return out
 
 
 def refine_box(base: Path, frame: Path, box) -> list[float]:
@@ -118,17 +169,29 @@ def refine_box(base: Path, frame: Path, box) -> list[float]:
     from PIL import ImageChops, ImageFilter
     x0, y0, x1, y1 = box
     w, h = x1 - x0, y1 - y0
-    win = (max(0, x0 - w * 0.5), max(0, y0 - h * 1.2), min(1, x1 + w * 0.5), min(1, y1 + h * 0.4))
-    a = Image.open(base).convert("L").resize((180, 320)).filter(ImageFilter.GaussianBlur(1.5))
-    b = Image.open(frame).convert("L").resize((180, 320)).filter(ImageFilter.GaussianBlur(1.5))
-    d = ImageChops.difference(a, b).point(lambda v: 255 if v > 28 else 0).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.MaxFilter(5))
+    # 창: 위로 넉넉히(상자가 다리만 잡은 경우 머리까지) — 2026-10-12 검수: 상자 높이 12% 면 위로 14%만 봐서 머리가 잘렸다
+    win = (max(0, x0 - max(w * 0.5, 0.10)), max(0, y0 - max(h * 1.2, 0.22)), min(1, x1 + max(w * 0.5, 0.10)), min(1, y1 + max(h * 0.4, 0.05)))
+    a = Image.open(base).convert("RGB").resize((180, 320)).filter(ImageFilter.GaussianBlur(1.5))
+    b = Image.open(frame).convert("RGB").resize((180, 320)).filter(ImageFilter.GaussianBlur(1.5))
+    r, g, bl = ImageChops.difference(a, b).split()                     # 색 차이까지 본다(밝기만 보면 배경과 밝기가 비슷한 인형 부분을 놓친다)
+    d = ImageChops.lighter(ImageChops.lighter(r, g), bl).point(lambda v: 255 if v > 28 else 0).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.MaxFilter(5))
     wx0, wy0, wx1, wy1 = int(win[0] * 180), int(win[1] * 320), int(win[2] * 180), int(win[3] * 320)
     bb = d.crop((wx0, wy0, wx1, wy1)).getbbox()
     if bb:
         cx0, cy0, cx1, cy1 = (wx0 + bb[0]) / 180, (wy0 + bb[1]) / 320, (wx0 + bb[2]) / 180, (wy0 + bb[3]) / 320
         x0, y0, x1, y1 = min(x0, cx0), min(y0, cy0), max(x1, cx1), max(y1, cy1)
     m = 0.04
-    return [max(0.0, x0 - m), max(0.0, y0 - m), min(1.0, x1 + m), min(1.0, y1 + m)]
+    out = [max(0.0, x0 - m), max(0.0, y0 - m), min(1.0, x1 + m), min(1.0, y1 + m)]
+    # 2026-10-12 검수: 합성이 배경을 다시 그리면 '바뀐 픽셀' 이 창 전체로 번져 상자가 커지고 → 지어낸 배경까지 원본 복원에서 살아남는다.
+    # 상자는 비전 상자의 2.5배(최소 화면 12%)·화면 40% 를 넘지 못한다. 넘으면 비전 상자를 30% 키운 것으로 되돌린다(그 뒤 이음매 검사가 판단).
+    va = max(1e-6, w * h)
+    oa = (out[2] - out[0]) * (out[3] - out[1])
+    if oa > min(0.40, max(2.5 * va, 0.12)):
+        # 인형은 바닿은 자리에서 위로 선다 — 비전 상자는 아래(접점)는 맞고 위(머리)를 자주 놓친다(run-27 훅 컷: 머리 없는 인형).
+        # 그래서 제한할 때도 위로는 넉넉히(높이의 80%·최소 10%), 옆 15%씩, 아래 5%.
+        out = [max(0.0, box[0] - w * 0.15), max(0.0, box[1] - max(h * 0.8, 0.10)), min(1.0, box[2] + w * 0.15), min(1.0, box[3] + h * 0.05)]
+        log(f"상자 확장 상한 초과(바뀐 영역 {oa:.0%}) → 비전 상자 기준(위로 넉넉히)으로 제한")
+    return out
 
 
 def _md_code_after(heading: str) -> str:
@@ -249,6 +312,8 @@ def composite(base: Path, prompt: str, out: Path, models: list[str], rep: dict) 
             used = veo.month_total("all")
             if used + krw > veo.MONTH_KRW:
                 raise RuntimeError(f"이번 달 한도({veo.MONTH_KRW:,.0f}원) — 지금 {used:,.0f}원")
+            if veo._state["spent"] + krw > veo.RUN_KRW:                       # 2026-10-12 검수: 이미지 비용이 한 번 실행 한도에서 빠져 있었다
+                raise RuntimeError(f"한 번 실행 한도({veo.RUN_KRW:,.0f}원) — 여기까지 {veo._state['spent']:,.0f}원")
             try:
                 data = _post(f"models/{model}:generateContent", body)
             except RuntimeError as e:
@@ -258,6 +323,7 @@ def composite(base: Path, prompt: str, out: Path, models: list[str], rep: dict) 
                     break
                 raise
             veo.record_est("image", krw, f"{model} 미니어처 합성 {out.name} (추정)")
+            veo._state["spent"] += krw
             rep["image_krw"] = rep.get("image_krw", 0) + round(krw)
             img = None
             for c in data.get("candidates") or []:
@@ -327,9 +393,18 @@ def paste_back(base: Path, frame: Path, box, out: Path, feather: int = 18) -> tu
     b = Image.open(frame).convert("RGB").resize((W, H), Image.LANCZOS)
     x0, y0, x1, y1 = [int(round(v * (W if i % 2 == 0 else H))) for i, v in enumerate(box)]
     x0, y0, x1, y1 = max(0, x0), max(0, y0), min(W, x1), min(H, y1)
+    # 화면 가장자리에 붙은 변은 안쪽으로 들이지 않는다(2026-10-12 검수: box x1=1.0 이면 오른쪽 끝 인형이 원본으로 덮여 지워졌다)
+    ex0, ey0 = (x0 if x0 <= 1 else x0 + feather), (y0 if y0 <= 1 else y0 + feather)
+    ex1, ey1 = (x1 if x1 >= W - 1 else x1 - feather), (y1 if y1 >= H - 1 else y1 - feather)
     mask = Image.new("L", (W, H), 0)
-    ImageDraw.Draw(mask).rectangle([x0 + feather, y0 + feather, x1 - feather, y1 - feather], fill=255)
+    ImageDraw.Draw(mask).rectangle([ex0, ey0, ex1, ey1], fill=255)
     mask = mask.filter(ImageFilter.GaussianBlur(feather / 2))
+    if x0 <= 1 or y0 <= 1 or x1 >= W - 1 or y1 >= H - 1:                     # 흐림이 가장자리에서 새지 않게 그 변은 다시 꽉 채운다
+        dm = ImageDraw.Draw(mask)
+        if x0 <= 1: dm.rectangle([0, ey0, feather, ey1], fill=255)          # noqa: E701
+        if x1 >= W - 1: dm.rectangle([W - feather, ey0, W, ey1], fill=255)  # noqa: E701
+        if y0 <= 1: dm.rectangle([ex0, 0, ex1, feather], fill=255)          # noqa: E701
+        if y1 >= H - 1: dm.rectangle([ex0, H - feather, ex1, H], fill=255)  # noqa: E701
     Image.composite(b, a, mask).save(out, "PNG")
     # 경계 띠(안쪽 feather~2feather) 어긋남
     ga, gb = a.convert("L").filter(ImageFilter.GaussianBlur(1.5)), b.convert("L").filter(ImageFilter.GaussianBlur(1.5))
@@ -337,7 +412,7 @@ def paste_back(base: Path, frame: Path, box, out: Path, feather: int = 18) -> tu
     ring, bad = 0, 0
     for y in range(max(0, y0), min(H, y1), 3):
         for x in range(max(0, x0), min(W, x1), 3):
-            d_edge = min(x - x0, x1 - x, y - y0, y1 - y)
+            d_edge = min([d for d, edge in ((x - x0, x0 <= 1), (x1 - x, x1 >= W - 1), (y - y0, y0 <= 1), (y1 - y, y1 >= H - 1)) if not edge] or [0])
             if feather <= d_edge <= 2 * feather:
                 ring += 1
                 bad += abs(pa[x, y] - pb[x, y]) > 28
@@ -394,7 +469,7 @@ def main():
     BUILD.mkdir(parents=True, exist_ok=True)
     rep = {"nonce": req.get("nonce"), "started": datetime.now().isoformat(timespec="seconds"), "ok": False, "shots": [],
            "veo_model": veo.MODEL, "fake_veo": veo.FAKE, "fake_image": FAKE_IMG}
-    if not (veo.FAKE and FAKE_IMG) and req.get("veo_approved") is not True:
+    if not (veo.FAKE and FAKE_IMG and omni.FAKE) and req.get("veo_approved") is not True:   # 2026-10-12 검수: 옴니 가짜 여부도 본다(빠져 있었다)
         raise SystemExit('유료 시험은 운영자 허락이 필요합니다 — requests/mini/request.json 에 "veo_approved": true')
     models = [] if FAKE_IMG else image_models(req.get("image_model"))
     log("이미지 모델 후보:", models[:4])
@@ -406,7 +481,8 @@ def main():
             rep["shots"].append(row)
             src = fetch(s["url"], BUILD / f"{k}_src.jpg")
             base = crop916(src, BUILD / f"{k}_base.jpg", float(s.get("focus_x", 0.5)), float(s.get("focus_y", 0.5)))
-            ep = edit_prompt(s["scene"]); (BUILD / f"{k}_edit_prompt.txt").write_text(ep, encoding="utf-8")
+            wet = bool(s.get("water", True))                                      # 물가면 수영복, 마른 실내면 가운
+            ep = edit_prompt(s["scene"], water=wet, signature=bool(s.get("signature"))); (BUILD / f"{k}_edit_prompt.txt").write_text(ep, encoding="utf-8")
             prev = ROOT / "build" / "mini_prev" / f"{k}_frame.png"                 # 이전 실행 아티팩트의 합성(돈 아끼기 · request "reuse_run_id")
             if req.get("reuse_run_id") and prev.exists():
                 frame = BUILD / f"{k}_frame.png"; frame.write_bytes(prev.read_bytes()); row["reused_frame"] = int(req["reuse_run_id"])
@@ -414,7 +490,7 @@ def main():
             else:
                 frame = composite(base, ep, BUILD / f"{k}_frame.png", models, rep)
             if s.get("box"):                                               # 인형 영역 밖은 원본으로 되돌림 → 배경 보존 보장
-                frame, seam = paste_back(base, frame, s["box"], BUILD / f"{k}_frame_pb.png")
+                frame, seam = paste_back(base, frame, refine_box(base, frame, s["box"]), BUILD / f"{k}_frame_pb.png")
                 row["seam"] = round(seam, 3)
                 ch = changed_ratio(base, frame); row["changed"] = round(ch, 3)
                 if seam > MAX_SEAM:
@@ -439,7 +515,7 @@ def main():
             engine = str(s.get("engine") or req.get("video_engine") or "omni")
             clip = BUILD / f"{k}.mp4"
             if engine == "omni":
-                vp = omni_prompt(motion); (BUILD / f"{k}_omni_prompt.txt").write_text(vp, encoding="utf-8")
+                vp = omni_prompt(motion, water=wet and not s.get("signature")); (BUILD / f"{k}_omni_prompt.txt").write_text(vp, encoding="utf-8")
                 res = omni.make_clip(vp, frame, 4, clip, resolution=str(req.get("omni_resolution") or "720p"))
                 row.update({"ok": True, "engine": "omni", "omni_krw": res["krw"], "clip_sec": res["sec"], "omni_model": res["model"], "tokens_out": res["tokens_out"]})
             else:

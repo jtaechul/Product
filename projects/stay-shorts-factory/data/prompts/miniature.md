@@ -14,7 +14,7 @@
 > 실제 제작(Veo)에서는 이 블록 끝에 `BACKGROUND: use the attached hotel photograph as the exact, unchanged background — same walls, water, furniture, colors and lighting; nothing added, removed or redrawn.` 을 붙인다.
 > **기준 이미지(확정)**: `assets/characters/ref.jpg` — v3 블록 + 장면 ③(수영장 가장자리 발 담그기)으로 운영자가 Gemini 에서 만든 결과. 8등신 성인 체형, 준 = 앞머리 내린 둥근 댄디컷,
 > 미나 = 왼쪽 가르마 낮은 올림머리, 코발트 원피스(스쿱넥·가는 끈) / 남색 허벅지 중간 수영복. **모든 생성(정지 이미지·Veo)에 이 이미지를 참조로 첨부**하고,
-> 블록 앞에 `Keep both figures exactly identical to the attached reference figurines — same faces, hairstyles, body proportions, skin tone and swimwear.` 를 붙인다. 결과가 이 이미지와 다르면 버린다.
+> 블록 앞에 `Keep both figures exactly identical to the attached reference figurines — same faces, hairstyles, body proportions, skin tone and swimwear.` 를 붙인다(마른 장소는 `… and skin tone.` — 수영복 낱말 없음). 결과가 이 이미지와 다르면 버린다.
 
 ```
 CHARACTERS — FIXED DESIGN, identical in every image and every shot. Two hand-sculpted, hand-painted miniature figurines of a Korean couple in their early 30s, "Mina" (woman) and "Jun" (man): collectible art-doll figurines with realistic adult fashion-figure proportions, photographed as tiny toys inside a real full-size place. Jun is 10 cm tall; Mina is 9.5 cm tall.
@@ -41,7 +41,7 @@ FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobbleh
 ## 1-1. 모델 선택 (2026-10-12 운영자 결정)
 
 - 미니어처 인물 영상 = **Gemini Omni Flash** (비오 라이트는 남녀가 뒤바뀌어 인물 컷 금지). 환경 움직임만(사람 없음) = Veo 3.1 Lite. 단순 줌·패닝 = 사진 무빙 0원.
-- 옴니 카메라는 다가가며 원본 밖을 지어내므로 "slow push-in of about 10 percent, stay within the original photograph" 로 묶는다.
+- 옴니 카메라는 다가가며 원본 밖을 지어내므로(run-27: 없는 수영장) **첫 장면 구도 고정, 아주 약간의 당기기까지만**(코드 `VEO_TAIL`). 비전이 쓰는 동작에 카메라 지시(zoom·push·pan·close-up)는 금지 — 코드가 거른다.
 
 ## 1-2. 연출 톤 — 엉뚱하고 재밌게 (2026-10-12 운영자)
 
@@ -92,7 +92,7 @@ SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side a
 
 ## 2. 장면 블록 (컷마다 · 장소 사전에서 고른다 · 영어)
 
-틀: `SCENE: [위치] + [자세] + [동작 1개 · 4초 타임라인] + [환경 반응 1개] + Camera: locked-off, slow 5 percent push-in. Vertical 9:16, 4 seconds, photoreal background, toy-scale clay figures in focus.`
+틀: `SCENE: [위치] + [자세] + [동작 1개 · 4초 타임라인] + [환경 반응 1개] ` (카메라 문장은 코드가 고정으로 붙인다 — 장면 블록에 쓰지 않는다)
 
 | 장소 유형 | 위치·자세 | 동작(4초) | 환경 반응 |
 |---|---|---|---|
@@ -116,3 +116,24 @@ SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side a
    ② Veo 이미지→영상 = 그 첫 프레임에서 4초 동작(장면 블록의 타임라인). 인물이 첫 프레임부터 있어 "갑자기 나타남"·얼굴 흔들림이 줄어든다.
 4. Veo 전에 같은 지시문으로 정지 이미지 2~3장(무료 구간)을 뽑아 블록과 맞는지 **운영자가** 본다(AI 검수 호출 없음 — 운영자 "검수는 돈").
 5. 캡션 끝에 "미니어처 인물은 AI 연출입니다" 한 줄. 영상 안에는 글자 추가 없음.
+
+## 4. 오류 요인 검수 규칙 (2026-10-12 운영자 "한 번 더 검수해서 오류 날 요인 전부 고쳐" · 코드로 강제)
+
+| 요인 (실측 근거) | 규칙 | 코드 |
+|---|---|---|
+| 마른 장소 지시문의 물 낱말(run-27 없는 수영장) | 마른 장소의 합성·옴니 지시문에 water·pool·swim·splash·wave·ripple·wet·spa·bath·tub·jacuzzi·steam **0개**. 부정문도 금지. 남으면 돈 쓰기 전에 멈춤 | `make_mini.edit_prompt`·`omni_prompt` 검사, `make_solo.mini_errs` |
+| 캐릭터 블록·유지 문장 속 수영복·'wet' | 마른 장소는 CLOTHING·젖음·수영복 금지 항목·'wet or dry'·'wet-look' 삭제, 유지 문장도 수영복 없이, 옷은 가운 고정 | `character_block(water=False)`, `KEEP_LINE_DRY`, `OUTFIT_DRY` |
+| 비전이 인형 생김새를 적음('hand-carved wooden' → 나무 인형) | 인형은 이름으로만. 생김새 낱말은 지워서 보냄 | `clean_scene`, `MINI_SYSTEM` |
+| 크게 당기는 카메라 | 동작에 카메라 지시 금지, 옴니는 구도 고정 | `CAMERA_WORDS`, `VEO_TAIL` |
+| 인형이 자막·앱 버튼 자리에 들어감(run-27 훅 65~95%, 시그니처 84~95%) | 인형 전신은 화면 높이 25~60%·오른쪽 15% 밖. 비전 상자 세로 0.15~0.66·오른쪽 0.90 안. 합성 뒤 상자 중심 0.70 넘으면 옴니 생략 | `EDIT_SCALE`, `ZONE`, `mini_errs`, `make_minis` |
+| 인형이 너무 작음(run-27 객실 12%·전경 11%) | 비전 상자 높이 0.15 이상, 합성 뒤 0.12 미만이면 옴니 생략 | `mini_errs`, `make_minis` |
+| 원본 복원 때 몸 잘림(run-27 훅: 머리 없는 인형) | 상자 다듬기는 색 차이까지 보고 위로 넉넉히(최소 22%) 찾는다. 상한을 넘겨 제한할 때도 위로 높이 80% | `refine_box` |
+| 합성이 배경을 통째로 다시 그림 → 상자가 커져 가짜 배경이 살아남음 | 상자는 비전 상자의 2.5배·화면 40% 이하. 복원 뒤에도 30% 넘게 바뀌면 옴니 생략 | `refine_box`, `make_minis` |
+| 화면 가장자리 인형이 복원 때 지워짐 | 가장자리에 붙은 변은 안쪽으로 들이지 않고 이음매 검사에서도 뺀다 | `paste_back` |
+| 시그니처 양머리 수건 vs 캐릭터 블록 'no hats' 충돌 | 시그니처 컷에만 수건 허용 줄을 붙인다. 물가 데크여도 물 반응 문장 없음 | `PROPS_SIGNATURE` |
+| 짧은 나레이션에 하트 포즈가 잘림 | 미니어처 컷 최소 3.4초 | `MIN_MINI` |
+| 환경 컷(라이트)의 '드론 글라이드'·'표면 전체 파도' | 카메라 고정 + 약 5% 당기기, 있는 물·김·빛만 움직임 | `ENV_PROMPT` |
+| 잔잔한 풀에서 파도 개그 등 시설과 다른 연출 | 개그는 사진에 보이는 것만으로 가능해야 함 | `MINI_SYSTEM` |
+| `"fake": true` 면 미니어처(합성·옴니)가 허락 없이 유료로 돌 수 있었음 | 미니어처는 옴니·합성 둘 다 가짜일 때만 허락 면제 | `make_stay.main`, `make_mini.main` |
+| 합성 이미지 비용이 한 번 실행 한도에서 빠짐 | 이미지도 실행 한도(3,000원)에 합산 | `composite` |
+
