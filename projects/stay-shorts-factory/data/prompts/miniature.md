@@ -5,30 +5,34 @@
 > 2차 시험(2026-10-12, 운영자): 얼굴·머리·수영복·손·질감은 블록과 일치. 위반 1건 = 여자 인물 눈의 속눈썹 → "both figures identical eye construction" 강조 추가.
 > → 얼굴 부품의 **생성 방식**(모양·개수·재질)을 하나로 못 박고, 표정은 눈·입의 곡선만 바뀌게 한다. 디테일 수준은 "아주 조금 있는" 중간(3번 사진보다 한 단계 위).
 
-## 1. 캐릭터 블록 v2 (고정 · 모든 컷 공통 · 영어 그대로 복사)
+## 1. 캐릭터 블록 v3 (고정 · 모든 컷 공통 · 영어 그대로 복사)
 
-> v2 (2026-10-12 운영자 "이런 느낌의 캐릭터를 원한다" — 눈 쪽 온천 반실사 피규어 사진): 3등신 점눈 클레이 → **반실사 손조각·손채색 피규어**(6등신, 아몬드형 채색 눈, 작은 코·닫힌 입술, 조각 머리, 미나는 낮은 올림머리).
-> 예외 없이 지킬 것: 수영복 끈이 수면 위로 보인다(나체처럼 보이는 결과 금지), 속눈썹·화장·이빨 금지, 두 인물 같은 눈 구조.
+> v3 (2026-10-12 운영자 3차 시험 → "8등신 성인 체형, 남자 머리 계속 바뀜 — 통일"): 실측 문제 = 머리가 큰 4~5등신으로 나옴, 준의 머리가 뾰족·옆으로 넘김·헬멧형으로 3장 모두 다름, 수영복 바지 길이 들쭉날쭉.
+> 고친 것: **8등신을 수치로**(머리 길이 × 8 = 키, 다리 = 키의 절반, "큰 머리·어린이·버블헤드 금지"), 준 머리를 **앞머리 내린 댄디컷 하나**로 모양·길이·결 선까지 고정(옆으로 넘김·뾰족·볼륨 금지), 미나 올림머리 위치·크기 고정,
+> 수영복 디자인 고정(스쿱넥·가는 끈 / 허벅지 중간 길이·끈 없음), 크기 기준을 실제 비율로 교정(머그컵 높이·의자의 1/20·타일 = 머리), 피부색 하나.
 > 실제 제작(Veo)에서는 이 블록 끝에 `BACKGROUND: use the attached hotel photograph as the exact, unchanged background — same walls, water, furniture, colors and lighting; nothing added, removed or redrawn.` 을 붙인다.
+> 일관성 보강: 마음에 드는 결과 1장을 참조 이미지로 고정해(`assets/characters/ref.jpg`) 다음 생성마다 첨부한다.
 
 ```
-CHARACTERS — FIXED DESIGN, identical in every image and every shot. Two hand-sculpted, hand-painted miniature figurines of a Korean couple in their early 30s, "Mina" (woman) and "Jun" (man): collectible art-doll figurines about 10 cm tall with semi-realistic adult proportions (about six heads tall), photographed as tiny toys inside a real full-size place.
+CHARACTERS — FIXED DESIGN, identical in every image and every shot. Two hand-sculpted, hand-painted miniature figurines of a Korean couple in their early 30s, "Mina" (woman) and "Jun" (man): collectible art-doll figurines with realistic adult fashion-figure proportions, photographed as tiny toys inside a real full-size place. Jun is 10 cm tall; Mina is 9.5 cm tall.
 
-MATERIAL: smooth sculpted polymer clay with a soft satin finish, subtle hand-painted shading, a faint warm blush on the cheeks, nose tip and shoulders; edges slightly softened like a sculpted doll. No fingerprints, no seams, no plastic gloss, no realistic pores or skin texture. When wet, only a thin glossy sheen.
+PROPORTIONS — strictly eight heads tall: total height equals eight head lengths. Small head, long neck, shoulders about two head-widths wide, legs exactly half of the total height, natural adult waist and hips. This is an elegant adult figurine — NOT a doll with an oversized head, NOT chibi, NOT a child, NOT a bobblehead. Mina: slim, graceful feminine build. Jun: slim athletic build with broad shoulders and a softly sculpted chest, no exaggerated muscles, no visible six-pack.
 
-FACE — identical construction on both figures: softly sculpted oval face with gentle cheekbones. Eyes: almond-shaped sculpted eyes with painted dark-brown irises and black pupils, only a thin sliver of white at the corners, one tiny white highlight. Closed eyes are a sculpted downward-curving lid with one thin painted dark line along the lash line — no individual eyelashes, no makeup. Eyebrows: thin, softly painted, natural dark-brown. Nose: small straight sculpted nose with a softly rounded tip and barely indicated nostrils. Mouth: small closed sculpted lips painted muted rose with a calm faint smile; no teeth, never open. Ears: small sculpted ears. Expression range: calm, relaxed, content — only the eyelids (open or closed) and the faint smile change.
+MATERIAL: smooth sculpted polymer clay with a soft satin finish, subtle hand-painted shading, a faint warm blush on the cheeks, nose tip and shoulders; edges slightly softened like a sculpted doll. No fingerprints, no seams, no plastic gloss, no realistic pores or skin texture. When wet, only a thin glossy sheen. Skin is one warm light-beige tone on both figures.
 
-HAIR: sculpted as one solid piece with shallow carved groove lines suggesting strands, satin finish, no loose strands. Mina: dark chocolate-brown hair with a side part, pulled back smoothly into a neat low round bun at the back of the head. Jun: black short hair, slightly longer on top and swept to one side, short sides.
+FACE — small because of the eight-head proportions, but fully detailed, and built identically on both figures: softly sculpted oval face with gentle cheekbones. Eyes: almond-shaped sculpted eyes with painted dark-brown irises and black pupils, only a thin sliver of white at the corners, one tiny white highlight. Closed eyes are a sculpted downward-curving lid with one thin painted dark line along the lash line — no individual eyelashes, no makeup. Eyebrows: thin, softly painted, natural dark-brown. Nose: small straight sculpted nose with a softly rounded tip and barely indicated nostrils. Mouth: small closed sculpted lips painted muted rose with a calm faint smile; no teeth, never open. Ears: small sculpted ears. Expression range: calm, relaxed, content — only the eyelids (open or closed) and the faint smile change.
 
-BODY: slim adult build, sculpted shoulders and subtle collarbones, hands with five simplified sculpted fingers held softly together, natural relaxed poses.
+HAIR — exact and never changes, wet or dry, from any angle:
+Mina: dark chocolate-brown hair with a side part on her left side, all hair combed smoothly back over both ears into one neat round low bun at the nape of the neck; the bun is about half the size of her head; 10 to 12 shallow carved groove lines run from the hairline back to the bun; no fringe, no loose strands, no ponytail, no high bun.
+Jun: jet-black short Korean dandy cut. The top is combed straight forward into a soft rounded fringe that covers the forehead and ends just above the eyebrows; the sides and back are short and tapered close to the head, with both ears fully visible; the whole outline is a smooth rounded cap shape with 8 to 10 shallow carved groove lines running from the crown toward the fringe. No side part, no swept-to-the-side hair, no spikes, no upward quiff, no volume lift, no messy or wet-look texture.
 
-CLOTHING — always worn: Mina wears a plain cobalt-blue one-piece swimsuit whose thin shoulder straps stay visible above the waterline; Jun wears plain navy swim trunks with a bare chest. In sauna, room, lobby, restaurant and balcony scenes both wear plain cream waffle-texture bathrobes over the swimwear. No patterns, logos, jewelry, glasses or hats.
+CLOTHING — exact and always worn: Mina wears a plain cobalt-blue one-piece swimsuit with a scoop neckline, thin shoulder straps and a moderate leg cut, matte finish; the straps stay visible above the waterline. Jun wears plain dark-navy swim shorts ending at mid-thigh with a flat elastic waistband, no drawstring, no stripes; bare chest. In sauna, room, lobby, restaurant and balcony scenes both wear plain cream waffle-texture bathrobes over the swimwear. No patterns, logos, jewelry, glasses or hats.
 
-SCALE: the figures are tiny — about one-sixth the length of a lounge chair, each head roughly the size of a walnut next to a pool rim or a pebble next to a stone edge. Real objects in the scene stay full-size.
+SCALE: each figure is about the height of a coffee mug (10 cm) placed in a real full-size place — a lounge chair is about twenty times longer than a figure, and a 2.5 cm pool mosaic tile is about as tall as a figure's head. Real objects in the scene stay full-size.
 
-PHOTOGRAPHY: realistic macro toy photography, camera low near the figures' eye level, shallow depth of field — figures tack-sharp, background softly blurred. Natural light matching the scene, soft contact shadows, true reflections in the water. Vertical 9:16.
+PHOTOGRAPHY: realistic macro toy photography, camera low near the figures' chest level, both figures fully in frame from head to the waterline or feet, shallow depth of field — figures tack-sharp, background softly blurred. Natural light matching the scene, soft contact shadows, true reflections in the water. Vertical 9:16.
 
-FORBIDDEN: real people, realistic human skin, chibi or big-head proportions, dot eyes, cartoon or anime eyes, eyelashes, makeup, teeth, open mouths, nudity or missing swimsuit straps, patterned or colorful swimwear, more than two figures, flyaway hair strands, distorted hands, extra fingers, text, logos, watermarks, melted or morphing shapes.
+FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobblehead proportions, dot eyes, cartoon or anime eyes, eyelashes, makeup, teeth, open mouths, nudity or missing swimsuit straps, patterned or colorful swimwear, drawstrings, any hairstyle other than the ones described, side-swept or spiky hair on Jun, more than two figures, flyaway hair strands, distorted hands, extra fingers, text, logos, watermarks, melted or morphing shapes.
 ```
 
 ## 2. 장면 블록 (컷마다 · 장소 사전에서 고른다 · 영어)
