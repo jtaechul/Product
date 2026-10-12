@@ -94,5 +94,35 @@
   "kind": "gemini_est",
   "krw": 84,
   "note": "2026-10-12-p10d 미리보기 AI 글·음성 28회 (추정)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_11.mp4"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_12.mp4"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_13.mp4"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_18.mp4"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "gemini_est",
+  "krw": 78,
+  "note": "2026-10-12-v2 solo AI 글·음성 28회 (추정)"
  }
 ]
