@@ -89,6 +89,7 @@ jobs:
             projects/stay-shorts-factory/build/video.mp4
             projects/stay-shorts-factory/build/meta.json
             projects/stay-shorts-factory/build/narr_full.wav
+            projects/stay-shorts-factory/build/mini
             projects/stay-shorts-factory/data/runs/latest/compare_sheet.jpg
             projects/stay-shorts-factory/data/runs/latest/preview_shots.jpg
             projects/stay-shorts-factory/data/runs/latest/narration_preview.mp3
