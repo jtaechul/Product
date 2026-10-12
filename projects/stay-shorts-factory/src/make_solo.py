@@ -258,8 +258,9 @@ def check_script(s: dict, h: dict, cuts: list[dict], req: dict, sig: dict | None
         errs.append("extra 는 null (사진 없는 시그니처가 없다)")
     if ex and sig and ex_i != sig["i"]:
         errs.append(f"extra 는 컷 {sig['i']} 에만")
-    if ex and not (2 <= _len(design.plain(str(ex.get("tag", "")).lstrip("+ "))) <= 10):
-        errs.append("extra.tag 는 '+ 시설 이름' 2~10자")
+    if ex and sig:                                                               # tag 는 기록용(화면 태그 폐기) → 모델 출력에 기대지 않고 시설 낱말로 채운다 (stay-run-24: 긴 tag 로 3번 탈락)
+        words = [w for w in _words(sig["fact"]) if FACILITY_RX.search(w)]
+        ex["tag"] = "+ " + (words[0] if words else design.plain(str(ex.get("tag", "")).lstrip("+ "))[:10] or sig["fact"][:10])
     for c in cuts:
         x = got[c["i"]]
         n, cap = str(x.get("narration", "")).strip(), str(x.get("caption", "")).strip()
