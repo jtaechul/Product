@@ -220,8 +220,8 @@ MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙�
 두 인형 Mina(여)·Jun(남)을 이 사진 안에 **실제로 있는** 표면(물·풀 가장자리·바닥·데크·침대·소파) 위에만 둔다. 사진에 없는 수영장·물·가구·구조물을 만들거나 키우지 않는다.
 
 [적합 판단] suitable=true 는 아래를 **모두** 만족할 때만:
-- 인형의 **머리·상체가 화면 높이 25~60%(위에서부터)** 에 오고, 발·다리는 **74% 위**에서 끝나도록 실제로 서거나 앉거나 들어갈 표면이 있다
-  (60~74% 는 자막이 다리 위를 지나가도 되는 자리, 74% 아래는 앱 정보가 덮어 쓰지 않는다. 오른쪽 15% 는 앱 버튼 자리)
+- 인형이 실제로 서거나 앉거나 들어갈 표면이 있고, 그 자리에서 **두 얼굴이 화면 높이 58%(위에서부터)보다 위**, 오른쪽 15%(앱 버튼) 밖에 온다
+  (58% 아래는 자막 띠 — **몸·다리는 자막에 가려져도 되지만 얼굴은 절대 안 된다**)
 - 그 표면이 카메라에서 가까워 인형이 화면 높이의 1/4~1/3 크기로 자연스럽게 보인다
 - 멀리 찍은 외관·전경·항공·조감 사진, 그 띠가 하늘·벽·잔디·도로뿐인 사진은 false
 [역할 gag] 아래 장소 개그 사전에서 이 사진의 장소에 맞는 개그 하나(최근 사용 개그 제외 · 맞는 것이 없으면 같은 결의 새 개그).
@@ -233,9 +233,10 @@ MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙�
 - 인형은 이름(Mina, Jun)으로만 부른다. **생김새·재질·크기·옷·머리를 쓰지 않는다**(wooden·carved·tiny·clay·swimsuit·robe 등 금지 — 생김새는 시스템이 정한다).
 - water=false(마른 장소)면 scene·motion 에 water·pool·swim·splash·wave·ripple·wet·spa·bath·tub·jacuzzi·steam 같은 물 낱말을 **하나도** 쓰지 않는다(부정문 'no water' 도 금지 — 낱말 자체가 영상 모델에 물을 부른다). 손 인사도 wave 대신 'sway a raised hand' 로 쓴다.
 - motion(영어, gag 만): 정확히 '0 to 1.5 seconds: ... 1.5 to 3 seconds: ... 3 to 4 seconds: ...' 형식. 인형 동작만 — 카메라 움직임(zoom·push·pan·dolly·close-up)은 쓰지 않는다(시스템이 고정).
-- box: 인형 두 명의 머리끝~발끝과 그림자(물이면 물보라)가 들어갈 영역 [x0, y0, x1, y1](0~1, 왼쪽 위 기준)을 넉넉히 — y0 은 0.15 이상, y1 은 0.74 이하, 세로 중심 (y0+y1)/2 는 0.62 이하, x1 은 0.92 이하(오른쪽 앱 버튼). 이 영역 밖은 원본 사진으로 되돌린다.
+- box: 인형 두 명의 머리끝~발끝과 그림자(물이면 물보라)가 들어갈 영역 [x0, y0, x1, y1](0~1, 왼쪽 위 기준)을 넉넉히 — y0 은 0.12 이상. 이 영역 밖은 원본 사진으로 되돌린다.
+- faces: 두 얼굴(이마~턱)을 함께 감싸는 영역 [x0, y0, x1, y1] — y1(턱) 은 0.58 이하, 얼굴이 화면 위쪽 절반(y1 0.50 이하)이 아니면 x1 은 0.85 이하.
 - water: 인형이 물 안이나 물가에 있으면 true(물 반응을 넣는다), 마른 장소면 false.
-JSON 만: {"suitable":true|false,"why":"한 줄","water":true|false,"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1]}"""
+JSON 만: {"suitable":true|false,"why":"한 줄","water":true|false,"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1],"faces":[x0,y0,x1,y1]}"""
 
 
 def _recent_gags(n: int = 6) -> list[str]:
@@ -299,11 +300,17 @@ def mini_errs(sc: dict, role: str) -> list[str]:
             and 0 <= box[0] < box[2] <= 1 and 0 <= box[1] < box[3] <= 1 and box[2] - box[0] > 0.1 and box[3] - box[1] > 0.1):
         errs.append(f"box 형식 오류 {box}")
     else:
-        top, bottom, right = make_mini.ZONE
-        if box[3] > bottom or box[1] < top or box[2] > right:
-            errs.append(f"box {box} 가 자막·앱 버튼 자리에 걸침(세로 {top}~{bottom}, 오른쪽 {right} 안쪽)")
-        elif (box[1] + box[3]) / 2 > make_mini.MID_MAX:
-            errs.append(f"box {box} 중심 {(box[1] + box[3]) / 2:.2f} — 머리·상체가 자막 띠(0.60) 아래로 내려감")
+        if box[1] < make_mini.BOX_TOP_MIN:
+            errs.append(f"box {box} 위 끝이 고지문 자리({make_mini.BOX_TOP_MIN} 위)")
+        # 2026-10-12 운영자 "얼굴만 안 가리면 된다" — 몸은 자막에 가려져도 되고, 얼굴만 자막 띠·앱 버튼을 피한다
+        fc = sc.get("faces")
+        if isinstance(fc, list) and len(fc) == 4 and all(isinstance(v, (int, float)) for v in fc):
+            if fc[3] > make_mini.FACE_Y_MAX:
+                errs.append(f"얼굴 {fc} 턱 {fc[3]:.2f} — 자막 띠({make_mini.FACE_Y_MAX} 아래)에 얼굴이 가려짐")
+            elif fc[2] > make_mini.FACE_X_MAX and fc[3] > 0.50:
+                errs.append(f"얼굴 {fc} 이 오른쪽 앱 버튼 자리({make_mini.FACE_X_MAX} 오른쪽)")
+        elif box[1] > make_mini.FACE_Y_MAX - 0.10:                        # 얼굴 좌표가 없으면 머리 위 끝으로 대신 본다(얼굴 높이 약 0.10 가정)
+            errs.append(f"얼굴 좌표 없음 · 머리 위 끝 {box[1]:.2f} — 얼굴이 자막 띠에 걸릴 수 있음")
         if box[3] - box[1] < 0.15:                                       # run-27 객실 컷: 상자 높이 12% = 인형이 작아 옴니가 크게 당기며 주변을 지어냄
             errs.append(f"box 높이 {box[3] - box[1]:.2f} — 인형이 너무 작다(화면 높이 0.15 이상)")
     return errs
@@ -331,7 +338,7 @@ def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
             except Exception as e:  # noqa: BLE001
                 rec["verdict"] = f"판단 실패: {str(e)[:80]}"
                 log(f"컷 {c['i']} 미니어처 판단 실패: {str(e)[:80]}"); continue
-            rec.update({k: sc.get(k) for k in ("suitable", "why", "water", "place", "gag", "box", "scene", "motion")})
+            rec.update({k: sc.get(k) for k in ("suitable", "why", "water", "place", "gag", "box", "faces", "scene", "motion")})
             bad = mini_errs(sc, role) if sc.get("suitable") is True and sc.get("scene") else []
             if bad:
                 rec["verdict"] = "거름: " + " / ".join(bad)
@@ -395,8 +402,8 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
             if isinstance(box, list) and len(box) == 4 and all(isinstance(v, (int, float)) for v in box) and box[2] - box[0] > 0.1 and box[3] - box[1] > 0.1:
                 # omni-1 실측: 합성 모델이 인형은 잘 넣고 위쪽 건물·야자수를 다시 그렸다 → 인형 영역 밖은 원본 픽셀로 되돌린다
                 box = make_mini.refine_box(base, frame, [max(0.0, min(1.0, float(v))) for v in box])
-                if (box[1] + box[3]) / 2 > make_mini.POST_MID_MAX:              # 상자(여백 포함) 중심이 자막 띠 안 = 상체까지 글자에 가려진다 → 옴니 620원을 쓰지 않는다 (run-27 시그니처 0.86)
-                    raise RuntimeError(f"인형이 자막 띠에 들어감(상자 {[round(v, 2) for v in box]}) — 옴니 생략")
+                if box[1] > make_mini.POST_HEAD_TOP_MAX:                       # 합성 결과 머리가 너무 아래서 시작 = 얼굴이 자막 띠에 가려진다 → 옴니 620원을 쓰지 않는다 (run-27 시그니처 0.72)
+                    raise RuntimeError(f"얼굴이 자막 띠에 들어감(상자 위 끝 {box[1]:.2f}) — 옴니 생략")
                 if box[3] - box[1] < 0.12:                                        # 합성 결과 인형이 아주 작음(run-27 객실·전경) → 옴니가 당기며 주변을 지어낼 위험
                     raise RuntimeError(f"인형이 너무 작음(상자 높이 {box[3] - box[1]:.2f}) — 옴니 생략")
                 frame, seam = make_mini.paste_back(base, frame, box, mdir / f"{c['n']}_frame_pb.png")
@@ -892,14 +899,16 @@ def mini_sheet(rows: list[dict], out: Path) -> Path | None:
         except Exception:  # noqa: BLE001
             im = Image.new("RGB", (w, hh), (60, 60, 60))
         ov = Image.new("RGBA", (w, hh), (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
-        d.rectangle([0, int(0.25 * hh), w, int(0.60 * hh)], outline=(80, 220, 120, 200), width=2)       # 머리·상체 자리
         d.rectangle([0, int(1150 / 1920 * hh), w, int(1560 / 1920 * hh)], fill=(255, 60, 60, 60))         # 자막 띠
-        d.line([(0, int(make_mini.ZONE[1] * hh)), (w, int(make_mini.ZONE[1] * hh))], fill=(255, 220, 60, 230), width=2)  # 발 한계
+        d.line([(0, int(make_mini.FACE_Y_MAX * hh)), (w, int(make_mini.FACE_Y_MAX * hh))], fill=(255, 220, 60, 230), width=2)  # 얼굴 한계(이 선 위)
         im = Image.alpha_composite(im.convert("RGBA"), ov).convert("RGB"); d = ImageDraw.Draw(im)
         ok = r.get("verdict") == "채택"
         b = r.get("box")
         if isinstance(b, list) and len(b) == 4 and all(isinstance(v, (int, float)) for v in b):
             d.rectangle([b[0] * w, b[1] * hh, b[2] * w, b[3] * hh], outline=(60, 255, 140) if ok else (255, 160, 40), width=3)
+        fc = r.get("faces")
+        if isinstance(fc, list) and len(fc) == 4 and all(isinstance(v, (int, float)) for v in fc):
+            d.rectangle([fc[0] * w, fc[1] * hh, fc[2] * w, fc[3] * hh], outline=(90, 200, 255), width=2)          # 얼굴
         sheet.paste(im, (x, y))
         dd = ImageDraw.Draw(sheet)
         role = {"gag": "개그", "signature": "시그니처"}.get(r.get("role"), r.get("role"))
@@ -938,7 +947,7 @@ def preview_md(req: dict, p: dict) -> str:
         x = by_i[c["i"]]
         md.append(f"- 컷 {c['i']}: " + (f"**{x['narration']}**" if c["section"] == "hook" else " | ".join(design.chunk_words(x["narration"]))))
     if MINI_LOG:
-        md += ["", "## 미니어처 후보 판정 (`preview_mini.jpg` · 초록 띠 = 머리·상체 자리 25~60% · 노랑 선 = 발 한계 74% · 빨강 = 자막 띠)", "",
+        md += ["", "## 미니어처 후보 판정 (`preview_mini.jpg` · 노랑 선 = 얼굴 한계 58%(이 선 위) · 하늘색 = 얼굴 · 빨강 = 자막 띠 — 몸은 가려져도 됨)", "",
                "| 컷 | 역할 | 판정 | 장소 · 개그 | 물 | 상자 |", "|---|---|---|---|---|---|"]
         for r in MINI_LOG:
             md.append(f"| {r['i']} | {r['role']} | {r.get('verdict', '-')} | {r.get('place') or ''} · {r.get('gag') or ''} | {r.get('water')} | {r.get('box')} |")
