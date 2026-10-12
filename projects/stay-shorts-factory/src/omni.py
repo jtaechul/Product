@@ -119,8 +119,14 @@ def make_clip(prompt: str, image: Path, sec: float, out: Path, mime: str = "imag
                                      headers={"x-goog-api-key": veo._key(), "Content-Type": "application/json"})
         log(f"영상 요청 {model} ({resolution} · 목표 {sec}초 · 약 {est:,.0f}원 이하 예상): {out.name}")
         try:
-            with urllib.request.urlopen(req, timeout=900) as r:
+            with urllib.request.urlopen(req, timeout=1500) as r:
                 data = json.loads(r.read().decode("utf-8"))
+        except (TimeoutError, urllib.error.URLError) as e:
+            if isinstance(e, urllib.error.HTTPError):
+                raise
+            veo._state["spent"] += est                                          # 요청은 갔을 수 있다 → 보수적으로 예상액 기록
+            veo.record_est("omni", est, f"{model} 응답 시간 초과(보수적 기록) {out.name}")
+            raise veo.VeoError(f"Omni 응답 시간 초과·연결 오류: {str(e)[:150]}")
         except urllib.error.HTTPError as e:
             msg = e.read().decode("utf-8", "replace")[:300]
             last = veo.VeoError(f"Omni HTTP {e.code}: {msg}")
