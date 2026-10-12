@@ -32,7 +32,7 @@ import photos  # noqa: E402
 import veo  # noqa: E402
 
 QUOTA = {"water": 3, "room": 3, "special": 4}                 # 사진 10장 후보 → 훅1 · 물2 · 객실2 · 특별2~3(시설 사진 우선) · 조건1~2 = 컷 9~10
-LIM = {"hook": (10, 22), "veo": (12, 24), "photo": (14, 30)}  # 컷 문장 길이(공백 제외). 1.28배속 실측 약 6.6자/초 → Veo 4초 컷은 24자까지
+LIM = {"hook": (10, 24), "veo": (12, 28), "photo": (14, 32)}  # 컷 문장 길이(공백 제외). 1.28배속 실측 약 6.6자/초. p10c 실측: 연결어가 붙으니 Veo 컷이 25~26자로 3번 연속 탈락 → 28자(≈4.2초, 1.1배 슬로우 허용)
 MIN_CUT, GAP, VEO_SEC, MAX_SLOW = 1.6, 0.30, 4, 1.25
 PATTERNS = ("push", "pan", "tilt", "pull")                     # 사진 컷 카메라 무빙 4종 순환
 KO = {"hook": "훅", "water": "물놀이", "room": "객실", "special": "특별 공간", "offer": "조건·추천", "cta": "끝 카드"}
@@ -382,7 +382,7 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
               f"후기 아쉬움: {h.get('honest') or '없음'}",
               (f"사진 없는 시그니처(컷 {sig['i']} 문장 끝에 한 절로 덧붙이기 · 한도 +{EXTRA_BONUS}자): {sig['fact']}" if sig else "사진 없는 시그니처: 없음 (extra 는 null)")]
     content = "\n".join(lines)
-    errs = []
+    errs, best = [], None
     for attempt in range(3):
         extra = ("\n\n직전 답의 문제(고쳐서 다시): " + " / ".join(errs)) if errs else ""
         s = ms.gemini_json(model, SCRIPT_SYSTEM, content + extra)
@@ -394,7 +394,16 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
             if not sig:
                 s["extra"] = None
             return polish_script(model, s, cuts, h, req, sig)
+        # p10c 실측: 글자 한도 1~3자 초과만 남아 3번 다 탈락 → 그런 답은 '거의 통과'로 보관해 두고 마지막에 쓴다 (0.5초 차이는 슬로우로 흡수된다)
+        if all(re.search(r"\d+자 \(한도 \d+\)", e) and int(re.search(r"(\d+)자 \(한도 (\d+)\)", e).group(1)) - int(re.search(r"(\d+)자 \(한도 (\d+)\)", e).group(2)) <= 3 for e in errs):
+            best = s
         log(f"대본 검사 실패({attempt + 1}):", errs)
+    if best:
+        log("글자 한도 3자 이내 초과만 남아 그대로 채택")
+        best["cuts"] = sorted(best["cuts"], key=lambda x: int(x["i"]))
+        if not sig:
+            best["extra"] = None
+        return best
     raise RuntimeError("대본이 규칙을 통과하지 못함: " + " / ".join(errs))
 
 
