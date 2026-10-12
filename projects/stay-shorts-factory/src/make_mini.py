@@ -46,17 +46,17 @@ W, H = 720, 1280
 
 KEEP_LINE = ("Keep both figures exactly identical to the attached reference figurines — same faces, hairstyles, "
              "body proportions, skin tone and swimwear.")
-EDIT_HEAD = ("TASK: Edit the FIRST attached image, a real hotel photograph. Keep the photograph exactly as it is — same framing, walls, "
+EDIT_HEAD = ("TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real place). Keep the photograph exactly as it is — same framing, walls, "
              "water, furniture, decorations, colors, lighting and focus; do not blur, recolor, crop, extend, clean up or redraw anything, "
-             "and do not add or remove any object. Only add the two miniature figurines shown in the SECOND attached image (the reference), "
+             "and do not add or remove any object. Only add the two miniature figurines shown in the attached REFERENCE IMAGE (two figurines sitting on a pool edge), "
              "placed into the scene as described below, with correct contact shadows, reflections and water interaction so they look "
              "physically present in the photograph.")
-EDIT_SCALE = ("SCALE AND PLACEMENT (forced perspective): the figurines are 10 cm toys placed very close to the camera in the lower "
-              "foreground, so each figure appears about one third of the frame height, while the real place behind them keeps its true "
-              "size and stays clearly recognizable. Never enlarge or shrink anything in the photograph.")
+EDIT_SCALE = ("SCALE AND PLACEMENT: the figurines are 10 cm toys standing at the real spot described in SCENE, in true perspective — "
+              "if that spot is close to the camera they appear large (up to about one third of the frame height), if it is farther they "
+              "appear smaller. The real place keeps its true size and stays clearly recognizable. Never enlarge or shrink anything in the photograph.")
 EDIT_PHOTO = ("PHOTOGRAPHY: realistic toy photography matched to the photograph's own light direction, color temperature and grain; "
               "figures tack-sharp; the background keeps the photograph's existing sharpness (at most a very gentle natural softness right "
-              "behind the figures). Vertical 9:16, same size as the first image.")
+              "behind the figures). Vertical 9:16, same size as the hotel photograph.")
 EDIT_TAIL = ("PLACEMENT RULE: put the figurines only where that kind of place really exists in the photograph (real water, real pool rim, "
              "real floor). Never add, extend, enlarge, move or replace any pool, water area, floor, wall or structure to make room for them; "
              "if the described spot is farther from the camera, place them there and let them appear smaller. Do not zoom, reframe or shift "
@@ -67,9 +67,10 @@ VEO_HEAD = ("The first frame is a real hotel photograph with two small hand-scul
             "Korean couple (elegant adult proportions, eight heads tall, satin clay finish). Keep the figurines exactly as they appear in "
             "the first frame for the whole clip: same faces with painted almond eyes and small closed smiling lips, same hairstyles "
             "(woman: dark-brown hair with a left side part in a neat low bun; man: black short dandy cut with a forward fringe), same "
-            "cobalt-blue one-piece swimsuit and dark-navy swim shorts, same size and position. They move gently and slowly, slightly "
-            "stepwise like stop-motion figurines.")
-VEO_TAIL = ("Water, steam and light behave naturally around them. Camera: locked-off with a very slow 5 percent push-in. The hotel place "
+            "cobalt-blue one-piece swimsuit and dark-navy swim shorts, same body proportions. They are alive and clearly enjoying the place: "
+            "natural, visible, playful body movement (arms, heads, torsos and splashing water), smooth like an animated figurine film — "
+            "not frozen, not stiff. They may move around within the same pool or spot.")
+VEO_TAIL = ("Water reacts to every movement with splashes, droplets and ripples; steam and light behave naturally. Camera: locked-off with a very slow 5 percent push-in. The hotel place "
             "stays exactly the same as the first frame: no new objects, no new people, no text, no logos, no morphing; the figurines' "
             "faces, hair and swimwear never change; they never turn into real humans. Vertical 9:16, 4 seconds.")
 
