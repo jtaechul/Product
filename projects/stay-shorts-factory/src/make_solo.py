@@ -220,8 +220,8 @@ MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙�
 두 인형 Mina(여)·Jun(남)을 이 사진 안에 **실제로 있는** 표면(물·풀 가장자리·바닥·데크·침대·소파) 위에만 둔다. 사진에 없는 수영장·물·가구·구조물을 만들거나 키우지 않는다.
 
 [적합 판단] suitable=true 는 아래를 **모두** 만족할 때만:
-- 인형이 실제로 서거나 앉거나 들어갈 표면이 있고, 그 자리에서 **두 얼굴이 화면 높이 58%(위에서부터)보다 위**, 오른쪽 15%(앱 버튼) 밖에 온다
-  (58% 아래는 자막 띠 — **몸·다리는 자막에 가려져도 되지만 얼굴은 절대 안 된다**)
+- 인형이 실제로 서거나 앉거나 들어갈 표면이 있고, 그 자리에서 **두 얼굴(턱)이 화면 높이 67%(위에서부터)보다 위**, 오른쪽 15%(앱 버튼) 밖에 온다
+  (최종 화면에서 58% 아래는 자막 띠 — 얼굴이 58~67% 이면 시스템이 사진 위쪽을 잘라 확대해 얼굴을 올린다. **몸·다리는 자막에 가려져도 되지만 얼굴은 절대 안 된다**)
 - 그 표면이 카메라에서 가까워 인형이 화면 높이의 1/4~2/5 크기로 보인다 — 카메라 바로 앞 장난감 사진(원근)이라 크게 보이는 것이 자연스럽다
 - **얼굴을 58% 위로 올리는 법을 먼저 찾는다**: 가까운 가장자리가 화면 아래쪽(60~90%)에 있어도 거기 **서 있거나 기대 서면** 큰 인형의 얼굴은 위로 올라온다.
   물에서는 깊이 잠기는 대신 가장자리에 서서 발만 담그기·물속에 서서 허리 위 내밀기처럼 얼굴이 높은 자세를 고른다. 발·다리·몸은 화면 아래 끝까지 내려가도 된다(rev 2026-10-12 run-29b: 앉거나 잠기는 자세만 생각해 물 사진 3장을 모두 버렸다)
@@ -236,7 +236,7 @@ MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙�
 - water=false(마른 장소)면 scene·motion 에 water·pool·swim·splash·wave·ripple·wet·spa·bath·tub·jacuzzi·steam 같은 물 낱말을 **하나도** 쓰지 않는다(부정문 'no water' 도 금지 — 낱말 자체가 영상 모델에 물을 부른다). 손 인사도 wave 대신 'sway a raised hand' 로 쓴다.
 - motion(영어, gag 만): 정확히 '0 to 1.5 seconds: ... 1.5 to 3 seconds: ... 3 to 4 seconds: ...' 형식. 인형 동작만 — 카메라 움직임(zoom·push·pan·dolly·close-up)은 쓰지 않는다(시스템이 고정).
 - box: 인형 두 명의 머리끝~발끝과 그림자(물이면 물보라)가 들어갈 영역 [x0, y0, x1, y1](0~1, 왼쪽 위 기준)을 넉넉히 — y0 은 0.12 이상. 이 영역 밖은 원본 사진으로 되돌린다.
-- faces: 두 얼굴(이마~턱)을 함께 감싸는 영역 [x0, y0, x1, y1] — y1(턱) 은 0.58 이하, 얼굴이 화면 위쪽 절반(y1 0.50 이하)이 아니면 x1 은 0.85 이하.
+- faces: 두 얼굴(이마~턱)을 함께 감싸는 영역 [x0, y0, x1, y1] — y1(턱) 은 0.67 이하, 얼굴이 화면 위쪽 절반(y1 0.50 이하)이 아니면 x1 은 0.85 이하.
 - water: 인형이 물 안이나 물가에 있으면 true(물 반응을 넣는다), 마른 장소면 false.
 JSON 만: {"suitable":true|false,"why":"한 줄","water":true|false,"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1],"faces":[x0,y0,x1,y1]}"""
 
@@ -306,15 +306,23 @@ def mini_errs(sc: dict, role: str) -> list[str]:
             errs.append(f"box {box} 위 끝이 고지문 자리({make_mini.BOX_TOP_MIN} 위)")
         # 2026-10-12 운영자 "얼굴만 안 가리면 된다" — 몸은 자막에 가려져도 되고, 얼굴만 자막 띠·앱 버튼을 피한다
         fc = sc.get("faces")
-        if isinstance(fc, list) and len(fc) == 4 and all(isinstance(v, (int, float)) for v in fc):
-            if fc[3] > make_mini.FACE_Y_MAX:
-                errs.append(f"얼굴 {fc} 턱 {fc[3]:.2f} — 자막 띠({make_mini.FACE_Y_MAX} 아래)에 얼굴이 가려짐")
-            elif fc[2] > make_mini.FACE_X_MAX and fc[3] > 0.50:
-                errs.append(f"얼굴 {fc} 이 오른쪽 앱 버튼 자리({make_mini.FACE_X_MAX} 오른쪽)")
-        elif box[1] > make_mini.FACE_Y_MAX - 0.10:                        # 얼굴 좌표가 없으면 머리 위 끝으로 대신 본다(얼굴 높이 약 0.10 가정)
-            errs.append(f"얼굴 좌표 없음 · 머리 위 끝 {box[1]:.2f} — 얼굴이 자막 띠에 걸릴 수 있음")
-        if box[3] - box[1] < 0.15:                                       # run-27 객실 컷: 상자 높이 12% = 인형이 작아 옴니가 크게 당기며 주변을 지어냄
-            errs.append(f"box 높이 {box[3] - box[1]:.2f} — 인형이 너무 작다(화면 높이 0.15 이상)")
+        fc = fc if (isinstance(fc, list) and len(fc) == 4 and all(isinstance(v, (int, float)) for v in fc) and fc[3] > fc[1]) else None
+        # 얼굴이 낮으면 위쪽을 잘라 확대해 올린다(운영자 아이디어) — 잘라내기 25% 로도 안 되면 탈락
+        plan = make_mini.plan_crop(box, fc)
+        if plan is None:
+            fy = fc[3] if fc else box[1] + 0.10
+            errs.append(f"얼굴 턱 {fy:.2f} — 위쪽을 {make_mini.CROP_MAX:.0%} 잘라도 자막 띠({make_mini.FACE_Y_MAX})에 가려짐")
+        else:
+            c, xs = plan
+            mb = make_mini.map_crop(box, c, xs)
+            if c and mb[1] < make_mini.BOX_TOP_MIN:
+                errs.append(f"위쪽을 {c:.0%} 자르면 머리가 고지문 자리에 걸림(상자 위 끝 {mb[1]:.2f})")
+            if fc:
+                mf = make_mini.map_crop(fc, c, xs)
+                if mf[2] > make_mini.FACE_X_MAX and mf[3] > 0.50:
+                    errs.append(f"얼굴 {mf} 이 오른쪽 앱 버튼 자리({make_mini.FACE_X_MAX} 오른쪽)")
+            if mb[3] - mb[1] < 0.15:                                      # run-27 객실 컷: 상자 높이 12% = 인형이 작아 옴니가 크게 당기며 주변을 지어냄 (잘라 확대한 뒤 크기로 판단)
+                errs.append(f"box 높이 {mb[3] - mb[1]:.2f} — 인형이 너무 작다(화면 높이 0.15 이상)")
     return errs
 
 
@@ -348,6 +356,8 @@ def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
                 continue
             if sc.get("suitable") is True and sc.get("scene"):
                 rec["verdict"] = "채택"
+                fcs = sc.get("faces") if isinstance(sc.get("faces"), list) and len(sc.get("faces")) == 4 else None
+                rec["crop_top"] = (make_mini.plan_crop(sc["box"], fcs) or (0.0, 0.0))[0]
                 used.add(c["n"]); c["mini"] = role; c["mini_scene"] = sc
                 if role == "gag" and sc.get("gag"):
                     recent.append(str(sc["gag"]))
@@ -390,11 +400,19 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
             sc = c.get("mini_scene") or ms._try_models("vision", models["text"], lambda m: mini_scene(m, c, recent + used))
             row.update({"place": sc.get("place"), "gag": sc.get("gag")})
             motion = make_mini.signature_block() if c["mini"] == "signature" else str(sc.get("motion") or "")
-            base = make_mini.crop916(B() / f"shotHD_{c['n']}.png", mdir / f"{c['n']}_base.jpg")
             if not c.get("mini_scene"):                                       # choose_minis 를 거치지 않은 경우에도 같은 검사
                 bad = mini_errs(sc, c["mini"]) if sc.get("suitable") is not False else ["부적합"]
                 if bad:
                     raise RuntimeError("미니어처 답 거름: " + " / ".join(bad)[:160])
+            fc = sc.get("faces") if isinstance(sc.get("faces"), list) and len(sc.get("faces")) == 4 else None
+            plan = make_mini.plan_crop(sc["box"], fc) or (0.0, 0.0)
+            if plan[0] > 0:                                                   # 얼굴이 낮으면 위쪽을 잘라 확대(운영자 아이디어) — 실제 사진 픽셀만, 0원
+                base = make_mini.crop_zoom(B() / f"shotHD_{c['n']}.png", mdir / f"{c['n']}_base.jpg", *plan)
+                sc = {**sc, "box": make_mini.map_crop(sc["box"], *plan), "faces": make_mini.map_crop(fc, *plan) if fc else None}
+                row["crop_top"] = plan[0]
+                log(f"컷 {c['i']} 얼굴이 낮아 위쪽 {plan[0]:.0%} 잘라 확대")
+            else:
+                base = make_mini.crop916(B() / f"shotHD_{c['n']}.png", mdir / f"{c['n']}_base.jpg")
             wet = bool(sc.get("water"))                                       # 비전이 정한 물 여부 — 없으면 마른 장소(물 낱말이 없는 쪽이 안전)
             sig = c["mini"] == "signature"
             ep = make_mini.edit_prompt(sc["scene"], water=wet, signature=sig)
@@ -911,10 +929,13 @@ def mini_sheet(rows: list[dict], out: Path) -> Path | None:
         fc = r.get("faces")
         if isinstance(fc, list) and len(fc) == 4 and all(isinstance(v, (int, float)) for v in fc):
             d.rectangle([fc[0] * w, fc[1] * hh, fc[2] * w, fc[3] * hh], outline=(90, 200, 255), width=2)          # 얼굴
+        if r.get("crop_top"):                                                                                   # 잘라낼 위쪽(흰 선 위)
+            d.line([(0, int(r["crop_top"] * hh)), (w, int(r["crop_top"] * hh))], fill=(255, 255, 255), width=3)
         sheet.paste(im, (x, y))
         dd = ImageDraw.Draw(sheet)
         role = {"gag": "개그", "signature": "시그니처"}.get(r.get("role"), r.get("role"))
-        dd.text((x, y + hh + 8), f"컷 {r['i']} · {role} · {'채택' if ok else '탈락'}", font=fb, fill=(120, 230, 150) if ok else (255, 170, 80))
+        dd.text((x, y + hh + 8), f"컷 {r['i']} · {role} · {'채택' if ok else '탈락'}" + (f" · 위 {r['crop_top']:.0%} 잘라 확대" if ok and r.get("crop_top") else ""),
+                font=fb, fill=(120, 230, 150) if ok else (255, 170, 80))
         txt = (r.get("gag") or "") if ok else str(r.get("verdict") or "")
         lines, cur = [], ""
         for ch in txt:
@@ -949,10 +970,10 @@ def preview_md(req: dict, p: dict) -> str:
         x = by_i[c["i"]]
         md.append(f"- 컷 {c['i']}: " + (f"**{x['narration']}**" if c["section"] == "hook" else " | ".join(design.chunk_words(x["narration"]))))
     if MINI_LOG:
-        md += ["", "## 미니어처 후보 판정 (`preview_mini.jpg` · 노랑 선 = 얼굴 한계 58%(이 선 위) · 하늘색 = 얼굴 · 빨강 = 자막 띠 — 몸은 가려져도 됨)", "",
+        md += ["", "## 미니어처 후보 판정 (`preview_mini.jpg` · 노랑 선 = 얼굴 한계 58%(이 선 위) · 하늘색 = 얼굴 · 빨강 = 자막 띠 — 몸은 가려져도 됨 · 흰 선 = 얼굴을 올리려고 잘라낼 위쪽)", "",
                "| 컷 | 역할 | 판정 | 장소 · 개그 | 물 | 상자 |", "|---|---|---|---|---|---|"]
         for r in MINI_LOG:
-            md.append(f"| {r['i']} | {r['role']} | {r.get('verdict', '-')} | {r.get('place') or ''} · {r.get('gag') or ''} | {r.get('water')} | {r.get('box')} |")
+            md.append(f"| {r['i']} | {r['role']} | {r.get('verdict', '-')}{' · 위 ' + format(r['crop_top'], '.0%') + ' 잘라 확대' if r.get('crop_top') else ''} | {r.get('place') or ''} · {r.get('gag') or ''} | {r.get('water')} | {r.get('box')} |")
     md += ["", "## 나레이션 받아쓰기 검증", "", "| 컷 | 대본 | 들린 것 | 일치 | 판정 |", "|---|---|---|---|---|"]
     for q in nqa:
         md.append(f"| {q['segment']} | {q['script']} | {q['heard']} | {q['similarity']} | {'통과' if q['ok'] else '실패 ' + ','.join(q['instruction_words'])} |")

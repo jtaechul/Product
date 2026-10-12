@@ -67,6 +67,40 @@ FACE_Y_MAX = 0.58           # 두 얼굴(턱)의 가장 낮은 점 상한 — �
 FACE_X_MAX = 0.85           # 얼굴 오른쪽 끝 상한 — 앱 버튼 기둥(얼굴이 화면 위쪽 절반이면 버튼이 없어 면제)
 BOX_TOP_MIN = 0.12          # 상자 위 끝 하한 — 위쪽 고지문(y 172/1920 = 0.09) 회피
 POST_HEAD_TOP_MAX = 0.54    # 합성 뒤 다듬은 상자(여백 0.04 포함) 위 끝 상한 — 이보다 아래서 머리가 시작하면 얼굴이 자막 띠에 걸린다 → 옴니 생략
+# 얼굴이 낮으면 화면 위쪽을 잘라 확대한다(2026-10-12 운영자 아이디어 "얼굴이 가려질 것 같으면 위쪽을 조금 크롭"). 아래쪽은 그대로 두고 위쪽만 c 만큼 잘라
+# 9:16 을 유지하려 좌우도 같은 비율로 줄인다 → 얼굴 y 가 (y - c)/(1 - c) 로 올라가고 인형도 1/(1-c) 배 커진다. 실제 사진 픽셀만 쓴다(지어낸 영역 없음).
+CROP_MAX = 0.25             # 잘라내기 상한(확대 1.33배) — 원본이 1024px 급이라 더 자르면 흐려진다
+FACE_Y_LIMIT = round(FACE_Y_MAX + (CROP_MAX - 0.02) * (1 - FACE_Y_MAX), 3)   # 0.677 — 잘라내기로 구할 수 있는 얼굴 턱의 한계(여유 0.02 포함 · 비전 지시는 67%)
+
+
+def plan_crop(box, faces=None):
+    """(c, xs) 또는 None. c = 위쪽 잘라낼 비율, xs = 남길 창의 왼쪽 끝(인형 상자 가운데 맞춤). 얼굴이 이미 58% 위면 (0, 0)."""
+    fy = faces[3] if faces else box[1] + 0.10
+    if fy <= FACE_Y_MAX:
+        return 0.0, 0.0
+    c = (fy - FACE_Y_MAX) / (1 - FACE_Y_MAX) + 0.02
+    if c > CROP_MAX:
+        return None
+    wdt = 1 - c
+    xs = min(max(0.0, (box[0] + box[2]) / 2 - wdt / 2), c)
+    return round(c, 3), round(xs, 3)
+
+
+def map_crop(v, c: float, xs: float) -> list[float]:
+    """원래 화면 비율 좌표 [x0,y0,x1,y1] → 잘라 확대한 화면의 좌표."""
+    w = 1 - c
+    f = lambda a, o: round(min(1.0, max(0.0, (a - o) / w)), 3)  # noqa: E731
+    return [f(v[0], xs), f(v[1], c), f(v[2], xs), f(v[3], c)]
+
+
+def crop_zoom(src: Path, out: Path, c: float, xs: float) -> Path:
+    """9:16 사진(shotHD)에서 위쪽 c·좌우를 잘라 W×H 로 — 원본 픽셀만."""
+    im = Image.open(src).convert("RGB")
+    iw, ih = im.size
+    x0, y0 = int(round(xs * iw)), int(round(c * ih))
+    cw = int(round((1 - c) * iw))
+    im.crop((x0, y0, min(iw, x0 + cw), ih)).resize((W, H), Image.LANCZOS).save(out, "JPEG", quality=94)
+    return out
 EDIT_PHOTO = ("PHOTOGRAPHY: realistic toy photography matched to the photograph's own light direction, color temperature and grain; "
               "figures tack-sharp; the background keeps the photograph's existing sharpness (at most a very gentle natural softness right "
               "behind the figures). Vertical 9:16, same size as the hotel photograph.")
