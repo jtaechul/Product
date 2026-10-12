@@ -5,26 +5,30 @@
 > 2차 시험(2026-10-12, 운영자): 얼굴·머리·수영복·손·질감은 블록과 일치. 위반 1건 = 여자 인물 눈의 속눈썹 → "both figures identical eye construction" 강조 추가.
 > → 얼굴 부품의 **생성 방식**(모양·개수·재질)을 하나로 못 박고, 표정은 눈·입의 곡선만 바뀌게 한다. 디테일 수준은 "아주 조금 있는" 중간(3번 사진보다 한 단계 위).
 
-## 1. 캐릭터 블록 (고정 · 모든 컷 공통 · 영어 그대로 복사)
+## 1. 캐릭터 블록 v2 (고정 · 모든 컷 공통 · 영어 그대로 복사)
+
+> v2 (2026-10-12 운영자 "이런 느낌의 캐릭터를 원한다" — 눈 쪽 온천 반실사 피규어 사진): 3등신 점눈 클레이 → **반실사 손조각·손채색 피규어**(6등신, 아몬드형 채색 눈, 작은 코·닫힌 입술, 조각 머리, 미나는 낮은 올림머리).
+> 예외 없이 지킬 것: 수영복 끈이 수면 위로 보인다(나체처럼 보이는 결과 금지), 속눈썹·화장·이빨 금지, 두 인물 같은 눈 구조.
+> 실제 제작(Veo)에서는 이 블록 끝에 `BACKGROUND: use the attached hotel photograph as the exact, unchanged background — same walls, water, furniture, colors and lighting; nothing added, removed or redrawn.` 을 붙인다.
 
 ```
-CHARACTERS — FIXED DESIGN, identical in every shot. Two handmade polymer-clay miniature figures, "Mina" (woman) and "Jun" (man), toy scale inside a real full-size hotel photograph.
+CHARACTERS — FIXED DESIGN, identical in every image and every shot. Two hand-sculpted, hand-painted miniature figurines of a Korean couple in their early 30s, "Mina" (woman) and "Jun" (man): collectible art-doll figurines about 10 cm tall with semi-realistic adult proportions (about six heads tall), photographed as tiny toys inside a real full-size place.
 
-SCALE: each figure is exactly as tall as one sofa cushion / one quarter of a lounge chair / the height of a bathtub rim. Anchor the size to a real object in the photo.
+MATERIAL: smooth sculpted polymer clay with a soft satin finish, subtle hand-painted shading, a faint warm blush on the cheeks, nose tip and shoulders; edges slightly softened like a sculpted doll. No fingerprints, no seams, no plastic gloss, no realistic pores or skin texture. When wet, only a thin glossy sheen.
 
-BODY: about three heads tall. Round head, short thick neck, chunky torso, stubby rounded arms and legs, slightly rounded belly. Hands are mitten shapes with one small thumb bump and no separate fingers. Feet are simple rounded blocks. Surface: matte polymer clay, faint fingerprint texture, soft rounded edges, no gloss, no plastic shine, no fabric weave, no visible seams.
+FACE — identical construction on both figures: softly sculpted oval face with gentle cheekbones. Eyes: almond-shaped sculpted eyes with painted dark-brown irises and black pupils, only a thin sliver of white at the corners, one tiny white highlight. Closed eyes are a sculpted downward-curving lid with one thin painted dark line along the lash line — no individual eyelashes, no makeup. Eyebrows: thin, softly painted, natural dark-brown. Nose: small straight sculpted nose with a softly rounded tip and barely indicated nostrils. Mouth: small closed sculpted lips painted muted rose with a calm faint smile; no teeth, never open. Ears: small sculpted ears. Expression range: calm, relaxed, content — only the eyelids (open or closed) and the faint smile change.
 
-FACE — build it exactly this way every time: skin is one uniform peach clay color with a faint pink blush circle on each cheek. Eyes: two small flat black clay ovals pressed into the face, each with one tiny white highlight dot in the upper left; NO eye whites, NO eyelids, NO eyelashes or lash flicks on either figure (Mina included), NO irises — both figures have identical eye construction. Eyebrows: two very thin short dark-brown clay arcs above the eyes. Nose: one tiny rounded clay bump in the center, no nostrils. Mouth: one thin carved curved line, closed; NO teeth, NO tongue, NO lips. Ears: two small clay half-circles. Expression changes ONLY by bending the eye ovals into closed arcs (relaxed) and bending the mouth line more or less (smile); nothing else on the face ever changes.
+HAIR: sculpted as one solid piece with shallow carved groove lines suggesting strands, satin finish, no loose strands. Mina: dark chocolate-brown hair with a side part, pulled back smoothly into a neat low round bun at the back of the head. Jun: black short hair, slightly longer on top and swept to one side, short sides.
 
-HAIR: a single smooth clay cap, no strands, no texture. Mina: dark-brown clay bob to the chin with one straight side part line (no bun, no ponytail). Jun: black clay short crew cut with a flat top, no part line.
+BODY: slim adult build, sculpted shoulders and subtle collarbones, hands with five simplified sculpted fingers held softly together, natural relaxed poses.
 
-CLOTHING — always worn, never nude: Mina wears a plain cobalt-blue clay one-piece swimsuit; Jun wears plain navy clay swim shorts. In sauna, lobby, restaurant and room scenes they wear plain cream clay bathrobes over the swimwear. No patterns, no logos, no accessories, no hats, no glasses.
+CLOTHING — always worn: Mina wears a plain cobalt-blue one-piece swimsuit whose thin shoulder straps stay visible above the waterline; Jun wears plain navy swim trunks with a bare chest. In sauna, room, lobby, restaurant and balcony scenes both wear plain cream waffle-texture bathrobes over the swimwear. No patterns, logos, jewelry, glasses or hats.
 
-LIGHT AND FOCUS: the figures are lit by the same light as the photograph and cast soft contact shadows on what they touch; wet clay in water shows only a faint sheen. Camera is at the figures' eye level, macro toy-photography look: figures tack-sharp, background softly out of focus only by natural depth of field. Motion is gentle and slightly stepwise like stop-motion.
+SCALE: the figures are tiny — about one-sixth the length of a lounge chair, each head roughly the size of a walnut next to a pool rim or a pebble next to a stone edge. Real objects in the scene stay full-size.
 
-BACKGROUND: the real photograph exactly as given — same walls, water, furniture, colors and lighting; nothing added, removed, resized or redrawn.
+PHOTOGRAPHY: realistic macro toy photography, camera low near the figures' eye level, shallow depth of field — figures tack-sharp, background softly blurred. Natural light matching the scene, soft contact shadows, true reflections in the water. Vertical 9:16.
 
-FORBIDDEN: realistic human skin or hair strands, real people, more than two figures, eye whites, eyelids, eyelashes, teeth, open mouths, nostrils, fingers, nude or missing swimwear, patterned swimwear, hair buns or ponytails, text, logos, watermarks, changing the room or pool, camera leaving the photo, morphing or melting shapes.
+FORBIDDEN: real people, realistic human skin, chibi or big-head proportions, dot eyes, cartoon or anime eyes, eyelashes, makeup, teeth, open mouths, nudity or missing swimsuit straps, patterned or colorful swimwear, more than two figures, flyaway hair strands, distorted hands, extra fingers, text, logos, watermarks, melted or morphing shapes.
 ```
 
 ## 2. 장면 블록 (컷마다 · 장소 사전에서 고른다 · 영어)
