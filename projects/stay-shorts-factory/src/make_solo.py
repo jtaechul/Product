@@ -627,7 +627,7 @@ def preview_md(req: dict, p: dict) -> str:
         ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
         tag = f" 〔태그 {ex.get('tag')}〕" if ex and int(ex.get("i", 0)) == c["i"] else ""
         md.append(f"| {c['i']}{' (Veo)' if c['veo'] else ''} | {KO[c['section']]} | {c['shot'].get('description', '')} [{mt.SRC_KO.get(c['shot'].get('source'), '?')}] | {x['caption']}{tag} | {x['narration']} | {sc if sc is not None else '-'} {mark}{fx} | {p['narr'][c['i']]:.1f} |")
-    md.append(f"| 끝 | 끝 카드 | 대표 사진 블러 | {script['cta']['caption']} | {script['cta']['narration']} | - | {p['narr']['cta']:.1f} |")
+    md.append(f"| 끝 | 끝 카드 | 훅 사진 선명 + 아래쪽 그라데이션 | {script['cta']['caption']} | {script['cta']['narration']} | - | {p['narr']['cta']:.1f} |")
     md += ["", "## 나레이션 받아쓰기 검증", "", "| 컷 | 대본 | 들린 것 | 일치 | 판정 |", "|---|---|---|---|---|"]
     for q in nqa:
         md.append(f"| {q['segment']} | {q['script']} | {q['heard']} | {q['similarity']} | {'통과' if q['ok'] else '실패 ' + ','.join(q['instruction_words'])} |")
@@ -804,7 +804,7 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
         segs.append(cut_segment(c["i"], src, L, B() / f"narr_c{c['i']}.wav", overlays, slow))
         timeline.append({"i": c["i"], "section": c["section"], "kind": kind, "sec": round(L, 2), "slow": round(slow, 2), "narration": x["narration"], "caption": x["caption"],
                          "extra": (ex.get("tag") if ex and int(ex.get("i", 0)) == c["i"] else None)})
-    # 끝 카드 — 훅 사진 블러 배경, "프로필 링크 → 폴더 N번"
+    # 끝 카드 — 훅 사진 선명 + 세로 그라데이션(블러 없음), 왼쪽 정렬 헤드라인 + 폴더 행
     card = design.end_card(B() / "end_card.jpg", B() / f"shotHD_{cuts[0]['n']}.png", folder, pos, style, ms.DISCLOSURE)
     Lc = max(3.6, narr["cta"] + 0.7)
     segs.append(cut_segment(99, card, Lc, B() / "narr_cta.wav", [], image=True, fade_in=0.3))
