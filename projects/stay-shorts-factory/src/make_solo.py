@@ -42,6 +42,7 @@ EXTERIOR_RX = re.compile(r"외관|전경|건물|항공|야경|조명|단지|하�
 WATER_RX = re.compile(r"물|풀|탕|스파|사우나|온천|폭포|분수|파도|슬라이드|바다|강|호수")
 QA_THR = {"offer": 5}                                          # 조건 컷은 느슨하게(5), 나머지 7
 EXTRA_BONUS = 12                                               # 시그니처 덧붙임이 들어간 컷의 글자 한도 추가(공백 제외)
+TOTAL_MAX = 230                                                # 컷 전체 나레이션 글자 합(공백 제외) — 1.28배속 6.3자/초 → 약 36초 (p10d 실측 44초가 길었다)
 BGM = mt.ROOT / "assets" / "music" / "bgm.mp3"           # 대표 배경음악 (make_music.py 가 만든다) — 있으면 자동으로 깐다, request.json "bgm": false 면 생략
 BGM_LEVEL = 0.22                                               # 나레이션 대비 배경음악 크기(선형). 말할 땐 사이드체인으로 더 내려간다
 
@@ -62,7 +63,7 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터이자 편집자�
   보이는 것에 입력 사실(수온·사계절 운영·투숙객 전용·조식 포함 등)을 덧붙이는 것은 좋다. 입력에 없는 사실·가격·할인 금지, 가격 숫자 금지.
 - **숙소 이름을 절대 쓰지 않는다** (나레이션·자막 모두). 대신 "강원 홍천의 대형 워터파크 리조트"처럼 **지역 + 유형**으로 부른다 — 컷 2 문장에서 한 번.
 - 1인칭 "~해요"체, 광고 말투 금지, 유행어 전체 1개 이하. "최고·유일·최저가·1위·완벽·보장·최장·최대" 금지. "골랐어요·뽑았어요" 금지. 마지막 컷에 "추천해요".
-- 문장마다 새 정보. 같은 시설·같은 표현을 두 컷에서 반복하지 않는다. 글자 한도(공백 제외)를 지킨다 — Veo 컷은 4초라 짧다.
+- 문장마다 새 정보. 같은 시설·같은 표현을 두 컷에서 반복하지 않는다. 글자 한도(공백 제외)를 지킨다 — Veo 컷은 4초라 짧다. **전체 나레이션은 공백 제외 230자 안**(약 36초) — 컷마다 핵심 하나만, 꾸밈말은 줄인다.
 - **이어지는 한 편의 이야기**로 쓴다 (2026-10-11 운영자 "특징을 단순 나열만 해서 앞뒤 연결이 어색하다"): 한 사람이 숙소를 안내하며 걸어가듯,
   컷 2부터는 문장이 **앞 컷을 받는 연결어·장면 전환어**로 시작한다 — 예: "안으로 들어가면", "그 옆엔", "객실로 올라오면", "창밖엔", "밤이 되면", "여기에", "그래서",
   "덕분에", "다만", "특히", "이렇게", "저녁엔", "아침엔", "한 층 내려가면". "A가 있어요. B가 있어요." 식 나열 금지. 같은 연결어를 두 번 쓰지 않고,
@@ -291,6 +292,9 @@ def check_script(s: dict, h: dict, cuts: list[dict], req: dict, sig: dict | None
     tags = s.get("hashtags") or []
     if not (3 <= len(tags) <= 5):
         errs.append("해시태그 3~5개")
+    total_chars = sum(_len(str(got[c["i"]].get("narration", ""))) for c in cuts)
+    if total_chars > TOTAL_MAX:
+        errs.append(f"전체 나레이션 {total_chars}자 — {TOTAL_MAX}자 안으로 (문장을 짧게, 컷마다 핵심 하나)")   # p10d 실측 44초 → 약 36초 목표
     return errs
 
 
@@ -301,13 +305,13 @@ def _words(t: str) -> list[str]:
 def pick_signature(h: dict, cuts: list[dict]) -> dict | None:
     """사진이 없는 시그니처 1개 (운영자 2026-10-11 "사진이 없어도 시그니처는 한두 문장 넣자" → 조건부 반영: 영상당 1개 · 확인된 사실만 · 사진 컷 끝에 한 절 · 태그 칩).
     후보 = 블로그 교차확인 시설 + 공식 홈페이지 사실 중 **어느 컷 설명에도 안 보이는 시설 낱말**이 있는 것. 들어갈 컷 = 조건 컷 ①(아쉬움 줄 자리)을 뺀 사진 컷 중 물·특별 공간 쪽."""
-    seen = " ".join(c["shot"].get("description") or "" for c in cuts)
+    seen = " ".join(c["shot"].get("description") or "" for c in cuts).replace(" ", "")   # 띄어쓰기 무시 (p10d: '실내수영장' vs '실내 수영장')
     # p10b 실측: '오션월드'(워터파크 브랜드 이름)가 시설 낱말 없이 뽑혀 "오션월드도 가까워요"가 됐다 → 시설 낱말(사우나·키즈·조식…)이 든 사실만 후보
     cands = [f for f in list(h.get("verified_facilities") or []) + list(h.get("official_facts") or []) if FACILITY_RX.search(f)]
     pick = None
     for f in cands:
         ws = [w for w in _words(f) if FACILITY_RX.search(w)]
-        if ws and not any(w in seen for w in ws):
+        if ws and not any(w.replace(" ", "") in seen for w in ws):
             pick = f; break
     if not pick:
         return None
@@ -395,7 +399,13 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
                 s["extra"] = None
             return polish_script(model, s, cuts, h, req, sig)
         # p10c 실측: 글자 한도 1~3자 초과만 남아 3번 다 탈락 → 그런 답은 '거의 통과'로 보관해 두고 마지막에 쓴다 (0.5초 차이는 슬로우로 흡수된다)
-        if all(re.search(r"\d+자 \(한도 \d+\)", e) and int(re.search(r"(\d+)자 \(한도 (\d+)\)", e).group(1)) - int(re.search(r"(\d+)자 \(한도 (\d+)\)", e).group(2)) <= 3 for e in errs):
+        def _soft(e):
+            m = re.search(r"(\d+)자 \(한도 (\d+)\)", e)
+            if m:
+                return int(m.group(1)) - int(m.group(2)) <= 3
+            m = re.search(r"전체 나레이션 (\d+)자", e)
+            return bool(m) and int(m.group(1)) - TOTAL_MAX <= 12
+        if all(_soft(e) for e in errs):
             best = s
         log(f"대본 검사 실패({attempt + 1}):", errs)
     if best:
