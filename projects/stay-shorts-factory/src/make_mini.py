@@ -57,7 +57,11 @@ EDIT_SCALE = ("SCALE AND PLACEMENT (forced perspective): the figurines are 10 cm
 EDIT_PHOTO = ("PHOTOGRAPHY: realistic toy photography matched to the photograph's own light direction, color temperature and grain; "
               "figures tack-sharp; the background keeps the photograph's existing sharpness (at most a very gentle natural softness right "
               "behind the figures). Vertical 9:16, same size as the first image.")
-EDIT_TAIL = "OUTPUT: exactly one photorealistic image. No text, no captions, no logos, no watermark, no borders."
+EDIT_TAIL = ("PLACEMENT RULE: put the figurines only where that kind of place really exists in the photograph (real water, real pool rim, "
+             "real floor). Never add, extend, enlarge, move or replace any pool, water area, floor, wall or structure to make room for them; "
+             "if the described spot is farther from the camera, place them there and let them appear smaller. Do not zoom, reframe or shift "
+             "the photograph. OUTPUT: exactly one photorealistic image. No text, no captions, no logos, no watermark, no borders.")
+MAX_CHANGED = 0.30          # 배경 보존 검사(0원): 원본 대비 바뀐 화면 비율 상한. 실측 mini-1: 잘 된 파도풀 11% · 배경을 다시 그린 스파 67%
 
 VEO_HEAD = ("The first frame is a real hotel photograph with two small hand-sculpted, hand-painted polymer-clay art-doll figurines of a "
             "Korean couple (elegant adult proportions, eight heads tall, satin clay finish). Keep the figurines exactly as they appear in "
@@ -213,6 +217,16 @@ def composite(base: Path, prompt: str, out: Path, models: list[str], rep: dict) 
     raise RuntimeError(f"합성 실패: {last}")
 
 
+def changed_ratio(base: Path, frame: Path) -> float:
+    """합성 결과가 숙소 사진을 얼마나 바꿨는지(0~1) — 작게 줄여 흐린 뒤 밝기 차 28 넘는 칸의 비율. 인형 자리만 바뀌면 0.1~0.25."""
+    from PIL import ImageFilter
+    a = Image.open(base).convert("L").resize((180, 320)).filter(ImageFilter.GaussianBlur(1.5))
+    b = Image.open(frame).convert("L").resize((180, 320)).filter(ImageFilter.GaussianBlur(1.5))
+    pa, pb = a.load(), b.load()
+    n = sum(1 for y in range(320) for x in range(180) if abs(pa[x, y] - pb[x, y]) > 28)
+    return n / (180 * 320)
+
+
 # ── 확인 시트 ─────────────────────────────────────────────────────────
 def frame_at(video: Path, t: float, out: Path) -> Path:
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t:.2f}", "-i", str(video), "-frames:v", "1", str(out)], check=True)
@@ -258,6 +272,18 @@ def main():
             base = crop916(src, BUILD / f"{k}_base.jpg", float(s.get("focus_x", 0.5)), float(s.get("focus_y", 0.5)))
             ep = edit_prompt(s["scene"]); (BUILD / f"{k}_edit_prompt.txt").write_text(ep, encoding="utf-8")
             frame = composite(base, ep, BUILD / f"{k}_frame.png", models, rep)
+            ch = changed_ratio(base, frame)
+            row["changed"] = round(ch, 3)
+            if ch > MAX_CHANGED:                                         # 배경을 다시 그렸다 → 한 번만 더, 그래도 넘으면 이 컷은 Veo 를 쓰지 않는다
+                log(f"{k}: 숙소 사진이 {ch:.0%} 바뀜(상한 {MAX_CHANGED:.0%}) → 한 번 더 합성")
+                frame = composite(base, ep + "\n\nPREVIOUS ATTEMPT FAILED: it redrew or reframed the photograph. Keep every pixel of the photograph except where the figurines are.",
+                                  BUILD / f"{k}_frame.png", models, rep)
+                ch = changed_ratio(base, frame); row["changed_retry"] = round(ch, 3)
+                if ch > MAX_CHANGED:
+                    row["skipped"] = f"배경 보존 실패 {ch:.0%} — Veo 생략(돈 아낌)"
+                    log(f"{k}: {row['skipped']}")
+                    rows.append([(base, f"{k} 숙소 사진"), (frame, f"합성 실패 {ch:.0%} 변경")])
+                    continue
             vp = veo_prompt(s["motion"]); (BUILD / f"{k}_veo_prompt.txt").write_text(vp, encoding="utf-8")
             clip = BUILD / f"{k}.mp4"
             krw = veo.make_clip(vp, frame, 4, clip, veo.seed_for("mini", k), mime="image/png")
