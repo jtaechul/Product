@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-12-v4-mini-preview",
+ "nonce": "2026-10-12-v4-mini-preview2",
  "mode": "solo",
  "stage": "preview",
  "stay": "소노펠리체 비발디파크",
@@ -11,7 +11,7 @@
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "운영자 2026-10-12 '1번부터 시작' — 미니어처 후보 판정 미리보기(영상 없음 · 합성·옴니·Veo 0원 · 글·음성·비전 약 100원)",
+ "note": "운영자 2026-10-12 '진행' — 얼굴 규칙으로 미니어처 후보 판정 미리보기 재실행(영상 없음 · 합성·옴니·Veo 0원 · 약 80원)",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
