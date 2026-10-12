@@ -67,14 +67,14 @@ MAX_CHANGED = 0.30          # 배경 보존 검사(0원): 원본 대비 바뀐 �
 VEO_HEAD = ("The first frame is a real hotel photograph with two small hand-sculpted, hand-painted polymer-clay art-doll figurines of a "
             "Korean couple (elegant adult proportions, eight heads tall, satin clay finish). Keep the figurines exactly as they appear in "
             "the first frame for the whole clip: same faces with painted almond eyes and small sculpted lips (the mouth may open when laughing or surprised), same hairstyles "
-            "(woman: dark-brown hair with a left side part in a neat low bun; man: black short dandy cut with a forward fringe), same "
-            "cobalt-blue one-piece swimsuit and dark-navy swim shorts, same body proportions. They are alive and clearly enjoying the place: "
-            "natural, visible, playful body movement (arms, heads, torsos and splashing water), smooth like an animated figurine film — "
-            "not frozen, not stiff. They may move around within the same pool or spot.")
+            "(woman: dark-brown hair with a left side part in a neat low bun; man: black short dandy cut with a forward fringe), the same "
+            "outfit they wear in the first frame, same body proportions. They are alive and clearly enjoying the place: "
+            "natural, visible, playful body movement (arms, heads and torsos), smooth like an animated figurine film — "
+            "not frozen, not stiff. They stay on the same spot where they are in the first frame.")
 VEO_TAIL = ("Camera: keeps the first frame's framing — locked-off, at most a very slight push-in — so nothing outside the first frame ever appears; "
-            "never invent pools, water, rooms, furniture or buildings that are not visible in the first frame. The hotel place "
+            "never invent anything that is not visible in the first frame. The hotel place "
             "stays exactly the same as the first frame: no new objects, no new people, no text, no logos, no morphing; the figurines' "
-            "faces, hair and swimwear never change; they never turn into real humans. Vertical 9:16, 4 seconds.")
+            "faces, hair and outfits never change; they never turn into real humans. Vertical 9:16, 4 seconds.")
 
 
 def log(*a):
@@ -104,7 +104,7 @@ OMNI_HEAD = ("Use the attached image as the exact first frame of the video and a
 
 
 WATER_LINE = "Water reacts to every movement with splashes, droplets and ripples; steam and light behave naturally."
-DRY_LINE = "This is a dry place: no water, no pool, no splashes anywhere."
+DRY_LINE = "The floor, furniture and surroundings stay exactly as they are in the first frame."   # 마른 장소엔 물 낱말을 아예 안 쓴다(부정문도 단서가 된다)
 
 
 def omni_prompt(motion: str, water: bool = True) -> str:

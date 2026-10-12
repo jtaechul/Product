@@ -68,7 +68,7 @@ FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobbleh
 장소는 그 편에서 가장 대표적인 사진(보통 훅과 같은 물 공간의 **마른 가장자리·데크**, 없으면 객실 침대 앞)을 쓴다. 젖은 바닥 뛰기 같은 위험 동작 없음.
 
 ```
-SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side at the real spot described, facing the camera, both wearing a cream terry-towel "sheep-head" wrap (a Korean jjimjilbang style towel rolled into two small round ears on top of the head) over their usual hair, with their usual swimwear. 0 to 1.5 seconds: they turn to the camera at the same time and give one small hop of excitement. 1.5 to 3 seconds: they raise both arms over their heads and join their hands to form one big heart shape together, tilting their heads toward each other. 3 to 4 seconds: they hold the big heart pose with big happy smiles and happily curved eyes, bouncing once in rhythm. No text, no props other than the towel wraps.
+SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side at the real spot described, facing the camera, both wearing a cream terry-towel "sheep-head" wrap (a Korean jjimjilbang style towel rolled into two small round ears on top of the head) over their usual hair, wearing the same outfit as in the first frame. 0 to 1.5 seconds: they turn to the camera at the same time and give one small hop of excitement. 1.5 to 3 seconds: they raise both arms over their heads and join their hands to form one big heart shape together, tilting their heads toward each other. 3 to 4 seconds: they hold the big heart pose with big happy smiles and happily curved eyes, bouncing once in rhythm. No text, no props other than the towel wraps.
 ```
 
 ## 1-5. 장소 개그 사전 (컷 ①② · 장소와 연결 · 하나만 고른다)
