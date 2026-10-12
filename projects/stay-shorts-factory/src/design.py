@@ -5,8 +5,11 @@ v1 까지의 자막: 지마켓산스 68px 흰 글자 + 6px 검은 외곽선, 훅
 바꾼 원칙:
   - 글꼴 하나: Pretendard ExtraBold(자막) / SemiBold(작은 글). OFL 무료 → assets/fonts 에 둔다. 손글씨·노란색 폐기.
   - 두꺼운 외곽선 대신 부드러운 그림자(또는 반투명 바). 포인트 색은 [대괄호] 한 단어에만.
-  - 최대 2줄, 줄당 10자 안, 글자 84px(훅 100px), 화면 높이 58% 자리(플랫폼 UI·엄지 영역 회피). 한 줄 강제로 글자를 줄이는 짓 금지.
-  - 화면 요소는 자막 + 작은 폴더 표시(왼쪽 위) + 고지문(아래 작게) 만. 후기 숫자는 작은 칩으로 1~2초만.
+  - (v2) 최대 2줄, 글자 84px(훅 100px), 화면 높이 58% 자리 — **v3 에서 폐기**(아래 GRID). 한 줄 강제로 글자를 줄이는 짓 금지.
+  - **v3 글자 그리드 (2026-10-12 운영자 "같은 유형 글씨는 항상 같은 위치 — 기본을 똑바로" · 절대 규칙)**: 글자 유형마다 (크기 · x · y · 줄 수) 를 `GRID` 에
+    한 번만 적고 모든 컷·카드가 그 값만 쓴다. 자막은 첫 줄 y 고정(위 정렬 슬롯), 줄 수가 달라도 첫 줄·라벨 위치 불변. 크기 자동 축소 금지 —
+    안 들어가면 대본을 줄인다(`fits` 로 대본 검사 단계에서 거른다). 고지문은 위쪽 한 자리(컷·끝 카드 동일). 알약·칩·태그 전부 폐기.
+  - (v2) 화면 요소는 자막 + 작은 폴더 표시(왼쪽 위) + 고지문(아래 작게) 만 — **v3 에서 폐기**: 화면 요소는 고지문(위) + 장소 라벨(작게) + 문장 자막(아래) 뿐.
   - 끝 카드: 훅 사진 선명 + 세로 그라데이션(블러 금지) + 왼쪽 정렬 헤드라인 "프로필 링크에서 / 폴더를 열어 보세요" + 폴더 행 카드(이름 · N번). 버튼 그림 폐기.
 네 가지 시안(STYLES)을 PNG 로 만들어 운영자가 고른다 → request.json "caption_style" (기본 shadow)."""
 
@@ -404,21 +407,9 @@ def end_card(out: Path, bg: Path | None, folder: str, pos: int, style: str = DEF
         d.text((x, 1056 + k * lh), line, font=f_h, fill=(255, 255, 255, 255))
     draw_folder_row(ov, x, 1056 + 2 * lh + 44, card_w, folder, pos)
     d = ImageDraw.Draw(ov)
-    if disclosure:
-        f_fine = font(TYPE["fine"], bold=False)
-        y = 1700
-        words, lines, cur = disclosure.split(" "), [], ""
-        for wd in words:
-            t = (cur + " " + wd).strip()
-            if d.textlength(t, font=f_fine) <= card_w:
-                cur = t
-            else:
-                lines.append(cur); cur = wd
-        if cur:
-            lines.append(cur)
-        for ln in lines:
-            d.text((x, y), ln, font=f_fine, fill=(255, 255, 255, 135)); y += TYPE["fine"] + 8
     im.alpha_composite(ov)
+    if disclosure:
+        draw_disclosure_top(im, disclosure)                 # v3: 고지문은 컷과 같은 자리(위쪽) — 같은 유형 글자는 항상 같은 위치
     im.convert("RGB").save(out, "JPEG", quality=92)
     return out
 
@@ -472,3 +463,129 @@ def _split(s: str, n: int) -> list[str]:
 if __name__ == "__main__":
     import sys
     print(mockups(Path(sys.argv[1]), Path(sys.argv[2] if len(sys.argv) > 2 else "build/design")))
+
+
+# ═══════════════════════════ v3 글자 그리드 (2026-10-12) ═══════════════════════════
+# 운영자: "같은 유형의 글씨라면 항상 같은 위치에 있어야지 왜 제각각이야 — 핵심 규칙에 반영해서 똑바로 해".
+# v2 가 흔들린 이유: 자막을 세로 '중심'에 맞춰 줄 수에 따라 첫 줄이 오르내렸고, fit_font 가 문장 길이에 따라 글자 크기를 84→56 으로 줄였고,
+# 훅만 100px·52% 자리였고, 보조 줄(아쉬움)·태그가 블록을 밀었다. → 유형별 (크기·x·y·줄 수) 를 여기 한 번만 적고, 그 값 밖으로는 아무것도 못 나간다.
+SAFE_BOTTOM = 1520                                    # 쇼츠·릴스 아래 400px(제목·채널·음악 표시) 위
+SAFE_X1 = W - SAFE_RIGHT                              # 900 — 오른쪽 아이콘 기둥 앞
+SUB_W = 800                                           # 자막 한 줄 최대 너비(가운데·왼쪽 정렬 공통 — 검사도 이 값으로)
+CX = (MARGIN + SAFE_X1) // 2 + 40                     # 가운데 정렬 중심 x (오른쪽 아이콘을 피해 살짝 왼쪽) = 526
+GRID = {
+    "disclosure": {"size": 24, "x": MARGIN, "y": 172, "lh": 32, "lines": 2},            # 고지문 — 컷·끝 카드 동일 자리
+    "kicker":     {"size": 36, "y": 1246},                                                # 장소 라벨 — 자막 바로 위 한 줄
+    "subtitle":   {"size": 58, "y": 1300, "lh": 70, "lines": 3},                         # 문장 자막 — 첫 줄 y 고정, 아래로 슬롯 3개(1300·1370·1440), 바닥 1510
+    "hook":       {"size": 76, "bottom": 1510, "lh": 93, "lines": 3},                    # 훅(컷 1 전용) — 마지막 줄 바닥을 자막 바닥과 맞춘다
+    "band":       {"top": 1180, "bottom": 1580, "peak": 0.34},                            # 가운데 정렬용 어둡기 띠 — 줄 수와 무관하게 고정
+}
+DEFAULT_ALIGN = "center"                              # request.json "subtitle_align": center | left (운영자 시안 A/B 선택 대기)
+
+
+def fits(text: str, role: str = "subtitle") -> tuple[bool, int]:
+    """문장이 고정 크기·고정 너비에서 허용 줄 수 안에 들어가는지. 대본 검사 단계에서 쓴다 — 렌더 단계에서는 절대 글자를 줄이지 않는다."""
+    g = GRID[role]
+    d = ImageDraw.Draw(Image.new("RGBA", (W, H)))
+    f = font(g["size"])
+    lines = wrap_marked(d, text, f, SUB_W, max_lines=12)
+    joined = "".join(t for ln in lines for t, _ in ln).replace(" ", "")
+    ok = len(lines) <= g["lines"] and len(joined) >= len(plain(text).replace(" ", "")) and all(_width(d, ln, f) <= SUB_W for ln in lines)
+    return ok, len(lines)
+
+
+def draw_disclosure_top(im: Image.Image, text: str):
+    g = GRID["disclosure"]
+    d = ImageDraw.Draw(im)
+    f = font(g["size"], bold=False)
+    words, lines, cur = text.split(" "), [], ""
+    for w in words:
+        t = (cur + " " + w).strip()
+        if d.textlength(t, font=f) <= W - 2 * MARGIN:
+            cur = t
+        else:
+            lines.append(cur); cur = w
+    if cur:
+        lines.append(cur)
+    for k, ln in enumerate(lines[:g["lines"]]):
+        d.text((g["x"], g["y"] + k * g["lh"]), ln, font=f, fill=(255, 255, 255, 170), stroke_width=1, stroke_fill=(0, 0, 0, 110))
+    return im
+
+
+def _shadow_lines(im: Image.Image, lines, f, xs, y0: int, lh: int, accent=(*ACCENT, 255)):
+    """자막 A 확정안의 글자 처리: 가까운 그림자 + 넓은 후광 2겹 + 3px 어두운 선. 위치는 호출자가 고정해 준다."""
+    for blur, alpha, dy in ((5, 170, 4), (18, 120, 10)):
+        sh = Image.new("RGBA", im.size, (0, 0, 0, 0)); ds = ImageDraw.Draw(sh)
+        for k, ln in enumerate(lines):
+            _draw_segs(ds, xs[k], y0 + k * lh + dy, ln, f, (0, 0, 0, alpha), (0, 0, 0, alpha), stroke=3, stroke_fill=(0, 0, 0, alpha))
+        im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(blur)))
+    d = ImageDraw.Draw(im)
+    for k, ln in enumerate(lines):
+        _draw_segs(d, xs[k], y0 + k * lh, ln, f, (255, 255, 255, 255), accent, stroke=3, stroke_fill=(12, 14, 20, 165))
+
+
+def draw_subtitle(im: Image.Image, text: str, kicker: str = "", hook: bool = False, align: str = DEFAULT_ALIGN):
+    """문장 자막(+ 장소 라벨) 을 GRID 자리에 그린다. im 은 RGBA 1080×1920.
+    - 자막: 첫 줄 y 고정(위 정렬), 줄 수 1~3. 글자 크기 고정. 안 들어가면 그리기 전에 fits() 로 걸렀어야 한다(여기서는 줄이지 않는다).
+    - 훅: 컷 1 전용 큰 글자, 마지막 줄 바닥을 자막 바닥(1510)에 맞춘다. 라벨 없음.
+    - 라벨: 코랄 36px, y 고정. 훅 컷엔 없다.
+    - align=center: 어둡기 띠(고정 구간) / align=left: 아래 그라데이션(고정 구간). 둘 다 줄 수와 무관."""
+    d = ImageDraw.Draw(im)
+    g = GRID["hook" if hook else "subtitle"]
+    f = font(g["size"])
+    lines = wrap_marked(d, text, f, SUB_W, max_lines=g["lines"])
+    lh = g["lh"]
+    y0 = (g["bottom"] - lh * len(lines)) if hook else g["y"]
+    widths = [_width(d, ln, f) for ln in lines]
+    if align == "left":
+        xs = [MARGIN] * len(lines)
+        gradient(im, 1060, 1580, 0.0, 0.62); gradient(im, 1580, H, 0.62, 0.70)
+    else:
+        xs = [CX - w / 2 for w in widths]
+        b = GRID["band"]; _scrim(im, b["top"], b["bottom"], b["peak"])
+    if kicker and not hook:
+        gk = GRID["kicker"]; fk = font(gk["size"])
+        kw = d.textlength(kicker, font=fk)
+        kx = MARGIN if align == "left" else CX - kw / 2
+        d = ImageDraw.Draw(im)
+        d.text((kx, gk["y"]), kicker, font=fk, fill=(*ACCENT, 255), stroke_width=2, stroke_fill=(0, 0, 0, 120))
+    _shadow_lines(im, lines, f, xs, y0, lh)
+    return im
+
+
+def subtitle_png(out: Path, text: str, kicker: str = "", hook: bool = False, align: str = DEFAULT_ALIGN) -> Path:
+    """컷 하나의 자막 겹침판(투명 PNG) — v3."""
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw_subtitle(im, text, kicker, hook, align)
+    im.save(out, "PNG")
+    return out
+
+
+def frame_png(out: Path, disclosure: str) -> Path:
+    """모든 컷에 고정되는 겹침판 — v3 에서는 위쪽 고지문뿐(알약·칩 폐기)."""
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    if disclosure:
+        draw_disclosure_top(im, disclosure)
+    im.save(out, "PNG")
+    return out
+
+
+def grid_sheet(frames: list[Path], out: Path, labels: list[str] | None = None, guides: bool = True, tw: int = 300) -> Path:
+    """시안 여러 장을 가로로 놓고 GRID 기준선(라벨 y · 자막 첫 줄 y · 자막 바닥 · 안전 영역) 을 시트 전체에 그어 '같은 자리'를 눈으로 검증한다."""
+    th = int(tw * H / W); gap = 20; top = 44
+    sheet = Image.new("RGB", (gap + len(frames) * (tw + gap), top + th + gap), (18, 20, 26))
+    d = ImageDraw.Draw(sheet); fl = font(22)
+    for k, fp in enumerate(frames):
+        sheet.paste(Image.open(fp).convert("RGB").resize((tw, th), Image.LANCZOS), (gap + k * (tw + gap), top))
+        if labels and k < len(labels):
+            d.text((gap + k * (tw + gap), 12), labels[k], font=fl, fill=(255, 255, 255))
+    if guides:
+        sc = th / H
+        for y, col, name in ((GRID["disclosure"]["y"], (120, 200, 255), "고지문"), (GRID["kicker"]["y"], ACCENT, "라벨"),
+                             (GRID["subtitle"]["y"], (255, 255, 255), "자막 첫 줄"), (GRID["hook"]["bottom"], (255, 255, 255), "자막·훅 바닥"),
+                             (SAFE_BOTTOM, (255, 90, 90), "플랫폼 UI")):
+            yy = top + int(y * sc)
+            d.line([(0, yy), (sheet.width, yy)], fill=col, width=1)
+            d.text((sheet.width - 150, yy - 24), name, font=font(18, bold=False), fill=col)
+    sheet.save(out, "JPEG", quality=88)
+    return out

@@ -34,6 +34,7 @@ import veo  # noqa: E402
 QUOTA = {"water": 3, "room": 3, "special": 4}                 # 사진 10장 후보 → 훅1 · 물2 · 객실2 · 특별2~3(시설 사진 우선) · 조건1~2 = 컷 9~10
 LIM = {"hook": (10, 24), "veo": (12, 28), "photo": (14, 32)}  # 컷 문장 길이(공백 제외). 1.28배속 실측 약 6.6자/초. p10c 실측: 연결어가 붙으니 Veo 컷이 25~26자로 3번 연속 탈락 → 28자(≈4.2초, 1.1배 슬로우 허용)
 MIN_CUT, GAP, VEO_SEC, MAX_SLOW = 1.6, 0.30, 4, 1.25
+MIN_HOOK = 3.2                                                  # 훅 컷 최소 길이 — v2 실측 2.78초는 훅 문장을 읽을 틈이 없었다
 PATTERNS = ("push", "pan", "tilt", "pull")                     # 사진 컷 카메라 무빙 4종 순환
 KO = {"hook": "훅", "water": "물놀이", "room": "객실", "special": "특별 공간", "offer": "조건·추천", "cta": "끝 카드"}
 GENERIC = {"호텔", "리조트", "앤", "스파", "풀빌라", "펜션", "콘도", "레지던스", "하우스", "파크", "비치", "해변", "온천", "관광호텔"}
@@ -69,8 +70,8 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터이자 편집자�
   "덕분에", "다만", "특히", "이렇게", "저녁엔", "아침엔", "한 층 내려가면". "A가 있어요. B가 있어요." 식 나열 금지. 같은 연결어를 두 번 쓰지 않고,
   문장 끝(~있어요 / ~이에요 / ~좋아요 / ~돼요 / ~해요)도 연속으로 같은 것을 쓰지 않는다. 마지막 컷은 앞 내용을 받아 "그래서 …에게 추천해요"로 닫는다.
 - 입력에 "사진 없는 시그니처"가 있으면(없으면 이 규칙 무시): 그 시설은 사진이 없지만 이 숙소의 대표 포인트라 **딱 한 번** 말해도 된다.
-  입력이 지정한 컷(사진 컷)의 문장 **끝에** "…도 있어요", "…까지 이용돼요" 식의 짧은 절로 덧붙인다. 그 컷의 자막은 화면에 보이는 것 그대로 둔다. 다른 컷에서는 말하지 않는다.
-  출력에 "extra": {"i": 그 컷 번호, "tag": "+ 시설 이름(2~10자)"} 를 적는다 — 화면에 '+ 히노키 사우나' 같은 작은 태그로 표시된다.
+  입력이 지정한 컷(사진 컷)의 문장 **끝에** "…도 있어요", "…까지 이용돼요" 식의 짧은 절로 덧붙인다. 그 컷의 라벨은 화면에 보이는 것 그대로 둔다. 다른 컷에서는 말하지 않는다.
+  출력에 "extra": {"i": 그 컷 번호, "tag": "+ 시설 이름(2~10자)"} 를 적는다 — 화면 태그는 없다(문장 자막에 그대로 보인다). 기록용.
 
 컷별 규칙
 - 컷 1 (훅): 시청자의 상황·몸의 감각으로 멈추게 하는 한 문장. 숙소 이름·지역·"데이터·후기·분석·추천·AI" 금지. 계절·테마 맥락 필수. 네 가지 중 하나:
@@ -80,7 +81,8 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터이자 편집자�
 - 특별 공간 컷: 화면의 시설(사우나·키즈·산책로·조식·라운지…)을 말한다. 화면이 외관·야경이면 "산속에 자리한", "밤이면 조명이 켜지는"처럼 보이는 것을 말한다.
 - 조건 컷 ①: 혜택을 조건문으로 (투숙객 무료·이용권 포함 객실·조식 포함 등 입력에 있는 것). 후기 아쉬움이 입력에 있으면 짧게 덧붙여도 된다. 화면과 모순 금지.
 - 조건 컷 ② (마지막 컷): 누구에게·언제 좋은지 + "추천해요".
-- 자막: 컷마다 2~10자 키워드(명사형). 강조할 한 단어를 [대괄호]로 감싼다(선택, 컷당 1개). 숫자·'후기'·느낌표·이모지 금지(훅 자막의 월 숫자는 허용). 화면과 모순 금지. 묘사형 문장 금지.
+- caption(장소 라벨): 컷마다 화면의 장소를 2~8자 명사로 (예: "노천 스파", "마운틴뷰 객실", "실내 수영장"). 대괄호·숫자·'후기'·느낌표·이모지 금지. 화면과 모순 금지. 문장 금지.
+  **화면 자막은 나레이션 문장이 그대로 나간다**(아래쪽 3줄 안, 글자 크기 고정) — 문장이 길면 자막이 안 들어가 탈락한다. 한 문장 = 한 숨, 공백 포함 30자 안이 안전하다.
 출력 JSON 만:
 {"cuts":[{"i":1,"narration":"...","caption":"..."}, ... 컷 수만큼 순서대로],
  "extra": {"i": 컷 번호, "tag": "+ 시설 이름"} 또는 null,
@@ -268,16 +270,21 @@ def check_script(s: dict, h: dict, cuts: list[dict], req: dict, sig: dict | None
             if ws and not any(w in n for w in ws):
                 errs.append(f"컷 {c['i']} 문장 끝에 시그니처({sig['fact']})를 한 절로 덧붙인다")
         pc = design.plain(cap)
-        if not (2 <= _len(pc) <= 10):
-            errs.append(f"컷 {c['i']} 자막 길이: '{cap}' (2~10자)")
-        if cap.count("[") > 1 or cap.count("[") != cap.count("]"):
-            errs.append(f"컷 {c['i']} 자막 대괄호는 한 단어만: '{cap}'")
-        if c["section"] != "hook" and re.search(r"\d|후기", pc):
-            errs.append(f"컷 {c['i']} 자막에 숫자·후기 금지: '{cap}'")
-        if re.search(r"[!！]|[\U0001F300-\U0001FAFF]", cap):
-            errs.append(f"컷 {c['i']} 자막에 느낌표·이모지 금지")
-        if any(t in pc for t in toks):
-            errs.append(f"컷 {c['i']} 자막에 숙소 이름")
+        if c["section"] != "hook":                                               # 훅 컷은 라벨을 화면에 안 그린다(문장이 곧 훅) → 검사 안 함
+            if not (2 <= _len(pc) <= 8):
+                errs.append(f"컷 {c['i']} 라벨 길이: '{cap}' (2~8자 명사)")
+            if "[" in cap or "]" in cap:
+                errs.append(f"컷 {c['i']} 라벨에 대괄호 금지: '{cap}'")
+            if re.search(r"\d|후기", pc):
+                errs.append(f"컷 {c['i']} 라벨에 숫자·후기 금지: '{cap}'")
+            if re.search(r"[!！]|[\U0001F300-\U0001FAFF]", cap):
+                errs.append(f"컷 {c['i']} 라벨에 느낌표·이모지 금지")
+            if any(t in pc for t in toks):
+                errs.append(f"컷 {c['i']} 라벨에 숙소 이름")
+        role = "hook" if c["section"] == "hook" else "subtitle"                    # v3 글자 그리드: 크기 고정 → 문장이 화면 줄 수 안에 들어가야 한다(픽셀 측정)
+        ok, nl = design.fits(n, role)
+        if not ok:
+            errs.append(f"컷 {c['i']} 문장이 화면 {design.GRID[role]['lines']}줄을 넘는다({nl}줄, 공백 포함 {len(n)}자) — 문장을 줄인다")
     second = [c for c in cuts if c["i"] == 2]
     if second and not any(w in got[2].get("narration", "") for w in region_words(req, h)):
         errs.append(f"컷 2 문장에 지역({' 또는 '.join(region_words(req, h))}) + 유형으로 숙소를 부른다")
@@ -450,12 +457,12 @@ def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) 
         row = {"i": c["i"], "section": c["section"], "threshold": thr, "narration": x["narration"], "caption": x["caption"]}
         img = B() / f"shot_{c['n']}.png"
         ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
-        note = (f"\n덧붙임(허용 · 감점 금지): 이 문장 끝의 '{ex.get('tag', '')}' 시설은 사진에 없지만 화면에 태그로 표시된다" if ex and int(ex.get("i", 0)) == c["i"] else "")
+        note = (f"\n덧붙임(허용 · 감점 금지): 이 문장 끝의 '{ex.get('tag', '')}' 시설은 사진에 없는 시그니처다" if ex and int(ex.get("i", 0)) == c["i"] else "")
         if c["i"] == cuts[-1]["i"]:
             note += "\n이 컷은 마지막 컷이라 수정 문장에도 '추천해요'가 들어가야 한다"
         try:
             r = ms._try_models("vision", models["text"], lambda m: _vision_json(m, SCREEN_SYSTEM.format(lo=c["lo"], hi=c["hi"] + (EXTRA_BONUS if note else 0)),
-                                                                                f"구간: {KO[c['section']]}\n나레이션: {x['narration']}\n자막: {design.plain(x['caption'])}{note}", img))
+                                                                                f"구간: {KO[c['section']]}\n나레이션: {x['narration']}\n라벨: {design.plain(x['caption'])}{note}", img))
             row.update({"score": int(r.get("score", -1)), "seen": str(r.get("seen", ""))[:80], "problem": str(r.get("problem", ""))[:120]})
         except Exception as e:  # noqa: BLE001
             row.update({"score": None, "error": str(e)[:100]})
@@ -469,7 +476,7 @@ def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) 
             row["fixed"] = fix
             try:
                 r2 = ms._try_models("vision", models["text"], lambda m: _vision_json(m, SCREEN_SYSTEM.format(lo=c["lo"], hi=c["hi"]),
-                                                                                     f"구간: {KO[c['section']]}\n나레이션: {fix}\n자막: {design.plain(x['caption'])}", img))
+                                                                                     f"구간: {KO[c['section']]}\n나레이션: {fix}\n라벨: {design.plain(x['caption'])}", img))
                 row["score2"] = int(r2.get("score", -1))
             except Exception as e:  # noqa: BLE001
                 row["score2"] = None; row["error2"] = str(e)[:80]
@@ -604,7 +611,7 @@ def preview_sheet(h: dict, cuts: list[dict], script: dict, qa: list[dict], out: 
         q = qa_i.get(c["i"], {})
         sc = q.get("score")
         col = (94, 234, 212) if (sc or 0) >= q.get("threshold", 7) else (255, 120, 120) if sc is not None else (200, 200, 200)
-        d.text((x, y + hh + 8), f"자막: {sx.get('caption', '')}", font=f, fill=(255, 255, 255))
+        d.text((x, y + hh + 8), f"라벨: {sx.get('caption', '')}", font=f, fill=(255, 255, 255))
         d.text((x, y + hh + 40), f"화면 검수 {sc if sc is not None else '-'}/10" + (f" → 교체 후 {q.get('score2')}" if q.get("fixed") else ""), font=f2, fill=col)
         narr = str(sx.get("narration", ""))
         for j, line in enumerate([narr[i:i + 24] for i in range(0, len(narr), 24)][:3]):
@@ -619,7 +626,7 @@ def preview_md(req: dict, p: dict) -> str:
     md = [f"# 미리보기(단일 숙소 · 컷 단위) — {h['name']} · {req.get('region')} · {req.get('theme')} · {req.get('month')}",
           f"프로필 폴더: **{p['folder']}** · 폴더에서 **{p['pos']}번** · 영상에서는 숙소 이름 비공개(캡션·고정 댓글에 공개)", "",
           "## 컷 (한 컷 = 사진 1장 = 문장 1개 · 재사용 없음)", "",
-          "| 컷 | 구간 | 화면에 보이는 것 | 자막 | 나레이션 | 화면 검수 | 초 |", "|---|---|---|---|---|---|---|"]
+          "| 컷 | 구간 | 화면에 보이는 것 | 라벨 | 나레이션(=화면 자막) | 화면 검수 | 초 |", "|---|---|---|---|---|---|---|"]
     for c in cuts:
         x = by_i[c["i"]]; q = qa_i.get(c["i"], {})
         sc = q.get("score"); mark = "" if sc is None else ("통과" if sc >= q.get("threshold", 7) else "미달")
@@ -768,29 +775,26 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     name = h["name"]
     clips = make_veo(cuts, theme, report)
 
-    pill = f"폴더 · {folder} · {pos}번"
+    # v3 화면 (2026-10-12 운영자 검토): 알약·후기 칩·'+ 시설' 태그·아쉬움 보조 줄 전부 폐기. 화면 요소는 고지문(위) + 장소 라벨 + 문장 자막(아래) 뿐.
+    # 같은 유형 글자는 항상 같은 자리(design.GRID) — 컷마다 크기·위치가 달라지는 일이 없다.
+    align = str(req.get("subtitle_align") or design.DEFAULT_ALIGN)
     frame = B() / "ov_frame.png"
-    design.caption_png(frame, "", style, pill=pill, disclosure=ms.DISCLOSURE)     # 모든 컷에 고정: 폴더 표시 + 고지문
-    chip = None
-    if h.get("blog_30d"):
-        chip = design.chip_png(B() / "ov_chip.png", f"최근 30일 후기 {int(h['blog_30d']):,}건{'+' if int(h['blog_30d']) >= 1000 else ''}", "네이버 블로그 기준")
-    honest = f"아쉬움: {h['honest']}" if h.get("honest") else ""
-    first_offer = next((c["i"] for c in cuts if c["section"] == "offer"), None)
+    design.frame_png(frame, ms.DISCLOSURE)                                      # 모든 컷에 고정: 위쪽 고지문
     by_i = {int(x["i"]): x for x in script["cuts"]}
     segs, timeline, k_pattern = [], [], 0
     for c in cuts:
         x = by_i[c["i"]]
-        L = max(MIN_CUT, narr[c["i"]] + (0.12 if (B() / "narr_full.wav").exists() else GAP))
+        is_hook = (c["section"] == "hook")
+        L = max(MIN_HOOK if is_hook else MIN_CUT, narr[c["i"]] + (0.12 if (B() / "narr_full.wav").exists() else GAP))
+        label = design.plain(x["caption"])
+        sub_text = x["narration"]
+        if is_hook and label and label in sub_text:                               # 훅: 라벨 낱말이 문장에 있으면 그 낱말만 코랄 강조
+            sub_text = sub_text.replace(label, f"[{label}]", 1)
         cap = B() / f"ov_cap_{c['i']:02d}.png"
-        design.caption_png(cap, x["caption"], style, hook=(c["section"] == "hook"), sub=(honest if c["i"] == first_offer else ""))
-        overlays = [{"path": frame, "a": 0, "b": 99, "anim": False}, {"path": cap, "a": 0.0, "b": 99, "anim": True}]
+        design.subtitle_png(cap, sub_text, kicker=("" if is_hook else label), hook=is_hook, align=align)
+        # 훅 자막은 0초부터 그대로 보인다(페이드·슬라이드 없음) — 첫 화면에 멈출 이유가 있어야 한다. 나머지 컷은 0.12초 페이드로 바뀐다
+        overlays = [{"path": frame, "a": 0, "b": 99, "anim": False}, {"path": cap, "a": 0.0, "b": 99, "anim": not is_hook}]
         ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
-        if ex and int(ex.get("i", 0)) == c["i"]:                      # 사진 없는 시그니처: 문장 후반에 '+ 시설' 태그 칩 — "이것도 있다"로 읽히게
-            tag = B() / f"ov_tag_{c['i']:02d}.png"
-            design.tag_png(tag, str(ex.get("tag", "")))
-            overlays.append({"path": tag, "a": round(L * 0.45, 2), "b": 99, "anim": True})
-        if chip and c["i"] == 2:
-            overlays.append({"path": chip, "a": 0.3, "b": min(L, 2.1), "anim": True})
         slow = 1.0
         if c["veo"] and c["n"] in clips:
             src = clips[c["n"]]
@@ -803,7 +807,7 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
             kind = f"사진·{pattern}"
         segs.append(cut_segment(c["i"], src, L, B() / f"narr_c{c['i']}.wav", overlays, slow))
         timeline.append({"i": c["i"], "section": c["section"], "kind": kind, "sec": round(L, 2), "slow": round(slow, 2), "narration": x["narration"], "caption": x["caption"],
-                         "extra": (ex.get("tag") if ex and int(ex.get("i", 0)) == c["i"] else None)})
+                         "label": label, "extra": (ex.get("tag") if ex and int(ex.get("i", 0)) == c["i"] else None)})
     # 끝 카드 — 훅 사진 선명 + 세로 그라데이션(블러 없음), 왼쪽 정렬 헤드라인 + 폴더 행
     card = design.end_card(B() / "end_card.jpg", B() / f"shotHD_{cuts[0]['n']}.png", folder, pos, style, ms.DISCLOSURE)
     Lc = max(3.6, narr["cta"] + 0.7)
@@ -836,9 +840,10 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     caption = (ms.DISCLOSURE + "\n\n" + str(script.get("caption", "")).strip()
                + f"\n\n{name}" + (f" · {h['city']}" if h.get("city") else "")
                + f"\n객실 타입·가격대·링크는 프로필 링크 → '{folder}' 폴더 {pos}번"
+               + (f"\n후기에서 아쉬움: {h['honest']}" if h.get("honest") else "")          # v3: 영상 보조 줄 폐기 → 캡션으로
                + ("\n사진: 숙소 공식 홈페이지" if pc.get("official") else "")
                + "\n\n" + " ".join(script.get("hashtags") or []))
-    meta = {"mode": "solo", "stay": name, "title": script.get("title"), "caption": caption, "folder": folder, "folder_pos": pos, "caption_style": style, "bgm": report.get("bgm"),
+    meta = {"mode": "solo", "stay": name, "title": script.get("title"), "caption": caption, "folder": folder, "folder_pos": pos, "caption_style": style, "subtitle_align": align, "bgm": report.get("bgm"),
             "pinned_comment": f"{name} — 객실 타입·링크는 프로필 링크 → '{folder}' 폴더 {pos}번 (쿠팡 파트너스 링크 포함)",
             "affiliate_urls": {name: h["affiliate_url"]}, "lines": [x["narration"] for x in script["cuts"]] + [script["cta"]["narration"]],
             "cuts": timeline, "screen_qa_ok": all((q.get("score") or 0) >= q.get("threshold", 7) for q in p["qa"] if q.get("score") is not None),
