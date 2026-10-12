@@ -166,5 +166,11 @@
   "kind": "veo",
   "krw": 294,
   "note": "veo-3.1-lite-generate-preview 4초 wave.mp4"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "image",
+  "krw": 83,
+  "note": "mini-1 합성 단가 정정: gemini-3.1-flash-image 공식 $0.067/장(98원) — 57원으로 적은 2장분 차액"
  }
 ]

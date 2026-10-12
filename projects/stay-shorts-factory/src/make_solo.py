@@ -24,6 +24,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import design  # noqa: E402
+import make_mini  # noqa: E402
+import omni  # noqa: E402
 import discover as dc  # noqa: E402
 import make_folder  # noqa: E402
 import make_stay as ms  # noqa: E402
@@ -139,7 +141,7 @@ def _special_key(s, facts=()):
     return (0 if named else 1 if (FACILITY_RX.search(d) and not exterior) else 2 if not exterior else 3, -int(s.get("quality") or 0))
 
 
-def plan_cuts(h: dict, max_veo: int) -> list[dict]:
+def plan_cuts(h: dict, max_veo: int, mini: bool = False) -> list[dict]:
     """사진을 컷에 배정한다 — 훅1(물) · 물2 · 객실2 · 특별2 · 조건2(남은 사진, 외관은 맨 뒤). **사진 하나는 컷 하나에만.**
     Veo 는 움직임이 중요한 순서(훅 → 물 → 물이 있는 특별 공간 → 나머지)로 max_veo 개."""
     shots = list(h["shots"])
@@ -184,15 +186,117 @@ def plan_cuts(h: dict, max_veo: int) -> list[dict]:
         if EXTERIOR_RX.search(d):
             return 4
         return 2 if WATER_RX.search(d) else 3
-    for c in sorted(cuts, key=lambda c: (motion_rank(c), c["i"]))[:max(0, int(max_veo))]:
-        c["veo"] = True
+    if mini:
+        # 2026-10-12 운영자 결정 — 미니어처 3컷(옴니 플래시): ① 훅 = 장소 개그 ② 중간(객실·특별, 외관 제외) = 다른 장소 개그 ③ 마지막 내용 컷 = 채널 시그니처 포즈
+        cuts[0]["mini"] = "gag"
+        mid = [c for c in cuts[1:-1] if c["section"] in ("room", "special") and not EXTERIOR_RX.search(c["shot"].get("description") or "")]
+        mid.sort(key=lambda c: (0 if re.search(r"침대|소파|사우나|스파|욕조|베드|bed|sofa|sauna", c["shot"].get("description") or "") else 1, c["i"]))
+        if mid:
+            mid[0]["mini"] = "gag"
+        cuts[-1]["mini"] = "signature"
+        # Veo 라이트는 사람 없는 물·김 움직임 컷에만(편당 0~1) — 미니어처 컷과 겹치지 않게
+        env = [c for c in cuts if not c.get("mini") and c["section"] == "water"]
+        for c in env[:max(0, int(max_veo))]:
+            c["veo"] = True
+    else:
+        for c in sorted(cuts, key=lambda c: (motion_rank(c), c["i"]))[:max(0, int(max_veo))]:
+            c["veo"] = True
     for c in cuts:
-        c["lo"], c["hi"] = LIM["hook"] if c["section"] == "hook" else LIM["veo"] if c["veo"] else LIM["photo"]
+        c["lo"], c["hi"] = LIM["hook"] if c["section"] == "hook" else LIM["veo"] if (c["veo"] or c.get("mini")) else LIM["photo"]
     return cuts
 
 
 def cut_label(c: dict) -> str:
-    return f"컷 {c['i']} ({KO[c['section']]} · {'Veo 4초' if c['veo'] else '사진'} · {c['lo']}~{c['hi']}자)"
+    kind = "미니어처 4초" if c.get("mini") else "Veo 4초" if c["veo"] else "사진"
+    return f"컷 {c['i']} ({KO[c['section']]} · {kind} · {c['lo']}~{c['hi']}자)"
+
+
+# ── 미니어처 컷 (2026-10-12 운영자 결정 · 규칙 원본: data/prompts/miniature.md) ─────────────────────
+MINI_GAGS = mt.ROOT / "state" / "mini_gags.json"
+MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙소 사진 1장과 역할(gag 또는 signature)을 받는다.
+두 인형 Mina(여)·Jun(남)은 손조각 피규어이고, 이 사진 안에 **실제로 있는** 물·풀 가장자리·바닥·데크·침대·소파 위에만 둔다.
+사진에 없는 수영장·물·가구·구조물을 만들거나 키우지 않는다. 그 자리가 카메라에서 멀면 인형은 작게 보이는 것이 맞다.
+역할 gag: 아래 장소 개그 사전에서 이 사진의 장소에 맞는 개그 하나를 고른다(최근 사용 개그는 고르지 않는다. 맞는 것이 없으면 같은 결의 새 개그를 만든다).
+  4초 동안 동작 1~2개, 크고 단순하게. 입은 닫힌 채 웃는다. 위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기)·시설 오용·다른 사람·유행 챌린지·유명인·상표 금지.
+역할 signature: 동작은 시스템이 고정 블록으로 넣는다. scene 에는 둘이 크림색 양머리 수건을 쓰고 나란히 서서 카메라를 보는 첫 자세와, 서 있을 **실제 마른 자리**(풀 가장자리 데크·바닥·침대 앞)만 쓴다. motion 은 빈 문자열.
+scene 은 영어로: 사진에 보이는 장소 한 문장 + 인형의 정확한 위치·자세(첫 장면) + 'Nothing else in the photograph changes.'
+motion 은 영어 4초 타임라인: '0 to 1.5 seconds: ... 1.5 to 3 seconds: ... 3 to 4 seconds: ...'
+JSON 만: {"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"..."}"""
+
+
+def _recent_gags(n: int = 6) -> list[str]:
+    try:
+        return [g["gag"] for g in json.loads(MINI_GAGS.read_text(encoding="utf-8"))[-n:]]
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _save_gags(stay: str, gags: list[str]):
+    try:
+        rows = json.loads(MINI_GAGS.read_text(encoding="utf-8")) if MINI_GAGS.exists() else []
+    except Exception:  # noqa: BLE001
+        rows = []
+    from datetime import date
+    rows += [{"date": date.today().isoformat(), "stay": stay, "gag": g} for g in gags]
+    MINI_GAGS.parent.mkdir(parents=True, exist_ok=True)
+    MINI_GAGS.write_text(json.dumps(rows[-60:], ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
+
+def mini_scene(model: str, c: dict, recent: list[str]) -> dict:
+    """사진을 보고 인형 자리·개그를 고른다(비전 · 몇 원). 사진에 없는 장소를 지어내지 않게 사진을 직접 보여 준다."""
+    gags = "\n".join(f"- {p}: {g}" for p, g in make_mini.gag_table())
+    text = (f"역할: {c['mini']}\n사진 설명(참고): {c['shot'].get('description', '')}\n최근 사용 개그(고르지 말 것): {', '.join(recent) or '없음'}\n"
+            f"장소 개그 사전:\n{gags}")
+    r = _vision_json(model, MINI_SYSTEM, text, B() / f"shot_{c['n']}.png")
+    if not r.get("scene"):
+        raise RuntimeError(f"미니어처 장면을 못 받음: {json.dumps(r, ensure_ascii=False)[:200]}")
+    return r
+
+
+def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict) -> dict:
+    """미니어처 컷 (돈): 장면 고르기(비전) → 숙소 사진에 인형 합성(이미지 편집) → 배경 보존 검사(0원) → 옴니 플래시 4초.
+    어느 단계든 실패하면 그 컷은 사진 무빙으로 내려간다(돈을 더 쓰지 않는다). 돌려주는 것: n → 클립 경로."""
+    clips, rows = {}, []
+    todo = [c for c in cuts if c.get("mini")]
+    if not todo:
+        return clips
+    img_models = make_mini.image_models(req.get("image_model"))
+    recent, used = _recent_gags(), []
+    mdir = B() / "mini"; mdir.mkdir(parents=True, exist_ok=True)
+    for c in todo:
+        row = {"i": c["i"], "n": c["n"], "role": c["mini"], "ok": False}
+        rows.append(row)
+        try:
+            sc = ms._try_models("vision", models["text"], lambda m: mini_scene(m, c, recent + used))
+            row.update({"place": sc.get("place"), "gag": sc.get("gag")})
+            motion = make_mini.signature_block() if c["mini"] == "signature" else str(sc.get("motion") or "")
+            base = make_mini.crop916(B() / f"shotHD_{c['n']}.png", mdir / f"{c['n']}_base.jpg")
+            ep = make_mini.edit_prompt(sc["scene"])
+            (mdir / f"{c['n']}_edit_prompt.txt").write_text(ep, encoding="utf-8")
+            frame = make_mini.composite(base, ep, mdir / f"{c['n']}_frame.png", img_models, row)
+            ch = make_mini.changed_ratio(base, frame); row["changed"] = round(ch, 3)
+            if ch > make_mini.MAX_CHANGED:
+                frame = make_mini.composite(base, ep + "\n\nPREVIOUS ATTEMPT FAILED: it redrew or reframed the photograph. Keep every pixel of the photograph except where the figurines are.",
+                                            mdir / f"{c['n']}_frame.png", img_models, row)
+                ch = make_mini.changed_ratio(base, frame); row["changed_retry"] = round(ch, 3)
+                if ch > make_mini.MAX_CHANGED:
+                    raise RuntimeError(f"배경 보존 실패 {ch:.0%} — 옴니 생략")
+            vp = make_mini.omni_prompt(motion)
+            (mdir / f"{c['n']}_omni_prompt.txt").write_text(vp, encoding="utf-8")
+            res = omni.make_clip(vp, frame, 4, mdir / f"{c['n']}.mp4")
+            clips[c["n"]] = mdir / f"{c['n']}.mp4"
+            row.update({"ok": True, "omni_krw": res["krw"], "clip_sec": res["sec"], "model": res["model"]})
+            if c["mini"] == "gag" and sc.get("gag"):
+                used.append(str(sc["gag"]))
+        except Exception as e:  # noqa: BLE001
+            row["error"] = f"{type(e).__name__}: {str(e)[:200]}"
+            c["mini"] = None                                              # 사진 무빙으로 대체
+            log(f"컷 {c['i']} 미니어처 실패 → 사진 무빙: {row['error']}")
+    if used:
+        _save_gags(h["name"], used)
+    report["mini"] = {"cuts": rows, "image_krw": sum(r.get("image_krw", 0) for r in rows), "omni_krw": sum(r.get("omni_krw", 0) for r in rows)}
+    log("미니어처:", json.dumps([{k: r.get(k) for k in ("i", "role", "gag", "ok", "changed", "clip_sec", "omni_krw", "error")} for r in rows], ensure_ascii=False))
+    return clips
 
 
 # ── 대본 ───────────────────────────────────────────────────────────────────────────────
@@ -572,9 +676,10 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     B().mkdir(parents=True, exist_ok=True)
     h, pos0 = assets(req, models, report)
     mv = req.get("max_veo_cuts")
-    cuts = plan_cuts(h, 4 if mv is None else int(mv))                     # 0 = Veo 없이 전부 사진 무빙(0원) — "or 4" 는 0 을 4 로 바꿔 버렸다
+    mini = bool(req.get("miniature"))
+    cuts = plan_cuts(h, (1 if mini else 4) if mv is None else int(mv), mini)                     # 0 = Veo 없이 전부 사진 무빙(0원) — "or 4" 는 0 을 4 로 바꿔 버렸다
     report["cuts"] = [{"i": c["i"], "section": c["section"], "n": c["n"], "veo": c["veo"], "source": c["shot"].get("source"), "seen": c["shot"].get("description")} for c in cuts]
-    log("컷: " + " · ".join(f"{c['i']}{KO[c['section']][0]}{'V' if c['veo'] else ''}" for c in cuts))
+    log("컷: " + " · ".join(f"{c['i']}{KO[c['section']][0]}{'V' if c['veo'] else ''}{'M' if c.get('mini') == 'gag' else 'S' if c.get('mini') == 'signature' else ''}" for c in cuts))
     script = ms._try_models("text", models["text"], lambda m: write_script(m, req, h, cuts))
     qa = screen_qa(models, cuts, script, h, req)
     report["screen_qa"] = qa
@@ -847,6 +952,8 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     h, cuts, script, narr, folder, pos = p["h"], p["cuts"], p["script"], p["narr"], p["folder"], p["pos"]
     name = h["name"]
     clips = make_veo(cuts, theme, report)
+    if req.get("miniature"):
+        clips.update(make_minis(cuts, h, req, models, report))
 
     # v3 화면 (2026-10-12 운영자 검토): 알약·후기 칩·'+ 시설' 태그·아쉬움 보조 줄 전부 폐기. 화면 요소는 고지문(위) + 장소 라벨(왼쪽) + 대사 자막(가운데, 2~3단어 가라오케) 뿐.
     # 같은 유형 글자는 항상 같은 자리(design.GRID) — 컷마다 크기·위치가 달라지는 일이 없다.
@@ -880,11 +987,11 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
                 overlays.append({"path": capk, "a": ta, "b": tb, "anim": True, "fade": 0.05, "slide": 8})
         ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
         slow = 1.0
-        if c["veo"] and c["n"] in clips:
+        if (c["veo"] or c.get("mini")) and c["n"] in clips:
             src = clips[c["n"]]
             avail = ms.probe_duration(src)
             slow = min(MAX_SLOW, L / avail) if L > avail else 1.0
-            kind = "Veo"
+            kind = "미니어처" if c.get("mini") else "Veo"
         else:
             pattern = PATTERNS[k_pattern % len(PATTERNS)]; k_pattern += 1
             src = photo_clip(B() / f"shotHD_{c['n']}.png", L, B() / f"pan_{c['n']}.mp4", pattern)
@@ -926,6 +1033,7 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
                + f"\n객실 타입·가격대·링크는 프로필 링크 → {pos}번 ({folder})"
                + (f"\n후기에서 아쉬움: {h['honest']}" if h.get("honest") else "")          # v3: 영상 보조 줄 폐기 → 캡션으로
                + ("\n사진: 숙소 공식 홈페이지" if pc.get("official") else "")
+               + ("\n미니어처 인물은 AI 연출입니다" if any(c.get("mini") for c in cuts) else "")
                + "\n\n" + " ".join(script.get("hashtags") or []))
     meta = {"mode": "solo", "stay": name, "title": script.get("title"), "caption": caption, "folder": folder, "folder_pos": pos, "caption_style": style, "bgm": report.get("bgm"),
             "pinned_comment": f"{name} — 객실 타입·링크는 프로필 링크 → {pos}번 ({folder}) · 쿠팡 파트너스 링크 포함",

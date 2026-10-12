@@ -31,6 +31,7 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import veo  # noqa: E402
+import omni  # noqa: E402
 import crawl_photos  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -70,7 +71,7 @@ VEO_HEAD = ("The first frame is a real hotel photograph with two small hand-scul
             "cobalt-blue one-piece swimsuit and dark-navy swim shorts, same body proportions. They are alive and clearly enjoying the place: "
             "natural, visible, playful body movement (arms, heads, torsos and splashing water), smooth like an animated figurine film — "
             "not frozen, not stiff. They may move around within the same pool or spot.")
-VEO_TAIL = ("Water reacts to every movement with splashes, droplets and ripples; steam and light behave naturally. Camera: locked-off with a very slow 5 percent push-in. The hotel place "
+VEO_TAIL = ("Water reacts to every movement with splashes, droplets and ripples; steam and light behave naturally. Camera: locked-off with a very slow push-in of at most 10 percent, staying within the original photograph. The hotel place "
             "stays exactly the same as the first frame: no new objects, no new people, no text, no logos, no morphing; the figurines' "
             "faces, hair and swimwear never change; they never turn into real humans. Vertical 9:16, 4 seconds.")
 
@@ -95,6 +96,40 @@ def edit_prompt(scene: str) -> str:
 
 def veo_prompt(motion: str) -> str:
     return " ".join([VEO_HEAD, "MOTION (4 seconds): " + motion.strip(), VEO_TAIL])
+
+
+OMNI_HEAD = ("Use the attached image as the exact first frame of the video and animate from it. Total length: exactly 4 seconds. "
+             "Audio: soft natural ambient sound of the place only — no dialogue, no voices, no music.")
+
+
+def omni_prompt(motion: str) -> str:
+    """옴니 플래시용 — 비오 지시문 + 첫 장면 고정·길이·소리 지시(옴니는 길이 필드가 없고 소리를 늘 만든다)."""
+    return OMNI_HEAD + " " + veo_prompt(motion)
+
+
+def _md_code_after(heading: str) -> str:
+    t = RULES.read_text(encoding="utf-8")
+    m = re.search(re.escape(heading) + r".*?```\n(.*?)```", t, re.S)
+    if not m:
+        raise RuntimeError(f"miniature.md 에서 '{heading}' 블록을 못 찾음")
+    return m.group(1).strip()
+
+
+def signature_block() -> str:
+    """채널 시그니처 포즈 — miniature.md 1-4 고정 블록(글자 그대로)."""
+    return _md_code_after("## 1-4.")
+
+
+def gag_table() -> list[tuple[str, str]]:
+    """장소 개그 사전 — miniature.md 1-5 표의 (장소 유형, 개그)."""
+    t = RULES.read_text(encoding="utf-8")
+    sec = t.split("## 1-5.", 1)[1].split("\n## ", 1)[0]
+    rows = []
+    for ln in sec.splitlines():
+        cells = [c.strip() for c in ln.strip().strip("|").split("|")]
+        if len(cells) == 2 and cells[0] and not cells[0].startswith(("장소 유형", "---")):
+            rows.append((cells[0], cells[1]))
+    return rows
 
 
 # ── 사진 ──────────────────────────────────────────────────────────────
@@ -162,7 +197,14 @@ def image_models(prefer: str | None) -> list[str]:
 
 
 def image_krw(model: str) -> float:
-    usd = float(os.environ.get("IMAGE_PRO_USD") or 0.134) if "pro" in model else float(os.environ.get("IMAGE_USD") or 0.039)
+    """공식 가격표(2026-10-12): gemini-3.1-flash-image 1K 출력 $0.067 · 2.5-flash-image $0.039 · pro 계열 $0.134.
+    mini-1 에서 3.1 을 $0.039 로 적어 장당 41원 적게 기록했다 → 장부에 정정 줄을 남겼다."""
+    if "pro" in model:
+        usd = float(os.environ.get("IMAGE_PRO_USD") or 0.134)
+    elif re.search(r"gemini-2\.", model):
+        usd = float(os.environ.get("IMAGE_USD") or 0.039)
+    else:
+        usd = float(os.environ.get("IMAGE3_USD") or 0.067)
     return usd * FX
 
 
@@ -301,12 +343,22 @@ def main():
                     log(f"{k}: {row['skipped']}")
                     rows.append([(base, f"{k} 숙소 사진"), (frame, f"합성 실패 {ch:.0%} 변경")])
                     continue
-            vp = veo_prompt(s["motion"]); (BUILD / f"{k}_veo_prompt.txt").write_text(vp, encoding="utf-8")
+            motion = signature_block() if s.get("signature") else s["motion"]
+            engine = str(s.get("engine") or req.get("video_engine") or "omni")
             clip = BUILD / f"{k}.mp4"
-            krw = veo.make_clip(vp, frame, 4, clip, veo.seed_for("mini", k), mime="image/png")
-            row.update({"ok": True, "veo_krw": round(krw), "edit_prompt_chars": len(ep), "veo_prompt_chars": len(vp)})
-            mids = [frame_at(clip, t, BUILD / f"{k}_t{t}.jpg") for t in (1.0, 2.5, 3.8)]
-            rows.append([(base, f"{k} 숙소 사진"), (frame, "합성 첫 장면"), (mids[0], "영상 1.0초"), (mids[1], "영상 2.5초"), (mids[2], "영상 3.8초")])
+            if engine == "omni":
+                vp = omni_prompt(motion); (BUILD / f"{k}_omni_prompt.txt").write_text(vp, encoding="utf-8")
+                res = omni.make_clip(vp, frame, 4, clip, resolution=str(req.get("omni_resolution") or "720p"))
+                row.update({"ok": True, "engine": "omni", "omni_krw": res["krw"], "clip_sec": res["sec"], "omni_model": res["model"], "tokens_out": res["tokens_out"]})
+            else:
+                vp = veo_prompt(motion); (BUILD / f"{k}_veo_prompt.txt").write_text(vp, encoding="utf-8")
+                krw = veo.make_clip(vp, frame, 4, clip, veo.seed_for("mini", k), mime="image/png")
+                row.update({"ok": True, "engine": "veo", "veo_krw": round(krw), "clip_sec": 4})
+            row.update({"edit_prompt_chars": len(ep), "video_prompt_chars": len(vp)})
+            dur = omni.duration(clip) or 4.0
+            ts = [round(dur * f, 1) for f in (0.25, 0.5, 0.75, 0.97)]
+            mids = [frame_at(clip, t, BUILD / f"{k}_t{t}.jpg") for t in ts]
+            rows.append([(base, f"{k} 숙소 사진"), (frame, "합성 첫 장면")] + [(m, f"영상 {t}초") for m, t in zip(mids, ts)])
         rep["ok"] = True
     except Exception as e:  # noqa: BLE001
         rep["error"] = f"{type(e).__name__}: {str(e)[:400]}"
@@ -314,7 +366,7 @@ def main():
     finally:
         if rows:
             sheet(rows, BUILD / "sheet.jpg")
-        rep["veo_spent_krw"] = round(veo.spent_this_run())
+        rep["veo_spent_krw"] = round(veo.spent_this_run())                # Veo + Omni 합계(같은 실행 카운터)
         rep["month_veo_krw"] = round(veo.month_total())
         rep["finished"] = datetime.now().isoformat(timespec="seconds")
         REPORT.parent.mkdir(parents=True, exist_ok=True)

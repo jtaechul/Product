@@ -1,22 +1,17 @@
 {
- "nonce": "2026-10-12-probe-1",
+ "nonce": "2026-10-12-omni-1",
  "veo_approved": false,
- "note": "0원 모델 목록 점검(옴니 플래시 사용 가능 여부) — 생성 호출 없음",
+ "note": "옴니 플래시 1컷 시험(대기 · 운영자 승인 뒤 veo_approved true) — 길이 지시가 먹는지(4초)·인물 유지·배경 보존 확인. 예상 약 700~1,290원",
  "shots": [
   {
    "key": "spa",
    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
    "focus_x": 0.5,
    "scene": "The photograph shows an outdoor spa terrace with Egyptian-style carved walls, a palm plant, a white sphinx statue on the left and small round warm bathing pools in the lower right of the frame, with a stone floor in front of them. Mina and Jun sit inside the nearest real round warm pool at the lower right, submerged to the upper chest near its stone rim, facing the camera at a slight angle; they appear at the size that fits that pool's real distance from the camera. Jun has both hands cupped in the water, about to splash; Mina leans toward the rim laughing with her eyes happily closed, the cobalt swimsuit straps visible on her shoulders. Light steam rises from the warm water. The stone floor in front of the pool stays exactly as it is — no new pool, no new water. Nothing else in the photograph changes.",
-   "motion": "0 to 1 second: Jun scoops warm water with both hands and playfully splashes it toward Mina, droplets sparkling. 1 to 2.5 seconds: Mina laughs with a big closed-mouth smile, turns her face away and splashes back with one hand; both shoulders shake with laughter. 2.5 to 4 seconds: Mina leans back against the rim and stretches both arms along it with a satisfied smile while Jun sinks to his shoulders and grins at her; ripples spread across the round pool and steam swirls."
-  },
-  {
-   "key": "wave",
-   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
-   "focus_x": 0.5,
-   "scene": "The photograph shows a large indoor wave pool under a high glass-and-steel roof with a rock wall, palm trees and a digital clock in the background. Mina and Jun stand waist-deep in the shallow turquoise water in the lower center foreground, close to the camera, holding hands, seen from a three-quarter back angle so both faces are visible in profile as they look toward the waves. Mina looks back over her shoulder toward the camera with a soft smile; Jun raises his free hand slightly as if cheering. A thin ring of white foam surrounds their waists from the incoming wave. Nothing else in the photograph changes.",
-   "motion": "0 to 1.5 seconds: a low artificial wave rolls in from the back of the pool toward them. 1.5 to 2.5 seconds: the wave splashes up to their chests; they jump up together holding hands and Jun throws his free arm high in a cheer. 2.5 to 4 seconds: they land, wobble and regain balance with big closed-mouth smiles, Mina looking back over her shoulder at the camera with a big smile, white foam swirling around their waists."
+   "motion": "0 to 1.5 seconds: Jun scoops warm water with both hands and tries to splash Mina, but the water flies back into his own face. 1.5 to 3 seconds: Jun freezes with a blank, dripping face and wide eyes; Mina laughs with a big closed-mouth smile and happily curved eyes. 3 to 4 seconds: Mina pats Jun's shoulder twice and he grins sheepishly, ripples spreading across the round pool and light steam swirling.",
+   "engine": "omni"
   }
  ],
- "probe_models": true
+ "video_engine": "omni",
+ "omni_resolution": "720p"
 }
