@@ -294,7 +294,7 @@ def clean_tts_wav(src: Path, dst: Path, frame_ms: int = 10) -> dict:
 VOICE_DEFAULT = "Kore"
 TTS_STYLE = "숙소를 소개하는 여행 쇼츠 나레이션이다. 서울 말씨의 30대 여성이 차분하고 따뜻하게, 친구에게 추천하듯 또박또박 말한다."
 READ_SEC_PER_CHAR, READ_SEC_SLACK = 0.24, 0.9
-READS_ALOUD: set = set()
+READS_ALOUD: set = {"gemini-3.8-flash-tts"}            # p10b 실측(2026-10-12): 253자 지시문까지 읽어 68.5초. 판결극장 2026-10-02 실측과 같다
 
 
 def _tts_once(model: str, prompt: str, voice: str) -> tuple[bytes, int]:

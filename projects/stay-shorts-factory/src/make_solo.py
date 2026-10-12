@@ -468,24 +468,39 @@ def silences(wav: Path, noise_db: int, min_sec: float) -> list[tuple[float, floa
     return list(zip(starts, ends))
 
 
-def split_narration(full: Path, keys: list, tempo_done: bool = True) -> dict | None:
-    """전체 나레이션 wav 를 문장 사이 무음에서 n 조각으로 자른다. 정확히 n-1 개의 무음이 잡히는 기준(dB·길이)을 찾지 못하면 None.
-    조각 이름: narr_c{i}.wav / narr_cta.wav (컷 단위 합성과 같은 파일 이름이라 뒤 단계는 그대로)."""
+def split_narration(full: Path, keys: list, texts: list[str] | None = None) -> dict | None:
+    """전체 나레이션 wav 를 문장 사이 무음에서 n 조각으로 자른다.
+    p10b 실측: "무음이 정확히 n-1 개" 조건은 쉼표 쉼(짧은 무음)이 섞이면 거의 안 맞는다 → **가장 긴 무음 n-1 개**를 경계로 잡고,
+    조각 길이가 문장 글자 수 비율(±45%)과 맞는지로 검증한다. 안 맞으면 None(컷마다 합성으로 복귀). 진단은 기록에 남긴다."""
     n = len(keys)
     total = ms.probe_duration(full)
-    for noise, d in ((-38, 0.30), (-35, 0.30), (-40, 0.26), (-38, 0.22), (-35, 0.36), (-42, 0.20), (-32, 0.30)):
-        sil = [(a, b) for a, b in silences(full, noise, d) if a > 0.15 and b < total - 0.15]
-        if len(sil) == n - 1:
-            bounds = [0.0] + [(a + b) / 2 for a, b in sil] + [total]
-            narr = {}
-            for k, key in enumerate(keys):
-                a, b = bounds[k], bounds[k + 1]
-                out = B() / (f"narr_c{key}.wav" if isinstance(key, int) else f"narr_{key}.wav")
-                ms.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{a:.3f}", "-t", f"{b - a:.3f}", "-i", str(full),
-                        "-af", "afade=t=in:d=0.02,afade=t=out:st=" + f"{max(0.0, b - a - 0.04):.3f}" + ":d=0.04", str(out)])
-                narr[key] = round(b - a, 3)
-            log(f"나레이션 한 번 합성 → {n}조각 분할 (무음 기준 {noise}dB·{d}s · 전체 {total:.1f}초)")
-            return narr
+    if texts and len(texts) == n:
+        w = [len(re.sub(r"\s", "", t)) + 3 for t in texts]          # +3 = 문장 끝 쉼 몫
+    else:
+        w = [1] * n
+    frac = [x / sum(w) for x in w]
+    why = []
+    for noise, d in ((-35, 0.12), (-38, 0.12), (-32, 0.14), (-40, 0.10), (-30, 0.16)):
+        sil = [(a, b) for a, b in silences(full, noise, d) if a > 0.3 and b < total - 0.3]
+        if len(sil) < n - 1:
+            why.append(f"{noise}dB/{d}s: 무음 {len(sil)}개(<{n - 1})"); continue
+        top = sorted(sorted(sil, key=lambda ab: ab[1] - ab[0], reverse=True)[:n - 1])
+        bounds = [0.0] + [(a + b) / 2 for a, b in top] + [total]
+        durs = [bounds[k + 1] - bounds[k] for k in range(n)]
+        ratio = [dd / (total * f) for dd, f in zip(durs, frac)]
+        bad = [k + 1 for k, r in enumerate(ratio) if not (0.55 <= r <= 1.45) or durs[k] < 0.8]
+        if bad:
+            why.append(f"{noise}dB/{d}s: 길이 비율 어긋난 조각 {bad} " + " ".join(f"{r:.2f}" for r in ratio)); continue
+        narr = {}
+        for k, key in enumerate(keys):
+            a, b = bounds[k], bounds[k + 1]
+            out = B() / (f"narr_c{key}.wav" if isinstance(key, int) else f"narr_{key}.wav")
+            ms.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{a:.3f}", "-t", f"{b - a:.3f}", "-i", str(full),
+                    "-af", "afade=t=in:d=0.02,afade=t=out:st=" + f"{max(0.0, b - a - 0.04):.3f}" + ":d=0.04", str(out)])
+            narr[key] = round(b - a, 3)
+        log(f"나레이션 한 번 합성 → {n}조각 분할 (무음 {noise}dB·{d}s 중 긴 것 {n - 1}개 · 전체 {total:.1f}초 · 비율 " + " ".join(f"{r:.2f}" for r in ratio) + ")")
+        return narr
+    log("무음 분할 실패 진단: " + " | ".join(why[:5]))
     return None
 
 
@@ -498,7 +513,7 @@ def narrate(models: dict, script: dict, voice: str, tempo: float) -> dict:
         try:
             full = B() / "narr_full.wav"
             mt.tts(models, "\n\n".join(texts), full, voice, tempo)
-            got = split_narration(full, keys)
+            got = split_narration(full, keys, texts)
             if got:
                 return got
             log("⚠️ 무음 분할이 문장 수와 안 맞아 컷마다 따로 합성한다")
