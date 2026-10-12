@@ -12,7 +12,7 @@
    "theme": "실내 온수풀·온천",
    "region": "강원",
    "updated": "2026-10-12",
-   "intro": "쌀쌀해진 11월에 따뜻하게 즐기기 좋은 강원 실내 온수풀 리조트 세 곳을 정리했어요. 최근 후기 데이터로 검증된 온천과 스파 숙소를 지금 만나보세요.",
+   "intro": "쌀쌀해진 11월, 찬바람 맞으며 따뜻한 물에 들어가는 강원 실내 온수풀·온천 숙소를 영상으로 소개한 순서대로 정리합니다.",
    "hotels": [
     {
      "rank": 1,
@@ -70,129 +70,6 @@
      "price_band": null,
      "caption": "",
      "no": 1
-    },
-    {
-     "rank": 2,
-     "name": "롯데리조트 속초",
-     "city": "속초시",
-     "hook": "사계절 실내 온수 워터파크",
-     "blog_30d": 931,
-     "facts": [
-      "동해 수평선이 맞닿은 인피니티 풀 완비",
-      "지하 2층에 실내 워터파크와 파도풀 운영",
-      "소금방·황토방·아이스방 갖춘 찜질방 구비",
-      "오션뷰를 조망하는 43~45도 체온유지실",
-      "호텔형과 콘도형의 다양한 객실 타입 보유",
-      "실내 워터파크"
-     ],
-     "rooms": [
-      {
-       "name": "디럭스 더블 바다전망",
-       "tags": [
-        "오션뷰"
-       ],
-       "image": "https://ads-partners.coupang.com/image1/x9YEkkwtddwLIkNvxwJM0a-86erZT6UPVQXzAapUwCQ2PemQxm4_7PUxXfwx6oO6N2rR3_RFgeotglU_YhjcuaNUpIgtiTV6cYNOj79MznBUUVKwZxiwlgJLyaptwmRG54W9GD0Pmi6idCY_pr9rqGEJa3hYb6XLjnw0Bsq4pGWUQAFleuCh1tyR3zo6gJv-RN-NzWBPltRsbhTHPbrubt08dGDCNZvuNWWFQOh0ieVgazh-VoAw3fC8DWL3rF0lJZdO7Z1ZJAzJeIZYtehda4IRkduTY5xqAlXVKql1BExV5Lk-9Rwo40Bi0XaellZu6xfHjiHkJn57wLWIpj7N3zHJVzwgaHBvOa40dgTYY94tKhX2MI8K22l56PYA5L9WJlQBaisLOEhiTWeS7A_l8yT2kZkj1cHPLWpn_NBZ7ZKj470leeQlnoKcL8Qn7SbQSwqpnGXDlJIpe0xoqUYYtqKetl3oSBxXIszsYvC6fSPepN1v0JGMlVLFbqEKW0-uYaAHnSkIDquxifMU_zr5o3r4N_4FhLsQ44u4farv2cdoJNkX"
-      },
-      {
-       "name": "디럭스 18평(Sunset Check-in(18시체크인/10시체크아웃)★연박불가, 콘도)",
-       "tags": [],
-       "image": "https://ads-partners.coupang.com/image1/izXRXvhS2gPJm43_ixN7UKc6zcoDRTypGPHAE9LJMvF4kGM6opJDzzr9v4lPPDKGD54gZYsJsDdBEdhUuiEQpOQ0l-Y5wOSFLxySdePwL0pEXVQjQWEgF_HDAZaFQHXX-5RBZpFQD1MoKQVKVO4nkvuNTyXUMGsn7mPLgdOZGVWR-Lh4HyRZhxsWV0YHyiAZ3cygaweHjUjqrvzzy_SIy4d5KsusrqX4eKa0LraH89KkQDhZ0NXotcIMR1CjDkr7fYpEw-P50NavcZdhBFHAfVeOfrIlUnwMGw--0hGAAMPCt795qmjh8erRLGGl1TkBHEM1axUV60cBRm2PiuWyoy6bZEnM0JCdSffY3tXx7I_pnUL-jupxd1Wi3vMQH3nQtvNhSd79YMrqBjGg_UcnPQ4IT033SgsHjNswuLMPsBHcAjw79HejiHrUbVRDsbv8ptGIVzyZhnSruYZMZ_hpi1npmhBV6FAPIbCcldpkdekassZIoVszLvRKkn3DdP4FmvB8w_cM8_rvlWl21QjQJdYMKpQxc-M8JQyBpAaMVKLwpA=="
-      },
-      {
-       "name": "디럭스 더블",
-       "tags": [],
-       "image": "https://ads-partners.coupang.com/image1/0c36gC-SEyj-0LbL0WA4148Spngn8IRoGAL5yBs2pZtJ3qPBv0art3T0tclH0GSYU4a5PvpLgqoFG1g_orb1P4PRX0iTgFn1LspGtU4oq20ppB27DfX6h_6KyWz2LFkuGm1iF-ST7LWL5fpI4HpPToe0cNSFeyGxvVVpSxg3-WtZ-yp3GqNVaFT3933FQHmQLlWhQqwT4GoBV8QTbpnCX7CYqf_w-K6jD3tClvHleqf2i7Sq1bTivv90wcsudXwhzPm7_7-g_W_-VXWeuFGLwzPa_fyfjMUmJKAgGNy55Xlzw4h2_UYUFfqe6QCjjl_YR6liS_b-WtDyl11r2hw7p5TzzM5pfdhMwV6OpUrXZizpWLwCrQF7sg5ftQxh0QqFjaNfBSLatTMng6wTWVquQWmj1ArAOgRrqeJ8OBSIwXaCITMKhwigL3AxAZ-l43RxUp_cQc7YQU1YQuSkn_iV5W34ewVa1vCu9xkl08JogyuM7ZB4dqS353rPwWc_suL8Q-fWl15OSIcj1CLJ8p1jZpMXrXX_SHWTbh1e3qLVuz6ZWhZ8"
-      },
-      {
-       "name": "디럭스 더블, 바다 전망",
-       "tags": [
-        "오션뷰"
-       ],
-       "image": "https://ads-partners.coupang.com/image1/1Fi94Yj3uWjWcaBb1ECF2Cr40AZyeksNGvh1Aw9_qI3f9dpEZ_proLyUgX1PnBdrofPjs7z8uRmc-LSoWgCKkn_VALKDNG08QdMKCIlbp3YdTsDl2f53YprTs7A4gvz_KKI2IPftHsTxoXFRwEN5Kzejc1kFJLJxstbxVm6o4H604at_cLoUU0AemtDIgcH5Wn6q6oAY_6QtWlcghJS7R0gUkRclcI1rXZVq-ZZpaNgHQ9PCAuOoo3ihhjaU0zFwHK0DUuRw6Q9VKHvT7YyTH48sy5WTImajN3S01KTP7FfQ0-nx9tunOwyl40JbFza1fQzQWhqZqW8EcAAiDl5RNzXmGi0wvg6rfbtBVI4dPmn-mpxiCh1zI_J-Ywr2Jdt0ZCIhBRD-L3ntI9--7oWwk9CpURCX2qTxGX8XIH4lemVWp58Br49sAXDVEbW_PYsWnwHciL0YNUUv-5tSClFKPyS8nvsToxW2Ksm_ca_YCJaEq2-G-RabvSluJyvHAF1mFl9MxtnFCRT7k7kbQboCPICqUeBiENKHaLT6sObm6PEPDw=="
-      },
-      {
-       "name": "[특가]수페리어 트윈 항구전망",
-       "tags": [
-        "오션뷰"
-       ],
-       "image": "https://ads-partners.coupang.com/image1/l_PHQpfoWebANLfal5rvgYRqTLpLiTs16WRitocO49VA7g3qKSMvj5TMiiCwp60Y4LX7tXA6OlkU2qaMA__KkHnllEOhYcGQ9waRdbPpr-qee28ExHKQEEvaCtXLh4yPfMKyxXkoLMazPoX5vRsVY_f83TamFTjoRvxJ13NPBckEdHKqs9lT-hwFaAbwJ9BECxeClmtK9d4OajZV18gLF0eURGw1osfCgc3xvlfbzhn8NFHcGodIbx4xpkh22-fgJglzqBpkvqwrXxYAmxdkwJAdWu-ZRqEb0N9QKbz-Us0AGs8iv9XD92d1T7IFuzlGZJQ7VVNvdJW_OQnX6xRt4ufnYxaa0EWNlpApA5xVK5qWgBk4HpCEM--BToYcVQgqHx2dbnopL3B7LMFXvUAhNSve-GxXXsspaSBUJ09WmT3MZlvFwEb3GlJ-SZJYig4ZYDEahJDklDob5aq74QZCwNwAXxkZBBP0gaJftEkZ0b5RHootax73sukkPPVGQLLwfIjMJlpU1L1t8j4_LSgejhetbjqlOFqfi7FJd9_UNGflLr4="
-      }
-     ],
-     "image": "img/2026-11-강원-실내-온수풀-온천/2.jpg",
-     "links": {
-      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000578675&vendorItemId=70000006079834&itemId=20000050911027&traceid=V0-153-00f522d9ef652ffa&requestid=20261011220520951042158083&token=31850C%7CGM&pt=0&slot=1",
-      "agoda": null,
-      "official": "https://www.lottehotel.com/resort-sokcho/ko"
-     },
-     "honest": "",
-     "price_band": null,
-     "caption": "실내 워터파크 파도풀 · 바다 전망 디럭스 객실 · 사계절 온수 인피니티풀",
-     "no": 2
-    },
-    {
-     "rank": 3,
-     "name": "쏠비치 삼척",
-     "city": "삼척시",
-     "hook": "그리스 산토리니 감성 오션풀",
-     "blog_30d": 1000,
-     "facts": [
-      "웰컴센터 지하 1층 사우나 운영",
-      "동해를 조망하는 오션플레이 릴렉스룸",
-      "어린이 2층 침대 구비된 키즈 전용 객실",
-      "반려견 동반 가능한 펫 전용 객실 보유",
-      "노래방·오락실·탁구장 및 유리공예 시설",
-      "오션플레이"
-     ],
-     "rooms": [
-      {
-       "name": "호텔 슈페리어(클린/스탠다드/패트)",
-       "tags": [
-        "반려견"
-       ],
-       "image": "https://ads-partners.coupang.com/image1/vG-bAATQFmwMN5g7vA-ehBpbYYX8i05i197_abqTg3QN6KNHLw1NQYYvoYNXvxaoM1_pFqDd1XgU3Hqi-xGvFIOOLrwGcBPOERKtrZIN7EZp4kbqrIKZ3fkQyq7thDGKyjzRiio029dTHQu3_cGpczmWMGflQ4wGRwtiIAFuF4SyLvND9rCGWZInUPdJRsMrewA5lZCPfW2oyLh7nInn7l8RFwOAjQ9j-bPYM5iUrvcWVbVLVqziUxP11hKLN_zikRW4NZi1DPHlfYuICFJB0lL5V3TIWu5AgzhHX3MZvceBktBloyHBdEnm59Ax9nv8pX1l1luDHnzzMZEcIox_oyrhLO_57M_8YDEnmBhELvE5pzYTJkCrHqsgd8F0ztIePPwFLhgFyCXJSjpp7eA8vOD3W2y31gOQuIhERL8hToaAEHJocN84tgleo2T9q8eYRgu6cS35DiQ2PftOJltAgUqwabNl7G5n6T2tHuMcNjPVVR36yTiTYhqcpf6S9uR5od-g2BWDrWgTksOjFTcJcjRnsvE81ntEmDQchgOeR53LQfo="
-      },
-      {
-       "name": "[리조트] 패밀리-스탠다드 취사",
-       "tags": [
-        "취사 가능",
-        "패밀리"
-       ],
-       "image": "https://ads-partners.coupang.com/image1/laEF5Nq0feyLf5p5ld0-MCZgWvuakWJMpr2uZJqIwhvAhf8pLVID1MfuDmYYeDRluf8K8Gujk-MQ6GKEHqcs4hVdZM4MJ0_rsg1KG5uahs941wZHhEQrJwKppW4hRC6f1nrmWrHdJR5lDYaf4tx55ubkvfq-UBwlQjI065uO81_-BmTXavo3VhxrTT_lmxZPJj09b53OB0jSFPORCjo6TqlycZk7kZoxYhv6ejjZvaM6Fn8e86-jO-PgwJHfQ0eXbXvsJTXqMj1aa7A6mAQvVHA6_VJJtLJ27Dih_HstzgviFlygwB1PUu3hTOElYlDMWGmwKB3pCk-X1r5mNRID1jvm7qazjex65RFLfhNOsUBEPZNFNIm_J90kVtcFVWdF4oNpWjsdTwqN-beO0uiPG5IFwMihuzrXPWKtp9GgMpL-RpMXRd8d2IRlQwMSmAzDRDBz-H5BmFfB03w7FwgWthi-Hyumt3czyOh4IT7Q9T27AAzQUJWN0zp_4Iy_uCuN1q2GQmU8FkmOQamXom1EJH_akhJav0uev8fJpITISyMUZQ=="
-      },
-      {
-       "name": "패밀리 (취사/스탠다드)",
-       "tags": [
-        "취사 가능",
-        "패밀리"
-       ],
-       "image": "https://ads-partners.coupang.com/image1/fFXyGxtUDryObjbQfFg7qnrCr8-mfRkWFeKbAHbD7XuYNuMrWltJuJhUBO3TuqYiYLEDYrQnFn-ZK5IcdMeI8h6KJ_bUXiRTSYQvRkAdY9vjg4ZBFy-DdvP1TDqF1VxavGRR5cm3Ii8de1u5zeASVbsnANzc3o3--iqow6LAEI2OwWZuCIrQ4WBj5R_M6NHyw8qSvovLH1BsVCaIZtGgelJd6UnKBrza44T6G1mnwBZJe9JYeVSXDGgjL21wmAS324GBbSnQljCsbzNjrcJRrLjPuWiHqnjeecPkFZLESg11KGpjhOnGmoTD-uPTyZcFesIQogv0XT94hdz78WFumXPvJS1qhtvvDJI6QDR1lTk2BZAqDPSln2nP8rFnr6czGf1V7YSXVFZTlFD9Lc1lIJ75Uj4iRdlgBeg5lCtxY7SSq-HCVYG1KIfBEh-HVkiVSnsvlxyiclUTIkWWG3LpQEXJs-OdfK6RQU_d2kAutlLpJtqd4tMrKOTQJ5FjUVS5LSJudsSzTDiZxC2A6NNt-pVtuEl4Lq-V8AytCFjtcutrmco="
-      },
-      {
-       "name": "패밀리-취사/스탠다드/침대",
-       "tags": [
-        "취사 가능",
-        "패밀리"
-       ],
-       "image": "https://ads-partners.coupang.com/image1/xRI1I3kMYyi0PBucxfKzt4cR3_RCgv8ACddtcfhUCgXpmQSydr5frs4smHuJN8evAPCv3y-wO7_2kwBOoUMAbhO2AVPyERtf8CWIsAXBeUrWv6Z2s5AksKSxpKhylA0vGala36pC-1pzoOj2RZuhZbENZ0ja-D1hzt4Io66tXIpsILVnn11T-KdNM9OaoQypdE7BwJyA_UMZe0iZIDCRLILYvJ9wY0mr6t6EeEkVcF4yaXrRUA7DJjWLivotcAkxXkMqOGh5WqzTiQYHVSkrV7X88uILyoWyxeqqCZkYrhOiWjJxBhYY6YvSh-ZLzD9OkwxzsvzDlKXubGc0V44BpxxJyNs3Mm8Zwk76W_5Uh0is28X6Br3sLYJTDKyO3842Poo368lWrHh9pKsjkvMnxTcoaaFIAf813FMJo8X2dT2lXtMdRCwBdhNCCFeIuohu7g7STYxU6i3AxSjIiN_5lV-VzZIle52LZBlCdaaMSp8Mrm2IlXeekfS-9uCYwJmRDHfN52CXRt80F35j8lCAuzm6T0YbbR87pfkoALSH5b6tGA=="
-      },
-      {
-       "name": "호텔 패밀리(슈페리어/스탠다드)",
-       "tags": [
-        "패밀리"
-       ],
-       "image": "https://ads-partners.coupang.com/image1/npeJEMMAOf-D1mBfnlFkFEaHU8_g7dPaBA7xSi_rZm4famPEqmVO4SRORyUViISB_5Spu3mzv1CehUinWsBju2Vr7sXIKyYnDU5YlrQLFtx4TeesgM3vheeHzIcn0jfljfUYIAv2uFZiXExUV6qxjiiRf1VGoxnz9e3rtavjO_91a1diM3l98KNQDJMV8iBchK7dSnCL2_QFtLQmVzxO2QuYkju_YXGecba5JzUOCeo5-dTKHaI5QlsewGSC5uVoGuVrdMqv2ZUFtP6aDsxdwqpXfjwC5uhXcfTJK44WaW7TYSIzwfHoLOpnIL2EGvbWz307E6bA_0-W09EfbK8oDQSh2ebiEIQm198wPHVbrmz3Kl-N4hl4DIZduhdY1Nim7ro9yMr1xCJ_XHpgABdma6Gv4EcNlwKEPJHp3Eo4yuk4L_3wJXe6S65Dpo8sJFqZKIEp3NKJhOs8e56Fo5Az-RisoEb8SQw48Whb47U41xMoeZshqtIsK0Iw_CCc-dLwme_UVj9WoA_FYXtP77T8c8N417DlI_cbY3QWQtCnUdaZUgM="
-      }
-     ],
-     "image": "img/2026-11-강원-실내-온수풀-온천/3.jpg",
-     "links": {
-      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010793396&vendorItemId=70000146624717&itemId=20002052038812&traceid=V0-153-c82ffc0c7bd19330&requestid=20261011221008961127131467&token=31850C%7CGM&pt=0&slot=1",
-      "agoda": null,
-      "official": "https://www.sonohotelsresorts.com/solbeach_sc"
-     },
-     "honest": "",
-     "price_band": null,
-     "caption": "동해 전망 사우나 · 전 객실 오션뷰 발코니 · 실내 온수풀 보유",
-     "no": 3
     }
    ]
   }
