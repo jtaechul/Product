@@ -5,13 +5,15 @@
 > 2차 시험(2026-10-12, 운영자): 얼굴·머리·수영복·손·질감은 블록과 일치. 위반 1건 = 여자 인물 눈의 속눈썹 → "both figures identical eye construction" 강조 추가.
 > → 얼굴 부품의 **생성 방식**(모양·개수·재질)을 하나로 못 박고, 표정은 눈·입의 곡선만 바뀌게 한다. 디테일 수준은 "아주 조금 있는" 중간(3번 사진보다 한 단계 위).
 
-## 1. 캐릭터 블록 v3 (고정 · 모든 컷 공통 · 영어 그대로 복사)
+## 1. 캐릭터 블록 v3 — ⭐ 확정 (2026-10-12 운영자 "잘 만들어졌다, 이 이미지가 제일 마음에 든다") (고정 · 모든 컷 공통 · 영어 그대로 복사)
 
 > v3 (2026-10-12 운영자 3차 시험 → "8등신 성인 체형, 남자 머리 계속 바뀜 — 통일"): 실측 문제 = 머리가 큰 4~5등신으로 나옴, 준의 머리가 뾰족·옆으로 넘김·헬멧형으로 3장 모두 다름, 수영복 바지 길이 들쭉날쭉.
 > 고친 것: **8등신을 수치로**(머리 길이 × 8 = 키, 다리 = 키의 절반, "큰 머리·어린이·버블헤드 금지"), 준 머리를 **앞머리 내린 댄디컷 하나**로 모양·길이·결 선까지 고정(옆으로 넘김·뾰족·볼륨 금지), 미나 올림머리 위치·크기 고정,
 > 수영복 디자인 고정(스쿱넥·가는 끈 / 허벅지 중간 길이·끈 없음), 크기 기준을 실제 비율로 교정(머그컵 높이·의자의 1/20·타일 = 머리), 피부색 하나.
 > 실제 제작(Veo)에서는 이 블록 끝에 `BACKGROUND: use the attached hotel photograph as the exact, unchanged background — same walls, water, furniture, colors and lighting; nothing added, removed or redrawn.` 을 붙인다.
-> 일관성 보강: 마음에 드는 결과 1장을 참조 이미지로 고정해(`assets/characters/ref.jpg`) 다음 생성마다 첨부한다.
+> **기준 이미지(확정)**: `assets/characters/ref.jpg` — v3 블록 + 장면 ③(수영장 가장자리 발 담그기)으로 운영자가 Gemini 에서 만든 결과. 8등신 성인 체형, 준 = 앞머리 내린 둥근 댄디컷,
+> 미나 = 왼쪽 가르마 낮은 올림머리, 코발트 원피스(스쿱넥·가는 끈) / 남색 허벅지 중간 수영복. **모든 생성(정지 이미지·Veo)에 이 이미지를 참조로 첨부**하고,
+> 블록 앞에 `Keep both figures exactly identical to the attached reference figurines — same faces, hairstyles, body proportions, skin tone and swimwear.` 를 붙인다. 결과가 이 이미지와 다르면 버린다.
 
 ```
 CHARACTERS — FIXED DESIGN, identical in every image and every shot. Two hand-sculpted, hand-painted miniature figurines of a Korean couple in their early 30s, "Mina" (woman) and "Jun" (man): collectible art-doll figurines with realistic adult fashion-figure proportions, photographed as tiny toys inside a real full-size place. Jun is 10 cm tall; Mina is 9.5 cm tall.
@@ -56,6 +58,8 @@ FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobbleh
 
 1. 컷의 "화면에 보이는 것" 설명으로 장소 유형을 고르고, Gemini 가 표의 형식대로 장면 블록만 쓴다(인물 묘사 금지 — 인물은 블록이 담당).
 2. 최종 지시문 = 캐릭터 블록 + 장면 블록 (코드가 붙임). 한 편 안에서 캐릭터 블록은 바이트 단위로 동일.
-3. 일관성 장치: 캐릭터 참조 이미지(정면·뒷모습·흰 배경, 이 블록으로 생성)를 `assets/characters/` 에 두고 Veo 참조 입력으로 함께 보낸다.
+3. 일관성 장치: 기준 이미지 `assets/characters/ref.jpg` 를 매 생성에 참조로 첨부한다. 제작 순서(예정·유료라 승인 뒤 구현):
+   ① Gemini 이미지 편집 = 숙소 사진 + ref.jpg + 캐릭터 블록 + 장면 블록 → 인물이 들어간 첫 프레임 1장(사진 배경은 그대로)
+   ② Veo 이미지→영상 = 그 첫 프레임에서 4초 동작(장면 블록의 타임라인). 인물이 첫 프레임부터 있어 "갑자기 나타남"·얼굴 흔들림이 줄어든다.
 4. Veo 전에 같은 지시문으로 정지 이미지 2~3장(무료 구간)을 뽑아 블록과 맞는지 **운영자가** 본다(AI 검수 호출 없음 — 운영자 "검수는 돈").
 5. 캡션 끝에 "미니어처 인물은 AI 연출입니다" 한 줄. 영상 안에는 글자 추가 없음.
