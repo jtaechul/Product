@@ -221,7 +221,8 @@ MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙�
 역할 signature: 동작은 시스템이 고정 블록으로 넣는다. scene 에는 둘이 크림색 양머리 수건을 쓰고 나란히 서서 카메라를 보는 첫 자세와, 서 있을 **실제 마른 자리**(풀 가장자리 데크·바닥·침대 앞)만 쓴다. motion 은 빈 문자열.
 scene 은 영어로: 사진에 보이는 장소 한 문장 + 인형의 정확한 위치·자세(첫 장면) + 'Nothing else in the photograph changes.'
 motion 은 영어 4초 타임라인: '0 to 1.5 seconds: ... 1.5 to 3 seconds: ... 3 to 4 seconds: ...'
-JSON 만: {"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"..."}"""
+box: 인형 두 명과 그 물보라·그림자가 들어갈 영역을 화면 비율로 [x0, y0, x1, y1](0~1, 왼쪽 위 기준)로 넉넉히 — 이 영역 밖은 원본 사진으로 되돌린다.
+JSON 만: {"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1]}"""
 
 
 def _recent_gags(n: int = 6) -> list[str]:
@@ -274,8 +275,15 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
             ep = make_mini.edit_prompt(sc["scene"])
             (mdir / f"{c['n']}_edit_prompt.txt").write_text(ep, encoding="utf-8")
             frame = make_mini.composite(base, ep, mdir / f"{c['n']}_frame.png", img_models, row)
+            box = sc.get("box")
+            if isinstance(box, list) and len(box) == 4 and all(isinstance(v, (int, float)) for v in box) and box[2] - box[0] > 0.1 and box[3] - box[1] > 0.1:
+                # omni-1 실측: 합성 모델이 인형은 잘 넣고 위쪽 건물·야자수를 다시 그렸다 → 인형 영역 밖은 원본 픽셀로 되돌린다
+                frame, seam = make_mini.paste_back(base, frame, [max(0.0, min(1.0, float(v))) for v in box], mdir / f"{c['n']}_frame_pb.png")
+                row.update({"box": box, "seam": round(seam, 3)})
+                if seam > make_mini.MAX_SEAM:
+                    raise RuntimeError(f"이음매 어긋남 {seam:.0%} — 옴니 생략")
             ch = make_mini.changed_ratio(base, frame); row["changed"] = round(ch, 3)
-            if ch > make_mini.MAX_CHANGED:
+            if not row.get("box") and ch > make_mini.MAX_CHANGED:
                 frame = make_mini.composite(base, ep + "\n\nPREVIOUS ATTEMPT FAILED: it redrew or reframed the photograph. Keep every pixel of the photograph except where the figurines are.",
                                             mdir / f"{c['n']}_frame.png", img_models, row)
                 ch = make_mini.changed_ratio(base, frame); row["changed_retry"] = round(ch, 3)

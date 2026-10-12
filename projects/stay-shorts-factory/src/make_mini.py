@@ -260,14 +260,67 @@ def composite(base: Path, prompt: str, out: Path, models: list[str], rep: dict) 
     raise RuntimeError(f"합성 실패: {last}")
 
 
-def changed_ratio(base: Path, frame: Path) -> float:
-    """합성 결과가 숙소 사진을 얼마나 바꿨는지(0~1) — 작게 줄여 흐린 뒤 밝기 차 28 넘는 칸의 비율. 인형 자리만 바뀌면 0.1~0.25."""
+def _gray(path: Path, size=(180, 320)):
     from PIL import ImageFilter
-    a = Image.open(base).convert("L").resize((180, 320)).filter(ImageFilter.GaussianBlur(1.5))
-    b = Image.open(frame).convert("L").resize((180, 320)).filter(ImageFilter.GaussianBlur(1.5))
+    return Image.open(path).convert("L").resize(size, Image.BILINEAR).filter(ImageFilter.GaussianBlur(1.5))
+
+
+def _diff_ratio(a, b) -> float:
     pa, pb = a.load(), b.load()
-    n = sum(1 for y in range(320) for x in range(180) if abs(pa[x, y] - pb[x, y]) > 28)
-    return n / (180 * 320)
+    w, h = a.size
+    n = sum(1 for y in range(h) for x in range(w) if abs(pa[x, y] - pb[x, y]) > 28)
+    return n / (w * h)
+
+
+def changed_ratio(base: Path, frame: Path) -> float:
+    """합성 결과가 숙소 사진을 얼마나 바꿨는지(0~1). 인형 자리만 바뀌면 0.1~0.25.
+    omni-1 실측: 합성 모델이 사진을 3~8% 확대·이동만 해도 그냥 비교하면 32%로 나와 좋은 합성이 탈락했다 →
+    **확대 1.00~1.12배 · 이동 ±4% 안에서 가장 잘 맞는 정렬을 찾은 뒤** 비교한다(같은 장소를 살짝 당겨 찍은 것은 허용, 없는 수영장을 그린 것은 그대로 걸린다)."""
+    W0, H0 = 180, 320
+    big = Image.open(base).convert("L").resize((W0 * 2, H0 * 2), Image.BILINEAR)
+    fb = _gray(frame, (W0, H0))
+    best = 1.0
+    for sc in (1.0, 1.02, 1.04, 1.06, 1.08, 1.10, 1.12):
+        cw, ch = big.width / sc, big.height / sc
+        for fx in (-0.04, -0.02, 0.0, 0.02, 0.04):
+            for fy in (-0.04, -0.02, 0.0, 0.02, 0.04):
+                x0 = (big.width - cw) / 2 + fx * big.width
+                y0 = (big.height - ch) / 2 + fy * big.height
+                if x0 < 0 or y0 < 0 or x0 + cw > big.width or y0 + ch > big.height:
+                    continue
+                from PIL import ImageFilter
+                a = big.crop((int(x0), int(y0), int(x0 + cw), int(y0 + ch))).resize((W0, H0), Image.BILINEAR).filter(ImageFilter.GaussianBlur(1.5))
+                best = min(best, _diff_ratio(a, fb))
+    return best
+
+
+def paste_back(base: Path, frame: Path, box, out: Path, feather: int = 18) -> tuple[Path, float]:
+    """인형이 들어간 영역(box: 화면 비율 x0,y0,x1,y1)만 합성 결과를 쓰고 **나머지는 숙소 사진 원본 그대로** 되돌린다.
+    omni-1 실측: 합성 모델이 인형을 잘 넣고도 위쪽 건물을 위로 당기고 야자수를 다시 그렸다(비교 32%) → 영역 밖은 원본 픽셀로 보장.
+    돌려주는 값: (결과, 경계 어긋남 비율) — 경계 띠에서 합성과 원본이 크게 다르면(합성이 통째로 밀림) 이음매가 보이므로 거른다."""
+    from PIL import ImageFilter
+    a = Image.open(base).convert("RGB").resize((W, H), Image.LANCZOS)
+    b = Image.open(frame).convert("RGB").resize((W, H), Image.LANCZOS)
+    x0, y0, x1, y1 = [int(round(v * (W if i % 2 == 0 else H))) for i, v in enumerate(box)]
+    x0, y0, x1, y1 = max(0, x0), max(0, y0), min(W, x1), min(H, y1)
+    mask = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(mask).rectangle([x0 + feather, y0 + feather, x1 - feather, y1 - feather], fill=255)
+    mask = mask.filter(ImageFilter.GaussianBlur(feather / 2))
+    Image.composite(b, a, mask).save(out, "PNG")
+    # 경계 띠(안쪽 feather~2feather) 어긋남
+    ga, gb = a.convert("L").filter(ImageFilter.GaussianBlur(1.5)), b.convert("L").filter(ImageFilter.GaussianBlur(1.5))
+    pa, pb = ga.load(), gb.load()
+    ring, bad = 0, 0
+    for y in range(max(0, y0), min(H, y1), 3):
+        for x in range(max(0, x0), min(W, x1), 3):
+            d_edge = min(x - x0, x1 - x, y - y0, y1 - y)
+            if feather <= d_edge <= 2 * feather:
+                ring += 1
+                bad += abs(pa[x, y] - pb[x, y]) > 28
+    return out, (bad / ring if ring else 1.0)
+
+
+MAX_SEAM = 0.35             # 경계 띠 어긋남 상한 — 넘으면 이음매가 보인다
 
 
 # ── 확인 시트 ─────────────────────────────────────────────────────────
@@ -330,10 +383,25 @@ def main():
             src = fetch(s["url"], BUILD / f"{k}_src.jpg")
             base = crop916(src, BUILD / f"{k}_base.jpg", float(s.get("focus_x", 0.5)), float(s.get("focus_y", 0.5)))
             ep = edit_prompt(s["scene"]); (BUILD / f"{k}_edit_prompt.txt").write_text(ep, encoding="utf-8")
-            frame = composite(base, ep, BUILD / f"{k}_frame.png", models, rep)
-            ch = changed_ratio(base, frame)
-            row["changed"] = round(ch, 3)
-            if ch > MAX_CHANGED:                                         # 배경을 다시 그렸다 → 한 번만 더, 그래도 넘으면 이 컷은 Veo 를 쓰지 않는다
+            prev = ROOT / "build" / "mini_prev" / f"{k}_frame.png"                 # 이전 실행 아티팩트의 합성(돈 아끼기 · request "reuse_run_id")
+            if req.get("reuse_run_id") and prev.exists():
+                frame = BUILD / f"{k}_frame.png"; frame.write_bytes(prev.read_bytes()); row["reused_frame"] = int(req["reuse_run_id"])
+                log(f"{k}: 이전 실행({req['reuse_run_id']})의 합성 장면 재사용 — 이미지 비용 0원")
+            else:
+                frame = composite(base, ep, BUILD / f"{k}_frame.png", models, rep)
+            if s.get("box"):                                               # 인형 영역 밖은 원본으로 되돌림 → 배경 보존 보장
+                frame, seam = paste_back(base, frame, s["box"], BUILD / f"{k}_frame_pb.png")
+                row["seam"] = round(seam, 3)
+                ch = changed_ratio(base, frame); row["changed"] = round(ch, 3)
+                if seam > MAX_SEAM:
+                    row["skipped"] = f"이음매 어긋남 {seam:.0%} — 영상 생략(돈 아낌)"
+                    log(f"{k}: {row['skipped']}")
+                    rows.append([(base, f"{k} 숙소 사진"), (frame, f"이음매 실패 {seam:.0%}")])
+                    continue
+            else:
+                ch = changed_ratio(base, frame)
+                row["changed"] = round(ch, 3)
+            if not s.get("box") and ch > MAX_CHANGED:                                         # 배경을 다시 그렸다 → 한 번만 더, 그래도 넘으면 이 컷은 Veo 를 쓰지 않는다
                 log(f"{k}: 숙소 사진이 {ch:.0%} 바뀜(상한 {MAX_CHANGED:.0%}) → 한 번 더 합성")
                 frame = composite(base, ep + "\n\nPREVIOUS ATTEMPT FAILED: it redrew or reframed the photograph. Keep every pixel of the photograph except where the figurines are.",
                                   BUILD / f"{k}_frame.png", models, rep)
