@@ -1,0 +1,21 @@
+{
+ "nonce": "2026-10-12-mini-1",
+ "veo_approved": true,
+ "note": "운영자 2026-10-12 '진행해' — 소노펠리체 물 컷 2개, 합성 2장 + Veo 2컷 약 710원",
+ "shots": [
+  {
+   "key": "spa",
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
+   "focus_x": 0.5,
+   "scene": "The photograph shows an outdoor spa terrace with Egyptian-style carved walls, a palm plant, a white sphinx statue on the left and round warm bathing pools in the lower right. Mina and Jun are inside the nearest round warm pool in the lower right foreground, close to the camera, submerged to the upper chest at the near pool rim, facing the camera at a slight angle. Mina rests the back of her head against the pool rim with her eyes closed and both hands floating on the water, the cobalt swimsuit straps visible on her shoulders. Jun sits just to her left, looking down at the water with a calm faint smile, lifting one hand so warm water drips from his fingers into small concentric ripples. Thin light steam rises from the warm water surface. Nothing else in the photograph changes.",
+   "motion": "Mina slowly sinks a few millimeters deeper and lets out a relaxed breath with her eyes closed; Jun lets warm water trickle from his raised hand and the ripples spread across the round pool; thin steam drifts slowly upward and to the right."
+  },
+  {
+   "key": "wave",
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
+   "focus_x": 0.5,
+   "scene": "The photograph shows a large indoor wave pool under a high glass-and-steel roof with a rock wall, palm trees and a digital clock in the background. Mina and Jun stand waist-deep in the shallow turquoise water in the lower center foreground, close to the camera, holding hands, seen from a three-quarter back angle so both faces are visible in profile as they look toward the waves. Mina looks back over her shoulder toward the camera with a soft smile; Jun raises his free hand slightly as if cheering. A thin ring of white foam surrounds their waists from the incoming wave. Nothing else in the photograph changes.",
+   "motion": "A low artificial wave rolls in from the back of the pool and reaches them; it lifts the foam around their waists and they sway gently like floating toys, then settle; Jun raises his free hand a little higher; Mina keeps smiling over her shoulder."
+  }
+ ]
+}
