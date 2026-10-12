@@ -195,10 +195,7 @@ def plan_cuts(h: dict, max_veo: int, mini: bool = False) -> list[dict]:
         if mid:
             mid[0]["mini"] = "gag"
         cuts[-1]["mini"] = "signature"
-        # Veo 라이트는 사람 없는 물·김 움직임 컷에만(편당 0~1) — 미니어처 컷과 겹치지 않게
-        env = [c for c in cuts if not c.get("mini") and c["section"] == "water"]
-        for c in env[:max(0, int(max_veo))]:
-            c["veo"] = True; c["env"] = True
+        # Veo 라이트 환경 컷은 미니어처 컷을 고른 **뒤에** 정한다(assign_env) — 2026-10-12 미리보기: 먼저 정하니 가장 좋은 물 사진(omni-1b 성공작)이 미니어처 후보에서 빠졌다
     else:
         for c in sorted(cuts, key=lambda c: (motion_rank(c), c["i"]))[:max(0, int(max_veo))]:
             c["veo"] = True
@@ -272,6 +269,16 @@ def mini_scene(model: str, c: dict, recent: list[str], role: str | None = None) 
 DRY_BAN = re.compile(r"\b(water|pool|swim\w*|splash\w*|wave\w*|ripple\w*|wet|spa|bath(?:e|es|ing|tub|tubs)?|tub|jacuzzi|steam\w*|drip\w*|soak\w*|float\w*)\b", re.I)   # bathrobe 는 통과
 CAMERA_WORDS = re.compile(r"\b(zoom\w*|push(?:es|ing)?[- ]in|dolly|pan(?:s|ning)?|close-?ups?|camera|tracking|orbit\w*|crane)\b", re.I)
 TIMELINE = re.compile(r"0\s*to\s*1\.5\s*seconds?.*1\.5\s*to\s*3\s*seconds?.*3\s*to\s*4\s*seconds?", re.I | re.S)
+
+
+def assign_env(cuts: list[dict], max_veo: int) -> list[dict]:
+    """미니어처 편의 Veo 라이트 환경 컷(사람 없는 물·김 움직임, 편당 0~1) — 미니어처로 쓰지 않은 물 컷 중 앞쪽부터."""
+    env = [c for c in cuts if not c.get("mini") and c["section"] in ("hook", "water") and WATER_RX.search(c["shot"].get("description") or "")]
+    for c in env[:max(0, int(max_veo))]:
+        c["veo"] = True; c["env"] = True
+    for c in cuts:
+        c["lo"], c["hi"] = LIM["hook"] if c["section"] == "hook" else LIM["veo"] if (c["veo"] or c.get("mini")) else LIM["photo"]
+    return cuts
 
 
 def mini_errs(sc: dict, role: str) -> list[str]:
@@ -805,7 +812,7 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     mini = bool(req.get("miniature"))
     cuts = plan_cuts(h, (1 if mini else 4) if mv is None else int(mv), mini)                     # 0 = Veo 없이 전부 사진 무빙(0원) — "or 4" 는 0 을 4 로 바꿔 버렸다
     if mini:
-        cuts = choose_minis(cuts, models)
+        cuts = assign_env(choose_minis(cuts, models), 1 if mv is None else int(mv))
         report["mini_pick"] = [dict(r) for r in MINI_LOG]
     report["cuts"] = [{"i": c["i"], "section": c["section"], "n": c["n"], "veo": c["veo"], "mini": c.get("mini"), "source": c["shot"].get("source"), "seen": c["shot"].get("description")} for c in cuts]
     log("컷: " + " · ".join(f"{c['i']}{KO[c['section']][0]}{'V' if c['veo'] else ''}{'M' if c.get('mini') == 'gag' else 'S' if c.get('mini') == 'signature' else ''}" for c in cuts))
