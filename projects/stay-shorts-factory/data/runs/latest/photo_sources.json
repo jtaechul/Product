@@ -26,25 +26,25 @@
     "n": 11,
     "slot": "water",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
-    "page": "https://www.sonohotelsresorts.com/oceanWorld",
-    "description": "이집트 벽화와 스핑크스 조각상이 있는 야외 스파 시설."
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Z2QIeKCw56CffVBzKIkWjA==/1",
+    "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
+    "description": "원형 조명이 은은한 실내 스파 및 자쿠지 공간이다."
    },
    {
     "n": 12,
     "slot": "water",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/NP-EHN-mvIQSILUbhWAnsA==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
-    "description": "곡선 조명 천장 아래 마련된 고급스러운 실내 수영장."
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
+    "page": "https://www.sonohotelsresorts.com/oceanWorld",
+    "description": "이집트풍 스핑크스 조형물과 야외 온수 스파 풀이 마련되어 있다."
    },
    {
     "n": 13,
     "slot": "water",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
-    "page": "https://www.sonohotelsresorts.com/oceanWorld",
-    "description": "실내 파도풀에 잔잔한 파도가 일고 있다."
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/NP-EHN-mvIQSILUbhWAnsA==/1",
+    "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
+    "description": "곡선형 천장 조명이 반사되는 실내 레인 수영장 전경이다."
    },
    {
     "n": 14,
@@ -52,7 +52,7 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
     "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "통창 너머로 산 전망이 시원하게 보이는 아늑한 거실."
+    "description": "통창 너머로 산 전망이 시원하게 보이는 객실 거실이다."
    },
    {
     "n": 15,
@@ -60,23 +60,23 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/oAKONtuhXMveXdY6fEmACQ==/1",
     "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "넓은 원목 바닥과 슬로프 전망의 테라스 창이 있는 거실."
+    "description": "넓은 원목 바닥과 소파, 산 전망 발코니가 갖춰진 거실이다."
    },
    {
     "n": 16,
     "slot": "room",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/bg-2j1RQeBA1cus9fVFGSw==/1",
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/5munRA1u4Ct_fKC5x7MWZw==/1",
     "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "높은 복층 천장과 감각적인 샹들리에가 있는 거실."
+    "description": "대리석 벽체 TV와 다이닝 테이블이 이어진 넓은 거실이다."
    },
    {
     "n": 17,
     "slot": "special",
-    "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Z2QIeKCw56CffVBzKIkWjA==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
-    "description": "은은한 조명이 켜진 실내 원형 스파 욕탕 전경."
+    "source": "coupang",
+    "url": null,
+    "page": null,
+    "description": "호수 분수대와 잔디 정원 너머로 소노펠리체 클럽하우스가 보인다."
    },
    {
     "n": 18,
@@ -84,23 +84,23 @@
     "source": "coupang",
     "url": null,
     "page": null,
-    "description": "호수 분수대와 푸른 잔디 너머로 소노펠리체 클럽하우스가 보인다."
+    "description": "푸른 잔디와 분수대 호수 뒤로 클럽하우스와 리조트 타워가 서 있다."
    },
    {
     "n": 19,
     "slot": "special",
-    "source": "coupang",
-    "url": null,
-    "page": null,
-    "description": "통유리창과 높은 천장의 고급스러운 호텔 레스토랑 내부."
+    "source": "official",
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/o4adYnfDv1FqVqNaEkT7Mw==/1",
+    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
+    "description": "잔디밭이 내려다보이는 테라스에 해먹과 캠핑 텐트가 설치되어 있다."
    },
    {
     "n": 20,
     "slot": "special",
-    "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/o4adYnfDv1FqVqNaEkT7Mw==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "인조잔디 테라스에 해먹과 캠핑 텐트가 꾸며져 있다."
+    "source": "coupang",
+    "url": null,
+    "page": null,
+    "description": "통유리창으로 자연 채광이 들어오는 높은 층고의 레스토랑 내부이다."
    }
   ]
  }
