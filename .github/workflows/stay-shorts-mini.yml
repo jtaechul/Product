@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: stay-shorts-mini
@@ -34,6 +35,22 @@ jobs:
         run: |
           python3 -m pip install -q pillow
           command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null; }
+
+      - name: 이전 실행 합성 장면 읽기 (돈 아끼기)
+        id: prev
+        run: |
+          P=projects/stay-shorts-factory
+          python3 -c "import json;r=json.load(open('$P/requests/mini/request.json',encoding='utf-8'));print('run_id='+str(r.get('reuse_run_id') or ''));print('name='+str(r.get('reuse_artifact') or ''))" >> "$GITHUB_OUTPUT"
+
+      - name: 이전 아티팩트 내려받기
+        if: steps.prev.outputs.run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.prev.outputs.name }}
+          path: projects/stay-shorts-factory/build/mini_prev
+          run-id: ${{ steps.prev.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 합성 → 영상 (약 710원)
         id: run
