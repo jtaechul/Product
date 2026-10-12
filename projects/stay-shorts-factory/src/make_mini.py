@@ -56,7 +56,7 @@ EDIT_HEAD = ("TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real pl
              "contact shadows so they look physically present in the photograph.")
 EDIT_WATER = "They interact naturally with the water that is already in the photograph (correct reflections, a faint wet sheen)."
 EDIT_SCALE = ("SCALE AND PLACEMENT: the figurines are toys placed on the real surface described in SCENE, close to the camera "
-              "(forced perspective), so each figure appears about a quarter to a third of the frame height and is clearly readable. "
+              "(forced perspective), so each figure appears about a quarter to two fifths of the frame height and is clearly readable. "
               "Their FACES must stay clearly visible: both faces sit higher than 58% of the frame height measured from the top, and not in "
               "the right-most 15% of the frame (captions and app buttons are drawn there later). Their bodies may extend lower. "
               "The real place keeps its true size and stays clearly recognizable behind them. "
