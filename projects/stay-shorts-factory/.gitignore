@@ -2,3 +2,6 @@ build/
 __pycache__/
 *.mp4
 *.wav
+# 2026-10-12 검수: 미리보기·비교 시트에는 공식 홈페이지 사진이 들어 있다 — 공개 저장소에 커밋하지 않는다(텔레그램·아티팩트로만)
+data/runs/latest/*.jpg
+data/runs/latest/*.mp3

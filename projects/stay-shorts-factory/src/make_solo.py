@@ -299,30 +299,41 @@ def mini_errs(sc: dict, role: str) -> list[str]:
     return errs
 
 
+MINI_LOG: list[dict] = []                                        # 이번 실행의 미니어처 후보 판정 기록(미리보기 시트·report 용)
+
+
 def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
     """대본을 쓰기 **전에** 미니어처 3컷을 고른다(비전 · 컷당 몇 원). run-27 실측: 멀리 찍은 객실·리조트 전경에 인형을 넣으니 아주 작게 들어갔고,
     옴니가 크게 당기며 **없는 수영장을 지어냈다** → 카메라 가까이 실제 표면이 있는 사진만 쓴다. 시그니처 컷은 맨 뒤로 옮긴다(나레이션은 이 순서로 쓴다)."""
     for c in cuts:
         c.pop("mini", None)
+    MINI_LOG.clear()
     recent, used, picked = _recent_gags(), set(), {}
 
     def try_role(role, cands):
         for c in cands:
             if c["n"] in used:
                 continue
+            rec = {"i": c["i"], "n": c["n"], "role": role, "seen": c["shot"].get("description")}
+            MINI_LOG.append(rec)
             try:
                 sc = ms._try_models("vision", models["text"], lambda m: mini_scene(m, c, recent, role))
             except Exception as e:  # noqa: BLE001
+                rec["verdict"] = f"판단 실패: {str(e)[:80]}"
                 log(f"컷 {c['i']} 미니어처 판단 실패: {str(e)[:80]}"); continue
+            rec.update({k: sc.get(k) for k in ("suitable", "why", "water", "place", "gag", "box", "scene", "motion")})
             bad = mini_errs(sc, role) if sc.get("suitable") is True and sc.get("scene") else []
             if bad:
+                rec["verdict"] = "거름: " + " / ".join(bad)
                 log(f"컷 {c['i']} 미니어처 답 거름: {' / '.join(bad)[:160]}")
                 continue
             if sc.get("suitable") is True and sc.get("scene"):
+                rec["verdict"] = "채택"
                 used.add(c["n"]); c["mini"] = role; c["mini_scene"] = sc
                 if role == "gag" and sc.get("gag"):
                     recent.append(str(sc["gag"]))
                 return c
+            rec["verdict"] = "부적합: " + str(sc.get("why", ""))[:120]
             log(f"컷 {c['i']} 미니어처 부적합: {sc.get('why', '')[:80]}")
         return None
     notx = lambda c: not EXTERIOR_RX.search(c["shot"].get("description") or "")  # noqa: E731
@@ -795,7 +806,8 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     cuts = plan_cuts(h, (1 if mini else 4) if mv is None else int(mv), mini)                     # 0 = Veo 없이 전부 사진 무빙(0원) — "or 4" 는 0 을 4 로 바꿔 버렸다
     if mini:
         cuts = choose_minis(cuts, models)
-    report["cuts"] = [{"i": c["i"], "section": c["section"], "n": c["n"], "veo": c["veo"], "source": c["shot"].get("source"), "seen": c["shot"].get("description")} for c in cuts]
+        report["mini_pick"] = [dict(r) for r in MINI_LOG]
+    report["cuts"] = [{"i": c["i"], "section": c["section"], "n": c["n"], "veo": c["veo"], "mini": c.get("mini"), "source": c["shot"].get("source"), "seen": c["shot"].get("description")} for c in cuts]
     log("컷: " + " · ".join(f"{c['i']}{KO[c['section']][0]}{'V' if c['veo'] else ''}{'M' if c.get('mini') == 'gag' else 'S' if c.get('mini') == 'signature' else ''}" for c in cuts))
     script = ms._try_models("text", models["text"], lambda m: write_script(m, req, h, cuts))
     qa = screen_qa(models, cuts, script, h, req)
@@ -852,6 +864,48 @@ def preview_sheet(h: dict, cuts: list[dict], script: dict, qa: list[dict], out: 
     im.save(out, "JPEG", quality=86)
 
 
+def mini_sheet(rows: list[dict], out: Path) -> Path | None:
+    """미니어처 후보 판정 시트(0원) — 사진마다 목표 자리(화면 높이 25~60%, 초록 띠)·자막 띠(60~81%, 빨강)·비전 상자(채택 초록 / 탈락 주황)와 판정 이유.
+    합성·옴니 전에 '인형이 어디에 얼마나 크게 들어갈지'를 운영자가 눈으로 본다."""
+    from PIL import Image, ImageDraw
+    if not rows:
+        return None
+    w, hh = 300, 533
+    fb, f = design.font(22), design.font(19, bold=False)
+    cols = min(4, len(rows))
+    rws = -(-len(rows) // cols)
+    sheet = Image.new("RGB", (cols * (w + 12) + 12, rws * (hh + 150) + 12), (18, 18, 20))
+    for k, r in enumerate(rows):
+        x, y = 12 + (k % cols) * (w + 12), 12 + (k // cols) * (hh + 150)
+        try:
+            im = Image.open(B() / f"shot_{r['n']}.png").convert("RGB").resize((w, hh), Image.LANCZOS)
+        except Exception:  # noqa: BLE001
+            im = Image.new("RGB", (w, hh), (60, 60, 60))
+        ov = Image.new("RGBA", (w, hh), (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
+        d.rectangle([0, int(0.25 * hh), w, int(0.60 * hh)], outline=(80, 220, 120, 200), width=2)
+        d.rectangle([0, int(1150 / 1920 * hh), w, int(1560 / 1920 * hh)], fill=(255, 60, 60, 60))
+        im = Image.alpha_composite(im.convert("RGBA"), ov).convert("RGB"); d = ImageDraw.Draw(im)
+        ok = r.get("verdict") == "채택"
+        b = r.get("box")
+        if isinstance(b, list) and len(b) == 4 and all(isinstance(v, (int, float)) for v in b):
+            d.rectangle([b[0] * w, b[1] * hh, b[2] * w, b[3] * hh], outline=(60, 255, 140) if ok else (255, 160, 40), width=3)
+        sheet.paste(im, (x, y))
+        dd = ImageDraw.Draw(sheet)
+        role = {"gag": "개그", "signature": "시그니처"}.get(r.get("role"), r.get("role"))
+        dd.text((x, y + hh + 8), f"컷 {r['i']} · {role} · {'채택' if ok else '탈락'}", font=fb, fill=(120, 230, 150) if ok else (255, 170, 80))
+        txt = (r.get("gag") or "") if ok else str(r.get("verdict") or "")
+        lines, cur = [], ""
+        for ch in txt:
+            cur += ch
+            if dd.textlength(cur, font=f) > w - 4:
+                lines.append(cur[:-1]); cur = ch
+        lines.append(cur)
+        for j, ln in enumerate(lines[:4]):
+            dd.text((x, y + hh + 40 + j * 26), ln, font=f, fill=(225, 225, 225))
+    sheet.save(out, "JPEG", quality=85)
+    return out
+
+
 def preview_md(req: dict, p: dict) -> str:
     h, cuts, script, qa, nqa = p["h"], p["cuts"], p["script"], p["qa"], p["nqa"]
     by_i = {int(x["i"]): x for x in script["cuts"]}
@@ -866,12 +920,17 @@ def preview_md(req: dict, p: dict) -> str:
         fx = f" → 교체 {q.get('score2')}" if q.get("fixed") else ""
         ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
         tag = f" 〔태그 {ex.get('tag')}〕" if ex and int(ex.get("i", 0)) == c["i"] else ""
-        md.append(f"| {c['i']}{' (Veo)' if c['veo'] else ''} | {KO[c['section']]} | {c['shot'].get('description', '')} [{mt.SRC_KO.get(c['shot'].get('source'), '?')}] | {x['caption']}{tag} | {x['narration']} | {sc if sc is not None else '-'} {mark}{fx} | {p['narr'][c['i']]:.1f} |")
+        md.append(f"| {c['i']}{' (Veo)' if c['veo'] else ''}{' (미니어처 ' + {'gag': '개그', 'signature': '시그니처'}.get(c['mini'], '') + ')' if c.get('mini') else ''} | {KO[c['section']]} | {c['shot'].get('description', '')} [{mt.SRC_KO.get(c['shot'].get('source'), '?')}] | {x['caption']}{tag} | {x['narration']} | {sc if sc is not None else '-'} {mark}{fx} | {p['narr'][c['i']]:.1f} |")
     md.append(f"| 끝 | 끝 카드 | 훅 사진 선명 + 아래쪽 그라데이션 | {script['cta']['caption']} | {script['cta']['narration']} | - | {p['narr']['cta']:.1f} |")
     md += ["", "## 화면 자막 조각 (가라오케식 2~3단어 · 컷 1 훅은 문장 전체)", ""]
     for c in cuts:
         x = by_i[c["i"]]
         md.append(f"- 컷 {c['i']}: " + (f"**{x['narration']}**" if c["section"] == "hook" else " | ".join(design.chunk_words(x["narration"]))))
+    if MINI_LOG:
+        md += ["", "## 미니어처 후보 판정 (`preview_mini.jpg` · 초록 띠 = 인형 자리 25~60% · 빨강 = 자막 띠)", "",
+               "| 컷 | 역할 | 판정 | 장소 · 개그 | 물 | 상자 |", "|---|---|---|---|---|---|"]
+        for r in MINI_LOG:
+            md.append(f"| {r['i']} | {r['role']} | {r.get('verdict', '-')} | {r.get('place') or ''} · {r.get('gag') or ''} | {r.get('water')} | {r.get('box')} |")
     md += ["", "## 나레이션 받아쓰기 검증", "", "| 컷 | 대본 | 들린 것 | 일치 | 판정 |", "|---|---|---|---|---|"]
     for q in nqa:
         md.append(f"| {q['segment']} | {q['script']} | {q['heard']} | {q['similarity']} | {'통과' if q['ok'] else '실패 ' + ','.join(q['instruction_words'])} |")
@@ -897,11 +956,15 @@ def preview_solo(req: dict, models: dict, report: dict) -> dict:
         ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-t", "0.4", "-i", "anullsrc=r=24000:cl=mono", str(B() / "gap.wav")])
         ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(B() / "narr_list.txt"), "-c:a", "libmp3lame", "-b:a", "96k", str(prev / "narration_preview.mp3")])
     preview_sheet(p["h"], p["cuts"], p["script"], p["qa"], prev / "preview_shots.jpg")
+    if req.get("miniature"):
+        mini_sheet(MINI_LOG, prev / "preview_mini.jpg")
     (prev / "preview.md").write_text(preview_md(req, p), encoding="utf-8")
     meta = {"mode": "solo", "stage": "preview", "stay": p["h"]["name"], "title": p["script"].get("title"), "folder": p["folder"], "folder_pos": p["pos"],
             "voice": p["voice"], "narration_mode": ("single_pass" if (B() / "narr_full.wav").exists() else "per_cut"),
             "narration_qa_ok": all(q["ok"] for q in p["nqa"]), "screen_qa_ok": all((q.get("score") or 0) >= q.get("threshold", 7) for q in p["qa"] if q.get("score") is not None),
-            "cuts": len(p["cuts"]), "veo_cuts": sum(1 for c in p["cuts"] if c["veo"]), "files": ["preview.md", "preview_shots.jpg", "narration_preview.mp3"]}
+            "cuts": len(p["cuts"]), "veo_cuts": sum(1 for c in p["cuts"] if c["veo"]),
+            "mini_cuts": [{"i": c["i"], "role": c["mini"], "gag": (c.get("mini_scene") or {}).get("gag")} for c in p["cuts"] if c.get("mini")],
+            "files": ["preview.md", "preview_shots.jpg", "narration_preview.mp3"] + (["preview_mini.jpg"] if (prev / "preview_mini.jpg").exists() else [])}
     (B() / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
     return meta
 
