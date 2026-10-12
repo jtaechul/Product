@@ -120,7 +120,7 @@ jobs:
             if [ -f "$L/preview_mini.jpg" ]; then
               MC=$(python3 -c "import json;r=json.load(open('$L/report.json',encoding='utf-8'));m=r.get('mini_pick') or [];ok=[x for x in m if x.get('verdict')=='채택'];print(f\"미니어처 후보 {len(m)}장 중 채택 {len(ok)}컷 (\" + ', '.join(f\"컷 {x['i']} {x['role']}\" for x in ok) + ')')" 2>/dev/null || echo "미니어처 후보 판정")
               curl -s -o /dev/null -w "telegram mini sheet http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$L/preview_mini.jpg" \
-                -F caption="$MC · 초록 띠 = 머리·상체 자리(화면 높이 25~60%) · 노랑 선 = 발 한계(74%) · 빨강 = 자막 띠 · 초록 상자 = 채택, 주황 = 탈락(아래 이유)" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
+                -F caption="$MC · 노랑 선 = 얼굴 한계(화면 높이 58%, 이 선 위) · 하늘색 = 얼굴 · 빨강 = 자막 띠(몸은 가려져도 됨) · 초록 상자 = 채택, 주황 = 탈락(아래 이유)" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
             fi
           elif [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$V" ]; then
             CAP=$(python3 - <<'PY' || echo "숙소 쇼츠 시험 제작본입니다 (미발행 · 검수용)"
