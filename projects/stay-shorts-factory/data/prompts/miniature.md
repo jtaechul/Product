@@ -49,6 +49,47 @@ FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobbleh
   미나가 수건을 뗏목처럼 띄우고 눕기 / 준이 물을 튀기려다 자기 얼굴에 맞기 / 창가 소파에서 둘이 같은 자세로 기지개 / 침대에 누워 이불 속으로 쏙 사라졌다 나오기.
 - 금지: 위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기), 시설 오용·파손, 다른 사람 방해, 사실과 다른 시설 기능, 입 크게 벌리기(닫힌 입 미소만).
 
+## 1-3. 편당 구성 — 미니어처 3컷 (2026-10-12 운영자 결정)
+
+| 순서 | 컷 | 모델 | 내용 |
+|---|---|---|---|
+| ① | 컷 1 (훅) | Omni Flash | **장소 개그** — 첫 1초에 웃음으로 멈추게. 물 사진 우선 |
+| ② | 중간 컷 1개 (객실·특별 공간 중 하나) | Omni Flash | **장소 개그** — ①과 다른 장소·다른 개그 |
+| ③ | 마지막 내용 컷(끝 카드 직전) | Omni Flash | **채널 시그니처 포즈**(아래 고정 블록, 매 편 동일) |
+| — | 물·김 움직임 컷 0~1개 (사람 없음) | Veo 3.1 Lite | 파도·물결·김·커튼 |
+| — | 나머지 컷 | 사진 무빙 0원 | 줌·패닝 |
+
+- 편당 예상(추정): 합성 이미지 3장 약 170원 + 옴니 4초 3컷 약 1,764원 + (라이트 1컷 294원) + 글·음성 약 80원 = **약 2,000~2,300원**. 월 18편이면 약 36,000~41,000원으로 월 5만 원 상한에 가깝다 → 라이트 컷은 물 장면이 정말 좋을 때만.
+- 옴니 단가·우리 키 사용 가능 여부는 모델 목록(무료)과 공식 가격표로 확정한 뒤 코드에 넣는다(확정 전 추정).
+- 한 편 안에서 개그는 2개(①②) + 시그니처 1개(③)만. 같은 개그를 연속 편에서 반복하지 않는다(최근 3편 기록 확인).
+
+## 1-4. 채널 시그니처 포즈 — 고정 블록 (매 편 마지막 미니어처 컷 · 글자 그대로)
+
+장소는 그 편에서 가장 대표적인 사진(보통 훅과 같은 물 공간의 **마른 가장자리·데크**, 없으면 객실 침대 앞)을 쓴다. 젖은 바닥 뛰기 같은 위험 동작 없음.
+
+```
+SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side at the real spot described, facing the camera, both wearing a cream terry-towel "sheep-head" wrap (a Korean jjimjilbang style towel rolled into two small round ears on top of the head) over their usual hair, with their usual swimwear. 0 to 1.5 seconds: they turn to the camera at the same time and give one small hop of excitement. 1.5 to 3 seconds: they raise both arms over their heads and join their hands to form one big heart shape together, tilting their heads toward each other. 3 to 4 seconds: they hold the big heart pose with big closed-mouth smiles and happily curved eyes, bouncing once in rhythm. No text, no props other than the towel wraps, mouths stay closed.
+```
+
+## 1-5. 장소 개그 사전 (컷 ①② · 장소와 연결 · 하나만 고른다)
+
+| 장소 유형 | 개그 (4초) |
+|---|---|
+| 실내 파도풀 | 파도가 오자 둘이 서핑 자세를 잡다가 그대로 덮여 엉덩방아 → 거품 수염을 달고 일어나 웃기 |
+| 노천탕·자쿠지 | 준이 물을 튀기려다 자기 얼굴에 맞고 멍한 표정 → 미나가 웃으며 어깨를 토닥 |
+| 사우나·스파 | 둘이 양머리 수건을 쓰고 무지 노란 우유병으로 건배 → 동시에 "크~" 하듯 눈을 질끈 감기 |
+| 레인 수영장 | 가장자리에 앉아 둘이 발장구를 치다 점점 빨라져 물보라가 커지고 서로 쳐다보며 웃기 |
+| 인피니티풀 | 난간에 팔을 걸치고 풍경을 보다가 손가락 쌍안경을 만들어 서로를 쳐다보고 깜짝 |
+| 객실 침대 | 둘이 동시에 침대에 대자로 풀썩 쓰러진 뒤 이불 속으로 사라졌다가 고개만 쏙 |
+| 객실 창가·소파 | 손가락 쌍안경으로 창밖 산을 보다 서로를 보고 놀라기 / 같은 자세로 기지개 |
+| 발코니·테라스 | 난간 앞에서 짧은 어깨춤(이름 없는 단순 동작) 후 하이파이브 |
+| 레스토랑·조식 | 접시 앞에서 둘이 볼이 빵빵해진 채 엄지척(입은 닫힌 채) |
+| 로비·복도 | 작은 캐리어를 끌고 들어오다 멈춰 두 팔 벌려 "짠" 포즈 |
+
+- 춤·세리머니: 이름 없는 단순 동작만(어깨 들썩, 엉덩이 흔들기, 두 팔 벌려 비행기, 하늘 가리키기). **유행 챌린지 이름·안무, 음원, 선수 이름·등번호·유니폼은 쓰지 않는다**(저작권·퍼블리시티권 위험 — 확실하지 않음, 보수적으로).
+- 4초 안에 동작 1~2개만, 크고 단순하게(빠르고 복잡하면 작은 인형의 팔다리·얼굴이 무너진다).
+- 개그용 소품(양머리 수건·무지 우유병·작은 캐리어)은 그 컷에서만 허용 — 캐릭터 블록의 "no props/hats" 보다 이 사전이 우선.
+
 ## 2. 장면 블록 (컷마다 · 장소 사전에서 고른다 · 영어)
 
 틀: `SCENE: [위치] + [자세] + [동작 1개 · 4초 타임라인] + [환경 반응 1개] + Camera: locked-off, slow 5 percent push-in. Vertical 9:16, 4 seconds, photoreal background, toy-scale clay figures in focus.`
