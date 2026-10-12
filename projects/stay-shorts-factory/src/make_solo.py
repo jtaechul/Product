@@ -302,10 +302,11 @@ def pick_signature(h: dict, cuts: list[dict]) -> dict | None:
     """사진이 없는 시그니처 1개 (운영자 2026-10-11 "사진이 없어도 시그니처는 한두 문장 넣자" → 조건부 반영: 영상당 1개 · 확인된 사실만 · 사진 컷 끝에 한 절 · 태그 칩).
     후보 = 블로그 교차확인 시설 + 공식 홈페이지 사실 중 **어느 컷 설명에도 안 보이는 시설 낱말**이 있는 것. 들어갈 컷 = 조건 컷 ①(아쉬움 줄 자리)을 뺀 사진 컷 중 물·특별 공간 쪽."""
     seen = " ".join(c["shot"].get("description") or "" for c in cuts)
-    cands = list(h.get("verified_facilities") or []) + [f for f in (h.get("official_facts") or []) if FACILITY_RX.search(f)]
+    # p10b 실측: '오션월드'(워터파크 브랜드 이름)가 시설 낱말 없이 뽑혀 "오션월드도 가까워요"가 됐다 → 시설 낱말(사우나·키즈·조식…)이 든 사실만 후보
+    cands = [f for f in list(h.get("verified_facilities") or []) + list(h.get("official_facts") or []) if FACILITY_RX.search(f)]
     pick = None
     for f in cands:
-        ws = [w for w in _words(f) if FACILITY_RX.search(w) or len(w) >= 3]
+        ws = [w for w in _words(f) if FACILITY_RX.search(w)]
         if ws and not any(w in seen for w in ws):
             pick = f; break
     if not pick:
