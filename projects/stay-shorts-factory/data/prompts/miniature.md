@@ -15,7 +15,7 @@ BODY: about three heads tall. Round head, short thick neck, chunky torso, stubby
 
 FACE — build it exactly this way every time: skin is one uniform peach clay color with a faint pink blush circle on each cheek. Eyes: two small flat black clay ovals pressed into the face, each with one tiny white highlight dot in the upper left; NO eye whites, NO eyelids, NO eyelashes, NO irises. Eyebrows: two very thin short dark-brown clay arcs above the eyes. Nose: one tiny rounded clay bump in the center, no nostrils. Mouth: one thin carved curved line, closed; NO teeth, NO tongue, NO lips. Ears: two small clay half-circles. Expression changes ONLY by bending the eye ovals into closed arcs (relaxed) and bending the mouth line more or less (smile); nothing else on the face ever changes.
 
-HAIR: a single smooth clay cap, no strands, no texture. Mina: dark-brown clay bob to the chin with one straight side part line and a small round bun is NOT allowed. Jun: black clay short crew cut with a flat top, no part line.
+HAIR: a single smooth clay cap, no strands, no texture. Mina: dark-brown clay bob to the chin with one straight side part line (no bun, no ponytail). Jun: black clay short crew cut with a flat top, no part line.
 
 CLOTHING — always worn, never nude: Mina wears a plain cobalt-blue clay one-piece swimsuit; Jun wears plain navy clay swim shorts. In sauna, lobby, restaurant and room scenes they wear plain cream clay bathrobes over the swimwear. No patterns, no logos, no accessories, no hats, no glasses.
 
