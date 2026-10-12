@@ -219,13 +219,17 @@ ENV_BOOST = (" The water must be clearly alive: visible ripples or rolling waves
 MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙소 사진 1장과 역할(gag 또는 signature)을 받는다.
 두 인형 Mina(여)·Jun(남)은 손조각 피규어이고, 이 사진 안에 **실제로 있는** 물·풀 가장자리·바닥·데크·침대·소파 위에만 둔다.
 사진에 없는 수영장·물·가구·구조물을 만들거나 키우지 않는다. 그 자리가 카메라에서 멀면 인형은 작게 보이는 것이 맞다.
+먼저 이 사진이 미니어처에 맞는지 판단한다 — suitable=true 는 **화면 아래쪽 40% 안, 카메라 가까이**에 인형이 실제로 앉거나 서거나 들어갈 실제 표면
+(물·풀 가장자리·바닥·데크·소파·침대)이 있어 인형이 화면 높이의 약 1/3 크기로 자연스럽게 보일 때만. 멀리 찍은 외관·전경·항공·조감 사진, 아래쪽이 비어 있거나 잔디·도로뿐인 사진은 false.
+인형은 그 가까운 실제 표면 위에 크게(화면 높이 약 1/3) 둔다.
 역할 gag: 아래 장소 개그 사전에서 이 사진의 장소에 맞는 개그 하나를 고른다(최근 사용 개그는 고르지 않는다. 맞는 것이 없으면 같은 결의 새 개그를 만든다).
   4초 동안 동작 1~2개, 크고 단순하게. 웃음·놀람 때 입 벌림은 허용. 위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기)·시설 오용·다른 사람·유행 챌린지·유명인·상표 금지.
 역할 signature: 동작은 시스템이 고정 블록으로 넣는다. scene 에는 둘이 크림색 양머리 수건을 쓰고 나란히 서서 카메라를 보는 첫 자세와, 서 있을 **실제 마른 자리**(풀 가장자리 데크·바닥·침대 앞)만 쓴다. motion 은 빈 문자열.
 scene 은 영어로: 사진에 보이는 장소 한 문장 + 인형의 정확한 위치·자세(첫 장면) + 'Nothing else in the photograph changes.'
 motion 은 영어 4초 타임라인: '0 to 1.5 seconds: ... 1.5 to 3 seconds: ... 3 to 4 seconds: ...'
 box: 인형 두 명과 그 물보라·그림자가 들어갈 영역을 화면 비율로 [x0, y0, x1, y1](0~1, 왼쪽 위 기준)로 넉넉히 — 이 영역 밖은 원본 사진으로 되돌린다.
-JSON 만: {"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1]}"""
+water: 인형이 물 안이나 물가에 있으면 true(물 반응을 넣는다), 마른 장소면 false.
+JSON 만: {"suitable":true|false,"why":"한 줄","water":true|false,"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1]}"""
 
 
 def _recent_gags(n: int = 6) -> list[str]:
@@ -246,15 +250,55 @@ def _save_gags(stay: str, gags: list[str]):
     MINI_GAGS.write_text(json.dumps(rows[-60:], ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
-def mini_scene(model: str, c: dict, recent: list[str]) -> dict:
+def mini_scene(model: str, c: dict, recent: list[str], role: str | None = None) -> dict:
     """사진을 보고 인형 자리·개그를 고른다(비전 · 몇 원). 사진에 없는 장소를 지어내지 않게 사진을 직접 보여 준다."""
     gags = "\n".join(f"- {p}: {g}" for p, g in make_mini.gag_table())
-    text = (f"역할: {c['mini']}\n사진 설명(참고): {c['shot'].get('description', '')}\n최근 사용 개그(고르지 말 것): {', '.join(recent) or '없음'}\n"
+    text = (f"역할: {role or c['mini']}\n사진 설명(참고): {c['shot'].get('description', '')}\n최근 사용 개그(고르지 말 것): {', '.join(recent) or '없음'}\n"
             f"장소 개그 사전:\n{gags}")
     r = _vision_json(model, MINI_SYSTEM, text, B() / f"shot_{c['n']}.png")
-    if not r.get("scene"):
+    if r.get("suitable") is not False and not r.get("scene"):
         raise RuntimeError(f"미니어처 장면을 못 받음: {json.dumps(r, ensure_ascii=False)[:200]}")
     return r
+
+
+def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
+    """대본을 쓰기 **전에** 미니어처 3컷을 고른다(비전 · 컷당 몇 원). run-27 실측: 멀리 찍은 객실·리조트 전경에 인형을 넣으니 아주 작게 들어갔고,
+    옴니가 크게 당기며 **없는 수영장을 지어냈다** → 카메라 가까이 실제 표면이 있는 사진만 쓴다. 시그니처 컷은 맨 뒤로 옮긴다(나레이션은 이 순서로 쓴다)."""
+    for c in cuts:
+        c.pop("mini", None)
+    recent, used, picked = _recent_gags(), set(), {}
+
+    def try_role(role, cands):
+        for c in cands:
+            if c["n"] in used:
+                continue
+            try:
+                sc = ms._try_models("vision", models["text"], lambda m: mini_scene(m, c, recent, role))
+            except Exception as e:  # noqa: BLE001
+                log(f"컷 {c['i']} 미니어처 판단 실패: {str(e)[:80]}"); continue
+            if sc.get("suitable") is True and sc.get("scene"):
+                used.add(c["n"]); c["mini"] = role; c["mini_scene"] = sc
+                if role == "gag" and sc.get("gag"):
+                    recent.append(str(sc["gag"]))
+                return c
+            log(f"컷 {c['i']} 미니어처 부적합: {sc.get('why', '')[:80]}")
+        return None
+    notx = lambda c: not EXTERIOR_RX.search(c["shot"].get("description") or "")  # noqa: E731
+    water = [c for c in cuts if c["section"] in ("hook", "water") and not c["veo"]]
+    inner = [c for c in cuts[1:] if c["section"] in ("room", "special") and notx(c) and not c["veo"]]
+    tail = [c for c in reversed(cuts) if c["section"] in ("offer", "room", "special") and notx(c) and not c["veo"]]
+    g1 = try_role("gag", water)
+    g2 = try_role("gag", inner)
+    sig = try_role("signature", tail)
+    if g1 and g1 is not cuts[0]:                                         # 훅 자리로 — 훅 사진이 미니어처에 안 맞으면 맞는 물 컷과 자리를 바꾼다
+        k = cuts.index(g1); cuts[0], cuts[k] = cuts[k], cuts[0]
+        cuts[k]["section"], cuts[0]["section"] = cuts[0]["section"] if cuts[0]["section"] != "hook" else "water", "hook"
+    if sig and sig is not cuts[-1]:                                       # 맨 뒤로
+        cuts.remove(sig); sig["section"] = "offer"; cuts.append(sig)
+    for k, c in enumerate(cuts, 1):
+        c["i"] = k
+        c["lo"], c["hi"] = LIM["hook"] if c["section"] == "hook" else LIM["veo"] if (c["veo"] or c.get("mini")) else LIM["photo"]
+    return cuts
 
 
 def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict) -> dict:
@@ -271,7 +315,7 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
         row = {"i": c["i"], "n": c["n"], "role": c["mini"], "ok": False}
         rows.append(row)
         try:
-            sc = ms._try_models("vision", models["text"], lambda m: mini_scene(m, c, recent + used))
+            sc = c.get("mini_scene") or ms._try_models("vision", models["text"], lambda m: mini_scene(m, c, recent + used))
             row.update({"place": sc.get("place"), "gag": sc.get("gag")})
             motion = make_mini.signature_block() if c["mini"] == "signature" else str(sc.get("motion") or "")
             base = make_mini.crop916(B() / f"shotHD_{c['n']}.png", mdir / f"{c['n']}_base.jpg")
@@ -281,7 +325,8 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
             box = sc.get("box")
             if isinstance(box, list) and len(box) == 4 and all(isinstance(v, (int, float)) for v in box) and box[2] - box[0] > 0.1 and box[3] - box[1] > 0.1:
                 # omni-1 실측: 합성 모델이 인형은 잘 넣고 위쪽 건물·야자수를 다시 그렸다 → 인형 영역 밖은 원본 픽셀로 되돌린다
-                frame, seam = make_mini.paste_back(base, frame, [max(0.0, min(1.0, float(v))) for v in box], mdir / f"{c['n']}_frame_pb.png")
+                box = make_mini.refine_box(base, frame, [max(0.0, min(1.0, float(v))) for v in box])
+                frame, seam = make_mini.paste_back(base, frame, box, mdir / f"{c['n']}_frame_pb.png")
                 row.update({"box": box, "seam": round(seam, 3)})
                 if seam > make_mini.MAX_SEAM:
                     raise RuntimeError(f"이음매 어긋남 {seam:.0%} — 옴니 생략")
@@ -292,7 +337,7 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
                 ch = make_mini.changed_ratio(base, frame); row["changed_retry"] = round(ch, 3)
                 if ch > make_mini.MAX_CHANGED:
                     raise RuntimeError(f"배경 보존 실패 {ch:.0%} — 옴니 생략")
-            vp = make_mini.omni_prompt(motion)
+            vp = make_mini.omni_prompt(motion, water=bool(sc.get("water", c["section"] in ("hook", "water"))))
             (mdir / f"{c['n']}_omni_prompt.txt").write_text(vp, encoding="utf-8")
             res = omni.make_clip(vp, frame, 4, mdir / f"{c['n']}.mp4")
             clips[c["n"]] = mdir / f"{c['n']}.mp4"
@@ -689,6 +734,8 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     mv = req.get("max_veo_cuts")
     mini = bool(req.get("miniature"))
     cuts = plan_cuts(h, (1 if mini else 4) if mv is None else int(mv), mini)                     # 0 = Veo 없이 전부 사진 무빙(0원) — "or 4" 는 0 을 4 로 바꿔 버렸다
+    if mini:
+        cuts = choose_minis(cuts, models)
     report["cuts"] = [{"i": c["i"], "section": c["section"], "n": c["n"], "veo": c["veo"], "source": c["shot"].get("source"), "seen": c["shot"].get("description")} for c in cuts]
     log("컷: " + " · ".join(f"{c['i']}{KO[c['section']][0]}{'V' if c['veo'] else ''}{'M' if c.get('mini') == 'gag' else 'S' if c.get('mini') == 'signature' else ''}" for c in cuts))
     script = ms._try_models("text", models["text"], lambda m: write_script(m, req, h, cuts))

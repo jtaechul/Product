@@ -52,9 +52,9 @@ EDIT_HEAD = ("TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real pl
              "and do not add or remove any object. Only add the two miniature figurines shown in the attached REFERENCE IMAGE (two figurines sitting on a pool edge), "
              "placed into the scene as described below, with correct contact shadows, reflections and water interaction so they look "
              "physically present in the photograph.")
-EDIT_SCALE = ("SCALE AND PLACEMENT: the figurines are 10 cm toys standing at the real spot described in SCENE, in true perspective — "
-              "if that spot is close to the camera they appear large (up to about one third of the frame height), if it is farther they "
-              "appear smaller. The real place keeps its true size and stays clearly recognizable. Never enlarge or shrink anything in the photograph.")
+EDIT_SCALE = ("SCALE AND PLACEMENT: the figurines are 10 cm toys placed on the real surface described in SCENE in the lower part of the frame, "
+              "close to the camera (forced perspective), so each figure appears about one third of the frame height and is clearly readable. "
+              "The real place keeps its true size and stays clearly recognizable behind them. Never enlarge or shrink anything in the photograph.")
 EDIT_PHOTO = ("PHOTOGRAPHY: realistic toy photography matched to the photograph's own light direction, color temperature and grain; "
               "figures tack-sharp; the background keeps the photograph's existing sharpness (at most a very gentle natural softness right "
               "behind the figures). Vertical 9:16, same size as the hotel photograph.")
@@ -71,7 +71,8 @@ VEO_HEAD = ("The first frame is a real hotel photograph with two small hand-scul
             "cobalt-blue one-piece swimsuit and dark-navy swim shorts, same body proportions. They are alive and clearly enjoying the place: "
             "natural, visible, playful body movement (arms, heads, torsos and splashing water), smooth like an animated figurine film — "
             "not frozen, not stiff. They may move around within the same pool or spot.")
-VEO_TAIL = ("Water reacts to every movement with splashes, droplets and ripples; steam and light behave naturally. Camera: a smooth, moderate push-in toward the figurines that ends at a medium shot — the figurines fill about half of the frame height and the place stays clearly visible behind them; never an extreme close-up of faces. The hotel place "
+VEO_TAIL = ("Camera: keeps the first frame's framing — locked-off, at most a very slight push-in — so nothing outside the first frame ever appears; "
+            "never invent pools, water, rooms, furniture or buildings that are not visible in the first frame. The hotel place "
             "stays exactly the same as the first frame: no new objects, no new people, no text, no logos, no morphing; the figurines' "
             "faces, hair and swimwear never change; they never turn into real humans. Vertical 9:16, 4 seconds.")
 
@@ -102,9 +103,32 @@ OMNI_HEAD = ("Use the attached image as the exact first frame of the video and a
              "Audio: soft natural ambient sound of the place only — no dialogue, no voices, no music.")
 
 
-def omni_prompt(motion: str) -> str:
-    """옴니 플래시용 — 비오 지시문 + 첫 장면 고정·길이·소리 지시(옴니는 길이 필드가 없고 소리를 늘 만든다)."""
-    return OMNI_HEAD + " " + veo_prompt(motion)
+WATER_LINE = "Water reacts to every movement with splashes, droplets and ripples; steam and light behave naturally."
+DRY_LINE = "This is a dry place: no water, no pool, no splashes anywhere."
+
+
+def omni_prompt(motion: str, water: bool = True) -> str:
+    """옴니 플래시용 — 비오 지시문 + 첫 장면 고정·길이·소리 지시(옴니는 길이 필드가 없고 소리를 늘 만든다).
+    run-27 실측: 객실·외관 컷에서 '물 반응' 문장 + 크게 당기기 지시 때문에 옴니가 **없는 수영장을 지어냄** → 물 문장은 물 장소에서만, 마른 장소는 물 금지를 명시."""
+    return OMNI_HEAD + " " + veo_prompt(motion) + " " + (WATER_LINE if water else DRY_LINE)
+
+
+def refine_box(base: Path, frame: Path, box) -> list[float]:
+    """비전이 준 상자가 인형 몸을 자르는 일(run-27: 다리만 남음)을 막는다 — 상자를 위로 넓힌 창 안에서 실제로 바뀐 픽셀의 범위와 합치고 여백을 더한다."""
+    from PIL import ImageChops, ImageFilter
+    x0, y0, x1, y1 = box
+    w, h = x1 - x0, y1 - y0
+    win = (max(0, x0 - w * 0.5), max(0, y0 - h * 1.2), min(1, x1 + w * 0.5), min(1, y1 + h * 0.4))
+    a = Image.open(base).convert("L").resize((180, 320)).filter(ImageFilter.GaussianBlur(1.5))
+    b = Image.open(frame).convert("L").resize((180, 320)).filter(ImageFilter.GaussianBlur(1.5))
+    d = ImageChops.difference(a, b).point(lambda v: 255 if v > 28 else 0).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.MaxFilter(5))
+    wx0, wy0, wx1, wy1 = int(win[0] * 180), int(win[1] * 320), int(win[2] * 180), int(win[3] * 320)
+    bb = d.crop((wx0, wy0, wx1, wy1)).getbbox()
+    if bb:
+        cx0, cy0, cx1, cy1 = (wx0 + bb[0]) / 180, (wy0 + bb[1]) / 320, (wx0 + bb[2]) / 180, (wy0 + bb[3]) / 320
+        x0, y0, x1, y1 = min(x0, cx0), min(y0, cy0), max(x1, cx1), max(y1, cy1)
+    m = 0.04
+    return [max(0.0, x0 - m), max(0.0, y0 - m), min(1.0, x1 + m), min(1.0, y1 + m)]
 
 
 def _md_code_after(heading: str) -> str:

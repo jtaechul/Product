@@ -5,12 +5,12 @@
  "theme": "실내 온수풀·온천",
  "region": "강원",
  "month": "2026-11",
- "veo_approved": true,
+ "veo_approved": false,
  "miniature": true,
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "운영자 2026-10-12 '승인' — 미니어처 3컷(옴니) + 물결·김 라이트 1컷 정식 1편, 예상 약 2,550원",
+ "note": "대기 — run-27 문제 고친 뒤 재제작은 운영자 승인 필요",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
