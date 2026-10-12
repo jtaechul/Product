@@ -38,7 +38,7 @@ LIM = {"hook": (10, 24), "veo": (12, 28), "photo": (14, 32)}  # 컷 문장 길�
 MIN_CUT, GAP, VEO_SEC, MAX_SLOW = 1.6, 0.30, 4, 1.25
 MIN_HOOK = 3.2                                                  # 훅 컷 최소 길이 — v2 실측 2.78초는 훅 문장을 읽을 틈이 없었다
 PUNCT_PAUSE = 1.6                                               # 가라오케 타이밍: 쉼표·마침표 뒤 쉼 = 글자 1.6개 분량
-PATTERNS = ("push", "pan", "tilt", "pull")                     # 사진 컷 카메라 무빙 4종 순환
+PATTERNS = ("push", "pan", "diag", "tilt", "pull")             # 사진 컷 카메라 무빙 5종 순환 (2026-10-12 역동화)
 KO = {"hook": "훅", "water": "물놀이", "room": "객실", "special": "특별 공간", "offer": "조건·추천", "cta": "끝 카드"}
 GENERIC = {"호텔", "리조트", "앤", "스파", "풀빌라", "펜션", "콘도", "레지던스", "하우스", "파크", "비치", "해변", "온천", "관광호텔"}
 FACILITY_RX = re.compile(r"사우나|찜질|키즈|놀이|산책|정원|테라스|라운지|조식|레스토랑|식당|스파|온천|노천|족욕|카페|바비큐|바베큐|수영장|풀")
@@ -848,13 +848,23 @@ def preview_solo(req: dict, models: dict, report: dict) -> dict:
 
 
 # ── 영상 조립 ───────────────────────────────────────────────────────────────────────────
+MOTION = 0.24                                                   # 사진 무빙 폭 — v2 는 0.10~0.12 직선이라 "너무 약하고 밋밋" (2026-10-12 운영자) → 약 2배 + 가속·감속
+
+
 def photo_clip(image: Path, sec: float, out: Path, pattern: str) -> Path:
     """사진 1장 → 정확히 sec 초의 무빙 클립 (0원). 2160x3840 으로 키운 뒤 zoompan → 1080x1920 (서브픽셀 떨림 완화).
-    push: 천천히 밀고 들어감 · pull: 물러남 · pan: 왼쪽→오른쪽 · tilt: 아래→위."""
+    2026-10-12 역동화: 폭 10~12% → 약 24%, 직선 → **가속·감속 곡선**(처음엔 빠르게 들어가고 끝에서 부드럽게 멈춤), 무늬 5종 순환.
+    push: 빠르게 밀고 들어가 멈춤 · pull: 확대에서 빠르게 빠짐 · pan: 확대 상태로 좌→우 + 살짝 더 들어감 · tilt: 아래→위 + 살짝 더 들어감 · diag: 대각선으로 들어감."""
     F = max(2, int(round(sec * ms.FPS)))
-    z = {"push": f"1.0+0.10*on/{F}", "pull": f"1.10-0.10*on/{F}", "pan": "1.12", "tilt": "1.12"}[pattern]
-    x = {"push": "iw/2-(iw/zoom/2)", "pull": "iw/2-(iw/zoom/2)", "pan": f"(iw-iw/zoom)*on/{F}", "tilt": "iw/2-(iw/zoom/2)"}[pattern]
-    y = {"push": "ih/2-(ih/zoom/2)", "pull": "ih/2-(ih/zoom/2)", "pan": "ih/2-(ih/zoom/2)", "tilt": f"(ih-ih/zoom)*(1-on/{F})"}[pattern]
+    M = MOTION
+    t = f"(on/{F})"
+    eo = f"(1-pow(1-{t},2))"                                   # 감속(빠르게 시작 → 부드럽게 멈춤)
+    io = f"({t}*{t}*(3-2*{t}))"                                # 가속·감속
+    z = {"push": f"1.0+{M}*{eo}", "pull": f"1.0+{M}*(1-{eo})", "pan": f"1.0+{M}*0.8+{M}*0.2*{io}",
+         "tilt": f"1.0+{M}*0.8+{M}*0.2*{io}", "diag": f"1.0+{M}*{eo}"}[pattern]
+    cx, cy = "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)"
+    x = {"push": cx, "pull": cx, "pan": f"(iw-iw/zoom)*{io}", "tilt": cx, "diag": f"(iw-iw/zoom)*(0.5-0.4*{eo})"}[pattern]
+    y = {"push": cy, "pull": cy, "pan": cy, "tilt": f"(ih-ih/zoom)*(1-{io})", "diag": f"(ih-ih/zoom)*(0.5+0.4*{eo})"}[pattern]
     ms.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", str(ms.FPS), "-i", str(image),
             "-vf", f"scale=2160:3840:flags=lanczos,zoompan=z='{z}':x='{x}':y='{y}':d={F}:s=1080x1920:fps={ms.FPS},setsar=1",
             "-frames:v", str(F), "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p", str(out)])
