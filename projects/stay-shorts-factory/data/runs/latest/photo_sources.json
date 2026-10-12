@@ -28,23 +28,23 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
     "page": "https://www.sonohotelsresorts.com/oceanWorld",
-    "description": "이집트 벽화와 스핑크스 조각상이 장식된 노천 스파 공간이 보인다."
+    "description": "스핑크스 석상과 벽화로 장식된 노천 스파 시설이다."
    },
    {
     "n": 12,
     "slot": "water",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
-    "page": "https://www.sonohotelsresorts.com/oceanWorld",
-    "description": "실내 워터파크의 파도풀과 대형 유리 천장이 보인다."
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/NP-EHN-mvIQSILUbhWAnsA==/1",
+    "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
+    "description": "유려한 곡선 천장 조명이 반사되는 실내 레인 수영장이다."
    },
    {
     "n": 13,
     "slot": "water",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/NP-EHN-mvIQSILUbhWAnsA==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
-    "description": "곡선형 천장 조명이 돋보이는 넓은 실내 수영장 전경이다."
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
+    "page": "https://www.sonohotelsresorts.com/oceanWorld",
+    "description": "오션월드 실내 파도풀과 이집트풍 인테리어가 펼쳐져 있다."
    },
    {
     "n": 14,
@@ -52,7 +52,7 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
     "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "통창 너머로 산 전망이 보이는 거실과 가죽 소파가 있다."
+    "description": "통창 너머로 산 전망이 시원하게 펼쳐진 밝은 거실 공간이다."
    },
    {
     "n": 15,
@@ -60,15 +60,15 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/oAKONtuhXMveXdY6fEmACQ==/1",
     "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "넓은 통창으로 산세가 펼쳐진 아늑한 거실 공간이다."
+    "description": "벽난로 인테리어와 가죽 소파가 놓인 넓은 마룻바닥 거실이다."
    },
    {
     "n": 16,
     "slot": "room",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/RpUyl4x2tUtPVhB1GW9yeQ==/1",
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/5munRA1u4Ct_fKC5x7MWZw==/1",
     "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "대리석 벽면의 TV 아트월과 소파가 배치된 거실이다."
+    "description": "화이트 톤 아트월과 주방 다이닝 공간이 이어진 깔끔한 객실이다."
    },
    {
     "n": 17,
@@ -76,7 +76,7 @@
     "source": "official",
     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Z2QIeKCw56CffVBzKIkWjA==/1",
     "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
-    "description": "원형 천장 조명이 비추는 고급스러운 실내 스파 욕조가 보인다."
+    "description": "원형 천장 조명과 대리석 마감이 돋보이는 고급 실내 스파 시설이다."
    },
    {
     "n": 18,
@@ -84,15 +84,15 @@
     "source": "coupang",
     "url": null,
     "page": null,
-    "description": "초록빛 잔디와 분수 연못 너머로 소노펠리체 클럽하우스가 보인다."
+    "description": "연못의 분수대와 푸른 잔디밭 뒤로 돔형 클럽하우스 건물이 서 있다."
    },
    {
     "n": 19,
     "slot": "special",
-    "source": "coupang",
-    "url": null,
-    "page": null,
-    "description": "통유리창으로 산세가 내다보이는 높은 층고의 레스토랑 내부이다."
+    "source": "official",
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/o4adYnfDv1FqVqNaEkT7Mw==/1",
+    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
+    "description": "해먹과 텐트, 캠핑 의자가 구비된 넓은 잔디 전망 테라스이다."
    },
    {
     "n": 20,
@@ -100,7 +100,7 @@
     "source": "coupang",
     "url": null,
     "page": null,
-    "description": "푸른 산자락 아래 늘어선 소노펠리체 비발디파크 리조트 전경이다."
+    "description": "통유리창 너머 숲 전망이 보이는 높은 층고의 고급 레스토랑이다."
    }
   ]
  }
