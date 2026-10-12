@@ -254,8 +254,24 @@ def sheet(rows: list[list[tuple[Path, str]]], out: Path) -> Path:
     return out
 
 
+def probe_models() -> dict:
+    """0원: 이 키로 보이는 모델 이름·지원 방식만 기록한다 (생성 호출 없음)."""
+    req = urllib.request.Request(f"{GEMINI}/models?pageSize=1000", headers={"x-goog-api-key": _key()})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        ms = json.loads(r.read().decode()).get("models", [])
+    keep = [{"name": m.get("name", "").split("/", 1)[-1], "methods": m.get("supportedGenerationMethods") or []} for m in ms]
+    pick = [k for k in keep if re.search(r"omni|veo|image|lyria|tts", k["name"])]
+    return {"count": len(keep), "media_models": pick, "all_names": [k["name"] for k in keep]}
+
+
 def main():
     req = json.loads(REQ.read_text(encoding="utf-8"))
+    if req.get("probe_models"):                                   # 0원 점검 — 모델 목록만
+        rep = {"nonce": req.get("nonce"), "ok": True, "probe": probe_models(), "finished": datetime.now().isoformat(timespec="seconds")}
+        REPORT.parent.mkdir(parents=True, exist_ok=True)
+        REPORT.write_text(json.dumps(rep, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        log("모델 목록:", [m["name"] for m in rep["probe"]["media_models"]])
+        return
     BUILD.mkdir(parents=True, exist_ok=True)
     rep = {"nonce": req.get("nonce"), "started": datetime.now().isoformat(timespec="seconds"), "ok": False, "shots": [],
            "veo_model": veo.MODEL, "fake_veo": veo.FAKE, "fake_image": FAKE_IMG}
