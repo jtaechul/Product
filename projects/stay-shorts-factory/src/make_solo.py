@@ -417,16 +417,19 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
             if m:
                 return int(m.group(1)) - int(m.group(2)) <= 3
             m = re.search(r"전체 나레이션 (\d+)자", e)
-            return bool(m) and int(m.group(1)) - TOTAL_MAX <= 12
+            if m:
+                return int(m.group(1)) - TOTAL_MAX <= 12
+            m = re.search(r"연결어로 시작 \(지금 (\d+)/(\d+)\)", e)                  # stay-run-25: 연결어 4/8 로 3번 탈락(52원) → 절반 이상이면 채택하고 다듬기에 맡긴다
+            return bool(m) and int(m.group(1)) * 2 >= int(m.group(2))
         if all(_soft(e) for e in errs):
             best = s
         log(f"대본 검사 실패({attempt + 1}):", errs)
     if best:
-        log("글자 한도 3자 이내 초과만 남아 그대로 채택")
+        log("가벼운 위반(글자 한도 3자 이내 · 연결어 절반 이상)만 남아 채택 → 다듬기")
         best["cuts"] = sorted(best["cuts"], key=lambda x: int(x["i"]))
         if not sig:
             best["extra"] = None
-        return best
+        return polish_script(model, best, cuts, h, req, sig)
     raise RuntimeError("대본이 규칙을 통과하지 못함: " + " / ".join(errs))
 
 
