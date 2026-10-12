@@ -66,12 +66,12 @@ MAX_CHANGED = 0.30          # 배경 보존 검사(0원): 원본 대비 바뀐 �
 
 VEO_HEAD = ("The first frame is a real hotel photograph with two small hand-sculpted, hand-painted polymer-clay art-doll figurines of a "
             "Korean couple (elegant adult proportions, eight heads tall, satin clay finish). Keep the figurines exactly as they appear in "
-            "the first frame for the whole clip: same faces with painted almond eyes and small closed smiling lips, same hairstyles "
+            "the first frame for the whole clip: same faces with painted almond eyes and small sculpted lips (the mouth may open when laughing or surprised), same hairstyles "
             "(woman: dark-brown hair with a left side part in a neat low bun; man: black short dandy cut with a forward fringe), same "
             "cobalt-blue one-piece swimsuit and dark-navy swim shorts, same body proportions. They are alive and clearly enjoying the place: "
             "natural, visible, playful body movement (arms, heads, torsos and splashing water), smooth like an animated figurine film — "
             "not frozen, not stiff. They may move around within the same pool or spot.")
-VEO_TAIL = ("Water reacts to every movement with splashes, droplets and ripples; steam and light behave naturally. Camera: locked-off with a very slow push-in of at most 10 percent, staying within the original photograph. The hotel place "
+VEO_TAIL = ("Water reacts to every movement with splashes, droplets and ripples; steam and light behave naturally. Camera: a smooth, moderate push-in toward the figurines that ends at a medium shot — the figurines fill about half of the frame height and the place stays clearly visible behind them; never an extreme close-up of faces. The hotel place "
             "stays exactly the same as the first frame: no new objects, no new people, no text, no logos, no morphing; the figurines' "
             "faces, hair and swimwear never change; they never turn into real humans. Vertical 9:16, 4 seconds.")
 

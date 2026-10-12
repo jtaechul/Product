@@ -1,14 +1,14 @@
 {
  "nonce": "2026-10-12-omni-1b",
- "veo_approved": true,
- "note": "옴니 1컷 시험 재실행(운영자 \"한번 해봐\" 승인 범위) — 첫 실행은 배경 검사에서 옴니 전 정지(이미지 196원). 이번엔 그 합성 장면 재사용(이미지 0원) + 인형 영역 밖 원본 복원",
+ "veo_approved": false,
+ "note": "대기 — 다음 유료 실행 전 승인 필요",
  "shots": [
   {
    "key": "spa",
    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
    "focus_x": 0.5,
    "scene": "The photograph shows an outdoor spa terrace with Egyptian-style carved walls, a palm plant, a white sphinx statue on the left and small round warm bathing pools in the lower right of the frame, with a stone floor in front of them. Mina and Jun sit inside the nearest real round warm pool at the lower right, submerged to the upper chest near its stone rim, facing the camera at a slight angle; they appear at the size that fits that pool's real distance from the camera. Jun has both hands cupped in the water, about to splash; Mina leans toward the rim laughing with her eyes happily closed, the cobalt swimsuit straps visible on her shoulders. Light steam rises from the warm water. The stone floor in front of the pool stays exactly as it is — no new pool, no new water. Nothing else in the photograph changes.",
-   "motion": "0 to 1.5 seconds: Jun scoops warm water with both hands and tries to splash Mina, but the water flies back into his own face. 1.5 to 3 seconds: Jun freezes with a blank, dripping face and wide eyes; Mina laughs with a big closed-mouth smile and happily curved eyes. 3 to 4 seconds: Mina pats Jun's shoulder twice and he grins sheepishly, ripples spreading across the round pool and light steam swirling.",
+   "motion": "0 to 1.5 seconds: Jun scoops warm water with both hands and tries to splash Mina, but the water flies back into his own face. 1.5 to 3 seconds: Jun freezes with a blank, dripping face and wide eyes; Mina laughs with a big open laugh and happily curved eyes. 3 to 4 seconds: Mina pats Jun's shoulder twice and he grins sheepishly, ripples spreading across the round pool and light steam swirling.",
    "engine": "omni",
    "box": [
     0.4,

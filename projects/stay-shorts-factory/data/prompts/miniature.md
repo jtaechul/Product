@@ -23,7 +23,7 @@ PROPORTIONS — strictly eight heads tall: total height equals eight head length
 
 MATERIAL: smooth sculpted polymer clay with a soft satin finish, subtle hand-painted shading, a faint warm blush on the cheeks, nose tip and shoulders; edges slightly softened like a sculpted doll. No fingerprints, no seams, no plastic gloss, no realistic pores or skin texture. When wet, only a thin glossy sheen. Skin is one warm light-beige tone on both figures.
 
-FACE — small because of the eight-head proportions, but fully detailed, and built identically on both figures: softly sculpted oval face with gentle cheekbones. Eyes: almond-shaped sculpted eyes with painted dark-brown irises and black pupils, only a thin sliver of white at the corners, one tiny white highlight. Closed eyes are a sculpted downward-curving lid with one thin painted dark line along the lash line — no individual eyelashes, no makeup. Eyebrows: thin, softly painted, natural dark-brown. Nose: small straight sculpted nose with a softly rounded tip and barely indicated nostrils. Mouth: small closed sculpted lips painted muted rose with a gentle smile; no teeth, the mouth never opens. Ears: small sculpted ears. Expression range: from calm to joyful — eyelids open, closed or happily curved, and the closed-mouth smile ranges from faint to big; nothing else on the face changes.
+FACE — small because of the eight-head proportions, but fully detailed, and built identically on both figures: softly sculpted oval face with gentle cheekbones. Eyes: almond-shaped sculpted eyes with painted dark-brown irises and black pupils, only a thin sliver of white at the corners, one tiny white highlight. Closed eyes are a sculpted downward-curving lid with one thin painted dark line along the lash line — no individual eyelashes, no makeup. Eyebrows: thin, softly painted, natural dark-brown. Nose: small straight sculpted nose with a softly rounded tip and barely indicated nostrils. Mouth: small sculpted lips painted muted rose; when laughing, surprised or cheering the mouth may open into a simple rounded shape (plain sculpted interior, at most a simple white band for teeth, no tongue detail). Ears: small sculpted ears. Expression range: from calm to joyful — eyelids open, closed or happily curved, and the smile ranges from faint to a big open laugh; nothing else on the face changes.
 
 HAIR — exact and never changes, wet or dry, from any angle:
 Mina: dark chocolate-brown hair with a side part on her left side, all hair combed smoothly back over both ears into one neat round low bun at the nape of the neck; the bun is about half the size of her head; 10 to 12 shallow carved groove lines run from the hairline back to the bun; no fringe, no loose strands, no ponytail, no high bun.
@@ -35,7 +35,7 @@ SCALE: each figure is about the height of a coffee mug (10 cm) placed in a real 
 
 PHOTOGRAPHY: realistic macro toy photography, camera low near the figures' chest level, both figures fully in frame from head to the waterline or feet, shallow depth of field — figures tack-sharp, background softly blurred. Natural light matching the scene, soft contact shadows, true reflections in the water. Vertical 9:16.
 
-FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobblehead proportions, dot eyes, cartoon or anime eyes, eyelashes, makeup, teeth, open mouths, nudity or missing swimsuit straps, patterned or colorful swimwear, drawstrings, any hairstyle other than the ones described, side-swept or spiky hair on Jun, more than two figures, flyaway hair strands, distorted hands, extra fingers, text, logos, watermarks, melted or morphing shapes.
+FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobblehead proportions, dot eyes, cartoon or anime eyes, eyelashes, makeup, detailed realistic teeth, nudity or missing swimsuit straps, patterned or colorful swimwear, drawstrings, any hairstyle other than the ones described, side-swept or spiky hair on Jun, more than two figures, flyaway hair strands, distorted hands, extra fingers, text, logos, watermarks, melted or morphing shapes.
 ```
 
 ## 1-1. 모델 선택 (2026-10-12 운영자 결정)
@@ -47,7 +47,7 @@ FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobbleh
 
 - 컷당 **개그 하나**, 그 장소를 즐기는 행동과 이어지게. 예: 파도에 밀려 둘이 동시에 뒤로 엉덩방아 → 거품 수염을 달고 일어나 웃기 / 김 속에서 준이 고개만 쏙 내밀기 /
   미나가 수건을 뗏목처럼 띄우고 눕기 / 준이 물을 튀기려다 자기 얼굴에 맞기 / 창가 소파에서 둘이 같은 자세로 기지개 / 침대에 누워 이불 속으로 쏙 사라졌다 나오기.
-- 금지: 위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기), 시설 오용·파손, 다른 사람 방해, 사실과 다른 시설 기능, 입 크게 벌리기(닫힌 입 미소만).
+- 금지: 위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기), 시설 오용·파손, 다른 사람 방해, 사실과 다른 시설 기능. (입 벌림은 2026-10-12 운영자 허용 — 웃음·놀람·환호 때 자연스럽게)
 
 ## 1-3. 편당 구성 — 미니어처 3컷 (2026-10-12 운영자 결정)
 
@@ -68,7 +68,7 @@ FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobbleh
 장소는 그 편에서 가장 대표적인 사진(보통 훅과 같은 물 공간의 **마른 가장자리·데크**, 없으면 객실 침대 앞)을 쓴다. 젖은 바닥 뛰기 같은 위험 동작 없음.
 
 ```
-SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side at the real spot described, facing the camera, both wearing a cream terry-towel "sheep-head" wrap (a Korean jjimjilbang style towel rolled into two small round ears on top of the head) over their usual hair, with their usual swimwear. 0 to 1.5 seconds: they turn to the camera at the same time and give one small hop of excitement. 1.5 to 3 seconds: they raise both arms over their heads and join their hands to form one big heart shape together, tilting their heads toward each other. 3 to 4 seconds: they hold the big heart pose with big closed-mouth smiles and happily curved eyes, bouncing once in rhythm. No text, no props other than the towel wraps, mouths stay closed.
+SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side at the real spot described, facing the camera, both wearing a cream terry-towel "sheep-head" wrap (a Korean jjimjilbang style towel rolled into two small round ears on top of the head) over their usual hair, with their usual swimwear. 0 to 1.5 seconds: they turn to the camera at the same time and give one small hop of excitement. 1.5 to 3 seconds: they raise both arms over their heads and join their hands to form one big heart shape together, tilting their heads toward each other. 3 to 4 seconds: they hold the big heart pose with big happy smiles and happily curved eyes, bouncing once in rhythm. No text, no props other than the towel wraps.
 ```
 
 ## 1-5. 장소 개그 사전 (컷 ①② · 장소와 연결 · 하나만 고른다)
