@@ -567,7 +567,8 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     voice, tempo = str(req.get("voice") or ms.VOICE_DEFAULT), float(req.get("tempo") or mt.TEMPO)
     B().mkdir(parents=True, exist_ok=True)
     h, pos0 = assets(req, models, report)
-    cuts = plan_cuts(h, int(req.get("max_veo_cuts") or 4))
+    mv = req.get("max_veo_cuts")
+    cuts = plan_cuts(h, 4 if mv is None else int(mv))                     # 0 = Veo 없이 전부 사진 무빙(0원) — "or 4" 는 0 을 4 로 바꿔 버렸다
     report["cuts"] = [{"i": c["i"], "section": c["section"], "n": c["n"], "veo": c["veo"], "source": c["shot"].get("source"), "seen": c["shot"].get("description")} for c in cuts]
     log("컷: " + " · ".join(f"{c['i']}{KO[c['section']][0]}{'V' if c['veo'] else ''}" for c in cuts))
     script = ms._try_models("text", models["text"], lambda m: write_script(m, req, h, cuts))
