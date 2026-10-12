@@ -1,0 +1,94 @@
+name: stay-shorts-mini
+
+# 미니어처 연출 시험 — 숙소 사진 + 기준 인형(assets/characters/ref.jpg) → Gemini 이미지 편집(첫 장면) → Veo 4초.
+# 운영자 2026-10-12 "진행해" (합성 2장 + Veo 2컷, 약 710원). requests/mini/request.json 의 nonce 를 바꿔 푸시할 때만 돈다.
+# 돈 잠금: request.json 에 "veo_approved": true 가 없으면 make_mini.py 가 돈 쓰기 전에 멈춘다. 한도는 veo.py(실행 3,000원 · 월 50,000원).
+# 결과: 텔레그램(비교 시트 · 합성 첫 장면 · 영상) + Actions 아티팩트. 숙소 사진·합성 결과는 커밋하지 않는다(공개 저장소 재배포 금지) — 기록·장부만 커밋.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: ["claude/stay-shorts-video-conversion-67hiin"]
+    paths: ["projects/stay-shorts-factory/requests/mini/*.json"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stay-shorts-mini
+  cancel-in-progress: false
+
+jobs:
+  mini:
+    name: 미니어처 합성·영상 시험
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            projects/stay-shorts-factory
+          sparse-checkout-cone-mode: true
+
+      - name: 준비 (pillow · ffmpeg)
+        run: |
+          python3 -m pip install -q pillow
+          command -v ffmpeg >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null; }
+
+      - name: 합성 → 영상 (약 710원)
+        id: run
+        working-directory: projects/stay-shorts-factory
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          VEO_MODEL: ${{ vars.STAY_VEO_MODEL }}
+          STAY_RUN_KRW: ${{ vars.STAY_RUN_KRW }}
+          STAY_MONTH_KRW: ${{ vars.STAY_MONTH_KRW }}
+        run: python3 src/make_mini.py
+
+      - name: 텔레그램으로 보내기
+        if: always()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          P=projects/stay-shorts-factory
+          B=$P/build/mini
+          R=$P/data/runs/mini/report.json
+          CAP=$(python3 -c "import json;r=json.load(open('$R',encoding='utf-8'));print(f\"미니어처 시험 {r.get('nonce')} · {'성공' if r.get('ok') else '실패: '+str(r.get('error',''))[:200]} · 합성 {r.get('image_model','-')} 약 {r.get('image_krw',0)}원 · Veo {r.get('veo_spent_krw',0)}원 · 이번 달 Veo {r.get('month_veo_krw',0):,}원\")" 2>/dev/null || echo "미니어처 시험 기록 없음")
+          if [ -f "$B/sheet.jpg" ]; then
+            curl -s -o /dev/null -w "telegram sheet http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$B/sheet.jpg" -F caption="$CAP" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
+          else
+            curl -s -o /dev/null -w "telegram msg http %{http_code}\n" -F chat_id="$TG_CHAT" -F text="$CAP" "https://api.telegram.org/bot$TG_TOKEN/sendMessage" || true
+          fi
+          for k in spa wave; do
+            [ -f "$B/${k}_frame.png" ] && curl -s -o /dev/null -w "telegram frame $k http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$B/${k}_frame.png" -F caption="$k 합성 첫 장면" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
+            [ -f "$B/${k}.mp4" ] && curl -s -o /dev/null -w "telegram video $k http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$B/${k}.mp4" -F caption="$k 미니어처 4초 (Veo)" "https://api.telegram.org/bot$TG_TOKEN/sendVideo" || true
+          done
+
+      - name: 아티팩트 보관
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stay-mini-${{ github.run_number }}
+          path: projects/stay-shorts-factory/build/mini
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: 커밋 (기록 · 장부만)
+        if: always()
+        run: |
+          P=projects/stay-shorts-factory
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          SAVE=$(mktemp -d)
+          for d in data/runs/mini state; do [ -e "$P/$d" ] && { mkdir -p "$SAVE/$(dirname "$d")"; cp -r "$P/$d" "$SAVE/$d"; }; done
+          for i in 1 2 3 4 5; do
+            git fetch origin "${GITHUB_REF_NAME}" && git reset -q --hard "origin/${GITHUB_REF_NAME}" || { sleep 3; continue; }
+            for d in data/runs/mini state; do [ -e "$SAVE/$d" ] && { mkdir -p "$P/$d"; cp -a "$SAVE/$d/." "$P/$d/"; }; done
+            git add "$P/data/runs/mini" "$P/state" 2>/dev/null || true
+            if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+            git commit -q -m "stay-shorts: 미니어처 시험 기록 [skip ci]"
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then echo "저장 완료"; exit 0; fi
+            echo "재시도 $i"; sleep 3
+          done
+          echo "::error::기록 저장 실패"; exit 1
