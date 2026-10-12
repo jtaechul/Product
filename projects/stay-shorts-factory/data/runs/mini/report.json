@@ -1,0 +1,31 @@
+{
+ "nonce": "2026-10-12-mini-1",
+ "started": "2026-10-12T12:39:53",
+ "ok": true,
+ "shots": [
+  {
+   "key": "spa",
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
+   "ok": true,
+   "veo_krw": 294,
+   "edit_prompt_chars": 6104,
+   "veo_prompt_chars": 1248
+  },
+  {
+   "key": "wave",
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
+   "ok": true,
+   "veo_krw": 294,
+   "edit_prompt_chars": 5933,
+   "veo_prompt_chars": 1255
+  }
+ ],
+ "veo_model": "veo-3.1-lite-generate-preview",
+ "fake_veo": false,
+ "fake_image": false,
+ "image_krw": 114,
+ "image_model": "gemini-3.1-flash-image",
+ "veo_spent_krw": 588,
+ "month_veo_krw": 4410,
+ "finished": "2026-10-12T12:41:47"
+}

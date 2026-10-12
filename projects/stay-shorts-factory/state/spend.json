@@ -142,5 +142,29 @@
   "kind": "gemini_est",
   "krw": 75,
   "note": "2026-10-12-v3-photo-c solo AI 글·음성 27회 (추정)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "image",
+  "krw": 57,
+  "note": "gemini-3.1-flash-image 미니어처 합성 spa_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 spa.mp4"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "image",
+  "krw": 57,
+  "note": "gemini-3.1-flash-image 미니어처 합성 wave_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 wave.mp4"
  }
 ]
