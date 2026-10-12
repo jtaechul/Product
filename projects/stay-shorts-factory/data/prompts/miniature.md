@@ -38,6 +38,17 @@ PHOTOGRAPHY: realistic macro toy photography, camera low near the figures' chest
 FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobblehead proportions, dot eyes, cartoon or anime eyes, eyelashes, makeup, teeth, open mouths, nudity or missing swimsuit straps, patterned or colorful swimwear, drawstrings, any hairstyle other than the ones described, side-swept or spiky hair on Jun, more than two figures, flyaway hair strands, distorted hands, extra fingers, text, logos, watermarks, melted or morphing shapes.
 ```
 
+## 1-1. 모델 선택 (2026-10-12 운영자 결정)
+
+- 미니어처 인물 영상 = **Gemini Omni Flash** (비오 라이트는 남녀가 뒤바뀌어 인물 컷 금지). 환경 움직임만(사람 없음) = Veo 3.1 Lite. 단순 줌·패닝 = 사진 무빙 0원.
+- 옴니 카메라는 다가가며 원본 밖을 지어내므로 "slow push-in of about 10 percent, stay within the original photograph" 로 묶는다.
+
+## 1-2. 연출 톤 — 엉뚱하고 재밌게 (2026-10-12 운영자)
+
+- 컷당 **개그 하나**, 그 장소를 즐기는 행동과 이어지게. 예: 파도에 밀려 둘이 동시에 뒤로 엉덩방아 → 거품 수염을 달고 일어나 웃기 / 김 속에서 준이 고개만 쏙 내밀기 /
+  미나가 수건을 뗏목처럼 띄우고 눕기 / 준이 물을 튀기려다 자기 얼굴에 맞기 / 창가 소파에서 둘이 같은 자세로 기지개 / 침대에 누워 이불 속으로 쏙 사라졌다 나오기.
+- 금지: 위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기), 시설 오용·파손, 다른 사람 방해, 사실과 다른 시설 기능, 입 크게 벌리기(닫힌 입 미소만).
+
 ## 2. 장면 블록 (컷마다 · 장소 사전에서 고른다 · 영어)
 
 틀: `SCENE: [위치] + [자세] + [동작 1개 · 4초 타임라인] + [환경 반응 1개] + Camera: locked-off, slow 5 percent push-in. Vertical 9:16, 4 seconds, photoreal background, toy-scale clay figures in focus.`
