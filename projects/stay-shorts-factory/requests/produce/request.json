@@ -1,5 +1,5 @@
-{"nonce": "2026-10-12-p10d", "mode": "solo", "stage": "preview", "theme": "실내 온수풀·온천", "region": "강원", "month": "2026-11",
- "max_veo_cuts": 4, "caption_style": "shadow",
+{"nonce": "2026-10-12-v2", "mode": "solo", "theme": "실내 온수풀·온천", "region": "강원", "month": "2026-11",
+ "veo_approved": true, "max_veo_cuts": 4, "caption_style": "shadow",
  "crawl": true,
  "official_urls": {"소노펠리체 비발디파크": ["https://www.sonohotelsresorts.com/felice_vp", "https://www.sonohotelsresorts.com/oceanWorld"],
                    "쏠비치 삼척": "https://www.sonohotelsresorts.com/solbeach_sc",
