@@ -58,6 +58,11 @@
   .hotel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin:14px 0 0}
   .hero{position:relative;aspect-ratio:16/10;background:linear-gradient(135deg,#0f766e,#134e4a);overflow:hidden}
   .hero img{width:100%;height:100%;object-fit:cover;display:block}
+  .findno{display:flex;gap:8px;align-items:center;margin:0 0 14px;padding:12px 14px;border:1px solid var(--line,#e6e6ea);border-radius:14px;background:var(--card,#fff)}
+  .findno label{font-size:13px;color:var(--muted,#6b7280);white-space:nowrap}
+  .findno input{flex:1;min-width:0;font-size:16px;padding:10px 12px;border:1px solid var(--line,#e6e6ea);border-radius:10px;background:transparent;color:inherit}
+  .findno button{font-size:14px;font-weight:700;padding:10px 14px;border:0;border-radius:10px;background:#ff8a5b;color:#fff}
+  .hotel.hit{outline:2px solid #ff8a5b;outline-offset:2px}
   .hero .badge{position:absolute;left:12px;top:12px;background:rgba(0,0,0,.6);color:#fff;font-weight:800;font-size:13px;padding:6px 10px;border-radius:999px;backdrop-filter:blur(6px)}
   .hero .badge.r1{background:rgba(183,121,31,.92)}
   .hero .nophoto{position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.85);font-size:13px;letter-spacing:.02em}
@@ -128,13 +133,20 @@
   function renderList(){
     const fs = DATA.folders || [];
     if(!fs.length){ main.innerHTML = '<div class="empty">아직 올라온 폴더가 없습니다. 첫 번째 테마가 곧 올라옵니다.</div>'; return; }
-    main.innerHTML = '<div class="list">' + fs.map(f => `
+    main.innerHTML = '<form class="findno" id="findNo"><label for="noIn">영상에서 본 번호</label><input id="noIn" type="number" min="1" inputmode="numeric" placeholder="예: 7"><button type="submit">찾기</button></form><div class="list">' + fs.map(f => `
       <a class="folder" href="#/f/${encodeURIComponent(f.slug)}">
         <div class="top"><div class="ficon" aria-hidden="true">${ICON.folder}</div>
           <div><p class="ftitle">${esc(f.title)}</p><p class="fmeta">${esc(f.region)} · 숙소 ${f.hotels.length}곳 · ${esc(f.updated)} 갱신</p></div>
           <span class="arrow" aria-hidden="true">›</span></div>
-        <ul class="fhotels">${f.hotels.map(h => `<li><span class="rk ${h.rank===1?'r1':''}">${h.rank}</span><span>${esc(h.name)}</span></li>`).join("")}</ul>
+        <ul class="fhotels">${f.hotels.map(h => `<li><span class="rk ${h.rank===1?'r1':''}">${h.no||h.rank}</span><span>${esc(h.name)}</span></li>`).join("")}</ul>
       </a>`).join("") + '</div>';
+    document.getElementById("findNo").addEventListener("submit", e => {
+      e.preventDefault();
+      const no = parseInt(document.getElementById("noIn").value, 10);
+      const f = fs.find(x => (x.hotels||[]).some(h => h.no === no));
+      if(!f){ toast("그 번호의 숙소가 아직 없습니다"); return; }
+      location.hash = `#/f/${encodeURIComponent(f.slug)}?no=${no}`;
+    });
   }
 
   function hotelCard(h){
@@ -144,8 +156,8 @@
     const rooms = (h.rooms||[]).map(r => `<span class="room ${r.tags&&r.tags.length?'t':''}">${esc(r.name)}${r.tags&&r.tags.length?' · '+esc(r.tags.join(' · ')):''}</span>`).join("");
     const L = h.links || {};
     const btn = (cls, url, label, icon) => url ? `<a class="btn ${cls}" href="${esc(url)}" target="_blank" rel="noopener sponsored">${icon}${label}</a>` : "";
-    return `<article class="hotel">
-      <div class="hero ${h.image?'':'nopic'}"><span class="badge ${r1?'r1':''}">${h.rank}번</span>${hero}</div>
+    return `<article class="hotel" id="no-${h.no||''}">
+      <div class="hero ${h.image?'':'nopic'}"><span class="badge ${r1?'r1':''}">${h.no||h.rank}번</span>${hero}</div>
       <div class="body">
         <h3 class="name">${esc(h.name)}</h3>
         ${h.city?`<p class="city">${esc(h.city)}</p>`:""}
@@ -175,11 +187,13 @@
     document.getElementById("copyBtn").addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(location.href); toast("링크를 복사했습니다"); } catch(e){ toast("주소창의 링크를 복사해 주세요"); }
     });
-    window.scrollTo(0, 0);
+    const m = location.hash.match(/[?&]no=(\d+)/);
+    const target = m && document.getElementById("no-" + m[1]);
+    if(target){ target.classList.add("hit"); target.scrollIntoView({block:"start"}); } else { window.scrollTo(0, 0); }
   }
 
   function route(){
-    const m = location.hash.match(/^#\/f\/(.+)$/);
+    const m = location.hash.match(/^#\/f\/([^?]+)/);
     if(m) renderFolder(decodeURIComponent(m[1])); else renderList();
   }
 

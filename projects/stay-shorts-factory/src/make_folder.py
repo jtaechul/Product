@@ -186,6 +186,13 @@ def update_hotel(req: dict, h: dict, rank: int) -> Path:
     prev = next((x for x in folder["hotels"] if x.get("name") == h["name"]), None)
     rank = int(rank or (prev or {}).get("rank") or (len(folder["hotels"]) + 1))
     entry = hotel_entry(rank, h, None, slug, folder.get("theme") or "")
+    # 숙소 고유 번호(no) — 2026-10-12 운영자 "'폴더'는 기계적 → 고유 번호 + 테마명": 전 폴더 통틀어 1부터, 한 번 준 번호는 바꾸지도 재사용하지도 않는다.
+    # 영상·끝 카드·캡션의 "프로필 N번" 이 이 값이다. 같은 숙소가 다른 폴더에 또 들어가면 그 숙소의 기존 번호를 그대로 쓴다.
+    existing = next((x.get("no") for f in (data.get("folders") or []) for x in (f.get("hotels") or []) if x.get("name") == h["name"] and x.get("no")), None)
+    if existing:
+        entry["no"] = int(existing)
+    else:
+        entry["no"] = max([int(x.get("no") or 0) for f in (data.get("folders") or []) for x in (f.get("hotels") or [])] + [0]) + 1
     if prev and not entry.get("image"):
         entry["image"] = prev.get("image")
     folder["hotels"] = [x for x in folder["hotels"] if x.get("name") != h["name"]] + [entry]
@@ -195,7 +202,7 @@ def update_hotel(req: dict, h: dict, rank: int) -> Path:
     data["updated"] = date.today().isoformat()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    log(f"폴더 '{folder['title']}' 에 {h['name']} 갱신 (순위 {rank}) → 숙소 {len(folder['hotels'])}곳")
+    log(f"폴더 '{folder['title']}' 에 {h['name']} 갱신 (순위 {rank} · 고유 번호 {entry['no']}) → 숙소 {len(folder['hotels'])}곳")
     return OUT
 
 
@@ -217,8 +224,8 @@ def save_cover(path: str | Path, slug: str, rank: int) -> str | None:
 
 
 def place_hotel(req: dict, h: dict, rank: int, cover: str | Path | None = None) -> int:
-    """단일 숙소 영상용: 숙소를 테마 폴더에 넣고(update_hotel) **페이지에 보이는 순번(1부터)** 을 돌려준다.
-    영상 끝 카드·나레이션의 "폴더 N번" 은 이 값이다 (순위표 번호가 아니라 페이지 정렬 순서). 2026-10-11 이름 비공개 결정."""
+    """단일 숙소 영상용: 숙소를 테마 폴더에 넣고(update_hotel) **숙소 고유 번호(no)** 를 돌려준다.
+    영상 끝 카드·나레이션의 "프로필 N번" 은 이 값이다 (2026-10-12 운영자 결정 — 폴더 안 순번이 아니라 전 폴더 통틀어 고유한 번호). 2026-10-11 이름 비공개 결정."""
     slug = slug_of(str(req.get("month") or ""), str(req.get("theme") or ""), str(req.get("region") or ""))
     data = {}
     if OUT.exists():
@@ -237,8 +244,7 @@ def place_hotel(req: dict, h: dict, rank: int, cover: str | Path | None = None) 
     update_hotel(req, hh, rank)
     data = json.loads(OUT.read_text(encoding="utf-8"))
     folder = next(f for f in data["folders"] if f.get("slug") == slug)
-    names = [x["name"] for x in sorted(folder["hotels"], key=lambda e: e.get("rank") or 99)]
-    return names.index(h["name"]) + 1
+    return int(next(x for x in folder["hotels"] if x["name"] == h["name"])["no"])
 
 
 def from_report() -> Path:

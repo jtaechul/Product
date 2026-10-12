@@ -384,10 +384,10 @@ def cover(im: Image.Image, w: int = W, h: int = H) -> Image.Image:
     return im.crop((x, y, x + cw, y + ch)).resize((w, h), Image.LANCZOS)
 
 
-def end_card(out: Path, bg: Path | None, folder: str, pos: int, style: str = DEFAULT_STYLE, disclosure: str = "", label: str = "객실 타입 · 가격대 · 예약 링크"):
-    """끝 카드 (2026-10-11 재설계 — 운영자 "이 카드처럼 촌스럽게 하지 마라"):
-    흐린 배경·가운데 정렬·화살표 폐기 → **선명한 사진 + 아래쪽 어둡기 그라데이션**, 왼쪽 정렬 편집 타이포(작은 안내 → 큰 제목 2줄),
-    그 아래 **프로필 폴더 페이지의 한 줄을 닮은 카드**(아이콘 · 폴더 이름 · N번 코랄 뱃지). 오른쪽 아이콘 영역(180px)은 비운다. 숙소 이름 없음."""
+def end_card(out: Path, bg: Path | None, folder: str, pos: int, style: str = DEFAULT_STYLE, disclosure: str = "", label: str = "객실 종류 · 예약 링크"):
+    """끝 카드 (2026-10-11 재설계 → 2026-10-12 운영자 "디자인 좋다" 확정 · '폴더' 낱말만 교체):
+    **선명한 사진 + 아래쪽 어둡기 그라데이션**, 왼쪽 정렬 편집 타이포 — 작은 안내 → 큰 제목 2줄 "프로필 링크 / [N번]에 있어요"(N = 숙소 고유 번호, 코랄)
+    → 그 아래 테마명 한 줄(folder). 폴더 행 카드·아이콘 폐기. 오른쪽 아이콘 영역(180px)은 비운다. 숙소 이름 없음. 고지문은 컷과 같은 위쪽 자리."""
     if bg and Path(bg).exists():
         base = cover(Image.open(bg).convert("RGB"))
     else:
@@ -403,10 +403,10 @@ def end_card(out: Path, bg: Path | None, folder: str, pos: int, style: str = DEF
     d.text((x, 1004), label, font=f_eye, fill=(255, 255, 255, 180))
     f_h = font(TYPE["headline"])
     lh = int(f_h.size * 1.14)
-    for k, line in enumerate(("프로필 링크에서", "폴더를 열어 보세요")):
-        d.text((x, 1056 + k * lh), line, font=f_h, fill=(255, 255, 255, 255))
-    draw_folder_row(ov, x, 1056 + 2 * lh + 44, card_w, folder, pos)
-    d = ImageDraw.Draw(ov)
+    d.text((x, 1056), "프로필 링크", font=f_h, fill=(255, 255, 255, 255))
+    _draw_segs(d, x, 1056 + lh, [(f"{int(pos)}번", True), ("에 있어요", False)], f_h, (255, 255, 255, 255), (*ACCENT, 255))
+    if folder:
+        d.text((x, 1056 + 2 * lh + 40), str(folder), font=font(TYPE["body"], bold=False), fill=(255, 255, 255, 170))
     im.alpha_composite(ov)
     if disclosure:
         draw_disclosure_top(im, disclosure)                 # v3: 고지문은 컷과 같은 자리(위쪽) — 같은 유형 글자는 항상 같은 위치
@@ -475,12 +475,12 @@ SUB_W = 800                                           # 자막 한 줄 최대 �
 CX = (MARGIN + SAFE_X1) // 2 + 40                     # 가운데 정렬 중심 x (오른쪽 아이콘을 피해 살짝 왼쪽) = 526
 GRID = {
     "disclosure": {"size": 24, "x": MARGIN, "y": 172, "lh": 32, "lines": 2},            # 고지문 — 컷·끝 카드 동일 자리
-    "kicker":     {"size": 36, "y": 1246},                                                # 장소 라벨 — 자막 바로 위 한 줄
-    "subtitle":   {"size": 58, "y": 1300, "lh": 70, "lines": 3},                         # 문장 자막 — 첫 줄 y 고정, 아래로 슬롯 3개(1300·1370·1440), 바닥 1510
-    "hook":       {"size": 76, "bottom": 1510, "lh": 93, "lines": 3},                    # 훅(컷 1 전용) — 마지막 줄 바닥을 자막 바닥과 맞춘다
-    "band":       {"top": 1180, "bottom": 1580, "peak": 0.34},                            # 가운데 정렬용 어둡기 띠 — 줄 수와 무관하게 고정
+    "kicker":     {"size": 36, "x": MARGIN, "y": 1246},                                   # 장소 라벨 — **왼쪽** 한 줄 (2026-10-12 운영자 "장소 자막은 왼쪽")
+    "subtitle":   {"size": 72, "y": 1330, "lh": 88, "lines": 1},                         # 대사 자막 — **가운데 한 줄, 2~3단어 가라오케식** (운영자 결정). 한 줄뿐이라 줄 수 변동 없음
+    "hook":       {"size": 76, "bottom": 1418, "lh": 93, "lines": 3},                    # 훅(컷 1 전용) — 문장 전체, 마지막 줄 바닥을 대사 줄 바닥(1330+88)과 맞춘다
+    "band":       {"top": 1200, "bottom": 1550, "peak": 0.34},                            # 어둡기 띠 — 대사 줄 중심(1374)에 고정, 글자 양과 무관
 }
-DEFAULT_ALIGN = "center"                              # request.json "subtitle_align": center | left (운영자 시안 A/B 선택 대기)
+CHUNK_WORDS = 3                                       # 가라오케 조각 = 최대 3단어 (운영자 "2~3단어 위주")
 
 
 def fits(text: str, role: str = "subtitle") -> tuple[bool, int]:
@@ -492,6 +492,41 @@ def fits(text: str, role: str = "subtitle") -> tuple[bool, int]:
     joined = "".join(t for ln in lines for t, _ in ln).replace(" ", "")
     ok = len(lines) <= g["lines"] and len(joined) >= len(plain(text).replace(" ", "")) and all(_width(d, ln, f) <= SUB_W for ln in lines)
     return ok, len(lines)
+
+
+_PUNCT_END = re.compile(r"[,.!?，。]$")
+
+
+def chunk_words(text: str, max_words: int = CHUNK_WORDS) -> list[str]:
+    """가라오케 조각 나누기: 띄어쓰기 단위로 2~3단어씩. 쉼표·마침표 뒤에서는 반드시 끊고, 한 조각은 GRID 대사 크기로 한 줄(SUB_W)에 들어가야 한다.
+    마지막 조각이 1단어로 남으면 앞 조각에 붙인다(붙여도 한 줄이면). 렌더가 아니라 **대본 검사**가 이 함수로 거른다."""
+    d = ImageDraw.Draw(Image.new("RGBA", (W, H)))
+    f = font(GRID["subtitle"]["size"])
+    words = [w for w in plain(text).split(" ") if w]
+    chunks, cur = [], []
+    def w_of(ws): return d.textlength(" ".join(ws), font=f)
+    for w in words:
+        trial = cur + [w]
+        if cur and (len(trial) > max_words or w_of(trial) > SUB_W):
+            chunks.append(cur); cur = [w]
+        else:
+            cur = trial
+        if _PUNCT_END.search(w):
+            chunks.append(cur); cur = []
+    if cur:
+        chunks.append(cur)
+    if len(chunks) >= 2 and len(chunks[-1]) == 1 and len(chunks[-2]) < max_words and w_of(chunks[-2] + chunks[-1]) <= SUB_W \
+            and not _PUNCT_END.search(chunks[-2][-1]):
+        chunks[-2] = chunks[-2] + chunks[-1]; chunks.pop()
+    return [" ".join(c) for c in chunks]
+
+
+def fits_chunks(text: str) -> tuple[bool, list[str]]:
+    """대사 문장을 가라오케 조각으로 나눴을 때 모든 조각이 한 줄에 들어가는지 (한 단어가 너무 길면 실패)."""
+    d = ImageDraw.Draw(Image.new("RGBA", (W, H)))
+    f = font(GRID["subtitle"]["size"])
+    ch = chunk_words(text)
+    return all(d.textlength(c, font=f) <= SUB_W for c in ch) and len(ch) > 0, ch
 
 
 def draw_disclosure_top(im: Image.Image, text: str):
@@ -524,12 +559,25 @@ def _shadow_lines(im: Image.Image, lines, f, xs, y0: int, lh: int, accent=(*ACCE
         _draw_segs(d, xs[k], y0 + k * lh, ln, f, (255, 255, 255, 255), accent, stroke=3, stroke_fill=(12, 14, 20, 165))
 
 
-def draw_subtitle(im: Image.Image, text: str, kicker: str = "", hook: bool = False, align: str = DEFAULT_ALIGN):
-    """문장 자막(+ 장소 라벨) 을 GRID 자리에 그린다. im 은 RGBA 1080×1920.
-    - 자막: 첫 줄 y 고정(위 정렬), 줄 수 1~3. 글자 크기 고정. 안 들어가면 그리기 전에 fits() 로 걸렀어야 한다(여기서는 줄이지 않는다).
-    - 훅: 컷 1 전용 큰 글자, 마지막 줄 바닥을 자막 바닥(1510)에 맞춘다. 라벨 없음.
-    - 라벨: 코랄 36px, y 고정. 훅 컷엔 없다.
-    - align=center: 어둡기 띠(고정 구간) / align=left: 아래 그라데이션(고정 구간). 둘 다 줄 수와 무관."""
+def draw_band(im: Image.Image):
+    """대사 줄 뒤 어둡기 띠 — 모든 컷에 같은 구간. 조각 겹침판이 아니라 **컷 고정 겹침판(frame)** 에 그려 깜빡이지 않게 한다."""
+    b = GRID["band"]; _scrim(im, b["top"], b["bottom"], b["peak"])
+    return im
+
+
+def draw_label(im: Image.Image, text: str):
+    """장소 라벨 — 왼쪽, 코랄 36px, 자리 고정 (운영자 2026-10-12 "장소 자막은 왼쪽")."""
+    gk = GRID["kicker"]
+    d = ImageDraw.Draw(im)
+    d.text((gk["x"], gk["y"]), text, font=font(gk["size"]), fill=(*ACCENT, 255), stroke_width=2, stroke_fill=(0, 0, 0, 120))
+    return im
+
+
+def draw_subtitle(im: Image.Image, text: str, hook: bool = False):
+    """대사 자막을 GRID 자리에 그린다. im 은 RGBA 1080×1920.
+    - 대사(가라오케 조각 2~3단어): **가운데 한 줄**, y 고정, 72px. 한 줄에 안 들어가면 그리기 전에 fits_chunks() 로 걸렀어야 한다(여기서는 줄이지 않는다).
+    - 훅(컷 1 전용): 문장 전체, 76px, 최대 3줄, 마지막 줄 바닥을 대사 줄 바닥에 맞춘다.
+    띠(어둡기)는 frame 겹침판이 담당한다(draw_band)."""
     d = ImageDraw.Draw(im)
     g = GRID["hook" if hook else "subtitle"]
     f = font(g["size"])
@@ -537,33 +585,31 @@ def draw_subtitle(im: Image.Image, text: str, kicker: str = "", hook: bool = Fal
     lh = g["lh"]
     y0 = (g["bottom"] - lh * len(lines)) if hook else g["y"]
     widths = [_width(d, ln, f) for ln in lines]
-    if align == "left":
-        xs = [MARGIN] * len(lines)
-        gradient(im, 1060, 1580, 0.0, 0.62); gradient(im, 1580, H, 0.62, 0.70)
-    else:
-        xs = [CX - w / 2 for w in widths]
-        b = GRID["band"]; _scrim(im, b["top"], b["bottom"], b["peak"])
-    if kicker and not hook:
-        gk = GRID["kicker"]; fk = font(gk["size"])
-        kw = d.textlength(kicker, font=fk)
-        kx = MARGIN if align == "left" else CX - kw / 2
-        d = ImageDraw.Draw(im)
-        d.text((kx, gk["y"]), kicker, font=fk, fill=(*ACCENT, 255), stroke_width=2, stroke_fill=(0, 0, 0, 120))
+    xs = [CX - w / 2 for w in widths]
     _shadow_lines(im, lines, f, xs, y0, lh)
     return im
 
 
-def subtitle_png(out: Path, text: str, kicker: str = "", hook: bool = False, align: str = DEFAULT_ALIGN) -> Path:
-    """컷 하나의 자막 겹침판(투명 PNG) — v3."""
+def subtitle_png(out: Path, text: str, hook: bool = False) -> Path:
+    """대사 조각(또는 훅 문장) 하나의 겹침판(투명 PNG)."""
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    draw_subtitle(im, text, kicker, hook, align)
+    draw_subtitle(im, text, hook)
     im.save(out, "PNG")
     return out
 
 
-def frame_png(out: Path, disclosure: str) -> Path:
-    """모든 컷에 고정되는 겹침판 — v3 에서는 위쪽 고지문뿐(알약·칩 폐기)."""
+def label_png(out: Path, text: str) -> Path:
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw_label(im, text)
+    im.save(out, "PNG")
+    return out
+
+
+def frame_png(out: Path, disclosure: str, band: bool = True) -> Path:
+    """모든 컷에 고정되는 겹침판 — 위쪽 고지문 + 대사 줄 어둡기 띠 (알약·칩 폐기). 띠를 여기 두면 조각이 바뀌어도 띠는 가만히 있다."""
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    if band:
+        draw_band(im)
     if disclosure:
         draw_disclosure_top(im, disclosure)
     im.save(out, "PNG")
@@ -581,8 +627,8 @@ def grid_sheet(frames: list[Path], out: Path, labels: list[str] | None = None, g
             d.text((gap + k * (tw + gap), 12), labels[k], font=fl, fill=(255, 255, 255))
     if guides:
         sc = th / H
-        for y, col, name in ((GRID["disclosure"]["y"], (120, 200, 255), "고지문"), (GRID["kicker"]["y"], ACCENT, "라벨"),
-                             (GRID["subtitle"]["y"], (255, 255, 255), "자막 첫 줄"), (GRID["hook"]["bottom"], (255, 255, 255), "자막·훅 바닥"),
+        for y, col, name in ((GRID["disclosure"]["y"], (120, 200, 255), "고지문"), (GRID["kicker"]["y"], ACCENT, "라벨(왼쪽)"),
+                             (GRID["subtitle"]["y"], (255, 255, 255), "대사 줄"), (GRID["hook"]["bottom"], (255, 255, 255), "대사·훅 바닥"),
                              (SAFE_BOTTOM, (255, 90, 90), "플랫폼 UI")):
             yy = top + int(y * sc)
             d.line([(0, yy), (sheet.width, yy)], fill=col, width=1)

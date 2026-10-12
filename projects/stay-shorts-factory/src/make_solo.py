@@ -35,6 +35,7 @@ QUOTA = {"water": 3, "room": 3, "special": 4}                 # 사진 10장 후
 LIM = {"hook": (10, 24), "veo": (12, 28), "photo": (14, 32)}  # 컷 문장 길이(공백 제외). 1.28배속 실측 약 6.6자/초. p10c 실측: 연결어가 붙으니 Veo 컷이 25~26자로 3번 연속 탈락 → 28자(≈4.2초, 1.1배 슬로우 허용)
 MIN_CUT, GAP, VEO_SEC, MAX_SLOW = 1.6, 0.30, 4, 1.25
 MIN_HOOK = 3.2                                                  # 훅 컷 최소 길이 — v2 실측 2.78초는 훅 문장을 읽을 틈이 없었다
+PUNCT_PAUSE = 1.6                                               # 가라오케 타이밍: 쉼표·마침표 뒤 쉼 = 글자 1.6개 분량
 PATTERNS = ("push", "pan", "tilt", "pull")                     # 사진 컷 카메라 무빙 4종 순환
 KO = {"hook": "훅", "water": "물놀이", "room": "객실", "special": "특별 공간", "offer": "조건·추천", "cta": "끝 카드"}
 GENERIC = {"호텔", "리조트", "앤", "스파", "풀빌라", "펜션", "콘도", "레지던스", "하우스", "파크", "비치", "해변", "온천", "관광호텔"}
@@ -281,10 +282,14 @@ def check_script(s: dict, h: dict, cuts: list[dict], req: dict, sig: dict | None
                 errs.append(f"컷 {c['i']} 라벨에 느낌표·이모지 금지")
             if any(t in pc for t in toks):
                 errs.append(f"컷 {c['i']} 라벨에 숙소 이름")
-        role = "hook" if c["section"] == "hook" else "subtitle"                    # v3 글자 그리드: 크기 고정 → 문장이 화면 줄 수 안에 들어가야 한다(픽셀 측정)
-        ok, nl = design.fits(n, role)
-        if not ok:
-            errs.append(f"컷 {c['i']} 문장이 화면 {design.GRID[role]['lines']}줄을 넘는다({nl}줄, 공백 포함 {len(n)}자) — 문장을 줄인다")
+        if c["section"] == "hook":                                                 # v3 글자 그리드: 크기 고정 → 훅 문장은 화면 3줄 안(픽셀 측정)
+            ok, nl = design.fits(n, "hook")
+            if not ok:
+                errs.append(f"컷 {c['i']} 훅 문장이 화면 {design.GRID['hook']['lines']}줄을 넘는다({nl}줄, 공백 포함 {len(n)}자) — 문장을 줄인다")
+        else:                                                                       # 대사는 2~3단어 가라오케 조각 — 조각마다 한 줄에 들어가야 한다
+            ok, ch = design.fits_chunks(n)
+            if not ok:
+                errs.append(f"컷 {c['i']} 문장의 한 단어가 자막 한 줄보다 길다: {max(ch, key=len) if ch else n}")
     second = [c for c in cuts if c["i"] == 2]
     if second and not any(w in got[2].get("narration", "") for w in region_words(req, h)):
         errs.append(f"컷 2 문장에 지역({' 또는 '.join(region_words(req, h))}) + 유형으로 숙소를 부른다")
@@ -425,7 +430,8 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
 
 
 def cta_text(folder: str, pos: int) -> str:
-    return f"객실 타입이랑 링크는 프로필 '{folder}' 폴더 {pos}번에 정리해 뒀어요."
+    """끝 카드 나레이션 — 2026-10-12 운영자 "'폴더'는 기계적" → 숙소 고유 번호로. 테마명은 카드에 글자로만(읽으면 끝이 늘어진다 — v2 실측 5.8초)."""
+    return f"객실이랑 예약 링크는 프로필 {pos}번에 있어요."
 
 
 # ── 화면 검수 (컷 사진 ↔ 문장) ───────────────────────────────────────────────────────────
@@ -575,7 +581,7 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     except Exception as e:  # noqa: BLE001
         log(f"폴더 데이터 갱신 실패 ({str(e)[:80]}) — 순위표 위치로 대체")
         pos = pos0 or 1
-    script["cta"] = {"narration": cta_text(folder, pos), "caption": f"프로필 링크 → {folder} {pos}번"}
+    script["cta"] = {"narration": cta_text(folder, pos), "caption": f"프로필 링크 → {pos}번 · {folder}"}
     report["script"] = script
     for x in script["cuts"]:
         report["cuts"][int(x["i"]) - 1].update({"narration": x["narration"], "caption": x["caption"]})
@@ -635,6 +641,10 @@ def preview_md(req: dict, p: dict) -> str:
         tag = f" 〔태그 {ex.get('tag')}〕" if ex and int(ex.get("i", 0)) == c["i"] else ""
         md.append(f"| {c['i']}{' (Veo)' if c['veo'] else ''} | {KO[c['section']]} | {c['shot'].get('description', '')} [{mt.SRC_KO.get(c['shot'].get('source'), '?')}] | {x['caption']}{tag} | {x['narration']} | {sc if sc is not None else '-'} {mark}{fx} | {p['narr'][c['i']]:.1f} |")
     md.append(f"| 끝 | 끝 카드 | 훅 사진 선명 + 아래쪽 그라데이션 | {script['cta']['caption']} | {script['cta']['narration']} | - | {p['narr']['cta']:.1f} |")
+    md += ["", "## 화면 자막 조각 (가라오케식 2~3단어 · 컷 1 훅은 문장 전체)", ""]
+    for c in cuts:
+        x = by_i[c["i"]]
+        md.append(f"- 컷 {c['i']}: " + (f"**{x['narration']}**" if c["section"] == "hook" else " | ".join(design.chunk_words(x["narration"]))))
     md += ["", "## 나레이션 받아쓰기 검증", "", "| 컷 | 대본 | 들린 것 | 일치 | 판정 |", "|---|---|---|---|---|"]
     for q in nqa:
         md.append(f"| {q['segment']} | {q['script']} | {q['heard']} | {q['similarity']} | {'통과' if q['ok'] else '실패 ' + ','.join(q['instruction_words'])} |")
@@ -683,6 +693,63 @@ def photo_clip(image: Path, sec: float, out: Path, pattern: str) -> Path:
     return out
 
 
+def speech_window(wav: Path) -> tuple[float, float]:
+    """조각 wav 안에서 실제 말소리 구간(앞뒤 무음 제외). 무음을 못 찾으면 (0, 길이)."""
+    D = ms.probe_duration(wav)
+    a, b = 0.0, D
+    for s0, s1 in silences(wav, -35, 0.08):
+        if s0 <= 0.05 and s1 > a:
+            a = s1
+        if s1 >= D - 0.05 and s0 < b:
+            b = s0
+    return (a, b) if b - a > 0.3 else (0.0, D)
+
+
+def karaoke_times(text: str, wav: Path | None, L: float) -> list[tuple[str, float, float]]:
+    """가라오케 조각마다 (글, 시작초, 끝초). TTS 는 단어 시각을 안 주므로 **글자 수 비율**로 말소리 구간을 나눈다(1.28배속 한국어는 음절 길이가 고르다 — 조각이 2~3단어라 ±0.15초 오차는 보이지 않는다).
+    쉼표·마침표 뒤 쉼은 PUNCT_PAUSE 글자 분량으로 그 조각에 붙인다. 마지막 조각은 컷 끝까지 유지."""
+    chunks = design.chunk_words(text)
+    if not chunks:
+        return []
+    have = bool(wav and Path(wav).exists())
+    a, b = speech_window(wav) if have else (0.0, L)
+    b = min(b, L)
+    w = [len(c.replace(" ", "")) + (PUNCT_PAUSE if design._PUNCT_END.search(c) else 0) for c in chunks]
+    w[-1] = max(0.5, w[-1] - (PUNCT_PAUSE if design._PUNCT_END.search(chunks[-1]) else 0))   # 마지막 쉼은 보이는 시간에 안 넣는다
+    n = len(chunks)
+    # 1차: 글자 수 비율
+    def spread(lo: float, hi: float, idx: list[int]) -> dict[int, float]:
+        tot = sum(w[k] for k in idx) or 1
+        ends, t = {}, lo
+        for k in idx:
+            t += (hi - lo) * w[k] / tot; ends[k] = t
+        return ends
+    ends = spread(a, b, list(range(n)))
+    # 2차: 쉼표·마침표로 끝나는 조각의 경계는 **실제 들리는 쉼(무음 0.12초 이상)** 에 맞춘다 — v2 음성 실측: 쉼표 뒤 쉼이 비율 추정보다 0.4초 늦었다
+    if have:
+        sil = [(s0, s1) for s0, s1 in silences(wav, -35, 0.12) if s0 > a + 0.2 and s1 < b - 0.2]
+        anchors, used = {}, set()
+        for k in range(n - 1):
+            if not design._PUNCT_END.search(chunks[k]):
+                continue
+            cand = [(abs((s0 + s1) / 2 - ends[k]), j) for j, (s0, s1) in enumerate(sil) if j not in used and abs((s0 + s1) / 2 - ends[k]) <= 0.9]
+            if cand:
+                _, j = min(cand); used.add(j); anchors[k] = sil[j][1]                       # 쉼이 끝나고 말이 다시 시작될 때 다음 조각으로
+        if anchors:
+            lo, start = a, 0
+            for k in sorted(anchors):
+                ends.update(spread(lo, anchors[k], list(range(start, k + 1)))); ends[k] = anchors[k]
+                lo, start = anchors[k], k + 1
+            ends.update(spread(lo, b, list(range(start, n))))
+    out, t = [], a
+    for k, c in enumerate(chunks):
+        t2 = b if k == n - 1 else ends[k]
+        out.append((c, round(t, 3), round(t2, 3)))
+        t = t2
+    out[-1] = (out[-1][0], out[-1][1], round(L + 0.5, 3))                                # 마지막 조각은 컷이 끝날 때까지
+    return out
+
+
 def cut_segment(idx: int, src: Path, L: float, wav: Path | None, overlays: list[dict], slow: float = 1.0, image: bool = False, fade_in: float = 0.0) -> Path:
     """컷 하나 = 영상 1개(또는 카드 이미지) + 겹침판들 + 그 컷의 나레이션. overlays: {"path","a","b","anim"} — anim 은 0.12초 페이드 + 14px 올라오기.
     L 초로 정확히 맞춘다. 영상이 짧으면 최대 slow 배까지만 느리게, 그래도 모자라면 마지막 프레임 유지(기록에 남김 — 글자 한도로 거의 안 생긴다)."""
@@ -712,8 +779,9 @@ def cut_segment(idx: int, src: Path, L: float, wav: Path | None, overlays: list[
     for j, ov in enumerate(overlays):
         a, b = float(ov.get("a", 0.0)), float(ov.get("b", 99.0))
         if ov.get("anim"):
-            fc += f"[{k}:v]format=rgba,fade=t=in:st={a:.3f}:d=0.12:alpha=1[o{j}];"
-            fc += f"[{cur}][o{j}]overlay=0:y='14*max(0,1-(t-{a:.3f})/0.15)':format=auto:enable='between(t,{a:.3f},{b:.3f})'[v{j + 1}];"
+            fd, sl = float(ov.get("fade", 0.12)), int(ov.get("slide", 14))           # 가라오케 조각은 짧게(0.05초·8px) — 또박또박 바뀌는 느낌
+            fc += f"[{k}:v]format=rgba,fade=t=in:st={a:.3f}:d={fd:.2f}:alpha=1[o{j}];"
+            fc += f"[{cur}][o{j}]overlay=0:y='{sl}*max(0,1-(t-{a:.3f})/{max(fd, 0.05) + 0.03:.2f})':format=auto:enable='between(t,{a:.3f},{b:.3f})'[v{j + 1}];"
         else:
             fc += f"[{k}:v]format=rgba[o{j}];[{cur}][o{j}]overlay=0:0:format=auto:enable='between(t,{a:.3f},{b:.3f})'[v{j + 1}];"
         cur = f"v{j + 1}"; k += 1
@@ -775,11 +843,10 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     name = h["name"]
     clips = make_veo(cuts, theme, report)
 
-    # v3 화면 (2026-10-12 운영자 검토): 알약·후기 칩·'+ 시설' 태그·아쉬움 보조 줄 전부 폐기. 화면 요소는 고지문(위) + 장소 라벨 + 문장 자막(아래) 뿐.
+    # v3 화면 (2026-10-12 운영자 검토): 알약·후기 칩·'+ 시설' 태그·아쉬움 보조 줄 전부 폐기. 화면 요소는 고지문(위) + 장소 라벨(왼쪽) + 대사 자막(가운데, 2~3단어 가라오케) 뿐.
     # 같은 유형 글자는 항상 같은 자리(design.GRID) — 컷마다 크기·위치가 달라지는 일이 없다.
-    align = str(req.get("subtitle_align") or design.DEFAULT_ALIGN)
     frame = B() / "ov_frame.png"
-    design.frame_png(frame, ms.DISCLOSURE)                                      # 모든 컷에 고정: 위쪽 고지문
+    design.frame_png(frame, ms.DISCLOSURE)                                      # 모든 컷에 고정: 위쪽 고지문 + 대사 줄 어둡기 띠
     by_i = {int(x["i"]): x for x in script["cuts"]}
     segs, timeline, k_pattern = [], [], 0
     for c in cuts:
@@ -787,13 +854,25 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
         is_hook = (c["section"] == "hook")
         L = max(MIN_HOOK if is_hook else MIN_CUT, narr[c["i"]] + (0.12 if (B() / "narr_full.wav").exists() else GAP))
         label = design.plain(x["caption"])
-        sub_text = x["narration"]
-        if is_hook and label and label in sub_text:                               # 훅: 라벨 낱말이 문장에 있으면 그 낱말만 코랄 강조
-            sub_text = sub_text.replace(label, f"[{label}]", 1)
-        cap = B() / f"ov_cap_{c['i']:02d}.png"
-        design.subtitle_png(cap, sub_text, kicker=("" if is_hook else label), hook=is_hook, align=align)
-        # 훅 자막은 0초부터 그대로 보인다(페이드·슬라이드 없음) — 첫 화면에 멈출 이유가 있어야 한다. 나머지 컷은 0.12초 페이드로 바뀐다
-        overlays = [{"path": frame, "a": 0, "b": 99, "anim": False}, {"path": cap, "a": 0.0, "b": 99, "anim": not is_hook}]
+        overlays = [{"path": frame, "a": 0, "b": 99, "anim": False}]
+        chunks = []
+        if is_hook:
+            sub_text = x["narration"]
+            if label and label in sub_text:                                         # 훅: 라벨 낱말이 문장에 있으면 그 낱말만 코랄 강조
+                sub_text = sub_text.replace(label, f"[{label}]", 1)
+            cap = B() / f"ov_cap_{c['i']:02d}.png"
+            design.subtitle_png(cap, sub_text, hook=True)
+            overlays.append({"path": cap, "a": 0.0, "b": 99, "anim": False})       # 훅 문장은 0초부터 그대로 — 첫 화면에 멈출 이유
+        else:
+            if label:
+                lab = B() / f"ov_label_{c['i']:02d}.png"
+                design.label_png(lab, label)
+                overlays.append({"path": lab, "a": 0.0, "b": 99, "anim": True})
+            chunks = karaoke_times(x["narration"], B() / f"narr_c{c['i']}.wav", L)
+            for k, (txt, ta, tb) in enumerate(chunks):
+                capk = B() / f"ov_cap_{c['i']:02d}_{k}.png"
+                design.subtitle_png(capk, txt)
+                overlays.append({"path": capk, "a": ta, "b": tb, "anim": True, "fade": 0.05, "slide": 8})
         ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
         slow = 1.0
         if c["veo"] and c["n"] in clips:
@@ -807,7 +886,7 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
             kind = f"사진·{pattern}"
         segs.append(cut_segment(c["i"], src, L, B() / f"narr_c{c['i']}.wav", overlays, slow))
         timeline.append({"i": c["i"], "section": c["section"], "kind": kind, "sec": round(L, 2), "slow": round(slow, 2), "narration": x["narration"], "caption": x["caption"],
-                         "label": label, "extra": (ex.get("tag") if ex and int(ex.get("i", 0)) == c["i"] else None)})
+                         "label": label, "chunks": [[t, a, b] for t, a, b in chunks], "extra": (ex.get("tag") if ex and int(ex.get("i", 0)) == c["i"] else None)})
     # 끝 카드 — 훅 사진 선명 + 세로 그라데이션(블러 없음), 왼쪽 정렬 헤드라인 + 폴더 행
     card = design.end_card(B() / "end_card.jpg", B() / f"shotHD_{cuts[0]['n']}.png", folder, pos, style, ms.DISCLOSURE)
     Lc = max(3.6, narr["cta"] + 0.7)
@@ -839,12 +918,12 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     pc = h.get("photo_counts") or {}
     caption = (ms.DISCLOSURE + "\n\n" + str(script.get("caption", "")).strip()
                + f"\n\n{name}" + (f" · {h['city']}" if h.get("city") else "")
-               + f"\n객실 타입·가격대·링크는 프로필 링크 → '{folder}' 폴더 {pos}번"
+               + f"\n객실 타입·가격대·링크는 프로필 링크 → {pos}번 ({folder})"
                + (f"\n후기에서 아쉬움: {h['honest']}" if h.get("honest") else "")          # v3: 영상 보조 줄 폐기 → 캡션으로
                + ("\n사진: 숙소 공식 홈페이지" if pc.get("official") else "")
                + "\n\n" + " ".join(script.get("hashtags") or []))
-    meta = {"mode": "solo", "stay": name, "title": script.get("title"), "caption": caption, "folder": folder, "folder_pos": pos, "caption_style": style, "subtitle_align": align, "bgm": report.get("bgm"),
-            "pinned_comment": f"{name} — 객실 타입·링크는 프로필 링크 → '{folder}' 폴더 {pos}번 (쿠팡 파트너스 링크 포함)",
+    meta = {"mode": "solo", "stay": name, "title": script.get("title"), "caption": caption, "folder": folder, "folder_pos": pos, "caption_style": style, "bgm": report.get("bgm"),
+            "pinned_comment": f"{name} — 객실 타입·링크는 프로필 링크 → {pos}번 ({folder}) · 쿠팡 파트너스 링크 포함",
             "affiliate_urls": {name: h["affiliate_url"]}, "lines": [x["narration"] for x in script["cuts"]] + [script["cta"]["narration"]],
             "cuts": timeline, "screen_qa_ok": all((q.get("score") or 0) >= q.get("threshold", 7) for q in p["qa"] if q.get("score") is not None),
             "veo": {"model": veo.MODEL, "fake": veo.FAKE, "clips_ok": sum(1 for r in report["veo"]["clips"] if r["ok"]), "clips_total": len(report["veo"]["clips"]),
