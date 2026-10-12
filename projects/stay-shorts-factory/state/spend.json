@@ -172,5 +172,17 @@
   "kind": "image",
   "krw": 83,
   "note": "mini-1 합성 단가 정정: gemini-3.1-flash-image 공식 $0.067/장(98원) — 57원으로 적은 2장분 차액"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 미니어처 합성 spa_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 미니어처 합성 spa_frame.png (추정)"
  }
 ]
