@@ -1,23 +1,28 @@
 {
- "nonce": "2026-10-12-omni-1",
- "started": "2026-10-12T14:07:03",
+ "nonce": "2026-10-12-omni-1b",
+ "started": "2026-10-12T14:11:30",
  "ok": true,
  "shots": [
   {
    "key": "spa",
    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
-   "ok": false,
-   "changed": 0.59,
-   "changed_retry": 0.32,
-   "skipped": "배경 보존 실패 32% — Veo 생략(돈 아낌)"
+   "ok": true,
+   "reused_frame": 38260492912,
+   "seam": 0.229,
+   "changed": 0.053,
+   "engine": "omni",
+   "omni_krw": 622,
+   "clip_sec": 4.01,
+   "omni_model": "gemini-omni-1.1-flash",
+   "tokens_out": 24046,
+   "edit_prompt_chars": 6683,
+   "video_prompt_chars": 1884
   }
  ],
  "veo_model": "veo-3.1-lite-generate-preview",
  "fake_veo": false,
  "fake_image": false,
- "image_krw": 196,
- "image_model": "gemini-3.1-flash-image",
- "veo_spent_krw": 0,
+ "veo_spent_krw": 622,
  "month_veo_krw": 4410,
- "finished": "2026-10-12T14:07:25"
+ "finished": "2026-10-12T14:12:01"
 }

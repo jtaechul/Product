@@ -184,5 +184,11 @@
   "kind": "image",
   "krw": 98,
   "note": "gemini-3.1-flash-image 미니어처 합성 spa_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "omni",
+  "krw": 622,
+  "note": "gemini-omni-1.1-flash 720p 4.0초 spa.mp4 (토큰 24046)"
  }
 ]
