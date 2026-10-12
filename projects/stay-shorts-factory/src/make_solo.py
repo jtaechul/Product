@@ -197,7 +197,7 @@ def plan_cuts(h: dict, max_veo: int, mini: bool = False) -> list[dict]:
         # Veo 라이트는 사람 없는 물·김 움직임 컷에만(편당 0~1) — 미니어처 컷과 겹치지 않게
         env = [c for c in cuts if not c.get("mini") and c["section"] == "water"]
         for c in env[:max(0, int(max_veo))]:
-            c["veo"] = True
+            c["veo"] = True; c["env"] = True
     else:
         for c in sorted(cuts, key=lambda c: (motion_rank(c), c["i"]))[:max(0, int(max_veo))]:
             c["veo"] = True
@@ -213,6 +213,9 @@ def cut_label(c: dict) -> str:
 
 # ── 미니어처 컷 (2026-10-12 운영자 결정 · 규칙 원본: data/prompts/miniature.md) ─────────────────────
 MINI_GAGS = mt.ROOT / "state" / "mini_gags.json"
+# 2026-10-12 운영자 "물결·김은 비오 라이트로 진짜 움직이게" — 미니어처 편의 사람 없는 환경 컷(편당 1개, 294원)에 붙인다
+ENV_BOOST = (" The water must be clearly alive: visible ripples or rolling waves moving across the whole surface, sparkling light on the water, "
+             "and if the water is warm, soft white steam rising and drifting slowly. No people, no figures, nothing added.")
 MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙소 사진 1장과 역할(gag 또는 signature)을 받는다.
 두 인형 Mina(여)·Jun(남)은 손조각 피규어이고, 이 사진 안에 **실제로 있는** 물·풀 가장자리·바닥·데크·침대·소파 위에만 둔다.
 사진에 없는 수영장·물·가구·구조물을 만들거나 키우지 않는다. 그 자리가 카메라에서 멀면 인형은 작게 보이는 것이 맞다.
@@ -936,7 +939,8 @@ def make_veo(cuts: list[dict], theme: str, report: dict) -> dict:
         seed = veo.seed_for(theme, n)
         for attempt in range(2):
             try:
-                veo.make_clip(c["shot"]["prompt"], B() / f"shot_{n}.png", VEO_SEC, out, seed + attempt)
+                vp = c["shot"]["prompt"] + (ENV_BOOST if c.get("env") else "")
+                veo.make_clip(vp, B() / f"shot_{n}.png", VEO_SEC, out, seed + attempt)
                 row["ok"] = True; clips[n] = out; break
             except veo.RaiFiltered as e:
                 row["error"] = f"안전 필터: {str(e)[:120]}"
