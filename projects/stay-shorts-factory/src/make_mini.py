@@ -57,11 +57,15 @@ EDIT_HEAD = ("TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real pl
 EDIT_WATER = "They interact naturally with the water that is already in the photograph (correct reflections, a faint wet sheen)."
 EDIT_SCALE = ("SCALE AND PLACEMENT: the figurines are toys placed on the real surface described in SCENE, close to the camera "
               "(forced perspective), so each figure appears about a quarter to a third of the frame height and is clearly readable. "
-              "Their whole bodies, from the top of the head to the feet, stay inside the band between 25% and 60% of the frame height "
-              "measured from the top, and out of the right-most 15% of the frame — the strip below 60% and the right edge are covered by captions "
-              "and app buttons. The real place keeps its true size and stays clearly recognizable behind them. "
+              "Measured from the top of the frame: their heads and upper bodies stay between 25% and 60% of the frame height (the strip below 60% "
+              "carries captions), their legs and feet may reach down to about 74% but never lower, and they stay out of the right-most 15% of the "
+              "frame (app buttons). The real place keeps its true size and stays clearly recognizable behind them. "
               "Never enlarge or shrink anything in the photograph.")
-ZONE = (0.15, 0.66, 0.90)   # (위 한계, 아래 한계, 오른쪽 한계) — 비전 box 검사용. design.GRID 띠 위쪽 1150/1920 = 0.60 + 여유
+# 인형 자리 (2026-10-12 운영자 결정 "머리·상체만 글자 위"): 머리·상체는 자막 띠 위(design.GRID 띠 위쪽 1150/1920 = 0.60), 다리·발은 0.74 까지 허용
+# (자막이 다리 위를 지나감). run-29 미리보기: 전신을 0.60 위로 묶자 가까운 표면이 없어 훅 개그 0컷 → 완화.
+ZONE = (0.15, 0.74, 0.92)   # 비전 상자 (위 한계 y0, 아래 한계 y1(발), 오른쪽 한계 x1 — 여백 포함이라 앱 버튼 기둥 0.83 보다 조금 넓게)
+MID_MAX = 0.62              # 비전 상자 세로 중심 상한 — 상자 위 절반(머리·상체)이 대략 띠 위
+POST_MID_MAX = 0.68         # 합성 뒤 다듬은 상자(여백 포함) 중심 상한 — 넘으면 상체까지 글자에 가려진다 → 옴니 생략
 EDIT_PHOTO = ("PHOTOGRAPHY: realistic toy photography matched to the photograph's own light direction, color temperature and grain; "
               "figures tack-sharp; the background keeps the photograph's existing sharpness (at most a very gentle natural softness right "
               "behind the figures). Vertical 9:16, same size as the hotel photograph.")
