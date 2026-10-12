@@ -2,6 +2,7 @@
 
 > Veo(이미지→영상) 컷에 들어가는 인물은 **이 문서의 캐릭터 블록을 글자 하나 바꾸지 않고** 앞에 붙인다. 장면 블록만 컷마다 쓴다.
 > 운영자 Gemini 시험(2026-10-12, 3장): "점 눈·코 없음"처럼 비워 둔 항목을 모델이 매번 다르게 채웠다(흰자 눈+이빨 / 조각상 얼굴+쪽머리+수영복 없음 / 단순 점 눈).
+> 2차 시험(2026-10-12, 운영자): 얼굴·머리·수영복·손·질감은 블록과 일치. 위반 1건 = 여자 인물 눈의 속눈썹 → "both figures identical eye construction" 강조 추가.
 > → 얼굴 부품의 **생성 방식**(모양·개수·재질)을 하나로 못 박고, 표정은 눈·입의 곡선만 바뀌게 한다. 디테일 수준은 "아주 조금 있는" 중간(3번 사진보다 한 단계 위).
 
 ## 1. 캐릭터 블록 (고정 · 모든 컷 공통 · 영어 그대로 복사)
@@ -13,7 +14,7 @@ SCALE: each figure is exactly as tall as one sofa cushion / one quarter of a lou
 
 BODY: about three heads tall. Round head, short thick neck, chunky torso, stubby rounded arms and legs, slightly rounded belly. Hands are mitten shapes with one small thumb bump and no separate fingers. Feet are simple rounded blocks. Surface: matte polymer clay, faint fingerprint texture, soft rounded edges, no gloss, no plastic shine, no fabric weave, no visible seams.
 
-FACE — build it exactly this way every time: skin is one uniform peach clay color with a faint pink blush circle on each cheek. Eyes: two small flat black clay ovals pressed into the face, each with one tiny white highlight dot in the upper left; NO eye whites, NO eyelids, NO eyelashes, NO irises. Eyebrows: two very thin short dark-brown clay arcs above the eyes. Nose: one tiny rounded clay bump in the center, no nostrils. Mouth: one thin carved curved line, closed; NO teeth, NO tongue, NO lips. Ears: two small clay half-circles. Expression changes ONLY by bending the eye ovals into closed arcs (relaxed) and bending the mouth line more or less (smile); nothing else on the face ever changes.
+FACE — build it exactly this way every time: skin is one uniform peach clay color with a faint pink blush circle on each cheek. Eyes: two small flat black clay ovals pressed into the face, each with one tiny white highlight dot in the upper left; NO eye whites, NO eyelids, NO eyelashes or lash flicks on either figure (Mina included), NO irises — both figures have identical eye construction. Eyebrows: two very thin short dark-brown clay arcs above the eyes. Nose: one tiny rounded clay bump in the center, no nostrils. Mouth: one thin carved curved line, closed; NO teeth, NO tongue, NO lips. Ears: two small clay half-circles. Expression changes ONLY by bending the eye ovals into closed arcs (relaxed) and bending the mouth line more or less (smile); nothing else on the face ever changes.
 
 HAIR: a single smooth clay cap, no strands, no texture. Mina: dark-brown clay bob to the chin with one straight side part line (no bun, no ponytail). Jun: black clay short crew cut with a flat top, no part line.
 
