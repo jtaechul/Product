@@ -5,12 +5,12 @@
  "theme": "실내 온수풀·온천",
  "region": "강원",
  "month": "2026-11",
- "veo_approved": true,
+ "veo_approved": false,
  "miniature": true,
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "운영자 2026-10-13 '잘 나온 인물 영상은 살려, 망친 마지막 컷만 다시' — 훅·소파·물 컷 재사용(0원) + 시그니처만 v6 클레이메이션으로 새로(합성 98 + 옴니 620 + 검수 1 + 글·음성 80 ≈ 800원)",
+ "note": "잠금 — stay-run-35 완료(약 1,085원: 훅·소파 재사용 0원 + 시그니처 v6 새로 714 + 물 컷 294 + 글·음성 77). 다음 유료 제작은 nonce 변경 + veo_approved true",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
