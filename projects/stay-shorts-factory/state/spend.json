@@ -310,5 +310,41 @@
   "kind": "omni",
   "krw": 615,
   "note": "gemini-omni-1.1-flash 720p 4.0초 sofa.mp4 (토큰 23780)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_12.mp4"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 미니어처 합성 11_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "omni",
+  "krw": 618,
+  "note": "gemini-omni-1.1-flash 720p 4.0초 11.mp4 (토큰 23881)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 미니어처 합성 16_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "omni",
+  "krw": 613,
+  "note": "gemini-omni-1.1-flash 720p 4.0초 16.mp4 (토큰 23696)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "gemini_est",
+  "krw": 84,
+  "note": "2026-10-13-life-run3 solo AI 글·음성 31회 (추정)"
  }
 ]
