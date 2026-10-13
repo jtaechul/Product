@@ -70,6 +70,7 @@ jobs:
         run: |
           P=projects/stay-shorts-factory
           B=$P/build/mini
+          [ -f "$B/SKIPPED" ] && { cat "$B/SKIPPED"; exit 0; }   # 같은 nonce 재실행 — 알림 없음
           R=$P/data/runs/mini/report.json
           CAP=$(python3 -c "import json;r=json.load(open('$R',encoding='utf-8'));print(f\"캐릭터 시험 {r.get('nonce')} · 크기 {r.get('scale','-')} · {'성공' if r.get('ok') else '실패: '+str(r.get('error',''))[:200]} · 합성 {r.get('image_model','-')} 약 {r.get('image_krw',0)}원 · 영상 {r.get('veo_spent_krw',0)}원 · 이번 달 영상 {r.get('month_veo_krw',0):,}원\")" 2>/dev/null || echo "캐릭터 시험 기록 없음")
           if [ -f "$B/sheet.jpg" ]; then
