@@ -357,6 +357,25 @@ def mini_errs(sc: dict, role: str) -> list[str]:
 
 
 MINI_LOG: list[dict] = []                                        # 이번 실행의 미니어처 후보 판정 기록(미리보기 시트·report 용)
+# ── 클립 재사용 (2026-10-13 운영자 "왜 또 2,500원이야" → 0원 재조립 경로) ──────────────────────────────────────
+# request "reuse_runs": [{"run_id", "name"}] 를 워크플로가 build/reuse/<name>/ 에 내려받고,
+# "reuse_clips": [{"url": 사진 주소, "clip": "<name>/sofa.mp4", "frame": "<name>/sofa_frame_pb.png", "role": "gag"|"signature", "gag", "water", "place"}]
+# 로 같은 사진(주소 일치)이 다시 뽑히면 비전·합성·옴니를 건너뛰고 그 클립을 그대로 쓴다(0원). 사진이 안 뽑히면 평소처럼 새로 만든다.
+REUSE_DIR = mt.ROOT / "build" / "reuse"
+REUSE: dict[str, dict] = {}
+
+
+def load_reuse(req: dict) -> dict[str, dict]:
+    REUSE.clear()
+    for r in req.get("reuse_clips") or []:
+        url, clip = str(r.get("url") or ""), REUSE_DIR / str(r.get("clip") or "")
+        if not url or not clip.is_file():
+            log(f"재사용 클립 없음 → 건너뜀: {r.get('clip')}"); continue
+        fr = REUSE_DIR / str(r.get("frame") or "")
+        REUSE[url] = {**r, "clip": clip, "frame": fr if fr.is_file() else None}
+    if REUSE:
+        log(f"재사용 클립 {len(REUSE)}개 준비(0원)")
+    return REUSE
 DRIFT_WARN = 0.25                                                # 옴니 끝 장면 변화율 경고 기준(run-31 실측: 정상 0.04~0.05 / 과한 당김·크기 변화 0.40)
 
 
@@ -369,6 +388,18 @@ def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
     recent, used, picked = _recent_gags(), set(), {}
 
     def try_role(role, cands):
+        for c in cands:                                                   # 재사용 클립이 있는 사진이면 비전 없이 그대로(0원)
+            ru = REUSE.get(str(c["shot"].get("src_url") or ""))
+            if c["n"] not in used and ru and ru.get("role", "gag") == role:
+                used.add(c["n"]); c["mini"] = role
+                c["mini_scene"] = {"suitable": True, "why": "재사용", "water": bool(ru.get("water")), "place": ru.get("place"), "gag": ru.get("gag"),
+                                   "scene": str(ru.get("scene") or ""), "motion": "", "reused": ru["clip"], "frame": ru.get("frame")}
+                MINI_LOG.append({"i": c["i"], "n": c["n"], "role": role, "seen": c["shot"].get("description"), "verdict": "채택(재사용 · 0원)",
+                                 "place": ru.get("place"), "gag": ru.get("gag"), "water": bool(ru.get("water"))})
+                if role == "gag" and ru.get("gag"):
+                    recent.append(str(ru["gag"]))
+                log(f"컷 {c['i']} 재사용 클립 사용(0원): {ru['clip'].name}")
+                return c
         for c in cands:
             if c["n"] in used:
                 continue
@@ -430,6 +461,17 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
         try:
             sc = c.get("mini_scene") or ms._try_models("vision", models["text"], lambda m: mini_scene(m, c, recent + used))
             row.update({"place": sc.get("place"), "gag": sc.get("gag")})
+            if sc.get("reused"):                                              # 0원: 이전 실행의 클립 그대로
+                import shutil
+                shutil.copy(sc["reused"], mdir / f"{c['n']}.mp4")
+                if sc.get("frame"):
+                    shutil.copy(sc["frame"], mdir / f"{c['n']}_frame_pb.png")
+                clips[c["n"]] = mdir / f"{c['n']}.mp4"
+                row.update({"ok": True, "reused": str(Path(sc["reused"]).relative_to(REUSE_DIR)), "omni_krw": 0, "image_krw": 0,
+                            "clip_sec": round(ms.probe_duration(clips[c["n"]]), 2)})
+                if c["mini"] == "gag" and sc.get("gag"):
+                    used.append(str(sc["gag"]))
+                continue
             motion = make_mini.signature_block() if c["mini"] == "signature" else str(sc.get("motion") or "")
             if not c.get("mini_scene"):                                       # choose_minis 를 거치지 않은 경우에도 같은 검사
                 bad = mini_errs(sc, c["mini"]) if sc.get("suitable") is not False else ["부적합"]
@@ -874,6 +916,7 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     h, pos0 = assets(req, models, report)
     mv = req.get("max_veo_cuts")
     mini = bool(req.get("miniature"))
+    load_reuse(req)
     global SCALE_MODE
     SCALE_MODE = "mini" if str(req.get("mini_scale") or "life") == "mini" else "life"
     if mini:
