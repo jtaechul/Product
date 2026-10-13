@@ -109,17 +109,48 @@ EDIT_TAIL = ("PLACEMENT RULE: put the figurines only on a surface that really ex
              "photograph. OUTPUT: exactly one photorealistic image. No text, no captions, no logos, no watermark, no borders.")
 MAX_CHANGED = 0.30          # 배경 보존 검사(0원): 원본 대비 바뀐 화면 비율 상한. 실측 mini-1: 잘 된 파도풀 11% · 배경을 다시 그린 스파 67%
 
+# ── 실물 크기 모드 (2026-10-13 운영자 결정 "그냥 실제 사람 크기로 하고 8등신으로") · 기본값 ───────────────────────────
+# run-31 컷 4 실측: 10cm 인형이 움직이기 시작하자 옴니가 '거실의 사람 = 사람 크기' 라는 기본값으로 되돌아가 인형이 가구 대비 2배로 커지고
+# 미나는 바닥으로 내려왔다(끝 장면 변화율 0.40). 영상 모델의 기본값과 싸우지 않도록 인물을 처음부터 실제 사람 크기로 넣는다.
+# 얼굴·머리·의상·점토 질감 규칙(캐릭터 블록·ref.jpg)은 그대로 쓰고 크기 문장만 바꾼다. 미니어처는 request "mini_scale": "mini" 로 되돌릴 수 있다.
+LIFE_DEFAULT = True
+EDIT_HEAD_LIFE = ("TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real place). Keep the photograph exactly as it is — same framing, "
+                  "every surface, object and decoration, colors, lighting and focus; do not blur, recolor, crop, extend, clean up or redraw anything, "
+                  "and do not add or remove any object. Only add the two characters from the attached CHARACTER REFERENCE IMAGE — take only their "
+                  "design (faces, hair, outfits, clay-like finish) from it, ignore everything else in that image, and render them at real human "
+                  "size — placed into the scene as described below, with correct perspective and contact shadows so they look physically present "
+                  "in the photograph.")
+EDIT_SCALE_LIFE = ("SCALE AND PLACEMENT: the characters are real human size — Jun about 178 cm, Mina about 165 cm — standing, sitting or lying on "
+                   "the real surface described in SCENE, at the true distance that surface is from the camera, so doors, furniture and railings "
+                   "keep their real proportions next to them (a sofa seat reaches their knees, a door is a little taller than Jun). "
+                   "Their FACES must stay clearly visible: both faces sit higher than 58% of the frame height measured from the top, and not in "
+                   "the right-most 15% of the frame (captions and app buttons are drawn there later). Keep them to one side or in front of the "
+                   "furniture so the place itself stays clearly visible behind and around them. Never enlarge or shrink anything in the photograph.")
+EDIT_PHOTO_LIFE = ("PHOTOGRAPHY: the characters look photographed in the same shot — matched to the photograph's own light direction, color "
+                   "temperature, depth of field and grain, with the same sharpness as real objects at the same distance; the background keeps "
+                   "the photograph's existing sharpness. Vertical 9:16, same size as the hotel photograph.")
+VEO_HEAD_LIFE = ("The first frame is a real hotel photograph with two life-size stylized characters of a Korean couple — smooth hand-painted "
+                 "polymer-clay satin finish, elegant adult proportions, eight heads tall. Keep them exactly as they appear in the first frame "
+                 "for the whole clip: same faces with painted almond eyes and small sculpted lips (the mouth may open when laughing or surprised), "
+                 "same hairstyles (woman: dark-brown hair with a left side part in a neat low bun; man: black short dandy cut with a forward "
+                 "fringe), the same outfit they wear in the first frame, same body proportions, and the same real human size relative to the "
+                 "furniture and the room — they never grow, shrink or change their distance from the camera. They are alive and clearly enjoying "
+                 "the place: natural, visible, playful body movement (arms, heads and torsos), smooth like an animated film — not frozen, not "
+                 "stiff. They stay on the same spot where they are in the first frame, feet planted (or seated) exactly where they are.")
+
 VEO_HEAD = ("The first frame is a real hotel photograph with two small hand-sculpted, hand-painted polymer-clay art-doll figurines of a "
             "Korean couple (elegant adult proportions, eight heads tall, satin clay finish). Keep the figurines exactly as they appear in "
             "the first frame for the whole clip: same faces with painted almond eyes and small sculpted lips (the mouth may open when laughing or surprised), same hairstyles "
             "(woman: dark-brown hair with a left side part in a neat low bun; man: black short dandy cut with a forward fringe), the same "
             "outfit they wear in the first frame, same body proportions. They are alive and clearly enjoying the place: "
             "natural, visible, playful body movement (arms, heads and torsos), smooth like an animated figurine film — "
-            "not frozen, not stiff. They stay on the same spot where they are in the first frame.")
+            "not frozen, not stiff. They stay on the same spot where they are in the first frame, and their size relative to the "
+            "furniture never changes.")
 VEO_TAIL = ("Camera: keeps the first frame's framing — locked-off, at most a very slight push-in — so nothing outside the first frame ever appears; "
             "never invent anything that is not visible in the first frame. The hotel place "
-            "stays exactly the same as the first frame: no new objects, no new people, no text, no logos, no morphing; the figurines' "
-            "faces, hair and outfits never change; they never turn into real humans. Vertical 9:16, 4 seconds.")
+            "stays exactly the same as the first frame: no new objects, no new people, no text, no logos, no morphing; the characters' "
+            "faces, hair, outfits, size and position relative to the furniture never change; they never turn into real humans. "
+            "Vertical 9:16, 4 seconds.")
 
 
 def log(*a):
@@ -131,7 +162,19 @@ OUTFIT_DRY = ("OUTFIT IN THIS SCENE: both wear plain cream waffle-texture bathro
               "faces, hair and body proportions exactly as described.")
 
 
-def character_block(water: bool = True) -> str:
+LIFE_SUBS = [   # 캐릭터 블록(v3 · 운영자 확정)에서 크기 문장만 실물 크기로 — 낱말이 바뀌어 못 찾으면 바로 멈춘다
+    ("Two hand-sculpted, hand-painted miniature figurines of a Korean couple in their early 30s",
+     "Two hand-sculpted, hand-painted art-doll style characters of a Korean couple in their early 30s"),
+    ("collectible art-doll figurines with realistic adult fashion-figure proportions, photographed as tiny toys inside a real full-size place. "
+     "Jun is 10 cm tall; Mina is 9.5 cm tall.",
+     "collectible art-doll look with realistic adult proportions, standing at real human size inside the real place. Jun is 178 cm tall; "
+     "Mina is 165 cm tall."),
+    ("This is an elegant adult figurine", "This is an elegant adult figure"),
+    ("FACE — small because of the eight-head proportions, but fully detailed", "FACE — in proportion to the eight-head body, fully detailed"),
+]
+
+
+def character_block(water: bool = True, life: bool | None = None) -> str:
     """miniature.md 의 첫 코드 블록(캐릭터 블록) — 사진 편집용으로 SCALE·PHOTOGRAPHY 문단만 바꾼다.
     2026-10-12 검수: 마른 장소(객실·로비·잔디)에도 'waterline·wet·swimsuit straps' 문장이 그대로 들어가 물을 부르는 단서가 됐다 →
     마른 장소용은 물·수영복 문장을 빼고 목욕 가운으로 고정한다(캐릭터 블록의 '객실·사우나 등은 가운' 규칙을 코드로 강제)."""
@@ -140,6 +183,13 @@ def character_block(water: bool = True) -> str:
     if not m:
         raise RuntimeError("miniature.md 에서 캐릭터 블록을 못 찾음")
     paras = [p for p in m.group(1).strip().split("\n\n") if not p.startswith(("SCALE:", "PHOTOGRAPHY:"))]
+    if LIFE_DEFAULT if life is None else life:
+        text = "\n\n".join(paras)
+        for old, new in LIFE_SUBS:
+            if old not in text:
+                raise RuntimeError(f"miniature.md 캐릭터 블록에서 실물 크기 치환 문장을 못 찾음: {old[:60]}")
+            text = text.replace(old, new)
+        paras = text.split("\n\n")
     if not water:
         out = []
         for p in paras:
@@ -153,7 +203,7 @@ def character_block(water: bool = True) -> str:
     return "\n\n".join(paras)
 
 
-FIGURE_WORDS = re.compile(r"\b(two\s+)?((tiny|small|little|hand-?carved|carved|wooden|miniature|toy|clay|plastic|resin|sculpted)\s+)+(figures?|figurines?|dolls?|toys?)\b", re.I)
+FIGURE_WORDS = re.compile(r"\b(two\s+)?((tiny|small|little|life-?sized?|human-?sized?|hand-?carved|carved|wooden|miniature|toy|clay|plastic|resin|sculpted)\s+)+(figures?|figurines?|dolls?|toys?|characters?)\b", re.I)
 WATER_WORDS = re.compile(r"\b(water|pool|swim\w*|splash\w*|wave\w*|ripple\w*|wet|bath(?:e|ing)?|spa|jacuzzi|tub|steam)\b", re.I)
 
 
@@ -166,24 +216,29 @@ PROPS_SIGNATURE = ("PROPS IN THIS SHOT ONLY: both wear a cream terry-towel \"she
                    "on top of their usual hair — this towel wrap is allowed here even though hats are otherwise not.")
 
 
-def edit_prompt(scene: str, water: bool = True, signature: bool = False) -> str:
+def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: bool | None = None) -> str:
     """사진 편집 지시문. water=False(마른 장소)면 물·수영복 낱말이 하나도 없다(검사: WATER_WORDS). signature 면 양머리 수건 허용 줄을 붙인다
-    (캐릭터 블록의 'no hats' 와 충돌해 모델이 수건을 빼먹을 수 있었다)."""
-    parts = [EDIT_HEAD, KEEP_LINE if water else KEEP_LINE_DRY, character_block(water), OUTFIT_WATER if water else OUTFIT_DRY, EDIT_SCALE, EDIT_PHOTO,
-             "SCENE: " + clean_scene(scene).strip()]
+    (캐릭터 블록의 'no hats' 와 충돌해 모델이 수건을 빼먹을 수 있었다). life(기본 True)=실물 크기 — 크기 문장만 바뀐다."""
+    life = LIFE_DEFAULT if life is None else life
+    keep = KEEP_LINE if water else KEEP_LINE_DRY
+    if life:
+        keep = keep.replace("reference figurines", "reference characters")
+    parts = [EDIT_HEAD_LIFE if life else EDIT_HEAD, keep, character_block(water, life), OUTFIT_WATER if water else OUTFIT_DRY,
+             EDIT_SCALE_LIFE if life else EDIT_SCALE, EDIT_PHOTO_LIFE if life else EDIT_PHOTO, "SCENE: " + clean_scene(scene).strip()]
     if signature:
         parts.append(PROPS_SIGNATURE)
     elif water:                                                       # 시그니처는 물가여도 마른 데크에 선다 — 물과 닿는 문장 없음
         parts.append(EDIT_WATER)
-    parts.append(EDIT_TAIL)
+    parts.append(EDIT_TAIL.replace("the figurines", "the characters") if life else EDIT_TAIL)
     out = "\n\n".join(parts)
     if not water and WATER_WORDS.search(out):
         raise RuntimeError(f"마른 장소 합성 지시문에 물 낱말 '{WATER_WORDS.search(out).group(0)}' — miniature.md 캐릭터 블록을 확인")
     return out
 
 
-def veo_prompt(motion: str) -> str:
-    return " ".join([VEO_HEAD, "MOTION (4 seconds): " + motion.strip(), VEO_TAIL])
+def veo_prompt(motion: str, life: bool | None = None) -> str:
+    life = LIFE_DEFAULT if life is None else life
+    return " ".join([VEO_HEAD_LIFE if life else VEO_HEAD, "MOTION (4 seconds): " + motion.strip(), VEO_TAIL])
 
 
 OMNI_HEAD = ("Use the attached image as the exact first frame of the video and animate from it. Total length: exactly 4 seconds. "
@@ -194,10 +249,10 @@ WATER_LINE = "Water reacts to every movement with splashes, droplets and ripples
 DRY_LINE = "The floor, furniture and surroundings stay exactly as they are in the first frame."   # 마른 장소엔 물 낱말을 아예 안 쓴다(부정문도 단서가 된다)
 
 
-def omni_prompt(motion: str, water: bool = True) -> str:
+def omni_prompt(motion: str, water: bool = True, life: bool | None = None) -> str:
     """옴니 플래시용 — 비오 지시문 + 첫 장면 고정·길이·소리 지시(옴니는 길이 필드가 없고 소리를 늘 만든다).
     run-27 실측: 객실·외관 컷에서 '물 반응' 문장 + 크게 당기기 지시 때문에 옴니가 **없는 수영장을 지어냄** → 물 문장은 물 장소에서만, 마른 장소는 물 금지를 명시."""
-    out = OMNI_HEAD + " " + veo_prompt(motion) + " " + (WATER_LINE if water else DRY_LINE)
+    out = OMNI_HEAD + " " + veo_prompt(motion, life) + " " + (WATER_LINE if water else DRY_LINE)
     if not water and WATER_WORDS.search(out):                         # 2026-10-12 검수: 마른 장소 옴니 지시문은 물 낱말 0 — 어기면 돈 쓰기 전에 멈춘다
         raise RuntimeError(f"마른 장소 옴니 지시문에 물 낱말 '{WATER_WORDS.search(out).group(0)}'")
     return out
@@ -511,7 +566,9 @@ def main():
     if not (veo.FAKE and FAKE_IMG and omni.FAKE) and req.get("veo_approved") is not True:   # 2026-10-12 검수: 옴니 가짜 여부도 본다(빠져 있었다)
         raise SystemExit('유료 시험은 운영자 허락이 필요합니다 — requests/mini/request.json 에 "veo_approved": true')
     models = [] if FAKE_IMG else image_models(req.get("image_model"))
-    log("이미지 모델 후보:", models[:4])
+    life = str(req.get("mini_scale") or ("life" if LIFE_DEFAULT else "mini")) == "life"
+    rep["scale"] = "life" if life else "mini"
+    log("이미지 모델 후보:", models[:4], "· 인물 크기:", rep["scale"])
     rows = []
     try:
         for s in req["shots"]:
@@ -521,7 +578,7 @@ def main():
             src = fetch(s["url"], BUILD / f"{k}_src.jpg")
             base = crop916(src, BUILD / f"{k}_base.jpg", float(s.get("focus_x", 0.5)), float(s.get("focus_y", 0.5)))
             wet = bool(s.get("water", True))                                      # 물가면 수영복, 마른 실내면 가운
-            ep = edit_prompt(s["scene"], water=wet, signature=bool(s.get("signature"))); (BUILD / f"{k}_edit_prompt.txt").write_text(ep, encoding="utf-8")
+            ep = edit_prompt(s["scene"], water=wet, signature=bool(s.get("signature")), life=life); (BUILD / f"{k}_edit_prompt.txt").write_text(ep, encoding="utf-8")
             prev = ROOT / "build" / "mini_prev" / f"{k}_frame.png"                 # 이전 실행 아티팩트의 합성(돈 아끼기 · request "reuse_run_id")
             if req.get("reuse_run_id") and prev.exists():
                 frame = BUILD / f"{k}_frame.png"; frame.write_bytes(prev.read_bytes()); row["reused_frame"] = int(req["reuse_run_id"])
@@ -554,11 +611,11 @@ def main():
             engine = str(s.get("engine") or req.get("video_engine") or "omni")
             clip = BUILD / f"{k}.mp4"
             if engine == "omni":
-                vp = omni_prompt(motion, water=wet and not s.get("signature")); (BUILD / f"{k}_omni_prompt.txt").write_text(vp, encoding="utf-8")
+                vp = omni_prompt(motion, water=wet and not s.get("signature"), life=life); (BUILD / f"{k}_omni_prompt.txt").write_text(vp, encoding="utf-8")
                 res = omni.make_clip(vp, frame, 4, clip, resolution=str(req.get("omni_resolution") or "720p"))
                 row.update({"ok": True, "engine": "omni", "omni_krw": res["krw"], "clip_sec": res["sec"], "omni_model": res["model"], "tokens_out": res["tokens_out"]})
             else:
-                vp = veo_prompt(motion); (BUILD / f"{k}_veo_prompt.txt").write_text(vp, encoding="utf-8")
+                vp = veo_prompt(motion, life); (BUILD / f"{k}_veo_prompt.txt").write_text(vp, encoding="utf-8")
                 krw = veo.make_clip(vp, frame, 4, clip, veo.seed_for("mini", k), mime="image/png")
                 row.update({"ok": True, "engine": "veo", "veo_krw": round(krw), "clip_sec": 4})
             row.update({"edit_prompt_chars": len(ep), "video_prompt_chars": len(vp)})

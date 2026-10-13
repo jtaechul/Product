@@ -222,29 +222,47 @@ HOT_RX = re.compile(r"온천|온수|스파|노천|탕|사우나|자쿠지|hot sp
 def env_prompt(c: dict) -> str:
     d = c["shot"].get("description") or ""
     return ENV_PROMPT.format(steam=ENV_STEAM if HOT_RX.search(d) else "") + photos.SUFFIX
-MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙소 사진 1장과 역할(gag 또는 signature)을 받는다.
-두 인형 Mina(여)·Jun(남)을 이 사진 안에 **실제로 있는** 표면(물·풀 가장자리·바닥·데크·침대·소파) 위에만 둔다. 사진에 없는 수영장·물·가구·구조물을 만들거나 키우지 않는다.
+SCALE_MODE = "life"                                              # 2026-10-13 운영자 결정: 인물은 실제 사람 크기(기본). request "mini_scale": "mini" 로 10cm 인형
+_MINI_SYSTEM = """너는 쇼츠의 연출 감독이다. 실제 숙소 사진 1장과 역할(gag 또는 signature)을 받는다.
+{who}
+사진에 없는 수영장·물·가구·구조물을 만들거나 키우지 않는다.
 
 [적합 판단] suitable=true 는 아래를 **모두** 만족할 때만:
-- 인형이 실제로 서거나 앉거나 들어갈 표면이 있고, 그 자리에서 **두 얼굴(턱)이 화면 높이 67%(위에서부터)보다 위**, 오른쪽 15%(앱 버튼) 밖에 온다
+- 인물이 실제로 서거나 앉거나 들어갈 표면이 있고, 그 자리에서 **두 얼굴(턱)이 화면 높이 67%(위에서부터)보다 위**, 오른쪽 15%(앱 버튼) 밖에 온다
   (최종 화면에서 58% 아래는 자막 띠 — 얼굴이 58~67% 이면 시스템이 사진 위쪽을 잘라 확대해 얼굴을 올린다. **몸·다리는 자막에 가려져도 되지만 얼굴은 절대 안 된다**)
-- 그 표면이 카메라에서 가까워 인형이 화면 높이의 1/4~2/5 크기로 보인다 — 카메라 바로 앞 장난감 사진(원근)이라 크게 보이는 것이 자연스럽다
-- **얼굴을 58% 위로 올리는 법을 먼저 찾는다**: 가까운 가장자리가 화면 아래쪽(60~90%)에 있어도 거기 **서 있거나 기대 서면** 큰 인형의 얼굴은 위로 올라온다.
-  물에서는 깊이 잠기는 대신 가장자리에 서서 발만 담그기·물속에 서서 허리 위 내밀기처럼 얼굴이 높은 자세를 고른다. 발·다리·몸은 화면 아래 끝까지 내려가도 된다(rev 2026-10-12 run-29b: 앉거나 잠기는 자세만 생각해 물 사진 3장을 모두 버렸다)
+{size}
+- **얼굴을 58% 위로 올리는 법을 먼저 찾는다**: 가까운 자리가 화면 아래쪽(60~90%)에 있어도 거기 **서 있거나 기대 서면** 얼굴은 위로 올라온다.
+  물에서는 깊이 잠기는 대신 가장자리에 서서 발만 담그기·물속에 서서 허리 위 내밀기처럼 얼굴이 높은 자세를 고른다. 발·다리·몸은 화면 아래 끝까지 내려가도 된다
 - 멀리 찍은 외관·전경·항공·조감 사진, 가까운 실제 표면이 아예 없는 사진은 false
 [역할 gag] 아래 장소 개그 사전에서 이 사진의 장소에 맞는 개그 하나(최근 사용 개그 제외 · 맞는 것이 없으면 같은 결의 새 개그).
   개그는 **이 사진에 보이는 것만으로 가능**해야 한다(잔잔한 풀에서 파도 개그 금지, 침대가 없으면 침대 개그 금지). 4초 동안 동작 1~2개, 크고 단순하게. 웃음·놀람 때 입 벌림 허용.
-  위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기)·시설 오용·다른 사람·유행 챌린지·유명인·상표 금지.
-[역할 signature] 동작은 시스템이 고정 블록으로 넣는다. scene 에는 둘이 크림색 양머리 수건을 쓰고 나란히 서서 카메라를 보는 첫 자세와, 서 있을 **실제 마른 자리**(풀 가장자리 데크·바닥·침대 앞)만 쓴다. motion 은 빈 문자열. water 는 그 자리가 풀 가장자리 데크처럼 물가면 true(수영복), 객실·바닥처럼 마른 실내면 false(가운).
+  **동작은 제자리에서만**: 넘어짐·균형 잃기·내려서기·걸어가기·점프·자리 옮기기 금지(인물이 자리를 옮기면 영상 모델이 크기를 다시 그린다 — run-31 실측). 팔·머리·상체·표정으로 웃긴다.
+  {furniture}위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기)·시설 오용·다른 사람·유행 챌린지·유명인·상표 금지.
+[역할 signature] 동작은 시스템이 고정 블록으로 넣는다. scene 에는 둘이 크림색 양머리 수건을 쓰고 나란히 서서 카메라를 보는 첫 자세와, 서 있을 **실제 마른 바닥·데크**(가구 위 금지)만 쓴다. motion 은 빈 문자열. water 는 그 자리가 풀 가장자리 데크처럼 물가면 true(수영복), 객실·바닥처럼 마른 실내면 false(가운).
 [쓰는 법 — 어기면 버린다]
 - scene(영어): 사진에 보이는 장소 한 문장 + Mina 와 Jun 의 정확한 위치·자세(첫 장면) + 'Nothing else in the photograph changes.'
-- 인형은 이름(Mina, Jun)으로만 부른다. **생김새·재질·크기·옷·머리를 쓰지 않는다**(wooden·carved·tiny·clay·swimsuit·robe 등 금지 — 생김새는 시스템이 정한다).
+- 인물은 이름(Mina, Jun)으로만 부른다. **생김새·재질·크기·옷·머리를 쓰지 않는다**(wooden·carved·tiny·life-size·clay·swimsuit·robe 등 금지 — 생김새·크기는 시스템이 정한다).
 - water=false(마른 장소)면 scene·motion 에 water·pool·swim·splash·wave·ripple·wet·spa·bath·tub·jacuzzi·steam 같은 물 낱말을 **하나도** 쓰지 않는다(부정문 'no water' 도 금지 — 낱말 자체가 영상 모델에 물을 부른다). 손 인사도 wave 대신 'sway a raised hand' 로 쓴다.
-- motion(영어, gag 만): 정확히 '0 to 1.5 seconds: ... 1.5 to 3 seconds: ... 3 to 4 seconds: ...' 형식. 인형 동작만 — 카메라 움직임(zoom·push·pan·dolly·close-up)은 쓰지 않는다(시스템이 고정).
-- box: 인형 두 명의 머리끝~발끝과 그림자(물이면 물보라)가 들어갈 영역 [x0, y0, x1, y1](0~1, 왼쪽 위 기준)을 넉넉히 — y0 은 0.12 이상. 이 영역 밖은 원본 사진으로 되돌린다.
+- motion(영어, gag 만): 정확히 '0 to 1.5 seconds: ... 1.5 to 3 seconds: ... 3 to 4 seconds: ...' 형식. 인물 동작만 — 카메라 움직임(zoom·push·pan·dolly·close-up)은 쓰지 않는다(시스템이 고정).
+- box: 두 인물의 머리끝~발끝과 그림자(물이면 물보라)가 들어갈 영역 [x0, y0, x1, y1](0~1, 왼쪽 위 기준)을 넉넉히 — y0 은 0.12 이상. 이 영역 밖은 원본 사진으로 되돌린다.
 - faces: 두 얼굴(이마~턱)을 함께 감싸는 영역 [x0, y0, x1, y1] — y1(턱) 은 0.67 이하, 얼굴이 화면 위쪽 절반(y1 0.50 이하)이 아니면 x1 은 0.85 이하.
-- water: 인형이 물 안이나 물가에 있으면 true(물 반응을 넣는다), 마른 장소면 false.
-JSON 만: {"suitable":true|false,"why":"한 줄","water":true|false,"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1],"faces":[x0,y0,x1,y1]}"""
+- water: 인물이 물 안이나 물가에 있으면 true(물 반응을 넣는다), 마른 장소면 false.
+JSON 만: {{"suitable":true|false,"why":"한 줄","water":true|false,"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1],"faces":[x0,y0,x1,y1]}}"""
+_SCALE_TEXT = {
+    "life": {"who": "두 인물 Mina(여)·Jun(남)은 **실제 사람 크기**(준 178cm · 미나 165cm)의 점토 질감 캐릭터다. 이 사진 안에 **실제로 있는** 바닥·데크·물·풀 가장자리·침대·소파 위에 사람이 있을 법하게 둔다.",
+             "size": "- 그 자리에 사람 크기로 서거나 앉으면 화면 높이의 1/3~3/4 로 보인다(가까운 자리일수록 크다). 사람이 화면 높이 1/5 이하로 작아지는 먼 자리는 false",
+             "furniture": "소파·침대·빈백 **위에 올라서기 금지**(앉기·눕기·기대기만 — 사람 크기에서는 시설 오용으로 보인다). "},
+    "mini": {"who": "두 인형 Mina(여)·Jun(남)은 손조각 피규어(10cm)이고, 이 사진 안에 **실제로 있는** 표면(물·풀 가장자리·바닥·데크·침대·소파) 위에만 둔다.",
+             "size": "- 그 표면이 카메라에서 가까워 인형이 화면 높이의 1/4~2/5 크기로 보인다 — 카메라 바로 앞 장난감 사진(원근)이라 크게 보이는 것이 자연스럽다",
+             "furniture": ""},
+}
+
+
+def mini_system(mode: str | None = None) -> str:
+    return _MINI_SYSTEM.format(**_SCALE_TEXT[mode or SCALE_MODE])
+
+
+MINI_SYSTEM = mini_system("life")
 
 
 def _recent_gags(n: int = 6) -> list[str]:
@@ -270,7 +288,7 @@ def mini_scene(model: str, c: dict, recent: list[str], role: str | None = None) 
     gags = "\n".join(f"- {p}: {g}" for p, g in make_mini.gag_table())
     text = (f"역할: {role or c['mini']}\n사진 설명(참고): {c['shot'].get('description', '')}\n최근 사용 개그(고르지 말 것): {', '.join(recent) or '없음'}\n"
             f"장소 개그 사전:\n{gags}")
-    r = _vision_json(model, MINI_SYSTEM, text, B() / f"shot_{c['n']}.png")
+    r = _vision_json(model, mini_system(), text, B() / f"shot_{c['n']}.png")
     if r.get("suitable") is not False and not r.get("scene"):
         raise RuntimeError(f"미니어처 장면을 못 받음: {json.dumps(r, ensure_ascii=False)[:200]}")
     return r
@@ -279,6 +297,10 @@ def mini_scene(model: str, c: dict, recent: list[str], role: str | None = None) 
 DRY_BAN = re.compile(r"\b(water|pool|swim\w*|splash\w*|wave\w*|ripple\w*|wet|spa|bath(?:e|es|ing|tub|tubs)?|tub|jacuzzi|steam\w*|drip\w*|soak\w*|float\w*)\b", re.I)   # bathrobe 는 통과
 CAMERA_WORDS = re.compile(r"\b(zoom\w*|push(?:es|ing)?[- ]in|dolly|pan(?:s|ning)?|close-?ups?|camera|tracking|orbit\w*|crane)\b", re.I)
 TIMELINE = re.compile(r"0\s*to\s*1\.5\s*seconds?.*1\.5\s*to\s*3\s*seconds?.*3\s*to\s*4\s*seconds?", re.I | re.S)
+# run-31 컷 4: '균형을 잃고' → 미나가 소파에서 바닥으로 내려오며 옴니가 크기를 사람 크기로 다시 그림 → 자리를 옮기는 동작은 거른다
+MOVE_WORDS = re.compile(r"\b(fall\w*|tumbl\w*|topple\w*|los\w*\s+(?:their|her|his)?\s*balance|step(?:s|ping)?\s+(?:down|off|away|back|forward|onto|out)|"
+                        r"climb\w*|jump\w*|leap\w*|walk\w*|run(?:s|ning)?|stroll\w*|get(?:s|ting)?\s+(?:down|off|out)|slide\w*|roll\w*|dive\w*|"
+                        r"move(?:s|d)?\s+(?:to|toward|away|closer)|cross\w*|chase\w*)\b", re.I)
 
 
 def assign_env(cuts: list[dict], max_veo: int) -> list[dict]:
@@ -303,6 +325,8 @@ def mini_errs(sc: dict, role: str) -> list[str]:
         errs.append(f"동작에 카메라 지시 '{CAMERA_WORDS.search(str(sc.get('motion'))).group(0)}'")
     if role == "gag" and not TIMELINE.search(str(sc.get("motion") or "")):
         errs.append("동작 타임라인 형식(0 to 1.5 / 1.5 to 3 / 3 to 4 seconds) 아님")
+    if MOVE_WORDS.search(str(sc.get("motion") or "")):
+        errs.append(f"제자리 동작만 — '{MOVE_WORDS.search(str(sc.get('motion'))).group(0)}' (넘어짐·이동·점프 금지)")
     box = sc.get("box")
     if not (isinstance(box, list) and len(box) == 4 and all(isinstance(v, (int, float)) for v in box)
             and 0 <= box[0] < box[2] <= 1 and 0 <= box[1] < box[3] <= 1 and box[2] - box[0] > 0.1 and box[3] - box[1] > 0.1):
@@ -333,6 +357,7 @@ def mini_errs(sc: dict, role: str) -> list[str]:
 
 
 MINI_LOG: list[dict] = []                                        # 이번 실행의 미니어처 후보 판정 기록(미리보기 시트·report 용)
+DRIFT_WARN = 0.25                                                # 옴니 끝 장면 변화율 경고 기준(run-31 실측: 정상 0.04~0.05 / 과한 당김·크기 변화 0.40)
 
 
 def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
@@ -421,7 +446,7 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
                 base = make_mini.crop916(B() / f"shotHD_{c['n']}.png", mdir / f"{c['n']}_base.jpg")
             wet = bool(sc.get("water"))                                       # 비전이 정한 물 여부 — 없으면 마른 장소(물 낱말이 없는 쪽이 안전)
             sig = c["mini"] == "signature"
-            ep = make_mini.edit_prompt(sc["scene"], water=wet, signature=sig)
+            ep = make_mini.edit_prompt(sc["scene"], water=wet, signature=sig, life=SCALE_MODE == "life")
             (mdir / f"{c['n']}_edit_prompt.txt").write_text(ep, encoding="utf-8")
             frame = make_mini.composite(base, ep, mdir / f"{c['n']}_frame.png", img_models, row)
             box = sc.get("box")
@@ -445,7 +470,7 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
                 ch = make_mini.changed_ratio(base, frame); row["changed_retry"] = round(ch, 3)
                 if ch > make_mini.MAX_CHANGED:
                     raise RuntimeError(f"배경 보존 실패 {ch:.0%} — 옴니 생략")
-            vp = make_mini.omni_prompt(motion, water=wet and not sig)          # 시그니처는 물가여도 마른 데크에 서 있다 — 물 반응 문장 없음
+            vp = make_mini.omni_prompt(motion, water=wet and not sig, life=SCALE_MODE == "life")   # 시그니처는 물가여도 마른 데크에 서 있다 — 물 반응 문장 없음
             (mdir / f"{c['n']}_omni_prompt.txt").write_text(vp, encoding="utf-8")
             res = omni.make_clip(vp, frame, 4, mdir / f"{c['n']}.mp4")
             clips[c["n"]] = mdir / f"{c['n']}.mp4"
@@ -453,6 +478,9 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
             try:                                                              # 기록만(0원): 끝 장면이 첫 장면과 얼마나 다른지 — 카메라 고정 뒤의 기준값을 모아 나중에 자동 거름 기준으로 쓴다
                 last = make_mini.frame_at(clips[c["n"]], max(0.1, (res["sec"] or 4.0) - 0.15), mdir / f"{c['n']}_last.jpg")
                 row["drift_last"] = round(make_mini.changed_ratio(frame, last), 3)
+                if row["drift_last"] > DRIFT_WARN:                            # run-31: 정상 0.04~0.05 · 과한 당김/크기 변화 0.40 — 기록·경고만(재생성은 돈 · 운영자 결정)
+                    row["drift_warn"] = True
+                    log(f"컷 {c['i']} 끝 장면 변화율 {row['drift_last']:.2f} > {DRIFT_WARN} — 카메라 당김·크기 변화 의심(기록만)")
             except Exception as e:  # noqa: BLE001
                 row["drift_last"] = f"측정 실패: {str(e)[:60]}"
             if c["mini"] == "gag" and sc.get("gag"):
@@ -846,6 +874,10 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     h, pos0 = assets(req, models, report)
     mv = req.get("max_veo_cuts")
     mini = bool(req.get("miniature"))
+    global SCALE_MODE
+    SCALE_MODE = "mini" if str(req.get("mini_scale") or "life") == "mini" else "life"
+    if mini:
+        report["mini_scale"] = SCALE_MODE
     cuts = plan_cuts(h, (1 if mini else 4) if mv is None else int(mv), mini)                     # 0 = Veo 없이 전부 사진 무빙(0원) — "or 4" 는 0 을 4 로 바꿔 버렸다
     if mini:
         cuts = assign_env(choose_minis(cuts, models), 1 if mv is None else int(mv))
@@ -1274,7 +1306,7 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
                + f"\n객실 타입·가격대·링크는 프로필 링크 → {pos}번 ({folder})"
                + (f"\n후기에서 아쉬움: {h['honest']}" if h.get("honest") else "")          # v3: 영상 보조 줄 폐기 → 캡션으로
                + ("\n사진: 숙소 공식 홈페이지" if pc.get("official") else "")
-               + ("\n미니어처 인물은 AI 연출입니다" if any(c.get("mini") for c in cuts) else "")
+               + (("\n등장 인물은 AI 캐릭터입니다(실제 사람 아님)" if SCALE_MODE == "life" else "\n미니어처 인물은 AI 연출입니다") if any(c.get("mini") for c in cuts) else "")
                + "\n\n" + " ".join(script.get("hashtags") or []))
     meta = {"mode": "solo", "stay": name, "title": script.get("title"), "caption": caption, "folder": folder, "folder_pos": pos, "caption_style": style, "bgm": report.get("bgm"),
             "pinned_comment": f"{name} — 객실 타입·링크는 프로필 링크 → {pos}번 ({folder}) · 쿠팡 파트너스 링크 포함",

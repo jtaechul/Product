@@ -763,10 +763,25 @@ def produce_photo(req: dict, stay: str, items: list, models: dict, report: dict)
     return video, sum(durs), meta
 
 
+NONCE_DONE = ROOT / "state" / "produce_nonce.json"           # 마지막으로 돌린 요청 nonce — 같은 nonce 로 다시 푸시(잠금 편집 등)되면 아무것도 하지 않는다
+
+
 def main() -> int:
     req = json.loads(REQUEST.read_text(encoding="utf-8"))
     stay = str(req.get("stay") or "").strip()
     mode = str(req.get("mode") or "photo").strip().lower()
+    # 2026-10-13: run-31 뒤 요청을 잠그려고(veo_approved false) 같은 nonce 로 푸시하자 run-32 가 돌아 report 를 덮어썼다(0원이지만 기록 유실) → 같은 nonce 면 건너뛴다
+    try:
+        done = json.loads(NONCE_DONE.read_text(encoding="utf-8")).get("nonce") if NONCE_DONE.exists() else None
+    except Exception:  # noqa: BLE001
+        done = None
+    if req.get("nonce") and req.get("nonce") == done:
+        BUILD.mkdir(parents=True, exist_ok=True)
+        (BUILD / "SKIPPED").write_text(f"같은 nonce 재실행 건너뜀: {req.get('nonce')}\n", encoding="utf-8")
+        log(f"같은 nonce '{req.get('nonce')}' 는 이미 처리됨 — 건너뜀(0원, 기록 유지)")
+        return 0
+    NONCE_DONE.parent.mkdir(parents=True, exist_ok=True)
+    NONCE_DONE.write_text(json.dumps({"nonce": req.get("nonce"), "at": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False) + "\n", encoding="utf-8")
     if not stay and mode not in ("top3", "solo"):          # solo 는 stay 가 없으면 순위표 1위를 쓴다 (p9 실측: 여기서 막혀 실패)
         raise SystemExit("request.json 에 stay(숙소 이름)가 없습니다")
     if req.get("fake"):                                 # 포맷 검토용: Veo 를 가짜 클립으로 (0원)

@@ -90,6 +90,21 @@ SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side a
 - 4초 안에 동작 1~2개만, 크고 단순하게(빠르고 복잡하면 작은 인형의 팔다리·얼굴이 무너진다).
 - 개그용 소품(양머리 수건·무지 우유병·작은 캐리어)은 그 컷에서만 허용 — 캐릭터 블록의 "no props/hats" 보다 이 사전이 우선.
 
+## 1-6. 실물 크기 모드 v4 — ⭐ 기본값 (2026-10-13 운영자 결정 "그냥 실제 사람 크기로 하고 8등신으로")
+
+> run-31 컷 4 실측: 10cm 인형이 소파 위에서 기지개를 켜다 "균형을 잃는" 동작에서 옴니가 **인형을 가구 대비 2배로 키우고 미나를 바닥으로 내려 세웠다**(끝 장면 변화율 0.40).
+> 원인 = 영상 모델의 기본값("거실의 사람 = 사람 크기")과 싸운 것 + 영상 지시문에 가구 대비 크기 기준이 없었음 + 개그가 자리 이동을 부름.
+> 결정: 인물을 처음부터 **실제 사람 크기(준 178cm · 미나 165cm) · 8등신**으로 넣는다. 얼굴·머리·의상·점토 질감·`ref.jpg` 기준은 그대로, **크기 문장만** 코드가 바꾼다(`make_mini.LIFE_SUBS`).
+> 컨셉은 "실사 숙소 안의 장난감 세상" → **"실사 숙소 안의 점토 캐릭터 커플"** 로 바뀐다. 미니어처로 되돌리려면 request `"mini_scale": "mini"`.
+
+- 캐릭터 블록 치환(코드): "miniature figurines … photographed as tiny toys … Jun is 10 cm tall; Mina is 9.5 cm tall" → "art-doll style characters … at real human size … Jun is 178 cm; Mina is 165 cm", "FACE — small because of…" → "in proportion to the eight-head body".
+- 합성 지시문: `EDIT_HEAD_LIFE`(참조 이미지에서 디자인만 가져와 사람 크기로) · `EDIT_SCALE_LIFE`(소파 좌석이 무릎, 문이 준보다 조금 큼 — 가구 비율 기준 · 얼굴 58% 위 · 시설이 뒤에 보이게 한쪽으로) · `EDIT_PHOTO_LIFE`(같은 거리의 실제 사물과 같은 선명도).
+- 영상 지시문 `VEO_HEAD_LIFE`: "same real human size relative to the furniture — never grow, shrink or change distance; feet planted (or seated) exactly where they are".
+- 개그 규칙 추가(두 모드 공통): **제자리 동작만** — 넘어짐·균형 잃기·내려서기·걷기·점프·자리 옮기기 금지(`make_solo.MOVE_WORDS` 가 거른다). 실물 크기에서는 **가구 위에 올라서기 금지**(앉기·눕기·기대기만).
+- 시그니처: 마른 바닥·데크에 서서(가구 위 금지), 양머리 수건 + 하트는 그대로.
+- 캡션 문구: "등장 인물은 AI 캐릭터입니다(실제 사람 아님)".
+- 시험: `requests/mini/request.json` 1컷(run-31 소파 사진 · 합성 98원 + 옴니 620원 ≈ 720원) — 운영자 "진행해"(2026-10-13).
+
 ## 2. 장면 블록 (컷마다 · 장소 사전에서 고른다 · 영어)
 
 틀: `SCENE: [위치] + [자세] + [동작 1개 · 4초 타임라인] + [환경 반응 1개] ` (카메라 문장은 코드가 고정으로 붙인다 — 장면 블록에 쓰지 않는다)
