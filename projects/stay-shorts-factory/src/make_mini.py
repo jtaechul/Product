@@ -40,6 +40,7 @@ RULES = ROOT / "data" / "prompts" / "miniature.md"
 REF = ROOT / "assets" / "characters" / "ref.jpg"
 BUILD = ROOT / "build" / "mini"
 REPORT = ROOT / "data" / "runs" / "mini" / "report.json"
+NONCE_DONE = ROOT / "state" / "mini_nonce.json"               # 잠금을 통과해 돈 요청의 nonce — 같은 nonce 재푸시(잠금 편집)는 건너뛴다
 GEMINI = "https://generativelanguage.googleapis.com/v1beta"
 FX = float(os.environ.get("USD_KRW") or 1470)
 FAKE_IMG = os.environ.get("MINI_FAKE_IMAGE", "") == "1"          # 로컬 시험: 이미지 편집 대신 ref 를 붙인 가짜 합성(0원)
@@ -561,10 +562,20 @@ def main():
         log("모델 목록:", [m["name"] for m in rep["probe"]["media_models"]])
         return
     BUILD.mkdir(parents=True, exist_ok=True)
+    try:
+        done = json.loads(NONCE_DONE.read_text(encoding="utf-8")).get("nonce") if NONCE_DONE.exists() else None
+    except Exception:  # noqa: BLE001
+        done = None
+    if req.get("nonce") and req.get("nonce") == done:                       # 2026-10-13: 시험 뒤 잠금(veo_approved false) 푸시가 또 실행되는 일 방지
+        (BUILD / "SKIPPED").write_text(f"같은 nonce 재실행 건너뜀: {req.get('nonce')}\n", encoding="utf-8")
+        log(f"같은 nonce '{req.get('nonce')}' 는 이미 처리됨 — 건너뜀(0원, 기록 유지)")
+        return
     rep = {"nonce": req.get("nonce"), "started": datetime.now().isoformat(timespec="seconds"), "ok": False, "shots": [],
            "veo_model": veo.MODEL, "fake_veo": veo.FAKE, "fake_image": FAKE_IMG}
     if not (veo.FAKE and FAKE_IMG and omni.FAKE) and req.get("veo_approved") is not True:   # 2026-10-12 검수: 옴니 가짜 여부도 본다(빠져 있었다)
         raise SystemExit('유료 시험은 운영자 허락이 필요합니다 — requests/mini/request.json 에 "veo_approved": true')
+    NONCE_DONE.parent.mkdir(parents=True, exist_ok=True)
+    NONCE_DONE.write_text(json.dumps({"nonce": req.get("nonce"), "at": datetime.now().isoformat(timespec="seconds")}, ensure_ascii=False) + "\n", encoding="utf-8")
     models = [] if FAKE_IMG else image_models(req.get("image_model"))
     life = str(req.get("mini_scale") or ("life" if LIFE_DEFAULT else "mini")) == "life"
     rep["scale"] = "life" if life else "mini"

@@ -1,7 +1,7 @@
 {
  "nonce": "2026-10-13-life-1",
- "veo_approved": true,
- "note": "운영자 2026-10-13 '진행해' — 실물 크기(178/165cm · 8등신) 캐릭터 1컷 시험: run-31 컷 4 와 같은 소파 사진 · 합성 98원 + 옴니 약 620원 ≈ 720원. 끝나면 veo_approved 를 false 로 되돌린다",
+ "veo_approved": false,
+ "note": "잠금 — life-1 시험 완료(714원 · 성공). 다음 유료 시험은 nonce 를 바꾸고 veo_approved true",
  "mini_scale": "life",
  "video_engine": "omni",
  "omni_resolution": "720p",

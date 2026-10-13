@@ -780,8 +780,6 @@ def main() -> int:
         (BUILD / "SKIPPED").write_text(f"같은 nonce 재실행 건너뜀: {req.get('nonce')}\n", encoding="utf-8")
         log(f"같은 nonce '{req.get('nonce')}' 는 이미 처리됨 — 건너뜀(0원, 기록 유지)")
         return 0
-    NONCE_DONE.parent.mkdir(parents=True, exist_ok=True)
-    NONCE_DONE.write_text(json.dumps({"nonce": req.get("nonce"), "at": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False) + "\n", encoding="utf-8")
     if not stay and mode not in ("top3", "solo"):          # solo 는 stay 가 없으면 순위표 1위를 쓴다 (p9 실측: 여기서 막혀 실패)
         raise SystemExit("request.json 에 stay(숙소 이름)가 없습니다")
     if req.get("fake"):                                 # 포맷 검토용: Veo 를 가짜 클립으로 (0원)
@@ -799,6 +797,8 @@ def main() -> int:
         if mode in ("veo", "top3", "solo") and (not veo.FAKE or mini_paid) and str(req.get("stage") or "") != "preview" and req.get("veo_approved") is not True \
                 and not (mode == "solo" and str(req.get("max_veo_cuts")) == "0" and not req.get("miniature")):   # Veo 0컷·미니어처 없음(사진만, 0원)만 허락 불필요
             raise RuntimeError('유료 Veo 제작은 운영자 허락이 필요합니다 — request.json 에 "veo_approved": true 를 넣어 주세요 (미리보기는 "stage": "preview")')
+        NONCE_DONE.parent.mkdir(parents=True, exist_ok=True)                    # 잠금을 통과한 요청만 '처리됨'으로 — 잠긴 채 돈 실행은 같은 nonce 로 승인 뒤 다시 돌 수 있어야 한다
+        NONCE_DONE.write_text(json.dumps({"nonce": req.get("nonce"), "at": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False) + "\n", encoding="utf-8")
         models = pick_models()
         report["models"] = models
         if mode in ("top3", "solo") and str(req.get("stage") or "") == "preview":
