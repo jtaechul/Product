@@ -850,6 +850,46 @@ def polish_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, sig
     return t
 
 
+SHORTEN_SYSTEM = """너는 쇼츠 나레이션 편집자다. 아래 컷 문장들을 각 컷의 **최대 글자 수(공백 제외) 안으로 줄인다**.
+지킬 것: 사실(시설·전망·조건)·문장 첫 연결어·"~해요"체 말투·지역+유형 호칭·"추천해요"는 그대로. 꾸밈말·중복 표현부터 뺀다. 숙소 이름·가격·과장 금지. 새 정보를 더하지 않는다.
+JSON 만: {"cuts":[{"i": 컷 번호, "narration": "줄인 문장"}]}"""
+LEN_ERR = re.compile(r"^컷 \d+ \d+자 \(한도 \d+\)$|^전체 나레이션 \d+자")
+
+
+def shorten_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, sig: dict | None) -> dict | None:
+    """길이 위반만 남은 대본은 버리지 않고 **넘친 컷만** 줄인다(텍스트 1번 · 몇 원). stay-run-37 실측: 3번 모두 1~7자 초과로 탈락해 제작이 멈췄다.
+    통과하면 줄인 대본, 아니면 None."""
+    got = {int(x.get("i", 0)): str(x.get("narration", "")).strip() for x in (s.get("cuts") or []) if isinstance(x, dict)}
+    hi = {c["i"]: c["hi"] + (EXTRA_BONUS if sig and sig["i"] == c["i"] else 0) for c in cuts}
+    tg = {i: hi[i] for i in got if i in hi and _len(got[i]) > hi[i]}
+    total = sum(min(_len(n), tg.get(i, _len(n))) for i, n in got.items())
+    over = total - TOTAL_MAX
+    if over > 0:                                                                  # 전체가 넘치면 긴 컷 3개(훅·마지막 제외)에서 나눠 줄인다
+        cand = sorted([c for c in cuts[1:-1]], key=lambda c: -min(_len(got.get(c["i"], "")), tg.get(c["i"], 99)))[:3]
+        per = -(-(over + 3) // max(1, len(cand)))
+        for c in cand:
+            cur = min(_len(got.get(c["i"], "")), tg.get(c["i"], 99))
+            tg[c["i"]] = max(c["lo"], cur - per)
+    if not tg:
+        return None
+    lines = [f"컷 {i}: 최대 {tg[i]}자 (지금 {_len(got[i])}자) — {got[i]}" for i in sorted(tg)]
+    try:
+        r = ms.gemini_json(model, SHORTEN_SYSTEM, "\n".join(lines))
+    except Exception as e:  # noqa: BLE001
+        log(f"문장 줄이기 실패: {str(e)[:80]}"); return None
+    new = {int(x.get("i", 0)): str(x.get("narration", "")).strip() for x in (r.get("cuts") or []) if isinstance(x, dict)} if isinstance(r, dict) else {}
+    t = json.loads(json.dumps(s, ensure_ascii=False))
+    for x in t.get("cuts") or []:
+        i = int(x.get("i", 0))
+        if new.get(i):
+            x["narration"] = new[i]
+    errs = [e for e in check_script(t, h, cuts, req, sig) if not e.startswith("hook_title")] or flow_errs(t, cuts)
+    if errs:
+        log("줄인 대본도 규칙에 걸림:", errs[:3]); return None
+    log(f"넘친 컷 {sorted(tg)} 만 줄여 통과")
+    return t
+
+
 HOOK_TITLE_SYSTEM = """너는 숙소 쇼츠의 훅 제목 카피라이터다. 컷 1 나레이션과 컷 1 화면 설명을 받아, 컷 1 동안 화면 위쪽 가운데에 크게 뜨는 제목 후보 5개를 쓴다.
 규칙: 공백 제외 6~14자 · 나레이션을 그대로 옮기지 않고 줄여서 **궁금증만 남긴다**(답을 다 말하지 않는다 — "뭐지? 어디지?") ·
 핵심 낱말 하나만 [대괄호] · 숙소 이름·지역 이름·가격 숫자·마침표·느낌표·이모지 금지 ·
@@ -949,6 +989,10 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
         errs = [e for e in check_script(s, h, cuts, req, sig) if not e.startswith("hook_title")]   # 훅 제목만 틀리면 대본 전체를 다시 쓰지 않는다 → ensure_hook_title 이 제목만
         if not errs:
             errs = flow_errs(s, cuts)
+        if errs and all(LEN_ERR.search(e) for e in errs):                     # 길이만 넘쳤으면 넘친 컷만 줄인다(전체 다시 쓰기보다 싸고 확실)
+            t = shorten_script(model, s, cuts, h, req, sig)
+            if t:
+                s, errs = t, []
         if not errs:
             s["cuts"] = sorted(s["cuts"], key=lambda x: int(x["i"]))
             if not sig:
