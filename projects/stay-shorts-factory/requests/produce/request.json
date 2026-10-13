@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-13-reuse-title-1",
+ "nonce": "2026-10-13-reuse-title-2",
  "mode": "solo",
  "stay": "소노펠리체 비발디파크",
  "theme": "실내 온수풀·온천",
@@ -10,7 +10,7 @@
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "0원 재조립(운영자 2026-10-13 선택 '같은 숙소 0원 재조립'): 새 훅 제목 화면 확인용. reuse_only — 재사용 클립 없는 컷은 사진 무빙, 새 영상·합성 0원 · 글·음성 약 80원. 끝나면 reuse_only 제거·잠금",
+ "note": "0원 재조립 2차(1차 run-37 은 대본 길이 탈락 · 약 48원 · 운영자 2026-10-13 선택 '같은 숙소 0원 재조립'): 새 훅 제목 화면 확인용. reuse_only — 재사용 클립 없는 컷은 사진 무빙, 새 영상·합성 0원 · 글·음성 약 80원. 끝나면 reuse_only 제거·잠금",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
