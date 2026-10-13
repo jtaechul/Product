@@ -71,15 +71,16 @@ jobs:
           P=projects/stay-shorts-factory
           B=$P/build/mini
           R=$P/data/runs/mini/report.json
-          CAP=$(python3 -c "import json;r=json.load(open('$R',encoding='utf-8'));print(f\"미니어처 시험 {r.get('nonce')} · {'성공' if r.get('ok') else '실패: '+str(r.get('error',''))[:200]} · 합성 {r.get('image_model','-')} 약 {r.get('image_krw',0)}원 · Veo {r.get('veo_spent_krw',0)}원 · 이번 달 Veo {r.get('month_veo_krw',0):,}원\")" 2>/dev/null || echo "미니어처 시험 기록 없음")
+          CAP=$(python3 -c "import json;r=json.load(open('$R',encoding='utf-8'));print(f\"캐릭터 시험 {r.get('nonce')} · 크기 {r.get('scale','-')} · {'성공' if r.get('ok') else '실패: '+str(r.get('error',''))[:200]} · 합성 {r.get('image_model','-')} 약 {r.get('image_krw',0)}원 · 영상 {r.get('veo_spent_krw',0)}원 · 이번 달 영상 {r.get('month_veo_krw',0):,}원\")" 2>/dev/null || echo "캐릭터 시험 기록 없음")
           if [ -f "$B/sheet.jpg" ]; then
             curl -s -o /dev/null -w "telegram sheet http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$B/sheet.jpg" -F caption="$CAP" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
           else
             curl -s -o /dev/null -w "telegram msg http %{http_code}\n" -F chat_id="$TG_CHAT" -F text="$CAP" "https://api.telegram.org/bot$TG_TOKEN/sendMessage" || true
           fi
-          for k in spa wave; do
-            [ -f "$B/${k}_frame.png" ] && curl -s -o /dev/null -w "telegram frame $k http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$B/${k}_frame.png" -F caption="$k 합성 첫 장면" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
-            [ -f "$B/${k}.mp4" ] && curl -s -o /dev/null -w "telegram video $k http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$B/${k}.mp4" -F caption="$k 미니어처 4초 (Veo)" "https://api.telegram.org/bot$TG_TOKEN/sendVideo" || true
+          for k in $(python3 -c "import json;print(' '.join(s['key'] for s in json.load(open('$P/requests/mini/request.json',encoding='utf-8')).get('shots',[])))" 2>/dev/null); do
+            F="$B/${k}_frame_pb.png"; [ -f "$F" ] || F="$B/${k}_frame.png"
+            [ -f "$F" ] && curl -s -o /dev/null -w "telegram frame $k http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$F" -F caption="$k 합성 첫 장면(원본 복원 뒤)" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
+            [ -f "$B/${k}.mp4" ] && curl -s -o /dev/null -w "telegram video $k http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$B/${k}.mp4" -F caption="$k 캐릭터 4초" "https://api.telegram.org/bot$TG_TOKEN/sendVideo" || true
           done
 
       - name: 아티팩트 보관

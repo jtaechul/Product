@@ -107,6 +107,7 @@ jobs:
         run: |
           [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ] && { echo "텔레그램 키 없음 — 건너뜀"; exit 0; }
           P=projects/stay-shorts-factory
+          [ -f "$P/build/SKIPPED" ] && { cat "$P/build/SKIPPED"; exit 0; }   # 같은 nonce 재실행 — 알림·기록 없음
           V=$P/build/video.mp4
           L=$P/data/runs/latest
           if [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$L/narration_preview.mp3" ] && [ ! -f "$V" ]; then
