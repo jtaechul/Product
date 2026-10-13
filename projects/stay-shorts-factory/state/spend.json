@@ -250,5 +250,53 @@
   "kind": "gemini_est",
   "krw": 88,
   "note": "2026-10-12-v4-mini-preview2 미리보기 AI 글·음성 33회 (추정)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_12.mp4"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 미니어처 합성 11_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "omni",
+  "krw": 616,
+  "note": "gemini-omni-1.1-flash 720p 4.0초 11.mp4 (토큰 23808)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 미니어처 합성 14_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "omni",
+  "krw": 616,
+  "note": "gemini-omni-1.1-flash 720p 4.0초 14.mp4 (토큰 23796)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 미니어처 합성 16_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-12",
+  "kind": "omni",
+  "krw": 620,
+  "note": "gemini-omni-1.1-flash 720p 4.0초 16.mp4 (토큰 23943)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "gemini_est",
+  "krw": 81,
+  "note": "2026-10-12-v4-mini-run2 solo AI 글·음성 30회 (추정)"
  }
 ]
