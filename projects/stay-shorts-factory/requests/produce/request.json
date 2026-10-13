@@ -1,16 +1,16 @@
 {
- "nonce": "2026-10-13-life-run3",
+ "nonce": "2026-10-13-life-run4",
  "mode": "solo",
  "stay": "소노펠리체 비발디파크",
  "theme": "실내 온수풀·온천",
  "region": "강원",
  "month": "2026-11",
- "veo_approved": false,
+ "veo_approved": true,
  "miniature": true,
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "잠금 — stay-run-33 실물 크기 제작 완료(약 1,805원). 다음 유료 제작은 nonce 를 바꾸고 veo_approved true (같은 nonce 재푸시는 건너뜀)",
+ "note": "운영자 2026-10-13 '잘 나온 인물 영상은 살려, 망친 마지막 컷만 다시' — 훅·소파·물 컷 재사용(0원) + 시그니처만 v6 클레이메이션으로 새로(합성 98 + 옴니 620 + 검수 1 + 글·음성 80 ≈ 800원)",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -22,20 +22,33 @@
  "mini_scale": "life",
  "reuse_runs": [
   {
-   "run_id": 38327200880,
-   "name": "stay-mini-8"
+   "run_id": 38346158908,
+   "name": "stay-run-33"
   }
  ],
  "reuse_clips": [
   {
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
+   "clip": "stay-run-33/build/mini/11.mp4",
+   "frame": "stay-run-33/build/mini/11_frame_pb.png",
+   "role": "gag",
+   "gag": "스핑크스처럼 위엄 있는 표정을 지으려다 서로 눈이 마주치고 피식 웃기",
+   "water": true,
+   "place": "노천탕·자쿠지"
+  },
+  {
    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
-   "clip": "stay-mini-8/sofa.mp4",
-   "frame": "stay-mini-8/sofa_frame_pb.png",
+   "clip": "stay-run-33/build/mini/14.mp4",
+   "frame": "stay-run-33/build/mini/14_frame_pb.png",
    "role": "gag",
    "gag": "소파에 앉아 동시에 기지개를 켜다 팔이 부딪혀 서로 쳐다보고 웃음",
    "water": false,
-   "place": "객실 창가·소파",
-   "scene": "Mina and Jun sit side by side on the sofa seat in cream bathrobes, turned slightly toward the camera."
+   "place": "객실 창가·소파"
+  },
+  {
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
+   "clip": "stay-run-33/build/veo_12.mp4",
+   "role": "env"
   }
  ]
 }

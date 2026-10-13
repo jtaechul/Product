@@ -1287,6 +1287,12 @@ def make_veo(cuts: list[dict], theme: str, report: dict) -> dict:
     for c in todo:
         n, out = c["n"], B() / f"veo_{c['n']}.mp4"
         row = {"i": c["i"], "n": n, "ok": False, "krw": 0.0}
+        ru = REUSE.get(str(c["shot"].get("src_url") or ""))
+        if ru and ru.get("role") == "env":                                   # 이전 실행의 환경 컷 그대로(0원)
+            import shutil
+            shutil.copy(ru["clip"], out); clips[n] = out
+            row.update({"ok": True, "reused": str(Path(ru["clip"]).relative_to(REUSE_DIR))}); results.append(row)
+            log(f"컷 {c['i']} Veo 환경 컷 재사용(0원): {ru['clip'].name}"); continue
         before = veo.spent_this_run()
         seed = veo.seed_for(theme, n)
         for attempt in range(2):
