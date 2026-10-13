@@ -90,6 +90,11 @@ POST_HEAD_TOP_MAX = 0.54    # 합성 뒤 다듬은 상자(여백 0.04 포함) �
 # 9:16 을 유지하려 좌우도 같은 비율로 줄인다 → 얼굴 y 가 (y - c)/(1 - c) 로 올라가고 인형도 1/(1-c) 배 커진다. 실제 사진 픽셀만 쓴다(지어낸 영역 없음).
 CROP_MAX = 0.25             # 잘라내기 상한(확대 1.33배) — 원본이 1024px 급이라 더 자르면 흐려진다
 FACE_Y_LIMIT = round(FACE_Y_MAX + (CROP_MAX - 0.02) * (1 - FACE_Y_MAX), 3)   # 0.677 — 잘라내기로 구할 수 있는 얼굴 턱의 한계(여유 0.02 포함 · 비전 지시는 67%)
+# 훅 컷(컷 1)은 위쪽 1/3 가운데에 큰 훅 제목이 뜬다(design.GRID["hook_title"] 430~718px = 화면 높이 0.22~0.37 · 2026-10-13 운영자 "훅 문구 중앙에 크게").
+# 정중앙은 얼굴 자리라 위쪽에 두고, 훅 컷 인물의 얼굴(이마)은 제목 바닥 아래로 — 얼굴은 0.38~0.58 사이. 위쪽을 잘라 확대하면 얼굴이 올라가므로 잘라낸 뒤 기준으로 본다.
+HOOK_FACE_TOP_MIN = 0.38
+EDIT_HOOK = ("TITLE SPACE: a big title is drawn later across the upper part of the frame, from 20% to 38% of the frame height measured from the top. "
+             "Both faces sit lower than 38% and higher than 58% of the frame height (raised hands may reach higher).")
 
 
 def plan_crop(box, faces=None):
@@ -253,7 +258,7 @@ PROPS_SIGNATURE = ("PROPS IN THIS SHOT ONLY: both wear a cream terry-towel \"she
                    "on top of their usual hair — this towel wrap is allowed here even though hats are otherwise not.")
 
 
-def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: bool | None = None) -> str:
+def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: bool | None = None, hook: bool = False) -> str:
     """사진 편집 지시문. water=False(마른 장소)면 물·수영복 낱말이 하나도 없다(검사: WATER_WORDS). signature 면 양머리 수건 허용 줄을 붙인다
     (캐릭터 블록의 'no hats' 와 충돌해 모델이 수건을 빼먹을 수 있었다). life(기본 True)=실물 크기 — 크기 문장만 바뀐다."""
     life = LIFE_DEFAULT if life is None else life
@@ -264,6 +269,8 @@ def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: b
                 + " Render them as the painted plastic model-kit figures described below.")
     parts = [EDIT_HEAD_LIFE if life else EDIT_HEAD, keep, character_block(water, life), OUTFIT_WATER if water else OUTFIT_DRY,
              EDIT_SCALE_LIFE if life else EDIT_SCALE, EDIT_PHOTO_LIFE if life else EDIT_PHOTO, "SCENE: " + clean_scene(scene).strip()]
+    if hook:                                                          # 훅 컷: 위쪽 큰 제목 자리를 비운다(얼굴 0.38~0.58)
+        parts.insert(5, EDIT_HOOK)
     if signature:
         parts.append(PROPS_SIGNATURE)
     elif water:                                                       # 시그니처는 물가여도 마른 데크에 선다 — 물과 닿는 문장 없음

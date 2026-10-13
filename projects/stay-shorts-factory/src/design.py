@@ -479,6 +479,10 @@ GRID = {
     "subtitle":   {"size": 72, "y": 1330, "lh": 88, "lines": 1},                         # 대사 자막 — **가운데 한 줄, 2~3단어 가라오케식** (운영자 결정). 한 줄뿐이라 줄 수 변동 없음
     "hook":       {"size": 76, "bottom": 1418, "lh": 93, "lines": 3},                    # 훅(컷 1 전용) — 문장 전체, 마지막 줄 바닥을 대사 줄 바닥(1330+88)과 맞춘다
     "band":       {"top": 1150, "bottom": 1560, "peak": 0.34},                            # 어둡기 띠 — 대사 줄 중심(1374)에 고정, 글자 양과 무관
+    # 훅 타이틀(컷 1 전용 · 2026-10-13 운영자 "훅 문구 중앙에 크게 — 나레이션 그대로 말고 요약해서 궁금증 유발").
+    # 정중앙(0.50)은 실제 훅 컷 얼굴 자리(run-35 실측 0.45~0.55)라 얼굴을 가린다 → 위쪽 1/3 가운데(첫 줄 위 430 · 두 줄 바닥 718 = 0.37)에 고정.
+    # 훅 컷 인물 얼굴은 이 바닥 아래(make_mini.HOOK_FACE_TOP_MIN)로 둔다.
+    "hook_title": {"size": 120, "y": 430, "lh": 144, "lines": 2, "w": 840, "scrim": (330, 820, 0.38)},
 }
 CHUNK_WORDS = 3                                       # 가라오케 조각 = 최대 3단어 (운영자 "2~3단어 위주")
 
@@ -488,9 +492,10 @@ def fits(text: str, role: str = "subtitle") -> tuple[bool, int]:
     g = GRID[role]
     d = ImageDraw.Draw(Image.new("RGBA", (W, H)))
     f = font(g["size"])
-    lines = wrap_marked(d, text, f, SUB_W, max_lines=12)
+    mw = g.get("w", SUB_W)
+    lines = title_lines(d, text, f, mw) if role == "hook_title" else wrap_marked(d, text, f, mw, max_lines=12)
     joined = "".join(t for ln in lines for t, _ in ln).replace(" ", "")
-    ok = len(lines) <= g["lines"] and len(joined) >= len(plain(text).replace(" ", "")) and all(_width(d, ln, f) <= SUB_W for ln in lines)
+    ok = len(lines) <= g["lines"] and len(joined) >= len(plain(text).replace(" ", "")) and all(_width(d, ln, f) <= mw for ln in lines)
     return ok, len(lines)
 
 
@@ -598,6 +603,68 @@ def subtitle_png(out: Path, text: str, hook: bool = False) -> Path:
     return out
 
 
+def title_lines(d: ImageDraw.ImageDraw, text: str, f, max_w: float) -> list[list[tuple[str, bool]]]:
+    """훅 타이틀 줄 나누기: 한 줄에 들어가면 한 줄, 아니면 **띄어쓰기 자리에서만** 두 줄로 — 두 줄 너비가 가장 비슷한 자리.
+    wrap_marked 는 '[정답]은' 처럼 강조와 조사 사이에서도 끊어 '은 여기'가 생겼다(2026-10-13 시안) → 낱말 안에서는 절대 안 끊는다."""
+    one = segments(text)
+    if _width(d, one, f) <= max_w:
+        return [one]
+    toks = [t for t in text.split(" ") if t]
+    best = None
+    for k in range(1, len(toks)):
+        a, b = " ".join(toks[:k]), " ".join(toks[k:])
+        if a.count("[") != a.count("]"):                                     # 강조 괄호 안에서는 안 끊는다
+            continue
+        wa, wb = _width(d, segments(a), f), _width(d, segments(b), f)
+        if max(wa, wb) <= max_w and (best is None or max(wa, wb) < best[0]):
+            best = (max(wa, wb), [segments(a), segments(b)])
+    return best[1] if best else wrap_marked(d, text, f, max_w, max_lines=12)
+
+
+def draw_hook_title(im: Image.Image, text: str, style: str = "shadow", y: int | None = None):
+    """훅 타이틀 — 컷 1 의 큰 제목. 가운데 정렬, 120px, 최대 2줄, `[낱말]` 하나만 코랄.
+    style "shadow": 부드러운 어둡기 띠 + 두꺼운 그림자(사진을 덜 가린다) · "box": 줄마다 어두운 둥근 상자(밝은 사진에서도 확실히 읽힌다).
+    y 는 시안 비교용(정중앙 등) — 영상은 GRID 값만 쓴다."""
+    g = GRID["hook_title"]
+    d = ImageDraw.Draw(im)
+    f = font(g["size"])
+    lines = title_lines(d, text, f, g["w"])[:g["lines"]]
+    lh = g["lh"]
+    y0 = g["y"] if y is None else y
+    widths = [_width(d, ln, f) for ln in lines]
+    xs = [CX - w / 2 for w in widths]
+    if style == "box":
+        layer = Image.new("RGBA", im.size, (0, 0, 0, 0)); dl = ImageDraw.Draw(layer)
+        for k, w in enumerate(widths):
+            top = y0 + k * lh - 6
+            dl.rounded_rectangle((xs[k] - 30, top, xs[k] + w + 30, top + g["size"] + 30), 24, fill=(*INK, 214))
+        im.alpha_composite(layer)
+        d = ImageDraw.Draw(im)
+        for k, ln in enumerate(lines):
+            _draw_segs(d, xs[k], y0 + k * lh, ln, f, (255, 255, 255, 255), (*ACCENT, 255))
+        return im
+    st, sb, pk = g["scrim"]
+    if y is not None:
+        st, sb = st + (y - g["y"]), sb + (y - g["y"])
+    _scrim(im, st, sb, pk)
+    for blur, alpha, dy in ((6, 190, 5), (22, 140, 12)):
+        sh = Image.new("RGBA", im.size, (0, 0, 0, 0)); ds = ImageDraw.Draw(sh)
+        for k, ln in enumerate(lines):
+            _draw_segs(ds, xs[k], y0 + k * lh + dy, ln, f, (0, 0, 0, alpha), (0, 0, 0, alpha), stroke=5, stroke_fill=(0, 0, 0, alpha))
+        im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(blur)))
+    d = ImageDraw.Draw(im)
+    for k, ln in enumerate(lines):
+        _draw_segs(d, xs[k], y0 + k * lh, ln, f, (255, 255, 255, 255), (*ACCENT, 255), stroke=4, stroke_fill=(12, 14, 20, 190))
+    return im
+
+
+def hook_title_png(out: Path, text: str, style: str = "shadow") -> Path:
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw_hook_title(im, text, style)
+    im.save(out, "PNG")
+    return out
+
+
 def label_png(out: Path, text: str) -> Path:
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw_label(im, text)
@@ -627,7 +694,9 @@ def grid_sheet(frames: list[Path], out: Path, labels: list[str] | None = None, g
             d.text((gap + k * (tw + gap), 12), labels[k], font=fl, fill=(255, 255, 255))
     if guides:
         sc = th / H
-        for y, col, name in ((GRID["disclosure"]["y"], (120, 200, 255), "고지문"), (GRID["kicker"]["y"], ACCENT, "라벨(왼쪽)"),
+        gt = GRID["hook_title"]
+        for y, col, name in ((GRID["disclosure"]["y"], (120, 200, 255), "고지문"), (gt["y"], (200, 120, 255), "훅 제목"),
+                             (gt["y"] + gt["lh"] * gt["lines"], (200, 120, 255), "훅 제목 바닥"), (GRID["kicker"]["y"], ACCENT, "라벨(왼쪽)"),
                              (GRID["subtitle"]["y"], (255, 255, 255), "대사 줄"), (GRID["hook"]["bottom"], (255, 255, 255), "대사·훅 바닥"),
                              (SAFE_BOTTOM, (255, 90, 90), "플랫폼 UI")):
             yy = top + int(y * sc)

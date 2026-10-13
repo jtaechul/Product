@@ -20,6 +20,7 @@ import json
 import re
 import subprocess
 import sys
+from difflib import SequenceMatcher
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -83,15 +84,21 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터이자 편집자�
   ① 호명형 "겨울에 아이랑 어디 갈지 고민인 분 주목." / "온천 호캉스 가고 싶은데 어디 갈지 모르겠다면."  ② 손해·반전형 "실내 온수풀이 산속에 있다고?" / "온천 호캉스, 여기 모르면 손해예요."
   ③ 숫자·결과형(입력 사실에 있을 때만) "실내 온수풀에 노천탕, 사우나까지 한 곳에." / "투숙만 하면 워터파크가 무제한이에요."
   지역 이름은 훅에서는 쓰지 않는다(컷 2에서). 유형은 편마다 돌아가며 쓴다.
+- hook_title(화면 훅 제목 · 2026-10-13 운영자): 컷 1 동안 화면 위쪽 가운데에 **크게** 뜨는 제목. 공백 제외 6~14자, 두 줄 안.
+  **나레이션을 그대로 옮기지 않는다** — 훅의 핵심만 줄여 **답을 다 말하지 않고 "뭐지? 어디지?"를 남긴다**(열린 고리). 귀(나레이션)와 눈(제목)이 따로 붙잡는다.
+  유형(나레이션과 다른 유형도 좋다): ① 반전 질문 "11월에 [수영복] 챙기라고?" ② 의외 사실 "산속에 [파도풀]이 있다?" ③ 정답 예고 "겨울 물놀이 [정답]은 여기"
+  ④ 손해형 "모르면 [손해]인 겨울 숙소" ⑤ 호명형 "온천파라면 [주목]". 물음표·주목·손해·모르면·정답·여기·숫자 같은 궁금증 장치를 하나 넣는다.
+  핵심 낱말 하나만 [대괄호]로 강조(코랄색으로 보인다). 숙소·지역 이름, 가격 숫자, 마침표·느낌표·이모지 금지. 입력 사실·컷 1 화면과 모순 금지(없는 시설을 제목에 쓰지 않는다).
 - 물놀이 컷: 실내/야외, 온천수·온수, 전망, 운영(사계절·투숙객), 파도풀·슬라이드 같은 구성 중 **화면에 보이는 것**.
 - 객실 컷: 뷰·침대·구성·테라스 — 쿠팡 객실 이름과 화면에 있는 것만.
 - 특별 공간 컷: 화면의 시설(사우나·키즈·산책로·조식·라운지…)을 말한다. 화면이 외관·야경이면 "산속에 자리한", "밤이면 조명이 켜지는"처럼 보이는 것을 말한다.
 - 조건 컷 ①: 혜택을 조건문으로 (투숙객 무료·이용권 포함 객실·조식 포함 등 입력에 있는 것). 후기 아쉬움이 입력에 있으면 짧게 덧붙여도 된다. 화면과 모순 금지.
 - 조건 컷 ② (마지막 컷): 누구에게·언제 좋은지 + "추천해요".
 - caption(장소 라벨): 컷마다 화면의 장소를 2~8자 명사로 (예: "노천 스파", "마운틴뷰 객실", "실내 수영장"). 대괄호·숫자·'후기'·느낌표·이모지 금지. 화면과 모순 금지. 문장 금지.
-  **화면 자막은 나레이션 문장이 그대로 나간다**(아래쪽 3줄 안, 글자 크기 고정) — 문장이 길면 자막이 안 들어가 탈락한다. 한 문장 = 한 숨, 공백 포함 30자 안이 안전하다.
+  **화면 자막은 나레이션 문장이 2~3단어씩 그대로 나간다**(아래쪽 한 줄, 컷 1 포함) — 한 문장 = 한 숨, 공백 포함 30자 안이 안전하다. 컷 1 위쪽의 큰 글자는 hook_title 이다.
 출력 JSON 만:
 {"cuts":[{"i":1,"narration":"...","caption":"..."}, ... 컷 수만큼 순서대로],
+ "hook_title":"화면 훅 제목 6~14자 (핵심 낱말 하나 [대괄호])",
  "extra": {"i": 컷 번호, "tag": "+ 시설 이름"} 또는 null,
  "title":"유튜브 제목 12~25자 (숙소 이름 포함 — 제목·캡션은 텍스트라 이름을 쓴다)",
  "caption":"인스타 캡션 2문장 (숙소 이름 포함 가능. 고지문·링크·폴더 안내는 시스템이 붙임)","hashtags":["#..","#..","#..","#..","#.."]}"""
@@ -287,11 +294,15 @@ def _save_gags(stay: str, gags: list[str]):
     MINI_GAGS.write_text(json.dumps(rows[-60:], ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
-def mini_scene(model: str, c: dict, recent: list[str], role: str | None = None) -> dict:
+HOOK_SCENE_NOTE = ("이 사진은 영상 첫 컷(훅)이 될 수 있다: 화면 위쪽 20~38% 에 큰 훅 제목이 뜬다 → **두 얼굴(이마)은 38% 아래, 턱은 58% 위**(faces y0 0.38 이상). "
+                   "얼굴이 38% 보다 높게 올 자리(카메라 바로 앞에 서서 얼굴이 화면 위쪽에 오는 자리)는 앉기·물속에 서기처럼 얼굴이 내려오는 자세로 바꾸고, 그래도 안 되면 false.")
+
+
+def mini_scene(model: str, c: dict, recent: list[str], role: str | None = None, hook: bool = False) -> dict:
     """사진을 보고 인형 자리·개그를 고른다(비전 · 몇 원). 사진에 없는 장소를 지어내지 않게 사진을 직접 보여 준다."""
     gags = "\n".join(f"- {p}: {g}" for p, g in make_mini.gag_table())
     text = (f"역할: {role or c['mini']}\n사진 설명(참고): {c['shot'].get('description', '')}\n최근 사용 개그(고르지 말 것): {', '.join(recent) or '없음'}\n"
-            f"장소 개그 사전:\n{gags}")
+            + (HOOK_SCENE_NOTE + "\n" if hook else "") + f"장소 개그 사전:\n{gags}")
     r = _vision_json(model, mini_system(), text, B() / f"shot_{c['n']}.png")
     if r.get("suitable") is not False and not r.get("scene"):
         raise RuntimeError(f"미니어처 장면을 못 받음: {json.dumps(r, ensure_ascii=False)[:200]}")
@@ -355,7 +366,7 @@ def clip_check(models: dict, first: Path, clip: Path, out_dir: Path, tag: str) -
     return r
 
 
-def mini_errs(sc: dict, role: str) -> list[str]:
+def mini_errs(sc: dict, role: str, hook: bool = False) -> list[str]:
     """비전 답을 쓰기 전에 거른다(0원). 2026-10-12 검수 — run-27 의 없는 수영장은 '마른 장소 지시문의 물 낱말' + '크게 당기는 카메라' + '멀고 작은 인형' 이 겹친 것:
     마른 장소에 물 낱말, 동작에 카메라 지시, 타임라인 형식 위반, 자막 띠·앱 버튼 자리에 걸치는 상자를 여기서 막는다."""
     errs = []
@@ -393,6 +404,10 @@ def mini_errs(sc: dict, role: str) -> list[str]:
                 mf = make_mini.map_crop(fc, c, xs)
                 if mf[2] > make_mini.FACE_X_MAX and mf[3] > 0.50:
                     errs.append(f"얼굴 {mf} 이 오른쪽 앱 버튼 자리({make_mini.FACE_X_MAX} 오른쪽)")
+                if hook and mf[1] < make_mini.HOOK_FACE_TOP_MIN:          # 2026-10-13: 훅 컷 위쪽 20~38% 는 큰 훅 제목 자리
+                    errs.append(f"훅 컷 얼굴 위 끝 {mf[1]:.2f} — 훅 제목 자리({make_mini.HOOK_FACE_TOP_MIN} 위)에 가려짐")
+            elif hook:
+                errs.append("훅 컷인데 faces 없음 — 훅 제목과 겹치는지 판단 불가")
             if mb[3] - mb[1] < 0.15:                                      # run-27 객실 컷: 상자 높이 12% = 인형이 작아 옴니가 크게 당기며 주변을 지어냄 (잘라 확대한 뒤 크기로 판단)
                 errs.append(f"box 높이 {mb[3] - mb[1]:.2f} — 인형이 너무 작다(화면 높이 0.15 이상)")
     return errs
@@ -429,7 +444,7 @@ def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
     MINI_LOG.clear()
     recent, used, picked = _recent_gags(), set(), {}
 
-    def try_role(role, cands):
+    def try_role(role, cands, hook=False):
         for c in cands:                                                   # 재사용 클립이 있는 사진이면 비전 없이 그대로(0원)
             ru = REUSE.get(str(c["shot"].get("src_url") or ""))
             if c["n"] not in used and ru and ru.get("role", "gag") == role:
@@ -445,15 +460,15 @@ def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
         for c in cands:
             if c["n"] in used:
                 continue
-            rec = {"i": c["i"], "n": c["n"], "role": role, "seen": c["shot"].get("description")}
+            rec = {"i": c["i"], "n": c["n"], "role": role, "seen": c["shot"].get("description"), "hook": hook}
             MINI_LOG.append(rec)
             try:
-                sc = ms._try_models("vision", models["text"], lambda m: mini_scene(m, c, recent, role))
+                sc = ms._try_models("vision", models["text"], lambda m: mini_scene(m, c, recent, role, hook))
             except Exception as e:  # noqa: BLE001
                 rec["verdict"] = f"판단 실패: {str(e)[:80]}"
                 log(f"컷 {c['i']} 미니어처 판단 실패: {str(e)[:80]}"); continue
             rec.update({k: sc.get(k) for k in ("suitable", "why", "water", "place", "gag", "box", "faces", "scene", "motion")})
-            bad = mini_errs(sc, role) if sc.get("suitable") is True and sc.get("scene") else []
+            bad = mini_errs(sc, role, hook) if sc.get("suitable") is True and sc.get("scene") else []
             if bad:
                 rec["verdict"] = "거름: " + " / ".join(bad)
                 log(f"컷 {c['i']} 미니어처 답 거름: {' / '.join(bad)[:160]}")
@@ -473,7 +488,7 @@ def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
     water = [c for c in cuts if c["section"] in ("hook", "water") and not c["veo"]]
     inner = [c for c in cuts[1:] if c["section"] in ("room", "special") and notx(c) and not c["veo"]]
     tail = [c for c in reversed(cuts) if c["section"] in ("offer", "room", "special") and notx(c) and not c["veo"]]
-    g1 = try_role("gag", water)
+    g1 = try_role("gag", water, hook=True)                               # 물 개그 = 훅 컷(아래에서 컷 1 로 옮긴다) → 훅 제목 자리 피하기
     g2 = try_role("gag", inner)
     sig = try_role("signature", tail)
     if g1 and g1 is not cuts[0]:                                         # 훅 자리로 — 훅 사진이 미니어처에 안 맞으면 맞는 물 컷과 자리를 바꾼다
@@ -530,7 +545,7 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
                 base = make_mini.crop916(B() / f"shotHD_{c['n']}.png", mdir / f"{c['n']}_base.jpg")
             wet = bool(sc.get("water"))                                       # 비전이 정한 물 여부 — 없으면 마른 장소(물 낱말이 없는 쪽이 안전)
             sig = c["mini"] == "signature"
-            ep = make_mini.edit_prompt(sc["scene"], water=wet, signature=sig, life=SCALE_MODE == "life")
+            ep = make_mini.edit_prompt(sc["scene"], water=wet, signature=sig, life=SCALE_MODE == "life", hook=c["section"] == "hook")
             (mdir / f"{c['n']}_edit_prompt.txt").write_text(ep, encoding="utf-8")
             frame = make_mini.composite(base, ep, mdir / f"{c['n']}_frame.png", img_models, row, water=wet)
             box = sc.get("box")
@@ -613,6 +628,42 @@ HOOK_RX = re.compile(r"주목|분들?은|분이라면|라면|분들?께|손해|�
 HOOK_FACT_RX = re.compile(r"(온수풀|온천|사우나|워터파크|파도풀|노천|스파|수영장|풀|슬라이드|키즈).*(무제한|포함|무료|까지|한 곳|사계절|\d|개)|(\d|무제한|포함|무료).*(온수풀|온천|사우나|워터파크|파도풀|노천|스파|수영장|풀)")  # 시설 + 혜택·숫자
 
 
+HOOK_TITLE_RX = re.compile(r"\?|주목|손해|모르면|몰랐|놓치|아직도|\d|정답|이유|비밀|한 곳|한 번에|여기|이게|이곳|진짜|라면|만 아는|어디")   # 궁금증 장치
+
+
+def hook_title_errs(title: str, narr: str, h: dict, req: dict) -> list[str]:
+    """화면 훅 제목 검사(0원) — 2026-10-13 운영자 "나레이션 그대로 말고 요약해서 궁금증 유발". 위쪽 가운데 120px 두 줄 안."""
+    t = str(title or "").strip()
+    if not t:
+        return ["hook_title(화면 훅 제목) 없음 — 6~14자, 나레이션을 줄여 궁금증만 남긴 제목"]
+    errs, p = [], design.plain(t)
+    L = _len(p)
+    if not (6 <= L <= 14):
+        errs.append(f"hook_title '{t}' {L}자 — 공백 제외 6~14자")
+    ok, nl = design.fits(t, "hook_title")
+    if not ok:
+        errs.append(f"hook_title '{t}' 이 화면 {design.GRID['hook_title']['lines']}줄을 넘는다({nl}줄) — 줄인다")
+    if t.count("[") > 1 or t.count("[") != t.count("]"):
+        errs.append(f"hook_title 강조 [ ] 는 하나만: '{t}'")
+    ps, ns = re.sub(r"[\s.,?!~]", "", p), re.sub(r"[\s.,?!~]", "", design.plain(narr))
+    if ps and ns and (ps in ns or ns in ps or SequenceMatcher(None, ps, ns).ratio() >= 0.7):
+        errs.append(f"hook_title '{t}' 이 컷 1 나레이션과 거의 같다 — 그대로 옮기지 말고 줄여서 궁금증만 남긴다")
+    if not HOOK_TITLE_RX.search(p):
+        errs.append(f"hook_title '{t}' 에 궁금증 장치 없음 — 물음표·주목·손해·모르면·정답·여기·숫자 중 하나")
+    if any(tk in p for tk in name_tokens(h["name"], req, h)):
+        errs.append("hook_title 에 숙소 이름 금지")
+    if any(w in p for w in region_words(req, h)):
+        errs.append("hook_title 에 지역 이름 금지 (컷 2에서)")
+    if re.search(r"\d[\d,]*\s*(원|만원|만 원|%)", p):
+        errs.append("hook_title 에 가격·할인 숫자 금지")
+    for b in list(mt.BANNED) + list(mt.WORDING_BAN) + ["1위", "최고", "유일", "완벽"]:
+        if b in p:
+            errs.append(f"hook_title 금지 표현 '{b}'"); break
+    if re.search(r"[.!！。]\s*$|[\U0001F300-\U0001FAFF\u2600-\u27BF]", p):
+        errs.append("hook_title 끝 마침표·느낌표·이모지 금지")
+    return errs
+
+
 def sentence_errs(text: str, c: dict, h: dict, req: dict) -> list[str]:
     errs = []
     L = _len(text)
@@ -685,14 +736,12 @@ def check_script(s: dict, h: dict, cuts: list[dict], req: dict, sig: dict | None
                 errs.append(f"컷 {c['i']} 라벨에 느낌표·이모지 금지")
             if any(t in pc for t in toks):
                 errs.append(f"컷 {c['i']} 라벨에 숙소 이름")
-        if c["section"] == "hook":                                                 # v3 글자 그리드: 크기 고정 → 훅 문장은 화면 3줄 안(픽셀 측정)
-            ok, nl = design.fits(n, "hook")
-            if not ok:
-                errs.append(f"컷 {c['i']} 훅 문장이 화면 {design.GRID['hook']['lines']}줄을 넘는다({nl}줄, 공백 포함 {len(n)}자) — 문장을 줄인다")
-        else:                                                                       # 대사는 2~3단어 가라오케 조각 — 조각마다 한 줄에 들어가야 한다
-            ok, ch = design.fits_chunks(n)
-            if not ok:
-                errs.append(f"컷 {c['i']} 문장의 한 단어가 자막 한 줄보다 길다: {max(ch, key=len) if ch else n}")
+        # 대사는 2~3단어 가라오케 조각 — 조각마다 한 줄에 들어가야 한다 (2026-10-13 부터 컷 1 도 같다: 위쪽 큰 글자는 hook_title)
+        ok, ch = design.fits_chunks(n)
+        if not ok:
+            errs.append(f"컷 {c['i']} 문장의 한 단어가 자막 한 줄보다 길다: {max(ch, key=len) if ch else n}")
+        if c["section"] == "hook":
+            errs += hook_title_errs(str(s.get("hook_title") or ""), n, h, req)
     second = [c for c in cuts if c["i"] == 2]
     if second and not any(w in got[2].get("narration", "") for w in region_words(req, h)):
         errs.append(f"컷 2 문장에 지역({' 또는 '.join(region_words(req, h))}) + 유형으로 숙소를 부른다")
@@ -764,7 +813,7 @@ def flow_errs(s: dict, cuts: list[dict]) -> list[str]:
 
 
 POLISH_SYSTEM = """너는 쇼츠 나레이션 편집자다. 아래 JSON 대본을 **소리 내어 읽었을 때 한 사람이 한 호흡으로 안내하듯 이어지게** 다듬는다.
-지켜야 할 것: 컷 수·순서·각 컷의 사실(시설·전망·조건)·자막(caption)·extra·title·caption·hashtags 는 그대로. 숙소 이름 금지. 가격·과장 금지. 각 컷의 글자 한도(공백 제외, 입력에 적힘)를 지킨다.
+지켜야 할 것: 컷 수·순서·각 컷의 사실(시설·전망·조건)·자막(caption)·hook_title·extra·title·caption·hashtags 는 그대로. 숙소 이름 금지. 가격·과장 금지. 각 컷의 글자 한도(공백 제외, 입력에 적힘)를 지킨다.
 바꿀 것: 컷 2부터 앞 컷을 받는 연결어·장면 전환어로 시작하게 하고("안으로 들어가면", "그 옆엔", "객실로 올라오면", "밤이 되면", "그래서", "다만" …), 같은 연결어·같은 문장 끝을 연속해서 쓰지 않는다.
 마지막 컷은 "…에게 추천해요"로 닫는다. 출력은 입력과 같은 구조의 JSON 만."""
 
@@ -777,14 +826,52 @@ def polish_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, sig
     except Exception as e:  # noqa: BLE001
         log(f"다듬기 실패(원본 유지): {str(e)[:80]}")
         return s
-    for k in ("title", "caption", "hashtags", "extra"):
+    for k in ("title", "caption", "hashtags", "extra", "hook_title"):
         t.setdefault(k, s.get(k))
-    errs = check_script(t, h, cuts, req, sig) + flow_errs(t, cuts)
+    errs = [e for e in check_script(t, h, cuts, req, sig) + flow_errs(t, cuts) if not e.startswith("hook_title")]   # 훅 제목은 ensure_hook_title 이 마지막에 본다
     if errs:
         log("다듬은 대본이 규칙에 걸려 원본 유지:", errs[:3])
         return s
     t["cuts"] = sorted(t["cuts"], key=lambda x: int(x["i"]))
     return t
+
+
+HOOK_TITLE_SYSTEM = """너는 숙소 쇼츠의 훅 제목 카피라이터다. 컷 1 나레이션과 컷 1 화면 설명을 받아, 컷 1 동안 화면 위쪽 가운데에 크게 뜨는 제목 후보 5개를 쓴다.
+규칙: 공백 제외 6~14자 · 나레이션을 그대로 옮기지 않고 줄여서 **궁금증만 남긴다**(답을 다 말하지 않는다 — "뭐지? 어디지?") ·
+물음표·주목·손해·모르면·정답·여기·숫자 중 하나 · 핵심 낱말 하나만 [대괄호] · 숙소 이름·지역 이름·가격 숫자·마침표·느낌표·이모지 금지 ·
+입력 사실과 화면에 없는 시설 금지 · 후보 5개는 서로 다른 유형(반전 질문 / 의외 사실 / 정답 예고 / 손해형 / 호명형).
+예: "11월에 [수영복] 챙기라고?" / "산속에 [파도풀]이 있다?" / "겨울 물놀이 [정답]은 여기" / "모르면 [손해]인 겨울 숙소" / "온천파라면 [주목]"
+JSON 만: {"titles": ["...", "...", "...", "...", "..."]}"""
+
+
+def ensure_hook_title(model: str, s: dict, cuts: list[dict], h: dict, req: dict) -> dict:
+    """훅 제목이 규칙에 맞는지 마지막으로 본다. 틀리면 제목만 다시 쓰게 한다(텍스트 1~2번 · 몇 원). 그래도 안 되면 제목 없이(아래 자막만) — 미리보기에 표시."""
+    by_i = {int(x.get("i", 0)): x for x in (s.get("cuts") or []) if isinstance(x, dict)}
+    hook = next((c for c in cuts if c["section"] == "hook"), cuts[0])
+    n1 = str(by_i.get(hook["i"], {}).get("narration", ""))
+    errs = hook_title_errs(str(s.get("hook_title") or ""), n1, h, req)
+    if not errs:
+        return s
+    log("훅 제목 다시 쓰기:", errs[:2])
+    facts = ", ".join(list(h.get("verified_facilities") or []) + list(h.get("official_facts") or [])) or "없음"
+    content = (f"컷 1 나레이션: {n1}\n컷 1 화면: {hook['shot'].get('description') or ''}\n테마: {req.get('theme')} · 시기: {req.get('month')}\n"
+               f"확인된 시설·사실: {facts}")
+    for _ in range(2):
+        try:
+            r = ms.gemini_json(model, HOOK_TITLE_SYSTEM, content + (("\n\n직전 후보의 문제: " + " / ".join(errs[:4])) if errs else ""))
+        except Exception as e:  # noqa: BLE001
+            log(f"훅 제목 호출 실패: {str(e)[:80]}"); continue
+        for t in (r.get("titles") or []) if isinstance(r, dict) else []:
+            e2 = hook_title_errs(str(t), n1, h, req)
+            if not e2:
+                s["hook_title"] = str(t).strip()
+                log(f"훅 제목: {s['hook_title']}")
+                return s
+            errs = e2
+    log("훅 제목 후보가 모두 규칙에 걸림 → 제목 없이(아래 자막만). 미리보기에서 확인")
+    s["hook_title"] = None
+    s["hook_title_missing"] = errs[:3]
+    return s
 
 
 def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
@@ -805,16 +892,18 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
     for attempt in range(3):
         extra = ("\n\n직전 답의 문제(고쳐서 다시): " + " / ".join(errs)) if errs else ""
         s = ms.gemini_json(model, SCRIPT_SYSTEM, content + extra)
-        errs = check_script(s, h, cuts, req, sig)
+        errs = [e for e in check_script(s, h, cuts, req, sig) if not e.startswith("hook_title")]   # 훅 제목만 틀리면 대본 전체를 다시 쓰지 않는다 → ensure_hook_title 이 제목만
         if not errs:
             errs = flow_errs(s, cuts)
         if not errs:
             s["cuts"] = sorted(s["cuts"], key=lambda x: int(x["i"]))
             if not sig:
                 s["extra"] = None
-            return polish_script(model, s, cuts, h, req, sig)
+            return ensure_hook_title(model, polish_script(model, s, cuts, h, req, sig), cuts, h, req)
         # p10c 실측: 글자 한도 1~3자 초과만 남아 3번 다 탈락 → 그런 답은 '거의 통과'로 보관해 두고 마지막에 쓴다 (0.5초 차이는 슬로우로 흡수된다)
         def _soft(e):
+            if e.startswith("hook_title"):                                        # 훅 제목만 틀리면 대본은 채택하고 제목만 다시 쓴다(ensure_hook_title)
+                return True
             m = re.search(r"(\d+)자 \(한도 (\d+)\)", e)
             if m:
                 return int(m.group(1)) - int(m.group(2)) <= 3
@@ -827,11 +916,11 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
             best = s
         log(f"대본 검사 실패({attempt + 1}):", errs)
     if best:
-        log("가벼운 위반(글자 한도 3자 이내 · 연결어 절반 이상)만 남아 채택 → 다듬기")
+        log("가벼운 위반(글자 한도 3자 이내 · 연결어 절반 이상 · 훅 제목)만 남아 채택 → 다듬기")
         best["cuts"] = sorted(best["cuts"], key=lambda x: int(x["i"]))
         if not sig:
             best["extra"] = None
-        return polish_script(model, best, cuts, h, req, sig)
+        return ensure_hook_title(model, polish_script(model, best, cuts, h, req, sig), cuts, h, req)
     raise RuntimeError("대본이 규칙을 통과하지 못함: " + " / ".join(errs))
 
 
@@ -1071,6 +1160,9 @@ def mini_sheet(rows: list[dict], out: Path) -> Path | None:
             d.rectangle([fc[0] * w, fc[1] * hh, fc[2] * w, fc[3] * hh], outline=(90, 200, 255), width=2)          # 얼굴
         if r.get("crop_top"):                                                                                   # 잘라낼 위쪽(흰 선 위)
             d.line([(0, int(r["crop_top"] * hh)), (w, int(r["crop_top"] * hh))], fill=(255, 255, 255), width=3)
+        if r.get("hook"):                                                                                       # 훅 제목 자리 바닥(얼굴은 이 선 아래 · 잘라낸 뒤 기준을 원본에 되돌려 그림)
+            ct = float(r.get("crop_top") or 0.0); yy = ct + make_mini.HOOK_FACE_TOP_MIN * (1 - ct)
+            d.line([(0, int(yy * hh)), (w, int(yy * hh))], fill=(200, 120, 255), width=2)
         sheet.paste(im, (x, y))
         dd = ImageDraw.Draw(sheet)
         role = {"gag": "개그", "signature": "시그니처"}.get(r.get("role"), r.get("role"))
@@ -1105,12 +1197,15 @@ def preview_md(req: dict, p: dict) -> str:
         tag = f" 〔태그 {ex.get('tag')}〕" if ex and int(ex.get("i", 0)) == c["i"] else ""
         md.append(f"| {c['i']}{' (Veo)' if c['veo'] else ''}{' (미니어처 ' + {'gag': '개그', 'signature': '시그니처'}.get(c['mini'], '') + ')' if c.get('mini') else ''} | {KO[c['section']]} | {c['shot'].get('description', '')} [{mt.SRC_KO.get(c['shot'].get('source'), '?')}] | {x['caption']}{tag} | {x['narration']} | {sc if sc is not None else '-'} {mark}{fx} | {p['narr'][c['i']]:.1f} |")
     md.append(f"| 끝 | 끝 카드 | 훅 사진 선명 + 아래쪽 그라데이션 | {script['cta']['caption']} | {script['cta']['narration']} | - | {p['narr']['cta']:.1f} |")
-    md += ["", "## 화면 자막 조각 (가라오케식 2~3단어 · 컷 1 훅은 문장 전체)", ""]
+    ht = str(script.get("hook_title") or "").strip()
+    md += ["", "## 화면 훅 제목 (컷 1 · 위쪽 가운데 큰 글자 · 나레이션과 다른 요약·궁금증 문구)", "",
+           (f"**{ht}**" if ht else f"**없음** — 규칙 탈락으로 예전 방식(문장 전체 아래 3줄): {' / '.join(script.get('hook_title_missing') or [])}"),
+           "", "## 화면 자막 조각 (가라오케식 2~3단어 · 컷 1 포함)", ""]
     for c in cuts:
         x = by_i[c["i"]]
-        md.append(f"- 컷 {c['i']}: " + (f"**{x['narration']}**" if c["section"] == "hook" else " | ".join(design.chunk_words(x["narration"]))))
+        md.append(f"- 컷 {c['i']}: " + (f"**{x['narration']}**" if (c["section"] == "hook" and not ht) else " | ".join(design.chunk_words(x["narration"]))))
     if MINI_LOG:
-        md += ["", "## 미니어처 후보 판정 (`preview_mini.jpg` · 노랑 선 = 얼굴 한계 58%(이 선 위) · 하늘색 = 얼굴 · 빨강 = 자막 띠 — 몸은 가려져도 됨 · 흰 선 = 얼굴을 올리려고 잘라낼 위쪽)", "",
+        md += ["", "## 미니어처 후보 판정 (`preview_mini.jpg` · 노랑 선 = 얼굴 한계 58%(이 선 위) · 하늘색 = 얼굴 · 빨강 = 자막 띠 — 몸은 가려져도 됨 · 흰 선 = 얼굴을 올리려고 잘라낼 위쪽 · 보라 선 = 훅 컷 제목 자리 바닥(얼굴은 이 선 아래))", "",
                "| 컷 | 역할 | 판정 | 장소 · 개그 | 물 | 상자 |", "|---|---|---|---|---|---|"]
         for r in MINI_LOG:
             md.append(f"| {r['i']} | {r['role']} | {r.get('verdict', '-')}{' · 위 ' + format(r['crop_top'], '.0%') + ' 잘라 확대' if r.get('crop_top') else ''} | {r.get('place') or ''} · {r.get('gag') or ''} | {r.get('water')} | {r.get('box')} |")
@@ -1349,7 +1444,8 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
         label = design.plain(x["caption"])
         overlays = [{"path": frame, "a": 0, "b": 99, "anim": False}]
         chunks = []
-        if is_hook:
+        title = str(script.get("hook_title") or "").strip() if is_hook else ""
+        if is_hook and not title:                                                   # 훅 제목이 없을 때만(규칙 탈락) 예전 방식: 문장 전체를 아래 3줄로
             sub_text = x["narration"]
             if label and label in sub_text:                                         # 훅: 라벨 낱말이 문장에 있으면 그 낱말만 코랄 강조
                 sub_text = sub_text.replace(label, f"[{label}]", 1)
@@ -1357,7 +1453,11 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
             design.subtitle_png(cap, sub_text, hook=True)
             overlays.append({"path": cap, "a": 0.0, "b": 99, "anim": False})       # 훅 문장은 0초부터 그대로 — 첫 화면에 멈출 이유
         else:
-            if label:
+            if title:                                                               # 2026-10-13 운영자 "훅 문구 중앙에 크게": 위쪽 가운데 큰 제목(나레이션과 다른 요약·궁금증 문구) + 아래 가라오케
+                ttl = B() / f"ov_title_{c['i']:02d}.png"
+                design.hook_title_png(ttl, title)
+                overlays.append({"path": ttl, "a": 0.0, "b": 99, "anim": False})   # 0초부터 — 첫 화면(썸네일)에 제목이 있어야 한다
+            elif label:
                 lab = B() / f"ov_label_{c['i']:02d}.png"
                 design.label_png(lab, label)
                 overlays.append({"path": lab, "a": 0.0, "b": 99, "anim": True})
@@ -1379,7 +1479,7 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
             kind = f"사진·{pattern}"
         segs.append(cut_segment(c["i"], src, L, B() / f"narr_c{c['i']}.wav", overlays, slow))
         timeline.append({"i": c["i"], "section": c["section"], "kind": kind, "sec": round(L, 2), "slow": round(slow, 2), "narration": x["narration"], "caption": x["caption"],
-                         "label": label, "chunks": [[t, a, b] for t, a, b in chunks], "extra": (ex.get("tag") if ex and int(ex.get("i", 0)) == c["i"] else None)})
+                         "label": label, "title": title or None, "chunks": [[t, a, b] for t, a, b in chunks], "extra": (ex.get("tag") if ex and int(ex.get("i", 0)) == c["i"] else None)})
     # 끝 카드 — 훅 사진 선명 + 세로 그라데이션(블러 없음), 왼쪽 정렬 헤드라인 + 폴더 행
     card = design.end_card(B() / "end_card.jpg", B() / f"shotHD_{cuts[0]['n']}.png", folder, pos, style, ms.DISCLOSURE)
     Lc = max(3.6, narr["cta"] + 0.7)
