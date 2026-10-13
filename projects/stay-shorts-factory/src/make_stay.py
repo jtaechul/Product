@@ -795,7 +795,8 @@ def main() -> int:
         # 2026-10-12 검수: "fake": true 는 Veo 만 가짜로 바꾼다 — 미니어처(합성 이미지·옴니)는 여전히 유료라 허락 없이 돌던 구멍을 막는다
         mini_paid = bool(req.get("miniature")) and not (os.environ.get("OMNI_FAKE") == "1" and os.environ.get("MINI_FAKE_IMAGE") == "1")
         if mode in ("veo", "top3", "solo") and (not veo.FAKE or mini_paid) and str(req.get("stage") or "") != "preview" and req.get("veo_approved") is not True \
-                and not (mode == "solo" and str(req.get("max_veo_cuts")) == "0" and not req.get("miniature")):   # Veo 0컷·미니어처 없음(사진만, 0원)만 허락 불필요
+                and not (mode == "solo" and str(req.get("max_veo_cuts")) == "0" and not req.get("miniature")) \
+                and not (mode == "solo" and req.get("reuse_only") is True):   # Veo 0컷·미니어처 없음(사진만, 0원), 재사용 전용(새 영상·합성 0 · 글·음성만)만 허락 불필요
             raise RuntimeError('유료 Veo 제작은 운영자 허락이 필요합니다 — request.json 에 "veo_approved": true 를 넣어 주세요 (미리보기는 "stage": "preview")')
         NONCE_DONE.parent.mkdir(parents=True, exist_ok=True)                    # 잠금을 통과한 요청만 '처리됨'으로 — 잠긴 채 돈 실행은 같은 nonce 로 승인 뒤 다시 돌 수 있어야 한다
         NONCE_DONE.write_text(json.dumps({"nonce": req.get("nonce"), "at": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False) + "\n", encoding="utf-8")

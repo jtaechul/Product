@@ -86,8 +86,9 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터이자 편집자�
   지역 이름은 훅에서는 쓰지 않는다(컷 2에서). 유형은 편마다 돌아가며 쓴다.
 - hook_title(화면 훅 제목 · 2026-10-13 운영자): 컷 1 동안 화면 위쪽 가운데에 **크게** 뜨는 제목. 공백 제외 6~14자, 두 줄 안.
   **나레이션을 그대로 옮기지 않는다** — 훅의 핵심만 줄여 **답을 다 말하지 않고 "뭐지? 어디지?"를 남긴다**(열린 고리). 귀(나레이션)와 눈(제목)이 따로 붙잡는다.
-  유형(나레이션과 다른 유형도 좋다): ① 반전 질문 "11월에 [수영복] 챙기라고?" ② 의외 사실 "산속에 [파도풀]이 있다?" ③ 정답 예고 "겨울 물놀이 [정답]은 여기"
-  ④ 손해형 "모르면 [손해]인 겨울 숙소" ⑤ 호명형 "온천파라면 [주목]". 물음표·주목·손해·모르면·정답·여기·숫자 같은 궁금증 장치를 하나 넣는다.
+  유형은 **두 가지만**(2026-10-13 운영자 결정 · 편마다 번갈아 — 입력의 "이번 훅 제목 유형"을 따른다), 둘 다 **물음표로 끝나는 질문**:
+  ① 반전 질문 — 상식과 어긋나는 상황을 묻는다 "11월에 [수영복] 챙기라고?" / "한겨울에 [물놀이]를 한다고?"
+  ② 의외 사실 — 이 숙소의 의외의 사실을 묻는다 "산속에 [파도풀]이 있다?" / "객실에서 [슬로프]가 보인다?" (입력 사실·화면에 있는 것만)
   핵심 낱말 하나만 [대괄호]로 강조(코랄색으로 보인다). 숙소·지역 이름, 가격 숫자, 마침표·느낌표·이모지 금지. 입력 사실·컷 1 화면과 모순 금지(없는 시설을 제목에 쓰지 않는다).
 - 물놀이 컷: 실내/야외, 온천수·온수, 전망, 운영(사계절·투숙객), 파도풀·슬라이드 같은 구성 중 **화면에 보이는 것**.
 - 객실 컷: 뷰·침대·구성·테라스 — 쿠팡 객실 이름과 화면에 있는 것만.
@@ -319,8 +320,13 @@ MOVE_WORDS = re.compile(r"\b(fall\w*|tumbl\w*|topple\w*|los\w*\s+(?:their|her|hi
 
 
 def assign_env(cuts: list[dict], max_veo: int) -> list[dict]:
-    """미니어처 편의 Veo 라이트 환경 컷(사람 없는 물·김 움직임, 편당 0~1) — 미니어처로 쓰지 않은 물 컷 중 앞쪽부터."""
+    """미니어처 편의 Veo 라이트 환경 컷(사람 없는 물·김 움직임, 편당 0~1) — 미니어처로 쓰지 않은 물 컷 중 앞쪽부터.
+    재사용 클립(role env)이 있는 사진을 먼저 고른다(0원). 재사용 전용이면 재사용 클립이 있는 사진만."""
     env = [c for c in cuts if not c.get("mini") and c["section"] in ("hook", "water") and WATER_RX.search(c["shot"].get("description") or "")]
+    has = lambda c: (REUSE.get(str(c["shot"].get("src_url") or "")) or {}).get("role") == "env"  # noqa: E731
+    env = sorted(env, key=lambda c: not has(c))
+    if REUSE_ONLY:
+        env = [c for c in env if has(c)]
     for c in env[:max(0, int(max_veo))]:
         c["veo"] = True; c["env"] = True
     for c in cuts:
@@ -420,6 +426,9 @@ MINI_LOG: list[dict] = []                                        # 이번 실행
 # 로 같은 사진(주소 일치)이 다시 뽑히면 비전·합성·옴니를 건너뛰고 그 클립을 그대로 쓴다(0원). 사진이 안 뽑히면 평소처럼 새로 만든다.
 REUSE_DIR = mt.ROOT / "build" / "reuse"
 REUSE: dict[str, dict] = {}
+# 재사용 전용(2026-10-13 운영자 "같은 숙소 0원 재조립"): request "reuse_only": true 면 재사용 클립이 없는 컷은 **새로 만들지 않고** 사진 무빙으로 —
+# 비전 자리 고르기·합성·옴니·Veo 를 한 번도 부르지 않는다(글·음성만). 그래서 이 모드는 veo_approved 없이 돈다(make_stay 잠금 예외).
+REUSE_ONLY = False
 
 
 def load_reuse(req: dict) -> dict[str, dict]:
@@ -457,6 +466,8 @@ def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
                     recent.append(str(ru["gag"]))
                 log(f"컷 {c['i']} 재사용 클립 사용(0원): {ru['clip'].name}")
                 return c
+        if REUSE_ONLY:                                                    # 재사용 전용: 새 자리 고르기(비전)도 하지 않는다
+            return None
         for c in cands:
             if c["n"] in used:
                 continue
@@ -529,6 +540,8 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
                 if c["mini"] == "gag" and sc.get("gag"):
                     used.append(str(sc["gag"]))
                 continue
+            if REUSE_ONLY:                                                    # 재사용 전용인데 재사용 클립이 없다 → 돈 쓰지 않고 사진 무빙
+                raise RuntimeError("재사용 전용 — 새 합성·옴니를 만들지 않음")
             motion = make_mini.signature_block() if c["mini"] == "signature" else str(sc.get("motion") or "")
             if not c.get("mini_scene"):                                       # choose_minis 를 거치지 않은 경우에도 같은 검사
                 bad = mini_errs(sc, c["mini"]) if sc.get("suitable") is not False else ["부적합"]
@@ -628,7 +641,6 @@ HOOK_RX = re.compile(r"주목|분들?은|분이라면|라면|분들?께|손해|�
 HOOK_FACT_RX = re.compile(r"(온수풀|온천|사우나|워터파크|파도풀|노천|스파|수영장|풀|슬라이드|키즈).*(무제한|포함|무료|까지|한 곳|사계절|\d|개)|(\d|무제한|포함|무료).*(온수풀|온천|사우나|워터파크|파도풀|노천|스파|수영장|풀)")  # 시설 + 혜택·숫자
 
 
-HOOK_TITLE_RX = re.compile(r"\?|주목|손해|모르면|몰랐|놓치|아직도|\d|정답|이유|비밀|한 곳|한 번에|여기|이게|이곳|진짜|라면|만 아는|어디")   # 궁금증 장치
 
 
 def hook_title_errs(title: str, narr: str, h: dict, req: dict) -> list[str]:
@@ -648,8 +660,10 @@ def hook_title_errs(title: str, narr: str, h: dict, req: dict) -> list[str]:
     ps, ns = re.sub(r"[\s.,?!~]", "", p), re.sub(r"[\s.,?!~]", "", design.plain(narr))
     if ps and ns and (ps in ns or ns in ps or SequenceMatcher(None, ps, ns).ratio() >= 0.7):
         errs.append(f"hook_title '{t}' 이 컷 1 나레이션과 거의 같다 — 그대로 옮기지 말고 줄여서 궁금증만 남긴다")
-    if not HOOK_TITLE_RX.search(p):
-        errs.append(f"hook_title '{t}' 에 궁금증 장치 없음 — 물음표·주목·손해·모르면·정답·여기·숫자 중 하나")
+    if re.sub(r"\s", "", p) in {re.sub(r"\s", "", design.plain(x)) for x in recent_titles()}:
+        errs.append(f"hook_title '{t}' 는 최근 편에 쓴 제목 — 새 제목으로(예시 문구를 그대로 쓰지 않는다)")
+    if not p.rstrip().endswith("?"):                                       # 2026-10-13 운영자 결정: 반전 질문·의외 사실 두 유형만 — 둘 다 질문
+        errs.append(f"hook_title '{t}' 는 물음표로 끝나는 질문(반전 질문 또는 의외 사실)")
     if any(tk in p for tk in name_tokens(h["name"], req, h)):
         errs.append("hook_title 에 숙소 이름 금지")
     if any(w in p for w in region_words(req, h)):
@@ -826,7 +840,7 @@ def polish_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, sig
     except Exception as e:  # noqa: BLE001
         log(f"다듬기 실패(원본 유지): {str(e)[:80]}")
         return s
-    for k in ("title", "caption", "hashtags", "extra", "hook_title"):
+    for k in ("title", "caption", "hashtags", "extra", "hook_title", "hook_title_type"):
         t.setdefault(k, s.get(k))
     errs = [e for e in check_script(t, h, cuts, req, sig) + flow_errs(t, cuts) if not e.startswith("hook_title")]   # 훅 제목은 ensure_hook_title 이 마지막에 본다
     if errs:
@@ -838,10 +852,45 @@ def polish_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, sig
 
 HOOK_TITLE_SYSTEM = """너는 숙소 쇼츠의 훅 제목 카피라이터다. 컷 1 나레이션과 컷 1 화면 설명을 받아, 컷 1 동안 화면 위쪽 가운데에 크게 뜨는 제목 후보 5개를 쓴다.
 규칙: 공백 제외 6~14자 · 나레이션을 그대로 옮기지 않고 줄여서 **궁금증만 남긴다**(답을 다 말하지 않는다 — "뭐지? 어디지?") ·
-물음표·주목·손해·모르면·정답·여기·숫자 중 하나 · 핵심 낱말 하나만 [대괄호] · 숙소 이름·지역 이름·가격 숫자·마침표·느낌표·이모지 금지 ·
-입력 사실과 화면에 없는 시설 금지 · 후보 5개는 서로 다른 유형(반전 질문 / 의외 사실 / 정답 예고 / 손해형 / 호명형).
-예: "11월에 [수영복] 챙기라고?" / "산속에 [파도풀]이 있다?" / "겨울 물놀이 [정답]은 여기" / "모르면 [손해]인 겨울 숙소" / "온천파라면 [주목]"
+핵심 낱말 하나만 [대괄호] · 숙소 이름·지역 이름·가격 숫자·마침표·느낌표·이모지 금지 ·
+입력 사실과 화면에 없는 시설 금지 · 후보 5개 모두 입력의 "유형"으로, **물음표로 끝나는 질문**.
+유형 ① 반전 질문(상식과 어긋나는 상황): "11월에 [수영복] 챙기라고?" / "한겨울에 [물놀이]를 한다고?"
+유형 ② 의외 사실(이 숙소의 의외의 사실): "산속에 [파도풀]이 있다?" / "객실에서 [슬로프]가 보인다?"
 JSON 만: {"titles": ["...", "...", "...", "...", "..."]}"""
+
+
+HOOK_TITLES = mt.ROOT / "state" / "hook_titles.json"               # 편마다 쓴 훅 제목·유형(번갈아 쓰기용)
+TITLE_TYPES = {"반전 질문": '상식과 어긋나는 상황을 묻는다 — 예 "11월에 [수영복] 챙기라고?" / "한겨울에 [물놀이]를 한다고?"',
+               "의외 사실": '이 숙소의 의외의 사실을 묻는다 — 예 "산속에 [파도풀]이 있다?" / "객실에서 [슬로프]가 보인다?"'}
+
+
+def recent_titles(n: int = 12) -> list[str]:
+    try:
+        return [str(r.get("title") or "") for r in json.loads(HOOK_TITLES.read_text(encoding="utf-8"))[-n:]]
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def next_title_type() -> str:
+    """직전 편이 반전 질문이면 의외 사실, 아니면 반전 질문(2026-10-13 운영자 "반전 질문·의외 사실 우선 — 번갈아")."""
+    try:
+        rows = json.loads(HOOK_TITLES.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        rows = []
+    return "의외 사실" if (rows and rows[-1].get("type") == "반전 질문") else "반전 질문"
+
+
+def save_hook_title(stay: str, script: dict):
+    if not script.get("hook_title"):
+        return
+    try:
+        rows = json.loads(HOOK_TITLES.read_text(encoding="utf-8")) if HOOK_TITLES.exists() else []
+    except Exception:  # noqa: BLE001
+        rows = []
+    from datetime import date
+    rows.append({"date": date.today().isoformat(), "stay": stay, "title": script["hook_title"], "type": script.get("hook_title_type")})
+    HOOK_TITLES.parent.mkdir(parents=True, exist_ok=True)
+    HOOK_TITLES.write_text(json.dumps(rows[-60:], ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
 def ensure_hook_title(model: str, s: dict, cuts: list[dict], h: dict, req: dict) -> dict:
@@ -854,7 +903,8 @@ def ensure_hook_title(model: str, s: dict, cuts: list[dict], h: dict, req: dict)
         return s
     log("훅 제목 다시 쓰기:", errs[:2])
     facts = ", ".join(list(h.get("verified_facilities") or []) + list(h.get("official_facts") or [])) or "없음"
-    content = (f"컷 1 나레이션: {n1}\n컷 1 화면: {hook['shot'].get('description') or ''}\n테마: {req.get('theme')} · 시기: {req.get('month')}\n"
+    typ = str(s.get("hook_title_type") or next_title_type())
+    content = (f"유형: {typ}\n최근 제목(다시 쓰지 말 것): {' / '.join(recent_titles()) or '없음'}\n컷 1 나레이션: {n1}\n컷 1 화면: {hook['shot'].get('description') or ''}\n테마: {req.get('theme')} · 시기: {req.get('month')}\n"
                f"확인된 시설·사실: {facts}")
     for _ in range(2):
         try:
@@ -887,6 +937,10 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
               f"공식 홈페이지 사실: {', '.join(h.get('official_facts') or []) or '없음'}",
               f"후기 아쉬움: {h.get('honest') or '없음'}",
               (f"사진 없는 시그니처(컷 {sig['i']} 문장 끝에 한 절로 덧붙이기 · 한도 +{EXTRA_BONUS}자): {sig['fact']}" if sig else "사진 없는 시그니처: 없음 (extra 는 null)")]
+    typ = next_title_type()
+    lines.append(f"이번 훅 제목 유형: {typ} — {TITLE_TYPES[typ]} (예시 문구를 그대로 쓰지 말고 이 숙소·컷 1 화면에 맞게 새로)")
+    if recent_titles():
+        lines.append(f"최근 훅 제목(다시 쓰지 말 것): {' / '.join(recent_titles())}")
     content = "\n".join(lines)
     errs, best = [], None
     for attempt in range(3):
@@ -899,6 +953,7 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
             s["cuts"] = sorted(s["cuts"], key=lambda x: int(x["i"]))
             if not sig:
                 s["extra"] = None
+            s["hook_title_type"] = typ
             return ensure_hook_title(model, polish_script(model, s, cuts, h, req, sig), cuts, h, req)
         # p10c 실측: 글자 한도 1~3자 초과만 남아 3번 다 탈락 → 그런 답은 '거의 통과'로 보관해 두고 마지막에 쓴다 (0.5초 차이는 슬로우로 흡수된다)
         def _soft(e):
@@ -920,6 +975,7 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
         best["cuts"] = sorted(best["cuts"], key=lambda x: int(x["i"]))
         if not sig:
             best["extra"] = None
+        best["hook_title_type"] = typ
         return ensure_hook_title(model, polish_script(model, best, cuts, h, req, sig), cuts, h, req)
     raise RuntimeError("대본이 규칙을 통과하지 못함: " + " / ".join(errs))
 
@@ -1065,7 +1121,11 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     mv = req.get("max_veo_cuts")
     mini = bool(req.get("miniature"))
     load_reuse(req)
-    global SCALE_MODE
+    global SCALE_MODE, REUSE_ONLY
+    REUSE_ONLY = req.get("reuse_only") is True
+    if REUSE_ONLY:
+        report["reuse_only"] = True
+        log("재사용 전용 — 새 영상·합성은 만들지 않는다(글·음성만)")
     SCALE_MODE = "mini" if str(req.get("mini_scale") or "life") == "mini" else "life"
     if mini:
         report["mini_scale"] = SCALE_MODE
@@ -1398,6 +1458,9 @@ def make_veo(cuts: list[dict], theme: str, report: dict) -> dict:
             shutil.copy(ru["clip"], out); clips[n] = out
             row.update({"ok": True, "reused": str(Path(ru["clip"]).relative_to(REUSE_DIR))}); results.append(row)
             log(f"컷 {c['i']} Veo 환경 컷 재사용(0원): {ru['clip'].name}"); continue
+        if REUSE_ONLY:                                                       # 재사용 전용: 새 Veo 를 만들지 않는다
+            c["veo"] = False; row["error"] = "재사용 전용 — 새 Veo 생략"; results.append(row)
+            log(f"컷 {c['i']} 재사용 클립 없음 → 사진 무빙(재사용 전용)"); continue
         before = veo.spent_this_run()
         seed = veo.seed_for(theme, n)
         for attempt in range(2):
@@ -1426,6 +1489,8 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     p = prepare(req, models, report)
     h, cuts, script, narr, folder, pos = p["h"], p["cuts"], p["script"], p["narr"], p["folder"], p["pos"]
     name = h["name"]
+    save_hook_title(name, script)                                              # 다음 편은 다른 유형(번갈아)
+    report["hook_title"] = {"title": script.get("hook_title"), "type": script.get("hook_title_type")}
     clips = make_veo(cuts, theme, report)
     if req.get("miniature"):
         clips.update(make_minis(cuts, h, req, models, report))
