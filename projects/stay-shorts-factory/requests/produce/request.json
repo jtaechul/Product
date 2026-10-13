@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-13-life-run4",
+ "nonce": "2026-10-13-reuse-title-1",
  "mode": "solo",
  "stay": "소노펠리체 비발디파크",
  "theme": "실내 온수풀·온천",
@@ -10,7 +10,7 @@
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "잠금 — stay-run-35 완료(약 1,085원: 훅·소파 재사용 0원 + 시그니처 v6 새로 714 + 물 컷 294 + 글·음성 77). 다음 유료 제작은 nonce 변경 + veo_approved true",
+ "note": "0원 재조립(운영자 2026-10-13 선택 '같은 숙소 0원 재조립'): 새 훅 제목 화면 확인용. reuse_only — 재사용 클립 없는 컷은 사진 무빙, 새 영상·합성 0원 · 글·음성 약 80원. 끝나면 reuse_only 제거·잠금",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -24,6 +24,10 @@
   {
    "run_id": 38346158908,
    "name": "stay-run-33"
+  },
+  {
+   "run_id": 38401637294,
+   "name": "stay-run-35"
   }
  ],
  "reuse_clips": [
@@ -46,9 +50,24 @@
    "place": "객실 창가·소파"
   },
   {
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/oAKONtuhXMveXdY6fEmACQ==/1",
+   "clip": "stay-run-35/build/mini/16.mp4",
+   "frame": "stay-run-35/build/mini/16_frame_pb.png",
+   "role": "signature",
+   "gag": "시그니처 포즈",
+   "water": false,
+   "place": "객실 거실"
+  },
+  {
    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
    "clip": "stay-run-33/build/veo_12.mp4",
    "role": "env"
+  },
+  {
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Z2QIeKCw56CffVBzKIkWjA==/1",
+   "clip": "stay-run-35/build/veo_11.mp4",
+   "role": "env"
   }
- ]
+ ],
+ "reuse_only": true
 }
