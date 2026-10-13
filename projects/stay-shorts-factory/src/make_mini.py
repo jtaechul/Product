@@ -119,8 +119,8 @@ EDIT_HEAD_LIFE = ("TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the re
                   "every surface, object and decoration, colors, lighting and focus; do not blur, recolor, crop, extend, clean up or redraw anything, "
                   "and do not add or remove any object. Only add the two characters from the attached CHARACTER REFERENCE IMAGE — take only their "
                   "design (faces, hair, outfits) from it, ignore everything else in that image, and render them at real human size as "
-                  "unmistakable collectible ball-jointed dolls (visible ball joints, semi-gloss vinyl skin, rigid molded hair) — never as real "
-                  "people — placed into the scene as described below, with correct perspective and contact shadows so they look physically "
+                  "unmistakable collectible vinyl dolls (semi-gloss vinyl skin, smooth seamless limbs, rigid molded hair, painted eyes) — "
+                  "never as real people — placed into the scene as described below, with correct perspective and contact shadows so they look physically "
                   "present in the photograph.")
 EDIT_SCALE_LIFE = ("SCALE AND PLACEMENT: the characters are real human size — Jun about 178 cm, Mina about 165 cm — standing, sitting or lying on "
                    "the real surface described in SCENE, at the true distance that surface is from the camera, so doors, furniture and railings "
@@ -132,10 +132,10 @@ EDIT_SCALE_LIFE = ("SCALE AND PLACEMENT: the characters are real human size — 
 EDIT_PHOTO_LIFE = ("PHOTOGRAPHY: the dolls look photographed in the same shot — matched to the photograph's own light direction, color "
                    "temperature, depth of field and grain; their vinyl skin shows soft specular highlights like a doll, not like human skin; "
                    "the background keeps the photograph's existing sharpness. Vertical 9:16, same size as the hotel photograph.")
-VEO_HEAD_LIFE = ("The first frame is a real hotel photograph with two human-size collectible ball-jointed dolls of a Korean couple — "
-                 "semi-gloss vinyl skin, visible ball joints at the neck, shoulders, elbows, wrists, hips, knees and ankles, rigid molded hair "
-                 "with carved grooves, painted eyes, elegant adult proportions, eight heads tall. They remain dolls for the whole clip: the skin "
-                 "stays vinyl, the hair stays one rigid piece, the joints stay visible, and they wear exactly what they wear in the first frame "
+VEO_HEAD_LIFE = ("The first frame is a real hotel photograph with two human-size collectible vinyl dolls of a Korean couple — "
+                 "semi-gloss vinyl skin, smooth seamless limbs, rigid molded hair with carved grooves, painted eyes, elegant adult proportions, "
+                 "eight heads tall. They remain dolls for the whole clip: the skin stays vinyl, the hair stays one rigid piece, "
+                 "and they wear exactly what they wear in the first frame "
                  "and nothing else, from head to feet, throughout. "
                  "Keep them exactly as they appear in the first frame: same faces with painted almond eyes and small sculpted lips (the mouth "
                  "may open when laughing or surprised), same hairstyles (woman: dark-brown hair with a left side part in a neat low bun; man: "
@@ -181,16 +181,15 @@ LIFE_SUBS = [   # 캐릭터 블록(v3 · 운영자 확정)에서 크기 문장�
     # v5 (2026-10-13 운영자 "1번 방향"): 사람 크기에서도 인형으로 읽히는 시각 단서 — 구체관절 인형
     ("MATERIAL: smooth sculpted polymer clay with a soft satin finish, subtle hand-painted shading, a faint warm blush on the cheeks, nose tip and "
      "shoulders; edges slightly softened like a sculpted doll. No fingerprints, no seams, no plastic gloss, no realistic pores or skin texture.",
-     "MATERIAL — unmistakably a DOLL, never a real person: a human-size collectible ball-jointed doll. Skin is smooth cast vinyl with a soft "
-     "semi-gloss sheen, with no pores, no fine body hair, no veins and no skin texture; soft specular highlights sit on the vinyl like on a doll. "
-     "Visible spherical ball joints with a thin seam line at the neck, shoulders, elbows, wrists, hips, knees and ankles. Fingers are slightly "
-     "simplified and stiff. A faint hand-painted blush on the cheeks and nose tip."),
+     "MATERIAL — unmistakably a DOLL, never a real person: a human-size collectible vinyl doll with smooth, seamless limbs. "
+     "Skin is smooth cast vinyl with a soft semi-gloss sheen, with no pores, no fine body hair, no veins and no skin texture; soft specular "
+     "highlights sit on the vinyl like on a doll. Fingers are slightly simplified and stiff. A faint hand-painted blush on the cheeks and nose tip."),
     ("Eyes: almond-shaped sculpted eyes with painted dark-brown irises and black pupils",
      "Eyes: almond-shaped painted doll eyes under a glossy clear coat, with visibly hand-painted dark-brown irises and black pupils"),
     ("HAIR — exact and never changes, wet or dry, from any angle:",
      "HAIR — one rigid molded piece of sculpted doll hair (no separate strands, never moves or blows), exact and never changes, wet or dry, from any angle:"),
     ("extra fingers, text, logos, watermarks, melted or morphing shapes.",
-     "extra fingers, text, logos, watermarks, melted or morphing shapes, hidden or missing ball joints, loose hair strands."),
+     "extra fingers, text, logos, watermarks, melted or morphing shapes, loose hair strands."),   # 관절·이음선은 부정문으로도 쓰지 않는다(부정문 낱말이 단서가 됨)
 ]
 
 
@@ -242,8 +241,8 @@ def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: b
     life = LIFE_DEFAULT if life is None else life
     keep = KEEP_LINE if water else KEEP_LINE_DRY
     if life:
-        keep = keep.replace("reference figurines", "reference characters") + (" The reference image does not show the ball joints and the "
-                                                                              "semi-gloss vinyl finish — add them exactly as described below.")
+        keep = keep.replace("reference figurines", "reference characters") + (" The reference image does not show the semi-gloss vinyl "
+                                                                              "finish — add it exactly as described below.")
     parts = [EDIT_HEAD_LIFE if life else EDIT_HEAD, keep, character_block(water, life), OUTFIT_WATER if water else OUTFIT_DRY,
              EDIT_SCALE_LIFE if life else EDIT_SCALE, EDIT_PHOTO_LIFE if life else EDIT_PHOTO, "SCENE: " + clean_scene(scene).strip()]
     if signature:
