@@ -493,7 +493,12 @@ def fits(text: str, role: str = "subtitle") -> tuple[bool, int]:
     d = ImageDraw.Draw(Image.new("RGBA", (W, H)))
     f = font(g["size"])
     mw = g.get("w", SUB_W)
-    lines = title_lines(d, text, f, mw) if role == "hook_title" else wrap_marked(d, text, f, mw, max_lines=12)
+    if role == "hook_title":                                                    # 훅 제목은 띄어쓰기 자리에서만 두 줄 — 낱말 안을 끊어야 들어가면 탈락(제목을 줄인다)
+        lines = title_lines(d, text, f, mw, clean_only=True)
+        if lines is None:
+            return False, 3
+    else:
+        lines = wrap_marked(d, text, f, mw, max_lines=12)
     joined = "".join(t for ln in lines for t, _ in ln).replace(" ", "")
     ok = len(lines) <= g["lines"] and len(joined) >= len(plain(text).replace(" ", "")) and all(_width(d, ln, f) <= mw for ln in lines)
     return ok, len(lines)
@@ -603,9 +608,10 @@ def subtitle_png(out: Path, text: str, hook: bool = False) -> Path:
     return out
 
 
-def title_lines(d: ImageDraw.ImageDraw, text: str, f, max_w: float) -> list[list[tuple[str, bool]]]:
+def title_lines(d: ImageDraw.ImageDraw, text: str, f, max_w: float, clean_only: bool = False):
     """훅 타이틀 줄 나누기: 한 줄에 들어가면 한 줄, 아니면 **띄어쓰기 자리에서만** 두 줄로 — 두 줄 너비가 가장 비슷한 자리.
-    wrap_marked 는 '[정답]은' 처럼 강조와 조사 사이에서도 끊어 '은 여기'가 생겼다(2026-10-13 시안) → 낱말 안에서는 절대 안 끊는다."""
+    wrap_marked 는 '[정답]은' 처럼 강조와 조사 사이에서도 끊어 '은 여기'가 생겼다(2026-10-13 시안) → 낱말 안에서는 절대 안 끊는다.
+    clean_only=True 면 띄어쓰기 자리로 못 나눌 때 None(검사용) — stay-run-38 '신전에서 물놀이 / 를 즐긴다고?' 가 예비 줄바꿈으로 통과했다."""
     one = segments(text)
     if _width(d, one, f) <= max_w:
         return [one]
@@ -618,7 +624,9 @@ def title_lines(d: ImageDraw.ImageDraw, text: str, f, max_w: float) -> list[list
         wa, wb = _width(d, segments(a), f), _width(d, segments(b), f)
         if max(wa, wb) <= max_w and (best is None or max(wa, wb) < best[0]):
             best = (max(wa, wb), [segments(a), segments(b)])
-    return best[1] if best else wrap_marked(d, text, f, max_w, max_lines=12)
+    if best:
+        return best[1]
+    return None if clean_only else wrap_marked(d, text, f, max_w, max_lines=12)
 
 
 def draw_hook_title(im: Image.Image, text: str, style: str = "shadow", y: int | None = None):
