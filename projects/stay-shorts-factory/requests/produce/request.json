@@ -1,16 +1,16 @@
 {
- "nonce": "2026-10-12-v4-mini-run2",
+ "nonce": "2026-10-13-life-run3",
  "mode": "solo",
  "stay": "소노펠리체 비발디파크",
  "theme": "실내 온수풀·온천",
  "region": "강원",
  "month": "2026-11",
- "veo_approved": false,
+ "veo_approved": true,
  "miniature": true,
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "잠금 — stay-run-31 제작 완료(2,521원). 다음 유료 제작은 운영자 승인 뒤 veo_approved true",
+ "note": "운영자 2026-10-13 '물영상컷 포함해서 진행해' — 실물 크기 정식 제작: 소파 클립 재사용(0원) + 훅·시그니처 새로(합성 2장 + 옴니 2컷) + 라이트 물 컷 1 ≈ 1,800원",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -18,5 +18,24 @@
   ],
   "쏠비치 삼척": "https://www.sonohotelsresorts.com/solbeach_sc",
   "세인트존스 호텔": "https://new.stjohns.co.kr/"
- }
+ },
+ "mini_scale": "life",
+ "reuse_runs": [
+  {
+   "run_id": 38327200880,
+   "name": "stay-mini-8"
+  }
+ ],
+ "reuse_clips": [
+  {
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
+   "clip": "stay-mini-8/sofa.mp4",
+   "frame": "stay-mini-8/sofa_frame_pb.png",
+   "role": "gag",
+   "gag": "소파에 앉아 동시에 기지개를 켜다 팔이 부딪혀 서로 쳐다보고 웃음",
+   "water": false,
+   "place": "객실 창가·소파",
+   "scene": "Mina and Jun sit side by side on the sofa seat in cream bathrobes, turned slightly toward the camera."
+  }
+ ]
 }
