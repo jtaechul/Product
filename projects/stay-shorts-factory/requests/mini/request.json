@@ -1,7 +1,7 @@
 {
  "nonce": "2026-10-13-life-2",
- "veo_approved": true,
- "note": "운영자 2026-10-13 '시험해' — v5 구체관절 인형 단서 + 가구 앞 배치 + 제자리 시그니처 + 비전 검수: run-33 시그니처 사진으로 1컷 재시험(합성 98 + 옴니 약 620 + 검수 1 ≈ 720원). 끝나면 veo_approved false",
+ "veo_approved": false,
+ "note": "잠금 — life-2(v5 구체관절 인형) 시험 완료 716원 · 성공. 다음 유료 시험은 nonce 를 바꾸고 veo_approved true",
  "mini_scale": "life",
  "video_engine": "omni",
  "omni_resolution": "720p",
