@@ -250,7 +250,7 @@ _MINI_SYSTEM = """너는 쇼츠의 연출 감독이다. 실제 숙소 사진 1�
 - water: 인물이 물 안이나 물가에 있으면 true(물 반응을 넣는다), 마른 장소면 false.
 JSON 만: {{"suitable":true|false,"why":"한 줄","water":true|false,"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1],"faces":[x0,y0,x1,y1]}}"""
 _SCALE_TEXT = {
-    "life": {"who": "두 인물 Mina(여)·Jun(남)은 **실제 사람 크기**(준 178cm · 미나 165cm)의 비닐 인형(시스템이 생김새를 정한다)이다. 이 사진 안에 **실제로 있는** 바닥·데크·물·풀 가장자리·침대·소파 위에 사람이 있을 법하게 둔다.",
+    "life": {"who": "두 인물 Mina(여)·Jun(남)은 **실제 사람 크기**(준 178cm · 미나 165cm)의 클레이 애니메이션 캐릭터(시스템이 생김새를 정한다)이다. 이 사진 안에 **실제로 있는** 바닥·데크·물·풀 가장자리·침대·소파 위에 사람이 있을 법하게 둔다.",
              "size": "- 그 자리에 사람 크기로 서거나 앉으면 화면 높이의 1/3~3/4 로 보인다(가까운 자리일수록 크다). 사람이 화면 높이 1/5 이하로 작아지는 먼 자리는 false",
              "furniture": "소파·침대·빈백 **위에 올라서기 금지**(앉기·눕기·기대기만 — 사람 크기에서는 시설 오용으로 보인다). "},
     "mini": {"who": "두 인형 Mina(여)·Jun(남)은 손조각 피규어(10cm)이고, 이 사진 안에 **실제로 있는** 표면(물·풀 가장자리·바닥·데크·침대·소파) 위에만 둔다.",
@@ -314,12 +314,12 @@ def assign_env(cuts: list[dict], max_veo: int) -> list[dict]:
     return cuts
 
 
-CLIP_CHECK_SYSTEM = """너는 AI 영상 클립 검수자다. 같은 4초 클립의 첫 장면·2초·끝 장면 3장을 받는다. 첫 장면에는 실제 숙소 사진 안에 사람 크기의 비닐 인형(관절 없음) 두 명이 있다.
+CLIP_CHECK_SYSTEM = """너는 AI 영상 클립 검수자다. 같은 4초 클립의 첫 장면·2초·끝 장면 3장을 받는다. 첫 장면에는 실제 숙소 사진 안에 사람 크기의 클레이 애니메이션(클레이메이션) 캐릭터 두 명이 있다.
 판정(JSON 만): {"same_place": true|false, "same_size": true|false, "passes_through": true|false, "doll_look": true|false, "new_objects": ["..."], "verdict": "ok"|"reject", "why": "한 줄"}
 - same_place: 두 인물의 발·엉덩이 위치가 첫 장면과 같은가(앞으로 나오거나 걸어가면 false)
 - same_size: 가구·방 대비 인물 크기가 같은가(커지거나 작아지면 false)
 - passes_through: 인물이 탁자·의자·난간·벽 등을 통과하거나 겹쳐 지나갔는가
-- doll_look: 끝 장면에서도 인형(비닐 광택 피부·성형 머리·그린 눈)으로 보이는가(실제 사람처럼 보이면 false)
+- doll_look: 끝 장면에서도 클레이 애니메이션 캐릭터(무광 점토 질감·성형 머리·그린 눈)로 보이는가(실제 사람처럼 보이면 false)
 - new_objects: 첫 장면에 없던 신발·슬리퍼·소품·사람·시설
 - verdict: same_place·same_size·doll_look 이 모두 true 이고 passes_through 가 false 이고 new_objects 가 비면 ok, 아니면 reject"""
 

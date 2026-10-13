@@ -115,12 +115,12 @@ MAX_CHANGED = 0.30          # 배경 보존 검사(0원): 원본 대비 바뀐 �
 # 미나는 바닥으로 내려왔다(끝 장면 변화율 0.40). 영상 모델의 기본값과 싸우지 않도록 인물을 처음부터 실제 사람 크기로 넣는다.
 # 얼굴·머리·의상·점토 질감 규칙(캐릭터 블록·ref.jpg)은 그대로 쓰고 크기 문장만 바꾼다. 미니어처는 request "mini_scale": "mini" 로 되돌릴 수 있다.
 LIFE_DEFAULT = True
-EDIT_HEAD_LIFE = ("TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real place). Keep the photograph exactly as it is — same framing, "
+EDIT_HEAD_LIFE = ("STYLE: claymation (stop-motion clay animation) characters composited into a real photograph. "
+                  "TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real place). Keep the photograph exactly as it is — same framing, "
                   "every surface, object and decoration, colors, lighting and focus; do not blur, recolor, crop, extend, clean up or redraw anything, "
                   "and do not add or remove any object. Only add the two characters from the attached CHARACTER REFERENCE IMAGE — take only their "
                   "design (faces, hair, outfits) from it, ignore everything else in that image, and render them at real human size as "
-                  "unmistakable collectible vinyl dolls (semi-gloss vinyl skin, smooth seamless limbs, rigid molded hair, painted eyes) — "
-                  "never as real people — placed into the scene as described below, with correct perspective and contact shadows so they look physically "
+                  "claymation characters (matte modeling-clay surface, molded clay hair, painted clay eyes) — never as real people — placed into the scene as described below, with correct perspective and contact shadows so they look physically "
                   "present in the photograph.")
 EDIT_SCALE_LIFE = ("SCALE AND PLACEMENT: the characters are real human size — Jun about 178 cm, Mina about 165 cm — standing, sitting or lying on "
                    "the real surface described in SCENE, at the true distance that surface is from the camera, so doors, furniture and railings "
@@ -129,13 +129,13 @@ EDIT_SCALE_LIFE = ("SCALE AND PLACEMENT: the characters are real human size — 
                    "the right-most 15% of the frame (captions and app buttons are drawn there later). Place them on the open floor or surface "
                    "NEAREST to the camera, in front of every piece of furniture: nothing — no table, chair, rail, plant or ledge — is between them "
                    "and the camera, and the place stays clearly visible behind and beside them. Never enlarge or shrink anything in the photograph.")
-EDIT_PHOTO_LIFE = ("PHOTOGRAPHY: the dolls look photographed in the same shot — matched to the photograph's own light direction, color "
-                   "temperature, depth of field and grain; their vinyl skin shows soft specular highlights like a doll, not like human skin; "
-                   "the background keeps the photograph's existing sharpness. Vertical 9:16, same size as the hotel photograph.")
-VEO_HEAD_LIFE = ("The first frame is a real hotel photograph with two human-size collectible vinyl dolls of a Korean couple — "
-                 "semi-gloss vinyl skin, smooth seamless limbs, rigid molded hair with carved grooves, painted eyes, elegant adult proportions, "
-                 "eight heads tall. They remain dolls for the whole clip: the skin stays vinyl, the hair stays one rigid piece, "
-                 "and they wear exactly what they wear in the first frame "
+EDIT_PHOTO_LIFE = ("PHOTOGRAPHY: the claymation characters are lit by the photograph's own light direction and color temperature, with soft "
+                   "contact shadows, like a stop-motion clay figure composited into a real photo; the background keeps the photograph's existing "
+                   "sharpness. Vertical 9:16, same size as the hotel photograph.")
+VEO_HEAD_LIFE = ("STYLE: claymation (stop-motion clay animation). The first frame is a real hotel photograph with two human-size claymation "
+                 "characters of a Korean couple — matte modeling-clay surface, molded clay hair with carved grooves, painted clay eyes, elegant "
+                 "adult proportions, eight heads tall. They stay claymation characters for the whole clip, animated like a stop-motion clay film: "
+                 "the surface stays matte clay, the hair stays one molded piece, and they wear exactly what they wear in the first frame "
                  "and nothing else, from head to feet, throughout. "
                  "Keep them exactly as they appear in the first frame: same faces with painted almond eyes and small sculpted lips (the mouth "
                  "may open when laughing or surprised), same hairstyles (woman: dark-brown hair with a left side part in a neat low bun; man: "
@@ -181,9 +181,9 @@ LIFE_SUBS = [   # 캐릭터 블록(v3 · 운영자 확정)에서 크기 문장�
     # v5 (2026-10-13 운영자 "1번 방향"): 사람 크기에서도 인형으로 읽히는 시각 단서 — 구체관절 인형
     ("MATERIAL: smooth sculpted polymer clay with a soft satin finish, subtle hand-painted shading, a faint warm blush on the cheeks, nose tip and "
      "shoulders; edges slightly softened like a sculpted doll. No fingerprints, no seams, no plastic gloss, no realistic pores or skin texture.",
-     "MATERIAL — unmistakably a DOLL, never a real person: a human-size collectible vinyl doll with smooth, seamless limbs. "
-     "Skin is smooth cast vinyl with a soft semi-gloss sheen, with no pores, no fine body hair, no veins and no skin texture; soft specular "
-     "highlights sit on the vinyl like on a doll. Fingers are slightly simplified and stiff. A faint hand-painted blush on the cheeks and nose tip."),
+     "MATERIAL — STYLE: CLAYMATION. Both are stop-motion clay animation characters (claymation style), human-size, exactly like figures from a "
+     "claymation film: matte modeling-clay surface with soft hand-smoothed clay texture, slightly chunky simplified hands, painted clay eyes, "
+     "a faint warm blush on the cheeks and nose tip. Never real skin, never a real person."),
     ("Eyes: almond-shaped sculpted eyes with painted dark-brown irises and black pupils",
      "Eyes: almond-shaped painted doll eyes under a glossy clear coat, with visibly hand-painted dark-brown irises and black pupils"),
     ("HAIR — exact and never changes, wet or dry, from any angle:",
@@ -241,8 +241,7 @@ def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: b
     life = LIFE_DEFAULT if life is None else life
     keep = KEEP_LINE if water else KEEP_LINE_DRY
     if life:
-        keep = keep.replace("reference figurines", "reference characters") + (" The reference image does not show the semi-gloss vinyl "
-                                                                              "finish — add it exactly as described below.")
+        keep = keep.replace("reference figurines", "reference characters") + " Render them in the claymation style described below."
     parts = [EDIT_HEAD_LIFE if life else EDIT_HEAD, keep, character_block(water, life), OUTFIT_WATER if water else OUTFIT_DRY,
              EDIT_SCALE_LIFE if life else EDIT_SCALE, EDIT_PHOTO_LIFE if life else EDIT_PHOTO, "SCENE: " + clean_scene(scene).strip()]
     if signature:
