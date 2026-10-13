@@ -213,9 +213,15 @@ def cut_label(c: dict) -> str:
 MINI_GAGS = mt.ROOT / "state" / "mini_gags.json"
 # 2026-10-12 운영자 "물결·김은 비오 라이트로 진짜 움직이게" — 미니어처 편의 사람 없는 환경 컷(편당 1개, 294원)에 붙인다
 ENV_PROMPT = ("Camera: locked-off with a very slow, steady push-in of about 5 percent, staying inside the photo the whole time; no other camera movement. "
-              "The water that is already in the photo moves naturally and visibly: gentle ripples drifting across it, sparkling light on the surface, "
-              "and if the water is warm, soft white steam rising and drifting slowly. Only the existing water, steam and light move. "
-              "No people, no figures.")   # 2026-10-12 검수: 비전이 쓴 'drone glide' 카메라 + 'rolling waves·whole surface' 는 잔잔한 풀에 없는 파도·사진 밖 풍경을 부른다
+              "The water that is already in the photo moves naturally and visibly: gentle ripples drifting across it and sparkling light on the surface. "
+              "{steam}Only the existing water and light move. No people, no figures.")   # 2026-10-12 검수: 비전이 쓴 'drone glide' 카메라 + 'rolling waves·whole surface' 는 잔잔한 풀에 없는 파도·사진 밖 풍경을 부른다
+ENV_STEAM = "Soft white steam rises from the warm water and drifts slowly. "        # run-31 컷 2: '따뜻하면 김' 조건문을 라이트가 실내 파도풀에도 적용해 안개가 생김 → 온천·스파 사진에만 넣는다
+HOT_RX = re.compile(r"온천|온수|스파|노천|탕|사우나|자쿠지|hot spring|spa|jacuzzi|thermal", re.I)
+
+
+def env_prompt(c: dict) -> str:
+    d = c["shot"].get("description") or ""
+    return ENV_PROMPT.format(steam=ENV_STEAM if HOT_RX.search(d) else "") + photos.SUFFIX
 MINI_SYSTEM = """너는 쇼츠의 미니어처 연출 감독이다. 실제 숙소 사진 1장과 역할(gag 또는 signature)을 받는다.
 두 인형 Mina(여)·Jun(남)을 이 사진 안에 **실제로 있는** 표면(물·풀 가장자리·바닥·데크·침대·소파) 위에만 둔다. 사진에 없는 수영장·물·가구·구조물을 만들거나 키우지 않는다.
 
@@ -1161,7 +1167,7 @@ def make_veo(cuts: list[dict], theme: str, report: dict) -> dict:
         seed = veo.seed_for(theme, n)
         for attempt in range(2):
             try:
-                vp = (ENV_PROMPT + photos.SUFFIX) if c.get("env") else c["shot"]["prompt"]
+                vp = env_prompt(c) if c.get("env") else c["shot"]["prompt"]
                 veo.make_clip(vp, B() / f"shot_{n}.png", VEO_SEC, out, seed + attempt)
                 row["ok"] = True; clips[n] = out; break
             except veo.RaiFiltered as e:
