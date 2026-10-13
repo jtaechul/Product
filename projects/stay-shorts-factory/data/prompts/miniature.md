@@ -121,7 +121,7 @@ SIGNATURE ENDING — identical in every video. Mina and Jun already stand side b
 
 ## 1-8. 캐릭터 기준 시트 (2026-10-13 운영자 제작 · `assets/characters/`)
 
-- 운영자가 프라모델 스타일 프롬프트로 직접 만든 **정면·측면·뒷면 한 장짜리 시트**를 기준으로 쓴다: `mina_swim.jpg`(수영복) · `mina_robe.jpg`(가운). 준 시트(`jun_swim.jpg`·`jun_robe.jpg`)는 받는 대로 추가.
+- 운영자가 프라모델 스타일 프롬프트로 직접 만든 **정면·측면·뒷면 한 장짜리 시트**를 기준으로 쓴다: `mina_swim.jpg`(수영복) · `mina_robe.jpg`(가운). 준 시트 `jun_swim.jpg`·`jun_robe.jpg` 도 반영(2026-10-13). `ref.jpg` 는 예비.
 - 합성 호출에 사진 + 캐릭터별 시트를 모두 첨부하고(`make_mini.ref_sheets`), 물 장면은 수영복 시트, 마른 장면은 가운 시트. 시트가 없는 캐릭터는 옛 공용 기준 `ref.jpg` 로 보완.
 - 유지 문장은 "첨부된 기준 시트와 똑같이(얼굴·머리·몸·옷을 그대로 복사)" 로 바뀜. 각 첨부에 "Attached image N: …" 라벨을 붙여 모델이 사진과 시트를 혼동하지 않게 한다.
 
