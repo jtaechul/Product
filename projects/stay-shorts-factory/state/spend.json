@@ -358,5 +358,29 @@
   "kind": "omni",
   "krw": 617,
   "note": "gemini-omni-1.1-flash 720p 4.0초 living.mp4 (토큰 23848)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_11.mp4"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 미니어처 합성 16_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "omni",
+  "krw": 616,
+  "note": "gemini-omni-1.1-flash 720p 4.0초 16.mp4 (토큰 23809)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "gemini_est",
+  "krw": 77,
+  "note": "2026-10-13-life-run4 solo AI 글·음성 28회 (추정)"
  }
 ]
