@@ -1,25 +1,26 @@
 {
- "nonce": "2026-10-13-life-1",
- "veo_approved": false,
- "note": "잠금 — life-1 시험 완료(714원 · 성공). 다음 유료 시험은 nonce 를 바꾸고 veo_approved true",
+ "nonce": "2026-10-13-life-2",
+ "veo_approved": true,
+ "note": "운영자 2026-10-13 '시험해' — v5 구체관절 인형 단서 + 가구 앞 배치 + 제자리 시그니처 + 비전 검수: run-33 시그니처 사진으로 1컷 재시험(합성 98 + 옴니 약 620 + 검수 1 ≈ 720원). 끝나면 veo_approved false",
  "mini_scale": "life",
  "video_engine": "omni",
  "omni_resolution": "720p",
  "shots": [
   {
-   "key": "sofa",
-   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
-   "focus_x": 0.55,
+   "key": "living",
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/RpUyl4x2tUtPVhB1GW9yeQ==/1",
+   "focus_x": 0.5,
    "focus_y": 0.5,
    "water": false,
-   "scene": "The photograph shows a bright hotel living room: a beige sectional sofa in front of a large window with a green mountain view, a round coffee table on the left and a wooden floor. Mina and Jun sit side by side on the sofa seat, both in cream bathrobes, turned slightly toward the camera, their feet on the floor in front of the sofa. Nothing else in the photograph changes.",
-   "motion": "0 to 1.5 seconds: both stretch their arms straight up at the same time with big yawning open mouths, still seated. 1.5 to 3 seconds: their raised arms bump into each other; they freeze and turn their heads to look at each other with wide eyes. 3 to 4 seconds: they burst out laughing and lean their shoulders together, staying seated in exactly the same spot.",
+   "signature": true,
+   "scene": "The photograph shows a modern hotel living room with a marble accent wall, a TV ledge, two dark armchairs, a low coffee table and a glass balcony door, with an open tiled floor in the foreground nearest the camera. Mina and Jun stand side by side on that open foreground floor, in front of the coffee table and every other piece of furniture, nothing between them and the camera, facing the camera, both in cream bathrobes with the cream sheep-head towel wraps on their heads. Nothing else in the photograph changes.",
+   "motion": "",
    "engine": "omni",
    "box": [
-    0.3,
-    0.26,
-    0.97,
-    0.86
+    0.18,
+    0.22,
+    0.86,
+    0.98
    ]
   }
  ]
