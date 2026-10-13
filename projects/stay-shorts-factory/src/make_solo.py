@@ -532,7 +532,7 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
             sig = c["mini"] == "signature"
             ep = make_mini.edit_prompt(sc["scene"], water=wet, signature=sig, life=SCALE_MODE == "life")
             (mdir / f"{c['n']}_edit_prompt.txt").write_text(ep, encoding="utf-8")
-            frame = make_mini.composite(base, ep, mdir / f"{c['n']}_frame.png", img_models, row)
+            frame = make_mini.composite(base, ep, mdir / f"{c['n']}_frame.png", img_models, row, water=wet)
             box = sc.get("box")
             if isinstance(box, list) and len(box) == 4 and all(isinstance(v, (int, float)) for v in box) and box[2] - box[0] > 0.1 and box[3] - box[1] > 0.1:
                 # omni-1 실측: 합성 모델이 인형은 잘 넣고 위쪽 건물·야자수를 다시 그렸다 → 인형 영역 밖은 원본 픽셀로 되돌린다
@@ -550,7 +550,7 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
                 raise RuntimeError(f"원본 복원 뒤에도 {ch:.0%} 변경 — 옴니 생략")
             if not row.get("box") and ch > make_mini.MAX_CHANGED:
                 frame = make_mini.composite(base, ep + "\n\nPREVIOUS ATTEMPT FAILED: it redrew or reframed the photograph. Keep every pixel of the photograph except where the figurines are.",
-                                            mdir / f"{c['n']}_frame.png", img_models, row)
+                                            mdir / f"{c['n']}_frame.png", img_models, row, water=wet)
                 ch = make_mini.changed_ratio(base, frame); row["changed_retry"] = round(ch, 3)
                 if ch > make_mini.MAX_CHANGED:
                     raise RuntimeError(f"배경 보존 실패 {ch:.0%} — 옴니 생략")

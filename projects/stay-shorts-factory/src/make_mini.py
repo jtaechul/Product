@@ -38,6 +38,24 @@ ROOT = Path(__file__).resolve().parent.parent
 REQ = ROOT / "requests" / "mini" / "request.json"
 RULES = ROOT / "data" / "prompts" / "miniature.md"
 REF = ROOT / "assets" / "characters" / "ref.jpg"
+CHAR_DIR = ROOT / "assets" / "characters"
+
+
+def ref_sheets(water: bool = True) -> list[tuple[str, Path]]:
+    """캐릭터별 기준 시트(2026-10-13 운영자 제작 · 정면·측면·뒷면 한 장). 물 장면은 수영복 시트, 마른 장면은 가운 시트.
+    시트가 없는 캐릭터는 옛 공용 기준(ref.jpg)으로 보완한다. 돌려주는 값: [(설명, 경로)]."""
+    out, missing = [], []
+    for name in ("mina", "jun"):
+        p = CHAR_DIR / f"{name}_{'swim' if water else 'robe'}.jpg"
+        if not p.is_file():
+            p = CHAR_DIR / f"{name}_swim.jpg"
+        if p.is_file():
+            out.append((f"{name.capitalize()} reference sheet (front, left side, back)", p))
+        else:
+            missing.append(name)
+    if missing:
+        out.append((f"shared reference image for {' and '.join(m.capitalize() for m in missing)}", REF))
+    return out
 BUILD = ROOT / "build" / "mini"
 REPORT = ROOT / "data" / "runs" / "mini" / "report.json"
 NONCE_DONE = ROOT / "state" / "mini_nonce.json"               # 잠금을 통과해 돈 요청의 nonce — 같은 nonce 재푸시(잠금 편집)는 건너뛴다
@@ -118,8 +136,8 @@ LIFE_DEFAULT = True
 EDIT_HEAD_LIFE = ("STYLE: plastic model-kit figures (collectible painted plastic figures, like a high-end model kit) composited into a real photograph. "
                   "TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real place). Keep the photograph exactly as it is — same framing, "
                   "every surface, object and decoration, colors, lighting and focus; do not blur, recolor, crop, extend, clean up or redraw anything, "
-                  "and do not add or remove any object. Only add the two characters from the attached CHARACTER REFERENCE IMAGE — take only their "
-                  "design (faces, hair, outfits) from it, ignore everything else in that image, and render them at real human size as "
+                  "and do not add or remove any object. Only add the two characters from the attached CHARACTER REFERENCE SHEETS — take only their "
+                  "design (faces, hair, outfits) from the sheets, ignore the gray background and the three-view layout, and render them at real human size as "
                   "painted plastic model-kit figures (matte injection-molded plastic surface, molded plastic hair, painted eyes) — never as real people — placed into the scene as described below, with correct perspective and contact shadows so they look physically "
                   "present in the photograph.")
 EDIT_SCALE_LIFE = ("SCALE AND PLACEMENT: the characters are real human size — Jun about 178 cm, Mina about 165 cm — standing, sitting or lying on "
@@ -241,7 +259,9 @@ def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: b
     life = LIFE_DEFAULT if life is None else life
     keep = KEEP_LINE if water else KEEP_LINE_DRY
     if life:
-        keep = keep.replace("reference figurines", "reference characters") + " Render them as the painted plastic model-kit figures described below."
+        keep = (keep.replace("exactly identical to the attached reference figurines", "exactly identical to the attached CHARACTER REFERENCE SHEETS "
+                             "(each sheet shows one character from the front, left side and back — copy that character's face, hair, body and outfit exactly)")
+                + " Render them as the painted plastic model-kit figures described below.")
     parts = [EDIT_HEAD_LIFE if life else EDIT_HEAD, keep, character_block(water, life), OUTFIT_WATER if water else OUTFIT_DRY,
              EDIT_SCALE_LIFE if life else EDIT_SCALE, EDIT_PHOTO_LIFE if life else EDIT_PHOTO, "SCENE: " + clean_scene(scene).strip()]
     if signature:
@@ -408,14 +428,16 @@ def image_krw(model: str) -> float:
     return usd * FX
 
 
-def composite(base: Path, prompt: str, out: Path, models: list[str], rep: dict) -> Path:
+def composite(base: Path, prompt: str, out: Path, models: list[str], rep: dict, water: bool = True) -> Path:
     if FAKE_IMG:
         im = Image.open(base).convert("RGB"); ref = Image.open(REF).convert("RGB")
         ref.thumbnail((W // 2, H // 2)); im.paste(ref, (W // 4, H - ref.height - 60)); im.save(out, "PNG")
         rep["image_model"] = "FAKE"; return out
     parts = [{"text": prompt},
-             {"inline_data": {"mime_type": "image/jpeg", "data": base64.b64encode(base.read_bytes()).decode()}},
-             {"inline_data": {"mime_type": "image/jpeg", "data": base64.b64encode(REF.read_bytes()).decode()}}]
+             {"text": "Attached image 1: the HOTEL PHOTOGRAPH."},
+             {"inline_data": {"mime_type": "image/jpeg", "data": base64.b64encode(base.read_bytes()).decode()}}]
+    for k, (label, path) in enumerate(ref_sheets(water), 2):
+        parts += [{"text": f"Attached image {k}: {label}."}, {"inline_data": {"mime_type": "image/jpeg", "data": base64.b64encode(path.read_bytes()).decode()}}]
     last = None
     for model in models:
         for attempt in range(2):
@@ -613,7 +635,7 @@ def main():
                 frame = BUILD / f"{k}_frame.png"; frame.write_bytes(prev.read_bytes()); row["reused_frame"] = int(req["reuse_run_id"])
                 log(f"{k}: 이전 실행({req['reuse_run_id']})의 합성 장면 재사용 — 이미지 비용 0원")
             else:
-                frame = composite(base, ep, BUILD / f"{k}_frame.png", models, rep)
+                frame = composite(base, ep, BUILD / f"{k}_frame.png", models, rep, water=wet)
             if s.get("box"):                                               # 인형 영역 밖은 원본으로 되돌림 → 배경 보존 보장
                 frame, seam = paste_back(base, frame, refine_box(base, frame, s["box"]), BUILD / f"{k}_frame_pb.png")
                 row["seam"] = round(seam, 3)
@@ -629,7 +651,7 @@ def main():
             if not s.get("box") and ch > MAX_CHANGED:                                         # 배경을 다시 그렸다 → 한 번만 더, 그래도 넘으면 이 컷은 Veo 를 쓰지 않는다
                 log(f"{k}: 숙소 사진이 {ch:.0%} 바뀜(상한 {MAX_CHANGED:.0%}) → 한 번 더 합성")
                 frame = composite(base, ep + "\n\nPREVIOUS ATTEMPT FAILED: it redrew or reframed the photograph. Keep every pixel of the photograph except where the figurines are.",
-                                  BUILD / f"{k}_frame.png", models, rep)
+                                  BUILD / f"{k}_frame.png", models, rep, water=wet)
                 ch = changed_ratio(base, frame); row["changed_retry"] = round(ch, 3)
                 if ch > MAX_CHANGED:
                     row["skipped"] = f"배경 보존 실패 {ch:.0%} — Veo 생략(돈 아낌)"
