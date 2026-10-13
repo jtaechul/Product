@@ -45,6 +45,19 @@ jobs:
           # 공식 홈페이지 사진 수집(src/crawl_photos.py)은 러너에 기본 탑재된 크롬으로 페이지를 그린다 — 없으면 쿠팡 사진만 쓴다
           command -v google-chrome >/dev/null && google-chrome --version || echo "크롬 없음 — 공식 홈페이지 사진 수집은 건너뛴다"
 
+      - name: 재사용 클립 내려받기 (이전 실행 아티팩트 · 0원)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          P=projects/stay-shorts-factory
+          python3 -c "import json;[print(r['run_id'], r['name']) for r in json.load(open('$P/requests/produce/request.json',encoding='utf-8')).get('reuse_runs') or []]" | while read -r RID NAME; do
+            [ -n "$RID" ] || continue
+            mkdir -p "$P/build/reuse/$NAME"
+            gh run download "$RID" -n "$NAME" -D "$P/build/reuse/$NAME" -R "$GITHUB_REPOSITORY" && echo "내려받음: $NAME ($RID)" || echo "실패(새로 만든다): $NAME ($RID)"
+          done
+          ls -R "$P/build/reuse" 2>/dev/null | head -40 || true
+
       - name: 제작
         id: make
         working-directory: projects/stay-shorts-factory
@@ -90,6 +103,7 @@ jobs:
             projects/stay-shorts-factory/build/meta.json
             projects/stay-shorts-factory/build/narr_full.wav
             projects/stay-shorts-factory/build/mini
+            projects/stay-shorts-factory/build/veo_*.mp4
             projects/stay-shorts-factory/data/runs/latest/compare_sheet.jpg
             projects/stay-shorts-factory/data/runs/latest/preview_shots.jpg
             projects/stay-shorts-factory/data/runs/latest/preview_mini.jpg
