@@ -5,12 +5,12 @@
  "theme": "실내 온수풀·온천",
  "region": "강원",
  "month": "2026-11",
- "veo_approved": true,
+ "veo_approved": false,
  "miniature": true,
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "운영자 2026-10-13 '물영상컷 포함해서 진행해' — 실물 크기 정식 제작: 소파 클립 재사용(0원) + 훅·시그니처 새로(합성 2장 + 옴니 2컷) + 라이트 물 컷 1 ≈ 1,800원",
+ "note": "잠금 — stay-run-33 실물 크기 제작 완료(약 1,805원). 다음 유료 제작은 nonce 를 바꾸고 veo_approved true (같은 nonce 재푸시는 건너뜀)",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
