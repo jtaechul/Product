@@ -298,5 +298,17 @@
   "kind": "gemini_est",
   "krw": 81,
   "note": "2026-10-12-v4-mini-run2 solo AI 글·음성 30회 (추정)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 미니어처 합성 sofa_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-13",
+  "kind": "omni",
+  "krw": 615,
+  "note": "gemini-omni-1.1-flash 720p 4.0초 sofa.mp4 (토큰 23780)"
  }
 ]
