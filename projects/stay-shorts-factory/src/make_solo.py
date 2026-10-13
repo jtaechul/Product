@@ -233,12 +233,13 @@ _MINI_SYSTEM = """너는 쇼츠의 연출 감독이다. 실제 숙소 사진 1�
 {size}
 - **얼굴을 58% 위로 올리는 법을 먼저 찾는다**: 가까운 자리가 화면 아래쪽(60~90%)에 있어도 거기 **서 있거나 기대 서면** 얼굴은 위로 올라온다.
   물에서는 깊이 잠기는 대신 가장자리에 서서 발만 담그기·물속에 서서 허리 위 내밀기처럼 얼굴이 높은 자세를 고른다. 발·다리·몸은 화면 아래 끝까지 내려가도 된다
+- **인물과 카메라 사이에 탁자·의자·난간·화분·선반이 없는, 카메라에서 가장 가까운 트인 바닥·표면**에만 둔다. 가까운 자리가 가구 뒤라면 false(run-33: 탁자 뒤에 세웠더니 영상에서 탁자를 통과해 앞으로 나왔다)
 - 멀리 찍은 외관·전경·항공·조감 사진, 가까운 실제 표면이 아예 없는 사진은 false
 [역할 gag] 아래 장소 개그 사전에서 이 사진의 장소에 맞는 개그 하나(최근 사용 개그 제외 · 맞는 것이 없으면 같은 결의 새 개그).
   개그는 **이 사진에 보이는 것만으로 가능**해야 한다(잔잔한 풀에서 파도 개그 금지, 침대가 없으면 침대 개그 금지). 4초 동안 동작 1~2개, 크고 단순하게. 웃음·놀람 때 입 벌림 허용.
   **동작은 제자리에서만**: 넘어짐·균형 잃기·내려서기·걸어가기·점프·자리 옮기기 금지(인물이 자리를 옮기면 영상 모델이 크기를 다시 그린다 — run-31 실측). 대신 **팔·상체 동작은 크게** — 표정만 바꾸는 개그는 안 된다(run-33 훅 '위엄 있는 표정 → 피식': 4초 내내 거의 정지로 보였다). 제자리에서 두 팔을 크게 쓰는 동작 1~2개로 웃긴다.
   {furniture}위험 행동(얕은 물 다이빙·젖은 바닥 뛰기·난간 오르기)·시설 오용·다른 사람·유행 챌린지·유명인·상표 금지.
-[역할 signature] 동작은 시스템이 고정 블록으로 넣는다. scene 에는 둘이 크림색 양머리 수건을 쓰고 나란히 서서 카메라를 보는 첫 자세와, 서 있을 **실제 마른 바닥·데크**(가구 위 금지)만 쓴다. motion 은 빈 문자열. water 는 그 자리가 풀 가장자리 데크처럼 물가면 true(수영복), 객실·바닥처럼 마른 실내면 false(가운).
+[역할 signature] 동작은 시스템이 고정 블록으로 넣는다. scene 에는 둘이 크림색 양머리 수건을 쓰고 나란히 서서 카메라를 보는 첫 자세와, 서 있을 **카메라 앞 트인 실제 바닥·데크**(가구 위·가구 뒤 금지)만 쓴다. motion 은 빈 문자열. water 는 그 자리가 풀 가장자리 데크처럼 물가면 true(수영복), 객실·바닥처럼 마른 실내면 false(가운).
 [쓰는 법 — 어기면 버린다]
 - scene(영어): 사진에 보이는 장소 한 문장 + Mina 와 Jun 의 정확한 위치·자세(첫 장면) + 'Nothing else in the photograph changes.'
 - 인물은 이름(Mina, Jun)으로만 부른다. **생김새·재질·크기·옷·머리를 쓰지 않는다**(wooden·carved·tiny·life-size·clay·swimsuit·robe 등 금지 — 생김새·크기는 시스템이 정한다).
@@ -249,7 +250,7 @@ _MINI_SYSTEM = """너는 쇼츠의 연출 감독이다. 실제 숙소 사진 1�
 - water: 인물이 물 안이나 물가에 있으면 true(물 반응을 넣는다), 마른 장소면 false.
 JSON 만: {{"suitable":true|false,"why":"한 줄","water":true|false,"place":"장소 유형(사전 이름 또는 새 이름)","gag":"개그 한 줄 요약(한국어)","scene":"...","motion":"...","box":[x0,y0,x1,y1],"faces":[x0,y0,x1,y1]}}"""
 _SCALE_TEXT = {
-    "life": {"who": "두 인물 Mina(여)·Jun(남)은 **실제 사람 크기**(준 178cm · 미나 165cm)의 점토 질감 캐릭터다. 이 사진 안에 **실제로 있는** 바닥·데크·물·풀 가장자리·침대·소파 위에 사람이 있을 법하게 둔다.",
+    "life": {"who": "두 인물 Mina(여)·Jun(남)은 **실제 사람 크기**(준 178cm · 미나 165cm)의 구체관절 인형(시스템이 생김새를 정한다)이다. 이 사진 안에 **실제로 있는** 바닥·데크·물·풀 가장자리·침대·소파 위에 사람이 있을 법하게 둔다.",
              "size": "- 그 자리에 사람 크기로 서거나 앉으면 화면 높이의 1/3~3/4 로 보인다(가까운 자리일수록 크다). 사람이 화면 높이 1/5 이하로 작아지는 먼 자리는 false",
              "furniture": "소파·침대·빈백 **위에 올라서기 금지**(앉기·눕기·기대기만 — 사람 크기에서는 시설 오용으로 보인다). "},
     "mini": {"who": "두 인형 Mina(여)·Jun(남)은 손조각 피규어(10cm)이고, 이 사진 안에 **실제로 있는** 표면(물·풀 가장자리·바닥·데크·침대·소파) 위에만 둔다.",
@@ -311,6 +312,44 @@ def assign_env(cuts: list[dict], max_veo: int) -> list[dict]:
     for c in cuts:
         c["lo"], c["hi"] = LIM["hook"] if c["section"] == "hook" else LIM["veo"] if (c["veo"] or c.get("mini")) else LIM["photo"]
     return cuts
+
+
+CLIP_CHECK_SYSTEM = """너는 AI 영상 클립 검수자다. 같은 4초 클립의 첫 장면·2초·끝 장면 3장을 받는다. 첫 장면에는 실제 숙소 사진 안에 사람 크기의 구체관절 인형 두 명이 있다.
+판정(JSON 만): {"same_place": true|false, "same_size": true|false, "passes_through": true|false, "doll_look": true|false, "new_objects": ["..."], "verdict": "ok"|"reject", "why": "한 줄"}
+- same_place: 두 인물의 발·엉덩이 위치가 첫 장면과 같은가(앞으로 나오거나 걸어가면 false)
+- same_size: 가구·방 대비 인물 크기가 같은가(커지거나 작아지면 false)
+- passes_through: 인물이 탁자·의자·난간·벽 등을 통과하거나 겹쳐 지나갔는가
+- doll_look: 끝 장면에서도 인형(비닐 피부·관절·성형 머리)으로 보이는가(실제 사람처럼 보이면 false)
+- new_objects: 첫 장면에 없던 신발·슬리퍼·소품·사람·시설
+- verdict: same_place·same_size·doll_look 이 모두 true 이고 passes_through 가 false 이고 new_objects 가 비면 ok, 아니면 reject"""
+
+
+def _vision_json_multi(model: str, system: str, text: str, images: list[Path]) -> dict:
+    parts = [{"text": text}] + [{"inline_data": {"mime_type": "image/jpeg", "data": photos._small_jpeg_b64(str(p))}} for p in images]
+    body = {"system_instruction": {"parts": [{"text": system}]}, "contents": [{"role": "user", "parts": parts}],
+            "generationConfig": {"maxOutputTokens": 400, "temperature": 0.1, "responseMimeType": "application/json", "thinkingConfig": {"thinkingBudget": 0}}}
+    try:
+        data = ms._gpost(f"models/{model}:generateContent", body, 90)
+    except RuntimeError as e:
+        if "thinking" not in str(e).lower():
+            raise
+        body["generationConfig"].pop("thinkingConfig", None)
+        data = ms._gpost(f"models/{model}:generateContent", body, 90)
+    txt = "".join(p.get("text", "") for p in (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or [])).strip()
+    txt = re.sub(r"^```(?:json)?|```$", "", txt).strip()
+    m = re.search(r"\{.*\}", txt, re.S)
+    return json.loads(m.group(0)) if m else {}
+
+
+def clip_check(models: dict, first: Path, clip: Path, out_dir: Path, tag: str) -> dict:
+    """옴니 클립을 쓰기 전 비전 검수(컷당 약 1원): 같은 자리·같은 크기·가구 통과·인형 외형·새 사물. run-33 시그니처(탁자 통과·실사화)를 픽셀 비교(0.14)가 못 잡았다."""
+    dur = ms.probe_duration(clip) or 4.0
+    mid = make_mini.frame_at(clip, min(2.0, dur / 2), out_dir / f"{tag}_chk_mid.jpg")
+    last = make_mini.frame_at(clip, max(0.1, dur - 0.15), out_dir / f"{tag}_chk_last.jpg")
+    r = ms._try_models("vision", models["text"], lambda m: _vision_json_multi(m, CLIP_CHECK_SYSTEM, "첫 장면 · 2초 · 끝 장면 순서입니다.", [first, mid, last]))
+    if not r or "verdict" not in r:
+        raise RuntimeError(f"클립 검수 답 없음: {json.dumps(r, ensure_ascii=False)[:120]}")
+    return r
 
 
 def mini_errs(sc: dict, role: str) -> list[str]:
@@ -517,6 +556,14 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
             res = omni.make_clip(vp, frame, 4, mdir / f"{c['n']}.mp4")
             clips[c["n"]] = mdir / f"{c['n']}.mp4"
             row.update({"ok": True, "omni_krw": res["krw"], "clip_sec": res["sec"], "model": res["model"]})
+            try:                                                              # 비전 검수(약 1원 · 운영자 2026-10-13 "공통 수정 반영"): 탈락이면 사진 무빙으로(재생성은 승인 뒤)
+                chk = clip_check(models, frame, clips[c["n"]], mdir, str(c["n"]))
+                row["vision"] = chk
+            except Exception as e:  # noqa: BLE001
+                row["vision"] = {"verdict": "error", "why": str(e)[:120]}
+                log(f"컷 {c['i']} 클립 검수 호출 실패(통과로 둠): {str(e)[:80]}")
+            if row["vision"].get("verdict") == "reject":
+                raise RuntimeError(f"클립 비전 검수 탈락: {row['vision'].get('why', '')[:120]}")
             try:                                                              # 기록만(0원): 끝 장면이 첫 장면과 얼마나 다른지 — 카메라 고정 뒤의 기준값을 모아 나중에 자동 거름 기준으로 쓴다
                 last = make_mini.frame_at(clips[c["n"]], max(0.1, (res["sec"] or 4.0) - 0.15), mdir / f"{c['n']}_last.jpg")
                 row["drift_last"] = round(make_mini.changed_ratio(frame, last), 3)
@@ -529,6 +576,8 @@ def make_minis(cuts: list[dict], h: dict, req: dict, models: dict, report: dict)
                 used.append(str(sc["gag"]))
         except Exception as e:  # noqa: BLE001
             row["error"] = f"{type(e).__name__}: {str(e)[:200]}"
+            row["ok"] = False
+            clips.pop(c["n"], None)                                       # 검수 탈락 클립은 쓰지 않는다
             c["mini"] = None                                              # 사진 무빙으로 대체
             log(f"컷 {c['i']} 미니어처 실패 → 사진 무빙: {row['error']}")
     if used:

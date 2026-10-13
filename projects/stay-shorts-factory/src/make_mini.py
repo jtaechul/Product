@@ -118,26 +118,32 @@ LIFE_DEFAULT = True
 EDIT_HEAD_LIFE = ("TASK: Edit the attached HOTEL PHOTOGRAPH (the photo of the real place). Keep the photograph exactly as it is — same framing, "
                   "every surface, object and decoration, colors, lighting and focus; do not blur, recolor, crop, extend, clean up or redraw anything, "
                   "and do not add or remove any object. Only add the two characters from the attached CHARACTER REFERENCE IMAGE — take only their "
-                  "design (faces, hair, outfits, clay-like finish) from it, ignore everything else in that image, and render them at real human "
-                  "size — placed into the scene as described below, with correct perspective and contact shadows so they look physically present "
-                  "in the photograph.")
+                  "design (faces, hair, outfits) from it, ignore everything else in that image, and render them at real human size as "
+                  "unmistakable collectible ball-jointed dolls (visible ball joints, semi-gloss vinyl skin, rigid molded hair) — never as real "
+                  "people — placed into the scene as described below, with correct perspective and contact shadows so they look physically "
+                  "present in the photograph.")
 EDIT_SCALE_LIFE = ("SCALE AND PLACEMENT: the characters are real human size — Jun about 178 cm, Mina about 165 cm — standing, sitting or lying on "
                    "the real surface described in SCENE, at the true distance that surface is from the camera, so doors, furniture and railings "
                    "keep their real proportions next to them (a sofa seat reaches their knees, a door is a little taller than Jun). "
                    "Their FACES must stay clearly visible: both faces sit higher than 58% of the frame height measured from the top, and not in "
-                   "the right-most 15% of the frame (captions and app buttons are drawn there later). Keep them to one side or in front of the "
-                   "furniture so the place itself stays clearly visible behind and around them. Never enlarge or shrink anything in the photograph.")
-EDIT_PHOTO_LIFE = ("PHOTOGRAPHY: the characters look photographed in the same shot — matched to the photograph's own light direction, color "
-                   "temperature, depth of field and grain, with the same sharpness as real objects at the same distance; the background keeps "
-                   "the photograph's existing sharpness. Vertical 9:16, same size as the hotel photograph.")
-VEO_HEAD_LIFE = ("The first frame is a real hotel photograph with two life-size stylized characters of a Korean couple — smooth hand-painted "
-                 "polymer-clay satin finish, elegant adult proportions, eight heads tall. Keep them exactly as they appear in the first frame "
-                 "for the whole clip: same faces with painted almond eyes and small sculpted lips (the mouth may open when laughing or surprised), "
-                 "same hairstyles (woman: dark-brown hair with a left side part in a neat low bun; man: black short dandy cut with a forward "
-                 "fringe), the same outfit they wear in the first frame, same body proportions, and the same real human size relative to the "
-                 "furniture and the room — they never grow, shrink or change their distance from the camera. They are alive and clearly enjoying "
-                 "the place: natural, visible, playful body movement (arms, heads and torsos), smooth like an animated film — not frozen, not "
-                 "stiff. They stay on the same spot where they are in the first frame, feet planted (or seated) exactly where they are.")
+                   "the right-most 15% of the frame (captions and app buttons are drawn there later). Place them on the open floor or surface "
+                   "NEAREST to the camera, in front of every piece of furniture: nothing — no table, chair, rail, plant or ledge — is between them "
+                   "and the camera, and the place stays clearly visible behind and beside them. Never enlarge or shrink anything in the photograph.")
+EDIT_PHOTO_LIFE = ("PHOTOGRAPHY: the dolls look photographed in the same shot — matched to the photograph's own light direction, color "
+                   "temperature, depth of field and grain; their vinyl skin shows soft specular highlights like a doll, not like human skin; "
+                   "the background keeps the photograph's existing sharpness. Vertical 9:16, same size as the hotel photograph.")
+VEO_HEAD_LIFE = ("The first frame is a real hotel photograph with two human-size collectible ball-jointed dolls of a Korean couple — "
+                 "semi-gloss vinyl skin, visible ball joints at the neck, shoulders, elbows, wrists, hips, knees and ankles, rigid molded hair "
+                 "with carved grooves, painted eyes, elegant adult proportions, eight heads tall. They remain dolls for the whole clip: the skin "
+                 "stays vinyl, the hair stays one rigid piece, the joints stay visible, and they wear exactly what they wear in the first frame "
+                 "and nothing else, from head to feet, throughout. "
+                 "Keep them exactly as they appear in the first frame: same faces with painted almond eyes and small sculpted lips (the mouth "
+                 "may open when laughing or surprised), same hairstyles (woman: dark-brown hair with a left side part in a neat low bun; man: "
+                 "black short dandy cut with a forward fringe), the same outfit they wear in the first frame, same body proportions, and the "
+                 "same real human size relative to the furniture — they never grow, shrink or change their distance from the camera. They are "
+                 "alive and clearly enjoying the place: natural, visible, playful movement of arms, heads and torsos, like a stop-motion doll "
+                 "film — not frozen, not stiff. Their feet and hips stay planted exactly on the first-frame spot for the whole clip, at the "
+                 "same distance from the camera; all movement happens above the waist.")
 
 VEO_HEAD = ("The first frame is a real hotel photograph with two small hand-sculpted, hand-painted polymer-clay art-doll figurines of a "
             "Korean couple (elegant adult proportions, eight heads tall, satin clay finish). Keep the figurines exactly as they appear in "
@@ -150,8 +156,8 @@ VEO_HEAD = ("The first frame is a real hotel photograph with two small hand-scul
 VEO_TAIL = ("Camera: keeps the first frame's framing — locked-off, at most a very slight push-in — so nothing outside the first frame ever appears; "
             "never invent anything that is not visible in the first frame. The hotel place "
             "stays exactly the same as the first frame: no new objects, no new people, no text, no logos, no morphing; the characters' "
-            "faces, hair, outfits, size and position relative to the furniture never change; they never turn into real humans. "
-            "Vertical 9:16, 4 seconds.")
+            "faces, hair, outfits, size and position relative to the furniture never change; they never turn into real humans; "
+            "their outfit stays exactly as in the first frame from head to feet. Vertical 9:16, 4 seconds.")
 
 
 def log(*a):
@@ -172,6 +178,19 @@ LIFE_SUBS = [   # 캐릭터 블록(v3 · 운영자 확정)에서 크기 문장�
      "Mina is 165 cm tall."),
     ("This is an elegant adult figurine", "This is an elegant adult figure"),
     ("FACE — small because of the eight-head proportions, but fully detailed", "FACE — in proportion to the eight-head body, fully detailed"),
+    # v5 (2026-10-13 운영자 "1번 방향"): 사람 크기에서도 인형으로 읽히는 시각 단서 — 구체관절 인형
+    ("MATERIAL: smooth sculpted polymer clay with a soft satin finish, subtle hand-painted shading, a faint warm blush on the cheeks, nose tip and "
+     "shoulders; edges slightly softened like a sculpted doll. No fingerprints, no seams, no plastic gloss, no realistic pores or skin texture.",
+     "MATERIAL — unmistakably a DOLL, never a real person: a human-size collectible ball-jointed doll. Skin is smooth cast vinyl with a soft "
+     "semi-gloss sheen, with no pores, no fine body hair, no veins and no skin texture; soft specular highlights sit on the vinyl like on a doll. "
+     "Visible spherical ball joints with a thin seam line at the neck, shoulders, elbows, wrists, hips, knees and ankles. Fingers are slightly "
+     "simplified and stiff. A faint hand-painted blush on the cheeks and nose tip."),
+    ("Eyes: almond-shaped sculpted eyes with painted dark-brown irises and black pupils",
+     "Eyes: almond-shaped painted doll eyes under a glossy clear coat, with visibly hand-painted dark-brown irises and black pupils"),
+    ("HAIR — exact and never changes, wet or dry, from any angle:",
+     "HAIR — one rigid molded piece of sculpted doll hair (no separate strands, never moves or blows), exact and never changes, wet or dry, from any angle:"),
+    ("extra fingers, text, logos, watermarks, melted or morphing shapes.",
+     "extra fingers, text, logos, watermarks, melted or morphing shapes, hidden or missing ball joints, loose hair strands."),
 ]
 
 
@@ -223,7 +242,8 @@ def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: b
     life = LIFE_DEFAULT if life is None else life
     keep = KEEP_LINE if water else KEEP_LINE_DRY
     if life:
-        keep = keep.replace("reference figurines", "reference characters")
+        keep = keep.replace("reference figurines", "reference characters") + (" The reference image does not show the ball joints and the "
+                                                                              "semi-gloss vinyl finish — add them exactly as described below.")
     parts = [EDIT_HEAD_LIFE if life else EDIT_HEAD, keep, character_block(water, life), OUTFIT_WATER if water else OUTFIT_DRY,
              EDIT_SCALE_LIFE if life else EDIT_SCALE, EDIT_PHOTO_LIFE if life else EDIT_PHOTO, "SCENE: " + clean_scene(scene).strip()]
     if signature:
@@ -630,6 +650,12 @@ def main():
                 krw = veo.make_clip(vp, frame, 4, clip, veo.seed_for("mini", k), mime="image/png")
                 row.update({"ok": True, "engine": "veo", "veo_krw": round(krw), "clip_sec": 4})
             row.update({"edit_prompt_chars": len(ep), "video_prompt_chars": len(vp)})
+            try:                                                           # 비전 검수(약 1원) — 시험 경로는 기록만
+                import make_solo, make_stay as _ms
+                row["vision"] = make_solo.clip_check(_ms.pick_models(), frame, clip, BUILD, k)
+                log(f"{k} 비전 검수: {row['vision'].get('verdict')} — {row['vision'].get('why', '')[:80]}")
+            except Exception as e:  # noqa: BLE001
+                row["vision"] = {"verdict": "error", "why": str(e)[:120]}
             dur = omni.duration(clip) or 4.0
             ts = [round(dur * f, 1) for f in (0.25, 0.5, 0.75, 0.97)]
             mids = [frame_at(clip, t, BUILD / f"{k}_t{t}.jpg") for t in ts]

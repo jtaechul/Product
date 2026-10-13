@@ -65,10 +65,11 @@ FORBIDDEN: real people, realistic human skin, big heads, chibi, child or bobbleh
 
 ## 1-4. 채널 시그니처 포즈 — 고정 블록 (매 편 마지막 미니어처 컷 · 글자 그대로)
 
-장소는 그 편에서 가장 대표적인 사진(보통 훅과 같은 물 공간의 **마른 가장자리·데크**, 없으면 객실 침대 앞)을 쓴다. 젖은 바닥 뛰기 같은 위험 동작 없음.
+장소는 그 편에서 가장 대표적인 사진(보통 훅과 같은 물 공간의 **마른 가장자리·데크**, 없으면 객실 바닥)을 쓴다. 젖은 바닥 뛰기 같은 위험 동작 없음.
+> **2026-10-13 run-33 사고**: 이전 블록의 "turn to the camera … one small hop" 이 "카메라 앞으로 나와서 포즈" 로 해석돼 두 인물이 **탁자를 통과**해 전진했다 → 돌아서기·깡충 삭제, "발·엉덩이는 첫 장면 자리 고정, 무릎만 제자리 바운스" 로 교체. 모든 동작 블록 공통 원칙: **발·엉덩이 고정, 상체·팔만 움직인다.**
 
 ```
-SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side at the real spot described, facing the camera, both wearing a cream terry-towel "sheep-head" wrap (a Korean jjimjilbang style towel rolled into two small round ears on top of the head) over their usual hair, wearing the same outfit as in the first frame. 0 to 1.5 seconds: they turn to the camera at the same time and give one small hop of excitement. 1.5 to 3 seconds: they raise both arms over their heads and join their hands to form one big heart shape together, tilting their heads toward each other. 3 to 4 seconds: they hold the big heart pose with big happy smiles and happily curved eyes, bouncing once in rhythm. No text, no props other than the towel wraps.
+SIGNATURE ENDING — identical in every video. Mina and Jun already stand side by side on the real spot described, facing the camera, both wearing a cream terry-towel "sheep-head" wrap (a Korean jjimjilbang style towel rolled into two small round ears on top of the head) over their usual hair, wearing the same outfit as in the first frame. Their feet and hips stay planted exactly where they are in the first frame for the whole clip, at the same distance from the camera; all movement happens above the waist. 0 to 1.5 seconds: they glance at each other, then back at the camera, with one small bounce of the knees in place, feet planted. 1.5 to 3 seconds: they raise both arms over their heads and join their hands to form one big heart shape together, tilting their heads toward each other. 3 to 4 seconds: they hold the big heart pose with big happy smiles and happily curved eyes, with one more gentle bounce of the knees in place. No text, no props other than the towel wraps.
 ```
 
 ## 1-5. 장소 개그 사전 (컷 ①② · 장소와 연결 · 하나만 고른다)
@@ -104,6 +105,18 @@ SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side a
 - 시그니처: 마른 바닥·데크에 서서(가구 위 금지), 양머리 수건 + 하트는 그대로.
 - 캡션 문구: "등장 인물은 AI 캐릭터입니다(실제 사람 아님)".
 - 시험 결과(life-1 · 2026-10-13 · 714원): 같은 소파 사진·같은 개그에서 크기 불변(변화율 0.01~0.035, 미니어처 0.40)·카메라 고정·정체성 유지 → **확정**. 같은 nonce 재푸시는 건너뜀(`state/mini_nonce.json`).
+
+## 1-7. 실물 크기 v5 — 구체관절 인형 단서 + 배치·검수 (2026-10-13 운영자 "1번 방향" · ⭐ 기본값)
+
+> run-33 시그니처 컷: 실물 크기로 바꾸자 "장난감" 단서(작은 크기)가 사라져 **실제 사람처럼** 렌더링됐고(피부·머리카락 실사, 슬리퍼까지 새로 신김), 시그니처 문장의 "카메라 쪽으로 돌아서며 깡충" 때문에 **탁자를 통과**해 앞으로 나왔다.
+> 결정(운영자): 실물 크기는 유지하되 사람 크기에서도 "인형"으로 읽히는 **시각 단서**를 넣는다 — 구체관절 인형(BJD). 8등신·얼굴·머리·의상·`ref.jpg` 는 그대로.
+
+1. **인형 단서(코드 `LIFE_SUBS` 가 캐릭터 블록에 치환)**: ① 피부 = 매끈한 캐스트 비닐, 은은한 반광택, 모공·솜털·혈관·피부결 없음 ② **목·어깨·팔꿈치·손목·골반·무릎·발목에 보이는 구슬 관절 + 가는 이음선** ③ 손가락은 단순하고 뻣뻣하게 ④ 눈 = 광택 코팅된 **그린 인형 눈**(붓자국 보이는 홍채) ⑤ 머리 = **한 덩어리로 성형된 단단한 머리**(가닥 없음, 흩날리지 않음) ⑥ 금지 목록에 새 옷·신발·슬리퍼·소품 같은 **사물 이름을 부정문으로 쓰지 않는다**(run-27 교훈: 부정문의 낱말도 단서가 된다) → "첫 장면의 옷차림 그대로, 머리부터 발끝까지" 로 긍정문.
+   기준 이미지엔 관절·광택이 없으므로 유지 문장에 "기준 이미지에 없는 관절·비닐 광택은 아래 설명대로 추가" 를 붙인다.
+2. **배치 규칙(합성 지시 + 비전 적합 판단)**: 인물은 **카메라에서 가장 가까운 트인 바닥·표면**에, 모든 가구 **앞**에 둔다. 인물과 카메라 사이에 탁자·의자·난간·화분·선반이 있는 자리는 **부적합**(가구 뒤 금지). 시설은 인물 뒤·옆에 보이게.
+3. **동작 규칙(모든 블록 공통)**: 발·엉덩이는 첫 장면 자리에 고정, 상체·팔·머리만 움직인다. 비전이 쓴 동작에서 걷기·발 떼기·깡충·점프·전진 낱말은 `MOVE_WORDS` 로 거르고, 영상 지시문에는 부정문 대신 "발·엉덩이는 첫 장면 자리에 고정, 움직임은 허리 위에서만" 으로 쓴다. 시그니처 블록도 같은 원칙(1-4).
+4. **영상 뒤 비전 검수(컷당 약 1원 · `clip_check`)**: 첫 장면·2초·끝 장면 3장을 비전에 보여 "같은 자리·같은 크기인가, 가구를 통과했나, 인형으로 보이나, 새 사물(신발·소품)이 생겼나" 를 JSON 으로 받는다. 탈락이면 그 컷은 사진 무빙으로 내려가고(돈은 이미 나감, 재생성은 승인 뒤) report 에 이유를 남긴다. 픽셀 비교(변화율)로는 탁자 통과·전진을 못 잡았다(run-33: 0.14).
+5. 시험: 1컷(소파 또는 거실 · 약 720원 + 검수 1원) — 승인 뒤.
 
 ## 2. 장면 블록 (컷마다 · 장소 사전에서 고른다 · 영어)
 
@@ -141,6 +154,7 @@ SIGNATURE ENDING — identical in every video. Mina and Jun stand side by side a
 | 비전이 인형 생김새를 적음('hand-carved wooden' → 나무 인형) | 인형은 이름으로만. 생김새 낱말은 지워서 보냄 | `clean_scene`, `MINI_SYSTEM` |
 | 크게 당기는 카메라 | 동작에 카메라 지시 금지, 옴니는 구도 고정 | `CAMERA_WORDS`, `VEO_TAIL` |
 | 인형 얼굴이 자막·앱 버튼에 가려짐(run-27 시그니처 84~95%) | **운영자 결정(2026-10-12 "상체까지 가려져도 된다, 얼굴만 안 가리면 된다")**: 몸은 자막 띠에 들어가도 되고, **두 얼굴만** 화면 높이 58% 위·오른쪽 앱 버튼 기둥(0.85) 밖. 비전이 얼굴 상자(`faces`)를 따로 주고 턱 0.58 이하만 통과, 상자 위 끝 0.12 이상(고지문). 합성 뒤 다듬은 상자 위 끝이 0.54 아래면(머리가 띠 근처에서 시작) 옴니 생략. (앞선 '전신 60% 위'·'상체 60% 위' 안은 폐기) | `EDIT_SCALE`, `FACE_Y_MAX`·`FACE_X_MAX`·`POST_HEAD_TOP_MAX`, `mini_errs`, `make_minis` |
+| 실물 크기에서 실제 사람처럼 보임 · 탁자 통과(run-33 시그니처) | 1-7: 구체관절 인형 단서(관절·비닐 광택·성형 머리·그린 눈), 가구 앞 트인 바닥에만 배치, 발·엉덩이 고정, 영상 뒤 비전 검수(1원) | `LIFE_SUBS`·`EDIT_*_LIFE`·`VEO_HEAD_LIFE`, `MINI_SYSTEM`, `clip_check` |
 | 얼굴이 낮아 자막에 걸림(run-30: 물 사진 3장 탈락) | **운영자 아이디어(2026-10-12) "얼굴이 가려질 것 같으면 위쪽을 조금 크롭"** — 얼굴 턱이 58~67% 면 합성 전에 사진 **위쪽을 잘라(최대 25%) 확대**한다. 아래쪽은 그대로, 9:16 유지를 위해 좌우도 같은 비율로 인형 쪽에 맞춰 자름 → 얼굴이 (y−c)/(1−c) 로 올라가고 인형도 최대 1.33배 커진다. 실제 사진 픽셀만(지어낸 영역 없음), 0원. 25% 넘게 잘라야 하면 탈락(원본이 1024px 급이라 흐려짐). run-27 훅 합성으로 시험: 16% 잘라 얼굴 0.55~0.60 → 0.47~0.57 | `plan_crop`·`crop_zoom`·`map_crop`, `mini_errs`, `make_minis` |
 | 인형이 너무 작음(run-27 객실 12%·전경 11%) | 비전 상자 높이 0.15 이상, 합성 뒤 0.12 미만이면 옴니 생략 | `mini_errs`, `make_minis` |
 | 원본 복원 때 몸 잘림(run-27 훅: 머리 없는 인형) | 상자 다듬기는 색 차이까지 보고 위로 넉넉히(최소 22%) 찾는다. 상한을 넘겨 제한할 때도 위로 높이 80% | `refine_box` |
