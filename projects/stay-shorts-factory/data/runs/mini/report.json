@@ -1,21 +1,30 @@
 {
- "nonce": "2026-10-13-life-1",
- "started": "2026-10-13T00:26:25",
+ "nonce": "2026-10-13-life-2",
+ "started": "2026-10-13T05:25:58",
  "ok": true,
  "shots": [
   {
-   "key": "sofa",
-   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
+   "key": "living",
+   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/RpUyl4x2tUtPVhB1GW9yeQ==/1",
    "ok": true,
-   "seam": 0.033,
-   "changed": 0.07,
+   "seam": 0.052,
+   "changed": 0.166,
    "engine": "omni",
-   "omni_krw": 615,
-   "clip_sec": 4.01,
+   "omni_krw": 617,
+   "clip_sec": 4.03,
    "omni_model": "gemini-omni-1.1-flash",
-   "tokens_out": 23780,
-   "edit_prompt_chars": 6196,
-   "video_prompt_chars": 2131
+   "tokens_out": 23848,
+   "edit_prompt_chars": 7326,
+   "video_prompt_chars": 3183,
+   "vision": {
+    "same_place": true,
+    "same_size": true,
+    "passes_through": false,
+    "doll_look": true,
+    "new_objects": [],
+    "verdict": "ok",
+    "why": "인형의 위치와 크기가 유지되고 배경 충돌이나 추가 오브젝트 없이 동작을 자연스럽게 수행함."
+   }
   }
  ],
  "veo_model": "veo-3.1-lite-generate-preview",
@@ -24,7 +33,7 @@
  "scale": "life",
  "image_krw": 98,
  "image_model": "gemini-3.1-flash-image",
- "veo_spent_krw": 714,
- "month_veo_krw": 4998,
- "finished": "2026-10-13T00:27:00"
+ "veo_spent_krw": 716,
+ "month_veo_krw": 5292,
+ "finished": "2026-10-13T05:26:42"
 }
