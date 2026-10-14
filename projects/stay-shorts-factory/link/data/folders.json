@@ -70,6 +70,72 @@
      "price_band": null,
      "caption": "",
      "no": 1
+    },
+    {
+     "rank": 3,
+     "name": "쏠비치 삼척",
+     "city": "삼척시",
+     "hook": "그리스 산토리니 감성 오션풀",
+     "blog_30d": 1000,
+     "facts": [
+      "웰컴센터 지하 1층 사우나 6시부터 운영",
+      "동해 전망 보며 쉬는 오션플레이 내 릴렉스룸",
+      "리조트·호텔·노블리안·반려견 객실 보유",
+      "어린이용 2층 침대 구비된 키즈룸 운영",
+      "비치오션뷰 및 테라스 오션뷰 객실 구성",
+      "오션플레이"
+     ],
+     "rooms": [
+      {
+       "name": "[리조트] 패밀리-스탠다드 취사",
+       "tags": [
+        "취사 가능",
+        "패밀리"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/iV74VKSkuykqWG39iZ3inpMRUwQxgTMyrI5o9QU-YhaVXlmkzXa4B-leZQBpiWR6IAfM0AKxrD9w6RzTMpuscoshpX2w-DAC0dpS8NoxPJPiub7NzZ44D_4I4fnv-Gx8YDvrZXtD64RmeLkY7GJVErE5PwVIkyplxg4q3L2mLwnZvG5YrvjCcJj-YisjfNV8pwWadoEHSPxbBQIMMCXDYs7j7oBj5ZNjiQLRUFURWPEPtqU0AR1zWDsHwom--sk2FMnJeiqImAccfj8kHTj9JnqGiNB3YttMU9WxT_TEpoattPTLQ2GFo_MR2nM2HQtGWULSR7FKvGBmeQl1-D3U4WicxWPnR2pyjWu7aY4QpVm-7g35UUyEBRQ13uYx4_wz0UrNUfXC5lohcdTKOezvIUSpxafVn0rofRlyzQDqsDcL_laGnYZHbTwMCqQFuOUrJ5boF03cfUN8LcfQEIwCWMUdl2fKjq_pXDg7Xzi2B2QWiBZX8XE_eQ4C5IxpKcIVzxYsbCvwIUkFYwcNM4lFxn5weJQtnQey85WwPfbfSKFPShkt"
+      },
+      {
+       "name": "리조트 패밀리(취사/스탠다드/침대)",
+       "tags": [
+        "취사 가능",
+        "패밀리"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/RserlXBKyIoZyMkzRt0Pavu0iYGjdxcSepMDHUVmTayFuRtqjUw1QGdlhQtD9YwEbMnjG3DfVxxz80dynkqphbfUazdwIFlgVEr-aRzNwhGmXiNrwivucWptJlPflc4BgS6ER6l_35ll9AdDCvY4olbY9BVWKI-mxEQBrxVTU0-TSOZN0dvI9ontd4nvfiFTOmTt_mb6c1q29tPPmK_bajP5pim3CEkparuqDgstvjQOimgOmeUDAOtW7a0KtUTbboxm16UFYZWUKxB-PMaxkK4Clrqm8ak8llgblbv_IdN3sE1QexfgRcjN3QLzWGUkZ2k8ZLFO-yqOoePpcxO5liilJv8u-WcKCMX_i8ykS_NsngSog0nBM1roXy_GLMIrn9DVB2_fxGf14F0znUn5knknFpGtbRVXClE5itL_MmGo6kvQiWpFH0ITMtM0r778fTfSbWh2cWOCMHzXnoNtBjLIoiPBM7OS0YJ-QwD622hwu1JqjGAtJ0TpUva0aMVLnxguTRhP8CaNtJ-KmuOowscl4XTcQhtLx0DTp5s8fuEPGg=="
+      },
+      {
+       "name": "패밀리 (취사/스탠다드)",
+       "tags": [
+        "취사 가능",
+        "패밀리"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/vuFSYlbbTiRkHdAkvhbKm0uH5gthJIIcvUOIFMB9Ajmv24gc99-em17dN_L2qoQX9eeLOyXB8zc-RqEdyRCxHsYZjwJFDYHtmaQZE_ablgzHXtKE3El4t0EBFlLA7u2xNU5NZl_zMRuHwqKcA4Xhq7G1dfjxN8IoThoaYsixN6ZeDCu3vh7uAEPSSvIa99BlQcG5UCEaifHKjwBZMtez3gy9cDHWNRfiJwdXGjSUzptrd0lukrf6uAE7xSKHy53SD73piT6Gi1VX0gKvjoV928U1LB8NdVQXxCd-cCuna6UK9k4vuEYSQ87Sj1Sgcg33tcVrOfdrb5KxEfVNkQzsWaEGRpJR8MH_HB6CaLs71ISBaUc47IeoBRQjArXpjMEgbB1rCWfEbl9yG-lcve7FEhO4RuLyqq0eaYjIJJ8ksSZrNDPqM818k2sn6IHmbxfHhxSezE14w3mqH9zc_2-ek-tB_jeF_zbLFqWqCbfPhdl9n2BxSBEDU-nSLKv1Mi0SrMrhRbSN9j-STAT4nzGhn0QzWUi9nSiddG-l00SkHu0YfA=="
+      },
+      {
+       "name": "리조트 스탠다드 패밀리룸 (키친 없음)",
+       "tags": [
+        "패밀리"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/VCrYcAeGRjcEw4rfVPnzBppRV1vQj4B0pBsCxVFbOkeg_qIctov6YirYUpQxKzkNYQUr2bFMNhPkUyO7LnNHe1LkwAwSBmNMuQW2q-OodASn0w0Wh5ETqvPQQ2btEfn-BRgHKVAnTkYwN6Bdcsy8wVY8I4Q8GkFAG8RS5TnXOTwUtOpmaOZ3V30c4y_1brh6EbhLQvcF0ccgRmUIv4I3sk3U7EKnt6tNpV_wiovWeiH8SMWDLmMjlBWs_ijBdpHZ6w5J0xTErTa68u2ZmW7VzX0GBiKnBMQTPgNcHaaN4IN0A9ePNVHI-6uPq0YT7KUERDV0irOQVCJkoEX77l2E8K91H4xPfWa36dvxehbuquY9VKFi3y8_GZxLSl-D6RiIOI5Z8uqH0m1XCaph7HNbI3jhQR4usiVhQi-c_8kMBL5a1jIU6e7T-i01fS3Dy6lFauIeS5xWRSA5KjG5_gCL32yD9I7sAGDYGEdntQQZWFytGxwQQtOvrf2oRiuWJ2Wq63c03lYJRDbEataRFCuxR7YelAPc_OwmjqB38IedQfvzAh4b"
+      },
+      {
+       "name": "패밀리-취사/스탠다드/침대",
+       "tags": [
+        "취사 가능",
+        "패밀리"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/MCPvSYdYo9wI2Cb5MLndngRNtsYpNMJ9Fa56UCMRHezAELBPSKk6Dgy6U36Rs744KBvWvYxB-bo9gamrJNRanWDUiY9i5338-kaGjM3cy3bfjpumdZWqyL6vuaPlqVwtMsbB-xNRMlWDbbTkoc3C4reAeNfzOYbwoFaDkdXgy4DF1Wxqix2wlCwnjM0u1tVvKEm-SgTDun3em240wlWoDMHLNrCGc9L5Jy5raR2FA9j8VQNOjw-pPhMX8LMGOJWO10XZEqH2Qp1ktnlUxdauPX-y0hvi-GC_qhH0PFtGWBDfwgUzc2S-YSgvCgMkd2N7LxQn7sslGoyyPn-ORG8xnzHUCIud_ZcMROGT314rqZFqE6UaoHZHzg8bTvRkcP82L442WoN2a1AlUEJrCvisS2hRht6KJX9hppmVepGuXZzOzDjjZPx4wjl4Lxj1E-kdRRR_3DDP_G-KLeJd-VMSiaMIHV-lBOGj3_55m-0czlEd9mZvnG3eKHLHzdT6pD2dKp14K6WsIxqV_MYtuqp5A4MhUlWoVAmSw3uUyWAhinjGCA=="
+      }
+     ],
+     "image": "img/2026-11-강원-실내-온수풀-온천/3.jpg",
+     "links": {
+      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010725728&vendorItemId=70000140985604&itemId=20002045760263&traceid=V0-153-f52ccab192124087&requestid=20261014122654229237533547&token=31850C%7CGM&pt=0&slot=1",
+      "agoda": null,
+      "official": "https://www.sonohotelsresorts.com/solbeach_sc"
+     },
+     "honest": "",
+     "price_band": null,
+     "caption": "",
+     "no": 2
     }
    ]
   }
