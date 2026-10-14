@@ -1,7 +1,7 @@
 {
- "nonce": "2026-10-14-preview-terms-1",
+ "nonce": "2026-10-14-preview-solbeach-1",
  "mode": "solo",
- "stay": "소노펠리체 비발디파크",
+ "stay": "쏠비치 삼척",
  "theme": "실내 온수풀·온천",
  "region": "강원",
  "month": "2026-11",
@@ -10,7 +10,7 @@
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "잠금 — stay-run-42 미리보기 완료(시설 이름 확인·말투 검사 실검증 · 약 82원). 다음 유료 제작은 nonce 변경 + veo_approved true (재조립이면 reuse_only true)",
+ "note": "미리보기(운영자 2026-10-14 선택 '미리보기만 먼저' · 약 80원 · 영상 0원): 쏠비치 삼척 — 외관 판정·외관 1장·시설 이름 확인·말투 검사 실검증. 끝나면 stage 제거·잠금",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -20,53 +20,5 @@
   "세인트존스 호텔": "https://new.stjohns.co.kr/"
  },
  "mini_scale": "life",
- "reuse_runs": [
-  {
-   "run_id": 38346158908,
-   "name": "stay-run-33"
-  },
-  {
-   "run_id": 38401637294,
-   "name": "stay-run-35"
-  }
- ],
- "reuse_clips": [
-  {
-   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
-   "clip": "stay-run-33/build/mini/11.mp4",
-   "frame": "stay-run-33/build/mini/11_frame_pb.png",
-   "role": "gag",
-   "gag": "스핑크스처럼 위엄 있는 표정을 지으려다 서로 눈이 마주치고 피식 웃기",
-   "water": true,
-   "place": "노천탕·자쿠지"
-  },
-  {
-   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
-   "clip": "stay-run-33/build/mini/14.mp4",
-   "frame": "stay-run-33/build/mini/14_frame_pb.png",
-   "role": "gag",
-   "gag": "소파에 앉아 동시에 기지개를 켜다 팔이 부딪혀 서로 쳐다보고 웃음",
-   "water": false,
-   "place": "객실 창가·소파"
-  },
-  {
-   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/oAKONtuhXMveXdY6fEmACQ==/1",
-   "clip": "stay-run-35/build/mini/16.mp4",
-   "frame": "stay-run-35/build/mini/16_frame_pb.png",
-   "role": "signature",
-   "gag": "시그니처 포즈",
-   "water": false,
-   "place": "객실 거실"
-  },
-  {
-   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
-   "clip": "stay-run-33/build/veo_12.mp4",
-   "role": "env"
-  },
-  {
-   "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Z2QIeKCw56CffVBzKIkWjA==/1",
-   "clip": "stay-run-35/build/veo_11.mp4",
-   "role": "env"
-  }
- ]
+ "stage": "preview"
 }
