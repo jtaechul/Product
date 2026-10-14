@@ -10,7 +10,7 @@
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "미리보기 2차(1차 run-44 줄바꿈 버그로 실패 · 약 80원 · 운영자 2026-10-14 선택 '미리보기만 먼저' · 약 80원 · 영상 0원): 쏠비치 삼척 — 외관 판정·외관 1장·시설 이름 확인·말투 검사 실검증. 끝나면 stage 제거·잠금",
+ "note": "잠금: 쏠비치 삼척 미리보기 stay-run-45 완료(약 80원 · 영상 0원). 다음 실행은 운영자 선택 뒤 nonce 를 바꿔서",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -19,6 +19,5 @@
   "쏠비치 삼척": "https://www.sonohotelsresorts.com/solbeach_sc",
   "세인트존스 호텔": "https://new.stjohns.co.kr/"
  },
- "mini_scale": "life",
- "stage": "preview"
+ "mini_scale": "life"
 }
