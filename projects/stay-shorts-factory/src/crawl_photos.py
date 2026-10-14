@@ -430,8 +430,9 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
         urls = [u for u in found if u not in shared]
         res["shared_excluded"] += len(found) - len(urls)
         got = 0
+        per_page = max(4, max_images // 4)                    # stay-run-44 실측: 객실 목록 한 페이지가 32장 중 27장을 채워 시설·물놀이 사진이 2장뿐 → 페이지당 상한
         for u in urls:
-            if len(res["photos"]) >= max_images:
+            if len(res["photos"]) >= max_images or got >= per_page:
                 break
             seen_url.add(u)
             res["tried"] += 1

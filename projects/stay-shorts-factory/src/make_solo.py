@@ -681,7 +681,7 @@ HOOK_FACT_RX = re.compile(r"(온수풀|온천|사우나|워터파크|파도풀|�
 
 def hook_title_errs(title: str, narr: str, h: dict, req: dict, cut: dict | None = None) -> list[str]:
     """화면 훅 제목 검사(0원) — 2026-10-13 운영자 "나레이션 그대로 말고 요약해서 궁금증 유발". 위쪽 가운데 120px 두 줄 안."""
-    t = str(title or "").strip()
+    t = design.one_line(title)
     if not t:
         return ["hook_title(화면 훅 제목) 없음 — 6~14자, 나레이션을 줄여 궁금증만 남긴 제목"]
     errs, p = [], design.plain(t)
@@ -1001,15 +1001,33 @@ def ensure_hook_title(model: str, s: dict, cuts: list[dict], h: dict, req: dict)
         except Exception as e:  # noqa: BLE001
             log(f"훅 제목 호출 실패: {str(e)[:80]}"); continue
         for t in (r.get("titles") or []) if isinstance(r, dict) else []:
-            e2 = hook_title_errs(str(t), n1, h, req, hook)
+            t = design.one_line(t)
+            try:
+                e2 = hook_title_errs(t, n1, h, req, hook)
+            except Exception as e:  # noqa: BLE001                               # 후보 하나가 이상해도 실행을 멈추지 않는다
+                e2 = [f"hook_title 검사 오류 {str(e)[:40]}"]
             if not e2:
-                s["hook_title"] = str(t).strip()
+                s["hook_title"] = t
                 log(f"훅 제목: {s['hook_title']}")
                 return s
             errs = e2
     log("훅 제목 후보가 모두 규칙에 걸림 → 제목 없이(아래 자막만). 미리보기에서 확인")
     s["hook_title"] = None
     s["hook_title_missing"] = errs[:3]
+    return s
+
+
+def clean_script(s: dict) -> dict:
+    """모델 답의 글(나레이션·라벨·훅 제목)에서 줄바꿈·겹공백을 없앤다 — 자막 폭을 재는 Pillow 가 줄바꿈 글에서 멈춘다(stay-run-44)."""
+    if not isinstance(s, dict):
+        return s
+    for x in s.get("cuts") or []:
+        if isinstance(x, dict):
+            for k in ("narration", "caption"):
+                if k in x:
+                    x[k] = design.one_line(x[k])
+    if s.get("hook_title"):
+        s["hook_title"] = design.one_line(s["hook_title"])
     return s
 
 
@@ -1034,7 +1052,7 @@ def write_script(model: str, req: dict, h: dict, cuts: list[dict]) -> dict:
     errs, best = [], None
     for attempt in range(3):
         extra = ("\n\n직전 답의 문제(고쳐서 다시): " + " / ".join(errs)) if errs else ""
-        s = ms.gemini_json(model, SCRIPT_SYSTEM, content + extra)
+        s = clean_script(ms.gemini_json(model, SCRIPT_SYSTEM, content + extra))
         errs = [e for e in check_script(s, h, cuts, req, sig) if not e.startswith("hook_title")]   # 훅 제목만 틀리면 대본 전체를 다시 쓰지 않는다 → ensure_hook_title 이 제목만
         if not errs:
             errs = flow_errs(s, cuts)

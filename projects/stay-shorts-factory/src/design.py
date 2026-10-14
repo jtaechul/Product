@@ -56,8 +56,14 @@ def font(size: int, bold: bool = True) -> ImageFont.FreeTypeFont:
     return ImageFont.truetype(str(p), size)
 
 
+def one_line(text: str) -> str:
+    """줄바꿈·탭·연속 공백을 공백 하나로. Pillow 는 줄바꿈 든 글의 폭을 못 잰다(ValueError) — stay-run-44 실측: 모델이 훅 제목 후보에 줄바꿈을 넣어 실행이 멈췄다."""
+    return re.sub(r"\s+", " ", str(text or "")).strip()
+
+
 def segments(text: str) -> list[tuple[str, bool]]:
     """'실내 [파도풀]은' → [('실내 ', False), ('파도풀', True), ('은', False)]"""
+    text = one_line(text)
     out = []
     for part in re.split(r"(\[[^\]]+\])", text):
         if not part:
@@ -512,7 +518,7 @@ def chunk_words(text: str, max_words: int = CHUNK_WORDS) -> list[str]:
     마지막 조각이 1단어로 남으면 앞 조각에 붙인다(붙여도 한 줄이면). 렌더가 아니라 **대본 검사**가 이 함수로 거른다."""
     d = ImageDraw.Draw(Image.new("RGBA", (W, H)))
     f = font(GRID["subtitle"]["size"])
-    words = [w for w in plain(text).split(" ") if w]
+    words = [w for w in one_line(plain(text)).split(" ") if w]
     chunks, cur = [], []
     def w_of(ws): return d.textlength(" ".join(ws), font=f)
     for w in words:
@@ -612,6 +618,7 @@ def title_lines(d: ImageDraw.ImageDraw, text: str, f, max_w: float, clean_only: 
     """훅 타이틀 줄 나누기: 한 줄에 들어가면 한 줄, 아니면 **띄어쓰기 자리에서만** 두 줄로 — 두 줄 너비가 가장 비슷한 자리.
     wrap_marked 는 '[정답]은' 처럼 강조와 조사 사이에서도 끊어 '은 여기'가 생겼다(2026-10-13 시안) → 낱말 안에서는 절대 안 끊는다.
     clean_only=True 면 띄어쓰기 자리로 못 나눌 때 None(검사용) — stay-run-38 '신전에서 물놀이 / 를 즐긴다고?' 가 예비 줄바꿈으로 통과했다."""
+    text = one_line(text)
     one = segments(text)
     if _width(d, one, f) <= max_w:
         return [one]
