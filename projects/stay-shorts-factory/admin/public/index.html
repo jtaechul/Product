@@ -193,7 +193,7 @@ function render(d) {
 
   $("themeLine").textContent = "다음 숙소 · " + [d.theme.month, d.theme.region, d.theme.theme].filter(Boolean).join(" · ");
   const sel = $("stay"), keep = sel.value;
-  sel.innerHTML = d.candidates.map((c) => "<option value=\"" + esc(c.name) + "\">" + esc(c.rank + "위 " + c.name + (c.city ? " (" + c.city + ")" : "") + (c.done ? " · 영상 있음" : "")) + "</option>").join("");
+  sel.innerHTML = d.candidates.map((c) => "<option value=\"" + esc(c.name) + "\">" + esc(c.rank + "위 " + c.name + (c.city ? " (" + c.city + ")" : "") + (c.done ? " · 폴더 등록됨" : "")) + "</option>").join("");
   const first = d.candidates.find((c) => !c.done);
   sel.value = keep && d.candidates.some((c) => c.name === keep) ? keep : (first ? first.name : (d.candidates[0] || {}).name || "");
 
