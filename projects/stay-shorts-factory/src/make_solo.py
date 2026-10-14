@@ -728,6 +728,8 @@ def sentence_errs(text: str, c: dict, h: dict, req: dict) -> list[str]:
             errs.append(f"컷 {c['i']} 금지 표현 '{b}'")
     if re.search(r"\d[\d,]*\s*(원|만원|만 원|%)", text):
         errs.append(f"컷 {c['i']} 가격·할인 숫자")
+    if ENDING_RX.search(text):                                                  # 2026-10-14 run-40 컷 3·8 '~습니다' — 규칙은 '~해요'체(검사가 없었다)
+        errs.append(f"컷 {c['i']} 문장 끝 '~니다' — '~해요'체로")
     if c["section"] == "hook":
         bad = [w for w in ("데이터", "후기", "분석", "추천", "AI", "인공지능", "빅데이터") if w in text]
         if bad:
@@ -885,9 +887,11 @@ def polish_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, sig
 
 
 SHORTEN_SYSTEM = """너는 쇼츠 나레이션 편집자다. 아래 컷 문장들을 각 컷의 **최대 글자 수(공백 제외) 안으로 줄인다**.
+'~해요체로' 표시가 있는 컷은 문장 끝을 '~해요'체로 바꾼다(예: "쉴 수 있습니다" → "쉴 수 있어요", "이어집니다" → "이어져요").
 지킬 것: 사실(시설·전망·조건)·문장 첫 연결어·"~해요"체 말투·지역+유형 호칭·"추천해요"는 그대로. 꾸밈말·중복 표현부터 뺀다. 숙소 이름·가격·과장 금지. 새 정보를 더하지 않는다.
 JSON 만: {"cuts":[{"i": 컷 번호, "narration": "줄인 문장"}]}"""
-LEN_ERR = re.compile(r"^컷 \d+ \d+자 \(한도 \d+\)$|^전체 나레이션 \d+자")
+LEN_ERR = re.compile(r"^컷 \d+ \d+자 \(한도 \d+\)$|^전체 나레이션 \d+자|^컷 \d+ 문장 끝 '~니다'")   # 이 오류만 남으면 해당 컷만 고친다(shorten_script)
+ENDING_RX = re.compile(r"니다[.!?~]?\s*$")
 
 
 def shorten_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, sig: dict | None) -> dict | None:
@@ -896,6 +900,9 @@ def shorten_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, si
     got = {int(x.get("i", 0)): str(x.get("narration", "")).strip() for x in (s.get("cuts") or []) if isinstance(x, dict)}
     hi = {c["i"]: c["hi"] + (EXTRA_BONUS if sig and sig["i"] == c["i"] else 0) for c in cuts}
     tg = {i: hi[i] for i in got if i in hi and _len(got[i]) > hi[i]}
+    ending = {i for i in got if i in hi and ENDING_RX.search(got[i])}              # '~니다' 컷은 같은 호출에서 '~해요'체로
+    for i in ending:
+        tg.setdefault(i, hi[i])
     total = sum(min(_len(n), tg.get(i, _len(n))) for i, n in got.items())
     over = total - TOTAL_MAX
     if over > 0:                                                                  # 전체가 넘치면 긴 컷 3개(훅·마지막 제외)에서 나눠 줄인다
@@ -906,7 +913,7 @@ def shorten_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, si
             tg[c["i"]] = max(c["lo"], cur - per)
     if not tg:
         return None
-    lines = [f"컷 {i}: 최대 {tg[i]}자 (지금 {_len(got[i])}자) — {got[i]}" for i in sorted(tg)]
+    lines = [f"컷 {i}: 최대 {tg[i]}자 (지금 {_len(got[i])}자){' · ~해요체로' if i in ending else ''} — {got[i]}" for i in sorted(tg)]
     try:
         r = ms.gemini_json(model, SHORTEN_SYSTEM, "\n".join(lines))
     except Exception as e:  # noqa: BLE001
@@ -920,7 +927,7 @@ def shorten_script(model: str, s: dict, cuts: list[dict], h: dict, req: dict, si
     errs = [e for e in check_script(t, h, cuts, req, sig) if not e.startswith("hook_title")] or flow_errs(t, cuts)
     if errs:
         log("줄인 대본도 규칙에 걸림:", errs[:3]); return None
-    log(f"넘친 컷 {sorted(tg)} 만 줄여 통과")
+    log(f"넘친·말투 컷 {sorted(tg)} 만 고쳐 통과")
     return t
 
 
@@ -1351,6 +1358,13 @@ def preview_md(req: dict, p: dict) -> str:
     for c in cuts:
         x = by_i[c["i"]]
         md.append(f"- 컷 {c['i']}: " + (f"**{x['narration']}**" if (c["section"] == "hook" and not ht) else " | ".join(design.chunk_words(x["narration"]))))
+    audits = [c for c in p["cuts"] if c["shot"].get("term_audit")]
+    if audits:                                                                  # 2026-10-14: 시설 이름(자쿠지 등)을 사진으로 확인한 결과
+        md += ["", "## 시설 이름 확인 (사진에 결정적 증거가 있는지 · 없으면 일반어로 교체)", "", "| 컷 | 이름 | 확인 | 근거 | 설명(교체 뒤) |", "|---|---|---|---|---|"]
+        for c in audits:
+            a = c["shot"]["term_audit"]
+            for k, v in a.get("terms", {}).items():
+                md.append(f"| {c['i']} | {k} | {'확인' if v.get('seen') else '**미확인 → 교체**'} | {v.get('evidence', '')} | {c['shot'].get('description', '')} |")
     if MINI_LOG:
         md += ["", "## 미니어처 후보 판정 (`preview_mini.jpg` · 노랑 선 = 얼굴 한계 58%(이 선 위) · 하늘색 = 얼굴 · 빨강 = 자막 띠 — 몸은 가려져도 됨 · 흰 선 = 얼굴을 올리려고 잘라낼 위쪽 · 보라 선 = 훅 컷 제목 자리 바닥(얼굴은 이 선 아래))", "",
                "| 컷 | 역할 | 판정 | 장소 · 개그 | 물 | 상자 |", "|---|---|---|---|---|---|"]
