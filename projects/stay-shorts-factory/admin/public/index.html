@@ -17,7 +17,7 @@
 }
 * { box-sizing: border-box }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 "IBM Plex Sans KR", system-ui, sans-serif; -webkit-text-size-adjust: 100% }
-main { max-width: 520px; margin: 0 auto; padding: 18px 16px calc(28px + env(safe-area-inset-bottom)); display: grid; gap: 12px }
+main { max-width: 520px; margin: 0 auto; grid-template-columns: minmax(0, 1fr); padding: 18px 16px calc(28px + env(safe-area-inset-bottom)); display: grid; gap: 12px }
 .bar { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted) }
 .bar b { color: var(--ink); font-size: 17px }
 .bar button { border: 0; background: none; color: var(--muted); font: inherit; padding: 8px 0 8px 12px; min-height: 44px }
@@ -64,6 +64,28 @@ input[type=password] { width: 100%; min-height: 52px; border: 1px solid #d9dee5;
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; padding: 6px 0 }
 .check input { width: 22px; height: 22px; flex: none; margin-top: 1px }
 [hidden] { display: none !important }
+/* 실행 기록 펼치기 */
+.runs details { border-top: 1px solid var(--line) }
+.runs details:first-child { border-top: 0 }
+.runs summary { list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; color: var(--ink); padding: 10px 0; min-height: 44px }
+.runs summary::-webkit-details-marker { display: none }
+.runs summary span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.runs .body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 0 0 12px }
+main > *, .card > *, .runs .body > * { min-width: 0 }      /* 넓은 표가 화면 폭을 밀어내지 않게(격자 칸의 최소 폭) */
+.md p, .md li { overflow-wrap: anywhere }
+.runs video { width: 100%; max-height: 70vh; background: #000; border-radius: 12px }
+.runs audio { width: 100% }
+.kind { font-size: 11px; color: var(--muted); margin-right: 4px }
+.md { font-size: 13px; overflow-x: auto }
+.md h1, .md h2 { font-size: 15px; margin: 12px 0 6px }
+.md table { border-collapse: collapse; font-size: 12px; min-width: 100% }
+.md td, .md th { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; text-align: left }
+.md li { margin: 2px 0 }
+.small-btn { border: 0; border-radius: 10px; padding: 10px 12px; min-height: 44px; font: 600 14px "IBM Plex Sans KR", sans-serif; background: var(--soft); color: var(--ink); cursor: pointer }
+.small-btn.warn { background: var(--bad-bg); color: var(--bad) }
+.field { display: grid; gap: 4px; font-size: 13px; color: var(--muted) }
+.field input, .field select { width: 100%; min-height: 48px; border: 1px solid #d9dee5; border-radius: 12px; padding: 10px 12px; font: 600 16px "IBM Plex Sans KR", sans-serif; color: var(--ink); background: #fff }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
 </style>
 </head>
 <body>
@@ -90,6 +112,7 @@ input[type=password] { width: 100%; min-height: 52px; border: 1px solid #d9dee5;
   <section class="card">
     <span class="label">지금 상태</span>
     <div class="live"><span class="dot" id="dot"></span><span id="liveText">불러오는 중</span></div>
+    <button class="small-btn warn" id="cancelBtn" hidden>실행 멈추기</button>
   </section>
 
   <section class="card">
@@ -101,7 +124,7 @@ input[type=password] { width: 100%; min-height: 52px; border: 1px solid #d9dee5;
       <button class="btn main wide" id="produceBtn">정식 제작<small id="produceCost">약 2,500원 · 누르면 한 번 더 확인</small></button>
     </div>
     <div class="msg" id="runMsg"></div>
-    <p class="note">결과(사진 시트·나레이션·영상)는 텔레그램으로 옵니다. 미리보기를 확인한 뒤 정식 제작을 누르세요.</p>
+    <p class="note">사진 시트는 텔레그램으로 옵니다(공식 사진이라 이 페이지엔 안 올림). 완성 영상·나레이션은 아래 '최근 실행'을 눌러 바로 볼 수 있습니다.</p>
   </section>
 
   <section class="card" id="lastCard" hidden>
@@ -113,20 +136,37 @@ input[type=password] { width: 100%; min-height: 52px; border: 1px solid #d9dee5;
   </section>
 
   <section class="card">
-    <span class="label">최근 실행</span>
-    <div id="runs"></div>
+    <span class="label">최근 실행 · 눌러서 영상·나레이션 보기</span>
+    <div class="runs" id="runs"></div>
+  </section>
+
+  <section class="card">
+    <details id="discBox">
+      <summary>후보 다시 찾기 <span class="sub">테마·지역·월을 바꿔 숙소 순위표를 새로 만듭니다</span></summary>
+      <div style="display:grid;gap:10px;padding-top:8px">
+        <label class="field">테마<input id="dTheme" maxlength="24" placeholder="예: 키즈풀·워터파크"></label>
+        <div class="grid2">
+          <label class="field">지역<select id="dRegion"></select></label>
+          <label class="field">월<select id="dMonth"></select></label>
+        </div>
+        <label class="field">키워드 (선택 · 쉼표로)<input id="dKeys" maxlength="160" placeholder="비우면 테마에서 자동"></label>
+        <button class="btn main" id="discBtn">후보 찾기 시작<small id="discCost">수십 원 · 약 10분 · 끝나면 텔레그램 알림</small></button>
+        <div class="msg" id="discMsg"></div>
+        <p class="note" id="discNow"></p>
+      </div>
+    </details>
   </section>
 </main>
 
 <div class="sheet" id="sheet">
   <div class="card">
-    <span class="label">정식 제작 확인</span>
+    <span class="label" id="cfLabel">정식 제작 확인</span>
     <div style="font-size:19px;font-weight:700" id="cfStay"></div>
     <div class="big" id="cfCost"></div>
     <p class="note" id="cfAfter"></p>
-    <label class="check"><input type="checkbox" id="cfCheck"><span>이 숙소의 미리보기(사진 시트·나레이션)를 텔레그램에서 확인했습니다</span></label>
+    <label class="check" id="cfCheckRow"><input type="checkbox" id="cfCheck"><span id="cfCheckText"></span></label>
     <div class="btns">
-      <button class="btn" id="cfCancel">취소<small>돈 안 씀</small></button>
+      <button class="btn" id="cfCancel">취소<small>아무것도 안 함</small></button>
       <button class="btn main" id="cfGo" disabled>제작 시작<small>바로 시작합니다</small></button>
     </div>
   </div>
@@ -138,6 +178,53 @@ const won = (n) => Math.round(Number(n) || 0).toLocaleString("ko-KR") + "원";
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const KIND = { gemini_est: "글·음성", veo: "Veo 영상", image: "합성 사진", omni: "인물 영상", music: "음악" };
 let S = null, timer = null, holdUntil = 0;   // 시작 직후 1분은 버튼을 막는다(실행이 GitHub 에 보이기까지 몇 초 걸림)
+let runsSig = "", discFilled = false, sheetGo = null;
+const RUN_KIND = { produce: "", discover: "후보 찾기 · " };
+
+function inline(x) {
+  return esc(x).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+function tableHtml(rows) {
+  return "<table>" + rows.map((r, i) => "<tr>" + r.map((c) => (i ? "<td>" : "<th>") + inline(c) + (i ? "</td>" : "</th>")).join("") + "</tr>").join("") + "</table>";
+}
+function mdHtml(t) {
+  // 미리보기 글(preview.md) 최소 표시: 제목·표·목록·굵게 — 글은 먼저 이스케이프한다
+  const out = []; let tbl = null;
+  for (const line of String(t).split("\n")) {
+    if (/^\s*\|/.test(line)) {
+      const cells = line.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+      if (!cells.every((c) => /^:?-{2,}:?$/.test(c))) (tbl = tbl || []).push(cells);
+      continue;
+    }
+    if (tbl) { out.push(tableHtml(tbl)); tbl = null; }
+    if (/^#{1,6}\s/.test(line)) out.push("<h2>" + inline(line.replace(/^#+\s*/, "")) + "</h2>");
+    else if (/^\s*-\s/.test(line)) out.push("<li>" + inline(line.replace(/^\s*-\s/, "")) + "</li>");
+    else if (line.trim()) out.push("<p>" + inline(line) + "</p>");
+  }
+  if (tbl) out.push(tableHtml(tbl));
+  return out.join("");
+}
+
+function openSheet(o) {
+  $("cfLabel").textContent = o.label; $("cfStay").textContent = o.title || "";
+  $("cfCost").innerHTML = o.big || ""; $("cfAfter").textContent = o.after || "";
+  $("cfCheckRow").hidden = !o.check; $("cfCheckText").textContent = o.check || "";
+  $("cfCheck").checked = false; $("cfGo").disabled = !!o.check;
+  $("cfGo").innerHTML = esc(o.go) + "<small>" + esc(o.goSub || "바로 시작합니다") + "</small>";
+  sheetGo = o.onGo;
+  $("sheet").classList.add("show");
+}
+
+function runBody(r) {
+  const tag = "stay-run-" + r.number, has = (n) => (r.media || []).includes(n), q = (n) => "/api/media?tag=" + encodeURIComponent(tag) + "&name=" + n;
+  const parts = [];
+  if (has("video.mp4")) parts.push("<video controls playsinline preload=\"metadata\" src=\"" + q("video.mp4") + "\"></video>");
+  if (has("narration_preview.mp3")) parts.push("<span class=\"sub\">나레이션 미리듣기</span><audio controls preload=\"none\" src=\"" + q("narration_preview.mp3") + "\"></audio>");
+  if (has("preview.md")) parts.push("<button class=\"small-btn\" data-md=\"" + q("preview.md") + "\">대본·검수 글 보기</button><div class=\"md\"></div>");
+  if (!parts.length) parts.push("<p class=\"note\">" + (r.kind === "discover" ? "후보 순위표는 위 '다음 숙소' 목록에 반영됩니다(사진 시트는 텔레그램)." : r.active ? "실행 중입니다. 끝나면 여기서 결과를 볼 수 있습니다." : "이 실행에는 볼 수 있는 결과 파일이 없습니다(실패했거나 건너뜀).") + "</p>");
+  parts.push("<a class=\"sub\" href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\">GitHub 실행 기록 열기</a>");
+  return parts.join("");
+}
 
 async function api(path, body) {
   const r = await fetch(path, body === undefined ? { credentials: "same-origin" } : {
@@ -188,8 +275,10 @@ function render(d) {
   const act = d.runs.find((r) => r.active);
   $("dot").className = "dot" + (act ? " on" : "");
   $("liveText").innerHTML = act
-    ? "<b>" + esc(shortTitle(act.title)) + "</b> 실행 중 · <a href=\"" + esc(act.url) + "\" target=\"_blank\" rel=\"noopener\">진행 보기</a><br><span class=\"sub\">미리보기 약 6분 · 정식 제작 약 15분. 끝나면 텔레그램으로 옵니다</span>"
+    ? "<b>" + esc(RUN_KIND[act.kind] + shortTitle(act.title)) + "</b> 실행 중 · <a href=\"" + esc(act.url) + "\" target=\"_blank\" rel=\"noopener\">진행 보기</a><br><span class=\"sub\">미리보기 약 6분 · 정식 제작 약 15분 · 후보 찾기 약 10분. 끝나면 텔레그램으로 알림이 옵니다</span>"
     : (d.runs_error ? "실행 기록을 읽지 못했습니다: " + esc(d.runs_error) : "쉬는 중 · 아래에서 숙소를 고르고 시작하세요");
+  $("cancelBtn").hidden = !act;
+  $("cancelBtn").dataset.id = act ? act.id : "";
 
   $("themeLine").textContent = "다음 숙소 · " + [d.theme.month, d.theme.region, d.theme.theme].filter(Boolean).join(" · ");
   const sel = $("stay"), keep = sel.value;
@@ -217,7 +306,34 @@ function render(d) {
     $("lastCuts").innerHTML = L.cuts.map((c) => "<div class=\"cut\"><b>컷 " + esc(c.i) + "</b>" + esc(c.narration) + " <span class=\"sub\">[" + esc(c.caption) + "]</span></div>").join("") || "<p class=\"note\">컷 없음</p>";
   }
 
-  $("runs").innerHTML = d.runs.length ? d.runs.map((r) => "<a class=\"row\" href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\"><span>#" + esc(r.number) + " " + esc(shortTitle(r.title)) + "</span>" + runChip(r) + "</a>").join("") : "<p class=\"note\">기록 없음</p>";
+  // 목록이 그대로면 다시 그리지 않는다(재생 중인 영상이 끊기지 않게)
+  const sig = d.runs.map((r) => r.id + r.status + r.conclusion + (r.media || []).join()).join("|");
+  if (sig !== runsSig) {
+    const open = new Set([...document.querySelectorAll("#runs details[open]")].map((x) => x.dataset.id));
+    runsSig = sig;
+    $("runs").innerHTML = d.runs.length ? d.runs.map((r) => "<details data-id=\"" + esc(r.id) + "\"><summary><span><span class=\"kind\">#" + esc(r.number) + "</span>" + esc(RUN_KIND[r.kind] + shortTitle(r.title)) + "</span>" + runChip(r) + "</summary><div class=\"body\"></div></details>").join("") : "<p class=\"note\">기록 없음</p>";
+    for (const el of document.querySelectorAll("#runs details")) {
+      const r = d.runs.find((x) => String(x.id) === el.dataset.id);
+      el.addEventListener("toggle", () => { const b = el.querySelector(".body"); if (el.open && !b.innerHTML) b.innerHTML = runBody(r); });
+      if (open.has(el.dataset.id)) el.open = true;
+    }
+  }
+
+  // 후보 다시 찾기: 처음 한 번만 채운다(입력 중인 값을 덮지 않게)
+  if (!discFilled) {
+    discFilled = true;
+    $("dRegion").innerHTML = d.regions.map((x) => "<option>" + esc(x) + "</option>").join("");
+    const months = [];
+    for (let k = 0; k < 7; k++) { const t = new Date(Date.UTC(+d.now.slice(0, 4), +d.now.slice(5, 7) - 1 + k, 1)); months.push(t.toISOString().slice(0, 7)); }
+    $("dMonth").innerHTML = months.map((x) => "<option>" + x + "</option>").join("");
+    $("dTheme").value = d.discover.theme || d.theme.theme;
+    $("dRegion").value = d.discover.region || d.theme.region || "강원";
+    $("dMonth").value = months.includes(d.discover.month) ? d.discover.month : months[1];
+    $("dKeys").value = d.discover.keywords || "";
+    $("discCost").textContent = d.discover.note + " · 약 10분 · 끝나면 텔레그램 알림";
+  }
+  $("discNow").textContent = "지금 순위표: " + [d.theme.month, d.theme.region, d.theme.theme].filter(Boolean).join(" · ") + (d.theme.ran_at ? " (" + d.theme.ran_at + " 만듦)" : "");
+  $("discBtn").disabled = !!act || hold;
 
   clearTimeout(timer);
   timer = setTimeout(load, act ? 20000 : 60000);
@@ -253,16 +369,46 @@ $("previewBtn").onclick = () => start("preview");
 $("produceBtn").onclick = () => {
   if (!S) return;
   const stay = $("stay").value, m = S.money, c = S.cost.produce;
-  $("cfStay").textContent = stay;
-  $("cfCost").innerHTML = "약 " + esc(won(c)) + " <small>정식 제작 1편</small>";
-  $("cfAfter").textContent = "이번 달 " + won(m.total) + " → 약 " + won(m.total + c) + " (한도 " + won(m.cap) + ")";
-  $("cfCheck").checked = false; $("cfGo").disabled = true;
-  $("sheet").classList.add("show");
+  openSheet({ label: "정식 제작 확인", title: stay, big: "약 " + esc(won(c)) + " <small>정식 제작 1편</small>",
+    after: "이번 달 " + won(m.total) + " → 약 " + won(m.total + c) + " (한도 " + won(m.cap) + ")",
+    check: "이 숙소의 미리보기(사진 시트·나레이션)를 확인했습니다", go: "제작 시작", onGo: () => start("produce", true) });
 };
+$("cancelBtn").onclick = () => {
+  const id = Number($("cancelBtn").dataset.id), r = S && S.runs.find((x) => x.id === id);
+  if (!r) return;
+  openSheet({ label: "실행 멈추기", title: RUN_KIND[r.kind] + shortTitle(r.title), big: "멈출까요?",
+    after: "영상(Veo·인물 영상)을 만들기 전이면 돈이 거의 나가지 않습니다. 이미 만든 조각 값은 돌아오지 않고, 멈춘 실행은 다시 이어서 할 수 없습니다.",
+    go: "멈추기", goSub: "1분 안에 멈춥니다", onGo: async () => {
+      try { await api("/api/cancel", { id }); msg($("runMsg"), "멈추라고 보냈습니다. 1분 안에 '지금 상태'에서 사라집니다", "ok"); setTimeout(load, 8000); }
+      catch (e) { msg($("runMsg"), e.message, "bad"); }
+    } });
+};
+$("discBtn").onclick = () => {
+  const body = { theme: $("dTheme").value.trim(), region: $("dRegion").value, month: $("dMonth").value, keywords: $("dKeys").value };
+  openSheet({ label: "후보 다시 찾기", title: body.month + " · " + body.region + " · " + body.theme, big: "약 10분 <small>" + esc(S.discover.note) + "</small>",
+    after: "새 순위표가 나오면 '다음 숙소' 목록과 앞으로 만드는 영상의 테마·폴더가 이 테마로 바뀝니다.",
+    go: "찾기 시작", onGo: async () => {
+      $("discBtn").disabled = true;
+      try { await api("/api/discover", body); holdUntil = Date.now() + 60000; msg($("discMsg"), "후보 찾기를 시작했습니다. 약 10분 뒤 '다음 숙소'가 바뀝니다", "ok"); setTimeout(load, 8000); setTimeout(load, 61000); }
+      catch (e) { msg($("discMsg"), e.message, "bad"); load(); }
+    } });
+};
+$("runs").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-md]");
+  if (!b) return;
+  const box = b.nextElementSibling;
+  if (box.innerHTML) { box.innerHTML = ""; b.textContent = "대본·검수 글 보기"; return; }
+  b.textContent = "불러오는 중";
+  try {
+    const r = await fetch(b.dataset.md, { credentials: "same-origin" });
+    if (!r.ok) throw new Error("글을 불러오지 못했습니다 (" + r.status + ")");
+    box.innerHTML = mdHtml(await r.text()); b.textContent = "글 접기";
+  } catch (err) { box.textContent = err.message; b.textContent = "대본·검수 글 보기"; }
+});
 $("cfCheck").onchange = () => { $("cfGo").disabled = !$("cfCheck").checked; };
 $("cfCancel").onclick = () => $("sheet").classList.remove("show");
 $("sheet").onclick = (e) => { if (e.target === $("sheet")) $("sheet").classList.remove("show"); };
-$("cfGo").onclick = () => { $("sheet").classList.remove("show"); start("produce", true); };
+$("cfGo").onclick = () => { $("sheet").classList.remove("show"); if (sheetGo) sheetGo(); };
 document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("app").hidden) load(); });
 load();
 </script>
