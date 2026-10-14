@@ -185,7 +185,21 @@ jobs:
           for i in 1 2 3 4 5; do
             git fetch origin "${GITHUB_REF_NAME}" && git reset -q --hard "origin/${GITHUB_REF_NAME}" || { sleep 3; continue; }
             for d in data/runs state link; do [ -e "$SAVE/$d" ] && { mkdir -p "$P/$d"; cp -a "$SAVE/$d/." "$P/$d/"; }; done
-            git add "$P/data/runs" "$P/state" "$P/link" 2>/dev/null || true
+            # 2026-10-14 관리실: 실행이 끝나면 요청을 자동으로 잠근다(stage 제거 · veo_approved false · 재사용 전용 해제).
+            # 원격 요청의 nonce 가 방금 돈 nonce 와 같을 때만 — 그사이 새로 들어온 요청은 건드리지 않는다
+            python3 - "$P" <<'PY' || echo "요청 잠금 건너뜀"
+          import json, pathlib, sys
+          p = pathlib.Path(sys.argv[1])
+          ran = json.loads((p / "state/produce_nonce.json").read_text(encoding="utf-8")).get("nonce")
+          rq = p / "requests/produce/request.json"
+          r = json.loads(rq.read_text(encoding="utf-8"))
+          if ran and r.get("nonce") == ran and (r.get("stage") or r.get("veo_approved") or r.get("reuse_only")):
+              r.pop("stage", None); r.pop("reuse_only", None); r["veo_approved"] = False
+              r["note"] = f"잠금(자동 · 실행 끝): {ran}"
+              rq.write_text(json.dumps(r, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+              print("요청 잠금:", ran)
+          PY
+            git add "$P/data/runs" "$P/state" "$P/link" "$P/requests/produce/request.json" 2>/dev/null || true
             if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
             FOLDER_CHANGED=0; git diff --cached --quiet -- "$P/link" || FOLDER_CHANGED=1
             git commit -q -m "stay-shorts: 시험 제작 기록 [skip ci]"

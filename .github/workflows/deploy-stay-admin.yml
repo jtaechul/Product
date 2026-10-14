@@ -1,0 +1,124 @@
+name: Deploy Stay Admin
+
+# 숙소 쇼츠 관리실(projects/stay-shorts-factory/admin) 을 Cloudflare Workers 에 올린다.
+# 운영자 2026-10-14: 웹 관리자 페이지 · 비밀번호 하나 · 즉시 실행 · 텔레그램은 진행 알림 전용 · "기존 열쇠 재사용".
+#
+# 쓰는 저장소 시크릿 — 모두 이미 있는 이름(새 시크릿 이름 없음):
+#   CF_API_TOKEN · CLOUDFLARE_ACCOUNT_ID   다른 배포 워크플로와 같은 Cloudflare 열쇠
+#   MOVIEGEN_ADMIN_GH_TOKEN                숏폼 스튜디오 관리자와 같은 GitHub 토큰 → 워커 GH_TOKEN
+#                                          (request.json 커밋에 Contents 쓰기, 실행 목록에 Actions 읽기)
+#   MOVIEGEN_ADMIN_PASSWORD                같은 관리자 비밀번호 → 워커 ADMIN_PASSWORD
+#   MOVIEGEN_SESSION_SECRET (선택)         로그인 쿠키 서명 → 워커 SESSION_SECRET (없으면 비밀번호)
+# 값은 환경변수로만 넘기고 화면·로그에 찍지 않는다.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: ["claude/stay-shorts-video-conversion-67hiin", "main"]
+    paths:
+      - "projects/stay-shorts-factory/admin/**"
+      - ".github/workflows/deploy-stay-admin.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stay-admin-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: 관리실 배포
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: projects/stay-shorts-factory/admin
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            projects/stay-shorts-factory/admin
+          sparse-checkout-cone-mode: true
+
+      - name: 열쇠 확인 (값은 찍지 않는다)
+        env:
+          CF: ${{ secrets.CF_API_TOKEN }}
+          ACC: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TK: ${{ secrets.MOVIEGEN_ADMIN_GH_TOKEN }}
+          PW: ${{ secrets.MOVIEGEN_ADMIN_PASSWORD }}
+        run: |
+          MISS=""
+          [ -z "$CF" ]  && MISS="$MISS CF_API_TOKEN"
+          [ -z "$ACC" ] && MISS="$MISS CLOUDFLARE_ACCOUNT_ID"
+          [ -z "$TK" ]  && MISS="$MISS MOVIEGEN_ADMIN_GH_TOKEN"
+          [ -z "$PW" ]  && MISS="$MISS MOVIEGEN_ADMIN_PASSWORD"
+          if [ -n "$MISS" ]; then
+            echo "::error::없는 시크릿:$MISS (숏폼 스튜디오 관리자 배포와 같은 이름이어야 합니다)"
+            exit 1
+          fi
+          VERIFY=$(curl -sS https://api.cloudflare.com/client/v4/user/tokens/verify -H "Authorization: Bearer $CF" || echo '{}')
+          printf '%s' "$VERIFY" | grep -q '"success":true' || { echo "::error::CF_API_TOKEN 이 유효하지 않습니다(만료·삭제)"; exit 1; }
+          echo "열쇠 확인됨"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 문법 검사 (워커 + 화면)
+        run: |
+          node --check worker.mjs
+          node -e "
+            const h=require('fs').readFileSync('public/index.html','utf8');
+            const m=h.match(/<script>([\s\S]*)<\/script>/);
+            if(!m) throw new Error('화면 코드를 찾지 못했습니다');
+            new Function(m[1]);
+            console.log('화면 코드 문법 OK');
+          "
+
+      - name: 배포 + 비밀값 등록
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SEC_GH_TOKEN: ${{ secrets.MOVIEGEN_ADMIN_GH_TOKEN }}
+          SEC_ADMIN_PASSWORD: ${{ secrets.MOVIEGEN_ADMIN_PASSWORD }}
+          SEC_SESSION_SECRET: ${{ secrets.MOVIEGEN_SESSION_SECRET || secrets.MOVIEGEN_ADMIN_PASSWORD }}
+        run: |
+          set -o pipefail
+          sed -i "s/^const BUILD = \"dev\";/const BUILD = \"${GITHUB_SHA:0:7}\";/" worker.mjs
+          grep -m1 '^const BUILD' worker.mjs
+          # 배포가 먼저 — 비밀값은 이미 있는 워커에만 넣을 수 있다
+          npx --yes wrangler@4 deploy 2>&1 | tee deploy.log
+          for NAME in GH_TOKEN ADMIN_PASSWORD SESSION_SECRET; do
+            VAR="SEC_$NAME"
+            printf '%s' "${!VAR}" | npx --yes wrangler@4 secret put "$NAME" >/dev/null
+            echo "  $NAME 반영"
+          done
+
+      - name: 동작 확인 (/api/health)
+        run: |
+          URL=$(grep -oE 'https://[a-zA-Z0-9.-]+workers\.dev' deploy.log | tail -1)
+          [ -n "$URL" ] || { echo "::error::배포 주소를 찾지 못했습니다"; tail -n 30 deploy.log; exit 1; }
+          echo "URL=$URL" >> "$GITHUB_ENV"
+          for i in 1 2 3 4 5 6; do
+            H=$(curl -s "$URL/api/health" || true)
+            echo "$H" | grep -q '"configured":true' && { echo "정상: $H"; break; }
+            sleep 5
+          done
+          {
+            echo "## 숙소 쇼츠 관리실"
+            echo ""
+            echo "### [$URL]($URL)"
+            echo ""
+            echo "휴대폰 브라우저로 열고 홈 화면에 추가해 두세요. 비밀번호는 숏폼 스튜디오 관리자와 같습니다."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 텔레그램 알림 (배포 주소)
+        if: success()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ] && exit 0
+          curl -s -o /dev/null -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+            --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=숙소 쇼츠 관리실 배포됨: ${URL}" || true
