@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#eef1f5">
+<title>숙소 쇼츠 관리실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #eef1f5; --card: #ffffff; --ink: #11161d; --muted: #6b7480; --line: #eef0f3;
+  --coral: #ff8a5b; --gauge: #e4e8ee; --soft: #f0f2f5;
+  --ok-bg: #e3f4ea; --ok: #1f7a4d; --bad-bg: #fde6e2; --bad: #b3362b; --run-bg: #e6eefc; --run: #2852b8;
+}
+* { box-sizing: border-box }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 "IBM Plex Sans KR", system-ui, sans-serif; -webkit-text-size-adjust: 100% }
+main { max-width: 520px; margin: 0 auto; padding: 18px 16px calc(28px + env(safe-area-inset-bottom)); display: grid; gap: 12px }
+.bar { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted) }
+.bar b { color: var(--ink); font-size: 17px }
+.bar button { border: 0; background: none; color: var(--muted); font: inherit; padding: 8px 0 8px 12px; min-height: 44px }
+.card { background: var(--card); border-radius: 18px; padding: 16px; display: grid; gap: 10px }
+.label { font-size: 13px; color: var(--muted) }
+.big { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.15 }
+.big small { font-size: 14px; color: var(--muted); font-weight: 500 }
+.gauge { height: 8px; border-radius: 99px; background: var(--gauge); overflow: hidden }
+.gauge i { display: block; height: 100%; width: 0; background: var(--coral); border-radius: 99px; transition: width .4s }
+.sub { font-size: 12px; color: var(--muted) }
+.live { display: flex; gap: 10px; align-items: flex-start; font-size: 14px }
+.dot { width: 9px; height: 9px; margin-top: 6px; border-radius: 50%; background: #9aa3ae; flex: none }
+.dot.on { background: #2f9e6a; box-shadow: 0 0 0 4px #d8f0e4; animation: pulse 1.6s infinite }
+@keyframes pulse { 50% { box-shadow: 0 0 0 7px #d8f0e400 } }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; padding: 10px 0; border-top: 1px solid var(--line); color: inherit; text-decoration: none }
+.row:first-of-type { border-top: 0 }
+.row span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.chip { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; white-space: nowrap; flex: none }
+.ok { background: var(--ok-bg); color: var(--ok) } .bad { background: var(--bad-bg); color: var(--bad) } .run { background: var(--run-bg); color: var(--run) } .idle { background: var(--soft); color: var(--muted) }
+select { width: 100%; min-height: 48px; border: 1px solid #d9dee5; border-radius: 12px; padding: 10px 12px; font: 600 16px "IBM Plex Sans KR", sans-serif; color: var(--ink); background: #fff }
+.btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.btn { border: 0; border-radius: 14px; padding: 13px 12px; min-height: 56px; font: 700 15px "IBM Plex Sans KR", sans-serif; background: var(--soft); color: var(--ink); text-align: left; cursor: pointer }
+.btn small { display: block; font-weight: 500; font-size: 12px; color: var(--muted) }
+.btn.main { background: var(--ink); color: #fff } .btn.main small { color: #c4cad3 }
+.btn.wide { grid-column: 1 / -1 }
+.btn:disabled { opacity: .45; cursor: not-allowed }
+.note { font-size: 13px; color: var(--muted); margin: 0 }
+.msg { font-size: 14px; padding: 10px 12px; border-radius: 12px; display: none }
+.msg.show { display: block } .msg.ok { background: var(--ok-bg); color: var(--ok) } .msg.bad { background: var(--bad-bg); color: var(--bad) }
+.hook { font-size: 20px; font-weight: 700; letter-spacing: -0.01em }
+.hook em { font-style: normal; color: #e8673a }
+.facts { display: flex; flex-wrap: wrap; gap: 6px }
+details summary { cursor: pointer; font-size: 14px; color: var(--run); padding: 6px 0; min-height: 32px }
+.cut { font-size: 14px; padding: 8px 0; border-top: 1px solid var(--line) }
+.cut b { display: inline-block; min-width: 3.2em; color: var(--muted); font-weight: 500 }
+a { color: var(--run) }
+/* 로그인 */
+.login { min-height: 70vh; display: grid; align-content: center; gap: 12px }
+input[type=password] { width: 100%; min-height: 52px; border: 1px solid #d9dee5; border-radius: 12px; padding: 12px 14px; font: 16px "IBM Plex Sans KR", sans-serif }
+/* 확인 창 */
+.sheet { position: fixed; inset: 0; background: #11161d80; display: none; align-items: flex-end; justify-content: center; z-index: 10 }
+.sheet.show { display: flex }
+.sheet .card { width: 100%; max-width: 520px; border-radius: 22px 22px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)) }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; padding: 6px 0 }
+.check input { width: 22px; height: 22px; flex: none; margin-top: 1px }
+[hidden] { display: none !important }
+</style>
+</head>
+<body>
+<main id="login" class="login" hidden>
+  <div class="bar"><b>숙소 쇼츠 관리실</b></div>
+  <div class="card">
+    <span class="label">비밀번호</span>
+    <input id="pw" type="password" autocomplete="current-password" placeholder="관리자 비밀번호">
+    <button class="btn main" id="loginBtn">들어가기<small>한 번 들어가면 30일 동안 유지됩니다</small></button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+</main>
+
+<main id="app" hidden>
+  <div class="bar"><b>숙소 쇼츠 관리실</b><span><span id="now"></span><button id="logout">나가기</button></span></div>
+
+  <section class="card">
+    <span class="label">이번 달 쓴 돈</span>
+    <div class="big" id="spent">-</div>
+    <div class="gauge"><i id="gauge"></i></div>
+    <div class="sub" id="kinds"></div>
+  </section>
+
+  <section class="card">
+    <span class="label">지금 상태</span>
+    <div class="live"><span class="dot" id="dot"></span><span id="liveText">불러오는 중</span></div>
+  </section>
+
+  <section class="card">
+    <span class="label" id="themeLine">다음 숙소</span>
+    <select id="stay" aria-label="숙소 고르기"></select>
+    <div class="btns">
+      <button class="btn" id="previewBtn">미리보기<small id="previewCost">약 80원 · 영상 없음</small></button>
+      <button class="btn" id="refreshBtn">새로고침<small>상태 다시 읽기 · 0원</small></button>
+      <button class="btn main wide" id="produceBtn">정식 제작<small id="produceCost">약 2,500원 · 누르면 한 번 더 확인</small></button>
+    </div>
+    <div class="msg" id="runMsg"></div>
+    <p class="note">결과(사진 시트·나레이션·영상)는 텔레그램으로 옵니다. 미리보기를 확인한 뒤 정식 제작을 누르세요.</p>
+  </section>
+
+  <section class="card" id="lastCard" hidden>
+    <span class="label">최근 결과</span>
+    <div style="font-size:17px;font-weight:700" id="lastHead"></div>
+    <div class="hook" id="lastHook"></div>
+    <div class="facts" id="lastFacts"></div>
+    <details><summary>컷별 나레이션 보기</summary><div id="lastCuts"></div></details>
+  </section>
+
+  <section class="card">
+    <span class="label">최근 실행</span>
+    <div id="runs"></div>
+  </section>
+</main>
+
+<div class="sheet" id="sheet">
+  <div class="card">
+    <span class="label">정식 제작 확인</span>
+    <div style="font-size:19px;font-weight:700" id="cfStay"></div>
+    <div class="big" id="cfCost"></div>
+    <p class="note" id="cfAfter"></p>
+    <label class="check"><input type="checkbox" id="cfCheck"><span>이 숙소의 미리보기(사진 시트·나레이션)를 텔레그램에서 확인했습니다</span></label>
+    <div class="btns">
+      <button class="btn" id="cfCancel">취소<small>돈 안 씀</small></button>
+      <button class="btn main" id="cfGo" disabled>제작 시작<small>바로 시작합니다</small></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const won = (n) => Math.round(Number(n) || 0).toLocaleString("ko-KR") + "원";
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const KIND = { gemini_est: "글·음성", veo: "Veo 영상", image: "합성 사진", omni: "인물 영상", music: "음악" };
+let S = null, timer = null, holdUntil = 0;   // 시작 직후 1분은 버튼을 막는다(실행이 GitHub 에 보이기까지 몇 초 걸림)
+
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? { credentials: "same-origin" } : {
+    method: "POST", credentials: "same-origin",
+    headers: { "Content-Type": "application/json", "X-Stay-Admin": "1" }, body: JSON.stringify(body),
+  });
+  const d = await r.json().catch(() => ({ error: "응답을 읽지 못했습니다" }));
+  if (r.status === 401 && path !== "/api/login") { show("login"); throw new Error(d.error || "로그인이 필요합니다"); }
+  if (!r.ok) throw new Error(d.error || ("오류 " + r.status));
+  return d;
+}
+
+function show(which) {
+  $("login").hidden = which !== "login";
+  $("app").hidden = which !== "app";
+  if (which === "login") { clearTimeout(timer); setTimeout(() => $("pw").focus(), 50); }
+}
+
+function msg(el, text, kind) {
+  el.textContent = text; el.className = "msg show " + kind;
+}
+
+function runChip(r) {
+  if (r.active) return '<span class="chip run">실행 중</span>';
+  if (r.conclusion === "success") return '<span class="chip ok">완료</span>';
+  if (r.conclusion === "cancelled") return '<span class="chip idle">취소</span>';
+  if (r.conclusion === "skipped") return '<span class="chip idle">건너뜀</span>';
+  return '<span class="chip bad">실패</span>';
+}
+
+function shortTitle(t) {
+  return String(t || "").replace(/^stay-shorts:\s*/, "").replace(/\s*\([^)]*\)\s*$/, "");
+}
+
+function hookHtml(t) {
+  return esc(t).replace(/\[([^\]]+)\]/, "<em>$1</em>");
+}
+
+function render(d) {
+  S = d;
+  const [md, hm] = d.now.slice(5).split(" "), [mo, da] = md.split("-");
+  $("now").textContent = (+mo) + "월 " + (+da) + "일 " + hm;
+  const m = d.money;
+  $("spent").innerHTML = esc(won(m.total)) + " <small>/ " + esc(won(m.cap)) + "</small>";
+  $("gauge").style.width = Math.min(100, m.total / m.cap * 100).toFixed(1) + "%";
+  $("kinds").textContent = Object.entries(m.by_kind).sort((a, b) => b[1] - a[1]).map(([k, v]) => (KIND[k] || k) + " " + won(v)).join(" · ") || "이번 달 지출 없음";
+
+  const act = d.runs.find((r) => r.active);
+  $("dot").className = "dot" + (act ? " on" : "");
+  $("liveText").innerHTML = act
+    ? "<b>" + esc(shortTitle(act.title)) + "</b> 실행 중 · <a href=\"" + esc(act.url) + "\" target=\"_blank\" rel=\"noopener\">진행 보기</a><br><span class=\"sub\">미리보기 약 6분 · 정식 제작 약 15분. 끝나면 텔레그램으로 옵니다</span>"
+    : (d.runs_error ? "실행 기록을 읽지 못했습니다: " + esc(d.runs_error) : "쉬는 중 · 아래에서 숙소를 고르고 시작하세요");
+
+  $("themeLine").textContent = "다음 숙소 · " + [d.theme.month, d.theme.region, d.theme.theme].filter(Boolean).join(" · ");
+  const sel = $("stay"), keep = sel.value;
+  sel.innerHTML = d.candidates.map((c) => "<option value=\"" + esc(c.name) + "\">" + esc(c.rank + "위 " + c.name + (c.city ? " (" + c.city + ")" : "") + (c.done ? " · 영상 있음" : "")) + "</option>").join("");
+  const first = d.candidates.find((c) => !c.done);
+  sel.value = keep && d.candidates.some((c) => c.name === keep) ? keep : (first ? first.name : (d.candidates[0] || {}).name || "");
+
+  const room = m.cap - m.total;
+  $("previewCost").textContent = "약 " + won(d.cost.preview) + " · 영상 없음";
+  $("produceCost").textContent = "약 " + won(d.cost.produce) + " · 누르면 한 번 더 확인";
+  const hold = Date.now() < holdUntil;
+  $("previewBtn").disabled = !!act || hold || room < d.cost.preview || !sel.value;
+  $("produceBtn").disabled = !!act || hold || room < d.cost.produce || !sel.value;
+
+  const L = d.last;
+  $("lastCard").hidden = !L;
+  if (L) {
+    $("lastHead").textContent = (L.stay || "") + " · " + (L.stage === "preview" ? "미리보기" : L.stage) + (L.ok ? "" : " · 실패");
+    $("lastHook").innerHTML = L.hook_title ? hookHtml(L.hook_title) : (L.error ? "<span class=\"sub\">" + esc(L.error) + "</span>" : "");
+    const f = [];
+    if (L.narration_total) f.push("<span class=\"chip " + (L.narration_ok === L.narration_total ? "ok" : "bad") + "\">받아쓰기 " + L.narration_ok + "/" + L.narration_total + "</span>");
+    if (L.screen.total) f.push("<span class=\"chip " + (L.screen.ok === L.screen.total ? "ok" : "bad") + "\">화면 검수 " + L.screen.ok + "/" + L.screen.total + "</span>");
+    if (L.krw) f.push("<span class=\"chip idle\">글·음성 약 " + esc(won(L.krw)) + "</span>");
+    $("lastFacts").innerHTML = f.join("");
+    $("lastCuts").innerHTML = L.cuts.map((c) => "<div class=\"cut\"><b>컷 " + esc(c.i) + "</b>" + esc(c.narration) + " <span class=\"sub\">[" + esc(c.caption) + "]</span></div>").join("") || "<p class=\"note\">컷 없음</p>";
+  }
+
+  $("runs").innerHTML = d.runs.length ? d.runs.map((r) => "<a class=\"row\" href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\"><span>#" + esc(r.number) + " " + esc(shortTitle(r.title)) + "</span>" + runChip(r) + "</a>").join("") : "<p class=\"note\">기록 없음</p>";
+
+  clearTimeout(timer);
+  timer = setTimeout(load, act ? 20000 : 60000);
+}
+
+async function load() {
+  try { const d = await api("/api/state"); show("app"); render(d); }
+  catch (e) {
+    if (!$("app").hidden) msg($("runMsg"), e.message, "bad");
+    else { show("login"); if (!/로그인이 필요/.test(e.message)) msg($("loginMsg"), e.message, "bad"); }
+  }
+}
+
+async function start(action, confirm) {
+  const stay = $("stay").value;
+  $("previewBtn").disabled = $("produceBtn").disabled = true;
+  try {
+    const r = await api("/api/run", { action, stay, confirm: !!confirm });
+    holdUntil = Date.now() + 60000;
+    msg($("runMsg"), (action === "preview" ? "미리보기" : "정식 제작") + " 시작: " + stay + " (예상 약 " + won(r.cost) + "). 1분 안에 '지금 상태'에 나타납니다", "ok");
+    setTimeout(load, 8000); setTimeout(load, 61000);
+  } catch (e) { msg($("runMsg"), e.message, "bad"); load(); }
+}
+
+$("loginBtn").onclick = async () => {
+  try { await api("/api/login", { password: $("pw").value }); $("pw").value = ""; $("loginMsg").className = "msg"; load(); }
+  catch (e) { msg($("loginMsg"), e.message, "bad"); }
+};
+$("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") $("loginBtn").click(); });
+$("logout").onclick = async () => { await api("/api/logout", {}).catch(() => {}); show("login"); };
+$("refreshBtn").onclick = () => { $("runMsg").className = "msg"; load(); };
+$("previewBtn").onclick = () => start("preview");
+$("produceBtn").onclick = () => {
+  if (!S) return;
+  const stay = $("stay").value, m = S.money, c = S.cost.produce;
+  $("cfStay").textContent = stay;
+  $("cfCost").innerHTML = "약 " + esc(won(c)) + " <small>정식 제작 1편</small>";
+  $("cfAfter").textContent = "이번 달 " + won(m.total) + " → 약 " + won(m.total + c) + " (한도 " + won(m.cap) + ")";
+  $("cfCheck").checked = false; $("cfGo").disabled = true;
+  $("sheet").classList.add("show");
+};
+$("cfCheck").onchange = () => { $("cfGo").disabled = !$("cfCheck").checked; };
+$("cfCancel").onclick = () => $("sheet").classList.remove("show");
+$("sheet").onclick = (e) => { if (e.target === $("sheet")) $("sheet").classList.remove("show"); };
+$("cfGo").onclick = () => { $("sheet").classList.remove("show"); start("produce", true); };
+document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("app").hidden) load(); });
+load();
+</script>
+</body>
+</html>

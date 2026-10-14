@@ -1,0 +1,11 @@
+name = "stay-admin"
+main = "worker.mjs"
+compatibility_date = "2026-06-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# 비밀값은 여기 적지 않는다. 배포 워크플로(.github/workflows/deploy-stay-admin.yml)가 Cloudflare 쪽에 넣는다.
+#   GH_TOKEN · ADMIN_PASSWORD · SESSION_SECRET
+#   (운영자 2026-10-14 "기존 열쇠 재사용": 숏폼 스튜디오 관리자와 같은 저장소 시크릿을 쓴다 — 새 시크릿 이름 없음)
