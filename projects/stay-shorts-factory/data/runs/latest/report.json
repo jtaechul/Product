@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-13-reuse-title-2",
+ "nonce": "2026-10-14-reuse-title-3",
  "stay": "소노펠리체 비발디파크",
  "mode": "solo",
  "fake": false,
@@ -40,75 +40,75 @@
    ],
    "theme_hits": [],
    "blog_30d": 719,
-   "min_price": 252000.0,
+   "min_price": 249598.0,
    "honest": "",
    "photo_counts": {
     "official": 32,
-    "coupang": 7,
+    "coupang": 8,
     "operator": 0,
-    "mismatch": 2,
+    "mismatch": 1,
     "near_dup": 0
    },
    "official_facts": [
-    "노천탕과 옥돌 습식·히노키 건식 사우나 구비",
-    "키즈풀과 스위밍풀 바스풀 갖춘 클럽하우스 수영장",
-    "캠핑테마 게이밍룸 홈바룸 등 파크뷰 스위트 객실",
-    "단층 복층 펜트하우스 구조의 프레지덴셜 객실",
-    "영유아와 초등 3학년용 보노 키즈 클럽 운영",
-    "슬로프 루지월드와 스노위랜드 플레이존 구비"
+    "옥돌 습식·히노키 건식 발한실과 노천탕 구비 사우나",
+    "키즈풀과 스위밍풀, 바스풀을 갖춘 클럽하우스 수영장",
+    "캠핑테마, 게이밍룸, 홈바룸 등 특화 객실 운영",
+    "복층 및 펜트하우스 타입의 로얄·프레지덴셜 객실",
+    "영유아~초등 3학년 전용 놀이 공간 보노 키즈 클럽",
+    "슬로프 루지월드 및 스노위랜드, 오션월드 연계"
    ],
-   "signature": "테마 객실과 스파·액티비티를 갖춘 리조트",
+   "signature": "노블리안 객실과 스파·레저 시설을 갖춘 리조트",
    "hook": "프라이빗 실내풀과 오션월드",
-   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010791582&vendorItemId=70000146598875&itemId=20002051990762&traceid=V0-153-f26197bd66ef2828&requestid=20261013235608325033384883&token=31850C%7CGM&pt=0&slot=1",
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010791582&vendorItemId=70000146598875&itemId=20002051990762&traceid=V0-153-f26197bd66ef2828&requestid=20261014100409851305298458&token=31850C%7CGM&pt=0&slot=1",
    "official_site": "https://www.sonohotelsresorts.com/felice_vp",
    "rooms": [
     {
      "name": "실버스위트(취사/파크뷰/침대)",
      "price": 252000.0,
-     "image": "https://ads-partners.coupang.com/image1/GXJKdGf76bxnhZjmGVj0i91TwnddRpFXsGo0pwJ-okbBikyAK16MDErZcnUXQjl9aqWOP39DVumd_SiMh4zSCSQnOd0a9jgWW5Wu3eFd3Uwm2JbtGGHjCe8a8Q9VMWmL7AWerfQE5ih01LXANPAM87ZtY714qmMlHqBTRM8h-7g6gWbGnz6RjMkiBfr70b3RHOM_7qKrJQDZcAJfI669NgvAszBIMw81tFNCc47n20TG4TekMuHZEz5hhvZYCrcMlXdBbufUuIfPIGdrtnybJVzukZN4LKHrwDrSmR5dFAsq5wVy6TwJVLeE7rfrZQrH5HdtFUGkRZNFuRXjCJ5As8Ffmv1YSUxyLEEdAQXr3z-spQYdGrYuy1aJ1cBEsmpomwm0JYu3WBwN_0mbpPDZiIStcd8gF6l0nXQH7hybSY3xB6tNYVu3-9gbQ5qk1i4DmRaVw1eAvHSoy8oQm70AHQsaY3v39DHbtgi7zFKmJC4rFTT9A2L-t-xCqjHsghf3WujiWrd13HySXEHwtyd_AuqBOVItE7d1hU3MkJMPiwI-zA==",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010791582&vendorItemId=70000146598875&itemId=20002051990762&traceid=V0-153-f26197bd66ef2828&requestid=20261013235608325033384883&token=31850C%7CGM&pt=0&slot=1"
+     "image": "https://ads-partners.coupang.com/image1/8Z8guDRngFQ3EIqv8UoLUTZ8GDwkV8o6VXFX5Q5_klFPNpTjOrH1Nz4vLqiSPXkVorjJjHOGiV_tOVMoi7eFsfQbLnNIe6tlOigSsN1ZnsfzWIEeBNHXnKmAkjmIINWRy_4jvwISeRLwq5EB6oEGYEfb9pw9W_Ybw3c2s3cd86ceyT-2U0spbfFR9tFOtmSZ0CYIUr1M0Ar2cFyJblTEs0nHFdtJOFLU6gAQZaqSarbcUcRmD8N9EWnT0aT3WxvhdQFWGAGsKxXLMXpCtIbE_Y4gaMXAZG70ElsDy9gggHuU4iX_VKPg5eWDM_akFkDrtizK0qQTQ6aj7fwAiFms8_hEhBKrafB8BzSnc1pJjnQMUauxzJIA9oGFrtH09WVPmCx1suD7s1MrrnLtCnPLsfnsUc57Sgilky-IOIWDE9S4hp-kOiI-G1l1pSCvGbxNqNMWXSxEksaY_2gNI4y9w8FwVo6YmNDBzfreDLNgR2IF9twZXJlEeS7dEKMrZxzRuw6nYXtLPl1Ru7sh39FbYyLql-xd7HuVYn6efMgrX3G7cA==",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010791582&vendorItemId=70000146598875&itemId=20002051990762&traceid=V0-153-f26197bd66ef2828&requestid=20261014100409851305298458&token=31850C%7CGM&pt=0&slot=1"
     },
     {
      "name": "실버 (취사/파크뷰/침대)",
      "price": 295200.0,
-     "image": "https://ads-partners.coupang.com/image1/xgy9tbsI6RLKNQ37xnZe3_gf018fz6Mxj6aVKRjjJWDlPtm_gb0GuTyQtvAFZmPFIRl7673gRDGt1MBLaFonKI-Wr5aAxubXznvCUuHBc-563JHFG2z5DESkMmMH88jRP_Bs34Nuh8k7o3GljLbsd0TOolXgWuuCJUdjYgeKpZj8z9iVKF-GhV0WINfJ2mdJLRhRtFlvEn3pTOYvfslVQkAESDio0ReOZ2n8jdjN3a8z04B9laOkpZFJvlL0EDSb3FCe-zvbCU8eLvHz4-_PLkDTXrNUozBcXZYttxnpIsFV1qkXaA5TtU76goZc5MwJUOxIZaCd-TJhJ0UppK4CgOIRUEaNLeULZmH_QfxMvMHRxFAjUV3Px-i9r5OkjrNL_LhEklrvprdOBMgPqD3Vcf8NYvfW-BozbGaXDu948f4INHrUTC6EQfthi9_x1Xk7mKY68lTVbo87fceU9nTV1xeho1iGwgPOfhZuvDKlU51uc_KdbQ7ybLfsWSgV-YwL8lBx2-xh5JtPSyDJgsfsa6jWcuvvYhW_a_R8_xQJd6r4dA==",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010603513&vendorItemId=70000136719379&itemId=20002040963811&traceid=V0-153-3d1e9467297c0bcd&requestid=20261013235608325033384883&token=31850C%7CGM&pt=0&slot=2"
+     "image": "https://ads-partners.coupang.com/image1/ZtSqTXuU9uv0A1gyZtiGGU9VWMBv-VRNU15IiUeT5fYNIlaFXWdYCoL9wWGbhwt99-KnHnHRX7d6EmrCV_DvgzBBJkLYvjQecVfZdkJxlTu7VaImFqKbCRJcf6_fGDFSaVfTl-BvUvZd_djEP5Hre4-4xWCIUVzGr1MCDlwAXJYGGsF8hHozEK5PhRRtCcOIpohuZMtZADKSBA9X8y-THXHlzc3fgNYi_uFN-NZo2MSht9dqefdwVB-UaLBm4wbhP3oz3KYN-3VM-p-EUx7qz8KEM34_C0HEX3kxoLFL6HLUDFnTp7NOMTsOWM53Wyk5wZRzRh9ILpcIOHdkow-h65z-_k3xOKxS3nEC2POmUUazVh0latsThy0MQXvda2eokDzZCWrx82Cprmrn7UehNCnKOsKjdXb6reejEXeBOF9XjOTDbzkoO7VSjdMka0T9yiaDniFCOeHr8Tc_iSig4YFfs-Kgp8Bg6P5GaQkWv-U0HKWK3Wgs4tQkIfZKRv5mIyklriU3tiZpZT8qONR8TZcqH1ILicq1x8u0L0OuOPfcRA==",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010603513&vendorItemId=70000136719379&itemId=20002040963811&traceid=V0-153-3d1e9467297c0bcd&requestid=20261014100409851305298458&token=31850C%7CGM&pt=0&slot=2"
     },
     {
      "name": "실버 스위트 (취사/파크뷰/침대)",
      "price": 252000.0,
-     "image": "https://ads-partners.coupang.com/image1/85fQAn4EqwBkrXyp8_8DIUgQA8UEYTPcBgsr72ih_zdY69zC_rodGJW8YeXfEFPp817jx-Oxb0E_7r5dMYjYtCXKA7ce4vDQgh7qs2nK3EsOHmuiZNdMTJEPwI2HRt77fEbLl3AboOAgy-UPI-9W-g_NkkOnF4avk3UfHqoyazYGYfgfidHM6-3GkFkJ7VAuR1knv4NVnlfvHmGrRzIRLAwmVxypxLVCoMdlShb_oVgwpeDwNypHs93meW8G2bL2LZRK6GNiC7QFH3067FpUnqw-FWPYlz-m6zDEYKv6loq3_o_bv1_4ANp6PjO4V80CFOYAyTzfW5GiaBXZgzYuQ-SYE6w5O1sPO7jKSDm8XrpI7u_bZk-03AcPi-RJMheCjxW99zM1Su6lQguK0_bGmM5qE3eZDM0_IKoElzVnxiFoy9g9EiWwaw3kAdZvaec-_jFWHaiYP0v_xv1ZevmePd-6bTBYcKcbb-keYgkF4dNM0Bp7i-qeIebWwyEJir0MYsLByIv5geKM16olxy9hDOX-HLzcgXn1BYRxxV1EUX01nn0=",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000787455&vendorItemId=70000018421664&itemId=20000841821644&traceid=V0-153-07eb591b4d6340dc&requestid=20261013235608325033384883&token=31850C%7CGM&pt=0&slot=3"
+     "image": "https://ads-partners.coupang.com/image1/F6fC1OSlb-7hXv3tF67eP2LaYAgRbcWhgL8YSa3H-QR8qoIU4KZNf36VzhrPSY-zKsr0Yc9COgnmIaFBg_swDUaFaXxkujjonfbVvhaM7MiJwwbFyp5AO9PAVCxyVbpCH5s3r9eKv2h9vYMBc4j-SghmOPb8rOwzKDxOW48nMObwOvxroINvrpKneeLVIPpkBKaYHQ1NGtZ7yvLuzMuQ_tPyx7qc6Z-dt9ho-otMIHa2B7Ixj9vQoLpPKUzlv0jnEabH8QBDTYk5IypwZlroXeUHCRtQ3YSOCrZh7V0c31-r_0gghowet5gX-4a6jMK4lktAjgayy0XcYiQ8ssGyyVfpeqx-xRNwHlzwj89j4PTWfeL59FNKB5kuxAkWx9IVbLJHDIsqg7J6lLYX968exdWotQOWf7Nd3Sew31cYBLAat5K83VL5cIV43UqFCRIB2Hq5ShoLqWx2tUJTA60MBmbGemeqfDRYBpr2LoLYhwGEJAX87RNBHMXLKevsZmJUH8SPH7A484RH3rsEVhqhqIMzzoaxgi6vM6JgMnSu5csOkunP",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000787455&vendorItemId=70000018421664&itemId=20000841821644&traceid=V0-153-07eb591b4d6340dc&requestid=20261014100409851305298458&token=31850C%7CGM&pt=0&slot=3"
     },
     {
      "name": "실버스위트(클린/파크뷰/침대)",
      "price": 259000.0,
-     "image": "https://ads-partners.coupang.com/image1/88znH55GuKzDG9oj88-QYqsvdbdU1OdSzpDVyhS2ZXqiC62WJEhdrZTgwOP4_a8OkyJwbviHXNLLwzHj1rkV3PiKNipZce3_iltthRN5kBJ9sqCtCVDBQyXqIKxjIdvuHWYp0vQmzlvt5IuA6bmfiCri7OT0uH2k6f06KnFZpuppuvERGRYui4IETqpyHRa5LdNTn3YX8Rcuu1KknEfwMZ6MpDl5MPJu1czS575cjPtyae_3rSA45Cdjtt-KjVZRIUUMrYFlABl0v8KOzVzNhQ2zlzjWlPib5WBloh6sUBag8mpg005GJmYOa7iTY69kThrw-45_O8R8Enzph8nl4PGT9UM0JFeyGuGN3jQ27hNtEsNsgmquKsmF-0qgcxu9RFg1H9c3M_mCyajHN73tOA_Z1Zz1BKqATvZeJj_xk2HwjV8qTEvvKY-C9ogvw_0fGtO_MDby9dy-ng21mLYPB7sUvBtj64k29--4WOs-aN4P75er31oU4kS1LZevR-akSOMEUa33wgn7u-IWMRk1FuHqY5z_RDzdOnKsLJWwwo5gLw==",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011321628&vendorItemId=70000276527698&itemId=20002196652443&traceid=V0-153-9fbe9e482be1db02&requestid=20261013235608325033384883&token=31850C%7CGM&pt=0&slot=4"
+     "image": "https://ads-partners.coupang.com/image1/ZVCMKlLHYF1Ce21YZdghodN4vt2s7VM0YAXc5hm4rTLQ1-II4RiRkT6UdRND04HPywQWznb0kTb7REjGT5qq3aytzvMlUKJ165P9oChRwj10yx66HykfRL06pDB3AI7HjS4urAVQUMfoaeP-Jh4v20zJv5Dyh2j43p797INJD4fbJWTtF4MiGYjTvrhiVmTk4KD7mzGv8IfYmeMkvWUO3N4C6pT4fI_hWd-taH8nR1DVTaQQbH8cW5dQCfWGMeAcckshHUPLaDwkeaIe0uq-Psfed8iDYn6uTPS4PhQ4stZ6X6qluGXQRiVH1htdUShvlJ7iGUMnxes39ACxhwd0P2aoB7fDvXzVgDmrwal9QqJwqZNdVCQ2NNwcNgC2oddy7sFU0RZMYiOmkBmKhMya91Uc05r0ZL5TX_vcYNlkB02y2v8_hg2QZdW5aQacvOnAvOU_onJIR3r4UXJXwm3mvR-39KMNnM38fBMjWbECsezyUVP8Y5w-14vlu3TfsGJY2wZfbeUk0tP0B_FxUmfsmsAVXbM1mhrkfoWLgHQAzVAmfl-A",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011321628&vendorItemId=70000276527698&itemId=20002196652443&traceid=V0-153-9fbe9e482be1db02&requestid=20261014100409851305298458&token=31850C%7CGM&pt=0&slot=4"
     },
     {
      "name": "실버 (취사/파크뷰/침대)",
      "price": 260100.0,
-     "image": "https://ads-partners.coupang.com/image1/Hzwzxq0gMsYm5WcgH5AWxK_HSi8T5BV0JEstCnnVNTWutCdUeFnsfZpuQfZCgmtgRhQcloNT59-by3JBcm1korsHT-oT1kDBhIDDnpS-_-6EHEhk9J_1vE-2cIYEAPFVqg48Pz6kz_ySahE0WRG2PbkEenYcIxLpgdWoDYpBY6bm_uD0Ou4b8490wYfKxTVLCKqK1GRovlFcI3zZu1oGZuBkoDwpfEycrj8pNlynlEdt6q5z3ZKeOLLGLPFwjPWYyTNL-Ue3S7BztOxXPHDzlpCaC-c0RSa1Rq4bAHcDoglXtcFZfSnay0Bb2vqUpLqFqGDk0KS905OL-KM0k4H3VyFjZcQbuD4DwYuAAw_UA3DQy9uIK4HT8fDV5yIxqqqPrER7XO8ZEfeMllwDRIT8nHa8b5xwPh29eybIBotZRHQGwDA5NQw6ei0UEqis34P9bEaKLuAHeWGRKAX8bqKEk0JFVFEJWcKmjXGQJs8E-j0UlOSBDw6EptqVO30GMDW71jTrzXGxmh30nyfFvdL5V-ZGM6rJO-TkxdctH_luAtFK",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010601547&vendorItemId=70000136696450&itemId=20002040939423&traceid=V0-153-e9d4f9f7af4cfae0&requestid=20261013235608325033384883&token=31850C%7CGM&pt=0&slot=5"
-    },
-    {
-     "name": "실버스위트(취사/파크뷰/침대)",
-     "price": 294000.0,
-     "image": "https://ads-partners.coupang.com/image1/2qSUb65Z6caPVPNN2q9tLuWwHzCluNmgQf8lpepSICFfQwQUVfJlGBCZuqdyx-lYDJFpemfzfq6Wcse2MmrwRXhfknHg9SMC3nPWogO7ZozLV_t_aBsMrU3CBHjUVyawh2Qg7ydFugdTgXeoaLfAao6l14VaJm1zN6pmgf0UyxPKwxKGeOnGoIq8QaITitUwh6V0WaaYfAp6OIyCbXfxDihhP8p9z2hALlHzumFzFDK6DofaTTRooCnfoKMm05a7Y3gaiTT_kLEI8z7JnBxYZfPbF6S8kxBuOungiZ3jgCTXubgX_Nm3DB-yJXq7hq2WPWMD0oc4R0Z8VskTbmsEUbM6_jZVYfYRDY64hUHvzc484obAvdbzCXlhtioVMerjDkXLkrkm9XcS8RNIuT7KTwNuZsL77KGtt_0T_9hiXcfocQUHU2qjS-UgK9xalYtsoC_cEZ_qllD4kP9aExGnH6ICv5dpixgAJaH8-32mY2_hyprT1ZVzofy3qemj2yBTHG5NO_x11KM-xsjL5LqB9hwtZQuGtQ68DnZwbt12FB9jbld_",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011321615&vendorItemId=70000276316522&itemId=20002196397934&traceid=V0-153-b4ea1d399d5ab67e&requestid=20261013235608325033384883&token=31850C%7CGM&pt=0&slot=6"
+     "image": "https://ads-partners.coupang.com/image1/Oh-KC6iJvbat-ORQOiXaSagQNO2GDwoNNMj4TdBu4mXA17bOqi8nLqhmQcUI5HytL9g5wJOPGndHYSufiORg_AYsuGXDD9s9DHV6Iz4hJEyOeAhw69KusbNpgWVjRI8HbT28uZvdfhTRmlY0v3lXGaKrVwGia2aEUQ8_WcRoOIrIGeshehguPTsKhWddJXJke_YJ7uJdi4ejen_3XWn8Zv2eivg7uK-21HoAJe-WQDOq734EX9X-UuEwBpkI1b-wCbl-XHfxfjQz4LulssamYKuSet6P9N_O9-B4durtTq7p35ZbHU1fOV5hBwuIZoCmOMIaAd8b6F33JWs-GmxfemJI_e4yX8GsOnplGqGuVMkDB1goJn88CWxtvCAiIgkzDwOIlLsEKBlHihcksC18ms617ln2A2WlLexa1fRvTXrl17gZSlHC2y9pzarfDktZEBuURJv2YDF4uNTI01ydj3iFs02xOE_gvMD2XlU7is3o6VOhaAAxVKM-I1xRKL3upip_uMx5Jcez-vYOFNjY64vwuH78Rg6cWgxT3KslXP3-LQ==",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010601547&vendorItemId=70000136696450&itemId=20002040939423&traceid=V0-153-e9d4f9f7af4cfae0&requestid=20261014100409851305298458&token=31850C%7CGM&pt=0&slot=5"
     },
     {
      "name": "실버 (취사/파크뷰/침대)",
      "price": 275600.0,
-     "image": "https://ads-partners.coupang.com/image1/2vc5ueGjUlmlL1vg2sv9fq6CKhZyV4ETIrDsx6AF1b3HGrG_j3lQA1Zog4skfWGWe5co1s86R8Yw8Bdk8CjT9Uri37HXDS0pHMuClJdflneomEGnaMC-Tldj0k_FEsV8lxhZlEu6M5ZxfebcyoL8mGrUl5Ys4Qh3nXfUiKJ7BhamkageaaZSRhaNIkULQXNntPOA3VTpK_bLLAUfjB81eI4fAOu70B_9yYAsClrpnGqwyff5Tagnj3lm2HXeUIYIBNiKJIzw6cGHlGUTuit9fNLTQ2hFL5UdyusyQ-WWFa5xixN1CmTNwlzyFULTvR8ZTn10R9GyScG6Qw88gLK3HAORzz7gx3lmWtSg_dTiaGCB6VFNDQrrxbX9h6PGikPpex7YViKAckDU9z7OKQ8TlKU4DQOTEEyU6zrrBaypum03gkrmzGiU8NBwc4tCRK41SDEJGY3AFDneT5J-UEMxRJdddhJAIBv3Kw7n8Uy7kqp_Uc5E3wB8OzaCfKPvelEBN_So1zPm2kdo4V4va1cSnbnPLuROyZ4HmHfBxJ4Qkn346tPR",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000417129&vendorItemId=70000005304607&itemId=20000011450798&traceid=V0-153-2e1710d5ed00f92e&requestid=20261013235608325033384883&token=31850C%7CGM&pt=0&slot=7"
+     "image": "https://ads-partners.coupang.com/image1/LoqSMjcOez2ywDfgLj3Y31GvL48tmGqx3MuVkNbfvz6CesbwG6hPrDZMwajXCTtZ6rgRJvKtLY5vjDqsFMZ2efN-86BqVtN0KPE5Dvy6gJVenhRC8H3sZY-mK7KUZTNLx4Tu2wl_duIbbnYISswgwrNw7NmY-oLZ94xYh4DHDd2Ou0TfJmxydAZl6vmdiqA2AAuvsqweF0_TED7zmYBFN5GPYQjZ9MuAgUJHTzhSsERcoRl2wCOsnL0naUpIo_grxiCV39KowvvWJTX4SyZuJ7J0mqgNKQq_KZnTth3MTbCk6VdkF24bS53-un5voiFRgpQeGsEcD1prpvuYI5WUae1DTj-jrIGmOov7GGKKvGjvTBE37yTRSiP_BK_jPPDb3BYXU6stCEMXukDIFySbDzPLP47fPyUaVzd8rx7mELCsTozm24Qkci4BcwnAMbqmBrQ6TRu2t3qnXeUsjuqb0Q0hnNhpQCqmj1_0n4Efappe08Hm8f6esR_I66PmYLlh-BNFqj9yg1aNk1YofoI9ayTC-lkHNjQ4I7tiPL93THSvKBA=",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000417129&vendorItemId=70000005304607&itemId=20000011450798&traceid=V0-153-2e1710d5ed00f92e&requestid=20261014100409851305298458&token=31850C%7CGM&pt=0&slot=7"
     },
     {
-     "name": "실버 스위트 (취사/파크뷰/침대)",
-     "price": 252000.0,
-     "image": "https://ads-partners.coupang.com/image1/gzIGUWqv0LtIsgTfg3t3Avcsfe7Jx5xiDPP6_GPuhk_632RgUaZZHHjNkLP6GTwVA_E5Vz2ohJE_xxAlE66-2kafykJODEwLKdJZIQt3vD4mv-rgmqzo70b2Hm8WcTBcDWTT5oSkWkyDNcRDi9sVLxO3UsDzQKkEiFruejSoZSaFIDLfT8xMI8gzD5WKgbS0D3jTqasfAfOlsDw-TyJUIgxLetDKvEO330eC5Ak3fpzZSislUxE-l4wqZPuPjNmmaKa1mmIZj4p1Tl1_pPvU24Urp8xTx8N24eVDcYvq-cuoAezMvnW2Dv4SscWk5tNWxmdsP6-lojgPuZlNM7gHx9HfVk4dUIaWZtOoxPwe2_CGa_WRChhaMPXj6j-MyV2yzZcMdvqqhw-T62eZqNP2_WgAzsrXkRb9nJqwvhxI5XC95MSww5ZieggmugcLhc4SUvqrCxrzFXRjJgb9szVI151btkMml1LiA8rnj2InPJO0Rz1nBiTu1lH9FiR9lM9qv3HDISjsIcJtfHr1jO77DnqsKCMGkOrXYfq9k2pQEiMvoQ==",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000572405&vendorItemId=70000006940091&itemId=20000923719436&traceid=V0-153-eb61b14ff72ab648&requestid=20261013235608325033384883&token=31850C%7CGM&pt=0&slot=9"
+     "name": "실버스위트(취사/파크뷰/침대)",
+     "price": 294000.0,
+     "image": "https://ads-partners.coupang.com/image1/wjPQ8CeOgfYznP1Nwk0ElxUznHfpueEivsmwf9Fcqekdk7Ey095jmwph8JcmRn0RkYPkr-bKXx6qpv0tlDQix0-SNQnJDtJK7UvlLr-vWPpPnPfObgucy2oyHEz2ijaBhTy6kf_bqG3Z00UT5xAiUvEQ0pCO-LBfsFCnz59Z12yCKgHKf4o6ZKu18Gr6G8k1ZiIV9Eg6aHHUq4z4l5PF7B6DNNPFFIbWNdkAu-mAyGfNNe6TQLOIDnkGM1AAhtl64C61nPeYDxfPfcaQpdF1-BK2Uc62VIaZcTydTg2IrUMy-R_9PrC1TqoVFIJ49UtSQjgkt1OgSXm5ThCor8PdTyM1w943-sd1tq9oksi9Di-OWqLY41se5Q4gKdOIo0Mc9tMKCb1UVIZA3oo7MRuFYTL3QsXGtMw20kfF4ispOh-f961jBXCVJoVTvqmU5N6_qomqYcWjhZ2WFrbB5r_vnuwGHULkxx_PhzQzMatZfjSR0LaAKWXIPRCMWdqMUn_VEAQoFMamz2U46wFl98AhiNp_m3xHJy1Bqck-O40soAu_I3YW",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011321615&vendorItemId=70000276316522&itemId=20002196397934&traceid=V0-153-b4ea1d399d5ab67e&requestid=20261014100409851305298458&token=31850C%7CGM&pt=0&slot=8"
+    },
+    {
+     "name": "파크뷰 실버 스위트 (키친)",
+     "price": 249598.0,
+     "image": "https://ads-partners.coupang.com/image1/LJvzq7cXobFpGtKRLPQ4iEzSuZCcBqawdSClEi-0oOwF5U-Fe937AikAwC9N_Gm_QrGLiYZlw5LvkpWGAPPrSNYjUS7_bwtgAFc9qQkXvcAY4TPP-yCoHpOonX4mLDEZLa-L-Gaf2M3H8TxtvSjYmENt4cmyN2gq9npIEKNjoAhUxVJIUVkNOr8YxgpKIlBi8SIgg5dcYj7wUpZ2eAf0c4Jrwg90u-R65iKzk4vQYHgj5KtDfTH_uw7h2Hn12WsJmUqCNyGwVRv-KPaSHRv0U17w0VV6aGh2GlsgcKpWDMY1A8ynvSjQKHD5Ds6foTZzV0eGdz67hV-VnRrNnR-KSPWQ0kp5nmD7H7p-QWhK3JstFjIW1RcL1dwUFMNTltv4CG4OK1Wg3k0IdJPr3PHX2u6h6PFeUCpd6O1MDdn40X3igpB4bGDh86zBlGW85NV_EaLM3czcDNEsAXJwopxxepELuBB_2XpqkIvQKUZmZ4aez1XeRflNimQlb3qPoPcewmstZFJRZEFDbOIbiTUEjw_fezMeBCBhiaefjplPnNVdmQ==",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002314404&vendorItemId=70000068280413&itemId=20001032442985&traceid=V0-153-c447fa96f06bbb88&requestid=20261014100409851305298458&token=31850C%7CGM&pt=0&slot=9"
     }
    ],
    "classified_summary": [
@@ -116,10 +116,10 @@
      "k": 0,
      "src": "official",
      "cat": "water",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "오션월드의 야외 파도풀과 이집트풍 조형물이 보인다."
+     "desc": "이집트 신전 테마의 대형 파도풀에서 파도가 일고 있다."
     },
     {
      "k": 1,
@@ -128,34 +128,34 @@
      "q": 8,
      "people": true,
      "mismatch": "",
-     "desc": "객실 테라스 미니 풀에 여성이 앉아 있다."
+     "desc": "야외 풀장 난간에 한 여성이 앉아 있다."
     },
     {
      "k": 2,
      "src": "official",
-     "cat": "skip",
-     "q": 6,
+     "cat": "water",
+     "q": 8,
      "people": false,
-     "mismatch": "소노펠리체 델피노(고성) 전경으로 홍천 사업장이 아님",
-     "desc": "야외 수영장 너머로 산과 리조트 건물이 보인다."
+     "mismatch": "",
+     "desc": "산과 유럽풍 리조트 건물이 보이는 인피니티 풀 테라스."
     },
     {
      "k": 3,
      "src": "official",
      "cat": "skip",
-     "q": 1,
+     "q": 2,
      "people": false,
      "mismatch": "",
-     "desc": "수영장 튜브 위의 남성을 그린 일러스트이다."
+     "desc": "수영장 위 튜브를 탄 남자가 그려진 그래픽 일러스트."
     },
     {
      "k": 4,
      "src": "official",
      "cat": "skip",
-     "q": 7,
+     "q": 8,
      "people": false,
-     "mismatch": "홍천 내륙 산간 지역인데 바다가 보임 (진도 쏠비치 추",
-     "desc": "야외 인피니티 풀 너머로 바다가 펼쳐져 있다."
+     "mismatch": "내륙 산간 지역인 홍천군에 바다가 보이는 야외 오션뷰 ",
+     "desc": "야자수와 썬베드가 있는 인피니티 풀 너머로 넓은 바다가 보인다."
     },
     {
      "k": 5,
@@ -164,34 +164,34 @@
      "q": 1,
      "people": false,
      "mismatch": "",
-     "desc": "스마트폰 화면 속 도민증 그래픽 안내문이다."
+     "desc": "강원생활도민증 스마트폰 프로모션 그래픽 이미지."
     },
     {
      "k": 6,
      "src": "official",
      "cat": "skip",
-     "q": 1,
+     "q": 2,
      "people": false,
      "mismatch": "",
-     "desc": "워터파크 일러스트 포스터 이미지이다."
+     "desc": "소노 워터파크 홍보용 3D 워터파크 일러스트 이미지."
     },
     {
      "k": 7,
      "src": "official",
      "cat": "water",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "실내 워터파크 파도풀에 잔잔한 파도가 친다."
+     "desc": "거대한 유리 돔 아래 실내 파도풀에 파도가 밀려온다."
     },
     {
      "k": 8,
      "src": "official",
      "cat": "water",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "이집트 양식 조각상과 스파 풀이 어우러져 있다."
+     "desc": "스핑크스 조각상과 이집트 벽화로 꾸며진 야외 스파 온수풀."
     },
     {
      "k": 9,
@@ -200,7 +200,7 @@
      "q": 7,
      "people": false,
      "mismatch": "",
-     "desc": "야외 워터 슬라이드와 착수 풀이 보인다."
+     "desc": "야외 풀장 옆 워터 슬라이드와 대형 건물 외관."
     },
     {
      "k": 10,
@@ -209,7 +209,7 @@
      "q": 8,
      "people": true,
      "mismatch": "",
-     "desc": "파도풀에서 사람들이 물놀이를 즐기고 있다."
+     "desc": "야외 파도풀에서 많은 사람들이 인공 파도를 즐기고 있다."
     },
     {
      "k": 11,
@@ -218,7 +218,7 @@
      "q": 8,
      "people": true,
      "mismatch": "",
-     "desc": "유수풀에서 사람들이 튜브를 타고 물살을 따라 내려온다."
+     "desc": "유수풀에서 튜브를 타고 물살을 따라 내려오는 피서객들."
     },
     {
      "k": 12,
@@ -227,16 +227,16 @@
      "q": 7,
      "people": true,
      "mismatch": "",
-     "desc": "급류 타기 어트랙션에서 큰 물보라가 튀고 있다."
+     "desc": "튜브를 탄 사람들이 거센 파도 물보라를 맞고 있다."
     },
     {
      "k": 13,
      "src": "official",
      "cat": "water",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "붉은색 워터 슬라이드가 높게 연결되어 있다."
+     "desc": "푸른 녹음 속으로 높게 솟은 빨간색 몬스터 블라스터 워터 슬라이드."
     },
     {
      "k": 14,
@@ -245,16 +245,16 @@
      "q": 8,
      "people": true,
      "mismatch": "",
-     "desc": "높은 타워에서 연결된 파란색 워터 슬라이드가 보인다."
+     "desc": "녹색 숲 사이에 위치한 대형 오션월드 워터 슬라이드 타워."
     },
     {
      "k": 15,
      "src": "official",
      "cat": "water",
-     "q": 7,
+     "q": 8,
      "people": true,
      "mismatch": "",
-     "desc": "워터 바스켓에서 쏟아지는 물을 사람들이 맞고 있다."
+     "desc": "거대한 물폭포를 맞으며 팔을 벌리고 있는 사람들."
     },
     {
      "k": 16,
@@ -263,16 +263,16 @@
      "q": 8,
      "people": true,
      "mismatch": "",
-     "desc": "여러 갈래의 다채로운 워터 슬라이드가 나란히 뻗어 있다."
+     "desc": "다양한 색상의 봅슬레이형 워터 슬라이드 레인 전경."
     },
     {
      "k": 17,
      "src": "official",
      "cat": "water",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "거대한 터널형 워터 슬라이드의 출구가 보인다."
+     "desc": "거대한 나선형 파란색 슈퍼 S라이드 워터 슬라이드 입구."
     },
     {
      "k": 18,
@@ -281,34 +281,34 @@
      "q": 8,
      "people": true,
      "mismatch": "",
-     "desc": "스핑크스 조형물과 연결된 대형 워터 슬라이드 시설이다."
+     "desc": "스핑크스 조형물 사이로 연결된 대형 워터 슬라이드 착수 풀."
     },
     {
      "k": 19,
      "src": "official",
      "cat": "skip",
-     "q": 1,
+     "q": 2,
      "people": false,
      "mismatch": "",
-     "desc": "워터파크 홍보 포스터 그래픽이다."
+     "desc": "소노 워터파크 홍보 포스터 그래픽 이미지."
     },
     {
      "k": 20,
      "src": "official",
-     "cat": "water",
+     "cat": "special",
      "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "은은한 조명이 켜진 원형 실내 스파 온수풀이다."
+     "desc": "은은한 천장 조명이 비치는 아늑한 실내 스파 및 온수 자쿠지 시설."
     },
     {
      "k": 21,
      "src": "official",
      "cat": "water",
-     "q": 8,
+     "q": 9,
      "people": false,
      "mismatch": "",
-     "desc": "천장 곡선 조명이 반사되는 넓은 실내 수영장 레인이다."
+     "desc": "곡선형 천장 조명이 돋보이는 소노펠리체 클럽하우스 실내 수영장 레인."
     },
     {
      "k": 22,
@@ -317,16 +317,16 @@
      "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "소파와 큰 창문 너머로 산 전망이 펼쳐진 거실이다."
+     "desc": "통유리창으로 푸른 산이 내려다보이는 고급스러운 객실 거실."
     },
     {
      "k": 23,
      "src": "official",
      "cat": "special",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "해먹과 캠핑 텐트가 설치된 야외 테라스 공간이다."
+     "desc": "인조잔디가 깔린 발코니에 해먹과 캠핑 텐트가 설치된 공간."
     },
     {
      "k": 24,
@@ -335,34 +335,34 @@
      "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "원목 마루와 가죽 소파가 놓인 넓은 객실 거실이다."
+     "desc": "넓은 원목 마루와 큰 창문 너머로 산 조망이 펼쳐진 객실 거실."
     },
     {
      "k": 25,
      "src": "official",
      "cat": "room",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "대리석 아트월과 소파가 배치된 모던한 거실이다."
+     "desc": "스트라이프 대리석 아트월과 소파가 배치된 모던한 객실 거실."
     },
     {
      "k": 26,
      "src": "official",
      "cat": "room",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "빈백 소파와 TV가 놓인 편안한 분위기의 객실 거실이다."
+     "desc": "빈백 소파와 벽걸이 TV가 있는 편안한 분위기의 객실 거실."
     },
     {
      "k": 27,
      "src": "official",
      "cat": "room",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "모던한 가구와 조명이 돋보이는 객실 거실 공간이다."
+     "desc": "감각적인 소파와 세련된 펜던트 조명이 켜진 객실 거실."
     },
     {
      "k": 28,
@@ -371,7 +371,7 @@
      "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "주방 식탁과 거실 공간이 연결된 깔끔한 객실 내부이다."
+     "desc": "모던한 대리석 벽면과 깔끔한 주방 식탁이 이어진 객실 내부."
     },
     {
      "k": 29,
@@ -380,16 +380,16 @@
      "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "높은 천장과 샹들리에가 있는 복층형 거실이다."
+     "desc": "높은 층고와 샹들리에 조명이 돋보이는 복층형 객실 거실."
     },
     {
      "k": 30,
      "src": "official",
      "cat": "room",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "빨간 1인용 소파와 식탁이 있는 복층 구조의 거실이다."
+     "desc": "빨간색 1인용 라운지 체어와 소파가 놓인 높은 층고의 객실 거실."
     },
     {
      "k": 31,
@@ -398,52 +398,52 @@
      "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "유리창 밖으로 산세가 내려다보이는 객실 소파 공간이다."
+     "desc": "발코니 창밖으로 푸른 마운틴 뷰가 펼쳐진 객실 휴식 공간."
     },
     {
      "k": 32,
      "src": "coupang",
      "cat": "special",
-     "q": 8,
+     "q": 9,
      "people": false,
      "mismatch": "",
-     "desc": "푸른 산자락 아래 소노펠리체 건물들이 줄지어 있다."
+     "desc": "울창한 산으로 둘러싸인 웅장한 소노펠리체 비발디파크 리조트 전경."
     },
     {
      "k": 33,
      "src": "coupang",
      "cat": "special",
-     "q": 8,
+     "q": 9,
      "people": true,
      "mismatch": "",
-     "desc": "푸른 골프장 페어웨이 언덕 위로 리조트 빌라들이 서 있다."
+     "desc": "골프장 페어웨이와 연못 너머로 보이는 고급 빌리지 단지."
     },
     {
      "k": 34,
      "src": "coupang",
      "cat": "special",
-     "q": 7,
+     "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "소나무 사이로 이국적인 외관의 리조트 건물과 골프장이 보인다."
+     "desc": "푸른 소나무와 산등성이 너머 자리 잡은 소노펠리체 CC 클럽하우스 풍경."
     },
     {
      "k": 35,
      "src": "coupang",
      "cat": "special",
-     "q": 7,
+     "q": 9,
      "people": false,
      "mismatch": "",
-     "desc": "별빛 밤하늘 아래 리조트 외관에 조명이 켜져 있다."
+     "desc": "별이 빛나는 밤하늘 아래 화려한 조명을 밝힌 리조트 야경."
     },
     {
      "k": 36,
      "src": "coupang",
      "cat": "special",
-     "q": 8,
+     "q": 9,
      "people": false,
      "mismatch": "",
-     "desc": "연못 분수와 잔디밭 너머로 클럽하우스 건물이 보인다."
+     "desc": "분수가 솟아오르는 호수 정원과 곡선형 클럽하우스 건물 전경."
     },
     {
      "k": 37,
@@ -452,7 +452,7 @@
      "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "산 아래 골프장과 소노펠리체 단지 전경이 한눈에 들어온다."
+     "desc": "푸른 잔디 정원과 산을 배경으로 늘어선 대형 리조트 단지."
     },
     {
      "k": 38,
@@ -461,7 +461,16 @@
      "q": 8,
      "people": false,
      "mismatch": "",
-     "desc": "분수가 솟아오르는 연못과 푸른 잔디 너머 리조트 건물이 보인다."
+     "desc": "통유리창 너머로 산 조망이 보이는 넓고 쾌적한 레스토랑 라운지."
+    },
+    {
+     "k": 39,
+     "src": "coupang",
+     "cat": "special",
+     "q": 9,
+     "people": false,
+     "mismatch": "",
+     "desc": "맑은 하늘 아래 호수 분수대와 조화를 이루는 소노펠리체 클럽하우스."
     }
    ]
   }
@@ -494,25 +503,25 @@
      "n": 11,
      "slot": "water",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Z2QIeKCw56CffVBzKIkWjA==/1",
-     "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
-     "description": "은은한 조명이 켜진 원형 실내 스파 온수풀이다."
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
+     "page": "https://www.sonohotelsresorts.com/oceanWorld",
+     "description": "스핑크스 조각상과 이집트 벽화로 꾸며진 야외 스파 온수풀."
     },
     {
      "n": 12,
      "slot": "water",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
-     "page": "https://www.sonohotelsresorts.com/oceanWorld",
-     "description": "이집트 양식 조각상과 스파 풀이 어우러져 있다."
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/NP-EHN-mvIQSILUbhWAnsA==/1",
+     "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
+     "description": "곡선형 천장 조명이 돋보이는 소노펠리체 클럽하우스 실내 수영장 레인."
     },
     {
      "n": 13,
      "slot": "water",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/NP-EHN-mvIQSILUbhWAnsA==/1",
-     "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
-     "description": "천장 곡선 조명이 반사되는 넓은 실내 수영장 레인이다."
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
+     "page": "https://www.sonohotelsresorts.com/oceanWorld",
+     "description": "거대한 유리 돔 아래 실내 파도풀에 파도가 밀려온다."
     },
     {
      "n": 14,
@@ -520,7 +529,7 @@
      "source": "official",
      "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
      "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-     "description": "소파와 큰 창문 너머로 산 전망이 펼쳐진 거실이다."
+     "description": "통유리창으로 푸른 산이 내려다보이는 고급스러운 객실 거실."
     },
     {
      "n": 15,
@@ -528,23 +537,23 @@
      "source": "official",
      "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/oAKONtuhXMveXdY6fEmACQ==/1",
      "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-     "description": "원목 마루와 가죽 소파가 놓인 넓은 객실 거실이다."
+     "description": "넓은 원목 마루와 큰 창문 너머로 산 조망이 펼쳐진 객실 거실."
     },
     {
      "n": 16,
      "slot": "room",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/5munRA1u4Ct_fKC5x7MWZw==/1",
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/RpUyl4x2tUtPVhB1GW9yeQ==/1",
      "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-     "description": "주방 식탁과 거실 공간이 연결된 깔끔한 객실 내부이다."
+     "description": "스트라이프 대리석 아트월과 소파가 배치된 모던한 객실 거실."
     },
     {
      "n": 17,
      "slot": "special",
      "source": "official",
-     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/o4adYnfDv1FqVqNaEkT7Mw==/1",
-     "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-     "description": "해먹과 캠핑 텐트가 설치된 야외 테라스 공간이다."
+     "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Z2QIeKCw56CffVBzKIkWjA==/1",
+     "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
+     "description": "은은한 천장 조명이 비치는 아늑한 실내 스파 및 온수 자쿠지 시설."
     },
     {
      "n": 18,
@@ -552,7 +561,7 @@
      "source": "coupang",
      "url": null,
      "page": null,
-     "description": "푸른 산자락 아래 소노펠리체 건물들이 줄지어 있다."
+     "description": "푸른 소나무와 산등성이 너머 자리 잡은 소노펠리체 CC 클럽하우스 풍경."
     },
     {
      "n": 19,
@@ -560,7 +569,7 @@
      "source": "coupang",
      "url": null,
      "page": null,
-     "description": "연못 분수와 잔디밭 너머로 클럽하우스 건물이 보인다."
+     "description": "통유리창 너머로 산 조망이 보이는 넓고 쾌적한 레스토랑 라운지."
     },
     {
      "n": 20,
@@ -568,7 +577,7 @@
      "source": "coupang",
      "url": null,
      "page": null,
-     "description": "산 아래 골프장과 소노펠리체 단지 전경이 한눈에 들어온다."
+     "description": "울창한 산으로 둘러싸인 웅장한 소노펠리체 비발디파크 리조트 전경."
     }
    ]
   }
@@ -577,10 +586,10 @@
  "mini_scale": "life",
  "mini_pick": [
   {
-   "i": 2,
-   "n": 12,
+   "i": 1,
+   "n": 11,
    "role": "gag",
-   "seen": "이집트 양식 조각상과 스파 풀이 어우러져 있다.",
+   "seen": "스핑크스 조각상과 이집트 벽화로 꾸며진 야외 스파 온수풀.",
    "verdict": "채택(재사용 · 0원)",
    "place": "노천탕·자쿠지",
    "gag": "스핑크스처럼 위엄 있는 표정을 지으려다 서로 눈이 마주치고 피식 웃기",
@@ -590,7 +599,7 @@
    "i": 4,
    "n": 14,
    "role": "gag",
-   "seen": "소파와 큰 창문 너머로 산 전망이 펼쳐진 거실이다.",
+   "seen": "통유리창으로 푸른 산이 내려다보이는 고급스러운 객실 거실.",
    "verdict": "채택(재사용 · 0원)",
    "place": "객실 창가·소파",
    "gag": "소파에 앉아 동시에 기지개를 켜다 팔이 부딪혀 서로 쳐다보고 웃음",
@@ -600,7 +609,7 @@
    "i": 5,
    "n": 15,
    "role": "signature",
-   "seen": "원목 마루와 가죽 소파가 놓인 넓은 객실 거실이다.",
+   "seen": "넓은 원목 마루와 큰 창문 너머로 산 조망이 펼쳐진 객실 거실.",
    "verdict": "채택(재사용 · 0원)",
    "place": "객실 거실",
    "gag": "시그니처 포즈",
@@ -611,35 +620,35 @@
   {
    "i": 1,
    "section": "hook",
-   "n": 12,
+   "n": 11,
    "veo": false,
    "mini": "gag",
    "source": "official",
-   "seen": "이집트 양식 조각상과 스파 풀이 어우러져 있다.",
-   "narration": "겨울에 이색 스파 찾는 분 주목.",
-   "caption": "테마 스파풀"
+   "seen": "스핑크스 조각상과 이집트 벽화로 꾸며진 야외 스파 온수풀.",
+   "narration": "노천 스파 온수풀, 여기 모르면 손해예요.",
+   "caption": "야외 스파풀"
   },
   {
    "i": 2,
    "section": "water",
-   "n": 11,
-   "veo": true,
+   "n": 12,
+   "veo": false,
    "mini": null,
    "source": "official",
-   "seen": "은은한 조명이 켜진 원형 실내 스파 온수풀이다.",
-   "narration": "먼저 강원 홍천의 대형 리조트 실내 온수풀이에요.",
-   "caption": "원형 온수풀"
+   "seen": "곡선형 천장 조명이 돋보이는 소노펠리체 클럽하우스 실내 수영장 레인.",
+   "narration": "강원 홍천 스파 리조트로 실내 레인 수영장이 있어요.",
+   "caption": "실내 수영장"
   },
   {
    "i": 3,
    "section": "water",
    "n": 13,
-   "veo": false,
+   "veo": true,
    "mini": null,
    "source": "official",
-   "seen": "천장 곡선 조명이 반사되는 넓은 실내 수영장 레인이다.",
-   "narration": "안으로 들어가면 곡선 조명이 빛나는 레인이 나와요.",
-   "caption": "실내 수영장"
+   "seen": "거대한 유리 돔 아래 실내 파도풀에 파도가 밀려온다.",
+   "narration": "그 옆엔 유리 돔 아래 사계절 파도가 치는 파도풀도 이어집니다.",
+   "caption": "실내 파도풀"
   },
   {
    "i": 4,
@@ -648,31 +657,31 @@
    "veo": false,
    "mini": "gag",
    "source": "official",
-   "seen": "소파와 큰 창문 너머로 산 전망이 펼쳐진 거실이다.",
-   "narration": "객실로 올라오면 큰 창 너머 산 전망이 시원해요.",
-   "caption": "파크뷰 거실"
+   "seen": "통유리창으로 푸른 산이 내려다보이는 고급스러운 객실 거실.",
+   "narration": "객실로 올라오면 통창 너머로 시원한 산 전망이 한눈에 들어와요.",
+   "caption": "마운틴뷰 거실"
   },
   {
    "i": 5,
-   "section": "special",
-   "n": 17,
-   "veo": false,
-   "mini": null,
-   "source": "official",
-   "seen": "해먹과 캠핑 텐트가 설치된 야외 테라스 공간이다.",
-   "narration": "그 옆 테라스엔 캠핑 텐트가 있고 사우나 노천탕도 갖췄어요.",
-   "caption": "테라스 캠핑존"
-  },
-  {
-   "i": 6,
    "section": "special",
    "n": 18,
    "veo": false,
    "mini": null,
    "source": "coupang",
-   "seen": "푸른 산자락 아래 소노펠리체 건물들이 줄지어 있다.",
-   "narration": "눈을 돌리면 푸른 산자락 아래 건물들이 멋지게 펼쳐져요.",
-   "caption": "리조트 전경"
+   "seen": "푸른 소나무와 산등성이 너머 자리 잡은 소노펠리체 CC 클럽하우스 풍경.",
+   "narration": "밖으로 나오면 숲속 클럽하우스와 노천탕 사우나도 있어요.",
+   "caption": "클럽하우스"
+  },
+  {
+   "i": 6,
+   "section": "special",
+   "n": 19,
+   "veo": false,
+   "mini": null,
+   "source": "coupang",
+   "seen": "통유리창 너머로 산 조망이 보이는 넓고 쾌적한 레스토랑 라운지.",
+   "narration": "한 층 내려가면 산을 보며 식사하는 라운지가 있어요.",
+   "caption": "전망 라운지"
   },
   {
    "i": 7,
@@ -681,20 +690,20 @@
    "veo": false,
    "mini": null,
    "source": "official",
-   "seen": "주방 식탁과 거실 공간이 연결된 깔끔한 객실 내부이다.",
-   "narration": "여기에 주방과 거실이 넓어 가족 식사하기도 편해요.",
-   "caption": "스위트 주방"
+   "seen": "스트라이프 대리석 아트월과 소파가 배치된 모던한 객실 거실.",
+   "narration": "취사가 되는 실버스위트 거실은 가족이 함께 머물기 좋아요.",
+   "caption": "실버스위트 거실"
   },
   {
    "i": 8,
    "section": "offer",
-   "n": 19,
+   "n": 17,
    "veo": false,
    "mini": null,
-   "source": "coupang",
-   "seen": "연못 분수와 잔디밭 너머로 클럽하우스 건물이 보인다.",
-   "narration": "야외로 나가면 연못 분수가 있는 산책로도 잘 꾸며졌어요.",
-   "caption": "클럽하우스 잔디밭"
+   "source": "official",
+   "seen": "은은한 천장 조명이 비치는 아늑한 실내 스파 및 온수 자쿠지 시설.",
+   "narration": "밤이 되면 은은한 조명 아래 실내 자쿠지에서 편안히 쉴 수 있습니다.",
+   "caption": "실내 자쿠지"
   },
   {
    "i": 9,
@@ -703,9 +712,9 @@
    "veo": false,
    "mini": "signature",
    "source": "official",
-   "seen": "원목 마루와 가죽 소파가 놓인 넓은 객실 거실이다.",
-   "narration": "그래서 겨울 힐링 스파를 찾는 가족에게 추천해요.",
-   "caption": "스위트 거실"
+   "seen": "넓은 원목 마루와 큰 창문 너머로 산 조망이 펼쳐진 객실 거실.",
+   "narration": "그래서 겨울철 부모님 모시고 편히 쉬고 싶은 가족에게 추천해요.",
+   "caption": "스위트 객실"
   }
  ],
  "screen_qa": [
@@ -713,243 +722,242 @@
    "i": 1,
    "section": "hook",
    "threshold": 7,
-   "narration": "겨울에 이색 스파 찾는 분 주목.",
-   "caption": "테마 스파풀",
+   "narration": "노천 스파 온수풀, 여기 모르면 손해예요.",
+   "caption": "야외 스파풀",
    "score": 9,
-   "seen": "스핑크스 조각상과 이집트풍 벽화로 꾸며진 야외 테마 스파풀",
+   "seen": "이집트 벽화와 스핑크스 조형물 옆에 있는 야외 노천 스파 온수풀",
    "problem": ""
   },
   {
    "i": 2,
    "section": "water",
    "threshold": 7,
-   "narration": "먼저 강원 홍천의 대형 리조트 실내 온수풀이에요.",
-   "caption": "원형 온수풀",
-   "score": 9,
-   "seen": "고급스러운 실내 원형 온수 욕조/풀과 사우나 시설",
+   "narration": "강원 홍천 스파 리조트로 실내 레인 수영장이 있어요.",
+   "caption": "실내 수영장",
+   "score": 7,
+   "seen": "레인이 구분된 실내 수영장 내부 전경",
    "problem": ""
   },
   {
    "i": 3,
    "section": "water",
    "threshold": 7,
-   "narration": "안으로 들어가면 곡선 조명이 빛나는 레인이 나와요.",
-   "caption": "실내 수영장",
-   "score": 8,
-   "seen": "천장에 곡선 형태의 조명이 설치된 실내 수영장 레인",
+   "narration": "그 옆엔 유리 돔 아래 사계절 파도가 치는 파도풀도 이어집니다.",
+   "caption": "실내 파도풀",
+   "score": 10,
+   "seen": "실내 워터파크의 유리 천장 돔과 파도가 치는 파도풀",
    "problem": ""
   },
   {
    "i": 4,
    "section": "room",
    "threshold": 7,
-   "narration": "객실로 올라오면 큰 창 너머 산 전망이 시원해요.",
-   "caption": "파크뷰 거실",
+   "narration": "객실로 올라오면 통창 너머로 시원한 산 전망이 한눈에 들어와요.",
+   "caption": "마운틴뷰 거실",
    "score": 10,
-   "seen": "거실 소파와 테이블 너머로 큰 통창과 푸른 산 전망이 보임",
+   "seen": "거실 소파와 테이블 너머 통창으로 보이는 푸른 산 전망",
    "problem": ""
   },
   {
    "i": 5,
    "section": "special",
    "threshold": 7,
-   "narration": "그 옆 테라스엔 캠핑 텐트가 있고 사우나 노천탕도 갖췄어요.",
-   "caption": "테라스 캠핑존",
-   "score": 9,
-   "seen": "테라스에 인조잔디가 깔려 있고 해먹, 캠핑 의자, 텐트가 설치된 모습",
-   "problem": ""
+   "narration": "밖으로 나오면 숲속 클럽하우스와 노천탕 사우나도 있어요.",
+   "caption": "클럽하우스",
+   "score": null,
+   "error": "Gemini 오류 HTTP 503: {\n  \"error\": {\n    \"code\": 503,\n    \"message\": \"This model is currently experien"
   },
   {
    "i": 6,
    "section": "special",
    "threshold": 7,
-   "narration": "눈을 돌리면 푸른 산자락 아래 건물들이 멋지게 펼쳐져요.",
-   "caption": "리조트 전경",
-   "score": 8,
-   "seen": "푸른 산을 배경으로 자리한 대형 리조트 건물 전경",
+   "narration": "한 층 내려가면 산을 보며 식사하는 라운지가 있어요.",
+   "caption": "전망 라운지",
+   "score": 7,
+   "seen": "통창 너머로 산이 보이는 넓은 식당 및 라운지 공간",
    "problem": ""
   },
   {
    "i": 7,
    "section": "offer",
    "threshold": 5,
-   "narration": "여기에 주방과 거실이 넓어 가족 식사하기도 편해요.",
-   "caption": "스위트 주방",
-   "score": 10,
-   "seen": "거실의 낮은 테이블과 벽걸이 TV, 그 너머로 보이는 주방과 식탁 공간",
+   "narration": "취사가 되는 실버스위트 거실은 가족이 함께 머물기 좋아요.",
+   "caption": "실버스위트 거실",
+   "score": 7,
+   "seen": "햇살이 들어오는 거실 내부와 TV, 소파 및 테이블",
    "problem": ""
   },
   {
    "i": 8,
    "section": "offer",
    "threshold": 5,
-   "narration": "야외로 나가면 연못 분수가 있는 산책로도 잘 꾸며졌어요.",
-   "caption": "클럽하우스 잔디밭",
-   "score": 8,
-   "seen": "연못과 푸른 잔디밭 너머로 보이는 리조트 건물 외관",
+   "narration": "밤이 되면 은은한 조명 아래 실내 자쿠지에서 편안히 쉴 수 있습니다.",
+   "caption": "실내 자쿠지",
+   "score": 7,
+   "seen": "은은한 천장 조명 아래의 실내 온수풀 및 자쿠지 시설",
    "problem": ""
   },
   {
    "i": 9,
    "section": "offer",
    "threshold": 5,
-   "narration": "그래서 겨울 힐링 스파를 찾는 가족에게 추천해요.",
-   "caption": "스위트 거실",
-   "score": 5,
-   "seen": "푸른 산 전망이 보이는 발코니 창문과 나무 바닥의 깔끔하고 넓은 거실",
-   "problem": "사진은 거실 풍경인데 '스파'를 언급하여 보이는 공간과 맞지 않음"
+   "narration": "그래서 겨울철 부모님 모시고 편히 쉬고 싶은 가족에게 추천해요.",
+   "caption": "스위트 객실",
+   "score": 8,
+   "seen": "넓은 원목 바닥의 거실과 테라스 너머로 보이는 푸른 산 풍경",
+   "problem": ""
   }
  ],
  "script": {
   "cuts": [
    {
     "i": 1,
-    "narration": "겨울에 이색 스파 찾는 분 주목.",
-    "caption": "테마 스파풀"
+    "narration": "노천 스파 온수풀, 여기 모르면 손해예요.",
+    "caption": "야외 스파풀"
    },
    {
     "i": 2,
-    "narration": "먼저 강원 홍천의 대형 리조트 실내 온수풀이에요.",
-    "caption": "원형 온수풀"
-   },
-   {
-    "i": 3,
-    "narration": "안으로 들어가면 곡선 조명이 빛나는 레인이 나와요.",
+    "narration": "강원 홍천 스파 리조트로 실내 레인 수영장이 있어요.",
     "caption": "실내 수영장"
    },
    {
+    "i": 3,
+    "narration": "그 옆엔 유리 돔 아래 사계절 파도가 치는 파도풀도 이어집니다.",
+    "caption": "실내 파도풀"
+   },
+   {
     "i": 4,
-    "narration": "객실로 올라오면 큰 창 너머 산 전망이 시원해요.",
-    "caption": "파크뷰 거실"
+    "narration": "객실로 올라오면 통창 너머로 시원한 산 전망이 한눈에 들어와요.",
+    "caption": "마운틴뷰 거실"
    },
    {
     "i": 5,
-    "narration": "그 옆 테라스엔 캠핑 텐트가 있고 사우나 노천탕도 갖췄어요.",
-    "caption": "테라스 캠핑존"
+    "narration": "밖으로 나오면 숲속 클럽하우스와 노천탕 사우나도 있어요.",
+    "caption": "클럽하우스"
    },
    {
     "i": 6,
-    "narration": "눈을 돌리면 푸른 산자락 아래 건물들이 멋지게 펼쳐져요.",
-    "caption": "리조트 전경"
+    "narration": "한 층 내려가면 산을 보며 식사하는 라운지가 있어요.",
+    "caption": "전망 라운지"
    },
    {
     "i": 7,
-    "narration": "여기에 주방과 거실이 넓어 가족 식사하기도 편해요.",
-    "caption": "스위트 주방"
+    "narration": "취사가 되는 실버스위트 거실은 가족이 함께 머물기 좋아요.",
+    "caption": "실버스위트 거실"
    },
    {
     "i": 8,
-    "narration": "야외로 나가면 연못 분수가 있는 산책로도 잘 꾸며졌어요.",
-    "caption": "클럽하우스 잔디밭"
+    "narration": "밤이 되면 은은한 조명 아래 실내 자쿠지에서 편안히 쉴 수 있습니다.",
+    "caption": "실내 자쿠지"
    },
    {
     "i": 9,
-    "narration": "그래서 겨울 힐링 스파를 찾는 가족에게 추천해요.",
-    "caption": "스위트 거실"
+    "narration": "그래서 겨울철 부모님 모시고 편히 쉬고 싶은 가족에게 추천해요.",
+    "caption": "스위트 객실"
    }
   ],
-  "hook_title": "신전에서 [물놀이]를 즐긴다고?",
+  "hook_title": "야외에 [스핑크스] 온수풀이?",
   "extra": {
    "i": 5,
-   "tag": "+ 노천탕과"
+   "tag": "+ 노천탕"
   },
-  "title": "소노펠리체 비발디파크 온수풀 스파 호캉스",
-  "caption": "이색적인 테마 스파풀과 파크뷰 객실을 갖춘 소노펠리체 비발디파크입니다. 따뜻한 온수풀 수영과 사우나 노천탕까지 온 가족이 함께 편안하게 즐기기 좋습니다.",
+  "title": "물놀이와 스파를 한 번에 즐기는 홍천 소노펠리체 비발디파크",
+  "caption": "사계절 실내 파도풀부터 아늑한 노천 스파까지 모두 갖춘 홍천 소노펠리체 비발디파크입니다. 통창으로 마운틴뷰가 시원하게 펼쳐지는 넓은 스위트 객실에서 온 가족 힐링을 즐겨보세요.",
   "hashtags": [
    "#소노펠리체비발디파크",
    "#홍천여행",
-   "#온수풀리조트",
-   "#실내수영장",
-   "#겨울가족여행"
+   "#온수풀숙소",
+   "#가족호캉스",
+   "#스파리조트"
   ],
-  "hook_title_type": "반전 질문",
+  "hook_title_type": "의외 사실",
   "cta": {
    "narration": "객실이랑 예약 링크는 프로필 1번에 있어요.",
    "caption": "프로필 링크 → 1번 · 11월 실내 온수풀 온천"
   }
  },
  "narration_sec": {
-  "1": 1.97,
-  "2": 3.55,
-  "3": 3.11,
-  "4": 2.86,
-  "5": 3.83,
-  "6": 3.51,
-  "7": 3.3,
-  "8": 3.41,
-  "9": 2.93,
-  "cta": 2.62
+  "1": 3.12,
+  "2": 3.53,
+  "3": 3.81,
+  "4": 3.76,
+  "5": 3.49,
+  "6": 3.35,
+  "7": 3.36,
+  "8": 3.98,
+  "9": 3.59,
+  "cta": 2.4
  },
  "narration_qa": [
   {
    "segment": "컷1",
-   "script": "겨울에 이색 스파 찾는 분 주목.",
-   "heard": "겨울에 이색 스파 찾는 분 주목",
+   "script": "노천 스파 온수풀, 여기 모르면 손해예요.",
+   "heard": "노천 스파, 온수 풀. 여기 모르면 손해예요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "컷2",
-   "script": "먼저 강원 홍천의 대형 리조트 실내 온수풀이에요.",
-   "heard": "먼저 강원 홍천의 대형 리조트 실내 온수풀이에요.",
+   "script": "강원 홍천 스파 리조트로 실내 레인 수영장이 있어요.",
+   "heard": "강원 홍천 스파 리조트로 실내 레인 수영장이 있어요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "컷3",
-   "script": "안으로 들어가면 곡선 조명이 빛나는 레인이 나와요.",
-   "heard": "안으로 들어가면 곡선 조명이 빛나는 레인이 나와요.",
-   "similarity": 1.0,
+   "script": "그 옆엔 유리 돔 아래 사계절 파도가 치는 파도풀도 이어집니다.",
+   "heard": "그 옆엔 요리도 마에 사계절 파도가 치는 파도 풀도 이어집니다.",
+   "similarity": 0.84,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "컷4",
-   "script": "객실로 올라오면 큰 창 너머 산 전망이 시원해요.",
-   "heard": "객실로 올라오면 큰 창 너머 산 전망이 시원해요.",
+   "script": "객실로 올라오면 통창 너머로 시원한 산 전망이 한눈에 들어와요.",
+   "heard": "객실로 올라오면 통창 너머로 시원한 산 전망이 한눈에 들어와요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "컷5",
-   "script": "그 옆 테라스엔 캠핑 텐트가 있고 사우나 노천탕도 갖췄어요.",
-   "heard": "그 옆 테라스엔 캠핑 텐트가 있고 사우나, 노천탕도 갖췄어요.",
+   "script": "밖으로 나오면 숲속 클럽하우스와 노천탕 사우나도 있어요.",
+   "heard": "밖으로 나오면 숲속 클럽하우스와 노천탕, 사우나도 있어요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "컷6",
-   "script": "눈을 돌리면 푸른 산자락 아래 건물들이 멋지게 펼쳐져요.",
-   "heard": "눈을 돌리면 푸른 산자락 아래 건물들이 멋지게 펼쳐져요.",
+   "script": "한 층 내려가면 산을 보며 식사하는 라운지가 있어요.",
+   "heard": "한 층 내려가면 산을 보며 식사하는 라운지가 있어요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "컷7",
-   "script": "여기에 주방과 거실이 넓어 가족 식사하기도 편해요.",
-   "heard": "여기에 주방과 거실이 넓어 가족 식사하기도 편해요.",
+   "script": "취사가 되는 실버스위트 거실은 가족이 함께 머물기 좋아요.",
+   "heard": "취사가 되는 실버 스위트 거실은 가족이 함께 머물기 좋아요.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "컷8",
-   "script": "야외로 나가면 연못 분수가 있는 산책로도 잘 꾸며졌어요.",
-   "heard": "야외로 나가면 연못 분수가 있는 산책로도 잘 꾸며졌어요.",
+   "script": "밤이 되면 은은한 조명 아래 실내 자쿠지에서 편안히 쉴 수 있습니다.",
+   "heard": "밤이 되면 은은한 조명 아래 실내 자쿠지에서 편안히 쉴 수 있습니다.",
    "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
   {
    "segment": "컷9",
-   "script": "그래서 겨울 힐링 스파를 찾는 가족에게 추천해요.",
-   "heard": "그래서 겨울 힐링 스팟을 찾는 가족에게 추천해요",
-   "similarity": 0.9,
+   "script": "그래서 겨울철 부모님 모시고 편히 쉬고 싶은 가족에게 추천해요.",
+   "heard": "그래서 겨울철 부모님 모시고 편히 쉬고 싶은 가족에게 추천해요",
+   "similarity": 1.0,
    "ok": true,
    "instruction_words": []
   },
@@ -963,19 +971,19 @@
   }
  ],
  "hook_title": {
-  "title": "신전에서 [물놀이]를 즐긴다고?",
-  "type": "반전 질문"
+  "title": "야외에 [스핑크스] 온수풀이?",
+  "type": "의외 사실"
  },
  "veo": {
   "model": "veo-3.1-lite-generate-preview",
   "fake": false,
   "clips": [
    {
-    "i": 2,
-    "n": 11,
+    "i": 3,
+    "n": 13,
     "ok": true,
     "krw": 0.0,
-    "reused": "stay-run-35/build/veo_11.mp4"
+    "reused": "stay-run-33/build/veo_12.mp4"
    }
   ],
   "spent_krw": 0,
@@ -985,7 +993,7 @@
   "cuts": [
    {
     "i": 1,
-    "n": 12,
+    "n": 11,
     "role": "gag",
     "ok": true,
     "place": "노천탕·자쿠지",
@@ -1031,19 +1039,19 @@
    "kind": "미니어처",
    "sec": 3.4,
    "slow": 1.0,
-   "narration": "겨울에 이색 스파 찾는 분 주목.",
-   "caption": "테마 스파풀",
-   "label": "테마 스파풀",
-   "title": "신전에서 [물놀이]를 즐긴다고?",
+   "narration": "노천 스파 온수풀, 여기 모르면 손해예요.",
+   "caption": "야외 스파풀",
+   "label": "야외 스파풀",
+   "title": "야외에 [스핑크스] 온수풀이?",
    "chunks": [
     [
-     "겨울에 이색 스파",
+     "노천 스파 온수풀,",
      0.0,
-     1.059
+     1.726
     ],
     [
-     "찾는 분 주목.",
-     1.059,
+     "여기 모르면 손해예요.",
+     1.726,
      3.9
     ]
    ],
@@ -1052,28 +1060,28 @@
   {
    "i": 2,
    "section": "water",
-   "kind": "Veo",
-   "sec": 3.67,
+   "kind": "사진·push",
+   "sec": 3.65,
    "slow": 1.0,
-   "narration": "먼저 강원 홍천의 대형 리조트 실내 온수풀이에요.",
-   "caption": "원형 온수풀",
-   "label": "원형 온수풀",
+   "narration": "강원 홍천 스파 리조트로 실내 레인 수영장이 있어요.",
+   "caption": "실내 수영장",
+   "label": "실내 수영장",
    "title": null,
    "chunks": [
     [
-     "먼저 강원 홍천의",
-     0.0,
-     1.13
+     "강원 홍천 스파",
+     0.309,
+     1.116
     ],
     [
-     "대형 리조트 실내",
-     1.13,
-     2.261
+     "리조트로 실내 레인",
+     1.116,
+     2.193
     ],
     [
-     "온수풀이에요.",
-     2.261,
-     4.172
+     "수영장이 있어요.",
+     2.193,
+     4.151
     ]
    ],
    "extra": null
@@ -1081,28 +1089,33 @@
   {
    "i": 3,
    "section": "water",
-   "kind": "사진·push",
-   "sec": 3.23,
+   "kind": "Veo",
+   "sec": 3.93,
    "slow": 1.0,
-   "narration": "안으로 들어가면 곡선 조명이 빛나는 레인이 나와요.",
-   "caption": "실내 수영장",
-   "label": "실내 수영장",
+   "narration": "그 옆엔 유리 돔 아래 사계절 파도가 치는 파도풀도 이어집니다.",
+   "caption": "실내 파도풀",
+   "label": "실내 파도풀",
    "title": null,
    "chunks": [
     [
-     "안으로 들어가면 곡선",
-     0.169,
-     1.374
+     "그 옆엔 유리",
+     0.26,
+     0.891
     ],
     [
-     "조명이 빛나는 레인이",
-     1.374,
-     2.579
+     "돔 아래 사계절",
+     0.891,
+     1.648
     ],
     [
-     "나와요.",
-     2.579,
-     3.734
+     "파도가 치는 파도풀도",
+     1.648,
+     2.785
+    ],
+    [
+     "이어집니다.",
+     2.785,
+     4.428
     ]
    ],
    "extra": null
@@ -1111,27 +1124,27 @@
    "i": 4,
    "section": "room",
    "kind": "미니어처",
-   "sec": 3.4,
+   "sec": 3.88,
    "slow": 1.0,
-   "narration": "객실로 올라오면 큰 창 너머 산 전망이 시원해요.",
-   "caption": "파크뷰 거실",
-   "label": "파크뷰 거실",
+   "narration": "객실로 올라오면 통창 너머로 시원한 산 전망이 한눈에 들어와요.",
+   "caption": "마운틴뷰 거실",
+   "label": "마운틴뷰 거실",
    "title": null,
    "chunks": [
     [
-     "객실로 올라오면 큰",
-     0.109,
-     1.123
+     "객실로 올라오면 통창",
+     0.265,
+     1.343
     ],
     [
-     "창 너머 산",
-     1.123,
-     1.631
+     "너머로 시원한 산",
+     1.343,
+     2.181
     ],
     [
-     "전망이 시원해요.",
-     1.631,
-     3.9
+     "전망이 한눈에 들어와요.",
+     2.181,
+     4.38
     ]
    ],
    "extra": null
@@ -1140,56 +1153,56 @@
    "i": 5,
    "section": "special",
    "kind": "사진·pan",
-   "sec": 3.95,
+   "sec": 3.61,
    "slow": 1.0,
-   "narration": "그 옆 테라스엔 캠핑 텐트가 있고 사우나 노천탕도 갖췄어요.",
-   "caption": "테라스 캠핑존",
-   "label": "테라스 캠핑존",
+   "narration": "밖으로 나오면 숲속 클럽하우스와 노천탕 사우나도 있어요.",
+   "caption": "클럽하우스",
+   "label": "클럽하우스",
    "title": null,
    "chunks": [
     [
-     "그 옆 테라스엔",
-     0.0,
-     0.866
+     "밖으로 나오면 숲속",
+     0.261,
+     1.214
     ],
     [
-     "캠핑 텐트가 있고",
-     0.866,
-     1.876
+     "클럽하우스와 노천탕",
+     1.214,
+     2.287
     ],
     [
-     "사우나 노천탕도 갖췄어요.",
-     1.876,
-     4.446
+     "사우나도 있어요.",
+     2.287,
+     4.112
     ]
    ],
-   "extra": "+ 노천탕과"
+   "extra": "+ 노천탕"
   },
   {
    "i": 6,
    "section": "special",
    "kind": "사진·diag",
-   "sec": 3.63,
+   "sec": 3.47,
    "slow": 1.0,
-   "narration": "눈을 돌리면 푸른 산자락 아래 건물들이 멋지게 펼쳐져요.",
-   "caption": "리조트 전경",
-   "label": "리조트 전경",
+   "narration": "한 층 내려가면 산을 보며 식사하는 라운지가 있어요.",
+   "caption": "전망 라운지",
+   "label": "전망 라운지",
    "title": null,
    "chunks": [
     [
-     "눈을 돌리면 푸른",
-     0.225,
-     1.114
+     "한 층 내려가면",
+     0.251,
+     1.026
     ],
     [
-     "산자락 아래 건물들이",
-     1.114,
-     2.257
+     "산을 보며 식사하는",
+     1.026,
+     2.059
     ],
     [
-     "멋지게 펼쳐져요.",
-     2.257,
-     4.128
+     "라운지가 있어요.",
+     2.059,
+     3.974
     ]
    ],
    "extra": null
@@ -1198,27 +1211,27 @@
    "i": 7,
    "section": "offer",
    "kind": "사진·tilt",
-   "sec": 3.42,
+   "sec": 3.48,
    "slow": 1.0,
-   "narration": "여기에 주방과 거실이 넓어 가족 식사하기도 편해요.",
-   "caption": "스위트 주방",
-   "label": "스위트 주방",
+   "narration": "취사가 되는 실버스위트 거실은 가족이 함께 머물기 좋아요.",
+   "caption": "실버스위트 거실",
+   "label": "실버스위트 거실",
    "title": null,
    "chunks": [
     [
-     "여기에 주방과 거실이",
-     0.111,
-     1.315
+     "취사가 되는 실버스위트",
+     0.263,
+     1.402
     ],
     [
-     "넓어 가족 식사하기도",
-     1.315,
-     2.519
+     "거실은 가족이 함께",
+     1.402,
+     2.313
     ],
     [
-     "편해요.",
-     2.519,
-     3.918
+     "머물기 좋아요.",
+     2.313,
+     3.982
     ]
    ],
    "extra": null
@@ -1227,27 +1240,32 @@
    "i": 8,
    "section": "offer",
    "kind": "사진·pull",
-   "sec": 3.53,
+   "sec": 4.1,
    "slow": 1.0,
-   "narration": "야외로 나가면 연못 분수가 있는 산책로도 잘 꾸며졌어요.",
-   "caption": "클럽하우스 잔디밭",
-   "label": "클럽하우스 잔디밭",
+   "narration": "밤이 되면 은은한 조명 아래 실내 자쿠지에서 편안히 쉴 수 있습니다.",
+   "caption": "실내 자쿠지",
+   "label": "실내 자쿠지",
    "title": null,
    "chunks": [
     [
-     "야외로 나가면 연못",
-     0.0,
-     1.058
+     "밤이 되면 은은한",
+     0.252,
+     1.121
     ],
     [
-     "분수가 있는 산책로도",
-     1.058,
-     2.249
+     "조명 아래 실내",
+     1.121,
+     1.867
     ],
     [
-     "잘 꾸며졌어요.",
-     2.249,
-     4.029
+     "자쿠지에서 편안히 쉴",
+     1.867,
+     2.985
+    ],
+    [
+     "수 있습니다.",
+     2.985,
+     4.599
     ]
    ],
    "extra": null
@@ -1256,27 +1274,27 @@
    "i": 9,
    "section": "offer",
    "kind": "미니어처",
-   "sec": 3.4,
+   "sec": 3.71,
    "slow": 1.0,
-   "narration": "그래서 겨울 힐링 스파를 찾는 가족에게 추천해요.",
-   "caption": "스위트 거실",
-   "label": "스위트 거실",
+   "narration": "그래서 겨울철 부모님 모시고 편히 쉬고 싶은 가족에게 추천해요.",
+   "caption": "스위트 객실",
+   "label": "스위트 객실",
    "title": null,
    "chunks": [
     [
-     "그래서 겨울 힐링",
-     0.24,
-     1.059
+     "그래서 겨울철 부모님",
+     0.248,
+     1.275
     ],
     [
-     "스파를 찾는 가족에게",
-     1.059,
-     2.113
+     "모시고 편히 쉬고",
+     1.275,
+     2.074
     ],
     [
-     "추천해요.",
-     2.113,
-     3.9
+     "싶은 가족에게 추천해요.",
+     2.074,
+     4.211
     ]
    ],
    "extra": null
@@ -1291,17 +1309,17 @@
   }
  ],
  "models_used": {},
- "duration_sec": 35.28,
- "video_bytes": 13123275,
+ "duration_sec": 36.93,
+ "video_bytes": 13500805,
  "gemini_usage": {
-  "calls": 27,
-  "prompt_text": 19877,
-  "prompt_image": 52203,
-  "prompt_audio": 782,
-  "output_text": 5702,
-  "output_audio": 1001,
+  "calls": 26,
+  "prompt_text": 16989,
+  "prompt_image": 52192,
+  "prompt_audio": 865,
+  "output_text": 6930,
+  "output_audio": 1111,
   "thoughts": 0,
-  "krw_est": 69,
+  "krw_est": 74,
   "note": "토큰 수는 실측, 단가는 추정 — 실제 청구는 Google 사용량 화면 기준"
  }
 }
