@@ -148,6 +148,7 @@ class _Links(HTMLParser):
         super().__init__()
         self.links: list[tuple[str, str]] = []
         self.imgs: list[str] = []
+        self.alts: dict[str, str] = {}               # 사진 주소 → 공식 페이지의 사진 이름(alt·title) — 시설 이름 근거(2026-10-14 자쿠지 오표기)
         self._a: str | None = None
         self._txt: list[str] = []
 
@@ -157,9 +158,12 @@ class _Links(HTMLParser):
             self._a = a["href"]
             self._txt = []
         if tag in ("img", "source"):
+            alt = re.sub(r"\s+", " ", str(a.get("alt") or a.get("title") or "")).strip()[:60]
             for k in ("src", "data-src", "data-original", "data-lazy", "data-lazy-src", "data-bg"):
                 if a.get(k):
                     self.imgs.append(a[k])
+                    if alt:
+                        self.alts[a[k].strip()] = alt
             if a.get("srcset"):
                 # srcset 은 "url 640w, url2 1280w" — 마지막(대개 가장 큰 것)을 쓴다
                 parts = [p.strip().split()[0] for p in a["srcset"].split(",") if p.strip()]
@@ -279,6 +283,16 @@ def discover_pages(root: str, html: str, limit: int = MAX_PAGES, extra: list[str
             scored[u] = max(scored.get(u, 0), score - s.path.count("/") * 0.1)
     ranked = sorted(scored, key=lambda k: -scored[k])
     return out + ranked[: max(0, limit - len(out))]
+
+
+def image_alts(page: str, html: str) -> dict[str, str]:
+    """사진 절대 주소 → alt/title 글(있을 때만). 이미지 파일 이름 같은 의미 없는 값은 버린다."""
+    out = {}
+    for raw, alt in parse(html).alts.items():
+        if re.fullmatch(r"[\w\-. ]{0,20}\.(jpe?g|png|webp)|image|img|이미지|사진|\d+", alt, re.I):
+            continue
+        out[urllib.parse.urljoin(page, raw)] = alt
+    return out
 
 
 def image_urls(page: str, html: str) -> list[str]:
@@ -412,6 +426,7 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
         if len(res["photos"]) >= max_images:
             continue
         found = [u for u in image_urls(page, htmls[page]) if u not in seen_url]
+        alts = image_alts(page, htmls[page])
         urls = [u for u in found if u not in shared]
         res["shared_excluded"] += len(found) - len(urls)
         got = 0
@@ -435,7 +450,7 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
                     n = len(res["photos"])
                     dest = out_dir / f"off_{n:02d}.jpg"
                     im.convert("RGB").save(dest, "JPEG", quality=93)
-                res["photos"].append({"path": str(dest), "url": u, "page": page, "size": [w, h], "sha1": sha[:12]})
+                res["photos"].append({"path": str(dest), "url": u, "page": page, "size": [w, h], "sha1": sha[:12], "alt": alts.get(u, "")})
                 got += 1
             except Exception as e:  # noqa: BLE001
                 log(f"사진 실패 {u[-60:]}: {str(e)[:50]}")

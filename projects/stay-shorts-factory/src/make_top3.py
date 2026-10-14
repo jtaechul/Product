@@ -140,7 +140,8 @@ def record_sources(hotels: list[dict], report: dict) -> None:
     """어느 사진을 어디서 가져왔는지 장부 — report 와 data/runs/latest/photo_sources.json. 호텔이 삭제를 요청하면 여기서 찾는다."""
     rows = [{"hotel": h["name"], "official_site": (h.get("crawl") or {}).get("url"), "crawl": h.get("crawl"),
              "shots": [{"n": s["n"], "slot": s.get("slot"), "source": s.get("source"), "url": s.get("src_url"), "page": s.get("src_page"),
-                        "description": s.get("description")} for s in h["shots"]]} for h in hotels]
+                        "description": s.get("description"), **({"alt": s["src_alt"]} if s.get("src_alt") else {}),
+                        **({"description_raw": s["description_raw"], "term_audit": s.get("term_audit")} if s.get("description_raw") else {})} for s in h["shots"]]} for h in hotels]
     report["photo_sources"] = rows
     ms.PREVIEW.mkdir(parents=True, exist_ok=True)
     (ms.PREVIEW / "photo_sources.json").write_text(json.dumps(rows, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

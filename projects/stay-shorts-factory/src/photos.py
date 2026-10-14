@@ -17,6 +17,7 @@ import json
 import os
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -47,12 +48,144 @@ SYSTEM = """너는 숙소 홍보 숏폼의 촬영 감독이다. 숙소 사진 �
 각 사진에 대해:
 - category: "water"(수영장·워터파크·온수풀·해변 등 물놀이 공간. 항공·외관 사진이라도 수영장이 또렷이 보이면 water) / "room"(침대·객실 내부·욕실) / "special"(산책로·정원·테라스·전망·라운지·바베큐장 등 객실 밖의 특별한 공간) / "skip"(사진이 아닌 안내문·지도·로고·항공권·음식 접시만 찍힌 것·심하게 작거나 흐린 것)
 - description: 사진에 실제로 보이는 것만 한국어 한 문장 (없는 것을 지어내지 않는다. 예: "인피니티 풀 너머로 바다와 소나무가 보인다")
+  **시설 이름 규칙(2026-10-14 · 같은 사진이 17번 실행에서 자쿠지·욕조·온수풀·탕으로 매번 달라졌다)**: 아래 이름은 **사진에 그 결정적 증거가 보일 때만** 쓴다.
+  증거가 없으면 모양·재질·조명만 말하는 일반어("원형 실내 온수탕", "실내 풀", "스파 공간")를 쓴다. 분위기·주변 맥락(스파 페이지·조명)으로 이름을 추측하지 않는다.
+  · 자쿠지·월풀: 물속 기포·거품이나 벽의 분사구(제트)가 보인다
+  · 파도풀: 물결 띠·하얀 포말로 파도가 치는 것이 보인다
+  · 유수풀: 길게 이어진 수로를 따라 물이 흐르거나 튜브가 떠간다
+  · 인피니티풀: 수면 끝이 난간 없이 바깥 풍경과 이어진다
+  · 노천: 하늘이나 바깥 풍경이 직접 보이는 야외의 탕·풀
+  · 사우나·발한실: 나무 벤치·계단식 좌석이 있는 발한실 내부(문만 보이면 '사우나 입구')
+  · 찜질: 찜질방 내부(황토·돌 벽, 눕는 바닥)
+  · 히노키·편백: 나무로 된 욕조·탕
+  · 워터슬라이드: 미끄럼 튜브 구조물
+  · 키즈풀: 아이용 얕은 물과 놀이 구조물
+  · 족욕: 발만 담그는 얕은 탕·자리
+  숙소 이름·시설 고유 이름(클럽하우스·바스풀·오션월드 등)과 '온천'은 **간판이나 공식 사진 이름**에 있을 때만 쓴다(사진만으로는 알 수 없다).
 - focus_x, focus_y: 세로(9:16)로 잘라낼 때 꼭 남겨야 할 중심점. 0.0~1.0 (왼쪽 위가 0,0). 수영장·침대·길 같은 핵심이 들어가게 고른다
 - people: 사람이 보이면 true
 - quality: 영상 소재로서의 품질 0~10 (해상도·구도·밝기)
 - veo_prompt: 이 사진을 4초 영상으로 움직일 때의 영어 지시문 1~2문장. 카메라 움직임 한 가지(drone glide / slow push-in / slow tracking / gentle tilt 등)와 자연스러운 움직임 한 가지(water ripples / curtains sway / leaves sway / light shimmer)만 적는다. 사진에 없는 사물·사람·건물·풍경을 추가하라고 쓰지 않는다. 빠른 움직임·흔들림·줌 급변 금지.
 - mismatch: 사용자 메시지에 숙소 이름·지역이 주어졌을 때, 사진이 **그 숙소의 것이 아닐 가능성이 높으면**(지역 지리와 맞지 않음 — 예: 내륙 산간 리조트인데 바다가 보임, 알려진 건물 양식·시설과 다름, 다른 지점 이름의 간판) 그 이유를 한국어 한 줄로. 확실하지 않으면 빈 문자열. mismatch 를 적은 사진은 category 를 "skip" 으로 한다
 JSON 만 출력한다: {"photos":[{"k":번호,"category":"...","description":"...","focus_x":0.5,"focus_y":0.5,"people":false,"quality":7,"veo_prompt":"...","mismatch":""}]}"""
+
+
+# ── 시설 이름 사전 (2026-10-14 운영자 "자쿠지가 아닌데 자쿠지라고 표기") ─────────────────────────────
+# 사진에 결정적 증거가 있어야 쓸 수 있는 이름. 분류 설명(description)이 이 이름을 쓰면 컷으로 뽑힌 사진만 비전으로 한 번 더 확인(audit_terms)하고,
+# 대본·라벨·훅 제목은 그 컷의 (확인된) 설명에 있는 이름만 쓸 수 있다(make_solo.unseen_terms). kind: "visual" = 사진으로 확인 / "fact" = 공식 표기로만.
+FACILITY_TERMS = {
+    # 대표 이름: (종류, 글에서 찾는 낱말, 설명에 있으면 인정하는 낱말, 결정적 증거 정의, 바꿀 일반어)
+    # 종류 visual = 사진으로 확인(비전) · property = 숙소 전체 성질(공식 사실·확인 시설에 있으면 인정) · name = 특정 장소 이름(공식 사진 이름·페이지 주소에 있을 때만)
+    "자쿠지": ("visual", ("자쿠지", "월풀"), ("자쿠지", "월풀"), "물속에서 올라오는 기포·거품이나 벽·바닥의 분사구(제트)가 보이는 월풀 욕조", "온수탕"),
+    "파도풀": ("visual", ("파도풀",), ("파도풀",), "물결 띠·하얀 포말로 파도가 치는 것이 보이는 넓은 풀", "실내 풀"),
+    "유수풀": ("visual", ("유수풀",), ("유수풀",), "길게 이어진 수로를 따라 물이 흐르거나 튜브가 떠가는 풀", "풀"),
+    "인피니티풀": ("visual", ("인피니티",), ("인피니티",), "수면 끝이 난간 없이 바깥 풍경과 이어지는 풀", "야외 풀"),
+    "노천탕": ("visual", ("노천",), ("노천", "야외"), "하늘이나 바깥 풍경이 직접 보이는 야외의 탕·풀", "탕"),
+    "사우나": ("visual", ("사우나", "발한실"), ("사우나", "발한실"), "나무 벤치·계단식 좌석이 있는 발한실 내부(문만 보이면 아니다)", "스파 공간"),
+    "찜질방": ("visual", ("찜질",), ("찜질",), "황토·돌 벽과 눕는 바닥이 있는 찜질방 내부", "휴게 공간"),
+    "히노키": ("visual", ("히노키", "편백"), ("히노키", "편백"), "나무(편백)로 된 욕조·탕", "탕"),
+    "워터슬라이드": ("visual", ("슬라이드",), ("슬라이드",), "워터 슬라이드(미끄럼 튜브) 구조물", "워터파크"),
+    "키즈풀": ("visual", ("키즈풀",), ("키즈풀",), "아이용 얕은 물과 놀이 구조물", "풀"),
+    "족욕": ("visual", ("족욕",), ("족욕",), "발만 담그는 얕은 탕·족욕 자리", "탕"),
+    "온천": ("property", ("온천",), ("온천",), "", "온수"),
+    "바스풀": ("name", ("바스풀",), ("바스풀",), "", "실내 풀"),
+    "클럽하우스": ("name", ("클럽하우스",), ("클럽하우스",), "", ""),
+}
+
+
+EN_WORDS = {"자쿠지": r"jacuzzi|whirlpool|bubbl|jets?\b", "파도풀": r"\bwaves?\b", "유수풀": r"lazy river|current", "인피니티풀": r"infinity",
+            "노천탕": r"open-air|outdoor", "사우나": r"sauna", "히노키": r"hinoki|cypress", "워터슬라이드": r"slide"}
+
+
+def facility_terms(text: str) -> list[str]:
+    """글에 나온 시설 이름(사전 대표 이름)."""
+    t = str(text or "")
+    return [k for k, v in FACILITY_TERMS.items() if any(w in t for w in v[1])]
+
+
+def term_ok(term: str, desc: str) -> bool:
+    """설명(확인본)이 이 시설 이름을 인정하는지 — 대본·라벨·훅 제목 검사용."""
+    return any(w in str(desc or "") for w in FACILITY_TERMS[term][2])
+
+
+AUDIT_SYSTEM = """너는 숙소 사진 검수자다. 사진 1장과, 그 사진 설명에 쓰인 시설 이름들의 정의를 받는다.
+이름마다 **이 사진에 그 정의의 결정적 증거가 실제로 보이는지**만 판단한다. 분위기·조명·주변 맥락·상식으로 추측하지 않는다(둥근 탕 = 자쿠지가 아니다).
+보이면 seen=true 와 증거(무엇이 어디에 보이는지), 안 보이면 seen=false.
+plain: 확인되지 않은 이름을 빼고, 사진에 보이는 모양·재질·조명만으로 쓴 한국어 설명 한 문장(확인된 이름은 써도 된다).
+JSON 만: {"terms":[{"term":"이름","seen":true|false,"evidence":"..."}],"plain":"..."}"""
+
+
+def audit_terms(model: str, shot: dict, facts: str = "", raise_errors: bool = False, offline: str = "") -> dict:
+    """뽑힌 사진의 설명에 든 시설 이름을 확인한다(비전 1번 · 약 1원, 이름이 없으면 호출 0).
+    visual = 비전 확인 · property(온천) = 공식 사실·확인 시설에 있으면 인정 · name(바스풀·클럽하우스) = 공식 사진 이름·페이지 주소에 있을 때만
+    (숙소에 클럽하우스가 있다고 이 사진이 클럽하우스인 것은 아니다). 확인 안 된 이름은 설명에서 빼고 일반어 설명으로 바꾼다.
+    shot 을 고친다: description(확인본) · description_raw(원래) · term_audit(기록)."""
+    desc = str(shot.get("description") or "")
+    found = facility_terms(desc)
+    if not found:
+        return {}
+    alt = str(shot.get("src_alt") or (shot.get("name") if shot.get("source") == "coupang" else "") or "")   # 쿠팡은 상품 이름이 공식 표기
+    page = urllib.parse.unquote(str(shot.get("src_page") or ""))
+    rec = {"raw": desc, "terms": {}}
+    visual = []
+    for k in found:
+        kind, words = FACILITY_TERMS[k][0], FACILITY_TERMS[k][1]
+        if any(w in alt for w in words):                                   # 공식 사진 이름에 있으면 확인된 것
+            rec["terms"][k] = {"seen": True, "evidence": f"공식 사진 이름 '{alt}'"}
+        elif kind == "property":
+            ok = any(w in facts for w in words)
+            rec["terms"][k] = {"seen": ok, "evidence": "공식 사실·확인 시설" if ok else "공식 표기 없음"}
+        elif kind == "name":
+            ok = any(w in page for w in words)
+            rec["terms"][k] = {"seen": ok, "evidence": f"페이지 주소 {page[-30:]}" if ok else "공식 사진 이름·페이지에 없음(숙소에 있다고 이 사진이 그곳은 아님)"}
+        else:
+            visual.append(k)
+    plain = ""
+    if visual and offline:                                                 # 비전 호출이 모두 실패 → 보수적으로 확인 안 된 것으로
+        for k in visual:
+            rec["terms"][k] = {"seen": False, "evidence": f"검수 실패: {offline}"}
+        visual = []
+    if visual:
+        lines = "\n".join(f"- {k}: {FACILITY_TERMS[k][3]}" for k in visual)
+        body = {"system_instruction": {"parts": [{"text": AUDIT_SYSTEM}]},
+                "contents": [{"role": "user", "parts": [{"text": f"사진 설명: {desc}\n확인할 이름과 정의:\n{lines}"},
+                                                        {"inline_data": {"mime_type": "image/jpeg", "data": _small_jpeg_b64(shot["path"], 1024)}}]}],
+                "generationConfig": {"maxOutputTokens": 600, "temperature": 0.0, "responseMimeType": "application/json"}}
+        try:
+            data = _gpost(f"models/{model}:generateContent", body, 90)
+            txt = "".join(p.get("text", "") for p in (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []))
+            js = json.loads(re.sub(r"^```(?:json)?|```$", "", txt.strip()).strip())
+            got = {}
+            for t in js.get("terms") or []:
+                name = str(t.get("term", ""))
+                key = next((k for k in visual if k in name or any(w in name for w in FACILITY_TERMS[k][1])), None)
+                if key:
+                    got[key] = {"seen": t.get("seen") is True, "evidence": str(t.get("evidence", ""))[:80]}
+            for k in visual:
+                rec["terms"][k] = got.get(k, {"seen": False, "evidence": "답 없음 — 확인 안 된 것으로"})
+            plain = str(js.get("plain") or "").strip()[:120]
+        except Exception as e:  # noqa: BLE001
+            if raise_errors:
+                raise
+            for k in visual:                                              # 검수 실패면 보수적으로: 확인 안 된 것으로 본다
+                rec["terms"][k] = {"seen": False, "evidence": f"검수 실패: {str(e)[:50]}"}
+    bad = [k for k, v in rec["terms"].items() if not v["seen"]]
+    if bad:
+        new = plain if plain and not any(w in plain for k in bad for w in FACILITY_TERMS[k][1]) else desc
+        for k in bad:                                                      # plain 이 없거나 이름을 다시 쓰면 낱말을 일반어로 바꾼다
+            for w in FACILITY_TERMS[k][1]:
+                fb = FACILITY_TERMS[k][4]
+                new = re.sub(rf"(온수\s*)?{w}\S*", fb, new) if fb else new.replace(w, "")
+        new = re.sub(r"\s{2,}", " ", new).strip()
+        shot["description_raw"] = desc
+        shot["description"] = new
+        rec["fixed"] = new
+        en = "|".join(EN_WORDS[k] for k in bad if k in EN_WORDS)                # Veo 지시문에서도 그 시설을 부르는 문장을 뺀다(없는 거품·파도를 그리지 않게)
+        if en and shot.get("prompt"):
+            shot["prompt"] = " ".join(x for x in re.split(r"(?<=[.!?])\s+", shot["prompt"]) if not re.search(en, x, re.I))
+        log(f"사진 {shot.get('k')} 시설 이름 확인 안 됨 {bad} → 설명 교체: {desc} → {new}")
+    shot["term_audit"] = rec
+    return rec
 
 
 def context_for(name: str, city: str = "", facts: list[str] | None = None) -> str:
@@ -115,7 +248,7 @@ def gather(items: list, operator_dir: Path, build: Path, official: list[dict] | 
     for i, p in enumerate(official or []):
         try:
             add(Path(p["path"]).read_bytes(), "official", str(p.get("url", ""))[-60:], i,
-                {"src_url": p.get("url"), "src_page": p.get("page")})
+                {"src_url": p.get("url"), "src_page": p.get("page"), "src_alt": p.get("alt") or ""})
         except Exception as e:  # noqa: BLE001
             log(f"공식 홈페이지 사진 읽기 실패 ({i}): {e}")
     for i, it in enumerate(items):
@@ -165,7 +298,7 @@ def _src_label(c: dict) -> str:
     if c["source"] == "operator":
         return "운영자가 준 사진"
     if c["source"] == "official":
-        return f"공식 홈페이지 사진 (페이지 {str(c.get('src_page') or '')[-40:]})"
+        return (f"공식 홈페이지 사진 (페이지 {str(c.get('src_page') or '')[-40:]}" + (f" · 공식 사진 이름 '{c['src_alt']}'" if c.get("src_alt") else "") + ")")
     return f"쿠팡 객실 상품 '{c['name']}'"
 
 
@@ -179,7 +312,7 @@ def classify(model: str, cands: list[dict], context: str = "") -> list[dict]:
         parts.append({"inline_data": {"mime_type": "image/jpeg", "data": _small_jpeg_b64(c["path"])}})
     body = {"system_instruction": {"parts": [{"text": SYSTEM}]},
             "contents": [{"role": "user", "parts": parts}],
-            "generationConfig": {"maxOutputTokens": 8000, "temperature": 0.4,
+            "generationConfig": {"maxOutputTokens": 8000, "temperature": 0.1,          # 0.4 → 0.1: 같은 사진의 설명이 실행마다 바뀌지 않게
                                  "responseMimeType": "application/json",
                                  "thinkingConfig": {"thinkingBudget": 0}}}
     got = {}

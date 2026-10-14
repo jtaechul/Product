@@ -105,11 +105,15 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터이자 편집자�
  "title":"유튜브 제목 12~25자 (숙소 이름 포함 — 제목·캡션은 텍스트라 이름을 쓴다)",
  "caption":"인스타 캡션 2문장 (숙소 이름 포함 가능. 고지문·링크·폴더 안내는 시스템이 붙임)","hashtags":["#..","#..","#..","#..","#.."]}"""
 
-SCREEN_SYSTEM = """너는 쇼츠 편집 검수자다. 사진 1장과 그 위에 나올 나레이션 문장·자막을 받는다.
-문장·자막이 **이 사진에 보이는 것**을 말하는지 0~10점으로 매긴다. 10 = 보이는 것을 정확히 말함 · 7 = 보이는 것과 어울리고 모순 없음 · 4 = 사진에 없는 것을 주로 말함 · 0 = 모순(사진은 외관인데 사우나 내부를 말함).
+SCREEN_SYSTEM = """너는 쇼츠 편집 검수자다. 사진 1장과 그 위에 나올 나레이션 문장·장소 라벨을 받는다.
+**먼저 문장·라벨을 따라 읽지 말고 사진만 보고** seen 을 쓴다(무엇이 어떤 모양·재질로 보이는지). 그다음 문장·라벨과 비교한다.
+문장·라벨이 **이 사진에 보이는 것**을 말하는지 0~10점으로 매긴다. 10 = 보이는 것을 정확히 말함 · 7 = 보이는 것과 어울리고 모순 없음 · 4 = 사진에 없는 것을 주로 말함 · 0 = 모순(사진은 외관인데 사우나 내부를 말함).
+**시설 이름 검사(2026-10-14 · 둥근 실내 탕을 '자쿠지'로 적은 사고)**: 문장·라벨에 자쿠지·월풀·파도풀·유수풀·인피니티·노천·사우나·찜질·히노키·편백·슬라이드·키즈풀·족욕 같은 이름이 있으면
+그 결정적 증거(자쿠지=물속 기포·분사구 / 파도풀=파도 / 노천=하늘·바깥 / 사우나=나무 벤치 발한실 내부 / 히노키=나무 욕조 …)가 사진에 보이는지 확인한다. 증거가 없으면 '사진에 없는 시설 이름'으로 **4점 이하**.
 사진에 없는 사실을 덧붙여도 그 공간에 관한 설명(수온·운영·포함 여부·누구에게 좋은지)이면 감점하지 않는다. 가격·사람 이름은 다루지 않는다.
-7점 미만이면 **공백 제외 {lo}~{hi}자**로, 사진에 보이는 것만 말하는 수정 문장을 fix 에 쓴다 (숙소 이름 금지, "~해요"체, 원래 문장의 사실·말투는 최대한 유지). 7점 이상이면 fix 는 빈 문자열.
-JSON 만: {{"score": 0~10 정수, "seen": "사진에 보이는 것 한 줄", "problem": "문제 한 줄(없으면 빈 문자열)", "fix": "..."}}"""
+7점 미만이면 **공백 제외 {lo}~{hi}자**로, 사진에 보이는 것만 말하는 수정 문장을 fix 에 쓴다 (숙소 이름 금지, "~해요"체, 원래 문장의 사실·말투는 최대한 유지).
+라벨이 사진과 맞지 않으면 label_fix 에 사진에 보이는 장소를 2~8자 명사로(예: "실내 온수탕") — 맞으면 빈 문자열. 7점 이상이면 fix 는 빈 문자열.
+JSON 만: {{"score": 0~10 정수, "seen": "사진에 보이는 것 한 줄", "problem": "문제 한 줄(없으면 빈 문자열)", "fix": "...", "label_fix": "..."}}"""
 
 
 # ── 숙소·사진 ───────────────────────────────────────────────────────────────────────────
@@ -152,6 +156,29 @@ def _special_key(s, facts=()):
     exterior = bool(EXTERIOR_RX.search(d))
     named = (not exterior) and any(len(t) >= 2 and t in d for f in facts for t in re.split(r"[\s·/,()]+", str(f)))
     return (0 if named else 1 if (FACILITY_RX.search(d) and not exterior) else 2 if not exterior else 3, -int(s.get("quality") or 0))
+
+
+def audit_cuts(cuts: list[dict], h: dict, models: dict) -> list[dict]:
+    """2026-10-14 운영자 "자쿠지가 아닌데 자쿠지로 표기". 원인: 사진 분류가 39장을 한 번에 640px·thinking 0 으로 보며 모양·맥락으로 시설 이름을 추측
+    (같은 사진이 17번 실행에서 자쿠지 3번·욕조·온수풀·탕으로 매번 달라짐) → 대본·라벨·화면 검수가 그 설명을 그대로 믿었다.
+    컷으로 뽑힌 사진만, 설명에 시설 이름이 있을 때만 비전으로 결정적 증거를 확인(컷당 약 1원) → 확인 안 된 이름은 일반어 설명으로 바꾼다."""
+    facts = " ".join(list(h.get("official_facts") or []) + list(h.get("verified_facilities") or []))
+    out = []
+    for c in cuts:
+        try:                                                                  # 모델을 차례로(첫 모델이 안 되면 다음) — 모두 실패하면 보수적으로 '확인 안 됨'
+            rec = ms._try_models("vision", models["text"], lambda m: photos.audit_terms(m, c["shot"], facts, raise_errors=True))
+        except Exception as e:  # noqa: BLE001
+            rec = photos.audit_terms("", c["shot"], facts, offline=str(e)[:60])
+        if rec:
+            out.append({"i": c["i"], "n": c["n"], **rec})
+    return out
+
+
+def unseen_terms(text: str, c: dict, sig: dict | None = None) -> list[str]:
+    """글(나레이션·라벨·훅 제목)에 나온 시설 이름 중 **이 컷 사진 설명(확인본)이 인정하지 않는 것**. 시그니처 덧붙임 컷은 시그니처 사실의 이름도 허용."""
+    desc = str(c["shot"].get("description") or "")
+    allow = str(sig["fact"]) if (sig and sig.get("i") == c["i"]) else ""
+    return [t for t in photos.facility_terms(text) if not photos.term_ok(t, desc) and not any(w in allow for w in photos.FACILITY_TERMS[t][1])]
 
 
 def plan_cuts(h: dict, max_veo: int, mini: bool = False) -> list[dict]:
@@ -644,7 +671,7 @@ HOOK_FACT_RX = re.compile(r"(온수풀|온천|사우나|워터파크|파도풀|�
 
 
 
-def hook_title_errs(title: str, narr: str, h: dict, req: dict) -> list[str]:
+def hook_title_errs(title: str, narr: str, h: dict, req: dict, cut: dict | None = None) -> list[str]:
     """화면 훅 제목 검사(0원) — 2026-10-13 운영자 "나레이션 그대로 말고 요약해서 궁금증 유발". 위쪽 가운데 120px 두 줄 안."""
     t = str(title or "").strip()
     if not t:
@@ -663,6 +690,9 @@ def hook_title_errs(title: str, narr: str, h: dict, req: dict) -> list[str]:
         errs.append(f"hook_title '{t}' 이 컷 1 나레이션과 거의 같다 — 그대로 옮기지 말고 줄여서 궁금증만 남긴다")
     if re.sub(r"\s", "", p) in {re.sub(r"\s", "", design.plain(x)) for x in recent_titles()}:
         errs.append(f"hook_title '{t}' 는 최근 편에 쓴 제목 — 새 제목으로(예시 문구를 그대로 쓰지 않는다)")
+    bad_t = unseen_terms(p, cut) if cut else []
+    if bad_t:
+        errs.append(f"hook_title 시설 이름 {'/'.join(bad_t)} — 컷 1 사진에서 확인되지 않음(사진 설명: {str(cut['shot'].get('description') or '')[:40]})")
     if not p.rstrip().endswith("?"):                                       # 2026-10-13 운영자 결정: 반전 질문·의외 사실 두 유형만 — 둘 다 질문
         errs.append(f"hook_title '{t}' 는 물음표로 끝나는 질문(반전 질문 또는 의외 사실)")
     if any(tk in p for tk in name_tokens(h["name"], req, h)):
@@ -735,6 +765,9 @@ def check_script(s: dict, h: dict, cuts: list[dict], req: dict, sig: dict | None
         all_text += " " + n
         cc = {**c, "hi": c["hi"] + EXTRA_BONUS} if (sig and c["i"] == sig["i"]) else c
         errs += sentence_errs(n, cc, h, req)
+        bad_t = unseen_terms(n + " " + cap, c, sig)                                # 2026-10-14 자쿠지 오표기: 사진에서 확인 안 된 시설 이름 금지
+        if bad_t:
+            errs.append(f"컷 {c['i']} 시설 이름 {'/'.join(bad_t)} — 이 컷 사진에서 확인되지 않음(사진 설명: {str(c['shot'].get('description') or '')[:40]}). 설명에 있는 낱말로")
         if sig and c["i"] == sig["i"]:
             ws = [w for w in _words(sig["fact"]) if FACILITY_RX.search(w) or len(w) >= 3]
             if ws and not any(w in n for w in ws):
@@ -756,7 +789,7 @@ def check_script(s: dict, h: dict, cuts: list[dict], req: dict, sig: dict | None
         if not ok:
             errs.append(f"컷 {c['i']} 문장의 한 단어가 자막 한 줄보다 길다: {max(ch, key=len) if ch else n}")
         if c["section"] == "hook":
-            errs += hook_title_errs(str(s.get("hook_title") or ""), n, h, req)
+            errs += hook_title_errs(str(s.get("hook_title") or ""), n, h, req, c)
     second = [c for c in cuts if c["i"] == 2]
     if second and not any(w in got[2].get("narration", "") for w in region_words(req, h)):
         errs.append(f"컷 2 문장에 지역({' 또는 '.join(region_words(req, h))}) + 유형으로 숙소를 부른다")
@@ -939,7 +972,7 @@ def ensure_hook_title(model: str, s: dict, cuts: list[dict], h: dict, req: dict)
     by_i = {int(x.get("i", 0)): x for x in (s.get("cuts") or []) if isinstance(x, dict)}
     hook = next((c for c in cuts if c["section"] == "hook"), cuts[0])
     n1 = str(by_i.get(hook["i"], {}).get("narration", ""))
-    errs = hook_title_errs(str(s.get("hook_title") or ""), n1, h, req)
+    errs = hook_title_errs(str(s.get("hook_title") or ""), n1, h, req, hook)
     if not errs:
         return s
     log("훅 제목 다시 쓰기:", errs[:2])
@@ -953,7 +986,7 @@ def ensure_hook_title(model: str, s: dict, cuts: list[dict], h: dict, req: dict)
         except Exception as e:  # noqa: BLE001
             log(f"훅 제목 호출 실패: {str(e)[:80]}"); continue
         for t in (r.get("titles") or []) if isinstance(r, dict) else []:
-            e2 = hook_title_errs(str(t), n1, h, req)
+            e2 = hook_title_errs(str(t), n1, h, req, hook)
             if not e2:
                 s["hook_title"] = str(t).strip()
                 log(f"훅 제목: {s['hook_title']}")
@@ -1070,6 +1103,14 @@ def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) 
             row.update({"score": None, "error": str(e)[:100]})
             out.append(row); continue
         fix = str(r.get("fix", "")).strip()
+        lfix = design.plain(str(r.get("label_fix", "")).strip())
+        if lfix and row["score"] is not None and row["score"] < thr and c["section"] != "hook" and 2 <= _len(lfix) <= 8 \
+                and not re.search(r"\d|후기|[!！\[\]]", lfix) and not unseen_terms(lfix, c):  # 라벨도 바꾼다(전엔 문장만 바꿔 '실내 자쿠지' 라벨이 남을 수 있었다)
+            row["label_fixed"] = f"{x['caption']} → {lfix}"
+            x["caption"] = lfix
+            log(f"컷 {c['i']} 라벨 교체: {row['label_fixed']}")
+        if fix and unseen_terms(fix, c, None if not note else {"i": c["i"], "fact": str((ex or {}).get("tag", ""))}):
+            row["fix_rejected"] = fix; fix = ""                               # 교체 문장도 확인 안 된 시설 이름을 쓰면 거부
         last = (c["i"] == cuts[-1]["i"])
         if last and fix and "추천" not in fix:                           # p10 실측: 마지막 컷 교체문에서 '추천해요'가 빠졌다 → 교체 거부
             row["fix_rejected"] = fix; fix = ""
@@ -1175,6 +1216,7 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     if mini:
         report["mini_scale"] = SCALE_MODE
     cuts = plan_cuts(h, (1 if mini else 4) if mv is None else int(mv), mini)                     # 0 = Veo 없이 전부 사진 무빙(0원) — "or 4" 는 0 을 4 로 바꿔 버렸다
+    report["term_audit"] = audit_cuts(cuts, h, models)                       # 2026-10-14: 컷 사진 설명의 시설 이름(자쿠지 등)을 사진으로 한 번 더 확인 → 대본은 확인본만 본다
     if mini:
         cuts = assign_env(choose_minis(cuts, models), 1 if mv is None else int(mv))
         report["mini_pick"] = [dict(r) for r in MINI_LOG]
