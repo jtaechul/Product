@@ -180,6 +180,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # stay-run-18 실측: 실행 중에 다른 푸시가 들어오면 pull --rebase 가 충돌(report·장부·폴더) → 기록·Veo 장부가 통째로 유실됐다.
           # 그래서 이 실행의 결과 파일을 따로 보관했다가, 원격 최신 위에 **덮어쓰는** 방식으로 커밋한다 (충돌 없음).
+          # 이 실행이 시작할 때의 요청 nonce(돈 잠금 전에 멈춘 실행·취소된 실행도 잠그려고 — produce_nonce 는 돈 잠금 뒤에만 적힌다)
+          export STARTED=$(python3 -c "import json;print(json.load(open('$P/requests/produce/request.json',encoding='utf-8')).get('nonce',''))" 2>/dev/null || true)
           SAVE=$(mktemp -d)
           for d in data/runs state link; do [ -e "$P/$d" ] && { mkdir -p "$SAVE/$(dirname "$d")"; cp -r "$P/$d" "$SAVE/$d"; }; done
           for i in 1 2 3 4 5; do
@@ -188,9 +190,9 @@ jobs:
             # 2026-10-14 관리실: 실행이 끝나면 요청을 자동으로 잠근다(stage 제거 · veo_approved false · 재사용 전용 해제).
             # 원격 요청의 nonce 가 방금 돈 nonce 와 같을 때만 — 그사이 새로 들어온 요청은 건드리지 않는다
             python3 - "$P" <<'PY' || echo "요청 잠금 건너뜀"
-          import json, pathlib, sys
+          import json, os, pathlib, sys
           p = pathlib.Path(sys.argv[1])
-          ran = json.loads((p / "state/produce_nonce.json").read_text(encoding="utf-8")).get("nonce")
+          ran = os.environ.get("STARTED") or json.loads((p / "state/produce_nonce.json").read_text(encoding="utf-8")).get("nonce")
           rq = p / "requests/produce/request.json"
           r = json.loads(rq.read_text(encoding="utf-8"))
           if ran and r.get("nonce") == ran and (r.get("stage") or r.get("veo_approved") or r.get("reuse_only")):
