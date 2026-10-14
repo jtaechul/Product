@@ -62,12 +62,13 @@ SYSTEM = """너는 숙소 홍보 숏폼의 촬영 감독이다. 숙소 사진 �
   · 키즈풀: 아이용 얕은 물과 놀이 구조물
   · 족욕: 발만 담그는 얕은 탕·자리
   숙소 이름·시설 고유 이름(클럽하우스·바스풀·오션월드 등)과 '온천'은 **간판이나 공식 사진 이름**에 있을 때만 쓴다(사진만으로는 알 수 없다).
+- view: "exterior"(건물 바깥 모습·단지 전경·항공·야경 — 시설을 이용하는 공간이 아니라 건물·단지가 주인공) / "interior"(실내) / "outdoor"(야외 풀·테라스·정원·산책로처럼 이용하는 바깥 공간)
 - focus_x, focus_y: 세로(9:16)로 잘라낼 때 꼭 남겨야 할 중심점. 0.0~1.0 (왼쪽 위가 0,0). 수영장·침대·길 같은 핵심이 들어가게 고른다
 - people: 사람이 보이면 true
 - quality: 영상 소재로서의 품질 0~10 (해상도·구도·밝기)
 - veo_prompt: 이 사진을 4초 영상으로 움직일 때의 영어 지시문 1~2문장. 카메라 움직임 한 가지(drone glide / slow push-in / slow tracking / gentle tilt 등)와 자연스러운 움직임 한 가지(water ripples / curtains sway / leaves sway / light shimmer)만 적는다. 사진에 없는 사물·사람·건물·풍경을 추가하라고 쓰지 않는다. 빠른 움직임·흔들림·줌 급변 금지.
 - mismatch: 사용자 메시지에 숙소 이름·지역이 주어졌을 때, 사진이 **그 숙소의 것이 아닐 가능성이 높으면**(지역 지리와 맞지 않음 — 예: 내륙 산간 리조트인데 바다가 보임, 알려진 건물 양식·시설과 다름, 다른 지점 이름의 간판) 그 이유를 한국어 한 줄로. 확실하지 않으면 빈 문자열. mismatch 를 적은 사진은 category 를 "skip" 으로 한다
-JSON 만 출력한다: {"photos":[{"k":번호,"category":"...","description":"...","focus_x":0.5,"focus_y":0.5,"people":false,"quality":7,"veo_prompt":"...","mismatch":""}]}"""
+JSON 만 출력한다: {"photos":[{"k":번호,"category":"...","description":"...","view":"interior","focus_x":0.5,"focus_y":0.5,"people":false,"quality":7,"veo_prompt":"...","mismatch":""}]}"""
 
 
 # ── 시설 이름 사전 (2026-10-14 운영자 "자쿠지가 아닌데 자쿠지라고 표기") ─────────────────────────────
@@ -381,7 +382,8 @@ def classify(model: str, cands: list[dict], context: str = "") -> list[dict]:
                 return min(1.0, max(0.0, float(v)))
             except (TypeError, ValueError):
                 return d
-        out.append({**c, "category": cat, "description": str(p.get("description", ""))[:120],
+        view = str(p.get("view") or "").strip().lower()
+        out.append({**c, "category": cat, "description": str(p.get("description", ""))[:120], "view": view if view in ("exterior", "interior", "outdoor") else "",
                     "focus_x": f01(p.get("focus_x")), "focus_y": f01(p.get("focus_y")),
                     "people": bool(p.get("people", False)), "quality": _q(p.get("quality")),
                     "veo_prompt": str(p.get("veo_prompt", "")).strip()[:400], "mismatch": mismatch})

@@ -185,29 +185,11 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None, quota
             hashes[id(p)] = dhash(p["path"])
         except Exception:  # noqa: BLE001
             hashes[id(p)] = None
-
-    def dup_of_chosen(p):
-        h = hashes.get(id(p))
-        return h is not None and any(hashes.get(id(q)) is not None and near_dup(h, hashes[id(q)]) for q in chosen)
-    chosen, dups = [], 0
-    for cat in ("water", "room", "special"):
-        for p in usable:
-            if sum(1 for q in chosen if q["category"] == cat) >= quota.get(cat, 0):
-                break
-            if p["category"] == cat and p not in chosen:
-                if dup_of_chosen(p):
-                    dups += 1; continue
-                chosen.append(p)
-    for p in usable:
-        if len(chosen) >= want_total:
-            break
-        if p not in chosen:
-            if dup_of_chosen(p):
-                dups += 1; continue
-            chosen.append(p)
-    chosen = chosen[:want_total]
+    chosen, dups, ext_cut = pick_shots(usable, quota, want_total, hashes)
     if dups:
         log(f"{name}: 거의 같은 사진 {dups}장 제외 (dHash)")
+    if ext_cut:
+        log(f"{name}: 외관·전경 사진 {ext_cut}장 제외 (영상당 {MAX_EXTERIOR}장)")
     if len(chosen) < 2:
         log(f"{name}: 쓸 수 있는 사진 {len(chosen)}장 — 제외")
         return None
@@ -229,9 +211,9 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None, quota
             "official_facts": fd["facts"], "signature": fd["signature"], "city": c.get("city", ""), "official_site": crawl_info.get("url"),
             "rooms": [{"name": str(it.get("productName", ""))[:60], "price": float(it.get("productPrice") or 0) or None,
                        "image": it.get("productImage") or None, "url": str(it.get("productUrl", "")) or None} for it in rooms[:8]],
-            "photo_counts": {k: sum(p["source"] == k for p in cands) for k in SRC_KO} | {"mismatch": len(mism), "near_dup": dups},
+            "photo_counts": {k: sum(p["source"] == k for p in cands) for k in SRC_KO} | {"mismatch": len(mism), "near_dup": dups, "exterior_cut": ext_cut},
             "classified_summary": [{"k": p.get("k"), "src": p.get("source"), "cat": p.get("category"), "q": p.get("quality"), "people": bool(p.get("people")),
-                                    "mismatch": (p.get("mismatch") or "")[:30], "desc": (p.get("description") or "")[:40]} for p in cl]}
+                                    "mismatch": (p.get("mismatch") or "")[:30], "view": p.get("view"), "desc": (p.get("description") or "")[:40]} for p in cl]}
 
 
 THEME_RX = {"실내": r"실내|인도어|indoor|돔", "온수": r"온수|온천|스파|사우나|따뜻|온탕|노천", "온천": r"온천|온탕|노천|스파",
@@ -239,7 +221,55 @@ THEME_RX = {"실내": r"실내|인도어|indoor|돔", "온수": r"온수|온천|
 
 
 FACILITY_RX = re.compile(r"사우나|찜질|키즈|놀이|산책|정원|테라스|라운지|조식|레스토랑|식당|스파|온천|노천|족욕|카페|바비큐|바베큐|수영장|풀|자쿠지|피트니스")
-EXTERIOR_RX = re.compile(r"외관|전경|건물|항공|야경|조명|단지|하늘|은하수|드론|멀리")
+EXTERIOR_RX = re.compile(r"외관|전경|건물|항공|야경|단지|은하수|드론|멀리|리조트 동|타워 동")   # '조명'·'하늘' 제외 — 실내 '은은한 조명'·노천 '하늘'이 외관으로 잡혔다(2026-10-14)
+MAX_EXTERIOR = 1                                                    # 2026-10-14 운영자 "중복 외관 사진 거르기": 외관·전경은 영상당 1장(run-42 컷 6·8 = 같은 단지 다른 각도)
+
+
+def is_exterior(p: dict) -> bool:
+    """외관·전경 사진인가. 분류 비전이 준 view 가 있으면 그것, 없으면(옛 기록) 설명 낱말로."""
+    v = str(p.get("view") or "")
+    if v:
+        return v == "exterior"
+    if (p.get("category") or p.get("slot")) in ("water", "room"):          # 물놀이·객실 사진은 배경에 건물이 보여도 외관이 아니다('인피니티풀 너머 리조트 건물' 오탐)
+        return False
+    return bool(EXTERIOR_RX.search(p.get("description") or ""))
+
+
+def pick_shots(usable: list[dict], quota: dict, want_total: int, hashes: dict, min_keep: int = 6) -> tuple[list[dict], int, int]:
+    """분류별 quota 만큼 고르고 남은 자리를 채운다. 거르는 것 ① 거의 같은 사진(dHash) ② **외관·전경은 MAX_EXTERIOR 장까지**
+    — 같은 단지를 다른 각도로 찍은 사진은 픽셀 지문이 전혀 다르다(run-42 컷 6·8 해밍 27 = 무관한 사진과 같은 수준) → 의미로 거른다.
+    사진이 모자라 min_keep 장이 안 되면 그때만 외관을 더 허용한다(제작 중단보다 낫다). 돌려주는 것: (고른 것, 거의 같은 사진 수, 외관 상한으로 뺀 수)."""
+    chosen, dups, ext_cut = [], 0, 0
+
+    def dup_of_chosen(p):
+        h = hashes.get(id(p))
+        return h is not None and any(hashes.get(id(q)) is not None and near_dup(h, hashes[id(q)]) for q in chosen)
+
+    def ext_full(p):
+        return is_exterior(p) and sum(1 for q in chosen if is_exterior(q)) >= MAX_EXTERIOR
+
+    for cat in ("water", "room", "special"):
+        for p in usable:
+            if sum(1 for q in chosen if q["category"] == cat) >= quota.get(cat, 0):
+                break
+            if p["category"] == cat and p not in chosen:
+                if dup_of_chosen(p):
+                    dups += 1; continue
+                if ext_full(p):
+                    ext_cut += 1; continue
+                chosen.append(p)
+    for p in usable:
+        if len(chosen) >= want_total:
+            break
+        if p not in chosen and not dup_of_chosen(p) and not ext_full(p):
+            chosen.append(p)
+    if len(chosen) < min(min_keep, want_total):                            # 사진이 모자라면 서로 다른 외관을 더 허용
+        for p in usable:
+            if len(chosen) >= min(min_keep, want_total):
+                break
+            if p not in chosen and not dup_of_chosen(p):
+                chosen.append(p); ext_cut = max(0, ext_cut - 1)
+    return chosen[:want_total], dups, ext_cut
 
 
 def dhash(path: str, size: int = 8) -> int:
@@ -266,7 +296,7 @@ def facility_hit(p: dict, facts: list[str] | None = None) -> int:
     if p.get("category") != "special":
         return 0
     d = p.get("description") or ""
-    if EXTERIOR_RX.search(d):
+    if is_exterior(p):
         return 0
     for f in facts or []:
         if any(len(t) >= 2 and t in d for t in re.split(r"[\s·/,()]+", str(f))):

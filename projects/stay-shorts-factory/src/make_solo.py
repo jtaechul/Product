@@ -44,7 +44,7 @@ PATTERNS = ("push", "pan", "diag", "tilt", "pull")             # 사진 컷 카�
 KO = {"hook": "훅", "water": "물놀이", "room": "객실", "special": "특별 공간", "offer": "조건·추천", "cta": "끝 카드"}
 GENERIC = {"호텔", "리조트", "앤", "스파", "풀빌라", "펜션", "콘도", "레지던스", "하우스", "파크", "비치", "해변", "온천", "관광호텔"}
 FACILITY_RX = re.compile(r"사우나|찜질|키즈|놀이|산책|정원|테라스|라운지|조식|레스토랑|식당|스파|온천|노천|족욕|카페|바비큐|바베큐|수영장|풀")
-EXTERIOR_RX = re.compile(r"외관|전경|건물|항공|야경|조명|단지|하늘|은하수|드론|멀리")
+EXTERIOR_RX = mt.EXTERIOR_RX                                     # 외관 판정은 make_top3.is_exterior 하나로(분류 view 우선)
 WATER_RX = re.compile(r"물|풀|탕|스파|사우나|온천|폭포|분수|파도|슬라이드|바다|강|호수")
 QA_THR = {"offer": 5}                                          # 조건 컷은 느슨하게(5), 나머지 7
 EXTRA_BONUS = 12                                               # 시그니처 덧붙임이 들어간 컷의 글자 한도 추가(공백 제외)
@@ -153,7 +153,7 @@ def assets(req: dict, models: dict, report: dict) -> tuple[dict, int]:
 
 def _special_key(s, facts=()):
     d = s.get("description") or ""
-    exterior = bool(EXTERIOR_RX.search(d))
+    exterior = mt.is_exterior(s)
     named = (not exterior) and any(len(t) >= 2 and t in d for f in facts for t in re.split(r"[\s·/,()]+", str(f)))
     return (0 if named else 1 if (FACILITY_RX.search(d) and not exterior) else 2 if not exterior else 3, -int(s.get("quality") or 0))
 
@@ -205,8 +205,16 @@ def plan_cuts(h: dict, max_veo: int, mini: bool = False) -> list[dict]:
     for s in extra_fac:
         used.add(id(s)); special.append(s)
     rest = [s for s in shots if id(s) not in used]
-    rest.sort(key=lambda s: (1 if EXTERIOR_RX.search(s.get("description") or "") else 0))
-    offer = rest[:2]
+    rest.sort(key=lambda s: (1 if mt.is_exterior(s) else 0))
+    ext_now = sum(1 for lst in (hook, water, room, special) for s in lst if mt.is_exterior(s))
+    offer = []
+    for s in rest:                                                           # 2026-10-14: 외관·전경은 영상당 1장(조건 컷에서 두 번째 외관을 넣지 않는다)
+        if len(offer) >= 2:
+            break
+        if mt.is_exterior(s) and ext_now >= mt.MAX_EXTERIOR and len(rest) > 2:
+            continue
+        ext_now += 1 if mt.is_exterior(s) else 0
+        offer.append(s)
     cuts, i = [], 1
     for sec, lst in (("hook", hook), ("water", water), ("room", room), ("special", special), ("offer", offer)):
         for s in lst:
@@ -223,13 +231,13 @@ def plan_cuts(h: dict, max_veo: int, mini: bool = False) -> list[dict]:
             return 0
         if c["section"] == "water":
             return 1
-        if EXTERIOR_RX.search(d):
+        if mt.is_exterior(c["shot"]):
             return 4
         return 2 if WATER_RX.search(d) else 3
     if mini:
         # 2026-10-12 운영자 결정 — 미니어처 3컷(옴니 플래시): ① 훅 = 장소 개그 ② 중간(객실·특별, 외관 제외) = 다른 장소 개그 ③ 마지막 내용 컷 = 채널 시그니처 포즈
         cuts[0]["mini"] = "gag"
-        mid = [c for c in cuts[1:-1] if c["section"] in ("room", "special") and not EXTERIOR_RX.search(c["shot"].get("description") or "")]
+        mid = [c for c in cuts[1:-1] if c["section"] in ("room", "special") and not mt.is_exterior(c["shot"])]
         mid.sort(key=lambda c: (0 if re.search(r"침대|소파|사우나|스파|욕조|베드|bed|sofa|sauna", c["shot"].get("description") or "") else 1, c["i"]))
         if mid:
             mid[0]["mini"] = "gag"
@@ -523,7 +531,7 @@ def choose_minis(cuts: list[dict], models: dict) -> list[dict]:
             rec["verdict"] = "부적합: " + str(sc.get("why", ""))[:120]
             log(f"컷 {c['i']} 미니어처 부적합: {sc.get('why', '')[:80]}")
         return None
-    notx = lambda c: not EXTERIOR_RX.search(c["shot"].get("description") or "")  # noqa: E731
+    notx = lambda c: not mt.is_exterior(c["shot"])  # noqa: E731
     water = [c for c in cuts if c["section"] in ("hook", "water") and not c["veo"]]
     inner = [c for c in cuts[1:] if c["section"] in ("room", "special") and notx(c) and not c["veo"]]
     tail = [c for c in reversed(cuts) if c["section"] in ("offer", "room", "special") and notx(c) and not c["veo"]]
