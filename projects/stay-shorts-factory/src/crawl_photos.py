@@ -413,27 +413,22 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
     res["text"] = {}                              # 페이지별 보이는 글 — 시설 사실(수온·길이·전망) 추출용. 사진 한도와 무관하게 모은다
     seen_url, seen_hash = set(), set()
     htmls = {_norm(url): html}
-    for i, page in enumerate(pages):
-        if page not in htmls:
-            if not allowed(page):
-                continue
-            time.sleep(PAGE_PAUSE)
-            htmls[page] = render(page, chrome)
-            if blocked(htmls[page]):
-                continue
-        if len(res["text"]) < 12:
-            res["text"][page] = page_text(htmls[page])[:2500]
-        if len(res["photos"]) >= max_images:
-            continue
-        found = [u for u in image_urls(page, htmls[page]) if u not in seen_url]
-        alts = image_alts(page, htmls[page])
-        urls = [u for u in found if u not in shared]
-        res["shared_excluded"] += len(found) - len(urls)
+    # stay-run-45 실측: 페이지당 8장 상한만으로는 객실형 페이지 3개(객실 목록·리조트·호텔)가 22장을 채워 14개 중 9번째 뒤 페이지는 0장이었다
+    # → 두 바퀴로 모은다: 1바퀴는 모든 페이지에서 고르게(한도 ÷ 페이지 수 내림, 최소 2장), 2바퀴는 남은 한도를 앞 페이지부터 페이지당 상한까지 채운다
+    per_page = max(4, max_images // 4)
+    first = max(2, max_images // max(1, len(pages)))
+    cands: dict[str, list[str]] = {}
+    pos: dict[str, int] = {}
+    got_by: dict[str, int] = {}
+    alts_by: dict[str, dict] = {}
+
+    def grab(page: str, cap: int) -> int:
         got = 0
-        per_page = max(4, max_images // 4)                    # stay-run-44 실측: 객실 목록 한 페이지가 32장 중 27장을 채워 시설·물놀이 사진이 2장뿐 → 페이지당 상한
-        for u in urls:
-            if len(res["photos"]) >= max_images or got >= per_page:
-                break
+        urls = cands.get(page) or []
+        while pos[page] < len(urls) and len(res["photos"]) < max_images and got_by[page] < cap:
+            u = urls[pos[page]]; pos[page] += 1
+            if u in seen_url:
+                continue
             seen_url.add(u)
             res["tried"] += 1
             try:
@@ -451,12 +446,36 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
                     n = len(res["photos"])
                     dest = out_dir / f"off_{n:02d}.jpg"
                     im.convert("RGB").save(dest, "JPEG", quality=93)
-                res["photos"].append({"path": str(dest), "url": u, "page": page, "size": [w, h], "sha1": sha[:12], "alt": alts.get(u, "")})
-                got += 1
+                res["photos"].append({"path": str(dest), "url": u, "page": page, "size": [w, h], "sha1": sha[:12], "alt": alts_by[page].get(u, "")})
+                got += 1; got_by[page] += 1
             except Exception as e:  # noqa: BLE001
                 log(f"사진 실패 {u[-60:]}: {str(e)[:50]}")
             time.sleep(0.25)
+        return got
+
+    for i, page in enumerate(pages):
+        if page not in htmls:
+            if not allowed(page):
+                continue
+            time.sleep(PAGE_PAUSE)
+            htmls[page] = render(page, chrome)
+            if blocked(htmls[page]):
+                continue
+        if len(res["text"]) < 12:
+            res["text"][page] = page_text(htmls[page])[:2500]
+        found = [u for u in image_urls(page, htmls[page]) if u not in seen_url]
+        alts_by[page] = image_alts(page, htmls[page])
+        urls = [u for u in found if u not in shared]
+        res["shared_excluded"] += len(found) - len(urls)
+        cands[page], pos[page], got_by[page] = urls, 0, 0
+        got = grab(page, 0 if page == _norm(url) else first)          # 첫 페이지(그룹 프로모션 혼입)는 1바퀴에서 빼고 채우기 때만
         log(f"  페이지 {i + 1}/{len(pages)} {urllib.parse.urlsplit(page).path or '/'} → 사진 {got}장 (누적 {len(res['photos'])})")
+    for page in [pg for pg in pages if pg in cands]:                         # 2바퀴: 남은 한도 채우기
+        if len(res["photos"]) >= max_images:
+            break
+        got = grab(page, per_page)
+        if got:
+            log(f"  채우기 {urllib.parse.urlsplit(page).path or '/'} → +{got}장 (누적 {len(res['photos'])})")
     res["ok"] = bool(res["photos"])
     if res["ok"]:
         res["reason"] = ""

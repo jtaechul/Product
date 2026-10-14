@@ -77,6 +77,8 @@ SCRIPT_SYSTEM = """너는 숙소 소개 쇼츠의 큐레이터이자 편집자�
 - 입력에 "사진 없는 시그니처"가 있으면(없으면 이 규칙 무시): 그 시설은 사진이 없지만 이 숙소의 대표 포인트라 **딱 한 번** 말해도 된다.
   입력이 지정한 컷(사진 컷)의 문장 **끝에** "…도 있어요", "…까지 이용돼요" 식의 짧은 절로 덧붙인다. 그 컷의 라벨은 화면에 보이는 것 그대로 둔다. 다른 컷에서는 말하지 않는다.
   출력에 "extra": {"i": 그 컷 번호, "tag": "+ 시설 이름(2~10자)"} 를 적는다 — 화면 태그는 없다(문장 자막에 그대로 보인다). 기록용.
+- **계절**(2026-10-14 run-45 · 11월 편 훅이 해변 카바나): 시기가 11~3월이면 카바나·선베드·파라솔·해수욕 같은 여름 해변 시설을 말하지 않는다
+  (겨울 운영 근거가 없다). 겨울 편은 실내·온수·사계절 시설과 창밖 풍경 위주로 — 바다는 '보이는 풍경'으로만.
 
 컷별 규칙
 - 컷 1 (훅): 3초 안에 "내 얘기다·놓치면 손해다"를 만드는 한 문장. 숙소 이름·"데이터·후기·분석·추천·AI" 금지. **감성 묘사만 하는 문장 금지**("찬바람 불 때 따뜻한 물에…" 처럼 느낌만 있고 유인 요소가 없는 훅은 탈락 — 2026-10-13 운영자).
@@ -181,13 +183,38 @@ def unseen_terms(text: str, c: dict, sig: dict | None = None) -> list[str]:
     return [t for t in photos.facility_terms(text) if not photos.term_ok(t, desc) and not any(w in allow for w in photos.FACILITY_TERMS[t][1])]
 
 
-def plan_cuts(h: dict, max_veo: int, mini: bool = False) -> list[dict]:
+# 2026-10-14 run-45: 11월 '실내 온수풀·온천' 편의 훅이 해변 카바나 사진("겨울 바다 보며 카바나에서 쉬고 싶다면 주목" · 제목 "겨울에 [카바나]를 찾는다고?").
+# 원인: 물 분류 사진이 야외 카바나·야외 슬라이드 2장뿐이라 훅이 물 사진 1순위를 그대로 집었다(시기를 보지 않음). 여름 야외 시설을 겨울 이용처럼 말하면 사실 위험.
+COLD_MONTHS = {11, 12, 1, 2, 3}
+SUMMER_RX = re.compile(r"카바나|선베드|썬베드|파라솔|해수욕|비치\s?체어|모래사장|백사장|워터\s?슬라이드|야외\s?(?:수영장|풀|물놀이)|파도풀|유수풀")
+SUMMER_TALK_RX = re.compile(r"카바나|선베드|썬베드|파라솔|해수욕|비치\s?체어")     # 겨울 편 글에 쓰면 안 되는 낱말(겨울 실내 시설과 겹치지 않는 것만)
+WARM_RX = re.compile(r"온수|온천|스파|사우나|노천|히팅|김이|증기|따뜻|사계절|실내")
+
+
+def cold_month(req: dict) -> bool:
+    m = re.search(r"-(\d{1,2})\b", str(req.get("month") or ""))
+    return bool(m) and int(m.group(1)) in COLD_MONTHS
+
+
+def off_season(s: dict) -> bool:
+    """겨울에 쓰면 안 되는 사진 — 바깥(view outdoor)의 여름 물놀이·해변 시설이고 온수·실내 단서가 없는 것. 외관·전경(exterior)은 풍경이라 해당 없음."""
+    d = str(s.get("description") or "")
+    v = s.get("view")
+    outdoor = v == "outdoor" or (not v and s.get("slot") == "water" and "실내" not in d)
+    return outdoor and bool(SUMMER_RX.search(d)) and not WARM_RX.search(d)
+
+
+def plan_cuts(h: dict, max_veo: int, mini: bool = False, cold: bool = False) -> list[dict]:
     """사진을 컷에 배정한다 — 훅1(물) · 물2 · 객실2 · 특별2 · 조건2(남은 사진, 외관은 맨 뒤). **사진 하나는 컷 하나에만.**
     Veo 는 움직임이 중요한 순서(훅 → 물 → 물이 있는 특별 공간 → 나머지)로 max_veo 개."""
     shots = list(h["shots"])
     by = {k: [s for s in shots if s["slot"] == k] for k in photos.CATS}
     facts = list(h.get("verified_facilities") or [])
     by["special"].sort(key=lambda s: _special_key(s, facts))
+    late = {id(s) for s in shots if off_season(s)} if cold else set()
+    if late:                                                                # 겨울 편: 여름 야외 시설 사진은 훅·물·특별 컷에서 빼고 조건 컷이 모자랄 때만 맨 뒤에서 쓴다
+        log(f"겨울 편: 여름 야외 시설 사진 {len(late)}장은 훅·물 컷에서 뺀다 — " + " / ".join(str(s.get("description") or "")[:24] for s in shots if id(s) in late))
+        by = {k: [s for s in v if id(s) not in late] for k, v in by.items()}
     used = set()
 
     def take(cat, n):
@@ -205,7 +232,7 @@ def plan_cuts(h: dict, max_veo: int, mini: bool = False) -> list[dict]:
     for s in extra_fac:
         used.add(id(s)); special.append(s)
     rest = [s for s in shots if id(s) not in used]
-    rest.sort(key=lambda s: (1 if mt.is_exterior(s) else 0))
+    rest.sort(key=lambda s: (2 if id(s) in late else 1 if mt.is_exterior(s) else 0))
     ext_now = sum(1 for lst in (hook, water, room, special) for s in lst if mt.is_exterior(s))
     offer = []
     for s in rest:                                                           # 2026-10-14: 외관·전경은 영상당 1장(조건 컷에서 두 번째 외관을 넣지 않는다)
@@ -701,6 +728,9 @@ def hook_title_errs(title: str, narr: str, h: dict, req: dict, cut: dict | None 
     bad_t = unseen_terms(p, cut) if cut else []
     if bad_t:
         errs.append(f"hook_title 시설 이름 {'/'.join(bad_t)} — 컷 1 사진에서 확인되지 않음(사진 설명: {str(cut['shot'].get('description') or '')[:40]})")
+    sm = SUMMER_TALK_RX.search(p) if cold_month(req) else None
+    if sm:
+        errs.append(f"hook_title 겨울 편에 여름 해변 시설 '{sm.group(0)}' 금지")
     if not p.rstrip().endswith("?"):                                       # 2026-10-13 운영자 결정: 반전 질문·의외 사실 두 유형만 — 둘 다 질문
         errs.append(f"hook_title '{t}' 는 물음표로 끝나는 질문(반전 질문 또는 의외 사실)")
     if any(tk in p for tk in name_tokens(h["name"], req, h)):
@@ -736,6 +766,9 @@ def sentence_errs(text: str, c: dict, h: dict, req: dict) -> list[str]:
             errs.append(f"컷 {c['i']} 금지 표현 '{b}'")
     if re.search(r"\d[\d,]*\s*(원|만원|만 원|%)", text):
         errs.append(f"컷 {c['i']} 가격·할인 숫자")
+    sm = SUMMER_TALK_RX.search(text) if cold_month(req) else None
+    if sm:
+        errs.append(f"컷 {c['i']} 겨울 편에 여름 해변 시설 '{sm.group(0)}' — 겨울 운영 근거가 없다. 실내·온수·사계절 시설이나 보이는 풍경으로")
     if ENDING_RX.search(text):                                                  # 2026-10-14 run-40 컷 3·8 '~습니다' — 규칙은 '~해요'체(검사가 없었다)
         errs.append(f"컷 {c['i']} 문장 끝 '~니다' — '~해요'체로")
     if c["section"] == "hook":
@@ -943,6 +976,7 @@ HOOK_TITLE_SYSTEM = """너는 숙소 쇼츠의 훅 제목 카피라이터다. �
 규칙: 공백 제외 8~12자(최대 14) · 한 줄은 약 7자이고 띄어쓰기 자리에서만 두 줄로 나뉜다 · 나레이션을 그대로 옮기지 않고 줄여서 **궁금증만 남긴다**(답을 다 말하지 않는다 — "뭐지? 어디지?") ·
 핵심 낱말 하나만 [대괄호] · 숙소 이름·지역 이름·가격 숫자·마침표·느낌표·이모지 금지 ·
 입력 사실과 화면에 없는 시설 금지 · 후보 5개 모두 입력의 "유형"으로, **물음표로 끝나는 질문**.
+'겨울인데 물놀이' 같은 반전은 **겨울에도 실제로 운영되는 실내·온수 시설**일 때만 — 시기가 11~3월이면 카바나·선베드·파라솔·해수욕 같은 여름 해변 시설 금지.
 유형 ① 반전 질문(상식과 어긋나는 상황): "11월에 [수영복] 챙기라고?" / "한겨울에 [물놀이]를 한다고?"
 유형 ② 의외 사실(이 숙소의 의외의 사실): "산속에 [파도풀]이 있다?" / "객실에서 [슬로프]가 보인다?"
 JSON 만: {"titles": ["...", "...", "...", "...", "..."]}"""
@@ -1115,6 +1149,15 @@ def _vision_json(model: str, system: str, text: str, image: Path) -> dict:
     return json.loads(m.group(0)) if m else {}
 
 
+def qa_score(q: dict):
+    """화면 검수 최종 점수 — 문장·라벨을 고친 뒤 다시 매긴 점수가 있으면 그것(전엔 첫 점수만 봐서 5→10 으로 고친 컷도 '미달'로 셌다)."""
+    return q["score2"] if q.get("score2") is not None else q.get("score")
+
+
+def screen_ok(qa: list[dict]) -> bool:
+    return all((qa_score(q) or 0) >= q.get("threshold", 7) for q in qa if qa_score(q) is not None)
+
+
 def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) -> list[dict]:
     """컷마다: 사진 + 문장·자막 → 일치도 0~10. 기준 미달이면 사진은 두고 **문장만** 다시 쓴다(한 번). 기록은 report['screen_qa']."""
     out = []
@@ -1125,7 +1168,9 @@ def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) 
         row = {"i": c["i"], "section": c["section"], "threshold": thr, "narration": x["narration"], "caption": x["caption"]}
         img = B() / f"shot_{c['n']}.png"
         ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
-        note = (f"\n덧붙임(허용 · 감점 금지): 이 문장 끝의 '{ex.get('tag', '')}' 시설은 사진에 없는 시그니처다" if ex and int(ex.get("i", 0)) == c["i"] else "")
+        note = (f"\n덧붙임(허용 · 감점 금지): 이 문장 끝의 '{ex.get('tag', '')}' 시설은 사진에 없는 시그니처다 — 수정 문장(fix)에도 그 시설 이름을 끝에 그대로 남긴다"
+                if ex and int(ex.get("i", 0)) == c["i"] else "")
+        tag_word = re.sub(r"^\+\s*", "", str((ex or {}).get("tag", ""))).strip() if note else ""
         if c["i"] == cuts[-1]["i"]:
             note += "\n이 컷은 마지막 컷이라 수정 문장에도 '추천해요'가 들어가야 한다"
         try:
@@ -1147,7 +1192,8 @@ def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) 
         last = (c["i"] == cuts[-1]["i"])
         if last and fix and "추천" not in fix:                           # p10 실측: 마지막 컷 교체문에서 '추천해요'가 빠졌다 → 교체 거부
             row["fix_rejected"] = fix; fix = ""
-        if row["score"] is not None and 0 <= row["score"] < thr and fix and not note and not sentence_errs(fix, c, h, req):
+        # run-45 컷 4: 덧붙임 컷은 문장 교체 금지라 4점 문장이 그대로 남았다 → 덧붙임 시설 이름을 그대로 남긴 교체문은 허용
+        if row["score"] is not None and 0 <= row["score"] < thr and fix and (not note or (tag_word and tag_word in fix)) and not sentence_errs(fix, c, h, req):
             x["narration"] = fix
             row["fixed"] = fix
             try:
@@ -1157,6 +1203,14 @@ def screen_qa(models: dict, cuts: list[dict], script: dict, h: dict, req: dict) 
             except Exception as e:  # noqa: BLE001
                 row["score2"] = None; row["error2"] = str(e)[:80]
             log(f"컷 {c['i']} 화면 검수 {row['score']} → 문장 교체 ({row.get('score2')}): {fix}")
+        elif row.get("label_fixed"):                                      # run-45 컷 4: 라벨만 바뀌고 재채점이 없어 '4 미달'로 남았다 → 바뀐 라벨로 다시 매긴다
+            try:
+                r2 = ms._try_models("vision", models["text"], lambda m: _vision_json(m, SCREEN_SYSTEM.format(lo=c["lo"], hi=c["hi"] + (EXTRA_BONUS if note else 0)),
+                                                                                     f"구간: {KO[c['section']]}\n나레이션: {x['narration']}\n라벨: {design.plain(x['caption'])}{note}", img))
+                row["score2"] = int(r2.get("score", -1))
+            except Exception as e:  # noqa: BLE001
+                row["score2"] = None; row["error2"] = str(e)[:80]
+            log(f"컷 {c['i']} 라벨 교체 뒤 재채점 {row['score']} → {row.get('score2')}")
         out.append(row)
     return out
 
@@ -1248,7 +1302,7 @@ def prepare(req: dict, models: dict, report: dict) -> dict:
     SCALE_MODE = "mini" if str(req.get("mini_scale") or "life") == "mini" else "life"
     if mini:
         report["mini_scale"] = SCALE_MODE
-    cuts = plan_cuts(h, (1 if mini else 4) if mv is None else int(mv), mini)                     # 0 = Veo 없이 전부 사진 무빙(0원) — "or 4" 는 0 을 4 로 바꿔 버렸다
+    cuts = plan_cuts(h, (1 if mini else 4) if mv is None else int(mv), mini, cold_month(req))                     # 0 = Veo 없이 전부 사진 무빙(0원) — "or 4" 는 0 을 4 로 바꿔 버렸다
     report["term_audit"] = audit_cuts(cuts, h, models)                       # 2026-10-14: 컷 사진 설명의 시설 이름(자쿠지 등)을 사진으로 한 번 더 확인 → 대본은 확인본만 본다
     if mini:
         cuts = assign_env(choose_minis(cuts, models), 1 if mv is None else int(mv))
@@ -1300,10 +1354,10 @@ def preview_sheet(h: dict, cuts: list[dict], script: dict, qa: list[dict], out: 
         d.text((x + 8, y + 6), f"{cut_label(c)}  [{mt.SRC_KO.get(c['shot'].get('source'), '?')}]", font=f2, fill=(255, 255, 255))
         sx = by_i.get(c["i"], {})
         q = qa_i.get(c["i"], {})
-        sc = q.get("score")
-        col = (94, 234, 212) if (sc or 0) >= q.get("threshold", 7) else (255, 120, 120) if sc is not None else (200, 200, 200)
+        sc = q.get("score"); fin = qa_score(q)
+        col = (94, 234, 212) if (fin or 0) >= q.get("threshold", 7) else (255, 120, 120) if fin is not None else (200, 200, 200)
         d.text((x, y + hh + 8), f"라벨: {sx.get('caption', '')}", font=f, fill=(255, 255, 255))
-        d.text((x, y + hh + 40), f"화면 검수 {sc if sc is not None else '-'}/10" + (f" → 교체 후 {q.get('score2')}" if q.get("fixed") else ""), font=f2, fill=col)
+        d.text((x, y + hh + 40), f"화면 검수 {sc if sc is not None else '-'}/10" + (f" → 교체 후 {q.get('score2')}" if q.get("score2") is not None else ""), font=f2, fill=col)
         narr = str(sx.get("narration", ""))
         for j, line in enumerate([narr[i:i + 24] for i in range(0, len(narr), 24)][:3]):
             d.text((x, y + hh + 70 + j * 26), line, font=f2, fill=(225, 225, 230))
@@ -1371,11 +1425,11 @@ def preview_md(req: dict, p: dict) -> str:
           "| 컷 | 구간 | 화면에 보이는 것 | 라벨 | 나레이션(=화면 자막) | 화면 검수 | 초 |", "|---|---|---|---|---|---|---|"]
     for c in cuts:
         x = by_i[c["i"]]; q = qa_i.get(c["i"], {})
-        sc = q.get("score"); mark = "" if sc is None else ("통과" if sc >= q.get("threshold", 7) else "미달")
-        fx = f" → 교체 {q.get('score2')}" if q.get("fixed") else ""
+        sc = q.get("score"); fin = qa_score(q); mark = "" if fin is None else ("통과" if fin >= q.get("threshold", 7) else "미달")
+        fx = f" → 교체 {q.get('score2')}" if q.get("fixed") else f" → 라벨 교체 {q.get('score2')}" if q.get("label_fixed") and q.get("score2") is not None else ""
         ex = script.get("extra") if isinstance(script.get("extra"), dict) else None
         tag = f" 〔태그 {ex.get('tag')}〕" if ex and int(ex.get("i", 0)) == c["i"] else ""
-        md.append(f"| {c['i']}{' (Veo)' if c['veo'] else ''}{' (미니어처 ' + {'gag': '개그', 'signature': '시그니처'}.get(c['mini'], '') + ')' if c.get('mini') else ''} | {KO[c['section']]} | {c['shot'].get('description', '')} [{mt.SRC_KO.get(c['shot'].get('source'), '?')}] | {x['caption']}{tag} | {x['narration']} | {sc if sc is not None else '-'} {mark}{fx} | {p['narr'][c['i']]:.1f} |")
+        md.append(f"| {c['i']}{' (Veo)' if c['veo'] else ''}{' (미니어처 ' + {'gag': '개그', 'signature': '시그니처'}.get(c['mini'], '') + ')' if c.get('mini') else ''} | {KO[c['section']]} | {c['shot'].get('description', '')} [{mt.SRC_KO.get(c['shot'].get('source'), '?')}] | {x['caption']}{tag} | {x['narration']} | {sc if sc is not None else '-'}{fx} {mark} | {p['narr'][c['i']]:.1f} |")
     md.append(f"| 끝 | 끝 카드 | 훅 사진 선명 + 아래쪽 그라데이션 | {script['cta']['caption']} | {script['cta']['narration']} | - | {p['narr']['cta']:.1f} |")
     ht = str(script.get("hook_title") or "").strip()
     md += ["", "## 화면 훅 제목 (컷 1 · 위쪽 가운데 큰 글자 · 나레이션과 다른 요약·궁금증 문구)", "",
@@ -1426,7 +1480,7 @@ def preview_solo(req: dict, models: dict, report: dict) -> dict:
     (prev / "preview.md").write_text(preview_md(req, p), encoding="utf-8")
     meta = {"mode": "solo", "stage": "preview", "stay": p["h"]["name"], "title": p["script"].get("title"), "folder": p["folder"], "folder_pos": p["pos"],
             "voice": p["voice"], "narration_mode": ("single_pass" if (B() / "narr_full.wav").exists() else "per_cut"),
-            "narration_qa_ok": all(q["ok"] for q in p["nqa"]), "screen_qa_ok": all((q.get("score") or 0) >= q.get("threshold", 7) for q in p["qa"] if q.get("score") is not None),
+            "narration_qa_ok": all(q["ok"] for q in p["nqa"]), "screen_qa_ok": screen_ok(p["qa"]),
             "cuts": len(p["cuts"]), "veo_cuts": sum(1 for c in p["cuts"] if c["veo"]),
             "mini_cuts": [{"i": c["i"], "role": c["mini"], "gag": (c.get("mini_scene") or {}).get("gag")} for c in p["cuts"] if c.get("mini")],
             "files": ["preview.md", "preview_shots.jpg", "narration_preview.mp3"] + (["preview_mini.jpg"] if (prev / "preview_mini.jpg").exists() else [])}
@@ -1711,7 +1765,7 @@ def produce_solo(req: dict, models: dict, report: dict) -> tuple[Path, float, di
     meta = {"mode": "solo", "stay": name, "title": script.get("title"), "caption": caption, "folder": folder, "folder_pos": pos, "caption_style": style, "bgm": report.get("bgm"),
             "pinned_comment": f"{name} — 객실 타입·링크는 프로필 링크 → {pos}번 ({folder}) · 쿠팡 파트너스 링크 포함",
             "affiliate_urls": {name: h["affiliate_url"]}, "lines": [x["narration"] for x in script["cuts"]] + [script["cta"]["narration"]],
-            "cuts": timeline, "screen_qa_ok": all((q.get("score") or 0) >= q.get("threshold", 7) for q in p["qa"] if q.get("score") is not None),
+            "cuts": timeline, "screen_qa_ok": screen_ok(p["qa"]),
             "veo": {"model": veo.MODEL, "fake": veo.FAKE, "clips_ok": sum(1 for r in report["veo"]["clips"] if r["ok"]), "clips_total": len(report["veo"]["clips"]),
                     "spent_krw": round(veo.spent_this_run()), "month_total_krw": round(veo.month_total())}}
     return video, total, meta

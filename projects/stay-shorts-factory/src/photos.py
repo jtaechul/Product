@@ -18,6 +18,7 @@ import os
 import re
 import urllib.error
 import urllib.parse
+import time
 import urllib.request
 from pathlib import Path
 
@@ -282,16 +283,19 @@ def _gpost(path: str, body: dict, timeout: int = 180) -> dict:
     key = (os.environ.get("GEMINI_API_KEY") or "").strip()
     if not key:
         raise RuntimeError("GEMINI_API_KEY 가 실행 환경에 없습니다")
-    req = urllib.request.Request(f"{GEMINI}/{path}", data=json.dumps(body).encode(), method="POST",
-                                 headers={"x-goog-api-key": key, "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            data = json.loads(r.read().decode("utf-8"))
-        if USAGE_HOOK:                       # make_stay 가 토큰 수를 모아 추정 비용을 낸다
-            USAGE_HOOK(data)
-        return data
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f"Gemini 오류 HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}")
+    for k in range(3):                       # stay-run-45: 일시 오류(429·5xx)는 잠깐 쉬고 두 번까지 다시
+        req = urllib.request.Request(f"{GEMINI}/{path}", data=json.dumps(body).encode(), method="POST",
+                                     headers={"x-goog-api-key": key, "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                data = json.loads(r.read().decode("utf-8"))
+            if USAGE_HOOK:                       # make_stay 가 토큰 수를 모아 추정 비용을 낸다
+                USAGE_HOOK(data)
+            return data
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 500, 502, 503, 504) and k < 2:
+                time.sleep((4, 10)[k]); continue
+            raise RuntimeError(f"Gemini 오류 HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}")
 
 
 def _small_jpeg_b64(path: str, side: int = 640) -> str:

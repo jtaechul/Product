@@ -102,14 +102,22 @@ def _gkey() -> str:
     return k
 
 
+RETRY_CODES = (429, 500, 502, 503, 504)
+RETRY_WAIT = (4, 10)        # stay-run-45: 받아쓰기 한 컷이 Gemini 503(일시 과부하)으로 실패 처리 — 일시 오류는 잠깐 쉬고 두 번까지 다시(실패 호출은 청구 없음)
+
+
 def _gpost(path: str, body: dict, timeout: int = 180) -> dict:
-    req = urllib.request.Request(f"{GEMINI}/{path}", data=json.dumps(body).encode(), method="POST",
-                                 headers={"x-goog-api-key": _gkey(), "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            data = json.loads(r.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f"Gemini 오류 HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}")
+    for k in range(len(RETRY_WAIT) + 1):
+        req = urllib.request.Request(f"{GEMINI}/{path}", data=json.dumps(body).encode(), method="POST",
+                                     headers={"x-goog-api-key": _gkey(), "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                data = json.loads(r.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as e:
+            if e.code in RETRY_CODES and k < len(RETRY_WAIT):
+                time.sleep(RETRY_WAIT[k]); continue
+            raise RuntimeError(f"Gemini 오류 HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:300]}")
     track_usage(data)
     return data
 
