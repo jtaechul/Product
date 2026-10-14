@@ -390,7 +390,8 @@ export default {
         if (Date.now() - f.t > 10 * 60 * 1000) { f.n = 0; f.t = Date.now(); }
         if (f.n >= 8) return json({ error: "잠시 뒤 다시 시도하세요 (10분)" }, 429);
         const body = await request.json().catch(() => ({}));
-        if (await sameText(String(body.password || ""), env.ADMIN_PASSWORD)) {
+        // 붙여넣기로 앞뒤에 들어간 공백·줄바꿈은 무시한다(시크릿 칸에 복사해 넣을 때 흔함 — 2026-10-14 로그인 실패 문의)
+        if (await sameText(String(body.password || "").trim(), String(env.ADMIN_PASSWORD).trim())) {
           fails.delete(ip);
           return json({ ok: true }, 200, { "Set-Cookie": cookie(await makeSession(env), SESSION_DAYS * 86400) });
         }
