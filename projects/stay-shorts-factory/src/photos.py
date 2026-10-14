@@ -89,12 +89,21 @@ FACILITY_TERMS = {
     "족욕": ("visual", ("족욕",), ("족욕",), "발만 담그는 얕은 탕·족욕 자리", "탕"),
     "온천": ("property", ("온천",), ("온천",), "", "온수"),
     "바스풀": ("name", ("바스풀",), ("바스풀",), "", "실내 풀"),
-    "클럽하우스": ("name", ("클럽하우스",), ("클럽하우스",), "", ""),
+    "클럽하우스": ("name", ("클럽하우스",), ("클럽하우스",), "", "건물"),
 }
 
 
 EN_WORDS = {"자쿠지": r"jacuzzi|whirlpool|bubbl|jets?\b", "파도풀": r"\bwaves?\b", "유수풀": r"lazy river|current", "인피니티풀": r"infinity",
             "노천탕": r"open-air|outdoor", "사우나": r"sauna", "히노키": r"hinoki|cypress", "워터슬라이드": r"slide"}
+
+
+def _josa(text: str, word: str) -> str:
+    """바꿔 넣은 낱말 바로 뒤 조사를 받침에 맞춘다(와/과·를/을·는/은·가/이)."""
+    code = ord(word[-1]) - 0xAC00 if word else -1
+    batchim = 0 <= code < 11172 and code % 28 != 0
+    pair = {"와": "과와", "과": "과와", "를": "을를", "을": "을를", "는": "은는", "은": "은는", "가": "이가", "이": "이가"}
+    return re.sub(rf"({re.escape(word)})(와|과|를|을|는|은|가|이)(?=[\s.,!?]|$)",
+                  lambda m: m.group(1) + pair[m.group(2)][0 if batchim else 1], text)
 
 
 def facility_terms(text: str) -> list[str]:
@@ -172,10 +181,10 @@ def audit_terms(model: str, shot: dict, facts: str = "", raise_errors: bool = Fa
     bad = [k for k, v in rec["terms"].items() if not v["seen"]]
     if bad:
         new = plain if plain and not any(w in plain for k in bad for w in FACILITY_TERMS[k][1]) else desc
-        for k in bad:                                                      # plain 이 없거나 이름을 다시 쓰면 낱말을 일반어로 바꾼다
+        for k in bad:                                                      # plain 이 없거나 이름을 다시 쓰면 낱말만 일반어로 바꾸고 조사를 맞춘다
+            fb = FACILITY_TERMS[k][4]                                      # (preview-terms-1 실측: '클럽하우스와' → 빈칸 '곡선형 와' 사고)
             for w in FACILITY_TERMS[k][1]:
-                fb = FACILITY_TERMS[k][4]
-                new = re.sub(rf"(온수\s*)?{w}\S*", fb, new) if fb else new.replace(w, "")
+                new = _josa(re.sub(rf"(?:온수\s*)?{w}", fb, new), fb)
         new = re.sub(r"\s{2,}", " ", new).strip()
         shot["description_raw"] = desc
         shot["description"] = new
