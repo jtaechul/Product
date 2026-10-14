@@ -1,24 +1,28 @@
 [
  {
-  "hotel": "소노펠리체 비발디파크",
-  "official_site": "https://www.sonohotelsresorts.com/felice_vp",
+  "hotel": "쏠비치 삼척",
+  "official_site": "https://www.sonohotelsresorts.com/solbeach_sc",
   "crawl": {
-   "url": "https://www.sonohotelsresorts.com/felice_vp",
+   "url": "https://www.sonohotelsresorts.com/solbeach_sc",
    "resolved_by": "request.json official_urls",
    "reason": "",
    "pages": [
-    "https://www.sonohotelsresorts.com/oceanWorld",
-    "https://www.sonohotelsresorts.com/felice_vp/spa",
-    "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "https://www.sonohotelsresorts.com/felice_vp/entertainment",
-    "https://www.sonohotelsresorts.com/felice_vp/resort",
-    "https://www.sonohotelsresorts.com/felice_vp/facilitiesviewall",
-    "https://www.sonohotelsresorts.com/felice_vp/conveniences",
-    "https://www.sonohotelsresorts.com/felice_vp/highlight",
-    "https://www.sonohotelsresorts.com/felice_vp/discover",
-    "https://www.sonohotelsresorts.com/felice_vp"
+    "https://www.sonohotelsresorts.com/solbeach_sc/sauna",
+    "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000527",
+    "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
+    "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000536",
+    "https://www.sonohotelsresorts.com/solbeach_sc/entertainment",
+    "https://www.sonohotelsresorts.com/solbeach_sc/resort",
+    "https://www.sonohotelsresorts.com/solbeach_sc/hotel",
+    "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall",
+    "https://www.sonohotelsresorts.com/solbeach_sc/conveniences",
+    "https://www.sonohotelsresorts.com/solbeach_sc/highlight",
+    "https://www.sonohotelsresorts.com/solbeach_sc/pet",
+    "https://www.sonohotelsresorts.com/solbeach_sc/relaxtion",
+    "https://www.sonohotelsresorts.com/solbeach_sc/discover",
+    "https://www.sonohotelsresorts.com/solbeach_sc"
    ],
-   "tried": 37,
+   "tried": 35,
    "photos": 32
   },
   "shots": [
@@ -26,69 +30,72 @@
     "n": 11,
     "slot": "water",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
-    "page": "https://www.sonohotelsresorts.com/oceanWorld",
-    "description": "대형 실내 파도풀에서 포말을 일으키며 물결이 밀려온다."
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/yvhKloOFB3yOw-1m9U0VMA==/1",
+    "page": "https://www.sonohotelsresorts.com/solbeach_sc/sauna",
+    "description": "실내 온수탕과 사우나 유리 부스가 보이고 창밖으로 바다가 내다보인다.",
+    "alt": "쏠비치_삼척_해수_사우나_01"
    },
    {
     "n": 12,
-    "slot": "water",
+    "slot": "room",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/vuYCDmI4yhnPLOt4r75jzA==/1",
-    "page": "https://www.sonohotelsresorts.com/oceanWorld",
-    "description": "스핑크스 조각상 옆 야외 원형 온수탕에서 물이 뿜어져 나온다."
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/al4LqGI_YPQlqkNjaEO-gg==/1",
+    "page": "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
+    "description": "바다가 내려다보이는 발코니 창가 옆에 더블 침대가 정돈되어 있다.",
+    "alt": "쏠비치_삼척_패밀리_비치오션뷰_01_세로"
    },
    {
     "n": 13,
-    "slot": "water",
+    "slot": "room",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/NP-EHN-mvIQSILUbhWAnsA==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
-    "description": "천장 곡선 조명과 깃발 장식이 돋보이는 넓은 실내수영장 레인이 펼쳐져 있다.",
-    "alt": "소노펠리체_비발디파크_수영장_1024_1140.jpg"
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/PemjI9lPhrJjXdlDE8z08g==/1",
+    "page": "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
+    "description": "발코니 창가에 아치형 기둥과 나무숲이 보이는 객실에 더블 침대가 놓여 있다.",
+    "alt": "쏠비치_삼척_패밀리_스탠다드_01_세로"
    },
    {
     "n": 14,
     "slot": "room",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Z2QIeKCw56CffVBzKIkWjA==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
-    "description": "은은한 원형 천장 조명 아래 모자이크 타일로 마감된 실내 온수탕과 사우나 입구가 보인다.",
-    "alt": "소노펠리체_비발디파크_01_사우나_1024_1140.jpg"
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2XvuT7WxcM3494At7PmmSw==/1",
+    "page": "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
+    "description": "전면 발코니 창으로 탁 트인 바다가 보이는 거실에 소파와 낮은 테이블이 놓여 있다.",
+    "alt": "쏠비치_삼척_스위트_파노라마_01"
    },
    {
     "n": 15,
-    "slot": "room",
+    "slot": "special",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "통창 너머로 푸른 산 능선이 내려다보이는 객실 거실에 소파와 원형 테이블이 놓여 있다.",
-    "alt": "소노펠리체_비발디파크_실버_스위트_파크뷰_세로_1024_1140.jpg"
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/F8xippdHFwEyCklSnc0wVA==/1",
+    "page": "https://www.sonohotelsresorts.com/solbeach_sc/sauna",
+    "description": "통유리창 너머로 야외 워터슬라이드가 보이는 실내 스파 마사지 베드가 놓여 있다.",
+    "alt": "쏠비치_삼척_아레사나스파_01"
    },
    {
     "n": 16,
-    "slot": "room",
+    "slot": "special",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/u2GuIe-GbmbfO_8x9n6mnQ==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "통창으로 푸른 산맥이 시원하게 펼쳐지는 객실 거실에 소파와 티테이블이 놓여 있다.",
-    "alt": "소노펠리체_비발디파크_로얄_스위트_오션_파크뷰_01_세로.jpg"
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Ecm7-Ja6HMC6O9_2dIK8WA==/1",
+    "page": "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000536",
+    "description": "실내 릴렉스룸에 여러 대의 리클라이너 의자와 안마의자가 정렬되어 있다.",
+    "alt": "쏠비치_삼척_릴렉스룸_02"
    },
    {
     "n": 17,
     "slot": "special",
-    "source": "coupang",
-    "url": null,
-    "page": null,
-    "description": "웅장한 산을 배경으로 곡선형 클럽하우스와 웅장한 리조트 동들이 늘어서 있다."
+    "source": "official",
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/3XYTDc3AZvWQ1W8idUOIuw==/1",
+    "page": "https://www.sonohotelsresorts.com/solbeach_sc/facilitiesviewall/detail/ADD00000536",
+    "description": "통유리창으로 바다와 워터슬라이드가 내다보이는 실내 휴식 라운지이다.",
+    "alt": "쏠비치_삼척_릴렉스룸_03"
    },
    {
     "n": 18,
     "slot": "special",
-    "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/o4adYnfDv1FqVqNaEkT7Mw==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "인조 잔디가 깔린 넓은 테라스에 해먹과 캠핑 텐트, 의자가 마련되어 있다."
+    "source": "coupang",
+    "url": null,
+    "page": null,
+    "description": "푸른 바다 너머로 삼척 해변과 백사장, 리조트 전체 건물이 펼쳐져 있다."
    },
    {
     "n": 19,
@@ -96,15 +103,16 @@
     "source": "coupang",
     "url": null,
     "page": null,
-    "description": "푸른 산자락에 둘러싸인 리조트 건물 단지와 앞쪽 골프장 잔디밭이 내려다보인다."
+    "description": "푸른 동해 바다를 배경으로 그리스 산토리니 양식의 흰색 종탑 구조물이 서 있다."
    },
    {
     "n": 20,
-    "slot": "special",
-    "source": "coupang",
-    "url": null,
-    "page": null,
-    "description": "별이 빛나는 밤하늘 아래 조명을 환하게 밝힌 리조트 건물 단지의 야경이 펼쳐진다."
+    "slot": "room",
+    "source": "official",
+    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Z5_REIR-Z0GBy4HCZX20Zg==/1",
+    "page": "https://www.sonohotelsresorts.com/solbeach_sc/roomsviewall",
+    "description": "유리 발코니 너머로 리조트 건물과 바다가 보이는 거실에 소파와 테이블이 마련되어 있다.",
+    "alt": "쏠비치_삼척_스위트_스퀘어오션뷰_01_세로.jpg"
    }
   ]
  }
