@@ -1,0 +1,50 @@
+{
+  "kind": "remake",
+  "menuName": "리메이크 · 6e798cfa8d844de18e927f84d4c5",
+  "clips": [],
+  "source": {
+    "youtube": "",
+    "title": "6e798cfa8d844de18e927f84d4c52825.mov",
+    "music": ""
+  },
+  "remake": {
+    "swap": "1) replace the man's head with the head of the Shiba Inu from image 1; 2) turn the man's bare torso, arms, and hands into thick furry Shiba body and front legs with paws holding the belt; 3) keep the striped board shorts but turn visible legs and feet into thick furry Shiba hind legs and paws",
+    "keep_people": false,
+    "cast": "exactly one real dog, a Shiba Inu standing on hind legs dressed in board shorts",
+    "swap_ko": "벨트를 휘두르다 자폭하는 남성 → 머리와 팔다리를 시바견으로 변경",
+    "ending": "The Shiba Inu casually steps over the unconscious human, calmly biting the green rope ball and shaking its head.",
+    "big": "관리인 또 기절\n내일 출근 불가",
+    "sub": "엉뚱한 곳에 쓰던 체력과 시간\n안전한 터그 장난감으로 지켜주세요",
+    "vo": "관리인의 퇴장은 빨랐고. 구매는 프로필 링크에서.",
+    "cut": "",
+    "whimper": false,
+    "music_pick": "Mission Impossible Theme – Lalo Schifrin (기절한 관리인을 넘어설 때 첩보 음악이 흘러나와 비장함이 극대화됨)",
+    "ad": "vo",
+    "ad_copy": false,
+    "format": "lord",
+    "hook": "관리인 또 기절\n내일 출근 불가",
+    "series_no": 2,
+    "gen_model": "veo-lite",
+    "method": "gen",
+    "res": "720p",
+    "pre_enhance": false,
+    "upscale": 0,
+    "cap": 5
+  },
+  "caption": "시바 영주 일지 #2 · 관리인 또 기절 내일 출근 불가\n\n엉뚱한 곳에 쓰던 체력과 시간 안전한 터그 장난감으로 지켜주세요\n\n구매는 프로필 링크에서.",
+  "hashtags": [
+    "#강아지장난감",
+    "#노즈워크토이",
+    "#터그놀이장난감",
+    "#반려견스트레스해소",
+    "#강아지활동량"
+  ],
+  "product": {
+    "title": "멍냥 강아지 로프 공 노즈워크 터그놀이 장난감, 그린, 1개",
+    "brand": "",
+    "category": "장난감",
+    "reason": "엉뚱한 곳에 쓰던 체력과 시간 안전한 터그 장난감으로 지켜주세요",
+    "link": "https://link.coupang.com/re/AFFSDP?lptag=AF1018300&pageKey=9470783163&itemId=28188934263&vendorItemId=95143408900&traceid=V0-153-98be2aa2623d67ba&clickBeacon=9ffe6d10-c8a0-11f1-a742-344319b4a8aa%7E3&requestid=20261015225922957026370807&token=31850C%7CMIXED&pt=1&slot=2",
+    "image": "https://ads-partners.coupang.com/image1/_r1qJ5tVKDLGyhiD_v6c-mv0CwqwYtjixEoZCaH1PUU0HqyldjUEj0bs0fVhDJwqASthPuzPBFqvZTUpqccSlQ5wzdoEU35AApkvZ1z1E7ztJ5_LfspX2WUbF3LEJmoHzL3ooilH51eHsuXQq-P84MdwYNRqHBMg6wjy2jH5NeFDsoNww3_NZ6nbEwVPZzatNxesuoJ6vttw_EWCfarnHSYSTFW_mi2pHkAJ81-yoYcoqSBxLNl0nP8zLMCL1Mj_V1gHOhu0O2Xb5Tdv0TCvquhN61gUnHwsvaYG7I-6nw9D_6XQHdYjFh3ByR6wH0gtK7mWwIbVSlcfp7R_aY-9HPqFT57hLNgMJCaIHkVoyvaG9i9CclhZdQWnIDe1LArD5E81T2aJ2GoOM_4UFiknoyOijSL6EG9TaI03WKYWFUOqqR5sD-j13lV9Tyxjzh9OZdsv61dz2a4rB9hBOsCOv36VDYq9yFEQ85b-ahUIen3aY9Hlg68CXc96z5WbzfQsPtd9IBU24eQ="
+  }
+}
