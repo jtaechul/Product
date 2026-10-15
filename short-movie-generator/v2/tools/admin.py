@@ -35,6 +35,7 @@
   python admin.py trial_cancel <id> [이유]       # 진행 중인 시험 무효(다른 계정에 올라감 등 — 그 결과로 판정 안 함)
   python admin.py trial_repost <id>             # 무효가 된 시험을 ABYSS(@abyss_0cean)에 다시 올리기(이미 만든 A·B 그대로)
   python admin.py ig_probe                      # 인스타 연결 점검(게시 없음)
+  python admin.py ig_short <id>                 # 인스타용 짧은 판(약 25초 · 앞 컷 + 마지막 컷) + 인스타 캡션(공유 한 줄)
   python admin.py topics                        # 주제 후보 목록(topics.json) 갱신
   python admin.py index                         # 편 목록(index.json) 갱신
 """
@@ -954,7 +955,21 @@ def _compose_meta(sc: dict, gen: dict) -> dict:
         "desc_jp": desc(gen["desc_jp"], _CTA_JP, _REPRO_JP, tags_jp, "出典:"),
         "desc_ko": desc(gen["desc_ko"], _CTA_KO, _REPRO_KO, tags_ko, "출처:"),
         "tags_jp": tags_jp, "tags_ko": tags_ko, "pinned_comment": PINNED_COMMENT, "privacy": "private", "category": "15",
+        "ig_caption_jp": ig_caption(gen["desc_jp"], tags_jp),
     }
+
+
+# ── 인스타 캡션 = 공유 한 줄(운영자 승인 2026-10-15 · @abyss_0cean 30일: 공유 0 · 댓글 0 · 저장 12) ─────────────────
+# 인스타가 새 시청자에게 퍼뜨릴 때 크게 보는 신호로 '보내기(공유)'가 꼽힌다(모세리 2025-01 발언으로 전해짐 · 원문 미확인).
+# 유튜브 설명의 「チャンネル登録…」은 인스타에 안 맞으니 빼고, 본문 + 공유 한 줄 + AI 재현 표기 + 해시태그 5개.
+# ※ 나레이션에는 호소 문구를 넣지 않는 규칙 그대로 — 캡션에만.
+IG_SHARE_JP = "深海好きの友だちにも、送ってみてください。"
+IG_TAGS_MAX = 5
+
+
+def ig_caption(body_jp: str, tags_jp: list[str]) -> str:
+    body = str(body_jp or "").split("\n\n")[0].strip()                  # 유튜브 설명이 들어와도 첫 문단(본문)만
+    return "\n\n".join(x for x in (body, IG_SHARE_JP, _REPRO_JP, " ".join(list(tags_jp or [])[:IG_TAGS_MAX])) if x)
 
 
 YT_CATEGORIES = {"15": "반려동물/동물", "28": "과학기술", "27": "교육"}   # 유튜브 카테고리 번호(명시해서 보낸다)
@@ -2663,7 +2678,7 @@ def trial_media_url(sha: str, pid: str, rel: str) -> str:
 
 def trial_caption(sc: dict) -> str:
     """A·B 에 똑같이 붙는 캡션(후킹만 달라야 공정) — 후킹 문장·생물 이름 없이 채널 소개 + AI 재현 표기 + 공통 해시태그."""
-    return PLAYLIST_DESC + "\n" + _REPRO_JP + "\n\n" + " ".join(CORE_TAGS_JP)
+    return PLAYLIST_DESC + "\n" + IG_SHARE_JP + "\n" + _REPRO_JP + "\n\n" + " ".join(CORE_TAGS_JP)
 
 
 def _pick_b(hk: dict) -> int | None:
@@ -2847,6 +2862,70 @@ def _write_meta_safely(pid: str, schedule: bool = False) -> bool:
     return True
 
 
+# ── 인스타용 짧은 판(운영자 승인 2026-10-15 · 가설 시험) ──────────────────────────────────────────────────
+# @abyss_0cean 실측: 43초 릴스 평균 시청 9.3초(약 22%) → 같은 영상을 약 25초로 줄인 인스타 전용 판을 만들어 완주율을 비교한다.
+# 컷 고르기(무료 · 영상 컷을 새로 만들지 않음): 앞에서부터 이어 붙이되 마지막 컷(마무리 · 핵심 사실 회수)은 늘 넣는다.
+#   [후킹][1번 컷 …][마지막 컷][끝 카드] 총 IG_SHORT_MAX_S 이내. 나레이션은 컷별 문장이 완결이라 이어도 끊기지 않는다.
+IG_SHORT_MAX_S = 25.0
+
+
+def ig_short_cuts(sc: dict, hook_s: float, max_s: float | None = None) -> list[int]:
+    max_s = IG_SHORT_MAX_S if max_s is None else max_s     # 부를 때의 값(설정을 바꾸면 바로 따른다)
+    sys.path.insert(0, str(V2 / "tools"))
+    import assemble as A                                     # noqa: E402
+    cuts = [(int(t["cut"]), A.use_seconds(t)) for t in sc.get("timing_v5", [])]
+    if len(cuts) < 2:
+        return [n for n, _ in cuts]
+    budget = max_s - hook_s - A.ANSWER_S - cuts[-1][1]
+    keep = []
+    for n, u in cuts[:-1]:
+        if u > budget:
+            break
+        keep.append(n)
+        budget -= u
+    return keep + [cuts[-1][0]]
+
+
+def make_ig_short(pid: str) -> dict:
+    """인스타용 짧은 판(약 25초) 조립 → artifacts.video.ig_short · 메타가 있으면 인스타 캡션도 채운다(무료 · 1~2분)."""
+    st = load_status(pid)
+    sc = _load(_script_path(pid)) or {}
+    a = (st.get("artifacts") or {}).get("video") or {}
+    if not sc.get("hook") or not a.get("final"):
+        raise SystemExit("후킹이 있는 편의 완성본이 있어야 짧은 판을 만들 수 있습니다")
+    pilot = PILOTS / pid
+    sys.path.insert(0, str(V2 / "tools"))
+    import assemble as A                                     # noqa: E402
+    voice = ensure_hook_voice(pid, sc) if (sc.get("hook") or {}).get("voice_jp") else None
+    keep = ig_short_cuts(_load(_script_path(pid)) or sc, A.hook_seconds(pilot / voice) if voice else A.HOOK_S)
+    dst = pilot / "out" / _rid("ig_short") / "ig_short.mp4"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    over = {int(c["cut"]): str(pilot / c["file"]) for c in a.get("clips", [])}
+    A.main(str(pilot), a["assemble"]["clips_id"], a["assemble"]["tts_id"], "", str(dst), overrides=over, cuts_only=keep)
+    dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(dst)],
+                               capture_output=True, text=True).stdout or 0)
+    st = load_status(pid)
+    st["artifacts"]["video"]["ig_short"] = {"file": str(dst.relative_to(pilot)), "cuts": keep, "sec": round(dur, 1),
+                                            "at": _now(), "for_built_at": st["artifacts"]["video"].get("built_at")}
+    m = ((st["artifacts"].get("upload") or {}).get("meta"))
+    if m and not m.get("ig_caption_jp"):
+        m["ig_caption_jp"] = ig_caption(m.get("desc_jp", ""), m.get("tags_jp") or [])
+    _note(st, "upload", "ig_short", f"인스타용 짧은 판 {round(dur, 1)}초({', '.join(map(str, keep))}번 컷) — 업로드 칸에서 저장해 인스타에 올리세요")
+    _save(status_path(pid), st)
+    return st
+
+
+def _ig_short_safely(pid: str) -> None:
+    try:
+        make_ig_short(pid)
+    except BaseException as e:                               # noqa: BLE001 — 짧은 판이 안 돼도 시험·제목은 계속
+        if isinstance(e, KeyboardInterrupt):
+            raise
+        st = load_status(pid)
+        _note(st, "upload", "error", f"인스타용 짧은 판 만들기 실패 — 「인스타용 짧은 판 만들기」로 다시: {str(e)[:120]}")
+        _save(status_path(pid), st)
+
+
 def after_video(pid: str) -> dict:
     """완성본 승인 뒤(워크플로 '버튼 실행' 단계 · 키 있음): 시험 릴스로 후킹 겨루기 시작.
     못 하면(옛 형식 후킹 · 다른 후보 없음 · 인스타 키 없음 · 게시 실패) 이유를 남기고 예전처럼 바로 제목·설명을 쓴다."""
@@ -2868,6 +2947,8 @@ def after_video(pid: str) -> dict:
     if tr.get("state") == "decided":                         # 이미 판정 — 대본 후킹이 이긴 쪽이라 다시 조립해도 이긴 후킹
         _write_meta_safely(pid, schedule=True)
         return load_status(pid)
+    if sc_has_hook(pid):
+        _ig_short_safely(pid)                                # 인스타용 짧은 판(약 25초 · 무료) — 시험보다 먼저, 실패해도 계속
     sc = _load(_script_path(pid)) or {}
     hk = sc.get("hook") or {}
     api = _ig()
@@ -2903,6 +2984,10 @@ def after_video(pid: str) -> dict:
     _save(status_path(pid), st)
     _write_meta_safely(pid)
     return load_status(pid)
+
+
+def sc_has_hook(pid: str) -> bool:
+    return bool((_load(_script_path(pid)) or {}).get("hook"))
 
 
 def _iso_ts(iso: str) -> float:
@@ -3372,6 +3457,8 @@ def main(argv: list[str]) -> int:
         trial_check(a[0] if a and a[0] else None)
     elif cmd == "trial_skip":
         trial_skip(a[0])
+    elif cmd == "ig_short":                                  # 인스타용 짧은 판(약 25초) 만들기 · 인스타 캡션 채우기
+        make_ig_short(a[0])
     elif cmd == "trial_cancel":                              # 시험 무효(예: 다른 계정에 올라감) — 메모 = 이유
         trial_cancel(a[0], memo(1))
     elif cmd == "trial_repost":                              # 무효가 된 시험을 ABYSS 계정에 다시 올리기

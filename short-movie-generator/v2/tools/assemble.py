@@ -553,18 +553,25 @@ def build_cut(pilot: Path, clip: Path, sec: float, n: int, ann: str | None, t: P
     return cur
 
 
+def use_seconds(tm: dict) -> float:
+    """컷이 완성본에서 실제로 쓰는 길이 = 나레이션 끝 + 0.6초(영상이 더 길어도 자른다 · 핵심 규칙 2026-09-30)."""
+    sec = float(tm["sec"])
+    return round(min(sec, float(tm.get("lead", 0.15)) + float(tm.get("speech_s") or sec) + TAIL_S), 2)
+
+
 def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, overrides: dict | None = None,
-         hook_override: dict | None = None) -> dict:
+         hook_override: dict | None = None, cuts_only: list[int] | None = None) -> dict:
     """overrides: {컷번호: 클립 경로} — 관리자 페이지에서 그 컷만 다시 만든 경우 새 클립을 쓴다.
     ending: 예전 공용 엔딩 mp4(script.json 에 hook 이 없는 옛 편에만 쓰임 · '' 이면 안 붙임).
     hook_override: script.json 의 hook 대신 쓸 후킹(시험 릴스 B 버전 — 대본은 그대로 두고 맨 앞만 다르게 조립).
+    cuts_only: 이 컷들만 순서대로 이어 붙인다(인스타용 짧은 판 — 후킹·끝 카드는 그대로).
     반환: {"hook": {"cut", "at", "motion", "by"}} — 실제로 쓴 후킹 구간(후킹이 없는 옛 편은 빈 dict)."""
     info: dict = {}
     karaoke.verify_font()        # ★자막 글꼴 자가 검사 — 네모(□)·빈칸이면 여기서 멈춘다(영상을 만들지 않음)
     P = Path(pilot)
     sc = json.loads((P / "script.json").read_text(encoding="utf-8"))
     cuts = {c["cut"]: c for c in sc["cuts"] if "tts" in c}
-    timing = sc["timing_v5"]
+    timing = [t for t in sc["timing_v5"] if not cuts_only or t["cut"] in cuts_only]
     wav = P / "out" / tts_id / "body.wav"
     with tempfile.TemporaryDirectory() as td:
         t = Path(td)
@@ -572,10 +579,10 @@ def main(pilot: str, clips_id: str, tts_id: str, ending: str, dst: str, override
         parts, starts, acc = [], [], 0.0
         last_n = timing[-1]["cut"]
         for tm in timing:
-            n, sec = tm["cut"], float(tm["sec"])
+            n = tm["cut"]
             # ★핵심 규칙(운영자 확정 2026-09-30): 컷은 나레이션 끝 + 0.6초에서 자른다 — 영상은 짝수 초로 만들어도
             #   남는 무음 구간을 화면에 남기지 않는다(실사고: 편당 14초 무음). 마지막 컷은 끝을 어둠으로 페이드.
-            use = round(min(sec, float(tm.get("lead", 0.15)) + float(tm.get("speech_s") or sec) + TAIL_S), 2)
+            use = use_seconds(tm)
             tm["use_sec"] = use
             clip = Path((overrides or {}).get(n) or P / "out" / clips_id / f"c{n:02d}.mp4")
             parts.append(build_cut(P, clip, use, n, cuts[n].get("annotation"), t, cuts[n], fade_out=(n == last_n)))

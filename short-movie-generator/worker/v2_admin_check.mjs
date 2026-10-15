@@ -458,6 +458,21 @@ statusOverride = null;
   els = {}; await api.renderV2List();
   res.list_right_account_ok = els.view.innerHTML.includes('<span class="ok">연결됨</span> @abyss_0cean');
   indexOverride = null;
+  // ⑤-3 인스타용 짧은 판(약 25초) · 인스타 캡션(공유 한 줄) — 업로드 뒤 칸 · 없으면 만들기 버튼만
+  sv = base(); sv.stages.upload.state = "approved"; delete sv.jobs; delete sv.artifacts.trial;
+  sv.artifacts.upload = { result: { url: "https://youtu.be/x", privacy: "public" }, meta: { title_jp: "題", desc_jp: "d", tags_jp: [], tags_ko: [],
+    ig_caption_jp: "本文です。\n\n深海好きの友だちにも、送ってみてください。" } };
+  sv.artifacts.video.ig_short = { file: "out/r1015_ig_short/ig_short.mp4", cuts: [1, 2, 3, 8], sec: 23.3, at: "2026-10-15T08:05:39Z", for_built_at: sv.artifacts.video.built_at };
+  statusOverride = sv; els = {}; d0 = dispatched.length; await api.renderV2Episode("bathynomus_giganteus");
+  up = els.view.innerHTML.slice(els.view.innerHTML.indexOf('id="stg-upload"'));
+  res.ig_short_section = up.includes("인스타그램용 — 짧은 판") && up.includes("ig_short.mp4") && up.includes("23.3초 · 맨 앞 후킹 + 1, 2, 3, 8번 컷") &&
+    up.includes('data-v2dlig="1"') && up.includes("深海好きの友だちにも") && up.includes("다시 만들기") && !up.includes("완성본이 그 뒤 바뀌었습니다");
+  const igsb = els.igshort; if (igsb?.onclick) await igsb.onclick();
+  res.ig_short_dispatch = dispatched.slice(d0).some(x => x.body.inputs.action === "ig_short" && x.body.inputs.pilot === "bathynomus_giganteus");
+  delete sv.artifacts.video.ig_short; statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
+  up = els.view.innerHTML.slice(els.view.innerHTML.indexOf('id="stg-upload"'));
+  res.ig_short_missing_has_button = up.includes("인스타용 짧은 판 만들기 (무료") && !up.includes('data-v2dlig="1"');
+  statusOverride = null;
   // ⑥ 인스타가 가져갈 영상 주소(/v2file/커밋/편/파일.mp4): 커밋 번호로 고정한 raw 주소 · mp4 · 범위 요청 전달 · 그 밖은 거절
   const sha = "0123456789abcdef0123456789abcdef01234567";
   const r1 = await worker.fetch(new Request("https://x/v2file/" + sha + "/bathynomus_giganteus/out/r1009_trial/final_b.mp4", { headers: { Range: "bytes=0-1023" } }), {});

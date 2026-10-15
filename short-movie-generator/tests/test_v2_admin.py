@@ -814,7 +814,7 @@ def test_workflow_has_secrets_and_setup():
     for a in ("write_script", "write_storyboard", "make_video"):           # 키가 없는 첫 단계에서 유료 작업을 돌리면 안 된다
         assert f"admin.py {a}" not in run1, a
     for a in ("write_script", "write_storyboard", "make_video", "edit_hook", "recut_approve", "upload_meta", "save_meta", "save_viewed",
-              "after_video", "trial_check", "trial_skip", "ig_probe"):                  # 시험 릴스(2026-10-09)
+              "after_video", "trial_check", "trial_skip", "ig_probe", "trial_repost", "ig_short"):   # 시험 릴스 · 인스타용 짧은 판
         assert a in run2, a
     assert "after_video" not in run1                                              # 인스타 키는 '버튼 실행' 단계에만 있다
     assert steps["실패 기록"].get("if") == "failure()" and steps["결과 커밋"].get("if") == "always()"
@@ -1472,6 +1472,9 @@ def _trial_pilot(v2, monkeypatch, cands=None, line=True):
     monkeypatch.setattr(admin, "_RUN_REQUEST", _fake_runner(v2))
     monkeypatch.setattr(admin, "_COMMIT_PUSH", lambda msg: _SHA)
     monkeypatch.delenv("IG_ACCESS_TOKEN", raising=False)
+    shorts = []                                                              # 인스타용 짧은 판은 따로 시험(조립 시간 절약)
+    monkeypatch.setattr(admin, "_ig_short_safely", lambda pid: shorts.append(pid))
+    admin._TRIAL_SHORTS = shorts
     return pid, P
 
 
@@ -1525,6 +1528,8 @@ def test_after_video_posts_two_trial_reels_and_waits(v2, monkeypatch):
     n = len(ig.posts)
     admin.after_video(pid)                                                          # 다시 승인돼도 진행 중인 시험은 그대로(또 올리지 않음)
     assert len(ig.posts) == n
+    assert admin._TRIAL_SHORTS == [pid]                                             # 완성본 승인 때 인스타용 짧은 판도 함께
+    assert "深海好きの友だちにも" in ig.posts[0]["caption"]                            # 시험 릴스 캡션에도 공유 한 줄(A·B 같게)
 
 
 def test_trial_decide_rules():
@@ -1745,3 +1750,37 @@ def test_trial_cancel_then_repost_reuses_videos(v2, monkeypatch):
     assert tr["voided"][0]["posts"][0]["permalink"] and tr["b"]["checks"]
     with pytest.raises(SystemExit):                                                # 진행 중이면 다시 올리기 없음
         admin.trial_repost(pid)
+
+
+# ── 인스타용 짧은 판(약 25초) · 인스타 캡션 공유 한 줄(운영자 승인 2026-10-15 · @abyss_0cean 평균 시청 9.3초/43초 · 공유 0) ──
+def test_ig_short_cuts_keep_opening_and_ending():
+    uses = [4.63, 3.8, 5.58, 5.42, 4.67, 4.95, 4.9, 4.91]                          # 파리지옥말미잘 편 실제 컷 길이
+    sc = {"timing_v5": [{"cut": i + 1, "sec": 8, "lead": 0.15, "speech_s": round(u - 0.75, 2)} for i, u in enumerate(uses)]}
+    assert admin.ig_short_cuts(sc, 2.6) == [1, 2, 3, 8]                             # 앞에서부터 + 마지막 컷 · 총 23.5초
+    assert admin.ig_short_cuts(sc, 2.6, max_s=60) == list(range(1, 9))
+    assert admin.ig_short_cuts({"timing_v5": sc["timing_v5"][:1]}, 2.6) == [1]
+
+
+def test_ig_caption_has_share_line_not_youtube_cta():
+    desc = "本文です。\n\nチャンネル登録で、次の深海もいっしょに。\n\n出典:\nhttps://x"
+    cap = admin.ig_caption(desc, [f"#t{i}" for i in range(9)])
+    assert cap.startswith("本文です。") and admin.IG_SHARE_JP in cap and "チャンネル登録" not in cap and "出典" not in cap
+    assert cap.count("#") == admin.IG_TAGS_MAX and "AIによる再現映像" in cap
+    m = admin._compose_meta({"subject": {"jp_name": "テストウオ", "ko_name": "시험어"}},
+                            {"title_jp": "題", "title_ko": "제", "desc_jp": "本文。", "desc_ko": "본문.", "tags_jp": [], "tags_ko": []})
+    assert m["ig_caption_jp"].startswith("本文。") and admin.IG_SHARE_JP in m["ig_caption_jp"]
+
+
+def test_make_ig_short_builds_subset_and_fills_caption(v2, monkeypatch):
+    pid, P = _trial_pilot(v2, monkeypatch)
+    st = admin.load_status(pid)
+    st["artifacts"]["upload"] = {"meta": {"title_jp": "題", "desc_jp": "本文です。\n\nチャンネル登録で…", "tags_jp": ["#深海", "#テストウオ"]}}
+    admin._save(admin.status_path(pid), st)
+    monkeypatch.setattr(admin, "IG_SHORT_MAX_S", 9.0)                              # 후킹 2초 + 끝 카드 2초 + 컷 하나만 들어가게
+    admin.main(["ig_short", pid])
+    st = admin.load_status(pid)
+    sh = st["artifacts"]["video"]["ig_short"]
+    assert sh["cuts"] == [2] and (P / sh["file"]).exists() and abs(sh["sec"] - 7.25) < 0.3      # 2초 + 3.25초 + 2초
+    assert sh["for_built_at"] == st["artifacts"]["video"]["built_at"] and st["artifacts"]["video"]["final"] == "out/final/final.mp4"
+    cap = st["artifacts"]["upload"]["meta"]["ig_caption_jp"]
+    assert cap.startswith("本文です。") and admin.IG_SHARE_JP in cap and "チャンネル登録" not in cap

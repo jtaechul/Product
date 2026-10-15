@@ -63,7 +63,7 @@
 - **상태 파일 하나**: 편마다 `v2/pilots/<id>/status.json`(단계 상태 locked/working/review/revise/approved · 기록 · 결과물 경로 ·
   자동 검사 · 비용). 목록 `v2/pilots/index.json`, 주제 후보 `v2/topics.json`(`admin.py topics`로 갱신).
 - **버튼 = 워크플로**: 페이지는 파일을 직접 쓰지 않는다 → `v2-admin.yml` 디스패치 → `v2/tools/admin.py`
-  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·redo_panel·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta·save_viewed·trial_check·trial_skip·trial_repost·ig_probe) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
+  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·redo_panel·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta·save_viewed·trial_check·trial_skip·trial_repost·ig_probe·ig_short) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
   `v2-admin.yml`은 **main에도** 둔다(디스패치 워크플로 규칙 · 하드룰 #15③).
 - **★컷별 대사 수정(운영자 확정 2026-09-28) — 대사를 고쳐도 영상은 자동으로 바뀌지 않는다**:
   대본 카드의 컷마다 「대사 수정」 → 일본어·한국어(·읽기, 비우면 Janome 자동) 입력 → 「이 대사로 저장」(`admin.py edit_line`)은
@@ -510,6 +510,23 @@
   `test_after_video_old_hook_skips_trial`·`test_trial_post_failure_falls_back_and_hides_token`·`test_trial_skip_by_operator`·`test_ig_probe_and_pattern_hint`·
   `test_next_publish_slot_is_next_19_jst`·`test_other_window_for_trial_b`) · `v2_admin_check.mjs`(trial_* · list_ig_card · list_due_auto_check ·
   v2file_proxies_commit_raw · v2file_rejects_others).
+
+### ★인스타용 짧은 판 · 인스타 캡션 공유 한 줄 (운영자 승인 2026-10-15 · 가설 시험)
+- **근거(운영자 제공 인사이트 2026-10-15 · @abyss_0cean 팔로워 241 · 일본 97.5% · 25~54세 70%)**: 파리지옥말미잘 릴스(43초) 조회 1.2천 ·
+  시청자 1.1천(팔로워의 약 4.5배 → 비팔로워에게 퍼지고 있음 = 계정 문제 아님) · **평균 시청 9.3초(약 22%)** · 좋아요 8 · 저장 1 · 공유 0.
+  30일 릴스 6개 조회 7.3천(편당 약 1.2천) · 공유 0 · 댓글 0. → 문제는 배포가 아니라 붙잡는 힘. 운영자 질문 「계정 폐지?」에 **유지 권고**
+  (팔로워·기록을 잃고, 시험 릴스 팔로워 조건도 다시 쌓아야 함).
+- **① 인스타용 짧은 판(약 25초)**: `admin.py ig_short` / 완성본 승인 때 `after_video`가 자동(실패해도 시험·제목은 계속). 영상 컷은 새로 만들지 않고
+  **앞에서부터 컷을 잇되 마지막 컷(마무리 · 핵심 사실 회수)은 늘 넣는다** — [후킹][1번…][마지막 컷][끝 카드] 총 `IG_SHORT_MAX_S`(25초) 이내
+  (`ig_short_cuts` · `assemble.main(cuts_only=)` · `assemble.use_seconds`). 나레이션은 컷마다 문장이 완결이라 이어도 끊기지 않는다.
+  결과 `artifacts.video.ig_short`(file·cuts·sec·for_built_at — 완성본이 바뀌면 페이지가 「다시 만들기」 안내). 실측: 파리지옥말미잘 23.3초(1·2·3·8번 컷 ·
+  -16.0 LUFS). 업로드 칸 「인스타그램용」에서 미리보기·저장·다시 만들기. 비교는 인스타 인사이트 평균 시청 시간·조회(긴 판 43초 중 9.3초 · 1.2천 회).
+- **② 인스타 캡션 = 공유 한 줄**: `meta.ig_caption_jp` = 유튜브 설명 본문(첫 문단) + 「深海好きの友だちにも、送ってみてください。」(`IG_SHARE_JP`) +
+  AI 재현 표기 + 해시태그 5개(`IG_TAGS_MAX`) — 유튜브용 「チャンネル登録…」·출처 목록은 뺀다. 시험 릴스 캡션(`trial_caption`)에도 같은 한 줄(A·B 같게).
+  근거: 인스타가 새 시청자 배포에 '보내기(공유)'를 크게 본다는 모세리 2025-01 발언이 정리 글들로 전해짐(원문 미확인 · 가설).
+  ※ **나레이션 호소 문구 금지 규칙은 그대로** — 캡션에만.
+- 회귀: `test_ig_short_cuts_keep_opening_and_ending`·`test_ig_caption_has_share_line_not_youtube_cta`·`test_make_ig_short_builds_subset_and_fills_caption`
+  · `v2_admin_check.mjs`(ig_short_section · ig_short_dispatch · ig_short_missing_has_button).
 
 ### 비용 (한 편 기준 · 2026-10 혼합 제작)
 | 항목 | 금액 |

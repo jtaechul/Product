@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-10-2 (예약 공개 기본 시각 = 아침 9시 · 시험 릴스 계정 잠금 @abyss_0cean)";
+const BUILD="v2026-10-15-1 (인스타용 짧은 판 약 25초 · 인스타 캡션 공유 한 줄)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2642,11 +2642,11 @@ function v2stageBody(st,stage){
       v2copyBox("해시태그 (일본어)",(m.tags_jp||[]).join(" "),"cp_hj")+
       v2copyBox("제목 (한국어)",m.title_ko,"cp_tk")+v2copyBox("설명 (한국어 · 해시태그 포함)",m.desc_ko,"cp_dk")+
       v2copyBox("해시태그 (한국어)",(m.tags_ko||[]).join(" "),"cp_hk")+
-      v2copyBox("고정 댓글 (유튜브 앱에서 직접 달고 고정)",m.pinned_comment,"cp_pc");
+      v2copyBox("고정 댓글 (유튜브 앱에서 직접 달고 고정)",m.pinned_comment,"cp_pc")+v2igShortHTML(st);
     const trS=((st.artifacts||{}).trial||{}).state, trRun=trS==="running"||trS==="cancelled";
     if(!m)return v2trialHTML(st)+(trS==="cancelled"?'<div class="hint">다시 올리거나 건너뛰면 유튜브 제목·설명을 자동으로 씁니다.</div>':trRun?'<div class="hint">시험이 끝나면 이긴 후킹으로 유튜브 제목·설명을 자동으로 쓰고, 예약 공개(아침 9시)를 준비합니다. 기다리지 않으려면 위의 「시험 건너뛰고…」를 누르세요.</div>':
       '<div class="hint" style="margin-top:0">완성본을 승인하면 유튜브 제목·설명·해시태그를 자동으로 씁니다.</div>'+
-      '<button class="btn save" id="upmeta" style="width:100%;margin-top:8px">제목·설명 AI로 쓰기 (약 $0.01)</button>');
+      '<button class="btn save" id="upmeta" style="width:100%;margin-top:8px">제목·설명 AI로 쓰기 (약 $0.01)</button>')+v2igShortHTML(st);
     return v2trialHTML(st)+v2dlHTML("u")+'<div class="dual" style="margin-top:4px"><div><span class="lbl">제목 (일본어 · 실제로 올라감)</span><input id="up_tj" value="'+esc(m.title_jp)+'">'+v2copyBtn("up_tj")+'</div>'+
         '<div><span class="lbl">제목 (한국어 · 확인용)</span><input id="up_tk" value="'+esc(m.title_ko)+'">'+v2copyBtn("up_tk")+'</div></div>'+
       '<div class="dual"><div><span class="lbl">설명 (일본어 · 실제로 올라감)</span><textarea id="up_dj">'+esc(m.desc_jp)+'</textarea>'+v2copyBtn("up_dj")+'</div>'+
@@ -2660,7 +2660,7 @@ function v2stageBody(st,stage){
         '<span class="lbl">공개할 시각 (한국 시간 = 일본 시간)</span><input type="datetime-local" id="up_at" value="'+esc(m.publish_at&&Date.parse(m.publish_at)>Date.now()+15*6e4?v2kstInput(m.publish_at):v2slot(0))+'">'+
         '<div class="btnrow"><button class="btn" data-atq="0">'+v2slotLabel(0)+'</button><button class="btn" data-atq="1">'+v2slotLabel(1)+'</button></div>'+
         '<div class="hint">「승인 → 유튜브 업로드」를 누르면 지금 비공개로 올라가고, 이 시각에 유튜브가 자동으로 공개합니다. 시각은 지금부터 15분 이후로 골라 주세요.</div></div>'+
-      '<div class="btnrow"><button class="btn" id="upsave">수정 내용 저장</button><button class="btn warn" id="upmeta">AI로 다시 쓰기</button></div>';
+      '<div class="btnrow"><button class="btn" id="upsave">수정 내용 저장</button><button class="btn warn" id="upmeta">AI로 다시 쓰기</button></div>'+v2igShortHTML(st);
   }
   return "";
 }
@@ -2686,6 +2686,20 @@ function v2recutPanels(st){
       '<span class="lbl">화면 전환 최소 횟수</span><select id="rcmin-'+c.cut+'">'+[0,1,2,3].map(n=>'<option value="'+n+'"'+((rc.min_transitions||0)===n?' selected':'')+'>'+n+'회</option>').join("")+'</select>'+
       '<button class="btn save" data-rcgo="'+c.cut+'" style="width:100%;margin-top:8px">'+(rc.state==="conti_review"?"방향 고쳐 콘티 다시 만들기":"콘티 먼저 만들기")+' (약 $0.13 · 영상은 아직 안 만듦)</button></div>';
     return h;}).join("");
+}
+// ★인스타용 짧은 판 + 인스타 캡션(운영자 승인 2026-10-15 · @abyss_0cean 실측: 43초 릴스 평균 시청 9.3초 → 약 25초 판으로 비교 ·
+//   30일 공유 0 → 캡션에 공유 한 줄). 영상 컷은 새로 만들지 않고 앞 컷 + 마지막 컷만 이어 붙인다(무료).
+function v2igShortHTML(st){
+  const v=((st.artifacts||{}).video)||{}, sh=v.ig_short, m=((((st.artifacts||{}).upload)||{}).meta)||{};
+  const stale=sh&&sh.for_built_at&&v.built_at&&sh.for_built_at!==v.built_at;
+  return '<div class="sect">인스타그램용 — 짧은 판(약 25초) · 캡션</div>'+
+    (sh?'<video controls playsinline preload="metadata" src="'+v2media(st.id,sh.file,sh.at||"")+'#t=0.5"></video>'+
+        '<div class="cfact">'+esc(sh.sec)+'초 · 맨 앞 후킹 + '+esc((sh.cuts||[]).join(", "))+'번 컷 + 끝 카드'+(stale?' <span class="warn">완성본이 그 뒤 바뀌었습니다 — 다시 만들어 주세요</span>':'')+'</div>'+
+        '<button class="btn save" data-v2dlig="1" style="width:100%;margin-top:8px">인스타용 짧은 판 저장 (휴대폰 사진에 저장)</button><div class="hint" id="v2dlhint-ig"></div>'
+       :'<div class="hint">아직 없습니다 — 아래 버튼으로 만드세요(무료 · 1~2분). 앞으로는 완성본을 승인하면 자동으로 만들어집니다.</div>')+
+    (m.ig_caption_jp?v2copyBox("인스타 캡션 (일본어 · 공유 한 줄 포함 · 해시태그 5개)",m.ig_caption_jp,"cp_ig"):'')+
+    '<button class="btn" id="igshort" style="width:100%;margin-top:8px">'+(sh?'인스타용 짧은 판 다시 만들기':'인스타용 짧은 판 만들기')+' (무료 · 1~2분)</button>'+
+    '<div class="hint">인스타에는 짧은 판을 올려 보고, 인사이트의 「평균 시청 시간」·조회를 긴 판(파리지옥말미잘: 43초 중 9.3초 · 1.2천 회)과 비교하세요. 가설 시험입니다.</div>';
 }
 // ── 복사(운영자 요청 2026-09-28: 업로드 뒤에도 제목·설명·해시태그를 인스타그램에 붙여넣을 수 있게) ──
 const V2_PV={private:"비공개",unlisted:"일부 공개",public:"공개",scheduled:"예약 공개"};
@@ -3076,6 +3090,14 @@ async function renderV2Episode(pid){
     const k=b.dataset.v2dl; b.id="v2dlbtn-"+k;
     saveVideo(v2media(pid,va.final,va.built_at||""),(st.name_ko||pid)+".mp4",{btn:"#v2dlbtn-"+k,hint:"#v2dlhint-"+k});
   });
+  document.querySelectorAll("[data-v2dlig]").forEach(b=>b.onclick=()=>{
+    const sh=va.ig_short;if(!sh){banner("아직 인스타용 짧은 판이 없습니다.","err");return;}
+    b.id="v2dlbtn-ig";saveVideo(v2media(pid,sh.file,sh.at||""),(st.name_ko||pid)+"_insta.mp4",{btn:"#v2dlbtn-ig",hint:"#v2dlhint-ig"});
+  });
+  const igs=$("#igshort");if(igs)igs.onclick=async()=>{
+    if(!confirm("인스타용 짧은 판(약 25초)을 만들까요? 영상 컷은 새로 만들지 않고 앞 컷과 마지막 컷만 이어 붙입니다(무료 · 1~2분)."))return;
+    if(await v2do("ig_short",pid,"","",igs)){banner("인스타용 짧은 판을 만드는 중입니다(1~2분). 화면이 저절로 새로 고쳐집니다.","ok");v2trialLater(reEp);}
+  };
   const asm=$("#v2asm");if(asm)asm.onclick=async()=>{if(confirm("완성본을 다시 조립하고 자동 검사를 돌릴까요? (무료)"))await v2do("assemble",pid,"","",asm);};
 }
 
