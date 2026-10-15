@@ -11,7 +11,7 @@
    "month": "2026-11",
    "theme": "실내 온수풀·온천",
    "region": "강원",
-   "updated": "2026-10-14",
+   "updated": "2026-10-15",
    "intro": "쌀쌀해진 11월, 찬바람 맞으며 따뜻한 물에 들어가는 강원 실내 온수풀·온천 숙소를 영상으로 소개한 순서대로 정리합니다.",
    "hotels": [
     {
@@ -70,6 +70,66 @@
      "price_band": null,
      "caption": "",
      "no": 1
+    },
+    {
+     "rank": 2,
+     "name": "롯데리조트 속초",
+     "city": "속초시",
+     "hook": "사계절 실내 온수 워터파크",
+     "blog_30d": 931,
+     "facts": [
+      "실내 워터파크",
+      "사계절 온수 인피니티풀",
+      "스파"
+     ],
+     "rooms": [
+      {
+       "name": "주니어 패밀리 스위트 바다전망",
+       "tags": [
+        "오션뷰",
+        "스위트",
+        "패밀리"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/ZvnnfwFxOqBJGdmHZo6E4BHJXGEFhZuIUY15iUWB_8PoWQCBjdh_mKfH3ZST14r5min7TiundmcL0emFZEF-5srokYzeak0E62mbUxWdIcAyhdwe3DjUkVxrM0zgs_SzvlxIj-pkrqrCo1bMRJKkkL2hjm77EzQ5CPaifulF_oANqWtID1KPq00QcFSlKRHIZIcwjMgkeE8EV9UM991x02nHQF0Lb0ORAs2rh7mUyPOttLacE4v5gKKCkXzhFeqlEyx3Fp469182RzAY9JRfXo5qMNa1bxpogJtjE3ztGiTGSWTKJyGSMf6flKd8LaagZNwrop_pP_c9H70f89NJc-TY35WaWUF69SudPKG2miYBg9AU5b8AkcSWhme8Xej9GHgl467Tz5cw_IwPis1d5pquACSAEmj2Lxj93hj1PRT3jsBgwZPCMSdoMdf2ZZDVbuhDay9VxTN8PojotrkDQRW9MfgS_Mxm2CLMXer7pG0Csj-zh79fRvbALvFmDcOOHqu8xForU8gRxwtRuWojg3YQW_ZX81sxRcQ75lui91pTPKAQ"
+      },
+      {
+       "name": "콘도 디럭스 18평 → 콘도 스위트 33평(Sunset Check-in 콘도up(18시체크인/10시체크아웃)",
+       "tags": [
+        "스위트"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/Xna1m5fCB1EnV55NXr9AUcBxPw3rDGSggdZxbyBqoe7d8MZ9NS7P4TtB0sPXrWHtL_zj_PdkyuKqnj9QBBizOBC3HGl7TuDNZNBMK5gaLP3OWll2gW0cPc1-5LV48MVOWiePdbEiA34nVRktVbbVN9EdwEsEoe2Lv4eovYWwkXS_AjfG-UK7j1LLc_DgKLPuGQVea62d636UTAEa6uNrBolQZpJg6vNHWGOvBXXDUU0G3JDxkek8IXOrv5wivhY0Zxx3IfJcD4g3KsHdbUu33mIKqPXH7zGcU5v36bRTnXFnsSQ5tNc03_0JxYEuCB75XaLBmD-DbiL34TyuTKAQWuePMQvP3kDriQrORRLa6xYwicb0AH291sTexQsAz_pa9URvSr8nC6nnBLRu3zY4rTkMEkak4XEniE-DE9XWgb6L2Wb72jYgfjvvzwVzv5moCs0wySZlBm4dgIyZgPcGBJM_VbCyzeRUAbKHDApkayhfgCwh9HR9tiJIbJkoLorI0vwfUt6_0-Ymv-GtZlDLHBR-PdsMOlMWT4Z9XqObqerkCio="
+      },
+      {
+       "name": "디럭스 더블",
+       "tags": [],
+       "image": "https://ads-partners.coupang.com/image1/-6wb3juIq7Tnjv1Q--gBeXE69CeqYB2YQa1L8v0v55UwdNGOg-YQebk6pmi7wdV0f7LuUdXCEey6p_wDGahGu1jEpjuROJzNTTXtm3ZTVr_6UTWWo2bcDYLnGDRmd8-VP62kRT_18dlDvcUITCmtM_u1Ge4w2G0o8xyRdxFZc-MmcwhNvkCSA20QjIg_w6GOHK2LgqqDdu-_Qp4H9NoGQWWugnOeRi4bHWUYBfVqjaqvpwsW3PSlBw5QSsqgcLdHuaZKLuTOLDYcYKZVfKVCtOgO_F0jDdsbR7MGSPj4PbB8BJdFBTL3rYTVdt1crep3RBvIOVFnih-yuUoZiVSKtdStz3SJDuhsC3AJOgcfTAU0QAqJq7hgPW6R0aLx7rj7Dy8Q-ubj39X2cdKxTcR8ltU4he93JV6ZsbOCBiFrp4NY4smrTczphrboI64zpkLM70deIrn9TrWyKp6dtxr3_8wv0IQ0yW3z5f19PAhAChBNQOArgrajHXm7MeGrGEDD-tJMk6YJ-B4OOE08O_lXsPaG_3tfOvWnUdUbDTcG3l8gJgiN"
+      },
+      {
+       "name": "콘도 스위트 33평 (A), 바다 전망",
+       "tags": [
+        "오션뷰",
+        "스위트"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/LeHU3138d7QDnB4aLa9SthKE621Z7nOXetjqsByVLkyoaX244AtkQ3p1P3MOYXOxHb-ppZ9Mwmp0wKVgj1WLImPGT_n0t4MRtlVyHk_N9vPyZ1aSG6-awBf76Dz-yPxIGMy-kCF_70ih0RsJjuuTZIX9IvcMtczZ-ZX3Ob4pXZYIVGgCVFrEN78NybE6_iZ1L7flcZjAy0lQA0JeKXmWeeEsGshsobEMYq-NdC1K4EEbDe3fjmgJFhNb1s1V4-3eLLHxG_FBnXEEFZFS95ScnU53ivsmqnQ7-T6T-jUKsY1iFj9EO8CHjU661lD82A8xhHrK99F9N9RmYaLhnpGjqo-uqxZhqsoBvs5rt5gT5anQN7sMJ6mEAOA9iT29b4J-QBPYrNRiXxhVqZcO7GBxYJQ-JwfklMeyNZ4CN8mTcihYqM8950aIut7oOOZKeGQ8KXSSwdfgttE7L3TG2vxRn8fdYCJ0FIOKnXFu2N_aeYb9eku8fHT61mTPdOF5OaqnKhU5h4NRl4nArWkeIY79WKhBPOOxoA3eQJ6rsNRSq7eg2g=="
+      },
+      {
+       "name": "디럭스 더블, 바다 전망",
+       "tags": [
+        "오션뷰"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/3UMx9Q9la4zHJ0M73YPJmnXqgtfXMUTuFdld6294wXYQPQ_kqSv54_E2MzMy9a2sHZdsVgX3OYFC66pHK_n4PXFgwRM8cj0Ie-CW6XLcd34ZTB4zV5qZO-u3pxST448roGe2pK_kZTVWK8KyeQG8_Bc5Eg2aSV5ZEUl15CgWRv3QQypULx9Sz2Hd8fALTW47ebBUBHBVtxxKT8uwK5d0jqWY9oP9euXnU39Q0jk273x9uWrZ9OoVpUyHV_jw005rEevUtACVbWcdmuVTH45aX9GzRxh3L4k3Zo1MRjTM5tytiXpTyrs_sEpODUPPVkVDFmM6jeCxwUjwsqzRbn1QZdAvBJz_NSIRjLl_-vzQ6oNSVaeE-dFrawFA-rTWORFJ9Vgmaf22gOTzVlNYIVx_nhk02gdktvThSA7LYq6ojnmgmfCVRbA_riIpsHN1LuwfoxDJhaRRXfyoKv-lTqE3pdSwJk-PMs_biGnkfpkZfGrSOxDFAcUKUkUGGOM459yfCO-jOCrRxZnkPulzQtua98WSvkUfr4W627swWLxkmL1JgQ=="
+      }
+     ],
+     "image": "img/2026-11-강원-실내-온수풀-온천/2.jpg",
+     "links": {
+      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000578675&vendorItemId=70000006079838&itemId=20000050911031&traceid=V0-153-00f522d9ef652ffa&requestid=20261015103958835271762321&token=31850C%7CGM&pt=0&slot=1",
+      "agoda": null,
+      "official": "https://www.lottehotel.com/resort-sokcho/ko"
+     },
+     "honest": "",
+     "price_band": null,
+     "caption": "",
+     "no": 3
     },
     {
      "rank": 3,
@@ -140,5 +200,5 @@
    ]
   }
  ],
- "updated": "2026-10-14"
+ "updated": "2026-10-15"
 }
