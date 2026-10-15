@@ -18,9 +18,21 @@ v2(2026-10-15 운영자 "진행해") — 한 숙소 = 한 시그니처는 그대
      **정보 전달 시험**: 화면 글자만 보고 '특별한 점'을 말하게 해 사실과 2개 이상 맞아야 통과(두 번까지 다시 쓰고, 마지막은 경고로 남김).
   6. 렌더 — 사진 무빙(0원) + 제작 때만 첫 컷 Veo(294원), 정보 자막 컷 2.4초(읽을 시간), 끝 카드, 배경음악만.
 
-요청: {"mode":"signature","stay":..,"stage":"preview"|없음,"format":"montage"|"single","veo_approved":true(제작)}
-미리보기 = 사진 무빙 영상(Veo·이미지 0원 · 글·비전 수십 원). 제작 = 미리보기 결과 재사용(reuse_runs → build/reuse/*/…/sig/plan.json) + 첫 컷 Veo.
-사진·사실이 모자라 멈추면 state/sig_blocked.json 에 남긴다 — 관리실이 그 숙소의 시그니처 버튼을 잠근다(14일 뒤 풀림 · 성공하면 지움).
+v3(2026-10-15 운영자 "원인부터 똑바로 파악해 · 니가 있는 사진으로 ai 영상을 만들라고 했잖아") — v2 실행 두 번(stay-run-48·49) 연속 실패의 원인:
+  ① 영상보다 '완벽한 시그니처 찾기' 관문을 앞에 세웠다(다른 후보와 다름 · 주인공 사진 2장 · 전할 정보 2개를 다 넘어야 영상)
+     → 모델이 사진 1장짜리 답(run-48)·빈 답(run-49)을 내자 영상 0개로 끝났다
+  ② 가짜 모델 답으로만 시험했다 — 실제 모델이 관문을 못 넘는 경우를 시험하지 않았다
+  ③ 2026-10-09 확정 방식(사진마다 이미지→AI 영상)에서 벗어나 정지 사진 확대(사진 무빙)만 썼다
+  고침 — **쓸 사진 2장 이상 + 사실 1개 이상이면 반드시 영상을 만든다**:
+  - 시그니처: 모델 최대 3번(빈 답·규칙 위반은 이유를 붙여 다시) → 그래도 못 고르면 코드가 정한다(사진이 가장 많이 이어진 사실). 관문은 '우선순위'로만.
+  - 컷 사진: 주인공 확인 사진 → 설명에 시그니처 낱말이 있는 사진 → 사실과 이어진 사진(→ 2컷이 안 될 때만 품질 순·외관). 컷 자막 = 그 사진 설명과 맞는 사실.
+  - 렌더: **컷마다 그 실제 사진을 Veo 4초 AI 영상으로**(9컷 형식과 같은 지시문 — 사진별 카메라·자연 움직임 + 구조 유지). 실패한 컷만 사진 무빙.
+  - 자막이 규칙에 3번 걸리면 걸린 줄만 사실 문장으로 바꿔 끝까지 만든다(멈추지 않음 · 기록에 남김).
+
+요청: {"mode":"signature","stay":..,"stage":"preview"|없음,"format":"montage"|"single","veo_approved":true}
+미리보기 = 컷마다 AI 영상(몽타주 최대 5컷 약 1,470원 · 한 장면 2컷 약 590원 + 글·비전 수십 원) → **미리보기도 돈이 든다 → veo_approved 필수**
+(관리실 버튼이 금액을 보여 주고 한 번 더 확인 = 허락). 제작 = 미리보기 계획·AI 클립 재사용(reuse_runs → build/reuse/*/…/sig/plan.json · 0원).
+쓸 사진이 2장 미만·사실 0개로 멈추면 state/sig_blocked.json 에 남긴다 — 관리실이 그 숙소의 시그니처 버튼을 잠근다(14일 뒤 풀림 · 성공하면 지움).
 """
 from __future__ import annotations
 
@@ -48,9 +60,10 @@ REUSE_DIR = ms.BUILD / "reuse"
 FAKE_IMG = os.environ.get("SIG_FAKE_IMAGE", "") == "1"          # 로컬 시험: 이미지 편집 대신 색만 바꾼 가짜 변주(0원)
 MAX_EDITS = 5                                                     # (빛·날씨·인물 편집 — v2 는 쓰지 않는다. make_images 는 편집 컷이 있을 때만 돈을 쓴다)
 EDIT_TRIES = 7                                                    # 한 번 실행의 편집 호출 상한(재시도 포함)
-N_SHOTS = {"montage": 5, "single": 2}                             # 컷 수 상한 — 실제 컷 수 = '시그니처가 주인공인 사진'과 '전할 정보' 중 적은 쪽
-MIN_CUTS = 2                                                      # 이보다 적으면 만들지 않는다 — 같은 사진을 돌려 쓰지 않는다(run-47)
-DUR = {"hook": 4.0, "mid": 2.4, "last": 2.6, "card": 2.8}        # 정보 자막을 읽을 시간(한국어 약 6자/초 — 14자 약 2.3초)
+N_SHOTS = {"montage": 5, "single": 2}                             # 컷 수 상한 — 시그니처·사실과 이어진 사진 수만큼(이어진 사진이 모자라면 2컷까지만 채운다)
+MIN_CUTS = 2                                                      # 쓸 사진이 이보다 적으면 만들지 않는다 — 같은 사진을 돌려 쓰지 않는다(run-47)
+DUR = {"hook": 4.0, "mid": 3.0, "last": 3.0, "card": 2.8}        # 컷마다 AI 영상 4초 중 앞부분 — 자막 읽을 시간(14자 약 2.3초) + 움직임이 보일 시간
+VEO_SEC = 4                                                       # 컷마다 Veo 4초(약 294원 · veo.py 의 한 번 실행 3,000원·한 달 50,000원 상한 그대로)
 SUBJECT_MIN = 0.25                                                # 사진 확인: 시그니처가 화면에서 차지하는 비율(비전 추정) 하한 — 전경 귀퉁이는 탈락
 MOTION_SIG = 0.12                                                 # 짧은 컷이라 사진 무빙 폭을 9컷 형식(0.24)의 절반으로
 MUSIC_LEVEL = 0.9                                                 # 나레이션이 없어 음악을 주 소리로
@@ -100,15 +113,6 @@ EDIT_PEOPLE = ("PEOPLE: add {who}, seen strictly from behind — the backs of th
 EDIT_NO_PEOPLE = "Do not add any people or animals. "
 EDIT_TAIL = ("The result must look like a real, unretouched photo taken by the same camera at a different moment — photorealistic, natural colors, "
              "no painterly, illustrated or cartoon look.")
-
-VEO_SIG = ("Camera: locked-off with a very slow, steady push-in of about 5 percent, staying inside the photo the whole time; no other camera movement. "
-           "Only natural ambient motion of what is already in the first frame: {motion} "
-           "Keep every building, structure, object and the view exactly as in the first frame; no people, no new objects, no text.")
-VEO_MOTION = {"rain": "rain falls steadily and small ripples spread on the existing water.", "snow": "snowflakes drift down slowly.",
-              "steam": "soft white steam rises and drifts from the warm water.", "mist": "the thin mist drifts slowly.",
-              "night": "lights glow and their reflections shimmer gently on water and glass.", "dusk": "lights glow and reflections shimmer gently.",
-              "golden": "sunlight sparkles gently on surfaces.", "original": "water and leaves move gently and light sparkles softly."}
-
 
 def log(*a):
     print("[sig]", *a, flush=True)
@@ -207,6 +211,20 @@ def _body(f) -> str:
     return FACT_PREFIX_RX.sub("", str(f or ""))
 
 
+def _cut(text, n: int) -> str:
+    """띄어쓰기 단위로 n자 안에서 자른다(낱말 중간을 자르지 않는다 · 첫 낱말이 n자를 넘으면 그 낱말만 n자로)."""
+    t = design.one_line(str(text or "")).strip()
+    if len(t) <= n:
+        return t
+    out = ""
+    for w in t.split():
+        c = f"{out} {w}".strip()
+        if len(c) > n:
+            break
+        out = c
+    return out or t[:n]
+
+
 def _fmt(req: dict) -> str:
     return "single" if str(req.get("format") or "") == "single" else "montage"
 
@@ -225,10 +243,11 @@ def facts_list(h: dict) -> list[str]:
     return uniq
 
 
-def usable_photos(h: dict) -> list[dict]:
-    """쓸 수 있는 사진 — 사람 없음·다른 지점 아님·품질 5 이상 + 거의 같은 사진(dHash) 제거 + **외관·전경은 1장까지**(품질 높은 것).
-    run-47: 쿠팡 외관 항공 사진 5장(같은 단지 다른 각도)이 모두 '시그니처 사진'으로 들어가 6컷을 채웠다 → 9컷 형식의 MAX_EXTERIOR 를 그대로 쓴다."""
-    base = [p for p in (h.get("classified") or []) if p.get("category") in photos.CATS and int(p.get("quality") or 0) >= 5
+def usable_photos(h: dict, min_q: int = 5) -> list[dict]:
+    """쓸 수 있는 사진 — 사람 없음·다른 지점 아님·품질 min_q 이상 + 거의 같은 사진(dHash) 제거 + **외관·전경은 1장까지**(품질 높은 것).
+    run-47: 쿠팡 외관 항공 사진 5장(같은 단지 다른 각도)이 모두 '시그니처 사진'으로 들어가 6컷을 채웠다 → 9컷 형식의 MAX_EXTERIOR 를 그대로 쓴다.
+    v3: 품질 5 이상이 2장이 안 되면 choose_signature 가 품질 3 이상(9컷 형식 기준)으로 한 번 더 본다 — 사진이 있는데 멈추지 않게."""
+    base = [p for p in (h.get("classified") or []) if p.get("category") in photos.CATS and int(p.get("quality") or 0) >= min_q
             and not p.get("people") and not p.get("mismatch") and Path(str(p.get("path") or "")).exists()]
     base.sort(key=lambda p: (-int(p.get("quality") or 0), int(p.get("k") or 0)))
     out, hashes, ext = [], [], 0
@@ -447,95 +466,212 @@ def confirm_subjects(models: dict, js: dict, pool: dict, ks: list[int], cache: d
     return confirmed, checks
 
 
+def fallback_signature(facts: list[str], groups: list[tuple[int, list[int]]], pool: dict, cold: bool = False) -> dict:
+    """모델이 3번 모두 쓸 만한 시그니처를 못 내면 **코드가 정한다** — 멈추지 않는다(stay-run-48·49).
+    고르는 순서: 숙소 안 시설(인접·셔틀 아님) → 설명이 이어지는 사진(외관 제외 · 겨울엔 바깥 여름 물놀이 제외)이 2장 이상 → 분위기 말 없음 → 사진 많은 것 → 앞 번호."""
+    def ok(k):
+        return not mt.is_exterior(pool[k]) and not (cold and so.off_season(pool[k]))
+    best, key = None, None
+    for i, ks in groups:
+        ks2 = [k for k in ks if ok(k)]
+        if not ks2:
+            continue
+        f = _body(facts[i - 1])
+        kk = (not ADJ_RX.search(f), len(ks2) >= MIN_CUTS, not (MOOD_RX.search(f) or PAST_RX.search(f)), len(ks2), -i)
+        if key is None or kk > key:
+            best, key = (i, ks2), kk
+    if best is None:                                                                # 어느 사실도 사진 설명과 안 이어지면: 첫 사실 + 품질 순 사진
+        by_q = sorted(pool, key=lambda k: (-int(pool[k].get("quality") or 0), k))
+        best = (1, [k for k in by_q if ok(k)] or by_q)
+    i, ks = best
+    body = _body(facts[i - 1])
+    return {"signature": _cut(body, 24), "what": _cut(body, 40), "fact": i, "vs_peers": "", "why": "",
+            "points": [{"role": "신박함", "text": _cut(body, 24), "fact": i}], "photos": ks[:5], "fallback": True}
+
+
+def pick_photos(pool: dict, groups: list[tuple[int, list[int]]], confirmed: list[int], cands: list[int], n: int, cold: bool = False) -> tuple[list[int], set[int]]:
+    """컷 사진(서로 다름) = 시그니처가 주인공으로 확인된 사진(최대 n). 2장이 안 되면 그때만 ② 설명에 시그니처 낱말이 있는 사진
+    ③ 어느 사실과든 설명이 이어지는 사진 ④ 품질 높은 사진 ⑤ 외관·전경(1장)으로 2컷을 채운다 —
+    사진이 있는데 영상을 못 만드는 일(run-48·49)도, 시그니처와 상관없는 사진을 늘어놓는 일(run-47)도 없게.
+    돌려주는 것: (컷 사진 번호, 시그니처와 이어진 사진 번호 = 확인 + 후보)."""
+    out: list[int] = []
+
+    def add(ks, upto: int, allow_ext: bool = False, any_season: bool = False):
+        for k in ks:
+            if len(out) >= upto:
+                return
+            if k in pool and k not in out and (allow_ext or not mt.is_exterior(pool[k])) and (any_season or not (cold and so.off_season(pool[k]))):
+                out.append(k)
+
+    add(confirmed, n, allow_ext=True)                                               # 비전이 주인공으로 확인한 사진은 외관이어도 쓴다(시그니처가 건물 자체일 때)
+    add(cands, MIN_CUTS)
+    for _, ks in groups:
+        add(ks, MIN_CUTS)
+    by_q = sorted(pool, key=lambda k: (-int(pool[k].get("quality") or 0), k))
+    add(by_q, MIN_CUTS)
+    add(by_q, MIN_CUTS, allow_ext=True)
+    add(by_q, MIN_CUTS, allow_ext=True, any_season=True)                             # 마지막 수단 — 자막은 그 사진에 보이는 것으로(assign_points)
+    return out, set(confirmed) | set(cands)
+
+
+ROLE_RANK = {"신박함": 0, "차별성": 1, "유인": 2, "정보": 3}
+
+
+def assign_points(photos_: list[int], points: list[dict], facts: list[str], pool: dict, sig_rel: set[int]) -> list[tuple[int, dict]]:
+    """컷마다 전할 정보 하나 — 첫 컷은 신박함(시그니처). 나머지 사진은 **사진 설명과 겹치는 낱말 합이 가장 큰 짝**으로(전부 따져 본다 · 시그니처 정보 먼저).
+    겹치는 것이 없으면: 시그니처 사진이면 남은 시그니처 정보, 아니면 그 사진에 실제로 보이는 것(분류 설명) — 사진과 자막이 따로 놀지 않게(run-47).
+    짝지은 뒤 둘째 컷부터는 신박함 → 차별성 → 유인 → 정보 순으로 놓는다(이야기 순서)."""
+    used_fi = {p["fact_i"] for p in points}
+    others = [{"role": "정보", "text": _cut(_body(f), 24), "fact": f, "fact_i": i} for i, f in enumerate(facts, 1) if i not in used_fi]
+    cand = list(points) + [c for c in others if not (MOOD_RX.search(c["text"]) or PAST_RX.search(c["text"]) or ADJ_RX.search(c["text"]))]
+    dtok = {k: _tokens(f"{pool[k].get('description') or ''} {pool[k].get('src_alt') or ''}") for k in photos_}
+
+    def ov(c, k):
+        return _overlap(_tokens(_body(c["fact"])) | _tokens(c["text"]), dtok[k])
+
+    def seen(k):                                                                    # 이 사진과 이어지는 사실이 없다 → 사진에 보이는 것을 그대로(사실 번호 0)
+        desc = str(pool[k].get("description") or "").strip() or photos.KO.get(pool[k].get("category"), "")
+        return {"role": "정보", "text": _cut(desc, 24), "fact": desc, "fact_i": 0, "photo": True}
+
+    if not photos_:
+        return []
+    out = {photos_[0]: cand[0] if cand else seen(photos_[0])}                      # 첫 컷 = points[0](신박함)
+    rest = list(photos_[1:])
+    left = [c for c in cand[1:] if any(ov(c, k) or (k in sig_rel and c in points) for k in rest)]
+
+    def val0(k, j, c):
+        o = ov(c, k)
+        if o or (k in sig_rel and c in points):
+            return o * 10 + (3 if c in points else 0) - j * 0.001                   # 같은 점수면 앞 정보(시그니처 정보) 먼저
+        return None
+    vals = {(k, id(c)): val0(k, cand.index(c), c) for k in rest for c in left}       # 미리 한 번만 계산(낱말 쪼개기는 느리다)
+
+    def val(k, c):
+        return vals[(k, id(c))]
+    best = [float("-inf"), []]
+
+    def search(i, taken, acc, picks):                                               # 사진 4장 × 이어진 정보 몇 개 — 전부 따져도 수천 가지
+        if i == len(rest):
+            if acc > best[0]:
+                best[0], best[1] = acc, list(picks)
+            return
+        for c in left + [None]:
+            if c is not None and id(c) in taken:
+                continue
+            v = 0.0 if c is None else val(rest[i], c)
+            if v is None:
+                continue
+            if c is not None:
+                taken.add(id(c))
+            picks.append(c)
+            search(i + 1, taken, acc + v, picks)
+            picks.pop()
+            if c is not None:
+                taken.discard(id(c))
+    search(0, set(), 0.0, [])
+    for k, c in zip(rest, best[1]):
+        out[k] = c if c is not None else seen(k)
+    tail = sorted(photos_[1:], key=lambda k: (ROLE_RANK.get(out[k]["role"], 3), photos_.index(k)))
+    return [(k, out[k]) for k in [photos_[0]] + tail]
+
+
 def choose_signature(models: dict, h: dict, req: dict, report: dict) -> dict:
-    """시그니처 고르기 → 규칙 검사 → 주인공 사진 확인. 사진·정보가 2컷이 안 되면 그 시그니처를 빼고 **다른 시그니처를 다시 고른다**(최대 5번).
-    빈 답(고를 것 없음)은 받지 않고 '사실별 사진' 힌트로 다시 묻는다(stay-run-49: 첫 답이 빈 시그니처 → 그대로 멈췄다).
-    잠금(state/sig_blocked.json)은 재료 자체가 모자랄 때만(쓸 사진 2장 미만·사실 2개 미만 — AI 판단과 무관한 경우).
-    stay-run-48: 소노펠리체(쓸 사진 25장)에서 모델이 사진 1장뿐인 '유리 돔 실내 파도풀'을 고르자 바로 멈추고 숙소까지 잠갔다 → 고침."""
+    """시그니처 고르기(모델 최대 3번 · 빈 답·규칙 위반은 이유를 붙여 다시) → 못 고르면 코드가 정한다 → 주인공 사진 확인 → 컷 사진·정보 짝짓기.
+    **쓸 사진이 2장 이상이고 사실이 1개 이상이면 반드시 영상을 만든다** — 멈추는 것은 재료 자체가 없을 때뿐.
+    stay-run-48·49: '완벽한 시그니처' 관문(다른 후보와 다름·주인공 사진 2장·사실 2개…)을 못 넘으면 영상을 안 만들게 짜서 두 번 연속 실패했다
+    → 관문은 '우선순위'로만 쓴다(통과한 답이 있으면 그것, 없으면 코드가 정한 것)."""
     fmt = _fmt(req)
+    cold = so.cold_month(req)
     facts = facts_list(h)
     pool = {int(p["k"]): p for p in usable_photos(h)}
+    if len(pool) < MIN_CUTS:                                                        # 품질 5 이상이 모자라면 9컷 형식 기준(품질 3 이상)으로 한 번 더
+        loose = {int(p["k"]): p for p in usable_photos(h, 3)}
+        if len(loose) > len(pool):
+            log(f"품질 5 이상 사진 {len(pool)}장 → 품질 3 이상으로 다시 봄: {len(loose)}장")
+            report["sig_pool_relaxed"] = True
+            pool = loose
     pc = h.get("photo_counts") or {}
     report["sig_pool"] = {"usable": len(pool), "exterior": sum(1 for p in pool.values() if mt.is_exterior(p)), "facts": len(facts),
                           "official": pc.get("official", 0), "coupang": pc.get("coupang", 0)}
-    if len(pool) < MIN_CUTS or len(facts) < 2:                                      # AI 호출 전에 멈춘다(run-47 롯데: 외관 5장 → 1장만 셈)
+    if len(pool) < MIN_CUTS or not facts:                                           # 재료 자체가 없을 때만 멈춘다(run-47 롯데: 외관 5장 → 1장만 셈)
         why = (f"사진 부족 — 쓸 수 있는 사진 {len(pool)}장(외관·전경은 1장만 셈 · 공식 홈페이지 {pc.get('official', 0)}장 · 쿠팡 {pc.get('coupang', 0)}장)"
-               if len(pool) < MIN_CUTS else f"사실 부족 — 근거 사실 {len(facts)}개")
+               if len(pool) < MIN_CUTS else "사실 부족 — 근거 사실 0개")
         block(h, req, why)
         raise RuntimeError(f"시그니처 영상 불가 — {why} (만들지 않음)")
     peers = peer_lines(req, h)
+    groups = fact_groups(facts, pool)
     content = (f"숙소: {h['name']} ({h.get('city') or ''}) · 테마: {req.get('theme')} · 시기: {req.get('month')}\n\n"
-               "같은 테마 다른 후보(이들과 겹치는 것은 시그니처가 아니다):\n" + ("\n".join(f"- {x}" for x in peers) or "- (목록 없음)")
+               "같은 테마 다른 후보(이들과 겹치는 것은 피한다):\n" + ("\n".join(f"- {x}" for x in peers) or "- (목록 없음)")
                + "\n\n사실(번호):\n" + "\n".join(f"{i}. {f}" for i, f in enumerate(facts, 1))
                + "\n\n사진:\n" + "\n".join(_photo_line(p) for p in pool.values()))
-    groups = fact_groups(facts, pool)
     if groups:
         content += "\n\n사실별로 그 내용이 보이는 사진(설명 낱말 기준 · 참고):\n" + "\n".join(f"- 사실 {i} → 사진 {', '.join(map(str, ks))}" for i, ks in groups)
     report["sig_groups"] = [{"fact": i, "photos": ks} for i, ks in groups]
-    fb, js, tries, rejected, cache = "", {}, [], [], {}
-    points, dropped, confirmed, checks = [], [], [], []
-    for attempt in range(5):                                               # 빈 답·규칙 위반·사진 부족을 합쳐 최대 5번(시도당 글 약 5원 + 사진 확인 최대 6원)
-        confirmed = []
-        js = _ask(models, SIG_SYSTEM, content + fb, 0.3)
-        name = str(js.get("signature") or "").strip()
-        if not name:                                                       # stay-run-49: 첫 답이 빈 시그니처 → 그대로 멈췄다. 빈 답은 받지 않고 후보를 짚어 다시 묻는다
-            many = [f"사실 {i}(사진 {', '.join(map(str, ks))})" for i, ks in groups if len(ks) >= MIN_CUTS] or ["위 사진 목록에서 같은 시설이 2장 이상 보이는 것"]
-            errs = [f"빈 답은 받지 않는다 — 사진이 {MIN_CUTS}장 이상인 것 중 이 숙소에서 가장 의외인 것을 시그니처로: {', '.join(many[:6])}"
-                    + (f" (이미 뺀 것: {', '.join(rejected)})" if rejected else "")]
-            tries.append({"signature": "", "errs": errs})
-            log(f"시그니처 다시({attempt + 1}): 빈 답")
-            fb = "\n\n지난 답의 문제(고쳐서 다시):\n- " + "\n- ".join(errs)
+    fb, js, tries = "", None, []
+    for attempt in range(3):
+        try:
+            cand = _ask(models, SIG_SYSTEM, content + fb, 0.3)
+        except RuntimeError as e:
+            tries.append({"signature": "", "errs": [f"호출 실패: {str(e)[:80]}"]})
             continue
-        errs = sig_errs(js, facts, pool, h, req, peers)
-        if name in rejected:
-            errs.append(f"'{name}' 은 이미 사진이 모자라 뺀 시그니처 — 다른 것으로")
+        name = str(cand.get("signature") or "").strip()
+        if not name:
+            many = [f"사실 {i}(사진 {', '.join(map(str, ks))})" for i, ks in groups if len(ks) >= MIN_CUTS] or ["위 사진 목록에서 같은 시설이 2장 이상 보이는 것"]
+            errs = [f"빈 답은 받지 않는다 — 사진이 {MIN_CUTS}장 이상인 것 중 이 숙소에서 가장 의외인 것을 시그니처로: {', '.join(many[:6])}"]
+        else:
+            errs = sig_errs(cand, facts, pool, h, req, peers if attempt < 2 else None)  # 마지막 시도는 '다른 후보 공통점'을 따지지 않는다(영상을 못 만드는 것보다 낫다)
+        tries.append({"signature": name, "errs": errs})
         if not errs:
-            points, dropped = check_points(js, facts)
-            cands = subject_candidates(js, pool)
-            confirmed, checks = confirm_subjects(models, js, pool, cands, cache)
-            if min(len(confirmed), len(points), N_SHOTS[fmt]) >= MIN_CUTS:
-                tries.append({"signature": name, "errs": [], "photos": confirmed})
-                break
-            rejected.append(name)
-            errs = [f"'{name}' 은 시그니처가 주인공인 사진이 {len(confirmed)}장(후보 {len(cands)}장 확인)·전할 정보 {len(points)}개 — 둘 다 {MIN_CUTS} 이상이어야 한다. "
-                    f"사진이 넉넉한 다른 시그니처로(이미 뺀 것: {', '.join(rejected)})"]
-        tries.append({"signature": name, "errs": errs, "photos": confirmed})
+            js = cand
+            break
         log(f"시그니처 다시({attempt + 1}): {errs[:3]}")
         fb = "\n\n지난 답의 문제(고쳐서 다시):\n- " + "\n- ".join(errs[:8])
-    else:
-        js = {}
     report["signature_tries"] = tries
+    if js is None:
+        js = fallback_signature(facts, groups, pool, cold)
+        report["signature_fallback"] = True
+        log(f"시그니처를 모델이 못 골라 코드가 정함: {js['signature']} (사실 {js['fact']} · 사진 {js['photos']})")
+    points, dropped = check_points(js, facts)
+    if not points or points[0]["role"] != "신박함":
+        fi0 = _int(js.get("fact")) or 1
+        points = [{"role": "신박함", "text": _cut(_body(facts[fi0 - 1]), 24), "fact": facts[fi0 - 1], "fact_i": fi0}] + [p for p in points if p["fact_i"] != fi0]
+    cands = subject_candidates(js, pool)
+    confirmed, checks = confirm_subjects(models, js, pool, cands, {})
     report["signature_checks"] = checks
-    if not js or not str(js.get("signature") or "").strip() or tries[-1]["errs"]:
-        last = tries[-1]["errs"] if tries else ["시그니처 없음"]
-        raise RuntimeError("시그니처 영상 불가 — 이 숙소의 시그니처 후보가 '주인공 사진 2장 + 사실 2개' 조건을 못 넘음"
-                           f"(시도 {len(tries)}번 · 마지막: {'; '.join(last)[:160]}) — 다른 숙소를 권합니다 (만들지 않음)")
-    fi = _int(js["fact"])
-    sig = {"name": js["signature"].strip(), "what": str(js.get("what") or "").strip(), "fact": facts[fi - 1], "fact_i": fi,
-           "vs_peers": str(js.get("vs_peers") or "").strip()[:80], "peers": len(peers), "points": points, "dropped_points": dropped,
-           "photos": confirmed, "surprise": js.get("surprise"), "why": str(js.get("why") or "")[:80], "alternatives": js.get("alternatives") or [],
-           "checks": checks, "rejected": rejected}
-    log(f"시그니처: {sig['name']} — 근거 '{_body(sig['fact'])[:40]}' · 주인공 사진 {confirmed} · 전할 정보 {len(points)}개 · 비교 후보 {len(peers)}곳"
-        + (f" · 뺀 후보 {rejected}" if rejected else ""))
+    photos_, sig_rel = pick_photos(pool, groups, confirmed, cands, N_SHOTS[fmt], cold)
+    pairs = assign_points(photos_, points, facts, pool, sig_rel)
+    if len(pairs) < MIN_CUTS:                                                       # pick_photos 가 쓸 사진 2장 이상이면 늘 2장을 채운다 — 여기 오면 코드 잘못
+        raise RuntimeError(f"시그니처 영상 불가 — 컷 {len(pairs)}개(쓸 사진 {len(pool)}장인데 채우지 못함 · 코드 확인 필요)")
+    fi = _int(js["fact"]) or points[0]["fact_i"]
+    in_video = [p for _, p in pairs]
+    sig = {"name": str(js["signature"]).strip(), "what": str(js.get("what") or "").strip(), "fact": facts[fi - 1], "fact_i": fi,
+           "vs_peers": str(js.get("vs_peers") or "").strip()[:80], "peers": len(peers), "points": in_video + [p for p in points if p not in in_video],
+           "dropped_points": dropped, "photos": [k for k, _ in pairs], "confirmed": confirmed, "surprise": js.get("surprise"),
+           "why": str(js.get("why") or "")[:80], "alternatives": js.get("alternatives") or [], "checks": checks, "fallback": bool(js.get("fallback")),
+           "pairs": [{"k": k, "fact_i": p["fact_i"], "fact": p["fact"], "role": p["role"], "text": p["text"], "photo": bool(p.get("photo"))} for k, p in pairs]}
+    log(f"시그니처: {sig['name']} — 근거 '{_body(sig['fact'])[:40]}' · 컷 사진 {sig['photos']}(주인공 확인 {confirmed}) · 비교 후보 {len(peers)}곳"
+        + (" · 코드가 정함" if sig["fallback"] else ""))
     return sig
 
 
 # ── 3. 컷 계획 ──────────────────────────────────────────────────────────────────────────
 def plan_cuts(sig: dict, h: dict, req: dict, report: dict) -> list[dict]:
-    """컷 = 시그니처가 주인공인 사진(서로 다름) × 전할 정보(신박함 → 차별성 → 유인)를 순서대로 짝짓는다. 원본 사진 그대로(편집 없음).
-    v1 은 '같은 사진을 빛·날씨·사람만 바꿔 여러 컷'이라 컷이 늘어도 새 정보가 0 이었다(run-47)."""
-    pool = {int(p["k"]): p for p in usable_photos(h)}
-    n = min(len(sig["photos"]), len(sig["points"]), N_SHOTS[_fmt(req)])
+    """컷 = 사진(서로 다름) × 그 사진 설명과 맞는 정보 하나(choose_signature 의 pairs). 원본 사진 그대로 → 렌더에서 컷마다 AI 영상(Veo)으로 움직인다."""
+    by_k = {int(p["k"]): p for p in h.get("classified") or []}                    # 품질 3 이상으로 넓혀 고른 사진도 찾게(usable_photos 가 아니라 전체에서)
+    facts = facts_list(h)
     shots = []
-    for j in range(n):
-        k, pt = sig["photos"][j], sig["points"][j]
-        p = pool[k]
-        shots.append({"i": j + 1, "k": k, "role": pt["role"], "point": pt["text"], "fact": pt["fact"], "fact_i": pt["fact_i"],
-                      "variant": "original", "people": "none", "pose": "", "place": "",
+    for j, pr in enumerate(sig["pairs"]):
+        k = int(pr["k"])
+        p = by_k[k]
+        fi = int(pr.get("fact_i") or 0)
+        role = "신박함" if j == 0 else (pr["role"] if pr["role"] in ROLES else "정보")
+        shots.append({"i": j + 1, "k": k, "role": role, "point": pr["text"], "fact": pr.get("fact") or (facts[fi - 1] if fi else ""), "fact_i": fi,
+                      "photo_text": bool(pr.get("photo")), "variant": "original", "people": "none", "pose": "", "place": "",
                       "source": p.get("source"), "src_url": p.get("src_url"), "category": p.get("category"), "view": p.get("view"),
-                      "description": p.get("description") or "", "path": p["path"], "focus_x": p.get("focus_x", 0.5), "focus_y": p.get("focus_y", 0.5)})
-    report["plan"] = [{k: s[k] for k in ("i", "k", "role", "point", "fact_i", "source", "description")} for s in shots]
-    log("컷 계획: " + " · ".join(f"{s['i']}:사진{s['k']}/{s['role']}" for s in shots))
+                      "description": p.get("description") or "", "veo_prompt": p.get("veo_prompt") or "", "path": p["path"],
+                      "focus_x": p.get("focus_x", 0.5), "focus_y": p.get("focus_y", 0.5)})
+    report["plan"] = [{k: s[k] for k in ("i", "k", "role", "point", "fact_i", "photo_text", "source", "description")} for s in shots]
+    log("컷 계획: " + " · ".join(f"{s['i']}:사진{s['k']}/{s['role']}{'(사진 설명)' if s['photo_text'] else ''}" for s in shots))
     return shots
 
 
@@ -904,6 +1040,48 @@ def info_test(models: dict, ph: list, title: str, shots: list[dict]) -> dict:
     return {"ok": len(hit) >= need, "special": items, "matched": len(hit), "need": need}
 
 
+def fallback_phrase(s: dict) -> str:
+    """자막 대체(규칙에 3번 걸린 줄만 · v3): 그 컷 정보(사실 문장 또는 사진에 보이는 것)를 띄어쓰기 단위로 14자 안, 자막 한 줄에 들어가게."""
+    t = _cut(re.sub(r"[.!?。]+$", "", str(s.get("point") or _body(s.get("fact")) or "")), 14)
+    while t and not design.fits(t, "subtitle")[0]:
+        t = _cut(t, len(t) - 1)
+    return t
+
+
+def default_tags(req: dict) -> list[str]:
+    tags = ["#" + re.sub(r"[^가-힣A-Za-z0-9]", "", str(x)) for x in (req.get("theme"), req.get("region"))]
+    return [t for t in tags if len(t) > 1] + ["#숙소추천", "#국내여행", "#호캉스"]
+
+
+def text_fallback(models: dict, js: dict, ph: list, errs: list, shots: list[dict], sig: dict, h: dict, req: dict, facts: list[str], ttype: str,
+                  report: dict) -> tuple[dict, list, str, dict]:
+    """문구가 규칙을 3번 못 지켰을 때 — **걸린 자막 줄만** 그 컷 정보 문장으로 바꾸고, 캡션이 걸렸으면 사실 문장으로 만든다. 멈추지 않는다(v3).
+    바꾼 줄·남은 문제는 report.text_fallback 과 미리보기 문서 '자동 대체'에 남긴다."""
+    report["text_fallback"] = [str(e)[:120] for e in errs[:6]]
+    log(f"문구가 규칙을 3번 못 지킴 → 걸린 줄만 사실 문장으로 바꿔 계속: {errs[:3]}")
+    ph = [design.one_line(str(x)) for x in ph] if len(ph) == len(shots) else [""] * len(shots)
+    bad = {int(m.group(1)) for e in errs for m in [re.match(r"자막 (\d+) ", str(e))] if m}
+    if any(str(e).startswith("phrases ") for e in errs) or not any(ph):
+        bad = set(range(1, len(shots) + 1))
+    for j, s in enumerate(shots, 1):
+        if j in bad or not ph[j - 1].strip():
+            ph[j - 1] = fallback_phrase(s)
+    left = phrase_errs(ph, shots, sig, h, req, facts)
+    if left:
+        report["text_fallback_left"] = left[:6]
+        log(f"대체 자막에도 남은 문제(그대로 진행 · 미리보기에서 확인): {left[:3]}")
+    cap = js.get("caption") if isinstance(js.get("caption"), dict) else {}
+    if caption_errs(cap, h, req, sig, facts):
+        pts = ([s["point"] for s in shots[1:] if s.get("fact_i")][:3] or [p["text"] for p in sig.get("points", [])[1:4] if p.get("fact_i")]
+               or [_cut(_body(sig["fact"]), 40)])
+        cap = {"hook": _cut(_body(sig["fact"]), 80), "points": pts, "save": "갈 계획이 있다면 저장해두고 다시 꺼내 보세요."}
+    js = {**js, "caption": cap}
+    if not js.get("checklist"):
+        js["checklist"] = [{"fact": s["fact_i"], "text": ""} for s in shots if s.get("fact_i")]
+    title = ensure_sig_title(models, design.one_line(str(js.get("hook_title") or "")), ph, shots, sig, h, req, ttype, report)
+    return js, ph, title, info_test(models, ph, title, shots)
+
+
 def write_text(models: dict, shots: list[dict], sig: dict, h: dict, req: dict, report: dict) -> dict:
     facts = facts_list(h)
     ttype = so.next_title_type()
@@ -920,7 +1098,7 @@ def write_text(models: dict, shots: list[dict], sig: dict, h: dict, req: dict, r
         try:
             js = _ask(models, TEXT_SYSTEM, content + fb, 0.5)
         except RuntimeError as e:
-            errs = [str(e)[:120]]
+            errs = errs + [f"호출 실패: {str(e)[:100]}"]                                # 지난 답(ph)의 문제는 남긴다 — 대체할 때 걸린 줄을 알아야 한다
             continue
         ph = [design.one_line(str(x)) for x in (js.get("phrases") or [])]
         cap = js.get("caption") if isinstance(js.get("caption"), dict) else {}
@@ -940,17 +1118,17 @@ def write_text(models: dict, shots: list[dict], sig: dict, h: dict, req: dict, r
         break
     else:
         report["text_errs"] = errs
-        raise RuntimeError(f"문구가 규칙을 3번 못 지킴: {errs[:3]}")
+        js, ph, title, info = text_fallback(models, js if isinstance(js, dict) else {}, ph, errs, shots, sig, h, req, facts, ttype, report)
     report["info_test"] = info
     cap = js["caption"]
-    name_title = js.get("title") or ""
+    name_title = str(js.get("title") or sig["name"])
     if h["name"] not in name_title:
         name_title = f"{h['name']} {name_title}".strip()
     text = {"phrases": ph, "hook_title": title, "hook_title_type": ttype,
             "caption": {"hook": design.one_line(str(cap.get("hook") or "")), "points": [design.one_line(str(x)) for x in cap.get("points") or [] if str(x).strip()][:3],
                         "save": design.one_line(str(cap.get("save") or ""))},
             "checklist": grounded_checklist(js.get("checklist"), facts, h), "title": name_title[:40],
-            "hashtags": [t if str(t).startswith("#") else f"#{t}" for t in (js.get("hashtags") or [])][:5], "info_test": info}
+            "hashtags": ([t if str(t).startswith("#") else f"#{t}" for t in (js.get("hashtags") or []) if str(t).strip()] or default_tags(req))[:5], "info_test": info}
     log(f"훅 제목: {text['hook_title']} · 자막: {' / '.join(ph)} · 정보 전달 {info['matched']}/{info['need']}")
     return text
 
@@ -973,24 +1151,54 @@ def photo_clip(image: Path, sec: float, out: Path, pattern: str, M: float = MOTI
     return out
 
 
-def veo_hero(shot: dict, report: dict, theme: str) -> Path | None:
-    """제작 때만: 첫 컷(사람 없음)을 Veo 4초로 — 빛·물·김·비만 움직인다(294원). 실패하면 None(사진 무빙)."""
-    img = SIG / shot["img"]
-    small = SIG / "veo_in.png"
-    Image.open(img).convert("RGB").resize((720, 1280), Image.LANCZOS).save(small, "PNG")
-    out = SIG / "veo_hook.mp4"
-    prompt = VEO_SIG.format(motion=VEO_MOTION.get(shot["variant"], VEO_MOTION["original"]))
-    row = {"ok": False}
-    before = veo.spent_this_run()
-    try:
-        veo.make_clip(prompt, small, 4, out, veo.seed_for(theme, "sig", shot["k"]))
-        row["ok"] = True
-    except veo.VeoError as e:
-        row["error"] = str(e)[:160]
-        log(f"첫 컷 Veo 실패 → 사진 무빙: {row['error']}")
-    row["krw"] = round(veo.spent_this_run() - before)
-    report["veo"] = {"model": veo.MODEL, "fake": veo.FAKE, "clips": [row], "spent_krw": round(veo.spent_this_run()), "month_total_krw": round(veo.month_total())}
-    return out if row["ok"] else None
+def veo_clips(shots: list[dict], report: dict, theme: str) -> dict:
+    """컷마다 그 실제 사진(9:16 크롭)을 **Veo 4초 AI 영상**으로 — 9컷 형식과 같은 지시문(사진별 카메라·자연 움직임 + 시설·구조 그대로 · photos.prompt_for).
+    미리보기에서 만든 클립(find_reuse 가 가져온 veo_<i>.mp4)은 다시 만들지 않는다(0원). 안전 필터는 씨앗을 바꿔 한 번 더,
+    한도·그 밖 실패는 그 컷만 사진 무빙(영상은 끝까지 만든다). 한도는 veo.py 가 돈 쓰기 전에 본다(한 번 3,000원 · 한 달 50,000원)."""
+    clips, rows, stopped = {}, [], None
+    new = [s for s in shots if not (SIG / f"veo_{s['i']}.mp4").exists()]
+    log(f"AI 영상(Veo) {len(shots)}컷 — 새로 {len(new)}컷 · 예상 약 {veo.estimate_krw(len(new), VEO_SEC):,.0f}원 · 이번 달 누적 {veo.month_total():,.0f}원")
+    for s in shots:
+        i, out = s["i"], SIG / f"veo_{s['i']}.mp4"
+        row = {"i": i, "k": s["k"], "ok": False, "krw": 0}
+        if out.exists() and out.stat().st_size > 0:                                 # 미리보기 클립 재사용(0원)
+            clips[i] = out
+            row.update({"ok": True, "reused": True})
+            rows.append(row)
+            continue
+        if stopped:
+            row["error"] = f"한도: {stopped}"
+            rows.append(row)
+            continue
+        small = SIG / f"veo_in_{i}.png"
+        Image.open(SIG / s["img"]).convert("RGB").resize((720, 1280), Image.LANCZOS).save(small, "PNG")
+        cat = s.get("category") if s.get("category") in photos.CATS else "special"
+        prompt = photos.prompt_for({"veo_prompt": s.get("veo_prompt") or "", "category": cat})
+        seed = veo.seed_for(theme, "sig", s["k"])
+        before = veo.spent_this_run()
+        for attempt in range(2):
+            try:
+                veo.make_clip(prompt, small, VEO_SEC, out, seed + attempt)
+                row["ok"] = True
+                clips[i] = out
+                break
+            except veo.RaiFiltered as e:
+                row["error"] = f"안전 필터: {str(e)[:120]}"
+                log(f"컷 {i} 안전 필터 → 씨앗 바꿔 다시" if attempt == 0 else f"컷 {i} 다시 해도 안전 필터 → 사진 무빙")
+            except veo.CapReached as e:
+                row["error"] = f"한도: {e}"
+                stopped = str(e)
+                break
+            except veo.VeoError as e:
+                row["error"] = str(e)[:160]
+                break
+        row["krw"] = round(veo.spent_this_run() - before)                           # 실패한 시도에 나간 값까지 이 컷 몫으로
+        if not row["ok"]:
+            log(f"컷 {i} AI 영상 실패 → 사진 무빙: {row.get('error')}")
+        rows.append(row)
+    report["veo"] = {"model": veo.MODEL, "fake": veo.FAKE, "clip_sec": VEO_SEC, "clips": rows, "stopped": stopped,
+                     "spent_krw": round(veo.spent_this_run()), "month_total_krw": round(veo.month_total())}
+    return clips
 
 
 def compare_sheet(shots: list[dict], text: dict, out: Path) -> Path:
@@ -1007,7 +1215,7 @@ def compare_sheet(shots: list[dict], text: dict, out: Path) -> Path:
         except Exception:  # noqa: BLE001
             d.rectangle((pad, y, pad + tw, y + th), fill=(40, 40, 48))
         x = pad * 2 + tw
-        d.text((x, y + 8), f"컷 {s['i']} · {s.get('role') or ''}", font=f_role, fill=(94, 234, 212))
+        d.text((x, y + 8), f"컷 {s['i']} · {s.get('role') or ''}" + (f" · {s['motion']}" if s.get("motion") else ""), font=f_role, fill=(94, 234, 212))
         yy = y + 52
         if r == 0 and text.get("hook_title"):
             d.text((x, yy), f"훅 제목  {design.plain(text['hook_title'])}", font=f_role, fill=(255, 205, 120))
@@ -1031,9 +1239,12 @@ def preview_md(req: dict, sig: dict, shots: list[dict], text: dict, h: dict, pos
           "## 시그니처", "", f"- **{sig['name']}** — {sig['what']}", f"- 근거(사실 {sig.get('fact_i')}): {_body(sig['fact'])}",
           f"- 다른 후보와 다른 점: {sig.get('vs_peers') or '-'} (비교한 후보 {sig.get('peers', 0)}곳)",
           f"- 의외성 {sig.get('surprise')} · 왜: {sig.get('why')}", f"- 사진 확인(시그니처가 주인공인가 · 화면 비율): {chk or '-'}", "",
-          "## 컷 (자막 하나 = 사실 하나)", "", "| 컷 | 역할 | 자막 | 근거 사실 | 사진 |", "|---|---|---|---|---|"]
+          "## 컷 (자막 하나 = 사실 하나 · 컷마다 실제 사진 → AI 영상)", "", "| 컷 | 역할 | 자막 | 근거 사실 | 사진 | 영상 |", "|---|---|---|---|---|---|"]
     for r, s in enumerate(shots):
-        md.append(f"| {s['i']} | {s.get('role') or '-'} | {text['phrases'][r]} | {_body(s.get('fact') or '')[:40]} | {s['description'][:36]} [{mt.SRC_KO.get(s.get('source'), '?')}] |")
+        vr = next((x for x in (report.get("veo") or {}).get("clips", []) if x.get("i") == s["i"]), {})
+        how = ("AI 영상" + (" (미리보기 재사용)" if vr.get("reused") else "")) if vr.get("ok") else f"사진 무빙 ({str(vr.get('error') or '-')[:40]})"
+        fact_txt = _body(s.get("fact") or "")[:40] + (" (사실 목록에 없음 — 사진에 보이는 것)" if s.get("photo_text") else "")
+        md.append(f"| {s['i']} | {s.get('role') or '-'} | {text['phrases'][r]} | {fact_txt} | {s['description'][:36]} [{mt.SRC_KO.get(s.get('source'), '?')}] | {how} |")
     info = text.get("info_test") or {}
     md += ["", "## 정보 전달 시험", "",
            f"- 화면 글자만 보고 읽힌 특별한 점: {' / '.join(info.get('special') or []) or '없음'}",
@@ -1045,18 +1256,24 @@ def preview_md(req: dict, sig: dict, shots: list[dict], text: dict, h: dict, pos
     md += ["", "## 훅 제목", "", (f"**{text['hook_title']}** ({text['hook_title_type']})" if text.get("hook_title") else f"(제목 없음 — 규칙에 맞는 후보가 없었다: {report.get('hook_title_missing')})"),
            "", "## 캡션", "", c.get("hook", ""), *(c.get("points") or []), "", *[f"· {x}" for x in text["checklist"]], "", c.get("save", ""),
            "", f"제목: {text['title']} · 해시태그: {' '.join(text['hashtags'])}", "",
-           "## 비용", "", f"- 이미지 편집 {report.get('images', {}).get('image_krw', 0):,}원 · Veo {round(veo.spent_this_run() - report.get('images', {}).get('image_krw', 0)):,}원(추정) · 글·비전은 텔레그램 알림의 추정치"]
+           "## 비용", "", f"- AI 영상(Veo) {sum(1 for x in (report.get('veo') or {}).get('clips', []) if x.get('ok'))}/{len(shots)}컷 · 이번 실행 약 "
+           f"{round(veo.spent_this_run() - report.get('images', {}).get('image_krw', 0)):,}원(재사용 클립 0원) · 글·비전은 텔레그램 알림의 추정치"]
+    if sig.get("fallback") or report.get("text_fallback"):
+        md += ["", "## 자동 대체(멈추지 않으려고 코드가 정한 것 — 확인 필요)", ""]
+        if sig.get("fallback"):
+            md.append(f"- 시그니처: 모델이 3번 모두 규칙에 맞는 답을 못 내 코드가 정함 — 사실 {sig.get('fact_i')}(사진이 가장 많이 이어진 것)")
+        for e in report.get("text_fallback") or []:
+            md.append(f"- 자막·캡션: {e}")
     return "\n".join(md) + "\n"
 
 
-def render(shots: list[dict], text: dict, h: dict, req: dict, report: dict, preview: bool, folder: str, pos: int) -> tuple[Path, float, list]:
+def render(shots: list[dict], text: dict, h: dict, req: dict, report: dict, folder: str, pos: int) -> tuple[Path, float, list]:
+    """컷마다 AI 영상(Veo · 실패한 컷만 사진 무빙) + 자막 + 끝 카드 + 배경음악. 미리보기·제작 같은 영상(제작은 미리보기 클립 재사용)."""
     theme = str(req.get("theme") or "")
     style = str(req.get("caption_style") or design.DEFAULT_STYLE)
     frame = SIG / "ov_frame.png"
     design.frame_png(frame, ms.DISCLOSURE)
-    hero_clip = None if preview else veo_hero(shots[0], report, theme)
-    if preview:
-        report["veo"] = {"model": veo.MODEL, "fake": veo.FAKE, "clips": [], "spent_krw": 0, "month_total_krw": round(veo.month_total())}
+    clips = veo_clips(shots, report, theme)
     segs, timeline = [], []
     n = len(shots)
     for j, s in enumerate(shots):
@@ -1066,18 +1283,18 @@ def render(shots: list[dict], text: dict, h: dict, req: dict, report: dict, prev
         if j == 0 and text.get("hook_title"):
             ttl = SIG / "ov_title.png"
             design.hook_title_png(ttl, text["hook_title"])
-            overlays.append({"path": ttl, "a": 0.0, "b": 99, "anim": False})          # 0초부터(첫 화면 = 썸네일)
+            overlays.append({"path": ttl, "a": 0.0, "b": 99, "anim": False})          # 0초부터(첫 화면 = 썸네일 · Veo 첫 프레임 = 실제 사진)
         cap = SIG / f"ov_cap_{i:02d}.png"
         design.subtitle_png(cap, text["phrases"][j])
         overlays.append({"path": cap, "a": 0.0 if j == 0 else 0.08, "b": 99, "anim": j > 0, "fade": 0.12, "slide": 8})
-        if j == 0 and hero_clip:
-            src, kind, slow = hero_clip, "Veo", 1.0
-            L = max(L, min(ms.probe_duration(hero_clip), 4.2))
+        if i in clips:
+            src, kind = clips[i], "AI 영상"
         else:
             pattern = PATTERNS[j % len(PATTERNS)]
             src = photo_clip(SIG / s["img"], L, SIG / f"pan_{i}.mp4", pattern)
-            kind, slow = f"사진·{pattern}", 1.0
-        segs.append(so.cut_segment(100 + i, src, L, None, overlays, slow))
+            kind = f"사진 무빙·{pattern}"
+        s["motion"] = "AI 영상" if i in clips else "사진 무빙"
+        segs.append(so.cut_segment(100 + i, src, L, None, overlays, 1.0))
         timeline.append({"i": i, "kind": kind, "sec": round(L, 2), "role": s.get("role"), "variant": s["variant"], "people": s["people"], "phrase": text["phrases"][j],
                          "title": text["hook_title"] if j == 0 else None, "fallback": s.get("fallback")})
     card = design.end_card(SIG / "end_card.jpg", SIG / shots[0]["img"], folder, pos, style, ms.DISCLOSURE)
@@ -1105,9 +1322,9 @@ H_KEYS = ("name", "city", "room_names", "verified_facilities", "theme_hits", "bl
 
 
 def save_plan(req: dict, h: dict, pos0: int, sig: dict, shots: list[dict], text: dict) -> Path:
-    keep = ("i", "k", "role", "point", "fact", "fact_i", "variant", "people", "pose", "place", "source", "src_url", "category", "view", "description",
-            "src_img", "img", "verify", "fallback")
-    plan = {"version": 2, "stay": h["name"], "format": str(req.get("format") or "montage"), "month": req.get("month"), "theme": req.get("theme"), "region": req.get("region"),
+    keep = ("i", "k", "role", "point", "fact", "fact_i", "photo_text", "variant", "people", "pose", "place", "source", "src_url", "category", "view", "description",
+            "veo_prompt", "motion", "src_img", "img", "verify", "fallback")
+    plan = {"version": 3, "stay": h["name"], "format": str(req.get("format") or "montage"), "month": req.get("month"), "theme": req.get("theme"), "region": req.get("region"),
             "pos0": pos0, "h": {k: h.get(k) for k in H_KEYS}, "signature": sig, "shots": [{k: s.get(k) for k in keep} for s in shots], "text": text}
     out = SIG / "plan.json"
     out.write_text(json.dumps(plan, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
@@ -1115,7 +1332,8 @@ def save_plan(req: dict, h: dict, pos0: int, sig: dict, shots: list[dict], text:
 
 
 def find_reuse(req: dict) -> dict | None:
-    """미리보기 실행의 아티팩트(build/reuse/<이름>/…/sig/plan.json)에서 같은 숙소·형식의 계획을 찾아 이미지와 함께 build/sig 로 가져온다."""
+    """미리보기 실행의 아티팩트(build/reuse/<이름>/…/sig/plan.json)에서 같은 숙소·형식의 계획을 찾아 이미지·AI 클립(veo_<i>.mp4)과 함께 build/sig 로 가져온다.
+    클립이 있는 컷은 다시 만들지 않는다(0원) — 미리보기에서 사진 무빙으로 내려간 컷만 제작 때 Veo 를 다시 시도한다."""
     if not req.get("reuse_runs") or not REUSE_DIR.exists():
         return None
     want = str(req.get("stay") or "").strip()
@@ -1125,15 +1343,21 @@ def find_reuse(req: dict) -> dict | None:
             plan = json.loads(f.read_text(encoding="utf-8"))
         except Exception:  # noqa: BLE001
             continue
-        if plan.get("version") != 2 or (want and plan.get("stay") != want) or plan.get("format", "montage") != fmt:
-            continue                                                                  # v1(빛·날씨 변주) 계획은 쓰지 않는다
+        if plan.get("version") != 3 or (want and plan.get("stay") != want) or plan.get("format", "montage") != fmt:
+            continue                                                                  # v1(빛·날씨 변주)·v2(사진 무빙) 계획은 쓰지 않는다
         need = {s["img"] for s in plan["shots"]} | {s["src_img"] for s in plan["shots"]}
         if not all((f.parent / n).exists() for n in need):
             log(f"재사용 계획 {f} — 이미지 파일이 빠짐 → 건너뜀"); continue
         SIG.mkdir(parents=True, exist_ok=True)
         for n in need:
             shutil.copy(f.parent / n, SIG / n)
-        log(f"미리보기 계획 재사용(이미지 0원): {f.relative_to(REUSE_DIR)}")
+        got = []
+        for s in plan["shots"]:
+            v = f.parent / f"veo_{s['i']}.mp4"
+            if v.exists() and v.stat().st_size > 0:
+                shutil.copy(v, SIG / v.name)
+                got.append(s["i"])
+        log(f"미리보기 계획 재사용(이미지 0원 · AI 클립 {len(got)}/{len(plan['shots'])}컷 0원): {f.relative_to(REUSE_DIR)}")
         return plan
     return None
 
@@ -1159,15 +1383,16 @@ def produce_sig(req: dict, models: dict, report: dict) -> tuple[Path, float, dic
         make_images(models, shots, report)                                         # 원본 사진 9:16 크롭만(편집 컷이 없어 0원)
         text = write_text(models, shots, sig, h, req, report)
         unblock(h["name"])                                                          # 전에 '사진 부족'으로 잠긴 숙소라도 이번에 만들어졌으면 푼다
-    report["signature"] = {k: sig.get(k) for k in ("name", "what", "fact", "vs_peers", "peers", "points", "photos", "surprise", "why", "alternatives", "checks")}
+    report["signature"] = {k: sig.get(k) for k in ("name", "what", "fact", "vs_peers", "peers", "points", "photos", "confirmed", "surprise", "why", "alternatives",
+                                                   "checks", "fallback")}
     folder = mt.folder_name(req)
     try:
         pos = make_folder.place_hotel(req, h, pos0, None)                          # 대표 이미지는 바꾸지 않는다(변주는 공식 사진 파생물 — 페이지에 안 올림)
     except Exception as e:  # noqa: BLE001
         log(f"폴더 데이터 갱신 실패 ({str(e)[:80]}) — 순위표 위치로 대체")
         pos = pos0 or 1
-    save_plan(req, h, pos0, sig, shots, text)
-    video, total, timeline = render(shots, text, h, req, report, preview, folder, pos)
+    video, total, timeline = render(shots, text, h, req, report, folder, pos)          # 컷마다 AI 영상(재사용 클립은 0원)
+    save_plan(req, h, pos0, sig, shots, text)                                       # 렌더 뒤에 — 컷별 영상 결과(motion)까지 남겨 제작이 클립을 재사용
     compare_sheet(shots, text, ms.PREVIEW / "compare_sheet.jpg")
     (ms.PREVIEW / "preview.md").write_text(preview_md(req, sig, shots, text, h, pos, folder, report, preview), encoding="utf-8")
     if not preview:
@@ -1175,13 +1400,13 @@ def produce_sig(req: dict, models: dict, report: dict) -> tuple[Path, float, dic
     report["hook_title"] = {"title": text["hook_title"], "type": text["hook_title_type"]}
     report["script"] = {"hook_title": text["hook_title"], "title": text["title"], "caption": text["caption"], "checklist": text["checklist"],
                         "cuts": [{"i": s["i"], "narration": text["phrases"][j], "caption": s.get("role") or VARIANT_KO[s["variant"]]} for j, s in enumerate(shots)]}
-    report["screen_qa"] = []                                                        # (v1 변주 검수 자리) v2 = 사진 확인(signature.checks) + 정보 전달 시험(info_test)
+    report["screen_qa"] = []                                                        # (v1 변주 검수 자리) v2·v3 = 사진 확인(signature.checks) + 정보 전달 시험(info_test)
     report["info_test"] = text.get("info_test")
     report["timeline"] = timeline
     c = text["caption"]
     pc = h.get("photo_counts") or {}
     edited = any(s["variant"] != "original" or s["people"] != "none" for s in shots)
-    veo_hook = any(r.get("ok") for r in (report.get("veo") or {}).get("clips", []))
+    ai_cuts = sum(1 for r in (report.get("veo") or {}).get("clips", []) if r.get("ok"))
     caption = (ms.DISCLOSURE + "\n\n" + str(c.get("hook") or "").strip()                       # 첫 줄 = 시그니처의 신박함(공감·감성 줄 없음)
                + ("\n" + "\n".join(c.get("points") or []) if c.get("points") else "")
                + ("\n\n" + "\n".join(f"· {x}" for x in text["checklist"]) if text["checklist"] else "")
@@ -1190,11 +1415,11 @@ def produce_sig(req: dict, models: dict, report: dict) -> tuple[Path, float, dic
                + f"\n객실 타입·예약 링크는 프로필 링크 → {pos}번 ({folder})"
                + ("\n사진: 숙소 공식 홈페이지" if pc.get("official") else "")
                + ("\n일부 장면(시간·날씨·뒷모습 인물)은 AI로 연출했어요. 실제 모습과 다를 수 있어요." if edited else "")
-               + ("\n첫 장면의 움직임은 실제 사진을 바탕으로 AI로 만들었어요." if veo_hook else "")
+               + ("\n영상 속 움직임(물결·빛·카메라 이동)은 실제 사진을 바탕으로 AI로 만들었어요. 실제 모습과 다를 수 있어요." if ai_cuts else "")
                + "\n\n" + " ".join(text["hashtags"]))
     v = report.get("veo") or {}
     img_krw = int((report.get("images") or {}).get("image_krw") or 0)              # 장부상 한 번 실행 돈(spent_this_run)에는 이미지 편집도 들어 있다 → 나눠 적는다
-    meta = {"mode": "signature", "label": "시그니처 미리보기(Veo 0원)" if preview else "시그니처 제작", "stage": report["stage"], "stay": h["name"],
+    meta = {"mode": "signature", "label": f"시그니처 {'AI 미리보기' if preview else '제작'}(AI 영상 {ai_cuts}/{len(shots)}컷)", "stage": report["stage"], "stay": h["name"],
             "signature": sig["name"], "title": text["title"], "caption": caption, "folder": folder, "folder_pos": pos, "bgm": report.get("bgm"),
             "pinned_comment": f"{h['name']} — 객실 타입·링크는 프로필 링크 → {pos}번 ({folder}) · 쿠팡 파트너스 링크 포함",
             "affiliate_urls": {h["name"]: h.get("affiliate_url")}, "lines": text["phrases"], "cuts": timeline, "ai_edited": edited,

@@ -802,13 +802,15 @@ def main() -> int:
         #    request.json 에 "veo_approved": true 가 있어야 한다. 없으면 돈을 쓰기 전에 멈춘다. 미리보기·가짜 클립은 Veo 0원이라 통과
         # 2026-10-12 검수: "fake": true 는 Veo 만 가짜로 바꾼다 — 미니어처(합성 이미지·옴니)는 여전히 유료라 허락 없이 돌던 구멍을 막는다
         mini_paid = bool(req.get("miniature")) and not (os.environ.get("OMNI_FAKE") == "1" and os.environ.get("MINI_FAKE_IMAGE") == "1")
-        sig_paid = mode == "signature" and not (veo.FAKE and os.environ.get("SIG_FAKE_IMAGE") == "1")    # 시그니처 제작은 첫 컷 Veo(294원) — 가짜일 때만 허락 불필요
-        # 2026-10-15 시그니처 v2: 미리보기(stage preview)는 사진·글·비전만(수십 원 · 이미지 편집·Veo 0원) — 관리실 버튼이 금액을 보여 주고 누르는 것이 허락.
-        #   제작(첫 컷 Veo)은 다른 유료 모드와 같이 veo_approved 필수
-        if mode in ("veo", "top3", "solo", "signature") and (not veo.FAKE or mini_paid or sig_paid) and str(req.get("stage") or "") != "preview" and req.get("veo_approved") is not True \
+        sig_paid = mode == "signature" and not veo.FAKE                                  # 시그니처는 컷마다 Veo — 가짜 클립일 때만 허락 불필요
+        # 2026-10-15 시그니처 v3: 미리보기도 컷마다 AI 영상(Veo · 몽타주 약 1,470원 · 한 장면 약 590원)이라 **미리보기도 veo_approved 필수**
+        #   (관리실 버튼이 금액을 보여 주고 한 번 더 확인 = 허락). 다른 모드의 미리보기(stage preview)는 Veo 0원이라 그대로 통과
+        free_preview = str(req.get("stage") or "") == "preview" and mode != "signature"
+        if mode in ("veo", "top3", "solo", "signature") and (not veo.FAKE or mini_paid or sig_paid) and not free_preview and req.get("veo_approved") is not True \
                 and not (mode == "solo" and str(req.get("max_veo_cuts")) == "0" and not req.get("miniature")) \
                 and not (mode == "solo" and req.get("reuse_only") is True):   # Veo 0컷·미니어처 없음(사진만, 0원), 재사용 전용(새 영상·합성 0 · 글·음성만)만 허락 불필요
-            raise RuntimeError('유료 Veo 제작은 운영자 허락이 필요합니다 — request.json 에 "veo_approved": true 를 넣어 주세요 (미리보기는 "stage": "preview")')
+            raise RuntimeError('유료 Veo 제작은 운영자 허락이 필요합니다 — request.json 에 "veo_approved": true 를 넣어 주세요 '
+                               '(시그니처는 미리보기도 AI 영상이라 허락 필요 — 관리실 버튼 · 다른 모드 미리보기는 "stage": "preview")')
         NONCE_DONE.parent.mkdir(parents=True, exist_ok=True)                    # 잠금을 통과한 요청만 '처리됨'으로 — 잠긴 채 돈 실행은 같은 nonce 로 승인 뒤 다시 돌 수 있어야 한다
         NONCE_DONE.write_text(json.dumps({"nonce": req.get("nonce"), "at": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False) + "\n", encoding="utf-8")
         models = pick_models()
@@ -830,7 +832,7 @@ def main() -> int:
             out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
             print(json.dumps({k: report[k] for k in ("ok", "stage", "narration_qa_ok", "narration_qa", "script", "gemini_usage")}, ensure_ascii=False, indent=1))
             return 0
-        if mode == "signature":                         # 2026-10-14 시그니처 원테마(미리보기·제작 모두 영상이 나온다 — 미리보기는 사진 무빙만)
+        if mode == "signature":                         # 2026-10-14 시그니처 원테마(v3: 미리보기·제작 모두 컷마다 AI 영상 — 제작은 미리보기 클립 재사용)
             import make_sig
             video, dur_total, meta = make_sig.produce_sig(req, models, report)
             stay = meta["stay"]

@@ -119,8 +119,8 @@ main > *, .card > *, .runs .body > * { min-width: 0 }      /* 넓은 표가 화�
     <span class="label" id="themeLine">다음 숙소</span>
     <select id="stay" aria-label="숙소 고르기"></select>
     <select id="fmt" aria-label="영상 형식">
-      <option value="signature|montage">시그니처 몽타주 · 컷 2~5개 · 9~17초</option>
-      <option value="signature|single">시그니처 짧게 · 컷 2개 · 약 9초</option>
+      <option value="signature|montage">시그니처 몽타주 · AI 영상 2~5컷 · 10~19초</option>
+      <option value="signature|single">시그니처 짧게 · AI 영상 2컷 · 약 10초</option>
       <option value="solo|">기존 9컷 · 약 36초</option>
     </select>
     <p class="note" id="fmtNote"></p>
@@ -281,7 +281,7 @@ function render(d) {
   const act = d.runs.find((r) => r.active);
   $("dot").className = "dot" + (act ? " on" : "");
   $("liveText").innerHTML = act
-    ? "<b>" + esc(RUN_KIND[act.kind] + shortTitle(act.title)) + "</b> 실행 중 · <a href=\"" + esc(act.url) + "\" target=\"_blank\" rel=\"noopener\">진행 보기</a><br><span class=\"sub\">미리보기 약 6분 · 정식 제작 약 15분 · 후보 찾기 약 10분. 끝나면 텔레그램으로 알림이 옵니다</span>"
+    ? "<b>" + esc(RUN_KIND[act.kind] + shortTitle(act.title)) + "</b> 실행 중 · <a href=\"" + esc(act.url) + "\" target=\"_blank\" rel=\"noopener\">진행 보기</a><br><span class=\"sub\">시그니처 AI 미리보기 약 10~15분 · 9컷 미리보기 약 6분 · 정식 제작 약 5~15분 · 후보 찾기 약 10분. 끝나면 텔레그램으로 알림이 옵니다</span>"
     : (d.runs_error ? "실행 기록을 읽지 못했습니다: " + esc(d.runs_error) : "쉬는 중 · 아래에서 숙소를 고르고 시작하세요");
   $("cancelBtn").hidden = !act;
   $("cancelBtn").dataset.id = act ? act.id : "";
@@ -297,12 +297,12 @@ function render(d) {
   const fc = fmtCost(d);
   const cur = d.candidates.find((c) => c.name === sel.value) || {};
   const blk = fc.mode === "signature" ? cur.sig_block : null;
-  $("previewCost").textContent = "약 " + won(fc.preview) + (fc.mode === "signature" ? " · 사진·자막만 · 이미지 편집·Veo 없음" : " · 영상 없음");
-  $("produceCost").textContent = "약 " + won(fc.produce) + (fc.reuse ? " · 미리보기 #" + fc.reuse.number + " 재사용" : "") + " · 누르면 한 번 더 확인";
+  $("previewCost").textContent = "약 " + won(fc.preview) + (fc.mode === "signature" ? " · 컷마다 AI 영상 · 누르면 한 번 더 확인" : " · 영상 없음");
+  $("produceCost").textContent = "약 " + won(fc.produce) + (fc.reuse ? " · 미리보기 #" + fc.reuse.number + (fc.mode === "signature" ? " AI 영상" : "") + " 재사용" : "") + " · 누르면 한 번 더 확인";
   $("fmtNote").textContent = blk
     ? "이 숙소는 시그니처 영상을 만들 재료가 부족해 잠겨 있습니다(" + blk.at + "): " + blk.reason + ". 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요."
     : fc.mode === "signature"
-    ? "다른 후보에 없는 이 숙소만의 시그니처 하나를, 컷마다 다른 사진 + 사실 한 줄(신박함 → 차별성 → 유인)로 보여 줍니다. 음악 + 자막. 시그니처가 주인공인 사진이 2장 안 되면 만들지 않습니다."
+    ? "이 숙소만의 시그니처 하나를, 컷마다 실제 사진을 AI 영상(Veo)으로 움직이고 사실 한 줄 자막(신박함 → 차별성 → 유인)으로 보여 줍니다. 음악 + 자막. 쓸 사진이 2장 이상이면 반드시 영상이 나옵니다(AI 가 못 고른 부분은 코드가 정하고 '대본·검수 글'에 표시)."
     : "물놀이·객실·특별 공간을 9컷으로 소개하는 예전 형식(나레이션 + 미니어처 인물).";
   const hold = Date.now() < holdUntil;
   $("previewBtn").disabled = !!act || hold || room < fc.preview || !sel.value || !!blk;
@@ -366,7 +366,7 @@ async function load() {
 
 function fmtCost(d) {
   const [mode, format] = ($("fmt").value || "signature|montage").split("|");
-  const c = d.cost[mode] || d.cost.signature;
+  const c = d.cost[mode === "signature" && format === "single" ? "signature_single" : mode] || d.cost.signature;
   const reuse = mode === "signature" ? (d.sig_previews || {})[(format || "montage") + "|" + $("stay").value] : null;
   return { mode, format, reuse, preview: c.preview, produce: reuse ? c.produce : c.produce_fresh };
 }
@@ -390,7 +390,15 @@ $("loginBtn").onclick = async () => {
 $("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") $("loginBtn").click(); });
 $("logout").onclick = async () => { await api("/api/logout", {}).catch(() => {}); show("login"); };
 $("refreshBtn").onclick = () => { $("runMsg").className = "msg"; load(); };
-$("previewBtn").onclick = () => start("preview");
+$("previewBtn").onclick = () => {
+  if (!S) return;
+  const fc = fmtCost(S);
+  if (fc.mode !== "signature") return start("preview");                        // 9컷 미리보기는 영상 없음(수십 원) — 바로 시작
+  const stay = $("stay").value, m = S.money, c = fc.preview;                    // 시그니처 v3: 미리보기도 컷마다 AI 영상(돈) → 금액 확인 = 허락
+  openSheet({ label: "AI 미리보기 확인", title: stay + " · " + $("fmt").selectedOptions[0].textContent.split(" · ")[0], big: "약 " + esc(won(c)) + " <small>AI 미리보기 1편</small>",
+    after: "컷마다 실제 사진을 AI 영상(Veo 4초 · 컷당 약 294원)으로 움직입니다. 정식 제작 때는 이 영상을 다시 씁니다(0원). 이번 달 " + won(m.total) + " → 약 " + won(m.total + c) + " (한도 " + won(m.cap) + ")",
+    go: "AI 미리보기 시작", goSub: "돈이 나갑니다 — 약 " + won(c), onGo: () => start("preview", true) });
+};
 $("fmt").onchange = () => { try { localStorage.setItem("stayFmt", $("fmt").value); } catch (e) {} if (S) render(S); };
 $("stay").onchange = () => { if (S) render(S); };
 try { const f = localStorage.getItem("stayFmt"); if (f && [...$("fmt").options].some((o) => o.value === f)) $("fmt").value = f; } catch (e) {}
@@ -398,7 +406,8 @@ $("produceBtn").onclick = () => {
   if (!S) return;
   const stay = $("stay").value, m = S.money, fc = fmtCost(S), c = fc.produce;
   const how = fc.mode === "signature"
-    ? (fc.reuse ? "미리보기 #" + fc.reuse.number + "의 사진·자막을 그대로 쓰고 첫 컷만 Veo 로 움직입니다. " : "이 숙소·형식의 미리보기가 없어 시그니처 선정·자막부터 새로 만듭니다(검수 안 된 자막이 나갈 수 있습니다). ")
+    ? (fc.reuse ? "미리보기 #" + fc.reuse.number + "의 AI 영상·자막을 그대로 씁니다(0원 · 미리보기에서 사진 무빙으로 남은 컷만 AI 영상을 다시 시도, 컷당 약 294원). "
+                : "이 숙소·형식의 AI 미리보기가 없어 시그니처 선정·자막·AI 영상부터 새로 만듭니다(검수 안 된 자막이 나갈 수 있습니다). ")
     : "";
   openSheet({ label: "정식 제작 확인", title: stay + " · " + $("fmt").selectedOptions[0].textContent.split(" · ")[0], big: "약 " + esc(won(c)) + " <small>정식 제작 1편</small>",
     after: how + "이번 달 " + won(m.total) + " → 약 " + won(m.total + c) + " (한도 " + won(m.cap) + ")",
