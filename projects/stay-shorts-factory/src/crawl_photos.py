@@ -384,6 +384,20 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
         log(f"{name}: robots.txt 가 {url} 수집을 금지 — 포기")
         return res
     html = render(url, chrome)
+    if not html.strip():
+        # stay-run-52 실측(2026-10-16): 세인트존스 첫 페이지 렌더가 90초 시간 초과로 빈 응답 → 바로 포기해 사진 0장·실행 실패.
+        # 바로 앞 #51 에선 같은 주소가 21초에 열렸다(일시 지연). 10초 쉬고 한 번 더, 그래도 없으면 JS 없이 같은 주소 원문을 한 번 읽는다
+        # (같은 공식 주소·같은 브라우저 이름 — 차단(WAF) 우회가 아니다. 차단 페이지면 아래 blocked 가 그대로 포기시킨다)
+        log(f"{name}: 첫 페이지 응답 없음 — 10초 뒤 한 번 더 ({url})")
+        time.sleep(10)
+        html = render(url, chrome, timeout=75)
+        if not html.strip():
+            try:
+                data, _ = fetch(url, timeout=30)
+                html = data.decode("utf-8", "replace")
+                log(f"{name}: 렌더 두 번 실패 → JS 없는 원문 {len(html):,}자로 진행")
+            except Exception as e:  # noqa: BLE001
+                log(f"{name}: 원문 읽기도 실패: {str(e)[:80]}")
     why = blocked(html)
     if why:
         res["reason"] = f"{why} ({url})"
