@@ -20,15 +20,18 @@
     "whimper": true,
     "music_pick": "The Pink Panther Theme – Henry Mancini (능청스러운 도둑 걸음 구간, 실패 장면의 어설픔을 극대화)",
     "ad": "vo",
-    "ad_copy": true,
+    "ad_copy": false,
     "method": "gen",
     "res": "720p",
     "pre_enhance": false,
     "upscale": 0,
     "cap": 5,
-    "gen_model": "veo-lite"
+    "gen_model": "veo-lite",
+    "format": "lord",
+    "hook": "주인님 트레드밀 타다가\n아주 잘못되버렸어.",
+    "series_no": 1
   },
-  "caption": "주인님 트레드밀 타다가 아주 잘못되버렸어.\n\n집에서도 완벽한 실내 산책 안전한 반려견 전용 트레드밀로 시작하세요\n\n구매는 프로필 링크에서.",
+  "caption": "시바 영주 일지 #1 · 주인님 트레드밀 타다가 아주 잘못되버렸어.\n\n집에서도 완벽한 실내 산책 안전한 반려견 전용 트레드밀로 시작하세요\n\n구매는 프로필 링크에서.",
   "hashtags": [
     "#강아지실내산책기",
     "#반려견런닝머신",
