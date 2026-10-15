@@ -753,10 +753,6 @@
         }
       ]
     },
-    "vertical": {
-      "mode": "new 9:16",
-      "src": "720x1280"
-    },
     "copy_place": {
       "place": "top",
       "why": "The top consists mostly of plain green wall space, while the bottom contains the treadmill base, frame, and the dog's fr"
@@ -764,18 +760,23 @@
     "sfx_used": [],
     "full": {
       "ok": true
-    }
+    },
+    "vertical": {
+      "mode": "new 9:16",
+      "src": "720x1280"
+    },
+    "cover_at": 1.2
   },
   "last_request": {
-    "file": "09_remake_full.json",
-    "ran_at": "2026-10-11T16:04:24Z",
+    "file": "10_remake_full.json",
+    "ran_at": "2026-10-15T08:07:57Z",
     "ok": true
   },
   "error": "컷1-1(0.0~5.7초)에서 개 몸이 엉켜 보여(2.25초 deformed second dog with abnormal spherical growth and missing limbs behind the front dog, 2.75초 dog standing upright with distorted and fused lower body) 완성하지 않고 멈췄습니다. 이 구간만 다시 만들려면 '다시 시도'(약 $0.30)를 눌러 주세요 — 나머지 구간은 그대로 씁니다.",
   "cover": "work/cover.jpg",
   "assemble": {
     "ok": true,
-    "sec": 12.5,
+    "sec": 12.42,
     "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"
   }
 }
