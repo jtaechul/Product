@@ -113,6 +113,7 @@ jobs:
             projects/stay-shorts-factory/build/sig/plan.json
             projects/stay-shorts-factory/build/sig/src_*.png
             projects/stay-shorts-factory/build/sig/var_*.png
+            projects/stay-shorts-factory/build/sig/veo_*.mp4
           if-no-files-found: ignore
           retention-days: 90
 
@@ -157,7 +158,7 @@ jobs:
           g = m.get("gemini_usage") or {}
           if g:
               s += f" · AI 글·음성 추정 {g.get('krw_est', 0):,}원"
-          print(s + (" (미리보기 · 관리실에서 정식 제작을 누르면 이 사진·자막을 재사용)" if m.get("stage") == "preview" else " (미발행 · 검수용)"))
+          print(s + (" (AI 미리보기 · 관리실에서 정식 제작을 누르면 이 AI 영상·자막을 그대로 재사용 — 0원)" if m.get("stage") == "preview" else " (미발행 · 검수용)"))
           PY
           )
             curl -s -o /dev/null -w "telegram video http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$V" \
