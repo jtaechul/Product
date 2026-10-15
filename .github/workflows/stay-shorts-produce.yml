@@ -177,10 +177,16 @@ jobs:
               curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$S" \
                 -F caption="$SC" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
             fi
-          else
-            ERR=$(python3 -c "import json;r=json.load(open('$P/data/runs/latest/report.json',encoding='utf-8'));v=r.get('veo')or{};print(str(r.get('error',''))[:220]+(f\"  / 이번 실행 영상값 약 {v.get('spent_krw',0):,}원\" if v else ''))" 2>/dev/null || echo "기록을 확인합니다")
+          elif [ "${{ steps.make.outcome }}" = "cancelled" ]; then
+            # 2026-10-16 #51: 멈춘(취소) 실행이 옛 report 의 빈 오류로 "실패 —" 만 보냈다 → 멈췄다고 분명히 알린다
             curl -s -o /dev/null -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
-              --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=숙소 쇼츠 시험 제작 실패 — $ERR" || true
+              --data-urlencode "chat_id=$TG_CHAT" \
+              --data-urlencode "text=숙소 쇼츠 실행 #${{ github.run_number }} 이 중간에 멈췄습니다(취소). 영상·결과는 없습니다. 멈추기 전에 쓴 돈은 관리실 '이번 달 쓴 돈'에 반영됩니다. 다시 하려면 관리실에서 다시 누르세요." || true
+          else
+            # report 가 이번 실행(요청 nonce) 것일 때만 그 오류를 쓴다 — 아니면 지난 실행의 오류를 잘못 보낸다
+            ERR=$(python3 -c "import json;r=json.load(open('$P/data/runs/latest/report.json',encoding='utf-8'));q=json.load(open('$P/requests/produce/request.json',encoding='utf-8'));assert r.get('nonce')==q.get('nonce');v=r.get('veo')or{};print((str(r.get('error',''))[:220] or '오류 내용 없음')+(f\"  / 이번 실행 영상값 약 {v.get('spent_krw',0):,}원\" if v else ''))" 2>/dev/null || echo "기록이 남기 전에 멈췄습니다. 관리실 '최근 실행'의 GitHub 실행 기록에서 이유를 확인합니다")
+            curl -s -o /dev/null -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+              --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=숙소 쇼츠 실행 #${{ github.run_number }} 실패 — $ERR" || true
           fi
           # 공식 홈페이지에서 모은 사진 전체(숙소별 한 장) — 검수용. 텔레그램으로만 보내고 저장소·Release 에는 올리지 않는다 (재배포 방지)
           for s in $P/build/h*/official/sheet.jpg $P/build/official/sheet.jpg; do
