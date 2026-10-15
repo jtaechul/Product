@@ -4958,6 +4958,9 @@ def step_remake(ep, epdir, work, log, req):
         use_wh = rm.get("whimper") is True and whimper.exists()   # 장면에 맞을 때만(사용자 지적 2026-10: 부딪힌 게 아니면 필요 없음)
         wh_at = Lb + 0.15
         t0 = (wh_at + _dur(whimper) + 0.1) if use_wh else max(0.0, Lb - 0.25)
+        if rm.get("format") == "lord":                    # 「시바 영주 일지」: 상품 장면을 약 3초로 — 내레이션은 본편 마지막 1초부터 시작(낑낑 소리도 그만큼 앞당김)
+            wh_at = max(0.0, Lb - 0.8)
+            t0 = (wh_at + _dur(whimper) + 0.05) if use_wh else max(0.0, Lb - 1.0)
         dd = round(max(4.0, t0 + vl + 0.6 - Lb), 2)        # 끝 장면 길이
         if _dur(end_v) >= 5.5:                            # 6초로 만든 광고는 6초를 다 쓴다(사용자 확정 2026-10: 광고 5~6초)
             dd = max(dd, 6.0)

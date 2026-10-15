@@ -4905,7 +4905,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="f"><label for="trHook">표지·첫 화면 한 줄 (웃긴 사건만 · 상품 말 금지)</label><textarea id="trHook" rows="2"></textarea></div>
     <div class="f"><label for="trBig">캡션 첫 줄 (두 줄 · 영상에는 안 나옴)</label><textarea id="trBig" rows="2"></textarea></div>
     <div class="f"><label for="trSub">캡션 설명 (두 줄 · 영상에는 안 나옴)</label><textarea id="trSub" rows="2"></textarea></div>
-    <div class="f"><label for="trVo">웃긴 내레이션 (4초 안 · 끝은 "구매는 프로필 링크에서.")</label><textarea id="trVo" rows="3"></textarea></div>
+    <div class="f"><label for="trVo">시바 영주 내레이션 (3초 안 · 끝은 "구매는 프로필 링크에서.")</label><textarea id="trVo" rows="3"></textarea></div>
     <div class="f"><label for="trEnd">끝 장면 동작 (영어, AI 영상 지시)</label><textarea id="trEnd" rows="2"></textarea></div>
     <div class="f"><label for="trMusic">추천 노래 (영상에는 안 넣음 — 인스타 앱에서 이 노래를 얹으면 더 웃김)</label><input id="trMusic" type="text" placeholder="곡명 – 가수 (언제·왜)"></div>
     <div class="f"><label for="trTags">해시태그 (상품을 사려는 사람이 검색할 말, 띄어쓰기로 구분)</label><input id="trTags" type="text" placeholder="#강아지관절영양제 #노견관절케어"></div>
@@ -7391,7 +7391,7 @@ async function handleRemakeCopy(env, body) {
 - hook: 표지·첫 화면에 얹을 웃긴 한 줄(2줄 이내, 줄바꿈 \\n, 각 줄 12자 이내). 영상 속 사건을 시바 영주가 담담하게 보고하는 말(예: "운동 첫날\\n둘 다 퇴근했다"). 상품·효능·"~하세요" 금지
 - big: 캡션 첫 줄용 훅 2줄(줄바꿈 \\n), 각 줄 12자 이내 — 웃긴 사건 중심(상품 설명 아님)
 - sub: 캡션용 2줄(\\n), 상품이 주는 이점을 구체적으로(예: "춤추며 빠져나간 수분과 전해질\\n강아지 전용 이온음료로 빠르게 채워주세요")
-- vo: 시바 영주의 1인칭 내레이션. 앞 장면에서 벌어진 사건(실패·망함)을 담담하게 보고하며 한 번 비트는 한 마디(12자 안팎, 광고 말투·효능 설명·느낌표 금지) + 마지막에 반드시 "구매는 프로필 링크에서." 전체 22자 안팎(4초 안에 읽힘). '...' 뜸은 한 번만. 주어 없이 "프로필 링크에서."만 쓰지 마라
+- vo: 시바 영주의 1인칭 내레이션. 앞 장면에서 벌어진 사건(실패·망함)을 담담하게 보고하며 한 번 비트는 한 마디(8~10자, 광고 말투·효능 설명·느낌표 금지) + 마지막에 반드시 "구매는 프로필 링크에서." 전체 18자 이내(3초 안에 읽힘 — 상품 장면은 약 3초). '...' 뜸은 한 번만. 주어 없이 "프로필 링크에서."만 쓰지 마라
 - ending: English one sentence — the final 4-second shot that CONTINUES the same joke in the same place with the same Shiba Inu (no cut to a clean ad set): the dog now has the product and does one funny, clear action with it (product visible)
 - hashtags: ${HASHTAG_RULE}
 - whimper: 앞부분이 강아지가 넘어지거나 부딪히거나 실패해 아파하는 장면이면 true(광고 화면 시작에 낑낑 소리), 그 밖(신나는 장면·놀라운 장면 등)이면 false
