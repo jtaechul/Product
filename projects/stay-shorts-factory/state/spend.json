@@ -478,5 +478,29 @@
   "kind": "gemini_est",
   "krw": 41,
   "note": "2026-10-15-admin-sig-preview-6O9f signature AI 글·음성 5회 (추정)"
+ },
+ {
+  "date": "2026-10-15",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_1.mp4"
+ },
+ {
+  "date": "2026-10-15",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_2.mp4"
+ },
+ {
+  "date": "2026-10-15",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_3.mp4"
+ },
+ {
+  "date": "2026-10-15",
+  "kind": "gemini_est",
+  "krw": 48,
+  "note": "2026-10-15-admin-sig-preview-b6Xe signature AI 글·음성 12회 (추정)"
  }
 ]
