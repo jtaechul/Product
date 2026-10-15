@@ -10,7 +10,7 @@
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "관리자 페이지 시그니처 미리보기 — 소노펠리체 비발디파크 · 예상 약 30원 · 2026-10-15 17:27 KST",
+ "note": "잠금(자동 · 실행 끝): 2026-10-15-admin-sig-preview-dj_L",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -20,6 +20,5 @@
   "세인트존스 호텔": "https://new.stjohns.co.kr/"
  },
  "mini_scale": "life",
- "format": "montage",
- "stage": "preview"
+ "format": "montage"
 }
