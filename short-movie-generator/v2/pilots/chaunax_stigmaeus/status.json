@@ -75,7 +75,18 @@
     },
     "upload": {
       "state": "working",
-      "notes": []
+      "notes": [
+        {
+          "at": "2026-10-15T16:13:20Z",
+          "kind": "ig_short",
+          "text": "인스타용 짧은 판 21.3초(1, 2, 8번 컷) — 업로드 칸에서 저장해 인스타에 올리세요"
+        },
+        {
+          "at": "2026-10-15T16:13:21Z",
+          "kind": "trial",
+          "text": "연결된 인스타 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 올리지 않았습니다. 키를 @abyss_0cean 것으로 고친 뒤 「ABYSS 계정에 다시 올리기」, 또는 「시험 건너뛰고 지금 후킹(A)으로 진행」을 눌러 주세요"
+        }
+      ]
     }
   },
   "topic": {
@@ -717,7 +728,24 @@
         "tts_id": "r10151457_script_tts",
         "ending": ""
       },
-      "built_at": "2026-10-15T15:46:59Z"
+      "built_at": "2026-10-15T15:46:59Z",
+      "ig_short": {
+        "file": "out/r1015161240_ig_short/ig_short.mp4",
+        "cuts": [
+          1,
+          2,
+          8
+        ],
+        "sec": 21.3,
+        "at": "2026-10-15T16:13:20Z",
+        "for_built_at": "2026-10-15T15:46:59Z"
+      }
+    },
+    "trial": {
+      "state": "cancelled",
+      "at": "2026-10-15T16:13:21Z",
+      "rule": "게시 24시간 뒤 두 버전 모두 조회 300회 이상이면 「3초 안에 넘긴 비율」이 3%p 이상 낮은 쪽이 이김 · 차이가 그보다 작으면 A 그대로 · 48시간까지 조회가 모자라면 버전마다 100회 이상으로 판정, 그래도 모자라면 판정 보류(A 그대로)",
+      "reason": "연결된 인스타 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 올리지 않았습니다"
     }
   },
   "checks": {
@@ -786,6 +814,13 @@
       "at": "2026-10-15T15:46:59Z",
       "action": "make_video",
       "text": "영상 자동 제작 완료 — 승인 대기"
+    },
+    "upload": {
+      "stage": "upload",
+      "status": "trial_wait",
+      "action": "trial_cancel",
+      "text": "시험 무효 — 「ABYSS 계정에 다시 올리기」 또는 「시험 건너뛰기」를 기다리는 중",
+      "at": "2026-10-15T16:13:21Z"
     }
   },
   "cost": {

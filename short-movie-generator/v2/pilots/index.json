@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-15T16:11:49Z",
+  "updated": "2026-10-15T16:13:21Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -48,12 +48,33 @@
       "sci": "Chaunax stigmaeus",
       "stage": "upload",
       "state": "working",
-      "job": null,
+      "job": {
+        "stage": "upload",
+        "status": "trial_wait",
+        "action": "trial_cancel",
+        "text": "시험 무효 — 「ABYSS 계정에 다시 올리기」 또는 「시험 건너뛰기」를 기다리는 중",
+        "at": "2026-10-15T16:13:21Z"
+      },
       "created": "2026-10-15T14:54:15Z",
       "uploaded_at": null,
       "stats": null,
       "viewed": null,
-      "trial": null
+      "trial": {
+        "state": "cancelled",
+        "posted_at": null,
+        "checked_at": null,
+        "winner": null,
+        "kind": null,
+        "reason": "연결된 인스타 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 올리지 않았습니다",
+        "a": {
+          "line": "",
+          "pattern": ""
+        },
+        "b": {
+          "line": "",
+          "pattern": ""
+        }
+      }
     },
     {
       "id": "enypniastes_eximia",
@@ -93,7 +114,7 @@
   ],
   "hook_patterns": {},
   "ig": {
-    "at": "2026-10-10T16:22:11Z",
+    "at": "2026-10-15T16:13:20Z",
     "expected": "abyss_0cean",
     "ok": false,
     "username": "lord.shiba.ybd",
