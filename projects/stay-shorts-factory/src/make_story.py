@@ -17,6 +17,7 @@
 """
 from __future__ import annotations
 
+import difflib
 import json
 import re
 import shutil
@@ -212,7 +213,8 @@ def build_shots(models: dict, sig: dict, h: dict, report: dict) -> list[dict]:
     adv += [int(c["k"]) for c in checked if int(c["k"]) not in adv and int(c["k"]) in good and sg._overlap(toks, sg._tokens(by_k[int(c["k"])].get("description")))]
     adv += [int(k) for k in sig.get("photos") or [] if int(k) in by_k and int(k) not in adv]
     adv = adv[:ADV_PHOTOS]
-    others = sorted((k for k in pool if k not in adv and not (mt.is_exterior(pool[k]) and k not in adv)),
+    rejected = {int(c["k"]) for c in checked if not (c.get("ok") or c.get("subject"))}   # 주인공 확인 '아님' — 닮아서 헷갈리는 사진(stay-run-53 키즈룸)
+    others = sorted((k for k in pool if k not in adv and k not in rejected and not (mt.is_exterior(pool[k]) and k not in adv)),
                     key=lambda k: (-sg._overlap(toks, sg._tokens(pool[k].get("description"))), -int(pool[k].get("quality") or 0), k))[:LINK_PHOTOS]
     STORY.mkdir(parents=True, exist_ok=True)
     shots, n = [], 0
@@ -266,6 +268,7 @@ STORY_SYSTEM = """너는 숙소 쇼츠 작가다. 이 숙소의 **장점 하나*
 규칙:
 1) beats 6~9개: 첫째 훅, 둘째 정체, 마지막 약속, 가운데는 디테일·상황·사람·행동·연결·희소성 중 **서로 다른 3개 이상**.
 2) 훅 말고 **모든 문장에 장점 낱말**(장점 이름·설명·장점 사진에 보이는 사물)이 들어간다. 장점과 상관없는 시설 이야기 금지.
+   단, 장점 이름을 매 문장 통째로 되풀이하지 않는다 — 장점의 **부분**(사진에 보이는 사물·사실 낱말: 계단·식기·탕·창…)으로 이어 간다.
 3) 각 문장은 근거가 있어야 한다: fact = 아래 사실 번호, 사진에 보이는 것만 말하면 0. 사실·사진에 없는 내용·숫자 금지.
 4) 말투: 2인칭 현재형 '~해요' 체. 금지: 1인칭·체험·과거형('다녀왔', '좋았', '-더라고요', '저는', '우리'), '~니다', 숙소 이름, 가격 숫자,
    '최고·유일·최저가·무조건', 분위기만 있는 말(노을빛·물들고·힐링·낭만·감성·설렘·아늑·포근·그림 같은·인생샷·완벽한·행복·추억).
@@ -278,12 +281,73 @@ STORY_SYSTEM = """너는 숙소 쇼츠 작가다. 이 숙소의 **장점 하나*
 9) person: 사람 컷 **하나** — 행동·사람·상황 관점 문장 중 하나(장점 사진 컷)에, 사진 안에 **이미 있는 사물**을 손이 만지거나(kind "hand", 기본)
    뒷모습 한 사람이 그 자리를 쓰는(kind "back" — 바닥이 넓게 보이는 사진만) 장면. 얼굴·여러 사람·새 물건(컵·휴대폰 등)·뛰기·물에 뛰어들기 금지.
    action_en = 영어 동작 한 구절(사진에 있는 사물 이름으로, 예 "gently pushes the hammock so it sways"). 그 문장 내용과 맞게.
+10) **흐름(시청자가 그 숙소에 들어가 하루를 보내는 순서)**: 훅(걱정) → 정체(답) → 들어서면 보이는 것 → 짐 풀고 하는 것 → 저녁·밤·아침 → 약속.
+   문장 3부터는 앞 문장을 받는 말로 시작한다('들어서면·짐 풀면·그 옆엔·저녁엔·씻고 나면·그래서·이제' 등). 같은 연결어·같은 끝맺음을 이어 쓰지 않는다.
+   각 문장은 **시청자가 얻는 것**(같이 잔다·짐이 준다·맡기지 않아도 된다·…)으로 끝낸다 — 시설 이름만 늘어놓지 않는다.
+11) **반복 금지**: 같은 낱말 둘을 이은 말(예 '전용 계단', '반려견 객실')을 다른 문장에서 다시 쓰지 않는다. 한 낱말은 영상 전체에서 3문장까지.
+   **약속은 정체를 되풀이하지 않는다** — 훅의 걱정 낱말을 받아 그 걱정이 풀렸다고 말한다(예 훅 '두고 떠나는 여행, 마음 쓰이죠?' → 약속 '이제 두고 떠나지 않아도 돼요').
 JSON 만: {"beats":[{"lens":"훅","line":"...","shots":["S1"],"fact":0}],"hook_title":"...","person":{"beat":6,"kind":"hand","action_en":"..."},
  "caption":{"hook":"...","points":["..."],"save":"..."},"checklist":[{"fact":1,"text":"..."}],"title":"...","hashtags":["#..."]}"""
 
 
 def _nospace(t: str) -> int:
     return len(re.sub(r"\s", "", str(t or "")))
+
+
+FLOW_START = tuple(so.CONNECTORS) + ("문을", "짐", "도착", "씻", "말리", "자기 전", "잠들", "눈 뜨", "그다음", "그러다", "같이", "함께")
+END_RX = re.compile(r"(요|죠|다)$")
+
+
+def _words(line: str) -> list[str]:
+    """반복 검사용 낱말(순서 유지): sg._tokens 와 같은 조사 떼기, 끝맺음 낱말(…요·…죠)은 뺀다."""
+    out = []
+    for w in re.findall(r"[가-힣A-Za-z0-9]+", str(line or "")):
+        w = re.sub(r"(은|는|이|가|을|를|과|와|의|에|에서|엔|으로|로|도|만|까지|부터|이에요|예요|이다|있는|하는)$", "", w)
+        if len(w) >= 2 and not END_RX.search(w) and w not in sg.GENERIC_SIG:
+            out.append(w)
+    return out
+
+
+def flow_story_errs(beats: list[dict]) -> list[str]:
+    """2026-10-16 운영자 '대사 연결이 미흡하고 마지막 주어가 중간과 반복돼 어색': stay-run-53 대본은 '전용'이 4문장, 약속이 정체의 '전용 계단 … 반려견 객실'을 되풀이,
+    문장 3~6 중 연결어로 시작한 문장 0개였다. 같은 말 두 낱말 반복(훅↔약속 되받기는 허용) · 한 낱말 4문장 이상 · 약속≈정체 · 연결어 부족 · 같은 끝맺음 3연속을 잡는다.
+    오류는 '흐름:' 으로 시작 — 모델에게 고쳐 쓰라고 돌려주되, 3번 실패 뒤 repair(사실 문장으로 갈아 끼우기) 대상은 아니다(더 딱딱해진다)."""
+    errs = []
+    lines = [design.one_line(str(b.get("line") or "")) for b in beats]
+    lenses = [str(b.get("lens") or "") for b in beats]
+    words = [_words(x) for x in lines]
+    grams = [{(a, b) for a, b in zip(w, w[1:])} for w in words]
+    for j in range(1, len(lines)):
+        for i in range(j):
+            if {lenses[i], lenses[j]} == {"훅", "약속"}:
+                continue                                                           # 첫 걱정을 되받는 것은 의도된 반복
+            same = grams[i] & grams[j]
+            if same:
+                a, b = sorted(same)[0]
+                errs.append(f"흐름: 문장 {j + 1} '{a} {b}' 가 문장 {i + 1} 의 말을 되풀이 — 새 정보나 다른 말로")
+                break
+    seen: dict[str, list[int]] = {}
+    for k, w in enumerate(words, 1):
+        for x in set(w):
+            seen.setdefault(x, []).append(k)
+    for x, ks in sorted(seen.items(), key=lambda kv: -len(kv[1])):
+        if len(ks) > 3:
+            errs.append(f"흐름: 문장 {ks[-1]} 낱말 '{x}' 이 {len(ks)}문장째 — 한 낱말은 3문장까지(장점의 다른 부분으로)")
+            break
+    if len(lines) >= 3 and "정체" in lenses and lenses[-1] == "약속":
+        a, b = re.sub(r"\s", "", lines[lenses.index("정체")]), re.sub(r"\s", "", lines[-1])
+        if difflib.SequenceMatcher(None, a, b).ratio() >= 0.5:
+            errs.append(f"흐름: 문장 {len(lines)} 약속이 정체를 되풀이 — 훅의 걱정을 받아 풀렸다고 말한다")
+    rest = lines[2:]
+    linked = sum(1 for x in rest if any(x.startswith(w) or w in x[:8] for w in FLOW_START))
+    if rest and linked < (len(rest) + 1) // 2:
+        errs.append(f"흐름: 문장 3부터 앞 문장을 받는 말로 시작한 문장 {linked}/{len(rest)} — 절반 이상('들어서면·짐 풀면·저녁엔·그래서·이제' 등)")
+    ends = [re.sub(r"[.!?~\s]+$", "", x)[-2:] for x in lines]
+    for k in range(2, len(ends)):
+        if ends[k] and ends[k] == ends[k - 1] == ends[k - 2]:
+            errs.append(f"흐름: 문장 끝 '{ends[k]}' 3번 연속 — 끝맺음을 바꾼다")
+            break
+    return errs
 
 
 def story_errs(js: dict, sig: dict, h: dict, req: dict, facts: list[str], shots: list[dict], peers: list[str], toks: set[str]) -> list[str]:
@@ -377,7 +441,7 @@ def story_errs(js: dict, sig: dict, h: dict, req: dict, facts: list[str], shots:
     over = {k: c for k, c in photo_count.items() if c > limit}
     if over:
         errs.append(f"같은 원본 사진을 너무 자주 씀 {over} — 사진당 {limit}컷까지")
-    return errs
+    return errs + flow_story_errs(beats)
 
 
 def _line_idx(e: str) -> int | None:
@@ -386,17 +450,18 @@ def _line_idx(e: str) -> int | None:
 
 
 def recheck_shots(text: dict, shots: list[dict], sig: dict, report: dict) -> None:
-    """재사용 계획 다시 검사(돈 0) — 위 build_shots 고치기 전에 만든 미리보기도 바로잡는다.
-    주인공 확인을 못 통과한 사진의 '장점' 컷은 연결 컷으로 낮추고, 연결이 아닌 문장에 걸렸으면 확인된 장점 컷(덜 쓴 사진·옆 문장과 다른 컷)으로 바꾼다."""
+    """재사용 계획 다시 검사(돈 0) — build_shots 를 고치기 전에 만든 미리보기도 바로잡는다(stay-run-53: '도그 파크' 문장 밑에 키즈룸).
+    주인공 확인을 못 통과한 사진의 컷은 목록에서 빼고(연결 컷으로도 안 씀), 그 컷을 쓰던 문장은 옆 문장과 다른 사진의 덜 쓴 컷으로 바꾼다
+    (연결 관점은 남은 연결 컷 먼저, 나머지는 장점 컷)."""
     good = adv_ok(sig)
-    bad = {s["id"] for s in shots if s.get("adv") and int(s["k"]) not in good}
+    bad = {s["id"] for s in shots if int(s["k"]) not in good and (s.get("adv") or int(s["k"]) in {int(c["k"]) for c in sig.get("checks") or []})}
     if not good or not bad:
         return
-    for s in shots:
-        if s["id"] in bad:
-            s["adv"], s["kind"] = False, "연결"
     by_id = {s["id"]: s for s in shots}
-    pool = [s["id"] for s in shots if s.get("adv")]
+    adv = [s["id"] for s in shots if s.get("adv") and s["id"] not in bad]
+    link = [s["id"] for s in shots if not s.get("adv") and s["id"] not in bad]
+    if not adv:
+        return
     beats = text.get("beats") or []
     use: dict[str, int] = {}
     for b in beats:
@@ -405,24 +470,28 @@ def recheck_shots(text: dict, shots: list[dict], sig: dict, report: dict) -> Non
     changed = []
     for i, b in enumerate(beats):
         ids = list(b.get("shots") or [])
-        if str(b.get("lens") or "") == "연결" or not any(x in bad for x in ids) or not pool:
+        if not any(x in bad for x in ids):
             continue
         # 옆 문장과 같은 원본 사진은 피한다(stay-run-53: 디테일·행동·희소성 세 문장이 같은 사진이 될 뻔함) → 덜 쓴 컷
         near = [x for j in (i - 1, i + 1) if 0 <= j < len(beats) for x in beats[j].get("shots") or [] if x in by_id]
         near_k = {by_id[x]["k"] for x in near}
+        pool = (link + adv) if str(b.get("lens") or "") == "연결" else adv
         new = []
         for x in ids:
             if x in bad:
-                y = sorted((y for y in pool if y not in new and y not in ids),
-                           key=lambda y: (by_id[y]["k"] in near_k, use.get(y, 0), pool.index(y)))[:1] or [pool[0]]
-                y = y[0]
+                cand = sorted((y for y in pool if y not in new and y not in ids and y not in bad),
+                              key=lambda y: (by_id[y]["k"] in near_k, use.get(y, 0), pool.index(y)))
+                if not cand:
+                    continue
+                y = cand[0]
                 use[y] = use.get(y, 0) + 1
                 changed.append({"beat": i + 1, "from": x, "to": y})
                 x = y
             new.append(x)
-        b["shots"] = new
+        b["shots"] = new or [adv[0]]
+    shots[:] = [s for s in shots if s["id"] not in bad]
     report["shot_recheck"] = {"not_signature": sorted(bad), "changed": changed}
-    log(f"컷 다시 검사: 주인공 확인 안 된 장점 컷 {sorted(bad)} → 연결로 낮춤 · 바꾼 문장 {changed}")
+    log(f"컷 다시 검사: 주인공 확인 안 된 사진의 컷 {sorted(bad)} 뺌 · 바꾼 문장 {changed}")
 
 
 def fix_shots(js: dict, shots: list[dict]) -> None:
@@ -497,8 +566,63 @@ def repair(js: dict, errs: list[str], sig: dict, facts: list[str], report: dict)
     return {**js, "beats": keep}
 
 
+SCRIPTS = mt.ROOT / "data" / "story_scripts.json"                                   # 운영자가 승인한 숙소별 대본(관점·문장) — 있으면 모델은 컷·근거·제목·캡션만 고른다
+
+
+def operator_script(stay: str) -> list[dict] | None:
+    """2026-10-16 운영자 '대본을 소비자 관점으로 개선해' — 대화에서 다듬어 승인받은 문장을 그대로 쓰기 위한 입구(숙소 이름별)."""
+    try:
+        d = json.loads(SCRIPTS.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+    beats = [{"lens": str(b["lens"]), "line": design.one_line(str(b["line"]))} for b in ((d.get(stay) or {}).get("beats") or [])
+             if isinstance(b, dict) and b.get("lens") and b.get("line")]
+    return beats or None
+
+
+def operator_caption(stay: str) -> dict | None:
+    """운영자 승인 캡션(hook·points·save) — 사진이 없어 나레이션에서 뺀 이득(무료 펫 욕조 등)을 글로 전한다. 캡션 검사를 통과할 때만 쓴다."""
+    try:
+        c = (json.loads(SCRIPTS.read_text(encoding="utf-8")).get(stay) or {}).get("caption")
+    except Exception:  # noqa: BLE001
+        return None
+    return c if isinstance(c, dict) and c.get("hook") else None
+
+
+def auto_shots(beats: list[dict], shots: list[dict]) -> None:
+    """모델 답이 없을 때 운영자 문장에 컷을 붙인다: 문장 낱말과 사진 설명이 많이 겹치는 컷, 옆 문장과 다른 사진, 약속 = 훅 컷."""
+    adv = [s for s in shots if s["adv"]] or shots
+    used: dict[str, int] = {}
+    for i, b in enumerate(beats):
+        if b["lens"] == "약속" and beats[0].get("shots"):
+            b["shots"] = list(beats[0]["shots"]); continue
+        pool = shots if b["lens"] in ("연결", "상황", "사람", "행동") else adv
+        prev_k = {s["k"] for s in shots if beats[i - 1].get("shots") and s["id"] in beats[i - 1]["shots"]} if i else set()
+        lt = sg._tokens(b["line"])
+        best = sorted(pool, key=lambda s: (s["k"] in prev_k, used.get(s["id"], 0), -sg._overlap(lt, sg._tokens(s["desc"])), not s["adv"]))[0]  # noqa: E501
+        used[best["id"]] = used.get(best["id"], 0) + 1
+        b["shots"] = [best["id"]]
+
+
+def force_operator(js: dict, op: list[dict], shots: list[dict]) -> dict:
+    """모델 답의 문장을 운영자 문장으로 덮는다(관점·문장·순서 고정). 컷·근거는 모델 답(문장 수가 같을 때) 또는 auto_shots."""
+    got = [b for b in (js.get("beats") or []) if isinstance(b, dict)]
+    beats = []
+    for i, b in enumerate(op):
+        g = got[i] if len(got) == len(op) else {}
+        beats.append({"lens": b["lens"], "line": b["line"], "shots": [str(x) for x in (g.get("shots") or [])], "fact": g.get("fact") or 0})
+    if not all(b["shots"] for b in beats) or any(x not in {s["id"] for s in shots} for b in beats for x in b["shots"]):
+        auto_shots(beats, shots)
+    out = dict(js)
+    out["beats"] = beats
+    if isinstance(js.get("person"), dict) and not (1 <= sg._int(js["person"].get("beat")) <= len(beats)):
+        out.pop("person")
+    return out
+
+
 def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], shots: list[dict], peers: list[str], toks: set[str], report: dict) -> dict:
     ttype = so.next_title_type()
+    op = operator_script(h["name"])
     content = (f"장점: {sig['name']} — {sig.get('what') or ''}\n근거 사실: {sg._body(sig['fact'])}\n왜 의외: {sig.get('why') or '-'}\n"
                f"다른 후보와 다른 점: {sig.get('vs_peers') or '-'}\n시기: {req.get('month')} · 테마: {req.get('theme')} · 지역: {req.get('region')}\n"
                f"훅 제목 유형: {ttype} — {so.TITLE_TYPES[ttype]}\n최근 제목(다시 쓰지 말 것): {' / '.join(so.recent_titles()) or '없음'}\n"
@@ -507,6 +631,10 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
                "같은 테마 다른 후보(희소성 관점 근거 · 이름은 말하지 않는다):\n" + ("\n".join(f"- {x}" for x in peers) or "- (없음)")
                + "\n\n사실(번호):\n" + "\n".join(f"{i}. {f}" for i, f in enumerate(facts, 1))
                + "\n\n컷 목록(id · 종류 · 사진 번호 · 보이는 것):\n" + "\n".join(f"{s['id']} · {s['kind']} · 사진 {s['k']} · {s['desc']}" for s in shots))
+    if op:
+        content += ("\n\n운영자 확정 대본 — beats 의 lens·line 은 아래를 글자 그대로·같은 순서·같은 개수로 쓴다(바꾸지 않는다). "
+                    "shots·fact·person·hook_title·caption·checklist·title·hashtags 만 정한다:\n" + "\n".join(f"{i}. [{b['lens']}] {b['line']}" for i, b in enumerate(op, 1)))
+        report["operator_script"] = [b["line"] for b in op]
     fb, best, tries = "", None, []
     for attempt in range(3):
         try:
@@ -514,6 +642,8 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
         except RuntimeError as e:
             tries.append({"errs": [f"호출 실패: {str(e)[:80]}"]})
             continue
+        if op:
+            js = force_operator(js, op, shots)
         fix_shots(js, shots)
         errs = story_errs(js, sig, h, req, facts, shots, peers, toks)
         cerrs = sg.caption_errs(js.get("caption") if isinstance(js.get("caption"), dict) else {}, h, req, sig, facts)
@@ -527,6 +657,10 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
         fb = "\n\n지난 답의 문제(고쳐서 다시):\n- " + "\n- ".join(errs[:12])
     report["story_tries"] = tries
     report["text_title_type"] = ttype
+    if best is None and op:                                                            # 글 호출 실패여도 운영자 대본은 그대로(컷은 코드가)
+        js = force_operator({}, op, shots)
+        fix_shots(js, shots)
+        best = (js, story_errs(js, sig, h, req, facts, shots, peers, toks))
     if best is None:                                                                   # 글 호출이 세 번 모두 실패 — 장점 사실로 최소 이야기
         adv = [s for s in shots if s["adv"]] or shots
         js = {"beats": [{"lens": "훅", "line": f"{sg._cut(sig['name'], 16)}, 들어보셨어요?", "shots": [adv[0]["id"]], "fact": 0},
@@ -537,7 +671,7 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
     js, errs = best
     mark_person(js, shots)
     report["lens_check"] = {"ok": not errs, "errs": [str(e)[:120] for e in errs[:10]]}
-    if errs:
+    if errs and not op:                                                                # 운영자 대본의 문장은 고치지 않는다(검사 결과만 기록)
         js = repair(js, errs, sig, facts, report)
         fix_shots(js, shots)
         left = story_errs(js, sig, h, req, facts, shots, peers, toks)
@@ -553,6 +687,12 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
     shots_desc = [{"description": next(s["desc"] for s in shots if s["id"] == beats[0]["shots"][0])}]
     title = sg.ensure_sig_title(models, design.one_line(str(js.get("hook_title") or "")), [b["line"] for b in beats], shots_desc, sig, h, req, ttype, report)
     cap = js.get("caption") if isinstance(js.get("caption"), dict) else {}
+    ocap = operator_caption(h["name"]) if op else None
+    if ocap:
+        oerrs = sg.caption_errs(ocap, h, req, sig, facts)
+        report["operator_caption"] = {"ok": not oerrs, "errs": [str(e)[:100] for e in oerrs[:5]]}
+        if not oerrs:
+            cap = ocap
     if sg.caption_errs(cap, h, req, sig, facts):
         pts = [b["line"] for b in beats[2:5] if b["fact_i"]] or [sg._cut(sg._body(sig["fact"]), 40)]
         cap = {"hook": sg._cut(sg._body(sig["fact"]), 80), "points": pts, "save": "갈 계획이 있다면 저장해두고 다시 꺼내 보세요."}
