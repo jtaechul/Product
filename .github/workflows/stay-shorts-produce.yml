@@ -110,6 +110,9 @@ jobs:
             projects/stay-shorts-factory/data/runs/latest/preview.md
             projects/stay-shorts-factory/data/runs/latest/narration_preview.mp3
             projects/stay-shorts-factory/data/runs/latest/report.json
+            projects/stay-shorts-factory/build/sig/plan.json
+            projects/stay-shorts-factory/build/sig/src_*.png
+            projects/stay-shorts-factory/build/sig/var_*.png
           if-no-files-found: ignore
           retention-days: 90
 
@@ -142,22 +145,28 @@ jobs:
           import json
           m = json.load(open("projects/stay-shorts-factory/build/meta.json", encoding="utf-8"))
           v = m.get("veo") or {}
-          s = {"veo": "Veo 7컷 방식", "top3": "TOP3", "solo": "단일 숙소 Veo"}.get(m.get("mode"), "사진 확대 방식") + f" · {m.get('stay')} · {m.get('duration_sec')}초"
+          s = (m.get("label") or {"veo": "Veo 7컷 방식", "top3": "TOP3", "solo": "단일 숙소 Veo"}.get(m.get("mode"), "사진 확대 방식")) + f" · {m.get('stay')} · {m.get('duration_sec')}초"
+          if m.get("signature"):
+              s += f" · 시그니처 '{m['signature']}'"
           if v:
               s += f" · 클립 {v.get('clips_ok')}/{v.get('clips_total')} · Veo 이번 실행 약 {v.get('spent_krw', 0):,}원 · 이번 달 누적 {v.get('month_total_krw', 0):,}원"
+          if m.get("image_krw"):
+              s += f" · 이미지 편집 약 {m['image_krw']:,}원"
           g = m.get("gemini_usage") or {}
           if g:
               s += f" · AI 글·음성 추정 {g.get('krw_est', 0):,}원"
-          print(s + " (미발행 · 검수용)")
+          print(s + (" (미리보기 · 관리실에서 정식 제작을 누르면 이 사진들을 재사용)" if m.get("stage") == "preview" else " (미발행 · 검수용)"))
           PY
           )
             curl -s -o /dev/null -w "telegram video http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$V" \
               -F caption="$CAP" "https://api.telegram.org/bot$TG_TOKEN/sendVideo" || true
             S=$P/data/runs/latest/compare_sheet.jpg
             if [ -f "$S" ]; then
+              SC="왼쪽 원본 사진 · 오른쪽 AI 영상 첫 장면. 실제와 다른 시설·전망이 보이면 폐기합니다"
+              python3 -c "import json,sys;sys.exit(0 if json.load(open('$P/build/meta.json',encoding='utf-8')).get('mode')=='signature' else 1)" 2>/dev/null \
+                && SC="왼쪽 원본 사진 · 오른쪽 AI 변주(빛·날씨·뒷모습 인물만 바뀌어야 함). 건물·물가·전망이 달라 보이면 폐기합니다"
               curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$S" \
-                -F caption="왼쪽 원본 사진 · 오른쪽 AI 영상 첫 장면. 실제와 다른 시설·전망이 보이면 폐기합니다" \
-                "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
+                -F caption="$SC" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
             fi
           else
             ERR=$(python3 -c "import json;r=json.load(open('$P/data/runs/latest/report.json',encoding='utf-8'));v=r.get('veo')or{};print(str(r.get('error',''))[:220]+(f\"  / 이번 실행 영상값 약 {v.get('spent_krw',0):,}원\" if v else ''))" 2>/dev/null || echo "기록을 확인합니다")
