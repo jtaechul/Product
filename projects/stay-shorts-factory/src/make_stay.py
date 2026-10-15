@@ -802,8 +802,8 @@ def main() -> int:
         #    request.json 에 "veo_approved": true 가 있어야 한다. 없으면 돈을 쓰기 전에 멈춘다. 미리보기·가짜 클립은 Veo 0원이라 통과
         # 2026-10-12 검수: "fake": true 는 Veo 만 가짜로 바꾼다 — 미니어처(합성 이미지·옴니)는 여전히 유료라 허락 없이 돌던 구멍을 막는다
         mini_paid = bool(req.get("miniature")) and not (os.environ.get("OMNI_FAKE") == "1" and os.environ.get("MINI_FAKE_IMAGE") == "1")
-        sig_paid = mode == "signature" and not (veo.FAKE and os.environ.get("SIG_FAKE_IMAGE") == "1")    # 시그니처 제작은 Veo + 이미지 편집 — 둘 다 가짜일 때만 허락 불필요
-        # 2026-10-14 시그니처 모드: 미리보기(stage preview)는 이미지 편집(장당 약 98원)까지 돌고 Veo 는 0원 — 관리실 버튼이 금액을 보여 주고 누르는 것이 허락.
+        sig_paid = mode == "signature" and not (veo.FAKE and os.environ.get("SIG_FAKE_IMAGE") == "1")    # 시그니처 제작은 첫 컷 Veo(294원) — 가짜일 때만 허락 불필요
+        # 2026-10-15 시그니처 v2: 미리보기(stage preview)는 사진·글·비전만(수십 원 · 이미지 편집·Veo 0원) — 관리실 버튼이 금액을 보여 주고 누르는 것이 허락.
         #   제작(첫 컷 Veo)은 다른 유료 모드와 같이 veo_approved 필수
         if mode in ("veo", "top3", "solo", "signature") and (not veo.FAKE or mini_paid or sig_paid) and str(req.get("stage") or "") != "preview" and req.get("veo_approved") is not True \
                 and not (mode == "solo" and str(req.get("max_veo_cuts")) == "0" and not req.get("miniature")) \

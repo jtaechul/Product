@@ -25,8 +25,10 @@ const REGIONS = ["강원", "경기", "제주", "부산", "경남", "경북", "�
 const MEDIA = { "video.mp4": "video/mp4", "narration_preview.mp3": "audio/mpeg", "preview.md": "text/plain; charset=utf-8" };
 const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.py MONTH_KRW 와 같은 값)
 // 형식별 예상 비용(원). 기존 9컷: 미리보기 글·음성 약 80 / 정식 제작(미니어처 3컷 + Veo 1컷) 약 2,500 (실측).
-// 시그니처(2026-10-14 · 추정): 미리보기 = 변주 이미지 편집 최대 5장(장당 약 98) + 검수·글 약 500 / 제작 = 미리보기 재사용 + 첫 컷 Veo 294 ≈ 300, 미리보기 없이 ≈ 800
-const COST = { signature: { preview: 500, produce: 300, produce_fresh: 800 }, solo: { preview: 80, produce: 2500, produce_fresh: 2500 } };
+// 시그니처 v2(2026-10-15 · 추정): 미리보기 = 사진 수집·분류·시그니처·사진 확인·자막 글·비전 약 30(이미지 편집·Veo 없음 — v1 실측 run-47 은 편집 686원)
+//   제작 = 미리보기 재사용 + 첫 컷 Veo 294 ≈ 300, 미리보기 없이 ≈ 330
+const COST = { signature: { preview: 30, produce: 300, produce_fresh: 330 }, solo: { preview: 80, produce: 2500, produce_fresh: 2500 } };
+const BLOCK_DAYS = 14;                      // make_sig 가 '사진·사실 부족'으로 멈춘 숙소는 이 기간 시그니처 버튼을 잠근다(state/sig_blocked.json)
 const MODES = { signature: "시그니처", solo: "기존 9컷" };
 const SIG_PREVIEW_RX = /관리자 페이지 시그니처(\(한 장면\))? 미리보기 — (.+?) \(/;   // 형식이 같아야 재사용된다(make_sig.find_reuse)
 const LABEL = { preview: "미리보기", produce: "정식 제작" };
@@ -224,9 +226,22 @@ function lastResult(rep) {
     narration_ok: nq.filter((q) => q.ok).length,
     narration_total: nq.length,
     screen: screenOk(rep.screen_qa),
+    info: rep.info_test ? { ok: !!rep.info_test.ok, matched: rep.info_test.matched || 0, need: rep.info_test.need || 0 } : null,
     krw: (rep.gemini_usage || {}).krw_est || 0,
     cuts: (s.cuts || []).map((c) => ({ i: c.i, caption: c.caption, narration: c.narration })),
   };
+}
+
+function activeBlocks(blocked, now) {
+  // 기한(BLOCK_DAYS)이 지나지 않은 잠금만 — 사진이 새로 생겼을 수 있어 오래된 잠금은 푼다
+  const out = {};
+  const today = now.toISOString().slice(0, 10);
+  for (const [name, b] of Object.entries(blocked && typeof blocked === "object" ? blocked : {})) {
+    const at = String((b || {}).at || "");
+    const days = at ? (Date.parse(today) - Date.parse(at)) / 86400000 : 0;
+    if (!(days > BLOCK_DAYS)) out[name] = { at, reason: String((b || {}).reason || "").slice(0, 160) };
+  }
+  return out;
 }
 
 function sigPreviewIndex(runs) {
@@ -244,7 +259,7 @@ function sigPreviewIndex(runs) {
 async function state(env) {
   const now = kstNow();
   const ym = now.toISOString().slice(0, 7);
-  const [req, ledger, cands, folders, rep, titles, runs, media, disc] = await Promise.all([
+  const [req, ledger, cands, folders, rep, titles, runs, media, disc, blocked] = await Promise.all([
     readJson(env, REQ_PATH, {}),
     readJson(env, `${P}/state/spend.json`, []),
     readJson(env, `${P}/data/discover/latest/candidates.json`, {}),
@@ -254,7 +269,9 @@ async function state(env) {
     listRuns(env).catch((e) => ({ error: e.message })),
     releaseMedia(env),
     readJson(env, DISC_PATH, {}),
+    readJson(env, `${P}/state/sig_blocked.json`, {}),
   ]);
+  const blocks = activeBlocks(blocked, now);
   const runList = (Array.isArray(runs) ? runs : []).map((r) => ({ ...r, media: r.kind === "produce" ? media[String(r.number)] || [] : [] }));
   const sigPreviews = sigPreviewIndex(Array.isArray(runs) ? runs : []);
   const done = new Set();
@@ -267,6 +284,7 @@ async function state(env) {
     score: c.score,
     done: done.has(c.name),
     official: !!officials[c.name],
+    sig_block: blocks[c.name] || null,
   }));
   return {
     build: BUILD,
@@ -304,18 +322,21 @@ async function startRun(env, body) {
   const format = String(body.format || "") === "single" ? "single" : "montage";
   const stay = String(body.stay || "").trim();
   if (!stay) throw new HttpError(400, "숙소를 고르세요");
-  const [req, ledger, cands, runs, recent] = await Promise.all([
+  const [req, ledger, cands, runs, recent, blocked] = await Promise.all([
     readWithSha(env, REQ_PATH),
     readJson(env, `${P}/state/spend.json`, []),
     readJson(env, `${P}/data/discover/latest/candidates.json`, {}),
     listRuns(env, 30),
     recentRequestCommit(env),
+    readJson(env, `${P}/state/sig_blocked.json`, {}),
   ]);
   const cur = req.data;
   const names = new Set([...(cands.candidates || []).map((c) => c.name), ...Object.keys(cur.official_urls || {})]);
   if (!names.has(stay)) throw new HttpError(400, "후보 목록에 없는 숙소입니다");
   if (runs.some((r) => r.active)) throw new HttpError(409, "지금 다른 실행이 돌고 있습니다. 끝난 뒤 다시 누르세요");
   if (recent) throw new HttpError(409, "방금 시작한 실행이 준비 중입니다. 1~2분 뒤 '지금 상태'를 확인하세요");
+  const blk = mode === "signature" ? activeBlocks(blocked, kstNow())[stay] : null;
+  if (blk) throw new HttpError(409, `이 숙소는 시그니처 영상을 만들 재료가 부족합니다(${blk.at}): ${blk.reason}. 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요`);
   const reuse = mode === "signature" && action === "produce" ? sigPreviewIndex(runs)[`${format}|${stay}`] || null : null;
   const cost = action === "preview" ? COST[mode].preview : reuse ? COST[mode].produce : COST[mode].produce_fresh;
   const now = kstNow();
@@ -334,7 +355,6 @@ async function startRun(env, body) {
   for (const k of ["theme", "region", "month"]) if (cands[k]) next[k] = cands[k];
   if (mode === "signature") {
     next.format = format;
-    next.people = "back";
     if (reuse) next.reuse_runs = [{ run_id: reuse.id, name: `stay-run-${reuse.number}` }];
   }
   next.veo_approved = action === "produce";

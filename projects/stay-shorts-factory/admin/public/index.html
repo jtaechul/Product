@@ -119,8 +119,8 @@ main > *, .card > *, .runs .body > * { min-width: 0 }      /* 넓은 표가 화�
     <span class="label" id="themeLine">다음 숙소</span>
     <select id="stay" aria-label="숙소 고르기"></select>
     <select id="fmt" aria-label="영상 형식">
-      <option value="signature|montage">시그니처 몽타주 · 15~20초 (새 형식)</option>
-      <option value="signature|single">시그니처 한 장면 · 약 9초 (새 형식)</option>
+      <option value="signature|montage">시그니처 몽타주 · 컷 2~5개 · 9~17초</option>
+      <option value="signature|single">시그니처 짧게 · 컷 2개 · 약 9초</option>
       <option value="solo|">기존 9컷 · 약 36초</option>
     </select>
     <p class="note" id="fmtNote"></p>
@@ -288,20 +288,25 @@ function render(d) {
 
   $("themeLine").textContent = "다음 숙소 · " + [d.theme.month, d.theme.region, d.theme.theme].filter(Boolean).join(" · ");
   const sel = $("stay"), keep = sel.value;
-  sel.innerHTML = d.candidates.map((c) => "<option value=\"" + esc(c.name) + "\">" + esc(c.rank + "위 " + c.name + (c.city ? " (" + c.city + ")" : "") + (c.done ? " · 폴더 등록됨" : "")) + "</option>").join("");
+  const sigMode = ($("fmt").value || "signature").startsWith("signature");
+  sel.innerHTML = d.candidates.map((c) => "<option value=\"" + esc(c.name) + "\">" + esc(c.rank + "위 " + c.name + (c.city ? " (" + c.city + ")" : "") + (c.done ? " · 폴더 등록됨" : "") + (sigMode && c.sig_block ? " · 시그니처 불가" : "")) + "</option>").join("");
   const first = d.candidates.find((c) => !c.done);
   sel.value = keep && d.candidates.some((c) => c.name === keep) ? keep : (first ? first.name : (d.candidates[0] || {}).name || "");
 
   const room = m.cap - m.total;
   const fc = fmtCost(d);
-  $("previewCost").textContent = "약 " + won(fc.preview) + (fc.mode === "signature" ? " · 사진 변주 포함 · Veo 없음" : " · 영상 없음");
+  const cur = d.candidates.find((c) => c.name === sel.value) || {};
+  const blk = fc.mode === "signature" ? cur.sig_block : null;
+  $("previewCost").textContent = "약 " + won(fc.preview) + (fc.mode === "signature" ? " · 사진·자막만 · 이미지 편집·Veo 없음" : " · 영상 없음");
   $("produceCost").textContent = "약 " + won(fc.produce) + (fc.reuse ? " · 미리보기 #" + fc.reuse.number + " 재사용" : "") + " · 누르면 한 번 더 확인";
-  $("fmtNote").textContent = fc.mode === "signature"
-    ? "숙소의 시그니처 하나만 시간·날씨·뒷모습 인물로 변주해 보여 줍니다. 음악 + 한 구절 자막. 미리보기에서 만든 사진을 정식 제작이 그대로 씁니다."
+  $("fmtNote").textContent = blk
+    ? "이 숙소는 시그니처 영상을 만들 재료가 부족해 잠겨 있습니다(" + blk.at + "): " + blk.reason + ". 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요."
+    : fc.mode === "signature"
+    ? "다른 후보에 없는 이 숙소만의 시그니처 하나를, 컷마다 다른 사진 + 사실 한 줄(신박함 → 차별성 → 유인)로 보여 줍니다. 음악 + 자막. 시그니처가 주인공인 사진이 2장 안 되면 만들지 않습니다."
     : "물놀이·객실·특별 공간을 9컷으로 소개하는 예전 형식(나레이션 + 미니어처 인물).";
   const hold = Date.now() < holdUntil;
-  $("previewBtn").disabled = !!act || hold || room < fc.preview || !sel.value;
-  $("produceBtn").disabled = !!act || hold || room < fc.produce || !sel.value;
+  $("previewBtn").disabled = !!act || hold || room < fc.preview || !sel.value || !!blk;
+  $("produceBtn").disabled = !!act || hold || room < fc.produce || !sel.value || !!blk;
 
   const L = d.last;
   $("lastCard").hidden = !L;
@@ -311,6 +316,7 @@ function render(d) {
     const f = [];
     if (L.narration_total) f.push("<span class=\"chip " + (L.narration_ok === L.narration_total ? "ok" : "bad") + "\">받아쓰기 " + L.narration_ok + "/" + L.narration_total + "</span>");
     if (L.screen.total) f.push("<span class=\"chip " + (L.screen.ok === L.screen.total ? "ok" : "bad") + "\">" + (L.mode === "signature" ? "변주 검수 " : "화면 검수 ") + L.screen.ok + "/" + L.screen.total + "</span>");
+    if (L.info && L.info.need) f.push("<span class=\"chip " + (L.info.ok ? "ok" : "bad") + "\">정보 전달 " + L.info.matched + "/" + L.info.need + "</span>");
     if (L.image_krw) f.push("<span class=\"chip idle\">이미지 약 " + esc(won(L.image_krw)) + "</span>");
     if (L.krw) f.push("<span class=\"chip idle\">글 약 " + esc(won(L.krw)) + "</span>");
     $("lastFacts").innerHTML = f.join("");
@@ -392,11 +398,11 @@ $("produceBtn").onclick = () => {
   if (!S) return;
   const stay = $("stay").value, m = S.money, fc = fmtCost(S), c = fc.produce;
   const how = fc.mode === "signature"
-    ? (fc.reuse ? "미리보기 #" + fc.reuse.number + "의 사진·문구를 그대로 쓰고 첫 컷만 Veo 로 움직입니다. " : "이 숙소·형식의 미리보기가 없어 사진 변주부터 새로 만듭니다. ")
+    ? (fc.reuse ? "미리보기 #" + fc.reuse.number + "의 사진·자막을 그대로 쓰고 첫 컷만 Veo 로 움직입니다. " : "이 숙소·형식의 미리보기가 없어 시그니처 선정·자막부터 새로 만듭니다(검수 안 된 자막이 나갈 수 있습니다). ")
     : "";
   openSheet({ label: "정식 제작 확인", title: stay + " · " + $("fmt").selectedOptions[0].textContent.split(" · ")[0], big: "약 " + esc(won(c)) + " <small>정식 제작 1편</small>",
     after: how + "이번 달 " + won(m.total) + " → 약 " + won(m.total + c) + " (한도 " + won(m.cap) + ")",
-    check: fc.mode === "signature" ? "이 숙소의 미리보기 영상과 원본·변주 비교 사진을 확인했습니다" : "이 숙소의 미리보기(사진 시트·나레이션)를 확인했습니다",
+    check: fc.mode === "signature" ? "이 숙소의 미리보기 영상과 컷별 스토리보드(사진·자막·근거 사실)를 확인했습니다" : "이 숙소의 미리보기(사진 시트·나레이션)를 확인했습니다",
     go: "제작 시작", onGo: () => start("produce", true) });
 };
 $("cancelBtn").onclick = () => {
