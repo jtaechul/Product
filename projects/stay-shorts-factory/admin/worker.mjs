@@ -167,8 +167,12 @@ async function releaseMedia(env) {
 
 async function recentRequestCommit(env) {
   // 커밋 직후 몇 초는 GitHub 에 실행이 아직 안 보인다 → 요청 폴더가 2분 안에 바뀌었으면 연달아 누른 것으로 본다
-  const last = await gh(env, `/repos/${REPO}/commits?sha=${encodeURIComponent(BRANCH)}&path=${encodeURIComponent(P + "/requests")}&per_page=1`).catch(() => []);
-  const at = Date.parse((((last || [])[0] || {}).commit || {}).committer?.date || "") || 0;
+  // 2026-10-16 stay-run-53: 실행이 끝날 때 워크플로(github-actions 봇)가 요청을 잠그는 커밋도 requests/ 를 바꾼다 → 결과를 받자마자 누른
+  // '정식 제작'이 2분 동안 '방금 시작한 실행' 으로 거절됐다. 사람(관리실) 커밋만 센다
+  const list = await gh(env, `/repos/${REPO}/commits?sha=${encodeURIComponent(BRANCH)}&path=${encodeURIComponent(P + "/requests")}&per_page=5`).catch(() => []);
+  const bot = (c) => /\[bot\]$/.test(String((c.author || {}).login || (c.commit || {}).author?.name || ""));
+  const last = (Array.isArray(list) ? list : []).find((c) => !bot(c));
+  const at = Date.parse(((last || {}).commit || {}).committer?.date || "") || 0;
   return Date.now() - at < 120 * 1000;
 }
 

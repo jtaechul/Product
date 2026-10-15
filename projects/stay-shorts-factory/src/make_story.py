@@ -192,6 +192,13 @@ def _iou(a, b) -> float:
     return inter / ua if ua > 0 else 0.0
 
 
+def adv_ok(sig: dict) -> set[int]:
+    """장점 사진으로 인정하는 원본 번호 — 주인공 확인을 통과한 사진(confirmed · 검사 ok/subject)만. 검사가 없으면(코드 대체 장점) 장점 사진 목록."""
+    ok = {int(k) for k in sig.get("confirmed") or []}
+    ok |= {int(c["k"]) for c in sig.get("checks") or [] if c.get("ok") or c.get("subject")}
+    return ok or {int(k) for k in sig.get("photos") or []}
+
+
 def build_shots(models: dict, sig: dict, h: dict, report: dict) -> list[dict]:
     """컷 재료 목록. 장점 사진(주인공 확인 → 시그니처 낱말 사진) 최대 4장 × (넓게 + 디테일 1~2) + 연결용 다른 사진 최대 5장(넓게만)."""
     by_k = {int(p["k"]): p for p in h.get("classified") or []}
@@ -199,7 +206,10 @@ def build_shots(models: dict, sig: dict, h: dict, report: dict) -> list[dict]:
     toks = adv_tokens(sig)
     checked = [c for c in sig.get("checks") or [] if int(c["k"]) in by_k]
     adv = [int(k) for k in sig.get("confirmed") or [] if int(k) in by_k]
-    adv += [int(c["k"]) for c in checked if int(c["k"]) not in adv and sg._overlap(toks, sg._tokens(by_k[int(c["k"])].get("description")))]
+    # stay-run-53 실측(2026-10-16): 주인공 확인에서 '아님'(subject false)이 나온 키즈룸 사진이 '침대' 낱말 하나 겹친다고 장점 사진이 됐다
+    # → '도그 파크' 문장 밑에 키즈룸이 깔림. 확인을 통과한 사진만 낱말 겹침으로 더한다
+    good = adv_ok(sig)
+    adv += [int(c["k"]) for c in checked if int(c["k"]) not in adv and int(c["k"]) in good and sg._overlap(toks, sg._tokens(by_k[int(c["k"])].get("description")))]
     adv += [int(k) for k in sig.get("photos") or [] if int(k) in by_k and int(k) not in adv]
     adv = adv[:ADV_PHOTOS]
     others = sorted((k for k in pool if k not in adv and not (mt.is_exterior(pool[k]) and k not in adv)),
@@ -219,6 +229,8 @@ def build_shots(models: dict, sig: dict, h: dict, report: dict) -> list[dict]:
         for d in details(models, sig, p):
             x0, y0, x1, y1 = d["box"]
             frac = max((y1 - y0) * H * 1.25 / mh, (x1 - x0) * W * 1.25 / mw)
+            if frac >= 0.9:                                                # stay-run-53: 확대 1.0배 '디테일'이 넓은 컷과 같은 화면 → 같은 그림이 두 문장 연속. 1.1배 미만은 안 만든다
+                continue
             n += 1
             sid = f"S{n}"
             crop_shot(p["path"], STORY / f"shot_{sid}.png", (x0 + x1) / 2, (y0 + y1) / 2, frac)
@@ -371,6 +383,46 @@ def story_errs(js: dict, sig: dict, h: dict, req: dict, facts: list[str], shots:
 def _line_idx(e: str) -> int | None:
     m = re.match(r"문장 (\d+) ", e)
     return int(m.group(1)) if m else None
+
+
+def recheck_shots(text: dict, shots: list[dict], sig: dict, report: dict) -> None:
+    """재사용 계획 다시 검사(돈 0) — 위 build_shots 고치기 전에 만든 미리보기도 바로잡는다.
+    주인공 확인을 못 통과한 사진의 '장점' 컷은 연결 컷으로 낮추고, 연결이 아닌 문장에 걸렸으면 확인된 장점 컷(덜 쓴 사진·옆 문장과 다른 컷)으로 바꾼다."""
+    good = adv_ok(sig)
+    bad = {s["id"] for s in shots if s.get("adv") and int(s["k"]) not in good}
+    if not good or not bad:
+        return
+    for s in shots:
+        if s["id"] in bad:
+            s["adv"], s["kind"] = False, "연결"
+    by_id = {s["id"]: s for s in shots}
+    pool = [s["id"] for s in shots if s.get("adv")]
+    beats = text.get("beats") or []
+    use: dict[str, int] = {}
+    for b in beats:
+        for x in b.get("shots") or []:
+            use[x] = use.get(x, 0) + 1
+    changed = []
+    for i, b in enumerate(beats):
+        ids = list(b.get("shots") or [])
+        if str(b.get("lens") or "") == "연결" or not any(x in bad for x in ids) or not pool:
+            continue
+        # 옆 문장과 같은 원본 사진은 피한다(stay-run-53: 디테일·행동·희소성 세 문장이 같은 사진이 될 뻔함) → 덜 쓴 컷
+        near = [x for j in (i - 1, i + 1) if 0 <= j < len(beats) for x in beats[j].get("shots") or [] if x in by_id]
+        near_k = {by_id[x]["k"] for x in near}
+        new = []
+        for x in ids:
+            if x in bad:
+                y = sorted((y for y in pool if y not in new and y not in ids),
+                           key=lambda y: (by_id[y]["k"] in near_k, use.get(y, 0), pool.index(y)))[:1] or [pool[0]]
+                y = y[0]
+                use[y] = use.get(y, 0) + 1
+                changed.append({"beat": i + 1, "from": x, "to": y})
+                x = y
+            new.append(x)
+        b["shots"] = new
+    report["shot_recheck"] = {"not_signature": sorted(bad), "changed": changed}
+    log(f"컷 다시 검사: 주인공 확인 안 된 장점 컷 {sorted(bad)} → 연결로 낮춤 · 바꾼 문장 {changed}")
 
 
 def fix_shots(js: dict, shots: list[dict]) -> None:
@@ -835,6 +887,7 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
         report["reused_plan"] = True
         report["hotels"] = [{k: h.get(k) for k in sg.H_KEYS if k in h}]
         report["lens_check"] = {"ok": True, "note": "미리보기 대본 재사용"}
+        recheck_shots(text, shot_list, sig, report)
     else:
         h, pos0 = so.assets(req, models, report)
         sig = sg.choose_signature(models, h, req, report)
