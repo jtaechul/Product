@@ -317,6 +317,8 @@ function render(d) {
     if (L.narration_total) f.push("<span class=\"chip " + (L.narration_ok === L.narration_total ? "ok" : "bad") + "\">받아쓰기 " + L.narration_ok + "/" + L.narration_total + "</span>");
     if (L.screen.total) f.push("<span class=\"chip " + (L.screen.ok === L.screen.total ? "ok" : "bad") + "\">" + (L.mode === "signature" ? "변주 검수 " : "화면 검수 ") + L.screen.ok + "/" + L.screen.total + "</span>");
     if (L.info && L.info.need) f.push("<span class=\"chip " + (L.info.ok ? "ok" : "bad") + "\">정보 전달 " + L.info.matched + "/" + L.info.need + "</span>");
+    if (L.veo) f.push("<span class=\"chip " + (L.veo.ok === L.veo.total ? "ok" : "bad") + "\">AI 영상 " + L.veo.ok + "/" + L.veo.total + "컷</span>");
+    if (L.veo && L.veo.krw) f.push("<span class=\"chip idle\">Veo 약 " + esc(won(L.veo.krw)) + "</span>");
     if (L.image_krw) f.push("<span class=\"chip idle\">이미지 약 " + esc(won(L.image_krw)) + "</span>");
     if (L.krw) f.push("<span class=\"chip idle\">글 약 " + esc(won(L.krw)) + "</span>");
     $("lastFacts").innerHTML = f.join("");

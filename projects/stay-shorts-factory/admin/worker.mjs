@@ -232,6 +232,7 @@ function lastResult(rep) {
     narration_total: nq.length,
     screen: screenOk(rep.screen_qa),
     info: rep.info_test ? { ok: !!rep.info_test.ok, matched: rep.info_test.matched || 0, need: rep.info_test.need || 0 } : null,
+    veo: rep.veo && (rep.veo.clips || []).length ? { ok: rep.veo.clips.filter((c) => c.ok).length, total: rep.veo.clips.length, krw: rep.veo.spent_krw || 0 } : null,
     krw: (rep.gemini_usage || {}).krw_est || 0,
     cuts: (s.cuts || []).map((c) => ({ i: c.i, caption: c.caption, narration: c.narration })),
   };
