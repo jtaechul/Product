@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-15T16:19:04Z",
+  "updated": "2026-10-15T16:23:00Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -46,17 +46,11 @@
       "id": "chaunax_stigmaeus",
       "name_ko": "아귀목 심해어",
       "sci": "Chaunax stigmaeus",
-      "stage": "upload",
-      "state": "review",
-      "job": {
-        "stage": "upload",
-        "status": "done",
-        "at": "2026-10-15T16:18:41Z",
-        "action": "trial_skip",
-        "text": "시험 릴스 건너뜀"
-      },
+      "stage": "done",
+      "state": "approved",
+      "job": null,
       "created": "2026-10-15T14:54:15Z",
-      "uploaded_at": null,
+      "uploaded_at": "2026-10-16T00:00:00Z",
       "stats": null,
       "viewed": null,
       "trial": {
