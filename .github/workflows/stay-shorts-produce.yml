@@ -164,7 +164,7 @@ jobs:
           g = m.get("gemini_usage") or {}
           if g:
               s += f" · AI 글·음성 추정 {g.get('krw_est', 0):,}원"
-          print(s + (" (미리보기 · AI 영상 없음 — 관리실에서 정식 제작을 누르면 이 대본·나레이션 그대로 + 훅·정체·마지막 3컷만 AI 영상, 약 900원)" if m.get("stage") == "preview" else " (미발행 · 검수용)"))
+          print(s + (" (미리보기 · AI 영상 없음 — 관리실에서 정식 제작을 누르면 이 대본·나레이션 그대로 + 훅·정체·마지막 3컷과 손·뒷모습 1컷만 AI 영상, 약 1,200원)" if m.get("stage") == "preview" else " (미발행 · 검수용)"))
           PY
           )
             curl -s -o /dev/null -w "telegram video http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$V" \
