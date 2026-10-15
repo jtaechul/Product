@@ -806,16 +806,19 @@ def test_workflow_has_secrets_and_setup():
     steps = {s.get("name"): s for s in d["jobs"]["run"]["steps"] if s.get("name")}
     assert list(steps) == ["진행 중 먼저 기록", "준비", "버튼 실행", "실패 기록", "결과 커밋"]
     env = steps["버튼 실행"]["env"]
-    for k in ("GEMINI_API_KEY", "GOOGLE_TTS_KEY", "YOUTUBE_REFRESH_TOKEN", "IG_ACCESS_TOKEN", "IN_ACTION", "IN_PILOT", "IN_STAGE", "IN_NOTE"):
+    for k in ("GEMINI_API_KEY", "GOOGLE_TTS_KEY", "YOUTUBE_REFRESH_TOKEN", "IN_ACTION", "IN_PILOT", "IN_STAGE", "IN_NOTE"):
         assert k in env, k
-    assert "ffmpeg" in steps["준비"]["run"] and "janome" in steps["준비"]["run"] and "requests" in steps["준비"]["run"]
+    assert "IG_ACCESS_TOKEN" not in env                                          # 인스타 연동 폐지(운영자 지시 2026-10-16)
+    assert "ffmpeg" in steps["준비"]["run"] and "janome" in steps["준비"]["run"]
     run1, run2 = steps["진행 중 먼저 기록"]["run"], steps["버튼 실행"]["run"]
     assert "job_start" in run1 and "ci_commit.sh" in run1
     for a in ("write_script", "write_storyboard", "make_video"):           # 키가 없는 첫 단계에서 유료 작업을 돌리면 안 된다
         assert f"admin.py {a}" not in run1, a
     for a in ("write_script", "write_storyboard", "make_video", "edit_hook", "recut_approve", "upload_meta", "save_meta", "save_viewed",
-              "after_video", "trial_check", "trial_skip", "ig_probe", "trial_repost", "ig_short"):   # 시험 릴스 · 인스타용 짧은 판
+              "after_video"):
         assert a in run2, a
+    for a in ("trial_check", "trial_skip", "trial_repost", "ig_probe", "ig_short"):              # 인스타 연동 폐지
+        assert a not in run2, a
     assert "after_video" not in run1                                              # 인스타 키는 '버튼 실행' 단계에만 있다
     assert steps["실패 기록"].get("if") == "failure()" and steps["결과 커밋"].get("if") == "always()"
 
@@ -1423,260 +1426,28 @@ def test_save_viewed_records_pattern_and_index(v2):
     assert admin.hook_pattern_label({"hook": {"question_jp": "光る皮を投げ捨てる、この生き物は？"}}) == "名前当て(옛)"
 
 
-# ── 인스타 시험 릴스로 후킹 A·B 겨루기(운영자 선택 2026-10-09: 자동 · 결과 보고 올리기 · 2개) ──────────────────
-_SHA = "a" * 40
-
-
-def _scrolling_clip(path, sec):
-    """처음부터 끝까지 고르게 움직이는 화면(시험 무늬가 옆으로 흐름) — 어느 2초를 잘라도 움직임이 비슷하다."""
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", f"testsrc2=s=1440x1280:r=24:d={sec}",
-                    "-vf", "crop=720:1280:x='mod(t*240,720)':y=0", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(path)], check=True)
-
-
-def _trial_pilot(v2, monkeypatch, cands=None, line=True):
-    """작은 실제 편: 컷 2개(2번 컷 = 6초 내내 움직임) · 후킹 후보 3개 · A 완성본을 실제로 조립 · 영상 승인까지."""
-    import assemble as A
-    pid = "test_fish"
-    P = v2 / "pilots" / pid
-    for d in ("out/clips", "out/tts", "out/hv", "out/final", "requests"):
-        (P / d).mkdir(parents=True, exist_ok=True)
-    _tiny_clip(P / "out/clips/c01.mp4", 4, "blue")
-    _scrolling_clip(P / "out/clips/c02.mp4", 6)
-    _silent_wav(P / "out/tts/body.wav", 8)
-    _silent_wav(P / "out/hv/hook.wav", 1.6)
-    tps = lambda: [{"jp_seg": None, "start": 0.15, "end": 2.5}]       # noqa: E731
-    c = cands or _CANDS
-    hook = {"cut": 2, "at": None, "answer_jp": "テストウオ", "answer_ko": "시험어", "candidates": c}
-    hook = admin.hook_from_candidate(hook, 0) if line else {"cut": 2, "at": 0.0, "question_jp": "青く光る、この生き物は？",
-                                                             "answer_jp": "テストウオ", "type": "identity"}
-    if line:
-        hook.update(voice_file="out/hv/hook.wav", voice_for=hook["voice_jp"])
-    sc = {"subject": {"scientific_name": "Testus fishus", "jp_name": "テストウオ", "ko_name": "시험어"}, "hook": hook, "core": "F4",
-          "facts": [{"id": "F4", "fact": "자극을 받으면 파랗게 빛난다", "fact_jp": "刺激を受けると青く光る", "sources": ["https://example.org/a"]}],
-          "cuts": [{"cut": 1, "jp": "こんにちは。", "tts": "こんにちは。", "sec": 4, "fact": "F4"},
-                   {"cut": 2, "jp": "さようなら。", "tts": "さようなら。", "sec": 6, "fact": "F4"}],
-          "timing_v5": [{"cut": 1, "sec": 4, "audio_from": 0.0, "audio_to": 2.5, "speech_s": 2.5, "lead": 0.15, "local_tps": tps()},
-                        {"cut": 2, "sec": 6, "audio_from": 2.5, "audio_to": 5.0, "speech_s": 2.5, "lead": 0.15, "local_tps": tps()}]}
-    admin._save(P / "script.json", sc)
-    info = A.main(str(P), "clips", "tts", "", str(P / "out/final/final.mp4"))
-    if line:
-        sc["hook"].update(at=info["hook"]["at"], motion=info["hook"]["motion"], at_by=info["hook"]["by"])
-        admin._save(P / "script.json", sc)
-    st = {"id": pid, "name_ko": "시험어", "sci": "Testus fishus", "created": admin._now(),
-          "stages": {s: {"state": "approved", "notes": []} for s in admin.STAGES[:4]} | {"upload": {"state": "working", "notes": []}},
-          "artifacts": {"video": {"final": "out/final/final.mp4", "built_at": "2026-10-09T00:00:00Z",
-                                  "assemble": {"clips_id": "clips", "tts_id": "tts", "ending": ""},
-                                  "clips": [{"cut": 1, "file": "out/clips/c01.mp4", "sec": 4}, {"cut": 2, "file": "out/clips/c02.mp4", "sec": 6}]},
-                        "script": {}}}
-    admin._save(admin.status_path(pid), st)
-    monkeypatch.setattr(admin, "_RUN_REQUEST", _fake_runner(v2))
-    monkeypatch.setattr(admin, "_COMMIT_PUSH", lambda msg: _SHA)
-    monkeypatch.delenv("IG_ACCESS_TOKEN", raising=False)
-    shorts = []                                                              # 인스타용 짧은 판은 따로 시험(조립 시간 절약)
-    monkeypatch.setattr(admin, "_ig_short_safely", lambda pid: shorts.append(pid))
-    admin._TRIAL_SHORTS = shorts
-    return pid, P
-
-
-class _FakeIG(dict):
-    """가짜 인스타 API — 올린 주소·캡션을 기억하고, 지표는 media_id 별로 돌려준다."""
-    def __init__(self, metrics=None, fail_on=None, user="abyss_0cean"):
-        self.posts, self.metrics, self.n, self.user = [], metrics or {}, 0, user
-        def post(url, cap):
-            self.n += 1
-            if fail_on and self.n == fail_on:
-                raise RuntimeError("HTTPSConnectionPool: /me?fields=user_id&access_token=SECRET123TOKEN failed")
-            self.posts.append({"url": url, "caption": cap})
-            return {"media_id": f"m{self.n}", "permalink": f"https://www.instagram.com/reel/R{self.n}/", "username": self.user}
-        super().__init__(post=post, insights=lambda mid: {"metrics": dict(self.metrics.get(mid, {})), "errors": {}},
-                         probe=lambda: {"ok": True, "username": self.user}, check=lambda url: True)
-
-
-def _meta_ai(line):
-    def ask(p):
-        return json.dumps(dict(_META, title_jp=line.replace("、", "") + "深海の謎", title_ko="한국어 제목"))
-    return ask
-
-
-def test_after_video_posts_two_trial_reels_and_waits(v2, monkeypatch):
-    pid, P = _trial_pilot(v2, monkeypatch)
-    ig = _FakeIG(); monkeypatch.setattr(admin, "_IG_API", ig)
-    a_hook = json.loads((P / "script.json").read_text(encoding="utf-8"))["hook"]
-    admin.main(["after_video", pid])
-    st = admin.load_status(pid)
-    tr = st["artifacts"]["trial"]
-    assert tr["state"] == "running" and len(ig.posts) == 2 and tr["username"] == "abyss_0cean"
-    urls = {p["url"] for p in ig.posts}
-    assert urls == {f"{admin.DASH_URL}/v2file/{_SHA}/{pid}/out/final/final.mp4", f"{admin.DASH_URL}/v2file/{_SHA}/{pid}/{tr['b']['file']}"}
-    assert ig.posts[0]["caption"] == ig.posts[1]["caption"]                      # 후킹만 다르게(캡션은 똑같이)
-    assert "触ると" not in ig.posts[0]["caption"] and "テストウオ" not in ig.posts[0]["caption"] and "AIによる再現映像" in ig.posts[0]["caption"]
-    hb = tr["b"]["hook"]
-    assert hb["pattern"] == "常識破り" and hb["question_jp"] == "魚なのに、青く光る" and hb["at_by"] == "trial"   # 틀이 다른 후보
-    assert hb["voice_file"] != a_hook["voice_file"] and (P / hb["voice_file"]).exists()
-    assert abs(hb["at"] - a_hook["at"]) >= admin.TRIAL_B_GAP_S and hb["motion"] >= admin.TRIAL_B_MOTION * a_hook["motion"]   # 다른 첫 장면
-    assert (P / tr["b"]["file"]).exists() and tr["b"]["checks"]["hook_voice"]["ok"] and "hook_motion" in tr["b"]["checks"]
-    assert tr["a"]["hook"]["question_jp"] == "触ると、青く光る" and tr["a"]["media_id"] and tr["b"]["permalink"].startswith("https://www.instagram.com/")
-    sc = json.loads((P / "script.json").read_text(encoding="utf-8"))
-    assert sc["hook"]["question_jp"] == a_hook["question_jp"] and sc["hook"]["at"] == a_hook["at"]     # 대본은 판정 전까지 A 그대로
-    assert st["jobs"]["upload"]["status"] == "trial" and "meta" not in st["artifacts"].get("upload", {})  # 제목은 결과 뒤에
-    assert st["stages"]["upload"]["state"] == "working" and tr["order"] in (["a", "b"], ["b", "a"])
-    idx = json.loads((v2 / "pilots" / "index.json").read_text(encoding="utf-8"))
-    assert idx["items"][0]["trial"]["state"] == "running" and idx["items"][0]["trial"]["b"]["line"] == "魚なのに、青く光る"
-    dur = lambda f: float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(f)],  # noqa: E731
-                                         capture_output=True, text=True).stdout)
-    assert abs(dur(P / tr["b"]["file"]) - dur(P / "out/final/final.mp4")) < 0.4      # 본편은 같고 맨 앞만 다름
-    n = len(ig.posts)
-    admin.after_video(pid)                                                          # 다시 승인돼도 진행 중인 시험은 그대로(또 올리지 않음)
-    assert len(ig.posts) == n
-    assert admin._TRIAL_SHORTS == [pid]                                             # 완성본 승인 때 인스타용 짧은 판도 함께
-    assert "深海好きの友だちにも" in ig.posts[0]["caption"]                            # 시험 릴스 캡션에도 공유 한 줄(A·B 같게)
-
-
-def test_trial_decide_rules():
-    import datetime as dt
-    t0 = dt.datetime(2026, 10, 9, 0, 0, tzinfo=dt.timezone.utc).timestamp()
-    tr = lambda a, b: {"posted_at": "2026-10-09T00:00:00Z", "a": {"metrics": a}, "b": {"metrics": b}}   # noqa: E731
-    at = lambda h: t0 + h * 3600                                                                         # noqa: E731
-    d = admin.trial_decide
-    v = lambda n, s=None, w=None: {k: x for k, x in (("views", n), ("reels_skip_rate", s), ("ig_reels_avg_watch_time", w)) if x is not None}  # noqa: E731
-    assert d(tr(v(900, 60), v(900, 50)), at(10))["kind"] == "wait"                                    # 24시간 전엔 판정 안 함
-    r = d(tr(v(900, 60), v(800, 50)), at(25))
-    assert r["kind"] == "win" and r["winner"] == "b" and "10%p" in r["why"]                           # 덜 넘긴 쪽이 이김
-    assert d(tr(v(900, 50), v(800, 61)), at(25))["winner"] == "a"
-    assert d(tr(v(900, 55), v(800, 53)), at(25))["kind"] == "tie"                                     # 3%p 미만 → A 그대로
-    assert d(tr(v(900, 0.62), v(800, 0.48)), at(25))["winner"] == "b"                                 # 0~1 비율로 와도 % 로
-    assert d(tr(v(900, 60), v(120, 40)), at(25))["kind"] == "wait"                                    # 조회 300 미만 → 기다림
-    assert d(tr(v(900, 60), v(120, 40)), at(49))["winner"] == "b"                                     # 48시간 뒤엔 100회면 판정
-    assert d(tr(v(900, 60), v(80, 40)), at(49))["kind"] == "hold"                                     # 그래도 모자라면 보류
-    assert d(tr(v(900), v(900)), at(25))["kind"] == "wait"                                            # 넘김 비율 아직 없음
-    assert d(tr(v(900, None, 4000), v(900, None, 5000)), at(49))["winner"] == "b"                     # 끝내 없으면 평균 시청 시간
-    assert d(tr(v(900, None, 4000), v(900, None, 4200)), at(49))["kind"] == "tie"
-    assert d(tr({}, v(900, 50)), at(30))["kind"] == "wait"                                            # 지표를 못 받으면 판정하지 않음
-
-
-def test_trial_check_b_wins_swaps_hook_video_and_prepares_upload(v2, monkeypatch):
-    pid, P = _trial_pilot(v2, monkeypatch)
-    ig = _FakeIG(); monkeypatch.setattr(admin, "_IG_API", ig)
-    admin.after_video(pid)
-    st = admin.load_status(pid); tr = st["artifacts"]["trial"]
-    a_final, b = st["artifacts"]["video"]["final"], tr["b"]
-    ig.metrics = {tr["a"]["media_id"]: {"views": 820, "reach": 700, "reels_skip_rate": 61.0, "ig_reels_avg_watch_time": 4100},
-                  tr["b"]["media_id"]: {"views": 760, "reach": 650, "reels_skip_rate": 47.5, "ig_reels_avg_watch_time": 5200}}
-    admin.trial_check(pid, now=time_after(tr["posted_at"], 10))                     # 10시간: 지표만 갱신, 판정 안 함
-    st = admin.load_status(pid)
-    assert st["artifacts"]["trial"]["state"] == "running" and st["artifacts"]["trial"]["a"]["metrics"]["views"] == 820
-    monkeypatch.setattr(admin, "_gemini_text", _meta_ai(b["hook"]["question_jp"]))
-    res = admin.trial_check(None, now=time_after(tr["posted_at"], 26))               # 편 id 없이 = 진행 중인 모든 편
-    assert res[0]["kind"] == "win" and res[0]["winner"] == "b"
-    st = admin.load_status(pid); tr = st["artifacts"]["trial"]
-    sc = json.loads((P / "script.json").read_text(encoding="utf-8"))
-    assert tr["state"] == "decided" and tr["winner"] == "b"
-    assert sc["hook"]["question_jp"] == "魚なのに、青く光る" and sc["hook"]["at_by"] == "trial" and sc["hook"]["voice_file"] == b["hook"]["voice_file"]
-    assert sc["hook_history"][-1]["hook"]["question_jp"] == "触ると、青く光る"
-    v = st["artifacts"]["video"]
-    assert v["final"] == b["file"] and v["final_a"] == a_final and st["checks"]["hook_voice"]["ok"]
-    m = st["artifacts"]["upload"]["meta"]
-    assert m["title_jp"].startswith("魚なのに青く光る") and m["privacy"] == "scheduled" and m["publish_at"].endswith("T00:00:00Z")   # 일본·한국 아침 9시
-    assert st["stages"]["upload"]["state"] == "review" and st["jobs"]["upload"]["status"] == "done"
-    assert st["artifacts"]["script"]["hook"]["question_jp"] == "魚なのに、青く光る"
-    stats = admin.hook_pattern_stats()
-    assert stats["常識破り"]["wins"] == 1 and stats["異常な行動"]["losses"] == 1 and stats["常識破り"]["skip_avg"] == 47.5
-    idx = admin.build_index()                                                       # (명령으로 부르면 끝에 자동으로 만든다)
-    assert idx["hook_patterns"]["常識破り"]["wins"] == 1 and idx["items"][0]["trial"]["winner"] == "b"
-    import assemble as A                                                            # 다시 조립해도 시험에서 이긴 구간 그대로
-    pk = A.pick_hook(P / "out/clips/c02.mp4", sc["hook"], 6.0, sec=2.0)
-    assert pk["by"] == "trial" and pk["at"] == round(min(sc["hook"]["at"], 4.0), 2)
-
-
-def time_after(iso, hours):
-    return admin._iso_ts(iso) + hours * 3600
-
-
-def test_trial_tie_or_hold_keeps_a(v2, monkeypatch):
-    pid, P = _trial_pilot(v2, monkeypatch)
-    ig = _FakeIG(); monkeypatch.setattr(admin, "_IG_API", ig)
-    admin.after_video(pid)
-    tr = admin.load_status(pid)["artifacts"]["trial"]
-    ig.metrics = {tr["a"]["media_id"]: {"views": 500, "reels_skip_rate": 55.0}, tr["b"]["media_id"]: {"views": 480, "reels_skip_rate": 53.5}}
-    monkeypatch.setattr(admin, "_gemini_text", _meta_ai("触ると、青く光る"))
-    admin.trial_check(pid, now=time_after(tr["posted_at"], 25))
-    st = admin.load_status(pid)
-    sc = json.loads((P / "script.json").read_text(encoding="utf-8"))
-    assert st["artifacts"]["trial"]["result"]["kind"] == "tie" and st["artifacts"]["trial"]["winner"] == "a"
-    assert sc["hook"]["question_jp"] == "触ると、青く光る" and st["artifacts"]["video"]["final"] == "out/final/final.mp4"
-    assert "final_a" not in st["artifacts"]["video"] and st["artifacts"]["upload"]["meta"]["title_jp"].startswith("触ると青く光る")
-
-
-def test_after_video_without_instagram_key_goes_straight_to_title(v2, monkeypatch):
-    pid, P = _trial_pilot(v2, monkeypatch)
-    monkeypatch.setattr(admin, "_IG_API", {})
-    monkeypatch.setattr(admin, "_gemini_text", _meta_ai("触ると、青く光る"))
-    admin.after_video(pid)
-    st = admin.load_status(pid)
-    assert st["artifacts"]["trial"]["state"] == "skipped" and "IG_ACCESS_TOKEN" in st["artifacts"]["trial"]["reason"]
-    m = st["artifacts"]["upload"]["meta"]
-    assert m["title_jp"].startswith("触ると青く光る") and m["privacy"] == "private"         # 시험 없으면 예전처럼(비공개 기본)
-    assert st["stages"]["upload"]["state"] == "review" and not list((P / "out").glob("*_trial"))
-
-
-def test_after_video_old_hook_skips_trial(v2, monkeypatch):
-    pid, P = _trial_pilot(v2, monkeypatch, line=False)
-    ig = _FakeIG(); monkeypatch.setattr(admin, "_IG_API", ig)
-    monkeypatch.setattr(admin, "_gemini_text", lambda p: json.dumps(_META))
-    admin.after_video(pid)
-    st = admin.load_status(pid)
-    assert st["artifacts"]["trial"]["state"] == "skipped" and "옛 형식" in st["artifacts"]["trial"]["reason"] and not ig.posts
-
-
-def test_trial_post_failure_falls_back_and_hides_token(v2, monkeypatch):
-    pid, P = _trial_pilot(v2, monkeypatch)
-    monkeypatch.setenv("IG_ACCESS_TOKEN", "SECRET123TOKEN")
-    ig = _FakeIG(fail_on=2); monkeypatch.setattr(admin, "_IG_API", ig)            # 첫 번째는 올라가고 두 번째에서 실패
-    monkeypatch.setattr(admin, "_gemini_text", _meta_ai("触ると、青く光る"))
-    admin.after_video(pid)
-    raw = (P / "status.json").read_text(encoding="utf-8")
-    st = admin.load_status(pid)
-    why = st["artifacts"]["trial"]["reason"]
-    assert st["artifacts"]["trial"]["state"] == "skipped" and "SECRET123TOKEN" not in raw and "access_token=***" in why
-    assert "reel/R1/" in why                                                        # 이미 올라간 1개는 알려 준다
-    assert st["artifacts"]["upload"]["meta"]["title_jp"] and st["jobs"]["upload"]["status"] == "done"
-
-
-def test_trial_skip_by_operator(v2, monkeypatch):
-    pid, P = _trial_pilot(v2, monkeypatch)
-    ig = _FakeIG(); monkeypatch.setattr(admin, "_IG_API", ig)
-    admin.after_video(pid)
-    monkeypatch.setattr(admin, "_gemini_text", _meta_ai("触ると、青く光る"))
-    admin.main(["trial_skip", pid])
-    st = admin.load_status(pid)
-    assert st["artifacts"]["trial"]["state"] == "skipped" and st["artifacts"]["trial"]["a"]["media_id"]
-    assert st["artifacts"]["upload"]["meta"]["title_jp"].startswith("触ると青く光る") and st["stages"]["upload"]["state"] == "review"
-    with pytest.raises(SystemExit):
-        st["artifacts"]["trial"]["state"] = "decided"; admin._save(admin.status_path(pid), st); admin.trial_skip(pid)
-
-
-def test_ig_probe_and_pattern_hint(v2, monkeypatch):
-    monkeypatch.setattr(admin, "_IG_API", _FakeIG())
-    admin.main(["ig_probe"])
-    idx = json.loads((v2 / "pilots" / "index.json").read_text(encoding="utf-8"))
-    assert idx["ig"]["ok"] and idx["ig"]["username"] == "abyss_0cean" and idx["ig"]["expected"] == "abyss_0cean"
-    monkeypatch.setenv("IG_ACCESS_TOKEN", "TOKX9")
-    bad = _FakeIG(); bad["probe"] = lambda: (_ for _ in ()).throw(RuntimeError("Invalid token TOKX9 access_token=TOKX9"))
-    monkeypatch.setattr(admin, "_IG_API", bad)
-    r = admin.ig_probe()
-    assert not r["ok"] and "TOKX9" not in json.dumps(r, ensure_ascii=False)
-    assert admin._pattern_hint() == ""                                             # 시험이 없으면 대본 AI 에 아무것도 안 알림
-    for i, (pa, pb, w) in enumerate([("異常な行動", "常識破り", "b"), ("欠けた体", "常識破り", "b"), ("異常な行動", "極端な数字", "a")]):
-        admin._save(v2 / "pilots" / f"p{i}" / "status.json", {"id": f"p{i}", "stages": {s: {"state": "approved"} for s in admin.STAGES},
-            "artifacts": {"trial": {"state": "decided", "winner": w, "result": {"kind": "win", "winner": w},
-                                    "a": {"hook": {"pattern": pa}, "metrics": {}}, "b": {"hook": {"pattern": pb}, "metrics": {}}}}})
-    h = admin._pattern_hint()
-    assert "常識破り 2勝0敗0分" in h and h.index("常識破り") < h.index("欠けた体") and "型の違う3つ" in h
-    seen = []
-    ask, _ = _fake_ai()
+# ── 인스타 연동 폐지(운영자 지시 2026-10-16) — 완성본 승인 → 유튜브 제목·설명·해시태그 바로 · 예약 공개 아침 9시 준비 ──────
+def test_after_video_writes_youtube_title_right_away(v2, monkeypatch):
+    """실사고 2026-10-15(아귀목 심해어 편): 시험 릴스가 인스타 키 문제로 멈추자 유튜브 제목·설명까지 막혔다 → 인스타 연동 폐지."""
     admin.new_pilot("test_fish")
-    admin.write_script("test_fish", ask=lambda p: (seen.append(p), ask(p))[1], get=_fake_wiki, tts=False)
-    assert any("常識破り 2勝0敗0分" in p for p in seen if "構成作家" in p)                # 다음 대본 후보 쓰기에 참고로 들어감
+    ask, _ = _fake_ai()
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    st = admin.load_status("test_fish")
+    for k in ("script", "storyboard", "video"):
+        st["stages"][k]["state"] = "approved"
+    st["stages"]["upload"]["state"] = "working"
+    admin._save(admin.status_path("test_fish"), st)
+    monkeypatch.setattr(admin, "_gemini_text", lambda p, **k: json.dumps(dict(_META, title_jp="触ると青く光る、深海の謎")))
+    monkeypatch.setenv("IG_ACCESS_TOKEN", "SHOULD_NOT_BE_USED")
+    admin.main(["after_video", "test_fish"])
+    st = admin.load_status("test_fish")
+    m = st["artifacts"]["upload"]["meta"]
+    assert st["stages"]["upload"]["state"] == "review" and m["title_jp"].startswith("触ると青く光る") and m["tags_jp"]
+    assert m["privacy"] == "scheduled" and m["publish_at"].endswith("T00:00:00Z")          # 다음 아침 9시(일본=한국)
+    assert "trial" not in st["artifacts"] and "ig_caption_jp" not in m and "ig_short" not in (st["artifacts"].get("video") or {})
+    assert not hasattr(admin, "trial_check") and not hasattr(admin, "make_ig_short") and not hasattr(admin, "_ig")
+    idx = json.loads((v2 / "pilots" / "index.json").read_text(encoding="utf-8"))
+    assert "ig" not in idx and "hook_patterns" not in idx and "trial" not in idx["items"][0]
 
 
 def test_next_publish_slot_is_next_9am_jst():
@@ -1687,100 +1458,3 @@ def test_next_publish_slot_is_next_9am_jst():
     assert admin.next_publish_slot(ts("2026-10-08T22:00:00+00:00")) == "2026-10-09T00:00:00Z"    # 7시 → 오늘 9시
     assert admin.next_publish_slot(ts("2026-10-08T23:30:00+00:00")) == "2026-10-10T00:00:00Z"    # 8시 30분 → 내일 9시
     assert admin.next_publish_slot(ts("2026-10-09T08:00:00+00:00")) == "2026-10-10T00:00:00Z"    # 17시 → 내일 9시
-
-
-def test_other_window_for_trial_b():
-    s = [3.0] * 16 + [0.2] * 8 + [2.8] * 16                                         # 0~2초 · 3~5초 둘 다 움직임
-    at, m = admin._other_window(s, 0.0, 5.0, 2.0)
-    assert at >= admin.TRIAL_B_GAP_S and m >= admin.TRIAL_B_MOTION * 3.0
-    s2 = [3.0] * 16 + [0.2] * 24                                                    # 다른 곳은 거의 정지 → A 와 같은 곳
-    assert admin._other_window(s2, 0.0, 5.0, 2.0) == (0.0, 3.0)
-
-
-def test_after_video_skips_trial_when_a_has_no_voice(v2, monkeypatch):
-    """A 의 맨 앞 목소리 합성이 실패한 채 승인됐으면(무음) B 만 목소리가 있어 불공정 → 시험하지 않고 예전처럼."""
-    pid, P = _trial_pilot(v2, monkeypatch)
-    st = admin.load_status(pid); st["checks"] = {"hook_voice": {"ok": False}}; admin._save(admin.status_path(pid), st)
-    ig = _FakeIG(); monkeypatch.setattr(admin, "_IG_API", ig)
-    monkeypatch.setattr(admin, "_gemini_text", _meta_ai("触ると、青く光る"))
-    admin.after_video(pid)
-    tr = admin.load_status(pid)["artifacts"]["trial"]
-    assert tr["state"] == "skipped" and "목소리" in tr["reason"] and not ig.posts
-
-
-# ── 계정 잠금(운영자 확정 2026-10-10 · 실사고: 키가 개인 계정 @lord.shiba.ybd 것이라 시험 릴스 2개가 거기에 올라감) ──────────
-def test_wrong_account_never_posts_and_waits_then_reposts(v2, monkeypatch):
-    pid, P = _trial_pilot(v2, monkeypatch)
-    ig = _FakeIG(user="lord.shiba.ybd"); monkeypatch.setattr(admin, "_IG_API", ig)
-    admin.main(["after_video", pid])
-    st = admin.load_status(pid); tr = st["artifacts"]["trial"]
-    assert not ig.posts and ig.n == 0                                              # 다른 계정이면 한 개도 안 올림
-    assert tr["state"] == "cancelled" and "@lord.shiba.ybd" in tr["reason"] and "abyss_0cean" in tr["reason"]
-    assert st["jobs"]["upload"]["status"] == "trial_wait" and "meta" not in st["artifacts"].get("upload", {})   # 결과 보고 올리기 → 기다림
-    ig_st = json.loads((v2 / "pilots" / "_shared" / "ig_status.json").read_text(encoding="utf-8"))
-    assert ig_st["ok"] is False and ig_st["username"] == "lord.shiba.ybd" and ig_st["expected"] == "abyss_0cean"
-    with pytest.raises(SystemExit):                                                # 키를 안 고치고 다시 올리기 → 멈춤
-        admin.main(["trial_repost", pid])
-    assert admin.load_status(pid)["artifacts"]["trial"]["state"] == "cancelled" and not ig.posts
-    ig.user = "abyss_0cean"                                                        # 키를 ABYSS 것으로 바꾼 뒤
-    admin.main(["trial_repost", pid])
-    tr = admin.load_status(pid)["artifacts"]["trial"]
-    assert tr["state"] == "running" and len(ig.posts) == 2 and tr["username"] == "abyss_0cean" and (P / tr["b"]["file"]).exists()
-
-
-def test_trial_cancel_then_repost_reuses_videos(v2, monkeypatch):
-    pid, P = _trial_pilot(v2, monkeypatch)
-    ig = _FakeIG(); monkeypatch.setattr(admin, "_IG_API", ig)
-    admin.after_video(pid)
-    first = admin.load_status(pid)["artifacts"]["trial"]
-    admin.main(["trial_cancel", pid, "잘못된 계정(@lord.shiba.ybd)에 올라감"])
-    st = admin.load_status(pid); tr = st["artifacts"]["trial"]
-    assert tr["state"] == "cancelled" and "media_id" not in tr["a"] and tr["a"]["metrics"] == {} and "posted_at" not in tr
-    v = tr["voided"][0]
-    assert v["username"] == "abyss_0cean" and {x["permalink"] for x in v["posts"]} == {first["a"]["permalink"], first["b"]["permalink"]}
-    assert st["jobs"]["upload"]["status"] == "trial_wait"
-    assert admin.trial_check(pid, now=time_after(first["posted_at"], 30)) == []        # 무효 시험은 판정하지 않는다
-    calls = []
-    base = admin._RUN_REQUEST
-    monkeypatch.setattr(admin, "_RUN_REQUEST", lambda rp: calls.append(rp) or base(rp))
-    admin.trial_repost(pid)
-    tr = admin.load_status(pid)["artifacts"]["trial"]
-    assert tr["state"] == "running" and len(ig.posts) == 4 and not calls                # 같은 A·B 영상 그대로(목소리·조립 다시 안 함)
-    assert tr["b"]["file"] == first["b"]["file"] and tr["a"]["media_id"] not in {first["a"]["media_id"], first["b"]["media_id"]}
-    assert tr["voided"][0]["posts"][0]["permalink"] and tr["b"]["checks"]
-    with pytest.raises(SystemExit):                                                # 진행 중이면 다시 올리기 없음
-        admin.trial_repost(pid)
-
-
-# ── 인스타용 짧은 판(약 25초) · 인스타 캡션 공유 한 줄(운영자 승인 2026-10-15 · @abyss_0cean 평균 시청 9.3초/43초 · 공유 0) ──
-def test_ig_short_cuts_keep_opening_and_ending():
-    uses = [4.63, 3.8, 5.58, 5.42, 4.67, 4.95, 4.9, 4.91]                          # 파리지옥말미잘 편 실제 컷 길이
-    sc = {"timing_v5": [{"cut": i + 1, "sec": 8, "lead": 0.15, "speech_s": round(u - 0.75, 2)} for i, u in enumerate(uses)]}
-    assert admin.ig_short_cuts(sc, 2.6) == [1, 2, 3, 8]                             # 앞에서부터 + 마지막 컷 · 총 23.5초
-    assert admin.ig_short_cuts(sc, 2.6, max_s=60) == list(range(1, 9))
-    assert admin.ig_short_cuts({"timing_v5": sc["timing_v5"][:1]}, 2.6) == [1]
-
-
-def test_ig_caption_has_share_line_not_youtube_cta():
-    desc = "本文です。\n\nチャンネル登録で、次の深海もいっしょに。\n\n出典:\nhttps://x"
-    cap = admin.ig_caption(desc, [f"#t{i}" for i in range(9)])
-    assert cap.startswith("本文です。") and admin.IG_SHARE_JP in cap and "チャンネル登録" not in cap and "出典" not in cap
-    assert cap.count("#") == admin.IG_TAGS_MAX and "AIによる再現映像" in cap
-    m = admin._compose_meta({"subject": {"jp_name": "テストウオ", "ko_name": "시험어"}},
-                            {"title_jp": "題", "title_ko": "제", "desc_jp": "本文。", "desc_ko": "본문.", "tags_jp": [], "tags_ko": []})
-    assert m["ig_caption_jp"].startswith("本文。") and admin.IG_SHARE_JP in m["ig_caption_jp"]
-
-
-def test_make_ig_short_builds_subset_and_fills_caption(v2, monkeypatch):
-    pid, P = _trial_pilot(v2, monkeypatch)
-    st = admin.load_status(pid)
-    st["artifacts"]["upload"] = {"meta": {"title_jp": "題", "desc_jp": "本文です。\n\nチャンネル登録で…", "tags_jp": ["#深海", "#テストウオ"]}}
-    admin._save(admin.status_path(pid), st)
-    monkeypatch.setattr(admin, "IG_SHORT_MAX_S", 9.0)                              # 후킹 2초 + 끝 카드 2초 + 컷 하나만 들어가게
-    admin.main(["ig_short", pid])
-    st = admin.load_status(pid)
-    sh = st["artifacts"]["video"]["ig_short"]
-    assert sh["cuts"] == [2] and (P / sh["file"]).exists() and abs(sh["sec"] - 7.25) < 0.3      # 2초 + 3.25초 + 2초
-    assert sh["for_built_at"] == st["artifacts"]["video"]["built_at"] and st["artifacts"]["video"]["final"] == "out/final/final.mp4"
-    cap = st["artifacts"]["upload"]["meta"]["ig_caption_jp"]
-    assert cap.startswith("本文です。") and admin.IG_SHARE_JP in cap and "チャンネル登録" not in cap

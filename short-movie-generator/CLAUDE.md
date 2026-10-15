@@ -63,7 +63,7 @@
 - **상태 파일 하나**: 편마다 `v2/pilots/<id>/status.json`(단계 상태 locked/working/review/revise/approved · 기록 · 결과물 경로 ·
   자동 검사 · 비용). 목록 `v2/pilots/index.json`, 주제 후보 `v2/topics.json`(`admin.py topics`로 갱신).
 - **버튼 = 워크플로**: 페이지는 파일을 직접 쓰지 않는다 → `v2-admin.yml` 디스패치 → `v2/tools/admin.py`
-  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·redo_panel·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta·save_viewed·trial_check·trial_skip·trial_repost·ig_probe·ig_short) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
+  (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·redo_panel·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta·save_viewed·after_video) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
   `v2-admin.yml`은 **main에도** 둔다(디스패치 워크플로 규칙 · 하드룰 #15③).
 - **★컷별 대사 수정(운영자 확정 2026-09-28) — 대사를 고쳐도 영상은 자동으로 바뀌지 않는다**:
   대본 카드의 컷마다 「대사 수정」 → 일본어·한국어(·읽기, 비우면 Janome 자동) 입력 → 「이 대사로 저장」(`admin.py edit_line`)은
@@ -458,75 +458,24 @@
   `test_ensure_hook_voice_once_per_sentence`·`test_save_viewed_records_pattern_and_index`) · `v2_admin_check.mjs`(hook_line_shown·hook_pick_*·
   hook_editor_has_voice_fields·viewed_box_shown·viewed_save_dispatch·viewed_list_card).
 
-### ★★인스타 시험 릴스로 후킹 A·B 겨루기 (운영자 선택 2026-10-09 · 「자동」·「결과 보고 올리기」·「2개」)
-- **왜**: 유튜브 쇼츠는 A/B 시험을 공식 지원하지 않는다(유튜브 고객센터). 인스타 **시험 릴스**(팔로워가 아닌 사람에게 먼저 보임)는
-  2025-12-03부터 API로 게시(`trial_params`)·**「3초 안에 넘긴 비율」(`reels_skip_rate`)** 읽기가 된다(Meta 변경 기록) → 유튜브에 올리기 전
-  인스타에서 후킹 2개를 겨룬다. 인스타 시청자 ≠ 유튜브 시청자(일본 45세+ 71%) → **절대 숫자가 아니라 A·B 중 어느 쪽이 나은지만** 본다.
-  최종 확인은 그대로 유튜브 「시청함 %」.
-- **흐름**: 완성본 승인(관문 3) → 워크플로 '버튼 실행' 단계의 `admin.py after_video`:
-  ① B 후보 = 지금 후킹과 **틀(pattern)이 다른** 후보(`_pick_b`) ② B 목소리(약 $0.001) ③ B 첫 장면 = 같은 컷에서 A 구간과 **1초 이상 떨어진**
-  가장 많이 움직이는 구간 — 그 움직임이 A의 **70% 이상일 때만**, 아니면 A와 같은 곳(`_other_window` · 거의 같은 영상 2개 → 인스타 중복 판정 완화,
-  B를 덜 움직이는 장면으로 불리하게 만들지 않음) ④ **대본은 그대로 두고 맨 앞만 바꿔 조립**(`assemble.main(hook_override=)` → `out/<rid>_trial/final_b.mp4`)
-  ⑤ B 영상을 먼저 커밋·푸시(`ci_commit.sh`) ⑥ A·B를 **시험 릴스(수동 졸업 MANUAL)로 게시** — 영상 주소는 관리자 페이지
-  `/v2file/<커밋 40자>/<편>/<파일>.mp4`(커밋 번호로 고정한 raw 중계 · mp4만 · 브랜치 주소는 새 파일이 몇 분 늦게 보여서), 게시 전 주소가 열리는지 확인,
-  **캡션은 둘이 똑같이**(채널 소개 + AI 재현 표기 + 공통 해시태그 — 후킹 문장·이름 없음), **올리는 순서는 편마다 번갈아**.
-  ⑦ `artifacts.trial` = 진행 중 · `jobs.upload.status = "trial"`(페이지 배지 「시험 중」 · 25분 멈춤 판정과 무관). **제목·설명은 판정 뒤**.
-- **판정**(`trial_decide` · `TRIAL_RULE`): 게시 **24시간 전엔 판정 안 함** → 두 버전 모두 조회 **300회↑**면 넘김 비율이 **3%p 이상 낮은 쪽 승**,
-  3%p 미만은 **무승부 → A 그대로** · 300회가 안 모이면 **48시간까지** 기다렸다가 **100회↑**로 판정, 그래도 모자라면 **판정 보류 → A 그대로** ·
-  넘김 비율을 48시간까지 못 받으면 평균 시청 시간(10% 미만 차이는 무승부) · 지표를 못 받으면(키 문제) 판정하지 않고 기다림(건너뛰기 버튼).
-  API가 0~1 비율로 주면 %로 바꾼다.
-- **결과 가져오기**: 서버에 상시 예약 실행이 없다(워커에 GH_PAT 없음 · main 수정 금지) → **24시간이 지난 시험은 관리자 페이지(목록 또는 그 편)를
-  열 때 자동으로 `trial_check`**(무료 · 같은 기기 50분에 한 번 · 서버도 기록) + 「지금 결과 가져오기」 버튼. 편 id 없이 부르면 진행 중인 모든 편.
-- **판정 반영**(`apply_trial_result`): **B 승이면 대본 후킹을 B로 바꾸고**(`hook_history`에 A 보관 · 구간 고정 `at_by="trial"` — 다시 조립해도
-  그 구간 · `assemble.pick_hook`) **완성본도 B로**(`video.final_a`에 A 보관 · 시험 중 본편을 다시 조립했으면 새 본편 + B 후킹으로 다시 조립) ·
-  무승부/보류/A 승은 그대로. 그다음 **이긴 후킹으로 유튜브 제목·설명 자동 작성 + 「예약 공개 · 다음 일본(=한국) 아침 9시」 준비**(`PUBLISH_HOUR` · 운영자 지시 2026-10-10)
-  (`next_publish_slot` · 운영자가 이미 공개 범위를 골랐으면 그대로). **업로드는 여전히 운영자 승인(관문 4)**. 인스타 **「모두에게 공유」(졸업)는
-  API로 안 돼 앱에서 직접**(페이지에 이긴 릴스 링크와 안내).
-- **시험을 못 하면 예전처럼**: 옛 형식 후킹 · 다른 후보 없음 · 인스타 키(`IG_ACCESS_TOKEN` 비밀값) 없음 · 게시 실패 → `trial.state = "skipped"` +
-  이유를 남기고 **바로 제목·설명**(비공개 기본 · 예전 그대로). 운영자는 「시험 건너뛰고 지금 후킹(A)으로 진행」(`trial_skip`)으로 언제든 끝낼 수 있다
-  (인스타에 올라간 시험 릴스는 그대로 둠). 오류 문구의 토큰은 지운다(`_safe_err` · status.json은 공개 저장소).
-- **실사고 2026-10-09**: 2026-10-06에 완성본 승인을 키 없는 첫 단계로 옮긴 뒤, 승인 안에서 부르던 제목 자동 작성이 **키가 없어 조용히 실패**하고
-  있었다 → 승인 뒤의 일은 키가 있는 '버튼 실행' 단계의 `after_video`가 한다(`approve()`는 상태만).
-- **인스타 연결**: 목록 화면 「인스타 시험 릴스」 카드 = 연결 상태(`ig_probe` → `_shared/ig_status.json` → `index.json.ig`) · 진행 중인 시험 ·
-  **후킹 틀별 시험 성적**(`hook_pattern_stats` → `index.json.hook_patterns` · 판정 보류는 안 셈). 판정 난 시험이 **3편(6건) 이상** 쌓이면 다음 대본
-  후보를 쓸 때 AI에 참고로 알린다(`_pattern_hint` · 후보 3개·서로 다른 틀 규칙은 그대로). 마지막 실측(2026-07-13 인스타 점검 실행): 저장된 키가
-  페이스북 로그인 토큰(EAA…)이고 **「API access blocked」**로 실패 → 새 키를 받기 전까지는 시험 없이 예전처럼 진행된다.
-  시험 릴스 자체도 **프로페셔널(비즈니스·크리에이터) 공개 계정 + 팔로워 수 조건**(출처마다 200~1,000명으로 다름 · 앱의 시험 스위치가 최종 확인)이 필요.
-- **★★올릴 계정 = ABYSS 인스타 `@abyss_0cean` 만 (운영자 확정 2026-10-10 · 핵심 규칙 · 절대 위반 금지)**:
-  **실사고 2026-10-10 23:46(한국 시간)**: GitHub 비밀값 `IG_ACCESS_TOKEN`이 개인 계정 **@lord.shiba.ybd** 것이라 파리지옥말미잘 편 시험 릴스 2개가
-  그 계정에 올라갔다(시스템이 계정을 확인하지 않았음). → ① 게시 전 계정 확인 `_ig_account_ok`(`IG_ACCOUNT = "abyss_0cean"` · 결과는
-  `_shared/ig_status.json` → 목록 카드) + 게시 함수도 한 번 더 확인(`ig_publish.publish_trial_reel(expect=)` — 다르면 컨테이너도 안 만듦).
-  ② 완성본 승인 때 **키는 있는데 계정이 다르거나 연결 오류**면 올리지 않고 `trial.state = "cancelled"`(「시험 대기」 · `jobs.upload.status = "trial_wait"`)로
-  **기다린다**(결과 보고 올리기 선택이므로 조용히 건너뛰지 않음 — 키가 아예 없을 때만 예전처럼 바로 제목·설명). ③ 잘못 올라간 시험은
-  `admin.py trial_cancel <id> <이유>`로 **무효**(그 숫자로 판정 안 함 · 올라간 릴스 주소는 `voided`에 남겨 페이지가 「인스타 앱에서 삭제」 안내 —
-  API 삭제는 권한이 불확실해 쓰지 않음) ④ 운영자가 키를 @abyss_0cean 것으로 고치고 「인스타 연결 점검」으로 확인한 뒤 편 페이지
-  **「ABYSS 계정에 다시 올리기」**(`trial_repost` · 본편이 그대로면 **이미 만든 A·B 영상 그대로** · 추가 비용 없음 · 계정이 다르면 다시 멈춤)
-  또는 「시험 건너뛰기」(`trial_skip`). 키를 새로 만들 때는 **시크릿 창에서 @abyss_0cean으로 로그인**(브라우저에 로그인된 다른 계정이 자동으로 쓰인 것으로 추정).
-  운영자 선택(2026-10-10): 파리지옥말미잘 편은 **ABYSS 계정에서 다시 시험**. 회귀: `test_wrong_account_never_posts_and_waits_then_reposts`·
-  `test_trial_cancel_then_repost_reuses_videos`·`test_ig_trial_publish.py::test_trial_reel_refuses_other_account` · `v2_admin_check.mjs`(trial_cancelled_panel ·
-  trial_repost_dispatch · trial_wrong_account_waits · list_wrong_account_warning · list_right_account_ok).
-- 회귀: `tests/test_v2_admin.py`(`test_after_video_posts_two_trial_reels_and_waits`(실제 조립 · 같은 캡션 · 다른 틀 · 다른 첫 장면)·`test_trial_decide_rules`·
-  `test_trial_check_b_wins_swaps_hook_video_and_prepares_upload`·`test_trial_tie_or_hold_keeps_a`·`test_after_video_without_instagram_key_goes_straight_to_title`·
-  `test_after_video_old_hook_skips_trial`·`test_trial_post_failure_falls_back_and_hides_token`·`test_trial_skip_by_operator`·`test_ig_probe_and_pattern_hint`·
-  `test_next_publish_slot_is_next_19_jst`·`test_other_window_for_trial_b`) · `v2_admin_check.mjs`(trial_* · list_ig_card · list_due_auto_check ·
-  v2file_proxies_commit_raw · v2file_rejects_others).
-
-### ★인스타용 짧은 판 · 인스타 캡션 공유 한 줄 (운영자 승인 2026-10-15 · 가설 시험)
-- **근거(운영자 제공 인사이트 2026-10-15 · @abyss_0cean 팔로워 241 · 일본 97.5% · 25~54세 70%)**: 파리지옥말미잘 릴스(43초) 조회 1.2천 ·
-  시청자 1.1천(팔로워의 약 4.5배 → 비팔로워에게 퍼지고 있음 = 계정 문제 아님) · **평균 시청 9.3초(약 22%)** · 좋아요 8 · 저장 1 · 공유 0.
-  30일 릴스 6개 조회 7.3천(편당 약 1.2천) · 공유 0 · 댓글 0. → 문제는 배포가 아니라 붙잡는 힘. 운영자 질문 「계정 폐지?」에 **유지 권고**
-  (팔로워·기록을 잃고, 시험 릴스 팔로워 조건도 다시 쌓아야 함).
-- **① 인스타용 짧은 판(약 25초)**: `admin.py ig_short` / 완성본 승인 때 `after_video`가 자동(실패해도 시험·제목은 계속). 영상 컷은 새로 만들지 않고
-  **앞에서부터 컷을 잇되 마지막 컷(마무리 · 핵심 사실 회수)은 늘 넣는다** — [후킹][1번…][마지막 컷][끝 카드] 총 `IG_SHORT_MAX_S`(25초) 이내
-  (`ig_short_cuts` · `assemble.main(cuts_only=)` · `assemble.use_seconds`). 나레이션은 컷마다 문장이 완결이라 이어도 끊기지 않는다.
-  결과 `artifacts.video.ig_short`(file·cuts·sec·for_built_at — 완성본이 바뀌면 페이지가 「다시 만들기」 안내). 실측: 파리지옥말미잘 23.3초(1·2·3·8번 컷 ·
-  -16.0 LUFS). 업로드 칸 「인스타그램용」에서 미리보기·저장·다시 만들기. 비교는 인스타 인사이트 평균 시청 시간·조회(긴 판 43초 중 9.3초 · 1.2천 회).
-- **② 인스타 캡션 = 공유 한 줄**: `meta.ig_caption_jp` = 유튜브 설명 본문(첫 문단) + 「深海好きの友だちにも、送ってみてください。」(`IG_SHARE_JP`) +
-  AI 재현 표기 + 해시태그 5개(`IG_TAGS_MAX`) — 유튜브용 「チャンネル登録…」·출처 목록은 뺀다. 시험 릴스 캡션(`trial_caption`)에도 같은 한 줄(A·B 같게).
-  근거: 인스타가 새 시청자 배포에 '보내기(공유)'를 크게 본다는 모세리 2025-01 발언이 정리 글들로 전해짐(원문 미확인 · 가설).
-  ※ **나레이션 호소 문구 금지 규칙은 그대로** — 캡션에만.
-- 회귀: `test_ig_short_cuts_keep_opening_and_ending`·`test_ig_caption_has_share_line_not_youtube_cta`·`test_make_ig_short_builds_subset_and_fills_caption`
-  · `v2_admin_check.mjs`(ig_short_section · ig_short_dispatch · ig_short_missing_has_button).
+### ★★인스타 연동 전부 폐지 (운영자 지시 2026-10-16 · 핵심 규칙)
+- 운영자: "인스타는 내가 알아서 올릴 테니 신경 꺼 · 메뉴에서 없애 · 인스타용 짧은 판도 안 한다 · 유튜브에 정상적으로 올릴 수 있게 ·
+  제목·설명·해시태그는 복사할 수 있게". → **시험 릴스(후킹 A·B) · 인스타용 짧은 판 · 인스타 캡션 · 인스타 연결 점검 · 계정 잠금**을
+  코드·화면·워크플로에서 **모두 없앴다**(2026-10-09~15에 만들었던 것). `v2-admin.yml`에 `IG_ACCESS_TOKEN`도 넣지 않는다.
+  예전 편 status.json 에 남은 `trial`·`ig_short`·`ig_caption_jp` 기록은 화면에 쓰지 않는다(기록으로만 남음).
+- **실사고 2026-10-15(아귀목 심해어 편)**: 완성본 승인 뒤 시험 릴스가 인스타 키 문제(개인 계정 @lord.shiba.ybd 키)로 멈추면서
+  **유튜브 제목·설명까지 막혀** 업로드할 수 없었다(운영자가 건너뛰기를 눌러야 풀림). 그 전 10-10에는 시험 릴스 2개가 개인 계정에 올라갔다.
+  → 교훈: **유튜브 업로드 준비는 어떤 부가 기능에도 막히면 안 된다.**
+- **지금 흐름**: 완성본 승인(관문 3) → 워크플로 '버튼 실행' 단계의 `admin.py after_video` = **유튜브 제목·설명·해시태그 바로 작성 +
+  예약 공개 「다음 아침 9시」 준비**(`_write_meta_safely` · `PUBLISH_HOUR` · 운영자가 이미 공개 범위를 골랐으면 그대로) → 업로드 칸에서
+  확인 후 「승인 → 유튜브 업로드」(관문 4 · 운영자). ※ 2026-10-06 실사고(승인을 키 없는 첫 단계로 옮긴 뒤 제목 자동 작성이 조용히 실패)도
+  이 단계가 해결한다(`approve()`는 상태만).
+- **복사 버튼(운영자 지시 2026-10-16)**: 업로드 전 칸 맨 위에 **「제목 복사」「설명 복사」「해시태그 복사」**(일본어 · 지금 칸에 적힌 그대로) +
+  한국어 3개, 해시태그 목록 아래에도 「해시태그 복사」. 업로드 뒤에는 「복사 — 제목·설명·해시태그」 상자들. 누르면 버튼 글자가 잠깐 「복사됨」
+  (휴대폰에서 위쪽 안내가 안 보여도 알 수 있게) · 첫 복사 방법이 막히면 예전 방법으로 한 번 더(`copyText`·`copyLegacy`).
+- 회귀: `tests/test_v2_admin.py::test_after_video_writes_youtube_title_right_away`·`test_workflow_has_secrets_and_setup`(인스타 키·동작 없음) ·
+  `v2_admin_check.mjs`(no_instagram_on_episode · copy_row_before_upload · hashtag_copy_works · video_approve_goes_to_youtube · no_instagram_on_list ·
+  v2file_route_removed).
 
 ### 비용 (한 편 기준 · 2026-10 혼합 제작)
 | 항목 | 금액 |

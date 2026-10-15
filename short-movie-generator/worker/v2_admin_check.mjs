@@ -54,7 +54,7 @@ globalThis.fetch = async (url, opts) => {
 };
 
 const api = new Function(js.replace(/\ninit\(\);\s*$/, "\n") +
-  "\n; return { renderV2List, renderV2New, renderV2Episode, renderHome, v2viewedCard, v2igCard, v2trialDue };").call(null);
+  "\n; return { renderV2List, renderV2New, renderV2Episode, renderHome, v2viewedCard };").call(null);
 const res = {};
 // 새 영상: 시작할 수 있는 종 카드에 사진 + 한글명(운영자 확정 2026-09-30)
 { const keepEls = els; els = {}; await api.renderV2New(); const nw2 = els.view.innerHTML; els = keepEls;
@@ -352,137 +352,46 @@ statusOverride = null;
   statusOverride = null;
 }
 
-// ── 인스타 시험 릴스로 후킹 A·B 겨루기(운영자 선택 2026-10-09: 자동 · 결과 보고 올리기 · 2개) ──
+// ── 인스타 연동 폐지(운영자 지시 2026-10-16): 영상 승인 → 유튜브 제목·설명 바로 · 인스타 칸 없음 · 제목·설명·해시태그 복사 버튼 ──
 {
-  const iso = h => new Date(Date.now() - h * 36e5).toISOString().replace(/\.\d+Z$/, "Z");
-  const HA = { question_jp: "触ると、青く光る", key_jp: "青く光る", voice_jp: "触れると、体が青く光る", pattern: "異常な行動", cut: 5, at: 3.25 };
-  const HB = { question_jp: "魚なのに、青く光る", key_jp: "光る", voice_jp: "魚なのに、体が青く光る", pattern: "常識破り", cut: 5, at: 1.5 };
-  const base = () => { const sv = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
-    sv.stages.video.state = "approved"; sv.stages.upload.state = "working"; sv.artifacts.upload = {};
-    sv.jobs = { upload: { stage: "upload", status: "trial", at: iso(3), text: "시험 중" } };
-    sv.artifacts.trial = { state: "running", posted_at: iso(3), rule: "규칙 문장", username: "deep.sea.test",
-      a: { hook: HA, permalink: "https://www.instagram.com/reel/AAA/", metrics: {} },
-      b: { hook: HB, permalink: "https://www.instagram.com/reel/BBB/", metrics: {} } };
-    return sv; };
-  // ① 진행 중(아직 24시간 전): 패널 · 시험 중 배지 · 버튼 · 제목 버튼 없음 · 자동 확인 안 함
-  let sv = base(); statusOverride = sv; els = {}; let d0 = dispatched.length; await api.renderV2Episode("bathynomus_giganteus");
-  let ev = els.view.innerHTML, up = ev.slice(ev.indexOf('id="stg-upload"'));
-  res.trial_running_panel = up.includes("인스타 시험 릴스 — 후킹 A·B 겨루기") && up.includes('v2st prog">시험 중') &&
-    up.includes('<b style="color:var(--rd)">青く光る</b>') && up.includes("魚なのに、") && up.includes("틀 常識破り") &&
-    up.includes("reel/BBB/") && up.includes('id="trcheck"') && up.includes('id="trskip"') && !up.includes('id="upmeta"') &&
-    up.includes("판정은 약 21시간 뒤부터");
-  res.trial_not_due_no_auto = dispatched.length === d0;
-  el("trcheck"); const tc = els.trcheck; d0 = dispatched.length; if (tc.onclick) await tc.onclick();
-  res.trial_check_dispatch = dispatched.slice(d0).some(x => x.body.inputs.action === "trial_check" && x.body.inputs.pilot === "bathynomus_giganteus");
-  const tsk = els.trskip; d0 = dispatched.length; if (tsk.onclick) await tsk.onclick();
-  res.trial_skip_dispatch = dispatched.slice(d0).some(x => x.body.inputs.action === "trial_skip" && x.body.inputs.pilot === "bathynomus_giganteus");
-  // ② 24시간이 지났고 최근에 확인하지 않음 → 페이지를 열면 결과 자동 가져오기(trial_check) · 최근 확인했으면 안 함
-  sv = base(); sv.artifacts.trial.posted_at = iso(30); sv.artifacts.trial.checked_at = iso(2);
-  sv.artifacts.trial.a.metrics = { views: 420, reels_skip_rate: 61.5, ig_reels_avg_watch_time: 4200 };
-  sv.artifacts.trial.last = { kind: "wait", why: "조회 A 420 · B 180 — 버전마다 300회가 모일 때까지" };
-  statusOverride = sv; els = {}; d0 = dispatched.length; await api.renderV2Episode("bathynomus_giganteus");
-  ev = els.view.innerHTML;
-  res.trial_due_auto_check = dispatched.slice(d0).filter(x => x.body.inputs.action === "trial_check").length === 1 &&
-    ev.includes("61.5%") && ev.includes("버전마다 300회가 모일 때까지");
-  sv.artifacts.trial.checked_at = iso(0.2); statusOverride = sv; els = {}; d0 = dispatched.length; await api.renderV2Episode("bathynomus_giganteus");
-  res.trial_recent_check_no_auto = dispatched.length === d0;
-  // ③ 판정 끝(B 승): 결과 · 앱에서 「모두에게 공유」 안내 · 제목 칸 · 지난 예약 시각은 다음 아침 9시로 · 영상 칸에 B 버전 표시
-  sv = base(); sv.stages.upload.state = "review"; sv.jobs.upload.status = "done";
-  Object.assign(sv.artifacts.trial, { state: "decided", winner: "b", result: { kind: "win", winner: "b", why: "3초 안에 넘김 A 62% · B 48% → B 가 14%p 덜 넘김" } });
-  sv.artifacts.upload.meta = { title_jp: "魚なのに青く光る 深海の謎 #テスト #深海", title_ko: "t", desc_jp: "d", desc_ko: "d", tags_jp: [], tags_ko: [],
-    privacy: "scheduled", publish_at: "2026-01-01T10:00:00Z", category: "15" };
-  sv.artifacts.video.final_a = sv.artifacts.video.final;
+  const sv = JSON.parse(readFileSync(path.join(ROOT, "short-movie-generator/v2/pilots/bathynomus_giganteus/status.json"), "utf-8"));
+  // 예전 기록(시험 릴스·짧은 판)이 남아 있어도 화면엔 안 나온다
+  sv.stages.video.state = "approved"; sv.stages.upload.state = "review"; sv.jobs = { upload: { stage: "upload", status: "done", at: "2026-10-15T16:18:41Z" } };
+  sv.artifacts.trial = { state: "skipped", reason: "운영자가 건너뜀" };
+  sv.artifacts.video.ig_short = { file: "out/x/ig_short.mp4", cuts: [1, 2, 8], sec: 21.3 };
+  sv.artifacts.upload = { meta: { title_jp: "魚なのに立ち上がる #アカメアンコウ #深海", title_ko: "제목", desc_jp: "説明本文", desc_ko: "설명",
+    tags_jp: ["#アカメアンコウ", "#深海"], tags_ko: ["#아귀", "#심해"], pinned_comment: "p", privacy: "scheduled", publish_at: "2099-01-01T00:00:00Z", category: "28",
+    ig_caption_jp: "旧キャプション" } };
   statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
-  ev = els.view.innerHTML; up = ev.slice(ev.indexOf('id="stg-upload"'));
-  res.trial_decided_panel = up.includes("판정 끝") && up.includes("<b>B 승</b>") && up.includes("모두에게 공유") &&
-    up.includes('<span class="ok">이김</span>') && up.includes('id="up_tj"') && !up.includes('id="trcheck"');
-  res.trial_past_schedule_refilled = !up.includes('value="2026-01-01T19:00"') && /id="up_at" value="\d{4}-\d\d-\d\dT09:00"/.test(up);
-  res.video_card_marks_trial_winner = ev.slice(ev.indexOf('id="stg-video"'), ev.indexOf('id="stg-upload"')).includes("이긴 B 버전");
-  // ③-2 완성본 승인 확인창이 시험 릴스로 이어진다는 것을 알린다
-  sv = base(); sv.stages.video.state = "review"; sv.stages.upload.state = "locked"; delete sv.jobs; delete sv.artifacts.trial;
+  const ev = els.view.innerHTML, up = ev.slice(ev.indexOf('id="stg-upload"'));
+  res.no_instagram_on_episode = !/인스타|시험 릴스|짧은 판|旧キャプション|trcheck|trskip|trrepost|igshort|v2dlig/.test(up) &&
+    /data-act="approve" data-stage="upload">/.test(up);
+  res.copy_row_before_upload = ["up_tj", "up_dj", "cp_hj", "up_tk", "up_dk", "cp_hk"].every(x => up.includes('data-copyfrom="' + x + '"')) &&
+    up.includes(">제목 복사<") && up.includes(">설명 복사<") && up.includes(">해시태그 복사<") &&
+    up.includes('<div id="cp_hj" style="display:none">#アカメアンコウ #深海</div>');
+  let copied = ""; Object.defineProperty(globalThis, "navigator", { value: { clipboard: { writeText: async t => { copied = t; } } }, configurable: true });
+  els["cp_hj"] = makeEl("cp_hj"); delete els["cp_hj"].value; els["cp_hj"].textContent = "#アカメアンコウ #深海";
+  const hb = (lists["[data-copyfrom]"] || []).find(x => x.dataset.copyfrom === "cp_hj"); hb.textContent = "해시태그 복사";
+  if (hb?.onclick) hb.onclick(); for (let i = 0; i < 10; i++) await Promise.resolve();
+  res.hashtag_copy_works = copied === "#アカメアンコウ #深海" && hb.textContent === "복사됨";
+  // 영상 승인 확인창: 인스타 없이 「유튜브 제목·설명을 바로」
+  sv.stages.video.state = "review"; sv.stages.upload.state = "locked"; delete sv.artifacts.upload;
   statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
   { let asked = ""; const cf0 = globalThis.confirm; globalThis.confirm = m => { asked = m; return false; };
-    const apv = (lists["[data-act]"] || []).find(b => b.dataset.act === "approve" && b.dataset.stage === "video");
+    const apv = (lists["[data-act]"] || []).find(x => x.dataset.act === "approve" && x.dataset.stage === "video");
     if (apv?.onclick) await apv.onclick(); globalThis.confirm = cf0;
-    res.video_approve_mentions_trial = asked.includes("인스타 시험 릴스로 올려 24~48시간 겨룬 뒤") && asked.includes("@abyss_0cean으로 연결돼 있을 때") &&
-      asked.includes("다른 계정이면 올리지 않고 멈춥니다"); }
-  // ④ 시험 없이 진행(키 없음 등): 이유가 보인다
-  sv = base(); sv.jobs.upload.status = "done"; sv.artifacts.trial = { state: "skipped", reason: "인스타 연결 키(IG_ACCESS_TOKEN)가 없음" };
-  statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
-  ev = els.view.innerHTML;
-  res.trial_skipped_reason = ev.includes("시험 없이 진행 — 인스타 연결 키(IG_ACCESS_TOKEN)가 없음") && ev.includes('id="upmeta"') && !ev.includes("대화 요청 필요");
+    res.video_approve_goes_to_youtube = asked.includes("유튜브 제목·설명·해시태그를 바로 씁니다") && !asked.includes("인스타"); }
   statusOverride = null;
-  // ⑤ 목록: 시험 중 배지 · 인스타 연결 상태 · 틀별 성적 · 24시간 지난 시험 자동 확인(모든 편) · 연결 점검 버튼
-  indexOverride = { items: [{ id: "t1", name_ko: "시험어", sci: "T t", stage: "upload", state: "working",
-      job: { stage: "upload", status: "trial", at: iso(30) },
-      trial: { state: "running", posted_at: iso(30), checked_at: null, a: { line: HA.question_jp, pattern: HA.pattern }, b: { line: HB.question_jp, pattern: HB.pattern } } }],
-    hook_patterns: { "異常な行動": { tests: 1, wins: 1, losses: 0, ties: 0, skip_avg: 48 }, "常識破り": { tests: 1, wins: 0, losses: 1, ties: 0, skip_avg: 62 } },
-    ig: { ok: false, error: "API access blocked.", at: "2026-10-09T00:00:00Z" } };
-  window.location.pathname = "/"; els = {}; d0 = dispatched.length; await api.renderV2List();
-  const lv = els.view.innerHTML;
-  res.list_trial_badge = lv.includes('v2st prog">시험 중');
-  res.list_ig_card = lv.includes("연결 안 됨 — API access blocked.") && lv.includes("異常な行動: 1승 0패 0무") && lv.includes("평균 3초 넘김 48%") &&
-    lv.includes("A 「触ると、青く光る」 vs B 「魚なのに、青く光る」") && lv.includes('id="igprobe"');
-  res.list_due_auto_check = dispatched.slice(d0).filter(x => x.body.inputs.action === "trial_check" && x.body.inputs.pilot === "").length === 1;
-  const ipb = els.igprobe; d0 = dispatched.length; if (ipb?.onclick) await ipb.onclick();
-  res.ig_probe_dispatch = dispatched.slice(d0).some(x => x.body.inputs.action === "ig_probe");
-  indexOverride = null;
-  // ⑤-2 계정 잠금(운영자 확정 2026-10-10 · 실사고: 개인 계정 @lord.shiba.ybd 에 올라감): 무효 시험 · 다시 올리기 · 계정 경고
-  sv = base(); sv.jobs.upload = { stage: "upload", status: "trial_wait", at: iso(0.5) };
-  Object.assign(sv.artifacts.trial, { state: "cancelled", reason: "잘못된 계정(@lord.shiba.ybd)에 올라감 — ABYSS(@abyss_0cean)가 아님",
-    voided: [{ username: "lord.shiba.ybd", reason: "잘못된 계정", posts: [{ side: "a", permalink: "https://www.instagram.com/reel/DeUVF3-iuoE/" },
-                                                                    { side: "b", permalink: "https://www.instagram.com/reel/DeUVAsGgepp/" }] }] });
-  sv.artifacts.trial.b.file = "out/r1_trial/final_b.mp4"; delete sv.artifacts.trial.posted_at;
-  statusOverride = sv; els = {}; d0 = dispatched.length; await api.renderV2Episode("bathynomus_giganteus");
-  ev = els.view.innerHTML; up = ev.slice(ev.indexOf('id="stg-upload"'));
-  res.trial_cancelled_panel = up.includes('v2st fail">시험 대기') && up.includes("시험이 멈춰 있습니다 — 잘못된 계정(@lord.shiba.ybd)") &&
-    up.includes("reel/DeUVF3-iuoE/") && up.includes("reel/DeUVAsGgepp/") && up.includes("「삭제」") && up.includes('id="trrepost"') &&
-    up.includes('id="trskip"') && up.includes("이미 만든 A·B 영상을 그대로") && !up.includes('id="upmeta"') && !up.includes('id="trcheck"') &&
-    dispatched.length === d0;
-  const trr = els.trrepost; d0 = dispatched.length; if (trr?.onclick) await trr.onclick();
-  res.trial_repost_dispatch = dispatched.slice(d0).some(x => x.body.inputs.action === "trial_repost" && x.body.inputs.pilot === "bathynomus_giganteus");
-  sv = base(); sv.jobs.upload = { stage: "upload", status: "trial_wait", at: iso(0.5) };
-  sv.artifacts.trial = { state: "cancelled", reason: "연결된 인스타 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 올리지 않았습니다" };
-  statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
-  ev = els.view.innerHTML;
-  res.trial_wrong_account_waits = ev.includes("올리지 않았습니다") && ev.includes("B 버전을 만든 뒤 올립니다") && ev.includes('id="trrepost"');
-  statusOverride = null;
-  indexOverride = { items: [{ id: "t2", name_ko: "파리지옥말미잘", stage: "upload", state: "working", job: { stage: "upload", status: "trial_wait", at: iso(1) },
-      trial: { state: "cancelled", reason: "잘못된 계정(@lord.shiba.ybd)" } }],
-    ig: { ok: false, username: "lord.shiba.ybd", expected: "abyss_0cean", error: "연결된 계정이 @lord.shiba.ybd", at: "2026-10-10T14:46:08Z" } };
+  // 목록: 인스타 카드 없음(예전 index.json 필드가 남아 있어도)
+  indexOverride = { items: [{ id: "t1", name_ko: "시험어", stage: "upload", state: "review", job: { stage: "upload", status: "done" },
+    trial: { state: "cancelled", reason: "x" } }], ig: { ok: false, username: "lord.shiba.ybd" }, hook_patterns: { "常識破り": { wins: 1 } } };
   window.location.pathname = "/"; els = {}; await api.renderV2List();
-  const lv2 = els.view.innerHTML;
-  res.list_wrong_account_warning = lv2.includes("올릴 계정: <b>@abyss_0cean</b>") && lv2.includes("연결된 계정이 @lord.shiba.ybd — ABYSS 계정이 아니라 올리지 않습니다") &&
-    !lv2.includes('<span class="ok">연결됨</span>') && lv2.includes("파리지옥말미잘 · 시험 멈춤") && lv2.includes('v2st fail">시험 대기');
-  indexOverride = { items: [], ig: { ok: true, username: "abyss_0cean", at: "2026-10-11T00:00:00Z" } };
-  els = {}; await api.renderV2List();
-  res.list_right_account_ok = els.view.innerHTML.includes('<span class="ok">연결됨</span> @abyss_0cean');
+  const lv = els.view.innerHTML;
+  res.no_instagram_on_list = !/인스타|시험 릴스|lord\.shiba|igprobe|常識破り/.test(lv) && lv.includes("시험어");
   indexOverride = null;
-  // ⑤-3 인스타용 짧은 판(약 25초) · 인스타 캡션(공유 한 줄) — 업로드 뒤 칸 · 없으면 만들기 버튼만
-  sv = base(); sv.stages.upload.state = "approved"; delete sv.jobs; delete sv.artifacts.trial;
-  sv.artifacts.upload = { result: { url: "https://youtu.be/x", privacy: "public" }, meta: { title_jp: "題", desc_jp: "d", tags_jp: [], tags_ko: [],
-    ig_caption_jp: "本文です。\n\n深海好きの友だちにも、送ってみてください。" } };
-  sv.artifacts.video.ig_short = { file: "out/r1015_ig_short/ig_short.mp4", cuts: [1, 2, 3, 8], sec: 23.3, at: "2026-10-15T08:05:39Z", for_built_at: sv.artifacts.video.built_at };
-  statusOverride = sv; els = {}; d0 = dispatched.length; await api.renderV2Episode("bathynomus_giganteus");
-  up = els.view.innerHTML.slice(els.view.innerHTML.indexOf('id="stg-upload"'));
-  res.ig_short_section = up.includes("인스타그램용 — 짧은 판") && up.includes("ig_short.mp4") && up.includes("23.3초 · 맨 앞 후킹 + 1, 2, 3, 8번 컷") &&
-    up.includes('data-v2dlig="1"') && up.includes("深海好きの友だちにも") && up.includes("다시 만들기") && !up.includes("완성본이 그 뒤 바뀌었습니다");
-  const igsb = els.igshort; if (igsb?.onclick) await igsb.onclick();
-  res.ig_short_dispatch = dispatched.slice(d0).some(x => x.body.inputs.action === "ig_short" && x.body.inputs.pilot === "bathynomus_giganteus");
-  delete sv.artifacts.video.ig_short; statusOverride = sv; els = {}; await api.renderV2Episode("bathynomus_giganteus");
-  up = els.view.innerHTML.slice(els.view.innerHTML.indexOf('id="stg-upload"'));
-  res.ig_short_missing_has_button = up.includes("인스타용 짧은 판 만들기 (무료") && !up.includes('data-v2dlig="1"');
-  statusOverride = null;
-  // ⑥ 인스타가 가져갈 영상 주소(/v2file/커밋/편/파일.mp4): 커밋 번호로 고정한 raw 주소 · mp4 · 범위 요청 전달 · 그 밖은 거절
-  const sha = "0123456789abcdef0123456789abcdef01234567";
-  const r1 = await worker.fetch(new Request("https://x/v2file/" + sha + "/bathynomus_giganteus/out/r1009_trial/final_b.mp4", { headers: { Range: "bytes=0-1023" } }), {});
-  const last = rawFetched[rawFetched.length - 1] || {};
-  res.v2file_proxies_commit_raw = r1.status === 206 && r1.headers.get("Content-Type") === "video/mp4" &&
-    last.url === "https://raw.githubusercontent.com/jtaechul/Product/" + sha + "/short-movie-generator/v2/pilots/bathynomus_giganteus/out/r1009_trial/final_b.mp4" &&
-    last.range === "bytes=0-1023";
-  const bad = await Promise.all(["/v2file/main/bathynomus_giganteus/out/a.mp4", "/v2file/" + sha + "/bathynomus_giganteus/../status.json",
-    "/v2file/" + sha + "/bathynomus_giganteus/out/a.json", "/v2file/" + sha + "/Bad-Id/out/a.mp4"].map(u => worker.fetch(new Request("https://x" + u), {})));
-  res.v2file_rejects_others = bad.every(r => r.status === 403);
+  // 예전 시험 릴스용 영상 주소(/v2file)는 없어졌다
+  const r1 = await worker.fetch(new Request("https://x/v2file/" + "a".repeat(40) + "/bathynomus_giganteus/out/a.mp4"), {});
+  res.v2file_route_removed = (await r1.text()).includes("<!doctype html") || r1.headers.get("Content-Type").includes("text/html");
 }
 
 els = {}; window.location.pathname = "/legacy"; api.renderHome(); res.legacy_home_renders = (els.view?.innerHTML || "").includes("쇼츠 생성 시작");
