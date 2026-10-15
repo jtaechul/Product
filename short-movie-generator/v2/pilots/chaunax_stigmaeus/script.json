@@ -33,12 +33,12 @@
         "text_ko": "적이 오면 크게 부푼다"
       }
     ],
-    "question_jp": "敵が来ると、立ち上がる",
-    "question_ko": "적이 오면 일어선다",
+    "question_jp": "魚なのに、立ち上がる",
+    "question_ko": "물고기인데 일어선다",
     "key_jp": "立ち上がる",
-    "voice_jp": "敵が来ると、立ち上がる",
-    "pattern": "異常な行動",
-    "chosen": 0,
+    "voice_jp": "魚なのに、立ち上がる",
+    "pattern": "常識破り",
+    "chosen": 1,
     "type": "line"
   },
   "core": "F13",
@@ -470,5 +470,46 @@
       ]
     }
   ],
-  "total_sec": 62.0
+  "total_sec": 62.0,
+  "hook_history": [
+    {
+      "at": "2026-10-15T15:26:28Z",
+      "hook": {
+        "cut": 6,
+        "at": 3.0,
+        "answer_jp": "アカメアンコウ",
+        "answer_ko": "아카메앙코우(아귀)",
+        "candidates": [
+          {
+            "pattern": "異常な行動",
+            "text_jp": "敵が来ると、立ち上がる",
+            "key_jp": "立ち上がる",
+            "voice_jp": "敵が来ると、立ち上がる",
+            "text_ko": "적이 오면 일어선다"
+          },
+          {
+            "pattern": "常識破り",
+            "text_jp": "魚なのに、立ち上がる",
+            "key_jp": "立ち上がる",
+            "voice_jp": "魚なのに、立ち上がる",
+            "text_ko": "물고기인데 일어선다"
+          },
+          {
+            "pattern": "異常な行動",
+            "text_jp": "敵が来ると、大きく膨らむ",
+            "key_jp": "大きく膨らむ",
+            "voice_jp": "敵が来ると、大きく膨らむ",
+            "text_ko": "적이 오면 크게 부푼다"
+          }
+        ],
+        "question_jp": "敵が来ると、立ち上がる",
+        "question_ko": "적이 오면 일어선다",
+        "key_jp": "立ち上がる",
+        "voice_jp": "敵が来ると、立ち上がる",
+        "pattern": "異常な行動",
+        "chosen": 0,
+        "type": "line"
+      }
+    }
+  ]
 }
