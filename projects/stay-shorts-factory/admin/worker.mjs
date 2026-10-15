@@ -26,9 +26,9 @@ const MEDIA = { "video.mp4": "video/mp4", "narration_preview.mp3": "audio/mpeg",
 const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.py MONTH_KRW 와 같은 값)
 // 형식별 예상 비용(원). 기존 9컷: 미리보기 글·음성 약 80 / 정식 제작(미니어처 3컷 + Veo 1컷) 약 2,500 (실측).
 // 시그니처 v4 이야기(2026-10-15 운영자 "진행해" · 장점 하나·여러 관점 · make_story): 미리보기 = 글·비전·음성(받아쓰기 포함)만 약 90 · AI 영상 없음.
-//   제작 = 미리보기 대본·음성 재사용 + 훅·정체·약속 3컷 Veo(294 × 3 = 882) ≈ 900, 미리보기 없이 ≈ 990
+//   제작 = 미리보기 대본·음성 재사용 + 훅·정체·사람(손·뒷모습)·약속 4컷 Veo(294 × 4 = 1,176) + 사람 컷 검수 ≈ 1,200, 미리보기 없이 ≈ 1,290
 const COST = {
-  signature: { preview: 90, produce: 900, produce_fresh: 990 },
+  signature: { preview: 90, produce: 1200, produce_fresh: 1290 },
   solo: { preview: 80, produce: 2500, produce_fresh: 2500 },
 };
 const costOf = (mode) => COST[mode];

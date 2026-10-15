@@ -297,11 +297,11 @@ function render(d) {
   const cur = d.candidates.find((c) => c.name === sel.value) || {};
   const blk = fc.mode === "signature" ? cur.sig_block : null;
   $("previewCost").textContent = "약 " + won(fc.preview) + (fc.mode === "signature" ? " · 대본·나레이션·사진 영상(AI 영상 없음)" : " · 영상 없음");
-  $("produceCost").textContent = "약 " + won(fc.produce) + (fc.mode === "signature" ? " · AI 영상 3컷" : "") + (fc.reuse ? " · 미리보기 #" + fc.reuse.number + " 재사용" : "") + " · 누르면 한 번 더 확인";
+  $("produceCost").textContent = "약 " + won(fc.produce) + (fc.mode === "signature" ? " · AI 영상 4컷" : "") + (fc.reuse ? " · 미리보기 #" + fc.reuse.number + " 재사용" : "") + " · 누르면 한 번 더 확인";
   $("fmtNote").textContent = blk
     ? "이 숙소는 시그니처 영상을 만들 재료가 부족해 잠겨 있습니다(" + blk.at + "): " + blk.reason + ". 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요."
     : fc.mode === "signature"
-    ? "장점 하나를 정해 훅(걱정) → 정체 → 디테일·상황·사람·행동·연결·희소성 → 약속(첫 걱정을 풂) 순서로, 모든 문장이 그 장점을 다른 관점으로 말합니다. 나레이션 + 가라오케 자막 + 음악. 미리보기는 AI 영상 없이 이야기·목소리를 먼저 확인하고, 정식 제작 때 훅·정체·마지막 3컷만 AI 영상으로 움직입니다."
+    ? "장점 하나를 정해 훅(걱정) → 정체 → 디테일·상황·사람·행동·연결·희소성 → 약속(첫 걱정을 풂) 순서로, 모든 문장이 그 장점을 다른 관점으로 말합니다. 나레이션 + 가라오케 자막 + 음악. 미리보기는 AI 영상 없이 이야기·목소리를 먼저 확인하고, 정식 제작 때 훅·정체·마지막 3컷과 손·뒷모습 한 컷(얼굴 없음)만 AI 영상으로 만듭니다."
     : "물놀이·객실·특별 공간을 9컷으로 소개하는 예전 형식(나레이션 + 미니어처 인물).";
   const hold = Date.now() < holdUntil;
   $("previewBtn").disabled = !!act || hold || room < fc.preview || !sel.value || !!blk;
@@ -399,7 +399,7 @@ $("produceBtn").onclick = () => {
   if (!S) return;
   const stay = $("stay").value, m = S.money, fc = fmtCost(S), c = fc.produce;
   const how = fc.mode === "signature"
-    ? (fc.reuse ? "미리보기 #" + fc.reuse.number + "의 대본·나레이션·컷을 그대로 쓰고, 훅·정체·마지막 3컷만 AI 영상(Veo 4초 · 컷당 약 294원)으로 움직입니다. "
+    ? (fc.reuse ? "미리보기 #" + fc.reuse.number + "의 대본·나레이션·컷을 그대로 쓰고, 훅·정체·마지막 3컷과 손·뒷모습 한 컷만 AI 영상(Veo 4초 · 컷당 약 294원)으로 만듭니다(사람 컷은 얼굴·새 물건 검수 뒤 탈락하면 사진). "
                 : "이 숙소의 이야기 미리보기가 없어 장점 선정·대본·나레이션부터 새로 만듭니다(검수 안 된 대본이 나갈 수 있습니다). ")
     : "";
   openSheet({ label: "정식 제작 확인", title: stay + " · " + $("fmt").selectedOptions[0].textContent.split(" · ")[0], big: "약 " + esc(won(c)) + " <small>정식 제작 1편</small>",
