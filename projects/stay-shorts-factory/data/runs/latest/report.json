@@ -1,9 +1,9 @@
 {
- "nonce": "2026-10-16-admin-sig-preview-f8zj",
+ "nonce": "2026-10-16-admin-sig-preview--1YB",
  "stay": "세인트존스 호텔",
  "mode": "signature",
  "fake": false,
- "ok": false,
+ "ok": true,
  "steps": {},
  "models": {
   "text": [
@@ -24,16 +24,1106 @@
  },
  "stage": "preview",
  "format": "story",
- "error": "RuntimeError: 세인트존스 호텔: 쓸 수 있는 사진이 2장 미만이거나 쿠팡 객실이 없습니다",
+ "hotels": [
+  {
+   "name": "세인트존스 호텔",
+   "city": "강릉시",
+   "room_names": [
+    "슈페리어더블or헐리우드 트윈 도시전망",
+    "10월 특가★슈페리어 할리우드",
+    "디럭스 온돌(전망없음)",
+    "슈페리어 헐리우드 노오션뷰",
+    "슈페리어 더블, 노오션뷰"
+   ],
+   "verified_facilities": [
+    "개폐식 돔 인피니티풀",
+    "실내 온수풀",
+    "사우나"
+   ],
+   "theme_hits": [],
+   "blog_30d": 1000,
+   "min_price": 115500.0,
+   "honest": "",
+   "photo_counts": {
+    "official": 32,
+    "coupang": 6,
+    "operator": 0,
+    "mismatch": 1,
+    "near_dup": 0,
+    "exterior_cut": 0
+   },
+   "official_facts": [
+    "오션타워와 파인타워 인피니티풀 운영",
+    "반려동물 동반 펫 객실 및 도그 파크 구비",
+    "호텔 내 사우나 및 피트니스 센터 운영",
+    "키즈 객실 및 전용 펫 살롱 시설 보유"
+   ],
+   "signature": "인피니티풀과 펫 시설을 갖춘 호텔",
+   "hook": "사계절 돔 열리는 온수 인피니티풀",
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000570032&vendorItemId=70000005963001&itemId=20000048991639&traceid=V0-153-72832fb8d58cb0b5&requestid=20261016011009107162649029&token=31850C%7CGM&pt=0&slot=1",
+   "official_site": "https://new.stjohns.co.kr/",
+   "rooms": [
+    {
+     "name": "슈페리어더블or헐리우드 트윈 도시전망",
+     "price": 162000.0,
+     "image": "https://ads-partners.coupang.com/image1/nEeibzTj8rj6vBbAnBAZWlHpqhT5xMZOfGijpSRZvvcUTZim8JLe7k27nxQ_310NLGwDWDYOY2-zcwBmTwPR7aMTvg-Cz8aKzwwh4XsN3U9Qw0aWpuLG7IWhZu9nRGJRv2pQZ_VkZZ_gNaQxZFKWHNjJyAr-W8AP7-nvnwokdHg2aYPQ45Z_zkDU7ady1TAgDCdGzHtEkLl0kPU9wE4stOEkg-u2owMGLeXx4GwOGgO-ZbI1wbOhcQYeCZQxO6B7sqxSzGWPsei0VP9jFfBPX61LgR7utNGdl_kNBOGqTVVsqjFMTm3KLcYNQ9O7KAZNjprCLQOIrHR-Mum4V2suoUSkubuFn3pfE3HM1mszcAhDEQ6pKXzrt3a7B38X_iYdEVOT29BX4eCsjUAfoZBO4mP0CxYvkONuBcSMVdIMHDRnYfAiEw_7Mohw6i610IYKwSulQrhrpYjfA7izfr4Wmp04nqSg3qEQtmrSwJoHs0M8GOF4oF8wjI73l-jZepZDzY0C-v9Q899ej4N3GVsX1mfNVE08CHJaQ6ZtUVQof2OsrqU=",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000570032&vendorItemId=70000005963001&itemId=20000048991639&traceid=V0-153-72832fb8d58cb0b5&requestid=20261016011009107162649029&token=31850C%7CGM&pt=0&slot=1"
+    },
+    {
+     "name": "10월 특가★슈페리어 할리우드",
+     "price": 124200.0,
+     "image": "https://ads-partners.coupang.com/image1/tzruQ_kXN5CAka8ZtxIdm85fWgEiA7FXF0QHKo2rC3_w0bCqHoWse01_WB1eOFjWRbCvG2Lqs5NWgbSh_ECEZQ4kvYnG0K3-fOZuGv7y06C5ItqALshZxubpAoRnBox9Eej1rihNy8xbDXb1i5-jkpoQSGb9Ghx_Zwy5EzJzguTCeVmRaSr9_fUHGdTnvqxMW2_rRZnVv9Z7KCGYnfw4g_0TGFzLtCTIMOOiB9KSkszvLKZlZVvNhIrGdHNz0MOJ4TjVZhM4EwbNty2A18Gt8wVAfsj-iaDxZWU8yfqrAOjocRr201AGKZxsZervOqjT_bBJVN_daX-bbB3XFl6reOs0D0NCl3G9fHcmKtbmqWkf7DluwThHfVYCdKfxQX5X3mdjjmEoIbiRJztkvVM6cxiRxUH2RU_F5Q2doshO-W42tfBPoecJ7cUCVyMOcl30hZFz3DXASvh88nN4M-MJh5bnvk1pBu6pomd32N0PkFgxlxFNkJB0UjBStWwzTaKr8owOWGX1ks-S1J20Yy4JDC_1AYiLUa1wEO4plg==",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=77802093&vendorItemId=70000115424650&itemId=20002017385730&traceid=V0-153-ccc895f1aaf4c20c&requestid=20261016011009107162649029&token=31850C%7CGM&pt=0&slot=2"
+    },
+    {
+     "name": "디럭스 온돌(전망없음)",
+     "price": 115500.0,
+     "image": "https://ads-partners.coupang.com/image1/oo_uqtXITQ5CJNMConNv7y5VNI27jkmyQGbb9sKQSAbmPFr-COISQXc0u11nWh31tHmBIFVViOgdB1Bl961H74T2nLHZvk5FEviz8E-yDMxFWJZovMOIvAyvCJYUMClVuYP4u073M-Gd6OV162zPxMT5Gzp_md0YaH4vWkeuK_Vr2bulRBFy-34d4tTmIzf-W6WUBPyRIH3XmWh35_HD9cOrmqUbx3tq95KjM7O3kFJzGF7N6ENgTQ_rjaN8xJMa_1ZThYBK-Vdt1bwj467ovYyWFO3pI1WnAZrwEtysi9_ICHiYytmcRvoFLHIG82PzqVDov02NOt16VoK88rsbZDHe0rSq6KaYYNTsPxhqqxKXGRev8RpodX7NBuEiF6PnCkDSBMDW1D1CArxhp02O-g4SHrqEUzODJyIG1c4m5AbLqNTkchtDpIzxKAjhOa0ZgQx9fsQAn3PcN3ElZ_xaLVRYz36NqfYqHbryOmNgg8gScP7Qy4CRX0RfvLFeYZlghYjAkkV_yqpWHPjbrXuGCL-5rfcdRNttOxRWy2u7BPC5",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011264187&vendorItemId=70000227543392&itemId=20002141545227&traceid=V0-153-51ef22e8660d6191&requestid=20261016011009107162649029&token=31850C%7CGM&pt=0&slot=6"
+    },
+    {
+     "name": "슈페리어 헐리우드 노오션뷰",
+     "price": 242000.0,
+     "image": "https://ads-partners.coupang.com/image1/9dDpui4Ra9SIVXN_9RGHtAIZhtN-SvsgS3deAWn5XzXjts2zELIaYJunH35aE1bLS_oZ8XQ0v4cu5fctZjDKBlVYbqOWXhT00KQNiKat7CWZP7qKE2U0LPbPeTwmeWWiM4-9dBqJOlbZ2zv8_FVx3X-QvEt6kbG_QpXqD0PdkvWccod-2VbH__lMfkcRQozZP56P5qV518uqAEs97orshk6e5MA4GmrseJ8OBJnsrM1BUQs91e8bwm94wdOPkGxt2lkFeaL4fYuqeSRBV2uVcPAqXogPGYIYasx0ohdF3dd1HGipJhMUR0LhKHJyq71dzOXPcB7fx7froMTz8NgzW0AGy5SC_q4wLXEf_trVHl0mk2PHl_ndfwzdeJO_vwU52ToKMMHCetE4FvFTvji1ZORh8kg75k9nyTOqw6xxN-u3ACFHMk0ukrxV9gkZe0lUyFojQwYicU20LdDphpQ9j6phrYolDy274b8HTnenE3aalOG5ctebVykjakQqh8sVDXEm4gqhXtU9aRNBcV2uqSCI9WYU1zu-d7fYh8AVcBcAMQ==",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002654392&vendorItemId=70000073563567&itemId=20001037827590&traceid=V0-153-cadb9b3ab528a714&requestid=20261016011009107162649029&token=31850C%7CGM&pt=0&slot=7"
+    },
+    {
+     "name": "슈페리어 더블, 노오션뷰",
+     "price": 217800.0,
+     "image": "https://ads-partners.coupang.com/image1/YLRcoNLClkD5Xr2DYMYI8AW3ECzsweGM0-zKWSSj6BGEDkMah6JqyK_b10jtQWfJZ9kO4XqsUgSjfFYA_P1F2wFCskv9PgrYGmSGF0uDiHXJT3JPcUsOCzYbhThFMXIMtqXXsI2a5Ubk0aSke7VBq9SLYB9xjbzEc0J5twmy_bpcNoyoyd-agZzLJ1xss5sGfQXpa7YBv34GhW2UWlgrTH7mCKgCe8mXnn_LqarOBTEBhbZbnG9q1vR5yAn_nWCaZOJY2Df3uCMhtBdX2h2G9GysMsq3tK5-PanjlZCEUw9wnS15PZZBbjoY5ZyzvY8HL9D4McVfs3sYD_SwBC40oIEONis5pop0d5pkdPiGIwgdMUkA4FjOARbGOBw9T6MS-9UxFBi9i3u6t3YfU-Iv3zH5KHtI1EV8Ut7qagn0pGG9dcJ-QIjdcWFxVvVrYvlNZJ1C0CwOKdIzFinEq8D48Pm3RDJoYwg971Sv_WbIgcj7AjzTC61-mTuv7gLIuZysO6OKc5GLy2WtLdO_OEA-3PXERTGTZJBavgXnFxa0g2p9DxU=",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000027006&vendorItemId=70000003297509&itemId=20001018313493&traceid=V0-153-098bb76154ea72e1&requestid=20261016011009107162649029&token=31850C%7CGM&pt=0&slot=9"
+    },
+    {
+     "name": "디럭스 더블룸 호수전망",
+     "price": 260150.0,
+     "image": "https://ads-partners.coupang.com/image1/8njVMe6EPGmK5WEa8llIFhzn24elWcybwcfZQoNwkalGnGjRTMNWJYjseB9UmWgrEXLCDJcxSwT5crj1bom71E3ROHaNomdKSL4Tt6ly70P0pc2JIXY1NIXnQC04SvSIS41s5M9qNfAzEXtU6S1mEQhi2ZxJEdWLUbPW1TOEsPnj6ETSKmZ7MNdPwMebhUA9WLkIFO2GDccWe970J8FadC0svKTbpXI3IMpOeS03oGjd5_cZ6RUBmZhOWD2GErmajOFD0n80TwJbQnSaBKfVITAn7XiAA86JLherDDTVFFYit5RUHhasRHFRFk2FERXLVKB1-5InPFtFKVx3GS9dKzzFp3DaX43tjMSyJsm87SYOsKuj4zTNzo2rKZlEC2dZ-WsiV6luowjcO-fvAxYZPKEeUtXfIu5IOHty2Kb0A3kv7Doz8uCoGGAk3d3JQesMTMDBJUmHu-1kN0L7m7mQgmIjfGZcDtCgwVlcqXzSsM1TOKwdMUpMpwJh62g7QtcSD2HWfWr9K2MQnwixSgTe_RZZChc9nzi0NQ==",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=77787097&vendorItemId=3613064881&itemId=616866787&traceid=V0-153-466d5d55cc659bbf&requestid=20261016011009107162649029&token=31850C%7CGM&pt=0&slot=10"
+    }
+   ],
+   "classified_summary": [
+    {
+     "k": 0,
+     "src": "official",
+     "cat": "skip",
+     "q": 4,
+     "people": true,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "루프탑 수영장과 버블 파티 장면이 콜라주 형태로 나열되어 있다."
+    },
+    {
+     "k": 1,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "오션 인피니티풀 운영 종료 및 제원 안내문이다."
+    },
+    {
+     "k": 2,
+     "src": "official",
+     "cat": "skip",
+     "q": 4,
+     "people": true,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "개폐식 돔 수영장과 반려견 동반 풀 이용 장면이 모인 콜라주 이미지다."
+    },
+    {
+     "k": 3,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "파인 인피니티풀 이용 시간 및 요금 안내문이다."
+    },
+    {
+     "k": 4,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "사우나 운영 시간 및 요금 안내문이다."
+    },
+    {
+     "k": 5,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "사우나 위치와 이용 요금이 적힌 안내 텍스트 이미지다."
+    },
+    {
+     "k": 6,
+     "src": "official",
+     "cat": "room",
+     "q": 7,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "캐릭터 쿠션이 놓인 어린이용 침대와 협탁 위의 미니 냉장고가 보인다."
+    },
+    {
+     "k": 7,
+     "src": "official",
+     "cat": "room",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "바다 생물 벽화로 꾸며진 키즈룸에 더블 침대와 어린이 침대, 작은 테이블"
+    },
+    {
+     "k": 8,
+     "src": "official",
+     "cat": "special",
+     "q": 7,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "푸른 동해 바다 위로 작은 보트가 물살을 가르며 지나가는 오션뷰가 펼쳐져"
+    },
+    {
+     "k": 9,
+     "src": "official",
+     "cat": "skip",
+     "q": 5,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "테이블 위에 알록달록한 여러 종류의 음료 잔들이 나란히 놓여 있다."
+    },
+    {
+     "k": 10,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "오션 피트니스 센터 이용 안내 텍스트 이미지다."
+    },
+    {
+     "k": 11,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "피트니스 센터 스텝밀 기구 입고 안내문이다."
+    },
+    {
+     "k": 12,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "웨어라운지 대여 물품 리스트 안내문이다."
+    },
+    {
+     "k": 13,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "파인 피트니스 센터 멤버십 안내문이다."
+    },
+    {
+     "k": 14,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "레저 멤버십 등급 및 이용 요금 안내문이다."
+    },
+    {
+     "k": 15,
+     "src": "official",
+     "cat": "skip",
+     "q": 3,
+     "people": true,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "인피니티풀 버블 퍼포먼스 안내 홍보 포스터다."
+    },
+    {
+     "k": 16,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "인피니티풀 버블 퍼포먼스 운영 시간 안내문이다."
+    },
+    {
+     "k": 17,
+     "src": "official",
+     "cat": "skip",
+     "q": 2,
+     "people": true,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "수중 스쿠터 대여 서비스 안내 포스터다."
+    },
+    {
+     "k": 18,
+     "src": "official",
+     "cat": "room",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "발코니 너머로 바다가 보이는 침실에 더블 침대와 반려견 전용 계단이 갖춰"
+    },
+    {
+     "k": 19,
+     "src": "official",
+     "cat": "room",
+     "q": 7,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "침대 옆 협탁과 암체어 앞 바닥에 호피 무늬 반려견 하우스와 식기가 놓여"
+    },
+    {
+     "k": 20,
+     "src": "official",
+     "cat": "skip",
+     "q": 4,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "호텔 내부 편의점 매장 모습이 담긴 홍보 안내 이미지다."
+    },
+    {
+     "k": 21,
+     "src": "official",
+     "cat": "skip",
+     "q": 3,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "호텔 노래방 시설을 소개하는 복합 사진 이미지다."
+    },
+    {
+     "k": 22,
+     "src": "official",
+     "cat": "skip",
+     "q": 2,
+     "people": true,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "레트로 게임기 대여 서비스 안내 포스터다."
+    },
+    {
+     "k": 23,
+     "src": "official",
+     "cat": "skip",
+     "q": 4,
+     "people": true,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "루프탑 수영장과 야간 풀파티 사진들이 결합된 콜라주 이미지다."
+    },
+    {
+     "k": 24,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "수영장 무료 및 판매, 대여 용품 안내표다."
+    },
+    {
+     "k": 25,
+     "src": "official",
+     "cat": "skip",
+     "q": 3,
+     "people": true,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "버블 퍼포먼스와 반려견 시설을 안내하는 웹페이지 이미지다."
+    },
+    {
+     "k": 26,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "파인 인피니티풀 이용 수칙 안내문이다."
+    },
+    {
+     "k": 27,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "파인 인피니티풀 소개 텍스트 이미지다."
+    },
+    {
+     "k": 28,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "인피니티풀 운영 시간 및 요금 안내표다."
+    },
+    {
+     "k": 29,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "인피니티풀 용품 안내표 텍스트 이미지다."
+    },
+    {
+     "k": 30,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "사우나 할인 혜택 안내문이다."
+    },
+    {
+     "k": 31,
+     "src": "official",
+     "cat": "skip",
+     "q": 1,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "사우나 정기 휴장 안내문이다."
+    },
+    {
+     "k": 32,
+     "src": "coupang",
+     "cat": "special",
+     "q": 6,
+     "people": false,
+     "mismatch": "",
+     "view": "exterior",
+     "desc": "푸른 해송 숲과 모래사장 너머로 세인트존스 호텔 외관 전경이 펼쳐져 있다"
+    },
+    {
+     "k": 33,
+     "src": "coupang",
+     "cat": "water",
+     "q": 8,
+     "people": true,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "유리 돔 천장 아래 타일 바닥에 호텔 영문명이 새겨진 실내 풀에서 한 사"
+    },
+    {
+     "k": 34,
+     "src": "coupang",
+     "cat": "skip",
+     "q": 6,
+     "people": false,
+     "mismatch": "세인트존스 호텔이 아닌 다른 해안 절벽 리조트(마음의숲",
+     "view": "exterior",
+     "desc": "해안 절벽 위에 위치한 파란색 외관의 리조트 건물 전경이다."
+    },
+    {
+     "k": 35,
+     "src": "coupang",
+     "cat": "skip",
+     "q": 5,
+     "people": false,
+     "mismatch": "",
+     "view": "",
+     "desc": ""
+    },
+    {
+     "k": 36,
+     "src": "coupang",
+     "cat": "skip",
+     "q": 5,
+     "people": false,
+     "mismatch": "",
+     "view": "",
+     "desc": ""
+    },
+    {
+     "k": 37,
+     "src": "coupang",
+     "cat": "skip",
+     "q": 5,
+     "people": false,
+     "mismatch": "",
+     "view": "",
+     "desc": ""
+    }
+   ]
+  }
+ ],
+ "photo_sources": [
+  {
+   "hotel": "세인트존스 호텔",
+   "official_site": "https://new.stjohns.co.kr/",
+   "crawl": {
+    "url": "https://new.stjohns.co.kr/",
+    "resolved_by": "request.json official_urls",
+    "reason": "",
+    "pages": [
+     "https://new.stjohns.co.kr/post/3789",
+     "https://new.stjohns.co.kr/post/3790",
+     "https://new.stjohns.co.kr/post/161",
+     "https://new.stjohns.co.kr/accommodation/index/KID",
+     "https://new.stjohns.co.kr/post/1248",
+     "https://new.stjohns.co.kr/post/139",
+     "https://new.stjohns.co.kr/post/3585",
+     "https://new.stjohns.co.kr/post/141",
+     "https://new.stjohns.co.kr/post/1521",
+     "https://new.stjohns.co.kr/post/3909",
+     "https://new.stjohns.co.kr/accommodation/index/PER",
+     "https://new.stjohns.co.kr/post/3584",
+     "https://new.stjohns.co.kr/post/3542",
+     "https://new.stjohns.co.kr"
+    ],
+    "tried": 58,
+    "photos": 32
+   },
+   "shots": [
+    {
+     "n": 11,
+     "slot": "room",
+     "source": "official",
+     "url": "https://new.stjohns.co.kr/uploads/room/2021/08/114f34599d49ced4ad2f61db33bb05d2.jpg",
+     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+     "description": "바다 생물 벽화로 꾸며진 키즈룸에 더블 침대와 어린이 침대, 작은 테이블이 놓여 있다."
+    },
+    {
+     "n": 12,
+     "slot": "room",
+     "source": "official",
+     "url": "https://new.stjohns.co.kr/uploads/room/2024/06/b18b67bcd0b94aabe9f76180dff57265.jpg",
+     "page": "https://new.stjohns.co.kr/accommodation/index/PER",
+     "description": "발코니 너머로 바다가 보이는 침실에 더블 침대와 반려견 전용 계단이 갖춰져 있다."
+    },
+    {
+     "n": 13,
+     "slot": "room",
+     "source": "official",
+     "url": "https://new.stjohns.co.kr/uploads/room/2026/07/5d4d1856e45082ced7bfbb94b504d68a.jpg",
+     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+     "description": "캐릭터 쿠션이 놓인 어린이용 침대와 협탁 위의 미니 냉장고가 보인다."
+    },
+    {
+     "n": 14,
+     "slot": "special",
+     "source": "official",
+     "url": "https://new.stjohns.co.kr/uploads/post/2026/05/ed27d480ada26c24f36de08fe4c3d0de.jpg",
+     "page": "https://new.stjohns.co.kr/post/1248",
+     "description": "푸른 동해 바다 위로 작은 보트가 물살을 가르며 지나가는 오션뷰가 펼쳐져 있다."
+    },
+    {
+     "n": 15,
+     "slot": "special",
+     "source": "coupang",
+     "url": null,
+     "page": null,
+     "description": "푸른 해송 숲과 모래사장 너머로 세인트존스 호텔 외관 전경이 펼쳐져 있다."
+    },
+    {
+     "n": 16,
+     "slot": "room",
+     "source": "official",
+     "url": "https://new.stjohns.co.kr/uploads/room/2020/11/034d4715652a511806b5515bb6febedf.jpg",
+     "page": "https://new.stjohns.co.kr/accommodation/index/PER",
+     "description": "침대 옆 협탁과 암체어 앞 바닥에 호피 무늬 반려견 하우스와 식기가 놓여 있다."
+    }
+   ]
+  }
+ ],
+ "sig_pool": {
+  "usable": 6,
+  "exterior": 1,
+  "facts": 8,
+  "official": 32,
+  "coupang": 6
+ },
+ "sig_groups": [
+  {
+   "fact": 4,
+   "photos": [
+    7,
+    18
+   ]
+  }
+ ],
+ "signature_tries": [
+  {
+   "signature": "반려견 전용 펫 객실",
+   "errs": []
+  }
+ ],
+ "signature_checks": [
+  {
+   "k": 18,
+   "subject": true,
+   "share": 0.85,
+   "ok": true,
+   "evidence": "침대 옆 전용 계단과 방석, 바닥의 펫 배변판과 식기 등이 구비된 반려견 전용 객실 전체가 담겨 있다."
+  },
+  {
+   "k": 19,
+   "subject": true,
+   "share": 0.8,
+   "ok": true,
+   "evidence": "침대 옆에 전용 반려견 하우스, 식수대, 장난감 등이 갖춰진 펫 전용 객실 공간이 사진의 주요 구성으로 잘 드러나 있다."
+  },
+  {
+   "k": 7,
+   "subject": false,
+   "share": 0.0,
+   "ok": false,
+   "evidence": "반려견 전용 계단, 하우스, 식기 등의 펫 전용 용품이 전혀 보이지 않는 어린이 테마 키즈 객실이다."
+  },
+  {
+   "k": 6,
+   "subject": false,
+   "share": 0.0,
+   "ok": false,
+   "evidence": "반려견 전용 계단, 전용 하우스, 식기 등의 펫 전용 용품이 보이지 않고 유아용 보조 침대와 미니 냉장고만 보임"
+  }
+ ],
+ "deep_facts": {
+  "facts": [
+   "스너그 하우스 또는 방석이 어메니티로 구비됨",
+   "반려견 전용 식기와 전용 계단이 제공됨",
+   "배변판과 패드, 배변 봉투가 제공됨",
+   "반려견 전용 수건 2장과 전용 샴푸가 제공됨",
+   "히노끼탕, 펫 욕조, 드라이룸 사전 예약 무료 대여",
+   "펫 더블룸 기준 면적은 27.44㎡이며 기준 인원 2인"
+  ]
+ },
+ "story_shots": [
+  {
+   "id": "S1",
+   "k": 18,
+   "kind": "장점·넓게",
+   "desc": "발코니 너머로 바다가 보이는 침실에 더블 침대와 반려견 전용 계단이 갖춰져 있다.",
+   "zoom": null
+  },
+  {
+   "id": "S2",
+   "k": 18,
+   "kind": "장점·디테일",
+   "desc": "침대 옆 반려견 전용 침대와 계단 (사진 18 확대: 발코니 너머로 바다가 보이는 침실에 더블 침대와 반려견 전용 계단이 갖춰져 있다.)",
+   "zoom": 1.43
+  },
+  {
+   "id": "S3",
+   "k": 19,
+   "kind": "장점·넓게",
+   "desc": "침대 옆 협탁과 암체어 앞 바닥에 호피 무늬 반려견 하우스와 식기가 놓여 있다.",
+   "zoom": null
+  },
+  {
+   "id": "S4",
+   "k": 19,
+   "kind": "장점·디테일",
+   "desc": "반려견 장난감이 놓인 원형 테이블과 1인용 소파 (사진 19 확대: 침대 옆 협탁과 암체어 앞 바닥에 호피 무늬 반려견 하우스와 식기가 놓여 있다.)",
+   "zoom": 1.0
+  },
+  {
+   "id": "S5",
+   "k": 7,
+   "kind": "장점·넓게",
+   "desc": "바다 생물 벽화로 꾸며진 키즈룸에 더블 침대와 어린이 침대, 작은 테이블이 놓여 있다.",
+   "zoom": null
+  },
+  {
+   "id": "S6",
+   "k": 7,
+   "kind": "장점·디테일",
+   "desc": "어린이용 낮은 목재 테이블 세트 (사진 7 확대: 바다 생물 벽화로 꾸며진 키즈룸에 더블 침대와 어린이 침대, 작은 테이블이 놓여 있다.)",
+   "zoom": 1.0
+  },
+  {
+   "id": "S7",
+   "k": 6,
+   "kind": "장점·넓게",
+   "desc": "캐릭터 쿠션이 놓인 어린이용 침대와 협탁 위의 미니 냉장고가 보인다.",
+   "zoom": null
+  },
+  {
+   "id": "S8",
+   "k": 6,
+   "kind": "장점·디테일",
+   "desc": "귀여운 동물 쿠션과 연두색 프레임의 전용 침실 공간 (사진 6 확대: 캐릭터 쿠션이 놓인 어린이용 침대와 협탁 위의 미니 냉장고가 보인다.)",
+   "zoom": 1.0
+  },
+  {
+   "id": "S9",
+   "k": 6,
+   "kind": "장점·디테일",
+   "desc": "침대 협탁 위에 놓인 소형 가전 (사진 6 확대: 캐릭터 쿠션이 놓인 어린이용 침대와 협탁 위의 미니 냉장고가 보인다.)",
+   "zoom": 1.0
+  },
+  {
+   "id": "S10",
+   "k": 8,
+   "kind": "연결",
+   "desc": "푸른 동해 바다 위로 작은 보트가 물살을 가르며 지나가는 오션뷰가 펼쳐져 있다.",
+   "zoom": null
+  }
+ ],
+ "story_tries": [
+  {
+   "errs": [
+    "문장 4 숫자 '1' 는 사실 목록에 없음"
+   ],
+   "beats": 6
+  },
+  {
+   "errs": [
+    "문장 1 훅 19자 — 18자 안(약 3초)",
+    "문장 2 정체가 6초 안에 안 나옴 — 훅·정체 합 40자 안",
+    "문장 3 분위기 말 '아늑'"
+   ],
+   "beats": 6
+  },
+  {
+   "errs": [],
+   "beats": 7
+  }
+ ],
+ "text_title_type": "반전 질문",
+ "lens_check": {
+  "ok": true,
+  "errs": []
+ },
+ "person_cut": {
+  "i": 4,
+  "lens": "행동",
+  "kind": "hand",
+  "action_en": "gently touches the pet food bowl on the floor"
+ },
+ "narration_sec": {
+  "1": 2.19,
+  "2": 2.77,
+  "3": 3.02,
+  "4": 2.87,
+  "5": 3.18,
+  "6": 3.27,
+  "7": 3.02,
+  "cta": 2.41
+ },
+ "narration_qa": [
+  {
+   "segment": "컷1",
+   "script": "수영장 호텔에 강아지도 갈까요?",
+   "heard": "수영장 호텔에 강아지도 갈까요?",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷2",
+   "script": "여긴 전용 계단이 있는 반려견 객실이에요.",
+   "heard": "여긴 전용 계단이 있는 반려견 객실이에요",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷3",
+   "script": "바닥에 전용 식기와 전용 하우스도 놓여 있어요.",
+   "heard": "바닥에 전용 식기와 전용 하우스도 놓여있어요.",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷4",
+   "script": "암체어 옆 전용 식기에 사료를 챙겨 주면 돼요.",
+   "heard": "암체어 옆 전용 식기에 사료를 챙겨주면 돼요.",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷5",
+   "script": "수영장 리조트 중에서 도그 파크까지 갖춰져 있죠.",
+   "heard": "수영장 리조트 중에서 도그 파크까지 갖춰져 있죠",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷6",
+   "script": "발코니 너머 바다를 보며 침대에서 함께 쉬면 돼요.",
+   "heard": "발코니 너머 바다를 보며 침대에서 함께 쉬면 돼요.",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷7",
+   "script": "전용 계단 있는 반려견 객실에서 편하게 머무세요.",
+   "heard": "전용 계단 있는 반려견 객실에서 편하게 머무세요",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "끝",
+   "script": "객실이랑 예약 링크는 프로필 4번에 있어요.",
+   "heard": "객실이랑 예약 링크는 프로필 4번에 있어요.",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  }
+ ],
+ "signature": {
+  "name": "반려견 전용 펫 객실",
+  "what": "침대 옆 전용 계단과 전용 하우스, 식기가 구비된 객실",
+  "fact": "반려동물 동반 펫 객실 및 도그 파크 구비",
+  "vs_peers": "온수풀 리조트 중 드물게 전용 계단과 하우스 등 전문 펫 시설을 갖춘 객실",
+  "peers": 12,
+  "photos": [
+   18,
+   19
+  ],
+  "confirmed": [
+   18,
+   19
+  ],
+  "why": "수영장 중심 리조트에서 반려견 전용 계단과 식기까지 완비된 전용 객실을 갖추고 있어 의외다",
+  "checks": [
+   {
+    "k": 18,
+    "subject": true,
+    "share": 0.85,
+    "ok": true,
+    "evidence": "침대 옆 전용 계단과 방석, 바닥의 펫 배변판과 식기 등이 구비된 반려견 전용 객실 전체가 담겨 있다."
+   },
+   {
+    "k": 19,
+    "subject": true,
+    "share": 0.8,
+    "ok": true,
+    "evidence": "침대 옆에 전용 반려견 하우스, 식수대, 장난감 등이 갖춰진 펫 전용 객실 공간이 사진의 주요 구성으로 잘 드러나 있다."
+   },
+   {
+    "k": 7,
+    "subject": false,
+    "share": 0.0,
+    "ok": false,
+    "evidence": "반려견 전용 계단, 하우스, 식기 등의 펫 전용 용품이 전혀 보이지 않는 어린이 테마 키즈 객실이다."
+   },
+   {
+    "k": 6,
+    "subject": false,
+    "share": 0.0,
+    "ok": false,
+    "evidence": "반려견 전용 계단, 전용 하우스, 식기 등의 펫 전용 용품이 보이지 않고 유아용 보조 침대와 미니 냉장고만 보임"
+   }
+  ],
+  "fallback": false
+ },
+ "veo": {
+  "model": "veo-3.1-lite-generate-preview",
+  "fake": false,
+  "clips": [],
+  "spent_krw": 0,
+  "month_total_krw": 6468
+ },
+ "bgm": "bgm.mp3",
+ "hook_title": {
+  "title": "수영장 호텔에 [반려견] 방이?",
+  "type": "반전 질문"
+ },
+ "script": {
+  "hook_title": "수영장 호텔에 [반려견] 방이?",
+  "title": "세인트존스 호텔 전용 계단 갖춘 반려견 객실",
+  "caption": {
+   "hook": "인피니티풀로 유명한 호텔에 반려견 전용 계단과 식기까지 갖춰진 전용 객실이 마련되어 있습니다.",
+   "points": [
+    "침대 옆 전용 계단과 전용 하우스, 식기 제공",
+    "야외 도그 파크 구비 및 전용 어메니티 완비"
+   ],
+   "save": "11월 늦가을 반려견과 바다 여행 갈 때 저장해 두세요."
+  },
+  "checklist": [
+   "반려동물 동반 펫 객실 및 도그 파크 운영",
+   "반려견 전용 식기와 전용 계단 제공"
+  ],
+  "cuts": [
+   {
+    "i": 1,
+    "narration": "수영장 호텔에 강아지도 갈까요?",
+    "caption": "훅"
+   },
+   {
+    "i": 2,
+    "narration": "여긴 전용 계단이 있는 반려견 객실이에요.",
+    "caption": "정체"
+   },
+   {
+    "i": 3,
+    "narration": "바닥에 전용 식기와 전용 하우스도 놓여 있어요.",
+    "caption": "디테일"
+   },
+   {
+    "i": 4,
+    "narration": "암체어 옆 전용 식기에 사료를 챙겨 주면 돼요.",
+    "caption": "행동"
+   },
+   {
+    "i": 5,
+    "narration": "수영장 리조트 중에서 도그 파크까지 갖춰져 있죠.",
+    "caption": "희소성"
+   },
+   {
+    "i": 6,
+    "narration": "발코니 너머 바다를 보며 침대에서 함께 쉬면 돼요.",
+    "caption": "연결"
+   },
+   {
+    "i": 7,
+    "narration": "전용 계단 있는 반려견 객실에서 편하게 머무세요.",
+    "caption": "약속"
+   }
+  ]
+ },
+ "screen_qa": [],
+ "timeline": [
+  {
+   "i": 1,
+   "lens": "훅",
+   "kind": "사진 무빙·push",
+   "sec": 3.2,
+   "shots": [
+    "S1"
+   ],
+   "narration": "수영장 호텔에 강아지도 갈까요?",
+   "title": "수영장 호텔에 [반려견] 방이?",
+   "chunks": [
+    [
+     "수영장 호텔에 강아지도",
+     0.0,
+     1.369
+    ],
+    [
+     "갈까요?",
+     1.369,
+     3.7
+    ]
+   ]
+  },
+  {
+   "i": 2,
+   "lens": "정체",
+   "kind": "사진 무빙·pan",
+   "sec": 2.89,
+   "shots": [
+    "S2"
+   ],
+   "narration": "여긴 전용 계단이 있는 반려견 객실이에요.",
+   "title": null,
+   "chunks": [
+    [
+     "여긴 전용 계단이",
+     0.277,
+     1.126
+    ],
+    [
+     "있는 반려견 객실이에요.",
+     1.126,
+     3.385
+    ]
+   ]
+  },
+  {
+   "i": 3,
+   "lens": "디테일",
+   "kind": "사진 무빙·diag",
+   "sec": 3.14,
+   "shots": [
+    "S3"
+   ],
+   "narration": "바닥에 전용 식기와 전용 하우스도 놓여 있어요.",
+   "title": null,
+   "chunks": [
+    [
+     "바닥에 전용 식기와",
+     0.306,
+     1.278
+    ],
+    [
+     "전용 하우스도 놓여",
+     1.278,
+     2.249
+    ],
+    [
+     "있어요.",
+     2.249,
+     3.644
+    ]
+   ]
+  },
+  {
+   "i": 4,
+   "lens": "행동",
+   "kind": "사진 무빙·tilt",
+   "sec": 2.99,
+   "shots": [
+    "S4"
+   ],
+   "narration": "암체어 옆 전용 식기에 사료를 챙겨 주면 돼요.",
+   "title": null,
+   "chunks": [
+    [
+     "암체어 옆 전용",
+     0.289,
+     0.972
+    ],
+    [
+     "식기에 사료를 챙겨",
+     0.972,
+     1.883
+    ],
+    [
+     "주면 돼요.",
+     1.883,
+     3.486
+    ]
+   ]
+  },
+  {
+   "i": 5,
+   "lens": "희소성",
+   "kind": "사진 무빙·pull",
+   "sec": 3.3,
+   "shots": [
+    "S5"
+   ],
+   "narration": "수영장 리조트 중에서 도그 파크까지 갖춰져 있죠.",
+   "title": null,
+   "chunks": [
+    [
+     "수영장 리조트 중에서",
+     0.414,
+     1.441
+    ],
+    [
+     "도그 파크까지 갖춰져",
+     1.441,
+     2.468
+    ],
+    [
+     "있죠.",
+     2.468,
+     3.8
+    ]
+   ]
+  },
+  {
+   "i": 6,
+   "lens": "연결",
+   "kind": "사진 무빙·push",
+   "sec": 3.39,
+   "shots": [
+    "S10"
+   ],
+   "narration": "발코니 너머 바다를 보며 침대에서 함께 쉬면 돼요.",
+   "title": null,
+   "chunks": [
+    [
+     "발코니 너머 바다를",
+     0.369,
+     1.336
+    ],
+    [
+     "보며 침대에서 함께",
+     1.336,
+     2.303
+    ],
+    [
+     "쉬면 돼요.",
+     2.303,
+     3.886
+    ]
+   ]
+  },
+  {
+   "i": 7,
+   "lens": "약속",
+   "kind": "사진 무빙·pan",
+   "sec": 3.14,
+   "shots": [
+    "S1"
+   ],
+   "narration": "전용 계단 있는 반려견 객실에서 편하게 머무세요.",
+   "title": null,
+   "chunks": [
+    [
+     "전용 계단 있는",
+     0.359,
+     1.037
+    ],
+    [
+     "반려견 객실에서 편하게",
+     1.037,
+     2.167
+    ],
+    [
+     "머무세요.",
+     2.167,
+     3.641
+    ]
+   ]
+  },
+  {
+   "i": "끝",
+   "lens": "끝 카드",
+   "kind": "카드",
+   "sec": 3.6,
+   "narration": "객실이랑 예약 링크는 프로필 4번에 있어요."
+  }
+ ],
+ "models_used": {},
+ "duration_sec": 25.71,
+ "video_bytes": 6964126,
  "gemini_usage": {
-  "calls": 2,
-  "prompt_text": 1841,
-  "prompt_image": 5445,
-  "prompt_audio": 0,
-  "output_text": 745,
-  "output_audio": 0,
+  "calls": 26,
+  "prompt_text": 26293,
+  "prompt_image": 50016,
+  "prompt_audio": 572,
+  "output_text": 6097,
+  "output_audio": 738,
   "thoughts": 0,
-  "krw_est": 6,
+  "krw_est": 68,
   "note": "토큰 수는 실측, 단가는 추정 — 실제 청구는 Google 사용량 화면 기준"
  }
 }

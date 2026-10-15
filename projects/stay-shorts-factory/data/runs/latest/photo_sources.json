@@ -1,112 +1,78 @@
 [
  {
-  "hotel": "소노펠리체 비발디파크",
-  "official_site": "https://www.sonohotelsresorts.com/felice_vp",
+  "hotel": "세인트존스 호텔",
+  "official_site": "https://new.stjohns.co.kr/",
   "crawl": {
-   "url": "https://www.sonohotelsresorts.com/felice_vp",
+   "url": "https://new.stjohns.co.kr/",
    "resolved_by": "request.json official_urls",
    "reason": "",
    "pages": [
-    "https://www.sonohotelsresorts.com/oceanWorld",
-    "https://www.sonohotelsresorts.com/felice_vp/spa",
-    "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "https://www.sonohotelsresorts.com/felice_vp/entertainment",
-    "https://www.sonohotelsresorts.com/felice_vp/resort",
-    "https://www.sonohotelsresorts.com/felice_vp/facilitiesviewall",
-    "https://www.sonohotelsresorts.com/felice_vp/conveniences",
-    "https://www.sonohotelsresorts.com/felice_vp/highlight",
-    "https://www.sonohotelsresorts.com/felice_vp/discover",
-    "https://www.sonohotelsresorts.com/felice_vp"
+    "https://new.stjohns.co.kr/post/3789",
+    "https://new.stjohns.co.kr/post/3790",
+    "https://new.stjohns.co.kr/post/161",
+    "https://new.stjohns.co.kr/accommodation/index/KID",
+    "https://new.stjohns.co.kr/post/1248",
+    "https://new.stjohns.co.kr/post/139",
+    "https://new.stjohns.co.kr/post/3585",
+    "https://new.stjohns.co.kr/post/141",
+    "https://new.stjohns.co.kr/post/1521",
+    "https://new.stjohns.co.kr/post/3909",
+    "https://new.stjohns.co.kr/accommodation/index/PER",
+    "https://new.stjohns.co.kr/post/3584",
+    "https://new.stjohns.co.kr/post/3542",
+    "https://new.stjohns.co.kr"
    ],
-   "tried": 37,
+   "tried": 58,
    "photos": 32
   },
   "shots": [
    {
     "n": 11,
-    "slot": "water",
+    "slot": "room",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/Z2QIeKCw56CffVBzKIkWjA==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
-    "description": "은은한 원형 천장 조명 아래 모자이크 타일로 마감된 실내 온수탕이 보인다.",
-    "alt": "소노펠리체_비발디파크_01_사우나_1024_1140.jpg"
+    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/114f34599d49ced4ad2f61db33bb05d2.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+    "description": "바다 생물 벽화로 꾸며진 키즈룸에 더블 침대와 어린이 침대, 작은 테이블이 놓여 있다."
    },
    {
     "n": 12,
-    "slot": "water",
+    "slot": "room",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/NP-EHN-mvIQSILUbhWAnsA==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/spa",
-    "description": "유선형 천장 조명과 레인이 갖춰진 넓고 밝은 실내 수영장 전경이다.",
-    "alt": "소노펠리체_비발디파크_수영장_1024_1140.jpg"
+    "url": "https://new.stjohns.co.kr/uploads/room/2024/06/b18b67bcd0b94aabe9f76180dff57265.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
+    "description": "발코니 너머로 바다가 보이는 침실에 더블 침대와 반려견 전용 계단이 갖춰져 있다."
    },
    {
     "n": 13,
-    "slot": "water",
+    "slot": "room",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/r8lgnGMZrxC7iVJ4y1IUUw==/1",
-    "page": "https://www.sonohotelsresorts.com/oceanWorld",
-    "description": "높은 철골 유리 천장 아래 실내 파도풀에서 물결이 일렁이고 있다."
+    "url": "https://new.stjohns.co.kr/uploads/room/2026/07/5d4d1856e45082ced7bfbb94b504d68a.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+    "description": "캐릭터 쿠션이 놓인 어린이용 침대와 협탁 위의 미니 냉장고가 보인다."
    },
    {
     "n": 14,
-    "slot": "room",
+    "slot": "special",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/2PaWERtAoppEHX_4oyC0Iw==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "전면 통창 너머로 푸른 산림이 한눈에 들어오는 깔끔한 거실 공간이다.",
-    "alt": "소노펠리체_비발디파크_실버_스위트_파크뷰_세로_1024_1140.jpg"
+    "url": "https://new.stjohns.co.kr/uploads/post/2026/05/ed27d480ada26c24f36de08fe4c3d0de.jpg",
+    "page": "https://new.stjohns.co.kr/post/1248",
+    "description": "푸른 동해 바다 위로 작은 보트가 물살을 가르며 지나가는 오션뷰가 펼쳐져 있다."
    },
    {
     "n": 15,
-    "slot": "room",
-    "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/bg-2j1RQeBA1cus9fVFGSw==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "복층형 구조로 높은 천장에 매달린 샹들리에와 아늑한 소파가 조화를 이룬다.",
-    "alt": "소노펠리체_비발디파크_로얄_스위트_디럭스_복층_파크뷰_세로.jpg"
+    "slot": "special",
+    "source": "coupang",
+    "url": null,
+    "page": null,
+    "description": "푸른 해송 숲과 모래사장 너머로 세인트존스 호텔 외관 전경이 펼쳐져 있다."
    },
    {
     "n": 16,
     "slot": "room",
     "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/u2GuIe-GbmbfO_8x9n6mnQ==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "통창 너머로 산자락 전경이 파노라마처럼 펼쳐지는 채광 좋은 거실이다.",
-    "alt": "소노펠리체_비발디파크_로얄_스위트_오션_파크뷰_01_세로.jpg"
-   },
-   {
-    "n": 17,
-    "slot": "special",
-    "source": "coupang",
-    "url": null,
-    "page": null,
-    "description": "분수가 뿜어져 나오는 호숫가 잔디밭과 아치형 돔 건물이 어우러진 풍경이다."
-   },
-   {
-    "n": 18,
-    "slot": "special",
-    "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/o4adYnfDv1FqVqNaEkT7Mw==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/roomsviewall",
-    "description": "인조잔디가 깔린 넓은 테라스에 해먹과 캠핑 의자, 텐트가 설치되어 있다."
-   },
-   {
-    "n": 19,
-    "slot": "special",
-    "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/88gY4F4ATgdfc2YPnn0ykg==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/entertainment",
-    "description": "높은 천장 아래 테이블과 미니 놀이 부스가 갖춰진 키즈 플레이 라운지다."
-   },
-   {
-    "n": 20,
-    "slot": "special",
-    "source": "official",
-    "url": "https://www.sonohotelsresorts.com/api/hms/user/management/file/image/luLi47bwNB3PDUbdkRyd9g==/1",
-    "page": "https://www.sonohotelsresorts.com/felice_vp/conveniences",
-    "description": "다양한 웨이트 트레이닝 머신이 배치된 쾌적한 피트니스 센터 내부다.",
-    "alt": "소노펠리체_비발디파크_01_피트니스_1024_1140.jpg"
+    "url": "https://new.stjohns.co.kr/uploads/room/2020/11/034d4715652a511806b5515bb6febedf.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
+    "description": "침대 옆 협탁과 암체어 앞 바닥에 호피 무늬 반려견 하우스와 식기가 놓여 있다."
    }
   ]
  }

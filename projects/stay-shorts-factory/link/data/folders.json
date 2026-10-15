@@ -196,6 +196,62 @@
      "price_band": null,
      "caption": "",
      "no": 2
+    },
+    {
+     "rank": 4,
+     "name": "세인트존스 호텔",
+     "city": "강릉시",
+     "hook": "사계절 돔 열리는 온수 인피니티풀",
+     "blog_30d": 1000,
+     "facts": [
+      "오션타워와 파인타워 인피니티풀 운영",
+      "반려동물 동반 펫 객실 및 도그 파크 구비",
+      "호텔 내 사우나 및 피트니스 센터 운영",
+      "키즈 객실 및 전용 펫 살롱 시설 보유",
+      "개폐식 돔 인피니티풀",
+      "실내 온수풀"
+     ],
+     "rooms": [
+      {
+       "name": "슈페리어더블or헐리우드 트윈 도시전망",
+       "tags": [],
+       "image": "https://ads-partners.coupang.com/image1/nEeibzTj8rj6vBbAnBAZWlHpqhT5xMZOfGijpSRZvvcUTZim8JLe7k27nxQ_310NLGwDWDYOY2-zcwBmTwPR7aMTvg-Cz8aKzwwh4XsN3U9Qw0aWpuLG7IWhZu9nRGJRv2pQZ_VkZZ_gNaQxZFKWHNjJyAr-W8AP7-nvnwokdHg2aYPQ45Z_zkDU7ady1TAgDCdGzHtEkLl0kPU9wE4stOEkg-u2owMGLeXx4GwOGgO-ZbI1wbOhcQYeCZQxO6B7sqxSzGWPsei0VP9jFfBPX61LgR7utNGdl_kNBOGqTVVsqjFMTm3KLcYNQ9O7KAZNjprCLQOIrHR-Mum4V2suoUSkubuFn3pfE3HM1mszcAhDEQ6pKXzrt3a7B38X_iYdEVOT29BX4eCsjUAfoZBO4mP0CxYvkONuBcSMVdIMHDRnYfAiEw_7Mohw6i610IYKwSulQrhrpYjfA7izfr4Wmp04nqSg3qEQtmrSwJoHs0M8GOF4oF8wjI73l-jZepZDzY0C-v9Q899ej4N3GVsX1mfNVE08CHJaQ6ZtUVQof2OsrqU="
+      },
+      {
+       "name": "10월 특가★슈페리어 할리우드",
+       "tags": [],
+       "image": "https://ads-partners.coupang.com/image1/tzruQ_kXN5CAka8ZtxIdm85fWgEiA7FXF0QHKo2rC3_w0bCqHoWse01_WB1eOFjWRbCvG2Lqs5NWgbSh_ECEZQ4kvYnG0K3-fOZuGv7y06C5ItqALshZxubpAoRnBox9Eej1rihNy8xbDXb1i5-jkpoQSGb9Ghx_Zwy5EzJzguTCeVmRaSr9_fUHGdTnvqxMW2_rRZnVv9Z7KCGYnfw4g_0TGFzLtCTIMOOiB9KSkszvLKZlZVvNhIrGdHNz0MOJ4TjVZhM4EwbNty2A18Gt8wVAfsj-iaDxZWU8yfqrAOjocRr201AGKZxsZervOqjT_bBJVN_daX-bbB3XFl6reOs0D0NCl3G9fHcmKtbmqWkf7DluwThHfVYCdKfxQX5X3mdjjmEoIbiRJztkvVM6cxiRxUH2RU_F5Q2doshO-W42tfBPoecJ7cUCVyMOcl30hZFz3DXASvh88nN4M-MJh5bnvk1pBu6pomd32N0PkFgxlxFNkJB0UjBStWwzTaKr8owOWGX1ks-S1J20Yy4JDC_1AYiLUa1wEO4plg=="
+      },
+      {
+       "name": "디럭스 온돌(전망없음)",
+       "tags": [],
+       "image": "https://ads-partners.coupang.com/image1/oo_uqtXITQ5CJNMConNv7y5VNI27jkmyQGbb9sKQSAbmPFr-COISQXc0u11nWh31tHmBIFVViOgdB1Bl961H74T2nLHZvk5FEviz8E-yDMxFWJZovMOIvAyvCJYUMClVuYP4u073M-Gd6OV162zPxMT5Gzp_md0YaH4vWkeuK_Vr2bulRBFy-34d4tTmIzf-W6WUBPyRIH3XmWh35_HD9cOrmqUbx3tq95KjM7O3kFJzGF7N6ENgTQ_rjaN8xJMa_1ZThYBK-Vdt1bwj467ovYyWFO3pI1WnAZrwEtysi9_ICHiYytmcRvoFLHIG82PzqVDov02NOt16VoK88rsbZDHe0rSq6KaYYNTsPxhqqxKXGRev8RpodX7NBuEiF6PnCkDSBMDW1D1CArxhp02O-g4SHrqEUzODJyIG1c4m5AbLqNTkchtDpIzxKAjhOa0ZgQx9fsQAn3PcN3ElZ_xaLVRYz36NqfYqHbryOmNgg8gScP7Qy4CRX0RfvLFeYZlghYjAkkV_yqpWHPjbrXuGCL-5rfcdRNttOxRWy2u7BPC5"
+      },
+      {
+       "name": "슈페리어 헐리우드 노오션뷰",
+       "tags": [
+        "오션뷰"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/9dDpui4Ra9SIVXN_9RGHtAIZhtN-SvsgS3deAWn5XzXjts2zELIaYJunH35aE1bLS_oZ8XQ0v4cu5fctZjDKBlVYbqOWXhT00KQNiKat7CWZP7qKE2U0LPbPeTwmeWWiM4-9dBqJOlbZ2zv8_FVx3X-QvEt6kbG_QpXqD0PdkvWccod-2VbH__lMfkcRQozZP56P5qV518uqAEs97orshk6e5MA4GmrseJ8OBJnsrM1BUQs91e8bwm94wdOPkGxt2lkFeaL4fYuqeSRBV2uVcPAqXogPGYIYasx0ohdF3dd1HGipJhMUR0LhKHJyq71dzOXPcB7fx7froMTz8NgzW0AGy5SC_q4wLXEf_trVHl0mk2PHl_ndfwzdeJO_vwU52ToKMMHCetE4FvFTvji1ZORh8kg75k9nyTOqw6xxN-u3ACFHMk0ukrxV9gkZe0lUyFojQwYicU20LdDphpQ9j6phrYolDy274b8HTnenE3aalOG5ctebVykjakQqh8sVDXEm4gqhXtU9aRNBcV2uqSCI9WYU1zu-d7fYh8AVcBcAMQ=="
+      },
+      {
+       "name": "슈페리어 더블, 노오션뷰",
+       "tags": [
+        "오션뷰"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/YLRcoNLClkD5Xr2DYMYI8AW3ECzsweGM0-zKWSSj6BGEDkMah6JqyK_b10jtQWfJZ9kO4XqsUgSjfFYA_P1F2wFCskv9PgrYGmSGF0uDiHXJT3JPcUsOCzYbhThFMXIMtqXXsI2a5Ubk0aSke7VBq9SLYB9xjbzEc0J5twmy_bpcNoyoyd-agZzLJ1xss5sGfQXpa7YBv34GhW2UWlgrTH7mCKgCe8mXnn_LqarOBTEBhbZbnG9q1vR5yAn_nWCaZOJY2Df3uCMhtBdX2h2G9GysMsq3tK5-PanjlZCEUw9wnS15PZZBbjoY5ZyzvY8HL9D4McVfs3sYD_SwBC40oIEONis5pop0d5pkdPiGIwgdMUkA4FjOARbGOBw9T6MS-9UxFBi9i3u6t3YfU-Iv3zH5KHtI1EV8Ut7qagn0pGG9dcJ-QIjdcWFxVvVrYvlNZJ1C0CwOKdIzFinEq8D48Pm3RDJoYwg971Sv_WbIgcj7AjzTC61-mTuv7gLIuZysO6OKc5GLy2WtLdO_OEA-3PXERTGTZJBavgXnFxa0g2p9DxU="
+      }
+     ],
+     "image": "img/2026-11-강원-실내-온수풀-온천/4.jpg",
+     "links": {
+      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000570032&vendorItemId=70000005963001&itemId=20000048991639&traceid=V0-153-72832fb8d58cb0b5&requestid=20261016011009107162649029&token=31850C%7CGM&pt=0&slot=1",
+      "agoda": null,
+      "official": "https://new.stjohns.co.kr/"
+     },
+     "honest": "",
+     "price_band": null,
+     "caption": "",
+     "no": 4
     }
    ]
   }
