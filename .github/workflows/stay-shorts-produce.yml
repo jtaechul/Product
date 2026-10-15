@@ -152,10 +152,12 @@ jobs:
               s += f" · 클립 {v.get('clips_ok')}/{v.get('clips_total')} · Veo 이번 실행 약 {v.get('spent_krw', 0):,}원 · 이번 달 누적 {v.get('month_total_krw', 0):,}원"
           if m.get("image_krw"):
               s += f" · 이미지 편집 약 {m['image_krw']:,}원"
+          if m.get("mode") == "signature" and "info_ok" in m:
+              s += " · 정보 전달 시험 " + ("통과" if m["info_ok"] else "미달(미리보기 문서 확인)")
           g = m.get("gemini_usage") or {}
           if g:
               s += f" · AI 글·음성 추정 {g.get('krw_est', 0):,}원"
-          print(s + (" (미리보기 · 관리실에서 정식 제작을 누르면 이 사진들을 재사용)" if m.get("stage") == "preview" else " (미발행 · 검수용)"))
+          print(s + (" (미리보기 · 관리실에서 정식 제작을 누르면 이 사진·자막을 재사용)" if m.get("stage") == "preview" else " (미발행 · 검수용)"))
           PY
           )
             curl -s -o /dev/null -w "telegram video http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$V" \
@@ -164,7 +166,7 @@ jobs:
             if [ -f "$S" ]; then
               SC="왼쪽 원본 사진 · 오른쪽 AI 영상 첫 장면. 실제와 다른 시설·전망이 보이면 폐기합니다"
               python3 -c "import json,sys;sys.exit(0 if json.load(open('$P/build/meta.json',encoding='utf-8')).get('mode')=='signature' else 1)" 2>/dev/null \
-                && SC="왼쪽 원본 사진 · 오른쪽 AI 변주(빛·날씨·뒷모습 인물만 바뀌어야 함). 건물·물가·전망이 달라 보이면 폐기합니다"
+                && SC="컷별 스토리보드 — 사진 · 자막 · 근거 사실. 사진에 시그니처가 안 보이거나 자막이 근거 사실과 다르면 폐기합니다"
               curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$S" \
                 -F caption="$SC" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
             fi
