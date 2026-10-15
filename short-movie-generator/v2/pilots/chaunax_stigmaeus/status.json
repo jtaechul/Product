@@ -16,8 +16,19 @@
       "approved_at": "2026-10-15T14:54:15Z"
     },
     "script": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-10-15T14:57:17Z",
+          "kind": "auto",
+          "text": "대본 자동 작성 완료"
+        },
+        {
+          "at": "2026-10-15T14:57:31Z",
+          "kind": "crosscheck",
+          "text": "AI 교차 검사: 의심 1건"
+        }
+      ]
     },
     "storyboard": {
       "state": "locked",
@@ -64,15 +75,457 @@
       "page": "https://www.inaturalist.org/taxa/450448"
     }
   },
-  "artifacts": {},
+  "artifacts": {
+    "script": {
+      "cuts": [
+        {
+          "cut": 1,
+          "jp": "暗い海底。胸ビレと腹ビレを使って、じっと休んでいる姿があります。",
+          "ko": "어두운 해저. 가슴지느러미와 배지느러미를 사용해 가만히 쉬고 있는 모습이 있습니다.",
+          "tts": "くらいかいてい。むねびれとはらびれをつかって、じっとやすんでいるすがたがあります。",
+          "fact": "F12",
+          "sec": 8,
+          "speech_s": 5.33,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F12",
+              "fact": "붉은눈아귀는 주로 가슴지느러미와 배지느러미로 해저에 엎드려 시간을 보내며, 먹이를 잡거나 포식자를 피할 때만 움직이는 매복 포식자입니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "Redeye gapers are sedentary ambush predators that spend most of their time resting on the sea floor on their pectoral and pelvic fins, moving only to capture prey or avoid predators.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            }
+          ]
+        },
+        {
+          "cut": 2,
+          "jp": "頭の上の釣り竿のような器官を振り、獲物を待ち伏せしているのです。",
+          "ko": "머리 위의 낚싯대 같은 기관을 흔들며 매복하여 먹이를 기다립니다.",
+          "tts": "あたまのうえのつりざおのようなきかんをふり、えものをまちぶせしているのです。",
+          "fact": "F7,F12",
+          "sec": 6,
+          "speech_s": 4.71,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F7",
+              "fact": "첫 번째 등지느러미 가시는 미끼가 달린 낚싯대 모양의 기관으로 변형되어 있습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "The first dorsal fin ray is modified into an angling apparatus (the illicium) with a lure (the esca).",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            },
+            {
+              "id": "F12",
+              "fact": "붉은눈아귀는 주로 가슴지느러미와 배지느러미로 해저에 엎드려 시간을 보내며, 먹이를 잡거나 포식자를 피할 때만 움직이는 매복 포식자입니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "Redeye gapers are sedentary ambush predators that spend most of their time resting on the sea floor on their pectoral and pelvic fins, moving only to capture prey or avoid predators.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            }
+          ]
+        },
+        {
+          "cut": 3,
+          "jp": "この生き物はアカメアンコウ。水深90から730メートルの深海にすみます。",
+          "ko": "이 생물은 아카메앙코우(아귀). 수심 90에서 730미터의 심해에 서식합니다.",
+          "tts": "このいきものはあかめあんこう。すいしん90から730めーとるのしんかいにすみます。",
+          "fact": "F1,F2",
+          "sec": 8,
+          "speech_s": 6.13,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F1",
+              "fact": "붉은눈아귀의 최초 표본은 1946년 3월 1일 애틀랜틱시티 앞바다에서 저인망 그물에 잡혔으며, 캐럴 B. 앳킨슨이 자연과학 아카데미에 기증했습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "The original type specimen was caught in a trawl off Atlantic City on March 1, 1946, and donated to the Academy of Natural Sciences by Carroll B. Atkinson.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            },
+            {
+              "id": "F2",
+              "fact": "이 종은 수심 90~730m의 바깥쪽 대륙붕과 위쪽 대륙사면에 서식하며, 죽은 산호 잔해물이 빽빽하게 쌓인 곳을 선호합니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "The species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            }
+          ]
+        },
+        {
+          "cut": 4,
+          "jp": "大きさは最大で全長30.5センチ。赤い目と、シワだらけの皮膚が特徴です。",
+          "ko": "크기는 최대 30.5센티미터. 붉은 눈과 주름투성이인 피부가 특징입니다.",
+          "tts": "おおきさはさいだいでぜんちょう30.5せんち。あかいめと、しわだらけのひふがとくちょうです。",
+          "fact": "F5,F9,F11",
+          "sec": 8,
+          "speech_s": 6.31,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F5",
+              "fact": "피부는 부드럽고 헐렁하며 매우 유연해서 머리와 몸의 대부분에 주름을 형성합니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "The skin is soft, loose, and very pliable (especially on the underside), forming folds over much of the head and body.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            },
+            {
+              "id": "F9",
+              "fact": "이 물고기의 홍채는 짙은 장미빛 붉은색을 띠고 있습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "The iris is a deep rose red.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            },
+            {
+              "id": "F11",
+              "fact": "이 종은 최대 30.5cm의 전체 길이까지 자랄 수 있습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "This species attains a maximum of 30.5 cm total length.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            }
+          ]
+        },
+        {
+          "cut": 5,
+          "jp": "表面は細かいトゲで覆われていて、まるでベルベットのような質感です。",
+          "ko": "표면은 미세한 가시로 덮여 있어, 마치 벨벳 같은 질감입니다.",
+          "tts": "ひょうめんはこまかいとげでおおわれていて、まるでべるべっとのようなしつかんです。",
+          "fact": "F4",
+          "sec": 6,
+          "speech_s": 4.84,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F4",
+              "fact": "이 물고기는 미세한 가시들로 덮여 있어 벨벳 같은 질감을 줍니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "The fish is covered with minute spinules that give it a velvety texture.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            }
+          ]
+        },
+        {
+          "cut": 6,
+          "jp": "危険を感じると、腹ビレで立ち上がり、水を吸って体を大きく膨らませます。",
+          "ko": "위험을 느끼면 배지느러미로 일어서서, 물을 빨아들여 몸을 크게 부풀립니다.",
+          "tts": "きけんをかんじると、はらびれでたちあがり、みずをすってからだをおおきくふくらませます。",
+          "fact": "F13",
+          "sec": 8,
+          "speech_s": 5.62,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F13",
+              "fact": "위협을 받으면 배지느러미로 몸을 일으켜 세우고 물을 빠르게 들이마셔 몸집을 부풀립니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "If threatened, they raise themselves up on their pelvic fins and rapidly take in water to increase the size of their bodies.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            }
+          ]
+        },
+        {
+          "cut": 7,
+          "jp": "深海から海面へと引き上げられる、急な環境の変化にも耐えられる強さを持ちます。",
+          "ko": "심해에서 수면으로 끌어올려지는 급격한 환경 변화에도 견딜 수 있는 강인함을 지녔습니다.",
+          "tts": "しんかいからかいめんへとひきあげられる、きゅうなかんきょうのへんかにもたえられるつよさをもちます。",
+          "fact": "F14",
+          "sec": 8,
+          "speech_s": 5.63,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F14",
+              "fact": "붉은눈아귀는 수면으로 끌어올려질 때 발생하는 온도와 압력 변화에서도 살아남을 수 있는 것으로 알려져 있습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "Redeye gapers are known to be able to survive the temperature and pressure changes from being brought to the surface.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            }
+          ]
+        },
+        {
+          "cut": 8,
+          "jp": "暗闇の中で獲物を待ち続ける、たくましい深海のハンターなのです。",
+          "ko": "어둠 속에서 먹이를 계속 기다리는, 듬직한 심해의 사냥꾼입니다.",
+          "tts": "くらやみのなかでえものをまちつづける、たくましいしんかいのはんたーなのです。",
+          "fact": "F12,F14",
+          "sec": 6,
+          "speech_s": 4.6,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F12",
+              "fact": "붉은눈아귀는 주로 가슴지느러미와 배지느러미로 해저에 엎드려 시간을 보내며, 먹이를 잡거나 포식자를 피할 때만 움직이는 매복 포식자입니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "Redeye gapers are sedentary ambush predators that spend most of their time resting on the sea floor on their pectoral and pelvic fins, moving only to capture prey or avoid predators.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            },
+            {
+              "id": "F14",
+              "fact": "붉은눈아귀는 수면으로 끌어올려질 때 발생하는 온도와 압력 변화에서도 살아남을 수 있는 것으로 알려져 있습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Redeye_gaper"
+              ],
+              "quote": "Redeye gapers are known to be able to survive the temperature and pressure changes from being brought to the surface.",
+              "source_title": "Wikipedia(en) Redeye gaper"
+            }
+          ]
+        }
+      ],
+      "pending_lines": [],
+      "hook": {
+        "cut": 6,
+        "at": 3.0,
+        "answer_jp": "アカメアンコウ",
+        "answer_ko": "아카메앙코우(아귀)",
+        "candidates": [
+          {
+            "pattern": "異常な行動",
+            "text_jp": "敵が来ると、立ち上がる",
+            "key_jp": "立ち上がる",
+            "voice_jp": "敵が来ると、立ち上がる",
+            "text_ko": "적이 오면 일어선다"
+          },
+          {
+            "pattern": "常識破り",
+            "text_jp": "魚なのに、立ち上がる",
+            "key_jp": "立ち上がる",
+            "voice_jp": "魚なのに、立ち上がる",
+            "text_ko": "물고기인데 일어선다"
+          },
+          {
+            "pattern": "異常な行動",
+            "text_jp": "敵が来ると、大きく膨らむ",
+            "key_jp": "大きく膨らむ",
+            "voice_jp": "敵が来ると、大きく膨らむ",
+            "text_ko": "적이 오면 크게 부푼다"
+          }
+        ],
+        "question_jp": "敵が来ると、立ち上がる",
+        "question_ko": "적이 오면 일어선다",
+        "key_jp": "立ち上がる",
+        "voice_jp": "敵が来ると、立ち上がる",
+        "pattern": "異常な行動",
+        "chosen": 0,
+        "type": "line"
+      },
+      "core": {
+        "id": "F13",
+        "fact": "위협을 받으면 배지느러미로 몸을 일으켜 세우고 물을 빠르게 들이마셔 몸집을 부풀립니다.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Redeye_gaper"
+        ],
+        "quote": "If threatened, they raise themselves up on their pelvic fins and rapidly take in water to increase the size of their bodies.",
+        "source_title": "Wikipedia(en) Redeye gaper"
+      },
+      "audio": "out/r10151457_script_tts/body.wav",
+      "tts_id": "r10151457_script_tts",
+      "verification": "자동 작성 · 출처 2곳 · 원문 인용이 확인된 사실 14개(확인 안 된 0개 버림) · 코드 검사 통과 · 예상 길이 62.0초",
+      "crosscheck": {
+        "at": "2026-10-15T14:57:17Z",
+        "model": "gemini-3.1-pro-preview",
+        "issues": [
+          {
+            "cut": 2,
+            "type": "unsupported",
+            "problem_ko": "사실 목록에는 낚싯대 모양의 기관이 있다는 것만 언급되어 있으며, 이를 '흔든다'는 동작에 대한 근거는 없습니다.",
+            "facts": [
+              "F7",
+              "F12"
+            ],
+            "suggestion_jp": "頭の上の釣り竿のような器官を持ち、獲物を待ち伏せしているのです。",
+            "suggestion_ko": "머리 위에 낚싯대 같은 기관을 가지고, 먹이를 매복하여 기다립니다."
+          }
+        ]
+      }
+    },
+    "topic": {
+      "facts": [
+        {
+          "id": "F1",
+          "fact": "붉은눈아귀의 최초 표본은 1946년 3월 1일 애틀랜틱시티 앞바다에서 저인망 그물에 잡혔으며, 캐럴 B. 앳킨슨이 자연과학 아카데미에 기증했습니다.",
+          "fact_jp": "アカメアンコウの最初の標本は、1946年3月1日にアトランティックシティ沖のトロール網で捕獲され、キャロル・B・アトキンソンによって自然科学アカデミーに寄贈されました。",
+          "quote": "The original type specimen was caught in a trawl off Atlantic City on March 1, 1946, and donated to the Academy of Natural Sciences by Carroll B. Atkinson.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F2",
+          "fact": "이 종은 수심 90~730m의 바깥쪽 대륙붕과 위쪽 대륙사면에 서식하며, 죽은 산호 잔해물이 빽빽하게 쌓인 곳을 선호합니다.",
+          "fact_jp": "この種は水深90〜730メートルの外側大陸棚や上部大陸斜面に生息し、死んだサンゴの瓦礫が密集する場所を好みます。",
+          "quote": "The species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F3",
+          "fact": "학명 중 'stigmaeus'는 그리스어로 '얼룩덜룩한'이라는 뜻입니다.",
+          "fact_jp": "学名の「stigmaeus」はギリシャ語で「斑点のある」という意味です。",
+          "quote": "The name stigmaeus means \"speckled\" in Greek.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F4",
+          "fact": "이 물고기는 미세한 가시들로 덮여 있어 벨벳 같은 질감을 줍니다.",
+          "fact_jp": "この魚は微小な棘で覆われており、ベルベットのような質感をしています。",
+          "quote": "The fish is covered with minute spinules that give it a velvety texture.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F5",
+          "fact": "피부는 부드럽고 헐렁하며 매우 유연해서 머리와 몸의 대부분에 주름을 형성합니다.",
+          "fact_jp": "皮膚は柔らかくたるんでおり非常に柔軟で、頭や体の大部分にシワを形成します。",
+          "quote": "The skin is soft, loose, and very pliable (especially on the underside), forming folds over much of the head and body.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F6",
+          "fact": "입이 크고 아래턱이 튀어나와 있으며, 이빨이 띠 모양으로 배열되어 있습니다.",
+          "fact_jp": "口は大きく、下顎が突き出ており、歯が帯状に並んでいます。",
+          "quote": "The mouth is large, with a protruding lower jaw and teeth arranged in bands.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F7",
+          "fact": "첫 번째 등지느러미 가시는 미끼가 달린 낚싯대 모양의 기관으로 변형되어 있습니다.",
+          "fact_jp": "第一背鰭の棘は、ルアーが付いた釣り竿のような器官に変化しています。",
+          "quote": "The first dorsal fin ray is modified into an angling apparatus (the illicium) with a lure (the esca).",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F8",
+          "fact": "미끼는 다양한 굵기의 필라멘트 다발로 이루어져 있으며, 앞면은 검은색에서 푸른색 또는 녹회색을 띠고 뒷면은 눈부신 흰색입니다.",
+          "fact_jp": "ルアーは様々な太さのフィラメントの束で構成され、前面は黒から青、緑灰色で、背面は鮮やかな白色をしています。",
+          "quote": "The esca consists of a cluster of filaments of varying thickness and is black to blue to greenish gray in front, and brilliant white behind.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F9",
+          "fact": "이 물고기의 홍채는 짙은 장미빛 붉은색을 띠고 있습니다.",
+          "fact_jp": "この魚の虹彩は深いローズレッド色をしています。",
+          "quote": "The iris is a deep rose red.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F10",
+          "fact": "몸의 반점들은 살아있을 때는 밝은 녹황색이지만, 보존된 표본에서는 배경색보다 더 어둡게 나타납니다.",
+          "fact_jp": "体の斑点は生きている時は明るい緑黄色ですが、保存された標本では背景よりも暗く見えます。",
+          "quote": "These spots appear darker than the background in preserved specimens, but are a lighter greenish-yellow color in life.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F11",
+          "fact": "이 종은 최대 30.5cm의 전체 길이까지 자랄 수 있습니다.",
+          "fact_jp": "この種は最大で全長30.5cmに達します。",
+          "quote": "This species attains a maximum of 30.5 cm total length.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F12",
+          "fact": "붉은눈아귀는 주로 가슴지느러미와 배지느러미로 해저에 엎드려 시간을 보내며, 먹이를 잡거나 포식자를 피할 때만 움직이는 매복 포식자입니다.",
+          "fact_jp": "アカメアンコウは、胸鰭と腹鰭を使って海底で休んで過ごし、獲物を捕らえるか捕食者を避ける時だけ動く待ち伏せ型の捕食者です。",
+          "quote": "Redeye gapers are sedentary ambush predators that spend most of their time resting on the sea floor on their pectoral and pelvic fins, moving only to capture prey or avoid predators.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F13",
+          "fact": "위협을 받으면 배지느러미로 몸을 일으켜 세우고 물을 빠르게 들이마셔 몸집을 부풀립니다.",
+          "fact_jp": "脅威を感じると、腹鰭で立ち上がり、素早く水を吸い込んで体を大きく膨らませます。",
+          "quote": "If threatened, they raise themselves up on their pelvic fins and rapidly take in water to increase the size of their bodies.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        },
+        {
+          "id": "F14",
+          "fact": "붉은눈아귀는 수면으로 끌어올려질 때 발생하는 온도와 압력 변화에서도 살아남을 수 있는 것으로 알려져 있습니다.",
+          "fact_jp": "アカメアンコウは、海面へ引き上げられる際の温度や圧力の変化を生き延びることができると知られています。",
+          "quote": "Redeye gapers are known to be able to survive the temperature and pressure changes from being brought to the surface.",
+          "sources": [
+            "https://en.wikipedia.org/wiki/Redeye_gaper"
+          ],
+          "source_title": "Wikipedia(en) Redeye gaper"
+        }
+      ]
+    }
+  },
   "checks": {},
   "jobs": {
     "script": {
       "stage": "script",
-      "status": "running",
-      "at": "2026-10-15T14:54:15Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-15T14:57:31Z",
+      "action": "write_script",
+      "text": "대본 자동 작성 완료 — 승인 대기"
     }
+  },
+  "cost": {
+    "estimate": {
+      "script": 0.05,
+      "storyboard": 0.54,
+      "video": 5.8
+    },
+    "spent": [
+      {
+        "at": "2026-10-15T14:57:17Z",
+        "what": "대본 자동 작성(AI+나레이션)",
+        "usd": 0.05
+      }
+    ]
   }
 }
