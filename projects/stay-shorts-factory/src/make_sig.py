@@ -58,6 +58,7 @@ PATTERNS = ("push", "pan", "diag", "tilt", "pull")
 MOOD_RX = re.compile(r"노을빛|물들|푸른|힐링|낭만|감성|설레|설렘|여유로|아늑|포근|로맨틱|그림\s?같|꿈\s?같|인생샷|완벽한|행복|분위기|추억|따뜻한 곳|쉬는 곳|머물고 싶")   # run-47 '감성팔이' — 사실 없는 분위기 말
 FACT_PREFIX_RX = re.compile(r"^(블로그 교차 확인 시설|공식 홈페이지 한 줄 요약|후보표 훅): ")
 ROLES = ("신박함", "차별성", "유인")
+ADJ_RX = re.compile(r"인접|근처|주변|바로\s?옆|옆에|도보|셔틀|차로|분 거리|가까운")      # 숙소 밖 시설(stay-run-48: '오션월드와 루지월드 인접'을 숙소 시설처럼 고를 뻔)
 PEERS_PATH = mt.ROOT / "data" / "discover" / "latest" / "candidates.json"     # 같은 테마 다른 후보(시그니처를 비교로 고르려고)
 BLOCKED = mt.ROOT / "state" / "sig_blocked.json"                              # 사진·사실이 모자라 멈춘 숙소 — 관리실이 시그니처 버튼을 잠근다
 PAST_RX = re.compile(r"(었|았|였)(어요|다|고|는데|지만|던|죠)|더라|다녀|묵었|머물렀|즐기고 온|좋았|했던|갔던|봤는데")   # 1인칭 체험·과거형 (stay__list 캡션의 위험 요소)
@@ -319,10 +320,13 @@ SIG_SYSTEM = """너는 숙소 쇼츠 기획자다. 시청자가 "이런 데가 �
 1) 근거: '사실' 목록 중 하나(번호)가 그 시그니처를 직접 말해야 한다. 사실에 없는 시그니처는 고르지 않는다.
 2) points(영상에서 전할 정보) 2~5개, 순서: 신박함(그게 무엇이고 왜 의외인지) → 차별성(다른 후보와 다른 구체적인 점) → 유인(그래서 거기서 할 수 있는 것·언제).
    각 point 는 **그 시그니처에 대한** 사실 한 줄(번호)을 짧게 옮긴 것(4~24자) — 다른 시설 이야기·분위기·감성 묘사 금지, 사실에 없는 내용·숫자 추가 금지.
-3) photos: 그 시그니처가 **사진의 주인공**(화면의 큰 부분·초점)인 서로 다른 사진 번호, 좋은 것부터 최대 5개.
-   멀리서 찍은 단지 전경·항공 사진에서 작게 보이는 것은 안 된다.
+3) photos: 그 시그니처가 **사진의 주인공**(화면의 큰 부분·초점)인 서로 다른 사진 번호 2~5개, 좋은 것부터.
+   멀리서 찍은 단지 전경·항공 사진에서 작게 보이는 것은 안 된다. **주인공 사진이 2장 안 되는 시그니처는 고르지 않는다** —
+   사진 목록을 보고 사진이 넉넉한 다른 시그니처를 찾는다(영상은 컷마다 다른 사진이 필요하다).
 4) 시기가 11~3월이면 바깥의 여름 물놀이(카바나·선베드·해수욕·야외 수영장)는 시그니처가 될 수 없다(온수·사계절이라고 사실에 있으면 된다).
-5) 조건에 맞는 시그니처가 없으면 signature 를 빈 글자로 둔다(지어내지 않는다).
+5) 숙소 밖 시설(사실에 '인접·근처·바로 옆·셔틀·도보' 등)이 시그니처면 이름이나 what 에 '바로 옆' 같은 위치를 넣고 첫 point 에도 위치를 말한다
+   — 숙소 안 시설처럼 보이게 하지 않는다. 숙소 안에 다른 좋은 시그니처가 있으면 그것을 먼저 고른다.
+6) 조건에 맞는 시그니처가 없으면 signature 를 빈 글자로 둔다(지어내지 않는다).
 JSON 만: {"signature":"2~16자","what":"사진에 보이는 모습 한 줄","fact":번호,"vs_peers":"다른 후보와 다른 점 한 줄",
  "points":[{"role":"신박함|차별성|유인","text":"4~24자","fact":번호}],"photos":[번호],"surprise":1~10,"why":"왜 의외인지 한 줄","alternatives":["다른 후보 이름"]}"""
 
@@ -378,10 +382,17 @@ def sig_errs(js: dict, facts: list[str], pool: dict, h: dict, req: dict, peers: 
         errs.append(f"쓸 수 있는 전할 정보 {len(good)}개{' — 첫 줄이 신박함이 아님' if good and good[0]['role'] != '신박함' else ''}: "
                     "그 시그니처에 대한 사실로 2개 이상, 첫 줄은 신박함")
         errs += notes[:4]
+    if ADJ_RX.search(_body(fact)):
+        if not ADJ_RX.search(f"{name} {js.get('what') or ''}"):
+            errs.append(f"근거 사실이 숙소 밖 시설('{ADJ_RX.search(_body(fact)).group(0)}') — 이름이나 what 에 '바로 옆' 같은 위치를 넣는다")
+        if good and not ADJ_RX.search(good[0]["text"]):
+            errs.append("숙소 밖 시설 — 첫 point(신박함)에 '바로 옆' 같은 위치를 말한다")
     ks = [_int(k) for k in (js.get("photos") or [])]
     if not ks or any(k not in pool for k in ks) or len(set(ks)) != len(ks):
-        errs.append("photos 는 위 목록의 서로 다른 사진 번호 1~5개")
+        errs.append(f"photos 는 위 목록의 서로 다른 사진 번호 {MIN_CUTS}~5개")
         return errs
+    if len(ks) < MIN_CUTS:
+        errs.append(f"photos {len(ks)}장 — 시그니처가 주인공인 사진 {MIN_CUTS}장 이상(안 되면 사진이 넉넉한 다른 시그니처)")
     hero = pool[ks[0]]
     desc = f"{hero.get('description') or ''} {hero.get('src_alt') or ''} {fact}"
     bad = [t for t in photos.facility_terms(name) if not photos.term_ok(t, desc)]
@@ -392,7 +403,41 @@ def sig_errs(js: dict, facts: list[str], pool: dict, h: dict, req: dict, peers: 
     return errs
 
 
+def subject_candidates(js: dict, pool: dict, cap: int = 6) -> list[int]:
+    """사진 확인 후보 = 모델이 고른 사진 + 설명에 시그니처 낱말이 있는 다른 사진(겹침 많은 순). 모델이 1장만 적어도 더 찾아본다(stay-run-48)."""
+    ks = [k for k in (_int(x) for x in js.get("photos") or []) if k in pool]
+    st = {t for t in _tokens(js.get("signature")) | _tokens(js.get("what")) if len(t) >= 2}
+    more = sorted((k for k, p in pool.items() if k not in ks and _overlap(st, _tokens(f"{p.get('description') or ''} {p.get('src_alt') or ''}"))),
+                  key=lambda k: (-_overlap(st, _tokens(pool[k].get("description"))), -int(pool[k].get("quality") or 0), k))
+    return (ks + more)[:cap]
+
+
+def confirm_subjects(models: dict, js: dict, pool: dict, ks: list[int], cache: dict) -> tuple[list[int], list[dict]]:
+    """시그니처가 그 사진의 **주인공**인가(비전 · 사진당 약 1원). 같은 시그니처·사진은 다시 묻지 않는다."""
+    confirmed, checks = [], []
+    for k in ks:
+        key = (str(js.get("signature") or ""), k)
+        if key not in cache:
+            try:
+                r = ms._try_models("vision", models["text"], lambda m: _json_vision(m, CONFIRM_SYSTEM, f"시그니처: {js['signature']} — {js.get('what') or ''}", [Path(pool[k]["path"])]))
+            except Exception as e:  # noqa: BLE001
+                r = {"subject": False, "share": 0, "evidence": f"확인 실패: {str(e)[:60]}"}
+            try:
+                share = float(r.get("share") or 0)
+            except (TypeError, ValueError):
+                share = 0.0
+            cache[key] = {"k": k, "subject": r.get("subject"), "share": round(share, 2), "ok": r.get("subject") is True and share >= SUBJECT_MIN,
+                          "evidence": str(r.get("evidence") or "")[:80]}
+        checks.append(cache[key])
+        if cache[key]["ok"]:
+            confirmed.append(k)
+    return confirmed, checks
+
+
 def choose_signature(models: dict, h: dict, req: dict, report: dict) -> dict:
+    """시그니처 고르기 → 규칙 검사 → 주인공 사진 확인. 사진·정보가 2컷이 안 되면 그 시그니처를 빼고 **다른 시그니처를 다시 고른다**(최대 4번).
+    잠금(state/sig_blocked.json)은 재료 자체가 모자랄 때만(쓸 사진 2장 미만·사실 2개 미만 — AI 판단과 무관한 경우).
+    stay-run-48: 소노펠리체(쓸 사진 25장)에서 모델이 사진 1장뿐인 '유리 돔 실내 파도풀'을 고르자 바로 멈추고 숙소까지 잠갔다 → 고침."""
     fmt = _fmt(req)
     facts = facts_list(h)
     pool = {int(p["k"]): p for p in usable_photos(h)}
@@ -409,55 +454,46 @@ def choose_signature(models: dict, h: dict, req: dict, report: dict) -> dict:
                "같은 테마 다른 후보(이들과 겹치는 것은 시그니처가 아니다):\n" + ("\n".join(f"- {x}" for x in peers) or "- (목록 없음)")
                + "\n\n사실(번호):\n" + "\n".join(f"{i}. {f}" for i, f in enumerate(facts, 1))
                + "\n\n사진:\n" + "\n".join(_photo_line(p) for p in pool.values()))
-    fb, js, tries = "", {}, []
-    for attempt in range(3):
+    fb, js, tries, rejected, cache = "", {}, [], [], {}
+    points, dropped, confirmed, checks = [], [], [], []
+    for attempt in range(4):
+        confirmed = []
         js = _ask(models, SIG_SYSTEM, content + fb, 0.3)
-        if not str(js.get("signature") or "").strip():
+        name = str(js.get("signature") or "").strip()
+        if not name:
             tries.append({"signature": "", "errs": ["조건에 맞는 시그니처 없음(모델 판단)"]})
-            report["signature_tries"] = tries
-            why = "시그니처 없음 — 이 숙소에만 있는 구체적인 시설·장면을 사실과 사진으로 찾지 못함"
-            block(h, req, why)
-            raise RuntimeError(f"{why} (만들지 않음)")
-        errs = sig_errs(js, facts, pool, h, req, peers)
-        tries.append({"signature": js.get("signature"), "errs": errs})
-        if not errs:
             break
-        log(f"시그니처 검사 실패({attempt + 1}): {errs[:4]}")
+        errs = sig_errs(js, facts, pool, h, req, peers)
+        if name in rejected:
+            errs.append(f"'{name}' 은 이미 사진이 모자라 뺀 시그니처 — 다른 것으로")
+        if not errs:
+            points, dropped = check_points(js, facts)
+            cands = subject_candidates(js, pool)
+            confirmed, checks = confirm_subjects(models, js, pool, cands, cache)
+            if min(len(confirmed), len(points), N_SHOTS[fmt]) >= MIN_CUTS:
+                tries.append({"signature": name, "errs": [], "photos": confirmed})
+                break
+            rejected.append(name)
+            errs = [f"'{name}' 은 시그니처가 주인공인 사진이 {len(confirmed)}장(후보 {len(cands)}장 확인)·전할 정보 {len(points)}개 — 둘 다 {MIN_CUTS} 이상이어야 한다. "
+                    f"사진이 넉넉한 다른 시그니처로(이미 뺀 것: {', '.join(rejected)})"]
+        tries.append({"signature": name, "errs": errs, "photos": confirmed})
+        log(f"시그니처 다시({attempt + 1}): {errs[:3]}")
         fb = "\n\n지난 답의 문제(고쳐서 다시):\n- " + "\n- ".join(errs[:8])
     else:
-        report["signature_tries"] = tries
-        why = f"시그니처 없음 — 조건을 만족하는 후보가 없음: {'; '.join(tries[-1]['errs'][:2])}"
-        block(h, req, why)
-        raise RuntimeError(f"{why} (만들지 않음)")
-    points, dropped = check_points(js, facts)
-    ks = [k for k in (_int(x) for x in js["photos"]) if k in pool][:N_SHOTS["montage"]]
-    confirmed, checks = [], []
-    for k in ks:                                                           # 시그니처가 그 사진의 주인공인가(비전 · 사진당 약 1원)
-        try:
-            r = ms._try_models("vision", models["text"], lambda m: _json_vision(m, CONFIRM_SYSTEM, f"시그니처: {js['signature']} — {js.get('what') or ''}", [Path(pool[k]["path"])]))
-        except Exception as e:  # noqa: BLE001
-            r = {"subject": False, "share": 0, "evidence": f"확인 실패: {str(e)[:60]}"}
-        try:
-            share = float(r.get("share") or 0)
-        except (TypeError, ValueError):
-            share = 0.0
-        ok = r.get("subject") is True and share >= SUBJECT_MIN
-        checks.append({"k": k, "subject": r.get("subject"), "share": round(share, 2), "ok": ok, "evidence": str(r.get("evidence") or "")[:80]})
-        if ok:
-            confirmed.append(k)
+        js = {}
+    report["signature_tries"] = tries
     report["signature_checks"] = checks
-    n = min(len(confirmed), len(points), N_SHOTS[fmt])
-    if n < MIN_CUTS:
-        report["signature_tries"] = tries
-        why = (f"사진 부족 — '{js['signature']}'이(가) 주인공인 사진 {len(confirmed)}장(후보 {len(ks)}장 확인)" if len(confirmed) < MIN_CUTS
-               else f"정보 부족 — '{js['signature']}'에 대해 전할 사실 {len(points)}개")
-        block(h, req, f"{why} · 최소 {MIN_CUTS}컷")
-        raise RuntimeError(f"시그니처 영상 불가 — {why}, 최소 {MIN_CUTS}컷 (만들지 않음)")
+    if not js or not str(js.get("signature") or "").strip() or tries[-1]["errs"]:
+        last = tries[-1]["errs"] if tries else ["시그니처 없음"]
+        raise RuntimeError("시그니처 영상 불가 — 이 숙소의 시그니처 후보가 '주인공 사진 2장 + 사실 2개' 조건을 못 넘음"
+                           f"(시도 {len(tries)}번 · 마지막: {'; '.join(last)[:160]}) — 다른 숙소를 권합니다 (만들지 않음)")
     fi = _int(js["fact"])
     sig = {"name": js["signature"].strip(), "what": str(js.get("what") or "").strip(), "fact": facts[fi - 1], "fact_i": fi,
            "vs_peers": str(js.get("vs_peers") or "").strip()[:80], "peers": len(peers), "points": points, "dropped_points": dropped,
-           "photos": confirmed, "surprise": js.get("surprise"), "why": str(js.get("why") or "")[:80], "alternatives": js.get("alternatives") or [], "checks": checks}
-    log(f"시그니처: {sig['name']} — 근거 '{_body(sig['fact'])[:40]}' · 주인공 사진 {confirmed} · 전할 정보 {len(points)}개 · 비교 후보 {len(peers)}곳")
+           "photos": confirmed, "surprise": js.get("surprise"), "why": str(js.get("why") or "")[:80], "alternatives": js.get("alternatives") or [],
+           "checks": checks, "rejected": rejected}
+    log(f"시그니처: {sig['name']} — 근거 '{_body(sig['fact'])[:40]}' · 주인공 사진 {confirmed} · 전할 정보 {len(points)}개 · 비교 후보 {len(peers)}곳"
+        + (f" · 뺀 후보 {rejected}" if rejected else ""))
     return sig
 
 
@@ -724,6 +760,8 @@ def phrase_errs(ph: list, shots: list[dict], sig: dict, h: dict, req: dict, fact
         bad = [x for x in photos.facility_terms(t) if not photos.term_ok(x, allow)]
         if bad:
             errs.append(f"자막 {i} 시설 이름 '{'/'.join(bad)}' 는 이 컷 사진·근거 사실에서 확인 안 됨")
+        if i == 1 and ADJ_RX.search(_body(sig["fact"])) and not ADJ_RX.search(t):
+            errs.append(f"자막 1 '{t}' — 시그니처가 숙소 밖 시설이라 '바로 옆' 같은 위치를 넣는다(숙소 안 시설처럼 보이면 안 된다)")
     return errs
 
 

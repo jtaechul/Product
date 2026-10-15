@@ -25,9 +25,9 @@ const REGIONS = ["강원", "경기", "제주", "부산", "경남", "경북", "�
 const MEDIA = { "video.mp4": "video/mp4", "narration_preview.mp3": "audio/mpeg", "preview.md": "text/plain; charset=utf-8" };
 const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.py MONTH_KRW 와 같은 값)
 // 형식별 예상 비용(원). 기존 9컷: 미리보기 글·음성 약 80 / 정식 제작(미니어처 3컷 + Veo 1컷) 약 2,500 (실측).
-// 시그니처 v2(2026-10-15 · 추정): 미리보기 = 사진 수집·분류·시그니처·사진 확인·자막 글·비전 약 30(이미지 편집·Veo 없음 — v1 실측 run-47 은 편집 686원)
-//   제작 = 미리보기 재사용 + 첫 컷 Veo 294 ≈ 300, 미리보기 없이 ≈ 330
-const COST = { signature: { preview: 30, produce: 300, produce_fresh: 330 }, solo: { preview: 80, produce: 2500, produce_fresh: 2500 } };
+// 시그니처 v2(2026-10-15): 미리보기 = 사진 수집·분류·시그니처·사진 확인·자막 글·비전 약 60(이미지 편집·Veo 없음 — run-48 실측 49원은 시그니처 단계에서 멈춘 값)
+//   제작 = 미리보기 재사용 + 첫 컷 Veo 294 ≈ 300, 미리보기 없이 ≈ 360
+const COST = { signature: { preview: 60, produce: 300, produce_fresh: 360 }, solo: { preview: 80, produce: 2500, produce_fresh: 2500 } };
 const BLOCK_DAYS = 14;                      // make_sig 가 '사진·사실 부족'으로 멈춘 숙소는 이 기간 시그니처 버튼을 잠근다(state/sig_blocked.json)
 const MODES = { signature: "시그니처", solo: "기존 9컷" };
 const SIG_PREVIEW_RX = /관리자 페이지 시그니처(\(한 장면\))? 미리보기 — (.+?) \(/;   // 형식이 같아야 재사용된다(make_sig.find_reuse)
