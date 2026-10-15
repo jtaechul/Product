@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-15T16:17:10Z",
+  "updated": "2026-10-15T16:19:04Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -50,22 +50,22 @@
       "state": "review",
       "job": {
         "stage": "upload",
-        "status": "trial_wait",
-        "action": "trial_cancel",
-        "text": "시험 무효 — 「ABYSS 계정에 다시 올리기」 또는 「시험 건너뛰기」를 기다리는 중",
-        "at": "2026-10-15T16:13:21Z"
+        "status": "done",
+        "at": "2026-10-15T16:18:41Z",
+        "action": "trial_skip",
+        "text": "시험 릴스 건너뜀"
       },
       "created": "2026-10-15T14:54:15Z",
       "uploaded_at": null,
       "stats": null,
       "viewed": null,
       "trial": {
-        "state": "cancelled",
+        "state": "skipped",
         "posted_at": null,
         "checked_at": null,
         "winner": null,
         "kind": null,
-        "reason": "연결된 인스타 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 올리지 않았습니다",
+        "reason": "운영자가 건너뜀",
         "a": {
           "line": "",
           "pattern": ""
