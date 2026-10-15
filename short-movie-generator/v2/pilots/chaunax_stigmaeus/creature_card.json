@@ -1,0 +1,88 @@
+{
+  "status": "자동 생성(운영자 승인 대기)",
+  "at": "2026-10-15T15:30:00Z",
+  "anatomy": "The body is bulbous, loose, and highly flexible, tapering to a small rear tail fin. The skin has a velvety texture covered in fine spines, colored orange-red with bright greenish-yellow mottling. It features a large mouth with a protruding lower jaw. Two small eyes with deep rosy red irises are positioned high on the head. Between the eyes sits a modified dorsal spine acting as a lure with filament bundles. It has two leg-like pectoral fins extending laterally and smaller pelvic fins underneath used for resting on the seafloor.",
+  "forbidden": "Must not have smooth scales, a streamlined body, large bulging eyes, or standard thin swimming fins.",
+  "size_note": "Grows up to a maximum total length of 30.5 cm.",
+  "checklist": [
+    "몸통은 둥글고 부풀어 오를 수 있으며 꼬리 쪽으로 갈수록 좁아지는 형태인가?",
+    "피부는 미세한 가시로 덮여 벨벳 질감을 주며 헐렁한 주름이 표현되었는가?",
+    "몸 색상은 주황/붉은색 바탕에 밝은 녹황색 반점(얼룩)이 있는가?",
+    "입이 매우 크고 아래턱이 위턱보다 앞으로 튀어나와 있는가?",
+    "머리 위쪽에 짙은 장미빛 붉은색 홍채를 가진 작은 눈이 두 개 위치하는가?",
+    "두 눈 사이에 미끼 역할을 하는 변형된 등지느러미 가시가 있는가?",
+    "바닥을 짚을 수 있는 다리 모양의 가슴지느러미 2개와 그 아래 배지느러미가 있는가?"
+  ],
+  "check": {
+    "items": [
+      {
+        "item": "몸통은 둥글고 부풀어 오를 수 있으며 꼬리 쪽으로 갈수록 좁아지는 형태인가?",
+        "verdict": "pass",
+        "note_ko": "실제 사진에서도 몸통이 둥글고 꼬리 쪽으로 갈수록 좁아지는 형태가 잘 확인됩니다."
+      },
+      {
+        "item": "피부는 미세한 가시로 덮여 벨벳 질감을 주며 헐렁한 주름이 표현되었는가?",
+        "verdict": "fail",
+        "note_ko": "레플리카는 크고 뾰족한 가시가 과장되어 있으나, 실제 사진의 피부는 미세한 질감으로 큰 가시가 두드러지지 않습니다."
+      },
+      {
+        "item": "몸 색상은 주황/붉은색 바탕에 밝은 녹황색 반점(얼룩)이 있는가?",
+        "verdict": "fail",
+        "note_ko": "레플리카의 선명한 형광 녹색 얼룩과 달리, 실제 사진에서는 은은한 노란색 계열의 반점만 관찰됩니다."
+      },
+      {
+        "item": "입이 매우 크고 아래턱이 위턱보다 앞으로 튀어나와 있는가?",
+        "verdict": "pass",
+        "note_ko": "실제 사진에서도 입이 크고 아래턱이 위턱보다 돌출된 특징이 동일하게 나타납니다."
+      },
+      {
+        "item": "머리 위쪽에 짙은 장미빛 붉은색 홍채를 가진 작은 눈이 두 개 위치하는가?",
+        "verdict": "unknown",
+        "note_ko": "작은 눈이 머리 위에 있는 것은 확인되나, 제공된 실제 사진에서는 홍채가 짙은 붉은색인지 명확하게 식별할 수 없습니다."
+      },
+      {
+        "item": "두 눈 사이에 미끼 역할을 하는 변형된 등지느러미 가시가 있는가?",
+        "verdict": "fail",
+        "note_ko": "레플리카는 미끼가 크고 화려하게 돌출되어 있으나, 실제 사진에서는 매우 작거나 함몰되어 있어 시각적 형태가 일치하지 않습니다."
+      },
+      {
+        "item": "바닥을 짚을 수 있는 다리 모양의 가슴지느러미 2개와 그 아래 배지느러미가 있는가?",
+        "verdict": "unknown",
+        "note_ko": "다리 모양의 가슴지느러미는 확인되나, 그 아래 배지느러미의 존재와 형태는 실제 사진에서 명확하게 관찰되지 않습니다."
+      }
+    ],
+    "error": ""
+  },
+  "refs": [
+    {
+      "file": "out/r1015152829_refs/ref_00.jpg",
+      "credit": "NOAA Photo Library, no known copyright restrictions (public domain)",
+      "license": "pd"
+    },
+    {
+      "file": "out/r1015152829_refs/ref_01.jpg",
+      "credit": "\nNOAA Ocean Explorer, no known copyright restrictions (public domain)",
+      "license": "pd"
+    },
+    {
+      "file": "out/r1015152829_refs/ref_02.jpg",
+      "credit": "Citron, no known copyright restrictions (public domain)",
+      "license": "pd"
+    }
+  ],
+  "use_as_reference": [
+    {
+      "file": "out/r1015152852_card/card_side.jpg",
+      "role": "생물 카드(자동)"
+    },
+    {
+      "file": "out/r1015152852_card/card_top.jpg",
+      "role": "생물 카드(자동)"
+    },
+    {
+      "file": "out/r1015152829_refs/ref_00.jpg",
+      "role": "실사 기준"
+    }
+  ],
+  "compare": "out/r1015152852_card/compare.jpg"
+}

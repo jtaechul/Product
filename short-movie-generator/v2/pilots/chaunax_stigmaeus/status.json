@@ -42,8 +42,14 @@
       "approved_at": "2026-10-15T15:27:32Z"
     },
     "storyboard": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-10-15T15:32:34Z",
+          "kind": "auto",
+          "text": "스토리보드 자동 작성 완료 — 승인 대기"
+        }
+      ]
     },
     "video": {
       "state": "locked",
@@ -513,6 +519,123 @@
           "source_title": "Wikipedia(en) Redeye gaper"
         }
       ]
+    },
+    "storyboard": {
+      "sheet": "out/r1015153142_sb/storyboard.jpg",
+      "request": "r1015153142_sb",
+      "card": [
+        "out/r1015152852_card/card_side.jpg",
+        "out/r1015152852_card/card_top.jpg",
+        "out/r1015152829_refs/ref_00.jpg"
+      ],
+      "compare": "out/r1015152852_card/compare.jpg",
+      "card_check": {
+        "items": [
+          {
+            "item": "몸통은 둥글고 부풀어 오를 수 있으며 꼬리 쪽으로 갈수록 좁아지는 형태인가?",
+            "verdict": "pass",
+            "note_ko": "실제 사진에서도 몸통이 둥글고 꼬리 쪽으로 갈수록 좁아지는 형태가 잘 확인됩니다."
+          },
+          {
+            "item": "피부는 미세한 가시로 덮여 벨벳 질감을 주며 헐렁한 주름이 표현되었는가?",
+            "verdict": "fail",
+            "note_ko": "레플리카는 크고 뾰족한 가시가 과장되어 있으나, 실제 사진의 피부는 미세한 질감으로 큰 가시가 두드러지지 않습니다."
+          },
+          {
+            "item": "몸 색상은 주황/붉은색 바탕에 밝은 녹황색 반점(얼룩)이 있는가?",
+            "verdict": "fail",
+            "note_ko": "레플리카의 선명한 형광 녹색 얼룩과 달리, 실제 사진에서는 은은한 노란색 계열의 반점만 관찰됩니다."
+          },
+          {
+            "item": "입이 매우 크고 아래턱이 위턱보다 앞으로 튀어나와 있는가?",
+            "verdict": "pass",
+            "note_ko": "실제 사진에서도 입이 크고 아래턱이 위턱보다 돌출된 특징이 동일하게 나타납니다."
+          },
+          {
+            "item": "머리 위쪽에 짙은 장미빛 붉은색 홍채를 가진 작은 눈이 두 개 위치하는가?",
+            "verdict": "unknown",
+            "note_ko": "작은 눈이 머리 위에 있는 것은 확인되나, 제공된 실제 사진에서는 홍채가 짙은 붉은색인지 명확하게 식별할 수 없습니다."
+          },
+          {
+            "item": "두 눈 사이에 미끼 역할을 하는 변형된 등지느러미 가시가 있는가?",
+            "verdict": "fail",
+            "note_ko": "레플리카는 미끼가 크고 화려하게 돌출되어 있으나, 실제 사진에서는 매우 작거나 함몰되어 있어 시각적 형태가 일치하지 않습니다."
+          },
+          {
+            "item": "바닥을 짚을 수 있는 다리 모양의 가슴지느러미 2개와 그 아래 배지느러미가 있는가?",
+            "verdict": "unknown",
+            "note_ko": "다리 모양의 가슴지느러미는 확인되나, 그 아래 배지느러미의 존재와 형태는 실제 사진에서 명확하게 관찰되지 않습니다."
+          }
+        ],
+        "error": ""
+      },
+      "checklist": [
+        "몸통은 둥글고 부풀어 오를 수 있으며 꼬리 쪽으로 갈수록 좁아지는 형태인가?",
+        "피부는 미세한 가시로 덮여 벨벳 질감을 주며 헐렁한 주름이 표현되었는가?",
+        "몸 색상은 주황/붉은색 바탕에 밝은 녹황색 반점(얼룩)이 있는가?",
+        "입이 매우 크고 아래턱이 위턱보다 앞으로 튀어나와 있는가?",
+        "머리 위쪽에 짙은 장미빛 붉은색 홍채를 가진 작은 눈이 두 개 위치하는가?",
+        "두 눈 사이에 미끼 역할을 하는 변형된 등지느러미 가시가 있는가?",
+        "바닥을 짚을 수 있는 다리 모양의 가슴지느러미 2개와 그 아래 배지느러미가 있는가?"
+      ],
+      "panels": [
+        {
+          "cut": 1,
+          "file": "out/r1015153142_sb/p01.jpg",
+          "desc": "Wide shot looking down at a handcrafted miniature seabed. Crumpled blue cellophane forms the water, with paper-cut rocks scattered around. The bulbous, orange-red deep-sea anglerfish with greenish-yellow mottling rests calmly on the bottom, propped up on its leg-like pectoral and pelvic fins. The creature occupies about one-third of the frame, large enough for phone viewing, caught in the act of resting. Warm desk lamp lighting casts soft shadows. The upper quarter is calm and uncluttered.",
+          "shot": "wide",
+          "motion": "omni"
+        },
+        {
+          "cut": 2,
+          "file": "out/r1015153142_sb/p02.jpg",
+          "desc": "Medium shot of the creature nestled among painted clay coral rubble and suspended cotton-wool marine snow hanging on fine threads. The creature's large mouth and protruding lower jaw are visible as it waves its modified dorsal spine lure, which features tiny filament bundles made of fine wire. The camera focuses on the creature's ambush behavior. The upper quarter of the frame remains calm and uncluttered.",
+          "shot": "medium",
+          "motion": "omni"
+        },
+        {
+          "cut": 3,
+          "file": "out/r1015153142_sb/p03.jpg",
+          "desc": "Wide shot of a cross-section cardboard display box sitting on a wooden desk edge. Inside the box, a miniature painted clay ROV shines a tiny LED fairy-light beam onto the anglerfish resting on the deep-sea floor. The box has visible seams, showing a deep-sea diorama. The upper quarter is empty black cardboard for captions.",
+          "shot": "wide",
+          "motion": "still"
+        },
+        {
+          "cut": 4,
+          "file": "out/r1015153142_sb/p04.jpg",
+          "desc": "Close shot panning across the creature's head and wrinkled, loose skin. The edge of a wooden worktable is visible. A painted clay scientist figurine holds a handcrafted wooden measuring stick next to the creature, which is accurately scaled to its 30.5cm true size (appearing small relative to the human figure). The creature's deep rosy red irises are clearly visible.",
+          "shot": "close",
+          "motion": "omni"
+        },
+        {
+          "cut": 5,
+          "file": "out/r1015153142_sb/p05.jpg",
+          "desc": "Close shot focusing on the creature's back. A miniature hand-made wire magnifying glass is propped up on a green cutting mat at the edge of the set, framing a section of the creature's skin. Through the glass, the satin paint and faint brush texture beautifully simulate the fine spines and velvety surface of the bright greenish-yellow mottled skin.",
+          "shot": "close",
+          "motion": "still"
+        },
+        {
+          "cut": 6,
+          "file": "out/r1015153142_sb/p06.jpg",
+          "desc": "Wide shot with a striking, dynamic composition. A menacing shadow from a cardboard predator claw falls across the set. The creature reacts dramatically, standing tall on its small pelvic fins like legs and inflating its bulbous body like a balloon. Hand-cut felt kelp sways around it under dramatic, warm desk lamp lighting.",
+          "shot": "wide",
+          "motion": "omni"
+        },
+        {
+          "cut": 7,
+          "file": "out/r1015153142_sb/p07.jpg",
+          "desc": "Wide shot showing the edge of the wooden worktable. On the table sits a diorama of the ocean surface made of layered paper waves. A large, chunky painted clay research ship uses a miniature string net to hoist the correctly-scaled small creature out of the water. The creature remains perfectly intact and robust in the net, demonstrating its resilience.",
+          "shot": "wide",
+          "motion": "still"
+        },
+        {
+          "cut": 8,
+          "file": "out/r1015153142_sb/p08.jpg",
+          "desc": "Wide shot of the creature back on the dark seabed, viewed from slightly behind as it sits patiently on its fins. The set is built against a black cardboard backdrop with visible seams, and the tiny LED fairy lights scattered around the felt rocks are dimming. The creature is receding into the deep darkness as the warm lighting fades to black.",
+          "shot": "wide",
+          "motion": "still"
+        }
+      ]
     }
   },
   "checks": {},
@@ -526,23 +649,33 @@
     },
     "storyboard": {
       "stage": "storyboard",
-      "status": "running",
-      "at": "2026-10-15T15:27:32Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-15T15:32:34Z",
+      "action": "write_storyboard",
+      "text": "스토리보드 자동 작성 완료 — 승인 대기"
     }
   },
   "cost": {
     "estimate": {
       "script": 0.05,
       "storyboard": 0.54,
-      "video": 5.8
+      "video": 3.0
     },
     "spent": [
       {
         "at": "2026-10-15T14:57:17Z",
         "what": "대본 자동 작성(AI+나레이션)",
         "usd": 0.05
+      },
+      {
+        "at": "2026-10-15T15:30:00Z",
+        "what": "생물 카드 2장",
+        "usd": 0.268
+      },
+      {
+        "at": "2026-10-15T15:32:34Z",
+        "what": "콘티 격자 2장",
+        "usd": 0.268
       }
     ]
   }

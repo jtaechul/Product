@@ -206,7 +206,11 @@
       "scene_ko": "어두운 해저. 가슴지느러미와 배지느러미로 바닥에 앉아 쉬고 있는 아카메앙코우(아귀)의 미니어처 디오라마.",
       "annotation": "",
       "sec": 8,
-      "speech_s": 5.33
+      "speech_s": 5.33,
+      "keyframe": "out/r1015153142_sb/p01.jpg",
+      "panel_desc": "Wide shot looking down at a handcrafted miniature seabed. Crumpled blue cellophane forms the water, with paper-cut rocks scattered around. The bulbous, orange-red deep-sea anglerfish with greenish-yellow mottling rests calmly on the bottom, propped up on its leg-like pectoral and pelvic fins. The creature occupies about one-third of the frame, large enough for phone viewing, caught in the act of resting. Warm desk lamp lighting casts soft shadows. The upper quarter is calm and uncluttered.",
+      "panel_shot": "wide",
+      "motion": "omni"
     },
     {
       "cut": 2,
@@ -217,7 +221,11 @@
       "scene_ko": "머리 위에 달린 낚싯대 같은 기관을 살랑살랑 흔들며 사냥감을 기다리는 모습.",
       "annotation": "釣り竿のような器官",
       "sec": 6,
-      "speech_s": 4.71
+      "speech_s": 4.71,
+      "keyframe": "out/r1015153142_sb/p02.jpg",
+      "panel_desc": "Medium shot of the creature nestled among painted clay coral rubble and suspended cotton-wool marine snow hanging on fine threads. The creature's large mouth and protruding lower jaw are visible as it waves its modified dorsal spine lure, which features tiny filament bundles made of fine wire. The camera focuses on the creature's ambush behavior. The upper quarter of the frame remains calm and uncluttered.",
+      "panel_shot": "medium",
+      "motion": "omni"
     },
     {
       "cut": 3,
@@ -228,7 +236,11 @@
       "scene_ko": "산호 잔해가 흩어진 심해 밑바닥에 자리 잡은 디오라마 풍경.",
       "annotation": "水深90〜730m",
       "sec": 8,
-      "speech_s": 6.13
+      "speech_s": 6.13,
+      "keyframe": "out/r1015153142_sb/p03.jpg",
+      "panel_desc": "Wide shot of a cross-section cardboard display box sitting on a wooden desk edge. Inside the box, a miniature painted clay ROV shines a tiny LED fairy-light beam onto the anglerfish resting on the deep-sea floor. The box has visible seams, showing a deep-sea diorama. The upper quarter is empty black cardboard for captions.",
+      "panel_shot": "wide",
+      "motion": "still"
     },
     {
       "cut": 4,
@@ -239,7 +251,11 @@
       "scene_ko": "붉은 눈동자와 온몸에 주름이 진 부드러운 피부를 클로즈업.",
       "annotation": "最大全長30.5cm",
       "sec": 8,
-      "speech_s": 6.31
+      "speech_s": 6.31,
+      "keyframe": "out/r1015153142_sb/p04.jpg",
+      "panel_desc": "Close shot panning across the creature's head and wrinkled, loose skin. The edge of a wooden worktable is visible. A painted clay scientist figurine holds a handcrafted wooden measuring stick next to the creature, which is accurately scaled to its 30.5cm true size (appearing small relative to the human figure). The creature's deep rosy red irises are clearly visible.",
+      "panel_shot": "close",
+      "motion": "omni"
     },
     {
       "cut": 5,
@@ -250,7 +266,11 @@
       "scene_ko": "피부 표면의 미세한 가시들이 벨벳처럼 보이는 질감을 화면에 담는다.",
       "annotation": "",
       "sec": 6,
-      "speech_s": 4.84
+      "speech_s": 4.84,
+      "keyframe": "out/r1015153142_sb/p05.jpg",
+      "panel_desc": "Close shot focusing on the creature's back. A miniature hand-made wire magnifying glass is propped up on a green cutting mat at the edge of the set, framing a section of the creature's skin. Through the glass, the satin paint and faint brush texture beautifully simulate the fine spines and velvety surface of the bright greenish-yellow mottled skin.",
+      "panel_shot": "close",
+      "motion": "still"
     },
     {
       "cut": 6,
@@ -261,7 +281,11 @@
       "scene_ko": "위협이 다가오자 배지느러미를 다리처럼 써서 벌떡 일어난 뒤, 몸을 풍선처럼 부풀리는 모습.",
       "annotation": "",
       "sec": 8,
-      "speech_s": 5.62
+      "speech_s": 5.62,
+      "keyframe": "out/r1015153142_sb/p06.jpg",
+      "panel_desc": "Wide shot with a striking, dynamic composition. A menacing shadow from a cardboard predator claw falls across the set. The creature reacts dramatically, standing tall on its small pelvic fins like legs and inflating its bulbous body like a balloon. Hand-cut felt kelp sways around it under dramatic, warm desk lamp lighting.",
+      "panel_shot": "wide",
+      "motion": "omni"
     },
     {
       "cut": 7,
@@ -272,7 +296,11 @@
       "scene_ko": "바다 위로 끌어올려져도 끄떡없는 튼튼한 생명력을 보여주는 연출.",
       "annotation": "",
       "sec": 8,
-      "speech_s": 5.63
+      "speech_s": 5.63,
+      "keyframe": "out/r1015153142_sb/p07.jpg",
+      "panel_desc": "Wide shot showing the edge of the wooden worktable. On the table sits a diorama of the ocean surface made of layered paper waves. A large, chunky painted clay research ship uses a miniature string net to hoist the correctly-scaled small creature out of the water. The creature remains perfectly intact and robust in the net, demonstrating its resilience.",
+      "panel_shot": "wide",
+      "motion": "still"
     },
     {
       "cut": 8,
@@ -283,7 +311,11 @@
       "scene_ko": "다시 어두운 심해 바닥에 웅크린 채, 서서히 어둠 속으로 사라지는 뒷모습.",
       "annotation": "",
       "sec": 6,
-      "speech_s": 4.6
+      "speech_s": 4.6,
+      "keyframe": "out/r1015153142_sb/p08.jpg",
+      "panel_desc": "Wide shot of the creature back on the dark seabed, viewed from slightly behind as it sits patiently on its fins. The set is built against a black cardboard backdrop with visible seams, and the tiny LED fairy lights scattered around the felt rocks are dimming. The creature is receding into the deep darkness as the warm lighting fades to black.",
+      "panel_shot": "wide",
+      "motion": "still"
     }
   ],
   "timing_rule": "컷 길이 = (앞 여백 0.15초 + 나레이션 + 여유 0.6초)를 짝수 초로 올림",
@@ -510,6 +542,13 @@
         "chosen": 0,
         "type": "line"
       }
+    }
+  ],
+  "storyboard_history": [
+    {
+      "at": "2026-10-15T15:32:34Z",
+      "rid": "r1015153142_sb",
+      "feedback": ""
     }
   ]
 }
