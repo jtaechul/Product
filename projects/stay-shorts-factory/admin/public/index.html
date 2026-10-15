@@ -46,6 +46,8 @@ select { width: 100%; min-height: 48px; border: 1px solid #d9dee5; border-radius
 .btn:disabled { opacity: .45; cursor: not-allowed }
 .note { font-size: 13px; color: var(--muted); margin: 0 }
 .msg { font-size: 14px; padding: 10px 12px; border-radius: 12px; display: none }
+.notice { font-size: 14px; padding: 10px 12px; border-radius: 12px; background: var(--bad-bg); color: var(--bad); margin-top: 8px; line-height: 1.5 }
+.notice.info { background: #eef3f8; color: #2c3e50 }
 .msg.show { display: block } .msg.ok { background: var(--ok-bg); color: var(--ok) } .msg.bad { background: var(--bad-bg); color: var(--bad) }
 .hook { font-size: 20px; font-weight: 700; letter-spacing: -0.01em }
 .hook em { font-style: normal; color: #e8673a }
@@ -112,7 +114,8 @@ main > *, .card > *, .runs .body > * { min-width: 0 }      /* 넓은 표가 화�
   <section class="card">
     <span class="label">지금 상태</span>
     <div class="live"><span class="dot" id="dot"></span><span id="liveText">불러오는 중</span></div>
-    <button class="small-btn warn" id="cancelBtn" hidden>실행 멈추기</button>
+    <div class="notice" id="lastRunNote" hidden></div>
+    <button class="small-btn warn" id="cancelBtn" hidden>실행 멈추기 (결과 안 나옴)</button>
   </section>
 
   <section class="card">
@@ -129,11 +132,12 @@ main > *, .card > *, .runs .body > * { min-width: 0 }      /* 넓은 표가 화�
       <button class="btn main wide" id="produceBtn">정식 제작<small id="produceCost">약 2,500원 · 누르면 한 번 더 확인</small></button>
     </div>
     <div class="msg" id="runMsg"></div>
-    <p class="note">사진 시트는 텔레그램으로 옵니다(공식 사진이라 이 페이지엔 안 올림). 완성 영상·나레이션은 아래 '최근 실행'을 눌러 바로 볼 수 있습니다.</p>
+    <p class="note">미리보기를 누르면: ① 1분 안에 위 '지금 상태'에 "실행 중"이 뜹니다 ② 약 6~8분 뒤 텔레그램으로 영상·문장별 스토리보드·공식 사진 시트가 옵니다 ③ 같은 때 아래 '최근 실행'에서 그 번호를 누르면 영상·나레이션·대본 글을 볼 수 있습니다. 끝나기 전에는 아무것도 안 보이는 게 정상입니다.</p>
   </section>
 
   <section class="card" id="lastCard" hidden>
-    <span class="label">최근 결과</span>
+    <span class="label">최근 결과 · 마지막으로 결과를 남긴 실행</span>
+    <div class="notice info" id="lastStale" hidden></div>
     <div style="font-size:17px;font-weight:700" id="lastHead"></div>
     <div class="hook" id="lastHook"></div>
     <div class="facts" id="lastFacts"></div>
@@ -226,7 +230,7 @@ function runBody(r) {
   if (has("video.mp4")) parts.push("<video controls playsinline preload=\"metadata\" src=\"" + q("video.mp4") + "\"></video>");
   if (has("narration_preview.mp3")) parts.push("<span class=\"sub\">나레이션 미리듣기</span><audio controls preload=\"none\" src=\"" + q("narration_preview.mp3") + "\"></audio>");
   if (has("preview.md")) parts.push("<button class=\"small-btn\" data-md=\"" + q("preview.md") + "\">대본·검수 글 보기</button><div class=\"md\"></div>");
-  if (!parts.length) parts.push("<p class=\"note\">" + (r.kind === "discover" ? "후보 순위표는 위 '다음 숙소' 목록에 반영됩니다(사진 시트는 텔레그램)." : r.active ? "실행 중입니다. 끝나면 여기서 결과를 볼 수 있습니다." : "이 실행에는 볼 수 있는 결과 파일이 없습니다(실패했거나 건너뜀).") + "</p>");
+  if (!parts.length) parts.push("<p class=\"note\">" + (r.kind === "discover" ? "후보 순위표는 위 '다음 숙소' 목록에 반영됩니다(사진 시트는 텔레그램)." : r.active ? "실행 중입니다(" + mins(r.created) + " 지남). " + expectText(r) : r.conclusion === "cancelled" ? "이 실행은 시작 " + mins(r.created, r.updated) + " 만에 멈춤(취소) 처리되어 결과 파일이 없습니다." : r.conclusion === "skipped" ? "같은 요청을 다시 받아 건너뛴 실행입니다(결과 없음)." : "이 실행은 실패해 결과 파일이 없습니다. 아래 GitHub 기록에서 이유를 확인합니다.") + "</p>");
   parts.push("<a class=\"sub\" href=\"" + esc(r.url) + "\" target=\"_blank\" rel=\"noopener\">GitHub 실행 기록 열기</a>");
   return parts.join("");
 }
@@ -261,7 +265,28 @@ function runChip(r) {
 }
 
 function shortTitle(t) {
-  return String(t || "").replace(/^stay-shorts:\s*/, "").replace(/\s*\([^)]*\)\s*$/, "");
+  return String(t || "").replace(/^stay-shorts:\s*/, "").replace(/^관리자 페이지\s*/, "").replace(/\s*\([^)]*\)?\s*$/, "");
+}
+
+function mins(a, b) {
+  const m = Math.max(0, Math.round(((b ? Date.parse(b) : Date.now()) - Date.parse(a)) / 60000));
+  return m < 1 ? "1분 안" : m + "분";
+}
+
+function expectText(r) {
+  // 실행 중일 때: 언제 무엇이 어디에 나오는지
+  if (r.kind === "discover") return "약 10분 걸립니다. 끝나면 텔레그램 알림이 오고 '다음 숙소' 목록이 바뀝니다.";
+  const pv = /미리보기/.test(r.title);
+  return (pv ? "미리보기는 약 6~8분" : "정식 제작은 약 5~15분") + " 걸립니다. 끝나면 텔레그램으로 영상·스토리보드·사진 시트가 오고, 아래 '최근 실행 #" + r.number + "'을 누르면 영상·대본 글이 보입니다. 끝나기 전에는 결과가 없습니다.";
+}
+
+function endedText(r, L, reqNonce) {
+  // 끝났는데 결과가 없는 실행: 취소·실패를 숨기지 않는다
+  const name = RUN_KIND[r.kind] + shortTitle(r.title), took = mins(r.created, r.updated);
+  if (r.conclusion === "cancelled")
+    return "직전 실행 #" + r.number + " (" + name + ")은 시작 " + took + " 만에 멈춤(취소) 처리되어 영상·결과가 없습니다. 실행 멈추기 버튼이나 GitHub 화면의 취소로 멈춥니다. 다시 만들려면 아래에서 다시 누르세요.";
+  const why = L && L.nonce === reqNonce && !L.ok && L.error ? " 이유: " + L.error : " 이유는 'GitHub 실행 기록 열기'에서 확인합니다.";
+  return "직전 실행 #" + r.number + " (" + name + ")이 실패해 영상이 없습니다(" + took + " 만에 끝남)." + why;
 }
 
 function hookHtml(t) {
@@ -280,8 +305,12 @@ function render(d) {
   const act = d.runs.find((r) => r.active);
   $("dot").className = "dot" + (act ? " on" : "");
   $("liveText").innerHTML = act
-    ? "<b>" + esc(RUN_KIND[act.kind] + shortTitle(act.title)) + "</b> 실행 중 · <a href=\"" + esc(act.url) + "\" target=\"_blank\" rel=\"noopener\">진행 보기</a><br><span class=\"sub\">미리보기 약 6~8분 · 정식 제작 약 5~15분 · 후보 찾기 약 10분. 끝나면 텔레그램으로 알림이 옵니다</span>"
+    ? "<b>#" + esc(act.number) + " " + esc(RUN_KIND[act.kind] + shortTitle(act.title)) + "</b> 실행 중 · " + esc(mins(act.created)) + " 지남 · <a href=\"" + esc(act.url) + "\" target=\"_blank\" rel=\"noopener\">진행 보기</a><br><span class=\"sub\">" + esc(expectText(act)) + "</span>"
     : (d.runs_error ? "실행 기록을 읽지 못했습니다: " + esc(d.runs_error) : "쉬는 중 · 아래에서 숙소를 고르고 시작하세요");
+  const lastRun = d.runs[0];
+  const failed = !act && lastRun && lastRun.status === "completed" && !["success", "skipped"].includes(lastRun.conclusion);
+  $("lastRunNote").hidden = !failed;
+  $("lastRunNote").textContent = failed ? endedText(lastRun, d.last, d.request.nonce) : "";
   $("cancelBtn").hidden = !act;
   $("cancelBtn").dataset.id = act ? act.id : "";
 
@@ -310,6 +339,9 @@ function render(d) {
   const L = d.last;
   $("lastCard").hidden = !L;
   if (L) {
+    const stale = !!d.request.nonce && L.nonce !== d.request.nonce;
+    $("lastStale").hidden = !stale;
+    $("lastStale").textContent = stale ? "이 카드는 이전 실행의 결과입니다. 가장 최근에 누른 실행은 " + (act ? "아직 만드는 중입니다." : "결과를 남기지 못했습니다(위 '지금 상태' 참고).") : "";
     $("lastHead").textContent = (L.stay || "") + " · " + (L.stage === "preview" ? "미리보기" : "제작") + (L.signature ? " · 시그니처 '" + L.signature + "'" : "") + (L.ok ? "" : " · 실패");
     $("lastHook").innerHTML = L.hook_title ? hookHtml(L.hook_title) : (L.error ? "<span class=\"sub\">" + esc(L.error) + "</span>" : "");
     const f = [];
@@ -411,7 +443,8 @@ $("cancelBtn").onclick = () => {
   const id = Number($("cancelBtn").dataset.id), r = S && S.runs.find((x) => x.id === id);
   if (!r) return;
   openSheet({ label: "실행 멈추기", title: RUN_KIND[r.kind] + shortTitle(r.title), big: "멈출까요?",
-    after: "영상(Veo·인물 영상)을 만들기 전이면 돈이 거의 나가지 않습니다. 이미 만든 조각 값은 돌아오지 않고, 멈춘 실행은 다시 이어서 할 수 없습니다.",
+    after: "멈추면 이 실행의 영상·텔레그램 결과는 나오지 않습니다. AI 영상을 만들기 전이면 돈이 거의 나가지 않지만, 이미 만든 조각 값은 돌아오지 않고 이어서 할 수도 없습니다.",
+    check: "멈추면 결과가 안 나온다는 것을 압니다",
     go: "멈추기", goSub: "1분 안에 멈춥니다", onGo: async () => {
       try { await api("/api/cancel", { id }); msg($("runMsg"), "멈추라고 보냈습니다. 1분 안에 '지금 상태'에서 사라집니다", "ok"); setTimeout(load, 8000); }
       catch (e) { msg($("runMsg"), e.message, "bad"); }
