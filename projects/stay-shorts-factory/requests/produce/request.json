@@ -1,7 +1,7 @@
 {
- "nonce": "2026-10-15-admin-sig-preview-jk8_",
+ "nonce": "2026-10-15-admin-sig-preview-dj_L",
  "mode": "signature",
- "stay": "롯데리조트 속초",
+ "stay": "소노펠리체 비발디파크",
  "theme": "실내 온수풀·온천",
  "region": "강원",
  "month": "2026-11",
@@ -10,7 +10,7 @@
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "잠금(자동 · 실행 끝): 2026-10-15-admin-sig-preview-jk8_",
+ "note": "관리자 페이지 시그니처 미리보기 — 소노펠리체 비발디파크 · 예상 약 30원 · 2026-10-15 17:27 KST",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -21,5 +21,5 @@
  },
  "mini_scale": "life",
  "format": "montage",
- "people": "back"
+ "stage": "preview"
 }
