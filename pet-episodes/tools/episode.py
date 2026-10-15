@@ -2119,6 +2119,8 @@ REMAKE_SEG = 9.5               # Omni 편집은 한 번에 10초까지
 SAY_SPEED_MIN, SAY_SPEED_MAX = 1.2, 1.3   # ⛔ 핵심 규칙: 녹음 속도는 항상 1.2~1.3배(사용자 확정 2026-10)
 REMAKE_BODY_SEC = 10.0         # 본편은 10초(사용자 확정 2026-10: 비용 최소·한 번에) — AI가 가장 웃긴 10초를 고른다. 편마다 remake.max_sec
 REMAKE_END_SEC = 6             # 광고 끝 장면은 처음부터 6초로(사용자 확정 2026-10, 예전 4초×1.6배 늘리기 대신)
+LORD_END_SEC = 3.0               # 「시바 영주 일지」(사장님 확정 2026-10-15): 상품은 마지막 약 3초에만(내레이션이 더 길면 그만큼)
+LORD_HOOK_SEC = 2.5              # 첫 화면에 웃긴 한 줄(hook)을 이만큼 얹었다가 사라지게 — 상품 문구는 처음 3초에 넣지 않는다
 REMAKE_END_SEC_VO = 4          # 글씨 없는 광고(remake.ad="vo"): 웃긴 장면 4초 + 웃긴 내레이션만(사용자 확정 2026-10, 헬기 편 광고 시작에서 절반 이탈)
 REMAKE_COST = {"omni_sec": 0.10, "veo_lite_sec": 0.05, "image": 0.15, "image4k": 0.25, "check": 0.01, "tts": 0.02}   # veo_lite = Veo 3.1 Lite 720p(구글 공지 1초 0.05달러)   # 구글 요금표 기준 어림값(720p 기준 — 360p는 더 쌈, 넉넉히 잡음)
 REMAKE_RES = "360p"            # ⛔ 처음부터 360p로 만든다(사용자 확정 2026-10: 큰 화면으로 만들면 비용이 커짐). 720p·1080p로 바꾸지 않는다
@@ -3475,7 +3477,7 @@ COPY_SPOT = ("This is the final shot of an ad. Big text (about 30% of the frame 
              "or the product. Which band is emptier? JSON only: {\"place\": \"top\" or \"bottom\", \"why\": \"short\"}")
 
 
-def _copy_png(big: str, sub: str, out: Path, W=720, H=1280, place: str = "bottom"):
+def _copy_png(big: str, sub: str, out: Path, W=720, H=1280, place: str = "bottom", top_y: float = 0.095):
     """광고 문구: 끝 장면에서 강아지·들고 있는 것·상품을 가리지 않는 쪽(위/아래)에 둔다(사용자 지적 2026-10: 냉찜질이 글씨에 가림).
     배경은 딱딱한 반투명 상자 대신 가장자리에서 서서히 사라지는 그라데이션 + 글씨 그림자(사용자 지적 2026-10: 상자가 인위적)."""
     from PIL import ImageFilter
@@ -3490,7 +3492,7 @@ def _copy_png(big: str, sub: str, out: Path, W=720, H=1280, place: str = "bottom
     if place == "top":
         shade.putalpha(grad)
         im.paste(shade, (0, 0))
-        y = int(H * 0.095)
+        y = int(H * top_y)
     else:
         shade.putalpha(grad.transpose(Image.FLIP_TOP_BOTTOM))
         im.paste(shade, (0, H - band))
@@ -4950,6 +4952,7 @@ def step_remake(ep, epdir, work, log, req):
                 raise RuntimeError(last_err + " — 두 번 실패, 다시 시도해 주세요")
         # 4) 조립: 리메이크 → (흰 번쩍) 끝 장면(느리게 + 마지막 장면 멈춤) + 문구 + 내레이션. 노래 없음
         Lb, vl = _dur(body_v), _dur(vo)
+        body_plain = body_v                               # 표지용(첫 화면 한 줄이 없는 본편)
         # 강아지 낑낑 소리는 실패 직후 광고 화면이 시작될 때(사용자 지시 2026-10) → 내레이션은 낑낑 소리가 끝난 뒤
         whimper = SFX_DIR / "whimper.mp3"
         use_wh = rm.get("whimper") is True and whimper.exists()   # 장면에 맞을 때만(사용자 지적 2026-10: 부딪힌 게 아니면 필요 없음)
@@ -4960,6 +4963,19 @@ def step_remake(ep, epdir, work, log, req):
             dd = max(dd, 6.0)
         if ad_vo:                                         # 4초 장면은 늘리지 않고, 내레이션이 더 길면 마지막 장면을 잠깐 멈춰 둔다
             dd = round(max(_dur(end_v), t0 + vl + 0.4 - Lb), 2)
+        lord = rm.get("format") == "lord"
+        if lord:                                          # 「시바 영주 일지」: 상품 장면은 약 3초만(내레이션이 더 길면 그만큼)
+            dd = round(max(min(_dur(end_v), LORD_END_SEC), t0 + vl + 0.3 - Lb), 2)
+            hook = str(rm.get("hook") or "").strip()
+            if hook:                                      # 첫 화면에 웃긴 한 줄을 2.5초 얹었다 사라지게(위쪽, 강아지 얼굴은 보통 가운데·아래) — 조립마다 새로(무료)
+                hp = work / "_hook.png"
+                _copy_png(hook, "", hp, place="top", top_y=0.15)
+                hb = work / "_remake_hook.mp4"
+                _ff(["-i", str(body_v), "-loop", "1", "-i", str(hp), "-filter_complex",
+                     f"[1:v]scale={W}:{H},format=rgba,fade=t=out:st={LORD_HOOK_SEC - 0.4:.2f}:d=0.4:alpha=1,trim=duration={LORD_HOOK_SEC}[h];"
+                     f"[0:v][h]overlay=0:0:eof_action=pass,format=yuv420p[v]", "-map", "[v]", "-c:v", "libx264", "-crf", "18", str(hb)])
+            if (work / "_remake_hook.mp4").exists():
+                body_v = work / "_remake_hook.mp4"
         cta_at = max(0.5, t0 + vl - 1.3 - Lb)
         copy_png, cta_png = work / "_copy.png", work / "_cta.png"
         if ad_vo and not rm.get("ad_copy"):               # 큰 문구·노란 설명 없음(2026-10 초기) — 빈 그림. ad_copy=true면 캡션 문구를 화면에도 올린다(사장님 확정 2026-10-07 사과 도둑 편)
@@ -5043,8 +5059,24 @@ def step_remake(ep, epdir, work, log, req):
         _ff(["-i", str(body_v), "-i", str(end_v), "-loop", "1", "-i", str(copy_png), "-loop", "1", "-i", str(cta_png), "-i", str(vo_loud), *wh_in, *src_in, *sfx_in,
              "-filter_complex", V, "-map", "[v]", "-map", "[aud]", "-c:v", "libx264", "-crf", "22", "-c:a", "aac", "-b:a", "128k",
              "-movflags", "+faststart", str(final)])
-        _ff(["-ss", f"{Lb + min(dd - 0.3, 2.5):.2f}", "-i", str(final), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos",
-             "-q:v", "3", str(work / "cover.jpg")])
+        if lord:                                          # 표지 = 본편의 웃긴 순간(부딪힘·넘어짐 등, 없으면 본편 40% 지점) + 웃긴 한 줄 + 「시바 영주 일지 #N」
+            gb = [g for g in _gag_beats((res.get("timeline") or {}).get("gen") or (res.get("timeline") or {}).get("all") or [])
+                  if g.get("kind") in ("맞힘", "넘어짐")]
+            try:
+                tc = float(str(gb[0]["t"]).split("-")[0]) + 0.2 if gb else Lb * 0.4
+            except ValueError:
+                tc = Lb * 0.4
+            tc = min(max(0.3, tc), Lb - 0.2)
+            cf, cp = work / "_cover_frame.png", work / "_cover_copy.png"
+            _ff(["-ss", f"{tc:.2f}", "-i", str(body_plain), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos", str(cf)])
+            _copy_png(str(rm.get("hook") or ""), f"시바 영주 일지 #{rm.get('series_no')}" if rm.get("series_no") else "", cp, W=1080, H=1920,
+                      place="top", top_y=0.15)          # 인스타 격자는 가운데 3:4만 보인다(위 12.5% 잘림) — 글씨는 그 안에
+            Image.alpha_composite(Image.open(cf).convert("RGBA").resize((1080, 1920)), Image.open(cp).convert("RGBA")).convert("RGB") \
+                .save(work / "cover.jpg", quality=92)
+            res["cover_at"] = round(tc, 2)
+        else:
+            _ff(["-ss", f"{Lb + min(dd - 0.3, 2.5):.2f}", "-i", str(final), "-frames:v", "1", "-vf", "scale=1080:1920:flags=lanczos",
+                 "-q:v", "3", str(work / "cover.jpg")])
         log["cover"] = "work/cover.jpg"
         _assert_vertical(final, "완성본")                 # ⛔ 마지막 관문: 꽉 찬 세로가 아니면 완성으로 표시하지 않는다(인스타 올리기도 막힘)
         log["assemble"] = {"ok": True, "sec": round(_dur(final), 2), "note": "리메이크(원본 소리 + 내레이션, 노래는 인스타 앱에서)"}

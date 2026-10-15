@@ -4902,6 +4902,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     <div class="box-hd"><span class="step">04</span><h2>광고 문구 · 내레이션</h2></div>
     <p class="lead">AI가 초안을 쓰고, 마음대로 고칠 수 있습니다. 쓴 그대로 영상에 들어갑니다.</p>
     <button class="btn btn-2 btn-sm" id="trCopyGo" type="button">문구 만들기</button>
+    <div class="f"><label for="trHook">표지·첫 화면 한 줄 (웃긴 사건만 · 상품 말 금지)</label><textarea id="trHook" rows="2"></textarea></div>
     <div class="f"><label for="trBig">캡션 첫 줄 (두 줄 · 영상에는 안 나옴)</label><textarea id="trBig" rows="2"></textarea></div>
     <div class="f"><label for="trSub">캡션 설명 (두 줄 · 영상에는 안 나옴)</label><textarea id="trSub" rows="2"></textarea></div>
     <div class="f"><label for="trVo">웃긴 내레이션 (4초 안 · 끝은 "구매는 프로필 링크에서.")</label><textarea id="trVo" rows="3"></textarea></div>
@@ -5750,7 +5751,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     say('trCMsg','문구를 쓰는 중…','wait');
     longPost('/api/remake/copy',{analysis:tr.analysis||{},product:tr.product},function(sec){ say('trCMsg','문구를 쓰는 중… '+sec+'초','wait'); }).then(function(r){
       if(!r||!r.success){ say('trCMsg',(r&&r.error)||'만들지 못했습니다.','no'); return; }
-      $('trBig').value=r.copy.big; $('trSub').value=r.copy.sub; $('trVo').value=r.copy.vo; $('trEnd').value=r.copy.ending; $('trTags').value=(r.copy.hashtags||[]).join(' '); $('trWhimper').checked=!!r.copy.whimper; $('trMusic').value=r.copy.music||''; hide('trCMsg');
+      $('trHook').value=r.copy.hook||''; $('trBig').value=r.copy.big; $('trSub').value=r.copy.sub; $('trVo').value=r.copy.vo; $('trEnd').value=r.copy.ending; $('trTags').value=(r.copy.hashtags||[]).join(' '); $('trWhimper').checked=!!r.copy.whimper; $('trMusic').value=r.copy.music||''; hide('trCMsg');
     }).catch(function(e){ say('trCMsg','만들지 못했습니다: '+e.message,'no'); });
   });
   // 원본 올리기(한 번 올린 파일은 다시 올리지 않는다 — 분석·제작 공용)
@@ -5797,7 +5798,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.65}
     if(!tr.analysis){ tr.analysis={meme:'',swap:'',productIdeas:[],remakeScore:0}; tr.video={id:'',title:(f&&f.name)||'직접 올린 영상'}; }
     if(!f){ say('trGoMsg','02에 원본 영상 파일을 올려 주세요.','no'); return; }
     if(!tr.product){ say('trGoMsg','03에서 상품을 골라 주세요.','no'); return; }
-    var copy={big:$('trBig').value.trim(),sub:$('trSub').value.trim(),vo:$('trVo').value.trim(),ending:$('trEnd').value.trim(),cut:$('trCut').value.trim(),hashtags:$('trTags').value.trim().split(/ +/).filter(Boolean),whimper:$('trWhimper').checked,music:$('trMusic').value.trim()};
+    var copy={hook:$('trHook').value.trim(),big:$('trBig').value.trim(),sub:$('trSub').value.trim(),vo:$('trVo').value.trim(),ending:$('trEnd').value.trim(),cut:$('trCut').value.trim(),hashtags:$('trTags').value.trim().split(/ +/).filter(Boolean),whimper:$('trWhimper').checked,music:$('trMusic').value.trim()};
     if(!copy.big||!copy.vo){ say('trGoMsg','04 문구와 내레이션을 채워 주세요.','no'); return; }
     if(!confirm('스토리보드 그림을 만듭니다(약 0.16달러, 5~10분). 시작할까요?')) return;
     $('trGo').disabled=true; say('trGoMsg','원본을 올리는 중…','wait');
@@ -7385,21 +7386,23 @@ async function handleRemakeCopy(env, body) {
   if (!p.title) throw new Error('상품을 먼저 골라 주세요.');
   const key = await getGeminiKey(env);
   const ask = `반려견 광고 영상의 마지막 장면 문구를 써라. 앞부분은 "${a.meme || ''}" 밈을 실사 시바견이 따라 하는 영상이고, 끝에서 시바견이 이 상품을 쓴다: "${p.title}".
-※ 끝 광고 화면에는 글씨를 띄우지 않는다(작은 "구매는 프로필 링크에서"만). big·sub는 인스타 캡션에만 쓴다.
-- big: 캡션 첫 줄용 훅 2줄(줄바꿈 \\n), 각 줄 12자 이내(예: "당신의 강아지도\\n갈증을 느낍니다")
+※ 계정 형식 「시바 영주 일지」(사장님 확정 2026-10-15): 주인공은 이 집의 영주인 시바견. 겉은 귀여운 강아지, 속은 이 집 주인이고 인간은 '관리인'. 말투는 담담한 통보체(느낌표·감탄사·설명조·광고 말투 금지).
+※ 처음 3초와 표지는 웃긴 장면만 — 상품 문구는 영상에 띄우지 않는다(끝에 작은 "구매는 프로필 링크에서"만). big·sub는 인스타 캡션에만 쓴다.
+- hook: 표지·첫 화면에 얹을 웃긴 한 줄(2줄 이내, 줄바꿈 \\n, 각 줄 12자 이내). 영상 속 사건을 시바 영주가 담담하게 보고하는 말(예: "운동 첫날\\n둘 다 퇴근했다"). 상품·효능·"~하세요" 금지
+- big: 캡션 첫 줄용 훅 2줄(줄바꿈 \\n), 각 줄 12자 이내 — 웃긴 사건 중심(상품 설명 아님)
 - sub: 캡션용 2줄(\\n), 상품이 주는 이점을 구체적으로(예: "춤추며 빠져나간 수분과 전해질\\n강아지 전용 이온음료로 빠르게 채워주세요")
-- vo: 웃긴 내레이션. 앞 장면에서 벌어진 사건(실패·망함)을 그대로 이어 받아 한 번 비트는 능청스러운 한 마디(12자 안팎, 광고 말투·효능 설명 금지) + 마지막에 반드시 "구매는 프로필 링크에서." 전체 22자 안팎(4초 안에 읽힘). '...' 뜸은 한 번만. 주어 없이 "프로필 링크에서."만 쓰지 마라
+- vo: 시바 영주의 1인칭 내레이션. 앞 장면에서 벌어진 사건(실패·망함)을 담담하게 보고하며 한 번 비트는 한 마디(12자 안팎, 광고 말투·효능 설명·느낌표 금지) + 마지막에 반드시 "구매는 프로필 링크에서." 전체 22자 안팎(4초 안에 읽힘). '...' 뜸은 한 번만. 주어 없이 "프로필 링크에서."만 쓰지 마라
 - ending: English one sentence — the final 4-second shot that CONTINUES the same joke in the same place with the same Shiba Inu (no cut to a clean ad set): the dog now has the product and does one funny, clear action with it (product visible)
 - hashtags: ${HASHTAG_RULE}
 - whimper: 앞부분이 강아지가 넘어지거나 부딪히거나 실패해 아파하는 장면이면 true(광고 화면 시작에 낑낑 소리), 그 밖(신나는 장면·놀라운 장면 등)이면 false
 - music: 이 영상을 더 웃기게 만들 인스타 릴스 배경 노래 추천 한 줄. 인스타 앱 음악에서 찾을 수 있는 유명 곡이나 밈 사운드 하나를 "곡명 – 가수 (몇 초 구간·왜 웃긴지 짧게)" 형식으로(예: "Fly Me to the Moon – Frank Sinatra (우주 장면이 나오는 순간 후렴이 터짐)")
 상품명·브랜드명·가격·숫자 금액은 어디에도 쓰지 마라(품목 이름은 된다: 예 "강아지 전용 이온음료").
-JSON만: {"big":"","sub":"","vo":"","ending":"","hashtags":["#..."],"whimper":false,"music":""}`;
+JSON만: {"hook":"","big":"","sub":"","vo":"","ending":"","hashtags":["#..."],"whimper":false,"music":""}`;
   const t = await callGeminiText(key, { system: '광고 카피라이터. JSON만 출력.', user: ask, max_tokens: 800, json: true }).catch(e => { throw new Error('문구를 만들지 못했습니다: ' + e.message); });
   const o = extractJson(typeof t === 'string' ? t : (t?.text || ''));
   const banned = remakeBanned(p.title);
   const clean = (s) => noPrice(scrubBanned(String(s || ''), banned).replace(/이 메뉴/g, '이 제품')).trim();
-  return { success: true, copy: { big: clean(o.big), sub: clean(o.sub), vo: voCta(clean(o.vo)), ending: String(o.ending || '').slice(0, 400),
+  return { success: true, copy: { hook: clean(o.hook).replace(/[!！]/g, ''), big: clean(o.big), sub: clean(o.sub), vo: voCta(clean(o.vo)), ending: String(o.ending || '').slice(0, 400),
     hashtags: cleanHashtags(o.hashtags, banned), whimper: o.whimper === true, music: String(o.music || '').slice(0, 160) } };
 }
 
@@ -7452,11 +7455,20 @@ async function handleRemakeCommit(env, body) {
   for (let n = 0; n < meta.chunks; n++) if (!(await env.PENDING_POSTS.get(`remake_src:${id}:${n}`, 'stream'))) throw new Error(`원본 ${n + 1}번째 조각이 올라가지 않았습니다. 다시 올려 주세요.`);
   const p = body.product || {}, c = body.copy || {}, v = body.video || {}, a = body.analysis || {};
   if (!p.title || !p.link) throw new Error('상품과 쿠팡 링크를 정해 주세요.');
+  // 「시바 영주 일지」 회차(사장님 확정 2026-10-15: 같은 주인공·같은 말투 시리즈로) — 편마다 한 번만 매긴다
+  const seriesKey = 'lord_series:' + id;
+  let seriesNo = Number(await env.PENDING_POSTS.get(seriesKey)) || 0;
+  if (!seriesNo) {
+    seriesNo = Math.max(Number(await env.PENDING_POSTS.get('lord_series_no')) || 0, 1) + 1;   // #1 = 261011-remake-b9c7(러닝머신 편, 저장소에서 직접 지정)
+    await env.PENDING_POSTS.put('lord_series_no', String(seriesNo));
+    await env.PENDING_POSTS.put(seriesKey, String(seriesNo));
+  }
+  const hook = String(c.hook || c.big || '').replace(/[!！]/g, '').trim();
   if (!c.big || !c.vo) throw new Error('광고 문구와 내레이션을 채워 주세요.');
   const ep = { kind: 'remake', menuName: `리메이크 · ${String(v.title || a.meme || '').slice(0, 28)}`, clips: [],
     source: { youtube: v.id ? `https://www.youtube.com/watch?v=${v.id}` : '', title: v.title || '', music: a.music || '' },
-    remake: { swap: a.swap || '', keep_people: a.keepPeople === true, cast: String(a.cast || '').slice(0, 300), swap_ko: String(a.swapKo || '').slice(0, 160), ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, music_pick: String(c.music || '').slice(0, 160), ad: 'vo', ad_copy: true, method: 'gen', res: '720p', pre_enhance: false, upscale: 0, cap: REMAKE_CAP_USD },   // method 'gen' = 새로 만들기(사장님 지시 2026-10-11: 합성은 화질이 떨어짐 → 원본은 분석만, 흥행 요소·초 단위 구성을 분석해 컷마다 0.5초 지시로 거의 똑같이 새로 생성, 720p). ad_copy: 끝 광고 화면에 캡션 문구도 올림. pre_enhance는 CPU 40분이라 끔(사장님 지시 2026-10-07: 느려 터짐) — 720p 합성만으로 선명   // Genjutsu식(사용자 확정 2026-10 사과 도둑 편): 원본 그대로 두고 대상만 합성, 처음부터 720p + 합성 전 원본 AI 복원(무료) — '아예 안 흐리게'   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
-    caption: `${String(c.big).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
+    remake: { swap: a.swap || '', keep_people: a.keepPeople === true, cast: String(a.cast || '').slice(0, 300), swap_ko: String(a.swapKo || '').slice(0, 160), ending: c.ending || '', big: c.big, sub: c.sub || '', vo: c.vo, cut: String(c.cut || '').slice(0, 200), whimper: c.whimper === true, music_pick: String(c.music || '').slice(0, 160), ad: 'vo', ad_copy: false, format: 'lord', hook: hook.slice(0, 60), series_no: seriesNo, gen_model: 'veo-lite', method: 'gen', res: '720p', pre_enhance: false, upscale: 0, cap: REMAKE_CAP_USD },   // 2026-10-15 「시바 영주 일지」: 영상에 상품 문구 없음(ad_copy false, 처음 3초·표지는 웃긴 장면+hook만), 영상은 Veo 3.1 Lite(편당 약 1달러)   // method 'gen' = 새로 만들기(사장님 지시 2026-10-11: 합성은 화질이 떨어짐 → 원본은 분석만, 흥행 요소·초 단위 구성을 분석해 컷마다 0.5초 지시로 거의 똑같이 새로 생성, 720p). ad_copy: 끝 광고 화면에 캡션 문구도 올림. pre_enhance는 CPU 40분이라 끔(사장님 지시 2026-10-07: 느려 터짐) — 720p 합성만으로 선명   // Genjutsu식(사용자 확정 2026-10 사과 도둑 편): 원본 그대로 두고 대상만 합성, 처음부터 720p + 합성 전 원본 AI 복원(무료) — '아예 안 흐리게'   // ad 'vo' = 끝 광고는 웃긴 장면 4초 + 웃긴 내레이션 + 작은 '구매는 프로필 링크에서'만(큰 문구는 캡션용, 사용자 확정 2026-10)
+    caption: `시바 영주 일지 #${seriesNo} · ${(hook || String(c.big)).replace(/\n/g, ' ')}\n\n${String(c.sub || '').replace(/\n/g, ' ')}\n\n구매는 프로필 링크에서.`,
     hashtags: cleanHashtags(Array.isArray(c.hashtags) ? c.hashtags : String(c.hashtags || '').split(/\s+/), remakeBanned(p.title)),
     product: { title: p.title, brand: p.brand || '', category: p.category || '기타', reason: String(c.sub || '').replace(/\n/g, ' '), link: p.link, image: p.image || '' } };
   const dir = `${EP_ROOT}/${id}`;

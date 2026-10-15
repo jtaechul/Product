@@ -405,6 +405,18 @@ body21 = E._dur(d / "work" / "remake.mp4") if (d / "work" / "remake.mp4").exists
 print("    Veo 고정 칸 구간:", [s_.get("veo_segs") for s_ in (r21.get("gen_plan") or {}).get("fit", [])], "| 본편", round(body21, 2), "초")
 if omni_used or vid_usd > 0.81 or not r21.get("gen", {}).get("ok") or abs(body21 - 5.8) > 0.1:
     FAILS.append("㉑ Veo로만 만들지 않았거나 영상 값이 예상(0.8달러)보다 크거나 본편 길이가 원본과 다름")
+d, ep = make_ep("genlord", method="gen", gen_model="veo-lite", format="lord", ad_copy=False, hook="운동 첫날\n둘 다 퇴근했다", series_no=1,
+                vo="관리인의 운동기구가 또 이겼다. 구매는 프로필 링크에서.")
+run(d, ep, {"remake": {"mode": "board"}}, {"outro": True}, "㉒ 시바 영주 일지 형식: 스토리보드")
+log = run(d, ep, {"remake": {"mode": "full"}}, {"outro": True}, "㉒ 시바 영주 일지 형식: 영상(첫 화면 한 줄·짧은 상품 장면·웃긴 장면 표지)")
+r22 = log["remake"]
+fin22 = d / "work" / "final.mp4"
+body22 = E._dur(d / "work" / "remake.mp4") if (d / "work" / "remake.mp4").exists() else 0
+end22 = (E._dur(fin22) - body22) if fin22.exists() else 99
+cov22 = d / "work" / "cover.jpg"
+print("    본편", round(body22, 2), "초 | 상품 장면", round(end22, 2), "초 | 표지 시각", r22.get("cover_at"), "| 표지", cov22.exists())
+if not cov22.exists() or r22.get("cover_at") is None or r22.get("cover_at", 99) > body22 or end22 > 4.2:
+    FAILS.append("㉒ 표지가 본편 웃긴 장면이 아니거나 상품 장면이 너무 김")
 d, ep = make_ep("gentest", method="gen")
 log = run(d, ep, {"remake": {"mode": "test"}}, {}, "⑰ 새로 만들기: 예전 '시험' 요청 → 스토리보드만(영상 안 만듦)")
 if log["remake"].get("gen") or not (d / "work" / "board.jpg").exists():
