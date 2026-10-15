@@ -209,6 +209,7 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None, quota
             "min_price": min(prices) if prices else None, "affiliate_url": str(rooms[0].get("productUrl", "")),
             "hook": (c.get("ai") or {}).get("hook", ""), "classified": cl, "crawl": crawl_info,
             "official_facts": fd["facts"], "signature": fd["signature"], "city": c.get("city", ""), "official_site": crawl_info.get("url"),
+            "site_text": site_text,                                                  # 공식 홈페이지 페이지 글 — 시그니처 이야기(make_story)가 장점 하나의 상세 사실을 더 뽑는다
             "rooms": [{"name": str(it.get("productName", ""))[:60], "price": float(it.get("productPrice") or 0) or None,
                        "image": it.get("productImage") or None, "url": str(it.get("productUrl", "")) or None} for it in rooms[:8]],
             "photo_counts": {k: sum(p["source"] == k for p in cands) for k in SRC_KO} | {"mismatch": len(mism), "near_dup": dups, "exterior_cut": ext_cut},

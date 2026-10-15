@@ -25,17 +25,16 @@ const REGIONS = ["강원", "경기", "제주", "부산", "경남", "경북", "�
 const MEDIA = { "video.mp4": "video/mp4", "narration_preview.mp3": "audio/mpeg", "preview.md": "text/plain; charset=utf-8" };
 const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.py MONTH_KRW 와 같은 값)
 // 형식별 예상 비용(원). 기존 9컷: 미리보기 글·음성 약 80 / 정식 제작(미니어처 3컷 + Veo 1컷) 약 2,500 (실측).
-// 시그니처 v3(2026-10-15 운영자 "있는 사진으로 AI 영상"): 미리보기부터 컷마다 실제 사진 → Veo 4초(약 294원) + 글·비전 약 60
-//   몽타주 최대 5컷 ≈ 1,550 · 한 장면 2컷 ≈ 650. 제작 = 미리보기 AI 클립 재사용 0원(사진 무빙으로 남은 컷만 다시 — 컷당 약 294), 미리보기 없이 = 미리보기와 같음
+// 시그니처 v4 이야기(2026-10-15 운영자 "진행해" · 장점 하나·여러 관점 · make_story): 미리보기 = 글·비전·음성(받아쓰기 포함)만 약 90 · AI 영상 없음.
+//   제작 = 미리보기 대본·음성 재사용 + 훅·정체·약속 3컷 Veo(294 × 3 = 882) ≈ 900, 미리보기 없이 ≈ 990
 const COST = {
-  signature: { preview: 1550, produce: 0, produce_fresh: 1550 },
-  signature_single: { preview: 650, produce: 0, produce_fresh: 650 },
+  signature: { preview: 90, produce: 900, produce_fresh: 990 },
   solo: { preview: 80, produce: 2500, produce_fresh: 2500 },
 };
-const costOf = (mode, format) => (mode === "signature" && format === "single" ? COST.signature_single : COST[mode]);
+const costOf = (mode) => COST[mode];
 const BLOCK_DAYS = 14;                      // make_sig 가 '사진·사실 부족'으로 멈춘 숙소는 이 기간 시그니처 버튼을 잠근다(state/sig_blocked.json)
 const MODES = { signature: "시그니처", solo: "기존 9컷" };
-const SIG_PREVIEW_RX = /관리자 페이지 시그니처(\(한 장면\))? AI 미리보기 — (.+?) \(/;   // 형식이 같아야 재사용된다(make_sig.find_reuse · v3 계획만 — v1·v2 '미리보기'는 안 맞음)
+const SIG_PREVIEW_RX = /관리자 페이지 시그니처 이야기 미리보기 — (.+?) \(/;   // 이야기(v4) 미리보기만 재사용 대상(make_story.find_reuse · 옛 형식 계획은 안 맞음)
 const LABEL = { preview: "미리보기", produce: "정식 제작" };
 const DISCOVER_NOTE = "수십 원(AI 확인 몇 번 · 장부 미기록)";
 const ACTIVE = new Set(["queued", "in_progress", "waiting", "requested", "pending"]);
@@ -256,7 +255,7 @@ function sigPreviewIndex(runs) {
   for (const r of runs) {
     if (r.kind !== "produce" || r.conclusion !== "success") continue;
     const m = String(r.title || "").match(SIG_PREVIEW_RX);
-    const key = m ? `${m[1] ? "single" : "montage"}|${m[2]}` : "";
+    const key = m ? `story|${m[1]}` : "";
     if (m && !out[key]) out[key] = { id: r.id, number: r.number };
   }
   return out;
@@ -325,7 +324,7 @@ async function startRun(env, body) {
   const action = String(body.action || "");
   if (!["preview", "produce"].includes(action)) throw new HttpError(400, "알 수 없는 실행입니다");
   const mode = String(body.mode || "signature") in MODES ? String(body.mode || "signature") : "signature";
-  const format = String(body.format || "") === "single" ? "single" : "montage";
+  const format = "story";                                                      // 시그니처는 이야기 형식 하나(옛 몽타주·한 장면은 관리실에서 안 씀)
   const stay = String(body.stay || "").trim();
   if (!stay) throw new HttpError(400, "숙소를 고르세요");
   const [req, ledger, cands, runs, recent, blocked] = await Promise.all([
@@ -344,16 +343,16 @@ async function startRun(env, body) {
   const blk = mode === "signature" ? activeBlocks(blocked, kstNow())[stay] : null;
   if (blk) throw new HttpError(409, `이 숙소는 시그니처 영상을 만들 재료가 부족합니다(${blk.at}): ${blk.reason}. 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요`);
   const reuse = mode === "signature" && action === "produce" ? sigPreviewIndex(runs)[`${format}|${stay}`] || null : null;
-  const c = costOf(mode, format);
+  const c = costOf(mode);
   const cost = action === "preview" ? c.preview : reuse ? c.produce : c.produce_fresh;
-  const paid = action === "produce" || mode === "signature";                  // 시그니처 v3: 미리보기도 AI 영상(돈) → 화면 확인 + veo_approved
+  const paid = action === "produce";                                          // 시그니처 v4: 미리보기는 AI 영상 없음(약 90원) → 제작만 화면 확인 + veo_approved
   const now = kstNow();
   const money = monthSpend(ledger, now.toISOString().slice(0, 7));
   if (money.total + cost > MONTH_CAP) {
     throw new HttpError(403, `이번 달 한도를 넘습니다 (쓴 돈 ${money.total.toLocaleString()}원 + 예상 ${cost.toLocaleString()}원 > ${MONTH_CAP.toLocaleString()}원)`);
   }
   if (paid && body.confirm !== true) {
-    throw new HttpError(400, action === "produce" ? "정식 제작은 화면에서 한 번 더 확인해야 합니다" : "시그니처 AI 미리보기는 돈이 들어 화면에서 한 번 더 확인해야 합니다");
+    throw new HttpError(400, "정식 제작은 화면에서 한 번 더 확인해야 합니다");
   }
 
   const next = { ...cur };
@@ -369,7 +368,7 @@ async function startRun(env, body) {
   }
   next.veo_approved = paid;                                                   // 버튼 + 금액 확인 = 운영자 허락(make_stay 돈 잠금 · 실행 뒤 워크플로가 다시 잠근다)
   if (action === "preview") next.stage = "preview";
-  const what = `${MODES[mode]}${mode === "signature" && format === "single" ? "(한 장면)" : ""} ${mode === "signature" && action === "preview" ? "AI 미리보기" : LABEL[action]}`;
+  const what = `${MODES[mode]} ${mode === "signature" && action === "preview" ? "이야기 미리보기" : LABEL[action]}`;
   next.note = `관리자 페이지 ${what} — ${stay} · 예상 약 ${cost.toLocaleString()}원${reuse ? ` · 미리보기 #${reuse.number} 재사용` : ""} · ${now.toISOString().slice(0, 16).replace("T", " ")} KST`;
   const put = await commitJson(env, REQ_PATH, req.sha, next, `stay-shorts: 관리자 페이지 ${what} — ${stay} (${next.nonce})`);
   return { ok: true, nonce: next.nonce, action, mode, stay, cost, reuse: reuse ? reuse.number : null, commit: (put.commit || {}).html_url || "" };
