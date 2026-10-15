@@ -1,0 +1,78 @@
+{
+  "id": "chaunax_stigmaeus",
+  "name_ko": "아귀목 심해어",
+  "sci": "Chaunax stigmaeus",
+  "created": "2026-10-15T14:54:15Z",
+  "stages": {
+    "topic": {
+      "state": "approved",
+      "notes": [
+        {
+          "at": "2026-10-15T14:54:15Z",
+          "kind": "approve",
+          "text": "운영자가 주제로 선택"
+        }
+      ],
+      "approved_at": "2026-10-15T14:54:15Z"
+    },
+    "script": {
+      "state": "working",
+      "notes": []
+    },
+    "storyboard": {
+      "state": "locked",
+      "notes": []
+    },
+    "video": {
+      "state": "locked",
+      "notes": []
+    },
+    "upload": {
+      "state": "locked",
+      "notes": []
+    }
+  },
+  "topic": {
+    "id": "chaunax_stigmaeus",
+    "key": "chaunax stigmaeus",
+    "name_ko": "아귀목 심해어",
+    "ko_official": false,
+    "name_en": "Redeye gaper",
+    "sci": "Chaunax stigmaeus",
+    "depth_m": "90-730",
+    "facts_n": 5,
+    "facts": [
+      "The redeye gaper, Chaunax stigmaeus, is a sedentary species of anglerfish in the family Chaunacidae.",
+      "It is native to deep waters in the western North Atlantic from the Georges Bank off New England southward to the Blake Plateau off South Carolina.",
+      "The species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat."
+    ],
+    "sources": [
+      "Wikipedia (en)",
+      "Wikimedia Commons (File:Chaunax stigmaeus dorsal view2.jpg)"
+    ],
+    "checks": {
+      "한 편 = 한 대상": true,
+      "사실 3개 이상": true,
+      "서식 수심": true
+    },
+    "ready": true,
+    "in_progress": false,
+    "photo": {
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/593101494/medium.jpg",
+      "credit": "NOAA Photo Library, no known copyright restrictions (public domain)",
+      "license": "pd",
+      "page": "https://www.inaturalist.org/taxa/450448"
+    }
+  },
+  "artifacts": {},
+  "checks": {},
+  "jobs": {
+    "script": {
+      "stage": "script",
+      "status": "running",
+      "at": "2026-10-15T14:54:15Z",
+      "action": "job_start",
+      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+    }
+  }
+}
