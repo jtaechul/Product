@@ -7,7 +7,7 @@
   },
   "hook": {
     "cut": 6,
-    "at": 3.0,
+    "at": 0.12,
     "answer_jp": "アカメアンコウ",
     "answer_ko": "아카메앙코우(아귀)",
     "candidates": [
@@ -39,7 +39,11 @@
     "voice_jp": "魚なのに、立ち上がる",
     "pattern": "常識破り",
     "chosen": 1,
-    "type": "line"
+    "type": "line",
+    "voice_file": "out/r1015154421_hook_tts/hook.wav",
+    "voice_for": "魚なのに、立ち上がる",
+    "motion": 10.16,
+    "at_by": "auto"
   },
   "core": "F13",
   "facts": [

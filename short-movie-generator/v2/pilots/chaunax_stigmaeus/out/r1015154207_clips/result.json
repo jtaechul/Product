@@ -1,0 +1,164 @@
+{
+  "ok": true,
+  "items": [
+    {
+      "name": "c01",
+      "model": "gemini-omni-1.1-flash",
+      "attempts": [
+        {
+          "task": "image_to_video",
+          "ok": true,
+          "file": "c01.mp4",
+          "video_s": 8.0,
+          "wait_s": 29.1,
+          "frames": "c01_frames.jpg",
+          "usage": {
+            "total_tokens": 49053,
+            "total_input_tokens": 1565,
+            "input_tokens_by_modality": [
+              {
+                "modality": "text",
+                "tokens": 465
+              },
+              {
+                "modality": "image",
+                "tokens": 1100
+              }
+            ],
+            "total_cached_tokens": 0,
+            "total_output_tokens": 47025,
+            "output_tokens_by_modality": [
+              {
+                "modality": "video",
+                "tokens": 46336
+              }
+            ],
+            "total_tool_use_tokens": 0,
+            "total_thought_tokens": 463
+          }
+        }
+      ],
+      "file": "c01.mp4"
+    },
+    {
+      "name": "c02",
+      "model": "gemini-omni-1.1-flash",
+      "attempts": [
+        {
+          "task": "image_to_video",
+          "ok": true,
+          "file": "c02.mp4",
+          "video_s": 6.02,
+          "wait_s": 27.2,
+          "frames": "c02_frames.jpg",
+          "usage": {
+            "total_tokens": 37310,
+            "total_input_tokens": 1527,
+            "input_tokens_by_modality": [
+              {
+                "modality": "text",
+                "tokens": 427
+              },
+              {
+                "modality": "image",
+                "tokens": 1100
+              }
+            ],
+            "total_cached_tokens": 0,
+            "total_output_tokens": 35402,
+            "output_tokens_by_modality": [
+              {
+                "modality": "video",
+                "tokens": 34752
+              }
+            ],
+            "total_tool_use_tokens": 0,
+            "total_thought_tokens": 381
+          }
+        }
+      ],
+      "file": "c02.mp4"
+    },
+    {
+      "name": "c04",
+      "model": "gemini-omni-1.1-flash",
+      "attempts": [
+        {
+          "task": "image_to_video",
+          "ok": true,
+          "file": "c04.mp4",
+          "video_s": 8.04,
+          "wait_s": 34.6,
+          "frames": "c04_frames.jpg",
+          "usage": {
+            "total_tokens": 49204,
+            "total_input_tokens": 1552,
+            "input_tokens_by_modality": [
+              {
+                "modality": "text",
+                "tokens": 452
+              },
+              {
+                "modality": "image",
+                "tokens": 1100
+              }
+            ],
+            "total_cached_tokens": 0,
+            "total_output_tokens": 47046,
+            "output_tokens_by_modality": [
+              {
+                "modality": "video",
+                "tokens": 46336
+              }
+            ],
+            "total_tool_use_tokens": 0,
+            "total_thought_tokens": 606
+          }
+        }
+      ],
+      "file": "c04.mp4"
+    },
+    {
+      "name": "c06",
+      "model": "gemini-omni-1.1-flash",
+      "attempts": [
+        {
+          "task": "image_to_video",
+          "ok": true,
+          "file": "c06.mp4",
+          "video_s": 8.0,
+          "wait_s": 40.6,
+          "frames": "c06_frames.jpg",
+          "usage": {
+            "total_tokens": 49395,
+            "total_input_tokens": 1554,
+            "input_tokens_by_modality": [
+              {
+                "modality": "text",
+                "tokens": 454
+              },
+              {
+                "modality": "image",
+                "tokens": 1100
+              }
+            ],
+            "total_cached_tokens": 0,
+            "total_output_tokens": 47319,
+            "output_tokens_by_modality": [
+              {
+                "modality": "video",
+                "tokens": 46336
+              }
+            ],
+            "total_tool_use_tokens": 0,
+            "total_thought_tokens": 522
+          }
+        }
+      ],
+      "file": "c06.mp4"
+    }
+  ],
+  "request": "r1015154207_clips.json",
+  "kind": "gen_omni",
+  "ran_at": "2026-10-15T15:44:20Z"
+}
