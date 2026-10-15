@@ -1,0 +1,519 @@
+{
+  "remake": {
+    "gen_model": "veo-lite",
+    "gen_res": "720p",
+    "pre_enhance": false,
+    "board_ref": "",
+    "edit_prompt": "Edit this video. Change ONLY these things and keep absolutely everything else exactly as it is (bodies, clothes, every movement and its timing, camera, background, lights): 1) replace the man's head with the head of the Shiba Inu from image 1; 2) turn the man's furry body, arms, hands into thick furry Shiba body and front legs with paws holding the belt; 3) keep the striped board but turn visible legs and feet into thick furry Shiba hind legs and paws. Every replaced head is the Shiba Inu from image 1. Every visible arm, leg, hand and foot becomes a thick, fully furry orange-and-cream Shiba leg ending in a round Shiba paw (sleeves and trousers stay as they are). SAME HEADCOUNT: one person becomes exactly one animal, never two; animals that are already in the original stay as they are (same number, breed and colour) - so every frame has exactly as many animals as the original frame has people and animals together, and no animal is added where nobody was. Body parts of a person seen at the frame edges belong to that same animal and stay attached to it. Remove any watermark or on-screen text. COMPOSITING QUALITY: the dog parts must look filmed in the same shot - match the original lighting direction, colour, shadows, motion blur, focus and film grain; the head is a natural size for the body and turns, nods and moves its mouth exactly with the original head motion; the fur blends seamlessly into the neck and collar and into the sleeves and trouser hems with no visible seam, outline or halo; the same dog in every frame with no flicker, morphing or changing markings.",
+    "swap_used": "1) replace the man's head with the head of the Shiba Inu from image 1; 2) turn the man's furry body, arms, hands into thick furry Shiba body and front legs with paws holding the belt; 3) keep the striped board but turn visible legs and feet into thick furry Shiba hind legs and paws",
+    "cast_used": "",
+    "lipsync": false,
+    "allow_i2v": false,
+    "use_timeline": true,
+    "src_sig": "d34843effbbf-7.9",
+    "src_full_sec": 7.88,
+    "cropped": {
+      "file": "480x854",
+      "content": "480x618"
+    },
+    "src_sec": 7.88,
+    "segments": 1,
+    "one_shot": true,
+    "method": "gen",
+    "timeline": {
+      "all": [
+        {
+          "t": "0.0-0.5",
+          "action": "A shirtless man in green-and-white striped shorts stands in the center background behind a green spray can on a table. He whips a black belt downward and across",
+          "mouth": "Closed, lips pressed tight.",
+          "sound": "Loud snap of the belt whipping against the floor.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "The shirtless man grasps both ends of the black belt in front of his waist with both hands, steadying himself.",
+          "mouth": "Closed.",
+          "sound": "Subtle shuffling sound of feet on the floor.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "The man pulls the belt taut between his hands and then holds it by one end in his right hand, lowering it to his right side.",
+          "mouth": "Slightly open, relaxed lips.",
+          "sound": "Soft footstep rustle.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "The man takes a small step to his left (viewer's right), letting the belt dangle from his right hand.",
+          "mouth": "Slightly open.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "The man raises his left arm outward to the side for balance, looking directly toward the camera with a focused expression.",
+          "mouth": "Slightly open, lips parted.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "The man maintains his wide stance, left arm extended out and right arm holding the belt down low.",
+          "mouth": "Closed.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "The man bends his knees slightly and begins drawing his right hand upward with the belt.",
+          "mouth": "Closed, lips neutral.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "The man raises his right hand holding the coiled belt up behind his right shoulder, cocking his arm back.",
+          "mouth": "Slightly open.",
+          "sound": "Male singing voice begins on background track ('Bem...').",
+          "camera": "Fixed."
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "The man holds the belt raised above his right shoulder, tensing his torso and staring ahead.",
+          "mouth": "Slightly open, showing upper teeth.",
+          "sound": "Singing voice continues ('...que o...').",
+          "camera": "Fixed."
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "The man winds his right arm further back behind his head, arching his back slightly as he prepares to strike.",
+          "mouth": "Open, grimacing with lips pulled back.",
+          "sound": "Singing voice continues ('...cara...').",
+          "camera": "Fixed."
+        },
+        {
+          "t": "5.0-5.5",
+          "action": "The man swings the belt violently forward and downward with his right arm, but his feet slip forward out from under him, causing his torso to whip backward.",
+          "mouth": "Wide open in shock.",
+          "sound": "Loud, violent crash and thud as the man slips and hits the floor.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "5.5-6.0",
+          "action": "The man falls completely backward below the table line and disappears from view, leaving only the green can standing on the ledge in front of the white curtain.",
+          "mouth": "Not visible as the man has fallen out of frame.",
+          "sound": "Secondary thud and rattling sound from the fall.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "6.0-6.5",
+          "action": "No person visible; the green spray can remains motionless in the foreground against the white curtain.",
+          "mouth": "None visible.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "6.5-7.0",
+          "action": "No person visible; the static shot of the spray can and curtain continues.",
+          "mouth": "None visible.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "7.0-7.5",
+          "action": "No person visible; static view of the can on the ledge.",
+          "mouth": "None visible.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "7.5-7.9",
+          "action": "No person visible; static view of the can on the ledge until video ends.",
+          "mouth": "None visible.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        }
+      ],
+      "gen": [
+        {
+          "t": "0.0-0.5",
+          "action": "A shirtless man in green-and-white striped shorts stands in the center background behind a green spray can on a table. He whips a black belt downward and across",
+          "mouth": "Closed, lips pressed tight.",
+          "sound": "Loud snap of the belt whipping against the floor.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "0.5-1.0",
+          "action": "The shirtless man grasps both ends of the black belt in front of his waist with both hands, steadying himself.",
+          "mouth": "Closed.",
+          "sound": "Subtle shuffling sound of feet on the floor.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "1.0-1.5",
+          "action": "The man pulls the belt taut between his hands and then holds it by one end in his right hand, lowering it to his right side.",
+          "mouth": "Slightly open, relaxed lips.",
+          "sound": "Soft footstep rustle.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "1.5-2.0",
+          "action": "The man takes a small step to his left (viewer's right), letting the belt dangle from his right hand.",
+          "mouth": "Slightly open.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "2.0-2.5",
+          "action": "The man raises his left arm outward to the side for balance, looking directly toward the camera with a focused expression.",
+          "mouth": "Slightly open, lips parted.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "2.5-3.0",
+          "action": "The man maintains his wide stance, left arm extended out and right arm holding the belt down low.",
+          "mouth": "Closed.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "3.0-3.5",
+          "action": "The man bends his knees slightly and begins drawing his right hand upward with the belt.",
+          "mouth": "Closed, lips neutral.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "3.5-4.0",
+          "action": "The man raises his right hand holding the coiled belt up behind his right shoulder, cocking his arm back.",
+          "mouth": "Slightly open.",
+          "sound": "Male singing voice begins on background track ('Bem...').",
+          "camera": "Fixed."
+        },
+        {
+          "t": "4.0-4.5",
+          "action": "The man holds the belt raised above his right shoulder, tensing his torso and staring ahead.",
+          "mouth": "Slightly open, showing upper teeth.",
+          "sound": "Singing voice continues ('...que o...').",
+          "camera": "Fixed."
+        },
+        {
+          "t": "4.5-5.0",
+          "action": "The man winds his right arm further back behind his head, arching his back slightly as he prepares to strike.",
+          "mouth": "Open, grimacing with lips pulled back.",
+          "sound": "Singing voice continues ('...cara...').",
+          "camera": "Fixed."
+        },
+        {
+          "t": "5.0-5.5",
+          "action": "The man swings the belt violently forward and downward with his right arm, but his feet slip forward out from under him, causing his torso to whip backward.",
+          "mouth": "Wide open in shock.",
+          "sound": "Loud, violent crash and thud as the man slips and hits the floor.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "5.5-6.0",
+          "action": "The man falls completely backward below the table line and disappears from view, leaving only the green can standing on the ledge in front of the white curtain.",
+          "mouth": "Not visible as the man has fallen out of frame.",
+          "sound": "Secondary thud and rattling sound from the fall.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "6.0-6.5",
+          "action": "No person visible; the green spray can remains motionless in the foreground against the white curtain.",
+          "mouth": "None visible.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "6.5-7.0",
+          "action": "No person visible; the static shot of the spray can and curtain continues.",
+          "mouth": "None visible.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "7.0-7.5",
+          "action": "No person visible; static view of the can on the ledge.",
+          "mouth": "None visible.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        },
+        {
+          "t": "7.5-7.9",
+          "action": "No person visible; static view of the can on the ledge until video ends.",
+          "mouth": "None visible.",
+          "sound": "Silent.",
+          "camera": "Fixed."
+        }
+      ]
+    },
+    "spent": 0.28,
+    "ledger": [
+      {
+        "what": "all 0.5초 시간표 만들기",
+        "usd": 0.01
+      },
+      {
+        "what": "연출 분석(흥행 요소·컷 나누기)",
+        "usd": 0.01
+      },
+      {
+        "what": "스토리보드 그림 4K",
+        "usd": 0.25
+      },
+      {
+        "what": "스토리보드 칸 검사(글씨·몸 엉킴)",
+        "usd": 0.01
+      }
+    ],
+    "timeline_src": "d34843effbbf-7.9",
+    "gen_plan": {
+      "v": 4,
+      "beats": [
+        {
+          "t0": 0.0,
+          "t1": 0.5,
+          "action": "The Shiba Inu stands on all four legs behind the green spray can, vigorously whipping a black belt in its mouth from side to side."
+        },
+        {
+          "t0": 0.5,
+          "t1": 1.0,
+          "action": "The Shiba Inu plants all four paws firmly on the floor, clamping its jaws securely onto the middle of the black belt."
+        },
+        {
+          "t0": 1.0,
+          "t1": 1.5,
+          "action": "The Shiba Inu adjusts its grip, letting the long end of the belt dangle onto the floor while standing squarely on four legs."
+        },
+        {
+          "t0": 1.5,
+          "t1": 2.0,
+          "action": "The Shiba Inu steps its hind paws back slightly, head lowered with the belt firmly clenched in its jaws."
+        },
+        {
+          "t0": 2.0,
+          "t1": 2.5,
+          "action": "The Shiba Inu widens its front stance, staring intensely forward past the spray can with the strap dangling."
+        },
+        {
+          "t0": 2.5,
+          "t1": 3.0,
+          "action": "The Shiba Inu remains still in a tense crouch on all four legs, holding the black belt tightly."
+        },
+        {
+          "t0": 3.0,
+          "t1": 3.5,
+          "action": "The Shiba Inu raises its head and arches its neck to one side, winding up with the belt in its jaws."
+        },
+        {
+          "t0": 3.5,
+          "t1": 4.0,
+          "action": "The Shiba Inu cocks its head far to its right shoulder, all four paws tensed as it prepares to lash the belt."
+        },
+        {
+          "t0": 4.0,
+          "t1": 4.5,
+          "action": "The Shiba Inu pulls its head back further, chest puffed out and tail curled tight, holding the pose."
+        },
+        {
+          "t0": 4.5,
+          "t1": 5.0,
+          "action": "The Shiba Inu coils its body back onto its haunches, preparing a violent forward thrash."
+        },
+        {
+          "t0": 5.0,
+          "t1": 5.5,
+          "action": "The Shiba Inu violently whips its head forward to thrash the belt, but both front paws slip outward on the slick floor, sending its body tumbling backward."
+        },
+        {
+          "t0": 5.5,
+          "t1": 6.0,
+          "action": "The Shiba Inu slides completely backward below the table line out of frame, leaving the scene empty."
+        },
+        {
+          "t0": 6.0,
+          "t1": 6.5,
+          "action": "The green spray can stands motionless on the foreground ledge against the white curtains with no dog in view."
+        },
+        {
+          "t0": 6.5,
+          "t1": 7.0,
+          "action": "The static shot continues showing only the solitary green spray can against the white backdrop."
+        },
+        {
+          "t0": 7.0,
+          "t1": 7.5,
+          "action": "The frame remains empty except for the still spray can in the foreground."
+        },
+        {
+          "t0": 7.5,
+          "t1": 7.88,
+          "action": "The shot holds static on the green spray can until the end."
+        }
+      ],
+      "mapping": "the man -> the Shiba Inu (a real four-legged dog)",
+      "src": "d34843effbbf-7.9",
+      "L": 7.88,
+      "by": "ai",
+      "trim": null,
+      "len": 7.88,
+      "cut_out": [],
+      "hook": [
+        "강렬하게 폼 잡으며 채찍질하듯 벨트를 휘두르다 한순간에 뒤로 꽈당 넘어지는 몸개그",
+        "비장한 표정과 대비되는 허무한 퇴장 및 덩그러니 남은 스프레이 캔의 정적"
+      ],
+      "structure": "0~5초 벨트를 물고 위협적인 폼잡기, 5~6초 격하게 휘두르다 미끄러져 추락, 6~7.9초 아무 일 없던 듯 빈 화면의 침묵",
+      "set": "Indoor bedroom by a window with sheer white curtains. Soft daylight. In the foreground, a dark green aerosol spray can sits upright on a white surface",
+      "cast": "A red Shiba Inu with tan markings, standing on four legs in the background behind the spray can, holding a black leather belt in its mouth",
+      "scenes": [
+        {
+          "t0": 0.0,
+          "t1": 7.88,
+          "outro": false,
+          "shot": "Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room",
+          "frame": "A red Shiba Inu stands on all four legs in the background behind a white curtain, gripping a black belt in its teeth, positioned behind a green spray can on a white counter.",
+          "ko": "시바견이 비장하게 벨트를 물고 휘두르다 발이 미끄러져 뒤로 추락하고, 캔만 덩그러니 남는다."
+        }
+      ],
+      "fit": [
+        {
+          "t0": 0.0,
+          "t1": 7.88,
+          "outro": false,
+          "shot": "Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room",
+          "frame": "A red Shiba Inu stands on all four legs in the background behind a white curtain, gripping a black belt in its teeth, positioned behind a green spray can on a white counter.",
+          "ko": "시바견이 비장하게 벨트를 물고 휘두르다 발이 미끄러져 뒤로 추락하고, 캔만 덩그러니 남는다.",
+          "cuts": [],
+          "segs": [
+            [
+              0.0,
+              1.97,
+              1,
+              4
+            ],
+            [
+              1.97,
+              3.94,
+              4,
+              7
+            ],
+            [
+              3.94,
+              5.91,
+              7,
+              10
+            ],
+            [
+              5.91,
+              7.88,
+              10,
+              12
+            ]
+          ],
+          "panel": 1
+        }
+      ],
+      "merged": 0,
+      "board_times": [
+        0.0,
+        0.61,
+        1.21,
+        1.97,
+        2.42,
+        3.03,
+        3.94,
+        4.85,
+        5.46,
+        5.91,
+        6.67,
+        7.8
+      ],
+      "board_notes": [
+        "FIRST FRAME of shot 1 (0.0s): A red Shiba Inu stands on all four legs in the background behind a white curtain, gripping a black belt in its teeth, positioned behind a green spray can on a white counter. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate).",
+        "0.6s, inside shot 1: The Shiba Inu plants all four paws firmly on the floor, clamping its jaws securely onto the middle of the black belt. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+        "1.2s, inside shot 1: The Shiba Inu adjusts its grip, letting the long end of the belt dangle onto the floor while standing squarely on four legs. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+        "2.0s, inside shot 1: The Shiba Inu steps its hind paws back slightly, head lowered with the belt firmly clenched in its jaws. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate).",
+        "2.4s, inside shot 1: The Shiba Inu widens its front stance, staring intensely forward past the spray can with the strap dangling. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+        "3.0s, inside shot 1: The Shiba Inu raises its head and arches its neck to one side, winding up with the belt in its jaws. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+        "3.9s, inside shot 1: The Shiba Inu cocks its head far to its right shoulder, all four paws tensed as it prepares to lash the belt. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate).",
+        "4.8s, inside shot 1: The Shiba Inu coils its body back onto its haunches, preparing a violent forward thrash. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+        "5.5s, inside shot 1: The Shiba Inu violently whips its head forward to thrash the belt, but both front paws slip outward on the slick floor, sending its body tumbling backward. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+        "5.9s, inside shot 1: The Shiba Inu slides completely backward below the table line out of frame, leaving the scene empty. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate).",
+        "6.7s, inside shot 1: The static shot continues showing only the solitary green spray can against the white backdrop. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+        "7.8s, inside shot 1: The shot holds static on the green spray can until the end. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate)."
+      ]
+    },
+    "board_times_auto": [
+      0.0,
+      0.61,
+      1.21,
+      1.97,
+      2.42,
+      3.03,
+      3.94,
+      4.85,
+      5.46,
+      5.91,
+      6.67,
+      7.8
+    ],
+    "board_notes_auto": [
+      "FIRST FRAME of shot 1 (0.0s): A red Shiba Inu stands on all four legs in the background behind a white curtain, gripping a black belt in its teeth, positioned behind a green spray can on a white counter. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate).",
+      "0.6s, inside shot 1: The Shiba Inu plants all four paws firmly on the floor, clamping its jaws securely onto the middle of the black belt. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+      "1.2s, inside shot 1: The Shiba Inu adjusts its grip, letting the long end of the belt dangle onto the floor while standing squarely on four legs. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+      "2.0s, inside shot 1: The Shiba Inu steps its hind paws back slightly, head lowered with the belt firmly clenched in its jaws. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate).",
+      "2.4s, inside shot 1: The Shiba Inu widens its front stance, staring intensely forward past the spray can with the strap dangling. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+      "3.0s, inside shot 1: The Shiba Inu raises its head and arches its neck to one side, winding up with the belt in its jaws. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+      "3.9s, inside shot 1: The Shiba Inu cocks its head far to its right shoulder, all four paws tensed as it prepares to lash the belt. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate).",
+      "4.8s, inside shot 1: The Shiba Inu coils its body back onto its haunches, preparing a violent forward thrash. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+      "5.5s, inside shot 1: The Shiba Inu violently whips its head forward to thrash the belt, but both front paws slip outward on the slick floor, sending its body tumbling backward. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+      "5.9s, inside shot 1: The Shiba Inu slides completely backward below the table line out of frame, leaving the scene empty. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate).",
+      "6.7s, inside shot 1: The static shot continues showing only the solitary green spray can against the white backdrop. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room.",
+      "7.8s, inside shot 1: The shot holds static on the green spray can until the end. Shot: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. KEY POSE (the video passes exactly through this picture - anatomy must be perfect, every character clearly separate)."
+    ],
+    "gen_prompts": [
+      "DURATION: 8 seconds. Image 1 is the FIRST FRAME of this shot: keep exactly its framing, characters, set and light. Re-create this shot of a viral video as new, clean, photorealistic vertical 9:16 footage that matches the original shot action for action. SHOT: Static medium eye-level shot, 9:16 vertical framing, focused on the green spray can in foreground and background room. SET (the same in every shot): Indoor bedroom by a window with sheer white curtains. Soft daylight. In the foreground, a dark green aerosol spray can sits upright on a white surface. CHARACTERS: A red Shiba Inu with tan markings, standing on four legs in the background behind the spray can, holding a black leather belt in its mouth. CHANGES from the original: the man -> the Shiba Inu (a real four-legged dog). 0.5-SECOND TIMELINE of this shot (follow it exactly - every action, contact, fall, head turn and mouth opening happens at exactly these times; positions are as in image 1): [0.0-0.5s] The Shiba Inu stands on all four legs behind the green spray can, vigorously whipping a black belt in its mouth from side to side; mouth: Closed, lips pressed tight; camera: Fixed. [0.5-1.0s] The Shiba Inu plants all four paws firmly on the floor, clamping its jaws securely onto the middle of the black belt; mouth: Closed; camera: Fixed. [1.0-1.5s] The Shiba Inu adjusts its grip, letting the long end of the belt dangle onto the floor while standing squarely on four legs; mouth: Slightly open, relaxed lips; camera: Fixed. [1.5-2.0s] The Shiba Inu steps its hind paws back slightly, head lowered with the belt firmly clenched in its jaws; mouth: Slightly open; camera: Fixed. [2.0-2.5s] The Shiba Inu widens its front stance, staring intensely forward past the spray can with the strap dangling; mouth: Slightly open, lips parted; camera: Fixed. [2.5-3.0s] The Shiba Inu remains still in a tense crouch on all four legs, holding the black belt tightly; mouth: Closed; camera: Fixed. [3.0-3.5s] The Shiba Inu raises its head and arches its neck to one side, winding up with the belt in its jaws; mouth: Closed, lips neutral; camera: Fixed. [3.5-4.0s] The Shiba Inu cocks its head far to its right shoulder, all four paws tensed as it prepares to lash the belt; mouth: Slightly open; camera: Fixed. [4.0-4.5s] The Shiba Inu pulls its head back further, chest puffed out and tail curled tight, holding the pose; mouth: Slightly open, showing upper teeth; camera: Fixed. [4.5-5.0s] The Shiba Inu coils its body back onto its haunches, preparing a violent forward thrash; mouth: Open, grimacing with lips pulled back; camera: Fixed. [5.0-5.5s] The Shiba Inu violently whips its head forward to thrash the belt, but both front paws slip outward on the slick floor, sending its body tumbling backward; mouth: Wide open in shock; camera: Fixed. [5.5-6.0s] The Shiba Inu slides completely backward below the table line out of frame, leaving the scene empty; mouth: Not visible as the man has fallen out of frame; camera: Fixed. [6.0-6.5s] The green spray can stands motionless on the foreground ledge against the white curtains with no dog in view; mouth: None visible; camera: Fixed. [6.5-7.0s] The static shot continues showing only the solitary green spray can against the white backdrop; mouth: None visible; camera: Fixed. [7.0-7.5s] The frame remains empty except for the still spray can in the foreground; mouth: None visible; camera: Fixed. [7.5-7.9s] The shot holds static on the green spray can until the end; mouth: None visible; camera: Fixed. No humans and no human skin anywhere: every character is a real four-legged dog with thick, fully furry legs and round paws; anything held is held by a paw or in the mouth. Every character who becomes a dog is a REAL four-legged dog with natural dog anatomy and posture - never a dog-headed human, never standing upright on two legs like a person, no human hands, no clothes - doing the closest natural dog version of the original action (for example a child gripping a handlebar becomes the dog with its front paws hooked over the bar). If the original stunt is impossible for a dog, use the simplest physically natural dog movement that keeps the same joke and timing (slipping, tumbling, bumping into the other dog's side and rolling next to it). OUTPUT: photorealistic, sharp, clean, high-detail modern phone footage with natural colours and steady exposure, filling the whole vertical 9:16 frame edge to edge. The same characters as in image 1 in every frame. No added text, captions, watermark, borders or split screen, no morphing, no extra animals or people. ANATOMY: every animal is one complete, separate, real animal - one head, one body, one tail and exactly four legs with natural proportions. When two animals touch, collide or one lands on the other, both bodies stay complete and clearly separate, each with its own outline - never merged, fused, melted into one shape, sharing legs or passing through each other; no dog-headed humans. PHYSICS: real weight and gravity - bodies fall, slide and roll the way real dogs do, never pass through each other, the floor or the machines, and each dog keeps exactly the same size, colour and markings in every frame (no morphing between the two dogs). CONTACT RULE (AI video cannot draw overlapping bodies - they melt together): never put one animal on top of or under another and never let their legs cross or intertwine. Re-stage every collision, landing or pile-up as a side-by-side moment that keeps the same joke and timing - one dog slides or tumbles INTO the other's side, they bump, both roll over NEXT TO each other - touching only briefly, with a clear gap between the bodies the rest of the time, every leg of each dog visible and attached to its own body. NO TEXT ANYWHERE: no letters, words, numbers, symbols, logos or watermarks in the picture - walls, posters, signs, clothes and screens are plain, with no writing."
+    ],
+    "vertical": {
+      "mode": "new 9:16",
+      "src": "480x618"
+    },
+    "preflight": [],
+    "board_times": [
+      0.0,
+      0.61,
+      1.21,
+      1.97,
+      2.42,
+      3.03,
+      3.94,
+      4.85,
+      5.46,
+      5.91,
+      6.67,
+      7.8
+    ],
+    "board_check": [
+      {
+        "text": [],
+        "body": [],
+        "seen": [],
+        "failed": 0
+      }
+    ],
+    "board": {
+      "ok": true,
+      "panels": 12,
+      "tries": 1
+    },
+    "est_full": 1.17
+  },
+  "last_request": {
+    "file": "01_remake_board.json",
+    "ran_at": "2026-10-15T14:04:10Z",
+    "ok": true
+  }
+}
