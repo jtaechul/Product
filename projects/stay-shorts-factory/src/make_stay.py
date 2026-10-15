@@ -788,7 +788,7 @@ def main() -> int:
         (BUILD / "SKIPPED").write_text(f"같은 nonce 재실행 건너뜀: {req.get('nonce')}\n", encoding="utf-8")
         log(f"같은 nonce '{req.get('nonce')}' 는 이미 처리됨 — 건너뜀(0원, 기록 유지)")
         return 0
-    if not stay and mode not in ("top3", "solo"):          # solo 는 stay 가 없으면 순위표 1위를 쓴다 (p9 실측: 여기서 막혀 실패)
+    if not stay and mode not in ("top3", "solo", "signature"):          # solo·signature 는 stay 가 없으면 순위표 1위를 쓴다 (p9 실측: 여기서 막혀 실패)
         raise SystemExit("request.json 에 stay(숙소 이름)가 없습니다")
     if req.get("fake"):                                 # 포맷 검토용: Veo 를 가짜 클립으로 (0원)
         veo.FAKE = True
@@ -802,7 +802,10 @@ def main() -> int:
         #    request.json 에 "veo_approved": true 가 있어야 한다. 없으면 돈을 쓰기 전에 멈춘다. 미리보기·가짜 클립은 Veo 0원이라 통과
         # 2026-10-12 검수: "fake": true 는 Veo 만 가짜로 바꾼다 — 미니어처(합성 이미지·옴니)는 여전히 유료라 허락 없이 돌던 구멍을 막는다
         mini_paid = bool(req.get("miniature")) and not (os.environ.get("OMNI_FAKE") == "1" and os.environ.get("MINI_FAKE_IMAGE") == "1")
-        if mode in ("veo", "top3", "solo") and (not veo.FAKE or mini_paid) and str(req.get("stage") or "") != "preview" and req.get("veo_approved") is not True \
+        sig_paid = mode == "signature" and not (veo.FAKE and os.environ.get("SIG_FAKE_IMAGE") == "1")    # 시그니처 제작은 Veo + 이미지 편집 — 둘 다 가짜일 때만 허락 불필요
+        # 2026-10-14 시그니처 모드: 미리보기(stage preview)는 이미지 편집(장당 약 98원)까지 돌고 Veo 는 0원 — 관리실 버튼이 금액을 보여 주고 누르는 것이 허락.
+        #   제작(첫 컷 Veo)은 다른 유료 모드와 같이 veo_approved 필수
+        if mode in ("veo", "top3", "solo", "signature") and (not veo.FAKE or mini_paid or sig_paid) and str(req.get("stage") or "") != "preview" and req.get("veo_approved") is not True \
                 and not (mode == "solo" and str(req.get("max_veo_cuts")) == "0" and not req.get("miniature")) \
                 and not (mode == "solo" and req.get("reuse_only") is True):   # Veo 0컷·미니어처 없음(사진만, 0원), 재사용 전용(새 영상·합성 0 · 글·음성만)만 허락 불필요
             raise RuntimeError('유료 Veo 제작은 운영자 허락이 필요합니다 — request.json 에 "veo_approved": true 를 넣어 주세요 (미리보기는 "stage": "preview")')
@@ -827,7 +830,11 @@ def main() -> int:
             out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
             print(json.dumps({k: report[k] for k in ("ok", "stage", "narration_qa_ok", "narration_qa", "script", "gemini_usage")}, ensure_ascii=False, indent=1))
             return 0
-        if mode == "solo":
+        if mode == "signature":                         # 2026-10-14 시그니처 원테마(미리보기·제작 모두 영상이 나온다 — 미리보기는 사진 무빙만)
+            import make_sig
+            video, dur_total, meta = make_sig.produce_sig(req, models, report)
+            stay = meta["stay"]
+        elif mode == "solo":
             import make_solo
             video, dur_total, meta = make_solo.produce_solo(req, models, report)
             stay = meta["stay"]

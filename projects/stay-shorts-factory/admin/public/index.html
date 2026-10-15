@@ -118,6 +118,12 @@ main > *, .card > *, .runs .body > * { min-width: 0 }      /* 넓은 표가 화�
   <section class="card">
     <span class="label" id="themeLine">다음 숙소</span>
     <select id="stay" aria-label="숙소 고르기"></select>
+    <select id="fmt" aria-label="영상 형식">
+      <option value="signature|montage">시그니처 몽타주 · 15~20초 (새 형식)</option>
+      <option value="signature|single">시그니처 한 장면 · 약 9초 (새 형식)</option>
+      <option value="solo|">기존 9컷 · 약 36초</option>
+    </select>
+    <p class="note" id="fmtNote"></p>
     <div class="btns">
       <button class="btn" id="previewBtn">미리보기<small id="previewCost">약 80원 · 영상 없음</small></button>
       <button class="btn" id="refreshBtn">새로고침<small>상태 다시 읽기 · 0원</small></button>
@@ -287,21 +293,26 @@ function render(d) {
   sel.value = keep && d.candidates.some((c) => c.name === keep) ? keep : (first ? first.name : (d.candidates[0] || {}).name || "");
 
   const room = m.cap - m.total;
-  $("previewCost").textContent = "약 " + won(d.cost.preview) + " · 영상 없음";
-  $("produceCost").textContent = "약 " + won(d.cost.produce) + " · 누르면 한 번 더 확인";
+  const fc = fmtCost(d);
+  $("previewCost").textContent = "약 " + won(fc.preview) + (fc.mode === "signature" ? " · 사진 변주 포함 · Veo 없음" : " · 영상 없음");
+  $("produceCost").textContent = "약 " + won(fc.produce) + (fc.reuse ? " · 미리보기 #" + fc.reuse.number + " 재사용" : "") + " · 누르면 한 번 더 확인";
+  $("fmtNote").textContent = fc.mode === "signature"
+    ? "숙소의 시그니처 하나만 시간·날씨·뒷모습 인물로 변주해 보여 줍니다. 음악 + 한 구절 자막. 미리보기에서 만든 사진을 정식 제작이 그대로 씁니다."
+    : "물놀이·객실·특별 공간을 9컷으로 소개하는 예전 형식(나레이션 + 미니어처 인물).";
   const hold = Date.now() < holdUntil;
-  $("previewBtn").disabled = !!act || hold || room < d.cost.preview || !sel.value;
-  $("produceBtn").disabled = !!act || hold || room < d.cost.produce || !sel.value;
+  $("previewBtn").disabled = !!act || hold || room < fc.preview || !sel.value;
+  $("produceBtn").disabled = !!act || hold || room < fc.produce || !sel.value;
 
   const L = d.last;
   $("lastCard").hidden = !L;
   if (L) {
-    $("lastHead").textContent = (L.stay || "") + " · " + (L.stage === "preview" ? "미리보기" : L.stage) + (L.ok ? "" : " · 실패");
+    $("lastHead").textContent = (L.stay || "") + " · " + (L.stage === "preview" ? "미리보기" : "제작") + (L.signature ? " · 시그니처 '" + L.signature + "'" : "") + (L.ok ? "" : " · 실패");
     $("lastHook").innerHTML = L.hook_title ? hookHtml(L.hook_title) : (L.error ? "<span class=\"sub\">" + esc(L.error) + "</span>" : "");
     const f = [];
     if (L.narration_total) f.push("<span class=\"chip " + (L.narration_ok === L.narration_total ? "ok" : "bad") + "\">받아쓰기 " + L.narration_ok + "/" + L.narration_total + "</span>");
-    if (L.screen.total) f.push("<span class=\"chip " + (L.screen.ok === L.screen.total ? "ok" : "bad") + "\">화면 검수 " + L.screen.ok + "/" + L.screen.total + "</span>");
-    if (L.krw) f.push("<span class=\"chip idle\">글·음성 약 " + esc(won(L.krw)) + "</span>");
+    if (L.screen.total) f.push("<span class=\"chip " + (L.screen.ok === L.screen.total ? "ok" : "bad") + "\">" + (L.mode === "signature" ? "변주 검수 " : "화면 검수 ") + L.screen.ok + "/" + L.screen.total + "</span>");
+    if (L.image_krw) f.push("<span class=\"chip idle\">이미지 약 " + esc(won(L.image_krw)) + "</span>");
+    if (L.krw) f.push("<span class=\"chip idle\">글 약 " + esc(won(L.krw)) + "</span>");
     $("lastFacts").innerHTML = f.join("");
     $("lastCuts").innerHTML = L.cuts.map((c) => "<div class=\"cut\"><b>컷 " + esc(c.i) + "</b>" + esc(c.narration) + " <span class=\"sub\">[" + esc(c.caption) + "]</span></div>").join("") || "<p class=\"note\">컷 없음</p>";
   }
@@ -347,13 +358,21 @@ async function load() {
   }
 }
 
+function fmtCost(d) {
+  const [mode, format] = ($("fmt").value || "signature|montage").split("|");
+  const c = d.cost[mode] || d.cost.signature;
+  const reuse = mode === "signature" ? (d.sig_previews || {})[(format || "montage") + "|" + $("stay").value] : null;
+  return { mode, format, reuse, preview: c.preview, produce: reuse ? c.produce : c.produce_fresh };
+}
+
 async function start(action, confirm) {
   const stay = $("stay").value;
+  const fc = fmtCost(S);
   $("previewBtn").disabled = $("produceBtn").disabled = true;
   try {
-    const r = await api("/api/run", { action, stay, confirm: !!confirm });
+    const r = await api("/api/run", { action, stay, mode: fc.mode, format: fc.format, confirm: !!confirm });
     holdUntil = Date.now() + 60000;
-    msg($("runMsg"), (action === "preview" ? "미리보기" : "정식 제작") + " 시작: " + stay + " (예상 약 " + won(r.cost) + "). 1분 안에 '지금 상태'에 나타납니다", "ok");
+    msg($("runMsg"), (action === "preview" ? "미리보기" : "정식 제작") + " 시작: " + stay + " (예상 약 " + won(r.cost) + (r.reuse ? " · 미리보기 #" + r.reuse + " 재사용" : "") + "). 1분 안에 '지금 상태'에 나타납니다", "ok");
     setTimeout(load, 8000); setTimeout(load, 61000);
   } catch (e) { msg($("runMsg"), e.message, "bad"); load(); }
 }
@@ -366,12 +385,19 @@ $("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") $("loginBtn"
 $("logout").onclick = async () => { await api("/api/logout", {}).catch(() => {}); show("login"); };
 $("refreshBtn").onclick = () => { $("runMsg").className = "msg"; load(); };
 $("previewBtn").onclick = () => start("preview");
+$("fmt").onchange = () => { try { localStorage.setItem("stayFmt", $("fmt").value); } catch (e) {} if (S) render(S); };
+$("stay").onchange = () => { if (S) render(S); };
+try { const f = localStorage.getItem("stayFmt"); if (f && [...$("fmt").options].some((o) => o.value === f)) $("fmt").value = f; } catch (e) {}
 $("produceBtn").onclick = () => {
   if (!S) return;
-  const stay = $("stay").value, m = S.money, c = S.cost.produce;
-  openSheet({ label: "정식 제작 확인", title: stay, big: "약 " + esc(won(c)) + " <small>정식 제작 1편</small>",
-    after: "이번 달 " + won(m.total) + " → 약 " + won(m.total + c) + " (한도 " + won(m.cap) + ")",
-    check: "이 숙소의 미리보기(사진 시트·나레이션)를 확인했습니다", go: "제작 시작", onGo: () => start("produce", true) });
+  const stay = $("stay").value, m = S.money, fc = fmtCost(S), c = fc.produce;
+  const how = fc.mode === "signature"
+    ? (fc.reuse ? "미리보기 #" + fc.reuse.number + "의 사진·문구를 그대로 쓰고 첫 컷만 Veo 로 움직입니다. " : "이 숙소·형식의 미리보기가 없어 사진 변주부터 새로 만듭니다. ")
+    : "";
+  openSheet({ label: "정식 제작 확인", title: stay + " · " + $("fmt").selectedOptions[0].textContent.split(" · ")[0], big: "약 " + esc(won(c)) + " <small>정식 제작 1편</small>",
+    after: how + "이번 달 " + won(m.total) + " → 약 " + won(m.total + c) + " (한도 " + won(m.cap) + ")",
+    check: fc.mode === "signature" ? "이 숙소의 미리보기 영상과 원본·변주 비교 사진을 확인했습니다" : "이 숙소의 미리보기(사진 시트·나레이션)를 확인했습니다",
+    go: "제작 시작", onGo: () => start("produce", true) });
 };
 $("cancelBtn").onclick = () => {
   const id = Number($("cancelBtn").dataset.id), r = S && S.runs.find((x) => x.id === id);

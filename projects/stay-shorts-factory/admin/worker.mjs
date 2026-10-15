@@ -24,7 +24,11 @@ const DISC_PATH = `${P}/requests/discover/request.json`;
 const REGIONS = ["강원", "경기", "제주", "부산", "경남", "경북", "전남", "전북", "충남", "충북", "서울", "인천", "대전", "대구", "광주", "울산", "세종"];
 const MEDIA = { "video.mp4": "video/mp4", "narration_preview.mp3": "audio/mpeg", "preview.md": "text/plain; charset=utf-8" };
 const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.py MONTH_KRW 와 같은 값)
-const COST = { preview: 80, produce: 2500 };  // 실측 평균: 미리보기 글·음성 약 80원 / 정식 제작(미니어처 3컷 + Veo 1컷 + 글·음성) 약 2,500원
+// 형식별 예상 비용(원). 기존 9컷: 미리보기 글·음성 약 80 / 정식 제작(미니어처 3컷 + Veo 1컷) 약 2,500 (실측).
+// 시그니처(2026-10-14 · 추정): 미리보기 = 변주 이미지 편집 최대 5장(장당 약 98) + 검수·글 약 500 / 제작 = 미리보기 재사용 + 첫 컷 Veo 294 ≈ 300, 미리보기 없이 ≈ 800
+const COST = { signature: { preview: 500, produce: 300, produce_fresh: 800 }, solo: { preview: 80, produce: 2500, produce_fresh: 2500 } };
+const MODES = { signature: "시그니처", solo: "기존 9컷" };
+const SIG_PREVIEW_RX = /관리자 페이지 시그니처(\(한 장면\))? 미리보기 — (.+?) \(/;   // 형식이 같아야 재사용된다(make_sig.find_reuse)
 const LABEL = { preview: "미리보기", produce: "정식 제작" };
 const DISCOVER_NOTE = "수십 원(AI 확인 몇 번 · 장부 미기록)";
 const ACTIVE = new Set(["queued", "in_progress", "waiting", "requested", "pending"]);
@@ -207,6 +211,9 @@ function lastResult(rep) {
   const s = rep.script || {};
   const nq = rep.narration_qa || [];
   return {
+    mode: rep.mode || "",
+    signature: (rep.signature || {}).name || "",
+    image_krw: (rep.images || {}).image_krw || 0,
     nonce: rep.nonce,
     stay: rep.stay,
     stage: rep.stage || "제작",
@@ -220,6 +227,18 @@ function lastResult(rep) {
     krw: (rep.gemini_usage || {}).krw_est || 0,
     cuts: (s.cuts || []).map((c) => ({ i: c.i, caption: c.caption, narration: c.narration })),
   };
+}
+
+function sigPreviewIndex(runs) {
+  // 숙소별 가장 최근의 성공한 시그니처 미리보기 실행(제작 때 그 사진·글을 재사용 — 이미지 0원)
+  const out = {};
+  for (const r of runs) {
+    if (r.kind !== "produce" || r.conclusion !== "success") continue;
+    const m = String(r.title || "").match(SIG_PREVIEW_RX);
+    const key = m ? `${m[1] ? "single" : "montage"}|${m[2]}` : "";
+    if (m && !out[key]) out[key] = { id: r.id, number: r.number };
+  }
+  return out;
 }
 
 async function state(env) {
@@ -237,6 +256,7 @@ async function state(env) {
     readJson(env, DISC_PATH, {}),
   ]);
   const runList = (Array.isArray(runs) ? runs : []).map((r) => ({ ...r, media: r.kind === "produce" ? media[String(r.number)] || [] : [] }));
+  const sigPreviews = sigPreviewIndex(Array.isArray(runs) ? runs : []);
   const done = new Set();
   for (const f of folders.folders || []) for (const h of f.hotels || []) done.add(h.name);
   const officials = req.official_urls || {};
@@ -253,6 +273,8 @@ async function state(env) {
     now: now.toISOString().slice(0, 16).replace("T", " "),
     money: monthSpend(ledger, ym),
     cost: COST,
+    modes: MODES,
+    sig_previews: sigPreviews,
     request: {
       nonce: req.nonce || "",
       stay: req.stay || "",
@@ -277,14 +299,16 @@ async function state(env) {
 
 async function startRun(env, body) {
   const action = String(body.action || "");
-  if (!(action in COST)) throw new HttpError(400, "알 수 없는 실행입니다");
+  if (!["preview", "produce"].includes(action)) throw new HttpError(400, "알 수 없는 실행입니다");
+  const mode = String(body.mode || "signature") in MODES ? String(body.mode || "signature") : "signature";
+  const format = String(body.format || "") === "single" ? "single" : "montage";
   const stay = String(body.stay || "").trim();
   if (!stay) throw new HttpError(400, "숙소를 고르세요");
   const [req, ledger, cands, runs, recent] = await Promise.all([
     readWithSha(env, REQ_PATH),
     readJson(env, `${P}/state/spend.json`, []),
     readJson(env, `${P}/data/discover/latest/candidates.json`, {}),
-    listRuns(env, 10),
+    listRuns(env, 30),
     recentRequestCommit(env),
   ]);
   const cur = req.data;
@@ -292,28 +316,33 @@ async function startRun(env, body) {
   if (!names.has(stay)) throw new HttpError(400, "후보 목록에 없는 숙소입니다");
   if (runs.some((r) => r.active)) throw new HttpError(409, "지금 다른 실행이 돌고 있습니다. 끝난 뒤 다시 누르세요");
   if (recent) throw new HttpError(409, "방금 시작한 실행이 준비 중입니다. 1~2분 뒤 '지금 상태'를 확인하세요");
+  const reuse = mode === "signature" && action === "produce" ? sigPreviewIndex(runs)[`${format}|${stay}`] || null : null;
+  const cost = action === "preview" ? COST[mode].preview : reuse ? COST[mode].produce : COST[mode].produce_fresh;
   const now = kstNow();
   const money = monthSpend(ledger, now.toISOString().slice(0, 7));
-  if (money.total + COST[action] > MONTH_CAP) {
-    throw new HttpError(403, `이번 달 한도를 넘습니다 (쓴 돈 ${money.total.toLocaleString()}원 + 예상 ${COST[action].toLocaleString()}원 > ${MONTH_CAP.toLocaleString()}원)`);
+  if (money.total + cost > MONTH_CAP) {
+    throw new HttpError(403, `이번 달 한도를 넘습니다 (쓴 돈 ${money.total.toLocaleString()}원 + 예상 ${cost.toLocaleString()}원 > ${MONTH_CAP.toLocaleString()}원)`);
   }
   if (action === "produce" && body.confirm !== true) throw new HttpError(400, "정식 제작은 화면에서 한 번 더 확인해야 합니다");
 
   const next = { ...cur };
-  delete next.stage;
-  delete next.reuse_only;
-  delete next.reuse_runs;
-  delete next.reuse_clips;
-  next.nonce = `${now.toISOString().slice(0, 10)}-admin-${action}-${b64url(crypto.getRandomValues(new Uint8Array(3)))}`;
-  next.mode = "solo";
+  for (const k of ["stage", "reuse_only", "reuse_runs", "reuse_clips", "format", "people"]) delete next[k];
+  next.nonce = `${now.toISOString().slice(0, 10)}-admin-${mode === "signature" ? "sig" : "solo"}-${action}-${b64url(crypto.getRandomValues(new Uint8Array(3)))}`;
+  next.mode = mode;
   next.stay = stay;
   // 후보표를 새로 만들었으면(후보 다시 찾기) 그 테마·지역·월로 만든다 — 폴더 이름·대본 계절이 후보표와 어긋나지 않게
   for (const k of ["theme", "region", "month"]) if (cands[k]) next[k] = cands[k];
+  if (mode === "signature") {
+    next.format = format;
+    next.people = "back";
+    if (reuse) next.reuse_runs = [{ run_id: reuse.id, name: `stay-run-${reuse.number}` }];
+  }
   next.veo_approved = action === "produce";
   if (action === "preview") next.stage = "preview";
-  next.note = `관리자 페이지 ${LABEL[action]} — ${stay} · 예상 약 ${COST[action].toLocaleString()}원 · ${now.toISOString().slice(0, 16).replace("T", " ")} KST`;
-  const put = await commitJson(env, REQ_PATH, req.sha, next, `stay-shorts: 관리자 페이지 ${LABEL[action]} — ${stay} (${next.nonce})`);
-  return { ok: true, nonce: next.nonce, action, stay, cost: COST[action], commit: (put.commit || {}).html_url || "" };
+  const what = `${MODES[mode]}${mode === "signature" && format === "single" ? "(한 장면)" : ""} ${LABEL[action]}`;
+  next.note = `관리자 페이지 ${what} — ${stay} · 예상 약 ${cost.toLocaleString()}원${reuse ? ` · 미리보기 #${reuse.number} 재사용` : ""} · ${now.toISOString().slice(0, 16).replace("T", " ")} KST`;
+  const put = await commitJson(env, REQ_PATH, req.sha, next, `stay-shorts: 관리자 페이지 ${what} — ${stay} (${next.nonce})`);
+  return { ok: true, nonce: next.nonce, action, mode, stay, cost, reuse: reuse ? reuse.number : null, commit: (put.commit || {}).html_url || "" };
 }
 
 async function cancelRun(env, body) {
