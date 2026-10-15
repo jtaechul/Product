@@ -315,7 +315,8 @@ SIG_SYSTEM = """너는 숙소 쇼츠 기획자다. 시청자가 "이런 데가 �
 시그니처 = 이 숙소에만 있는 구체적인 시설·장면 하나. 형태·위치·방식이 드러나야 한다
   (좋은 예: "이집트 신전풍 노천 스파", "돔 지붕이 열리는 인피니티풀", "객실 전용 노천탕", "바다 쪽으로 끝이 열린 온수풀").
   나쁜 예: 테마 그대로이거나 다른 후보 여럿이 함께 가진 것("실내 온수풀", "사계절 워터파크", "스파 시설"), 리조트 전경, 평범한 객실·로비.
-아래 '같은 테마 다른 후보'가 내세우는 것과 겹치면 시그니처가 아니다 — 이 숙소만의 다른 점을 찾는다.
+아래 '같은 테마 다른 후보'가 다 가진 것은 피한다. 낱말이 겹치면 이 숙소만의 형태·위치·방식을 이름에 넣어 다른 점이 보이게 한다.
+테마와 이어지는 시그니처를 먼저 찾고, 없으면 이 숙소만의 다른 것(테마 객실·이색 시설 등)을 고른다.
 조건:
 1) 근거: '사실' 목록 중 하나(번호)가 그 시그니처를 직접 말해야 한다. 사실에 없는 시그니처는 고르지 않는다.
 2) points(영상에서 전할 정보) 2~5개, 순서: 신박함(그게 무엇이고 왜 의외인지) → 차별성(다른 후보와 다른 구체적인 점) → 유인(그래서 거기서 할 수 있는 것·언제).
@@ -324,9 +325,10 @@ SIG_SYSTEM = """너는 숙소 쇼츠 기획자다. 시청자가 "이런 데가 �
    멀리서 찍은 단지 전경·항공 사진에서 작게 보이는 것은 안 된다. **주인공 사진이 2장 안 되는 시그니처는 고르지 않는다** —
    사진 목록을 보고 사진이 넉넉한 다른 시그니처를 찾는다(영상은 컷마다 다른 사진이 필요하다).
 4) 시기가 11~3월이면 바깥의 여름 물놀이(카바나·선베드·해수욕·야외 수영장)는 시그니처가 될 수 없다(온수·사계절이라고 사실에 있으면 된다).
-5) 숙소 밖 시설(사실에 '인접·근처·바로 옆·셔틀·도보' 등)이 시그니처면 이름이나 what 에 '바로 옆' 같은 위치를 넣고 첫 point 에도 위치를 말한다
-   — 숙소 안 시설처럼 보이게 하지 않는다. 숙소 안에 다른 좋은 시그니처가 있으면 그것을 먼저 고른다.
-6) 조건에 맞는 시그니처가 없으면 signature 를 빈 글자로 둔다(지어내지 않는다).
+5) 숙소 밖 시설(사실에 '인접·근처·바로 옆·셔틀·도보' 등, 또는 숙소와 이름이 다른 이웃 시설 — 예: 오션월드·루지월드·스키장)이 시그니처면
+   이름이나 what 에 '바로 옆' 같은 위치를 넣고 첫 point 에도 위치를 말한다 — 숙소 안 시설처럼 보이게 하지 않는다. 숙소 안에 좋은 시그니처가 있으면 그것을 먼저.
+6) 시그니처는 **반드시 하나** 고른다(빈 답 금지). 완벽한 것이 없으면 아래 '사실별 사진'에서 사진이 2장 이상인 사실 중 가장 의외인 것을 고른다.
+   사실·사진에 없는 것을 지어내지는 않는다.
 JSON 만: {"signature":"2~16자","what":"사진에 보이는 모습 한 줄","fact":번호,"vs_peers":"다른 후보와 다른 점 한 줄",
  "points":[{"role":"신박함|차별성|유인","text":"4~24자","fact":번호}],"photos":[번호],"surprise":1~10,"why":"왜 의외인지 한 줄","alternatives":["다른 후보 이름"]}"""
 
@@ -403,6 +405,17 @@ def sig_errs(js: dict, facts: list[str], pool: dict, h: dict, req: dict, peers: 
     return errs
 
 
+def fact_groups(facts: list[str], pool: dict) -> list[tuple[int, list[int]]]:
+    """사실마다 그 내용 낱말이 설명에 있는 사진 — 시그니처를 '사진이 넉넉한 사실'에서 고르게 돕는 힌트(0원 · 확정은 비전 확인)."""
+    out = []
+    for i, f in enumerate(facts, 1):
+        ft = _tokens(_body(f))
+        ks = [k for k, p in pool.items() if ft and _overlap(ft, _tokens(f"{p.get('description') or ''} {p.get('src_alt') or ''}"))]
+        if ks:
+            out.append((i, ks[:8]))
+    return sorted(out, key=lambda x: -len(x[1]))
+
+
 def subject_candidates(js: dict, pool: dict, cap: int = 6) -> list[int]:
     """사진 확인 후보 = 모델이 고른 사진 + 설명에 시그니처 낱말이 있는 다른 사진(겹침 많은 순). 모델이 1장만 적어도 더 찾아본다(stay-run-48)."""
     ks = [k for k in (_int(x) for x in js.get("photos") or []) if k in pool]
@@ -435,7 +448,8 @@ def confirm_subjects(models: dict, js: dict, pool: dict, ks: list[int], cache: d
 
 
 def choose_signature(models: dict, h: dict, req: dict, report: dict) -> dict:
-    """시그니처 고르기 → 규칙 검사 → 주인공 사진 확인. 사진·정보가 2컷이 안 되면 그 시그니처를 빼고 **다른 시그니처를 다시 고른다**(최대 4번).
+    """시그니처 고르기 → 규칙 검사 → 주인공 사진 확인. 사진·정보가 2컷이 안 되면 그 시그니처를 빼고 **다른 시그니처를 다시 고른다**(최대 5번).
+    빈 답(고를 것 없음)은 받지 않고 '사실별 사진' 힌트로 다시 묻는다(stay-run-49: 첫 답이 빈 시그니처 → 그대로 멈췄다).
     잠금(state/sig_blocked.json)은 재료 자체가 모자랄 때만(쓸 사진 2장 미만·사실 2개 미만 — AI 판단과 무관한 경우).
     stay-run-48: 소노펠리체(쓸 사진 25장)에서 모델이 사진 1장뿐인 '유리 돔 실내 파도풀'을 고르자 바로 멈추고 숙소까지 잠갔다 → 고침."""
     fmt = _fmt(req)
@@ -454,15 +468,24 @@ def choose_signature(models: dict, h: dict, req: dict, report: dict) -> dict:
                "같은 테마 다른 후보(이들과 겹치는 것은 시그니처가 아니다):\n" + ("\n".join(f"- {x}" for x in peers) or "- (목록 없음)")
                + "\n\n사실(번호):\n" + "\n".join(f"{i}. {f}" for i, f in enumerate(facts, 1))
                + "\n\n사진:\n" + "\n".join(_photo_line(p) for p in pool.values()))
+    groups = fact_groups(facts, pool)
+    if groups:
+        content += "\n\n사실별로 그 내용이 보이는 사진(설명 낱말 기준 · 참고):\n" + "\n".join(f"- 사실 {i} → 사진 {', '.join(map(str, ks))}" for i, ks in groups)
+    report["sig_groups"] = [{"fact": i, "photos": ks} for i, ks in groups]
     fb, js, tries, rejected, cache = "", {}, [], [], {}
     points, dropped, confirmed, checks = [], [], [], []
-    for attempt in range(4):
+    for attempt in range(5):                                               # 빈 답·규칙 위반·사진 부족을 합쳐 최대 5번(시도당 글 약 5원 + 사진 확인 최대 6원)
         confirmed = []
         js = _ask(models, SIG_SYSTEM, content + fb, 0.3)
         name = str(js.get("signature") or "").strip()
-        if not name:
-            tries.append({"signature": "", "errs": ["조건에 맞는 시그니처 없음(모델 판단)"]})
-            break
+        if not name:                                                       # stay-run-49: 첫 답이 빈 시그니처 → 그대로 멈췄다. 빈 답은 받지 않고 후보를 짚어 다시 묻는다
+            many = [f"사실 {i}(사진 {', '.join(map(str, ks))})" for i, ks in groups if len(ks) >= MIN_CUTS] or ["위 사진 목록에서 같은 시설이 2장 이상 보이는 것"]
+            errs = [f"빈 답은 받지 않는다 — 사진이 {MIN_CUTS}장 이상인 것 중 이 숙소에서 가장 의외인 것을 시그니처로: {', '.join(many[:6])}"
+                    + (f" (이미 뺀 것: {', '.join(rejected)})" if rejected else "")]
+            tries.append({"signature": "", "errs": errs})
+            log(f"시그니처 다시({attempt + 1}): 빈 답")
+            fb = "\n\n지난 답의 문제(고쳐서 다시):\n- " + "\n- ".join(errs)
+            continue
         errs = sig_errs(js, facts, pool, h, req, peers)
         if name in rejected:
             errs.append(f"'{name}' 은 이미 사진이 모자라 뺀 시그니처 — 다른 것으로")
