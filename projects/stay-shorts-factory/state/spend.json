@@ -520,5 +520,11 @@
   "kind": "gemini_est",
   "krw": 73,
   "note": "2026-10-16-admin-sig-preview-MJ8c signature AI 글·음성 24회 (추정)"
+ },
+ {
+  "date": "2026-10-16",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 미니어처 합성 petroom_frame.png (추정)"
  }
 ]
