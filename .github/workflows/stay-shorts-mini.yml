@@ -1,6 +1,7 @@
 name: stay-shorts-mini
 
 # 미니어처 연출 시험 — 숙소 사진 + 기준 인형(assets/characters/ref.jpg) → Gemini 이미지 편집(첫 장면) → Veo 4초.
+# 2026-10-16: 관리자 페이지 '캐릭터 1컷 시험' 버튼(약 720원 · 확인 체크)이 요청을 새 nonce + 허락으로 커밋해 깨운다. 실행 뒤 이 워크플로가 다시 잠근다.
 # 운영자 2026-10-12 "진행해" (합성 2장 + Veo 2컷, 약 710원). requests/mini/request.json 의 nonce 를 바꿔 푸시할 때만 돈다.
 # 돈 잠금: request.json 에 "veo_approved": true 가 없으면 make_mini.py 가 돈 쓰기 전에 멈춘다. 한도는 veo.py(실행 3,000원 · 월 50,000원).
 # 결과: 텔레그램(비교 시트 · 합성 첫 장면 · 영상) + Actions 아티팩트. 숙소 사진·합성 결과는 커밋하지 않는다(공개 저장소 재배포 금지) — 기록·장부만 커밋.
@@ -104,7 +105,9 @@ jobs:
           for i in 1 2 3 4 5; do
             git fetch origin "${GITHUB_REF_NAME}" && git reset -q --hard "origin/${GITHUB_REF_NAME}" || { sleep 3; continue; }
             for d in data/runs/mini state; do [ -e "$SAVE/$d" ] && { mkdir -p "$P/$d"; cp -a "$SAVE/$d/." "$P/$d/"; }; done
-            git add "$P/data/runs/mini" "$P/state" 2>/dev/null || true
+            # 2026-10-16: 관리자 페이지 '캐릭터 1컷 시험' 버튼이 연 요청을 실행 뒤 다시 잠근다(이 실행이 처리한 nonce 일 때만 · [skip ci] 라 다시 안 돈다)
+            python3 -c "import json,sys;p=sys.argv[1]+'/requests/mini/request.json';r=json.load(open(p,encoding='utf-8'));d=json.load(open(sys.argv[1]+'/state/mini_nonce.json',encoding='utf-8')).get('nonce');ok=r.get('veo_approved') is True and r.get('nonce')==d;r.update({'veo_approved':False}) if ok else None;ok and open(p,'w',encoding='utf-8').write(json.dumps(r,ensure_ascii=False,indent=1)+chr(10));print('요청 다시 잠금' if ok else '잠글 것 없음')" "$P" || true
+            git add "$P/data/runs/mini" "$P/state" "$P/requests/mini" 2>/dev/null || true
             if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
             git commit -q -m "stay-shorts: 미니어처 시험 기록 [skip ci]"
             if git push origin "HEAD:${GITHUB_REF_NAME}"; then echo "저장 완료"; exit 0; fi
