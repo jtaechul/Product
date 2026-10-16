@@ -41,9 +41,20 @@ REF = ROOT / "assets" / "characters" / "ref.jpg"
 CHAR_DIR = ROOT / "assets" / "characters"
 
 
-def ref_sheets(water: bool = True) -> list[tuple[str, Path]]:
+DOG_SHEET = CHAR_DIR / "dog.jpg"                                 # 강아지 기준 시트(있으면 첨부 · 없으면 DOG_BLOCK 글만)
+# 2026-10-16 운영자 선택 "커플 + 강아지": 미나·준과 같은 화풍(플라스틱 프라모델)의 작은 강아지 '보리'. 생김새는 이 블록 하나가 정한다(매 컷 같은 글).
+DOG_BLOCK = ("DOG — BORI, the couple's small dog (the third character): a cream-white toy poodle, real small-dog size — about 28 cm tall at the "
+             "shoulder, its back reaching just below Jun's knee. Fluffy curly coat sculpted as one molded plastic piece with soft carved curls, round "
+             "glossy painted black eyes, a small black nose, floppy ears, a short pom tail, and a coral-red collar with a small round gold tag. "
+             "Same STYLE as Mina and Jun: a painted plastic model-kit figure with a matte plastic surface — never a real dog, never real fur. "
+             "Bori looks exactly the same in every shot.")
+DOG_SCALE = ("Bori keeps real small-dog size next to the furniture and the couple. Unless SCENE says otherwise, Bori sits on a raised surface "
+             "(the bed, a cushion, a sofa or someone's lap) so that Bori's face is also higher than 58% of the frame height.")
+
+
+def ref_sheets(water: bool = True, dog: bool = False) -> list[tuple[str, Path]]:
     """캐릭터별 기준 시트(2026-10-13 운영자 제작 · 정면·측면·뒷면 한 장). 물 장면은 수영복 시트, 마른 장면은 가운 시트.
-    시트가 없는 캐릭터는 옛 공용 기준(ref.jpg)으로 보완한다. 돌려주는 값: [(설명, 경로)]."""
+    시트가 없는 캐릭터는 옛 공용 기준(ref.jpg)으로 보완한다. dog 이면 강아지 시트(있을 때만). 돌려주는 값: [(설명, 경로)]."""
     out, missing = [], []
     for name in ("mina", "jun"):
         p = CHAR_DIR / f"{name}_{'swim' if water else 'robe'}.jpg"
@@ -55,6 +66,8 @@ def ref_sheets(water: bool = True) -> list[tuple[str, Path]]:
             missing.append(name)
     if missing:
         out.append((f"shared reference image for {' and '.join(m.capitalize() for m in missing)}", REF))
+    if dog and DOG_SHEET.is_file():
+        out.append(("Bori the dog reference sheet (front, left side, back)", DOG_SHEET))
     return out
 BUILD = ROOT / "build" / "mini"
 REPORT = ROOT / "data" / "runs" / "mini" / "report.json"
@@ -258,7 +271,7 @@ PROPS_SIGNATURE = ("PROPS IN THIS SHOT ONLY: both wear a cream terry-towel \"she
                    "on top of their usual hair — this towel wrap is allowed here even though hats are otherwise not.")
 
 
-def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: bool | None = None, hook: bool = False) -> str:
+def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: bool | None = None, hook: bool = False, dog: bool = False) -> str:
     """사진 편집 지시문. water=False(마른 장소)면 물·수영복 낱말이 하나도 없다(검사: WATER_WORDS). signature 면 양머리 수건 허용 줄을 붙인다
     (캐릭터 블록의 'no hats' 와 충돌해 모델이 수건을 빼먹을 수 있었다). life(기본 True)=실물 크기 — 크기 문장만 바뀐다."""
     life = LIFE_DEFAULT if life is None else life
@@ -267,10 +280,19 @@ def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: b
         keep = (keep.replace("exactly identical to the attached reference figurines", "exactly identical to the attached CHARACTER REFERENCE SHEETS "
                              "(each sheet shows one character from the front, left side and back — copy that character's face, hair, body and outfit exactly)")
                 + " Render them as the painted plastic model-kit figures described below.")
-    parts = [EDIT_HEAD_LIFE if life else EDIT_HEAD, keep, character_block(water, life), OUTFIT_WATER if water else OUTFIT_DRY,
-             EDIT_SCALE_LIFE if life else EDIT_SCALE, EDIT_PHOTO_LIFE if life else EDIT_PHOTO, "SCENE: " + clean_scene(scene).strip()]
-    if hook:                                                          # 훅 컷: 위쪽 큰 제목 자리를 비운다(얼굴 0.38~0.58)
-        parts.insert(5, EDIT_HOOK)
+    head = EDIT_HEAD_LIFE if life else EDIT_HEAD
+    if dog:                                                           # 강아지: 셋째 인물로 넣는다(시트가 없으면 DOG 글이 기준) — 실물 크기 모드 전용
+        olds = ("Only add the two characters from the attached CHARACTER REFERENCE SHEETS", "render them at real human size")
+        if not life or any(o not in head for o in olds):
+            raise RuntimeError("강아지는 실물 크기(life) 합성 머리 문장에서만 넣을 수 있음 — EDIT_HEAD_LIFE 확인")
+        head = (head.replace(olds[0], "Only add three characters from the attached CHARACTER REFERENCE SHEETS (Mina, Jun and their small dog Bori described in DOG)")
+                .replace(olds[1], "render Mina and Jun at real human size and Bori at real small-dog size"))
+        keep += " Bori stays exactly as described in DOG" + (" and in the attached DOG REFERENCE SHEET." if DOG_SHEET.is_file() else ".")
+    photo = EDIT_PHOTO_LIFE if life else EDIT_PHOTO
+    parts = [head, keep, character_block(water, life)] + ([DOG_BLOCK] if dog else []) + [OUTFIT_WATER if water else OUTFIT_DRY,
+             EDIT_SCALE_LIFE if life else EDIT_SCALE] + ([DOG_SCALE] if dog else []) + [photo, "SCENE: " + clean_scene(scene).strip()]
+    if hook:                                                          # 훅 컷: 위쪽 큰 제목 자리를 비운다(얼굴 0.38~0.58) — 촬영 문장 앞(기존 순서 유지)
+        parts.insert(parts.index(photo), EDIT_HOOK)
     if signature:
         parts.append(PROPS_SIGNATURE)
     elif water:                                                       # 시그니처는 물가여도 마른 데크에 선다 — 물과 닿는 문장 없음
@@ -282,9 +304,14 @@ def edit_prompt(scene: str, water: bool = True, signature: bool = False, life: b
     return out
 
 
-def veo_prompt(motion: str, life: bool | None = None) -> str:
+VEO_DOG = ("Their small dog Bori is also in the first frame: a cream-white toy-poodle plastic model-kit figure with a coral collar, real small-dog size. "
+           "Bori stays the same plastic figure — same shape, curly molded coat, collar and size — for the whole clip; it may wag its tail, tilt its head, "
+           "lift one paw or turn its head, and its paws stay on the same spot.")
+
+
+def veo_prompt(motion: str, life: bool | None = None, dog: bool = False) -> str:
     life = LIFE_DEFAULT if life is None else life
-    return " ".join([VEO_HEAD_LIFE if life else VEO_HEAD, "MOTION (4 seconds): " + motion.strip(), VEO_TAIL])
+    return " ".join([VEO_HEAD_LIFE if life else VEO_HEAD] + ([VEO_DOG] if dog else []) + ["MOTION (4 seconds): " + motion.strip(), VEO_TAIL])
 
 
 OMNI_HEAD = ("Use the attached image as the exact first frame of the video and animate from it. Total length: exactly 4 seconds. "
@@ -295,10 +322,10 @@ WATER_LINE = "Water reacts to every movement with splashes, droplets and ripples
 DRY_LINE = "The floor, furniture and surroundings stay exactly as they are in the first frame."   # 마른 장소엔 물 낱말을 아예 안 쓴다(부정문도 단서가 된다)
 
 
-def omni_prompt(motion: str, water: bool = True, life: bool | None = None) -> str:
+def omni_prompt(motion: str, water: bool = True, life: bool | None = None, dog: bool = False) -> str:
     """옴니 플래시용 — 비오 지시문 + 첫 장면 고정·길이·소리 지시(옴니는 길이 필드가 없고 소리를 늘 만든다).
     run-27 실측: 객실·외관 컷에서 '물 반응' 문장 + 크게 당기기 지시 때문에 옴니가 **없는 수영장을 지어냄** → 물 문장은 물 장소에서만, 마른 장소는 물 금지를 명시."""
-    out = OMNI_HEAD + " " + veo_prompt(motion, life) + " " + (WATER_LINE if water else DRY_LINE)
+    out = OMNI_HEAD + " " + veo_prompt(motion, life, dog) + " " + (WATER_LINE if water else DRY_LINE)
     if not water and WATER_WORDS.search(out):                         # 2026-10-12 검수: 마른 장소 옴니 지시문은 물 낱말 0 — 어기면 돈 쓰기 전에 멈춘다
         raise RuntimeError(f"마른 장소 옴니 지시문에 물 낱말 '{WATER_WORDS.search(out).group(0)}'")
     return out
@@ -435,7 +462,7 @@ def image_krw(model: str) -> float:
     return usd * FX
 
 
-def composite(base: Path, prompt: str, out: Path, models: list[str], rep: dict, water: bool = True) -> Path:
+def composite(base: Path, prompt: str, out: Path, models: list[str], rep: dict, water: bool = True, dog: bool = False) -> Path:
     if FAKE_IMG:
         im = Image.open(base).convert("RGB"); ref = Image.open(REF).convert("RGB")
         ref.thumbnail((W // 2, H // 2)); im.paste(ref, (W // 4, H - ref.height - 60)); im.save(out, "PNG")
@@ -443,7 +470,7 @@ def composite(base: Path, prompt: str, out: Path, models: list[str], rep: dict, 
     parts = [{"text": prompt},
              {"text": "Attached image 1: the HOTEL PHOTOGRAPH."},
              {"inline_data": {"mime_type": "image/jpeg", "data": base64.b64encode(base.read_bytes()).decode()}}]
-    for k, (label, path) in enumerate(ref_sheets(water), 2):
+    for k, (label, path) in enumerate(ref_sheets(water, dog), 2):
         parts += [{"text": f"Attached image {k}: {label}."}, {"inline_data": {"mime_type": "image/jpeg", "data": base64.b64encode(path.read_bytes()).decode()}}]
     last = None
     for model in models:
@@ -620,7 +647,11 @@ def main():
     rep = {"nonce": req.get("nonce"), "started": datetime.now().isoformat(timespec="seconds"), "ok": False, "shots": [],
            "veo_model": veo.MODEL, "fake_veo": veo.FAKE, "fake_image": FAKE_IMG}
     if not (veo.FAKE and FAKE_IMG and omni.FAKE) and req.get("veo_approved") is not True:   # 2026-10-12 검수: 옴니 가짜 여부도 본다(빠져 있었다)
-        raise SystemExit('유료 시험은 운영자 허락이 필요합니다 — requests/mini/request.json 에 "veo_approved": true')
+        # 2026-10-16: 잠긴 요청을 미리 올려 두는 푸시(관리자 페이지 '캐릭터 1컷 시험' 버튼이 연다)는 0원으로 조용히 끝낸다.
+        # 예전엔 실패로 끝나 텔레그램이 지난 시험의 기록을 다시 보냈다(기록 파일이 이번 nonce 것이 아님)
+        (BUILD / "SKIPPED").write_text(f"잠금 상태(veo_approved 아님) — 돈 안 씀: {req.get('nonce')}\n", encoding="utf-8")
+        log('유료 시험은 운영자 허락이 필요합니다(관리자 페이지 버튼 또는 "veo_approved": true) — 0원으로 끝냄')
+        return
     NONCE_DONE.parent.mkdir(parents=True, exist_ok=True)
     NONCE_DONE.write_text(json.dumps({"nonce": req.get("nonce"), "at": datetime.now().isoformat(timespec="seconds")}, ensure_ascii=False) + "\n", encoding="utf-8")
     models = [] if FAKE_IMG else image_models(req.get("image_model"))
@@ -636,13 +667,15 @@ def main():
             src = fetch(s["url"], BUILD / f"{k}_src.jpg")
             base = crop916(src, BUILD / f"{k}_base.jpg", float(s.get("focus_x", 0.5)), float(s.get("focus_y", 0.5)))
             wet = bool(s.get("water", True))                                      # 물가면 수영복, 마른 실내면 가운
-            ep = edit_prompt(s["scene"], water=wet, signature=bool(s.get("signature")), life=life); (BUILD / f"{k}_edit_prompt.txt").write_text(ep, encoding="utf-8")
+            dog = bool(s.get("dog"))                                              # 2026-10-16 커플 + 강아지 보리
+            row["dog"] = dog
+            ep = edit_prompt(s["scene"], water=wet, signature=bool(s.get("signature")), life=life, dog=dog); (BUILD / f"{k}_edit_prompt.txt").write_text(ep, encoding="utf-8")
             prev = ROOT / "build" / "mini_prev" / f"{k}_frame.png"                 # 이전 실행 아티팩트의 합성(돈 아끼기 · request "reuse_run_id")
             if req.get("reuse_run_id") and prev.exists():
                 frame = BUILD / f"{k}_frame.png"; frame.write_bytes(prev.read_bytes()); row["reused_frame"] = int(req["reuse_run_id"])
                 log(f"{k}: 이전 실행({req['reuse_run_id']})의 합성 장면 재사용 — 이미지 비용 0원")
             else:
-                frame = composite(base, ep, BUILD / f"{k}_frame.png", models, rep, water=wet)
+                frame = composite(base, ep, BUILD / f"{k}_frame.png", models, rep, water=wet, dog=dog)
             if s.get("box"):                                               # 인형 영역 밖은 원본으로 되돌림 → 배경 보존 보장
                 frame, seam = paste_back(base, frame, refine_box(base, frame, s["box"]), BUILD / f"{k}_frame_pb.png")
                 row["seam"] = round(seam, 3)
@@ -658,7 +691,7 @@ def main():
             if not s.get("box") and ch > MAX_CHANGED:                                         # 배경을 다시 그렸다 → 한 번만 더, 그래도 넘으면 이 컷은 Veo 를 쓰지 않는다
                 log(f"{k}: 숙소 사진이 {ch:.0%} 바뀜(상한 {MAX_CHANGED:.0%}) → 한 번 더 합성")
                 frame = composite(base, ep + "\n\nPREVIOUS ATTEMPT FAILED: it redrew or reframed the photograph. Keep every pixel of the photograph except where the figurines are.",
-                                  BUILD / f"{k}_frame.png", models, rep, water=wet)
+                                  BUILD / f"{k}_frame.png", models, rep, water=wet, dog=dog)
                 ch = changed_ratio(base, frame); row["changed_retry"] = round(ch, 3)
                 if ch > MAX_CHANGED:
                     row["skipped"] = f"배경 보존 실패 {ch:.0%} — Veo 생략(돈 아낌)"
@@ -669,17 +702,17 @@ def main():
             engine = str(s.get("engine") or req.get("video_engine") or "omni")
             clip = BUILD / f"{k}.mp4"
             if engine == "omni":
-                vp = omni_prompt(motion, water=wet and not s.get("signature"), life=life); (BUILD / f"{k}_omni_prompt.txt").write_text(vp, encoding="utf-8")
+                vp = omni_prompt(motion, water=wet and not s.get("signature"), life=life, dog=dog); (BUILD / f"{k}_omni_prompt.txt").write_text(vp, encoding="utf-8")
                 res = omni.make_clip(vp, frame, 4, clip, resolution=str(req.get("omni_resolution") or "720p"))
                 row.update({"ok": True, "engine": "omni", "omni_krw": res["krw"], "clip_sec": res["sec"], "omni_model": res["model"], "tokens_out": res["tokens_out"]})
             else:
-                vp = veo_prompt(motion, life); (BUILD / f"{k}_veo_prompt.txt").write_text(vp, encoding="utf-8")
+                vp = veo_prompt(motion, life, dog); (BUILD / f"{k}_veo_prompt.txt").write_text(vp, encoding="utf-8")
                 krw = veo.make_clip(vp, frame, 4, clip, veo.seed_for("mini", k), mime="image/png")
                 row.update({"ok": True, "engine": "veo", "veo_krw": round(krw), "clip_sec": 4})
             row.update({"edit_prompt_chars": len(ep), "video_prompt_chars": len(vp)})
             try:                                                           # 비전 검수(약 1원) — 시험 경로는 기록만
                 import make_solo, make_stay as _ms
-                row["vision"] = make_solo.clip_check(_ms.pick_models(), frame, clip, BUILD, k)
+                row["vision"] = make_solo.clip_check(_ms.pick_models(), frame, clip, BUILD, k, dog=dog)
                 log(f"{k} 비전 검수: {row['vision'].get('verdict')} — {row['vision'].get('why', '')[:80]}")
             except Exception as e:  # noqa: BLE001
                 row["vision"] = {"verdict": "error", "why": str(e)[:120]}

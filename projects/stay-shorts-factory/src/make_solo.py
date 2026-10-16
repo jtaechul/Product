@@ -424,12 +424,17 @@ def _vision_json_multi(model: str, system: str, text: str, images: list[Path]) -
     return json.loads(m.group(0)) if m else {}
 
 
-def clip_check(models: dict, first: Path, clip: Path, out_dir: Path, tag: str) -> dict:
+CLIP_CHECK_DOG = ("\n- 강아지(2026-10-16): 첫 장면에는 같은 화풍의 작은 강아지 피규어(크림색 곱슬 털·산호색 목걸이)도 한 마리 있다 — 새 사물이 아니다. "
+                  "강아지도 same_place·same_size·doll_look 에 넣어 판단한다(실제 강아지처럼 보이거나·커지거나·다른 개로 바뀌면 reject).")
+
+
+def clip_check(models: dict, first: Path, clip: Path, out_dir: Path, tag: str, dog: bool = False) -> dict:
     """옴니 클립을 쓰기 전 비전 검수(컷당 약 1원): 같은 자리·같은 크기·가구 통과·인형 외형·새 사물. run-33 시그니처(탁자 통과·실사화)를 픽셀 비교(0.14)가 못 잡았다."""
     dur = ms.probe_duration(clip) or 4.0
     mid = make_mini.frame_at(clip, min(2.0, dur / 2), out_dir / f"{tag}_chk_mid.jpg")
     last = make_mini.frame_at(clip, max(0.1, dur - 0.15), out_dir / f"{tag}_chk_last.jpg")
-    r = ms._try_models("vision", models["text"], lambda m: _vision_json_multi(m, CLIP_CHECK_SYSTEM, "첫 장면 · 2초 · 끝 장면 순서입니다.", [first, mid, last]))
+    system = CLIP_CHECK_SYSTEM + (CLIP_CHECK_DOG if dog else "")
+    r = ms._try_models("vision", models["text"], lambda m: _vision_json_multi(m, system, "첫 장면 · 2초 · 끝 장면 순서입니다.", [first, mid, last]))
     if not r or "verdict" not in r:
         raise RuntimeError(f"클립 검수 답 없음: {json.dumps(r, ensure_ascii=False)[:120]}")
     return r
