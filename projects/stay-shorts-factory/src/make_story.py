@@ -63,7 +63,8 @@ LINK_PHOTOS = 5                                                      # 연결용
 ZOOM_MAX = 1.5                                                       # 디테일 컷 확대 상한(공식 사진 1024px → 1920 높이라 더 키우면 흐려진다)
 SHOT_MIN = 0.9                                                       # 한 컷 최소 길이(초) — 한 문장에 컷 2~3개일 때
 MIN_HOOK = 3.2
-MOTION = 0.14                                                        # 짧은 컷 사진 무빙 폭(9컷 형식 0.24 의 절반 남짓 — 1초 컷에서 흔들려 보이지 않게)
+AIM_ZOOM = (0.22, 0.5)                                               # 대상 겨냥 무빙의 확대 폭(끝 화면 1.22~1.5배) — 2026-10-16 운영자 "카메라 무빙만? 이미지를 보고 크게 움직이든가"
+MOTION = 0.24                                                        # 짧은 컷 사진 무빙 폭(9컷 형식 0.24 의 절반 남짓 — 1초 컷에서 흔들려 보이지 않게)
 PATTERNS = ("push", "pan", "diag", "tilt", "pull")
 PRICE_RX = re.compile(r"\d[\d,]*\s*(원|만원|만 원|%)")
 
@@ -213,7 +214,10 @@ def build_shots(models: dict, sig: dict, h: dict, report: dict) -> list[dict]:
     adv += [int(c["k"]) for c in checked if int(c["k"]) not in adv and int(c["k"]) in good and sg._overlap(toks, sg._tokens(by_k[int(c["k"])].get("description")))]
     adv += [int(k) for k in sig.get("photos") or [] if int(k) in by_k and int(k) not in adv]
     adv = adv[:ADV_PHOTOS]
-    rejected = {int(c["k"]) for c in checked if not (c.get("ok") or c.get("subject"))}   # 주인공 확인 '아님' — 닮아서 헷갈리는 사진(stay-run-53 키즈룸)
+    # 주인공 확인 '아님' + 장점 사진과 같은 분류 = 닮아서 헷갈리는 사진(stay-run-53 키즈룸 ↔ 펫 객실).
+    # stay-run-54: 분류를 안 보고 '아님'을 전부 뺐더니 바다 전망(다른 분류)까지 빠져 펫 객실 사진 2장으로 6문장 — 같은 사진 3번·'바다' 문장 밑에 하우스
+    sig_cats = {by_k[k].get("category") for k in adv}
+    rejected = {int(c["k"]) for c in checked if not (c.get("ok") or c.get("subject")) and by_k[int(c["k"])].get("category") in sig_cats}
     others = sorted((k for k in pool if k not in adv and k not in rejected and not (mt.is_exterior(pool[k]) and k not in adv)),
                     key=lambda k: (-sg._overlap(toks, sg._tokens(pool[k].get("description"))), -int(pool[k].get("quality") or 0), k))[:LINK_PHOTOS]
     STORY.mkdir(parents=True, exist_ok=True)
@@ -454,7 +458,9 @@ def recheck_shots(text: dict, shots: list[dict], sig: dict, report: dict) -> Non
     주인공 확인을 못 통과한 사진의 컷은 목록에서 빼고(연결 컷으로도 안 씀), 그 컷을 쓰던 문장은 옆 문장과 다른 사진의 덜 쓴 컷으로 바꾼다
     (연결 관점은 남은 연결 컷 먼저, 나머지는 장점 컷)."""
     good = adv_ok(sig)
-    bad = {s["id"] for s in shots if int(s["k"]) not in good and (s.get("adv") or int(s["k"]) in {int(c["k"]) for c in sig.get("checks") or []})}
+    failed = {int(c["k"]) for c in sig.get("checks") or [] if not (c.get("ok") or c.get("subject"))}
+    sig_cats = {s.get("category") for s in shots if int(s["k"]) in good}
+    bad = {s["id"] for s in shots if int(s["k"]) not in good and (s.get("adv") or (int(s["k"]) in failed and s.get("category") in sig_cats))}
     if not good or not bad:
         return
     by_id = {s["id"]: s for s in shots}
@@ -709,6 +715,48 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
 
 
 # ── 4. 렌더 ─────────────────────────────────────────────────────────────────────────────
+AIM_SYSTEM = """너는 쇼츠 카메라 감독이다. 세로 사진 한 장과 그 화면 동안 나올 나레이션 한 문장을 받는다.
+문장이 말하는 대상(예: 계단·하우스·식기·침대·바다·탕)을 사진에서 찾아, 카메라가 **그 대상으로 크게 다가가 멈추게** 정한다.
+- target: 대상의 중심 [x, y] (0~1, 왼쪽 위가 0,0). 문장 대상이 사진에 없으면 사진에서 가장 눈에 띄는 주인공 사물.
+- zoom: 끝 화면 확대 정도 0.22~0.5 — 대상이 작으면 크게(0.45~0.5), 화면 절반 이상이면 작게(0.22~0.3).
+- move: "in"(넓게 시작해 대상으로 다가감) 또는 "out"(대상에서 시작해 넓게 물러나 공간을 보여 줌 — 문장이 공간 전체·전망을 말할 때).
+JSON 만: {"target":[0.5,0.6],"zoom":0.4,"move":"in","what":"계단"}"""
+
+
+def aim_shots(models: dict, beats: list[dict], shots: dict, report: dict, skip: set | dict = ()) -> None:
+    """문장마다 첫 컷 사진을 보고 카메라가 다가갈 대상을 정한다(비전 · 문장당 약 1원). 실패하면 그 문장은 기본 무빙. skip = AI 영상이 붙은 문장 번호(0부터)."""
+    rows = []
+    for j, b in enumerate(beats):
+        sid = (b.get("shots") or [None])[0]
+        if j in skip or not sid or sid not in shots or b.get("aim"):
+            continue
+        try:
+            r = ms._try_models("vision", models["text"], lambda m: sg._json_vision(m, AIM_SYSTEM, f"나레이션: {b['line']}", [STORY / shots[sid]["img"]]))
+            x, y = [min(0.92, max(0.08, float(v))) for v in (r.get("target") or [0.5, 0.5])[:2]]
+            z = min(AIM_ZOOM[1], max(AIM_ZOOM[0], float(r.get("zoom") or 0.35)))
+            b["aim"] = {"x": round(x, 3), "y": round(y, 3), "zoom": round(z, 2), "move": "out" if r.get("move") == "out" else "in", "what": str(r.get("what") or "")[:20]}
+        except Exception as e:  # noqa: BLE001
+            b["aim"] = None
+            log(f"문장 {j + 1} 카메라 대상 못 정함({str(e)[:60]}) — 기본 무빙")
+        rows.append({"i": j + 1, "shot": sid, **(b.get("aim") or {})})
+    report["camera_aim"] = rows
+
+
+def aimed_clip(image: Path, sec: float, out: Path, aim: dict) -> Path:
+    """대상 겨냥 무빙: 넓은 화면 ↔ 대상 중심 확대(1.22~1.5배)를 가속·감속으로. 화면 중심이 대상 쪽으로 같이 옮겨 간다(원본 픽셀만)."""
+    F = max(2, int(round(sec * ms.FPS)))
+    t = f"(on/{F})"
+    e = f"(1-pow(1-{t},3))" if aim["move"] == "in" else f"(1-{t}*{t}*(3-2*{t}))"   # in: 빨리 다가가 천천히 멈춤 / out: 대상에서 부드럽게 물러남
+    Z, tx, ty = aim["zoom"], aim["x"], aim["y"]
+    z = f"1.0+{Z}*{e}"
+    x = f"clip((0.5+({tx}-0.5)*{e})*iw-iw/zoom/2,0,iw-iw/zoom)"
+    y = f"clip((0.5+({ty}-0.5)*{e})*ih-ih/zoom/2,0,ih-ih/zoom)"
+    ms.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-framerate", str(ms.FPS), "-i", str(image),
+            "-vf", f"scale=2160:3840:flags=lanczos,zoompan=z='{z}':x='{x}':y='{y}':d={F}:s=1080x1920:fps={ms.FPS},setsar=1",
+            "-frames:v", str(F), "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p", str(out)])
+    return out
+
+
 def beat_clip(beat: dict, shots: dict, L: float, out: Path, j: int) -> tuple[Path, str]:
     """문장 하나의 화면 — 컷이 여러 개면 길이를 나눠 사진 무빙을 이어 붙인다(원본 픽셀만)."""
     ids = beat["shots"]
@@ -717,9 +765,13 @@ def beat_clip(beat: dict, shots: dict, L: float, out: Path, j: int) -> tuple[Pat
     for m, sid in enumerate(ids):
         sec = each if m < n - 1 else max(SHOT_MIN, L - each * (n - 1))
         pat = PATTERNS[(j + m) % len(PATTERNS)]
-        parts.append(sg.photo_clip(STORY / shots[sid]["img"], sec, STORY / f"pan_{j}_{m}.mp4", pat, MOTION))
+        if m == 0 and beat.get("aim"):
+            parts.append(aimed_clip(STORY / shots[sid]["img"], sec, STORY / f"pan_{j}_{m}.mp4", beat["aim"]))
+        else:
+            parts.append(sg.photo_clip(STORY / shots[sid]["img"], sec, STORY / f"pan_{j}_{m}.mp4", pat, MOTION))
     if len(parts) == 1:
-        return parts[0], f"사진 무빙·{PATTERNS[j % len(PATTERNS)]}"
+        a = beat.get("aim")
+        return parts[0], (f"사진 무빙·{a['what'] or '대상'} {'다가감' if a['move'] == 'in' else '물러남'} {1 + a['zoom']:.2f}배" if a else f"사진 무빙·{PATTERNS[j % len(PATTERNS)]}")
     lst = STORY / f"beat_{j}.txt"
     lst.write_text("".join(f"file '{p.resolve()}'\n" for p in parts), encoding="utf-8")
     ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(out)])
@@ -852,6 +904,8 @@ def render(text: dict, shots: dict, narr: dict, req: dict, report: dict, folder:
     clips = {} if preview else veo_beats(beats, shots, report, str(req.get("theme") or ""), models)
     if preview:
         report["veo"] = {"model": veo.MODEL, "fake": veo.FAKE, "clips": [], "spent_krw": 0, "month_total_krw": round(veo.month_total())}
+    if models:
+        aim_shots(models, beats, shots, report, skip=clips)
     segs, timeline = [], []
     for j, b in enumerate(beats):
         i = j + 1
