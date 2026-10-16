@@ -121,19 +121,18 @@ def make_clip(prompt: str, image: Path, sec: float, out: Path, mime: str = "imag
         try:
             with urllib.request.urlopen(req, timeout=1500) as r:
                 data = json.loads(r.read().decode("utf-8"))
-        except (TimeoutError, urllib.error.URLError) as e:
-            if isinstance(e, urllib.error.HTTPError):
-                raise
-            veo._state["spent"] += est                                          # 요청은 갔을 수 있다 → 보수적으로 예상액 기록
-            veo.record_est("omni", est, f"{model} 응답 시간 초과(보수적 기록) {out.name}")
-            raise veo.VeoError(f"Omni 응답 시간 초과·연결 오류: {str(e)[:150]}")
-        except urllib.error.HTTPError as e:
-            msg = e.read().decode("utf-8", "replace")[:300]
+        except urllib.error.HTTPError as e:                              # 2026-10-16 stay-mini-13: 이 줄이 아래 URLError 뒤에 있어 HTTPError 가 거기서
+            msg = e.read().decode("utf-8", "replace")[:300]                 # 그대로 다시 던져졌다 → 구글 오류 설명이 사라지고 다음 모델로도 못 넘어감
+            log(f"Omni HTTP {e.code}:", msg[:300])
             last = veo.VeoError(f"Omni HTTP {e.code}: {msg}")
             if e.code in (404, 400) and ("not found" in msg.lower() or "model" in msg.lower()):
                 log(f"모델 {model} 사용 불가 → 다음:", msg[:120])
                 continue
             raise last
+        except (TimeoutError, urllib.error.URLError) as e:
+            veo._state["spent"] += est                                          # 요청은 갔을 수 있다 → 보수적으로 예상액 기록
+            veo.record_est("omni", est, f"{model} 응답 시간 초과(보수적 기록) {out.name}")
+            raise veo.VeoError(f"Omni 응답 시간 초과·연결 오류: {str(e)[:150]}")
         b64 = _find_video(data)
         tin, tout = _usage_tokens(data)
         if not b64:

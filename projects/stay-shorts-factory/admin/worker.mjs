@@ -24,7 +24,10 @@ const REQ_PATH = `${P}/requests/produce/request.json`;
 const DISC_PATH = `${P}/requests/discover/request.json`;
 const MINI_PATH = `${P}/requests/mini/request.json`;
 // 캐릭터 1컷 = 합성 사진 1장(약 98원) + 옴니 4초(약 620원) + 비전 검수(약 1원). 실측 life-2 716원
+// 실사 뒷모습 1컷(real_back · 2026-10-16) = 합성 없이 Veo 4초(약 294원) + 검수(약 1원)
 const MINI_PER_SHOT = 720;
+const MINI_REAL_BACK = 300;
+const miniCost = (shots) => shots.reduce((t, s) => t + (s && s.real_back ? MINI_REAL_BACK : MINI_PER_SHOT), 0);
 const MINI_MAX_SHOTS = 3;
 const REGIONS = ["강원", "경기", "제주", "부산", "경남", "경북", "전남", "전북", "충남", "충북", "서울", "인천", "대전", "대구", "광주", "울산", "세종"];
 const MEDIA = { "video.mp4": "video/mp4", "narration_preview.mp3": "audio/mpeg", "preview.md": "text/plain; charset=utf-8" };
@@ -343,7 +346,7 @@ function miniState(req, rep) {
     label: String((req || {}).label || ""),
     desc: String((req || {}).desc || ""),
     shots: shots.length,
-    cost: shots.length * MINI_PER_SHOT,
+    cost: miniCost(shots),
     nonce: String((req || {}).nonce || ""),
     approved: (req || {}).veo_approved === true,
     last: r && r.nonce ? {
@@ -433,7 +436,7 @@ async function startMini(env, body) {
   if (cur.admin_test !== true || !shots.length || shots.length > MINI_MAX_SHOTS) throw new HttpError(409, "준비된 캐릭터 시험이 없습니다");
   if (runs.some((r) => r.active)) throw new HttpError(409, "지금 다른 실행이 돌고 있습니다. 끝난 뒤 다시 누르세요");
   if (recent) throw new HttpError(409, "방금 시작한 실행이 준비 중입니다. 1~2분 뒤 '지금 상태'를 확인하세요");
-  const cost = shots.length * MINI_PER_SHOT;
+  const cost = miniCost(shots);
   const now = kstNow();
   const money = monthSpend(ledger, now.toISOString().slice(0, 7));
   if (money.total + cost > MONTH_CAP) {

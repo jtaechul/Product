@@ -136,13 +136,13 @@ main > *, .card > *, .runs .body > * { min-width: 0 }      /* 넓은 표가 화�
   </section>
 
   <section class="card" id="miniCard" hidden>
-    <span class="label">캐릭터 1컷 시험 · 본 영상 전에 화풍 확인</span>
+    <span class="label">캐릭터 1컷 시험 · 본 영상 전에 인물 컷 품질 확인</span>
     <div style="font-size:17px;font-weight:700" id="miniLabel"></div>
     <p class="note" id="miniDesc"></p>
     <div class="notice info" id="miniLast" hidden></div>
     <button class="btn main" id="miniBtn">시험 시작<small id="miniCost">약 720원 · 누르면 한 번 더 확인</small></button>
     <div class="msg" id="miniMsg"></div>
-    <p class="note">누르면 1분 안에 '지금 상태'에 "실행 중"이 뜨고, 약 3~6분 뒤 텔레그램으로 비교 시트·합성 첫 장면·4초 영상이 옵니다. 공식 사진이 들어 있어 이 페이지에는 올리지 않습니다.</p>
+    <p class="note">누르면 1분 안에 '지금 상태'에 "실행 중"이 뜨고, 약 3~6분 뒤 텔레그램으로 비교 시트·4초 영상이 옵니다. 공식 사진이 들어 있어 이 페이지에는 올리지 않습니다.</p>
   </section>
 
   <section class="card" id="lastCard" hidden>
@@ -479,8 +479,8 @@ $("cancelBtn").onclick = () => {
 $("miniBtn").onclick = () => {
   if (!S || !S.mini || !S.mini.ready) return;
   const M = S.mini, m = S.money;
-  openSheet({ label: "캐릭터 시험 확인", title: M.label, big: "약 " + esc(won(M.cost)) + " <small>합성 사진 " + M.shots + "장 + 4초 영상 " + M.shots + "컷</small>",
-    after: "결과는 약 3~6분 뒤 텔레그램으로 옵니다. 화풍·강아지 모습이 괜찮으면 이 방식으로 본 영상의 인물 컷을 만듭니다. 이번 달 " + won(m.total) + " → 약 " + won(m.total + M.cost) + " (한도 " + won(m.cap) + ")",
+  openSheet({ label: "캐릭터 시험 확인", title: M.label, big: "약 " + esc(won(M.cost)) + " <small>4초 영상 " + M.shots + "컷</small>",
+    after: "결과는 약 3~6분 뒤 텔레그램으로 옵니다. 인물·강아지 모습이 괜찮으면 이 방식으로 본 영상의 인물 컷을 만듭니다. 이번 달 " + won(m.total) + " → 약 " + won(m.total + M.cost) + " (한도 " + won(m.cap) + ")",
     check: "약 " + won(M.cost) + "이 나가는 것을 압니다",
     go: "시험 시작", onGo: async () => {
       $("miniBtn").disabled = true;

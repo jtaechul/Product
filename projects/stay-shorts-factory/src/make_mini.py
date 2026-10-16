@@ -331,6 +331,81 @@ def omni_prompt(motion: str, water: bool = True, life: bool | None = None, dog: 
     return out
 
 
+# 2026-10-16 운영자 "사람도 실사처럼 뒷모습으로 보여지게 하면 되잖아?" → 합성 없이 빈 공식 사진을 첫 장면으로 Veo 가 실사 커플(뒷모습)·강아지를
+# 걸어 들어오게 한다(컷당 약 294원 · 합성 98원 없음). 얼굴은 끝까지 안 보인다 — 얼굴 일관성 문제가 없고 '내가 거기 있는' 시점이 된다.
+# 실제 방문 영상으로 오해받지 않게 영상 화면에 'AI 연출' 을 작게 적는다(add_ai_label).
+REAL_BACK_HEAD = ("Use the attached hotel photograph as the exact first frame of a photorealistic 4-second travel video, as if shot on a phone in this real room. "
+                  "Camera: steady and locked-off, at most a very slow push-in, so nothing outside the first frame ever appears.")
+REAL_BACK_PEOPLE = ("PEOPLE: a Korean couple in their early 30s — a woman with dark-brown hair in a neat low bun and a man with short black hair — both wearing "
+                    "cream hotel bathrobes. They are seen strictly from behind for the whole clip: only the backs of their heads, their shoulders and backs are "
+                    "visible. They never turn around, never look back, and their faces are never shown. They walk into the frame from its lower edge, at true "
+                    "human size for the furniture and the floor.")
+REAL_BACK_DOG = ("DOG: their small cream-white toy poodle with a curly coat and a coral-red collar — a real living dog at real small-dog size, about knee height — "
+                 "walks in with them on the floor.")
+REAL_BACK_TAIL = ("Keep every object, structure, surface, piece of furniture and the view exactly as in the first frame; do not add any new objects, text or logos. "
+                  "Exactly two people{dog} appear — no one else. Natural, unhurried movement. Vertical 9:16, 4 seconds.")
+REAL_BAN_RX = re.compile(r"face|smil|look(s|ing)? (at|back|toward) (the )?camera|turns? around|selfie|phone|cup|glass|drink|bottle|bag|child|kid|baby|"
+                         r"jump|run|dive|swim|splash|naked|bikini", re.I)
+
+
+def real_back_prompt(motion: str, dog: bool = False) -> str:
+    """실사 뒷모습 Veo 지시문. 얼굴·뒤돌아보기·새 물건을 부르는 낱말이 동작 문장에 있으면 돈 쓰기 전에 멈춘다."""
+    bad = REAL_BAN_RX.search(motion or "")
+    if bad:
+        raise RuntimeError(f"뒷모습 동작 문장에 금지 낱말 '{bad.group(0)}' — 얼굴·새 물건이 나올 수 있음")
+    parts = [REAL_BACK_HEAD, REAL_BACK_PEOPLE] + ([REAL_BACK_DOG] if dog else []) + ["MOTION (4 seconds): " + motion.strip(),
+                                                                                    REAL_BACK_TAIL.format(dog=" and one small dog" if dog else "")]
+    return " ".join(parts)
+
+
+REAL_BACK_CHECK = """너는 AI 영상 검수자다. 이미지 4장: ① 첫 장면(사람 없는 숙소 사진) ② 1초 ③ 2초 ④ 끝 장면. 요청: 실사 커플 두 사람이 뒷모습으로 걸어 들어온다{dog}.
+판단: people = 보이는 사람 수(가장 많은 장면 기준), face_visible = 누구든 얼굴(눈·코·입)이 보이는 장면이 있는가, dog = 강아지 수,
+new_objects = 첫 장면에 없던 사물(사람·강아지 제외), structure_changed = 벽·가구·창·전망이 바뀌거나 사라졌나,
+weird = 팔다리·손가락 수·몸 크기가 이상하거나 몸이 녹아내리듯 변하는가, looks_real = 사람이 실사처럼 자연스러운가.
+JSON 만: {{"people":2,"face_visible":false,"dog":1,"new_objects":[],"structure_changed":false,"weird":false,"looks_real":true,"why":"한 줄"}}"""
+
+
+def real_back_check(models: dict, first: Path, clip: Path, tag: str, dog: bool = False) -> dict:
+    """뒷모습 클립 비전 검수(약 1원) — 판정은 코드가 한다(사람 2 · 얼굴 없음 · 강아지 수 · 새 물건·구조 변화·이상한 몸 없음)."""
+    import make_solo, make_stay as _ms
+    dur = omni.duration(clip) or 4.0
+    shots = [first] + [frame_at(clip, t, BUILD / f"{tag}_chk_{t}.jpg") for t in (min(1.0, dur / 4), min(2.0, dur / 2), max(0.1, dur - 0.15))]
+    system = REAL_BACK_CHECK.format(dog=", 작은 크림색 푸들 한 마리가 함께 들어온다" if dog else "")
+    r = _ms._try_models("vision", models["text"], lambda m: make_solo._vision_json_multi(m, system, "첫 장면 · 1초 · 2초 · 끝 장면 순서입니다.", shots))
+    if not r or "people" not in r:
+        raise RuntimeError(f"뒷모습 검수 답 없음: {json.dumps(r, ensure_ascii=False)[:120]}")
+    probs = []
+    if int(r.get("people") or 0) != 2:
+        probs.append(f"사람 {r.get('people')}명")
+    if r.get("face_visible"):
+        probs.append("얼굴 보임")
+    if dog and int(r.get("dog") or 0) != 1:
+        probs.append(f"강아지 {r.get('dog')}마리")
+    if r.get("new_objects"):
+        probs.append("새 물건 " + ", ".join(map(str, r["new_objects"]))[:60])
+    if r.get("structure_changed"):
+        probs.append("숙소 구조 바뀜")
+    if r.get("weird"):
+        probs.append("몸 모양 이상")
+    if r.get("looks_real") is False:
+        probs.append("실사처럼 안 보임")
+    return {"verdict": "ok" if not probs else "reject", "why": "; ".join(probs) or str(r.get("why", ""))[:120], "raw": r}
+
+
+def add_ai_label(clip: Path) -> bool:
+    """영상 왼쪽 위에 작게 'AI 연출' (실사 인물 — 실제 방문 영상으로 오해 방지). 실패하면 원본 그대로 두고 False."""
+    font = ROOT / "assets" / "fonts" / "Pretendard-ExtraBold.otf"
+    tmp = clip.with_name(clip.stem + "_label.mp4")
+    vf = (f"drawtext=fontfile='{font}':text='AI 연출':fontcolor=white@0.92:fontsize=h*0.024:"
+          "box=1:boxcolor=black@0.35:boxborderw=12:x=w*0.05:y=h*0.13")
+    r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(clip), "-vf", vf, "-c:a", "copy", str(tmp)], capture_output=True, text=True)
+    if r.returncode != 0 or not tmp.exists():
+        log("AI 연출 표시 실패(원본 유지):", (r.stderr or "")[:160])
+        return False
+    tmp.replace(clip)
+    return True
+
+
 def refine_box(base: Path, frame: Path, box) -> list[float]:
     """비전이 준 상자가 인형 몸을 자르는 일(run-27: 다리만 남음)을 막는다 — 상자를 위로 넓힌 창 안에서 실제로 바뀐 픽셀의 범위와 합치고 여백을 더한다."""
     from PIL import ImageChops, ImageFilter
@@ -627,6 +702,14 @@ def probe_models() -> dict:
     return {"count": len(keep), "media_models": pick, "all_names": [k["name"] for k in keep]}
 
 
+def clip_row(base: Path, frame: Path | None, clip: Path, k: str) -> list[tuple[Path, str]]:
+    """비교 시트 한 줄: 숙소 사진 · (합성 첫 장면) · 영상 네 시점."""
+    dur = omni.duration(clip) or 4.0
+    ts = [round(dur * f, 1) for f in (0.25, 0.5, 0.75, 0.97)]
+    mids = [frame_at(clip, t, BUILD / f"{k}_t{t}.jpg") for t in ts]
+    return [(base, f"{k} 숙소 사진")] + ([(frame, "합성 첫 장면")] if frame else []) + [(m, f"영상 {t}초") for m, t in zip(mids, ts)]
+
+
 def main():
     req = json.loads(REQ.read_text(encoding="utf-8"))
     if req.get("probe_models"):                                   # 0원 점검 — 모델 목록만
@@ -669,6 +752,20 @@ def main():
             wet = bool(s.get("water", True))                                      # 물가면 수영복, 마른 실내면 가운
             dog = bool(s.get("dog"))                                              # 2026-10-16 커플 + 강아지 보리
             row["dog"] = dog
+            if s.get("real_back"):                                                # 실사 뒷모습: 합성 없음 · 첫 장면 = 손대지 않은 공식 사진
+                vp = real_back_prompt(s["motion"], dog=dog); (BUILD / f"{k}_veo_prompt.txt").write_text(vp, encoding="utf-8")
+                clip = BUILD / f"{k}.mp4"
+                krw = veo.make_clip(vp, base, 4, clip, veo.seed_for("mini", k), mime="image/jpeg")
+                row.update({"ok": True, "engine": "veo", "mode": "real_back", "veo_krw": round(krw), "clip_sec": 4, "video_prompt_chars": len(vp)})
+                try:
+                    import make_stay as _ms
+                    row["vision"] = real_back_check(_ms.pick_models(), base, clip, k, dog=dog)
+                    log(f"{k} 뒷모습 검수: {row['vision'].get('verdict')} — {row['vision'].get('why', '')[:80]}")
+                except Exception as e:  # noqa: BLE001
+                    row["vision"] = {"verdict": "error", "why": str(e)[:120]}
+                row["ai_label"] = add_ai_label(clip)
+                rows.append(clip_row(base, None, clip, k))
+                continue
             ep = edit_prompt(s["scene"], water=wet, signature=bool(s.get("signature")), life=life, dog=dog); (BUILD / f"{k}_edit_prompt.txt").write_text(ep, encoding="utf-8")
             prev = ROOT / "build" / "mini_prev" / f"{k}_frame.png"                 # 이전 실행 아티팩트의 합성(돈 아끼기 · request "reuse_run_id")
             if req.get("reuse_run_id") and prev.exists():
@@ -716,10 +813,7 @@ def main():
                 log(f"{k} 비전 검수: {row['vision'].get('verdict')} — {row['vision'].get('why', '')[:80]}")
             except Exception as e:  # noqa: BLE001
                 row["vision"] = {"verdict": "error", "why": str(e)[:120]}
-            dur = omni.duration(clip) or 4.0
-            ts = [round(dur * f, 1) for f in (0.25, 0.5, 0.75, 0.97)]
-            mids = [frame_at(clip, t, BUILD / f"{k}_t{t}.jpg") for t in ts]
-            rows.append([(base, f"{k} 숙소 사진"), (frame, "합성 첫 장면")] + [(m, f"영상 {t}초") for m, t in zip(mids, ts)])
+            rows.append(clip_row(base, frame, clip, k))
         rep["ok"] = True
     except Exception as e:  # noqa: BLE001
         rep["error"] = f"{type(e).__name__}: {str(e)[:400]}"

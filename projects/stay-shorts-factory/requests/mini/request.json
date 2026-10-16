@@ -1,32 +1,22 @@
 {
- "nonce": "2026-10-16-admin-mini-HdiO",
+ "nonce": "2026-10-16-realback-1",
  "veo_approved": false,
  "admin_test": true,
- "label": "세인트존스 반려견 객실 · 커플+강아지 1컷",
- "desc": "공식 사진(반려견 객실: 바다 창·반려견 계단·침대)에 미나·준·강아지 보리를 같은 프라모델 화풍으로 넣은 첫 장면 1장 + 4초 영상. 미나는 침대 끝에 앉아 무릎 위 보리를 쓰다듬고, 준은 옆에 서서 보리 턱을 긁습니다. 보리는 꼬리를 흔들고 고개를 갸웃합니다.",
- "note": "관리자 페이지 캐릭터 시험 — 세인트존스 반려견 객실 · 커플+강아지 1컷 · 예상 약 720원 · 2026-10-16 12:44 KST",
- "mini_scale": "life",
- "video_engine": "omni",
- "omni_resolution": "720p",
+ "label": "세인트존스 반려견 객실 · 실사 커플 뒷모습 + 강아지 1컷",
+ "desc": "공식 사진(반려견 객실: 바다 창·반려견 계단·침대)을 첫 장면으로, 가운 입은 커플이 뒷모습으로 걸어 들어와 바다 창 쪽으로 가고 작은 크림색 푸들이 함께 걸어 들어옵니다. 얼굴은 끝까지 안 나오고, 화면 왼쪽 위에 'AI 연출'이 작게 붙습니다. 사진 합성 없이 4초 영상만 만듭니다.",
+ "note": "잠금 — 실사 뒷모습 1컷 시험 준비(운영자 2026-10-16 선택). 관리자 페이지 '캐릭터 1컷 시험' 버튼(약 300원)으로만 연다.",
+ "video_engine": "veo",
  "stay": "세인트존스 호텔 · 반려견 객실",
  "shots": [
   {
-   "key": "petroom",
+   "key": "petroom_back",
    "url": "https://new.stjohns.co.kr/uploads/room/2024/06/b18b67bcd0b94aabe9f76180dff57265.jpg",
    "focus_x": 0.5,
    "focus_y": 0.5,
-   "water": false,
-   "signature": false,
+   "real_back": true,
    "dog": true,
-   "scene": "The photograph shows a pet-friendly hotel room: on the left a glass balcony door with an ocean view and a sheer curtain, a gray armchair and a small round table with dog toys; in the middle a wooden pet staircase with a blue dog cushion leading up to the bed; on the right the foot of a large white bed nearest the camera, with an open wooden floor in the foreground. Mina sits on the near corner of the white bed, at the foot of the bed nearest the camera, turned slightly toward Jun, with Bori sitting on her lap facing the camera. Jun stands on the open wooden floor just left of the bed corner, between the small round table and the bed, so the balcony door and the ocean view on the left stay fully visible; nothing is between them and the camera. Both wear cream bathrobes. Nothing else in the photograph changes.",
-   "motion": "Bori wags its tail quickly and tilts its head to one side, looking up at Mina. Mina laughs and gently strokes Bori's head with one hand. Jun leans in a little, smiling, and scratches Bori under the chin. Their feet and hips stay planted, and Bori's paws stay on Mina's lap.",
-   "engine": "omni",
-   "box": [
-    0.18,
-    0.2,
-    0.86,
-    1
-   ]
+   "engine": "veo",
+   "motion": "The couple walks slowly side by side across the wooden floor toward the balcony door on the left and stops in front of it, taking in the ocean view; the man rests one hand lightly on the woman's shoulder. The dog trots beside them and sits down at their feet."
   }
  ]
 }
