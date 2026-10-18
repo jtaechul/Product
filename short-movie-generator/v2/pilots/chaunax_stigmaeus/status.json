@@ -125,6 +125,11 @@
           "at": "2026-10-15T16:23:00Z",
           "kind": "approve",
           "text": ""
+        },
+        {
+          "at": "2026-10-18T22:57:56Z",
+          "kind": "viewed",
+          "text": "시청함 37.6% 기록 · 후킹 틀 常識破り"
         }
       ],
       "approved_at": "2026-10-15T16:23:00Z"
@@ -846,6 +851,16 @@
         "token_scopes": [
           "https://www.googleapis.com/auth/youtube.upload"
         ]
+      },
+      "viewed": {
+        "pct": 37.6,
+        "at": "2026-10-18T22:57:56Z",
+        "note": "",
+        "hook": {
+          "line": "魚なのに、立ち上がる",
+          "pattern": "常識破り",
+          "voice": true
+        }
       }
     }
   },

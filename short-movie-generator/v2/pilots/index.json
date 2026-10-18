@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-18T22:43:03Z",
+  "updated": "2026-10-18T22:57:56Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -53,7 +53,16 @@
           "https://www.googleapis.com/auth/youtube.upload"
         ]
       },
-      "viewed": null
+      "viewed": {
+        "pct": 37.6,
+        "at": "2026-10-18T22:57:56Z",
+        "note": "",
+        "hook": {
+          "line": "魚なのに、立ち上がる",
+          "pattern": "常識破り",
+          "voice": true
+        }
+      }
     },
     {
       "id": "enypniastes_eximia",
