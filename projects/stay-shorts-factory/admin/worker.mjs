@@ -33,14 +33,14 @@ const REGIONS = ["강원", "경기", "제주", "부산", "경남", "경북", "�
 const MEDIA = { "video.mp4": "video/mp4", "narration_preview.mp3": "audio/mpeg", "preview.md": "text/plain; charset=utf-8" };
 const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.py MONTH_KRW 와 같은 값)
 // 형식별 예상 비용(원). 기존 9컷: 미리보기 글·음성 약 80 / 정식 제작(미니어처 3컷 + Veo 1컷) 약 2,500 (실측).
-// 시그니처 v4 이야기(2026-10-15 운영자 "진행해" · 장점 하나·여러 관점 · make_story): 미리보기 = 글·비전·음성(받아쓰기 포함)만 약 90 · AI 영상 없음.
-//   제작(v5 2026-10-18) = 미리보기 대본·음성 재사용 + 화면 계획 AI 컷 4개(훅 환경 + 사람·강아지·환경 순간 컷 · 294 × 4 = 1,176) + 검수 약 3 + 글 ≈ 1,300, 미리보기 없이 ≈ 1,390
+// 시그니처 v4 이야기(2026-10-15 운영자 "진행해" · 장점 하나·여러 관점 · make_story): 미리보기 = 글·비전·음성(받아쓰기 포함) 약 90 + v6(2026-10-18) 안내문 읽기 약 25 · AI 영상 없음.
+//   제작(v5 2026-10-18) = 미리보기 대본·음성 재사용 + 화면 계획 AI 컷 4개(사람·강아지·환경 순간 컷 · 294 × 4 = 1,176) + 검수 약 3 + 글 ≈ 1,300, 미리보기 없이 ≈ 1,420
 const COST = {
-  signature: { preview: 90, produce: 1300, produce_fresh: 1390 },
+  signature: { preview: 115, produce: 1300, produce_fresh: 1420 },
   solo: { preview: 80, produce: 2500, produce_fresh: 2500 },
 };
 const costOf = (mode) => COST[mode];
-const BLOCK_DAYS = 14;                      // make_sig 가 '사진·사실 부족'으로 멈춘 숙소는 이 기간 시그니처 버튼을 잠근다(state/sig_blocked.json)
+const BLOCK_DAYS = 14;                      // make_sig·make_story 가 '사진·사실·장면 부족'으로 멈춘 숙소는 이 기간 시그니처 버튼을 잠근다(state/sig_blocked.json)
 const MODES = { signature: "시그니처", solo: "기존 9컷" };
 const SIG_PREVIEW_RX = /관리자 페이지 시그니처 이야기 미리보기 — (.+?) \(/;   // 이야기(v4) 미리보기만 재사용 대상(make_story.find_reuse · 옛 형식 계획은 안 맞음)
 const LABEL = { preview: "미리보기", produce: "정식 제작" };

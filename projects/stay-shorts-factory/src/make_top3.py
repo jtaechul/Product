@@ -173,10 +173,19 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None, quota
     cands = photos.gather(rooms, ROOT / "requests" / "produce" / "photos_none", build, official=official)
     if not cands:
         return None
+    cands = photos.add_panels(cands, build)                                          # v6: 콜라주 → 패널 후보(0원)
     ctx = photos.context_for(name, c.get("city", ""), facts)
     cl = ms._try_models("vision", models["text"], lambda m: photos.classify(m, cands, ctx))
+    notes = {"facts": [], "closed": [], "read": 0}
+    ncands = photos.notice_candidates(cl)
+    if ncands and req.get("read_notices", True):                                     # v6: 글 안내문을 읽어 '공식 안내문' 사실로(장당 약 1원)
+        try:
+            notes = ms._try_models("vision", models["text"], lambda m: photos.read_notices(m, ncands))
+        except Exception as e:  # noqa: BLE001
+            log(f"{name}: 안내문 읽기 실패 — 안내문 사실 없이 진행 ({str(e)[:80]})")
+    closure_notes = photos.apply_closures(cl, notes.get("closed") or [])
     theme = str(req.get("theme") or "")
-    usable = sorted([p for p in cl if p["category"] in photos.CATS and p["quality"] >= 4 and not p.get("people")],
+    usable = sorted([p for p in cl if p["category"] in photos.CATS and p["quality"] >= 4 and not p.get("people") and photos.panel_grade(p) == "full"],
                     key=lambda p: (-theme_fit(p["description"], theme), -facility_hit(p, facts), -p["quality"]))   # 테마에 맞는 장면 → 시설(사우나·키즈…) → 품질
     # 장면 선택: 분류별 quota 만큼 (물놀이 → 객실 → 특별 순, 없으면 남은 것으로 채움). 2개 미만이면 제외
     hashes = {}
@@ -210,11 +219,15 @@ def hotel_assets(c: dict, models: dict, idx: int, req: dict | None = None, quota
             "hook": (c.get("ai") or {}).get("hook", ""), "classified": cl, "crawl": crawl_info,
             "official_facts": fd["facts"], "signature": fd["signature"], "city": c.get("city", ""), "official_site": crawl_info.get("url"),
             "site_text": site_text,                                                  # 공식 홈페이지 페이지 글 — 시그니처 이야기(make_story)가 장점 하나의 상세 사실을 더 뽑는다
+            "notice_facts": notes.get("facts") or [], "closed_facilities": notes.get("closed") or [], "closure_notes": closure_notes,   # v6 안내문 사실·운영 종료
+            "panels": sum(1 for p in cl if p.get("panel_of") is not None), "notices_read": notes.get("read", 0),
             "rooms": [{"name": str(it.get("productName", ""))[:60], "price": float(it.get("productPrice") or 0) or None,
                        "image": it.get("productImage") or None, "url": str(it.get("productUrl", "")) or None} for it in rooms[:8]],
             "photo_counts": {k: sum(p["source"] == k for p in cands) for k in SRC_KO} | {"mismatch": len(mism), "near_dup": dups, "exterior_cut": ext_cut},
             "classified_summary": [{"k": p.get("k"), "src": p.get("source"), "cat": p.get("category"), "q": p.get("quality"), "people": bool(p.get("people")),
-                                    "mismatch": (p.get("mismatch") or "")[:30], "view": p.get("view"), "desc": (p.get("description") or "")[:40]} for p in cl]}
+                                    "mismatch": (p.get("mismatch") or "")[:30], "view": p.get("view"), "desc": (p.get("description") or "")[:40],
+                                    **({"panel_of": p.get("panel_of"), "px": p.get("panel_px")} if p.get("panel_of") is not None else {}),
+                                    **({"closed": p.get("closed")} if p.get("closed") else {})} for p in cl]}
 
 
 THEME_RX = {"실내": r"실내|인도어|indoor|돔", "온수": r"온수|온천|스파|사우나|따뜻|온탕|노천", "온천": r"온천|온탕|노천|스파",

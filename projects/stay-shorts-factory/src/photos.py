@@ -312,7 +312,8 @@ def _src_label(c: dict) -> str:
     if c["source"] == "operator":
         return "운영자가 준 사진"
     if c["source"] == "official":
-        return (f"공식 홈페이지 사진 (페이지 {str(c.get('src_page') or '')[-40:]}" + (f" · 공식 사진 이름 '{c['src_alt']}'" if c.get("src_alt") else "") + ")")
+        return (f"공식 홈페이지 사진 (페이지 {str(c.get('src_page') or '')[-40:]}" + (f" · 공식 사진 이름 '{c['src_alt']}'" if c.get("src_alt") else "")
+                + (" · 콜라주에서 잘라낸 한 장면" if c.get("panel_of") is not None else "") + ")")
     return f"쿠팡 객실 상품 '{c['name']}'"
 
 
@@ -454,3 +455,193 @@ def prompt_for(shot: dict) -> str:
 
 def scene_list_ko(shots: list[dict]) -> str:
     return "\n".join(f"장면 {s['n']} ({KO[s['slot']]}): {s['description'] or KO[s['category']]}" for s in shots)
+
+
+# ── v6 재료 보강 (2026-10-18 운영자 "이미지가 전혀 다채롭지 않다 — 다시 분석해서 제안") ──────────────────────
+# stay-run-55 실측: 세인트존스 공식 사진 32장 중 22장이 글 안내문, 5장이 콜라주 → 쓸 장면 5장. 안내문엔 사실(반려견 수영장 무료 입장·
+# 운영 종료)이, 콜라주엔 장면(돔 수영장·슬라이드)이 들어 있었는데 둘 다 통째로 버렸다. ① 흰 구분선 콜라주는 0원으로 패널을 잘라 후보에 넣고
+# ② 글 안내문은 비전이 읽어 '공식 안내문' 사실로 쓰며 ③ 운영 종료·시즌 종료가 적힌 시설의 사진은 제작에서 뺀다.
+PANEL_FULL = 900                       # 패널 짧은 변(px) ≥ 900 → 일반 컷(AI 컷 시작 장면도 가능)
+PANEL_INSERT = 500                     # 500~899 → 짧은 인서트 컷만(1.3초 이하 · AI 컷 금지) · 그 밑은 버림
+PANELS_MAX = 6                         # 콜라주 한 장에서 최대 패널 수
+NOTICE_RX = re.compile(r"안내|요금|규정|수칙|공지|포스터|텍스트|글자|멤버십|가격|리스트|목록|이용 ?방법|휴장|운영 ?시간|종료|요금표|표가|설명")
+NOTICE_SYSTEM = """너는 숙소 공식 홈페이지의 안내문 이미지를 읽어 옮기는 기록자다. 이미지에 **적힌 글만** 옮기고, 적히지 않은 것은 쓰지 않는다.
+각 이미지에 대해:
+- is_notice: 글이 주인공인 안내문·요금표·규정·포스터면 true (사진이 주인공이면 false)
+- facility: 안내문이 말하는 시설 이름 한 개(예 "파인 인피니티풀"). 없으면 ""
+- facts: 적힌 사실 3~8개를 짧은 한국어 문장으로(숫자·조건·단서를 그대로 · 반려견·무료·요금·운영시간·제한·위치를 먼저). 시설 이름을 문장 앞에 붙인다. 글이 없으면 []
+- closed: 운영 종료·시즌 종료·휴장·공사 중이 적혀 있으면 "시설 이름: 기간/내용" 한 줄, 아니면 ""
+JSON 만: {"notices":[{"k":0,"is_notice":true,"facility":"...","facts":["..."],"closed":""}]}"""
+
+
+def split_panels(path: str) -> list[tuple[int, int, int, int]]:
+    """콜라주를 흰(또는 검은) 구분선으로 나눈 패널 상자(원본 픽셀 좌표). 2개 미만이면 빈 목록(콜라주가 아님). 0원.
+    구분선 = 거의 전부 밝거나(≥235) 거의 전부 어두운(≤22) 가로/세로 줄이 3px 이상, 치수의 10% 이하로 이어진 것(흰 벽처럼 긴 구간은 구분선이 아니다)."""
+    import numpy as np
+    with Image.open(path) as im:
+        im = im.convert("RGB")
+        W0, H0 = im.size
+        sc = max(1.0, max(W0, H0) / 1200.0)
+        small = im.resize((max(1, int(W0 / sc)), max(1, int(H0 / sc))), Image.BILINEAR)
+        a = np.asarray(small).astype(np.int16)
+    H, W = a.shape[:2]
+    gray = a.mean(axis=2)
+
+    def runs(mask_line, N):
+        out, s = [], None
+        for i, v in enumerate(mask_line):
+            if v and s is None:
+                s = i
+            if (not v) and s is not None:
+                if 3 <= i - s <= max(6, int(N * 0.10)):
+                    out.append((s, i))
+                s = None
+        if s is not None and 3 <= N - s <= max(6, int(N * 0.10)):
+            out.append((s, N))
+        return out
+
+    best = []
+    for lo, hi in ((235, 999), (-1, 22)):                               # 흰 구분선 → 검은 구분선
+        m = (gray > lo) & (gray < hi)
+        rows = runs(m.mean(axis=1) >= 0.985, H)
+        cols = runs(m.mean(axis=0) >= 0.985, W)
+
+        def spans(rs, N):
+            cuts = [0] + [(x + y) // 2 for x, y in rs if 0 < x and y < N] + [N]
+            return [(cuts[i], cuts[i + 1]) for i in range(len(cuts) - 1) if cuts[i + 1] - cuts[i] >= 120]
+        panels = []
+        for y0, y1 in spans(rows, H):
+            for x0, x1 in spans(cols, W):
+                g = gray[y0:y1, x0:x1]
+                inner = (g > lo) & (g < hi)                                  # 구분선과 같은 색이 60% 넘으면 글 안내문·여백 — 패널이 아니다
+                if inner.mean() > 0.6 or g.std() < 18:
+                    continue
+                keep = ~inner
+                ys = np.where(keep.any(axis=1))[0]; xs = np.where(keep.any(axis=0))[0]
+                if len(ys) < 100 or len(xs) < 100:
+                    continue
+                panels.append((int((x0 + xs[0]) * sc), int((y0 + ys[0]) * sc), int((x0 + xs[-1] + 1) * sc), int((y0 + ys[-1] + 1) * sc)))
+        if len(panels) > len(best):
+            best = panels
+    return best[:PANELS_MAX] if len(best) >= 2 else []
+
+
+def panel_grade(p: dict) -> str:
+    """패널(또는 보통 사진)의 쓰임새 등급: full(일반 컷) · insert(짧은 인서트만) · none(버림). 패널이 아니면 full."""
+    if p.get("panel_of") is None:
+        return "full"
+    px = int(p.get("panel_px") or 0)
+    return "full" if px >= PANEL_FULL else "insert" if px >= PANEL_INSERT else "none"
+
+
+def add_panels(cands: list[dict], build: Path) -> list[dict]:
+    """공식 홈페이지 후보 중 콜라주를 패널로 잘라 후보 사진으로 더한다(0원). 원본은 collage 표시(분류가 보통 skip 으로 거른다).
+    패널은 출처(src_url·src_page)를 원본과 같이 들고 다니고 panel_of 로 원본 번호를 가리킨다."""
+    out = list(cands)
+    added = 0
+    for c in cands:
+        if c.get("source") != "official" or c.get("panel_of") is not None:
+            continue
+        try:
+            boxes = split_panels(c["path"])
+        except Exception as e:  # noqa: BLE001
+            log(f"사진 {c['k']} 패널 분할 실패: {str(e)[:60]}")
+            continue
+        if not boxes:
+            continue
+        c["collage"] = len(boxes)
+        with Image.open(c["path"]) as im:
+            im = im.convert("RGB")
+            for i, (x0, y0, x1, y1) in enumerate(boxes):
+                px = min(x1 - x0, y1 - y0)
+                if px < PANEL_INSERT:
+                    continue
+                k = len(out)
+                dest = build / f"cand_{k}.jpg"
+                im.crop((x0, y0, x1, y1)).save(dest, "JPEG", quality=93)
+                out.append({"k": k, "source": c["source"], "name": f"{c.get('name', '')}#p{i}", "index": c.get("index"), "path": str(dest),
+                            "size": [x1 - x0, y1 - y0], "src_url": c.get("src_url"), "src_page": c.get("src_page"), "src_alt": c.get("src_alt") or "",
+                            "panel_of": c["k"], "panel_px": px, "panel_i": i})
+                added += 1
+        log(f"사진 {c['k']} 콜라주 → 패널 {len(boxes)}개 중 {sum(1 for o in out if o.get('panel_of') == c['k'])}개 후보 추가 "
+            f"({', '.join(str(min(b[2] - b[0], b[3] - b[1])) + 'px' for b in boxes)})")
+    if added:
+        log(f"콜라주 패널 {added}장 추가 → 후보 {len(out)}장")
+    return out
+
+
+def notice_candidates(classified: list[dict]) -> list[dict]:
+    """글 안내문으로 보이는 사진 — 분류 skip + 공식 홈페이지 + 설명에 안내문 낱말. 다른 지점 의심(mismatch)·패널·콜라주 원본은 제외."""
+    return [p for p in classified if p.get("category") == "skip" and p.get("source") == "official" and not p.get("mismatch")
+            and p.get("panel_of") is None and not p.get("collage") and NOTICE_RX.search(str(p.get("description") or ""))]
+
+
+def read_notices(model: str, cands: list[dict], batch: int = 6) -> dict:
+    """글 안내문 이미지를 비전이 읽어 '공식 안내문' 사실로 만든다(장당 약 1원). 결과: facts(문장 목록) · closed(운영 종료 시설) · read(읽은 장 수)."""
+    facts, closed, read = [], [], 0
+    for i in range(0, len(cands), batch):
+        chunk = cands[i:i + batch]
+        parts = [{"text": f"안내문 이미지 {len(chunk)}장. 각 이미지 앞에 번호를 적어 둔다."}]
+        for c in chunk:
+            parts.append({"text": f"이미지 {c['k']}:"})
+            parts.append({"inline_data": {"mime_type": "image/jpeg", "data": _small_jpeg_b64(c["path"], 2000)}})
+        body = {"system_instruction": {"parts": [{"text": NOTICE_SYSTEM}]}, "contents": [{"role": "user", "parts": parts}],
+                "generationConfig": {"maxOutputTokens": 6000, "temperature": 0.0, "responseMimeType": "application/json"}}
+        data = _gpost(f"models/{model}:generateContent", body, 180)
+        txt = "".join(p.get("text", "") for p in (((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []))
+        txt = re.sub(r"^```(?:json)?|```$", "", txt.strip()).strip()
+        try:
+            js = json.loads(txt)
+        except ValueError:
+            log(f"안내문 읽기 답이 JSON 이 아님: {txt[:80]!r}")
+            continue
+        by_k = {c["k"]: c for c in chunk}
+        for n in (js.get("notices") if isinstance(js, dict) else js) or []:
+            if not isinstance(n, dict):
+                continue
+            k = int(n.get("k", -1)) if str(n.get("k", "")).lstrip("-").isdigit() else -1
+            c = by_k.get(k)
+            if c is None or not n.get("is_notice"):
+                continue
+            read += 1
+            c["notice"] = True
+            fac = str(n.get("facility") or "").strip()[:30]
+            for f in (n.get("facts") or [])[:8]:
+                f = re.sub(r"\s+", " ", str(f)).strip(" .")
+                if 4 <= len(f) <= 120:
+                    facts.append(f if not fac or f.startswith(fac) else f"{fac}: {f}")
+            cl = str(n.get("closed") or "").strip()
+            if cl:
+                closed.append({"facility": (cl.split(":")[0].strip() or fac)[:30], "note": cl[:120], "k": k, "page": c.get("src_page") or ""})
+    seen, uniq = set(), []
+    for f in facts:
+        if f not in seen:
+            seen.add(f); uniq.append(f)
+    if read:
+        log(f"안내문 {read}장 읽음 → 사실 {len(uniq)}개" + (f" · 운영 종료 {[c['facility'] for c in closed]}" if closed else ""))
+    return {"facts": uniq[:60], "closed": closed, "read": read}
+
+
+def apply_closures(classified: list[dict], closed: list[dict]) -> list[str]:
+    """운영 종료·시즌 종료가 적힌 시설의 사진을 제작에서 뺀다(category skip · closed 표시). 기준: 그 안내문이 있던 페이지의 물놀이·특별 사진(첫 페이지는 너무 넓어 제외) 또는
+    설명에 시설 이름 낱말이 전부 있는 사진. 객실 사진은 건드리지 않는다. 돌려주는 것: 로그 문장."""
+    notes = []
+    for c in closed:
+        toks = {t for t in re.findall(r"[가-힣A-Za-z0-9]+", str(c.get("facility") or "")) if len(t) >= 2}
+        page = str(c.get("page") or "")
+        narrow = bool(page) and len(page.rstrip("/").split("/")) > 3                  # 'https://host/post/3789' 처럼 하위 페이지일 때만 페이지 기준
+        n = 0
+        for p in classified:
+            if p.get("category") not in ("water", "special") or p.get("closed"):
+                continue
+            desc = str(p.get("description") or "")
+            by_page = narrow and str(p.get("src_page") or "") == page
+            by_desc = bool(toks) and all(t in desc for t in toks)
+            if by_page or by_desc:
+                p["closed"] = c.get("facility") or "운영 종료"
+                p["category"] = "skip"
+                n += 1
+        if n:
+            notes.append(f"{c.get('facility')} 운영 종료({c.get('note')}) → 사진 {n}장 제외")
+            log(notes[-1])
+    return notes

@@ -147,7 +147,8 @@ def assets(req: dict, models: dict, report: dict) -> tuple[dict, int]:
     for s in h["shots"]:                                       # 사진 컷용 고해상 크롭 (Veo 입력은 720x1280 shot_N.png 그대로)
         photos.crop_9x16(s["path"], B() / f"shotHD_{s['n']}.png", s["focus_x"], s["focus_y"], 1080, 1920)
     report["hotels"] = [{k: h[k] for k in ("name", "city", "room_names", "verified_facilities", "theme_hits", "blog_30d", "min_price", "honest", "photo_counts",
-                                            "official_facts", "signature", "hook", "affiliate_url", "official_site", "rooms", "classified_summary") if k in h}]
+                                            "official_facts", "signature", "hook", "affiliate_url", "official_site", "rooms", "classified_summary",
+                                            "notice_facts", "closed_facilities", "closure_notes", "panels", "notices_read") if k in h}]
     mt.record_sources([h], report)
     log(f"{h['name']}: 사진 {len(h['shots'])}장 (순위표 {pos}위)")
     return h, pos

@@ -329,7 +329,7 @@ function render(d) {
   $("themeLine").textContent = "다음 숙소 · " + [d.theme.month, d.theme.region, d.theme.theme].filter(Boolean).join(" · ");
   const sel = $("stay"), keep = sel.value;
   const sigMode = ($("fmt").value || "signature").startsWith("signature");
-  sel.innerHTML = d.candidates.map((c) => "<option value=\"" + esc(c.name) + "\">" + esc(c.rank + "위 " + c.name + (c.city ? " (" + c.city + ")" : "") + (c.done ? " · 폴더 등록됨" : "") + (sigMode && c.sig_block ? " · 시그니처 불가" : "")) + "</option>").join("");
+  sel.innerHTML = d.candidates.map((c) => "<option value=\"" + esc(c.name) + "\">" + esc(c.rank + "위 " + c.name + (c.city ? " (" + c.city + ")" : "") + (c.done ? " · 폴더 등록됨" : "") + (sigMode && c.sig_block ? " · 재료 부족" : "")) + "</option>").join("");
   const first = d.candidates.find((c) => !c.done);
   sel.value = keep && d.candidates.some((c) => c.name === keep) ? keep : (first ? first.name : (d.candidates[0] || {}).name || "");
 
@@ -340,9 +340,9 @@ function render(d) {
   $("previewCost").textContent = "약 " + won(fc.preview) + (fc.mode === "signature" ? " · 대본·나레이션·사진 영상(AI 영상 없음)" : " · 영상 없음");
   $("produceCost").textContent = "약 " + won(fc.produce) + (fc.mode === "signature" ? " · AI 영상 4컷" : "") + (fc.reuse ? " · 미리보기 #" + fc.reuse.number + " 재사용" : "") + " · 누르면 한 번 더 확인";
   $("fmtNote").textContent = blk
-    ? "이 숙소는 시그니처 영상을 만들 재료가 부족해 잠겨 있습니다(" + blk.at + "): " + blk.reason + ". 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요."
+    ? "이 숙소는 시그니처 영상을 만들 재료(장면 사진·장소·사실)가 부족해 잠겨 있습니다(" + blk.at + "): " + blk.reason + ". 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요."
     : fc.mode === "signature"
-    ? "걱정(훅) → 답(정체) → 문 열면·하면·그다음(순간) → 조건 한 줄 → 되돌아옴(약속) 순서로, 모든 문장이 장점 하나를 다른 관점으로 말합니다. 나레이션 + 가라오케 자막 + 음악. 미리보기는 AI 영상 없이 대본·화면 계획·목소리를 먼저 확인하고, 정식 제작 때 순간 문장을 실사 뒷모습 사람·손·강아지·환경(빛·물·커튼)이 움직이는 AI 컷 4개로 만듭니다(얼굴 없음 · 화면에 'AI 연출' 표시)."
+    ? "걱정(훅) → 답(정체) → 문 열면·하면·그다음(순간) → 방을 나서면(다른 장소) → 조건 한 줄 → 제안 순서로, 모든 문장이 장점 하나를 다른 관점으로 말합니다. 화면은 12~14컷(문장마다 서로 다른 사진 1~2컷 · 이어지는 컷에 같은 사진 금지 · 장소 5곳 이상 권장). 미리보기는 AI 영상 없이 대본·화면 계획·목소리를 먼저 확인하고(공식 안내문 읽기 포함 약 115원), 정식 제작 때 순간 문장을 실사 뒷모습 사람·손·강아지·환경이 움직이는 AI 컷 4개로 만듭니다(앞 2~2.6초만 쓰고 나머지는 다른 사진 · 얼굴 없음 · 화면에 'AI 연출' 표시). 장면 사진 6장·장소 4곳 미만이면 만들지 않습니다."
     : "물놀이·객실·특별 공간을 9컷으로 소개하는 예전 형식(나레이션 + 미니어처 인물).";
   const hold = Date.now() < holdUntil;
   $("previewBtn").disabled = !!act || hold || room < fc.preview || !sel.value || !!blk;
@@ -449,7 +449,7 @@ $("loginBtn").onclick = async () => {
 $("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") $("loginBtn").click(); });
 $("logout").onclick = async () => { await api("/api/logout", {}).catch(() => {}); show("login"); };
 $("refreshBtn").onclick = () => { $("runMsg").className = "msg"; load(); };
-$("previewBtn").onclick = () => start("preview");                            // 미리보기는 AI 영상 없음(약 80~90원) — 바로 시작
+$("previewBtn").onclick = () => start("preview");                            // 미리보기는 AI 영상 없음(약 80~115원) — 바로 시작
 $("fmt").onchange = () => { try { localStorage.setItem("stayFmt", $("fmt").value); } catch (e) {} if (S) render(S); };
 $("stay").onchange = () => { if (S) render(S); };
 try { const f = localStorage.getItem("stayFmt"); if (f && [...$("fmt").options].some((o) => o.value === f)) $("fmt").value = f; } catch (e) {}

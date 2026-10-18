@@ -46,7 +46,7 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
       "Chrome/128.0.0.0 Safari/537.36")
 MAX_PAGES = 10
 MAX_IMAGES = 24
-MIN_SHORT = 560          # 짧은 변 최소 (px)
+MIN_SHORT = 500          # 짧은 변 최소 (px) — 2026-10-18 v6: 800×520 사우나·피트니스 사진이 걸러지던 것을 받는다(짧은 인서트 컷용 · photos.PANEL_INSERT)
 MIN_LONG = 900           # 긴 변 최소 (px) — 1024px 사진은 통과, 썸네일은 탈락
 PAGE_PAUSE = 1.0
 
@@ -240,7 +240,15 @@ def _first_seg(path: str) -> str:
 
 
 FACILITY_WORDS = ("사우나", "찜질", "스파", "온천", "노천", "키즈", "조식", "산책", "라운지", "피트니스", "수영장", "워터파크", "파도풀", "유수풀", "자쿠지",
-                  "sauna", "spa", "kids", "breakfast", "trail", "lounge", "fitness", "pool", "waterpark", "jacuzzi")
+                  "반려", "펫", "도그", "강아지", "애견", "살롱",            # 2026-10-18 v6: 세인트존스 도그 파크·로젯펫살롱 페이지를 수집기가 발견조차 못 했다
+                  "sauna", "spa", "kids", "breakfast", "trail", "lounge", "fitness", "pool", "waterpark", "jacuzzi", "pet", "dog", "puppy")
+LINK_TEXT: dict[str, str] = {}                                     # 페이지 주소 → 링크 글(discover_pages 가 채움) — 시설 페이지 판정(want_hit)에 쓴다
+
+
+def want_hit(page: str, want) -> bool:
+    """이 페이지가 시설·테마 낱말 페이지인가(주소 + 링크 글). 그런 페이지는 1바퀴부터 페이지당 상한까지 모은다(stay-run-55: 펫 객실 페이지 5장 중 2장만 가져옴)."""
+    hay = (urllib.parse.urlsplit(page).path + " " + LINK_TEXT.get(page, "")).lower()
+    return any(w.lower() in hay for w in _want_words(want))
 
 
 def _want_words(want) -> list[str]:
@@ -276,6 +284,8 @@ def discover_pages(root: str, html: str, limit: int = MAX_PAGES, extra: list[str
         if u in out or PAGE_SKIP.search(s.path + " " + text):
             continue
         hay = s.path + " " + text
+        if text and len(text) <= 80:
+            LINK_TEXT[u] = text
         score = sum(w for w, rx in PAGE_KW if rx.search(hay))
         # 2026-10-11 운영자 "사우나 같은 필요한 사진을 공식 홈페이지에서 다 반영": 이 숙소의 확인된 시설·테마 낱말이 링크에 있으면 그 페이지를 가장 먼저 본다
         score += sum(4 for w in _want_words(want) if w.lower() in hay.lower())
@@ -482,8 +492,9 @@ def collect(name: str, city: str, out_dir: Path, official_url: str | list | None
         urls = [u for u in found if u not in shared]
         res["shared_excluded"] += len(found) - len(urls)
         cands[page], pos[page], got_by[page] = urls, 0, 0
-        got = grab(page, 0 if page == _norm(url) else first)          # 첫 페이지(그룹 프로모션 혼입)는 1바퀴에서 빼고 채우기 때만
-        log(f"  페이지 {i + 1}/{len(pages)} {urllib.parse.urlsplit(page).path or '/'} → 사진 {got}장 (누적 {len(res['photos'])})")
+        hot = page != _norm(url) and want_hit(page, want)
+        got = grab(page, 0 if page == _norm(url) else (per_page if hot else first))   # 첫 페이지(그룹 프로모션 혼입)는 1바퀴에서 빼고 채우기 때만 · 시설 페이지는 1바퀴부터 상한까지
+        log(f"  페이지 {i + 1}/{len(pages)} {urllib.parse.urlsplit(page).path or '/'} → 사진 {got}장 (누적 {len(res['photos'])})" + (" · 시설 페이지(전부)" if hot else ""))
     for page in [pg for pg in pages if pg in cands]:                         # 2바퀴: 남은 한도 채우기
         if len(res["photos"]) >= max_images:
             break

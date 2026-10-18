@@ -69,7 +69,7 @@ MOTION_SIG = 0.12                                                 # 짧은 컷�
 MUSIC_LEVEL = 0.9                                                 # 나레이션이 없어 음악을 주 소리로
 PATTERNS = ("push", "pan", "diag", "tilt", "pull")
 MOOD_RX = re.compile(r"노을빛|물들|푸른|힐링|낭만|감성|설레|설렘|여유로|아늑|포근|로맨틱|그림\s?같|꿈\s?같|인생샷|완벽한|행복|분위기|추억|따뜻한 곳|쉬는 곳|머물고 싶")   # run-47 '감성팔이' — 사실 없는 분위기 말
-FACT_PREFIX_RX = re.compile(r"^(블로그 교차 확인 시설|공식 홈페이지 한 줄 요약|공식 홈페이지 상세|후보표 훅): ")
+FACT_PREFIX_RX = re.compile(r"^(블로그 교차 확인 시설|공식 홈페이지 한 줄 요약|공식 홈페이지 상세|공식 안내문|후보표 훅): ")
 ROLES = ("신박함", "차별성", "유인")
 ADJ_RX = re.compile(r"인접|근처|주변|바로\s?옆|옆에|도보|셔틀|차로|분 거리|가까운")      # 숙소 밖 시설(stay-run-48: '오션월드와 루지월드 인접'을 숙소 시설처럼 고를 뻔)
 PEERS_PATH = mt.ROOT / "data" / "discover" / "latest" / "candidates.json"     # 같은 테마 다른 후보(시그니처를 비교로 고르려고)
@@ -236,6 +236,7 @@ def facts_list(h: dict) -> list[str]:
     out += [f"블로그 교차 확인 시설: {f}" for f in (h.get("verified_facilities") or []) if str(f).strip()]
     if h.get("signature"):
         out.append(f"공식 홈페이지 한 줄 요약: {h['signature']}")
+    out += [f"공식 안내문: {f}" for f in (h.get("notice_facts") or []) if str(f).strip()]      # v6: 글 안내문 이미지에서 읽은 사실(반려견 입장·무료·운영시간)
     seen, uniq = set(), []
     for f in out:
         if f not in seen:
@@ -248,7 +249,8 @@ def usable_photos(h: dict, min_q: int = 5) -> list[dict]:
     run-47: 쿠팡 외관 항공 사진 5장(같은 단지 다른 각도)이 모두 '시그니처 사진'으로 들어가 6컷을 채웠다 → 9컷 형식의 MAX_EXTERIOR 를 그대로 쓴다.
     v3: 품질 5 이상이 2장이 안 되면 choose_signature 가 품질 3 이상(9컷 형식 기준)으로 한 번 더 본다 — 사진이 있는데 멈추지 않게."""
     base = [p for p in (h.get("classified") or []) if p.get("category") in photos.CATS and int(p.get("quality") or 0) >= min_q
-            and not p.get("people") and not p.get("mismatch") and Path(str(p.get("path") or "")).exists()]
+            and not p.get("people") and not p.get("mismatch") and not p.get("closed") and photos.panel_grade(p) != "none"
+            and Path(str(p.get("path") or "")).exists()]
     base.sort(key=lambda p: (-int(p.get("quality") or 0), int(p.get("k") or 0)))
     out, hashes, ext = [], [], 0
     for p in base:
@@ -1318,7 +1320,7 @@ def render(shots: list[dict], text: dict, h: dict, req: dict, report: dict, fold
 
 # ── 7. 계획 저장·재사용 ─────────────────────────────────────────────────────────────────
 H_KEYS = ("name", "city", "room_names", "verified_facilities", "theme_hits", "blog_30d", "blog_total", "min_price", "honest", "photo_counts",
-          "official_facts", "signature", "hook", "affiliate_url", "official_site", "rooms")
+          "official_facts", "signature", "hook", "affiliate_url", "official_site", "rooms", "notice_facts", "closed_facilities", "panels", "notices_read")
 
 
 def save_plan(req: dict, h: dict, pos0: int, sig: dict, shots: list[dict], text: dict) -> Path:
