@@ -770,6 +770,13 @@
           "pattern": "名前当て(옛)",
           "voice": false
         }
+      },
+      "stats": {
+        "at": "2026-10-18T22:43:03Z",
+        "error": "권한 없음 — 토큰 재발급 필요(scripts/youtube_oauth.py) · analytics: <HttpError 403 when requesting https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE&startDate=2026-10-06&endDate=2026-10-18&metrics=views%2CestimatedMinutesWatched%2Cave",
+        "token_scopes": [
+          "https://www.googleapis.com/auth/youtube.upload"
+        ]
       }
     }
   },

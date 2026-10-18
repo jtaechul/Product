@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-15T16:23:00Z",
+  "updated": "2026-10-18T22:43:03Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -10,24 +10,14 @@
       "job": null,
       "created": "2026-10-10T03:06:56Z",
       "uploaded_at": "2026-10-11T00:10:00Z",
-      "stats": null,
-      "viewed": null,
-      "trial": {
-        "state": "skipped",
-        "posted_at": null,
-        "checked_at": null,
-        "winner": null,
-        "kind": null,
-        "reason": "운영자가 건너뜀",
-        "a": {
-          "line": "獲物を、決して逃がさない",
-          "pattern": "異常な行動"
-        },
-        "b": {
-          "line": "海の中の、食虫植物？",
-          "pattern": "常識破り"
-        }
-      }
+      "stats": {
+        "at": "2026-10-18T22:43:02Z",
+        "error": "권한 없음 — 토큰 재발급 필요(scripts/youtube_oauth.py) · analytics: <HttpError 403 when requesting https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE&startDate=2026-10-10&endDate=2026-10-18&metrics=views%2CestimatedMinutesWatched%2Cave",
+        "token_scopes": [
+          "https://www.googleapis.com/auth/youtube.upload"
+        ]
+      },
+      "viewed": null
     },
     {
       "id": "bathynomus_giganteus",
@@ -38,9 +28,14 @@
       "job": null,
       "created": "2026-09-27T00:00:00Z",
       "uploaded_at": "2026-09-28T12:23:52Z",
-      "stats": null,
-      "viewed": null,
-      "trial": null
+      "stats": {
+        "at": "2026-10-18T22:43:02Z",
+        "error": "권한 없음 — 토큰 재발급 필요(scripts/youtube_oauth.py) · analytics: <HttpError 403 when requesting https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE&startDate=2026-09-28&endDate=2026-10-18&metrics=views%2CestimatedMinutesWatched%2Cave",
+        "token_scopes": [
+          "https://www.googleapis.com/auth/youtube.upload"
+        ]
+      },
+      "viewed": null
     },
     {
       "id": "chaunax_stigmaeus",
@@ -51,24 +46,14 @@
       "job": null,
       "created": "2026-10-15T14:54:15Z",
       "uploaded_at": "2026-10-16T00:00:00Z",
-      "stats": null,
-      "viewed": null,
-      "trial": {
-        "state": "skipped",
-        "posted_at": null,
-        "checked_at": null,
-        "winner": null,
-        "kind": null,
-        "reason": "운영자가 건너뜀",
-        "a": {
-          "line": "",
-          "pattern": ""
-        },
-        "b": {
-          "line": "",
-          "pattern": ""
-        }
-      }
+      "stats": {
+        "at": "2026-10-18T22:43:02Z",
+        "error": "권한 없음 — 토큰 재발급 필요(scripts/youtube_oauth.py) · analytics: <HttpError 403 when requesting https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE&startDate=2026-10-15&endDate=2026-10-18&metrics=views%2CestimatedMinutesWatched%2Cave",
+        "token_scopes": [
+          "https://www.googleapis.com/auth/youtube.upload"
+        ]
+      },
+      "viewed": null
     },
     {
       "id": "enypniastes_eximia",
@@ -79,9 +64,14 @@
       "job": null,
       "created": "2026-09-30T09:44:09Z",
       "uploaded_at": "2026-09-30T22:35:06Z",
-      "stats": null,
-      "viewed": null,
-      "trial": null
+      "stats": {
+        "at": "2026-10-18T22:43:02Z",
+        "error": "권한 없음 — 토큰 재발급 필요(scripts/youtube_oauth.py) · analytics: <HttpError 403 when requesting https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE&startDate=2026-09-30&endDate=2026-10-18&metrics=views%2CestimatedMinutesWatched%2Cave",
+        "token_scopes": [
+          "https://www.googleapis.com/auth/youtube.upload"
+        ]
+      },
+      "viewed": null
     },
     {
       "id": "lithodidae",
@@ -92,7 +82,13 @@
       "job": null,
       "created": "2026-10-05T15:29:14Z",
       "uploaded_at": "2026-10-06T10:00:00Z",
-      "stats": null,
+      "stats": {
+        "at": "2026-10-18T22:43:03Z",
+        "error": "권한 없음 — 토큰 재발급 필요(scripts/youtube_oauth.py) · analytics: <HttpError 403 when requesting https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE&startDate=2026-10-06&endDate=2026-10-18&metrics=views%2CestimatedMinutesWatched%2Cave",
+        "token_scopes": [
+          "https://www.googleapis.com/auth/youtube.upload"
+        ]
+      },
       "viewed": {
         "pct": 18.6,
         "at": "2026-10-09T14:16:15Z",
@@ -102,16 +98,7 @@
           "pattern": "名前当て(옛)",
           "voice": false
         }
-      },
-      "trial": null
+      }
     }
-  ],
-  "hook_patterns": {},
-  "ig": {
-    "at": "2026-10-15T16:13:20Z",
-    "expected": "abyss_0cean",
-    "ok": false,
-    "username": "lord.shiba.ybd",
-    "error": "연결된 계정이 @lord.shiba.ybd — ABYSS(@abyss_0cean)가 아니라 시험 릴스를 올리지 않습니다(키를 @abyss_0cean 것으로 바꿔 주세요)"
-  }
+  ]
 }

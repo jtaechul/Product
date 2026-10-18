@@ -839,6 +839,13 @@
         "at": "2026-10-15T16:22:59Z",
         "publish_at": "2026-10-16T00:00:00Z",
         "playlist_error": "<HttpError 403 when requesting https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50&alt=json returned \"Request had insuffici"
+      },
+      "stats": {
+        "at": "2026-10-18T22:43:02Z",
+        "error": "권한 없음 — 토큰 재발급 필요(scripts/youtube_oauth.py) · analytics: <HttpError 403 when requesting https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE&startDate=2026-10-15&endDate=2026-10-18&metrics=views%2CestimatedMinutesWatched%2Cave",
+        "token_scopes": [
+          "https://www.googleapis.com/auth/youtube.upload"
+        ]
       }
     }
   },
