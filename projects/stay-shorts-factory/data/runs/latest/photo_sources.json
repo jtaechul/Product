@@ -32,7 +32,7 @@
     "source": "official",
     "url": "https://new.stjohns.co.kr/uploads/room/2021/08/114f34599d49ced4ad2f61db33bb05d2.jpg",
     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "더블 침대와 어린이용 보조 침대, 키즈 테이블이 갖춰진 키즈 객실 내부이다."
+    "description": "바다 생물 벽화로 꾸며진 키즈 객실에 더블침대와 아동용 침대가 놓여 있다."
    },
    {
     "n": 12,
@@ -40,15 +40,15 @@
     "source": "official",
     "url": "https://new.stjohns.co.kr/uploads/room/2024/06/b18b67bcd0b94aabe9f76180dff57265.jpg",
     "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "발코니 너머로 바다가 내려다보이는 반려견 동반 객실의 더블 침대와 전경이다."
+    "description": "바다가 내려다보이는 발코니 창가 옆에 반려견 계단과 침대가 마련된 펫 전용 객실이다."
    },
    {
     "n": 13,
     "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2020/11/034d4715652a511806b5515bb6febedf.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "침대 옆에 반려견용 하우스와 식기, 테이블이 배치되어 있다."
+    "url": "https://new.stjohns.co.kr/uploads/room/2026/07/5d4d1856e45082ced7bfbb94b504d68a.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+    "description": "키즈 전용 침대와 동물 모양 쿠션, 미니 냉장고가 놓여 있다."
    },
    {
     "n": 14,
@@ -56,15 +56,15 @@
     "source": "official",
     "url": "https://new.stjohns.co.kr/uploads/post/2026/05/ed27d480ada26c24f36de08fe4c3d0de.jpg",
     "page": "https://new.stjohns.co.kr/post/1248",
-    "description": "푸른 바다 위로 작은 보트가 지나가고 아래로 모래사장이 보인다."
+    "description": "푸른 동해 바다 위로 작은 보트가 물살을 가르며 지나간다."
    },
    {
     "n": 15,
     "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2026/07/5d4d1856e45082ced7bfbb94b504d68a.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "키즈 전용 침대와 캐릭터 쿠션, 소형 가전이 객실 내에 놓여 있다."
+    "url": "https://new.stjohns.co.kr/uploads/room/2020/11/034d4715652a511806b5515bb6febedf.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
+    "description": "침대 옆에 원형 협탁과 의자, 바닥에 반려견 전용 집이 놓여 있다."
    }
   ]
  }

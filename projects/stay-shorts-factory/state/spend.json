@@ -526,5 +526,11 @@
   "kind": "image",
   "krw": 98,
   "note": "gemini-3.1-flash-image 미니어처 합성 petroom_frame.png (추정)"
+ },
+ {
+  "date": "2026-10-18",
+  "kind": "gemini_est",
+  "krw": 74,
+  "note": "2026-10-19-admin-sig-preview-em0C signature AI 글·음성 31회 (추정)"
  }
 ]

@@ -10,7 +10,7 @@
  "max_veo_cuts": 1,
  "caption_style": "shadow",
  "crawl": true,
- "note": "관리자 페이지 시그니처 이야기 미리보기 — 세인트존스 호텔 · 예상 약 90원 · 2026-10-19 06:51 KST",
+ "note": "잠금(자동 · 실행 끝): 2026-10-19-admin-sig-preview-em0C",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -20,6 +20,5 @@
   "세인트존스 호텔": "https://new.stjohns.co.kr/"
  },
  "mini_scale": "life",
- "format": "story",
- "stage": "preview"
+ "format": "story"
 }
