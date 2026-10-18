@@ -118,6 +118,8 @@ jobs:
             projects/stay-shorts-factory/build/story/shot_*.png
             projects/stay-shorts-factory/build/story/narr_*.wav
             projects/stay-shorts-factory/build/story/veo_b*.mp4
+            projects/stay-shorts-factory/build/story/sb_*.png
+            projects/stay-shorts-factory/build/story/sheet_*.png
           if-no-files-found: ignore
           retention-days: 90
 
