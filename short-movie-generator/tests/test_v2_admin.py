@@ -1443,7 +1443,7 @@ def test_after_video_writes_youtube_title_right_away(v2, monkeypatch):
     st = admin.load_status("test_fish")
     m = st["artifacts"]["upload"]["meta"]
     assert st["stages"]["upload"]["state"] == "review" and m["title_jp"].startswith("触ると青く光る") and m["tags_jp"]
-    assert m["privacy"] == "scheduled" and m["publish_at"].endswith("T00:00:00Z")          # 다음 아침 9시(일본=한국)
+    assert m["privacy"] == "scheduled" and m["publish_at"].endswith("T00:07:00Z")          # 다음 아침 9시 7분(일본=한국 · 정각 피하기)
     assert "trial" not in st["artifacts"] and "ig_caption_jp" not in m and "ig_short" not in (st["artifacts"].get("video") or {})
     assert not hasattr(admin, "trial_check") and not hasattr(admin, "make_ig_short") and not hasattr(admin, "_ig")
     idx = json.loads((v2 / "pilots" / "index.json").read_text(encoding="utf-8"))
@@ -1454,7 +1454,7 @@ def test_next_publish_slot_is_next_9am_jst():
     """예약 공개 기본 시각 = 아침 9시(운영자 지시 2026-10-10 · 예전 19시) · 1시간 안쪽이면 다음 날."""
     import datetime as dt
     ts = lambda s: dt.datetime.fromisoformat(s).timestamp()                         # noqa: E731
-    assert admin.PUBLISH_HOUR == 9
-    assert admin.next_publish_slot(ts("2026-10-08T22:00:00+00:00")) == "2026-10-09T00:00:00Z"    # 7시 → 오늘 9시
-    assert admin.next_publish_slot(ts("2026-10-08T23:30:00+00:00")) == "2026-10-10T00:00:00Z"    # 8시 30분 → 내일 9시
-    assert admin.next_publish_slot(ts("2026-10-09T08:00:00+00:00")) == "2026-10-10T00:00:00Z"    # 17시 → 내일 9시
+    assert (admin.PUBLISH_HOUR, admin.PUBLISH_MINUTE) == (9, 7)                                  # 정각·15분·5분 단위 피하기
+    assert admin.next_publish_slot(ts("2026-10-08T22:00:00+00:00")) == "2026-10-09T00:07:00Z"    # 7시 → 오늘 9시 7분
+    assert admin.next_publish_slot(ts("2026-10-08T23:30:00+00:00")) == "2026-10-10T00:07:00Z"    # 8시 30분 → 내일 9시 7분
+    assert admin.next_publish_slot(ts("2026-10-09T08:00:00+00:00")) == "2026-10-10T00:07:00Z"    # 17시 → 내일 9시 7분

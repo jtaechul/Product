@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-16-1 (인스타 연동 폐지 · 영상 승인하면 유튜브 제목·설명 바로 · 제목·설명·해시태그 복사 버튼)";
+const BUILD="v2026-10-18-1 (예약 공개 기본 9시 7분 — 정각 피하기)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2652,7 +2652,7 @@ function v2stageBody(st,stage){
       '<div id="up_atbox" style="display:'+(m.privacy==="scheduled"?'block':'none')+'">'+
         '<span class="lbl">공개할 시각 (한국 시간 = 일본 시간)</span><input type="datetime-local" id="up_at" value="'+esc(m.publish_at&&Date.parse(m.publish_at)>Date.now()+15*6e4?v2kstInput(m.publish_at):v2slot(0))+'">'+
         '<div class="btnrow"><button class="btn" data-atq="0">'+v2slotLabel(0)+'</button><button class="btn" data-atq="1">'+v2slotLabel(1)+'</button></div>'+
-        '<div class="hint">「승인 → 유튜브 업로드」를 누르면 지금 비공개로 올라가고, 이 시각에 유튜브가 자동으로 공개합니다. 시각은 지금부터 15분 이후로 골라 주세요.</div></div>'+
+        '<div class="hint">「승인 → 유튜브 업로드」를 누르면 지금 비공개로 올라가고, 이 시각에 유튜브가 자동으로 공개합니다. 시각은 지금부터 15분 이후로 골라 주세요. 정각(:00)·15분 단위는 다른 예약 영상이 몰려 피합니다(기본 9시 7분).</div></div>'+
       '<div class="btnrow"><button class="btn" id="upsave">수정 내용 저장</button><button class="btn warn" id="upmeta">AI로 다시 쓰기</button></div>';
   }
   return "";
@@ -2694,12 +2694,13 @@ const V2_PV={private:"비공개",unlisted:"일부 공개",public:"공개",schedu
 // 예약 공개(운영자 요청 2026-10-06): 화면은 한국 시간(KST=JST), 저장은 UTC
 function v2kstInput(iso){const t=Date.parse(iso);return isNaN(t)?"":new Date(t+9*36e5).toISOString().slice(0,16);}
 function v2kstLabel(iso){const v=v2kstInput(iso);if(!v)return "";const [d,h]=v.split("T"),[,mo,da]=d.split("-");return (+mo)+"월 "+(+da)+"일 "+h;}
-function v2nextAt(hour,dayOff){const k=new Date(Date.now()+9*36e5);k.setUTCDate(k.getUTCDate()+(dayOff||0));k.setUTCHours(hour,0,0,0);
+function v2nextAt(hour,dayOff,minute){const k=new Date(Date.now()+9*36e5);k.setUTCDate(k.getUTCDate()+(dayOff||0));k.setUTCHours(hour,minute||0,0,0);
   if(!dayOff&&k.getTime()-9*36e5<Date.now()+15*6e4)k.setUTCDate(k.getUTCDate()+1);return k.toISOString().slice(0,16);}
 // ★예약 공개 기본 시각 = 아침 9시(한국=일본 시간 · 운영자 지시 2026-10-10 · 예전 19시). 빠른 버튼은 날짜를 그대로 보여 준다
-//   (「오늘 09:00」은 낮에 누르면 이미 지나 내일이 돼 두 버튼이 같아지므로) — 가장 빠른 9시 · 그다음 날 9시.
-const V2_PUBLISH_HOUR=9;
-function v2slot(n){const v=v2nextAt(V2_PUBLISH_HOUR,0);return n?new Date(Date.parse(v+":00Z")+n*864e5).toISOString().slice(0,16):v;}
+//   (「오늘 09:00」은 낮에 누르면 이미 지나 내일이 돼 두 버튼이 같아지므로) — 가장 빠른 9시 7분 · 그다음 날 9시 7분.
+// ★정각 피하기(운영자 지적 2026-10-18): 예약 공개가 몰리는 정각·15분·5분 단위를 피해 9시 7분(서버 admin.PUBLISH_MINUTE 와 같게)
+const V2_PUBLISH_HOUR=9, V2_PUBLISH_MIN=7;
+function v2slot(n){const v=v2nextAt(V2_PUBLISH_HOUR,0,V2_PUBLISH_MIN);return n?new Date(Date.parse(v+":00Z")+n*864e5).toISOString().slice(0,16):v;}
 function v2slotLabel(n){const [d,h]=v2slot(n).split("T"),[,mo,da]=d.split("-");return (+mo)+"월 "+(+da)+"일 "+h;}
 const V2_CAT={"15":"반려동물/동물","28":"과학기술","27":"교육"};
 function v2copyBtn(fromId){return '<button class="btn v2edit" data-copyfrom="'+fromId+'">복사</button>';}
@@ -2901,7 +2902,7 @@ async function renderV2Episode(pid){
     const auto=!!V2_AUTO[stage], nextS=STG[STG.indexOf(stage)+1];
     const nextTxt=(act==="approve"&&nextS&&V2_AUTO[nextS])?(" 바로 이어서 "+STG_KO[nextS].slice(3)+"이(가) 자동으로 만들어집니다("+v2cost(nextS,st)+")."):"";
     const mv=stage==="video"?v2motionWarn(st.checks||{}):"";
-    const afterTxt=(act==="approve"&&stage==="video")?" 승인하면 유튜브 제목·설명·해시태그를 바로 씁니다(1~2분 · 예약 공개는 다음 아침 9시로 준비).":"";
+    const afterTxt=(act==="approve"&&stage==="video")?" 승인하면 유튜브 제목·설명·해시태그를 바로 씁니다(1~2분 · 예약 공개는 다음 아침 9시 7분으로 준비).":"";
     const msg=act==="approve"?(mv+(nIss?("AI가 의심 "+nIss+"건을 표시했습니다. 그래도 "):(mv?"그래도 ":""))+lab+"을(를) 승인할까요?"+nextTxt+afterTxt)
              :act==="revise"?(lab+"에 수정 요청을 보낼까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 요청대로 다시 만듭니다("+v2cost(stage,st)+")."+(stage==="video"?" 메모에 '3번 컷'처럼 번호를 적으면 그 컷만 다시 만듭니다(그만큼만 과금).":""):""))
              :(lab+"을(를) 처음부터 다시 할까요? 뒤 단계는 다시 잠깁니다."+(auto?" AI가 처음부터 다시 만듭니다("+v2cost(stage,st)+")."+(stage==="video"?" 8컷 전부 다시 생성해 비용이 큽니다.":""):""));

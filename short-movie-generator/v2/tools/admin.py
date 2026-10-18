@@ -2571,15 +2571,18 @@ def save_viewed(pid: str, data: dict) -> dict:
 # ★인스타 연동(시험 릴스 후킹 A·B · 인스타용 짧은 판 · 인스타 캡션)은 운영자 지시로 전부 폐지(2026-10-15):
 #   "인스타는 내가 알아서 올릴 테니 신경 꺼" — 시험 릴스가 키 문제로 멈추면 유튜브 제목·설명까지 막혔다(실사고 2026-10-15 아귀목 심해어 편).
 #   완성본 승인 → 바로 제목·설명·해시태그 + 예약 공개(다음 아침 9시) 준비. 업로드는 운영자 승인(관문 4) 그대로.
-PUBLISH_HOUR = 9                       # ★예약 공개 기본 시각 = 아침 9시(일본=한국 시간 · 운영자 지시 2026-10-10 · 예전 19시)
+PUBLISH_HOUR = 9                       # ★예약 공개 기본 시각 = 아침 9시대(일본=한국 시간 · 운영자 지시 2026-10-10 · 예전 19시)
+PUBLISH_MINUTE = 7                     # ★정각 피하기(운영자 지적 2026-10-18): 예약 공개는 정각·15분 단위(:00/:15/:30/:45)에 몰려
+#                                        새 영상끼리 첫 노출을 다툰다는 가설 → 정각·15분·5분 단위가 아닌 9시 7분. 실측(편마다 1번):
+#                                        09:10 공개 파리지옥말미잘 시청함 53.0% · 09:00 정각 아귀목 37.6%(일본 비율 차이도 커서 원인 단정 불가)
 
 
-def next_publish_slot(now: float | None = None, hour: int = PUBLISH_HOUR) -> str:
-    """다음 일본(=한국) 시간 아침 9시 — 지금부터 1시간 이상 뒤 → UTC 'YYYY-MM-DDTHH:MM:00Z'(유튜브 예약 공개 시각)."""
+def next_publish_slot(now: float | None = None, hour: int = PUBLISH_HOUR, minute: int = PUBLISH_MINUTE) -> str:
+    """다음 일본(=한국) 시간 아침 9시 7분 — 지금부터 1시간 이상 뒤 → UTC 'YYYY-MM-DDTHH:MM:00Z'(유튜브 예약 공개 시각)."""
     import datetime as dt
     jst = dt.timezone(dt.timedelta(hours=9))
     n = dt.datetime.fromtimestamp(time.time() if now is None else now, jst)
-    s = n.replace(hour=hour, minute=0, second=0, microsecond=0)
+    s = n.replace(hour=hour, minute=minute, second=0, microsecond=0)
     if s.timestamp() - n.timestamp() < 3600:
         s += dt.timedelta(days=1)
     return s.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:00Z")
@@ -2600,7 +2603,7 @@ def _write_meta_safely(pid: str, schedule: bool = True) -> bool:
         m = st["artifacts"]["upload"]["meta"]
         if m.get("privacy", "private") == "private":
             m["privacy"], m["publish_at"] = "scheduled", next_publish_slot()
-            _note(st, "upload", "meta", f"예약 공개 준비: {m['publish_at']}(UTC = 일본·한국 아침 {PUBLISH_HOUR}시) — 업로드는 「승인」을 눌러야 합니다")
+            _note(st, "upload", "meta", f"예약 공개 준비: {m['publish_at']}(UTC = 일본·한국 아침 {PUBLISH_HOUR}시 {PUBLISH_MINUTE}분) — 업로드는 「승인」을 눌러야 합니다")
             _save(status_path(pid), st)
     return True
 

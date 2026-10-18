@@ -257,7 +257,7 @@ statusOverride = null;
   // 예약 공개(운영자 요청 2026-10-06 · 기본 아침 9시 2026-10-10): 선택지 · 날짜가 보이는 9시 버튼 · 시각이 함께 전송 · 업로드 후 예약 안내
   statusOverride = s8; els = {}; await api.renderV2Episode("bathynomus_giganteus");
   const u9 = els.view.innerHTML; res.schedule_option_shown = u9.includes('value="scheduled"') && u9.includes('id="up_at"') &&
-    (u9.match(/data-atq="\d">\d+월 \d+일 09:00</g) || []).length === 2 && /id="up_at" value="\d{4}-\d\d-\d\dT09:00"/.test(u9);
+    (u9.match(/data-atq="\d">\d+월 \d+일 09:07</g) || []).length === 2 && /id="up_at" value="\d{4}-\d\d-\d\dT09:07"/.test(u9);
   els["up_tj"] = makeEl("up_tj"); els["up_tj"].value = "題"; els["up_pv"] = makeEl("up_pv"); els["up_pv"].value = "scheduled"; els["up_at"] = makeEl("up_at");
   const qb = (lists["[data-atq]"] || []).find(b => b.dataset.atq === "1"); if (qb?.onclick) qb.onclick();
   const picked = els["up_at"].value || "";
@@ -266,7 +266,7 @@ statusOverride = null;
   const sent9 = dispatched.slice(d9)[0]; const note9 = sent9 ? JSON.parse(sent9.body.inputs.note) : {};
   const first = (lists["[data-atq]"] || []).find(b => b.dataset.atq === "0"); if (first?.onclick) first.onclick(); const picked0 = els["up_at"].value || "";
   els["up_at"].value = picked;
-  res.schedule_sends_time = /T09:00$/.test(picked) && note9.privacy === "scheduled" && note9.publish_at === picked &&
+  res.schedule_sends_time = /T09:07$/.test(picked) && note9.privacy === "scheduled" && note9.publish_at === picked &&
     Date.parse(picked + ":00Z") - Date.parse(picked0 + ":00Z") === 864e5;                 // 두 버튼 = 가장 빠른 9시 · 그다음 날 9시(같아지지 않음)
   els["up_at"].value = "2020-01-01T19:00"; const d10 = dispatched.length; if (ap9?.onclick) await ap9.onclick();
   res.schedule_past_blocked = dispatched.length === d10;
