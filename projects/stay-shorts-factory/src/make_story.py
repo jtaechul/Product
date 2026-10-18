@@ -103,8 +103,7 @@ TAIL_MIN = 0.9                                                       # 둘째 �
 INSERT_MAX = 1.3                                                     # 짧은 인서트(작은 패널 사진) 컷 최대 길이
 C_PER_PHOTO = 2                                                      # 같은 원본 사진의 사진 무빙 컷 상한
 SEC_PER_CHAR = 0.152                                                 # 1.28배속 실측 6.6자/초 — 문장 길이로 컷 수를 미리 정한다
-GATE = {"photos": 6, "places": 4}                                    # 이 밑이면 미리보기도 만들지 않는다(재료 부족 잠금)
-WANT = {"photos": 8, "places": 5}                                    # 이 밑이면 미리보기 문서에 경고
+WANT = {"photos": 8, "places": 5}                                    # 이 밑이면 미리보기 문서에 경고만 — 2026-10-18 운영자 "5컷 미만이어도 AI로 다른 영상을 생성하면 괜찮아, 제한 걸지 마" → 관문(중단·잠금) 없음
 PLACE_RX = (("욕실", r"욕실|화장실|세면|샤워|변기|욕조"), ("사우나", r"사우나|찜질|발한"), ("온수탕·스파", r"온수탕|온탕|노천|스파|온천|자쿠지|히노키|족욕"),
             ("수영장", r"수영장|인피니티|돔|슬라이드|파도|유수풀|워터|풀\b|풀장|풀이"), ("바다", r"바다|해변|해안|오션|수평선|파도"),
             ("테라스", r"테라스|발코니|베란다|데크|루프탑|옥상"), ("정원·산책로", r"정원|산책|숲|잔디|소나무|해송"), ("라운지·카페", r"라운지|카페|바\b|레스토랑|식당|조식"),
@@ -278,14 +277,11 @@ def material(h: dict, pool: dict, rejected: set, report: dict) -> dict:
 
 
 def material_gate(mat: dict, h: dict, req: dict, report: dict) -> None:
-    """장면 사진·장소가 관문(GATE) 밑이면 만들지 않고 잠근다(관리실 '재료 부족') — 단조로운 영상(#55)은 아예 만들지 않는다. WANT 밑이면 경고만."""
+    """장면 사진·장소가 권장(WANT) 밑이면 경고만 남긴다 — 멈추거나 잠그지 않는다(운영자 2026-10-18 "5컷 미만이어도 AI로 다른 영상을 생성하면 괜찮아, 제한 걸지 마").
+    부족한 장면은 AI 컷(같은 사진 위의 다른 순간·동작)으로 채운다."""
     n, m = int(mat["photos"]), len(mat["places"])
-    if n < GATE["photos"] or m < GATE["places"]:
-        why = f"장면 부족 — 쓸 사진 {n}장 · 장소 {m}곳 {mat['places']} (최소 {GATE['photos']}장·{GATE['places']}곳 · 작은 패널 {mat['inserts']}장은 인서트만)"
-        sg.block(h, req, why)
-        raise RuntimeError(f"시그니처 이야기 불가 — {why} (만들지 않음)")
     if n < WANT["photos"] or m < WANT["places"]:
-        report["material_warning"] = f"장면 사진 {n}장 · 장소 {m}곳 — 권장 {WANT['photos']}장·{WANT['places']}곳 미만이라 화면이 단조로울 수 있음(사진이 더 있는 숙소가 유리)"
+        report["material_warning"] = f"장면 사진 {n}장 · 장소 {m}곳 — 권장 {WANT['photos']}장·{WANT['places']}곳 미만: 부족한 장면은 AI 컷으로 채운다(사진이 더 있는 숙소가 유리)"
         log("경고: " + report["material_warning"])
 
 
