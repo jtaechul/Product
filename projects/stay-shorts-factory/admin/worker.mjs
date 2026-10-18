@@ -35,8 +35,10 @@ const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.p
 // 형식별 예상 비용(원). 기존 9컷: 미리보기 글·음성 약 80 / 정식 제작(미니어처 3컷 + Veo 1컷) 약 2,500 (실측).
 // 시그니처 v4 이야기(2026-10-15 운영자 "진행해" · 장점 하나·여러 관점 · make_story): 미리보기 = 글·비전·음성(받아쓰기 포함) 약 90 + v6(2026-10-18) 안내문 읽기 약 25 · AI 영상 없음.
 //   제작(v5 2026-10-18) = 미리보기 대본·음성 재사용 + 화면 계획 AI 컷 4개(사람·강아지·환경 순간 컷 · 294 × 4 = 1,176) + 검수 약 3 + 글 ≈ 1,300, 미리보기 없이 ≈ 1,420
+// v7(2026-10-18 운영자 C안 "스토리보드는 이미지 한 장에 여러 씬, 돈 아껴"): 미리보기 = 글·음성·안내문 읽기 약 115 + 씬 스토리보드 시트(2×2 · 참조 사진별 1장 · 약 98원 × 4~6장) + 검수 ≈ 700
+//   제작 = 미리보기 패널 재사용(이미지 0원) + 사람·강아지 씬 Veo 최대 6컷(294 × 6 = 1,764) + 검수 ≈ 1,800, 미리보기 없이 ≈ 2,500
 const COST = {
-  signature: { preview: 115, produce: 1300, produce_fresh: 1420 },
+  signature: { preview: 700, produce: 1800, produce_fresh: 2500 },
   solo: { preview: 80, produce: 2500, produce_fresh: 2500 },
 };
 const costOf = (mode) => COST[mode];
@@ -387,7 +389,7 @@ async function startRun(env, body) {
   const reuse = mode === "signature" && action === "produce" ? sigPreviewIndex(runs)[`${format}|${stay}`] || null : null;
   const c = costOf(mode);
   const cost = action === "preview" ? c.preview : reuse ? c.produce : c.produce_fresh;
-  const paid = action === "produce";                                          // 시그니처 v4: 미리보기는 AI 영상 없음(약 90원) → 제작만 화면 확인 + veo_approved
+  const paid = action === "produce" || mode === "signature";                 // v7: 시그니처 미리보기도 스토리보드 시트(이미지)를 만들어 돈이 든다 → 화면 확인 + veo_approved
   const now = kstNow();
   const money = monthSpend(ledger, now.toISOString().slice(0, 7));
   if (money.total + cost > MONTH_CAP) {

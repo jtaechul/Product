@@ -337,12 +337,12 @@ function render(d) {
   const fc = fmtCost(d);
   const cur = d.candidates.find((c) => c.name === sel.value) || {};
   const blk = fc.mode === "signature" ? cur.sig_block : null;
-  $("previewCost").textContent = "약 " + won(fc.preview) + (fc.mode === "signature" ? " · 대본·나레이션·사진 영상(AI 영상 없음)" : " · 영상 없음");
-  $("produceCost").textContent = "약 " + won(fc.produce) + (fc.mode === "signature" ? " · AI 영상 4컷" : "") + (fc.reuse ? " · 미리보기 #" + fc.reuse.number + " 재사용" : "") + " · 누르면 한 번 더 확인";
+  $("previewCost").textContent = "약 " + won(fc.preview) + (fc.mode === "signature" ? " · 씬 스토리보드 시트 + 대본·나레이션(AI 영상 없음) · 누르면 한 번 더 확인" : " · 영상 없음");
+  $("produceCost").textContent = "약 " + won(fc.produce) + (fc.mode === "signature" ? " · 사람·강아지 씬 Veo 최대 6컷" : "") + (fc.reuse ? " · 미리보기 #" + fc.reuse.number + " 재사용" : "") + " · 누르면 한 번 더 확인";
   $("fmtNote").textContent = blk
     ? "이 숙소는 시그니처 영상을 만들 재료(장면 사진·장소·사실)가 부족해 잠겨 있습니다(" + blk.at + "): " + blk.reason + ". 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요."
     : fc.mode === "signature"
-    ? "걱정(훅) → 답(정체) → 문 열면·하면·그다음(순간) → 방을 나서면(다른 장소) → 조건 한 줄 → 제안 순서로, 모든 문장이 장점 하나를 다른 관점으로 말합니다. 화면은 12~14컷(문장마다 서로 다른 사진 1~2컷 · 이어지는 컷에 같은 사진 금지 · 장소 5곳 이상 권장). 미리보기는 AI 영상 없이 대본·화면 계획·목소리를 먼저 확인하고(공식 안내문 읽기 포함 약 115원), 정식 제작 때 순간 문장을 실사 뒷모습 사람·손·강아지·환경이 움직이는 AI 컷 4개로 만듭니다(앞 2~2.6초만 쓰고 나머지는 다른 사진 · 얼굴 없음 · 화면에 'AI 연출' 표시). 장면 사진이 적어도 멈추지 않고 부족한 장면은 AI 컷으로 채웁니다(미리보기 문서에 경고)."
+    ? "걱정(훅) → 답(정체) → 문 열면·하면·그다음(순간) → 방을 나서면(다른 장소) → 조건 한 줄 → 제안 순서로, 모든 문장이 장점 하나를 다른 관점으로 말합니다. 화면은 12~14컷이고 컷마다 '씬'(그 장소의 실제 사진 + 뒷모습 사람·손·강아지 + 시간대)을 AI 스토리보드로 만듭니다 — 참조 사진마다 2×2 시트 한 장(씬 4개 · 장당 약 98원)을 만들어 패널을 검수하고(같은 공간·새 사물·얼굴·글자) 통과한 패널이 그 컷의 화면이 됩니다. 미리보기 = 스토리보드 시트 + 대본·나레이션(AI 영상 없음 · 금액 확인창), 정식 제작 = 사람·강아지 씬만 그 패널에서 시작하는 Veo 영상 최대 6컷(앞 2.6초 사용 · 얼굴 없음 · 화면에 'AI 연출' 표시). 사진이 적어도 멈추지 않습니다(같은 사진 위의 다른 순간으로 채움)."
     : "물놀이·객실·특별 공간을 9컷으로 소개하는 예전 형식(나레이션 + 미니어처 인물).";
   const hold = Date.now() < holdUntil;
   $("previewBtn").disabled = !!act || hold || room < fc.preview || !sel.value || !!blk;
@@ -449,15 +449,21 @@ $("loginBtn").onclick = async () => {
 $("pw").addEventListener("keydown", (e) => { if (e.key === "Enter") $("loginBtn").click(); });
 $("logout").onclick = async () => { await api("/api/logout", {}).catch(() => {}); show("login"); };
 $("refreshBtn").onclick = () => { $("runMsg").className = "msg"; load(); };
-$("previewBtn").onclick = () => start("preview");                            // 미리보기는 AI 영상 없음(약 80~115원) — 바로 시작
-$("fmt").onchange = () => { try { localStorage.setItem("stayFmt", $("fmt").value); } catch (e) {} if (S) render(S); };
-$("stay").onchange = () => { if (S) render(S); };
-try { const f = localStorage.getItem("stayFmt"); if (f && [...$("fmt").options].some((o) => o.value === f)) $("fmt").value = f; } catch (e) {}
+$("previewBtn").onclick = () => {                                             // v7: 시그니처 미리보기 = 씬 스토리보드 시트(이미지 · 돈) → 금액 확인창. 기존 9컷 미리보기는 바로 시작
+  if (!S) return;
+  const fc = fmtCost(S);
+  if (fc.mode !== "signature") return start("preview");
+  const stay = $("stay").value, m = S.money, c = fc.preview;
+  openSheet({ label: "스토리보드 미리보기 확인", title: stay, big: "약 " + esc(won(c)) + " <small>씬 스토리보드 시트 + 대본·나레이션</small>",
+    after: "AI 영상은 아직 안 만듭니다. 참조 사진마다 2×2 스토리보드 이미지(씬 4개 · 장당 약 98원)를 만들어 패널을 검수하고 텔레그램으로 보냅니다. 패널이 괜찮으면 '정식 제작'에서 사람·강아지 씬만 영상으로 만듭니다. 이번 달 " + won(m.total) + " → 약 " + won(m.total + c) + " (한도 " + won(m.cap) + ")",
+    check: "약 " + won(c) + "이 나가는 것을 압니다",
+    go: "미리보기 시작", onGo: () => start("preview", true) });
+};
 $("produceBtn").onclick = () => {
   if (!S) return;
   const stay = $("stay").value, m = S.money, fc = fmtCost(S), c = fc.produce;
   const how = fc.mode === "signature"
-    ? (fc.reuse ? "미리보기 #" + fc.reuse.number + "의 대본·나레이션·컷을 그대로 쓰고, 화면 계획대로 AI 컷 4개(훅 환경 + 사람·강아지·환경 순간 컷 · Veo 4초 · 컷당 약 294원)를 만듭니다(사람·강아지 컷은 얼굴·수·새 물건 검수 뒤 탈락하면 사진 무빙). "
+    ? (fc.reuse ? "미리보기 #" + fc.reuse.number + "의 대본·나레이션·스토리보드 패널을 그대로 쓰고(이미지 0원), 사람·강아지 씬 최대 6개를 그 패널에서 시작하는 Veo 4초 영상(컷당 약 294원 · 앞 2.6초 사용)으로 만듭니다(얼굴·수·새 물건 검수 뒤 탈락하면 패널 스틸 무빙). "
                 : "이 숙소의 이야기 미리보기가 없어 장점 선정·대본·나레이션부터 새로 만듭니다(검수 안 된 대본이 나갈 수 있습니다). ")
     : "";
   openSheet({ label: "정식 제작 확인", title: stay + " · " + $("fmt").selectedOptions[0].textContent.split(" · ")[0], big: "약 " + esc(won(c)) + " <small>정식 제작 1편</small>",

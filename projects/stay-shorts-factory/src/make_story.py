@@ -36,6 +36,7 @@ from PIL import Image, ImageDraw
 import design
 import make_folder
 import make_mini as mm
+import make_scenes as sc
 import make_sig as sg
 import make_solo as so
 import make_stay as ms
@@ -50,7 +51,7 @@ MID_LENSES = ("디테일", "상황", "사람", "행동", "연결", "희소성", 
 MOMENT_LENSES = ("디테일", "상황", "사람", "행동", "연결")              # '순간' 문장 — 사람·강아지·환경이 실제로 움직이는 AI 컷(A/B)만 (v5)
 PLACE_LENSES = ("정체", "희소성", "조건")                                # '장소' 문장 — 겨냥 사진 무빙(C) 허용
 END_LENSES = ("제안", "약속")                                            # 마지막 문장 = 제안(2026-10-18 운영자 "되돌아옴이 아니고 제안") · '약속'은 옛 계획·대본의 별칭
-AI_CUTS_DEFAULT = 4                                                  # 제작 때 AI 컷 수(표준 4 ≈ 1,176원 · 고급 6 ≈ 1,764원). request "ai_cuts"
+AI_CUTS_DEFAULT = 6                                                  # 제작 때 AI 컷 수(v7 C안: 사람·강아지 씬 최대 6 ≈ 1,764원). request "ai_cuts"
 ACTORS = ("couple", "back", "hand", "dog", "env")
 ACTOR_KO = {"couple": "뒷모습 커플", "back": "뒷모습 한 사람", "hand": "손", "dog": "강아지", "env": "환경(빛·물·커튼)"}
 DOG_RX = re.compile(r"반려견|강아지|펫\b|펫 |애견|댕댕|puppy|dog", re.I)
@@ -948,6 +949,7 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
                       **({"want": str(b.get("want"))} if b.get("want") else {})})
     route_shots(beats, shots, report)                                                  # v6 동선 규칙(코드 강제 · 0원)
     plan_visuals(beats, shots, report, int(req.get("ai_cuts") or AI_CUTS_DEFAULT), dog_ok(sig))
+    scenes = storyboard_scenes(models, beats, shots, sig, req, report)                   # v7 씬 스토리보드(시트 이미지 · 돈)
     shots_desc = [{"description": next(s["desc"] for s in shots if s["id"] == beats[0]["shots"][0])}]
     title = sg.ensure_sig_title(models, design.one_line(str(js.get("hook_title") or "")), [b["line"] for b in beats], shots_desc, sig, h, req, ttype, report)
     cap = js.get("caption") if isinstance(js.get("caption"), dict) else {}
@@ -963,13 +965,31 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
     name_title = str(js.get("title") or sig["name"])
     if h["name"] not in name_title:
         name_title = f"{h['name']} {name_title}".strip()
-    text = {"beats": beats, "hook_title": title, "hook_title_type": ttype,
+    text = {"beats": beats, "hook_title": title, "hook_title_type": ttype, "scenes": scenes,
             "caption": {"hook": design.one_line(str(cap.get("hook") or "")), "points": [design.one_line(str(x)) for x in cap.get("points") or [] if str(x).strip()][:3],
                         "save": design.one_line(str(cap.get("save") or ""))},
             "checklist": sg.grounded_checklist(js.get("checklist") or [{"fact": b["fact_i"]} for b in beats if b["fact_i"]], facts, h),
             "title": name_title[:40], "hashtags": ([t if str(t).startswith("#") else f"#{t}" for t in (js.get("hashtags") or []) if str(t).strip()] or sg.default_tags(req))[:5]}
     log("대본: " + " / ".join(f"[{b['lens']}] {b['line']}" for b in beats) + f" · 훅 제목 {title or '(없음)'}")
     return text
+
+
+def storyboard_scenes(models: dict, beats: list[dict], shots: list[dict] | dict, sig: dict, req: dict, report: dict) -> list[dict]:
+    """v7: 컷마다 씬(사진 + 누가·동작 + 시간대) → 참조 사진별 2×2 시트(돈) → 패널 검수 → 컷 화면으로. request "storyboard": false 면 건너뜀(v6 사진 무빙)."""
+    if req.get("storyboard", True) is False:
+        report["storyboard"] = {"skipped": "request storyboard=false"}
+        return []
+    by_id = {s["id"]: s for s in (shots.values() if isinstance(shots, dict) else shots)}
+    scenes = sc.plan_scenes(beats, by_id, dog_ok(sig), report)
+    if not scenes:
+        report["storyboard"] = {"sheets": [], "krw": 0, "scenes": []}
+        return []
+    sc.make_sheets(models, scenes, by_id, STORY, report)
+    sc.apply_scenes(beats, scenes, by_id)
+    sb = report.get("storyboard") or {}
+    log(f"씬 스토리보드: 씬 {len([x for x in scenes if not x.get('spare')])}개 + 여분 {len([x for x in scenes if x.get('spare')])} · 시트 {len(sb.get('sheets') or [])}장 "
+        f"· 통과 {sum(1 for x in scenes if x.get('ok'))}/{len(scenes)} · 약 {sb.get('krw', 0):,}원")
+    return [{k_: x.get(k_) for k_ in ("n", "j", "m", "sid", "k", "place", "who", "with_dog", "action_en", "time", "img", "ok", "why", "panel_px", "sheet", "spare")} for x in scenes]
 
 
 # ── 4. 렌더 ─────────────────────────────────────────────────────────────────────────────
@@ -989,7 +1009,7 @@ def aim_shots(models: dict, beats: list[dict], shots: dict, report: dict, skip: 
         if j in skip or not sid or sid not in shots or b.get("aim"):
             continue
         try:
-            r = ms._try_models("vision", models["text"], lambda m: sg._json_vision(m, AIM_SYSTEM, f"나레이션: {b['line']}", [STORY / shots[sid]["img"]]))
+            r = ms._try_models("vision", models["text"], lambda m: sg._json_vision(m, AIM_SYSTEM, f"나레이션: {b['line']}", [sc.cut_img(b, 0, shots, STORY)]))
             x, y = [min(0.92, max(0.08, float(v))) for v in (r.get("target") or [0.5, 0.5])[:2]]
             z = min(AIM_ZOOM[1], max(AIM_ZOOM[0], float(r.get("zoom") or 0.35)))
             b["aim"] = {"x": round(x, 3), "y": round(y, 3), "zoom": round(z, 2), "move": "out" if r.get("move") == "out" else "in", "what": str(r.get("what") or "")[:20]}
@@ -1041,17 +1061,20 @@ def beat_clip(beat: dict, shots: dict, L: float, out: Path, j: int) -> tuple[Pat
     for m, sid in enumerate(ids):
         sec = secs[m]
         pat = PATTERNS[(j + m) % len(PATTERNS)]
+        img = sc.cut_img(beat, m, shots, STORY)
         if m == 0 and beat.get("aim"):
-            parts.append(aimed_clip(STORY / shots[sid]["img"], sec, STORY / f"pan_{j}_{m}.mp4", beat["aim"]))
+            parts.append(aimed_clip(img, sec, STORY / f"pan_{j}_{m}.mp4", beat["aim"]))
         else:
-            parts.append(sg.photo_clip(STORY / shots[sid]["img"], sec, STORY / f"pan_{j}_{m}.mp4", pat, MOTION))
+            parts.append(sg.photo_clip(img, sec, STORY / f"pan_{j}_{m}.mp4", pat, MOTION))
+    ks = beat.get("cut_kinds") or []
+    sbk = " · AI 스토리보드" if any(str(x).startswith("AI 스토리보드") for x in ks) else ""
     if len(parts) == 1:
         a = beat.get("aim")
-        return parts[0], (f"사진 무빙·{a['what'] or '대상'} {'다가감' if a['move'] == 'in' else '물러남'} {1 + a['zoom']:.2f}배" if a else f"사진 무빙·{PATTERNS[j % len(PATTERNS)]}")
+        return parts[0], (f"사진 무빙·{a['what'] or '대상'} {'다가감' if a['move'] == 'in' else '물러남'} {1 + a['zoom']:.2f}배" if a else f"사진 무빙·{PATTERNS[j % len(PATTERNS)]}") + sbk
     lst = STORY / f"beat_{j}.txt"
     lst.write_text("".join(f"file '{p.resolve()}'\n" for p in parts), encoding="utf-8")
     ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(out)])
-    return out, f"사진 무빙 {n}컷"
+    return out, f"사진 무빙 {n}컷" + sbk
 
 
 def dog_ok(sig: dict) -> bool:
@@ -1145,14 +1168,28 @@ def plan_visuals(beats: list[dict], shots: list[dict] | dict, report: dict, budg
         + (f" · 경고 {warns}" if warns else ""))
 
 
+PERSON_PROMPT_IN = {                                                                 # v7: 스토리보드 패널에서 시작 — 손·사람이 첫 장면에 이미 있다
+    "hand": ("Camera: steady and locked-off, no camera movement. The single adult hand and forearm already visible at the bottom edge of the first frame {action}, "
+             "then rests naturally. Nothing else of the person ever appears. Realistic skin, same size as in the first frame. "
+             "Keep every object, structure, surface and the view exactly as in the first frame; do not add any new objects, other people or text."),
+    "back": ("Camera: steady, a very slow push-in. The one adult already in the first frame, seen strictly from behind (back of the head and shoulders, the face is never shown), "
+             "stays where they are and {action}. They never turn around. Keep every object, structure, surface and the view exactly as in the first frame; "
+             "do not add any new objects, other people or text."),
+}
+DOG_PROMPT_IN = ("Camera: steady and locked-off, no camera movement. The small cream-white toy poodle already in the first frame — a real, living dog with soft curly fur "
+                 "and a coral-red collar, at true small-dog size for the furniture — {action}. Natural, unhurried dog movement; it stays the same dog for the whole clip. "
+                 "No people appear, not even a hand. Keep every object, structure, surface and the view exactly as in the first frame; do not add any new objects, other animals or text.")
+
+
 def visual_prompt(v: dict, shot: dict) -> str:
     actor, act = v["actor"], v["action_en"]
+    in_frame = str(v.get("start_img") or "").startswith("sb_")                       # 통과한 스토리보드 패널에서 시작하면 사람·강아지가 이미 화면에 있다
     if actor in PERSON_PROMPT:
-        return PERSON_PROMPT[actor].format(action=act)
+        return (PERSON_PROMPT_IN if in_frame else PERSON_PROMPT)[actor].format(action=act)
     if actor == "couple":
-        return mm.real_back_prompt(act, dog=bool(v.get("with_dog")))
+        return mm.real_back_prompt(act, dog=bool(v.get("with_dog")), in_frame=in_frame)
     if actor == "dog":
-        return DOG_PROMPT.format(action=act)
+        return (DOG_PROMPT_IN if in_frame else DOG_PROMPT).format(action=act)
     if v.get("auto"):                                                              # 기본 환경 컷 = 사진 분류가 준 카메라·자연 움직임(run-4·23·33 검증)
         cat = shot.get("category") if shot.get("category") in photos.CATS else "special"
         return photos.prompt_for({"veo_prompt": shot.get("veo_prompt") or "", "category": cat})
@@ -1230,7 +1267,9 @@ def ai_beats(beats: list[dict], shots: dict, report: dict, theme: str, models: d
         if stopped:
             row["error"] = f"한도: {stopped}"; rows.append(row); continue
         small = STORY / f"veo_in_{j}.png"
-        Image.open(STORY / s["img"]).convert("RGB").resize((720, 1280), Image.LANCZOS).save(small, "PNG")
+        start = v.get("start_img") or s["img"]
+        row["start"] = start                                                               # v7: 통과한 스토리보드 패널이면 그 장면(사람·강아지가 이미 있음)에서 시작
+        Image.open(STORY / start).convert("RGB").resize((720, 1280), Image.LANCZOS).save(small, "PNG")
         try:
             prompt = visual_prompt(v, s)
         except RuntimeError as e:                                                 # 금지 낱말(커플 지시문) — 돈 쓰기 전에 그 컷만 사진 무빙
@@ -1312,7 +1351,7 @@ def render(text: dict, shots: dict, narr: dict, req: dict, report: dict, folder:
                 head = STORY / f"ai_{j}.mp4"
                 ms.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-t", f"{ai:.2f}", "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "19",
                         "-pix_fmt", "yuv420p", "-r", str(ms.FPS), "-vf", "scale=1080:1920,setsar=1", str(head)])
-                tail_clip = sg.photo_clip(STORY / shots[tail]["img"], tail_sec, STORY / f"pan_{j}_t.mp4", PATTERNS[(j + 1) % len(PATTERNS)], MOTION)
+                tail_clip = sg.photo_clip(sc.cut_img(b, 1, shots, STORY), tail_sec, STORY / f"pan_{j}_t.mp4", PATTERNS[(j + 1) % len(PATTERNS)], MOTION)
                 lst = STORY / f"beat_{j}.txt"
                 lst.write_text(f"file '{head.resolve()}'\nfile '{tail_clip.resolve()}'\n", encoding="utf-8")
                 src = STORY / f"beat_{j}.mp4"
@@ -1382,7 +1421,12 @@ def storyboard(text: dict, shots: dict, out: Path, report: dict) -> Path:
         y = pad + r * rowh
         for m, sid in enumerate(b["shots"][:3]):
             try:
-                im.paste(Image.open(STORY / shots[sid]["img"]).convert("RGB").resize((tw, th), Image.LANCZOS), (pad + m * (tw + 8), y))
+                im.paste(Image.open(sc.cut_img(b, m, shots, STORY)).convert("RGB").resize((tw, th), Image.LANCZOS), (pad + m * (tw + 8), y))
+                ck = (b.get("cut_kinds") or [""] * 3)[m] if m < len(b.get("cut_kinds") or []) else ""
+                if ck:
+                    d.rectangle((pad + m * (tw + 8), y + th - 24, pad + m * (tw + 8) + tw, y + th), fill=(0, 0, 0))
+                    d.text((pad + m * (tw + 8) + 4, y + th - 22), ("AI " + ck.split(" ", 2)[-1] if ck.startswith("AI") else ck)[:16], font=design.font(18, bold=False),
+                           fill=(94, 234, 212) if ck.startswith("AI") else (255, 170, 120))
             except Exception:  # noqa: BLE001
                 d.rectangle((pad + m * (tw + 8), y, pad + m * (tw + 8) + tw, y + th), fill=(40, 40, 48))
         x = pad * 2 + tw * 3 + 16
@@ -1437,6 +1481,19 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
     nf = list(h.get("notice_facts") or [])
     if nf:
         md += ["## 공식 안내문에서 읽은 사실", "", *[f"- {f}" for f in nf[:14]], ""]
+    sb = report.get("storyboard") or {}
+    scn = [x for x in (text.get("scenes") or []) if x.get("j") is not None]
+    if sb.get("sheets") is not None or scn:
+        md += [f"## 씬 스토리보드 (v7 · 시트 {len(sb.get('sheets') or [])}장 · 약 {sb.get('krw', 0):,}원 · 통과 {sum(1 for x in scn if x.get('ok'))}/{len(scn)})", "",
+               "| 문장 | 컷 | 장소 | 누가·동작 | 시간대 | 패널 | 결과 |", "|---|---|---|---|---|---|---|"]
+        for x in scn:
+            who = sc.WHO_KO.get(x.get("who"), "") + ("+강아지" if x.get("with_dog") else "")
+            md.append(f"| {x['j'] + 1} | {x['m'] + 1} | {x.get('place') or '-'} | {who}{(' · ' + str(x.get('action_en') or '')[:50]) if x.get('action_en') else ''} | {sc.TIME_KO.get(x.get('time'), '')} "
+                      f"| {x.get('panel_px') or 0}px | {'통과' if x.get('ok') else '탈락 → 원본 사진 (' + str(x.get('why') or '')[:40] + ')'} |")
+        for sh in sb.get("sheets") or []:
+            if not sh.get("ok"):
+                md.append(f"- 시트 {sh['n']} 실패: {sh.get('error')}")
+        md += ["", "- 통과한 패널이 그 컷의 화면(스틸 무빙)이 되고, 제작 때 사람·강아지 씬은 그 패널에서 Veo 영상이 시작됩니다. 탈락한 패널은 원본 사진으로 돌아갑니다.", ""]
     md += ["## 이야기 (관점별 한 문장)", "", "| # | 관점 | 문장 | 컷 | 장소 | 근거 |", "|---|---|---|---|---|---|"]
     for j, b in enumerate(text["beats"], 1):
         cuts = ", ".join(x + "(" + shots[x]["kind"] + ")" for x in b["shots"])
@@ -1536,6 +1593,13 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
             s_.setdefault("grade", "full"); s_.setdefault("place", place_of({"description": s_.get("desc"), "category": s_.get("category")}))
         route_shots(text["beats"], shot_list, report)
         plan_visuals(text["beats"], shot_list, report, int(req.get("ai_cuts") or AI_CUTS_DEFAULT), dog_ok(sig))   # 예산·규칙은 제작 때 값으로(0원)
+        scenes_ok = [x for x in (text.get("scenes") or []) if x.get("ok") and x.get("img") and (STORY / x["img"]).exists()]
+        if text.get("scenes"):                                                          # v7: 미리보기의 스토리보드 패널을 그대로(이미지 0원) — 파일이 없으면 원본
+            for x in text["scenes"]:
+                if x.get("img") and not (STORY / x["img"]).exists():
+                    x["ok"] = False; x["why"] = "패널 파일 없음(아티팩트)"
+            sc.apply_scenes(text["beats"], text["scenes"], {s_["id"]: s_ for s_ in shot_list})
+            report["storyboard"] = {"reused": True, "scenes": len(text["scenes"]), "panels_ok": len(scenes_ok), "krw": 0}
     else:
         h, pos0 = so.assets(req, models, report)
         sig = sg.choose_signature(models, h, req, report)
@@ -1588,7 +1652,11 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
                + ("\n일부 장면의 움직임(물결·빛·커튼·카메라 이동)은 실제 사진을 바탕으로 AI로 만들었어요. 실제 모습과 다를 수 있어요." if ai else "")
                + ("\n사람·강아지 장면은 AI로 만든 연출이에요(실제 사람·반려견 아님)." if any(r.get("ok") and r.get("type") == "A" for r in v.get("clips", [])) else "")
                + "\n\n" + " ".join(text["hashtags"]))
-    meta = {"mode": "signature", "format": "story", "label": "시그니처 이야기 미리보기(AI 영상 없음)" if preview else f"시그니처 이야기 제작(AI 영상 {ai}/{len(v.get('clips', []))}컷)",
+    sb = report.get("storyboard") or {}
+    n_sheets = len(sb.get("sheets") or [])
+    meta = {"mode": "signature", "format": "story",
+            "label": (f"시그니처 이야기 미리보기(스토리보드 시트 {n_sheets}장 · AI 영상 없음)" if n_sheets else "시그니처 이야기 미리보기(AI 영상 없음)") if preview
+            else f"시그니처 이야기 제작(AI 영상 {ai}/{len(v.get('clips', []))}컷)", "storyboard_krw": sb.get("krw", 0), "storyboard_sheets": n_sheets,
             "cut_count": report.get("cut_count"), "places": report.get("places"), "material_warning": report.get("material_warning"),
             "stage": report["stage"], "stay": h["name"], "signature": sig["name"], "title": text["title"], "caption": caption, "folder": folder, "folder_pos": pos,
             "bgm": report.get("bgm"), "pinned_comment": f"{h['name']} — 객실 타입·링크는 프로필 링크 → {pos}번 ({folder}) · 쿠팡 파트너스 링크 포함",

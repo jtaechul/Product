@@ -806,10 +806,13 @@ def main() -> int:
         # 2026-10-15 시그니처 v4(이야기): 미리보기는 AI 영상 없이(사진 무빙) 글·비전·음성만(약 90원) → 다른 모드처럼 허락 없이.
         #   제작(Veo 3컷 약 882원)은 veo_approved 필수 — 관리실 '정식 제작' 금액 확인창이 허락
         free_preview = str(req.get("stage") or "") == "preview"
-        if mode in ("veo", "top3", "solo", "signature") and (not veo.FAKE or mini_paid or sig_paid) and not free_preview and req.get("veo_approved") is not True \
+        # 2026-10-18 v7: 시그니처 미리보기가 씬 스토리보드 시트(이미지 · 약 500~1,000원)를 만든다 → 가짜 이미지가 아니면 미리보기도 허락 필수
+        if mode == "signature" and free_preview and req.get("storyboard", True) is not False and os.environ.get("SCENE_FAKE_IMAGE") != "1":
+            free_preview = False
+        if mode in ("veo", "top3", "solo", "signature") and (not veo.FAKE or mini_paid or sig_paid or not free_preview) and not free_preview and req.get("veo_approved") is not True \
                 and not (mode == "solo" and str(req.get("max_veo_cuts")) == "0" and not req.get("miniature")) \
                 and not (mode == "solo" and req.get("reuse_only") is True):   # Veo 0컷·미니어처 없음(사진만, 0원), 재사용 전용(새 영상·합성 0 · 글·음성만)만 허락 불필요
-            raise RuntimeError('유료 Veo 제작은 운영자 허락이 필요합니다 — request.json 에 "veo_approved": true 를 넣어 주세요 (미리보기는 "stage": "preview")')
+            raise RuntimeError('유료 제작(Veo·스토리보드 이미지)은 운영자 허락이 필요합니다 — request.json 에 "veo_approved": true 를 넣어 주세요 (관리실 버튼의 금액 확인이 허락)')
         NONCE_DONE.parent.mkdir(parents=True, exist_ok=True)                    # 잠금을 통과한 요청만 '처리됨'으로 — 잠긴 채 돈 실행은 같은 nonce 로 승인 뒤 다시 돌 수 있어야 한다
         NONCE_DONE.write_text(json.dumps({"nonce": req.get("nonce"), "at": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False) + "\n", encoding="utf-8")
         models = pick_models()

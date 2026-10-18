@@ -348,13 +348,22 @@ REAL_BAN_RX = re.compile(r"face|smil|look(s|ing)? (at|back|toward) (the )?camera
                          r"jump|run|dive|swim|splash|naked|bikini", re.I)
 
 
-def real_back_prompt(motion: str, dog: bool = False) -> str:
-    """실사 뒷모습 Veo 지시문. 얼굴·뒤돌아보기·새 물건을 부르는 낱말이 동작 문장에 있으면 돈 쓰기 전에 멈춘다."""
+REAL_BACK_PEOPLE_IN = ("PEOPLE: the couple already standing in the first frame — seen strictly from behind for the whole clip: only the backs of their heads, "
+                       "their shoulders and backs are visible. They stay where they are, never turn around, never look back, and their faces are never shown. "
+                       "Same clothes and hair as in the first frame, at true human size for the furniture and the floor.")
+REAL_BACK_DOG_IN = ("DOG: the small cream-white toy poodle already in the first frame — a real living dog at real small-dog size — stays with them on the floor.")
+
+
+def real_back_prompt(motion: str, dog: bool = False, in_frame: bool = False) -> str:
+    """실사 뒷모습 Veo 지시문. 얼굴·뒤돌아보기·새 물건을 부르는 낱말이 동작 문장에 있으면 돈 쓰기 전에 멈춘다.
+    in_frame(v7 스토리보드 패널에서 시작): 사람·강아지가 첫 장면에 이미 있으니 '걸어 들어온다' 대신 '그 자리에서' 움직인다."""
     bad = REAL_BAN_RX.search(motion or "")
     if bad:
         raise RuntimeError(f"뒷모습 동작 문장에 금지 낱말 '{bad.group(0)}' — 얼굴·새 물건이 나올 수 있음")
-    parts = [REAL_BACK_HEAD, REAL_BACK_PEOPLE] + ([REAL_BACK_DOG] if dog else []) + ["MOTION (4 seconds): " + motion.strip(),
-                                                                                    REAL_BACK_TAIL.format(dog=" and one small dog" if dog else "")]
+    people = REAL_BACK_PEOPLE_IN if in_frame else REAL_BACK_PEOPLE
+    dog_line = (REAL_BACK_DOG_IN if in_frame else REAL_BACK_DOG) if dog else None
+    parts = [REAL_BACK_HEAD, people] + ([dog_line] if dog_line else []) + ["MOTION (4 seconds): " + motion.strip(),
+                                                                          REAL_BACK_TAIL.format(dog=" and one small dog" if dog else "")]
     return " ".join(parts)
 
 
