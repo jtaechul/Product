@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-18T22:57:56Z",
+  "updated": "2026-10-18T23:11:38Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -17,7 +17,16 @@
           "https://www.googleapis.com/auth/youtube.upload"
         ]
       },
-      "viewed": null
+      "viewed": {
+        "pct": 53.0,
+        "at": "2026-10-18T23:11:38Z",
+        "note": "운영자 스크린샷 2026-10-18 (넘김 47.0% · 일본 96.4% · 조회 1.5천)",
+        "hook": {
+          "line": "獲物を、決して逃がさない",
+          "pattern": "異常な行動",
+          "voice": true
+        }
+      }
     },
     {
       "id": "bathynomus_giganteus",
