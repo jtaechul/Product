@@ -1,37 +1,52 @@
 {
  "세인트존스 호텔": {
-  "note": "2026-10-16 운영자 '대사 연결이 미흡하고 마지막 주어가 중간과 반복돼 어색 — 소비자 관점으로 개선' → 대화에서 다시 씀. 흐름: 걱정 → 정체 → 들어서면 → 짐 풀면 → 그다음(침대에서 바다) → 걱정이 풀림(훅 되받기)",
+  "note": "v3 2026-10-18 운영자 '원점 재검토' → '걱정 → 문 열면 → 하루 → 되돌아옴' 구조 채택. 문장마다 화면(actor)을 정함: 훅 env · 순간 문장은 강아지·손·뒷모습 커플 · 조건은 사실 한 줄 · 약속은 훅 컷 재사용 · 마지막 문장은 제안(운영자 2026-10-18 '되돌아옴이 아니고 제안')",
   "beats": [
    {
     "lens": "훅",
-    "line": "반려견 두고 떠나는 여행, 늘 마음 쓰이죠?"
+    "line": "반려견 두고 떠나는 여행, 늘 마음 쓰이죠?",
+    "actor": "env",
+    "action_en": "late-afternoon light slowly warms the room, the sheer curtain by the balcony door sways very slightly and the sea outside glitters"
    },
    {
     "lens": "정체",
-    "line": "여긴 반려견과 한 방에서 묵는 펫 객실이에요."
+    "line": "여긴 반려견과 한 방에서 묵는 펫 객실이에요.",
+    "actor": "none"
    },
    {
     "lens": "디테일",
-    "line": "들어서면 강아지가 침대로 오르는 계단부터 보여요."
+    "line": "들어서면 침대로 오르는 계단으로 강아지가 먼저 올라가요.",
+    "actor": "dog",
+    "action_en": "trots to the small wooden pet stairs beside the bed, climbs them step by step and settles down on the bed"
    },
    {
     "lens": "행동",
-    "line": "수건·샴푸·패드까지 있어 식기에 물만 채우면 돼요."
+    "line": "수건·샴푸·패드까지 있어 식기에 물만 채우면 돼요.",
+    "actor": "hand",
+    "action_en": "picks up the empty pet bowl from the floor, holds it for a moment and sets it back down in front of the dog house"
    },
    {
     "lens": "상황",
-    "line": "그다음엔 침대에 같이 누워 발코니 너머 바다를 봐요."
+    "line": "그다음엔 같이 발코니에 서서 바다를 봐요.",
+    "actor": "couple",
+    "action_en": "walk slowly side by side toward the balcony door and stop in front of it, looking out at the sea; the man rests one hand on the woman's shoulder; the dog follows and sits at their feet"
    },
    {
-    "lens": "약속",
-    "line": "이제 반려견 두고 떠나지 않아도 괜찮아요."
+    "lens": "조건",
+    "line": "펫 욕조·드라이룸은 선착순 무료 대여예요.",
+    "actor": "none"
+   },
+   {
+    "lens": "제안",
+    "line": "이번엔 반려견과 함께 떠나 보는 건 어떨까요?",
+    "actor": "none"
    }
   ],
   "caption": {
    "hook": "인피니티풀로 알려진 호텔에 반려견과 한 방에서 묵는 펫 객실이 있어요.",
    "points": [
     "침대 계단·식기·하우스에 반려견 수건·샴푸·배변 패드까지 객실에 준비돼 있어요.",
-    "펫 욕조와 드라이룸은 사전 예약하면 무료로 빌릴 수 있어요."
+    "펫 욕조와 드라이룸은 선착순으로 무료 대여돼요."
    ],
    "save": "11월 반려견과 바다 여행을 계획 중이라면 저장해 두세요."
   }
