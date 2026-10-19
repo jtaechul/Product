@@ -120,6 +120,8 @@ jobs:
             projects/stay-shorts-factory/build/story/veo_b*.mp4
             projects/stay-shorts-factory/build/story/sb_*.png
             projects/stay-shorts-factory/build/story/sheet_*.png
+            projects/stay-shorts-factory/build/story/ins_*.png
+            projects/stay-shorts-factory/build/story/insert_sheet.png
           if-no-files-found: ignore
           retention-days: 90
 
@@ -167,8 +169,10 @@ jobs:
           if g:
               s += f" · AI 글·음성 추정 {g.get('krw_est', 0):,}원"
           sb = m.get("storyboard_sheets")
-          if sb:
-              s += f" · 씬 스토리보드 시트 {sb}장(약 {m.get('storyboard_krw', 0):,}원)"
+          if sb or m.get("inserts"):
+              s += f" · 씬 스토리보드 시트 {sb or 0}장 · 감정 인서트 {m.get('inserts', 0)}컷(이미지 약 {m.get('storyboard_krw', 0):,}원)"
+          if m.get("scene_drops"):
+              s += f" · 같은 사진 반복 방지로 뺀 컷 {m['scene_drops']}개"
           print(s + (" (미리보기 · AI 영상 없음 — 스토리보드 패널이 괜찮으면 관리실 '정식 제작': 이 대본·나레이션·패널 그대로 + 사람·강아지 씬만 Veo 영상 최대 6컷, 약 1,800원)" if m.get("stage") == "preview" else " (미발행 · 검수용)"))
           PY
           )
@@ -178,7 +182,7 @@ jobs:
             if [ -f "$S" ]; then
               SC="왼쪽 원본 사진 · 오른쪽 AI 영상 첫 장면. 실제와 다른 시설·전망이 보이면 폐기합니다"
               python3 -c "import json,sys;sys.exit(0 if json.load(open('$P/build/meta.json',encoding='utf-8')).get('mode')=='signature' else 1)" 2>/dev/null \
-                && SC="문장별 스토리보드 — 관점 · 나레이션 · 근거 사실 · 컷. 썸네일 아래 'AI 강아지·저녁' 같은 표시 = AI 스토리보드 패널(통과), '원본 사진' = 패널 없음·탈락. 같은 방인지, 뒷모습 사람·강아지가 자연스러운지 확인합니다"
+                && SC="문장별 스토리보드 — 관점 · 나레이션 · 근거 사실 · 컷. 썸네일 아래 'AI 강아지·저녁' = AI 스토리보드 패널(통과 · 환경 씬은 다른 카메라 위치), 'AI 여분·해 질 녘' = 같은 사진의 여분 패널, '원본 사진' = 패널 없음·탈락, '인서트 worry' = 숙소가 아닌 집·차 안 장면(훅·제안). 같은 방인지, 뒷모습 사람·강아지가 자연스러운지, 같은 그림이 반복되지 않는지 확인합니다"
               curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$S" \
                 -F caption="$SC" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
             fi
