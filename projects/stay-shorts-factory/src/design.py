@@ -719,3 +719,119 @@ def grid_sheet(frames: list[Path], out: Path, labels: list[str] | None = None, g
             d.text((sheet.width - 150, yy - 24), name, font=font(18, bold=False), fill=col)
     sheet.save(out, "JPEG", quality=88)
     return out
+
+
+# ═══════════════════════════ v9 요약 카드 (2026-10-19) ═══════════════════════════
+# 운영자: "특장점 요약 — 배경 이미지만 흐리게, 세련된 텍스트 프레임 안에 글이 애니메이션과 함께 들어오고, 고객의 포인트와 숙소의 특장점을 집어 준다".
+# 규칙 안에서 구현: 강한 블러(금지 ①) 대신 **약한 블러 + 어둡기 + 그라데이션**, 프레임은 토큰의 유리 칩, 왼쪽 정렬, 글자 3단계(눈썹 34 · 줄 44 · 고지문),
+# 코랄 강조는 카드 전체에서 [대괄호] 한 곳, 안전영역(위 250 · 아래 420 · 오른쪽 180) 안. 자리는 GRID["card"] 에 고정(줄 수가 달라도 각 줄의 y 는 불변).
+GRID["card"] = {"x": MARGIN, "y": 640, "w": W - MARGIN - SAFE_RIGHT - MARGIN // 2, "pad": 56, "inner": 56, "eyebrow": TYPE["eyebrow"], "eyebrow_lh": 52,
+                "point": TYPE["label"], "point_lh": 70, "gap": 24, "line": TYPE["label"], "lh": 64, "lines": 3}
+GRID["card_point"] = {"size": TYPE["label"], "w": GRID["card"]["w"] - 2 * GRID["card"]["inner"], "lines": 1}    # fits() 검사용(한 줄)
+GRID["card_line"] = {"size": TYPE["label"], "w": GRID["card"]["w"] - 2 * GRID["card"]["inner"], "lines": 1}
+CARD_EYEBROW, CARD_EYEBROW2 = "이런 고민이라면", "여기서는"
+
+
+def card_rows(n_lines: int) -> dict:
+    """카드 안 글 줄의 y 자리(고정). n_lines = 답 줄 수(2~3) — 줄이 적으면 프레임만 짧아지고 각 줄의 y 는 그대로."""
+    g = GRID["card"]
+    y = g["y"] + g["pad"]
+    rows = {"eyebrow": y}
+    y += g["eyebrow_lh"]
+    rows["point"] = y
+    y += g["point_lh"] + g["gap"]
+    rows["divider"] = y
+    y += g["gap"]
+    rows["eyebrow2"] = y
+    y += g["eyebrow_lh"]
+    rows["lines"] = [y + i * g["lh"] for i in range(max(0, n_lines))]
+    y += max(0, n_lines) * g["lh"]
+    rows["bottom"] = y + g["pad"] - 12
+    return rows
+
+
+def card_bg(out: Path, photo: Path, blur: int = 10, dark: float = 0.45) -> Path:
+    """요약 카드 배경: 장점 사진을 **약하게** 흐리고(10px) 어둡게(45%) + 아래 그라데이션. 사진이 글을 방해하지 않되 어디인지는 보이게."""
+    im = cover(Image.open(photo).convert("RGB")).filter(ImageFilter.GaussianBlur(blur)).convert("RGBA")
+    im.alpha_composite(Image.new("RGBA", (W, H), (*INK, int(255 * dark))))
+    gradient(im, 1150, 1700, 0.0, 0.5)
+    im.convert("RGB").save(out, "JPEG", quality=92)
+    return out
+
+
+def card_frame_png(out: Path, n_lines: int, eyebrow: str = CARD_EYEBROW, eyebrow2: str = CARD_EYEBROW2) -> Path:
+    """카드의 고정 요소(유리 칩 + 눈썹 글 2줄 + 구분선) — 애니메이션 첫 단계에 한 번에 뜬다."""
+    g, r = GRID["card"], card_rows(n_lines)
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    glass(im, (g["x"], g["y"], g["x"] + g["w"], r["bottom"]), RADIUS, fill=(255, 255, 255, 28), border=(255, 255, 255, 66))
+    d = ImageDraw.Draw(im)
+    x = g["x"] + g["inner"]
+    fe = font(g["eyebrow"], bold=False)
+    d.text((x, r["eyebrow"]), eyebrow, font=fe, fill=(255, 255, 255, 178))
+    d.line([(x, r["divider"]), (g["x"] + g["w"] - g["inner"], r["divider"])], fill=(255, 255, 255, 64), width=2)
+    d.text((x, r["eyebrow2"]), eyebrow2, font=fe, fill=(255, 255, 255, 178))
+    im.save(out, "PNG")
+    return out
+
+
+def card_line_png(out: Path, text: str, y: int) -> Path:
+    """카드 글 한 줄(겹침판) — 자리 고정, 줄이기 없음(안 들어가면 대본 검사 단계에서 걸렀어야 한다). [대괄호] 낱말만 코랄."""
+    g = GRID["card"]
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    f = font(g["line"])
+    x = g["x"] + g["inner"]
+    segs = segments(text)
+    _draw_segs(d, x + 1, y + 2, segs, f, (0, 0, 0, 70), (0, 0, 0, 70))                 # 아주 옅은 그림자(유리 칩 위 가독성)
+    _draw_segs(d, x, y, segs, f, (255, 255, 255, 255), (*ACCENT, 255))
+    im.save(out, "PNG")
+    return out
+
+
+def card_layers(out_dir: Path, photo: Path, point: str, answers: list[str], eyebrow: str = CARD_EYEBROW, eyebrow2: str = CARD_EYEBROW2) -> dict:
+    """렌더용 층: 배경(흐린 사진) · 프레임(유리 칩·눈썹·구분선) · 글 줄들(포인트 1 + 답 n). 렌더가 줄마다 시차를 두고 띄운다."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    r = card_rows(len(answers))
+    bg = card_bg(out_dir / "card_bg.jpg", photo)
+    frame = card_frame_png(out_dir / "card_frame.png", len(answers), eyebrow, eyebrow2)
+    lines = [card_line_png(out_dir / "card_l0.png", point, r["point"])]
+    for i, (t, y) in enumerate(zip(answers, r["lines"]), 1):
+        lines.append(card_line_png(out_dir / f"card_l{i}.png", t, y))
+    return {"bg": bg, "frame": frame, "lines": lines, "rows": r}
+
+
+def card_flat(out: Path, photo: Path, point: str, answers: list[str], eyebrow: str = CARD_EYEBROW, eyebrow2: str = CARD_EYEBROW2) -> Path:
+    """층을 전부 합친 한 장(검수 시트·스토리보드 썸네일·시안용)."""
+    tmp = out.parent / "_card_tmp"
+    lay = card_layers(tmp, photo, point, answers, eyebrow, eyebrow2)
+    im = Image.open(lay["bg"]).convert("RGBA")
+    for p in [lay["frame"]] + lay["lines"]:
+        im.alpha_composite(Image.open(p).convert("RGBA"))
+    im.convert("RGB").save(out, "JPEG", quality=90)
+    return out
+
+
+def card_sheet(photos: list[Path], out: Path, point: str, answers: list[str], labels: list[str] | None = None, disclosure: str = "") -> Path:
+    """운영자 승인용 시안 시트: 실제 사진 여러 장(밝음·중간·어두움)에 같은 카드를 얹고 안전영역·카드 자리 기준선을 긋는다."""
+    frames = []
+    for k, p in enumerate(photos):
+        fp = out.parent / f"_card_{k}.jpg"
+        card_flat(fp, p, point, answers)
+        if disclosure:
+            im = Image.open(fp).convert("RGBA"); draw_disclosure_top(im, disclosure); im.convert("RGB").save(fp, "JPEG", quality=90)
+        frames.append(fp)
+    tw = 360; th = int(tw * H / W); gap = 20; top = 44
+    sheet = Image.new("RGB", (gap + len(frames) * (tw + gap), top + th + gap), (18, 20, 26))
+    d = ImageDraw.Draw(sheet); fl = font(22)
+    for k, fp in enumerate(frames):
+        sheet.paste(Image.open(fp).convert("RGB").resize((tw, th), Image.LANCZOS), (gap + k * (tw + gap), top))
+        if labels and k < len(labels):
+            d.text((gap + k * (tw + gap), 12), labels[k], font=fl, fill=(255, 255, 255))
+    sc = th / H
+    g, r = GRID["card"], card_rows(len(answers))
+    for y, col, name in ((250, (255, 90, 90), "위 안전영역"), (g["y"], (120, 200, 255), "카드 위"), (r["bottom"], (120, 200, 255), "카드 아래"), (SAFE_BOTTOM, (255, 90, 90), "플랫폼 UI")):
+        yy = top + int(y * sc)
+        d.line([(0, yy), (sheet.width, yy)], fill=col, width=1)
+        d.text((sheet.width - 130, yy - 24), name, font=font(18, bold=False), fill=col)
+    sheet.save(out, "JPEG", quality=88)
+    return out
