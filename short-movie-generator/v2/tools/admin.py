@@ -301,8 +301,9 @@ def _sync_script_artifacts(st: dict, sc: dict) -> None:
         t = tm.get(c["cut"], {})
         cuts.append({"cut": c["cut"], "jp": c["jp"], "ko": c.get("ko", ""), "tts": c["tts"], "fact": c.get("fact", ""),
                      "sec": t.get("sec"), "speech_s": t.get("speech_s"), "pending": bool(c.get("pending_edit")),
-                     "facts": facts_for(sc, c.get("fact", ""))})
+                     "facts": facts_for(sc, c.get("fact", "")), "beat": c.get("beat", ""), "link_ko": c.get("link_ko", "")})
     st.setdefault("artifacts", {}).setdefault("script", {})["cuts"] = cuts
+    st["artifacts"]["script"]["story"] = sc.get("story")
     st["artifacts"]["script"]["pending_lines"] = [c["cut"] for c in cuts if c["pending"]]
     st["artifacts"]["script"]["hook"] = sc.get("hook")
     st["artifacts"]["script"]["core"] = (facts_for(sc, str(sc.get("core") or "")) or [None])[0]   # 핵심 사실 하나(D)
@@ -1402,7 +1403,19 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
 - 前提から親切に。専門用語はやさしく言い換える。
 - 生き物を「あだ名」(海の豚・頭のないニワトリなど)で呼ぶときは、実際に何の生き物か(ナマコの仲間など)も分かるように書く。scene_ko も同じ(例: 바다돼지(해삼))。
 - 同じ単語・言い回しを何度も繰り返さない。文末も単調にしない。
-- {n}カット目: 余韻のある締め(画面は暗闇に消えていく)。「チャンネル登録」「コメント」などの呼びかけは書かない(共通エンディングが別にある)。
+# 物語(いちばん大事 — 事実を並べるだけの台本は禁止 · 運営者指示 2026-10-19)
+- この回は「一つの謎 → 手がかり → 答え → 余韻」の一本の話にする。カット1で視聴者が抱く疑問を一つ決め(story.question_jp)、
+  最後までその答え(story.answer_jp)に向かって進む。答えは core の事実(と、その理由・背景になる事実)で裏付ける(story.fact)。
+- 疑問は事実リストで答えられるものだけ。理由(〜のため)が事実リストに書いていなければ「なぜ」とは問わず、
+  「どうやって」「その姿で何をしている」「そのあと何が起きる」型にする。事実にない因果は書かない(「〜と考えられています」も不可)。
+- beat(各カットの役割): 謎(カット1〜2) → 手がかり(カット3から) → 答え(最後から2〜3カット目・core の事実を含む) → 余韻(最後のカットだけ)。
+- 各カットは前のカットを受けて始まる(前のカットで生まれた疑問・言葉を次が受ける。「でも」「実は」「その秘密は」「だから」などの
+  つなぎは自然に・毎回同じ言葉にしない)。カット2以降は link_ko に「앞 컷과 어떻게 이어지는지」を韓国語一行で書く。
+- 話に関係ない豆知識(名前の由来・分類・発見の歴史など)は入れない。入れるのは答えの手がかりになる時だけ。
+  使う事実は多くても{max_facts}個まで(広く浅くより、一つの話を深く)。
+- 最後のカット(余韻): 新しい事実・新しい特徴を出さない(それまでのカットで話した事実だけ)。カット1の姿に戻り、
+  答えを知った今どう見えるかを一文で(冒頭と同じ言葉を少し使ってよい)。「闇に消えていく」のような決まり文句で終わらない。
+  「チャンネル登録」「コメント」などの呼びかけは書かない(共通エンディングが別にある)。
 - 呼び名: {name_rule}
 - core(この回の核・一つだけ): 事実リストから、この回でいちばん驚く事実を**一つだけ**選び、その番号を core に書く
   (候補: {core}・事実リストで裏付けること)。冒頭の問い(hook)・動画タイトル・最後の3カットのどれかが、すべてこの同じ事実を扱う。
@@ -1418,7 +1431,9 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
   ・answer_jp は最後のカードに出す生き物の呼び名(台本で使った呼び名と同じ)。カット1・2には出さず、3カット目以降で明かす。
 {feedback}
 # 出力(JSONのみ)
-{{"core":"F4","cuts":[{{"cut":1,"jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
+{{"core":"F4","story":{{"question_jp":"カット1で視聴者が抱く疑問(一文)","answer_jp":"その答え(一文・事実で裏付け)",
+"question_ko":"의문(한국어)","answer_ko":"답(한국어)","fact":"F4,F2"}},
+"cuts":[{{"cut":1,"beat":"謎","link_ko":"(カット2以降) 앞 컷과의 연결","jp":"日本語の台詞","ko":"자연스러운 한국어 번역","fact":"F1,F3",
 "scene_ko":"이 컷의 화면 아이디어(미니어처 디오라마 · 한국어 한 줄 · 별명은 실제 생물을 괄호로: 바다돼지(해삼))","annotation":"画面の注釈(日本語のみ・韓国語禁止・14文字以内・数字は事実どおり・なければ空)"}}],
 "hook":{{"cut":6,"answer_jp":"呼び名","answer_ko":"한국어 이름","candidates":[
 {{"pattern":"常識破り","text_jp":"ナマコなのに、泳ぐ","key_jp":"泳ぐ","voice_jp":"ナマコなのに、海の中を泳ぐ","text_ko":"해삼인데 헤엄친다"}},
@@ -1459,6 +1474,79 @@ def estimate_speech(tts: str) -> float:
 
 def _nums(s: str) -> set[str]:
     return set(re.findall(r"\d+(?:\.\d+)?", (s or "").replace(",", "").replace("，", "")))
+
+
+STORY_BEATS = ("謎", "手がかり", "答え", "余韻")
+STORY_MAX_FACTS = 7
+_BEAT_ALIAS = {"なぞ": "謎", "手掛かり": "手がかり", "手掛り": "手がかり", "こたえ": "答え", "答": "答え"}
+_END_CLICHE = re.compile(r"(闇|暗闇|深み|彼方)(へと|に|の中へ|の中に)?\s*(消え|溶け)|消えて(いく|ゆく|いき|ゆき|いった)")
+
+
+def _ids(x) -> list[str]:
+    return re.findall(r"F\d+", str(x or ""))
+
+
+def validate_story(story, cuts: list[dict], core: str | None) -> list[str]:
+    """이야기 구조 코드 검사(운영자 지시 2026-10-19: "스토리 없이 팩트만 나열 · 마지막이 쌩뚱맞다").
+    의문 하나 → 답(핵심 사실) · 컷 역할 순서(謎 → 手がかり → 答え → 余韻) · 앞 컷과의 연결 · 사실 7개까지 · 마지막 컷은 새 사실·상투구 금지."""
+    probs = []
+    st = story if isinstance(story, dict) else {}
+    if not str(st.get("question_jp", "")).strip() or not str(st.get("answer_jp", "")).strip():
+        probs.append("story.question_jp(カット1で視聴者が抱く疑問)と story.answer_jp(その答え)を書いてください。")
+    if core and core not in _ids(st.get("fact")):
+        probs.append(f"story.fact に核の事実 {core} を入れてください(答えは核の事実で裏付ける)。")
+    beats = [_BEAT_ALIAS.get(str(c.get("beat", "")).strip(), str(c.get("beat", "")).strip()) for c in cuts]
+    if not cuts or any(b not in STORY_BEATS for b in beats):
+        probs.append("各カットの beat は 謎 / 手がかり / 答え / 余韻 のどれかにしてください。")
+    else:
+        order = [STORY_BEATS.index(b) for b in beats]
+        if order != sorted(order):
+            probs.append("beat の順番は 謎 → 手がかり → 答え → 余韻 にしてください(途中で戻らない)。")
+        if beats[:2] != ["謎", "謎"] or beats[-1] != "余韻" or beats.count("余韻") != 1 or "手がかり" not in beats:
+            probs.append("カット1〜2は 謎、途中に 手がかり、最後のカットだけ 余韻 にしてください。")
+        ans = [c for c, b in zip(cuts, beats) if b == "答え"]
+        if not ans or (core and not any(core in _ids(c.get("fact")) for c in ans)):
+            probs.append(f"答え のカット(最後から2〜3カット目)で核の事実 {core or ''} を示し、カット1の疑問に答えてください。")
+    nolink = [str(c.get("cut", i)) for i, c in enumerate(cuts[1:], 2) if not str(c.get("link_ko", "")).strip()]
+    if nolink:
+        probs.append(f"カット{'・'.join(nolink)}: link_ko(前のカットとのつながり)がありません。前のカットを受けて話を進めてください。")
+    used = {x for c in cuts for x in _ids(c.get("fact"))}
+    if len(used) > STORY_MAX_FACTS:
+        probs.append(f"使っている事実が{len(used)}個です。{STORY_MAX_FACTS}個以内に絞り、謎の答えに関係ない事実は削ってください。")
+    if cuts:
+        new = sorted(set(_ids(cuts[-1].get("fact"))) - {x for c in cuts[:-1] for x in _ids(c.get("fact"))})
+        if new:
+            probs.append(f"最後のカットで新しい事実 {', '.join(new)} を出さないでください。それまでに話した事実だけで、カット1の姿に戻って締めてください。")
+        m = _END_CLICHE.search(str(cuts[-1].get("jp", "")))
+        if m:
+            probs.append(f"最後のカットの「{m.group(0)}」のような決まり文句で終わらないでください。答えを知った今、カット1の姿がどう見えるかで締めてください。")
+    return probs
+
+
+_STORY_CHECK_PROMPT = """あなたは科学ドキュメンタリーのストーリー編集者です。下のショート動画の台本(日本語ナレーション)を、初めて見る視聴者として読んでください。
+1. カット1で生まれる疑問が一つあり、最後までその答えに向かって進んでいるか。
+2. 各カットが前のカットを受けてつながっているか(唐突に別の話・豆知識が入っていないか)。
+3. 最後のカットが冒頭の姿・疑問に戻って締めているか(新しい情報や唐突な決まり文句で終わっていないか)。
+問題のあるカットだけを、直し方と一緒に日本語で短く挙げてください(最大5つ)。問題がなければ problems は空。事実の正しさはここでは見ない。
+JSONのみ: {{"problems":["カット6: 名前の由来は疑問と関係がない → 削って、獲物を閉じ込める手がかりにする"]}}
+# 疑問 → 答え
+{question} → {answer}
+# 台本
+{cuts}
+"""
+
+
+def story_check(cuts: list[dict], story, ask) -> list[str]:
+    """이야기 흐름 AI 검사(편집자 눈) — 지적 목록. 검사 자체가 실패하면 대본을 막지 않는다(빈 목록)."""
+    st = story if isinstance(story, dict) else {}
+    try:
+        got = _json_obj(ask(_STORY_CHECK_PROMPT.format(
+            question=st.get("question_jp", ""), answer=st.get("answer_jp", ""),
+            cuts="\n".join(f"カット{c.get('cut')}({c.get('beat', '')}): {c.get('jp', '')}" for c in cuts)))).get("problems") or []
+    except Exception as e:                                   # noqa: BLE001
+        print(f"[story] 이야기 흐름 검사 실패(대본은 계속): {e}")
+        return []
+    return [str(x).strip() for x in got if str(x).strip()][:5]
 
 
 def validate_script(cuts: list[dict], facts: list[dict]) -> list[str]:
@@ -1733,6 +1821,7 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
     topic = st.get("topic") or {}
     ask_facts = ask or _gemini_text                          # 사실 추출은 온도 0(그대로 옮기기)
     ask_script = ask or (lambda p: _gemini_text(p, temperature=0.7))   # 대본은 약간의 문장력
+    ask_check = ask or _gemini_text                          # 이야기 흐름 검사는 온도 0
     set_job(pid, "script", "running", "대본 자동 작성 중 — 출처 수집 → 사실 추출 → 대본 → 검증 → 미리듣기", "write_script")
     try:
         old = _load(_script_path(pid)) or {}
@@ -1758,25 +1847,36 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
         if feedback:
             prev = "\n".join(f"カット{c['cut']}: {c['jp']}" for c in old.get("cuts", []) if c.get("jp"))
             fb = f"# 運営者の修正依頼(必ず反映)\n{feedback}\n# 前の台本\n{prev}\n"
-        hook, voice_fixed = None, []
+        hook, voice_fixed, story, story_left, fallback = None, [], {}, [], None
+        base_fb = fb
         for attempt in range(3):
             gen = _json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt,
+                                                             max_facts=STORY_MAX_FACTS,
                                                              core=core or "(なし — 事実リストから最も驚く一つを選ぶ)")))
             cuts, hook, core_id = gen.get("cuts") or [], gen.get("hook"), str(gen.get("core") or "").strip()
+            story = gen.get("story") if isinstance(gen.get("story"), dict) else {}
             voice_fixed = fit_hook_voices(hook) if isinstance(hook, dict) else []
             probs = validate_script(cuts, facts) + (validate_hook_candidates(hook, cuts, facts, name=ja_name or "")
                                                     if isinstance(hook, dict) else ["hook がありません。"]) + \
-                validate_core(core_id, hook, cuts, facts)
-            if not probs:
-                break
-            fb = (fb + "\n" if feedback else "") + "# 前回の台本の問題点(必ず直す)\n" + "\n".join("- " + p for p in probs) + "\n"
-        if probs:
+                validate_core(core_id, hook, cuts, facts) + validate_story(story, cuts, core_id)
+            story_left = []
+            if not probs:                                    # 코드 검사를 통과하면 편집자 눈으로 이야기 흐름을 한 번 더 본다
+                story_left = story_check(cuts, story, ask_check)
+                if not story_left:
+                    break
+                fallback = (cuts, hook, core_id, story, voice_fixed, story_left)   # 흐름 지적만 남은 판 — 3번 다 그러면 이걸로
+            fb = base_fb + "# 前回の台本の問題点(必ず直す)\n" + "\n".join("- " + p for p in probs + story_left) + "\n"
+        if probs and fallback:
+            cuts, hook, core_id, story, voice_fixed, story_left = fallback
+        elif probs:
             raise RuntimeError("대본 검사를 3번 모두 통과하지 못했습니다: " + " / ".join(probs[:4]))
         out = []
         for i, c in enumerate(cuts, 1):
             jp = str(c["jp"]).strip()
             out.append({"cut": i, "jp": jp, "ko": str(c.get("ko", "")).strip(), "tts": auto_reading(jp),
                         "fact": ",".join(re.findall(r"F\d+", str(c.get("fact", "")))),
+                        "beat": _BEAT_ALIAS.get(str(c.get("beat", "")).strip(), str(c.get("beat", "")).strip()),
+                        "link_ko": str(c.get("link_ko", "")).strip(),
                         "scene_ko": str(c.get("scene_ko", "")).strip(), "annotation": str(c.get("annotation", "")).strip()})
         hk_cut = int(hook["cut"])
         cands = [{k: str(c.get(k, "") or "").strip() for k in ("pattern", "text_jp", "key_jp", "voice_jp", "text_ko")}
@@ -1788,6 +1888,9 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
               "hook": hook_from_candidate({"cut": hk_cut, "at": None, "answer_jp": str(hook["answer_jp"]).strip(),
                                            "answer_ko": str(hook.get("answer_ko", "")).strip(), "candidates": cands}, 0),
               "core": core_id,                               # ★핵심 사실 하나(후킹·제목·마지막 3컷이 함께 다룸)
+              # ★이야기 하나(운영자 지시 2026-10-19): 의문 → 답 · 남은 흐름 지적(있으면 화면에 표시)
+              "story": {**{k: str(story.get(k, "")).strip() for k in ("question_jp", "answer_jp", "question_ko", "answer_ko")},
+                        "fact": ",".join(_ids(story.get("fact"))), "check": story_left},
               "facts": facts, "source_docs": [{k: d[k] for k in ("id", "url", "title")} for d in docs],
               "cuts": out, "timing_rule": "컷 길이 = (앞 여백 0.15초 + 나레이션 + 여유 0.6초)를 짝수 초로 올림",
               "generated": {"at": _now(), "model": _TEXT_MODEL or "test", "feedback": feedback, "facts_dropped": dropped}}
@@ -1832,7 +1935,8 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
         st.setdefault("artifacts", {})["topic"] = {"facts": facts}
         st.setdefault("cost", {}).setdefault("spent", []).append({"at": _now(), "what": "대본 자동 작성(AI+나레이션)", "usd": 0.05})
         _note(st, "script", "auto", "대본 자동 작성 완료" + (" (수정 요청 반영)" if feedback else "") +
-              (f" · 0초 목소리가 길어 화면 문장 그대로 읽게 바꾼 후보: {'·'.join(map(str, voice_fixed))}번" if voice_fixed else ""))
+              (f" · 0초 목소리가 길어 화면 문장 그대로 읽게 바꾼 후보: {'·'.join(map(str, voice_fixed))}번" if voice_fixed else "") +
+              (f" · ★이야기 흐름 지적 {len(story_left)}건이 남음(대본 카드에서 확인)" if story_left else ""))
         _save(status_path(pid), st)
         crosscheck(pid, ask=ask)                            # ⑤ 교차 검사(실패해도 멈추지 않음)
         st = load_status(pid)

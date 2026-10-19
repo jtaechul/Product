@@ -486,7 +486,10 @@ _FACTS = {"facts": [
 _GOOD = [("暗い海の底で、体を青く光らせる魚がいます。", "F4"), ("すんでいるのは水深2000メートルより深い海。", "F2"),
          ("その名は、テストウオといいます。", "F1"), ("大きさは30センチほどになります。", "F3"),
          ("刺激を受けると、体が青く光ります。", "F4"), ("食べるのは、上から降ってくるマリンスノー。", "F5"),
-         ("光の届かない世界で、静かに暮らしています。", "F2"), ("今日も暗い海の底で、青い光がまたたきます。", "F4")]
+         ("光の届かない世界で、その光が仲間への合図になります。", "F2,F4"), ("今日も暗い海の底で、青い光がまたたきます。", "F4")]
+_BEATS = ["謎", "謎", "手がかり", "手がかり", "手がかり", "手がかり", "答え", "余韻"]          # 이야기 구조(운영자 지시 2026-10-19)
+_STORY = {"question_jp": "暗い海で、なぜ青く光る？", "answer_jp": "刺激を受けると光る魚だから", "question_ko": "왜 빛날까?",
+          "answer_ko": "자극을 받으면 빛나는 물고기", "fact": "F4,F2"}
 
 
 _CANDS = [{"pattern": "異常な行動", "text_jp": "触ると、青く光る", "key_jp": "青く光る", "voice_jp": "触れると、体が青く光る", "text_ko": "건드리면 파랗게 빛난다"},
@@ -494,19 +497,25 @@ _CANDS = [{"pattern": "異常な行動", "text_jp": "触ると、青く光る", 
           {"pattern": "正体の反転", "text_jp": "光の正体は、魚", "key_jp": "魚", "voice_jp": "暗い海の光、その正体は魚", "text_ko": "빛의 정체는 물고기"}]
 
 
-def _fake_ai(bad_first=False):
-    calls = {"script": 0}
+def _fake_ai(bad_first=False, story_problems=0):
+    calls = {"script": 0, "story": 0, "prompts": []}
     def ask(p):
         if "science fact extractor" in p:
             return json.dumps(_FACTS)
         if "構成作家" in p:
             calls["script"] += 1
-            cuts = [{"cut": i + 1, "jp": jp, "ko": "한국어 번역 " + str(i + 1), "fact": f, "scene_ko": "장면", "annotation": ""}
+            calls["prompts"].append(p)
+            cuts = [{"cut": i + 1, "beat": _BEATS[i], "link_ko": "" if i == 0 else "앞 컷을 이어 받음",
+                     "jp": jp, "ko": "한국어 번역 " + str(i + 1), "fact": f, "scene_ko": "장면", "annotation": ""}
                     for i, (jp, f) in enumerate(_GOOD)]
             if bad_first and calls["script"] == 1:
                 cuts[3]["jp"] = "大きさは50センチにもなります。"      # 사실에 없는 숫자 → 코드 검사에서 걸려 다시 쓰게
             hook = {"cut": 5, "answer_jp": "テストウオ", "answer_ko": "시험어", "candidates": _CANDS}   # 후킹 개편: 사실 한 줄 후보 3개
-            return json.dumps({"core": "F4", "cuts": cuts, "hook": hook})      # 핵심 사실 F4: 후킹 컷 5 · 마지막 3컷의 8번
+            return json.dumps({"core": "F4", "story": _STORY, "cuts": cuts, "hook": hook})   # 핵심 사실 F4: 후킹 컷 5 · 답 컷 7 · 마지막 8번
+        if "ストーリー編集者" in p:                            # 이야기 흐름 검사(편집자 눈)
+            calls["story"] += 1
+            return json.dumps({"problems": ["カット4: 大きさの話は疑問と関係がない → 光る仕組みの手がかりにする"]
+                               if calls["story"] <= story_problems else []})
         return json.dumps({"issues": []})                    # 교차 검사
     return ask, calls
 
@@ -532,6 +541,47 @@ def test_write_script_real_job_moves_script_to_review(v2):
     assert hk["key_jp"] == "青く光る" and hk["voice_jp"] == "触れると、体が青く光る" and hk["pattern"] == "異常な行動"
     assert sc["hook"]["cut"] == 5 and sc["hook"]["at"] is not None and a["hook"]["answer_jp"] == "テストウオ"
     assert sc["total_sec"] == sum(c["sec"] for c in sc["cuts"]) + 4      # 후킹 2초 + 정답 카드 2초
+    # 이야기 하나(운영자 지시 2026-10-19): 의문 → 답 · 컷 역할 · 연결이 저장되고 관리자 페이지로 간다
+    assert sc["story"]["question_jp"] == _STORY["question_jp"] and sc["story"]["fact"] == "F4,F2" and sc["story"]["check"] == []
+    assert [c["beat"] for c in sc["cuts"]] == _BEATS and sc["cuts"][1]["link_ko"]
+    assert a["story"]["answer_jp"] == _STORY["answer_jp"] and a["cuts"][6]["beat"] == "答え"
+    assert "一つの謎 → 手がかり → 答え → 余韻" in calls["prompts"][0] and "闇に消えていく" in calls["prompts"][0]
+
+
+def test_validate_story_rules():
+    """스토리 없이 사실만 나열 · 쌩뚱맞은 마지막(운영자 지시 2026-10-19)을 코드로 막는다."""
+    cuts = [{"cut": i + 1, "beat": _BEATS[i], "link_ko": "" if i == 0 else "이어짐", "jp": jp, "fact": f} for i, (jp, f) in enumerate(_GOOD)]
+    assert admin.validate_story(_STORY, cuts, "F4") == []
+    def bad(**ch):
+        cs = [dict(c) for c in cuts]
+        for k, v in ch.items():
+            i, key = k.split("_", 1)
+            cs[int(i)][key] = v
+        return " ".join(admin.validate_story(_STORY, cs, "F4"))
+    assert "新しい事実 F9" in bad(**{"7_fact": "F4,F9"})                               # 마지막 컷에 처음 나오는 사실
+    assert "決まり文句" in bad(**{"7_jp": "自ら光りながら、深海の闇へと消えていくのです。"})   # 「어둠으로 사라진다」 상투구
+    assert "順番" in bad(**{"3_beat": "答え", "4_beat": "手がかり"})                    # 역할이 거꾸로
+    assert "link_ko" in bad(**{"5_link_ko": ""})                                        # 앞 컷과의 연결 없음
+    assert "核の事実" in bad(**{"6_fact": "F2"})                                         # 답 컷에 핵심 사실 없음
+    many = [dict(c, fact=f"F{i + 1}") for i, c in enumerate(cuts)]
+    assert any("8個" in x for x in admin.validate_story(_STORY, many, "F4"))            # 사실 8개 = 나열
+    assert any("story.question_jp" in x for x in admin.validate_story({}, cuts, "F4"))
+    assert "手掛かり" in admin._BEAT_ALIAS and admin.validate_story(_STORY, [dict(c, beat=c["beat"].replace("手がかり", "手掛かり")) for c in cuts], "F4") == []
+
+
+def test_story_check_feedback_then_accept(v2):
+    """편집자 눈 검사: 지적이 있으면 그 지적을 주고 다시 쓰게 · 3번 다 지적이 남아도 대본은 만들고 남은 지적을 보여 준다."""
+    admin.new_pilot("test_fish")
+    ask, calls = _fake_ai(story_problems=1)
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    sc = json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))
+    assert calls["script"] == 2 and calls["story"] == 2 and "大きさの話は疑問と関係がない" in calls["prompts"][1]
+    assert sc["story"]["check"] == []
+    ask, calls = _fake_ai(story_problems=9)
+    st = admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    sc = json.loads((v2 / "pilots" / "test_fish" / "script.json").read_text(encoding="utf-8"))
+    assert calls["script"] == 3 and sc["story"]["check"] and st["stages"]["script"]["state"] == "review"
+    assert any("이야기 흐름 지적 1건이 남음" in n["text"] for n in st["stages"]["script"]["notes"])
 
 
 def test_write_script_failure_is_not_left_as_working(v2):

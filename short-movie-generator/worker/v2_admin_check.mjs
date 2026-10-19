@@ -112,6 +112,13 @@ const res = {};
     artifacts: { script: { cuts: [{ cut: 1, jp: "a", ko: "가", sec: 4, facts: [] }, { cut: 2, jp: "b", ko: "나", sec: 6, facts: [] }],
       hook: { cut: 2, at: 1.5, question_jp: "赤くなる、この生き物は？", question_ko: "붉어지는 이 생물은?", answer_jp: "テストウオ", answer_ko: "시험어" } } } };
   statusOverride = st; els = {}; await api.renderV2Episode("t"); const h = els.view.innerHTML;
+  { const keepEls2 = els; const st2 = JSON.parse(JSON.stringify(st));
+    st2.artifacts.script.story = { question_jp: "なぜ光る？", answer_jp: "刺激で光る", question_ko: "왜 빛날까", answer_ko: "자극을 받으면 빛난다", check: ["カット4: 関係ない"] };
+    st2.artifacts.script.cuts[0].beat = "謎"; st2.artifacts.script.cuts[1].beat = "答え"; st2.artifacts.script.cuts[1].link_ko = "앞 컷의 의문에 답함";
+    statusOverride = st2; els = {}; await api.renderV2Episode("t"); const sh = els.view.innerHTML;
+    res.script_story_shown = /이야기 흐름/.test(sh) && /왜 빛날까/.test(sh) && /자극을 받으면 빛난다/.test(sh) && />의문</.test(sh)
+      && />답</.test(sh) && /앞 컷의 의문에 답함/.test(sh) && /3번 고쳐도 남음/.test(sh);
+    statusOverride = st; els = keepEls2; }
   res.hook_block_shown = /맨 앞 2초 후킹/.test(h) && /赤くなる、この生き物は？/.test(h) && /正解：テストウオ/.test(h) && /공용 엔딩 대신/.test(h);
   const n0 = dispatched.length; el("hk_cut").value = "1"; el("hk_at").value = "0.5"; el("hk_qj").value = "赤くなる、この生き物は？"; el("hk_aj").value = "テストウオ";
   if (el("hksave").onclick) await el("hksave").onclick();

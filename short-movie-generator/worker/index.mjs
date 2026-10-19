@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-19-2 (새 영상 후보: 움직임 점수 — 잘 움직이는 종을 먼저)";
+const BUILD="v2026-10-19-3 (대본: 의문 → 단서 → 답 → 여운 이야기 구조 · 이야기 흐름 표시)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2561,6 +2561,16 @@ async function renderV2New(){
   });
 }
 
+// 이야기 하나(운영자 지시 2026-10-19: "팩트 나열 말고 스토리 · 마지막이 쌩뚱맞지 않게") — 의문 → 답 + 남은 흐름 지적
+const V2_BEAT_KO={"謎":"의문","手がかり":"단서","答え":"답","余韻":"여운"};
+function v2storyHTML(a){
+  const s=a&&a.story;if(!s||!(s.question_jp||s.answer_jp))return "";
+  const left=(s.check||[]);
+  return '<div class="sect">이야기 흐름</div><div class="cfact"><b>의문</b> '+esc(s.question_ko||s.question_jp)+' <span style="opacity:.7">'+esc(s.question_jp||"")+'</span></div>'+
+    '<div class="cfact"><b>답</b> '+esc(s.answer_ko||s.answer_jp)+' <span style="opacity:.7">'+esc(s.answer_jp||"")+'</span></div>'+
+    (left.length?'<div class="cfact warn">이야기 흐름 지적(3번 고쳐도 남음 — 「수정 요청」에 적어 다시 쓰게 할 수 있습니다): '+left.map(esc).join(" / ")+'</div>':'');
+}
+
 // ── 한 편 페이지(/v/<id>) ──
 function v2stageBody(st,stage){
   const pid=st.id, a=(st.artifacts||{})[stage]||{}, rev=(st.artifacts&&st.artifacts.video&&st.artifacts.video.built_at)||"";
@@ -2575,10 +2585,12 @@ function v2stageBody(st,stage){
     if(!a.cuts)return '<div class="hint">대본이 나오면 이 칸에 컷별 대사(일본어/한국어)·근거 원문·나레이션 미리듣기가 나옵니다.</div>';
     return (a.audio?'<span class="lbl">나레이션 미리듣기 (1.33배)</span><audio controls preload="none" style="width:100%" src="'+v2media(pid,a.audio)+'"></audio>':'')+
       (a.verification?'<div class="hint">'+esc(a.verification)+'</div>':'')+
-      v2pendingNote(a)+v2ccBlock(a)+v2hookHTML(a)+
-      '<div class="sect">컷별 대사 — 고쳐도 영상은 자동으로 바뀌지 않습니다</div>'+a.cuts.map(c=>'<div class="v2cut'+(v2ccCuts(a).has(c.cut)?' v2flag':'')+'"><b>'+c.cut+'</b><div style="flex:1">'+esc(c.jp)+
+      v2pendingNote(a)+v2ccBlock(a)+v2storyHTML(a)+v2hookHTML(a)+
+      '<div class="sect">컷별 대사 — 고쳐도 영상은 자동으로 바뀌지 않습니다</div>'+a.cuts.map(c=>'<div class="v2cut'+(v2ccCuts(a).has(c.cut)?' v2flag':'')+'"><b>'+c.cut+'</b><div style="flex:1">'+
+        (c.beat?'<span class="v2st'+(c.beat==="答え"?" done":"")+'" style="margin-right:6px">'+esc(V2_BEAT_KO[c.beat]||c.beat)+'</span>':'')+esc(c.jp)+
         (v2ccCuts(a).has(c.cut)?' <span class="v2st fail">AI 의심</span>':'')+
         (c.pending?' <span class="v2st wait">수정됨 · 미반영</span>':'')+'<small>'+esc(c.ko)+'</small>'+
+        (c.link_ko?'<small style="opacity:.7">↳ '+esc(c.link_ko)+'</small>':'')+
         v2factsHTML(c)+
         '<button class="btn v2edit" data-edit="'+c.cut+'">대사 수정</button>'+
         '<div class="v2ed" id="ed-'+c.cut+'" style="display:none">'+
