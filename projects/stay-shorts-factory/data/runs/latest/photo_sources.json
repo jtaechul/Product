@@ -1,111 +1,49 @@
 [
  {
-  "hotel": "세인트존스 호텔",
-  "official_site": "https://new.stjohns.co.kr/",
+  "hotel": "쏠비치 양양",
+  "official_site": "https://www.sonohotelsresorts.com/solbeach_yy",
   "crawl": {
-   "url": "https://new.stjohns.co.kr/",
-   "resolved_by": "request.json official_urls",
-   "reason": "",
+   "url": "https://www.sonohotelsresorts.com/solbeach_yy",
+   "resolved_by": "네이버 지역검색 '쏠비치 양양' link",
+   "reason": "사진 주소를 하나도 못 찾음 (봇 차단·빈 페이지 가능성)",
    "pages": [
-    "https://new.stjohns.co.kr/post/3851",
-    "https://new.stjohns.co.kr/post/3789",
-    "https://new.stjohns.co.kr/post/3790",
-    "https://new.stjohns.co.kr/post/161",
-    "https://new.stjohns.co.kr/accommodation/index/KID",
-    "https://new.stjohns.co.kr/accommodation/index/PER",
-    "https://new.stjohns.co.kr/post/1248",
-    "https://new.stjohns.co.kr/post/139",
-    "https://new.stjohns.co.kr/post/3585",
-    "https://new.stjohns.co.kr/post/141",
-    "https://new.stjohns.co.kr/post/3583",
-    "https://new.stjohns.co.kr/post/1521",
-    "https://new.stjohns.co.kr/post/3909",
-    "https://new.stjohns.co.kr"
+    "https://www.sonohotelsresorts.com/solbeach_yy"
    ],
-   "tried": 57,
-   "photos": 32
+   "tried": 0,
+   "photos": 0
   },
   "shots": [
    {
     "n": 11,
-    "slot": "room",
-    "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/d9f0da26f6ce41a63e7947a9403320aa.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "따뜻한 조명 아래 동물 그림 벽화와 키즈 테이블이 있는 객실 침실이다"
+    "slot": "water",
+    "source": "coupang",
+    "url": null,
+    "page": null,
+    "description": "리조트 건물 앞 야외 풀과 카바나 쉼터가 해변을 따라 조성되어 있다."
    },
    {
     "n": 12,
-    "slot": "room",
-    "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2020/11/034d4715652a511806b5515bb6febedf.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "침대 옆에 원형 협탁과 반려견 돔 하우스가 놓여 있다"
-   },
-   {
-    "n": 13,
-    "slot": "room",
-    "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2024/06/b18b67bcd0b94aabe9f76180dff57265.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "바다와 솔숲이 내려다보이는 발코니 창가에 반려견 방석과 침대가 놓인 펫 객실이다"
-   },
-   {
-    "n": 14,
-    "slot": "special",
-    "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/editor/2026/01/c3c0b5e6c3fd7b398a0c0e16138ee918.jpg",
-    "page": "https://new.stjohns.co.kr/post/139",
-    "description": "통창 너머로 전망이 보이는 넓은 피트니스 센터에 다양한 운동 기구들이 갖춰져 있다",
-    "alt": "c3c0b5e6c3fd7b398a0c0e16138ee918.jpg"
-   },
-   {
-    "n": 15,
-    "slot": "special",
-    "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/post/2026/05/ed27d480ada26c24f36de08fe4c3d0de.jpg",
-    "page": "https://new.stjohns.co.kr/post/1248",
-    "description": "넓고 푸른 동해 바다 위로 작은 보트 한 척이 지나가고 있다"
-   },
-   {
-    "n": 16,
     "slot": "special",
     "source": "coupang",
     "url": null,
     "page": null,
-    "description": "백사장과 해송 숲을 따라 길게 뻗은 대규모 호텔 건물 전경이 보인다"
+    "description": "붉은 지붕의 리조트 단지와 조경 정원 뒤로 동해 바다가 펼쳐져 있다."
    },
    {
-    "n": 17,
-    "slot": "room",
-    "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2024/06/65cb745dbe1cf10b87be12c4b8529f5a.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "오션뷰 발코니 창가 앞에 반려견 두 마리와 펫 전용 용품들이 놓여 있다"
+    "n": 13,
+    "slot": "special",
+    "source": "coupang",
+    "url": null,
+    "page": null,
+    "description": "해안가에 위치한 붉은 스페인풍 지붕의 리조트 단지와 파도치는 푸른 바다가 보인다."
    },
    {
-    "n": 18,
-    "slot": "room",
-    "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/114f34599d49ced4ad2f61db33bb05d2.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "바다 생물 벽화로 꾸며진 키즈 전용 침실에 더블침대와 주니어 침대가 있다"
-   },
-   {
-    "n": 19,
-    "slot": "room",
-    "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/15d1764c6ee38ee8beab253bddddf66c.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "동물 캐릭터 벽화와 유아용 보조 침대가 갖춰진 아늑한 키즈 객실이다"
-   },
-   {
-    "n": 20,
-    "slot": "room",
-    "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/3443d0f35835954d23b02aaa5948d08f.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "공룡 캐릭터 벽지로 장식된 키즈 객실에 더블침대와 어린이 침대가 마련되어 있다"
+    "n": 14,
+    "slot": "special",
+    "source": "coupang",
+    "url": null,
+    "page": null,
+    "description": "억새풀 너머로 은은한 조명이 켜진 스페인풍 리조트 본관 건물이 보인다."
    }
   ]
  }

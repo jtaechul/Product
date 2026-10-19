@@ -249,6 +249,65 @@
      "price_band": null,
      "caption": "",
      "no": 4
+    },
+    {
+     "rank": 5,
+     "name": "쏠비치 양양",
+     "city": "양양군",
+     "hook": "사계절 따뜻한 해수풀 스파",
+     "blog_30d": 701,
+     "facts": [
+      "오션플레이",
+      "실내 온수풀",
+      "해수 사우나"
+     ],
+     "rooms": [
+      {
+       "name": "리조트 패밀리(취사/스탠다드/침대)",
+       "tags": [
+        "취사 가능",
+        "패밀리"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/2Hx1pzA5JcxlU_XN2PTAp_oIRpr4-OR6Pzi3zmxJTlXYIR_8hHZzwKDK2npElJAkS5q2ySeOo0NiVvINJr6OpcYQBFh9CyMlQuPfD6eMUFNjAOWX3yV8aZXehJJ2Ex_cHs8wTR8_vbjnoRbZ7rWKiJYoZZidWSg862JehcHN4Z5WElRy7EzAhcMJaHR0JPRDwjWsSXLyWKQNMsoVj_ScenQMxve0gIBPuMhbMBC-GK7NKPyTliD0I01g6QnWbdSdFa0c03iAzUIhuqE9YUNohfGFI-VduwVZEG2Jf2DrcSZD5FvnC_lBqZFi8S7XomVezIkbsXvcB0iFJHA8GQWkj_VH-eSLXU-CbZylC9ci1mDdXo9CcQ8VEx7jMP9HJtpCZyQvHsglnJz4ERhh4Qd1QKy5uBkv5QC9bhuQORRK7E2bhzzGbxD0X9wmrc1bVDjK4iP4XhIQCARldzueYu6gvBvFZCsGWLAfizeRdxxFhfo6KC7q5HI0sCJ3OPIKFClfnL-XIbJJ0-uc9i1-IRpWH9TbZ4x8zIiMRR7B7evMfYQvPqYh"
+      },
+      {
+       "name": "호텔 슈페리어 (클린/스탠다드/더블)",
+       "tags": [],
+       "image": "https://ads-partners.coupang.com/image1/W8WsHITmeWkABvqdWw2_egayy3OpO4Htkrk5HNPSLbA7bn8j8ggjojJ-cgUJVYDaizlU2xkpZlduTKNkdpm3mCPYIFDQcmRsjLuZvf6bpsWDOygkO3-ST4NbMEP0gZOkFxc043_0Hn6mH86O4j5uCTuR_PoNrpzyf3GCniMm54sqzMsH_xvXNHEGd7Te9OqYIvckujKhvT9XLIh_UQDC73whp0c56Bn36OGChWRTbt8el78nh7YtwpHAlvH-R4DoO7-tKbAnTcnm0bGfaT3a8orYpoT9waiCkUgb4AzxSUOafS-zVvkUyOcgYXDPO0BzesmDelTVqqBJXYkwt43XwsTICMAOEttHz3_PbHhx5WiDUx_OifrRNG3efYNmIIgLfkCmWQWPdTLE7ekSMif147DUN61fQmvx3lyjjo7pRpKhh7m8uaAjUUMlWgGgYCCMcCRTKz72Moglzv5lPqgaxjACHZezaEI9PDNGxwuB6-8bh9MUrsV9pDfNVW83OWu8Nb8Y5H_Z9PT9Uyoc7_CYZfjX52p1cxaRebEpOcqrWgL--es="
+      },
+      {
+       "name": "빌라쏠레(취사/오션/더블,싱글)",
+       "tags": [
+        "오션뷰",
+        "취사 가능"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/vXuPS18lDrxuZN6hvZhgplY15800R_Q4MW93dus5d2hgcHys19RL9LuTNDQEl0AAP3TYR-adbKS1gTIW6FIFGuv--jpMiIgzpyqJwipsTB5TA41DjjJ0qek7511j897Tz3da9gjdQW0iZ6MPSrBmI7S94ILAhjiUKSz8pYo3d83ODVEndG5zPi5DVGiGGIzHOBtCZGGpo6Ez4jxXOdwlIdpG_4AFFd0lC4llFu70xpNL0giu15mPTnfokm7es-3aK9A_mLshAxZDlt-H9SHvcsMnEy49CazAOgRhFoZQzrniLAl7-HXgOmxFwamw1UxOqOlX56AGsTLQsjwv0rWyGU4taDeXEvsioVp1JI0s2sbMD7nC17_YthyG5tFqxI2aK8uoXHR9PgrJ84aSVQhx-18TquKMD7rnGSLfdzmWFtVLI0a8V0_zjibbPzDN9UXn096MMOMhgcJtZdLyaZJdYGmGAcC_eiwoxdQRbERVFnZNkZPD7xmFFOzH2Pppko7Ro6Yxc4w6HsbNySYnksQXKmFeu54Zl2FE7ioS7gbKCGLWZBY="
+      },
+      {
+       "name": "호텔 패밀리(슈페리어/스탠다드)",
+       "tags": [
+        "패밀리"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/smws-bnCZaqYVSMjsqv-jAG8dlWJiLALkBpbnquFYsW_E3zPvAIOWialXG7yElIk2X6ZqMAsTlyKel9iqZTqs1MJ6ck-bjZP3NsLrB4xVatVi8zwFjyi5qpqY-YW4kgh83_zbn9cwFMdQhHe6CJhuausRYmWmvnE1SF5Xv39O91FI6dCP9Vv1P2f1rTkNFhoLdiVu6he2E577fLcSrJICVQqzM0Acmhz4UPnUdFMh0IpmMXJCCE9t0RdD2OaXXt4FJwqGg1fOFYo491TNt_TuzQHW_RuWQosIYl8R11vzzie5YNRhI4w3boWZMqyhBs9eHD9cYB9As848l8NOL57986gADiKO6Nufhaq92a6tL7Ipzbs50pB0GesRZ783xuzjF8FputU2oc5GqM_6Le5qaS-3cqhiVq1VNivZ8rCWtPSzNAmgpoqJyLCJG8aXfFT-KzqDcyQ4xUJrn4guyaJ7S8RAbNOtAP_jBL4ifhPr8H4JAuyOFDCVpDr4mnM-IIVfvkeZBCh7rxQcgiFI1Af8U-zI6s-aWt_z6e7oZwkNaJc"
+      },
+      {
+       "name": "호텔 슈페리어 (미취사/스탠다드/더블)",
+       "tags": [
+        "취사 가능"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/QAZvT0olmYBgH9BdQMsl7WHKq9WDRKWDUSMna5o_sohL65IRYhkQ5f-HNVw7afS7tv8PR70GJ1y6MNsy9maXEktW4xeXJ-2ufEHNHhB9cDPVMn0MWgjjcsIG-6mGjzEUkSGeLmjeMEzPQdKhmnHDkSuRnTlAKvPkdXvliVLgMg0PccI5-l6jnRg9MLaLiyzm00vacDh078UESE3j80GTp5bXRy9OJBvntUpFqTm679Ps8wQu6UqZf1BfJIC0i5srvNP_KNAdELpsxZkLV59pxMoVbs_LAp9fl0zf4eJILFH94Ta2pxLcuUUeflXY8euIZzoepZEhqZpGxz4H6S9-Px_PFD1676KudeNlD-fRxrZSuZ8HgejGra4nTZq-iDh_l2ppGMAphrIl8NujW-qvAY_RTPA7LffzOtkWVh4avoBy9K7_apnyeZJjBAJSZ9qa03_o0dWxEjJzlZKBlObPJmF5oR1-upUfSyqZ0Jf4iUKEuMwDijvOaoeSLqq_xvKQUU6e2S-VYHUpbR_fJ5nhYwIvHq8XgfB_Nj2ddxG00ZxMWQ=="
+      }
+     ],
+     "image": "img/2026-11-강원-실내-온수풀-온천/5.jpg",
+     "links": {
+      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000010793396&vendorItemId=70000146624704&itemId=20002052038799&traceid=V0-153-c82ffc0c7bd19330&requestid=20261019191825981098778780&token=31850C%7CGM&pt=0&slot=1",
+      "agoda": null,
+      "official": "https://www.sonohotelsresorts.com/solbeach_yy"
+     },
+     "honest": "",
+     "price_band": null,
+     "caption": "",
+     "no": 5
     }
    ]
   }
