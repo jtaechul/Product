@@ -1,0 +1,390 @@
+[
+ {
+  "sci": "Psychrolutes marcidus",
+  "en": "blobfish"
+ },
+ {
+  "sci": "Macropinna microstoma",
+  "en": "barreleye"
+ },
+ {
+  "sci": "Opisthoproctus soleatus",
+  "en": "barreleye"
+ },
+ {
+  "sci": "Dolichopteryx longipes",
+  "en": "brownsnout spookfish"
+ },
+ {
+  "sci": "Eurypharynx pelecanoides",
+  "en": "pelican eel"
+ },
+ {
+  "sci": "Saccopharynx ampullaceus",
+  "en": "gulper eel"
+ },
+ {
+  "sci": "Anoplogaster cornuta",
+  "en": "common fangtooth"
+ },
+ {
+  "sci": "Chauliodus sloani",
+  "en": "Sloane's viperfish"
+ },
+ {
+  "sci": "Malacosteus niger",
+  "en": "stoplight loosejaw"
+ },
+ {
+  "sci": "Idiacanthus antrostomus",
+  "en": "Pacific blackdragon"
+ },
+ {
+  "sci": "Bathypterois grallator",
+  "en": "tripodfish"
+ },
+ {
+  "sci": "Chiasmodon niger",
+  "en": "black swallower"
+ },
+ {
+  "sci": "Argyropelecus aculeatus",
+  "en": "lovely hatchetfish"
+ },
+ {
+  "sci": "Regalecus glesne",
+  "en": "giant oarfish"
+ },
+ {
+  "sci": "Chlamydoselachus anguineus",
+  "en": "frilled shark"
+ },
+ {
+  "sci": "Megachasma pelagios",
+  "en": "megamouth shark"
+ },
+ {
+  "sci": "Somniosus microcephalus",
+  "en": "Greenland shark"
+ },
+ {
+  "sci": "Hexanchus griseus",
+  "en": "bluntnose sixgill shark"
+ },
+ {
+  "sci": "Isistius brasiliensis",
+  "en": "cookiecutter shark"
+ },
+ {
+  "sci": "Etmopterus perryi",
+  "en": "dwarf lanternshark"
+ },
+ {
+  "sci": "Latimeria chalumnae",
+  "en": "West Indian Ocean coelacanth"
+ },
+ {
+  "sci": "Pseudoliparis swirei",
+  "en": "Mariana snailfish"
+ },
+ {
+  "sci": "Abyssobrotula galatheae",
+  "en": ""
+ },
+ {
+  "sci": "Himantolophus groenlandicus",
+  "en": "Atlantic footballfish"
+ },
+ {
+  "sci": "Caulophryne jordani",
+  "en": "fanfin seadevil"
+ },
+ {
+  "sci": "Melanocetus johnsonii",
+  "en": "humpback anglerfish"
+ },
+ {
+  "sci": "Ceratias holboelli",
+  "en": "Krøyer's deep sea anglerfish"
+ },
+ {
+  "sci": "Stylephorus chordatus",
+  "en": "tube-eye"
+ },
+ {
+  "sci": "Bathysaurus ferox",
+  "en": "deep-sea lizardfish"
+ },
+ {
+  "sci": "Rhinochimaera pacifica",
+  "en": "Pacific spookfish"
+ },
+ {
+  "sci": "Chimaera monstrosa",
+  "en": "rabbit fish"
+ },
+ {
+  "sci": "Beryx splendens",
+  "en": "splendid alfonsino"
+ },
+ {
+  "sci": "Doederleinia berycoides",
+  "en": "blackthroat seaperch"
+ },
+ {
+  "sci": "Alepisaurus ferox",
+  "en": "long snouted lancetfish"
+ },
+ {
+  "sci": "Cyclothone",
+  "en": "bristlemouth"
+ },
+ {
+  "sci": "Myctophidae",
+  "en": "lanternfish"
+ },
+ {
+  "sci": "Hoplostethus atlanticus",
+  "en": "orange roughy"
+ },
+ {
+  "sci": "Coryphaenoides rupestris",
+  "en": "roundnose grenadier"
+ },
+ {
+  "sci": "Myxine glutinosa",
+  "en": "Atlantic hagfish"
+ },
+ {
+  "sci": "Cetomimidae",
+  "en": "flabby whalefish"
+ },
+ {
+  "sci": "Architeuthis dux",
+  "en": "giant squid"
+ },
+ {
+  "sci": "Mesonychoteuthis hamiltoni",
+  "en": "colossal squid"
+ },
+ {
+  "sci": "Magnapinna",
+  "en": "bigfin squid"
+ },
+ {
+  "sci": "Histioteuthis heteropsis",
+  "en": "strawberry squid"
+ },
+ {
+  "sci": "Stauroteuthis syrtensis",
+  "en": "glowing sucker octopus"
+ },
+ {
+  "sci": "Vitreledonella richardi",
+  "en": "glass octopus"
+ },
+ {
+  "sci": "Japetella diaphana",
+  "en": ""
+ },
+ {
+  "sci": "Haliphron atlanticus",
+  "en": "seven-arm octopus"
+ },
+ {
+  "sci": "Cirrothauma murrayi",
+  "en": "blind cirrate octopus"
+ },
+ {
+  "sci": "Watasenia scintillans",
+  "en": "firefly squid"
+ },
+ {
+  "sci": "Taningia danae",
+  "en": "Dana octopus squid"
+ },
+ {
+  "sci": "Opisthoteuthis depressa",
+  "en": "Japanese flapjack octopus"
+ },
+ {
+  "sci": "Amphitretus pelagicus",
+  "en": "telescope octopus"
+ },
+ {
+  "sci": "Spirula spirula",
+  "en": "ram's horn squid"
+ },
+ {
+  "sci": "Octopoteuthis deletron",
+  "en": ""
+ },
+ {
+  "sci": "Grimalditeuthis bonplandi",
+  "en": ""
+ },
+ {
+  "sci": "Bathyteuthis abyssicola",
+  "en": ""
+ },
+ {
+  "sci": "Macrocheira kaempferi",
+  "en": "Japanese spider crab"
+ },
+ {
+  "sci": "Kiwa hirsuta",
+  "en": "yeti crab"
+ },
+ {
+  "sci": "Shinkaia crosnieri",
+  "en": ""
+ },
+ {
+  "sci": "Gandalfus yunohana",
+  "en": ""
+ },
+ {
+  "sci": "Phronima sedentaria",
+  "en": ""
+ },
+ {
+  "sci": "Gnathophausia ingens",
+  "en": "giant red mysid"
+ },
+ {
+  "sci": "Gigantocypris",
+  "en": ""
+ },
+ {
+  "sci": "Alicella gigantea",
+  "en": "supergiant amphipod"
+ },
+ {
+  "sci": "Stygiomedusa gigantea",
+  "en": "giant phantom jelly"
+ },
+ {
+  "sci": "Deepstaria enigmatica",
+  "en": ""
+ },
+ {
+  "sci": "Atolla wyvillei",
+  "en": "Atolla jellyfish"
+ },
+ {
+  "sci": "Periphylla periphylla",
+  "en": "helmet jellyfish"
+ },
+ {
+  "sci": "Marrus orthocanna",
+  "en": ""
+ },
+ {
+  "sci": "Bathykorus bouilloni",
+  "en": ""
+ },
+ {
+  "sci": "Relicanthus daphneae",
+  "en": ""
+ },
+ {
+  "sci": "Halitrephes maasi",
+  "en": ""
+ },
+ {
+  "sci": "Bathocyroe fosteri",
+  "en": ""
+ },
+ {
+  "sci": "Leiopathes glaberrima",
+  "en": ""
+ },
+ {
+  "sci": "Scotoplanes globosa",
+  "en": "sea pig"
+ },
+ {
+  "sci": "Psychropotes longicauda",
+  "en": "gummy squirrel"
+ },
+ {
+  "sci": "Pelagothuria natatrix",
+  "en": ""
+ },
+ {
+  "sci": "Chrysomallon squamiferum",
+  "en": "scaly-foot gastropod"
+ },
+ {
+  "sci": "Bathymodiolus",
+  "en": ""
+ },
+ {
+  "sci": "Riftia pachyptila",
+  "en": "giant tube worm"
+ },
+ {
+  "sci": "Alvinella pompejana",
+  "en": "Pompeii worm"
+ },
+ {
+  "sci": "Osedax",
+  "en": "bone-eating worm"
+ },
+ {
+  "sci": "Swima bombiviridis",
+  "en": "green bomber"
+ },
+ {
+  "sci": "Poeobius meseres",
+  "en": ""
+ },
+ {
+  "sci": "Lamellibrachia luymesi",
+  "en": ""
+ },
+ {
+  "sci": "Euplectella aspergillum",
+  "en": "Venus' flower basket"
+ },
+ {
+  "sci": "Chondrocladia lyra",
+  "en": "harp sponge"
+ },
+ {
+  "sci": "Bathochordaeus",
+  "en": "giant larvacean"
+ },
+ {
+  "sci": "Monorhaphis chuni",
+  "en": ""
+ },
+ {
+  "sci": "Colossendeis colossea",
+  "en": "giant sea spider"
+ },
+ {
+  "sci": "Polychelidae",
+  "en": "deep-sea blind lobster"
+ },
+ {
+  "sci": "Neoceratias spinifer",
+  "en": ""
+ },
+ {
+  "sci": "Linophryne arborifera",
+  "en": ""
+ },
+ {
+  "sci": "Gigantactis vanhoeffeni",
+  "en": ""
+ },
+ {
+  "sci": "Oneirodes eschrichtii",
+  "en": ""
+ },
+ {
+  "sci": "Lasiognathus saccostoma",
+  "en": ""
+ }
+]

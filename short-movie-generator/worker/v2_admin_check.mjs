@@ -132,6 +132,18 @@ els = {}; await api.renderV2New(); const nw = els.view.innerHTML;
 res.new_lists_ready_topics = (nw.match(/data-new="/g) || []).length;
 res.new_hides_in_progress = !nw.includes('data-new="bathynomus_giganteus"');
 const nb = (lists["[data-new]"] || [])[0]; if (nb?.onclick) await nb.onclick();
+// 이미 만든 종은 후보에서 빠진다(운영자 지시 2026-10-19) — 후보 파일이 옛날 것이어도 지금 편 목록(index.json)과 대조 · 같은 속도
+{ const keepEls = els;
+  indexOverride = { items: [{ id: "x_made", sci: "Grimpoteuthis discoveryi", name_ko: "만든 편", stage: "upload", state: "review" }] };
+  els = {}; await api.renderV2New(); const nm = els.view.innerHTML;
+  res.new_hides_made_same_genus = !/data-new="grimpoteuthis/.test(nm) && (nm.match(/data-new="/g) || []).length > 0;
+  indexOverride = null; els = {}; await api.renderV2New(); const nr = els.view.innerHTML;
+  res.new_hides_made_from_index = ["bathynomus_giganteus", "enypniastes_eximia", "lithodidae", "chaunax_stigmaeus", "actinoscyphia_aurelia"]
+    .every(id => !nr.includes('data-new="' + id + '"'));
+  res.new_has_many_topics = (nr.match(/data-new="/g) || []).length >= 40;
+  const n0 = dispatched.length; if (el("v2topics").onclick) await el("v2topics").onclick();
+  res.topics_refresh_dispatches = !!(dispatched[n0] && dispatched[n0].body.inputs.action === "topics");
+  els = keepEls; }
 
 els = {}; await api.renderV2Episode("bathynomus_giganteus"); const ep = els.view.innerHTML;
 res.episode_five_stages = ["stg-topic", "stg-script", "stg-storyboard", "stg-video", "stg-upload"].every(k => ep.includes(k));

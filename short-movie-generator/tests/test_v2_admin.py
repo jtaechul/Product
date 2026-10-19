@@ -448,12 +448,14 @@ def test_topic_photo_free_license_and_renamed_species():
 
 
 def test_topics_have_photo_and_korean_name():
-    """시작할 수 있는 종은 사진과 한글명(정식이 없으면 상위 무리 이름 + 표시)을 가진다(지어내지 않음)."""
+    """시작할 수 있는 종은 사진과 한글명(정식이 없으면 상위 무리 이름 + 표시)을 가진다(지어내지 않음) · 이미 만든 종은 없다."""
     tp = json.loads((admin.V2 / "topics.json").read_text(encoding="utf-8"))["topics"]
     ready = [t for t in tp if t["ready"]]
-    assert ready and all(t.get("photo") and t["photo"]["url"].startswith("https://") for t in ready)
+    assert len(ready) >= 40 and all(t.get("photo") and t["photo"]["url"].startswith("https://") for t in ready)
     assert all(re.search(r"[가-힣]", t["name_ko"]) for t in ready)
-    assert all(t["ko_official"] or t["id"] in admin.KO_GROUP for t in ready)
+    assert all(t["ko_official"] or t["id"] in admin.KO_GROUP or re.search(r"의 한 (종|무리)$", t["name_ko"]) for t in ready)
+    made = admin.made_subjects()
+    assert not [t["id"] for t in tp if admin._is_made(t, made)]
 
 
 # ── 대본 자동 작성(실사고 2026-09-30: '작업 중'인데 실제로 아무것도 안 돌던 문제) ──────────
@@ -953,6 +955,97 @@ def test_topic_scores_sort_and_cache(v2, monkeypatch):
     assert sc["b"]["score"] == 9 and sc["a"]["hook_ko"] == "보통"
     admin._topic_scores(items, ask=ask)
     assert len(calls) == 1                                    # 캐시 — 두 번째는 묻지 않음
+
+
+# ── 새 영상 후보 넓히기(운영자 지시 2026-10-19: 만든 종 빼기 · 조건 완화 · 자료 수집 확대) ──
+def _wiki_fake(calls=None, boom=()):
+    import urllib.parse
+    pages = {
+        "Testus abyssus": {"title": "Testus abyssus", "fullurl": "https://en.wikipedia.org/wiki/Testus_abyssus",
+                           "extract": "Testus abyssus is a deep-sea fish found at depths of 1,200 to 3,000 m. It glows in the dark when touched. "
+                                      "Adults are about 30 cm long and live in the North Pacific.\n== Biology ==\nIt can live for 120 years in the cold water.",
+                           "langlinks": [{"lang": "ja", "*": "テストウオ"}, {"lang": "ko", "*": "시험심해어"}]},
+        "テストウオ": {"title": "テストウオ (魚)", "fullurl": "https://ja.wikipedia.org/wiki/テストウオ",
+                     "extract": "テストウオは深海魚である。水深1200メートルから3000メートルに生息する。" * 8},
+        "Groupus anonymus": {"title": "Groupus anonymus", "fullurl": "https://en.wikipedia.org/wiki/Groupus_anonymus",
+                             "extract": "Groupus anonymus is an anglerfish of the deep sea, living below 1000 m in the Atlantic Ocean. " * 4},
+        "Shallowus maris": {"title": "Shallowus maris", "fullurl": "https://en.wikipedia.org/wiki/Shallowus_maris",
+                            "extract": "Shallowus maris is a small fish of tide pools and sandy beaches. It eats algae near the shore. " * 4},
+    }
+    def get(url):
+        title = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)["titles"][0]
+        if calls is not None:
+            calls.append(title)
+        if title in boom:
+            raise OSError("HTTP Error 429: Too Many Requests")
+        pg = pages.get(title)
+        return {"query": {"pages": {"1": dict(pg)} if pg else {"-1": {"title": title, "missing": ""}}}}
+    return get
+
+
+def test_same_subject_and_wiki_profile():
+    assert admin.same_subject("Bathynomus giganteus", "Bathynomus") and admin.same_subject("Bathynomus giganteus", "bathynomus doederleini")
+    assert admin.same_subject("Crossota sp.", "Crossota") and not admin.same_subject("Bathynomus giganteus", "Grimpoteuthis")
+    w = admin.wiki_profile("Testus abyssus", get=_wiki_fake())
+    assert w["found"] and w["deep"] and w["depth"] == "1200-3000" and w["ko_title"] == "시험심해어" and w["ja_title"] == "テストウオ"
+    assert w["facts"][0].startswith("Testus abyssus is a deep-sea fish") and any("120 years" in f for f in w["facts"])   # 문서 문장 그대로
+    assert w["en_url"].endswith("Testus_abyssus") and w["ja_url"]
+    assert admin.wiki_profile("Nowikius nothing", get=_wiki_fake()) == {"found": False}
+
+
+def test_build_topics_excludes_made_relaxes_and_expands(v2, monkeypatch):
+    """만든 편(같은 속 포함)은 후보에서 빠지고 · v1 사실이 없어도 위키백과 문서 + 심해 확인이면 후보가 되고 · 확대 목록이 더해진다."""
+    for k, f in (("TOPIC_SEEDS", "topic_seeds.json"), ("TOPIC_WIKI", "topic_wiki.json"), ("TOPIC_MEDIA", "topic_media.json"),
+                 ("TOPIC_SCORES", "topic_scores.json")):
+        monkeypatch.setattr(admin, k, v2 / f)
+    (v2 / "topic_seeds.json").write_text(json.dumps([
+        {"sci": "Testus abyssus", "en": "test abyss fish"}, {"sci": "Groupus anonymus"}, {"sci": "Shallowus maris"},
+        {"sci": "Nowikius nothing"}, {"sci": "Bathynomus doederleini"}, {"sci": "Busyus wikius"}]), encoding="utf-8")
+    admin._save(admin.status_path("bathynomus_giganteus"), {"id": "bathynomus_giganteus", "sci": "Bathynomus giganteus"})   # 이미 만든 편
+    photos, asked = [], []
+    def fetch(sci):
+        photos.append(sci)
+        return {"url": "https://x/" + sci.replace(" ", "_") + ".jpg", "credit": "c", "license": "cc-by", "page": "https://x"}
+    def ask(p):
+        asked.append(p)
+        ids = re.findall(r"^([a-z0-9_]+) \(", p.split("# Species")[-1], re.M)
+        return json.dumps({"scores": {i: ({"score": 9, "hook_jp": "120年生きる", "hook_ko": "120년 산다"} if i == "testus_abyssus"
+                                          else {"score": 3, "hook_jp": "", "hook_ko": ""}) for i in ids}})
+    res = admin.build_topics(fetch=fetch, ask=ask, wiki_get=_wiki_fake(boom=("Busyus wikius",)),
+                             ko_fetch=lambda sci: {"ko": None, "group": "아귀목"})
+    by = {t["id"]: t for t in res["topics"]}
+    # ① 만든 종 · 같은 속은 빠진다
+    assert not {"bathynomus_giganteus", "bathynomus", "bathynomus_doederleini"} & set(by)
+    assert {"Bathynomus giganteus", "Bathynomus", "Bathynomus doederleini"} <= set(res["made_excluded"])
+    # ② 조건 완화 + ③ 확대 목록: v1 자료가 없어도 위키백과 문서 + 심해 확인 + 사진이면 시작 가능
+    t = by["testus_abyssus"]
+    assert t["ready"] and all(t["checks"].values()) and t["name_ko"] == "시험심해어" and t["ko_official"] and t["name_ja"] == "テストウオ"
+    assert t["facts"][0].startswith("Testus abyssus is") and "https://en.wikipedia.org/wiki/Testus_abyssus" in t["sources"]
+    assert t["score"] == 9 and res["topics"][0]["id"] == "testus_abyssus"                       # 점수 높은 종부터
+    g = by["groupus_anonymus"]                                                                   # 한글명 없음 → 상위 무리 이름(지어내지 않음)
+    assert g["ready"] and g["name_ko"] == "아귀목의 한 종" and g["ko_official"] is False
+    assert not by["shallowus_maris"]["ready"] and by["shallowus_maris"]["checks"]["심해 확인"] is False
+    assert not by["nowikius_nothing"]["ready"] and by["nowikius_nothing"]["checks"]["출처 문서(위키백과)"] is False
+    assert "Nowikius nothing" not in photos and "Shallowus maris" not in photos                  # 앞 조건 미달이면 사진도 안 찾음
+    # 네트워크 오류(429)는 캐시하지 않고 다음에 다시 묻는다 · '문서 없음'은 캐시
+    wiki = json.loads((v2 / "topic_wiki.json").read_text(encoding="utf-8"))
+    assert "busyus wikius" not in wiki and wiki["nowikius nothing"]["found"] is False and not by["busyus_wikius"]["ready"]
+    # v1 종 자료(사실 3개 + 수심)는 위키백과 없이도 예전처럼 후보(조건 완화가 기존 후보를 잃지 않음)
+    assert by["enypniastes_eximia"]["ready"]
+    # 두 번째는 캐시 — 위키백과·점수를 다시 묻지 않는다
+    calls, n_ask = [], len(asked)
+    admin.build_topics(fetch=fetch, ask=ask, wiki_get=_wiki_fake(calls), ko_fetch=lambda sci: {"ko": None, "group": None})
+    assert set(calls) == {"Busyus wikius"} and len(asked) == n_ask
+
+
+def test_new_pilot_removes_made_topic_right_away(v2):
+    (v2 / "topics.json").write_text(json.dumps({"topics": [
+        {"id": "test_fish", "name_ko": "시험어", "sci": "Testus fishus", "ready": True},
+        {"id": "testus_other", "name_ko": "다른 시험어", "sci": "Testus other", "ready": True},
+        {"id": "keep_me", "name_ko": "남는 종", "sci": "Keepus me", "ready": True}]}), encoding="utf-8")
+    admin.new_pilot("test_fish")
+    left = [t["id"] for t in json.loads((v2 / "topics.json").read_text(encoding="utf-8"))["topics"]]
+    assert left == ["keep_me"]                                                                  # 같은 속도 같은 대상
 
 
 def test_upload_adds_playlist_and_stats(real_copy):

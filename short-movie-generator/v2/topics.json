@@ -1,13 +1,816 @@
 {
-  "updated": "2026-09-30T08:05:28Z",
+  "updated": "2026-10-19T10:44:23Z",
   "topics": [
+    {
+      "id": "bathocyroe_fosteri",
+      "key": "",
+      "sci": "Bathocyroe fosteri",
+      "name_en": "",
+      "name_ko": "감투빗해파리목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "",
+      "facts_n": 5,
+      "facts": [
+        "Bathocyroe fosteri is a species of lobate ctenophore found at intermediate depths in all the world's oceans.",
+        "The species is very common and abundant near the Mid-Atlantic Ridge.",
+        "It is bioluminescent, and is typically observed hanging motionlessly in an upright or inverted posture although it can flap its oral lobes to swim."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/148533726/medium.jpg",
+        "credit": "\nPhoto courtesy of Marsh Youngbluth, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/949343"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "histioteuthis_heteropsis",
+      "key": "",
+      "sci": "Histioteuthis heteropsis",
+      "name_en": "strawberry squid",
+      "name_ko": "개안목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "200-1000",
+      "facts_n": 9,
+      "facts": [
+        "Histioteuthis heteropsis, known as the strawberry squid, is a species of small cock-eyed squid.",
+        "The scientific nomenclature of these squid stems from their set of differently sized eyes, one being small and blue and the other being large and yellow.",
+        "It is thought that the large eye is used to see objects against dim light, while the smaller eye is more able to view bioluminescent light sources."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Histioteuthis_heteropsis"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/378327034/medium.jpg",
+        "credit": "anonymous, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/432452"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "octopoteuthis_deletron",
+      "key": "",
+      "sci": "Octopoteuthis deletron",
+      "name_en": "",
+      "name_ko": "개안목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "400-800",
+      "facts_n": 3,
+      "facts": [
+        "Octopoteuthis deletron is a species of squid in the genus Octopoteuthis of the family Octopoteuthidae.",
+        "They belong to the pelagic squids of order Oegopsida.",
+        "Found at depths of 400 to 800 m (1,300 to 2,600 ft) in the Pacific Ocean, they have been known to grow to 24 cm (9.4 in)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Octopoteuthis_deletron"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11770060/medium.jpg",
+        "credit": "(c) aaronbaldwin, some rights reserved (CC BY-NC), uploaded by aaronbaldwin",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/432489"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "alicella_gigantea",
+      "key": "",
+      "sci": "Alicella gigantea",
+      "name_en": "supergiant amphipod",
+      "name_ko": "거대옆새우",
+      "ko_official": true,
+      "name_ja": "ダイダラボッチ",
+      "depth_m": "1720-8931",
+      "facts_n": 9,
+      "facts": [
+        "Alicella gigantea is a giant species of amphipod inhabiting the deep sea, which is sometimes referred to as the \"supergiant amphipod\"; these crustaceans may reach 34 cm (13 in) in length.",
+        "The only species within the genus Alicella, the species is white in colour and is distinguished from closely related amphipods mainly by size, though subtle anatomical differences can be used for small specimens.",
+        "They live at depths of around 4,850–7,000 m (15,910–22,970 ft), and their large body size is often presented as an example of abyssal gigantism."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Alicella",
+        "https://ja.wikipedia.org/wiki/%E3%83%80%E3%82%A4%E3%83%80%E3%83%A9%E3%83%9C%E3%83%83%E3%83%81_(%E7%AB%AF%E8%84%9A%E9%A1%9E)"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/1435265/medium.jpg",
+        "credit": "(c) WoRMS for SMEBD, some rights reserved (CC BY-NC-SA)",
+        "license": "cc-by-nc-sa",
+        "page": "https://www.inaturalist.org/taxa/425121"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "bathochordaeus",
+      "key": "",
+      "sci": "Bathochordaeus",
+      "name_en": "giant larvacean",
+      "name_ko": "거대올챙이우렁쉥이",
+      "ko_official": true,
+      "name_ja": "",
+      "depth_m": "",
+      "facts_n": 6,
+      "facts": [
+        "Bathochordaeus, the giant larvaceans, is a genus of larvacean tunicates in the family Oikopleuridae.",
+        "They are free-swimming filter-feeding marine animals that build mucus bubbles.",
+        "They eat tiny particles of dead or drifting organic material that float through the water column, which contribute to the oceanic carbon cycle and the accelerated transfer of carbon to the deep sea."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Bathochordaeus"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/68351920/medium.gif",
+        "credit": "(c) \nSherlock, R.E., Walz, K.R. and Robison, B.H., some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/554898"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "isistius_brasiliensis",
+      "key": "",
+      "sci": "Isistius brasiliensis",
+      "name_en": "cookiecutter shark",
+      "name_ko": "검목상어",
+      "ko_official": true,
+      "name_ja": "ダルマザメ",
+      "depth_m": "80-3700",
+      "facts_n": 9,
+      "facts": [
+        "The cookiecutter shark (Isistius brasiliensis), also called the cigar shark, is a species of small squaliform shark in the family Dalatiidae.",
+        "This shark lives in warm, oceanic waters worldwide, particularly near islands, and has been recorded as deep as 3.7 km (2.3 mi).",
+        "It migrates vertically up to 3 km (1.9 mi) every day, approaching the surface at dusk and descending with the dawn."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Cookiecutter_shark",
+        "https://ja.wikipedia.org/wiki/%E3%83%80%E3%83%AB%E3%83%9E%E3%82%B6%E3%83%A1"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/104243823/medium.jpg",
+        "credit": "\nNOAA Observer Project, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/103503"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "gandalfus_yunohana",
+      "key": "",
+      "sci": "Gandalfus yunohana",
+      "name_en": "",
+      "name_ko": "게하목의 한 종",
+      "ko_official": false,
+      "name_ja": "ユノハナガニ",
+      "depth_m": "420-1380",
+      "facts_n": 6,
+      "facts": [
+        "Gandalfus yunohana is a species of blind crab in the family Bythograeidae found on hydrothermal vents on the eastern edge of the Philippine Sea Plate south of Japan.",
+        "Because no light penetrates to such depths, the eyes of G.",
+        "yunohana are immobile and unpigmented."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Gandalfus_yunohana",
+        "https://ja.wikipedia.org/wiki/%E3%83%A6%E3%83%8E%E3%83%8F%E3%83%8A%E3%82%AC%E3%83%8B"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/484631523/medium.jpg",
+        "credit": "(c) Lycaon, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/1135652"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "chiasmodon_niger",
+      "key": "",
+      "sci": "Chiasmodon niger",
+      "name_en": "black swallower",
+      "name_ko": "고등어목의 한 종",
+      "ko_official": false,
+      "name_ja": "オニボウズギス",
+      "depth_m": "700-2745",
+      "facts_n": 7,
+      "facts": [
+        "The black swallower (Chiasmodon niger) is a species of deep sea fish in the family Chiasmodontidae.",
+        "It is known for its ability to swallow fish larger than itself.",
+        "It has a worldwide distribution in tropical and subtropical waters, in the mesopelagic and bathypelagic zones at a depth of 700–2,745 m (2,297–9,006 ft)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Black_swallower",
+        "https://ja.wikipedia.org/wiki/%E3%82%AA%E3%83%8B%E3%83%9C%E3%82%A6%E3%82%BA%E3%82%AE%E3%82%B9"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/593122341/medium.jpg",
+        "credit": "(c) MARC MARTIN SOLA, some rights reserved (CC BY-NC), uploaded by MARC MARTIN SOLA",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/317049"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "marrus_orthocanna",
+      "key": "",
+      "sci": "Marrus orthocanna",
+      "name_en": "",
+      "name_ko": "관해파리목의 한 종",
+      "ko_official": false,
+      "name_ja": "ヒノオビクラゲ",
+      "depth_m": "200-2000",
+      "facts_n": 8,
+      "facts": [
+        "Marrus orthocanna is a species of pelagic siphonophore, a colonial animal composed of a complex arrangement of zooids, some of which are polyps and some medusae.",
+        "Swimming independently in the mid-ocean, it lives in the Arctic and other cold, deep waters.",
+        "It is a colonial creature that is born from a single egg which is fertilized."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Marrus_orthocanna",
+        "https://ja.wikipedia.org/wiki/%E3%83%92%E3%83%8E%E3%82%AA%E3%83%93%E3%82%AF%E3%83%A9%E3%82%B2"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/145808211/medium.jpg",
+        "credit": "\nKevin Raskoff, Monterey Peninsula College, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/1506788"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "somniosus_microcephalus",
+      "key": "",
+      "sci": "Somniosus microcephalus",
+      "name_en": "Greenland shark",
+      "name_ko": "그린란드상어",
+      "ko_official": true,
+      "name_ja": "ニシオンデンザメ",
+      "depth_m": "4-2200",
+      "facts_n": 9,
+      "facts": [
+        "The Greenland shark (Somniosus microcephalus), also known as the grey shark or gurry shark, is a large shark of the family Somniosidae (\"sleeper sharks\"), closely related to the Pacific and southern sleeper sharks.",
+        "Inhabiting the North Atlantic and Arctic Oceans, they are notable for their exceptional longevity, although they are poorly studied because of the depth and remoteness of their natural habitat.",
+        "Greenland sharks have the longest lifespan of any known vertebrate, estimated to be between 272 and 510 years."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Greenland_shark",
+        "https://ja.wikipedia.org/wiki/%E3%83%8B%E3%82%B7%E3%82%AA%E3%83%B3%E3%83%87%E3%83%B3%E3%82%B6%E3%83%A1"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/62876037/medium.jpg",
+        "credit": "(c) Hemming1952, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/112841"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "beryx_splendens",
+      "key": "",
+      "sci": "Beryx splendens",
+      "name_en": "splendid alfonsino",
+      "name_ko": "금눈돔목의 한 종",
+      "ko_official": false,
+      "name_ja": "キンメダイ",
+      "depth_m": "25-1250",
+      "facts_n": 7,
+      "facts": [
+        "The splendid alfonsino (Beryx splendens) is an alfonsino of the genus Beryx, found around the world at depths between 25 and 1,250 metres (82 and 4,101 ft), usually between 400 and 600 metres (1,300 and 2,000 ft).",
+        "Although its most common size is 40 centimetres (16 in), it can reach lengths of up to 70 centimetres (28 in).",
+        "It is known as kinmedai (金目鯛) or \"golden eye snapper\" in sushi and Japanese cuisine."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Splendid_alfonsino",
+        "https://ja.wikipedia.org/wiki/%E3%82%AD%E3%83%B3%E3%83%A1%E3%83%80%E3%82%A4"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/4325417/medium.jpg",
+        "credit": "(c) NOAA Photo Library, some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/459205"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "ipnopidae",
+      "key": "ipnopidae",
+      "sci": "Ipnopidae",
+      "name_en": "Ipnopidae",
+      "name_ko": "긴촉수매퉁이과",
+      "ko_official": true,
+      "name_ja": "チョウチンハダカ科",
+      "depth_m": "",
+      "facts_n": 1,
+      "facts": [
+        "チョウチンハダカ科（Ipnopidae）は、ヒメ目アオメエソ亜目に所属する魚類の分類群の一つ。イトヒキイワシ・ナガヅエエソなど、底生性の深海魚を中心に5属29種が所属する。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Tripod fish1.jpg)",
+        "https://en.wikipedia.org/wiki/Ipnopidae",
+        "https://ja.wikipedia.org/wiki/%E3%83%81%E3%83%A7%E3%82%A6%E3%83%81%E3%83%B3%E3%83%8F%E3%83%80%E3%82%AB%E7%A7%91"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/75492169/medium.jpg",
+        "credit": "\nLLophelia II 2010: Oil Seeps and Deep Reefs, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/85841"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "grimalditeuthis_bonplandi",
+      "key": "",
+      "sci": "Grimalditeuthis bonplandi",
+      "name_en": "",
+      "name_ko": "긴팔오징어과의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "200-1500",
+      "facts_n": 9,
+      "facts": [
+        "Grimalditeuthis bonplandi is a squid named after the Grimaldi family, reigning house of Monaco.",
+        "Prince Albert I of Monaco was an amateur teuthologist who pioneered the study of deep sea squids by collecting the 'precious regurgitations' of sperm whales.",
+        "The specific name bonplandi refers to the French scientist Aimé Bonpland."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Grimalditeuthis"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14240850/medium.jpg",
+        "credit": "Jeanne Le Roux & L. Joubin, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/253711"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "coelorinchus_caelorhincus",
+      "key": "coelorinchus caelorhincus",
+      "sci": "Coelorinchus caelorhincus",
+      "name_en": "Coelorinchus caelorhincus",
+      "name_ko": "꼬리민태속의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "90-1485",
+      "facts_n": 2,
+      "facts": [
+        "The hollowsnout grenadier (Coelorinchus caelorhincus), also called the blackspot grenadier, is a species of fish in the family Macrouridae.",
+        "The specific name derives from Greek κοῖλος (koilos, \"hollow\") and ῥύγχος (rhynchos, \"snout\")."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Otolithes de grenadier raton (Coelorinchus caelorhinchus-Coelorhynchus coelorhynchus) (Ifremer 00677-78952 - 31898).jpg)",
+        "https://en.wikipedia.org/wiki/Hollowsnout_grenadier"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/593119509/medium.jpg",
+        "credit": "(c) MARC MARTIN SOLA, bazı hakları saklıdır (CC BY-NC), yükleyen: MARC MARTIN SOLA",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/120709"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "liparidae",
+      "key": "liparidae",
+      "sci": "Liparidae",
+      "name_en": "Liparidae",
+      "name_ko": "꼼치과",
+      "ko_official": true,
+      "name_ja": "クサウオ科",
+      "depth_m": "300",
+      "facts_n": 1,
+      "facts": [
+        "クサウオ科（学名：Liparidae）は、ペルカ目に所属する魚類の分類群の一つ。クサウオ・サケビクニンなど、寒冷な海あるいは深海に生息する種類を中心に32属407種が記載される。科名は科のタイプ属 Liparis に科を表す接尾辞「-idae」を付けたもの。属名 Liparis の由来は、ギリシア語の「λιπαρός」（liparos／脂っぽい、オイリーなどの意の形容詞）から。"
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Snailfish",
+        "https://ja.wikipedia.org/wiki/%E3%82%AF%E3%82%B5%E3%82%A6%E3%82%AA%E7%A7%91"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/113324795/medium.jpeg",
+        "credit": "(c) Sara Thiebaud, some rights reserved (CC BY-NC), uploaded by Sara Thiebaud",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/49032"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "osedax",
+      "key": "",
+      "sci": "Osedax",
+      "name_en": "bone-eating worm",
+      "name_ko": "꽃갯지렁이목의 한 무리",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "2893",
+      "facts_n": 9,
+      "facts": [
+        "Osedax is a genus of siboglinid polychaetes, commonly called snot worms, bone-eating worms, or zombie worms.",
+        "Osedax is Latin for 'bone devourer', derived from the worms' unique ecological niche of bone-boring.",
+        "Osedax settle on a bone, then secrete an acid through specialized root tissues to dissolve the bone's external layers in order to access the lipids within."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Osedax"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/162534416/medium.jpg",
+        "credit": "(c) https://doi.org/10.3897/zookeys.814.28869, some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/63596"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "riftia_pachyptila",
+      "key": "",
+      "sci": "Riftia pachyptila",
+      "name_en": "giant tube worm",
+      "name_ko": "꽃갯지렁이목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "",
+      "facts_n": 9,
+      "facts": [
+        "Riftia is a monotypic genus of polychaete annelid worms in the Siboglinidae family, which contains the sole species Riftia pachyptila, commonly known as the giant tubeworm or giant beardworm.",
+        "pachyptila is found in association with geologically active regions of the deep sea.",
+        "Riftia worms are sessile and are found clustered together in large colonies around deep-sea hydrothermal vents in the East Pacific Rise and the Galapagos Rift."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Riftia"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/179668766/medium.jpg",
+        "credit": "(c) Matthew Bellemare, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/58405"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "lamellibrachia_luymesi",
+      "key": "",
+      "sci": "Lamellibrachia luymesi",
+      "name_en": "",
+      "name_ko": "꽃갯지렁이목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "400-800",
+      "facts_n": 9,
+      "facts": [
+        "Lamellibrachia luymesi is a species of tube worms in the family Siboglinidae.",
+        "It lives at deep-sea cold seeps where hydrocarbons (oil and methane) are leaking out of the seafloor.",
+        "It is entirely reliant on internal, sulfide-oxidizing bacterial symbionts for its nutrition."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Lamellibrachia_luymesi"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/172489884/medium.jpg",
+        "credit": "(c) Tom Kennedy, some rights reserved (CC BY), uploaded by Tom Kennedy",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/1135548"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "myxine_glutinosa",
+      "key": "",
+      "sci": "Myxine glutinosa",
+      "name_en": "Atlantic hagfish",
+      "name_ko": "꾀장어과의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "20-1000",
+      "facts_n": 4,
+      "facts": [
+        "Myxine glutinosa, also known as the Atlantic hagfish, is a type of jawless fish belonging to the class Myxini.",
+        "== Description ==\nThe Atlantic hagfish may grow up to .75 metres (2+1⁄2 ft) long, with no eyes and no jaws; its star-shaped mouth is surrounded by 6 mouth barbels.",
+        "It has a total of 88–102 pores from which it can exude a slimy mucus."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Myxine_glutinosa"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/322255616/medium.jpg",
+        "credit": "(c) Vsevolod Rudyi, some rights reserved (CC BY), uploaded by Vsevolod Rudyi",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/49096"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "mesonychoteuthis_hamiltoni",
+      "key": "",
+      "sci": "Mesonychoteuthis hamiltoni",
+      "name_en": "colossal squid",
+      "name_ko": "남극하트지느러미오징어",
+      "ko_official": true,
+      "name_ja": "ダイオウホウズキイカ",
+      "depth_m": "10-4000",
+      "facts_n": 9,
+      "facts": [
+        "The colossal squid (Mesonychoteuthis hamiltoni) is a species of very large squid belonging to the family Cranchiidae, that of the cockatoo squids, or glass squids.",
+        "It is sometimes called the Antarctic cranch squid or giant squid (not to be confused with the giant squid in genus Architeuthis) and is believed to be the largest squid species in terms of mass.",
+        "It is the only recognized member of the genus Mesonychoteuthis."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Colossal_squid",
+        "https://ja.wikipedia.org/wiki/%E3%83%80%E3%82%A4%E3%82%AA%E3%82%A6%E3%83%9B%E3%82%A6%E3%82%BA%E3%82%AD%E3%82%A4%E3%82%AB"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14254978/medium.jpg",
+        "credit": "(c) Rogelio A. Galaviz C., some rights reserved (CC BY-NC)",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/432480"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "gnathophausia_ingens",
+      "key": "",
+      "sci": "Gnathophausia ingens",
+      "name_en": "giant red mysid",
+      "name_ko": "낭하상목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "900-1400",
+      "facts_n": 6,
+      "facts": [
+        "Gnathophausia ingens, the giant red mysid, is a species of lophogastrid crustacean with a pantropical distribution.",
+        "The adults may reach 35 cm (14 in) long, including the rostrum.",
+        "Females may brood their young for up to 530 days."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Gnathophausia_ingens"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/62612066/medium.jpeg",
+        "credit": "(c) Douglas J. Long, some rights reserved (CC BY-NC), uploaded by Douglas J. Long",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/1043643"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "megachasma_pelagios",
+      "key": "",
+      "sci": "Megachasma pelagios",
+      "name_en": "megamouth shark",
+      "name_ko": "넓은주둥이상어",
+      "ko_official": true,
+      "name_ja": "メガマウス",
+      "depth_m": "12-1500",
+      "facts_n": 9,
+      "facts": [
+        "The megamouth shark (Megachasma pelagios) is a species of deepwater shark.",
+        "Rarely seen by humans, it measures around 4–5.5 m (13–18 ft) long and is the smallest of the three extant filter-feeding sharks alongside the much larger whale shark and basking shark.",
+        "According to Sharkman's World Organization, a total of 296 specimens have been observed or caught since its discovery in 1976."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Megamouth_shark",
+        "https://ja.wikipedia.org/wiki/%E3%83%A1%E3%82%AC%E3%83%9E%E3%82%A6%E3%82%B9"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/838235/medium.JPG",
+        "credit": "(c) Alfonso Medellin, some rights reserved (CC BY-NC), uploaded by Alfonso Medellin",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/50869"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
     {
       "id": "opisthoteuthis_californiana",
       "key": "opisthoteuthis californiana",
+      "sci": "Opisthoteuthis californiana",
+      "name_en": "Flapjack octopus",
       "name_ko": "넓적문어",
       "ko_official": true,
-      "name_en": "Flapjack octopus",
-      "sci": "Opisthoteuthis californiana",
+      "name_ja": "メンダコ",
       "depth_m": "200-1500",
       "facts_n": 4,
       "facts": [
@@ -17,29 +820,255 @@
       ],
       "sources": [
         "NOAA Ocean Exploration",
-        "MBARI"
+        "MBARI",
+        "https://en.wikipedia.org/wiki/Opisthoteuthis_californiana",
+        "https://ja.wikipedia.org/wiki/%E3%83%A1%E3%83%B3%E3%83%80%E3%82%B3"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14168334/medium.jpg",
         "credit": "Ed Bowlby, NOAA/Olympic Coast NMS; NOAA/OAR/Office of Ocean Exploration, no known copyright restrictions (public domain)",
         "license": "pd",
         "page": "https://www.inaturalist.org/taxa/1638978"
-      }
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "pseudoliparis_swirei",
+      "key": "",
+      "sci": "Pseudoliparis swirei",
+      "name_en": "Mariana snailfish",
+      "name_ko": "농어목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "1000-8500",
+      "facts_n": 9,
+      "facts": [
+        "Pseudoliparis swirei, the Mariana snailfish or Mariana hadal snailfish, is a species of snailfish found at hadal depths in the Mariana Trench in the western Pacific Ocean.",
+        "It is known from a depth range of 6,198–8,076 m (20,335–26,496 ft), including a capture at 7,966 m (26,135 ft), which is possibly the record for a fish caught on the seafloor.",
+        "Various anatomical, physiological, molecular and genetic adaptions help this species survive in such depths."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Pseudoliparis_swirei"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/34972268/medium.png",
+        "credit": "(c) Gerringer M. E., Linley T. D., Jamieson A. J., Goetze E., Drazen J. C., some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/786306"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "doederleinia_berycoides",
+      "key": "",
+      "sci": "Doederleinia berycoides",
+      "name_en": "blackthroat seaperch",
+      "name_ko": "눈볼대",
+      "ko_official": true,
+      "name_ja": "アカムツ",
+      "depth_m": "100-600",
+      "facts_n": 7,
+      "facts": [
+        "The blackthroat seaperch (Doederleinia berycoides), also known as the rosy seabass, is a species of ray-finned fish in the family Acropomatidae, the temperate ocean-basses or lanternbellies.",
+        "It is the only species in the monotypic genus Doederleinia.",
+        "It is native to the eastern Indian Ocean and the western Pacific Ocean from Japan to Australia."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Blackthroat_seaperch",
+        "https://ja.wikipedia.org/wiki/%E3%82%A2%E3%82%AB%E3%83%A0%E3%83%84"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/378630775/medium.jpg",
+        "credit": "(c) Totti, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/451884"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "deepstaria_enigmatica",
+      "key": "",
+      "sci": "Deepstaria enigmatica",
+      "name_en": "",
+      "name_ko": "느릅나무해파리과의 한 종",
+      "ko_official": false,
+      "name_ja": "ディープスタリア・エニグマティカ",
+      "depth_m": "600-1750",
+      "facts_n": 4,
+      "facts": [
+        "Deepstaria enigmatica is a very rarely seen giant jellyfish of the family Ulmaridae first described in 1967 by F.",
+        "== Description ==\nThe Deepstaria enigmatica has a wide, thin bell (up to 60 cm or 2 ft), transparent in appearance, which undulates as the jellyfish moves.",
+        "They are usually found in Antarctic and near-Antarctic seas, but have been spotted in waters near the United Kingdom and Gulf of Mexico, at depths of 600–1,750 metres (1,970–5,740 ft)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Deepstaria_enigmatica",
+        "https://ja.wikipedia.org/wiki/%E3%83%87%E3%82%A3%E3%83%BC%E3%83%97%E3%82%B9%E3%82%BF%E3%83%AA%E3%82%A2%E3%83%BB%E3%82%A8%E3%83%8B%E3%82%B0%E3%83%9E%E3%83%86%E3%82%A3%E3%82%AB"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/155782296/medium.jpg",
+        "credit": "(c) \nStrange Sounds, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/255964"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "taningia_danae",
+      "key": "",
+      "sci": "Taningia danae",
+      "name_en": "Dana octopus squid",
+      "name_ko": "다나팔손오징어",
+      "ko_official": true,
+      "name_ja": "",
+      "depth_m": "240-900",
+      "facts_n": 5,
+      "facts": [
+        "Taningia danae, the Dana octopus squid, is a species of squid in the family Octopoteuthidae, the octopus squids.",
+        "It is one of the largest known squid species, and it has one of the largest photophores (light organs) known in any organism, useful in the deep-sea environments that the species inhabits.",
+        "In 1931 the name Taningia danae was coined, after the Danish fisheries biologist Åge Vedel Tåning (1890–1958), and the Danish ship  Dana, which collected a more complete specimen that became the holotype of this species."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Taningia_danae"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/557324363/medium.jpg",
+        "credit": "(c) Daniel Godínez, some rights reserved (CC BY-NC), uploaded by Daniel Godínez",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/397815"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "stylephorus_chordatus",
+      "key": "",
+      "sci": "Stylephorus chordatus",
+      "name_en": "tube-eye",
+      "name_ko": "대구목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "",
+      "facts_n": 6,
+      "facts": [
+        "Stylephorus is a genus of deep-sea ray-finned fish.",
+        "It contains a single species, Stylephorus chordatus, also called the tube-eye or thread-tail.",
+        "The phylogenetic position of the tube-eye has been controversial."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Stylephorus"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/55397335/medium.jpg",
+        "credit": "Bloch, Marcus Elieser; Hennig, J. F.; Schneider, Johann Gottlob, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/317396"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "architeuthis_dux",
+      "key": "",
+      "sci": "Architeuthis dux",
+      "name_en": "giant squid",
+      "name_ko": "대왕오징어",
+      "ko_official": true,
+      "name_ja": "ダイオウイカ",
+      "depth_m": "10-1000",
+      "facts_n": 9,
+      "facts": [
+        "The giant squid (Architeuthis dux) is a species of deep-ocean dwelling squid in the family Architeuthidae.",
+        "It can grow to a tremendous size, offering an example of abyssal gigantism; recent estimates put the maximum body size at around 5 m (16 ft) for females, with males slightly shorter, from the posterior fins to the tip of its long arms.",
+        "This makes it longer than the colossal squid at an estimated 4.2 m (14 ft), but substantially lighter, as it is less robust and its arms make up much of the length."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Giant_squid",
+        "https://ja.wikipedia.org/wiki/%E3%83%80%E3%82%A4%E3%82%AA%E3%82%A6%E3%82%A4%E3%82%AB"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/91402900/medium.jpeg",
+        "credit": "(c) Christopher Caine, some rights reserved (CC BY-NC), uploaded by Christopher Caine",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/253698"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "grimpoteuthis",
       "key": "dumbo octopus",
+      "sci": "Grimpoteuthis spp.",
+      "name_en": "Dumbo octopus",
       "name_ko": "덤보문어",
       "ko_official": true,
-      "name_en": "Dumbo octopus",
-      "sci": "Grimpoteuthis spp.",
+      "name_ja": "ジュウモンジダコ属",
       "depth_m": "1000-4000",
       "facts_n": 6,
       "facts": [
@@ -50,29 +1079,36 @@
       "sources": [
         "NOAA",
         "WoRMS",
-        "MBARI(정보만)"
+        "MBARI(정보만)",
+        "https://en.wikipedia.org/wiki/Grimpoteuthis",
+        "https://ja.wikipedia.org/wiki/%E3%82%B8%E3%83%A5%E3%82%A6%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%80%E3%82%B3%E5%B1%9E"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14194593/medium.jpg",
         "credit": "NOAA Okeanos Explorer, no known copyright restrictions (public domain)",
         "license": "pd",
         "page": "https://www.inaturalist.org/taxa/82228"
-      }
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "grimpoteuthis_discoveryi",
       "key": "grimpoteuthis discoveryi",
+      "sci": "Grimpoteuthis discoveryi",
+      "name_en": "Dumbo octopus",
       "name_ko": "덤보문어의 한 종",
       "ko_official": false,
-      "name_en": "Dumbo octopus",
-      "sci": "Grimpoteuthis discoveryi",
+      "name_ja": "",
       "depth_m": "2600-4870",
       "facts_n": 3,
       "facts": [
@@ -82,61 +1118,618 @@
       ],
       "sources": [
         "Wikipedia (en)",
-        "Wikimedia Commons (File:Grimpoteuthis discoveryi.jpg)"
+        "Wikimedia Commons (File:Grimpoteuthis discoveryi.jpg)",
+        "https://en.wikipedia.org/wiki/Grimpoteuthis_discoveryi"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14194696/medium.jpg",
         "credit": "Mike Vecchione, NOAA, no known copyright restrictions (public domain)",
         "license": "pd",
         "page": "https://www.inaturalist.org/taxa/432439"
-      }
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
-      "id": "enypniastes_eximia",
-      "key": "enypniastes eximia",
-      "name_ko": "머리없는닭괴물",
-      "ko_official": true,
-      "name_en": "Headless chicken monster",
-      "sci": "Enypniastes eximia",
-      "depth_m": "500-6000",
-      "facts_n": 5,
+      "id": "etmopterus_perryi",
+      "key": "",
+      "sci": "Etmopterus perryi",
+      "name_en": "dwarf lanternshark",
+      "name_ko": "돔발상어목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "283-439",
+      "facts_n": 9,
       "facts": [
-        "머리·눈·뼈가 없는 심해 해삼이다",
-        "지느러미 같은 막으로 헤엄쳐 이동한다",
-        "몸이 투명해 삼킨 퇴적물이 그대로 비친다"
+        "The dwarf lanternshark (Etmopterus perryi) is a species of dogfish shark in the family Etmopteridae and is the smallest shark in the world, reaching a maximum known length of 20 cm (8 in).",
+        "It is known to be present only on the upper continental slopes off Colombia and Venezuela, at a depth of 283–439 m (928–1,440 ft).",
+        "This species can be identified by its small size at maturity, long flattened head, and pattern of black ventral markings and a mid-dorsal line."
       ],
       "sources": [
-        "NOAA Ocean Exploration",
-        "WoRMS"
+        "https://en.wikipedia.org/wiki/Dwarf_lanternshark"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/42219981/medium.jpg",
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/95279853/medium.jpg",
+        "credit": "\nChip Clark/Smithsonian Institution, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/100588"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "alepisaurus_ferox",
+      "key": "",
+      "sci": "Alepisaurus ferox",
+      "name_en": "long snouted lancetfish",
+      "name_ko": "돛란도어",
+      "ko_official": true,
+      "name_ja": "ミズウオ",
+      "depth_m": "1830",
+      "facts_n": 6,
+      "facts": [
+        "Alepisaurus ferox, also known as the long snouted lancetfish, longnose lancetfish, or cannibal fish, is a species of lancetfish found in the ocean depths down to 1,830 m (6,000 ft).",
+        "This species grows to 215 cm (85 in) in total length and a weight of 9 kg (20 lb).",
+        "The appellation cannibal fish stems from discoveries of partially-digested conspecifics in captured specimens."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Alepisaurus_ferox",
+        "https://ja.wikipedia.org/wiki/%E3%83%9F%E3%82%BA%E3%82%A6%E3%82%AA"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/541148969/medium.jpg",
+        "credit": "(c) Nick Ramsey, some rights reserved (CC BY-NC), uploaded by Nick Ramsey",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/93644"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "regalecus_glesne",
+      "key": "",
+      "sci": "Regalecus glesne",
+      "name_en": "giant oarfish",
+      "name_ko": "리본이악어",
+      "ko_official": true,
+      "name_ja": "",
+      "depth_m": "11-492",
+      "facts_n": 9,
+      "facts": [
+        "The giant oarfish (Regalecus glesne) is a species of oarfish of the family Regalecidae.",
+        "It is an oceanodromous species with a worldwide distribution, excluding polar regions.",
+        "Other common names include Pacific oarfish, king of herrings, and ribbonfish."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Giant_oarfish"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/606948704/medium.jpg",
+        "credit": "(c) MARC MARTIN SOLA, some rights reserved (CC BY-NC), uploaded by MARC MARTIN SOLA",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/196745"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "mitsukurina_owstoni",
+      "key": "mitsukurina owstoni",
+      "sci": "Mitsukurina owstoni",
+      "name_en": "goblin shark",
+      "name_ko": "마귀상어",
+      "ko_official": true,
+      "name_ja": "ミツクリザメ",
+      "depth_m": "100-2000",
+      "facts_n": 1,
+      "facts": [
+        "ミツクリザメ（箕作鮫、学名：Mitsukurina owstoni、英: Goblin shark）は、ネズミザメ目ミツクリザメ科に属するサメ。ミツクリザメ科はミツクリザメ属 Mitsukurina 1属で、本種のみを含む。希少種。日本の東京湾、駿河湾、相模湾などをはじめ、世界各地で散発的に報告されている。表層から水深1,300 m、あるいはそれ以上の深海に生息する。推定全長6m。ブレード状の長い吻が特徴である。写真や図では顎が飛び出した状態のものが多いが、通常遊泳時は奥に引っ込んでいる。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Goblin shark, Pengo.jpg)",
+        "https://en.wikipedia.org/wiki/Goblin_shark",
+        "https://ja.wikipedia.org/wiki/%E3%83%9F%E3%83%84%E3%82%AF%E3%83%AA%E3%82%B6%E3%83%A1"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/181897375/medium.jpg",
+        "credit": "(c) Ken Graham, some rights reserved (CC BY-NC), uploaded by Ken Graham",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/105913"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "watasenia_scintillans",
+      "key": "",
+      "sci": "Watasenia scintillans",
+      "name_en": "firefly squid",
+      "name_ko": "매오징어",
+      "ko_official": true,
+      "name_ja": "ホタルイカ",
+      "depth_m": "20-400",
+      "facts_n": 9,
+      "facts": [
+        "The firefly squid (Watasenia scintillans), also commonly known as the sparkling enope squid or hotaru-ika in Japan, is a species of squid in the family Enoploteuthidae.",
+        "scintillans is the sole species in the monotypic genus Watasenia.",
+        "These tiny squid are found on the shores of Japan in springtime during spawning season, but spend most of their lives in deeper waters between 200 and 400 metres (700 and 1,300 feet; 100 and 200 fathoms)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Firefly_squid",
+        "https://ja.wikipedia.org/wiki/%E3%83%9B%E3%82%BF%E3%83%AB%E3%82%A4%E3%82%AB"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/186706722/medium.jpg",
+        "credit": "no rights reserved, uploaded by kamataryo",
+        "license": "cc0",
+        "page": "https://www.inaturalist.org/taxa/47878"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "stauroteuthis_syrtensis",
+      "key": "",
+      "sci": "Stauroteuthis syrtensis",
+      "name_en": "glowing sucker octopus",
+      "name_ko": "문어목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "500-4000",
+      "facts_n": 5,
+      "facts": [
+        "Stauroteuthis syrtensis, also known as the glowing sucker octopus or bioluminescent octopus, is a species of small pelagic octopus found at great depths in the north Atlantic Ocean.",
+        "It is one of a very small number of octopuses to exhibit bioluminescence.",
+        "== Description ==\n\nThe mantle length of Stauroteuthis syrtensis is about 9 to 18 cm (4 to 7 in) and its width about 4 cm (1.6 in)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Stauroteuthis_syrtensis"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/77073362/medium.jpg",
+        "credit": "(c) Claude Nozères, some rights reserved (CC BY-NC), uploaded by Claude Nozères",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/432536"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "vitreledonella_richardi",
+      "key": "",
+      "sci": "Vitreledonella richardi",
+      "name_en": "glass octopus",
+      "name_ko": "문어목의 한 종",
+      "ko_official": false,
+      "name_ja": "スカシダコ",
+      "depth_m": "110-1000",
+      "facts_n": 5,
+      "facts": [
+        "Vitreledonella richardi, also known as the glass octopus, is an incirrate octopus.",
+        "It is in the genus Vitreledonella and of the family Amphitretidae.",
+        "Adults reach up to 11 cm (4.3 in) in mantle length and a total length of up to 45 cm (18 in)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Glass_octopus",
+        "https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AB%E3%82%B7%E3%83%80%E3%82%B3"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/5836456/medium.jpg",
+        "credit": "(c) Richard E. Young, some rights reserved (CC BY-NC)",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/398692"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "japetella_diaphana",
+      "key": "",
+      "sci": "Japetella diaphana",
+      "name_en": "",
+      "name_ko": "문어목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "200-1352",
+      "facts_n": 6,
+      "facts": [
+        "Japetella diaphana, also known as the midwater octopus, is a species of pelagic deep-sea octopus from the subfamily Bolitaeninae in the family Amphitretidae.",
+        "It inhabits the mesopelagic and bathypelagic zones of all three major oceans, and is known for its transparent body and bioluminescence.",
+        "The midwater octopus is also noted for its high tolerance to hypoxia, and is able to live in a wide range of oxygen levels."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Japetella_diaphana"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14173624/medium.jpg",
+        "credit": "Ewald Rübsamen, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/253676"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "cirrothauma_murrayi",
+      "key": "",
+      "sci": "Cirrothauma murrayi",
+      "name_en": "blind cirrate octopus",
+      "name_ko": "문어목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "1500-4500",
+      "facts_n": 8,
+      "facts": [
+        "Cirrothauma murrayi, the blind cirrate octopus, is a presumably blind octopus whose eyes can likely sense light, but not form images.",
+        "It has been found worldwide, usually 1,500 to 4,500 metres (4,900 to 14,800 ft) beneath the ocean's surface, but a single specimen was collected in the Arctic immediately below the sea ice.",
+        "Like other cirrates, it has an internal shell, muscular fins for swimming, and a web connecting the arms."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Cirrothauma_murrayi"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14158563/medium.jpg",
         "credit": "(c) NOAA Ocean Exploration & Research, some rights reserved (CC BY-SA)",
         "license": "cc-by-sa",
-        "page": "https://www.inaturalist.org/taxa/901109"
-      }
+        "page": "https://www.inaturalist.org/taxa/432407"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "opisthoteuthis_depressa",
+      "key": "",
+      "sci": "Opisthoteuthis depressa",
+      "name_en": "Japanese flapjack octopus",
+      "name_ko": "문어목의 한 종",
+      "ko_official": false,
+      "name_ja": "メンダコ",
+      "depth_m": "130-1100",
+      "facts_n": 4,
+      "facts": [
+        "Exsuperoteuthis depressa, synonym Opisthoteuthis depressa, also known as the Japanese flapjack octopus, is an octopus found in waters near Japan.",
+        "Octopuses of this species have been found from 130–1,100 m (430–3,610 ft) below the surface.",
+        "The first specimen described by scientists was found about 16 km (9.9 mi) west of Cape Sunosaki in Japan."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Exsuperoteuthis_depressa",
+        "https://ja.wikipedia.org/wiki/%E3%83%A1%E3%83%B3%E3%83%80%E3%82%B3"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/377193470/medium.jpg",
+        "credit": "(c) Totti, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/1587324"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "hexanchus_griseus",
+      "key": "",
+      "sci": "Hexanchus griseus",
+      "name_en": "bluntnose sixgill shark",
+      "name_ko": "뭉툭코여섯줄아가미상어",
+      "ko_official": true,
+      "name_ja": "カグラザメ",
+      "depth_m": "12-2500",
+      "facts_n": 8,
+      "facts": [
+        "The bluntnose sixgill shark (Hexanchus griseus), often simply called the cow shark, is the largest hexanchoid shark, growing to 18 ft (5.5 m) in length.",
+        "It is found in tropical and temperate waters worldwide.",
+        "Its diet varies widely depending on the habitat."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Bluntnose_sixgill_shark",
+        "https://ja.wikipedia.org/wiki/%E3%82%AB%E3%82%B0%E3%83%A9%E3%82%B6%E3%83%A1"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/559648696/medium.jpg",
+        "credit": "(c) ajustinfocus.com, some rights reserved (CC BY-NC-ND), uploaded by ajustinfocus.com",
+        "license": "cc-by-nc-nd",
+        "page": "https://www.inaturalist.org/taxa/102743"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "macrouridae",
+      "key": "macrouridae",
+      "sci": "Macrouridae",
+      "name_en": "Macrouridae",
+      "name_ko": "민태과",
+      "ko_official": true,
+      "name_ja": "",
+      "depth_m": "100-6000",
+      "facts_n": 1,
+      "facts": [
+        "ソコダラ科（学名:Macrouridae）は、タラ目ソコダラ亜目に所属する魚類の分類群の一つ。タラ目で最大のグループである。学名の由来は、ギリシャ語の「makros（大きな）」+「oura（尾）」から。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Grenadier (Macrouridae) par 400 m de fond (Ifremer 00621-73302).jpg)",
+        "https://en.wikipedia.org/wiki/Grenadiers_(fish)"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/165426675/medium.jpg",
+        "credit": "(c) NOAA Ocean Exploration & Research, bazı hakları saklıdır (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/85881"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "coryphaenoides_rupestris",
+      "key": "",
+      "sci": "Coryphaenoides rupestris",
+      "name_en": "roundnose grenadier",
+      "name_ko": "민태과의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "400-1200",
+      "facts_n": 7,
+      "facts": [
+        "Coryphaenoides rupestris is a species of marine ray-finned fish in the family Macrouridae.",
+        "Its common names include the rock grenadier, the roundnose grenadier and the roundhead rat-tail.",
+        "In France it is known as grenadier de roche and in Spain as  granadero de roca."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Coryphaenoides_rupestris"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/477065250/medium.jpg",
+        "credit": "(c) Stewen Dale, some rights reserved (CC BY-NC), uploaded by Stewen Dale",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/217631"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "neoceratias_spinifer",
+      "key": "",
+      "sci": "Neoceratias spinifer",
+      "name_en": "",
+      "name_ko": "바늘방석아귀",
+      "ko_official": true,
+      "name_ja": "キバアンコウ",
+      "depth_m": "1000-2000",
+      "facts_n": 5,
+      "facts": [
+        "Neoceratias spinifer, the toothed seadevil, pincushion seadevil, spiny seadevil or netbeard seadevil, is a rarely seen deep-sea anglerfish found in the mesopelagic and bathypelagic zones in Oceans around the World.",
+        "It is the only species in the family Neoceratiidae, and is unique amongst the deep-sea anglerfish in lacking both the illicium and esca (the \"fishing rod\" and \"lure\"), and in having large teeth placed on the outside of its jaws.",
+        "In 1926 Charles Tate Regan created the monotypic family Neoceratiidae for this taxon."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Toothed_seadevil",
+        "https://ja.wikipedia.org/wiki/%E3%82%AD%E3%83%90%E3%82%A2%E3%83%B3%E3%82%B3%E3%82%A6"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/142284968/medium.jpg",
+        "credit": "(c) Apokryltaros, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/530476"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "colossendeis_colossea",
+      "key": "",
+      "sci": "Colossendeis colossea",
+      "name_en": "giant sea spider",
+      "name_ko": "바다거미목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "420-5200",
+      "facts_n": 6,
+      "facts": [
+        "Colossendeis colossea is a species  of sea spider (class Pycnogonida) in the family Colossendeidae.",
+        "The species was first described by Edmund B.",
+        "It is the largest pycnogonid species known to science, reaching a leg span of 70 cm (28 in)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Colossendeis_colossea"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/441834839/medium.jpg",
+        "credit": "(c) Justin Hofman, some rights reserved (CC BY-NC), uploaded by Justin Hofman",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/387790"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "saccopharynx_ampullaceus",
+      "key": "",
+      "sci": "Saccopharynx ampullaceus",
+      "name_en": "gulper eel",
+      "name_ko": "뱀장어아목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "37-3000",
+      "facts_n": 4,
+      "facts": [
+        "Saccopharynx ampullaceus, referred to as the gulper eel, gulper, taillight gulper or pelican-fish, is an ocean-dwelling eel found in the North Atlantic Ocean.",
+        "They are found up to a depth of 3,000 m (9,800 ft).",
+        "These fish are rarely observed, so little information is currently known about their habits or full distribution."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Saccopharynx_ampullaceus"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/30068190/medium.jpeg",
+        "credit": "(c) Gonzalo Mucientes Sandoval, some rights reserved (CC BY-NC), uploaded by Gonzalo Mucientes Sandoval",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/459219"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "graneledone_boreopacifica",
       "key": "graneledone boreopacifica",
+      "sci": "Graneledone boreopacifica",
+      "name_en": "Deep-sea octopus",
       "name_ko": "북태평양심해문어",
       "ko_official": true,
-      "name_en": "Deep-sea octopus",
-      "sci": "Graneledone boreopacifica",
+      "name_ja": "",
       "depth_m": "1000-2600",
       "facts_n": 4,
       "facts": [
@@ -146,61 +1739,366 @@
       ],
       "sources": [
         "NOAA Ocean Exploration",
-        "MBARI"
+        "MBARI",
+        "https://en.wikipedia.org/wiki/Graneledone_boreopacifica"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14144215/medium.jpg",
         "credit": "(c) Ocean Networks Canada, some rights reserved (CC BY-NC-SA)",
         "license": "cc-by-nc-sa",
         "page": "https://www.inaturalist.org/taxa/569523"
-      }
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
-      "id": "lithodidae",
-      "key": "king crab",
-      "name_ko": "심해 킹크랩(리소드과)",
+      "id": "psychrolutes_marcidus",
+      "key": "",
+      "sci": "Psychrolutes marcidus",
+      "name_en": "blobfish",
+      "name_ko": "블로브피시",
       "ko_official": true,
-      "name_en": "Lithodid king crab",
-      "sci": "Lithodidae",
-      "depth_m": "200-2000",
-      "facts_n": 5,
+      "name_ja": "",
+      "depth_m": "600-1200",
+      "facts_n": 6,
       "facts": [
-        "게처럼 보이지만 사실은 소라게(집게)에 가까운 '가짜 게'다",
-        "걸어 다니는 다리가 세 쌍뿐이다(마지막 한 쌍은 작게 퇴화해 등딱지 아래 숨는다)",
-        "온몸이 단단한 가시로 뒤덮여 포식자로부터 몸을 지킨다"
+        "Psychrolutes marcidus, the smooth-head blobfish, or simply the blobfish, is a deep-sea fish of the family Psychrolutidae.",
+        "It inhabits the deep waters off the coasts of mainland Australia and Tasmania, as well as the waters of New Zealand.",
+        "Blobfish are typically shorter than 30 cm (12 in)."
       ],
       "sources": [
-        "NOAA Ocean Exploration",
-        "WoRMS"
+        "https://en.wikipedia.org/wiki/Psychrolutes_marcidus"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/6245963/medium.jpg",
-        "credit": "(c) Ondřej Radosta, some rights reserved (CC BY-NC), uploaded by Ondřej Radosta",
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/165573611/medium.jpg",
+        "credit": "(c) Ken Graham, some rights reserved (CC BY-NC), uploaded by Ken Graham",
         "license": "cc-by-nc",
-        "page": "https://www.inaturalist.org/taxa/47397"
-      }
+        "page": "https://www.inaturalist.org/taxa/349823"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "chrysomallon_squamiferum",
+      "key": "",
+      "sci": "Chrysomallon squamiferum",
+      "name_en": "scaly-foot gastropod",
+      "name_ko": "비늘발고둥",
+      "ko_official": true,
+      "name_ja": "ウロコフネタマガイ",
+      "depth_m": "2400-2900",
+      "facts_n": 9,
+      "facts": [
+        "Chrysomallon squamiferum, commonly known as the scaly-foot gastropod, scaly-foot snail, sea pangolin, or volcano snail, is a species of deep-sea hydrothermal-vent snail, a marine gastropod mollusc in the family Peltospiridae.",
+        "This vent-endemic gastropod is known only from deep-sea hydrothermal vents in the Indian Ocean, where it has been found at depths of about 2,400–2,900 m (1.5–1.8 mi).",
+        "squamiferum differs greatly from other deep-sea gastropods, even the closely related neomphalines."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Scaly-foot_gastropod",
+        "https://ja.wikipedia.org/wiki/%E3%82%A6%E3%83%AD%E3%82%B3%E3%83%95%E3%83%8D%E3%82%BF%E3%83%9E%E3%82%AC%E3%82%A4"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/46170924/medium.png",
+        "credit": "(c) Kentaro Nakamura, Hiromi Watanabe, Junichi Miyazaki, Ken Takai, Shinsuke Kawagucci, Takuro Noguchi, Suguru Nemoto, Tomo-o Watsuji, Takuya Matsuzaki, Takazo Shibuya, Kei Okamura, Masashi Mochizuki, Yuji Orihashi, Tamaki Ura, Akira Asada, Daniel Marie, Meer, some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/912567"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "shinkaia_crosnieri",
+      "key": "",
+      "sci": "Shinkaia crosnieri",
+      "name_en": "",
+      "name_ko": "새우붙이상과의 한 종",
+      "ko_official": false,
+      "name_ja": "ゴエモンコシオリエビ",
+      "depth_m": "700-1600",
+      "facts_n": 2,
+      "facts": [
+        "Shinkaia crosnieri is a species of squat lobster in a monotypic genus in the family Munidopsidae.",
+        "crosnieri lives in deep-sea hydrothermal vent ecosystems, living off of the chemosynthetic activity of certain bacteria living on its setae."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Shinkaia",
+        "https://ja.wikipedia.org/wiki/%E3%82%B4%E3%82%A8%E3%83%A2%E3%83%B3%E3%82%B3%E3%82%B7%E3%82%AA%E3%83%AA%E3%82%A8%E3%83%93"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/80077620/medium.jpg",
+        "credit": "(c) anonymous, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/1101739"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "myctophidae",
+      "key": "",
+      "sci": "Myctophidae",
+      "name_en": "lanternfish",
+      "name_ko": "샛비늘치과",
+      "ko_official": true,
+      "name_ja": "ハダカイワシ",
+      "depth_m": "10-1500",
+      "facts_n": 9,
+      "facts": [
+        "Lanternfish (or myctophids, from the Greek μυκτήρ myktḗr, \"nose\" and ophis, \"serpent\") are small mesopelagic fish of the large family Myctophidae.",
+        "One of two families in the order Myctophiformes, the Myctophidae are represented by 246 species in 33 genera, and are found in oceans worldwide.",
+        "They are named after their conspicuous use of bioluminescence."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Lanternfish",
+        "https://ja.wikipedia.org/wiki/%E3%83%8F%E3%83%80%E3%82%AB%E3%82%A4%E3%83%AF%E3%82%B7"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/258150823/medium.jpg",
+        "credit": "(c) uwkwaj, some rights reserved (CC BY-NC), uploaded by uwkwaj",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/85910"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "rimicaris_exoculata",
+      "key": "rimicaris exoculata",
+      "sci": "Rimicaris exoculata",
+      "name_en": "vent shrimp",
+      "name_ko": "생이하목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "3600",
+      "facts_n": 5,
+      "facts": [
+        "Rimicaris exoculata, commonly known as the 'blind shrimp', is a species of shrimp.",
+        "It thrives on active hydrothermal edifices at deep-sea vents of the Mid-Atlantic Ridge.",
+        "This species belongs to the Alvinocarididae family of shrimp, named after the DSV Alvin, the vessel that collected the original samples described by M."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Fond abyssal (Ifremer 00701-81314).webm)",
+        "https://en.wikipedia.org/wiki/Rimicaris_exoculata"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/164714717/medium.jpeg",
+        "credit": "(c) \n\nLaura Flamme, some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/867838"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "latimeria_chalumnae",
+      "key": "",
+      "sci": "Latimeria chalumnae",
+      "name_en": "West Indian Ocean coelacanth",
+      "name_ko": "서인도양실러캔스",
+      "ko_official": true,
+      "name_ja": "ラティメリア",
+      "depth_m": "54-700",
+      "facts_n": 7,
+      "facts": [
+        "The other extant species is the Indonesian coelacanth (L.",
+        "This coelacanth was once thought to be evolutionarily conservative, but discoveries have shown initial morphological diversity.",
+        "It has a vivid blue pigment, and is the better known of the two extant species."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/West_Indian_Ocean_coelacanth",
+        "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%83%86%E3%82%A3%E3%83%A1%E3%83%AA%E3%82%A2"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/242640271/medium.png",
+        "credit": "(c) wrecklessmarine, some rights reserved (CC BY-NC)",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/104109"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "bathypterois_grallator",
+      "key": "",
+      "sci": "Bathypterois grallator",
+      "name_en": "tripodfish",
+      "name_ko": "세발치",
+      "ko_official": true,
+      "name_ja": "",
+      "depth_m": "878-4720",
+      "facts_n": 6,
+      "facts": [
+        "The tripod fish (also known as the tripod spiderfish), Bathypterois grallator, is a grinner in the family Ipnopidae found at lower latitudes.",
+        "Because of its unique way of \"standing\" on the seafloor, B.",
+        "grallator is one of the best-known benthic fish, and it is one of the few members of its genus to be directly observed and photographed by submersibles."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Bathypterois_grallator"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/453627823/medium.jpg",
+        "credit": "(c) \nnull, some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/459347"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "stygiomedusa_gigantea",
+      "key": "",
+      "sci": "Stygiomedusa gigantea",
+      "name_en": "giant phantom jelly",
+      "name_ko": "스티기오메두사",
+      "ko_official": true,
+      "name_ja": "ダイオウクラゲ",
+      "depth_m": "10-6665",
+      "facts_n": 9,
+      "facts": [
+        "Stygiomedusa gigantea, commonly known as the giant phantom jelly, is the only known species in the monotypic genus of deep sea jellyfish, Stygiomedusa.",
+        "It is in the Ulmaridae family.",
+        "With only around 118 sightings in 110 years, it is a jellyfish that is rarely seen, but believed to be widespread throughout the world, with the exception of the Arctic Ocean."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Stygiomedusa",
+        "https://ja.wikipedia.org/wiki/%E3%83%80%E3%82%A4%E3%82%AA%E3%82%A6%E3%82%AF%E3%83%A9%E3%82%B2"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/478081778/medium.jpg",
+        "credit": "(c) Fisheries and Oceans Canada, some rights reserved (CC BY-NC), uploaded by Fisheries and Oceans Canada",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/564145"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "spirula_spirula",
+      "key": "",
+      "sci": "Spirula spirula",
+      "name_en": "ram's horn squid",
+      "name_ko": "스피룰라 스피룰라",
+      "ko_official": true,
+      "name_ja": "トグロコウイカ",
+      "depth_m": "10-1000",
+      "facts_n": 9,
+      "facts": [
+        "Spirula spirula is a species of deep-water squid-like cephalopod mollusk.",
+        "It is the only extant member of the genus Spirula, the family Spirulidae, and the order Spirulida.",
+        "Because of the shape of its internal shell, it is commonly known as the ram's horn squid or the little post horn squid."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Spirula",
+        "https://ja.wikipedia.org/wiki/%E3%83%88%E3%82%B0%E3%83%AD%E3%82%B3%E3%82%A6%E3%82%A4%E3%82%AB"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/255955450/medium.jpg",
+        "credit": "(c) Alex Bairstow, some rights reserved (CC BY-NC), uploaded by Alex Bairstow",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/85107"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "pannychia_moseleyi",
       "key": "pannychia moseleyi",
+      "sci": "Pannychia moseleyi",
+      "name_en": "Pannychia moseleyi",
       "name_ko": "심해 해삼의 한 종",
       "ko_official": false,
-      "name_en": "Pannychia moseleyi",
-      "sci": "Pannychia moseleyi",
+      "name_ja": "",
       "depth_m": "400",
       "facts_n": 4,
       "facts": [
@@ -210,29 +2108,35 @@
       ],
       "sources": [
         "Wikipedia (en)",
-        "Wikimedia Commons (File:Solaster feeding on Pannychia moseleyi.jpg)"
+        "Wikimedia Commons (File:Solaster feeding on Pannychia moseleyi.jpg)",
+        "https://en.wikipedia.org/wiki/Pannychia_moseleyi"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11270463/medium.jpg",
         "credit": "(c) Jackson W.F. Chu, some rights reserved (CC BY-NC-SA), uploaded by Jackson W.F. Chu",
         "license": "cc-by-nc-sa",
         "page": "https://www.inaturalist.org/taxa/255828"
-      }
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "umbellula_sp",
       "key": "umbellula sp.",
+      "sci": "Umbellula sp.",
+      "name_en": "Deep-sea sea pen",
       "name_ko": "심해바다조름",
       "ko_official": true,
-      "name_en": "Deep-sea sea pen",
-      "sci": "Umbellula sp.",
+      "name_ja": "",
       "depth_m": "100-6000",
       "facts_n": 4,
       "facts": [
@@ -242,29 +2146,35 @@
       ],
       "sources": [
         "MBARI",
-        "WoRMS"
+        "WoRMS",
+        "https://en.wikipedia.org/wiki/Umbellula"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11270471/medium.jpg",
         "credit": "(c) Jackson W.F. Chu, some rights reserved (CC BY-NC-SA), uploaded by Jackson W.F. Chu",
         "license": "cc-by-nc-sa",
         "page": "https://www.inaturalist.org/taxa/459934"
-      }
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "crossota_sp",
       "key": "crossota sp.",
+      "sci": "Crossota sp.",
+      "name_en": "Deep-sea red medusa",
       "name_ko": "심해붉은해파리",
       "ko_official": true,
-      "name_en": "Deep-sea red medusa",
-      "sci": "Crossota sp.",
+      "name_ja": "",
       "depth_m": "1000-4000",
       "facts_n": 4,
       "facts": [
@@ -273,61 +2183,656 @@
         "종 모양 몸에서 가는 촉수를 방사상으로 뻗는다"
       ],
       "sources": [
-        "NOAA Ocean Exploration"
+        "NOAA Ocean Exploration",
+        "https://en.wikipedia.org/wiki/Crossota"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/26057584/medium.jpg",
         "credit": "(c) Jian Rzeszewicz, some rights reserved (CC BY-NC), uploaded by Jian Rzeszewicz",
         "license": "cc-by-nc",
         "page": "https://www.inaturalist.org/taxa/247164"
-      }
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
-      "id": "chaunax_stigmaeus",
-      "key": "chaunax stigmaeus",
-      "name_ko": "아귀목 심해어",
+      "id": "bathyteuthis_abyssicola",
+      "key": "",
+      "sci": "Bathyteuthis abyssicola",
+      "name_en": "",
+      "name_ko": "십완상목의 한 종",
       "ko_official": false,
-      "name_en": "Redeye gaper",
-      "sci": "Chaunax stigmaeus",
-      "depth_m": "90-730",
-      "facts_n": 5,
+      "name_ja": "",
+      "depth_m": "100-4200",
+      "facts_n": 6,
       "facts": [
-        "The redeye gaper, Chaunax stigmaeus, is a sedentary species of anglerfish in the family Chaunacidae.",
-        "It is native to deep waters in the western North Atlantic from the Georges Bank off New England southward to the Blake Plateau off South Carolina.",
-        "The species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat."
+        "Bathyteuthis abyssicola, also known as the deepsea squid, is a species of squid in the family Bathyteuthidae.",
+        "Bathyteuthis abyssicola is the type species  of Bathyteuthis.",
+        "abyssicola normally occurs at depths from 700–2,000 m (2,300–6,600 ft), but has been recorded from 100–4,200 m (330–13,780 ft)."
       ],
       "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Chaunax stigmaeus dorsal view2.jpg)"
+        "https://en.wikipedia.org/wiki/Bathyteuthis_abyssicola"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/593101494/medium.jpg",
-        "credit": "NOAA Photo Library, no known copyright restrictions (public domain)",
-        "license": "pd",
-        "page": "https://www.inaturalist.org/taxa/450448"
-      }
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/30029756/medium.jpg",
+        "credit": "(c) Paul K, some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/253699"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "caulophryne_jordani",
+      "key": "",
+      "sci": "Caulophryne jordani",
+      "name_en": "fanfin seadevil",
+      "name_ko": "아귀목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "100-2334",
+      "facts_n": 6,
+      "facts": [
+        "Caulophryne jordani, or the fanfin angler, is a species of marine ray-finned fish belonging to the family Caulophrynidae, the fanfins.",
+        "This species is a deepwater species which is found in Oceanic waters around the world.",
+        "Like other deepwater anglerfishes it shows extreme sexual dimorphism with the males being much smaller than the females and acting as sexual parasites of the females."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Caulophryne_jordani"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/277658588/medium.jpg",
+        "credit": "(c) Claude Nozères, some rights reserved (CC BY-NC), uploaded by Claude Nozères",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/459352"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "melanocetus_johnsonii",
+      "key": "",
+      "sci": "Melanocetus johnsonii",
+      "name_en": "humpback anglerfish",
+      "name_ko": "아귀목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "200-1500",
+      "facts_n": 6,
+      "facts": [
+        "The humpback anglerfish (Melanocetus johnsonii) is a species of black seadevil in the family of Melanocetidae, which means \"black sea monster\".",
+        "The species is named after James Yate Johnson, an English naturalist who discovered the first specimen in Madeira in 1863.",
+        "The common names include  anglerfish, viperfish, and fangtoothfish."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Humpback_anglerfish"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/468285045/medium.jpg",
+        "credit": "(c) MARC MARTIN SOLA, some rights reserved (CC BY-NC), uploaded by MARC MARTIN SOLA",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/64212"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "ceratias_holboelli",
+      "key": "",
+      "sci": "Ceratias holboelli",
+      "name_en": "Krøyer's deep sea anglerfish",
+      "name_ko": "아귀목의 한 종",
+      "ko_official": false,
+      "name_ja": "ビワアンコウ",
+      "depth_m": "150-3400",
+      "facts_n": 6,
+      "facts": [
+        "Krøyer's deep sea angler fish (Ceratias holboelli), also known as the deep-sea angler, longray seadevil or northern seadevil, is a species of marine ray-finned fish belonging to the family Ceratiidae, the warty seadevils.",
+        "It is found throughout the oceans of the world, from tropical to polar seas.",
+        "It is the largest species in its family."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Kr%C3%B8yer%27s_deep_sea_angler_fish",
+        "https://ja.wikipedia.org/wiki/%E3%83%93%E3%83%AF%E3%82%A2%E3%83%B3%E3%82%B3%E3%82%A6"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/13229733/medium.jpeg",
+        "credit": "(c) Gonzalo Mucientes Sandoval, some rights reserved (CC BY-NC), uploaded by Gonzalo Mucientes Sandoval",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/1605875"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "linophryne_arborifera",
+      "key": "",
+      "sci": "Linophryne arborifera",
+      "name_en": "",
+      "name_ko": "아귀목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "200-4000",
+      "facts_n": 4,
+      "facts": [
+        "Like all ceratioids, the female is significantly larger than parasitic male.",
+        "Linophrynids are further differentiated from other ceratioid families in having 3 dorsal fin- and anal fin-rays (rarely 2 to 4), 5 branchiostegal rays (rarely 4), and a sinistral anus (one which opens to the left).",
+        "At a length of up to 77 millimetres (3.0 in), females are significantly larger than the males, which reach only about 15 millimetres (0.59 in)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Linophryne_arborifera"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/252469091/medium.jpg",
+        "credit": "(c) cacher_alec, some rights reserved (CC BY-NC)",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/615743"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "gigantactis_vanhoeffeni",
+      "key": "",
+      "sci": "Gigantactis vanhoeffeni",
+      "name_en": "",
+      "name_ko": "아귀목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "500-5300",
+      "facts_n": 5,
+      "facts": [
+        "The cosmopolitan whipnose (Gigantactis vanhoeffeni) is a species of marine ray-finned fish belonging to the family Gigantactinidae, the whipnose anglers.",
+        "This species has a circumglobal distribution in the deeper waters of the Atlantic, Indian and Pacific Oceans.",
+        "== Taxonomy ==\nGigantactis vanhoeffeni was first formally described in 1902 by the German zoologist August Brauer with its type locality given as east of Zanzibar at 5°42'S, 43°36'E in the western Indian Ocean."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Gigantactis_vanhoeffeni"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/157180738/medium.jpg",
+        "credit": "(c) \nEmőke Dénes, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/459386"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "oneirodes_eschrichtii",
+      "key": "",
+      "sci": "Oneirodes eschrichtii",
+      "name_en": "",
+      "name_ko": "아귀목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "750-2500",
+      "facts_n": 5,
+      "facts": [
+        "The bulbous dreamer (Oneirodes eschrichtii), or cosmoplitan dreamer, is a species of marine ray-finned fish belonging to the family Oneirodidae, the dreamers, a family of deep-sea anglerfishes.",
+        "This fish has a circumglobal distribution in tropical and temperate oceans.",
+        "== Taxonomy ==\nThe bulbous dreamer was first formally described in 1871 by the Danish zoologist and naturalist Christian Frederik Lütken with its type locality given as off the western coast of Greenland."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Bulbous_dreamer"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/30098883/medium.jpeg",
+        "credit": "(c) Gonzalo Mucientes Sandoval, some rights reserved (CC BY-NC), uploaded by Gonzalo Mucientes Sandoval",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/459430"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "lasiognathus_saccostoma",
+      "key": "",
+      "sci": "Lasiognathus saccostoma",
+      "name_en": "",
+      "name_ko": "아귀목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "800-2000",
+      "facts_n": 5,
+      "facts": [
+        "Lasiognathus saccostoma, one of the wolftrap anglerfish or alternatively Regan's strainer mouth, is a species of marine ray-finned fish belonging to the family Thaumatichthyidae, the wolftrap anglers.",
+        "This species is known from the eastern central Pacific Ocean and tropical waters of the Atlantic Ocean.",
+        "The genus Lasiognathus is classified by the 5th edition of Fishes of the World in the family Thaumatichthyidae within the suborder Ceratioidei of the anglerfish order Lophiiformes."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Lasiognathus_saccostoma"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/370729894/medium.jpeg",
+        "credit": "(c) Tambja, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/621589"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "aphyonidae",
+      "key": "aphyonidae",
+      "sci": "Aphyonidae",
+      "name_en": "Aphyonidae",
+      "name_ko": "아피오누스과",
+      "ko_official": true,
+      "name_ja": "ソコオクメウオ科",
+      "depth_m": "2000-6000",
+      "facts_n": 1,
+      "facts": [
+        "ソコオクメウオ科（学名：Aphyonidae）は、アシロ目に所属する魚類の分類群の一つ。6属からなり、ミスジオクメウオなど底生性の深海魚のみ23種が含まれる。フサイタチウオ科に含める見解もある。"
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Aphyonidae",
+        "https://ja.wikipedia.org/wiki/%E3%82%BD%E3%82%B3%E3%82%AA%E3%82%AF%E3%83%A1%E3%82%A6%E3%82%AA%E7%A7%91"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/487581/medium.jpg",
+        "credit": "(c) Put30, bazı hakları saklıdır (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/47390"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "cranchiidae",
+      "key": "cranchiidae",
+      "sci": "Cranchiidae",
+      "name_en": "Cranchiidae",
+      "name_ko": "악어가죽주머니오징어과",
+      "ko_official": true,
+      "name_ja": "サメハダホウズキイカ科",
+      "depth_m": "",
+      "facts_n": 3,
+      "facts": [
+        "サメハダホウズキイカ科 (Cranchiidae) はイカの科の一つ。約60種を含む。全世界の海洋の表層から中層に生息する。大きさは外套長10cm程度の小型種から、3mに達するダイオウホウズキイカまで様々である。",
+        "英名はGlass squid・cockatoo squid・cranchiid・cranch squid・bathyscaphoid squidなどがある。\"Glass squid\" はほとんどの種で体が透明であることに由来し、\"bathyscaphoid squid\" は浮力調節方法がバチスカーフに似ていることによる。",
+        "他のイカのように、幼生は表層で過ごし、成熟すると深海に降りる。水深2000mにまで降りる種もいる。成長に連れて形態が大きく変化するため、幼生が別種だと思われていたものも多い。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg)",
+        "https://en.wikipedia.org/wiki/Cranchiidae",
+        "https://ja.wikipedia.org/wiki/%E3%82%B5%E3%83%A1%E3%83%8F%E3%83%80%E3%83%9B%E3%82%A6%E3%82%BA%E3%82%AD%E3%82%A4%E3%82%AB%E7%A7%91"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/210486256/medium.jpg",
+        "credit": "(c) mbartick, some rights reserved (CC BY-NC)",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/245317"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "cyclothone",
+      "key": "",
+      "sci": "Cyclothone",
+      "name_en": "bristlemouth",
+      "name_ko": "앨퉁이목의 한 무리",
+      "ko_official": false,
+      "name_ja": "オニハダカ属",
+      "depth_m": "10-2000",
+      "facts_n": 8,
+      "facts": [
+        "Cyclothone is a genus containing 13 extant species of bioluminescent fish, commonly known as 'bristlemouths' or 'bristlefishes' due to their shared characteristic of sharp, bristle-like teeth.",
+        "These fishes typically grow to around 1–3 inches (25–76 mm), though some can be larger.",
+        "These deep-sea fish are most commonly found in the mesopelagic zone of the ocean, mostly at depths of over 300 meters (1,000 feet), and many species have bioluminescence."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Cyclothone",
+        "https://ja.wikipedia.org/wiki/%E3%82%AA%E3%83%8B%E3%83%8F%E3%83%80%E3%82%AB%E5%B1%9E"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/523676575/medium.jpg",
+        "credit": "(c) Claude Nozères, some rights reserved (CC BY-NC), uploaded by Claude Nozères",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/87782"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "chauliodus_sloani",
+      "key": "",
+      "sci": "Chauliodus sloani",
+      "name_en": "Sloane's viperfish",
+      "name_ko": "앨퉁이목의 한 종",
+      "ko_official": false,
+      "name_ja": "ホウライエソ",
+      "depth_m": "500-2500",
+      "facts_n": 8,
+      "facts": [
+        "Sloane's viperfish (Chauliodus sloani), is a predatory mesopelagic dragonfish found in waters across the world.",
+        "The species was first described by German scientists Marcus Elieser Bloch and Johann Gottlob Schneider in their 1801 book Systema ichthyologiae: iconibus CX illustratum, volume 1.",
+        "sloani reach maturity between 133 and 191 mm, while males likely reach maturity at slightly smaller body lengths."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Sloane%27s_viperfish",
+        "https://ja.wikipedia.org/wiki/%E3%83%9B%E3%82%A6%E3%83%A9%E3%82%A4%E3%82%A8%E3%82%BD"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/6690852/medium.jpg",
+        "credit": "(c) JesseClaggett, some rights reserved (CC BY-NC)",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/120645"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "malacosteus_niger",
+      "key": "",
+      "sci": "Malacosteus niger",
+      "name_en": "stoplight loosejaw",
+      "name_ko": "앨퉁이목의 한 종",
+      "ko_official": false,
+      "name_ja": "オオクチホシエソ",
+      "depth_m": "500-2500",
+      "facts_n": 9,
+      "facts": [
+        "Malacosteus niger, commonly known as the stoplight loosejaw, is a species of deep-sea fish.",
+        "Some additional common names for this species include: northern stoplight loosejaw, lightless loosejaw, black loosejaw, and black hinged-head.",
+        "It belongs to the family Stomiidae, or dragonfishes."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Malacosteus_niger",
+        "https://ja.wikipedia.org/wiki/%E3%82%AA%E3%82%AA%E3%82%AF%E3%83%81%E3%83%9B%E3%82%B7%E3%82%A8%E3%82%BD"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/169688324/medium.jpg",
+        "credit": "(c) Ken Graham, some rights reserved (CC BY-NC), uploaded by Ken Graham",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/224389"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "idiacanthus_antrostomus",
+      "key": "",
+      "sci": "Idiacanthus antrostomus",
+      "name_en": "Pacific blackdragon",
+      "name_ko": "앨퉁이목의 한 종",
+      "ko_official": false,
+      "name_ja": "ミツマタヤリウオ",
+      "depth_m": "300-2000",
+      "facts_n": 4,
+      "facts": [
+        "Idiacanthus antrostomus, also known as the Pacific blackdragon or black sea dragon, is a species of barbeled dragonfish (Stomiidae) inhabiting the Pacific Ocean.",
+        "== Overview ==\n\nThis fish is noted for having ultrablack skin, similar to pigments like Vantablack, which is accomplished through tightly packed melanosomes that allow its skin to absorb 99.95% of common light wavelengths in its habitat.",
+        "== Habitat ==\nIt has been found at depths between 500 m (1,600 ft) and 2,000 m (6,600 ft) along the West Coast of the United States and in the Gulf of Mexico."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Idiacanthus_antrostomus",
+        "https://ja.wikipedia.org/wiki/%E3%83%9F%E3%83%84%E3%83%9E%E3%82%BF%E3%83%A4%E3%83%AA%E3%82%A6%E3%82%AA"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/88890218/medium.jpg",
+        "credit": "(c) anonymous, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/222181"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "argyropelecus_aculeatus",
+      "key": "",
+      "sci": "Argyropelecus aculeatus",
+      "name_en": "lovely hatchetfish",
+      "name_ko": "앨퉁이목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "",
+      "facts_n": 5,
+      "facts": [
+        "Argyropelecus aculeatus, the lovely hatchetfish or Atlantic silver hatchetfish, is a species of fish in the family Sternoptychidae.",
+        "It may exceed 70 millimetres (2.8 in) standard length (SL).",
+        "It lives in the mesopelagic zone of all oceans and performs diel vertical migration."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Argyropelecus_aculeatus"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/75492508/medium.jpg",
+        "credit": "(c) NOAA Photo Library, some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/459327"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "hoplostethus_atlanticus",
+      "key": "",
+      "sci": "Hoplostethus atlanticus",
+      "name_en": "orange roughy",
+      "name_ko": "오렌지라피",
+      "ko_official": true,
+      "name_ja": "オレンジラフィー",
+      "depth_m": "37-1500",
+      "facts_n": 8,
+      "facts": [
+        "The orange roughy (Hoplostethus atlanticus), also known as the red roughy, slimehead and deep sea perch, is a relatively large deep-sea fish belonging to the slimehead family (Trachichthyidae).",
+        "The orange roughy is notable for its extraordinary lifespan, attaining over 200 years.",
+        "The fish has a bright, brick red color, fading to a yellowish-orange after death."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Orange_roughy",
+        "https://ja.wikipedia.org/wiki/%E3%82%AA%E3%83%AC%E3%83%B3%E3%82%B8%E3%83%A9%E3%83%95%E3%82%A3%E3%83%BC"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/483097548/medium.jpg",
+        "credit": "(c) NOAA Photo Library, some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/459402"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "poeobius_meseres",
+      "key": "",
+      "sci": "Poeobius meseres",
+      "name_en": "",
+      "name_ko": "유령갯지렁이목의 한 종",
+      "ko_official": false,
+      "name_ja": "ウキナガムシ",
+      "depth_m": "300-2500",
+      "facts_n": 6,
+      "facts": [
+        "Poeobius is a genus of marine polychaete worm.",
+        "It contains the single species Poeobius meseres, or balloon worm.",
+        "This is a common and abundant resident in the midwater around the mesopelagic and bathypelagic zones, especially in Monterey Bay."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Poeobius",
+        "https://ja.wikipedia.org/wiki/%E3%82%A6%E3%82%AD%E3%83%8A%E3%82%AC%E3%83%A0%E3%82%B7"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/244763811/medium.jpeg",
+        "credit": "(c) Warren R. Francis, some rights reserved (CC BY-NC), uploaded by Warren R. Francis",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/1429112"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "megalodicopia_hians",
       "key": "megalodicopia hians",
+      "sci": "Megalodicopia hians",
+      "name_en": "Predatory tunicate",
       "name_ko": "육식멍게",
       "ko_official": true,
-      "name_en": "Predatory tunicate",
-      "sci": "Megalodicopia hians",
+      "name_ja": "オオグチボヤ",
       "depth_m": "200-1100",
       "facts_n": 4,
       "facts": [
@@ -337,29 +2842,474 @@
       ],
       "sources": [
         "MBARI",
-        "WoRMS"
+        "WoRMS",
+        "https://en.wikipedia.org/wiki/Predatory_tunicate",
+        "https://ja.wikipedia.org/wiki/%E3%82%AA%E3%82%AA%E3%82%B0%E3%83%81%E3%83%9C%E3%83%A4"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/21879693/medium.jpg",
         "credit": "(c) 2009 California Academy of Sciences, some rights reserved (CC BY-NC-SA)",
         "license": "cc-by-nc-sa",
         "page": "https://www.inaturalist.org/taxa/706663"
-      }
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "rhinochimaera_pacifica",
+      "key": "",
+      "sci": "Rhinochimaera pacifica",
+      "name_en": "Pacific spookfish",
+      "name_ko": "은상어목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "760-1290",
+      "facts_n": 5,
+      "facts": [
+        "Rhinochimaera pacifica, commonly known as the Pacific spookfish, knifenose chimaera, narrownose chimaera, Pacific long-nosed chimaera, or Pinocchiofish, is a species of chimaera in the family Rhinochimaeridae.",
+        "It lives in various parts of the Pacific Ocean and can be characterized by its long snout.",
+        "== Description ==\nRhinochimaera pacifica grows to a total length of roughly 130 cm, with a body length of roughly 62 cm."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Rhinochimaera_pacifica"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/365302393/medium.png",
+        "credit": "(c) jgrimshaw, some rights reserved (CC BY-NC)",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/111689"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "chimaera_monstrosa",
+      "key": "",
+      "sci": "Chimaera monstrosa",
+      "name_en": "rabbit fish",
+      "name_ko": "은상어목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "50-1663",
+      "facts_n": 7,
+      "facts": [
+        "Chimaera monstrosa, commonly known as the rabbit fish or rat fish, is a northeast Atlantic and Mediterranean species of cartilaginous fish in the family Chimaeridae.",
+        "The rabbit fish is known for its characteristically large head and small, tapering body.",
+        "With large eyes, nostrils, and tooth plates, the head gives them a rabbit-like appearance, hence the nickname \"Rabbit fish\"."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Rabbit_fish"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/100578086/medium.jpg",
+        "credit": "(c) Viktor V. Grøtan, some rights reserved (CC BY), uploaded by Viktor V. Grøtan",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/97517"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "chondrocladia_lyra",
+      "key": "",
+      "sci": "Chondrocladia lyra",
+      "name_en": "harp sponge",
+      "name_ko": "이골해면아강의 한 종",
+      "ko_official": false,
+      "name_ja": "コンドロクラディア・リラ",
+      "depth_m": "3000-5000",
+      "facts_n": 8,
+      "facts": [
+        "Chondrocladia lyra, also known as the lyre sponge or harp sponge, is a species of carnivorous deep-sea sponge first discovered off the Californian coast living at depths of 10,800–11,500 feet (3,300–3,500 m) by Welton L.",
+        "Lee, Henry M Reiswig, William C.",
+        "Austin, and Lonny Lundsten from the Monterey Bay Aquarium Research Institute (MBARI)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Chondrocladia_lyra",
+        "https://ja.wikipedia.org/wiki/%E3%82%B3%E3%83%B3%E3%83%89%E3%83%AD%E3%82%AF%E3%83%A9%E3%83%87%E3%82%A3%E3%82%A2%E3%83%BB%E3%83%AA%E3%83%A9"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/147541196/medium.jpg",
+        "credit": "(c) MDMihaela, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/1186665"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "haliphron_atlanticus",
+      "key": "",
+      "sci": "Haliphron atlanticus",
+      "name_en": "seven-arm octopus",
+      "name_ko": "일곱팔문어",
+      "ko_official": true,
+      "name_ja": "カンテンダコ",
+      "depth_m": "69-920",
+      "facts_n": 4,
+      "facts": [
+        "The only other similarly large extant species is the giant Pacific octopus, Enteroctopus dofleini.",
+        "While juveniles tend to be translucent, one study in 1985 in Norway studied the morphology between two female H.",
+        "The type specimen was collected in the Atlantic Ocean at 38°N 34°W (west of the Azores)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Seven-arm_octopus",
+        "https://ja.wikipedia.org/wiki/%E3%82%AB%E3%83%B3%E3%83%86%E3%83%B3%E3%83%80%E3%82%B3"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/14168414/medium.jpg",
+        "credit": "(c) Richard E. Young, some rights reserved (CC BY-NC)",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/253673"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "phronima_sedentaria",
+      "key": "",
+      "sci": "Phronima sedentaria",
+      "name_en": "",
+      "name_ko": "입주영리옆새우",
+      "ko_official": true,
+      "name_ja": "オオタルマワシ",
+      "depth_m": "25-3000",
+      "facts_n": 8,
+      "facts": [
+        "Phronima sedentaria is a species of amphipod crustaceans found in oceans at a depth of up to 1 km (0.6 mi).",
+        "They are large in size relative to other members of the family Phronimidae.",
+        "Individuals may be found inside barrel-like homes, created most commonly from the tunics of select species of pelagic tunicates; Phronima females appropriate these tunics and rear their young within."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Phronima_sedentaria",
+        "https://ja.wikipedia.org/wiki/%E3%82%AA%E3%82%AA%E3%82%BF%E3%83%AB%E3%83%9E%E3%83%AF%E3%82%B7"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11249629/medium.jpg",
+        "credit": "(c) Jackson W.F. Chu, some rights reserved (CC BY-NC-SA)",
+        "license": "cc-by-nc-sa",
+        "page": "https://www.inaturalist.org/taxa/260959"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "macropinna_microstoma",
+      "key": "",
+      "sci": "Macropinna microstoma",
+      "name_en": "barreleye",
+      "name_ko": "조기강의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "600-1015",
+      "facts_n": 9,
+      "facts": [
+        "The Pacific barreleye fish (Macropinna) is a genus of ray-finned fish belonging to Opisthoproctidae, the barreleye family.",
+        "It contains one species, M.",
+        "It is recognized for a highly unusual transparent, fluid-filled shield on its head, through which the vivid green lenses of its eyes can be seen."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Macropinna"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/323748862/medium.png",
+        "credit": "(c) \nKim Reisenbichler, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/49886"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "opisthoproctus_soleatus",
+      "key": "",
+      "sci": "Opisthoproctus soleatus",
+      "name_en": "barreleye",
+      "name_ko": "조기강의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "300-800",
+      "facts_n": 6,
+      "facts": [
+        "Opisthoproctus soleatus is an argentiniform species of fish referred to as the barreleye, being the type genus and species of the family Opisthoproctidae.",
+        "The species lives in most tropical seas, but is more common in the eastern Atlantic, from western Ireland to Mauritania and from Sierra Leone to Angola, and also in the South China Sea.",
+        "soleatus can grow to a standard length of 10.5 centimetres (4.1 in) and usually live from about 500 to 700 metres (1,600 to 2,300 ft) deep."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Opisthoproctus"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/148336146/medium.png",
+        "credit": "\nBrauer, A., no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/554820"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "dolichopteryx_longipes",
+      "key": "",
+      "sci": "Dolichopteryx longipes",
+      "name_en": "brownsnout spookfish",
+      "name_ko": "조기강의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "310-2400",
+      "facts_n": 7,
+      "facts": [
+        "The brownsnout spookfish or brown-snout spookfish (Dolichopteryx longipes) is a species of barreleye in the family Opisthoproctidae.",
+        "It and the glasshead barreleye fish are the only vertebrates known to employ a mirror, in addition to a lens, to focus an image in its eyes.",
+        "It is found in the mesopelagic and bathypelagic zones at a depth of 500–2,400 meters (1,600–7,900 ft), but usually occurs below 1,000 meters (3,300 feet)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Brownsnout_spookfish"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/440019562/medium.jpg",
+        "credit": "anonymous, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/618796"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "anoplogaster_cornuta",
+      "key": "",
+      "sci": "Anoplogaster cornuta",
+      "name_en": "common fangtooth",
+      "name_ko": "조기강의 한 종",
+      "ko_official": false,
+      "name_ja": "オニキンメ",
+      "depth_m": "500-5000",
+      "facts_n": 7,
+      "facts": [
+        "Anoplogaster cornuta, the common fangtooth, is a species of deep sea fish found in temperate and tropical oceans worldwide.",
+        "It is found at depths of from 2 to 5,000 metres (10 to 16,400 ft) with the adults usually found from 500 to 5,000 metres (1,640 to 16,400 ft) and the young usually found near the surface.",
+        "This species grows to a total length of about 18 cm (7 in)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Anoplogaster_cornuta",
+        "https://ja.wikipedia.org/wiki/%E3%82%AA%E3%83%8B%E3%82%AD%E3%83%B3%E3%83%A1"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/34085575/medium.jpg",
+        "credit": "(c) Gonzalo Mucientes Sandoval, some rights reserved (CC BY-NC), uploaded by Gonzalo Mucientes Sandoval",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/213729"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "swima_bombiviridis",
+      "key": "",
+      "sci": "Swima bombiviridis",
+      "name_en": "green bomber",
+      "name_ko": "조명탄벌레",
+      "ko_official": true,
+      "name_ja": "",
+      "depth_m": "444-3600",
+      "facts_n": 9,
+      "facts": [
+        "Swima bombiviridis is a worm species that lives in the deep ocean.",
+        "It is also known as the green bomber worm or bombardier worm.",
+        "This deep ocean pelagic (free-swimming) annelid has modified bioluminescent gills that can be cast off from an individual."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Swima_bombiviridis"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/244684827/medium.jpeg",
+        "credit": "(c) Warren R. Francis, some rights reserved (CC BY-NC), uploaded by Warren R. Francis",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/52871"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "chlamydoselachus_anguineus",
+      "key": "",
+      "sci": "Chlamydoselachus anguineus",
+      "name_en": "frilled shark",
+      "name_ko": "주름상어",
+      "ko_official": true,
+      "name_ja": "ラブカ",
+      "depth_m": "50-1570",
+      "facts_n": 9,
+      "facts": [
+        "The frilled shark (Chlamydoselachus anguineus), also known as the lizard shark, is one of the two extant species of shark in the family Chlamydoselachidae (the other is the southern African frilled shark, Chlamydoselachus africana).",
+        "The common name, frilled shark, derives from the fringed appearance of the six pairs of gill slits at the shark's throat.",
+        "To live on a diet of cephalopods, smaller sharks, and bony fish, the frilled shark practices diel vertical migration to feed at night at the surface of the ocean."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Frilled_shark",
+        "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%83%96%E3%82%AB"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/69990809/medium.jpg",
+        "credit": "(c) anonymous, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/47302"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "kiwa_hirsuta",
+      "key": "",
+      "sci": "Kiwa hirsuta",
+      "name_en": "yeti crab",
+      "name_ko": "집게하목의 한 종",
+      "ko_official": false,
+      "name_ja": "キワ・ヒルスタ",
+      "depth_m": "2200",
+      "facts_n": 6,
+      "facts": [
+        "Kiwa hirsuta is a crustacean discovered in 2005 in the South Pacific Ocean.",
+        "This decapod, which is approximately 15 cm (5.9 in) long, is notable for the quantity of silky blond setae (resembling fur) covering its pereiopods (thoracic legs, including claws).",
+        "Its discoverers dubbed it the \"yeti lobster\" or \"yeti crab\"."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Kiwa_hirsuta",
+        "https://ja.wikipedia.org/wiki/%E3%82%AD%E3%83%AF%E3%83%BB%E3%83%92%E3%83%AB%E3%82%B9%E3%82%BF"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/27874/medium.jpg",
+        "credit": "(c) Mandy Jouan, some rights reserved (CC BY-NC-ND)",
+        "license": "cc-by-nc-nd",
+        "page": "https://www.inaturalist.org/taxa/69645"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "ophidiidae",
       "key": "ophidiidae",
+      "sci": "Ophidiidae",
+      "name_en": "Ophidiidae",
       "name_ko": "첨치과",
       "ko_official": true,
-      "name_en": "Ophidiidae",
-      "sci": "Ophidiidae",
+      "name_ja": "",
       "depth_m": "370",
       "facts_n": 4,
       "facts": [
@@ -367,123 +3317,864 @@
         "The scientific name is from the Greek ophis meaning \"snake\", and refers to their eel-like appearance.",
         "True eels diverged from other ray-finned fish during the Jurassic, while cusk-eels are part of the Percomorpha clade, along with tuna, perch, seahorses, and others."
       ],
-      "sources": [],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Cusk-eel"
+      ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/66869/medium.jpg",
         "credit": "(c) David R, some rights reserved (CC BY-NC), uploaded by David R",
         "license": "cc-by-nc",
         "page": "https://www.inaturalist.org/taxa/85466"
-      }
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
-      "id": "actinoscyphia_aurelia",
-      "key": "actinoscyphia aurelia",
-      "name_ko": "파리지옥말미잘",
-      "ko_official": true,
-      "name_en": "Venus flytrap anemone",
-      "sci": "Actinoscyphia aurelia",
-      "depth_m": "1000-1600",
-      "facts_n": 4,
+      "id": "spectrunculus_grandis",
+      "key": "spectrunculus grandis",
+      "sci": "Spectrunculus grandis",
+      "name_en": "Spectrunculus grandis",
+      "name_ko": "첨치목의 한 종",
+      "ko_official": false,
+      "name_ja": "ソコボウズ",
+      "depth_m": "1000-6000",
+      "facts_n": 1,
       "facts": [
-        "식충식물 파리지옥처럼 입 원반을 닫아 먹이를 잡는다",
-        "빠른 물살이 지나는 심해 절벽·산호에 붙어 산다",
-        "물살 방향으로 몸을 돌려 먹이를 기다린다"
+        "ソコボウズ（底坊主、学名：Spectrunculus grandis）とは、条鰭綱アシロ目に属する魚類の一種。"
       ],
       "sources": [
-        "NOAA Ocean Exploration",
-        "WoRMS"
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Spectrunculus grandis.jpg)",
+        "https://en.wikipedia.org/wiki/Spectrunculus_grandis",
+        "https://ja.wikipedia.org/wiki/%E3%82%BD%E3%82%B3%E3%83%9C%E3%82%A6%E3%82%BA"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
       "in_progress": false,
       "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/422701779/medium.jpg",
-        "credit": "\nImage courtesy of Aquapix and Expedition to the Deep Slope 2007, NOAA-OE, no known copyright restrictions (public domain)",
-        "license": "pd",
-        "page": "https://www.inaturalist.org/taxa/1521695"
-      }
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/348142236/medium.jpg",
+        "credit": "(c) Fisheries and Oceans Canada, some rights reserved (CC BY-NC), uploaded by Fisheries and Oceans Canada",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/231272"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
-      "id": "bathynomus_giganteus",
-      "key": "bathynomus giganteus",
-      "name_ko": "대왕등각류",
+      "id": "abyssobrotula_galatheae",
+      "key": "",
+      "sci": "Abyssobrotula galatheae",
+      "name_en": "",
+      "name_ko": "첨치목의 한 종",
+      "ko_official": false,
+      "name_ja": "ヨミノアシロ",
+      "depth_m": "3110-8370",
+      "facts_n": 8,
+      "facts": [
+        "Abyssobrotula galatheae is a species of cusk eel in the family Ophidiidae.",
+        "It is the deepest-living fish known; one specimen, trawled from a depth of 8,370 m (27,460 ft) in the Puerto Rico Trench in 1970, holds the record for the deepest fish ever captured.",
+        "Although generally recognized, some have suggested that the record-breaking individual might have been caught with a non-closing net (a net that is open on the way up and down into the deep) and therefore perhaps caught shallower."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Abyssobrotula_galatheae",
+        "https://ja.wikipedia.org/wiki/%E3%83%A8%E3%83%9F%E3%83%8E%E3%82%A2%E3%82%B7%E3%83%AD"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/145834177/medium.jpg",
+        "credit": "\nCalifornia Academy of Sciences, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/491309"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "himantolophus_groenlandicus",
+      "key": "",
+      "sci": "Himantolophus groenlandicus",
+      "name_en": "Atlantic footballfish",
+      "name_ko": "초롱아귀",
       "ko_official": true,
-      "name_en": "Giant isopod",
-      "sci": "Bathynomus giganteus",
-      "depth_m": "170-2140",
+      "name_ja": "",
+      "depth_m": "200-800",
+      "facts_n": 7,
+      "facts": [
+        "Himantolophus groenlandicus, the Atlantic footballfish or Atlantic football-fish, is a species of marine ray-finned fish belonging to the family Himantolophidae, the footballfishes.",
+        "This fish is found primarily in mesopelagic depths of the ocean.",
+        "Despite its name, this species might not be restricted to the Atlantic Ocean, with its range possibly extending into the Indian Ocean and to the Pacific Ocean."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Himantolophus_groenlandicus"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/84540907/medium.jpg",
+        "credit": "\nJon Moore/NOAA Ocean Explorer, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/317144"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "cetomimidae",
+      "key": "",
+      "sci": "Cetomimidae",
+      "name_en": "flabby whalefish",
+      "name_ko": "케토미무스과",
+      "ko_official": true,
+      "name_ja": "クジラウオ科",
+      "depth_m": "700-4000",
+      "facts_n": 9,
+      "facts": [
+        "Cetomimidae is a family of small, deep-sea beryciform ray-finned fish.",
+        "They are among the most deep-living fish known, with some species recorded at depths in excess of 3,500 m (11,500 ft).",
+        "Females are known as flabby whalefishes, Males are known as bignose fishes, while juveniles are known as tapetails and were formerly thought to be in a separate family, dubbed Mirapinnidae."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Cetomimidae",
+        "https://ja.wikipedia.org/wiki/%E3%82%AF%E3%82%B8%E3%83%A9%E3%82%A6%E3%82%AA%E7%A7%91"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/3542287/medium.jpg",
+        "credit": "匿名，没有已知的版权限制（公有领域）",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/85671"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "magnapinna",
+      "key": "",
+      "sci": "Magnapinna",
+      "name_en": "bigfin squid",
+      "name_ko": "큰지느러미오징어",
+      "ko_official": true,
+      "name_ja": "",
+      "depth_m": "12-6212",
+      "facts_n": 9,
+      "facts": [
+        "Bigfin squids are a group of rarely seen cephalopods found in deep-sea zones with a distinctive morphology.",
+        "They are placed in the genus Magnapinna and family Magnapinnidae.",
+        "Although the family was described only from larval, paralarval, and juvenile specimens, numerous video observations of much larger squid with similar morphology are assumed to be adult specimens of the same family."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Bigfin_squid"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/595564154/medium.jpg",
+        "credit": "(c) Nikivas, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/48772"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "macrocheira_kaempferi",
+      "key": "",
+      "sci": "Macrocheira kaempferi",
+      "name_en": "Japanese spider crab",
+      "name_ko": "키다리게",
+      "ko_official": true,
+      "name_ja": "タカアシガニ",
+      "depth_m": "50-800",
+      "facts_n": 9,
+      "facts": [
+        "The Japanese giant spider crab (Macrocheira kaempferi) is a species of marine crab and is the largest crab found in the waters around Japan.",
+        "At around 3.75 metres (12.3 ft), it has the largest leg-span of any arthropod.",
+        "The Japanese name for this species is taka-ashi-gani, (Japanese: 高脚蟹; タカアシガニ), literally translating to \"tall-legged crab\"."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Japanese_spider_crab",
+        "https://ja.wikipedia.org/wiki/%E3%82%BF%E3%82%AB%E3%82%A2%E3%82%B7%E3%82%AC%E3%83%8B"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/84967662/medium.jpg",
+        "credit": "(c) Brian Gratwicke, some rights reserved (CC BY)",
+        "license": "cc-by",
+        "page": "https://www.inaturalist.org/taxa/127535"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "gigantocypris",
+      "key": "",
+      "sci": "Gigantocypris",
+      "name_en": "",
+      "name_ko": "패충강의 한 무리",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "150-3500",
       "facts_n": 5,
       "facts": [
-        "육지의 쥐며느리·공벌레와 같은 등각류다",
-        "몸길이가 30cm를 넘는 심해의 대형 청소부다",
-        "먹이가 드문 바닥에서 죽은 동물을 먹는다"
+        "Gigantocypris, sometimes known as giant ostracod or giant seed shrimp, is a genus of ostracod crustaceans in family Cypridinidae, and among the most well-known members of the class Ostracoda (together with Vargula hilgendorfii).",
+        "They are found worldwide in dark, deep and cold oceans.",
+        "Gigantocypris have been reported at depths between 150 and 3,500 m (490–11,480 ft)."
       ],
       "sources": [
-        "NOAA",
-        "WoRMS"
+        "https://en.wikipedia.org/wiki/Gigantocypris"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": true,
-      "in_progress": true,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/59005870/medium.jpeg",
-        "credit": "(c) craigjhowe, some rights reserved (CC BY-NC-ND)",
-        "license": "cc-by-nc-nd",
-        "page": "https://www.inaturalist.org/taxa/571229"
-      }
-    },
-    {
-      "id": "coelorinchus_caelorhincus",
-      "key": "coelorinchus caelorhincus",
-      "name_ko": "Coelorinchus caelorhincus",
-      "ko_official": false,
-      "name_en": "Coelorinchus caelorhincus",
-      "sci": "Coelorinchus caelorhincus",
-      "depth_m": "90-1485",
-      "facts_n": 2,
-      "facts": [
-        "The hollowsnout grenadier (Coelorinchus caelorhincus), also called the blackspot grenadier, is a species of fish in the family Macrouridae.",
-        "The specific name derives from Greek κοῖλος (koilos, \"hollow\") and ῥύγχος (rhynchos, \"snout\")."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Otolithes de grenadier raton (Coelorinchus caelorhinchus-Coelorhynchus coelorhynchus) (Ifremer 00677-78952 - 31898).jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": true
-      },
-      "ready": false,
       "in_progress": false,
       "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/593119509/medium.jpg",
-        "credit": "(c) MARC MARTIN SOLA, bazı hakları saklıdır (CC BY-NC), yükleyen: MARC MARTIN SOLA",
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/586467985/medium.jpg",
+        "credit": "(c) Claude Nozères, some rights reserved (CC BY-NC), uploaded by Claude Nozères",
         "license": "cc-by-nc",
-        "page": "https://www.inaturalist.org/taxa/120709"
-      }
+        "page": "https://www.inaturalist.org/taxa/1043645"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "eurypharynx_pelecanoides",
+      "key": "",
+      "sci": "Eurypharynx pelecanoides",
+      "name_en": "pelican eel",
+      "name_ko": "펠리칸장어",
+      "ko_official": true,
+      "name_ja": "フクロウナギ",
+      "depth_m": "75-3000",
+      "facts_n": 9,
+      "facts": [
+        "The pelican eel (Eurypharynx pelecanoides) is a deep-sea eel.",
+        "It is the only known member of the genus Eurypharynx and the family Eurypharyngidae.",
+        "The species belongs to the \"saccopharyngiforms\", members of which were historically placed in their own order, but are now considered true eels in the order Anguilliformes."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Pelican_eel",
+        "https://ja.wikipedia.org/wiki/%E3%83%95%E3%82%AF%E3%83%AD%E3%82%A6%E3%83%8A%E3%82%AE"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/169688272/medium.jpg",
+        "credit": "(c) Ken Graham, some rights reserved (CC BY-NC), uploaded by Ken Graham",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/317098"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "polychelidae",
+      "key": "",
+      "sci": "Polychelidae",
+      "name_en": "deep-sea blind lobster",
+      "name_ko": "폴리켈레스과",
+      "ko_official": true,
+      "name_ja": "",
+      "depth_m": "100-5000",
+      "facts_n": 3,
+      "facts": [
+        "The family Polychelidae contains thirty-eight extant species of blind, benthic lobster-like crustaceans.",
+        "They are found throughout the world's tropical, sub-tropical and temperate oceans, including the Mediterranean Sea and the Irish Sea.",
+        "The reason that polychelids remained unknown for so long is that they live on the sea-floor, often at great depths; the family as a whole has a depth range from less than 100 metres (330 ft) to over 5,000 metres (16,000 ft)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Polychelidae"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/106040123/medium.jpeg",
+        "credit": "(c) Nahuel Emiliano Farias, some rights reserved (CC BY-NC-SA), uploaded by Nahuel Emiliano Farias",
+        "license": "cc-by-nc-sa",
+        "page": "https://www.inaturalist.org/taxa/86001"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "alvinella_pompejana",
+      "key": "",
+      "sci": "Alvinella pompejana",
+      "name_en": "Pompeii worm",
+      "name_ko": "폼페이벌레",
+      "ko_official": true,
+      "name_ja": "",
+      "depth_m": "2500",
+      "facts_n": 9,
+      "facts": [
+        "Alvinella pompejana, the Pompeii worm, is a species of deep-sea polychaete worm (commonly referred to as \"bristle worms\").",
+        "It is an extremophile found only at hydrothermal vents in the Pacific Ocean, discovered in the early 1980s off the Galápagos Islands by French marine biologists.",
+        "Alvinella worms live in tubes and cultivate the chemosynthetic bacteria that they feed on."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Alvinella_pompejana"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/16688841/medium.jpg",
+        "credit": "National Science Foundation (University of Delaware College of Marine Studies), no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/706669"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "euplectella_aspergillum",
+      "key": "",
+      "sci": "Euplectella aspergillum",
+      "name_en": "Venus' flower basket",
+      "name_ko": "해로동혈",
+      "ko_official": true,
+      "name_ja": "カイロウドウケツ",
+      "depth_m": "100-1000",
+      "facts_n": 8,
+      "facts": [
+        "The Venus' flower basket (Euplectella aspergillum) is a species of glass sponge found in the deep waters of the Pacific Ocean, usually at depths below 500 m (1,600 ft).",
+        "Like other glass sponges, they build their skeletons out of silica, which forms a unique lattice structure consisting of spicules.",
+        "This body structure is of great interest in materials science as the optical and mechanical properties are in some ways superior to man-made materials."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Venus%27_flower_basket",
+        "https://ja.wikipedia.org/wiki/%E3%82%AB%E3%82%A4%E3%83%AD%E3%82%A6%E3%83%89%E3%82%A6%E3%82%B1%E3%83%84"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/55397941/medium.jpg",
+        "credit": "NOAA Okeanos Explorer Program, Gulf of Mexico 2012 Expedition, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/908110"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "scotoplanes_globosa",
+      "key": "",
+      "sci": "Scotoplanes globosa",
+      "name_en": "sea pig",
+      "name_ko": "해삼강의 한 종",
+      "ko_official": false,
+      "name_ja": "センジュナマコ",
+      "depth_m": "1000-9997",
+      "facts_n": 8,
+      "facts": [
+        "Scotoplanes globosa, commonly known as the sea pig, is a species of sea cucumber that lives in the deep sea.",
+        "It was first described by Hjalmar Théel, a Swedish scientist.",
+        "Scotoplanes globosa, along with numerous other sea cucumbers were discovered by Théel during an expedition on HMS Challenger between the years of 1873-1876."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Scotoplanes_globosa",
+        "https://ja.wikipedia.org/wiki/%E3%82%BB%E3%83%B3%E3%82%B8%E3%83%A5%E3%83%8A%E3%83%9E%E3%82%B3"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/72249957/medium.jpg",
+        "credit": "(c) \nNOAA/MBARI, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/568142"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "psychropotes_longicauda",
+      "key": "",
+      "sci": "Psychropotes longicauda",
+      "name_en": "gummy squirrel",
+      "name_ko": "해삼강의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "500",
+      "facts_n": 7,
+      "facts": [
+        "Psychropotes longicauda is a species of sea cucumber in the family Psychropotidae.",
+        "It inhabits the deep sea where the adult is found on the seabed.",
+        "The larva is pelagic and has an appendage shaped like a sail on its back which may enable it to move through the water."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Psychropotes_longicauda"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/236888490/medium.jpg",
+        "credit": "\nNOAA Okeanos Explorer, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/1162507"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "pelagothuria_natatrix",
+      "key": "",
+      "sci": "Pelagothuria natatrix",
+      "name_en": "",
+      "name_ko": "해삼강의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "200-4433",
+      "facts_n": 5,
+      "facts": [
+        "Pelagothuria is a genus of sea cucumber in the family Pelagothuriidae.",
+        "It is monotypic, being represented by the single species Pelagothuria natatrix.",
+        "The mouth is surrounded by around 15 short feeding tentacles like any sea cucumber, and the veil can be contracted like jellyfishes do (it is interrupted at the central ventral radius)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Pelagothuria"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/477143595/medium.jpg",
+        "credit": "\nNOAA Okeanos Explorer, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/195705"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "atolla_wyvillei",
+      "key": "",
+      "sci": "Atolla wyvillei",
+      "name_en": "Atolla jellyfish",
+      "name_ko": "해파리강의 한 종",
+      "ko_official": false,
+      "name_ja": "ムラサキカムリクラゲ",
+      "depth_m": "1000-4000",
+      "facts_n": 8,
+      "facts": [
+        "Atolla wyvillei, also known as the Atolla jellyfish, Coronate medusa, and deep-sea jellyfish, is a species of deep-sea crown jellyfish (Scyphozoa: Coronatae).",
+        "It lives in oceans around the world.",
+        "Like many species of mid-water animals, it is deep red in color."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Atolla_jellyfish",
+        "https://ja.wikipedia.org/wiki/%E3%83%A0%E3%83%A9%E3%82%B5%E3%82%AD%E3%82%AB%E3%83%A0%E3%83%AA%E3%82%AF%E3%83%A9%E3%82%B2"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/5865593/medium.jpg",
+        "credit": "(c) NOAA Ocean Explorer from USA, some rights reserved (CC BY-SA)",
+        "license": "cc-by-sa",
+        "page": "https://www.inaturalist.org/taxa/256087"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "periphylla_periphylla",
+      "key": "",
+      "sci": "Periphylla periphylla",
+      "name_en": "helmet jellyfish",
+      "name_ko": "해파리강의 한 종",
+      "ko_official": false,
+      "name_ja": "クロカムリクラゲ",
+      "depth_m": "75-2700",
+      "facts_n": 6,
+      "facts": [
+        "The helmet jellyfish (Periphylla periphylla), sometimes called the merchant-cap, is a luminescent, red-colored jellyfish of the deep sea, belonging to the order Coronatae of the phylum Cnidaria.",
+        "It is the only species in the monotypic genus Periphylla and a rare example of a scyphozoan with a polyp-less life cycle, occurring exclusively as a medusa.",
+        "Periphylla is intensely photophobic, and thus only seldom leaves the bathypelagic zone (likely only on particularly dark nights)."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Helmet_jellyfish",
+        "https://ja.wikipedia.org/wiki/%E3%82%AF%E3%83%AD%E3%82%AB%E3%83%A0%E3%83%AA%E3%82%AF%E3%83%A9%E3%82%B2"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11249637/medium.jpg",
+        "credit": "(c) Jackson W.F. Chu, some rights reserved (CC BY-NC-SA)",
+        "license": "cc-by-nc-sa",
+        "page": "https://www.inaturalist.org/taxa/256088"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "bathysaurus_ferox",
+      "key": "",
+      "sci": "Bathysaurus ferox",
+      "name_en": "deep-sea lizardfish",
+      "name_ko": "홍메치목의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "600-3500",
+      "facts_n": 5,
+      "facts": [
+        "The deepsea lizardfish (Bathysaurus ferox) is an aulopiform of the family Bathysauridae, found in tropical and subtropical seas across the world.",
+        "The deepsea lizardfish should not be confused with the true or \"typical\" lizardfishes of the related family Synodontidae.",
+        "== Taxonomy ==\nDeepsea lizardfishes were first described in 1878 by British zoologist Albert Günther, who created the generic name from ancient Greek word elements \"báthos\" and \"saûros\" meaning \"lizard of the depths\"."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Deepsea_lizardfish"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/29923221/medium.jpeg",
+        "credit": "(c) Gonzalo Mucientes Sandoval, some rights reserved (CC BY-NC), uploaded by Gonzalo Mucientes Sandoval",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/459301"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "rajidae",
+      "key": "rajidae",
+      "sci": "Rajidae",
+      "name_en": "Rajidae",
+      "name_ko": "홍어과",
+      "ko_official": true,
+      "name_ja": "ガンギエイ目",
+      "depth_m": "3000",
+      "facts_n": 2,
+      "facts": [
+        "ガンギエイ目、雁木鱝目 (学名：Rajiformes) は、軟骨魚綱板鰓亜綱の下位分類群で、エイのグループのひとつ。",
+        "Nelson (1994) の分類において、このグループはガンギエイ亜目 (Rajoidei) としてエイ目の下に置かれ、ガンギエイ科 (Rajidae) の3科が設置されている。Nelson (2006) の分類ではサメ・エイ2分説が採用され、エイ目はエイ亜区 (Batoidea) になり、ガンギエイ亜目を含む4亜目はそれぞれ目に格上げされている。"
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Skate_(fish)",
+        "https://ja.wikipedia.org/wiki/%E3%82%AC%E3%83%B3%E3%82%AE%E3%82%A8%E3%82%A4%E7%9B%AE"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/25578840/medium.jpg",
+        "credit": "(c) Tatiana Antokhina, some rights reserved (CC BY-NC), uploaded by Tatiana Antokhina",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/48408"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "bathymodiolus",
+      "key": "",
+      "sci": "Bathymodiolus",
+      "name_en": "",
+      "name_ko": "홍합상과의 한 무리",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "",
+      "facts_n": 2,
+      "facts": [
+        "Bathymodiolus is a genus of deep-sea mussels, marine bivalve molluscs in the family Mytilidae.",
+        "Many of them contain intracellular chemoautotrophic bacterial symbionts."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Bathymodiolus"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/1150871/medium.jpg",
+        "credit": "(c) Fabio Moretzsohn, some rights reserved (CC BY-NC), uploaded by Fabio Moretzsohn",
+        "license": "cc-by-nc",
+        "page": "https://www.inaturalist.org/taxa/370752"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "vampyroteuthis_infernalis",
+      "key": "vampyroteuthis infernalis",
+      "sci": "Vampyroteuthis infernalis",
+      "name_en": "Vampire squid",
+      "name_ko": "흡혈오징어",
+      "ko_official": true,
+      "name_ja": "コウモリダコ",
+      "depth_m": "550-900",
+      "facts_n": 3,
+      "facts": [
+        "コウモリダコ（蝙蝠蛸、蝙蝠鮹、Vampyroteuthis）は、コウモリダコ目コウモリダコ科に属する、上位分類の定めがたい頭足類。現生するのは V.",
+        "infernalis （ヴァンピロテウティス・インフェルナリス）の1種のみである。",
+        "熱帯・温帯地域の約600mから900mにかけての深海に生息する。体長は約30cm。鰭（ひれ）の付け根には青白い光を発する発光器を4つ備えている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Pu - Vampyroteuthis infernalis - 2.jpg)",
+        "https://en.wikipedia.org/wiki/Vampire_squid",
+        "https://ja.wikipedia.org/wiki/%E3%82%B3%E3%82%A6%E3%83%A2%E3%83%AA%E3%83%80%E3%82%B3"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/239331193/medium.jpg",
+        "credit": "\nInternet Archive Book Images, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/253737"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "halitrephes_maasi",
+      "key": "",
+      "sci": "Halitrephes maasi",
+      "name_en": "",
+      "name_ko": "히드라충강의 한 종",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "1200-1500",
+      "facts_n": 7,
+      "facts": [
+        "Halitrephes maasi, commonly known as the firework jellyfish, is a species of deep-sea hydrozoan of the family Halicreatidae.",
+        "Sightings have been reported at depths of 4,000 to 5,000 feet (1,200 to 1,500 m) near the Revillagigedo Archipelago off the Baja California Peninsula.",
+        "Although not much is known regarding this species, H."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Halitrephes"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": true
+      },
+      "in_progress": false,
+      "photo": {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/19852760/medium.jpg",
+        "credit": "NOAA Office of Ocean Exploration and Research, no known copyright restrictions (public domain)",
+        "license": "pd",
+        "page": "https://www.inaturalist.org/taxa/668207"
+      },
+      "ready": true,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "amphitretus_pelagicus",
+      "key": "",
+      "sci": "Amphitretus pelagicus",
+      "name_en": "telescope octopus",
+      "name_ko": "Amphitretus pelagicus",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "",
+      "facts_n": 4,
+      "facts": [
+        "The telescope octopus (Amphitretus pelagicus) is a species of pelagic octopus found in tropical  and subtropical regions of the Indian and Pacific Oceans.",
+        "It is transparent, almost colorless, and has 8 arms, all of the same size.",
+        "It is the only octopus to have tubular eyes, which is the reason it is commonly referred to as telescope octopus."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Telescope_octopus"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": false,
+        "실사 사진": false
+      },
+      "in_progress": false,
+      "photo": null,
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "bathykorus_bouilloni",
+      "key": "",
+      "sci": "Bathykorus bouilloni",
+      "name_en": "",
+      "name_ko": "Bathykorus bouilloni",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "800-2500",
+      "facts_n": 9,
+      "facts": [
+        "Bathykorus bouilloni is a species of hydrozoan first described in 2010.",
+        "It is a deep-sea species found in the Arctic Ocean, and appears to be common at depths below 1,000 m (3,300 ft).",
+        "It is the only species in the monotypic genus Bathykorus."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Bathykorus"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": false
+      },
+      "in_progress": false,
+      "photo": null,
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "duobrachium_sparksae",
       "key": "duobrachium sparksae",
+      "sci": "Duobrachium sparksae",
+      "name_en": "Duobrachium sparksae",
       "name_ko": "Duobrachium sparksae",
       "ko_official": false,
-      "name_en": "Duobrachium sparksae",
-      "sci": "Duobrachium sparksae",
+      "name_ja": "",
       "depth_m": "3910",
       "facts_n": 2,
       "facts": [
@@ -492,24 +4183,92 @@
       ],
       "sources": [
         "Wikipedia (en)",
-        "Wikimedia Commons (File:First footage of Duobrachium Sparksae.webm)"
+        "Wikimedia Commons (File:First footage of Duobrachium Sparksae.webm)",
+        "https://en.wikipedia.org/wiki/Duobrachium"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": false
       },
-      "ready": false,
       "in_progress": false,
-      "photo": null
+      "photo": null,
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "leiopathes_glaberrima",
+      "key": "",
+      "sci": "Leiopathes glaberrima",
+      "name_en": "",
+      "name_ko": "Leiopathes glaberrima",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "250-450",
+      "facts_n": 5,
+      "facts": [
+        "Leiopathes glaberrima is a species of black coral of the order Antipatharia found in the northern Atlantic Ocean and the Mediterranean Seas deep water habitats.",
+        "A very slow-growing species, it is among the oldest living animals on the planet.",
+        "It is also present in the Mediterranean Sea off the coast of Malta at depths of between 250 and 400 m (820 and 1,310 ft) where it constitutes a dense coral forest which greatly enhances the biodiversity of the area."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Leiopathes_glaberrima"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": false
+      },
+      "in_progress": false,
+      "photo": null,
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "monorhaphis_chuni",
+      "key": "",
+      "sci": "Monorhaphis chuni",
+      "name_en": "",
+      "name_ko": "Monorhaphis chuni",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "1100-2100",
+      "facts_n": 6,
+      "facts": [
+        "Monorhaphis is a monotypic genus of siliceous deep sea Hexactinellid sponges.",
+        "The single species is the type species Monorhaphis chuni, a sponge known for creating a single giant basal spicule (G.B.S.) to anchor the sponge in the sediments.",
+        "The species was described by Franz Eilhard Schulze in 1904 from specimens collected by the German Deep Sea Expedition in 1898–1899."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Monorhaphis"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": false
+      },
+      "in_progress": false,
+      "photo": null,
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "paralomis_diomedeae",
       "key": "paralomis diomedeae",
+      "sci": "Paralomis diomedeae",
+      "name_en": "Paralomis diomedeae",
       "name_ko": "Paralomis diomedeae",
       "ko_official": false,
-      "name_en": "Paralomis diomedeae",
-      "sci": "Paralomis diomedeae",
+      "name_ja": "",
       "depth_m": "680-935",
       "facts_n": 2,
       "facts": [
@@ -518,24 +4277,30 @@
       ],
       "sources": [
         "Wikipedia (en)",
-        "Wikimedia Commons (File:Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv)"
+        "Wikimedia Commons (File:Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv)",
+        "https://en.wikipedia.org/wiki/Paralomis_diomedeae"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": false
       },
-      "ready": false,
       "in_progress": false,
-      "photo": null
+      "photo": null,
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "peltospira_smaragdina",
       "key": "peltospira smaragdina",
+      "sci": "Peltospira smaragdina",
+      "name_en": "Peltospira smaragdina",
       "name_ko": "Peltospira smaragdina",
       "ko_official": false,
-      "name_en": "Peltospira smaragdina",
-      "sci": "Peltospira smaragdina",
+      "name_ja": "",
       "depth_m": "870-3520",
       "facts_n": 1,
       "facts": [
@@ -543,24 +4308,61 @@
       ],
       "sources": [
         "Wikipedia (en)",
-        "Wikimedia Commons (File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm)"
+        "Wikimedia Commons (File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm)",
+        "https://en.wikipedia.org/wiki/Peltospira_smaragdina"
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": true
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": false
       },
-      "ready": false,
       "in_progress": false,
-      "photo": null
+      "photo": null,
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
+    },
+    {
+      "id": "relicanthus_daphneae",
+      "key": "",
+      "sci": "Relicanthus daphneae",
+      "name_en": "",
+      "name_ko": "Relicanthus daphneae",
+      "ko_official": false,
+      "name_ja": "",
+      "depth_m": "",
+      "facts_n": 5,
+      "facts": [
+        "Relicanthus daphneae is a cnidarian which occurs in the depths of the East Pacific Rise and was described in 2006.",
+        "It is the only known member of the suborder Helenmonae within the order Actiniaria.",
+        "In December 2019 the American Museum of Natural History announced that new research had classified R."
+      ],
+      "sources": [
+        "https://en.wikipedia.org/wiki/Relicanthus_daphneae"
+      ],
+      "checks": {
+        "한 편 = 한 대상": true,
+        "출처 문서(위키백과)": true,
+        "심해 확인": true,
+        "실사 사진": false
+      },
+      "in_progress": false,
+      "photo": null,
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "ridgeia_piscesae",
       "key": "ridgeia piscesae",
+      "sci": "Ridgeia piscesae",
+      "name_en": "Ridgeia piscesae",
       "name_ko": "Ridgeia piscesae",
       "ko_official": false,
-      "name_en": "Ridgeia piscesae",
-      "sci": "Ridgeia piscesae",
+      "name_ja": "",
       "depth_m": "2190",
       "facts_n": 2,
       "facts": [
@@ -573,204 +4375,30 @@
       ],
       "checks": {
         "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": true
+        "출처 문서(위키백과)": false,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": false,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/364577378/medium.jpg",
         "credit": "(c) Ocean Networks Canada, some rights reserved (CC BY-NC), uploaded by Ocean Networks Canada",
         "license": "cc-by-nc",
         "page": "https://www.inaturalist.org/taxa/1544414"
-      }
-    },
-    {
-      "id": "rimicaris_exoculata",
-      "key": "rimicaris exoculata",
-      "name_ko": "Rimicaris exoculata",
-      "ko_official": false,
-      "name_en": "vent shrimp",
-      "sci": "Rimicaris exoculata",
-      "depth_m": "",
-      "facts_n": 5,
-      "facts": [
-        "Rimicaris exoculata, commonly known as the 'blind shrimp', is a species of shrimp.",
-        "It thrives on active hydrothermal edifices at deep-sea vents of the Mid-Atlantic Ridge.",
-        "This species belongs to the Alvinocarididae family of shrimp, named after the DSV Alvin, the vessel that collected the original samples described by M."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Fond abyssal (Ifremer 00701-81314).webm)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": false
       },
       "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/164714717/medium.jpeg",
-        "credit": "(c) \n\nLaura Flamme, some rights reserved (CC BY)",
-        "license": "cc-by",
-        "page": "https://www.inaturalist.org/taxa/867838"
-      }
-    },
-    {
-      "id": "spectrunculus_grandis",
-      "key": "spectrunculus grandis",
-      "name_ko": "Spectrunculus grandis",
-      "ko_official": false,
-      "name_en": "Spectrunculus grandis",
-      "sci": "Spectrunculus grandis",
-      "depth_m": "1000-6000",
-      "facts_n": 1,
-      "facts": [
-        "ソコボウズ（底坊主、学名：Spectrunculus grandis）とは、条鰭綱アシロ目に属する魚類の一種。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Spectrunculus grandis.jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": true
-      },
-      "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/348142236/medium.jpg",
-        "credit": "(c) Fisheries and Oceans Canada, some rights reserved (CC BY-NC), uploaded by Fisheries and Oceans Canada",
-        "license": "cc-by-nc",
-        "page": "https://www.inaturalist.org/taxa/231272"
-      }
-    },
-    {
-      "id": "ipnopidae",
-      "key": "ipnopidae",
-      "name_ko": "긴촉수매퉁이과",
-      "ko_official": true,
-      "name_en": "Ipnopidae",
-      "sci": "Ipnopidae",
-      "depth_m": "",
-      "facts_n": 1,
-      "facts": [
-        "チョウチンハダカ科（Ipnopidae）は、ヒメ目アオメエソ亜目に所属する魚類の分類群の一つ。イトヒキイワシ・ナガヅエエソなど、底生性の深海魚を中心に5属29種が所属する。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Tripod fish1.jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": false
-      },
-      "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/75492169/medium.jpg",
-        "credit": "\nLLophelia II 2010: Oil Seeps and Deep Reefs, no known copyright restrictions (public domain)",
-        "license": "pd",
-        "page": "https://www.inaturalist.org/taxa/85841"
-      }
-    },
-    {
-      "id": "liparidae",
-      "key": "liparidae",
-      "name_ko": "꼼치과",
-      "ko_official": true,
-      "name_en": "Liparidae",
-      "sci": "Liparidae",
-      "depth_m": "300",
-      "facts_n": 1,
-      "facts": [
-        "クサウオ科（学名：Liparidae）は、ペルカ目に所属する魚類の分類群の一つ。クサウオ・サケビクニンなど、寒冷な海あるいは深海に生息する種類を中心に32属407種が記載される。科名は科のタイプ属 Liparis に科を表す接尾辞「-idae」を付けたもの。属名 Liparis の由来は、ギリシア語の「λιπαρός」（liparos／脂っぽい、オイリーなどの意の形容詞）から。"
-      ],
-      "sources": [],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": true
-      },
-      "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/113324795/medium.jpeg",
-        "credit": "(c) Sara Thiebaud, some rights reserved (CC BY-NC), uploaded by Sara Thiebaud",
-        "license": "cc-by-nc",
-        "page": "https://www.inaturalist.org/taxa/49032"
-      }
-    },
-    {
-      "id": "mitsukurina_owstoni",
-      "key": "mitsukurina owstoni",
-      "name_ko": "마귀상어",
-      "ko_official": true,
-      "name_en": "goblin shark",
-      "sci": "Mitsukurina owstoni",
-      "depth_m": "100-2000",
-      "facts_n": 1,
-      "facts": [
-        "ミツクリザメ（箕作鮫、学名：Mitsukurina owstoni、英: Goblin shark）は、ネズミザメ目ミツクリザメ科に属するサメ。ミツクリザメ科はミツクリザメ属 Mitsukurina 1属で、本種のみを含む。希少種。日本の東京湾、駿河湾、相模湾などをはじめ、世界各地で散発的に報告されている。表層から水深1,300 m、あるいはそれ以上の深海に生息する。推定全長6m。ブレード状の長い吻が特徴である。写真や図では顎が飛び出した状態のものが多いが、通常遊泳時は奥に引っ込んでいる。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Goblin shark, Pengo.jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": true
-      },
-      "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/181897375/medium.jpg",
-        "credit": "(c) Ken Graham, some rights reserved (CC BY-NC), uploaded by Ken Graham",
-        "license": "cc-by-nc",
-        "page": "https://www.inaturalist.org/taxa/105913"
-      }
-    },
-    {
-      "id": "macrouridae",
-      "key": "macrouridae",
-      "name_ko": "민태과",
-      "ko_official": true,
-      "name_en": "Macrouridae",
-      "sci": "Macrouridae",
-      "depth_m": "100-6000",
-      "facts_n": 1,
-      "facts": [
-        "ソコダラ科（学名:Macrouridae）は、タラ目ソコダラ亜目に所属する魚類の分類群の一つ。タラ目で最大のグループである。学名の由来は、ギリシャ語の「makros（大きな）」+「oura（尾）」から。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Grenadier (Macrouridae) par 400 m de fond (Ifremer 00621-73302).jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": true
-      },
-      "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/165426675/medium.jpg",
-        "credit": "(c) NOAA Ocean Exploration & Research, bazı hakları saklıdır (CC BY-SA)",
-        "license": "cc-by-sa",
-        "page": "https://www.inaturalist.org/taxa/85881"
-      }
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "pycnogonida",
       "key": "pycnogonida",
+      "sci": "Pycnogonida",
+      "name_en": "Pycnogonida",
       "name_ko": "바다거미목",
       "ko_official": true,
-      "name_en": "Pycnogonida",
-      "sci": "Pycnogonida",
+      "name_ja": "",
       "depth_m": "",
       "facts_n": 2,
       "facts": [
@@ -783,25 +4411,30 @@
       ],
       "checks": {
         "한 편 = 한 대상": false,
-        "사실 3개 이상": false,
-        "서식 수심": false
+        "출처 문서(위키백과)": false,
+        "심해 확인": false,
+        "실사 사진": true
       },
-      "ready": false,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/78907506/medium.jpg",
         "credit": "(c) Adam, some rights reserved (CC BY-NC), uploaded by Adam",
         "license": "cc-by-nc",
         "page": "https://www.inaturalist.org/taxa/47825"
-      }
+      },
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "crinoidea",
       "key": "crinoidea",
+      "sci": "Crinoidea",
+      "name_en": "Crinoidea",
       "name_ko": "바다나리",
       "ko_official": true,
-      "name_en": "Crinoidea",
-      "sci": "Crinoidea",
+      "name_ja": "",
       "depth_m": "6000-9000",
       "facts_n": 1,
       "facts": [
@@ -813,57 +4446,30 @@
       ],
       "checks": {
         "한 편 = 한 대상": false,
-        "사실 3개 이상": false,
-        "서식 수심": true
+        "출처 문서(위키백과)": false,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": false,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/57574570/medium.jpeg",
         "credit": "(c) Frédéric Ducarme, some rights reserved (CC BY-NC-ND), uploaded by Frédéric Ducarme",
         "license": "cc-by-nc-nd",
         "page": "https://www.inaturalist.org/taxa/51245"
-      }
-    },
-    {
-      "id": "bathynomus",
-      "key": "bathynomus",
-      "name_ko": "바티노무스속",
-      "ko_official": true,
-      "name_en": "Bathynomus",
-      "sci": "Bathynomus",
-      "depth_m": "",
-      "facts_n": 5,
-      "facts": [
-        "Giant isopods are large marine isopods in the genus Bathynomus.",
-        "They are bottom-dwelling deep-sea scavengers that are abundant in the Atlantic, Pacific, and Indian oceans.",
-        "Bathynomus giganteus, the species upon which the generitype is based, is often considered the largest isopod in the world, though other comparably poorly known species of Bathynomus may reach similar sizes."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Bathynomus (10.3897-zookeys.947.53906) Figure 6.jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": false
       },
       "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/107720168/medium.jpg",
-        "credit": "(c) NOAA Ocean Exploration & Research, some rights reserved (CC BY-SA)",
-        "license": "cc-by-sa",
-        "page": "https://www.inaturalist.org/taxa/538387"
-      }
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "asteroidea",
       "key": "asteroidea",
+      "sci": "Asteroidea",
+      "name_en": "starfish",
       "name_ko": "불가사리류",
       "ko_official": true,
-      "name_en": "starfish",
-      "sci": "Asteroidea",
+      "name_ja": "",
       "depth_m": "",
       "facts_n": 2,
       "facts": [
@@ -873,25 +4479,30 @@
       "sources": [],
       "checks": {
         "한 편 = 한 대상": false,
-        "사실 3개 이상": false,
-        "서식 수심": false
+        "출처 문서(위키백과)": false,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": false,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/162318518/medium.jpg",
         "credit": "(c) Hans Hillewaert, some rights reserved (CC BY-SA)",
         "license": "cc-by-sa",
         "page": "https://www.inaturalist.org/taxa/47668"
-      }
+      },
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "teuthida",
       "key": "teuthida",
+      "sci": "Teuthida",
+      "name_en": "Teuthida",
       "name_ko": "살오징어목",
       "ko_official": true,
-      "name_en": "Teuthida",
-      "sci": "Teuthida",
+      "name_ja": "",
       "depth_m": "",
       "facts_n": 1,
       "facts": [
@@ -900,25 +4511,30 @@
       "sources": [],
       "checks": {
         "한 편 = 한 대상": false,
-        "사실 3개 이상": false,
-        "서식 수심": false
+        "출처 문서(위키백과)": false,
+        "심해 확인": false,
+        "실사 사진": true
       },
-      "ready": false,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/2476996/medium.jpg",
         "credit": "(c) Athila Bertoncini Andrade, some rights reserved (CC BY-NC), uploaded by Athila Bertoncini Andrade",
         "license": "cc-by-nc",
         "page": "https://www.inaturalist.org/taxa/246133"
-      }
+      },
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "selachimorpha",
       "key": "selachimorpha",
+      "sci": "Selachimorpha",
+      "name_en": "shark",
       "name_ko": "상어",
       "ko_official": true,
-      "name_en": "shark",
-      "sci": "Selachimorpha",
+      "name_ja": "",
       "depth_m": "",
       "facts_n": 2,
       "facts": [
@@ -928,84 +4544,30 @@
       "sources": [],
       "checks": {
         "한 편 = 한 대상": false,
-        "사실 3개 이상": false,
-        "서식 수심": false
+        "출처 문서(위키백과)": false,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": false,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11193947/medium.jpg",
         "credit": "(c) Erik Schlögl, some rights reserved (CC BY-NC), uploaded by Erik Schlögl",
         "license": "cc-by-nc",
         "page": "https://www.inaturalist.org/taxa/47273"
-      }
-    },
-    {
-      "id": "aphyonidae",
-      "key": "aphyonidae",
-      "name_ko": "아피오누스과",
-      "ko_official": true,
-      "name_en": "Aphyonidae",
-      "sci": "Aphyonidae",
-      "depth_m": "",
-      "facts_n": 1,
-      "facts": [
-        "ソコオクメウオ科（学名：Aphyonidae）は、アシロ目に所属する魚類の分類群の一つ。6属からなり、ミスジオクメウオなど底生性の深海魚のみ23種が含まれる。フサイタチウオ科に含める見解もある。"
-      ],
-      "sources": [],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": false
       },
       "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/487581/medium.jpg",
-        "credit": "(c) Put30, bazı hakları saklıdır (CC BY-SA)",
-        "license": "cc-by-sa",
-        "page": "https://www.inaturalist.org/taxa/47390"
-      }
-    },
-    {
-      "id": "cranchiidae",
-      "key": "cranchiidae",
-      "name_ko": "악어가죽주머니오징어과",
-      "ko_official": true,
-      "name_en": "Cranchiidae",
-      "sci": "Cranchiidae",
-      "depth_m": "",
-      "facts_n": 3,
-      "facts": [
-        "サメハダホウズキイカ科 (Cranchiidae) はイカの科の一つ。約60種を含む。全世界の海洋の表層から中層に生息する。大きさは外套長10cm程度の小型種から、3mに達するダイオウホウズキイカまで様々である。",
-        "英名はGlass squid・cockatoo squid・cranchiid・cranch squid・bathyscaphoid squidなどがある。\"Glass squid\" はほとんどの種で体が透明であることに由来し、\"bathyscaphoid squid\" は浮力調節方法がバチスカーフに似ていることによる。",
-        "他のイカのように、幼生は表層で過ごし、成熟すると深海に降りる。水深2000mにまで降りる種もいる。成長に連れて形態が大きく変化するため、幼生が別種だと思われていたものも多い。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": false
-      },
-      "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/210486256/medium.jpg",
-        "credit": "(c) mbartick, some rights reserved (CC BY-NC)",
-        "license": "cc-by-nc",
-        "page": "https://www.inaturalist.org/taxa/245317"
-      }
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "ctenophora",
       "key": "ctenophora",
+      "sci": "Ctenophora",
+      "name_en": "Ctenophora",
       "name_ko": "유즐동물",
       "ko_official": true,
-      "name_en": "Ctenophora",
-      "sci": "Ctenophora",
+      "name_ja": "",
       "depth_m": "",
       "facts_n": 1,
       "facts": [
@@ -1014,25 +4576,30 @@
       "sources": [],
       "checks": {
         "한 편 = 한 대상": false,
-        "사실 3개 이상": false,
-        "서식 수심": false
+        "출처 문서(위키백과)": false,
+        "심해 확인": false,
+        "실사 사진": true
       },
-      "ready": false,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/161528780/medium.jpg",
         "credit": "(c) Neil McDaniel, some rights reserved (CC BY-NC), uploaded by Neil McDaniel",
         "license": "cc-by-nc",
         "page": "https://www.inaturalist.org/taxa/51508"
-      }
+      },
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "chimaeriformes",
       "key": "chimaeriformes",
+      "sci": "Chimaeriformes",
+      "name_en": "Chimaeriformes",
       "name_ko": "은상어목",
       "ko_official": true,
-      "name_en": "Chimaeriformes",
-      "sci": "Chimaeriformes",
+      "name_ja": "",
       "depth_m": "220",
       "facts_n": 1,
       "facts": [
@@ -1044,25 +4611,30 @@
       ],
       "checks": {
         "한 편 = 한 대상": false,
-        "사실 3개 이상": false,
-        "서식 수심": true
+        "출처 문서(위키백과)": false,
+        "심해 확인": true,
+        "실사 사진": true
       },
-      "ready": false,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/12499725/medium.jpg",
         "credit": "(c) Viktor V. Grøtan, some rights reserved (CC BY), uploaded by Viktor V. Grøtan",
         "license": "cc-by",
         "page": "https://www.inaturalist.org/taxa/60451"
-      }
+      },
+      "ready": false,
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     },
     {
       "id": "porifera",
       "key": "porifera",
+      "sci": "Porifera",
+      "name_en": "Porifera",
       "name_ko": "해면동물",
       "ko_official": true,
-      "name_en": "Porifera",
-      "sci": "Porifera",
+      "name_ja": "",
       "depth_m": "",
       "facts_n": 2,
       "facts": [
@@ -1072,77 +4644,29 @@
       "sources": [],
       "checks": {
         "한 편 = 한 대상": false,
-        "사실 3개 이상": false,
-        "서식 수심": false
+        "출처 문서(위키백과)": false,
+        "심해 확인": false,
+        "실사 사진": true
       },
-      "ready": false,
       "in_progress": false,
       "photo": {
         "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/117290419/medium.jpg",
         "credit": "(c) Kerry Lewis, some rights reserved (CC BY-NC), uploaded by Kerry Lewis",
         "license": "cc-by-nc",
         "page": "https://www.inaturalist.org/taxa/48824"
-      }
-    },
-    {
-      "id": "rajidae",
-      "key": "rajidae",
-      "name_ko": "홍어과",
-      "ko_official": true,
-      "name_en": "Rajidae",
-      "sci": "Rajidae",
-      "depth_m": "",
-      "facts_n": 2,
-      "facts": [
-        "ガンギエイ目、雁木鱝目 (学名：Rajiformes) は、軟骨魚綱板鰓亜綱の下位分類群で、エイのグループのひとつ。",
-        "Nelson (1994) の分類において、このグループはガンギエイ亜目 (Rajoidei) としてエイ目の下に置かれ、ガンギエイ科 (Rajidae) の3科が設置されている。Nelson (2006) の分類ではサメ・エイ2分説が採用され、エイ目はエイ亜区 (Batoidea) になり、ガンギエイ亜目を含む4亜目はそれぞれ目に格上げされている。"
-      ],
-      "sources": [],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": false,
-        "서식 수심": false
       },
       "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/25578840/medium.jpg",
-        "credit": "(c) Tatiana Antokhina, some rights reserved (CC BY-NC), uploaded by Tatiana Antokhina",
-        "license": "cc-by-nc",
-        "page": "https://www.inaturalist.org/taxa/48408"
-      }
-    },
-    {
-      "id": "vampyroteuthis_infernalis",
-      "key": "vampyroteuthis infernalis",
-      "name_ko": "흡혈오징어",
-      "ko_official": true,
-      "name_en": "Vampire squid",
-      "sci": "Vampyroteuthis infernalis",
-      "depth_m": "",
-      "facts_n": 3,
-      "facts": [
-        "コウモリダコ（蝙蝠蛸、蝙蝠鮹、Vampyroteuthis）は、コウモリダコ目コウモリダコ科に属する、上位分類の定めがたい頭足類。現生するのは V.",
-        "infernalis （ヴァンピロテウティス・インフェルナリス）の1種のみである。",
-        "熱帯・温帯地域の約600mから900mにかけての深海に生息する。体長は約30cm。鰭（ひれ）の付け根には青白い光を発する発光器を4つ備えている。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Pu - Vampyroteuthis infernalis - 2.jpg)"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "사실 3개 이상": true,
-        "서식 수심": false
-      },
-      "ready": false,
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/239331193/medium.jpg",
-        "credit": "\nInternet Archive Book Images, no known copyright restrictions (public domain)",
-        "license": "pd",
-        "page": "https://www.inaturalist.org/taxa/253737"
-      }
+      "score": null,
+      "hook_jp": "",
+      "hook_ko": ""
     }
+  ],
+  "made_excluded": [
+    "Enypniastes eximia",
+    "Bathynomus giganteus",
+    "Actinoscyphia aurelia",
+    "Lithodidae",
+    "Chaunax stigmaeus",
+    "Bathynomus"
   ]
 }

@@ -156,7 +156,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-18-1 (예약 공개 기본 9시 7분 — 정각 피하기)";
+const BUILD="v2026-10-19-1 (새 영상 후보: 만든 종 빼기 · 위키백과로 조건 완화 · 심해 종 97개 추가)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2520,9 +2520,13 @@ async function renderV2List(){
 // ── 새 영상 만들기(/new) ──
 async function renderV2New(){
   view().innerHTML='<div class="banner" id="msg"></div><div class="card"><span class="lbl">새 영상 만들기</span><div class="hint">불러오는 중…</div></div>';
-  const tp=await v2json("short-movie-generator/v2/topics.json");
-  const all=(tp&&Array.isArray(tp.topics))?tp.topics:[];
-  const ready=all.filter(t=>t.ready&&!t.in_progress), notReady=all.filter(t=>!t.ready&&!t.in_progress);
+  const [tp,ix]=await Promise.all([v2json("short-movie-generator/v2/topics.json"),v2json("short-movie-generator/v2/pilots/index.json")]);
+  // 이미 만든(시작한) 편은 후보에서 뺀다(운영자 지시 2026-10-19) — 후보 목록이 옛날 것이어도 지금 편 목록과 바로 대조(같은 종 · 같은 속)
+  const genus=s=>String(s||"").trim().toLowerCase().replace(/\s+(sp|spp)\.?$/,"").split(/\s+/)[0];
+  const made=((ix&&ix.items)||[]).map(x=>({id:x.id,g:genus(x.sci)}));
+  const isMade=t=>made.some(m=>m.id===t.id||(m.g&&m.g===genus(t.sci)));
+  const all=((tp&&Array.isArray(tp.topics))?tp.topics:[]).filter(t=>!t.in_progress&&!isMade(t));
+  const ready=all.filter(t=>t.ready), notReady=all.filter(t=>!t.ready);
   // 이름 옆에 사진(자유 라이선스 실사 · 출처 표기) + 한글명(정식 한글명이 없으면 상위 무리 이름 + '정식 한글명 없음')
   const thumb=t=>t.photo&&t.photo.url
       ?'<a href="'+esc(t.photo.page||t.photo.url)+'" target="_blank" rel="noopener" style="flex:none"><img class="cthumb" loading="lazy" referrerpolicy="no-referrer" src="'+esc(t.photo.url)+'" alt="'+esc(t.name_ko)+'"></a>'
@@ -2531,7 +2535,7 @@ async function renderV2New(){
       '<div class="ctitle">'+esc(t.name_ko)+(t.ko_official===false?' <span style="font-size:11px;font-weight:400;color:var(--am)">(정식 한글명 없음)</span>':'')+
         (t.score?' <span class="v2st '+(t.score>=8?"done":t.score>=6?"wait":"")+'">놀라움 '+t.score+'/10</span>':'')+'</div>'+
       (t.hook_ko?'<div class="cfact"><b>핵심 한 줄</b> '+esc(t.hook_ko)+(t.hook_jp?' <span style="opacity:.7">'+esc(t.hook_jp)+'</span>':'')+'</div>':'')+
-      '<div class="cmeta"><i>'+esc(t.sci)+'</i>'+(t.depth_m?(' · 수심 '+esc(t.depth_m)+'m'):'')+'</div>'+
+      '<div class="cmeta">'+(t.name_ja?esc(t.name_ja)+' · ':'')+'<i>'+esc(t.sci)+'</i>'+(t.depth_m?(' · 수심 '+esc(t.depth_m)+'m'):'')+'</div>'+
       (t.photo&&t.photo.credit?'<div class="cfact" style="font-size:10px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">사진: '+esc(t.photo.credit)+'</div>':'')+
       (t.facts||[]).map(f=>'<div class="cfact">· '+esc(f)+'</div>').join("")+
       '<div class="cfact">'+Object.entries(t.checks||{}).map(([k,v])=>'<span class="'+(v?"ok":"err")+'">'+(v?"통과":"미달")+' '+esc(k)+'</span>').join(" · ")+'</div>'+
@@ -2540,11 +2544,15 @@ async function renderV2New(){
     '</div></div>';
   let html='<div class="banner" id="msg"></div><a class="back" href="/">← 영상 목록</a>'+
     '<div class="card"><span class="lbl">새 영상 만들기 — 주제 선택</span>'+
-    '<div class="hint" style="margin-top:0">조건(한 편 = 한 대상 · 출처 있는 사실 3개 이상 · 서식 수심)을 갖춘 종만 보여줍니다. 고르면 대본 작성이 시작됩니다(비용: 거의 0).</div></div>'+
+    '<div class="hint" style="margin-top:0">조건(한 편 = 한 대상 · 위키백과 출처 문서 · 심해 확인 · 실사 사진)을 갖춘 종만 보여줍니다. 이미 만든 종(같은 속 포함)은 빠집니다. 고르면 대본 작성이 시작됩니다(비용: 거의 0).</div>'+
+    '<button class="btn" id="v2topics" style="width:100%;margin-top:8px">후보 다시 찾기 (위키백과·사진 확인 · 3~6분)</button>'+
+    (tp&&tp.updated?'<div class="hint">후보 목록 갱신: '+esc(String(tp.updated).slice(0,10))+'</div>':'')+'</div>'+
     '<div class="card"><span class="lbl">시작할 수 있는 종 ('+ready.length+')</span>'+(ready.length?ready.map(card).join(""):'<div class="hint">없음</div>')+'</div>'+
     (notReady.length?'<details class="card"><summary class="lbl" style="cursor:pointer">조건 미달 ('+notReady.length+') — 보기</summary>'+notReady.map(card).join("")+'</details>':'')+
     v2tokbox();
   view().innerHTML=html;v2bindTok();
+  const rt=$("#v2topics");if(rt)rt.onclick=async()=>{if(confirm("새 영상 후보를 다시 찾을까요? 위키백과·사진을 확인하고 놀라움 점수를 매깁니다(3~6분 · 비용 거의 0)."))
+    if(await v2do("topics","","","",rt))banner("후보를 다시 찾는 중입니다. 5분쯤 뒤 새로고침하세요.","ok");};
   document.querySelectorAll("[data-new]").forEach(b=>b.onclick=async()=>{
     const id=b.dataset.new;const t=all.find(x=>x.id===id)||{};
     if(!confirm((t.name_ko||id)+" 으로 새 영상을 시작할까요?"))return;

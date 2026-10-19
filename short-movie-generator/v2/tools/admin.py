@@ -147,6 +147,10 @@ def new_pilot(pid: str) -> dict:
     st["stages"]["script"]["state"] = "working"
     _note(st, "topic", "approve", "운영자가 주제로 선택")
     _save(p, st)
+    tp = _load(V2 / "topics.json", {}) or {}                  # 만든 종은 바로 후보에서 뺀다(운영자 지시 2026-10-19)
+    if tp.get("topics"):
+        tp["topics"] = [t for t in tp["topics"] if t["id"] != pid and not same_subject(t.get("sci", ""), topic["sci"])]
+        _save(V2 / "topics.json", tp)
     build_index()
     return st
 
@@ -2737,6 +2741,7 @@ def _topic_media(items: list[dict], fetch=None) -> dict:
 # 이긴 두 편(5년 절식 · 머리가 없음)은 "한 줄로 말할 수 있는 믿기 힘든 사실"이 제목·후킹을 이끌었다 → 주제 후보마다
 # AI가 출처 있는 사실 안에서 그 한 줄과 1~10점을 매기고, 새 영상 페이지는 점수 높은 종부터 보여 준다. 결과는 캐시.
 TOPIC_SCORES = V2 / "topic_scores.json"
+SCORE_BATCH = 25
 _SCORE_PROMPT = """You pick topics for a Japanese YouTube Shorts channel about deep-sea creatures. The two best-performing videos
 were driven by ONE unbelievable, concrete fact told in a single line (「5年以上も絶食した」, 「頭も骨もない」).
 For EACH species below, using ONLY its listed facts (never invent), write the single most surprising fact as a short hook and
@@ -2751,11 +2756,12 @@ Return JSON only: {{"scores":{{"<id>":{{"score":7,"hook_jp":"日本語で一行(
 def _topic_scores(items: list[dict], ask=None) -> dict:
     cache = _load(TOPIC_SCORES, {}) or {}
     todo = [t for t in items if t["ready"] and t["id"] not in cache]
-    if todo:
+    for i in range(0, len(todo), SCORE_BATCH):               # 후보가 많아져(자료 수집 확대) 한 번에 묻지 않고 나눠 묻는다
+        part = todo[i:i + SCORE_BATCH]
         try:
-            txt = "\n".join(f"{t['id']} ({t['sci']} / {t['name_en']}): " + " | ".join(t.get("all_facts") or t["facts"]) for t in todo)
+            txt = "\n".join(f"{t['id']} ({t['sci']} / {t['name_en']}): " + " | ".join(t.get("all_facts") or t["facts"]) for t in part)
             got = _json_obj((ask or _gemini_text)(_SCORE_PROMPT.format(items=txt))).get("scores") or {}
-            for t in todo:
+            for t in part:
                 g = got.get(t["id"]) or {}
                 try:
                     sc = max(1, min(10, int(g.get("score"))))
@@ -2768,42 +2774,213 @@ def _topic_scores(items: list[dict], ask=None) -> dict:
     return cache
 
 
-def build_topics(fetch=None, ask=None) -> dict:
-    """주제 후보 = v1에서 이미 사실(출처 포함)을 모아 둔 심해 종 중 **한 편 = 한 대상** 기준을 통과한 종.
-    사진 장수·이야기거리(발견 사건·연도)는 자동으로 판정하지 못한다 → 화면에 '시작 후 확인'으로 정직하게 표시."""
+# ── 후보 넓히기(운영자 지시 2026-10-19: "이미 만든 건 새로 만들기 대상에서 삭제 · 조건 완화하거나 자료 수집을 확대해 더 많은 종으로") ──
+# ① 이미 만든 편(v2 pilots — 진행 중 포함)은 후보에서 뺀다. 같은 종·같은 속(예: 만든 Bathynomus giganteus ↔ 후보 Bathynomus)도 같은 대상.
+# ② 조건 완화: 예전엔 'v1이 모아 둔 사실 3개 + v1 서식 수심'이 있어야 했다 → 대본 단계가 어차피 위키백과(영·일)에서 사실을 원문 인용으로
+#    다시 뽑으므로, **위키백과 문서가 있고 · 심해 게이트(deepsea_verify: 수심 200 m 이상 또는 심해 근거어)를 통과하면** 후보가 된다.
+#    '한 편 = 한 대상'(너무 넓은 분류군 차단)과 '실사 사진(자유 라이선스)'은 그대로 지킨다.
+# ③ 자료 수집 확대: v1 종 자료 밖의 실존 심해 종 목록(`v2/topic_seeds.json`)을 더한다 — 학명만 적어 두고, 사실·수심·한글명·사진은
+#    전부 위키백과·iNaturalist에서 확인한 것만 쓴다(문서가 없으면 '조건 미달'로 남고 지어내지 않는다).
+TOPIC_SEEDS = V2 / "topic_seeds.json"
+TOPIC_WIKI = V2 / "topic_wiki.json"                          # 위키백과 확인 결과 캐시(성공·'문서 없음'만 저장 — 네트워크 오류는 다음에 다시)
+_KO = re.compile(r"[가-힣]")
+
+
+def _sci_key(sci: str) -> str:
+    s = re.sub(r"\s+(sp|spp)\.?$", "", str(sci or "").strip(), flags=re.I)
+    return re.sub(r"\s+", " ", s).lower()
+
+
+def same_subject(a: str, b: str) -> bool:
+    """같은 대상인가 — 학명이 같거나 **같은 속**일 때(속 ↔ 그 속의 종 · 같은 속의 다른 종).
+    예: 만든 Bathynomus giganteus ↔ 후보 Bathynomus · Bathynomus doederleini — 화면에선 같은 생물로 보인다."""
+    a, b = _sci_key(a), _sci_key(b)
+    return bool(a and b) and a.split()[0] == b.split()[0]
+
+
+def made_subjects() -> list[tuple[str, str]]:
+    """이미 만든(시작한) 편 — (id, 학명)."""
+    out = []
+    for p in sorted(PILOTS.glob("*/status.json")):
+        st = _load(p, {}) or {}
+        out.append((p.parent.name, st.get("sci") or (st.get("topic") or {}).get("sci", "")))
+    return out
+
+
+def _is_made(t: dict, made: list[tuple[str, str]]) -> bool:
+    return any(t["id"] == pid or same_subject(t["sci"], sci) for pid, sci in made)
+
+
+def _sentences(txt: str) -> list[str]:
+    return [x.strip() for x in re.split(r"(?<=[.!?。])\s+|(?<=。)", txt or "") if 25 <= len(x.strip()) <= 240]
+
+
+def wiki_profile(sci: str, get=None) -> dict:
+    """학명으로 위키백과(영어 → 일본어)를 찾아 후보 확인 자료를 만든다 — 문서에 있는 문장만 쓴다(지어내지 않음).
+    반환 {"found", "title", "en_url", "ja_title", "ja_url", "ko_title", "facts", "deep", "deep_why", "depth"}.
+    네트워크 오류는 그대로 올린다(호출한 쪽이 캐시하지 않고 다음에 다시)."""
+    import urllib.parse
+    sys.path.insert(0, str(ROOT))
+    from src.core import deepsea_verify as DV                # noqa: E402
+    name = re.sub(r"\s+(sp|spp)\.?$", "", sci.strip(), flags=re.I)
+
+    def look(lang, title):
+        if not title:
+            return None
+        u = f"https://{lang}.wikipedia.org/w/api.php?" + urllib.parse.urlencode({
+            "action": "query", "prop": "extracts|langlinks|info", "explaintext": 1, "redirects": 1, "lllimit": "max",
+            "inprop": "url", "titles": title, "format": "json"})
+        for pg in ((_wiki_get(u, get) or {}).get("query") or {}).get("pages", {}).values():
+            txt = (pg.get("extract") or "").strip()
+            if "missing" not in pg and len(txt) >= 200:
+                return {"title": pg.get("title", title), "url": pg.get("fullurl", ""), "text": txt,
+                        "ll": {x.get("lang"): x.get("*") for x in pg.get("langlinks") or []}}
+        return None
+    en = look("en", name)
+    ja = look("ja", (en or {}).get("ll", {}).get("ja") or (None if en else name))
+    if not en and not ja:
+        return {"found": False}
+    main = en or ja
+    lead = main["text"].split("\n==")[0]
+    facts = _sentences(lead)[:6]
+    facts += [x for x in _sentences(main["text"][len(lead):]) if re.search(r"\d", x) and x not in facts][:3]
+    v = DV.verdict(name, "", (en or {}).get("text", "")[:20000] + " " + (ja or {}).get("text", "")[:8000])
+    ko = (en or {}).get("ll", {}).get("ko") or (ja or {}).get("ll", {}).get("ko")
+    clean = lambda x: re.sub(r"\s*[(（].*$", "", x or "").strip() or None   # noqa: E731
+    return {"found": True, "title": main["title"], "en_url": (en or {}).get("url", ""),
+            "ja_title": clean((ja or {}).get("title")), "ja_url": (ja or {}).get("url", ""), "ko_title": clean(ko),
+            "facts": facts, "deep": v.ok, "deep_why": v.reason, "depth": v.depth_range_m}
+
+
+def _topic_wiki(items: list[dict], get=None) -> dict:
+    cache = _load(TOPIC_WIKI, {}) or {}
+    changed = False
+    for t in items:
+        k = _sci_key(t["sci"])
+        if k in cache:
+            continue
+        try:
+            cache[k] = dict(wiki_profile(t["sci"], get), at=_now())
+            changed = True
+            if len(cache) % 10 == 0:                         # 도중에 끊겨도 확인한 만큼은 남긴다
+                _save(TOPIC_WIKI, cache)
+            if not get:
+                time.sleep(1.5)                              # 외부 사이트 예의(요청 간격 · 빠르면 429로 막힘 — 실측 2026-10-19)
+        except Exception as e:                               # noqa: BLE001 — 네트워크가 없어도 목록은 만든다(다음에 다시)
+            print(f"[topics] 위키백과 확인 실패 {t['sci']}: {e}")
+    if changed:
+        _save(TOPIC_WIKI, cache)
+    return cache
+
+
+_KO_RANKS = ("genus", "subtribe", "tribe", "subfamily", "family", "superfamily", "infraorder", "suborder", "order",
+             "superorder", "infraclass", "subclass", "class")
+
+
+def fetch_ko_name(sci: str, get=None) -> dict:
+    """iNaturalist 한국어 이름 — {"ko": 종 이름 또는 None, "group": 가장 가까운 상위 무리 한국어 이름 또는 None}.
+    정식 한글명이 없으면 지어내지 않고 확실한 상위 무리 이름만(운영자 확정 2026-09-30)."""
+    import urllib.parse
+    get = get or _get_json
+    name = re.sub(r"\s+(sp|spp)\.?$", "", sci.strip(), flags=re.I)
+    q = urllib.parse.quote(name)
+    res = (get("https://api.inaturalist.org/v1/taxa?locale=ko&per_page=10&q=" + q).get("results") or []) + \
+        (get("https://api.inaturalist.org/v1/taxa/autocomplete?locale=ko&per_page=10&q=" + q).get("results") or [])
+    hit = next((t for t in res if (t.get("name") or "").lower() == name.lower()), None) or \
+        next((t for t in res if t.get("is_active", True) and (t.get("matched_term") or "").lower() == name.lower()), None)   # 학명이 바뀐 종
+    if not hit:
+        return {"ko": None, "group": None}
+    full = (get("https://api.inaturalist.org/v1/taxa/%d?locale=ko" % hit["id"]).get("results") or [hit])[0]
+    own = full.get("preferred_common_name") or ""
+    group = next((a.get("preferred_common_name") for a in reversed(full.get("ancestors") or [])
+                  if a.get("rank") in _KO_RANKS and _KO.search(a.get("preferred_common_name") or "")), None)
+    return {"ko": own if _KO.search(own) else None, "group": group}
+
+
+def build_topics(fetch=None, ask=None, wiki_get=None, ko_fetch=None) -> dict:
+    """주제 후보 = v1 종 자료 + 확대 목록(topic_seeds.json) 중 **아직 만들지 않은** 심해 종.
+    시작 조건: 한 편 = 한 대상 · 출처 문서(위키백과, 없으면 v1 사실 3개) · 심해 확인 · 실사 사진.
+    이야기거리(발견 사건·연도)는 자동으로 판정하지 못한다 → 화면에 '시작 후 확인'으로 정직하게 표시."""
     sys.path.insert(0, str(ROOT))
     from src.categories.deep_sea import data                 # noqa: E402
+    from src.core import deepsea_verify as DV                # noqa: E402
     from src.core import subject_quality as SQ               # noqa: E402
-    have = {p.parent.name for p in PILOTS.glob("*/status.json")}
-    out = []
-    for key, sp in data.SPECIES.items():
+    made = made_subjects()
+    rows, seen = [], set()
+    for key, sp in data.SPECIES.items():                     # v1 에서 모아 둔 종(사실·수심 있음)
+        rows.append((key, sp))
+    for sd in _load(TOPIC_SEEDS, []) or []:                  # 확대 목록(학명만 — 나머지는 위키백과·iNaturalist 확인)
+        rows.append(("", {"scientific_name": sd.get("sci", ""), "common_name_en": sd.get("en", "")}))
+    out, skipped = [], []
+    for key, sp in rows:
         sci = (sp.get("scientific_name") or "").strip()
-        if not sci:
+        if not sci or _sci_key(sci) in seen:
             continue
+        seen.add(_sci_key(sci))
         pid = re.sub(r"[^a-z0-9]+", "_", sci.lower().replace(" spp.", "")).strip("_")
+        t = {"id": pid, "key": key, "sci": sci, "name_en": sp.get("common_name_en", ""), "_sp": sp}
+        if _is_made(t, made):
+            skipped.append(sci)
+            continue
+        out.append(t)
+    wiki = _topic_wiki([t for t in out if SQ.is_specific_enough(t["sci"], t["name_en"])], wiki_get)   # 너무 넓은 분류군은 묻지 않음
+    for t in out:
+        sp, w = t.pop("_sp"), wiki.get(_sci_key(t["sci"])) or {}
         facts = [f for f in sp.get("fun_facts") or [] if f]
-        ok_subject = SQ.is_specific_enough(sci, sp.get("common_name_en", ""))
-        depth = str(sp.get("depth_range_m") or "")
+        d1 = str(sp.get("depth_range_m") or "")
+        corpus = " ".join(facts + [sp.get("habitat", ""), sp.get("distribution", ""), f"depth {d1} m" if d1 else ""])   # v1 수심엔 단위가 없다
+        deep = DV.verdict(t["sci"], t["name_en"], corpus).ok or bool(w.get("deep"))
+        doc = bool(w.get("found")) or len(facts) >= 3
         ko = sp.get("common_name_ko") or ""
-        ko_official = bool(ko) and not re.fullmatch(r"[A-Za-z .\-]+", ko)
-        if not ko_official:                                 # 정식 한글명이 없으면 지어내지 않고 상위 무리 이름 또는 학명
-            ko = KO_GROUP.get(pid) or sci
-        out.append({
-            "id": pid, "key": key, "name_ko": ko, "ko_official": ko_official, "name_en": sp.get("common_name_en", ""), "sci": sci,
-            "depth_m": depth, "facts_n": len(facts), "facts": facts[:3], "all_facts": facts, "sources": sp.get("sources") or [],
-            "checks": {"한 편 = 한 대상": ok_subject, "사실 3개 이상": len(facts) >= 3, "서식 수심": bool(depth)},
-            "ready": ok_subject and len(facts) >= 3 and bool(depth),
-            "in_progress": pid in have,
+        if ko and not re.fullmatch(r"[A-Za-z .\-]+", ko):
+            ko_src = "v1"
+        elif t["id"] in KO_GROUP:
+            ko, ko_src = KO_GROUP[t["id"]], "group"
+        elif w.get("ko_title") and _KO.search(w["ko_title"]):
+            ko, ko_src = w["ko_title"], "wiki"
+        else:
+            ko, ko_src = t["sci"], "none"
+        wf = w.get("facts") or []
+        t.update({
+            "name_ko": ko, "ko_official": ko_src in ("v1", "wiki"), "name_ja": w.get("ja_title") or "",
+            "depth_m": str(sp.get("depth_range_m") or "") or w.get("depth", ""), "facts_n": len(facts) or len(wf),
+            "facts": (facts or wf)[:3], "all_facts": (facts + wf)[:10],
+            "sources": (sp.get("sources") or []) + [u for u in (w.get("en_url"), w.get("ja_url")) if u],
+            "checks": {"한 편 = 한 대상": SQ.is_specific_enough(t["sci"], t["name_en"]), "출처 문서(위키백과)": doc,
+                       "심해 확인": deep},
+            "in_progress": False,
         })
-    media = _topic_media(out, fetch)
-    scores = _topic_scores(out, ask)
+    media = _topic_media([t for t in out if all(t["checks"].values())], fetch)   # 사진은 앞 조건을 통과한 종만 찾는다
     for t in out:
         t["photo"] = (media.get(t["id"]) or {}).get("photo")
+        t["checks"]["실사 사진"] = bool(t["photo"])
+        t["ready"] = all(t["checks"].values())
+    need_ko = [t for t in out if t["ready"] and t["name_ko"] == t["sci"]]
+    if need_ko:                                               # 한글명이 없으면 iNaturalist 한국어 이름 → 상위 무리 이름(지어내지 않음)
+        cache = _load(TOPIC_MEDIA, {}) or {}
+        for t in need_ko:
+            ent = cache.setdefault(t["id"], {})
+            if "ko" not in ent:
+                try:
+                    ent["ko"] = (ko_fetch or fetch_ko_name)(t["sci"])
+                    if not ko_fetch:
+                        time.sleep(1)
+                except Exception as e:                       # noqa: BLE001
+                    print(f"[topics] 한국어 이름 찾기 실패 {t['id']}: {e}")
+                    continue
+            k = ent.get("ko") or {}
+            if k.get("ko"):
+                t["name_ko"], t["ko_official"] = k["ko"], True
+            elif k.get("group"):
+                t["name_ko"] = k["group"] + ("의 한 종" if " " in t["sci"] else "의 한 무리")
+        _save(TOPIC_MEDIA, cache)
+    scores = _topic_scores(out, ask)
+    for t in out:
         sc = scores.get(t["id"]) or {}
         t["score"], t["hook_jp"], t["hook_ko"] = sc.get("score"), sc.get("hook_jp", ""), sc.get("hook_ko", "")
         t.pop("all_facts", None)
-    out.sort(key=lambda t: (not t["ready"], t["in_progress"], -(t.get("score") or 0), t["name_ko"]))   # 점수 높은 종부터
-    res = {"updated": _now(), "topics": out}
+    out.sort(key=lambda t: (not t["ready"], -(t.get("score") or 0), t["name_ko"]))   # 점수 높은 종부터
+    res = {"updated": _now(), "topics": out, "made_excluded": skipped}
     _save(V2 / "topics.json", res)
     return res
 

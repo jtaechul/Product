@@ -61,7 +61,7 @@
   **결과 보기 + [승인 / 수정 요청 / 다시 하기]** 버튼만. 잠긴 단계엔 버튼이 없고, 승인은 '승인 대기'일 때만 켜진다.
   돈이 드는 단계는 버튼 옆에 **예상 비용**, 영상 단계는 컷마다 **「이 컷만 다시 만들기(약 $초×0.10)」** + 「완성본 다시 조립 + 자동 검사(무료)」.
 - **상태 파일 하나**: 편마다 `v2/pilots/<id>/status.json`(단계 상태 locked/working/review/revise/approved · 기록 · 결과물 경로 ·
-  자동 검사 · 비용). 목록 `v2/pilots/index.json`, 주제 후보 `v2/topics.json`(`admin.py topics`로 갱신).
+  자동 검사 · 비용). 목록 `v2/pilots/index.json`, 주제 후보 `v2/topics.json`(`admin.py topics`로 갱신 · 「새 영상」 페이지 「후보 다시 찾기」 버튼).
 - **버튼 = 워크플로**: 페이지는 파일을 직접 쓰지 않는다 → `v2-admin.yml` 디스패치 → `v2/tools/admin.py`
   (new·write_script·write_storyboard·make_video·approve·revise·redo·ready·redo_cut·redo_panel·assemble·edit_line·edit_hook·apply_lines·crosscheck·recut_plan·recut_approve·recut_cancel·upload_meta·save_meta·save_viewed·after_video) → 커밋 → 페이지가 다시 읽는다. 입력은 **env로만** 넘긴다(인용부호 사고 규칙).
   `v2-admin.yml`은 **main에도** 둔다(디스패치 워크플로 규칙 · 하드룰 #15③).
@@ -171,6 +171,29 @@
   학명이 바뀐 종은 옛 이름으로 걸린 현재 분류군 사진을 쓴다. 찾은 결과는 `v2/topic_media.json`에 캐시.
 - 한글명: 정식 한글명이 없으면 **지어내지 않고** 확실한 상위 무리 이름(`KO_GROUP`)으로 적고 '(정식 한글명 없음)'을 붙인다.
   회귀: `test_topic_photo_free_license_and_renamed_species`, `test_topics_have_photo_and_korean_name`.
+
+### ★새 영상 후보 넓히기 — 만든 종 빼기 · 조건 완화 · 자료 수집 확대 (운영자 지시 2026-10-19 · 핵심 규칙)
+- 운영자: "이미 만든 건 새로 만들기 대상에서 삭제하고, 제작 가능한 종을 더 많게 조건 완화하거나 자료 수집을 확대해서 더 많은 종으로".
+- **실사고(원인)**: 후보 파일 `v2/topics.json`이 2026-09-30 이후 한 번도 다시 만들어지지 않아(화면에 갱신 버튼이 없었음) 그 뒤에 만든
+  머리없는닭괴물·심해 킹크랩·아귀목 심해어가 「시작할 수 있는 종」에 그대로 남아 있었다. 후보 풀도 v1이 모아 둔 38종뿐이었고 그중 14종만 조건 통과.
+- **① 만든 종 빼기**: v2 편(진행 중 포함 · `v2/pilots/*`)의 종과 **같은 학명 또는 같은 속**(예: Bathynomus giganteus ↔ Bathynomus ·
+  Bathynomus doederleini)은 후보에서 **아예 뺀다**(`same_subject`·`made_subjects` · `topics.json`의 `made_excluded`에 기록).
+  `new_pilot`은 고르는 즉시 후보 파일에서 그 종을 지우고, 화면(`renderV2New`)도 지금 편 목록(`index.json`)과 다시 대조한다(후보 파일이 옛것이어도).
+  ※ 옛 실사판(v1 `catalog.json`)에서 만든 종은 빼지 않는다(v2 편 대부분이 v1 종을 새 형식으로 다시 만든 것 — 운영자가 따로 정하면 바꾼다).
+- **② 조건 완화**: 예전 「v1 사실 3개 이상 + v1 서식 수심」 → **「한 편 = 한 대상 · 출처 문서(위키백과 영·일, 없으면 v1 사실 3개) · 심해 확인
+  (`deepsea_verify` — 수심 200 m 이상 또는 심해 근거어) · 실사 사진(자유 라이선스)」**. 대본 단계가 어차피 위키백과에서 사실을 원문 인용으로
+  다시 뽑으므로 v1 메모가 필요 없다. 너무 넓은 분류군 차단(`subject_quality`)과 사진·한글명 규칙은 그대로.
+- **③ 자료 수집 확대**: `v2/topic_seeds.json` = v1 밖의 실존 심해 종 **97개**(학명·영문명만). 사실·수심·일본어 이름·한국어 이름은 전부
+  위키백과(`wiki_profile` — 문서 첫 부분 문장 그대로 + 숫자 있는 문장 · 언어 링크로 일·한 제목)에서, 사진은 iNaturalist에서 확인한 것만 쓴다.
+  문서가 없거나 심해 근거가 없으면 '조건 미달'로 남고 **지어내지 않는다**(2026-10-19 확인 때 문서 없음·심해 근거 없음 5종은 목록에서 뺐다).
+  한글명: v1 → `KO_GROUP` → 한국어 위키백과 제목 → iNaturalist 한국어 이름 → 없으면 iNaturalist **상위 무리 한국어 이름 + 「의 한 종」**
+  ('(정식 한글명 없음)' 표시 · `fetch_ko_name`). 카드에 일본어 이름(`name_ja`)도 보인다.
+- **갱신**: 「새 영상」 페이지 「후보 다시 찾기」 버튼 → `admin.py topics`(위키백과 확인 `v2/topic_wiki.json` · 사진·한국어 이름
+  `v2/topic_media.json` · 놀라움 점수 `v2/topic_scores.json` 캐시 → 워크플로가 커밋). 위키백과는 빠르게 물으면 429로 막혀
+  요청 간격 1.5초 · **네트워크 오류는 캐시하지 않고 다음에 다시** 묻는다('문서 없음'만 캐시). 점수는 25종씩 나눠 묻는다.
+- 회귀: `tests/test_v2_admin.py::test_same_subject_and_wiki_profile`·`test_build_topics_excludes_made_relaxes_and_expands`·
+  `test_new_pilot_removes_made_topic_right_away`·`test_topics_have_photo_and_korean_name`(시작 가능 40종 이상 · 만든 종 없음) ·
+  `v2_admin_check.mjs`(new_hides_made_same_genus · new_hides_made_from_index · new_has_many_topics · topics_refresh_dispatches).
 
 ### ★생물 카드 — 실사 대조 관문 (운영자 확정)
 - 생성한 카드와 **수집한 라이선스 통과 실사 1장 이상**(운영자 확정 2026-09-30 · 2장→1장 완화. 더 있으면 옆·위 시점까지)을 **나란히 붙인 대조 시트**를
