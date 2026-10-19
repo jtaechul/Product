@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-19-admin-sig-preview-XUCW",
+ "nonce": "2026-10-19-admin-sig-produce-BpNa",
  "stay": "세인트존스 호텔",
  "mode": "signature",
  "fake": false,
@@ -22,8 +22,9 @@
    "gemini-2.5-pro-preview-tts"
   ]
  },
- "stage": "preview",
+ "stage": "produce",
  "format": "story",
+ "reused_plan": true,
  "hotels": [
   {
    "name": "세인트존스 호텔",
@@ -44,6 +45,7 @@
     "스파"
    ],
    "blog_30d": 1000,
+   "blog_total": 120103,
    "min_price": 79000.0,
    "honest": "",
    "photo_counts": {
@@ -108,398 +110,6 @@
      "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=77787097&vendorItemId=3613064881&itemId=616866787&traceid=V0-153-466d5d55cc659bbf&requestid=20261019223934629047634710&token=31850C%7CGM&pt=0&slot=10"
     }
    ],
-   "classified_summary": [
-    {
-     "k": 0,
-     "src": "official",
-     "cat": "skip",
-     "q": 4,
-     "people": true,
-     "mismatch": "",
-     "view": "outdoor",
-     "desc": "수영장과 풀파티 모습을 담은 여러 장의 사진이 콜라주되어 있다."
-    },
-    {
-     "k": 1,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "오션 인피니티풀 안내 문구가 적힌 텍스트 이미지이다."
-    },
-    {
-     "k": 2,
-     "src": "official",
-     "cat": "skip",
-     "q": 4,
-     "people": true,
-     "mismatch": "",
-     "view": "outdoor",
-     "desc": "수영장과 이벤트 장면을 모아 놓은 콜라주 이미지이다."
-    },
-    {
-     "k": 3,
-     "src": "official",
-     "cat": "skip",
-     "q": 4,
-     "people": true,
-     "mismatch": "",
-     "view": "outdoor",
-     "desc": "개폐식 돔 수영장과 반려견 동반 모습을 모아 놓은 콜라주 이미지이다."
-    },
-    {
-     "k": 4,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "파인 인피니티풀 운영 시간과 요금 표가 안내된 텍스트 이미지이다."
-    },
-    {
-     "k": 5,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "무료 제공 및 대여 용품 목록이 정리된 안내문 이미지이다."
-    },
-    {
-     "k": 6,
-     "src": "official",
-     "cat": "skip",
-     "q": 3,
-     "people": true,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "버블 퍼포먼스와 반려견 시설에 대한 안내문과 작은 사진들이 함께 있다."
-    },
-    {
-     "k": 7,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "파인 인피니티풀 이용 수칙이 적힌 텍스트 안내문이다."
-    },
-    {
-     "k": 8,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "파인 인피니티풀 제원 및 소개가 담긴 텍스트 이미지이다."
-    },
-    {
-     "k": 9,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "파인 인피니티풀 요금과 운영 시간이 적힌 안내문이다."
-    },
-    {
-     "k": 10,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "판매 및 대여용품 가격 안내가 담긴 텍스트 이미지이다."
-    },
-    {
-     "k": 11,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "사우나 이용 요금과 운영 안내가 적힌 텍스트 이미지이다."
-    },
-    {
-     "k": 12,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "사우나 이용 요금과 운영 안내가 중복된 텍스트 이미지이다."
-    },
-    {
-     "k": 13,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "사우나 할인 혜택에 관한 텍스트 안내 이미지이다."
-    },
-    {
-     "k": 14,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "사우나 정기 휴장 안내문 텍스트 이미지이다."
-    },
-    {
-     "k": 15,
-     "src": "official",
-     "cat": "room",
-     "q": 7,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "키즈 객실 내 침대 옆에 놓인 소형 냉장고와 캐릭터 쿠션이 보인다."
-    },
-    {
-     "k": 16,
-     "src": "official",
-     "cat": "room",
-     "q": 8,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "바다 생물 벽화로 꾸며진 키즈 더블룸과 어린이 침대가 놓여 있다."
-    },
-    {
-     "k": 17,
-     "src": "official",
-     "cat": "room",
-     "q": 8,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "동물 캐릭터 벽화와 유아용 보조 침대가 구비된 키즈 객실 내부이다."
-    },
-    {
-     "k": 18,
-     "src": "official",
-     "cat": "room",
-     "q": 8,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "공룡 벽화와 연두색 어린이 침대가 더블 침대 옆에 배치된 객실이다."
-    },
-    {
-     "k": 19,
-     "src": "official",
-     "cat": "room",
-     "q": 8,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "동물 벽화와 어린이 전용 테이블이 있는 키즈 객실 전경이다."
-    },
-    {
-     "k": 20,
-     "src": "official",
-     "cat": "room",
-     "q": 8,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "바다 전망의 발코니와 반려견 계단 및 패드가 갖춰진 객실이다."
-    },
-    {
-     "k": 21,
-     "src": "official",
-     "cat": "room",
-     "q": 7,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "침대 옆에 원형 테이블과 안락의자, 반려견 하우스가 놓여 있다."
-    },
-    {
-     "k": 22,
-     "src": "official",
-     "cat": "skip",
-     "q": 3,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "우드 벽면에 설치된 선반과 거치대가 보인다."
-    },
-    {
-     "k": 23,
-     "src": "official",
-     "cat": "room",
-     "q": 8,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "소나무 숲과 바다가 내다보이는 발코니 창가에 강아지 두 마리가 서 있다."
-    },
-    {
-     "k": 24,
-     "src": "official",
-     "cat": "room",
-     "q": 7,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "대리석 타일로 마감된 세면대와 양변기, 샤워 부스가 있는 욕실이다."
-    },
-    {
-     "k": 25,
-     "src": "official",
-     "cat": "special",
-     "q": 7,
-     "people": false,
-     "mismatch": "",
-     "view": "outdoor",
-     "desc": "푸른 동해 바다 위로 작은 보트가 지나가는 수평선 풍경이다."
-    },
-    {
-     "k": 26,
-     "src": "official",
-     "cat": "skip",
-     "q": 6,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "다양한 색상의 칵테일 잔들만 진열되어 찍힌 사진이다."
-    },
-    {
-     "k": 27,
-     "src": "official",
-     "cat": "skip",
-     "q": 4,
-     "people": true,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "라운지 바 안내 문구와 바다, 칵테일 사진들이 합쳐진 홍보 포스터이다."
-    },
-    {
-     "k": 28,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "피트니스 센터 내 운동 기구 입고 안내 텍스트 이미지이다."
-    },
-    {
-     "k": 29,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "오션 피트니스 센터 이용 수칙 안내문 텍스트이다."
-    },
-    {
-     "k": 30,
-     "src": "official",
-     "cat": "skip",
-     "q": 2,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "스텝밀 입고 안내문 텍스트 이미지이다."
-    },
-    {
-     "k": 31,
-     "src": "official",
-     "cat": "skip",
-     "q": 4,
-     "people": false,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "피트니스 센터 내부 사진 두 장이 위아래로 분할 합쳐진 이미지이다."
-    },
-    {
-     "k": 32,
-     "src": "coupang",
-     "cat": "water",
-     "q": 8,
-     "people": true,
-     "mismatch": "",
-     "view": "interior",
-     "desc": "바다가 보이는 통유리 개폐식 돔 수영장에서 한 사람이 만세를 하고 있다."
-    },
-    {
-     "k": 33,
-     "src": "coupang",
-     "cat": "special",
-     "q": 7,
-     "people": false,
-     "mismatch": "",
-     "view": "exterior",
-     "desc": "해송 숲과 백사장 뒤편으로 세인트존스 호텔 건물이 길게 자리 잡고 있다."
-    },
-    {
-     "k": 34,
-     "src": "coupang",
-     "cat": "skip",
-     "q": 7,
-     "people": false,
-     "mismatch": "세인트존스 호텔 본관 건물이 아니며 다른 지점(속초 아",
-     "view": "exterior",
-     "desc": "해변 언덕 위에 높은 초고층 호텔 타워가 솟아 있는 조감도이다."
-    },
-    {
-     "k": 35,
-     "src": "coupang",
-     "cat": "skip",
-     "q": 7,
-     "people": false,
-     "mismatch": "세인트존스 호텔의 외관 및 입지가 아니며 다른 해안가 ",
-     "view": "exterior",
-     "desc": "해안 절벽과 등대 옆에 위치한 파란색 유리 외관의 호텔 건물 전경이다."
-    },
-    {
-     "k": 36,
-     "src": "coupang",
-     "cat": "special",
-     "q": 8,
-     "people": false,
-     "mismatch": "",
-     "view": "exterior",
-     "desc": "푸른 해송 숲과 동해 모래사장을 따라 호텔 단지가 길게 뻗어 있다."
-    },
-    {
-     "k": 37,
-     "src": "coupang",
-     "cat": "water",
-     "q": 8,
-     "people": true,
-     "mismatch": "",
-     "view": "outdoor",
-     "desc": "수평선이 이어지는 인피니티 풀에서 한 여성이 바다를 바라보며 양팔을 벌리"
-    },
-    {
-     "k": 38,
-     "src": "coupang",
-     "cat": "skip",
-     "q": 8,
-     "people": false,
-     "mismatch": "세인트존스 호텔이 아닌 강릉 스카이베이 호텔 건물의 외",
-     "view": "exterior",
-     "desc": "가운데가 뚫린 아치형 구조의 현대식 고층 호텔 건물이 호수 앞에 서 있다"
-    }
-   ],
    "notice_facts": [
     "파인 인피니티풀 전연령 운영시간은 08:00~21:00이며 발권마감은 20:00입니다",
     "파인 인피니티풀 브레이크 타임은 13:00~14:00이며 입수가 제한되나 수영장 외 이용은 가능합니다",
@@ -525,382 +135,17 @@
     "오션 피트니스 센터에 독일 제품 스텝밀이 신규 배치되었습니다"
    ],
    "closed_facilities": [],
-   "closure_notes": [],
    "panels": 0,
    "notices_read": 5
   }
  ],
- "photo_sources": [
-  {
-   "hotel": "세인트존스 호텔",
-   "official_site": "https://new.stjohns.co.kr/",
-   "crawl": {
-    "url": "https://new.stjohns.co.kr/",
-    "resolved_by": "request.json official_urls",
-    "reason": "",
-    "pages": [
-     "https://new.stjohns.co.kr/post/3851",
-     "https://new.stjohns.co.kr/post/3789",
-     "https://new.stjohns.co.kr/post/3790",
-     "https://new.stjohns.co.kr/post/161",
-     "https://new.stjohns.co.kr/accommodation/index/KID",
-     "https://new.stjohns.co.kr/accommodation/index/PER",
-     "https://new.stjohns.co.kr/post/1248",
-     "https://new.stjohns.co.kr/post/139",
-     "https://new.stjohns.co.kr/post/3585",
-     "https://new.stjohns.co.kr/post/141",
-     "https://new.stjohns.co.kr/post/3583",
-     "https://new.stjohns.co.kr/post/1521",
-     "https://new.stjohns.co.kr/post/3909",
-     "https://new.stjohns.co.kr"
-    ],
-    "tried": 57,
-    "photos": 32
-   },
-   "shots": [
-    {
-     "n": 11,
-     "slot": "room",
-     "source": "official",
-     "url": "https://new.stjohns.co.kr/uploads/room/2021/08/114f34599d49ced4ad2f61db33bb05d2.jpg",
-     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-     "description": "바다 생물 벽화로 꾸며진 키즈 더블룸과 어린이 침대가 놓여 있다."
-    },
-    {
-     "n": 12,
-     "slot": "room",
-     "source": "official",
-     "url": "https://new.stjohns.co.kr/uploads/room/2021/08/15d1764c6ee38ee8beab253bddddf66c.jpg",
-     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-     "description": "동물 캐릭터 벽화와 유아용 보조 침대가 구비된 키즈 객실 내부이다."
-    },
-    {
-     "n": 13,
-     "slot": "room",
-     "source": "official",
-     "url": "https://new.stjohns.co.kr/uploads/room/2021/08/3443d0f35835954d23b02aaa5948d08f.jpg",
-     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-     "description": "공룡 벽화와 연두색 어린이 침대가 더블 침대 옆에 배치된 객실이다."
-    },
-    {
-     "n": 14,
-     "slot": "special",
-     "source": "coupang",
-     "url": null,
-     "page": null,
-     "description": "푸른 해송 숲과 동해 모래사장을 따라 호텔 단지가 길게 뻗어 있다."
-    },
-    {
-     "n": 15,
-     "slot": "special",
-     "source": "official",
-     "url": "https://new.stjohns.co.kr/uploads/post/2026/05/ed27d480ada26c24f36de08fe4c3d0de.jpg",
-     "page": "https://new.stjohns.co.kr/post/1248",
-     "description": "푸른 동해 바다 위로 작은 보트가 지나가는 수평선 풍경이다."
-    },
-    {
-     "n": 16,
-     "slot": "room",
-     "source": "official",
-     "url": "https://new.stjohns.co.kr/uploads/room/2021/08/d9f0da26f6ce41a63e7947a9403320aa.jpg",
-     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-     "description": "동물 벽화와 어린이 전용 테이블이 있는 키즈 객실 전경이다."
-    },
-    {
-     "n": 17,
-     "slot": "room",
-     "source": "official",
-     "url": "https://new.stjohns.co.kr/uploads/room/2024/06/b18b67bcd0b94aabe9f76180dff57265.jpg",
-     "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-     "description": "바다 전망의 발코니와 반려견 계단 및 패드가 갖춰진 객실이다."
-    },
-    {
-     "n": 18,
-     "slot": "room",
-     "source": "official",
-     "url": "https://new.stjohns.co.kr/uploads/room/2024/06/65cb745dbe1cf10b87be12c4b8529f5a.jpg",
-     "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-     "description": "소나무 숲과 바다가 내다보이는 발코니 창가에 강아지 두 마리가 서 있다."
-    },
-    {
-     "n": 19,
-     "slot": "room",
-     "source": "official",
-     "url": "https://new.stjohns.co.kr/uploads/room/2026/07/5d4d1856e45082ced7bfbb94b504d68a.jpg",
-     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-     "description": "키즈 객실 내 침대 옆에 놓인 소형 냉장고와 캐릭터 쿠션이 보인다."
-    },
-    {
-     "n": 20,
-     "slot": "room",
-     "source": "official",
-     "url": "https://new.stjohns.co.kr/uploads/room/2020/11/034d4715652a511806b5515bb6febedf.jpg",
-     "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-     "description": "침대 옆에 원형 테이블과 안락의자, 반려견 하우스가 놓여 있다."
-    }
-   ]
-  }
- ],
- "sig_pool": {
-  "usable": 11,
-  "exterior": 1,
-  "facts": 30,
-  "official": 32,
-  "coupang": 7
- },
- "sig_groups": [
-  {
-   "fact": 3,
-   "photos": [
-    15,
-    16,
-    17,
-    19
-   ]
-  },
-  {
-   "fact": 8,
-   "photos": [
-    16,
-    20,
-    23,
-    25
-   ]
-  },
-  {
-   "fact": 2,
-   "photos": [
-    17,
-    20,
-    21
-   ]
-  },
-  {
-   "fact": 25,
-   "photos": [
-    17,
-    19
-   ]
-  },
-  {
-   "fact": 26,
-   "photos": [
-    19
-   ]
-  }
- ],
- "signature_tries": [
-  {
-   "signature": "바다 전망 펫 전용 객실",
-   "errs": []
-  }
- ],
- "signature_checks": [
-  {
-   "k": 20,
-   "subject": true,
-   "share": 0.9,
-   "ok": true,
-   "evidence": "발코니 창밖으로 바다가 훤히 보이며, 객실 내부에는 침대 옆 반려견 계단/방석, 배변 패드, 식기 등이 명확히 갖춰져 있습니다."
-  },
-  {
-   "k": 23,
-   "subject": true,
-   "share": 0.85,
-   "ok": true,
-   "evidence": "통유리창 너머로 바다 전망이 보이며, 객실 내부에는 침대와 함께 반려견, 전용 하우스, 급수기 등의 펫 용품이 명확하게 배치되어 있습니다."
-  },
-  {
-   "k": 21,
-   "subject": false,
-   "share": 0.25,
-   "ok": false,
-   "evidence": "반려견 전용 하우스와 장난감 등 펫 어메니티는 보이지만, 커튼이 닫혀 있어 핵심 요소인 발코니 너머 바다 전망이 전혀 보이지 않는다."
-  },
-  {
-   "k": 16,
-   "subject": false,
-   "share": 0.0,
-   "ok": false,
-   "evidence": "반려견 전용 용품이나 바다 전망 대신 어린이용 침대와 캐릭터 벽지가 있는 키즈 전용 객실 내부가 보임"
-  },
-  {
-   "k": 19,
-   "subject": false,
-   "share": 0.0,
-   "ok": false,
-   "evidence": "바다 전망이나 반려견 전용 계단, 패드, 전용 하우스는 보이지 않고 키즈 전용 침대가 마련된 키즈룸 객실 내부만 보입니다."
-  },
-  {
-   "k": 25,
-   "subject": false,
-   "share": 0.0,
-   "ok": false,
-   "evidence": "반려견 전용 물품이나 객실 내부의 모습은 전혀 보이지 않고 바다와 해변 풍경만 보이는 야외 전망 사진이다."
-  }
- ],
- "deep_facts": {
-  "facts": [
-   "스너그 하우스 또는 방석 제공",
-   "배변판, 패드, 봉투 등 배변용품 구비",
-   "반려견 식기 및 반려견 계단 제공",
-   "반려견 전용 수건 2장 및 전용 샴푸 제공",
-   "히노끼탕·펫 욕조·드라이룸 선착순 무료 대여",
-   "객실 내 개별 발코니 완비"
-  ]
- },
- "material": {
-  "photos": 8,
-  "places": [
-   "객실",
-   "바다",
-   "외관",
-   "욕실"
-  ],
-  "inserts": 0,
-  "panels": 0,
-  "notices_read": 5,
-  "notice_facts": 22,
-  "closures": [],
-  "rejected": [
-   16,
-   19,
-   21
-  ]
- },
- "story_shots": [
-  {
-   "id": "S1",
-   "k": 20,
-   "kind": "장점·넓게",
-   "desc": "바다 전망의 발코니와 반려견 계단 및 패드가 갖춰진 객실이다.",
-   "zoom": null,
-   "place": "객실",
-   "grade": "full"
-  },
-  {
-   "id": "S2",
-   "k": 23,
-   "kind": "장점·넓게",
-   "desc": "소나무 숲과 바다가 내다보이는 발코니 창가에 강아지 두 마리가 서 있다.",
-   "zoom": null,
-   "place": "객실",
-   "grade": "full"
-  },
-  {
-   "id": "S3",
-   "k": 17,
-   "kind": "연결",
-   "desc": "동물 캐릭터 벽화와 유아용 보조 침대가 구비된 키즈 객실 내부이다.",
-   "zoom": null,
-   "place": "객실",
-   "grade": "full"
-  },
-  {
-   "id": "S4",
-   "k": 25,
-   "kind": "연결",
-   "desc": "푸른 동해 바다 위로 작은 보트가 지나가는 수평선 풍경이다.",
-   "zoom": null,
-   "place": "바다",
-   "grade": "full"
-  },
-  {
-   "id": "S5",
-   "k": 24,
-   "kind": "연결",
-   "desc": "대리석 타일로 마감된 세면대와 양변기, 샤워 부스가 있는 욕실이다.",
-   "zoom": null,
-   "place": "욕실",
-   "grade": "full"
-  },
-  {
-   "id": "S6",
-   "k": 15,
-   "kind": "연결",
-   "desc": "키즈 객실 내 침대 옆에 놓인 소형 냉장고와 캐릭터 쿠션이 보인다.",
-   "zoom": null,
-   "place": "객실",
-   "grade": "full"
-  },
-  {
-   "id": "S7",
-   "k": 18,
-   "kind": "연결",
-   "desc": "공룡 벽화와 연두색 어린이 침대가 더블 침대 옆에 배치된 객실이다.",
-   "zoom": null,
-   "place": "객실",
-   "grade": "full"
-  },
-  {
-   "id": "INS1",
-   "k": -1,
-   "kind": "인서트",
-   "desc": "인서트(숙소 아님 · 집·차 안) worry: a small cream-white dog waiting alone by a living-room window at home,",
-   "zoom": null,
-   "place": "인서트",
-   "grade": "full"
-  },
-  {
-   "id": "INS2",
-   "k": -2,
-   "kind": "인서트",
-   "desc": "인서트(숙소 아님 · 집·차 안) depart: a dog leash and car keys on a wooden console table by an apartment fro",
-   "zoom": null,
-   "place": "인서트",
-   "grade": "full"
-  }
- ],
- "material_warning": "장면 사진 8장 · 장소 4곳 — 권장 8장·5곳 미만: 부족한 장면은 AI 컷으로 채운다(사진이 더 있는 숙소가 유리)",
- "operator_script": [
-  "반려견 두고 떠나는 여행, 늘 마음 쓰이죠?",
-  "여긴 반려견과 한 방에서 묵는 펫 객실이에요.",
-  "들어서면 침대로 오르는 계단으로 강아지가 먼저 올라가요.",
-  "수건·샴푸·패드까지 있어 식기에 물만 채우면 돼요.",
-  "그다음엔 같이 발코니에 서서 바다를 봐요.",
-  "방을 나서면 돔 수영장도 반려견과 같이 갈 수 있어요.",
-  "펫 욕조·드라이룸은 선착순 무료 대여예요.",
-  "이번엔 반려견과 함께 떠나 보는 건 어떨까요?"
- ],
- "story_tries": [
-  {
-   "errs": [
-    "문장 6 '방을 나서면 돔 수영장도 반려견과 같이 갈 수 있어요.' 근거가 없음 — 사실 16·그 컷 사진 설명의 낱말로",
-    "흐름: 문장 8 낱말 '반려견' 이 4문장째 — 한 낱말은 3문장까지(장점의 다른 부분으로)"
-   ],
-   "beats": 8
-  },
-  {
-   "errs": [
-    "문장 6 '방을 나서면 돔 수영장도 반려견과 같이 갈 수 있어요.' 근거가 없음 — 사실 16·그 컷 사진 설명의 낱말로",
-    "흐름: 문장 8 낱말 '반려견' 이 4문장째 — 한 낱말은 3문장까지(장점의 다른 부분으로)",
-    "caption '발코니 너머 푸른 바다와 솔밭을 곁에' 분위기 말 '푸른' — 사실로"
-   ],
-   "beats": 8
-  },
-  {
-   "errs": [
-    "문장 6 '방을 나서면 돔 수영장도 반려견과 같이 갈 수 있어요.' 근거가 없음 — 사실 16·그 컷 사진 설명의 낱말로",
-    "흐름: 문장 8 낱말 '반려견' 이 4문장째 — 한 낱말은 3문장까지(장점의 다른 부분으로)"
-   ],
-   "beats": 8
-  }
- ],
- "text_title_type": "의외 사실",
  "lens_check": {
-  "ok": false,
-  "errs": [
-   "문장 6 '방을 나서면 돔 수영장도 반려견과 같이 갈 수 있어요.' 근거가 없음 — 사실 16·그 컷 사진 설명의 낱말로",
-   "흐름: 문장 8 낱말 '반려견' 이 4문장째 — 한 낱말은 3문장까지(장점의 다른 부분으로)"
-  ]
+  "ok": true,
+  "note": "미리보기 대본 재사용"
  },
  "route_changes": [
-  "문장 2 둘째 컷 +S6(객실)",
-  "문장 3 둘째 컷 +S7(객실)",
-  "문장 4 둘째 컷 +S3(객실)",
-  "문장 6 둘째 컷 +S5(욕실)",
-  "문장 7 둘째 컷 +S4(바다)",
-  "문장 7 컷 S1 → S6(같은 사진 2컷 초과)"
+  "문장 6 둘째 컷 +S3(객실)",
+  "문장 7 둘째 컷 +S4(바다)"
  ],
  "visual_plan": [
   {
@@ -1014,9 +259,7 @@
    "insert": "depart"
   }
  ],
- "visual_warnings": [
-  "문장 1·2 사진 무빙이 연속(예산 6컷)"
- ],
+ "visual_warnings": [],
  "ai_cuts": 5,
  "cut_count": 12,
  "places": [
@@ -1024,737 +267,19 @@
   "바다",
   "욕실"
  ],
- "scenes_planned": 11,
+ "scene_drops": [
+  "문장 6 컷 S3(사진 17 원본 이미 씀 · 대신 쓸 사진·패널 없음 → 뺌)",
+  "문장 7 컷 S4(사진 25 원본 이미 씀 · 대신 쓸 사진·패널 없음 → 뺌)"
+ ],
  "storyboard": {
-  "sheets": [
-   {
-    "n": 1,
-    "k": 20,
-    "ok": true,
-    "px": [
-     1536,
-     2752
-    ],
-    "panel_px": [
-     761,
-     762,
-     761,
-     762
-    ],
-    "scenes": [
-     1,
-     3,
-     12,
-     13
-    ],
-    "passed": 3,
-    "krw": 98,
-    "model": "gemini-3.1-flash-image",
-    "angles": [
-     "from the doorway looking into ",
-     "the same camera position as th",
-     "from beside the bed looking to",
-     "low angle near the floor looki"
-    ]
-   },
-   {
-    "n": 2,
-    "k": 15,
-    "ok": true,
-    "px": [
-     1536,
-     2752
-    ],
-    "panel_px": [
-     749,
-     750,
-     749,
-     750
-    ],
-    "scenes": [
-     2,
-     10,
-     14,
-     15
-    ],
-    "passed": 4,
-    "krw": 98,
-    "model": "gemini-3.1-flash-image",
-    "angles": [
-     "from the doorway looking into ",
-     "from beside the bed looking to",
-     "low angle near the floor looki",
-     "from the window side looking b"
-    ]
-   },
-   {
-    "n": 3,
-    "k": 24,
-    "ok": true,
-    "px": [
-     1536,
-     2752
-    ],
-    "panel_px": [
-     761,
-     762,
-     761,
-     762
-    ],
-    "scenes": [
-     5,
-     9,
-     16,
-     17
-    ],
-    "passed": 0,
-    "krw": 197,
-    "model": "gemini-3.1-flash-image",
-    "angles": [
-     "the same camera position as th",
-     "from the doorway",
-     "close-up of the counter and mi",
-     "low angle near the floor"
-    ]
-   },
-   {
-    "n": 4,
-    "k": 23,
-    "ok": true,
-    "px": [
-     1536,
-     2752
-    ],
-    "panel_px": [
-     763,
-     764,
-     763,
-     764
-    ],
-    "scenes": [
-     7,
-     18,
-     19,
-     20
-    ],
-    "passed": 3,
-    "krw": 98,
-    "model": "gemini-3.1-flash-image",
-    "angles": [
-     "the same camera position as th",
-     "from the doorway looking into ",
-     "from beside the bed looking to",
-     "low angle near the floor looki"
-    ]
-   },
-   {
-    "n": 5,
-    "k": 25,
-    "ok": true,
-    "px": [
-     1536,
-     2752
-    ],
-    "panel_px": [
-     754,
-     755,
-     754,
-     755
-    ],
-    "scenes": [
-     8,
-     11,
-     21,
-     22
-    ],
-    "passed": 0,
-    "krw": 98,
-    "model": "gemini-3.1-flash-image",
-    "angles": [
-     "from the railing or edge looki",
-     "a few steps further back, wide",
-     "low angle close to the ground",
-     "from the side, along the lengt"
-    ]
-   }
-  ],
-  "krw": 589,
-  "model": "gemini-3.1-flash-image",
-  "fake": false,
-  "scenes": [
-   {
-    "n": 1,
-    "j": 1,
-    "m": 0,
-    "sid": "S1",
-    "k": 20,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "day",
-    "img": "sb_1_1.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 761,
-    "sheet": 1,
-    "spare": null,
-    "angle": "from the doorway looking into the room",
-    "minor": null
-   },
-   {
-    "n": 2,
-    "j": 1,
-    "m": 1,
-    "sid": "S6",
-    "k": 15,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "golden",
-    "img": "sb_2_1.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 749,
-    "sheet": 2,
-    "spare": null,
-    "angle": "from the doorway looking into the room",
-    "minor": "조명"
-   },
-   {
-    "n": 3,
-    "j": 2,
-    "m": 0,
-    "sid": "S1",
-    "k": 20,
-    "place": "객실",
-    "who": "dog",
-    "with_dog": false,
-    "time": "golden",
-    "img": "sb_1_2.png",
-    "ok": false,
-    "why": "강아지 3(기대 1)",
-    "panel_px": 762,
-    "sheet": 1,
-    "spare": null,
-    "angle": "the same camera position as the photograph",
-    "minor": null
-   },
-   {
-    "n": 4,
-    "j": 2,
-    "m": 1,
-    "sid": "S7",
-    "k": 18,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "evening",
-    "img": null,
-    "ok": false,
-    "why": "꼬리 컷은 원본(시트 생략)",
-    "panel_px": 0,
-    "sheet": null,
-    "spare": null,
-    "angle": "from the doorway looking into the room",
-    "minor": null
-   },
-   {
-    "n": 5,
-    "j": 3,
-    "m": 0,
-    "sid": "S5",
-    "k": 24,
-    "place": "욕실",
-    "who": "hand",
-    "with_dog": false,
-    "time": "golden",
-    "img": "sb_3_1.png",
-    "ok": false,
-    "why": "글자",
-    "panel_px": 761,
-    "sheet": 3,
-    "spare": null,
-    "angle": "the same camera position as the photograph",
-    "minor": null
-   },
-   {
-    "n": 6,
-    "j": 3,
-    "m": 1,
-    "sid": "S3",
-    "k": 17,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "evening",
-    "img": null,
-    "ok": false,
-    "why": "꼬리 컷은 원본(시트 생략)",
-    "panel_px": 0,
-    "sheet": null,
-    "spare": null,
-    "angle": "from the doorway looking into the room",
-    "minor": null
-   },
-   {
-    "n": 7,
-    "j": 4,
-    "m": 0,
-    "sid": "S2",
-    "k": 23,
-    "place": "객실",
-    "who": "couple",
-    "with_dog": true,
-    "time": "evening",
-    "img": "sb_4_1.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 763,
-    "sheet": 4,
-    "spare": null,
-    "angle": "the same camera position as the photograph",
-    "minor": "스탠드 조명, 커튼"
-   },
-   {
-    "n": 8,
-    "j": 5,
-    "m": 0,
-    "sid": "S4",
-    "k": 25,
-    "place": "바다",
-    "who": "env",
-    "with_dog": false,
-    "time": "evening",
-    "img": "sb_5_1.png",
-    "ok": false,
-    "why": "시설·구조 추가: 통창, 난간",
-    "panel_px": 754,
-    "sheet": 5,
-    "spare": null,
-    "angle": "from the railing or edge looking out",
-    "minor": "스탠드 조명, 벽 조명, 의자"
-   },
-   {
-    "n": 9,
-    "j": 5,
-    "m": 1,
-    "sid": "S5",
-    "k": 24,
-    "place": "욕실",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": "sb_3_2.png",
-    "ok": false,
-    "why": "글자",
-    "panel_px": 762,
-    "sheet": 3,
-    "spare": null,
-    "angle": "from the doorway",
-    "minor": "양변기"
-   },
-   {
-    "n": 10,
-    "j": 6,
-    "m": 0,
-    "sid": "S6",
-    "k": 15,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": "sb_2_2.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 750,
-    "sheet": 2,
-    "spare": null,
-    "angle": "from beside the bed looking toward the window",
-    "minor": "스탠드 조명"
-   },
-   {
-    "n": 11,
-    "j": 6,
-    "m": 1,
-    "sid": "S4",
-    "k": 25,
-    "place": "바다",
-    "who": "env",
-    "with_dog": false,
-    "time": "day",
-    "img": "sb_5_2.png",
-    "ok": false,
-    "why": "시설·구조 추가: 창문, 난간, 침대",
-    "panel_px": 755,
-    "sheet": 5,
-    "spare": null,
-    "angle": "a few steps further back, wider",
-    "minor": "스탠드 조명, 의자"
-   },
-   {
-    "n": 12,
-    "j": null,
-    "m": null,
-    "sid": "S1",
-    "k": 20,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "evening",
-    "img": "sb_1_3.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 761,
-    "sheet": 1,
-    "spare": true,
-    "angle": "from beside the bed looking toward the window",
-    "minor": null
-   },
-   {
-    "n": 13,
-    "j": null,
-    "m": null,
-    "sid": "S1",
-    "k": 20,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": "sb_1_4.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 762,
-    "sheet": 1,
-    "spare": true,
-    "angle": "low angle near the floor looking across the room",
-    "minor": null
-   },
-   {
-    "n": 14,
-    "j": null,
-    "m": null,
-    "sid": "S6",
-    "k": 15,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "evening",
-    "img": "sb_2_3.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 749,
-    "sheet": 2,
-    "spare": true,
-    "angle": "low angle near the floor looking across the room",
-    "minor": "스탠드 조명"
-   },
-   {
-    "n": 15,
-    "j": null,
-    "m": null,
-    "sid": "S6",
-    "k": 15,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "day",
-    "img": "sb_2_4.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 750,
-    "sheet": 2,
-    "spare": true,
-    "angle": "from the window side looking back into the room",
-    "minor": null
-   },
-   {
-    "n": 16,
-    "j": null,
-    "m": null,
-    "sid": "S5",
-    "k": 24,
-    "place": "욕실",
-    "who": "env",
-    "with_dog": false,
-    "time": "evening",
-    "img": "sb_3_3.png",
-    "ok": false,
-    "why": "글자",
-    "panel_px": 761,
-    "sheet": 3,
-    "spare": true,
-    "angle": "close-up of the counter and mirror area",
-    "minor": null
-   },
-   {
-    "n": 17,
-    "j": null,
-    "m": null,
-    "sid": "S5",
-    "k": 24,
-    "place": "욕실",
-    "who": "env",
-    "with_dog": false,
-    "time": "day",
-    "img": "sb_3_4.png",
-    "ok": false,
-    "why": "글자",
-    "panel_px": 762,
-    "sheet": 3,
-    "spare": true,
-    "angle": "low angle near the floor",
-    "minor": null
-   },
-   {
-    "n": 18,
-    "j": null,
-    "m": null,
-    "sid": "S2",
-    "k": 23,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "golden",
-    "img": "sb_4_2.png",
-    "ok": false,
-    "why": "시설·구조 추가: 문 프레임",
-    "panel_px": 764,
-    "sheet": 4,
-    "spare": true,
-    "angle": "from the doorway looking into the room",
-    "minor": "스탠드 조명, 커튼"
-   },
-   {
-    "n": 19,
-    "j": null,
-    "m": null,
-    "sid": "S2",
-    "k": 23,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "day",
-    "img": "sb_4_3.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 763,
-    "sheet": 4,
-    "spare": true,
-    "angle": "from beside the bed looking toward the window",
-    "minor": null
-   },
-   {
-    "n": 20,
-    "j": null,
-    "m": null,
-    "sid": "S2",
-    "k": 23,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": "sb_4_4.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 764,
-    "sheet": 4,
-    "spare": true,
-    "angle": "low angle near the floor looking across the room",
-    "minor": "스탠드 조명, 커튼"
-   },
-   {
-    "n": 21,
-    "j": null,
-    "m": null,
-    "sid": "S4",
-    "k": 25,
-    "place": "바다",
-    "who": "env",
-    "with_dog": false,
-    "time": "golden",
-    "img": "sb_5_3.png",
-    "ok": false,
-    "why": "시설·구조 추가: 창문, 난간",
-    "panel_px": 754,
-    "sheet": 5,
-    "spare": true,
-    "angle": "low angle close to the ground",
-    "minor": "의자"
-   },
-   {
-    "n": 22,
-    "j": null,
-    "m": null,
-    "sid": "S4",
-    "k": 25,
-    "place": "바다",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": "sb_5_4.png",
-    "ok": false,
-    "why": "시설·구조 추가: 통창, 창문, 침대",
-    "panel_px": 755,
-    "sheet": 5,
-    "spare": true,
-    "angle": "from the side, along the length of the space",
-    "minor": "스탠드 조명, 단스탠드, 협탁, 의자"
-   }
-  ]
- },
- "inserts": {
-  "ok": true,
-  "krw": 98,
-  "model": "gemini-3.1-flash-image",
-  "px": [
-   1536,
-   2752
-  ],
-  "items": [
-   {
-    "n": 1,
-    "role": "hook",
-    "j": 0,
-    "name": "worry",
-    "img": "ins_1.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 727,
-    "what": "비 오는 날 집 안 창가에 앉아 밖을 바라보고 있는 강아지의 뒷모습"
-   },
-   {
-    "n": 2,
-    "role": "end",
-    "j": 7,
-    "name": "depart",
-    "img": "ins_2.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 727,
-    "what": "집 안 현관 콘솔 테이블 위에 놓인 차 키와 강아지 목줄"
-   },
-   {
-    "n": 3,
-    "role": "spare1",
-    "j": null,
-    "name": "road",
-    "img": "ins_3.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 727,
-    "what": "차 안에서 해안 도로 앞 풍경을 바라보고 있는 강아지의 뒷모습"
-   },
-   {
-    "n": 4,
-    "role": "spare2",
-    "j": null,
-    "name": "window",
-    "img": "ins_4.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 725,
-    "what": "차 창문에 두 앞발을 올리고 있는 강아지의 발 클로즈업"
-   }
-  ]
+  "reused": true,
+  "scenes": 22,
+  "panels_ok": 10,
+  "krw": 0
  },
  "inserts_used": [
   "INS1",
   "INS2"
- ],
- "scene_drops": [
-  "문장 6 컷 S5(사진 24 원본 이미 씀 · 대신 쓸 사진·패널 없음 → 뺌)",
-  "문장 7 컷 S4(사진 25 원본 이미 씀 · 대신 쓸 사진·패널 없음 → 뺌)"
- ],
- "operator_caption": {
-  "ok": false,
-  "errs": [
-   "caption.hook '인피니티풀로 알려진 호텔에 반려견과 한 방에' 에 시그니처가 없음 — 첫 줄은 시그니처가 무엇이고 왜 의외인지"
-  ]
- },
- "narration_sec": {
-  "1": 2.72,
-  "2": 3.1,
-  "3": 3.51,
-  "4": 3.69,
-  "5": 2.89,
-  "6": 3.45,
-  "7": 2.72,
-  "8": 2.94,
-  "cta": 2.48
- },
- "narration_qa": [
-  {
-   "segment": "컷1",
-   "script": "반려견 두고 떠나는 여행, 늘 마음 쓰이죠?",
-   "heard": "반려견 두고 떠나는 여행 늘 마음 쓰이죠",
-   "similarity": 1.0,
-   "ok": true,
-   "instruction_words": []
-  },
-  {
-   "segment": "컷2",
-   "script": "여긴 반려견과 한 방에서 묵는 펫 객실이에요.",
-   "heard": "여긴 반려견과 한 방에서 묵는 펫 객실이에요.",
-   "similarity": 1.0,
-   "ok": true,
-   "instruction_words": []
-  },
-  {
-   "segment": "컷3",
-   "script": "들어서면 침대로 오르는 계단으로 강아지가 먼저 올라가요.",
-   "heard": "들어서면 침대로 오르는 계단으로 강아지가 먼저 올라가요",
-   "similarity": 1.0,
-   "ok": true,
-   "instruction_words": []
-  },
-  {
-   "segment": "컷4",
-   "script": "수건·샴푸·패드까지 있어 식기에 물만 채우면 돼요.",
-   "heard": "수건 샴푸 패드까지 있어 식기에 물만 채우면 돼요.",
-   "similarity": 0.95,
-   "ok": true,
-   "instruction_words": []
-  },
-  {
-   "segment": "컷5",
-   "script": "그다음엔 같이 발코니에 서서 바다를 봐요.",
-   "heard": "그다음에 같이 발코니에 서서 바다를 봐요",
-   "similarity": 0.94,
-   "ok": true,
-   "instruction_words": []
-  },
-  {
-   "segment": "컷6",
-   "script": "방을 나서면 돔 수영장도 반려견과 같이 갈 수 있어요.",
-   "heard": "방을 나서면 돔 수영장도 반려견과 같이 갈 수 있어요.",
-   "similarity": 1.0,
-   "ok": true,
-   "instruction_words": []
-  },
-  {
-   "segment": "컷7",
-   "script": "펫 욕조·드라이룸은 선착순 무료 대여예요.",
-   "heard": "펫 욕조 드라이룸은 선착순 무료 대여해요",
-   "similarity": 0.91,
-   "ok": true,
-   "instruction_words": []
-  },
-  {
-   "segment": "컷8",
-   "script": "이번엔 반려견과 함께 떠나 보는 건 어떨까요?",
-   "heard": "이번엔 반려견과 함께 떠나보는 건 어떨까요?",
-   "similarity": 1.0,
-   "ok": true,
-   "instruction_words": []
-  },
-  {
-   "segment": "끝",
-   "script": "객실이랑 예약 링크는 프로필 4번에 있어요.",
-   "heard": "객실이랑 예약 링크는 프로필 4번에 있어요",
-   "similarity": 1.0,
-   "ok": true,
-   "instruction_words": []
-  }
  ],
  "signature": {
   "name": "바다 전망 펫 전용 객실",
@@ -1820,21 +345,110 @@
  "veo": {
   "model": "veo-3.1-lite-generate-preview",
   "fake": false,
-  "clips": [],
-  "spent_krw": 0,
-  "month_total_krw": 7644
+  "clips": [
+   {
+    "i": 1,
+    "lens": "훅",
+    "shot": "INS1",
+    "type": "B",
+    "actor": "env",
+    "ok": true,
+    "krw": 294,
+    "start": "ins_1.png"
+   },
+   {
+    "i": 3,
+    "lens": "디테일",
+    "shot": "S1",
+    "type": "A",
+    "actor": "dog",
+    "ok": false,
+    "krw": 294,
+    "start": "sb_1_3.png",
+    "check": {
+     "ok": false,
+     "reason": "새 사물: 강아지 계단",
+     "raw": {
+      "people": 0,
+      "face_visible": false,
+      "dogs": 1,
+      "new_objects": [
+       "강아지 계단"
+      ],
+      "structure_changed": false,
+      "weird": false,
+      "looks_real": true,
+      "why": "사람 없이 강아지 한 마리가 자연스럽게 침대 쪽으로 올라서는 모습이 구현됨"
+     }
+    },
+    "error": "검수 탈락: 새 사물: 강아지 계단"
+   },
+   {
+    "i": 4,
+    "lens": "행동",
+    "shot": "S5",
+    "type": "A",
+    "actor": "hand",
+    "ok": true,
+    "krw": 588,
+    "start": "shot_S5.png",
+    "error": "안전 필터: 안전 필터에 걸렸습니다: {\"name\": \"models/veo-3.1-lite-generate-preview/operations/qgivgjcug6cp\", \"done\": true, \"response\": {\"@type",
+    "check": {
+     "ok": true,
+     "reason": "",
+     "raw": {
+      "people": "hand",
+      "face_visible": false,
+      "dogs": 0,
+      "new_objects": [],
+      "structure_changed": false,
+      "weird": false,
+      "looks_real": true,
+      "why": "손과 팔만 자연스럽게 등장하여 수건을 다룸"
+     }
+    }
+   },
+   {
+    "i": 5,
+    "lens": "상황",
+    "shot": "S2",
+    "type": "A",
+    "actor": "couple",
+    "ok": true,
+    "krw": 294,
+    "start": "sb_4_1.png",
+    "check": {
+     "ok": true,
+     "reason": "",
+     "raw": {
+      "people": 2,
+      "face_visible": false,
+      "dogs": 1,
+      "new_objects": [],
+      "structure_changed": false,
+      "weird": false,
+      "looks_real": true,
+      "why": "뒷모습의 두 사람과 강아지가 자연스럽게 발코니 쪽으로 이동함"
+     }
+    }
+   },
+   {
+    "i": 6,
+    "lens": "연결",
+    "shot": "S4",
+    "type": "B",
+    "actor": "env",
+    "ok": true,
+    "krw": 294,
+    "start": "shot_S4.png"
+   }
+  ],
+  "stopped": null,
+  "spent_krw": 1764,
+  "month_total_krw": 9408
  },
- "ai_note_on_screen": false,
+ "ai_note_on_screen": true,
  "camera_aim": [
-  {
-   "i": 1,
-   "shot": "INS1",
-   "x": 0.53,
-   "y": 0.92,
-   "zoom": 0.42,
-   "move": "in",
-   "what": "반려견"
-  },
   {
    "i": 2,
    "shot": "S1",
@@ -1847,54 +461,27 @@
   {
    "i": 3,
    "shot": "S1",
-   "x": 0.8,
-   "y": 0.58,
-   "zoom": 0.4,
+   "x": 0.81,
+   "y": 0.59,
+   "zoom": 0.46,
    "move": "in",
-   "what": "반려견 계단 및 침대 옆 공간"
-  },
-  {
-   "i": 4,
-   "shot": "S5",
-   "x": 0.78,
-   "y": 0.73,
-   "zoom": 0.42,
-   "move": "in",
-   "what": "수건"
-  },
-  {
-   "i": 5,
-   "shot": "S2",
-   "x": 0.5,
-   "y": 0.38,
-   "zoom": 0.35,
-   "move": "in",
-   "what": "발코니와 바다"
-  },
-  {
-   "i": 6,
-   "shot": "S4",
-   "x": 0.5,
-   "y": 0.55,
-   "zoom": 0.3,
-   "move": "out",
-   "what": "바다"
+   "what": "반려견 계단"
   },
   {
    "i": 7,
    "shot": "S6",
    "x": 0.14,
    "y": 0.67,
-   "zoom": 0.4,
+   "zoom": 0.38,
    "move": "in",
    "what": "드라이룸"
   },
   {
    "i": 8,
    "shot": "INS2",
-   "x": 0.51,
+   "x": 0.52,
    "y": 0.6,
-   "zoom": 0.4,
+   "zoom": 0.45,
    "move": "in",
    "what": "반려견 목줄"
   }
@@ -1969,7 +556,7 @@
   {
    "i": 1,
    "lens": "훅",
-   "kind": "사진 무빙 2컷 · 인서트 (제작 때 AI 환경(빛·물·커튼) 2.6초 + 사진 무빙)",
+   "kind": "AI 영상·환경(빛·물·커튼) 2.3초 + 사진 무빙(객실)",
    "sec": 3.2,
    "shots": [
     "INS1",
@@ -2037,7 +624,7 @@
   {
    "i": 3,
    "lens": "디테일",
-   "kind": "사진 무빙 2컷 · AI 스토리보드 (제작 때 AI 강아지 2.6초 + 사진 무빙)",
+   "kind": "사진 무빙 2컷 · AI 스토리보드",
    "sec": 3.63,
    "shots": [
     "S1",
@@ -2071,7 +658,7 @@
   {
    "i": 4,
    "lens": "행동",
-   "kind": "사진 무빙 2컷 (제작 때 AI 손 2.6초 + 사진 무빙)",
+   "kind": "AI 영상·손 2.6초 + 사진 무빙(객실)",
    "sec": 3.81,
    "shots": [
     "S5",
@@ -2105,7 +692,7 @@
   {
    "i": 5,
    "lens": "상황",
-   "kind": "사진 무빙·발코니와 바다 다가감 1.35배 · AI 스토리보드 (제작 때 AI 뒷모습 커플)",
+   "kind": "AI 영상·뒷모습 커플",
    "sec": 3.01,
    "shots": [
     "S2"
@@ -2132,7 +719,7 @@
   {
    "i": 6,
    "lens": "연결",
-   "kind": "사진 무빙·바다 물러남 1.30배 (제작 때 AI 환경(빛·물·커튼))",
+   "kind": "AI 영상·환경(빛·물·커튼)",
    "sec": 3.57,
    "shots": [
     "S4"
@@ -2164,7 +751,7 @@
   {
    "i": 7,
    "lens": "조건",
-   "kind": "사진 무빙·드라이룸 다가감 1.40배 · AI 스토리보드",
+   "kind": "사진 무빙·드라이룸 다가감 1.38배 · AI 스토리보드",
    "sec": 2.84,
    "shots": [
     "S6"
@@ -2191,7 +778,7 @@
   {
    "i": 8,
    "lens": "제안",
-   "kind": "사진 무빙·반려견 목줄 다가감 1.40배 · 인서트",
+   "kind": "사진 무빙·반려견 목줄 다가감 1.45배 · 인서트",
    "sec": 3.06,
    "shots": [
     "INS2"
@@ -2230,16 +817,16 @@
  ],
  "models_used": {},
  "duration_sec": 29.97,
- "video_bytes": 10496305,
+ "video_bytes": 11938016,
  "gemini_usage": {
-  "calls": 45,
-  "prompt_text": 38309,
-  "prompt_image": 109380,
-  "prompt_audio": 692,
-  "output_text": 14441,
-  "output_audio": 884,
-  "thoughts": 1108,
-  "krw_est": 136,
+  "calls": 7,
+  "prompt_text": 1886,
+  "prompt_image": 14300,
+  "prompt_audio": 0,
+  "output_text": 372,
+  "output_audio": 0,
+  "thoughts": 0,
+  "krw_est": 9,
   "note": "토큰 수는 실측, 단가는 추정 — 실제 청구는 Google 사용량 화면 기준"
  }
 }
