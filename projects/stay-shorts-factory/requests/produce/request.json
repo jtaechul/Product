@@ -1,14 +1,14 @@
 {
- "nonce": "2026-10-19-admin-sig-produce-DRMG",
+ "nonce": "2026-10-19-admin-sig-preview-XUCW",
  "mode": "signature",
- "stay": "쏠비치 양양",
+ "stay": "세인트존스 호텔",
  "theme": "실내 온수풀·온천",
  "region": "강원",
  "month": "2026-11",
- "veo_approved": false,
+ "veo_approved": true,
  "caption_style": "shadow",
  "crawl": true,
- "note": "잠금(자동 · 실행 끝): 2026-10-19-admin-sig-produce-DRMG",
+ "note": "관리자 페이지 시그니처 이야기 미리보기 — 세인트존스 호텔 · 예상 약 800원 · 2026-10-19 22:38 KST",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -17,5 +17,6 @@
   "쏠비치 삼척": "https://www.sonohotelsresorts.com/solbeach_sc",
   "세인트존스 호텔": "https://new.stjohns.co.kr/"
  },
- "format": "story"
+ "format": "story",
+ "stage": "preview"
 }
