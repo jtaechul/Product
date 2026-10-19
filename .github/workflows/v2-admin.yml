@@ -134,7 +134,11 @@ jobs:
           IN_PILOT: ${{ inputs.pilot }}
           IN_STAGE: ${{ inputs.stage }}
         run: |
-          git add v2/pilots v2/topics.json v2/topic_media.json v2/topic_scores.json v2/topic_wiki.json || true
+          # ⚠ `git add A B C`는 하나라도 없으면 전체가 실패해 아무것도 안 올라간다(실사고 2026-10-19: 아직 없는 topic_scores.json 때문에
+          #   대본 실패 기록이 커밋되지 않아 화면이 25분 뒤 '멈춤'으로 보임) → 있는 것만 하나씩
+          for p in v2/pilots v2/topics.json v2/topic_media.json v2/topic_scores.json v2/topic_wiki.json; do
+            if [ -e "$p" ]; then git add "$p"; fi
+          done
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
