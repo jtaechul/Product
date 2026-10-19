@@ -353,7 +353,7 @@ def test_text_model_is_picked_from_what_the_server_offers():
 
 
 # ── 업로드(운영자 확정 2026-09-28) ──
-_META = {"title_jp": "深海の掃除屋、5年絶食の謎", "title_ko": "심해의 청소부, 5년 단식의 수수께끼",
+_META = {"title_jp": "5年絶食する巨大ダンゴムシ、深海の謎", "title_ko": "5년 단식하는 거대 공벌레, 심해의 수수께끼", "search_jp": "ダンゴムシ",
          "desc_jp": "メキシコ湾で見つかった大きな生き物です。", "desc_ko": "멕시코만에서 발견된 큰 생물입니다.",
          "tags_jp": ["#ダンゴムシ", "#絶食", "#深海の謎", "#雑学", "#生き物", "#Shorts", "#深海", "#海の生き物", "#水族館", "#ドキュメンタリー"],
          "tags_ko": ["#등각류", "#단식", "#심해의비밀", "#잡학", "#생물", "#바다생물", "#수족관", "#다큐멘터리"]}
@@ -1123,6 +1123,11 @@ def test_youtube_body_has_publish_at_only_when_scheduled(monkeypatch):
     assert r["privacy"] == "scheduled"
     yt.upload("v.mp4", "t", "d", privacy="public")
     assert "publishAt" not in bodies[-1]["status"] and bodies[-1]["status"]["privacyStatus"] == "public"
+    # 영상 언어 = 일본어(운영자 승인 2026-10-18): 제목·설명 언어 + 음성 언어를 늘 보낸다(빈칸이면 유튜브가 추측)
+    assert bodies[-1]["snippet"]["defaultLanguage"] == "ja" and bodies[-1]["snippet"]["defaultAudioLanguage"] == "ja"
+    assert bodies[0]["snippet"]["defaultLanguage"] == "ja"
+    yt.upload("v.mp4", "t", "d", language=None)
+    assert "defaultLanguage" not in bodies[-1]["snippet"] and "defaultAudioLanguage" not in bodies[-1]["snippet"]
 
 
 def test_glyph_check_works_without_fonttools(monkeypatch):
@@ -1272,12 +1277,12 @@ def test_title_never_contains_the_answer(v2):
     seen = []
     def meta(p):
         seen.append(p)
-        title = "青く光る魚テストウオの謎" if len(seen) == 1 else "触ると青く光る、深海の謎"
-        return json.dumps(dict(_META, title_jp=title, title_ko="자극을 받으면 파랗게 빛나는 심해의 수수께끼"))
+        title = "青く光る魚テストウオの謎" if len(seen) == 1 else "触ると青く光る、深海魚の謎"
+        return json.dumps(dict(_META, title_jp=title, title_ko="자극을 받으면 파랗게 빛나는 심해어의 수수께끼", search_jp="深海魚"))
     st = admin.upload_meta("test_fish", ask=meta)
     m = st["artifacts"]["upload"]["meta"]
     assert len(seen) == 2 and "テストウオ" in seen[1] and "Problems in your previous answer" in seen[1]
-    assert m["title_jp"].startswith("触ると青く光る、深海の謎") and m["title_jp"].endswith("#テストウオ #深海")   # 종명은 끝 해시태그로만
+    assert m["title_jp"].startswith("触ると青く光る、深海魚の謎") and m["title_jp"].endswith("#テストウオ #深海")   # 종명은 끝 해시태그로만
     assert "SAME LINE" in seen[0] and "触ると、青く光る" in seen[0]                               # 제목도 후킹과 같은 문장으로 시작
     assert "CORE FACT" in seen[0] and "F4: 刺激を受けると青く光る" in seen[0]
     with pytest.raises(ValueError):
@@ -1285,6 +1290,39 @@ def test_title_never_contains_the_answer(v2):
     sc = {"subject": {"jp_name": "タラバガニ科", "ko_name": "왕게"}, "hook": {"type": "fact", "answer_jp": "魚の卵", "answer_ko": "물고기 알"}}
     assert admin.title_spoilers(sc) == (["魚の卵"], ["물고기 알"])                       # 사실 질문 편: 정답만 금지(이름은 괜찮음)
     assert admin.species_tags(sc) == ("#タラバガニ科", "#왕게")
+
+
+def test_title_has_familiar_search_word(v2):
+    """운영자 승인 2026-10-18: 파리지옥말미잘 편 검색 유입 「食虫植物」 19.5% · 「深海魚」 6.3% → 제목에 일본에서 실제로 검색하는 말 하나."""
+    admin.new_pilot("test_fish")
+    ask, _ = _fake_ai()
+    admin.write_script("test_fish", ask=ask, get=_fake_wiki, tts=False)
+    seen = []
+    def meta(p):                                             # 1번째: 검색어 없음 → 2번째: 深海魚
+        seen.append(p)
+        if len(seen) == 1:
+            return json.dumps(dict(_META, title_jp="触ると青く光る、深海の謎", search_jp="深海"))
+        return json.dumps(dict(_META, title_jp="触ると青く光る、深海魚の謎", search_jp="深海魚"))
+    st = admin.upload_meta("test_fish", ask=meta)
+    m = st["artifacts"]["upload"]["meta"]
+    assert "SEARCH WORD" in seen[0] and "食虫植物" in seen[0] and '"search_jp"' in seen[0]
+    assert len(seen) == 2 and "search_jp" in seen[1] and "Problems in your previous answer" in seen[1]
+    assert m["search_jp"] == "深海魚" and "深海魚" in m["title_jp"]
+    assert "검색어 「深海魚」" in st["stages"]["upload"]["notes"][-1]["text"]
+    # 이름은 검색어로도 금지(정답 공개는 마지막에만) · 제목에 없는 검색어도 다시 쓰게
+    assert admin.search_word_probs({"title_jp": "テストウオの謎", "search_jp": "テストウオ"}, ["テストウオ"])
+    assert admin.search_word_probs({"title_jp": "触ると青く光る謎", "search_jp": "深海魚"}, [])
+    assert admin.search_word_probs({"title_jp": "触ると青く光る、深海魚の謎", "search_jp": "深海魚"}, ["テストウオ"]) == []
+    # 3번 다 검색어를 빠뜨려도 업로드 준비는 막지 않는다(제목은 쓰고 확인 안내만)
+    calls = []
+    st = admin.upload_meta("test_fish", ask=lambda p: calls.append(p) or json.dumps(dict(_META, title_jp="触ると青く光る、深海の謎", search_jp="")))
+    m = st["artifacts"]["upload"]["meta"]
+    assert len(calls) == 3 and m["title_jp"].startswith("触ると青く光る、深海の謎") and m["search_jp"] == ""
+    assert "검색하는 말이 없음" in st["stages"]["upload"]["notes"][-1]["text"]
+    # 운영자가 제목을 고쳐 검색어가 빠지면 기록도 지운다
+    st = admin.upload_meta("test_fish", ask=meta)
+    st = admin.save_upload_meta("test_fish", {"title_jp": "触ると青く光る、深海の謎 #テストウオ #深海"})
+    assert "search_jp" not in st["artifacts"]["upload"]["meta"]
 
 
 def test_answer_card_shows_name_for_fact_question(tmp_path):
@@ -1437,7 +1475,7 @@ def test_after_video_writes_youtube_title_right_away(v2, monkeypatch):
         st["stages"][k]["state"] = "approved"
     st["stages"]["upload"]["state"] = "working"
     admin._save(admin.status_path("test_fish"), st)
-    monkeypatch.setattr(admin, "_gemini_text", lambda p, **k: json.dumps(dict(_META, title_jp="触ると青く光る、深海の謎")))
+    monkeypatch.setattr(admin, "_gemini_text", lambda p, **k: json.dumps(dict(_META, title_jp="触ると青く光る、深海魚の謎", search_jp="深海魚")))
     monkeypatch.setenv("IG_ACCESS_TOKEN", "SHOULD_NOT_BE_USED")
     admin.main(["after_video", "test_fish"])
     st = admin.load_status("test_fish")

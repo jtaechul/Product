@@ -477,6 +477,25 @@
   `v2_admin_check.mjs`(no_instagram_on_episode · copy_row_before_upload · hashtag_copy_works · video_approve_goes_to_youtube · no_instagram_on_list ·
   v2file_route_removed).
 
+### ★유튜브에서 일본 시청자에게 닿게 — 영상 언어 일본어 + 제목 검색어 (운영자 승인 2026-10-18 · 핵심 규칙)
+- **근거(스튜디오 실측 · 운영자 스크린샷)**: 파리지옥말미잘 편 시청함 53.0% · 일본 시청 96.4% · 검색 유입 「食虫植物」 19.5%·「深海魚」 6.3% /
+  아귀목(아카메안코우) 편 시청함 37.6% · 일본 시청 42.4%. 두 편 다 새 후킹인데 **가장 큰 차이가 일본 시청 비율** → 일본 시청자에게 덜 닿은 편이 약했다.
+  확인해 보니 업로드 요청에 **영상 언어가 비어 있었다**(유튜브가 언어를 추측해야 함 ·
+  [유튜브 고객센터 — 동영상 언어 설정](https://support.google.com/youtube/answer/6304325): 언어를 정해 두면 그 언어 시청자가 찾기 쉬워진다).
+- **① 영상 언어 = 일본어**: `src/core/youtube_upload.upload(language="ja")` 기본 → `snippet.defaultLanguage`(제목·설명 언어) +
+  `snippet.defaultAudioLanguage`(음성 언어) 둘 다 `ja`로 보낸다. **새로 올리는 편부터만** 적용 — 이미 올린 편은 지금 토큰에 수정 권한이 없어
+  운영자가 **컴퓨터의 유튜브 스튜디오**에서 직접 바꾼다(고객센터 안내 그대로: 왼쪽 「콘텐츠」 → 영상 제목 클릭 → 아래 「더보기」 →
+  「언어 및 자막 면제 인증서」 칸에서 언어 「일본어」 → 위쪽 「저장」 · 고객센터에 휴대폰 앱 방법은 안내돼 있지 않음).
+- **② 제목에 검색어 하나**: `_META_PROMPT` SEARCH WORD — 후킹 문장(SAME LINE) 바로 뒤에 **일본 시청자가 유튜브 검색창에 실제로 치는 익숙한 말
+  하나**(사실이 비유하는 것 예 「食虫植物」 · 그 생물의 일상 분류어 예 「深海魚」「クラゲ」「ナマコ」「カニ」「ダンゴムシ」). 사실·나레이션이 뒷받침해야 함 ·
+  채널 공통어(深海·深海の謎·深海生物·生き物)는 안 침 · **정답 이름 금지는 그대로**. AI가 고른 말은 `search_jp`로 받아 코드 검사(`search_word_probs`:
+  비었거나 공통어·이름 포함·제목에 없음 → 다시 쓰기, 3번까지) → `meta.search_jp`에 기록(나중에 검색 유입과 비교용 · 운영자가 제목을 고쳐 빠지면 기록도 지움).
+  ★3번 다 검색어를 빠뜨려도 **업로드 준비는 막지 않고**(인스타 사고 교훈) 제목은 쓰되 업로드 칸 기록에 「검색하는 말이 없음 — 확인」을 남긴다.
+- **검증은 다음 편 숫자로**: 둘 다 가설이다. 다음 편들의 **일본 시청 비율 · 시청함 % · 검색 유입**을 파리지옥말미잘(96.4% · 53.0%)과 비교해
+  효과가 없으면 운영자와 다시 정한다.
+- 회귀: `tests/test_v2_admin.py::test_youtube_body_has_publish_at_only_when_scheduled`(defaultLanguage·defaultAudioLanguage = ja · None이면 안 보냄) ·
+  `test_title_has_familiar_search_word`(재시도·이름 금지·3번 실패해도 진행·제목 수정 시 기록 삭제) · `test_title_never_contains_the_answer`.
+
 ### 비용 (한 편 기준 · 2026-10 혼합 제작)
 | 항목 | 금액 |
 |---|---|

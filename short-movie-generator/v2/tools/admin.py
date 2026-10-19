@@ -880,6 +880,12 @@ Rules: title_jp = hook-style Japanese title, max 32 characters, mystery/awe tone
 ONE CORE FACT: the title is about the episode's CORE FACT below — the same fact the opening question asks about and the ending
 pays off. Put its most surprising concrete detail (a number, a missing body part, a strange behaviour) at the very start and end
 with 深海の謎 or a question, e.g. 「5年以上も絶食する、深海の巨大生物の謎」「頭も骨もない、深海の謎」.
+SEARCH WORD: title_jp must also contain ONE familiar Japanese noun that ordinary Japanese viewers actually type into YouTube search,
+and it must be supported by the facts/narration: either the well-known thing the facts compare the animal to (e.g. 食虫植物 for a
+"Venus flytrap" anemone) or the animal's everyday group word (e.g. 深海魚 for a deep-sea fish, クラゲ, ナマコ, カニ, ダンゴムシ).
+Put it right after the opening detail (keep the whole title within 32 characters). 深海 / 深海の謎 / 深海生物 / 生き物 alone do NOT count,
+and it must never be one of the NEVER words below. Return that word as search_jp (exactly as it appears in title_jp).
+title_ko uses the natural Korean equivalent (식충식물, 심해어 …).
 {name_rule}
 no "#Shorts", no episode numbers, NO office-worker jokes (有給/残業/上司 etc.), never exaggerate beyond the facts.
 desc_jp = 3-4 short sentences in polite Japanese (です・ます), summarising the story with the concrete facts.
@@ -889,7 +895,7 @@ and traits actually in the narration (e.g. #発光 #脱皮), habitat words (#深
 #ドキュメンタリー), curiosity words (#深海の謎). Korean list = same idea in Korean (#해삼 #발광 #심해생물 #잡학 ...).
 Each tag starts with #, no spaces inside, no #Shorts, no episode numbers, nothing the facts do not support.
 Return JSON only:
-{{"title_jp":"...","title_ko":"...","desc_jp":"...","desc_ko":"...","tags_jp":["#..."],"tags_ko":["#..."]}}
+{{"title_jp":"...","title_ko":"...","search_jp":"...","desc_jp":"...","desc_ko":"...","tags_jp":["#..."],"tags_ko":["#..."]}}
 # Species
 {name_jp} / {name_ko} / {sci}
 # CORE FACT (the one fact this episode is about)
@@ -970,6 +976,24 @@ def _title_key(s: str) -> str:
     return re.sub(r"[、。，,．.！!？?\s「」『』]", "", str(s or ""))
 
 
+# 제목 검색어(운영자 승인 2026-10-18): 파리지옥말미잘 편은 검색 유입이 「食虫植物」 19.5% · 「深海魚」 6.3%(스튜디오 실측) —
+# 제목에 일본 시청자가 실제로 검색창에 치는 익숙한 말이 하나 있어야 검색에서도 찾아온다. 채널 공통어(深海…)는 세지 않는다.
+_SEARCH_GENERIC = {"深海", "深海の謎", "深海生物", "生き物", "謎", "海", "海の生き物", "海洋生物"}
+
+
+def search_word_probs(gen: dict, banned: list[str]) -> list[str]:
+    """제목 검색어(search_jp) 검사 — 문제 목록(비면 통과). 이름 금지(banned)는 그대로 지킨다."""
+    w = str(gen.get("search_jp") or "").strip().strip("#「」")
+    if len(w) < 2 or w in _SEARCH_GENERIC:
+        return ["title_jp needs ONE familiar word Japanese viewers type into YouTube search (search_jp), "
+                "supported by the facts — e.g. 食虫植物 / 深海魚 / クラゲ. 深海 alone does not count"]
+    if any(b and b in w for b in banned):
+        return [f"search_jp 「{w}」 gives away the answer name — choose another familiar word"]
+    if w not in str(gen.get("title_jp") or ""):
+        return [f"search_jp 「{w}」 is not in title_jp — put it in the title right after the opening detail"]
+    return []
+
+
 def upload_meta(pid: str, ask=None) -> dict:
     st = load_status(pid)
     sc = _load(_script_path(pid))
@@ -991,6 +1015,7 @@ def upload_meta(pid: str, ask=None) -> dict:
         cuts="\n".join(f"{c['cut']}: {c['jp']}" for c in sc["cuts"] if "tts" in c),
         facts="\n".join(f"{f['id']}: {f['fact']}" for f in sc.get("facts", [])))
     probs: list[str] = []
+    fallback = None                                          # 이름 규칙은 지켰고 검색어만 빠진 답 — 3번 다 그러면 이걸로(업로드 준비는 막지 않음)
     for _ in range(3):
         gen = json.loads(re.search(r"\{.*\}", (ask or _gemini_text)(prompt + (
             "\n# Problems in your previous answer (fix all)\n" + "\n".join("- " + x for x in probs) if probs else "")), re.S).group(0))
@@ -999,23 +1024,30 @@ def upload_meta(pid: str, ask=None) -> dict:
                 raise ValueError(f"{k} 비어 있음")
         if _STALE.search(gen["title_jp"] + gen["title_ko"]):
             raise ValueError("제목에 금지된 회사원 소재가 들어갔습니다 — 다시 쓰기")
-        probs = [f"title_jp contains 「{w}」 — remove it" for w in ban_jp if w in gen["title_jp"]] + \
-                [f"title_ko contains 「{w}」 — remove it" for w in ban_ko if w in gen["title_ko"]]
+        hard = [f"title_jp contains 「{w}」 — remove it" for w in ban_jp if w in gen["title_jp"]] + \
+               [f"title_ko contains 「{w}」 — remove it" for w in ban_ko if w in gen["title_ko"]]
         if hk.get("type") == "line" and not _title_key(gen["title_jp"]).startswith(_title_key(hk.get("question_jp", ""))):
-            probs.append(f"title_jp must START with the opening line 「{hk.get('question_jp', '')}」 (same words) and then continue")
+            hard.append(f"title_jp must START with the opening line 「{hk.get('question_jp', '')}」 (same words) and then continue")
+        probs = hard + search_word_probs(gen, ban_jp)
         if not probs:
             break
-    if probs:
-        raise ValueError("제목에 정답(이름)이 들어갔습니다 — 3번 다시 써도 빠지지 않음: " + " / ".join(probs[:2]))
+        if not hard:
+            fallback = gen
+    if probs and fallback is None:
+        raise ValueError("제목에 정답(이름)이 들어갔습니다 — 3번 다시 써도 빠지지 않음: " + " / ".join(hard[:2]))
+    gen = gen if not probs else fallback
+    word = "" if probs else str(gen.get("search_jp") or "").strip().strip("#「」")
     up = st.setdefault("artifacts", {}).setdefault("upload", {})
     old = up.get("meta") or {}
     up["meta"] = _compose_meta(sc, gen)
     up["meta"]["privacy"] = old.get("privacy", "private")
     up["meta"]["category"] = old.get("category", "15")
+    up["meta"]["search_jp"] = word
     up["meta_at"] = _now()
     if st["stages"]["upload"]["state"] in ("working", "revise"):
         st["stages"]["upload"]["state"] = "review"
-    _note(st, "upload", "meta", "유튜브 제목·설명·해시태그 작성 — 확인 후 「승인 → 유튜브 업로드」")
+    _note(st, "upload", "meta", "유튜브 제목·설명·해시태그 작성" + (f"(검색어 「{word}」)" if word else
+          "(★제목에 일본에서 검색하는 말이 없음 — 「深海魚」처럼 넣을지 확인)") + " — 확인 후 「승인 → 유튜브 업로드」")
     _save(status_path(pid), st)
     return st
 
@@ -1065,6 +1097,8 @@ def save_upload_meta(pid: str, data: dict) -> dict:
         m.pop("publish_at", None)
     if m.get("category") not in YT_CATEGORIES:
         m["category"] = "15"
+    if m.get("search_jp") and m["search_jp"] not in m.get("title_jp", ""):     # 운영자가 제목을 고쳐 검색어가 빠졌으면 기록도 지움
+        m.pop("search_jp")
     if not m.get("title_jp") or len(m["title_jp"]) > 100:
         raise SystemExit("제목(일본어)은 1~100자여야 합니다")
     if "#shorts" in (m["title_jp"] + m.get("desc_jp", "")).lower():
