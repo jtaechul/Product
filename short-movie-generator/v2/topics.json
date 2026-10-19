@@ -2,42 +2,6 @@
   "updated": "2026-10-19T10:44:23Z",
   "topics": [
     {
-      "id": "bathocyroe_fosteri",
-      "key": "",
-      "sci": "Bathocyroe fosteri",
-      "name_en": "",
-      "name_ko": "감투빗해파리목의 한 종",
-      "ko_official": false,
-      "name_ja": "",
-      "depth_m": "",
-      "facts_n": 5,
-      "facts": [
-        "Bathocyroe fosteri is a species of lobate ctenophore found at intermediate depths in all the world's oceans.",
-        "The species is very common and abundant near the Mid-Atlantic Ridge.",
-        "It is bioluminescent, and is typically observed hanging motionlessly in an upright or inverted posture although it can flap its oral lobes to swim."
-      ],
-      "sources": [
-        "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
-      ],
-      "checks": {
-        "한 편 = 한 대상": true,
-        "출처 문서(위키백과)": true,
-        "심해 확인": true,
-        "실사 사진": true
-      },
-      "in_progress": false,
-      "photo": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/148533726/medium.jpg",
-        "credit": "\nPhoto courtesy of Marsh Youngbluth, no known copyright restrictions (public domain)",
-        "license": "pd",
-        "page": "https://www.inaturalist.org/taxa/949343"
-      },
-      "ready": true,
-      "score": null,
-      "hook_jp": "",
-      "hook_ko": ""
-    },
-    {
       "id": "histioteuthis_heteropsis",
       "key": "",
       "sci": "Histioteuthis heteropsis",
