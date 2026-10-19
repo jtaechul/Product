@@ -92,16 +92,50 @@ def find_chrome() -> str | None:
     return hits[-1] if hits else None
 
 
+RENDER_PRIMARY = ["--window-size=1280,8000", "--virtual-time-budget=20000", "--timeout=60000"]   # 가상 시간으로 JS 렌더를 기다리되 실제 60초면 그대로 덤프
+RENDER_ALT = ["--window-size=1280,4000", "--timeout=45000"]                                        # 가상 시간 없이 실제 45초 뒤 덤프(기본 설정이 멈출 때)
+RENDER_BUDGET_S = 900                                                                              # 한 실행의 렌더 누적 상한(초) — 워크플로 40분 한도 보호
+_render_state = {"prefer_alt": False, "fails": 0, "spent": 0.0}
+
+
+def _chrome_dom(chrome: str, url: str, extra: list[str], timeout: int) -> str:
+    r = subprocess.run([chrome, "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars", *extra, f"--user-agent={UA}",
+                        "--dump-dom", url], capture_output=True, text=True, timeout=timeout)
+    return r.stdout or ""
+
+
 def render(url: str, chrome: str, timeout: int = 90) -> str:
-    """JS 까지 실행한 뒤의 HTML. 실패하면 빈 문자열."""
-    try:
-        r = subprocess.run([chrome, "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
-                            "--window-size=1280,8000", "--virtual-time-budget=20000", f"--user-agent={UA}",
-                            "--dump-dom", url], capture_output=True, text=True, timeout=timeout)
-        return r.stdout or ""
-    except Exception as e:  # noqa: BLE001
-        log(f"렌더 실패 {url}: {str(e)[:80]}")
+    """JS 까지 실행한 뒤의 HTML. 실패하면 빈 문자열.
+    stay-run-58(2026-10-19): 쏠비치 양양 첫 페이지가 기본 설정으로 90초·75초 두 번 시간 초과(가상 시간 예산이 끝나지 않는 페이지) → 공식 사진 0장.
+    → 기본 설정이 비거나 멈추면 대체 설정(가상 시간 없음·크롬 자체 중단)으로 한 번 더. 대체가 열리면 그 실행 내내 대체를 먼저 쓴다.
+    연속 실패 2번부터는 한 번만 시도하고, 렌더 누적 시간이 예산을 넘으면 바로 포기한다(사이트가 통째로 안 열릴 때 실행 시간 보호)."""
+    if _render_state["spent"] >= RENDER_BUDGET_S:
+        log(f"렌더 예산({RENDER_BUDGET_S}초) 소진 — 건너뜀 {url}")
         return ""
+    order = [("alt", RENDER_ALT, min(timeout, 100)), ("primary", RENDER_PRIMARY, timeout)] if _render_state["prefer_alt"] \
+        else [("primary", RENDER_PRIMARY, timeout), ("alt", RENDER_ALT, 100)]
+    if _render_state["fails"] >= 2:
+        order = order[:1]
+    for name, extra, tmo in order:
+        t0 = time.time()
+        try:
+            html = _chrome_dom(chrome, url, extra, tmo)
+            _render_state["spent"] += time.time() - t0
+            if html.strip():
+                if name == "alt" and not _render_state["prefer_alt"]:
+                    _render_state["prefer_alt"] = True
+                    log("렌더: 기본 설정이 멈춰 대체 설정(가상 시간 없음 · 45초 중단)으로 전환")
+                _render_state["fails"] = 0
+                return html
+            log(f"렌더 빈 응답({name}) {url}")
+        except subprocess.TimeoutExpired:
+            _render_state["spent"] += time.time() - t0
+            log(f"렌더 시간 초과({name} · {tmo}초) {url}")
+        except Exception as e:  # noqa: BLE001
+            _render_state["spent"] += time.time() - t0
+            log(f"렌더 실패({name}) {url}: {type(e).__name__}: {str(e)[:200]}")
+    _render_state["fails"] += 1
+    return ""
 
 
 def fetch(url: str, referer: str | None = None, timeout: int = 40) -> tuple[bytes, str]:

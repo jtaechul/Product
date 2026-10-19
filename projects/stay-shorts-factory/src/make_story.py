@@ -382,7 +382,7 @@ STORY_SYSTEM = """너는 숙소 쇼츠 작가다. 이 숙소의 **장점 하나*
 5) 문장 길이: 공백 빼고 6~30자, 전체 합 80~170자(약 12~26초). 문장은 서로 이어지게(앞 문장을 받는 연결어 환영).
 6) shots: 그 문장 동안 나올 컷 id(아래 목록). 훅·제안은 1개, 정체·가운데 문장은 **서로 다른 사진 2개**(첫 컷 = 문장의 대상, 둘째 컷 = 다른 장소·다른 사진 — 화면이 자주 바뀌어야 한다).
    **이어지는 컷에 같은 원본 사진 금지**(앞 문장의 마지막 컷과 다음 문장의 첫 컷도) · 같은 원본 사진은 영상 전체에서 2컷까지 · '짧은 인서트' 컷은 둘째 컷으로만.
-   훅·정체·디테일의 첫 컷은 장점 사진. **제안은 훅과 같은 사진**(같은 id 또는 같은 사진의 다른 컷). 장소가 다른 사진을 골고루 쓴다(목록의 '장소').
+   훅·정체·디테일의 첫 컷은 장점 사진. **제안은 훅과 다른 사진**(아직 덜 쓴 사진 — 장점 사진이 남아 있으면 그것, 없으면 연결 사진 · 화면은 제작 때 집·차 안의 '떠남' 인서트로 바뀐다). 장소가 다른 사진을 골고루 쓴다(목록의 '장소').
 7) hook_title: 첫 화면 위쪽 큰 제목 — 장점의 신박함을 묻는 질문(장점 낱말 · 핵심 낱말 하나만 [대괄호] · 공백 빼고 6~14자 · 물음표 끝 · 숙소·지역 이름 금지 · 나레이션을 그대로 옮기지 않는다).
 8) caption: hook(첫 줄 — 장점이 무엇이고 왜 의외인지, 사실 그대로) · points(장점의 다른 관점 1~3줄, 사실 그대로) · save(저장 권유 한 줄, 시기와 연결).
    checklist: 사실 번호와 짧은 체크 항목 2~4개. title: 유튜브 제목 12~28자(숙소 이름 포함). hashtags 5개.
@@ -507,11 +507,10 @@ def story_errs(js: dict, sig: dict, h: dict, req: dict, facts: list[str], shots:
             errs.append(f"문장 {i} {lens} 컷은 1개")
         if len(ids) > 3:
             errs.append(f"문장 {i} 컷 {len(ids)}개 — 3개까지")
-        if lens in ("훅", "정체", "디테일", *END_LENSES) and not by_id[ids[0]]["adv"]:
+        if lens in ("훅", "정체", "디테일") and not by_id[ids[0]]["adv"]:                        # v8: 제안은 연결 사진도 된다(덜 쓴 사진 · 화면은 인서트)
             errs.append(f"문장 {i} {lens} 관점의 첫 컷에 연결 사진 — 장점 사진으로")
-        if lens not in END_LENSES:                                                           # 제안은 규칙상 훅 사진으로 돌아온다(그림은 되돌아옴) — 반복으로 안 센다
-            for x in ids:
-                photo_count[by_id[x]["k"]] = photo_count.get(by_id[x]["k"], 0) + 1
+        for x in ids:                                                                       # v8: 제안도 센다(훅 되돌아옴 폐기 — 같은 사진 반복은 어디서든 반복)
+            photo_count[by_id[x]["k"]] = photo_count.get(by_id[x]["k"], 0) + 1
         desc = " ".join(by_id[x]["desc"] for x in ids)
         fi = sg._int(b.get("fact"))
         fact = facts[fi - 1] if fi and 1 <= fi <= len(facts) else ""
@@ -562,7 +561,7 @@ def est_sec(j: int, line: str) -> float:
 
 def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None) -> None:
     """v6 동선 규칙을 코드가 강제한다(0원): ① 첫 컷은 인서트 금지 · 훅/정체/디테일/제안 첫 컷은 장점 사진 ② 2.9초 넘는 문장(훅·제안 제외)은 서로 다른 사진 2컷
-    ③ 이어지는 컷에 같은 원본 금지(앞 문장 마지막 컷 ↔ 다음 문장 첫 컷) ④ 같은 원본 사진은 2컷까지(제안=훅 되돌아옴은 안 셈). 모델 답을 고칠 뿐 다시 묻지 않는다."""
+    ③ 이어지는 컷에 같은 원본 금지(앞 문장 마지막 컷 ↔ 다음 문장 첫 컷) ④ 같은 원본 사진은 2컷까지(v8: 제안도 센다 · 제안은 훅과 다른 사진). 인서트 컷(INS)은 그대로 둔다. 모델 답을 고칠 뿐 다시 묻지 않는다."""
     by_id = {s["id"]: s for s in shots}
     if not by_id or not beats:
         return
@@ -574,25 +573,39 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
     changes: list[str] = []
 
     def need_adv(b) -> bool:
-        return b.get("lens") in ("훅", "정체", "디테일") or b.get("lens") in END_LENSES
+        return b.get("lens") in ("훅", "정체", "디테일")                                   # v8: 제안은 장점 사진 선호일 뿐 필수 아님(pick 정렬이 장점 사진을 앞에 둔다)
 
-    def pick(b, exclude_k: set, used: dict, prefer_place_not: str | None = None, allow_insert: bool = False) -> dict | None:
+    def pick(b, exclude_k: set, used: dict, prefer_place_not: str | None = None, allow_insert: bool = False, tail: bool = False) -> dict | None:
         lt = sg._tokens(b.get("line")) | sg._tokens(b.get("want"))
-        cands = [s for s in shots if (allow_insert or s.get("grade", "full") != "insert") and (s["adv"] or not need_adv(b))]
+        cands = [s for s in shots if not s.get("insert") and (allow_insert or s.get("grade", "full") != "insert") and (s["adv"] or not need_adv(b))]
         cands = [s for s in cands if s["k"] not in exclude_k] or [s for s in cands if s["k"] not in {min(exclude_k) if exclude_k else -1}]
         if not cands:
             return None
+        if tail:                                                                       # v8: 둘째 컷(꼬리)은 **아직 안 쓴 사진**이 먼저(원본은 영상에서 한 번만) · 장소 바꾸기 · 그다음 낱말 겹침
+            return sorted(cands, key=lambda s: (used.get(s["k"], 0) >= C_PER_PHOTO, used.get(s["k"], 0), s.get("place") == prefer_place_not,
+                                                -sg._overlap(lt, sg._tokens(s["desc"])), not s["adv"], s["id"]))[0]
         return sorted(cands, key=lambda s: (used.get(s["k"], 0) >= C_PER_PHOTO, s.get("place") == prefer_place_not,
                                             -sg._overlap(lt, sg._tokens(s["desc"])), used.get(s["k"], 0), not s["adv"], s["id"]))[0]
 
     # ① 첫 컷 규칙
     for j, b in enumerate(beats):
         ids = [x for x in (b.get("shots") or []) if x in by_id]
-        if b.get("lens") in END_LENSES and beats[0].get("shots") and beats[0]["shots"][0] in by_id:
-            k0 = k_of(beats[0]["shots"][0])
-            same = [s["id"] for s in shots if s["k"] == k0]
-            ids = [ids[0]] if ids and k_of(ids[0]) == k0 else same[:1]            # 제안 = 훅 사진으로 되돌아옴
-        if not ids or by_id[ids[0]].get("grade", "full") == "insert" or (need_adv(b) and not by_id[ids[0]]["adv"]):
+        if b.get("lens") in END_LENSES and j > 0:                                       # v8: 제안은 훅과 **다른** 장점 사진(되돌아옴 폐기 · 화면은 '떠남' 인서트가 덮는다)
+            k0 = k_of(beats[0]["shots"][0]) if beats[0].get("shots") and beats[0]["shots"][0] in by_id else -1
+            if not (ids and by_id[ids[0]].get("insert")) and (not ids or k_of(ids[0]) == k0):
+                cnt: dict[int, int] = {}
+                for bb in beats[:j]:
+                    for x in bb.get("shots") or []:
+                        if x in by_id:
+                            cnt[k_of(x)] = cnt.get(k_of(x), 0) + 1
+                prev_k = k_of(beats[j - 1]["shots"][-1]) if beats[j - 1].get("shots") and beats[j - 1]["shots"][-1] in by_id else -1
+                best = pick(b, {k0, prev_k}, cnt)
+                if best:
+                    changes.append(f"문장 {j + 1} 제안 컷 {ids[:1]} → {best['id']}({best.get('place')} · 훅과 다른 사진)")
+                    ids = [best["id"]]
+            b["shots"] = ids[:1]
+            continue
+        if not ids or by_id[ids[0]].get("grade", "full") == "insert" or (need_adv(b) and not (by_id[ids[0]]["adv"] or by_id[ids[0]].get("insert"))):
             best = pick(b, set(), {})
             if best:
                 changes.append(f"문장 {j + 1} 첫 컷 {ids[:1]} → {best['id']}({best.get('place')})")
@@ -610,7 +623,7 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
             continue
         first = by_id[b["shots"][0]]
         nxt = k_of(beats[j + 1]["shots"][0]) if j + 1 < n and beats[j + 1].get("shots") else -1
-        best = pick({**b, "lens": "연결"}, {first["k"], nxt}, used, prefer_place_not=first.get("place"), allow_insert=True)
+        best = pick({**b, "lens": "연결"}, {first["k"], nxt}, used, prefer_place_not=first.get("place"), allow_insert=True, tail=True)
         if best and best["k"] != first["k"]:
             b["shots"].append(best["id"])
             used[best["k"]] = used.get(best["k"], 0) + 1
@@ -621,10 +634,6 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
         if not prev.get("shots") or not cur.get("shots"):
             continue
         if k_of(cur["shots"][0]) != k_of(prev["shots"][-1]):
-            continue
-        if cur.get("lens") in END_LENSES:                                                 # 제안은 훅 사진이어야 하므로 앞 문장 쪽을 바꾼다
-            if len(prev["shots"]) >= 2 and k_of(prev["shots"][0]) != k_of(cur["shots"][0]):
-                prev["shots"].reverse(); changes.append(f"문장 {j} 컷 순서 바꿈(제안 앞 중복)")
             continue
         if len(cur["shots"]) >= 2 and k_of(cur["shots"][1]) != k_of(prev["shots"][-1]) and by_id[cur["shots"][1]].get("grade", "full") != "insert" \
                 and (by_id[cur["shots"][1]]["adv"] or not need_adv(cur)):
@@ -642,7 +651,7 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
     # ④ 같은 원본 사진 2컷까지(제안 제외) — 넘치면 바꿀 수 있는 자리부터: 둘째 컷 → 사람·강아지 동작이 없는 문장의 첫 컷(훅 제외) 순.
     #    손·뒷모습·강아지 동작이 붙은 첫 컷은 그 사진의 사물에 맞춘 지시문이라 바꾸지 않는다.
     def occurrences(k: int) -> list[tuple[int, int]]:
-        return [(j, m) for j, b in enumerate(beats) if b.get("lens") not in END_LENSES for m, x in enumerate(b["shots"]) if k_of(x) == k]
+        return [(j, m) for j, b in enumerate(beats) for m, x in enumerate(b["shots"]) if k_of(x) == k]
 
     def replaceable(j: int, m: int) -> int:                                            # 0 = 못 바꿈 · 1 = 둘째 컷 · 2 = 동작 없는 첫 컷
         b = beats[j]
@@ -651,7 +660,7 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
         if b.get("lens") == "훅" or str(b.get("actor") or "none").lower() in ("hand", "back", "couple", "dog"):
             return 0
         return 2
-    for k in sorted({k_of(x) for b in beats if b.get("lens") not in END_LENSES for x in b["shots"]}):
+    for k in sorted({k_of(x) for b in beats for x in b["shots"] if k_of(x) >= 0}):
         guard = 0
         while len(occurrences(k)) > C_PER_PHOTO and guard < 6:
             guard += 1
@@ -668,7 +677,7 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
                 nb.add(k_of(beats[j - 1]["shots"][-1]))
             cnt_now = {kk: len(occurrences(kk)) for kk in {k_of(y) for bb in beats for y in bb["shots"]}}
             best = pick(b if m == 0 else {**b, "lens": "연결"}, nb | {k}, cnt_now, prefer_place_not=by_id[b["shots"][0]].get("place") if m else None,
-                        allow_insert=m > 0)
+                        allow_insert=m > 0, tail=m > 0)
             if not best or best["k"] == k or cnt_now.get(best["k"], 0) >= C_PER_PHOTO:
                 break
             b["shots"][m] = best["id"]
@@ -733,13 +742,13 @@ def recheck_shots(text: dict, shots: list[dict], sig: dict, report: dict) -> Non
 
 def fix_shots(js: dict, shots: list[dict]) -> None:
     """코드로 고칠 수 있는 것은 고친다(돈 0): ① 같은 컷을 두 번 쓰면 같은 사진의 안 쓴 컷(없으면 안 쓴 장점 컷)으로 바꾼다
-    ② 제안 컷 = 훅 컷과 같은 사진(첫 장면으로 돌아오기 — 이것만 같은 컷 허용)."""
+    ② 제안 컷이 훅과 같은 사진이면 덜 쓴 다른 장점 사진으로(v8: 되돌아옴 폐기 — 운영자 2026-10-19 "똑같은 사진 반복이 눈에 거슬린다")."""
     beats = js.get("beats") or []
     if len(beats) < 2:
         return
     by_id = {s["id"]: s for s in shots}
     used = set()
-    for b in beats[:-1]:
+    for b in beats:
         ids = []
         for x in [x for x in b.get("shots") or [] if x in by_id]:
             if x in used:
@@ -753,14 +762,21 @@ def fix_shots(js: dict, shots: list[dict]) -> None:
             b["shots"] = ids
     h_ids = [x for x in beats[0].get("shots") or [] if x in by_id]
     last = beats[-1]
-    if not h_ids:
+    if not h_ids or str(last.get("lens") or "") not in END_LENSES:
         return
     k0 = by_id[h_ids[0]]["k"]
     l_ids = [x for x in last.get("shots") or [] if x in by_id]
-    if l_ids and by_id[l_ids[0]]["k"] == k0:
+    if l_ids and by_id[l_ids[0]]["k"] != k0:
         return
-    same = [s["id"] for s in shots if s["k"] == k0 and s["id"] != h_ids[0]]
-    last["shots"] = [same[0] if same else h_ids[0]]
+    cnt: dict[int, int] = {}
+    for b in beats[:-1]:
+        for x in b.get("shots") or []:
+            if x in by_id:
+                cnt[by_id[x]["k"]] = cnt.get(by_id[x]["k"], 0) + 1
+    alt = sorted((s for s in shots if s["k"] != k0 and not s.get("insert") and s.get("grade", "full") != "insert"),
+                 key=lambda s: (cnt.get(s["k"], 0), not s["adv"], s["id"] in used, s["id"]))        # 덜 쓴 사진 먼저(장점 사진 2장뿐이면 연결 사진) — 사진당 상한 충돌 방지
+    if alt:
+        last["shots"] = [alt[0]["id"]]
 
 
 def repair(js: dict, errs: list[str], sig: dict, facts: list[str], report: dict) -> dict:
@@ -948,9 +964,10 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
                       "actor": str(b.get("actor") or "").strip().lower(), "action_en": design.one_line(str(b.get("action_en") or "")),
                       **({"want": str(b.get("want"))} if b.get("want") else {})})
     route_shots(beats, shots, report)                                                  # v6 동선 규칙(코드 강제 · 0원)
-    plan_visuals(beats, shots, report, int(req.get("ai_cuts") or AI_CUTS_DEFAULT), dog_ok(sig))
+    plan_visuals(beats, shots, report, ai_budget(req), dog_ok(sig))
     scenes = storyboard_scenes(models, beats, shots, sig, req, report)                   # v7 씬 스토리보드(시트 이미지 · 돈)
-    shots_desc = [{"description": next(s["desc"] for s in shots if s["id"] == beats[0]["shots"][0])}]
+    hook_sid = next((x for x in beats[0]["shots"] if not any(s.get("insert") for s in shots if s["id"] == x)), beats[0]["shots"][0])
+    shots_desc = [{"description": next(s["desc"] for s in shots if s["id"] == hook_sid)}]
     title = sg.ensure_sig_title(models, design.one_line(str(js.get("hook_title") or "")), [b["line"] for b in beats], shots_desc, sig, h, req, ttype, report)
     cap = js.get("caption") if isinstance(js.get("caption"), dict) else {}
     ocap = operator_caption(h["name"]) if op else None
@@ -980,16 +997,28 @@ def storyboard_scenes(models: dict, beats: list[dict], shots: list[dict] | dict,
         report["storyboard"] = {"skipped": "request storyboard=false"}
         return []
     by_id = {s["id"]: s for s in (shots.values() if isinstance(shots, dict) else shots)}
-    scenes = sc.plan_scenes(beats, by_id, dog_ok(sig), report)
-    if not scenes:
+    dog = dog_ok(sig)
+    use_inserts = req.get("inserts", True) is not False and len(beats) >= 2
+    scenes = sc.plan_scenes(beats, by_id, dog, report, end_scene=not use_inserts)        # 인서트를 쓰면 제안 컷은 인서트라 그 씬(패널·시트 값)은 만들지 않는다
+    if scenes:
+        sc.make_sheets(models, scenes, by_id, STORY, report)
+    else:
         report["storyboard"] = {"sheets": [], "krw": 0, "scenes": []}
-        return []
-    sc.make_sheets(models, scenes, by_id, STORY, report)
-    sc.apply_scenes(beats, scenes, by_id)
+    # v8 C: 숙소와 무관한 감정 인서트(집 창가·현관·차창) 시트 1장 → 훅 첫 컷·제안 컷(훅 되돌아옴 대신). request "inserts": false 면 생략
+    inserts = sc.plan_inserts(beats, dog) if use_inserts else []
+    if inserts:
+        sc.make_insert_sheet(models, inserts, STORY, report)
+        added = sc.apply_inserts(beats, inserts, by_id, report, ai_budget(req))
+        if added and isinstance(shots, list):                                          # 재료 목록(plan.json · report)에도 — 제작 재사용이 같은 인서트를 쓴다
+            shots.extend(added)
+            report.setdefault("story_shots", []).extend({k: s_.get(k) for k in ("id", "k", "kind", "desc", "zoom", "place", "grade")} for s_ in added)
+    sc.apply_scenes(beats, scenes, by_id, report)
+    visual_report(beats, by_id, report)
     sb = report.get("storyboard") or {}
+    ins = report.get("inserts") or {}
     log(f"씬 스토리보드: 씬 {len([x for x in scenes if not x.get('spare')])}개 + 여분 {len([x for x in scenes if x.get('spare')])} · 시트 {len(sb.get('sheets') or [])}장 "
-        f"· 통과 {sum(1 for x in scenes if x.get('ok'))}/{len(scenes)} · 약 {sb.get('krw', 0):,}원")
-    return [{k_: x.get(k_) for k_ in ("n", "j", "m", "sid", "k", "place", "who", "with_dog", "action_en", "time", "img", "ok", "why", "panel_px", "sheet", "spare")} for x in scenes]
+        f"· 통과 {sum(1 for x in scenes if x.get('ok'))}/{len(scenes)} · 약 {sb.get('krw', 0):,}원 · 인서트 {len(report.get('inserts_used') or [])}컷(약 {ins.get('krw', 0):,}원)")
+    return [{k_: x.get(k_) for k_ in ("n", "j", "m", "sid", "k", "place", "who", "with_dog", "action_en", "time", "img", "ok", "why", "panel_px", "sheet", "spare", "angle", "minor")} for x in scenes]
 
 
 # ── 4. 렌더 ─────────────────────────────────────────────────────────────────────────────
@@ -1067,7 +1096,7 @@ def beat_clip(beat: dict, shots: dict, L: float, out: Path, j: int) -> tuple[Pat
         else:
             parts.append(sg.photo_clip(img, sec, STORY / f"pan_{j}_{m}.mp4", pat, MOTION))
     ks = beat.get("cut_kinds") or []
-    sbk = " · AI 스토리보드" if any(str(x).startswith("AI 스토리보드") for x in ks) else ""
+    sbk = (" · AI 스토리보드" if any(str(x).startswith("AI 스토리보드") for x in ks) else "") + (" · 인서트" if any(str(x).startswith("인서트") for x in ks) else "")
     if len(parts) == 1:
         a = beat.get("aim")
         return parts[0], (f"사진 무빙·{a['what'] or '대상'} {'다가감' if a['move'] == 'in' else '물러남'} {1 + a['zoom']:.2f}배" if a else f"사진 무빙·{PATTERNS[j % len(PATTERNS)]}") + sbk
@@ -1075,6 +1104,12 @@ def beat_clip(beat: dict, shots: dict, L: float, out: Path, j: int) -> tuple[Pat
     lst.write_text("".join(f"file '{p.resolve()}'\n" for p in parts), encoding="utf-8")
     ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(out)])
     return out, f"사진 무빙 {n}컷" + sbk
+
+
+def ai_budget(req: dict) -> int:
+    """request "ai_cuts" — 없으면 기본 6, 0 이면 AI 컷 없음(사진 무빙만 · Veo 0원)."""
+    v = req.get("ai_cuts")
+    return AI_CUTS_DEFAULT if v is None or v == "" else max(0, int(v))
 
 
 def dog_ok(sig: dict) -> bool:
@@ -1108,9 +1143,10 @@ def plan_visuals(beats: list[dict], shots: list[dict] | dict, report: dict, budg
         lens = str(b.get("lens") or "")
         v = valid_visual(b, dog)
         first = by_id0.get((b.get("shots") or [None])[0]) or {}
+        b.pop("hook_keep", None)
         if (j == n - 1 and lens in END_LENSES) or lens in PLACE_LENSES:
             v = None
-        elif j == 0 and DOG_RX.search(str(first.get("desc") or "")) and str(b.get("actor") or "").lower() in ("", "none"):
+        elif j == 0 and not first.get("insert") and DOG_RX.search(str(first.get("desc") or "")) and str(b.get("actor") or "").lower() in ("", "none"):
             v = None                                                                   # v6: 훅 사진에 실제 강아지가 이미 있으면 AI 로 건드리지 않는다(사진 무빙)
             b["hook_keep"] = "사진에 이미 강아지"
         elif v is None and (j == 0 or lens in MOMENT_LENSES):
@@ -1135,8 +1171,6 @@ def plan_visuals(beats: list[dict], shots: list[dict] | dict, report: dict, budg
             v["type"] = "C"; v["skipped"] = "AI 컷 예산 밖"
         else:
             b["visual"] = {"type": "C"}
-    if n >= 2 and str(beats[-1].get("lens") or "") in END_LENSES and 0 in chosen:
-        beats[-1]["visual"] = {"type": "R"}
     for b in beats:                                                                    # v6: A/B 문장의 둘째 컷은 AI 뒤에 붙는 다른 사진(꼬리)
         if b["visual"]["type"] in ("A", "B") and len(b.get("shots") or []) > 1:
             b["visual"]["tail"] = b["shots"][1]
@@ -1147,25 +1181,32 @@ def plan_visuals(beats: list[dict], shots: list[dict] | dict, report: dict, budg
             break
     by_id = {s["id"]: s for s in (shots.values() if isinstance(shots, dict) else shots)}
     cnt: dict[int, int] = {}
-    for b in beats:                                                                # 같은 사진의 **사진 무빙** 컷만 센다(AI 컷은 사람·강아지·빛으로 화면이 달라진다 · R 은 훅 영상 · A/B 의 꼬리 컷은 센다)
+    for b in beats:                                                                # 같은 사진의 **사진 무빙** 컷만 센다(AI 컷은 사람·강아지·빛으로 화면이 달라진다 · A/B 의 꼬리 컷은 센다)
         if b["visual"]["type"] == "R":
             continue
         for x in (b.get("shots") or [])[1 if b["visual"]["type"] in ("A", "B") else 0:]:
-            if x in by_id:
+            if x in by_id and by_id[x]["k"] >= 0:
                 cnt[by_id[x]["k"]] = cnt.get(by_id[x]["k"], 0) + 1
     over = {k: c for k, c in cnt.items() if c > 2}
     if over:
         warns.append(f"같은 사진의 사진 무빙 컷이 3개 이상 {over} — 사진 부족(#54 같은 그림 반복)")
+    visual_report(beats, by_id, report, warns)
+
+
+def visual_report(beats: list[dict], by_id: dict, report: dict, warns: list[str] | None = None) -> None:
+    """화면 계획 보고(0원) — 인서트가 끼어든 뒤(storyboard_scenes)에도 다시 부른다."""
     report["visual_plan"] = [{"i": j + 1, "lens": b.get("lens"), "type": b["visual"]["type"], "actor": b["visual"].get("actor"),
                               "action_en": b["visual"].get("action_en"), "auto": bool(b["visual"].get("auto")), "shot": (b.get("shots") or [None])[0],
-                              "shots": list(b.get("shots") or []), "tail": b["visual"].get("tail"), **({"keep": b["hook_keep"]} if b.get("hook_keep") else {})}
+                              "shots": list(b.get("shots") or []), "tail": b["visual"].get("tail"), **({"keep": b["hook_keep"]} if b.get("hook_keep") else {}),
+                              **({"insert": b["insert"]} if b.get("insert") else {})}
                              for j, b in enumerate(beats)]
-    report["visual_warnings"] = warns
-    report["ai_cuts"] = sum(1 for t in types if t in ("A", "B"))
+    if warns is not None:
+        report["visual_warnings"] = warns
+    report["ai_cuts"] = sum(1 for b in beats if b["visual"]["type"] in ("A", "B"))
     report["cut_count"] = sum(len(b.get("shots") or []) for b in beats)
-    report["places"] = sorted({by_id[x].get("place") or "-" for b in beats for x in (b.get("shots") or []) if x in by_id})
-    log("화면 계획: " + " ".join(f"{j + 1}{b['visual']['type']}" + (f"({ACTOR_KO[b['visual']['actor']]})" if b["visual"].get("actor") else "") for j, b in enumerate(beats))
-        + (f" · 경고 {warns}" if warns else ""))
+    report["places"] = sorted({by_id[x].get("place") or "-" for b in beats for x in (b.get("shots") or []) if x in by_id and not by_id[x].get("insert")})
+    log("화면 계획: " + " ".join(f"{j + 1}{b['visual']['type']}" + (f"({ACTOR_KO[b['visual']['actor']]})" if b["visual"].get("actor") else "") + ("(인서트)" if b.get("insert") else "")
+                               for j, b in enumerate(beats)) + (f" · 경고 {warns}" if warns else ""))
 
 
 PERSON_PROMPT_IN = {                                                                 # v7: 스토리보드 패널에서 시작 — 손·사람이 첫 장면에 이미 있다
@@ -1183,7 +1224,7 @@ DOG_PROMPT_IN = ("Camera: steady and locked-off, no camera movement. The small c
 
 def visual_prompt(v: dict, shot: dict) -> str:
     actor, act = v["actor"], v["action_en"]
-    in_frame = str(v.get("start_img") or "").startswith("sb_")                       # 통과한 스토리보드 패널에서 시작하면 사람·강아지가 이미 화면에 있다
+    in_frame = bool(v.get("in_frame"))                                               # 사람·강아지 패널이 통과해 그 패널에서 시작할 때만(apply_scenes) — 여분 패널·원본이면 '들어온다' 지시문
     if actor in PERSON_PROMPT:
         return (PERSON_PROMPT_IN if in_frame else PERSON_PROMPT)[actor].format(action=act)
     if actor == "couple":
@@ -1374,22 +1415,22 @@ def render(text: dict, shots: dict, narr: dict, req: dict, report: dict, folder:
                 ncut = 1
         else:
             src, kind = beat_clip(b, shots, L, STORY / f"beat_{j}.mp4", j)
-            if j == n_beats - 1 and b.get("lens") in END_LENSES:
-                kind = "훅 사진 되돌아옴 · " + kind
             if preview and v.get("type") in ("A", "B", "R"):
                 kind += " (제작 때 " + ("훅 컷 재사용" if v["type"] == "R" else "AI " + ACTOR_KO.get(v.get("actor"), "") + (f" {AI_PART[1]:.1f}초 + 사진 무빙" if v.get("tail") else "")) + ")"
         segs.append(so.cut_segment(100 + i, src, L, wav if wav.exists() else None, overlays, slow))
         timeline.append({"i": i, "lens": b["lens"], "kind": kind, "sec": round(L, 2), "shots": b["shots"], "cuts": ncut, "narration": b["line"],
                          "places": [shots[x].get("place") for x in b["shots"] if x in shots],
                          "title": text["hook_title"] if j == 0 else None, "chunks": [[t, a, c] for t, a, c in chunks]})
-    hook_img = STORY / shots[beats[0]["shots"][0]]["img"]
+    hook_sid = next((x for b in beats for x in b["shots"] if x in shots and not shots[x].get("insert") and shots[x].get("adv")),
+                    next((x for b in beats for x in b["shots"] if x in shots and not shots[x].get("insert")), beats[0]["shots"][0]))
+    hook_img = STORY / shots[hook_sid]["img"]                                         # 끝 카드 배경 = 숙소 장점 사진(인서트는 집·차 안이라 제외)
     card = design.end_card(STORY / "end_card.jpg", hook_img, folder, pos, style, ms.DISCLOSURE)
     Lc = max(3.6, float(narr.get("cta") or 2.5) + 0.7)
     cta_wav = B / "narr_cta.wav"
     segs.append(so.cut_segment(199, card, Lc, cta_wav if cta_wav.exists() else None, [], image=True, fade_in=0.3))
     timeline.append({"i": "끝", "lens": "끝 카드", "kind": "카드", "sec": round(Lc, 2), "narration": so.cta_text(folder, pos)})
     report["cut_count"] = sum(int(t.get("cuts") or 0) for t in timeline if t.get("cuts"))
-    report["places"] = sorted({pl for t in timeline for pl in (t.get("places") or []) if pl})
+    report["places"] = sorted({pl for t in timeline for pl in (t.get("places") or []) if pl and pl != "인서트"})
     log(f"컷 {report['cut_count']}개 · 장소 {len(report['places'])}곳 {report['places']}")
     (STORY / "concat.txt").write_text("".join(f"file '{p.resolve()}'\n" for p in segs), encoding="utf-8")
     nob = STORY / "video_nobgm.mp4"
@@ -1485,15 +1526,30 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
     scn = [x for x in (text.get("scenes") or []) if x.get("j") is not None]
     if sb.get("sheets") is not None or scn:
         md += [f"## 씬 스토리보드 (v7 · 시트 {len(sb.get('sheets') or [])}장 · 약 {sb.get('krw', 0):,}원 · 통과 {sum(1 for x in scn if x.get('ok'))}/{len(scn)})", "",
-               "| 문장 | 컷 | 장소 | 누가·동작 | 시간대 | 패널 | 결과 |", "|---|---|---|---|---|---|---|"]
+               "| 문장 | 컷 | 장소 | 누가·동작 | 카메라 | 시간대 | 패널 | 결과 |", "|---|---|---|---|---|---|---|---|"]
         for x in scn:
             who = sc.WHO_KO.get(x.get("who"), "") + ("+강아지" if x.get("with_dog") else "")
-            md.append(f"| {x['j'] + 1} | {x['m'] + 1} | {x.get('place') or '-'} | {who}{(' · ' + str(x.get('action_en') or '')[:50]) if x.get('action_en') else ''} | {sc.TIME_KO.get(x.get('time'), '')} "
-                      f"| {x.get('panel_px') or 0}px | {'통과' if x.get('ok') else '탈락 → 원본 사진 (' + str(x.get('why') or '')[:40] + ')'} |")
+            ang = "원본 각도" if x.get("angle") == sc.SAME_ANGLE else str(x.get("angle") or "")[:34]
+            res = ("통과" + (f" (소품: {x['minor']})" if x.get("minor") else "")) if x.get("ok") \
+                else ("원본 사진(꼬리 컷 · 시트 생략으로 돈 절약)" if "시트 생략" in str(x.get("why") or "") else "탈락 → 여분 패널·원본 (" + str(x.get("why") or "")[:40] + ")")
+            md.append(f"| {x['j'] + 1} | {x['m'] + 1} | {x.get('place') or '-'} | {who}{(' · ' + str(x.get('action_en') or '')[:50]) if x.get('action_en') else ''} | {ang} | {sc.TIME_KO.get(x.get('time'), '')} "
+                      f"| {x.get('panel_px') or 0}px | {res} |")
         for sh in sb.get("sheets") or []:
             if not sh.get("ok"):
                 md.append(f"- 시트 {sh['n']} 실패: {sh.get('error')}")
-        md += ["", "- 통과한 패널이 그 컷의 화면(스틸 무빙)이 되고, 제작 때 사람·강아지 씬은 그 패널에서 Veo 영상이 시작됩니다. 탈락한 패널은 원본 사진으로 돌아갑니다.", ""]
+        md += ["", "- 통과한 패널이 그 컷의 화면(스틸 무빙)이 되고, 제작 때 사람·강아지 씬은 그 패널에서 Veo 영상이 시작됩니다. 환경 씬은 원본과 다른 카메라 위치(v8).",
+               "- 탈락한 패널은 같은 사진의 여분 패널로, 원본 사진은 영상 전체에서 한 번만 씁니다(이미 쓴 사진의 컷은 뺍니다)."]
+        for d in (report.get("scene_drops") or [])[:6]:
+            md.append(f"- 뺀 컷: {d}")
+        md.append("")
+    ins = report.get("inserts") or {}
+    if ins.get("items"):
+        used = set(report.get("inserts_used") or [])
+        md += [f"## 감정 인서트 (v8 · 숙소 아님 · 시트 1장 약 {ins.get('krw', 0):,}원)", "", "| # | 쓰임 | 장면 | 결과 |", "|---|---|---|---|"]
+        for x in ins["items"]:
+            use = {"hook": "훅 첫 컷", "end": "제안 컷"}.get(x.get("role"), "예비") + (" · 사용" if f"INS{x.get('n')}" in used else "")
+            md.append(f"| {x.get('n')} | {use} | {x.get('name')} — {str(x.get('what') or '')[:40]} | {'통과' if x.get('ok') else '탈락 (' + str(x.get('why') or '')[:30] + ')'} |")
+        md += ["", "- 훅은 집·차 안의 '걱정' 장면에서 숙소로, 제안은 '떠남' 장면으로 끝납니다(훅 사진 되돌아옴 폐기).", ""]
     md += ["## 이야기 (관점별 한 문장)", "", "| # | 관점 | 문장 | 컷 | 장소 | 근거 |", "|---|---|---|---|---|---|"]
     for j, b in enumerate(text["beats"], 1):
         cuts = ", ".join(x + "(" + shots[x]["kind"] + ")" for x in b["shots"])
@@ -1510,6 +1566,8 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
                 kind += f" {AI_PART[1]:.1f}초 + 사진 무빙"
             if r.get("keep"):
                 kind += f" ({r['keep']})"
+            if r.get("insert"):
+                kind += f" (인서트 {r['insert']})"
             md.append(f"| {r['i']} | {r['lens']} | {kind}{' (코드가 고름)' if r.get('auto') else ''} | {r.get('action_en') or '-'} |")
         md += ["", "- 사람은 끝까지 뒷모습·강아지는 실사 소형견. 제작 뒤 비전 검수(사람 수·얼굴·강아지 수·새 사물·구조 변화)에 탈락하면 그 컷만 사진 무빙.",
                "- 화면 위 고지문 줄에 'AI 연출' 표시 + 캡션 고지."]
@@ -1524,7 +1582,7 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
     md += ["", "## 훅 제목", "", (f"**{text['hook_title']}** ({text['hook_title_type']})" if text.get("hook_title") else "(제목 없음 — 규칙에 맞는 후보가 없었다)"),
            "", "## 캡션", "", c.get("hook", ""), *(c.get("points") or []), "", *[f"· {x}" for x in text["checklist"]], "", c.get("save", ""),
            "", f"제목: {text['title']} · 해시태그: {' '.join(text['hashtags'])}", "",
-           "## 비용", "", (f"- 미리보기: AI 영상 없음(사진 무빙) · 글·비전·음성만 — 정식 제작 때 화면 계획대로 AI 컷 {report.get('ai_cuts', 0)}개(약 {294 * int(report.get('ai_cuts') or 0):,}원 + 검수)" if preview
+           "## 비용", "", (f"- 미리보기: 스토리보드 시트 약 {(report.get('storyboard') or {}).get('krw', 0):,}원 + 인서트 시트 약 {(report.get('inserts') or {}).get('krw', 0):,}원 · AI 영상 없음(사진 무빙) · 글·비전·음성 — 정식 제작 때 화면 계획대로 AI 컷 {report.get('ai_cuts', 0)}개(약 {294 * int(report.get('ai_cuts') or 0):,}원 + 검수)" if preview
                            else f"- AI 영상 {sum(1 for r in (report.get('veo') or {}).get('clips', []) if r.get('ok'))}/{len((report.get('veo') or {}).get('clips', []))}컷 · 이번 실행 약 {round(veo.spent_this_run()):,}원")]
     return "\n".join(md) + "\n"
 
@@ -1534,7 +1592,7 @@ NARR_FILES = ("narr_full.wav",)
 
 
 def save_plan(req: dict, h: dict, pos0: int, pos: int, sig: dict, text: dict, shots: list[dict], narr: dict) -> Path:
-    plan = {"version": 6, "stay": h["name"], "format": "story", "month": req.get("month"), "theme": req.get("theme"), "region": req.get("region"),
+    plan = {"version": 7, "stay": h["name"], "format": "story", "month": req.get("month"), "theme": req.get("theme"), "region": req.get("region"),
             "pos0": pos0, "pos": pos, "h": {k: h.get(k) for k in sg.H_KEYS}, "signature": sig, "text": text, "shots": shots,
             "narr": {str(k): v for k, v in narr.items()}}
     for f in list(mt.BUILD.glob("narr_c*.wav")) + [mt.BUILD / "narr_cta.wav", mt.BUILD / "narr_full.wav"]:
@@ -1554,7 +1612,7 @@ def find_reuse(req: dict) -> dict | None:
             plan = json.loads(f.read_text(encoding="utf-8"))
         except Exception:  # noqa: BLE001
             continue
-        if plan.get("version") not in (4, 5, 6) or (want and plan.get("stay") != want):
+        if plan.get("version") not in (4, 5, 6, 7) or (want and plan.get("stay") != want):
             continue
         need = {s["img"] for s in plan["shots"]} | {f"narr_c{j}.wav" for j in range(1, len(plan["text"]["beats"]) + 1)} | {"narr_cta.wav"}
         if not all((f.parent / n).exists() for n in need):
@@ -1592,14 +1650,16 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
         for s_ in shot_list:                                                            # v4·v5 계획엔 장소·등급이 없다
             s_.setdefault("grade", "full"); s_.setdefault("place", place_of({"description": s_.get("desc"), "category": s_.get("category")}))
         route_shots(text["beats"], shot_list, report)
-        plan_visuals(text["beats"], shot_list, report, int(req.get("ai_cuts") or AI_CUTS_DEFAULT), dog_ok(sig))   # 예산·규칙은 제작 때 값으로(0원)
+        plan_visuals(text["beats"], shot_list, report, ai_budget(req), dog_ok(sig))   # 예산·규칙은 제작 때 값으로(0원)
         scenes_ok = [x for x in (text.get("scenes") or []) if x.get("ok") and x.get("img") and (STORY / x["img"]).exists()]
         if text.get("scenes"):                                                          # v7: 미리보기의 스토리보드 패널을 그대로(이미지 0원) — 파일이 없으면 원본
             for x in text["scenes"]:
                 if x.get("img") and not (STORY / x["img"]).exists():
                     x["ok"] = False; x["why"] = "패널 파일 없음(아티팩트)"
-            sc.apply_scenes(text["beats"], text["scenes"], {s_["id"]: s_ for s_ in shot_list})
+            sc.apply_scenes(text["beats"], text["scenes"], {s_["id"]: s_ for s_ in shot_list}, report)
             report["storyboard"] = {"reused": True, "scenes": len(text["scenes"]), "panels_ok": len(scenes_ok), "krw": 0}
+            report["inserts_used"] = [s_["id"] for b in text["beats"] for s_ in shot_list if s_.get("insert") and s_["id"] in (b.get("shots") or [])]
+            visual_report(text["beats"], {s_["id"]: s_ for s_ in shot_list}, report)
     else:
         h, pos0 = so.assets(req, models, report)
         sig = sg.choose_signature(models, h, req, report)
@@ -1654,9 +1714,12 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
                + "\n\n" + " ".join(text["hashtags"]))
     sb = report.get("storyboard") or {}
     n_sheets = len(sb.get("sheets") or [])
+    n_ins = len(report.get("inserts_used") or [])
+    ins_krw = int((report.get("inserts") or {}).get("krw") or 0)
     meta = {"mode": "signature", "format": "story",
-            "label": (f"시그니처 이야기 미리보기(스토리보드 시트 {n_sheets}장 · AI 영상 없음)" if n_sheets else "시그니처 이야기 미리보기(AI 영상 없음)") if preview
-            else f"시그니처 이야기 제작(AI 영상 {ai}/{len(v.get('clips', []))}컷)", "storyboard_krw": sb.get("krw", 0), "storyboard_sheets": n_sheets,
+            "label": (f"시그니처 이야기 미리보기(스토리보드 시트 {n_sheets}장 · 인서트 {n_ins}컷 · AI 영상 없음)" if n_sheets or n_ins else "시그니처 이야기 미리보기(AI 영상 없음)") if preview
+            else f"시그니처 이야기 제작(AI 영상 {ai}/{len(v.get('clips', []))}컷)", "storyboard_krw": int(sb.get("krw", 0) or 0) + ins_krw, "storyboard_sheets": n_sheets,
+            "inserts": n_ins, "scene_drops": len(report.get("scene_drops") or []),
             "cut_count": report.get("cut_count"), "places": report.get("places"), "material_warning": report.get("material_warning"),
             "stage": report["stage"], "stay": h["name"], "signature": sig["name"], "title": text["title"], "caption": caption, "folder": folder, "folder_pos": pos,
             "bgm": report.get("bgm"), "pinned_comment": f"{h['name']} — 객실 타입·링크는 프로필 링크 → {pos}번 ({folder}) · 쿠팡 파트너스 링크 포함",

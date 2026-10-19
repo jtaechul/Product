@@ -38,7 +38,7 @@ const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.p
 // v7(2026-10-18 운영자 C안 "스토리보드는 이미지 한 장에 여러 씬, 돈 아껴"): 미리보기 = 글·음성·안내문 읽기 약 115 + 씬 스토리보드 시트(2×2 · 참조 사진별 1장 · 약 98원 × 4~6장) + 검수 ≈ 700
 //   제작 = 미리보기 패널 재사용(이미지 0원) + 사람·강아지 씬 Veo 최대 6컷(294 × 6 = 1,764) + 검수 ≈ 1,800, 미리보기 없이 ≈ 2,500
 const COST = {
-  signature: { preview: 700, produce: 1800, produce_fresh: 2500 },
+  signature: { preview: 800, produce: 1800, produce_fresh: 2500 },           // v8: 미리보기 = 스토리보드 시트(참조 사진 수 × 98) + 인서트 시트 98 + 글·음성 약 115
   solo: { preview: 80, produce: 2500, produce_fresh: 2500 },
 };
 const costOf = (mode) => COST[mode];
@@ -387,6 +387,9 @@ async function startRun(env, body) {
   const blk = mode === "signature" ? activeBlocks(blocked, kstNow())[stay] : null;
   if (blk) throw new HttpError(409, `이 숙소는 시그니처 영상을 만들 재료가 부족합니다(${blk.at}): ${blk.reason}. 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요`);
   const reuse = mode === "signature" && action === "produce" ? sigPreviewIndex(runs)[`${format}|${stay}`] || null : null;
+  if (mode === "signature" && action === "produce" && !reuse) {                  // v8 E: 정식 제작은 확인한 미리보기의 대본·패널로만(stay-run-58 이 미리보기 없이 2장짜리 영상에 1,630원)
+    throw new HttpError(409, "먼저 '미리보기'를 눌러 스토리보드를 확인하세요 — 이 숙소의 성공한 이야기 미리보기가 없습니다");
+  }
   const c = costOf(mode);
   const cost = action === "preview" ? c.preview : reuse ? c.produce : c.produce_fresh;
   const paid = action === "produce" || mode === "signature";                 // v7: 시그니처 미리보기도 스토리보드 시트(이미지)를 만들어 돈이 든다 → 화면 확인 + veo_approved
@@ -401,7 +404,7 @@ async function startRun(env, body) {
 
   const next = { ...cur };
   // 지난 시험의 설정(미니어처·피규어·컷 수·강아지 합성)이 요청 파일에 남아 다음 실행에 끼어들지 않게 지운다 — stay-run-56 요청에 miniature:true·max_veo_cuts:1 이 남아 있었다
-  for (const k of ["stage", "reuse_only", "reuse_runs", "reuse_clips", "format", "people", "miniature", "mini_scale", "max_veo_cuts", "dog", "real_back", "fake", "ai_cuts", "storyboard"]) delete next[k];
+  for (const k of ["stage", "reuse_only", "reuse_runs", "reuse_clips", "format", "people", "miniature", "mini_scale", "max_veo_cuts", "dog", "real_back", "fake", "ai_cuts", "storyboard", "inserts"]) delete next[k];
   next.nonce = `${now.toISOString().slice(0, 10)}-admin-${mode === "signature" ? "sig" : "solo"}-${action}-${b64url(crypto.getRandomValues(new Uint8Array(3)))}`;
   next.mode = mode;
   next.stay = stay;
