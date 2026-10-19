@@ -191,6 +191,13 @@
 - **갱신**: 「새 영상」 페이지 「후보 다시 찾기」 버튼 → `admin.py topics`(위키백과 확인 `v2/topic_wiki.json` · 사진·한국어 이름
   `v2/topic_media.json` · 놀라움 점수 `v2/topic_scores.json` 캐시 → 워크플로가 커밋). 위키백과는 빠르게 물으면 429로 막혀
   요청 간격 1.5초 · **네트워크 오류는 캐시하지 않고 다음에 다시** 묻는다('문서 없음'만 캐시). 점수는 25종씩 나눠 묻는다.
+- **실사고 2026-10-19(첫 확대 후보 Bathocyroe fosteri 편 · 대본 '멈춤')** — 원인 두 개:
+  ① 워크플로 「결과 커밋」의 `git add A B C`에 **아직 없는 `v2/topic_scores.json`**을 넣어(이 변경에서 추가) git이 **전체를 거부** →
+  대본 실패 기록이 커밋되지 않아 화면이 '작업 중'으로 남다가 25분 뒤 '멈춤'. ★모든 버튼의 결과 커밋이 막히는 사고 → **있는 파일만 하나씩**
+  `git add`(generate-short.yml에 이미 적힌 같은 교훈) · 회귀 `test_commit_step_stages_results_even_if_a_listed_file_is_missing`(임시 저장소에서 실제 실행).
+  ② 진짜 실패: AI가 0초 목소리(voice_jp)를 3번 연속 3.1~3.3초로 써(한자 문장의 읽는 시간을 못 셈) 대본 전체가 실패 →
+  **목소리가 2.6초를 넘으면 화면 문장(text_jp — 같은 뜻·12자·빨간 단어 포함)을 그대로 읽게 자동 교체**(`fit_hook_voices` · 기록에 남김) +
+  프롬프트를 초 대신 「ひらがなで20文字以内」로. 회귀 `test_long_hook_voice_is_replaced_by_screen_line`.
 - 회귀: `tests/test_v2_admin.py::test_same_subject_and_wiki_profile`·`test_build_topics_excludes_made_relaxes_and_expands`·
   `test_new_pilot_removes_made_topic_right_away`·`test_topics_have_photo_and_korean_name`(시작 가능 40종 이상 · 만든 종 없음) ·
   `v2_admin_check.mjs`(new_hides_made_same_genus · new_hides_made_from_index · new_has_many_topics · topics_refresh_dispatches).

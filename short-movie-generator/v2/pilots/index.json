@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-19T11:07:40Z",
+  "updated": "2026-10-19T13:40:17Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -36,10 +36,10 @@
       "state": "working",
       "job": {
         "stage": "script",
-        "status": "running",
-        "at": "2026-10-19T11:07:40Z",
-        "action": "job_start",
-        "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+        "status": "failed",
+        "at": "2026-10-19T13:40:16Z",
+        "action": "write_script",
+        "text": "대본 자동 작성 실패(2026-10-19 11:12): 0초 목소리 문장이 3번 모두 2.6초를 넘음 — 고쳤습니다(길면 화면 문장 그대로 읽기). 「다시 시도」를 눌러 주세요"
       },
       "created": "2026-10-19T11:07:40Z",
       "uploaded_at": null,

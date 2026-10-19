@@ -825,6 +825,37 @@ def test_workflow_has_secrets_and_setup():
     assert steps["실패 기록"].get("if") == "failure()" and steps["결과 커밋"].get("if") == "always()"
 
 
+def test_commit_step_stages_results_even_if_a_listed_file_is_missing(tmp_path):
+    """실사고 2026-10-19(Bathocyroe fosteri 편): `git add A B C`에 아직 없는 topic_scores.json 이 끼어 **전체가 실패** →
+    대본 실패 기록이 커밋되지 않아 화면이 25분 뒤 '멈춤'. 결과 커밋 단계는 없는 파일이 있어도 나머지를 올려야 한다."""
+    import subprocess
+    import yaml
+    d = yaml.safe_load((ROOT.parent / ".github" / "workflows" / "v2-admin.yml").read_text(encoding="utf-8"))
+    run = next(s["run"] for s in d["jobs"]["run"]["steps"] if s.get("name") == "결과 커밋")
+    add = run.split("if git diff --cached --quiet")[0]
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / "v2" / "pilots" / "x").mkdir(parents=True)
+    (tmp_path / "v2" / "pilots" / "x" / "status.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "v2" / "topics.json").write_text("{}", encoding="utf-8")                       # topic_scores.json 등은 없음
+    subprocess.run(["bash", "-e", "-c", add], cwd=tmp_path, check=True)
+    staged = subprocess.run(["git", "diff", "--cached", "--name-only"], cwd=tmp_path, capture_output=True, text=True).stdout.split()
+    assert "v2/pilots/x/status.json" in staged and "v2/topics.json" in staged
+
+
+def test_long_hook_voice_is_replaced_by_screen_line():
+    """실사고 2026-10-19: AI가 0초 목소리를 3번 연속 3초 넘게 써서 대본 전체가 실패 → 길면 화면 문장(같은 뜻·짧음)을 그대로 읽는다."""
+    hook = {"candidates": [
+        {"text_jp": "逆さまで、静止する", "key_jp": "逆さま", "voice_jp": "逆さまの姿勢で静止して、海中にぶら下がる"},
+        {"text_jp": "光る体で、逆さまに", "key_jp": "光る", "voice_jp": "光る体で逆さまに"},
+        {"text_jp": "ぶら下がる、深海の謎", "key_jp": "ぶら下がる", "voice_jp": "羽ばたいて泳ぐ姿から一転、逆さまにぶら下がる"}]}
+    assert admin.fit_hook_voices(hook) == [1, 3]
+    assert hook["candidates"][0]["voice_jp"] == "逆さまで、静止する" and hook["candidates"][1]["voice_jp"] == "光る体で逆さまに"
+    assert all(admin.estimate_speech(admin.auto_reading(c["voice_jp"])) <= admin.HOOK_VOICE_MAX_S for c in hook["candidates"])
+    assert not [p for c in hook["candidates"] for p in admin.validate_hook_line(dict(c, pattern="異常な行動"), [], [], "x") if "長すぎ" in p]
+    assert admin.fit_hook_voices({"candidates": "x"}) == [] and admin.fit_hook_voices(None) == []
+    assert "ひらがなで読んで20文字以内" in admin._SCRIPT_PROMPT
+
+
 def test_build_cut_without_pilot_macro_insert(tmp_path):
     """실사고 2026-09-30: 시범편 전용 매크로 인서트(컷 4)를 파일이 없는 새 편에도 적용해 ffmpeg가 죽었다 → 파일 없으면 건너뛴다."""
     import assemble as A

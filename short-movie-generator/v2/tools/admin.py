@@ -1413,7 +1413,8 @@ _SCRIPT_PROMPT = """あなたはNHKの科学ドキュメンタリーの構成作
   ・text_jp: 画面に大きく出す一行。「、」を除いて12文字以内・2行まで。改行したい所にだけ「、」を入れる(1行8文字以内・単語の途中で切らない)。
     いちばん驚く言葉を先頭近くに。生き物の名前・呼び名は入れない。事実を誇張しない(「〜と疑われている」程度の事実は「？」をつける)。
   ・key_jp: text_jp の中でいちばん強い言葉(赤で強調する・6文字以内・text_jp にそのまま含まれる)。
-  ・voice_jp: 0秒からナレーションが読む一言(text_jp と同じ意味・少し補ってよい・2.5秒以内・key_jp を含む・名前は入れない)。
+  ・voice_jp: 0秒からナレーションが読む一言(text_jp と同じ意味・key_jp を含む・名前は入れない)。**ひらがなで読んで20文字以内**(約2.4秒)。
+    長くなりそうなら text_jp をそのまま voice_jp にする(それで十分)。
   ・answer_jp は最後のカードに出す生き物の呼び名(台本で使った呼び名と同じ)。カット1・2には出さず、3カット目以降で明かす。
 {feedback}
 # 出力(JSONのみ)
@@ -1582,6 +1583,21 @@ def validate_hook_line(c: dict, facts: list[dict], banned: list[str], where: str
     return probs
 
 
+def fit_hook_voices(hook) -> list[int]:
+    """0초 목소리(voice_jp)가 2.6초를 넘으면 화면 문장(text_jp — 같은 뜻·12자 이내·빨간 단어 포함)을 그대로 읽게 바꾼다.
+    실사고 2026-10-19(Bathocyroe fosteri 편): AI가 목소리 문장을 3번 연속 3.1~3.3초로 써서 대본 전체가 실패했다 —
+    한자 문장의 '읽는 시간'을 AI가 못 세기 때문. 목소리 길이 하나로 대본을 버리지 않는다. 반환 = 바꾼 후보 번호(1부터)."""
+    fixed = []
+    for i, c in enumerate((hook or {}).get("candidates") or [], 1):
+        if not isinstance(c, dict):
+            continue
+        v, t = str(c.get("voice_jp", "") or "").strip(), str(c.get("text_jp", "") or "").strip()
+        if v and t and estimate_speech(auto_reading(v)) > HOOK_VOICE_MAX_S >= estimate_speech(auto_reading(t)):
+            c["voice_jp"] = t
+            fixed.append(i)
+    return fixed
+
+
 def validate_hook_candidates(hook: dict, cuts: list[dict], facts: list[dict], name: str = "") -> list[str]:
     """새 후킹(후보 3개) 검사: 컷 번호 · 마지막 카드 이름 · 후보마다 validate_hook_line · 서로 다른 문장."""
     probs = []
@@ -1742,11 +1758,12 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
         if feedback:
             prev = "\n".join(f"カット{c['cut']}: {c['jp']}" for c in old.get("cuts", []) if c.get("jp"))
             fb = f"# 運営者の修正依頼(必ず反映)\n{feedback}\n# 前の台本\n{prev}\n"
-        hook = None
+        hook, voice_fixed = None, []
         for attempt in range(3):
             gen = _json_obj(ask_script(_SCRIPT_PROMPT.format(name=name, n=SCRIPT_CUTS, name_rule=name_rule, feedback=fb, facts=ftxt,
                                                              core=core or "(なし — 事実リストから最も驚く一つを選ぶ)")))
             cuts, hook, core_id = gen.get("cuts") or [], gen.get("hook"), str(gen.get("core") or "").strip()
+            voice_fixed = fit_hook_voices(hook) if isinstance(hook, dict) else []
             probs = validate_script(cuts, facts) + (validate_hook_candidates(hook, cuts, facts, name=ja_name or "")
                                                     if isinstance(hook, dict) else ["hook がありません。"]) + \
                 validate_core(core_id, hook, cuts, facts)
@@ -1814,7 +1831,8 @@ def write_script(pid: str, feedback: str = "", ask=None, get=None, tts: bool = T
                              + (" · " + " / ".join(tprobs) if tprobs else ""))
         st.setdefault("artifacts", {})["topic"] = {"facts": facts}
         st.setdefault("cost", {}).setdefault("spent", []).append({"at": _now(), "what": "대본 자동 작성(AI+나레이션)", "usd": 0.05})
-        _note(st, "script", "auto", "대본 자동 작성 완료" + (" (수정 요청 반영)" if feedback else ""))
+        _note(st, "script", "auto", "대본 자동 작성 완료" + (" (수정 요청 반영)" if feedback else "") +
+              (f" · 0초 목소리가 길어 화면 문장 그대로 읽게 바꾼 후보: {'·'.join(map(str, voice_fixed))}번" if voice_fixed else ""))
         _save(status_path(pid), st)
         crosscheck(pid, ask=ask)                            # ⑤ 교차 검사(실패해도 멈추지 않음)
         st = load_status(pid)
