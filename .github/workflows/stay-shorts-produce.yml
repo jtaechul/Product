@@ -166,7 +166,10 @@ jobs:
           g = m.get("gemini_usage") or {}
           if g:
               s += f" · AI 글·음성 추정 {g.get('krw_est', 0):,}원"
-          print(s + (" (미리보기 · AI 영상 없음 — 관리실에서 정식 제작을 누르면 이 대본·나레이션 그대로 + 훅·정체·마지막 3컷과 손·뒷모습 1컷만 AI 영상, 약 1,200원)" if m.get("stage") == "preview" else " (미발행 · 검수용)"))
+          sb = m.get("storyboard_sheets")
+          if sb:
+              s += f" · 씬 스토리보드 시트 {sb}장(약 {m.get('storyboard_krw', 0):,}원)"
+          print(s + (" (미리보기 · AI 영상 없음 — 스토리보드 패널이 괜찮으면 관리실 '정식 제작': 이 대본·나레이션·패널 그대로 + 사람·강아지 씬만 Veo 영상 최대 6컷, 약 1,800원)" if m.get("stage") == "preview" else " (미발행 · 검수용)"))
           PY
           )
             curl -s -o /dev/null -w "telegram video http %{http_code}\n" -F chat_id="$TG_CHAT" -F video=@"$V" \
@@ -175,7 +178,7 @@ jobs:
             if [ -f "$S" ]; then
               SC="왼쪽 원본 사진 · 오른쪽 AI 영상 첫 장면. 실제와 다른 시설·전망이 보이면 폐기합니다"
               python3 -c "import json,sys;sys.exit(0 if json.load(open('$P/build/meta.json',encoding='utf-8')).get('mode')=='signature' else 1)" 2>/dev/null \
-                && SC="문장별 스토리보드 — 관점 · 나레이션 · 근거 사실 · 컷. 모든 문장이 장점 하나를 다른 관점으로 말하는지, 사진과 문장이 맞는지 확인합니다"
+                && SC="문장별 스토리보드 — 관점 · 나레이션 · 근거 사실 · 컷. 썸네일 아래 'AI 강아지·저녁' 같은 표시 = AI 스토리보드 패널(통과), '원본 사진' = 패널 없음·탈락. 같은 방인지, 뒷모습 사람·강아지가 자연스러운지 확인합니다"
               curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$S" \
                 -F caption="$SC" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
             fi
