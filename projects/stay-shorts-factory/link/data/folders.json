@@ -11,7 +11,7 @@
    "month": "2026-11",
    "theme": "실내 온수풀·온천",
    "region": "강원",
-   "updated": "2026-10-18",
+   "updated": "2026-10-19",
    "intro": "쌀쌀해진 11월, 찬바람 맞으며 따뜻한 물에 들어가는 강원 실내 온수풀·온천 숙소를 영상으로 소개한 순서대로 정리합니다.",
    "hotels": [
     {
@@ -204,48 +204,44 @@
      "hook": "사계절 돔 열리는 온수 인피니티풀",
      "blog_30d": 1000,
      "facts": [
-      "오션타워 및 파인타워 인피니티풀 보유",
-      "키즈 및 반려동물 동반 전용 객실 완비",
-      "반려견을 위한 도그 파크와 보딩센터 운영",
-      "강릉시 창해로 인근 위치 및 사우나 구비",
+      "오션타워와 파인타워 두 곳의 인피니티풀 구비",
+      "도그 파크와 반려동물 보딩센터 등 펫 시설 완비",
+      "키즈 및 펫 전용 객실과 스위트룸 등 운영",
+      "호텔 내 사우나 및 오션 피트니스 센터 구비",
       "개폐식 돔 인피니티풀",
       "실내 온수풀"
      ],
      "rooms": [
       {
-       "name": "10월 특가★슈페리어 할리우드",
-       "tags": [],
-       "image": "https://ads-partners.coupang.com/image1/7WPi4cr-rl3ezlyR7YzwKQTDQHbzK5Wxo0UJC0jFWqn4N60ht1-MU_dITgaxvpnEUfYY-lIWvO-6a0Fna1yv1gP49P5E-_6-jrjIm-46Rlp1MWXBzn2WG76o274FybprEHAYqiBwEeSQU6XSqYJv1wNw1nBzC9tlmLZqeXiUuNmnwf0E3F0QSD4xuDNATAUtG8HpfQahi0Exqtb630TrMGiBJV4VhN8E6JVIa9divBJoc1DW8me6mo9eoHBOgEaREemtZR2Pnu-IiBNkMl4jKWc6s2N7s7CCC72qB071o8fLV20PeYCQeTZptr-9k-JWgS6WMBkuYtoQWmCmDzdsoo3CxLKBPEWox0LvaExQ-PY5KC1dbcEVIi1GJ9yGHS2L0xDKOLToW5YfATw0X-MBTxbsZNOkA3HH5WEUwW2-XpJjNyzU4RlQ25pPM-aq2HdUC68VPXUIjqRjOu8-cv6w49JUlWZ80TI1_riPxZYzBQ3wSsiQ2CZPlUyZ3CbUNRpAX6PoQSoiC_X4yoK6mLrfaM1h07c74xpqz4V47A=="
+       "name": "조식PKG★슈페리어 더블",
+       "tags": [
+        "조식 포함"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/IIR9DFSavw6xEJ2kIDQOuhauyFYaEaDwyNCkQtMXgkLkC7uR6RK-pS15bB9QXvZ6E9dIqjgAZABubgq-9-czoRZYGs5wIJXjxe704UFmv_7oEYcjgiAqCtixZuPR5jxF7A07-mWFqHntsLrE5hs5Fsl27nOvTgxuypPlW6DiqrLr1dr97szD9jytZuILCazcaufuqZ0zVS3fWsimPokQuGvgpyfrGm0mHEu7q8_jamIuKAZiJAUZUbp5FqBQUrcHjN1QDUOtpXX2UdccAl-4JjVrbJq8Mwd5Dk8hh31HClENozFFnnf85rl2gB5x9rfYz2rQtYbD_BPGOhROFDVKq6XlmyEbMbpgt2ri_087BB8etGm6nwk0rvt80MwxzU8vsbQQxPdlptngESuCwNMK4vSnFcHaB7D4n3F_PrK8FJVCchJrstRYPN_sn4wrFKY8E6wBB0Ms3v4iwdXKz1QbeG0AxtjaCIKFuf2BuzHGpoSKEYSdiqQQZjPmVcf925g5T1riZ814liHFxrcFn1sPU6bdJrVtHU1h2zoeMQ=="
       },
       {
        "name": "슈페리어 트윈 씨티뷰 트윈룸 도시전망",
        "tags": [],
-       "image": "https://ads-partners.coupang.com/image1/y4f91xOVq9sRY3Oky_c5I2chQBKWy0HJHVZVyE8D2G1lwZiPenrsGIHI0Lz77sja3hp5BAmRiDlZchyGllkhAnoPEyWFgjM031LlWgww8o3fky38Zq7j08s5SjXN5RIa9hy3Xcp5LlTSC9Td0jeYZPayJGIg_7fbroZzZ1YzAXGi2tpjUGqg2eoPDG40CG-Jl5Zxu5gOH15mossEObQQ9nfNUtkragtoGyhsCf-Hh2vynR7H9mMiL4sfaNFoJs26XU2sLcmEepBYjElSm7un0RgHCByWabP_PBGPO24eE_5N27RWYaK_fUIXKY9vSYq6tgSM4J9Zl7gvw6O7tsPHG8plRMcchUyiG_M5DGtAOIsWJIO7HASIy5yMEN3vcZt26osDgMEGa-Jw7-Mtv2-3AT0mqVzlKm1upTy6SyQJ2ZuDDhM-Fh0NVXrdyW7sznVFK72hRdb7OyHTQ2Uua4j0BucH50Q3uiRvnE-eYjWcWNeIDgkmvt16x3GXw5XNwqs2Ef47scN9wfMbOtsqHYg6vA7bFK9itEg1DqXg81Q7nVQ7"
-      },
-      {
-       "name": "디럭스 온돌(전망없음)",
-       "tags": [],
-       "image": "https://ads-partners.coupang.com/image1/1fmrfE1pNm07-vKb1WP2a5RbfZYw18TfDPH4p1NV6sYvuuiTCArotLNwgK7MKMYy82aC_F2fdpe2lUMSq0Qgqlroj6XIC16tb6dVNBvKLh7tVTaHx2DSRzxj_CAjm87QqsM_AJ1BD2WEOa8SASp-zOXWUuxYm3HcVx2QVoAPDHISsa8lBUlZ828WMehhPJnxJ6GxieUXbvRpeNBl3ET1eVu2MleeBKU6kldaNV-bHyXog2aV9hqnTFGSjGnYBQIP67MeguhTCeXZcUNeNO8suHhxLHB67ghuzE9jFpkwOUlB8UrtKjXi_q-1z-e_tL7IsD0BP4bADcp1LWQRo7t-5meoQmG_cuorBgOQMCxKBXNa2nsDKJQXfhNoB9AdX9YpwM-ZumlYBVWdqf5Icbmdo9DjBCEYXOrHgbCNRuGx2qd2g1tjTBTIeEp21HjUMHXqMrwGK6LqzCUd162gt5gOOznlFATHgmAmpgkcurmP6Zgcu6LORBJW3J4UzYwSexfzu6SSWQN7Z2eugQivUIAdm8MFXU7jAbjb8AwjNQuWbFTbMA=="
+       "image": "https://ads-partners.coupang.com/image1/T8_ItGvhHnwzTsWBTys69YgkVWbwhH4YGdXk1NV9LoJFksRJgsfxRBoHePsZ04-8E5OdJkMtL-KU1fn-BbJMu63OzLXrkSqCb7h3gnQfVELAytpRq_zBqTVn5NEJ3VoG4_c_7TllMZ-p7EYcSEUW7vkAeH7mdaTNFGEQ45QLJN43-NIHsxaWFYJsc2kE3FOeRWMLCyVWvH7fl2JEiJ79McSfmNGp85lXEPijQdwWM6t6XfbuyrvcFpMgdIzpGMfCOmtDEd50Inz3h_qqCfhdd7ca6ffmSwLyERfDjAjn725cbVCWiyz4ssSAHfNWyK3Oyq3z-kpBF89hVJabZMeemmIMNEae6HwJjbD7W22r5gXFW1VEESd0-Z117KLt1paIQS8yIpq32KDBvM1bdjkA031gIGAL7XbiUcjJwhkKUr36UFKIf4h5gY6pH9DQtoW6no-VqT_9x7BRQxJvQ-A9zz_EIAevbu5tPXqreGyJIC_rcodLyRGOVl7XvIBa9uiq_TwxRto3qayBpcYtdvBDnCBjcrkb_p4D2xjfr0HQoPz9"
       },
       {
        "name": "슈페리어 헐리우드 노오션뷰",
        "tags": [
         "오션뷰"
        ],
-       "image": "https://ads-partners.coupang.com/image1/exrL3trYcIqb1_gweylv1y8_ZZPh0VCXee93NWeTNMA1m2x8ymreITqIfbXcC4t1kK6ZCk0WOIDQm5rjtNZCRWrt_4TFn_JFh1_lHjoIej63YMII8_mLIj6z9cJC5lSbqwctXFG8T1ETCqsPpmla9FbV1d9FhkTTXP-aSKBJ_liBGGgL57sIZmM5e6aNW2USSpsq03WTIy-OslvrYqlzuLOpnddNpv3kRJFMRkU5w9G3xhYneOvtPki1E3mzCRyxdtjn157aCebIsXsXD-LZZyrGgztI4K_IdJZR2AJ_mRC823vYk6qVa0y7F1gqgIN838ZmuYWeh8wvrwm--RCO-G1h-e97bZDgmGQD32hY78Gn17BzZrjynxwHMDVnJBqq0S_3rLa6Z1ITkLZrkwQWZOVZdMwExscHnkfR9Caoeh3FTj65u8KkiRy_zbO6PLg3BoWS9uuTWNukpD7RmA5EF78CTe3QXxf34AntiYMEi3GKUrk0OX7qNnP8byz5UVt1gKf4dnLIZUfDUoXt4If-BSELQxJyjTmT91CrKrfqGLWm8A=="
+       "image": "https://ads-partners.coupang.com/image1/VkF5bEpgX0ktPudBVs00odS0Hc8qkSADU0Gk0zh9d-xp2BtpZNgm1nq1tkX0Nx3IVvcEcc-8txVSppdeqjZc7ZjepLEuxLzpLeeIUxJPDU-bMvg7ThDGjdG6xhqyzspT3yZMZnZ4X76DjLD6c-z0jVM2D9HCQipdt-PL18Vc5ZNKn1-I1QhCHHW2Pi4dc2fqfOSAvs0-74axoM-i-y7A5YjL6aCaX6EAhM8hz0U9WPuxHk7hXEArRrQ9hnQrXh-etYf-wuxOjOtohe4LYZp6iZPVCLC88b1cYA4gM2AvuAf_-PY94Q3Bb0HewtRbOgCaQ9zfQCNCiKRLwFppbwfZwpCtZvMw3cR_6JIM4XYl3NJYf5vjmE0jsYuzWyKqPRtdL_P-yPBEI9l2HmBfSHdPQXvWYECvNaRA5CRzzXrc1nIEquBHHfZ_kcA7a8ZwCxX5y2ZedZ4EXFJt3s457JNuAB1kiE59hFkjEqh97st1ySTS_05yYcGrF5f-1pC0JfCeWOsJS-EFkDKpFbpUlQFZ8goGN_06HvHl-AT_KW-rY_0EKT0="
       },
       {
-       "name": "슈피리어 패밀리 트윈룸, 노오션뷰",
+       "name": "골져스 파셜오션 더블",
        "tags": [
-        "오션뷰",
-        "패밀리"
+        "오션뷰"
        ],
-       "image": "https://ads-partners.coupang.com/image1/tVJYKcfeL3VGvxPOteYO95M62K5ZS_qFxm9SV8jjSO8JLII8IRQ_hCkOg9SMHWpTV4Rti7kKGv6mkLXeP__yeBOjx0nGzNXnEI9C1jHmr7TAQyD3uXm_4EhVSROA4d0c9ifwBpt5p6pvTxv0_LKMCBEXKwKZPusfxpMgPzy-d4gVN27Q2lemDYNISWmoXEQm-e991qxNe3T7vuddKB0zuOUvsp44n10bAG_3569nS0js7hb70TFKsdmLPoxIhTsFcxxnP9SNE1Voh1ABknPNzj5_qWU6KUCcVpLmORfw6qRQbRtA_zzOmOu4DY2-9asCiKFQm6lO-NBnLulAO3PWOg24wR2N2_Nt3raIeW7YGsEHEZi4Aylrdtrn55Dv6ey0hsTbxVM6_FpFi7n0XmX15SnGckDy0_o3xTdYHQqIKOkHt2eWQGT2KMs5YysGyOICia8upX2lhLyj0tcHwcxrj8M4mGOv4ZyS1u-deVUsIEaG_TCJI_EqwVZeY_6c6LKiMcqOTI97idNcK_laQtFkVweBg5tfyE1DpLRJyhAFMYVoZQ=="
+       "image": "https://ads-partners.coupang.com/image1/-caJZ06fym3ESC_T-St6UYN0ntlmq9OgO5BEuzf_0LZczIbw8cRh2DPUimN6N0utCpDDMtFJqgeUMonDNvthC7pP8GIctvqeix5JbYjtkx6nV0ihK6o0zuMgY2tdkUfs6wjaxnk2vb4Mx2Ji2EBpHqqSdBNmFCHp7GWd91lOXMBUEBw3nUreMuMpLsq5aBRRikLsWbpft5OmLmweBD3HilwXFxCv8PmMOp8pePNMdN84wVnXr1kIHxjysTxDeIvutc5d7Tsuzz2hOZMR-O1jWI5LsEgVg0rvJBifLuYCiww1ClAeMChxQI_FszgKc_xcutUiMaXVgC-JP1b_fcz7FfbHntCJLi2ZomATxrbS7UiJmcVPSV0e8bZORvUfOaDPLZ60sbh7uJX_EQRGqJbRgIKHJKBiV5rRUu-5nusfjfOom5JY-K86IyGNkrP2vMsben3Sy9I39UgQLhv-t4f8FeFOa1H9IU1aN3Co_nqwt3IGAWZjFVp5rt6K9RX0wYmnU8TseqDnVYGxlnGdzVNzAiMfHR_uV4m-b-EY_eXzJ7B2Nxo="
       }
      ],
      "image": "img/2026-11-강원-실내-온수풀-온천/4.jpg",
      "links": {
-      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=77802093&vendorItemId=70000115424650&itemId=20002017385730&traceid=V0-153-ccc895f1aaf4c20c&requestid=20261019065206492134758556&token=31850C%7CGM&pt=0&slot=1",
+      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=77802093&vendorItemId=70000284805820&itemId=20002208939755&traceid=V0-153-ccc895f1aaf4c20c&requestid=20261019185948654186268747&token=31850C%7CGM&pt=0&slot=1",
       "agoda": null,
       "official": "https://new.stjohns.co.kr/"
      },
@@ -257,5 +253,5 @@
    ]
   }
  ],
- "updated": "2026-10-18"
+ "updated": "2026-10-19"
 }

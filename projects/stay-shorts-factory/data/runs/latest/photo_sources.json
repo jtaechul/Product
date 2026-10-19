@@ -30,25 +30,25 @@
     "n": 11,
     "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/114f34599d49ced4ad2f61db33bb05d2.jpg",
+    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/d9f0da26f6ce41a63e7947a9403320aa.jpg",
     "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "바다 동물 벽화로 꾸며진 키즈 침대와 더블 침대가 있는 객실 내부이다."
+    "description": "따뜻한 조명 아래 동물 그림 벽화와 키즈 테이블이 있는 객실 침실이다"
    },
    {
     "n": 12,
     "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/15d1764c6ee38ee8beab253bddddf66c.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "동물 일러스트 벽화가 장식된 키즈룸에 어린이 침대와 큰 침대가 배치되어 있다."
+    "url": "https://new.stjohns.co.kr/uploads/room/2020/11/034d4715652a511806b5515bb6febedf.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
+    "description": "침대 옆에 원형 협탁과 반려견 돔 하우스가 놓여 있다"
    },
    {
     "n": 13,
     "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/3443d0f35835954d23b02aaa5948d08f.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "공룡 벽화가 있는 키즈 침대와 더블 침대가 놓인 객실 전경이다."
+    "url": "https://new.stjohns.co.kr/uploads/room/2024/06/b18b67bcd0b94aabe9f76180dff57265.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
+    "description": "바다와 솔숲이 내려다보이는 발코니 창가에 반려견 방석과 침대가 놓인 펫 객실이다"
    },
    {
     "n": 14,
@@ -56,7 +56,7 @@
     "source": "official",
     "url": "https://new.stjohns.co.kr/uploads/editor/2026/01/c3c0b5e6c3fd7b398a0c0e16138ee918.jpg",
     "page": "https://new.stjohns.co.kr/post/139",
-    "description": "다양한 유산소 및 웨이트 트레이닝 기구가 구비된 피트니스 센터 내부이다.",
+    "description": "통창 너머로 전망이 보이는 넓은 피트니스 센터에 다양한 운동 기구들이 갖춰져 있다",
     "alt": "c3c0b5e6c3fd7b398a0c0e16138ee918.jpg"
    },
    {
@@ -65,7 +65,7 @@
     "source": "official",
     "url": "https://new.stjohns.co.kr/uploads/post/2026/05/ed27d480ada26c24f36de08fe4c3d0de.jpg",
     "page": "https://new.stjohns.co.kr/post/1248",
-    "description": "탁 트인 푸른 동해 바다와 모래사장이 내려다보인다."
+    "description": "넓고 푸른 동해 바다 위로 작은 보트 한 척이 지나가고 있다"
    },
    {
     "n": 16,
@@ -73,39 +73,39 @@
     "source": "coupang",
     "url": null,
     "page": null,
-    "description": "해안가를 따라 늘어선 울창한 해송 숲과 대형 리조트 건물의 조감도 전경이다."
+    "description": "백사장과 해송 숲을 따라 길게 뻗은 대규모 호텔 건물 전경이 보인다"
    },
    {
     "n": 17,
     "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/d9f0da26f6ce41a63e7947a9403320aa.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "어린이용 낮은 가구와 아기자기한 벽화가 꾸며진 키즈 테마 객실이다."
+    "url": "https://new.stjohns.co.kr/uploads/room/2024/06/65cb745dbe1cf10b87be12c4b8529f5a.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
+    "description": "오션뷰 발코니 창가 앞에 반려견 두 마리와 펫 전용 용품들이 놓여 있다"
    },
    {
     "n": 18,
     "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2024/06/b18b67bcd0b94aabe9f76180dff57265.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "창밖으로 소나무 숲과 바다가 내려다보이는 펫 전용 객실 침실이다."
+    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/114f34599d49ced4ad2f61db33bb05d2.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+    "description": "바다 생물 벽화로 꾸며진 키즈 전용 침실에 더블침대와 주니어 침대가 있다"
    },
    {
     "n": 19,
     "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2024/06/65cb745dbe1cf10b87be12c4b8529f5a.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "발코니 창밖으로 숲과 바다가 보이고 강아지 두 마리가 서 있는 펫룸이다."
+    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/15d1764c6ee38ee8beab253bddddf66c.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+    "description": "동물 캐릭터 벽화와 유아용 보조 침대가 갖춰진 아늑한 키즈 객실이다"
    },
    {
     "n": 20,
     "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2020/11/034d4715652a511806b5515bb6febedf.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "반려견 방석과 식기가 침대 옆 바닥에 놓여 있는 펫룸 내부이다."
+    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/3443d0f35835954d23b02aaa5948d08f.jpg",
+    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
+    "description": "공룡 캐릭터 벽지로 장식된 키즈 객실에 더블침대와 어린이 침대가 마련되어 있다"
    }
   ]
  }
