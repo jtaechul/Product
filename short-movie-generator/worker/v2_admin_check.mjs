@@ -141,6 +141,7 @@ const nb = (lists["[data-new]"] || [])[0]; if (nb?.onclick) await nb.onclick();
   res.new_hides_made_from_index = ["bathynomus_giganteus", "enypniastes_eximia", "lithodidae", "chaunax_stigmaeus", "actinoscyphia_aurelia"]
     .every(id => !nr.includes('data-new="' + id + '"'));
   res.new_has_many_topics = (nr.match(/data-new="/g) || []).length >= 40;
+  res.new_page_explains_motion_order = /놀라움 \+ 움직임 점수가 높은 종부터/.test(nr);
   const n0 = dispatched.length; if (el("v2topics").onclick) await el("v2topics").onclick();
   res.topics_refresh_dispatches = !!(dispatched[n0] && dispatched[n0].body.inputs.action === "topics");
   els = keepEls; }

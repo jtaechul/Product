@@ -981,11 +981,17 @@ def test_topic_scores_sort_and_cache(v2, monkeypatch):
     calls = []
     def ask(p):
         calls.append(p)
-        return json.dumps({"scores": {"a": {"score": 4, "hook_jp": "ふつう", "hook_ko": "보통"}, "b": {"score": 9, "hook_jp": "5年絶食", "hook_ko": "5년 단식"}}})
+        return json.dumps({"scores": {"a": {"score": 4, "motion": 9, "hook_jp": "ふつう", "hook_ko": "보통"},
+                                      "b": {"score": 9, "motion": 2, "hook_jp": "5年絶食", "hook_ko": "5년 단식"}}})
     sc = admin._topic_scores(items, ask=ask)
-    assert sc["b"]["score"] == 9 and sc["a"]["hook_ko"] == "보통"
+    assert sc["b"]["score"] == 9 and sc["a"]["hook_ko"] == "보통" and sc["a"]["motion"] == 9
     admin._topic_scores(items, ask=ask)
     assert len(calls) == 1                                    # 캐시 — 두 번째는 묻지 않음
+    # 움직임 점수(운영자 승인 2026-10-19): 프롬프트가 '보이는 동작'을 묻고 · 움직임이 없는 옛 기록은 다시 매긴다
+    assert "motion" in calls[0] and "visibly DOES" in calls[0]
+    admin._save(admin.TOPIC_SCORES, {"a": {"score": 4, "hook_jp": "x", "hook_ko": "x"}, "b": sc["b"]})
+    admin._topic_scores(items, ask=ask)
+    assert len(calls) == 2 and "a (" in calls[1] and "b (" not in calls[1]
 
 
 # ── 새 영상 후보 넓히기(운영자 지시 2026-10-19: 만든 종 빼기 · 조건 완화 · 자료 수집 확대) ──
@@ -1040,8 +1046,9 @@ def test_build_topics_excludes_made_relaxes_and_expands(v2, monkeypatch):
     def ask(p):
         asked.append(p)
         ids = re.findall(r"^([a-z0-9_]+) \(", p.split("# Species")[-1], re.M)
-        return json.dumps({"scores": {i: ({"score": 9, "hook_jp": "120年生きる", "hook_ko": "120년 산다"} if i == "testus_abyssus"
-                                          else {"score": 3, "hook_jp": "", "hook_ko": ""}) for i in ids}})
+        return json.dumps({"scores": {i: ({"score": 9, "motion": 3, "hook_jp": "120年生きる", "hook_ko": "120년 산다"} if i == "testus_abyssus"
+                                          else {"score": 4, "motion": 9, "hook_jp": "", "hook_ko": ""} if i == "groupus_anonymus"
+                                          else {"score": 3, "motion": 1, "hook_jp": "", "hook_ko": ""}) for i in ids}})
     res = admin.build_topics(fetch=fetch, ask=ask, wiki_get=_wiki_fake(boom=("Busyus wikius",)),
                              ko_fetch=lambda sci: {"ko": None, "group": "아귀목"})
     by = {t["id"]: t for t in res["topics"]}
@@ -1052,7 +1059,8 @@ def test_build_topics_excludes_made_relaxes_and_expands(v2, monkeypatch):
     t = by["testus_abyssus"]
     assert t["ready"] and all(t["checks"].values()) and t["name_ko"] == "시험심해어" and t["ko_official"] and t["name_ja"] == "テストウオ"
     assert t["facts"][0].startswith("Testus abyssus is") and "https://en.wikipedia.org/wiki/Testus_abyssus" in t["sources"]
-    assert t["score"] == 9 and res["topics"][0]["id"] == "testus_abyssus"                       # 점수 높은 종부터
+    # 놀라움 + 움직임 합이 높은 종부터(운영자 승인 2026-10-19): 놀라움 4 + 움직임 9 = 13 > 놀라움 9 + 움직임 3 = 12
+    assert t["score"] == 9 and t["motion"] == 3 and [x["id"] for x in res["topics"][:2]] == ["groupus_anonymus", "testus_abyssus"]
     g = by["groupus_anonymus"]                                                                   # 한글명 없음 → 상위 무리 이름(지어내지 않음)
     assert g["ready"] and g["name_ko"] == "아귀목의 한 종" and g["ko_official"] is False
     assert not by["shallowus_maris"]["ready"] and by["shallowus_maris"]["checks"]["심해 확인"] is False

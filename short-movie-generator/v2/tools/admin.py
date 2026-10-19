@@ -2761,11 +2761,18 @@ def _topic_media(items: list[dict], fetch=None) -> dict:
 TOPIC_SCORES = V2 / "topic_scores.json"
 SCORE_BATCH = 25
 _SCORE_PROMPT = """You pick topics for a Japanese YouTube Shorts channel about deep-sea creatures. The two best-performing videos
-were driven by ONE unbelievable, concrete fact told in a single line (「5年以上も絶食した」, 「頭も骨もない」).
-For EACH species below, using ONLY its listed facts (never invent), write the single most surprising fact as a short hook and
-score how strongly it would stop a scrolling viewer (1 = ordinary, 10 = unbelievable). Concrete numbers, missing/strange body
-parts and extreme behaviours score high; generic "lives in the deep sea" scores low.
-Return JSON only: {{"scores":{{"<id>":{{"score":7,"hook_jp":"日本語で一行(20字以内)","hook_ko":"한국어 한 줄"}}}}}}
+were driven by ONE unbelievable, concrete fact told in a single line (「5年以上も絶食した」, 「頭も骨もない」), and the two best
+recent openings both showed the animal DOING something on screen (「獲物を、決して逃がさない」 = it snaps shut on prey,
+「魚なのに、立ち上がる」 = a fish that stands up on its fins).
+For EACH species below, using ONLY its listed facts (never invent):
+- hook_jp / hook_ko: the single most surprising fact as a short hook. When the facts allow, prefer a fact the animal visibly DOES
+  (hunts, snaps, swims, walks, inflates, glows, sheds, attacks) over a fact about simply being still or existing.
+- score: how strongly that hook would stop a scrolling viewer (1 = ordinary, 10 = unbelievable). Concrete numbers, missing/strange
+  body parts and extreme behaviours score high; generic "lives in the deep sea" scores low.
+- motion: how much visible, dynamic movement the facts give us to show on screen (1 = sessile or hangs motionless, nothing happens;
+  5 = moves slowly; 10 = fast or dramatic action such as striking prey, swimming bursts, inflating, light displays). Judge ONLY from
+  the listed facts.
+Return JSON only: {{"scores":{{"<id>":{{"score":7,"motion":6,"hook_jp":"日本語で一行(20字以内)","hook_ko":"한국어 한 줄"}}}}}}
 # Species
 {items}
 """
@@ -2773,7 +2780,8 @@ Return JSON only: {{"scores":{{"<id>":{{"score":7,"hook_jp":"日本語で一行(
 
 def _topic_scores(items: list[dict], ask=None) -> dict:
     cache = _load(TOPIC_SCORES, {}) or {}
-    todo = [t for t in items if t["ready"] and t["id"] not in cache]
+    # 움직임 점수가 없는 옛 기록도 다시 매긴다(운영자 승인 2026-10-19: 잘 움직이는 종을 먼저 추천)
+    todo = [t for t in items if t["ready"] and "motion" not in (cache.get(t["id"]) or {})]
     for i in range(0, len(todo), SCORE_BATCH):               # 후보가 많아져(자료 수집 확대) 한 번에 묻지 않고 나눠 묻는다
         part = todo[i:i + SCORE_BATCH]
         try:
@@ -2782,10 +2790,11 @@ def _topic_scores(items: list[dict], ask=None) -> dict:
             for t in part:
                 g = got.get(t["id"]) or {}
                 try:
-                    sc = max(1, min(10, int(g.get("score"))))
+                    sc, mo = max(1, min(10, int(g.get("score")))), max(1, min(10, int(g.get("motion"))))
                 except (TypeError, ValueError):
                     continue
-                cache[t["id"]] = {"score": sc, "hook_jp": str(g.get("hook_jp", ""))[:40], "hook_ko": str(g.get("hook_ko", ""))[:60], "at": _now()}
+                cache[t["id"]] = {"score": sc, "motion": mo, "hook_jp": str(g.get("hook_jp", ""))[:40],
+                                  "hook_ko": str(g.get("hook_ko", ""))[:60], "at": _now()}
             _save(TOPIC_SCORES, cache)
         except Exception as e:                               # noqa: BLE001 — 점수가 없어도 주제 목록은 만든다
             print(f"[topics] 놀라움 점수 실패: {e}")
@@ -2996,8 +3005,10 @@ def build_topics(fetch=None, ask=None, wiki_get=None, ko_fetch=None) -> dict:
     for t in out:
         sc = scores.get(t["id"]) or {}
         t["score"], t["hook_jp"], t["hook_ko"] = sc.get("score"), sc.get("hook_jp", ""), sc.get("hook_ko", "")
+        t["motion"] = sc.get("motion")
         t.pop("all_facts", None)
-    out.sort(key=lambda t: (not t["ready"], -(t.get("score") or 0), t["name_ko"]))   # 점수 높은 종부터
+    # 놀라움 + 움직임 합이 높은 종부터(운영자 승인 2026-10-19 · 같으면 놀라움이 높은 쪽)
+    out.sort(key=lambda t: (not t["ready"], -((t.get("score") or 0) + (t.get("motion") or 0)), -(t.get("score") or 0), t["name_ko"]))
     res = {"updated": _now(), "topics": out, "made_excluded": skipped}
     _save(V2 / "topics.json", res)
     return res
