@@ -400,7 +400,8 @@ async function startRun(env, body) {
   }
 
   const next = { ...cur };
-  for (const k of ["stage", "reuse_only", "reuse_runs", "reuse_clips", "format", "people"]) delete next[k];
+  // 지난 시험의 설정(미니어처·피규어·컷 수·강아지 합성)이 요청 파일에 남아 다음 실행에 끼어들지 않게 지운다 — stay-run-56 요청에 miniature:true·max_veo_cuts:1 이 남아 있었다
+  for (const k of ["stage", "reuse_only", "reuse_runs", "reuse_clips", "format", "people", "miniature", "mini_scale", "max_veo_cuts", "dog", "real_back", "fake", "ai_cuts", "storyboard"]) delete next[k];
   next.nonce = `${now.toISOString().slice(0, 10)}-admin-${mode === "signature" ? "sig" : "solo"}-${action}-${b64url(crypto.getRandomValues(new Uint8Array(3)))}`;
   next.mode = mode;
   next.stay = stay;

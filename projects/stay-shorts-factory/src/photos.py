@@ -475,24 +475,23 @@ JSON 만: {"notices":[{"k":0,"is_notice":true,"facility":"...","facts":["..."],"
 
 
 def split_panels(path: str) -> list[tuple[int, int, int, int]]:
-    """콜라주를 흰(또는 검은) 구분선으로 나눈 패널 상자(원본 픽셀 좌표). 2개 미만이면 빈 목록(콜라주가 아님). 0원.
+    """콜라주를 흰(또는 검은) 구분선으로 나눈 패널 상자(원본 픽셀 좌표). 2개 미만이면 빈 목록(콜라주가 아님). 0원 · Pillow 만 쓴다(러너에 numpy 없음 — stay-run-56 실패).
     구분선 = 거의 전부 밝거나(≥235) 거의 전부 어두운(≤22) 가로/세로 줄이 3px 이상, 치수의 10% 이하로 이어진 것(흰 벽처럼 긴 구간은 구분선이 아니다)."""
-    import numpy as np
+    from PIL import ImageStat
     with Image.open(path) as im:
-        im = im.convert("RGB")
+        im = im.convert("L")
         W0, H0 = im.size
         sc = max(1.0, max(W0, H0) / 1200.0)
         small = im.resize((max(1, int(W0 / sc)), max(1, int(H0 / sc))), Image.BILINEAR)
-        a = np.asarray(small).astype(np.int16)
-    H, W = a.shape[:2]
-    gray = a.mean(axis=2)
+    W, H = small.size
 
-    def runs(mask_line, N):
+    def runs(line_vals, N):
         out, s = [], None
-        for i, v in enumerate(mask_line):
-            if v and s is None:
+        for i, v in enumerate(line_vals):
+            on = v >= 251                                                     # 0~255 로 평균낸 마스크 — 251 ≈ 98.5% 가 구분선 색
+            if on and s is None:
                 s = i
-            if (not v) and s is not None:
+            if (not on) and s is not None:
                 if 3 <= i - s <= max(6, int(N * 0.10)):
                     out.append((s, i))
                 s = None
@@ -501,10 +500,9 @@ def split_panels(path: str) -> list[tuple[int, int, int, int]]:
         return out
 
     best = []
-    for lo, hi in ((235, 999), (-1, 22)):                               # 흰 구분선 → 검은 구분선
-        m = (gray > lo) & (gray < hi)
-        rows = runs(m.mean(axis=1) >= 0.985, H)
-        cols = runs(m.mean(axis=0) >= 0.985, W)
+    for mask in (small.point(lambda v: 255 if v > 235 else 0), small.point(lambda v: 255 if v < 22 else 0)):   # 흰 구분선 → 검은 구분선
+        rows = runs(list(mask.resize((1, H), Image.BOX).getdata()), H)     # 행마다 구분선 색 비율(BOX 축소 = 평균)
+        cols = runs(list(mask.resize((W, 1), Image.BOX).getdata()), W)
 
         def spans(rs, N):
             cuts = [0] + [(x + y) // 2 for x, y in rs if 0 < x and y < N] + [N]
@@ -512,15 +510,15 @@ def split_panels(path: str) -> list[tuple[int, int, int, int]]:
         panels = []
         for y0, y1 in spans(rows, H):
             for x0, x1 in spans(cols, W):
-                g = gray[y0:y1, x0:x1]
-                inner = (g > lo) & (g < hi)                                  # 구분선과 같은 색이 60% 넘으면 글 안내문·여백 — 패널이 아니다
-                if inner.mean() > 0.6 or g.std() < 18:
+                m = mask.crop((x0, y0, x1, y1))
+                g = small.crop((x0, y0, x1, y1))
+                st = ImageStat.Stat(m)
+                if st.mean[0] / 255.0 > 0.6 or ImageStat.Stat(g).stddev[0] < 18:   # 구분선 색이 60% 넘으면 글 안내문·여백 · 밋밋하면 패널 아님
                     continue
-                keep = ~inner
-                ys = np.where(keep.any(axis=1))[0]; xs = np.where(keep.any(axis=0))[0]
-                if len(ys) < 100 or len(xs) < 100:
+                bbox = m.point(lambda v: 255 - v).getbbox()                  # 구분선 색이 아닌 부분의 경계
+                if not bbox or bbox[2] - bbox[0] < 100 or bbox[3] - bbox[1] < 100:
                     continue
-                panels.append((int((x0 + xs[0]) * sc), int((y0 + ys[0]) * sc), int((x0 + xs[-1] + 1) * sc), int((y0 + ys[-1] + 1) * sc)))
+                panels.append((int((x0 + bbox[0]) * sc), int((y0 + bbox[1]) * sc), int((x0 + bbox[2]) * sc), int((y0 + bbox[3]) * sc)))
         if len(panels) > len(best):
             best = panels
     return best[:PANELS_MAX] if len(best) >= 2 else []
