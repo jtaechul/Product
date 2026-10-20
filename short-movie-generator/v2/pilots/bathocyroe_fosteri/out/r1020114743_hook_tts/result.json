@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "items": [
+    {
+      "name": "hook",
+      "http": 200,
+      "rate": "120%",
+      "file": "hook.wav",
+      "sec": 1.93,
+      "timepoints": [
+        {
+          "seg": "くちはでえものをとじこめる",
+          "start": 0.015,
+          "end": 1.935
+        }
+      ]
+    }
+  ],
+  "request": "r1020114743_hook_tts.json",
+  "kind": "gen_tts",
+  "ran_at": "2026-10-20T11:47:43Z"
+}

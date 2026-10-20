@@ -73,8 +73,14 @@
       "approved_at": "2026-10-20T11:43:25Z"
     },
     "video": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-10-20T11:47:42Z",
+          "kind": "auto",
+          "text": "영상 컷 준비 완료 — 조립 + 자동 검사"
+        }
+      ]
     },
     "upload": {
       "state": "locked",
@@ -335,7 +341,7 @@
       "pending_lines": [],
       "hook": {
         "cut": 6,
-        "at": 2.0,
+        "at": 2.38,
         "answer_jp": "クシクラゲの仲間",
         "answer_ko": "빗해파리의 일종",
         "candidates": [
@@ -367,7 +373,11 @@
         "voice_jp": "口葉で獲物を閉じ込める",
         "pattern": "異常な行動",
         "chosen": 0,
-        "type": "line"
+        "type": "line",
+        "voice_file": "out/r1020114743_hook_tts/hook.wav",
+        "voice_for": "口葉で獲物を閉じ込める",
+        "motion": 16.73,
+        "at_by": "auto"
       },
       "core": {
         "id": "F7",
@@ -599,9 +609,113 @@
           "motion": "still"
         }
       ]
+    },
+    "video": {
+      "clips_request": "r1020114553_clips",
+      "clips": [
+        {
+          "cut": 1,
+          "file": "out/r1020114553_clips/c01.mp4",
+          "sec": 6,
+          "motion": "omni"
+        },
+        {
+          "cut": 2,
+          "file": "out/r1020114553_clips/c02.mp4",
+          "sec": 6,
+          "motion": "omni"
+        },
+        {
+          "cut": 3,
+          "file": "out/r1020114421_stills/c03.mp4",
+          "sec": 6,
+          "motion": "still"
+        },
+        {
+          "cut": 4,
+          "file": "out/r1020114553_clips/c04.mp4",
+          "sec": 6,
+          "motion": "omni"
+        },
+        {
+          "cut": 5,
+          "file": "out/r1020114421_stills/c05.mp4",
+          "sec": 6,
+          "motion": "still"
+        },
+        {
+          "cut": 6,
+          "file": "out/r1020114553_clips/c06.mp4",
+          "sec": 6,
+          "motion": "omni"
+        },
+        {
+          "cut": 7,
+          "file": "out/r1020114421_stills/c07.mp4",
+          "sec": 6,
+          "motion": "still"
+        },
+        {
+          "cut": 8,
+          "file": "out/r1020114421_stills/c08.mp4",
+          "sec": 6,
+          "motion": "still"
+        }
+      ],
+      "final": "out/r1020114742_final/final.mp4",
+      "assemble": {
+        "clips_id": "r1020114553_clips",
+        "tts_id": "r10200434_script_tts",
+        "ending": ""
+      },
+      "built_at": "2026-10-20T11:49:52Z"
     }
   },
-  "checks": {},
+  "checks": {
+    "at": "2026-10-20T11:49:51Z",
+    "duration_s": 45.27,
+    "white_edge_px": {
+      "value": 0,
+      "ok": true,
+      "rule": "좌우 가장자리 흰 줄 0px"
+    },
+    "loudness_lufs": {
+      "value": -16.1,
+      "ok": true,
+      "rule": "-16 LUFS ±1"
+    },
+    "music": {
+      "ok": true,
+      "rule": "음악 없음(영상 AI 오디오는 조립 때 전부 버림)"
+    },
+    "subtitle_font": {
+      "ok": true,
+      "value": "NotoSansJP-Bold.ttf",
+      "rule": "자막 글꼴이 실제로 그려질 것(네모 □ 금지) — 조립 직전 이 서버에서 검사"
+    },
+    "screen_text": {
+      "ok": true,
+      "value": "주석·후킹·정답 글자 모두 글꼴에 있음",
+      "rule": "화면 글자가 글꼴에 모두 있을 것(한국어 주석 금지 · 네모 □ 금지)"
+    },
+    "hook_motion": {
+      "value": 16.73,
+      "ok": true,
+      "warn": true,
+      "rule": "맨 앞 2초 움직임 3 이상 · 6번 컷 2.38초부터(자동 선택) · 실측: 왕게 1.0(81% 바로 넘김) · 대왕구족충 3.8 · 유령해삼 6.9"
+    },
+    "front_motion": {
+      "value": 7.55,
+      "ok": true,
+      "warn": true,
+      "rule": "앞 15초 평균 움직임 2 이상(잠정) · 실측: 왕게 1.4 · 유령해삼 2.5 · 대왕구족충 7.4"
+    },
+    "hook_voice": {
+      "ok": true,
+      "value": "口葉で獲物を閉じ込める",
+      "rule": "후킹 한 줄을 0초부터 목소리로 읽기(실패하면 맨 앞이 무음 — 「완성본 다시 조립」으로 다시 시도)"
+    }
+  },
   "jobs": {
     "script": {
       "stage": "script",
@@ -619,10 +733,10 @@
     },
     "video": {
       "stage": "video",
-      "status": "running",
-      "at": "2026-10-20T11:43:25Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-20T11:49:52Z",
+      "action": "make_video",
+      "text": "영상 자동 제작 완료 — 승인 대기"
     }
   },
   "cost": {
@@ -651,6 +765,11 @@
         "at": "2026-10-20T11:37:10Z",
         "what": "콘티 격자 2장",
         "usd": 0.268
+      },
+      {
+        "at": "2026-10-20T11:47:42Z",
+        "what": "영상 컷 4개 생성",
+        "usd": 2.4
       }
     ]
   }

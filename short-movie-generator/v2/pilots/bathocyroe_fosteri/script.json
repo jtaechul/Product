@@ -7,7 +7,7 @@
   },
   "hook": {
     "cut": 6,
-    "at": 2.0,
+    "at": 2.38,
     "answer_jp": "クシクラゲの仲間",
     "answer_ko": "빗해파리의 일종",
     "candidates": [
@@ -39,7 +39,11 @@
     "voice_jp": "口葉で獲物を閉じ込める",
     "pattern": "異常な行動",
     "chosen": 0,
-    "type": "line"
+    "type": "line",
+    "voice_file": "out/r1020114743_hook_tts/hook.wav",
+    "voice_for": "口葉で獲物を閉じ込める",
+    "motion": 16.73,
+    "at_by": "auto"
   },
   "core": "F7",
   "story": {
