@@ -7,7 +7,6 @@
 //                       그 푸시가 stay-shorts-produce 워크플로를 깨운다(기존 돈 잠금·nonce 가드는 워크플로 쪽에 그대로).
 //   - POST /api/cancel  : 도는 실행 멈추기(잘못 누른 정식 제작 — 영상 만들기 전이면 돈이 거의 안 나간다).
 //   - POST /api/discover: 테마·지역·월로 후보 순위표 새로 만들기(stay-shorts-discover · 수십 원).
-//   - POST /api/mini    : 캐릭터 1컷 시험(2026-10-16 운영자 "커플+강아지") — 미리 잠가 둔 requests/mini/request.json 을 새 nonce + 허락으로 커밋(컷당 약 720원).
 //   - GET  /api/media : 실행별 Release 의 완성 영상·나레이션·미리보기 글(preview.md)을 이 페이지 안에서 재생·표시(2026-10-14 운영자 "결과 바로 보기").
 //   - 실행 중이면 버튼을 막는다(운영 규칙: 제작 워크플로가 도는 동안 같은 브랜치에 푸시하지 않는다).
 //   - 텔레그램은 진행 알림 전용(운영자 2026-10-14) — 이 페이지는 텔레그램을 쓰지 않는다.
@@ -22,13 +21,6 @@ const P = "projects/stay-shorts-factory";
 const WF = { "stay-shorts-produce.yml": "produce", "stay-shorts-discover.yml": "discover", "stay-shorts-mini.yml": "mini" };
 const REQ_PATH = `${P}/requests/produce/request.json`;
 const DISC_PATH = `${P}/requests/discover/request.json`;
-const MINI_PATH = `${P}/requests/mini/request.json`;
-// 캐릭터 1컷 = 합성 사진 1장(약 98원) + 옴니 4초(약 620원) + 비전 검수(약 1원). 실측 life-2 716원
-// 실사 뒷모습 1컷(real_back · 2026-10-16) = 합성 없이 Veo 4초(약 294원) + 검수(약 1원)
-const MINI_PER_SHOT = 720;
-const MINI_REAL_BACK = 300;
-const miniCost = (shots) => shots.reduce((t, s) => t + (s && s.real_back ? MINI_REAL_BACK : MINI_PER_SHOT), 0);
-const MINI_MAX_SHOTS = 3;
 const REGIONS = ["강원", "경기", "제주", "부산", "경남", "경북", "전남", "전북", "충남", "충북", "서울", "인천", "대전", "대구", "광주", "울산", "세종"];
 const MEDIA = { "video.mp4": "video/mp4", "narration_preview.mp3": "audio/mpeg", "preview.md": "text/plain; charset=utf-8" };
 const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.py MONTH_KRW 와 같은 값)
@@ -299,7 +291,7 @@ function sigPreviewIndex(runs) {
 async function state(env) {
   const now = kstNow();
   const ym = now.toISOString().slice(0, 7);
-  const [req, ledger, cands, folders, rep, titles, runs, media, disc, blocked, mreq, mrep] = await Promise.all([
+  const [req, ledger, cands, folders, rep, titles, runs, media, disc, blocked] = await Promise.all([
     readJson(env, REQ_PATH, {}),
     readJson(env, `${P}/state/spend.json`, []),
     readJson(env, `${P}/data/discover/latest/candidates.json`, {}),
@@ -310,8 +302,6 @@ async function state(env) {
     releaseMedia(env),
     readJson(env, DISC_PATH, {}),
     readJson(env, `${P}/state/sig_blocked.json`, {}),
-    readJson(env, MINI_PATH, {}),
-    readJson(env, `${P}/data/runs/mini/report.json`, null),
   ]);
   const blocks = activeBlocks(blocked, now);
   const runList = (Array.isArray(runs) ? runs : []).map((r) => ({ ...r, media: r.kind === "produce" ? media[String(r.number)] || [] : [] }));
@@ -355,34 +345,6 @@ async function state(env) {
     folders: (folders.folders || []).map((f) => ({ title: f.title, hotels: (f.hotels || []).map((h) => ({ rank: h.rank, name: h.name })) })),
     last: lastResult(rep),
     hook_titles: (Array.isArray(titles) ? titles : []).slice(-4).reverse().map((t) => ({ title: t.title, type: t.type, stay: t.stay })),
-    mini: miniState(mreq, mrep),
-  };
-}
-
-function miniState(req, rep) {
-  // 캐릭터 시험 카드: 미리 준비(admin_test)된 요청만 버튼을 보인다. 결과 영상은 공식 사진이 들어 있어 이 페이지에 올리지 않는다(텔레그램).
-  const shots = Array.isArray((req || {}).shots) ? req.shots : [];
-  const ready = !!(req && req.admin_test === true && shots.length >= 1 && shots.length <= MINI_MAX_SHOTS);
-  const r = rep && typeof rep === "object" ? rep : null;
-  const shot = r && Array.isArray(r.shots) ? r.shots[0] || {} : {};
-  return {
-    ready,
-    label: String((req || {}).label || ""),
-    desc: String((req || {}).desc || ""),
-    shots: shots.length,
-    cost: miniCost(shots),
-    nonce: String((req || {}).nonce || ""),
-    approved: (req || {}).veo_approved === true,
-    last: r && r.nonce ? {
-      nonce: String(r.nonce),
-      ok: r.ok === true,
-      error: String(r.error || "").slice(0, 200),
-      krw: Math.round((Number(r.image_krw) || 0) + (Number(r.veo_spent_krw) || 0)),
-      finished: String(r.finished || ""),
-      verdict: String((shot.vision || {}).verdict || ""),
-      why: String((shot.vision || {}).why || "").slice(0, 160),
-      skipped: String(shot.skipped || ""),
-    } : null,
   };
 }
 
@@ -470,28 +432,6 @@ async function cancelRun(env, body) {
   return { ok: true, id };
 }
 
-async function startMini(env, body) {
-  const [req, ledger, runs, recent] = await Promise.all([readWithSha(env, MINI_PATH), readJson(env, `${P}/state/spend.json`, []), listRuns(env, 30), recentRequestCommit(env)]);
-  const cur = req.data || {};
-  const shots = Array.isArray(cur.shots) ? cur.shots : [];
-  if (cur.admin_test !== true || !shots.length || shots.length > MINI_MAX_SHOTS) throw new HttpError(409, "준비된 캐릭터 시험이 없습니다");
-  if (runs.some((r) => r.active)) throw new HttpError(409, "지금 다른 실행이 돌고 있습니다. 끝난 뒤 다시 누르세요");
-  if (recent) throw new HttpError(409, "방금 시작한 실행이 준비 중입니다. 1~2분 뒤 '지금 상태'를 확인하세요");
-  const cost = miniCost(shots);
-  const now = kstNow();
-  const money = monthSpend(ledger, now.toISOString().slice(0, 7));
-  if (money.total + cost > MONTH_CAP) {
-    throw new HttpError(403, `이번 달 한도를 넘습니다 (쓴 돈 ${money.total.toLocaleString()}원 + 예상 ${cost.toLocaleString()}원 > ${MONTH_CAP.toLocaleString()}원)`);
-  }
-  if (body.confirm !== true) throw new HttpError(400, "캐릭터 시험은 화면에서 한 번 더 확인해야 합니다");
-  const next = { ...cur };
-  next.nonce = `${now.toISOString().slice(0, 10)}-admin-mini-${b64url(crypto.getRandomValues(new Uint8Array(3)))}`;   // 같은 nonce 는 make_mini 가 건너뛴다 → 누를 때마다 새로
-  next.veo_approved = true;                                                   // 버튼 + 금액 확인 = 운영자 허락(실행 뒤 워크플로가 다시 잠근다)
-  next.note = `관리자 페이지 캐릭터 시험 — ${cur.label || ""} · 예상 약 ${cost.toLocaleString()}원 · ${now.toISOString().slice(0, 16).replace("T", " ")} KST`;
-  const put = await commitJson(env, MINI_PATH, req.sha, next, `stay-shorts: 관리자 페이지 ${cur.label || "캐릭터 시험"} (${next.nonce})`);
-  return { ok: true, nonce: next.nonce, cost, commit: (put.commit || {}).html_url || "" };
-}
-
 function monthOk(m, now) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(m)) return false;
   const [y, mo] = m.split("-").map(Number);
@@ -575,7 +515,6 @@ export default {
         if (path === "/api/run" && request.method === "POST") return json(await startRun(env, await request.json().catch(() => ({}))));
         if (path === "/api/cancel" && request.method === "POST") return json(await cancelRun(env, await request.json().catch(() => ({}))));
         if (path === "/api/discover" && request.method === "POST") return json(await startDiscover(env, await request.json().catch(() => ({}))));
-        if (path === "/api/mini" && request.method === "POST") return json(await startMini(env, await request.json().catch(() => ({}))));
         if (path === "/api/media" && (request.method === "GET" || request.method === "HEAD")) return media(env, url, request);
         return json({ error: "없는 주소" }, 404);
       }
