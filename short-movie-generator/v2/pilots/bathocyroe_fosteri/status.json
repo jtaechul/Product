@@ -104,7 +104,7 @@
       "approved_at": "2026-10-20T12:11:48Z"
     },
     "upload": {
-      "state": "review",
+      "state": "approved",
       "notes": [
         {
           "at": "2026-10-20T12:13:14Z",
@@ -115,8 +115,29 @@
           "at": "2026-10-20T12:13:14Z",
           "kind": "meta",
           "text": "예약 공개 준비: 2026-10-21T00:07:00Z(UTC = 일본·한국 아침 9시 7분) — 업로드는 「승인」을 눌러야 합니다"
+        },
+        {
+          "at": "2026-10-20T13:31:19Z",
+          "kind": "meta_edit",
+          "text": "운영자가 제목·설명 수정"
+        },
+        {
+          "at": "2026-10-20T13:31:22Z",
+          "kind": "uploaded",
+          "text": "유튜브 업로드 완료(예약 공개 2026-10-21T00:07:00Z): https://youtu.be/63J57OBDfdA — 고정 댓글은 유튜브 앱에서 직접 달고 고정"
+        },
+        {
+          "at": "2026-10-20T13:31:22Z",
+          "kind": "error",
+          "text": "재생목록 추가 실패(토큰 권한 부족이면 재발급 필요): <HttpError 403 when requesting https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50&"
+        },
+        {
+          "at": "2026-10-20T13:31:22Z",
+          "kind": "approve",
+          "text": ""
         }
-      ]
+      ],
+      "approved_at": "2026-10-20T13:31:22Z"
     }
   },
   "topic": {
@@ -733,11 +754,20 @@
         ],
         "pinned_comment": "次に見たい深海の生き物は？",
         "privacy": "scheduled",
-        "category": "15",
+        "category": "28",
         "search_jp": "クラゲ",
         "publish_at": "2026-10-21T00:07:00Z"
       },
-      "meta_at": "2026-10-20T12:13:14Z"
+      "meta_at": "2026-10-20T12:13:14Z",
+      "result": {
+        "url": "https://youtu.be/63J57OBDfdA",
+        "video_id": "63J57OBDfdA",
+        "privacy": "scheduled",
+        "category": "28",
+        "at": "2026-10-20T13:31:22Z",
+        "publish_at": "2026-10-21T00:07:00Z",
+        "playlist_error": "<HttpError 403 when requesting https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50&alt=json returned \"Request had insuffici"
+      }
     }
   },
   "checks": {
