@@ -83,7 +83,7 @@
       "approved_at": "2026-10-20T11:43:25Z"
     },
     "video": {
-      "state": "review",
+      "state": "approved",
       "notes": [
         {
           "at": "2026-10-20T11:47:42Z",
@@ -94,11 +94,17 @@
           "at": "2026-10-20T11:56:19Z",
           "kind": "redo_cut",
           "text": "1번 컷 다시 만듦."
+        },
+        {
+          "at": "2026-10-20T12:11:48Z",
+          "kind": "approve",
+          "text": ""
         }
-      ]
+      ],
+      "approved_at": "2026-10-20T12:11:48Z"
     },
     "upload": {
-      "state": "locked",
+      "state": "working",
       "notes": []
     }
   },
