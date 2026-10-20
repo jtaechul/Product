@@ -859,6 +859,20 @@ def operator_card(stay: str) -> dict | None:
     return c if isinstance(c, dict) and c.get("point") and isinstance(c.get("answers"), list) else None
 
 
+def operator_facts(stay: str, report: dict | None = None) -> list[str]:
+    """운영자 확인 사실(`story_scripts.json` facts · 출처·날짜는 facts_note) — 공식 홈페이지 안내문 이미지를 운영자가 직접 읽어 적은 사실.
+    수집기가 그 안내문을 못 읽은 실행(#59: 반려견 수영장 입장 규정 안내문이 콜라주 판정으로 빠짐)에서도 대본·캡션·카드의 근거가 되게 하는 안전망.
+    사실 목록 맨 뒤에 '운영자 확인 안내문: ' 머리말로 붙고 미리보기 문서에 따로 표시된다."""
+    try:
+        d = json.loads(SCRIPTS.read_text(encoding="utf-8")).get(stay) or {}
+    except Exception:  # noqa: BLE001
+        return []
+    out = [f"운영자 확인 안내문: {design.one_line(str(f))}" for f in (d.get("facts") or []) if isinstance(f, str) and f.strip()]
+    if report is not None and out:
+        report["operator_facts"] = {"facts": out, "note": design.one_line(str(d.get("facts_note") or ""))}
+    return out
+
+
 def card_errs(card, facts: list[str], toks: set[str], h: dict, req: dict, grounded: bool = True) -> list[str]:
     """요약 카드 검사(0원): point 6~14자 명사구(물음표·분위기 말·숙소 이름 금지) · 답 2~3줄 6~14자 · 한 줄 폭(design.fits) · 사실 번호 근거(0 이면 장점 사진 낱말)
     · 가격·1인칭·'~니다'·근거 없는 숫자·중복 금지 · [대괄호] 강조는 카드 전체에서 한 곳."""
@@ -1694,6 +1708,9 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
     nf = list(h.get("notice_facts") or [])
     if nf:
         md += ["## 공식 안내문에서 읽은 사실", "", *[f"- {f}" for f in nf[:14]], ""]
+    of = report.get("operator_facts") or {}
+    if of.get("facts"):
+        md += [f"## 운영자 확인 사실 (공식 홈페이지 안내문을 운영자가 읽어 적음 · {of.get('note') or '출처 메모 없음'})", "", *[f"- {sg._body(f)}" for f in of["facts"]], ""]
     sb = report.get("storyboard") or {}
     scn = [x for x in (text.get("scenes") or []) if x.get("j") is not None]
     if sb.get("sheets") is not None or scn:
@@ -1844,7 +1861,7 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
     else:
         h, pos0 = so.assets(req, models, report)
         sig = sg.choose_signature(models, h, req, report)
-        facts = sg.facts_list(h) + deep_facts(models, h, sig, report)
+        facts = sg.facts_list(h) + deep_facts(models, h, sig, report) + operator_facts(h["name"], report)   # 운영자 확인 사실은 맨 뒤(안전망)
         shot_list = build_shots(models, sig, h, report)
         material_gate(report.get("material") or {"photos": len({s_["k"] for s_ in shot_list}), "places": sorted({s_.get("place") for s_ in shot_list}), "inserts": 0}, h, req, report)
         if len(shot_list) < 2:

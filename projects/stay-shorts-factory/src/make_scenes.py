@@ -35,6 +35,8 @@ import veo
 #  C 숙소와 무관한 감정 인서트(집 창가의 강아지·현관의 목줄·해안도로 차창) 시트 1장(98원) → 훅 첫 컷·제안 컷
 #  D 검수 등급: 시설·구조(풀·욕조·계단·창·침대…) 추가 = 탈락 / 작은 소품(조명·화분·쿠션) = 통과(기록) / 글자 = 그 시트 1회 재생성
 FAKE = os.environ.get("SCENE_FAKE_IMAGE", "") == "1"                     # 로컬 시험: 시트 대신 원본에 색을 입힌 가짜 2×2(0원)
+VIEW_ANGLES = ["from the same camera position as the photograph, framed a little tighter", "from the same spot, the camera turned a little to the left",
+               "from the same spot, the camera turned a little to the right", "from the same spot, a little higher, looking slightly down"]   # 전망·바깥 사진은 자리를 옮기면 없는 난간·통창·건물을 지어낸다(#59 바다 사진 0/4) → 같은 자리에서 조금만
 ANGLES = {                                                                 # 장소별 카메라 위치(환경 씬은 원본과 다른 각도로 — 같은 사진 느낌을 없앤다)
     "객실": ["from the doorway looking into the room", "from beside the bed looking toward the window", "low angle near the floor looking across the room",
              "from the window side looking back into the room"],
@@ -42,7 +44,9 @@ ANGLES = {                                                                 # 장
     "수영장": ["from the pool edge at water level", "from the far end of the pool looking back", "from above the entry steps", "close-up of the water surface with the surroundings behind"],
     "온수탕·스파": ["from the edge of the bath at water level", "from the far side looking back", "from above the steps", "close-up of the water surface with the surroundings behind"],
     "물놀이": ["from the pool edge at water level", "from the far end looking back", "from above the entry steps", "close-up of the water with the surroundings behind"],
-    "_": ["from the railing or edge looking out", "a few steps further back, wider", "low angle close to the ground", "from the side, along the length of the space"],
+    "바다": VIEW_ANGLES, "외관": VIEW_ANGLES, "정원·산책로": VIEW_ANGLES, "테라스": VIEW_ANGLES,
+    "_": ["from the same camera position as the photograph, framed a little tighter", "a few steps further back, wider", "low angle close to the ground",
+          "from the side, along the length of the space"],
 }
 SAME_ANGLE = "the same camera position as the photograph"
 FACILITY_RX = re.compile(r"풀|수영장|욕조|탕|계단|발코니|테라스|창|침대|소파|테이블|탁자|의자|가구|문|벽|천장|기둥|난간|데크|지붕|건물|방|복도|주방|싱크|세면대|거울|바다|산|pool|bath|tub|stair|balcony|window|bed|sofa|table|chair|door|wall|railing|deck|sea", re.I)
@@ -84,15 +88,16 @@ WHO_EN = {"couple": "an adult couple in white hotel bathrobes seen strictly from
 WHO_KO = {"couple": "뒷모습 커플", "back": "뒷모습 한 사람", "hand": "손", "dog": "강아지", "env": "사람 없음", "none": "사람 없음"}
 DOG_EXTRA = " The same small cream-white toy poodle with a coral-red collar is with them."
 SHEET_PROMPT = """You are given one real hotel photograph (attached). Create ONE image that is a 2x2 storyboard grid: four vertical 9:16 panels of equal size, arranged top-left, top-right, bottom-left, bottom-right, separated by thin plain white gutters.
-All four panels show the SAME real space as the photograph, like frames from one video shot inside it, but each panel is taken from the camera position written for it. Everything visible must stay consistent with the photograph: the same furniture pieces, materials, colors, floor, walls, window and the same view outside. Where the photograph does not show a part of the space, keep that part plain and simple. NEVER add a pool, bathtub, stairs, balcony, extra window, extra bed, extra door or any facility or furniture that the photograph does not show, and do not remove what it shows. Absolutely no text, numbers, captions, logos or watermarks anywhere in the image. Photorealistic.
+All four panels show the SAME real space as the photograph, like frames from one video shot inside it, but each panel is taken from the camera position written for it. Everything visible must stay consistent with the photograph: the same furniture pieces, materials, colors, floor, walls, window and the same view outside. Where the photograph does not show a part of the space, keep that part plain and simple. NEVER add a pool, bathtub, stairs, balcony, extra window, extra bed, extra door or any facility or furniture that the photograph does not show, and do not remove what it shows. Absolutely no text, numbers, captions, logos or watermarks anywhere in the image; bottles, packaging, signs, screens, books and labels must be blank with no lettering at all. Photorealistic.
 Panels:
 {panels}
 Rules for people: only seen from behind, faces never visible, no eye contact with the camera, realistic adult size, no phones, cups or new objects in their hands. Nobody else appears. If a panel says "no people", it must contain no person and no animal."""
 CHECK_SYSTEM = """너는 숙소 AI 스토리보드 검수자다. 이미지 1 = 실제 숙소 사진(원본). 이미지 2~5 = AI 가 같은 공간을 **다른 카메라 위치**에서 다른 순간으로 그린 패널(차례로 패널 1~4). 각도가 달라도 같은 공간이면 된다.
 패널마다: same_place(같은 공간으로 보이는가 — 가구 종류·재질·색·창·바닥·전망이 원본과 일관), facilities_added(원본 사진에 없는 **시설·구조**가 생겼는가: 수영장·욕조·계단·발코니·창·침대·소파·문·난간·데크·건물 등 — 목록),
-small_added(원본에 없는 **작은 소품**: 조명·화분·쿠션·수건·액자·그릇 등 — 목록), people(사람 수 · 손·팔만 보이면 "hand"), face_visible(눈·코·입이 보이는 얼굴이 있는가),
+small_added(원본에 없는 **작은 소품**: 조명·화분·쿠션·수건·액자·그릇 등 — 목록), missing(원본에 보이는 **큰 사물·시설** 중 패널에서 사라진 것: 계단·침대·욕조·소파·창·문·난간 등 — 목록 · 각도가 달라 화면 밖으로 나간 것은 빼고, 그 자리인데 없어진 것만),
+people(사람 수 · 손·팔만 보이면 "hand"), face_visible(눈·코·입이 보이는 얼굴이 있는가),
 dogs(강아지 수), text(글자·번호·로고가 있는가), looks_real(실사처럼 자연스러운가 — 사람·강아지 몸·손가락이 이상하면 false).
-JSON 만: {"panels":[{"n":1,"same_place":true,"facilities_added":[],"small_added":[],"people":0,"face_visible":false,"dogs":0,"text":false,"looks_real":true,"why":"한 줄"}]}"""
+JSON 만: {"panels":[{"n":1,"same_place":true,"facilities_added":[],"small_added":[],"missing":[],"people":0,"face_visible":false,"dogs":0,"text":false,"looks_real":true,"why":"한 줄"}]}"""
 
 
 def log(*a):
@@ -273,6 +278,10 @@ def _judge(sc: dict, r: dict) -> tuple[bool, str]:
         probs.append("시설·구조 추가: " + ", ".join(fac)[:80])
     if small:
         sc["minor"] = ", ".join(small)[:80]                                            # 작은 소품은 통과(기록만)
+    if sc.get("angle") == SAME_ANGLE:                                                  # 원본 각도 씬(사람·강아지 = Veo 시작 장면)은 원본의 시설·큰 사물이 빠져도 탈락 — #60 강아지 컷이 계단 없는 패널에서 시작해 Veo 가 계단을 지어냄(새 사물 탈락 · 294원)
+        gone = [str(x) for x in (r.get("missing") or []) if FACILITY_RX.search(str(x))]
+        if gone:
+            probs.append("원본 시설 빠짐: " + ", ".join(gone)[:80])
     if r.get("face_visible"):
         probs.append("얼굴 보임")
     if r.get("text"):
@@ -315,7 +324,7 @@ def _check_sheet(models: dict, base: Path, panels: list[Path], group: list[dict]
         if not p:
             out.append({"ok": False, "why": "검수 답 없음", "raw": {}}); continue
         ok, why = _judge(sc, p)
-        out.append({"ok": ok, "why": why or str(p.get("why") or "")[:80], "raw": {k: p.get(k) for k in ("same_place", "facilities_added", "small_added", "structure_changes", "added_objects", "people", "face_visible", "dogs", "text", "looks_real")}})
+        out.append({"ok": ok, "why": why or str(p.get("why") or "")[:80], "raw": {k: p.get(k) for k in ("same_place", "facilities_added", "small_added", "missing", "structure_changes", "added_objects", "people", "face_visible", "dogs", "text", "looks_real")}})
     return out
 
 
@@ -440,7 +449,8 @@ def apply_scenes(beats: list[dict], scenes: list[dict], shots: dict, report: dic
                 continue
             k = sc["k"] if sc else s.get("k")
             alt = next((x for x in spare_all if x["k"] == k and x["img"] not in used_spare), None)
-            if alt and (sc is not None or used_k.get(k)):                                # 탈락·시트 생략 컷, 또는 이미 쓴 사진 → 같은 사진의 여분 패널(다른 각도·시간대)
+            need_orig = bool(sc and "원본 시설 빠짐" in str(sc.get("why") or "") and not used_k.get(k))   # 사람·강아지 패널에서 원본 시설이 빠졌으면 여분 패널(같은 시트)도 못 믿는다 → 원본(아직 안 썼을 때)에서 Veo 시작
+            if alt and not need_orig and (sc is not None or used_k.get(k)):              # 탈락·시트 생략 컷, 또는 이미 쓴 사진 → 같은 사진의 여분 패널(다른 각도·시간대)
                 used_spare.add(alt["img"]); imgs.append(alt["img"]); kinds.append(f"AI 스토리보드 여분·{TIME_KO[alt['time']]}"); keep.append(sid)
                 cuts_k[k] = cuts_k.get(k, 0) + 1; continue
             orig = s.get("img") or ""

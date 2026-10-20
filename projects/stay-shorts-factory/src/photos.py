@@ -569,9 +569,11 @@ def add_panels(cands: list[dict], build: Path) -> list[dict]:
 
 
 def notice_candidates(classified: list[dict]) -> list[dict]:
-    """글 안내문으로 보이는 사진 — 분류 skip + 공식 홈페이지 + 설명에 안내문 낱말. 다른 지점 의심(mismatch)·패널·콜라주 원본은 제외."""
+    """글 안내문으로 보이는 사진 — 분류 skip + 공식 홈페이지 + 설명에 안내문 낱말. 다른 지점 의심(mismatch)·잘라낸 패널은 제외.
+    콜라주 원본도 설명에 안내문 낱말이 있으면 읽는다(장당 약 1원) — #59 세인트존스 '반려견 시설 안내문 + 작은 사진들'(반려견 수영장 입장 규정)이
+    콜라주 판정으로 빠져 대본 6문장의 근거가 사라졌다."""
     return [p for p in classified if p.get("category") == "skip" and p.get("source") == "official" and not p.get("mismatch")
-            and p.get("panel_of") is None and not p.get("collage") and NOTICE_RX.search(str(p.get("description") or ""))]
+            and p.get("panel_of") is None and NOTICE_RX.search(str(p.get("description") or ""))]
 
 
 def read_notices(model: str, cands: list[dict], batch: int = 6) -> dict:
