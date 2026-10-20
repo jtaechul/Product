@@ -104,6 +104,11 @@ def log(*a):
     print("[scenes]", *a, flush=True)
 
 
+def _sid_num(t: dict) -> int:
+    """컷 id 의 숫자(S10 → 10). 글자 정렬이면 'S10' < 'S5' 라 S10 이 먼저 뽑힌다(#61 간판 사진이 그렇게 뽑혔다)."""
+    return int(re.sub(r"\D", "", str(t.get("id") or "")) or 0)
+
+
 # ── 1. 씬 계획(0원) ─────────────────────────────────────────────────────────────────
 def plan_scenes(beats: list[dict], shots: dict, dog: bool, report: dict, end_scene: bool = True) -> list[dict]:
     """컷마다 씬 하나: 그 컷의 사진(장소) + 누가·동작(화면 계획의 actor) + 시간대(하루 흐름 — 앞은 낮, 뒤로 갈수록 저녁·밤).
@@ -118,9 +123,11 @@ def plan_scenes(beats: list[dict], shots: dict, dog: bool, report: dict, end_sce
         if not end_scene and j == n - 1 and str(b.get("lens") or "") in ("제안", "약속"):
             continue
         base_t = order[min(len(order) - 1, int(j * len(order) / max(1, n - 1)))] if n > 1 else "day"
-        for m, sid in enumerate(b.get("shots") or []):
-            if sid not in shots:
+        m = -1
+        for sid in b.get("shots") or []:
+            if sid not in shots or shots[sid].get("insert"):                             # v10.3: 재사용 계획(문제 시트만 다시)엔 인서트 컷이 이미 들어 있다 — 씬 아님
                 continue
+            m += 1
             s = shots[sid]
             who, act, with_dog = "env", "", False
             if m == 0 and v.get("actor") in ("couple", "back", "hand", "dog"):
@@ -310,10 +317,18 @@ def _check_sheet(models: dict, base: Path, panels: list[Path], group: list[dict]
             out.append({"ok": not why, "why": why, "raw": {"fake": True}})
         return out
     want = "패널별 기대: " + " / ".join(f"패널 {i + 1}: {WHO_KO.get(sc['who'], '')}{'+강아지' if sc.get('with_dog') else ''} · {TIME_KO[sc['time']]}" for i, sc in enumerate(group))
-    try:
-        r = ms._try_models("vision", models["text"], lambda m: sg._json_vision(m, CHECK_SYSTEM, want, [base] + panels))
-    except Exception as e:  # noqa: BLE001
-        return [{"ok": False, "why": f"검수 호출 실패: {str(e)[:60]}", "raw": {}} for _ in group]
+    r, err = None, ""
+    for attempt in range(2):                                                           # v10.3: 답이 잘리거나 비면 한 번 더(약 2원) — #61 시트 4가 '검수 호출 실패' 한 번에 패널 4개(98원)를 다 버렸다
+        try:
+            r = ms._try_models("vision", models["text"], lambda m: sg._json_vision(m, CHECK_SYSTEM, want, [base] + panels, max_tokens=1500))
+            if (r.get("panels") if isinstance(r, dict) else r):
+                break
+            err, r = "검수 답 비어 있음", None
+        except Exception as e:  # noqa: BLE001
+            err, r = str(e)[:60], None
+        log(f"시트 검수 호출 실패({attempt + 1}/2): {err}")
+    if r is None:
+        return [{"ok": False, "why": f"검수 호출 실패: {err}", "raw": {}} for _ in group]
     by_n = {}
     for p in (r.get("panels") if isinstance(r, dict) else r) or []:
         if isinstance(p, dict) and str(p.get("n", "")).isdigit():
@@ -329,13 +344,36 @@ def _check_sheet(models: dict, base: Path, panels: list[Path], group: list[dict]
 
 
 # ── 2. 시트 생성·분할·검수 ──────────────────────────────────────────────────────────
-def make_sheets(models: dict, scenes: list[dict], shots: dict, story: Path, report: dict) -> None:
-    """참조 사진(k)별로 씬을 4개씩 묶어 시트 한 장씩(최대 MAX_SHEETS). 4개가 안 되면 빈 자리는 다른 시간대의 '사람 없음' 씬으로 채운다(여분 스틸)."""
+SCENE_KEYS = ("n", "j", "m", "sid", "k", "place", "who", "with_dog", "action_en", "time", "img", "ok", "why", "panel_px", "sheet", "spare", "angle", "minor", "reused")
+
+
+def scene_key(sc: dict) -> tuple:
+    """같은 패널인가 — 같은 사진·누가·강아지·동작·시간대·카메라 위치(plan_scenes 는 결정적이라 같은 대본·컷이면 같은 키)."""
+    return (int(sc["k"]), str(sc.get("who") or ""), bool(sc.get("with_dog")), str(sc.get("action_en") or "")[:200], str(sc.get("time") or ""), str(sc.get("angle") or ""))
+
+
+def reuse_index(old_scenes: list[dict], story: Path) -> dict:
+    """옛 미리보기의 씬 목록(plan.json text.scenes) → 키별 패널(파일이 있는 것만). v10.3 '문제 시트만 다시'의 재료."""
+    out = {}
+    for x in old_scenes or []:
+        if x.get("img") and x.get("sheet") and (story / str(x["img"])).exists():
+            out.setdefault(scene_key(x), x)
+    return out
+
+
+def make_sheets(models: dict, scenes: list[dict], shots: dict, story: Path, report: dict, reuse: dict | None = None, redo: dict | None = None) -> None:
+    """참조 사진(k)별로 씬을 4개씩 묶어 시트 한 장씩(최대 MAX_SHEETS). 4개가 안 되면 빈 자리는 다른 시간대의 '사람 없음' 씬으로 채운다(여분 스틸).
+    v10.3 reuse(옛 패널 키 → 씬) 가 있으면 **같은 패널이 다 있는 시트는 다시 만들지 않고 그 패널·검수 결과를 그대로**(0원) — redo 로 다시 만들 시트를 고른다:
+    sheets "failed"(기본 · 컷 패널이 하나라도 탈락한 시트) / [번호…](옛 미리보기의 시트 번호) / "all". 새 시트 번호는 옛 번호 뒤부터(파일 이름 충돌 방지)."""
     rep = {"image_prefer": None}
     groups: dict[int, list[dict]] = {}
     for sc in scenes:
         groups.setdefault(sc["k"], []).append(sc)
-    sheets, n_sheet = [], 0
+    old = reuse or {}
+    rd = redo or {}
+    redo_list = {int(x) for x in rd.get("sheets")} if isinstance(rd.get("sheets"), list) else None
+    redo_all = rd.get("sheets") == "all"
+    sheets, n_sheet = [], max((int(x.get("sheet") or 0) for x in old.values()), default=0)
     spare_n = len(scenes)
     for k, group in groups.items():
         if not any(sc["m"] == 0 for sc in group):                                        # 꼬리 컷만 있는 사진은 시트를 안 만든다(돈) — 다른 사진이라 화면은 이미 바뀐다
@@ -344,7 +382,31 @@ def make_sheets(models: dict, scenes: list[dict], shots: dict, story: Path, repo
             continue
         chunks = [group[i:i + 4] for i in range(0, len(group), 4)]
         for chunk in chunks:
-            if n_sheet >= MAX_SHEETS:
+            redo_of = None
+            matched = [old.get(scene_key(sc)) for sc in chunk] if old else []
+            ns = {int(m_["sheet"]) for m_ in matched if m_}
+            if old and all(matched) and len(ns) == 1:                                   # 옛 시트에 이 컷들의 패널이 다 있다 → 다시 만들지 말지
+                n_old = ns.pop()
+                failed = any(not m_.get("ok") for m_ in matched)
+                want_redo = redo_all or (redo_list is not None and n_old in redo_list) or (redo_list is None and failed)
+                if not want_redo:
+                    for sc, m_ in zip(chunk, matched):
+                        for key in ("img", "ok", "why", "panel_px", "minor", "check"):
+                            if key in m_:
+                                sc[key] = m_[key]
+                        sc["sheet"], sc["reused"] = n_old, True
+                    pad, taken = [], {sc.get("img") for sc in chunk}
+                    for x in (x for x in old.values() if x.get("spare") and int(x.get("sheet") or 0) == n_old and x.get("img") not in taken):   # 그 시트의 여분 패널도 그대로(컷이 쓴 패널은 빼고)
+                        spare_n += 1
+                        pad.append({**x, "n": spare_n, "j": None, "m": None, "reused": True})
+                    sheets.append({"n": n_old, "k": k, "ok": True, "reused": True, "panel_px": [sc["panel_px"] for sc in chunk + pad], "scenes": [sc["n"] for sc in chunk + pad],
+                                   "passed": sum(1 for sc in chunk + pad if sc.get("ok")), "krw": 0, "angles": [str(sc.get("angle", ""))[:30] for sc in chunk + pad]})
+                    scenes.extend(pad)
+                    log(f"시트 {n_old} (사진 {k}) 재사용 · 통과 {sheets[-1]['passed']}/{len(chunk) + len(pad)} · 0원")
+                    continue
+                redo_of = n_old
+                log(f"시트 {n_old} (사진 {k}) 다시 만든다" + (" — 컷 패널 탈락" if failed and redo_list is None else " — 운영자 지정" if redo_list is not None else ""))
+            if len(sheets) >= MAX_SHEETS:
                 for sc in chunk:
                     sc["why"] = "시트 상한"; sc["ok"] = False
                 continue
@@ -412,13 +474,14 @@ def make_sheets(models: dict, scenes: list[dict], shots: dict, story: Path, repo
                 sc["ok"] = bool(c["ok"]) and sc["panel_px"] >= PANEL_MIN
                 sc["why"] = c["why"] if not c["ok"] else ("" if sc["panel_px"] >= PANEL_MIN else f"패널이 작음 {sc['panel_px']}px")
                 sc["check"] = c.get("raw")
-            sheets.append({"n": n_sheet, "k": k, "ok": True, "px": [W, H], "panel_px": [sc["panel_px"] for sc in panel_scenes], "scenes": [sc["n"] for sc in panel_scenes],
+            sheets.append({"n": n_sheet, "k": k, "ok": True, "redo_of": redo_of, "px": [W, H], "panel_px": [sc["panel_px"] for sc in panel_scenes], "scenes": [sc["n"] for sc in panel_scenes],
                            "passed": sum(1 for sc in panel_scenes if sc["ok"]), "krw": round(krw), "model": rep.get("image_model"),
                            "angles": [sc.get("angle", "")[:30] for sc in panel_scenes]})
             log(f"시트 {n_sheet} (사진 {k}) {W}×{H} · 패널 {[sc['panel_px'] for sc in panel_scenes]}px · 통과 {sheets[-1]['passed']}/4 · 약 {krw:,.0f}원")
             scenes.extend(pad)
     report["storyboard"] = {"sheets": sheets, "krw": sum(s.get("krw", 0) for s in sheets), "model": rep.get("image_model"), "fake": FAKE,
-                            "scenes": [{k_: sc.get(k_) for k_ in ("n", "j", "m", "sid", "k", "place", "who", "with_dog", "time", "img", "ok", "why", "panel_px", "sheet", "spare", "angle", "minor")} for sc in scenes]}
+                            "reused": [s["n"] for s in sheets if s.get("reused")], "made": [s["n"] for s in sheets if not s.get("reused")],
+                            "scenes": [{k_: sc.get(k_) for k_ in SCENE_KEYS if k_ != "action_en"} for sc in scenes]}
 
 
 # ── 3. 컷에 적용 ─────────────────────────────────────────────────────────────────────
@@ -462,12 +525,16 @@ def apply_scenes(beats: list[dict], scenes: list[dict], shots: dict, report: dic
                 if j + 1 < len(beats) and beats[j + 1].get("shots") and beats[j + 1]["shots"][0] in shots:
                     nb.add(shots[beats[j + 1]["shots"][0]]["k"])
                 first_place = shots[ids[0]].get("place") if ids[0] in shots else None
+                lt = sg._tokens(b.get("line")) | sg._tokens(b.get("want"))
+
+                def rel(t: dict) -> bool:                                               # v10.3: 첫 컷 교체는 문장과 관계있는 사진만(장점 사진 · 문장 낱말 겹침 · 같은 장소) — #61 조건 컷 밑에 간판 사진
+                    return m > 0 or bool(t.get("adv")) or sg._overlap(lt, sg._tokens(t.get("desc"))) > 0 or (t.get("place") or "") == (s.get("place") or "")
                 cand = sorted((t for t in shots.values() if not t.get("insert") and t["k"] >= 0 and t["k"] != k and not used_k.get(t["k"]) and t["k"] not in nb and t["k"] not in scene_k
-                               and not (m == 0 and t.get("grade") == "insert")),           # 작은 패널(짧은 인서트)은 첫 컷·AI 시작 장면이 될 수 없다
-                              key=lambda t: (t.get("place") == first_place, t.get("grade") == "insert", t["id"]))
-                if not cand:                                                            # 안 쓴 원본이 없으면 다른 사진의 여분 패널(이웃 컷과 다른 사진 · 그 사진도 2컷 안)
+                               and not (m == 0 and t.get("grade") == "insert") and rel(t)),   # 작은 패널(짧은 인서트)은 첫 컷·AI 시작 장면이 될 수 없다
+                              key=lambda t: (t.get("place") == first_place, t.get("grade") == "insert", _sid_num(t)))
+                if not cand:                                                            # 안 쓴 원본이 없으면 다른 사진의 여분 패널(이웃 컷과 다른 사진 · 그 사진도 2컷 안 · 첫 컷이면 관계있는 사진만)
                     alt2 = next((x for x in sorted(spare_all, key=lambda x: cuts_k.get(x["k"], 0)) if x["k"] != k and x["k"] not in nb and x["img"] not in used_spare
-                                 and cuts_k.get(x["k"], 0) < 2), None)
+                                 and cuts_k.get(x["k"], 0) < 2 and rel(shots.get(x["sid"]) or {})), None)
                     if alt2:
                         used_spare.add(alt2["img"]); imgs.append(alt2["img"]); keep.append(alt2["sid"]); cuts_k[alt2["k"]] = cuts_k.get(alt2["k"], 0) + 1
                         kinds.append(f"AI 스토리보드 여분·{TIME_KO[alt2['time']]}(교체: {sid} 반복 방지)")

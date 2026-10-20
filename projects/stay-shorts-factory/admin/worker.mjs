@@ -37,15 +37,16 @@ const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.p
 //   제작(v5 2026-10-18) = 미리보기 대본·음성 재사용 + 화면 계획 AI 컷 4개(사람·강아지·환경 순간 컷 · 294 × 4 = 1,176) + 검수 약 3 + 글 ≈ 1,300, 미리보기 없이 ≈ 1,420
 // v7(2026-10-18 운영자 C안 "스토리보드는 이미지 한 장에 여러 씬, 돈 아껴"): 미리보기 = 글·음성·안내문 읽기 약 115 + 씬 스토리보드 시트(2×2 · 참조 사진별 1장 · 약 98원 × 4~6장) + 검수 ≈ 700
 //   제작 = 미리보기 패널 재사용(이미지 0원) + 사람·강아지 씬 Veo 최대 6컷(294 × 6 = 1,764) + 검수 ≈ 1,800, 미리보기 없이 ≈ 2,500
+// v10.3(2026-10-20 운영자 "문제 있는 스토리보드만 변경하기 해줘야 돈이 덜 들어가지"): 문제 시트만 다시 = 다시 만드는 시트 수 × 98 + (인서트 98) + 비전·검수 약 20 · 대본·나레이션 0원(재사용)
 const COST = {
-  signature: { preview: 800, produce: 1800, produce_fresh: 2500 },           // v8: 미리보기 = 스토리보드 시트(참조 사진 수 × 98) + 인서트 시트 98 + 글·음성 약 115
+  signature: { preview: 800, produce: 1800, produce_fresh: 2500, redo_sheet: 98, redo_base: 20 },   // v8: 미리보기 = 스토리보드 시트(참조 사진 수 × 98) + 인서트 시트 98 + 글·음성 약 115
   solo: { preview: 80, produce: 2500, produce_fresh: 2500 },
 };
 const costOf = (mode) => COST[mode];
 const BLOCK_DAYS = 14;                      // make_sig·make_story 가 '사진·사실·장면 부족'으로 멈춘 숙소는 이 기간 시그니처 버튼을 잠근다(state/sig_blocked.json)
 const MODES = { signature: "시그니처", solo: "기존 9컷" };
 const SIG_PREVIEW_RX = /관리자 페이지 시그니처 이야기 미리보기 — (.+?) \(/;   // 이야기(v4) 미리보기만 재사용 대상(make_story.find_reuse · 옛 형식 계획은 안 맞음)
-const LABEL = { preview: "미리보기", produce: "정식 제작" };
+const LABEL = { preview: "미리보기", produce: "정식 제작", redo: "미리보기(문제 시트만 다시)" };
 const DISCOVER_NOTE = "수십 원(AI 확인 몇 번 · 장부 미기록)";
 const ACTIVE = new Set(["queued", "in_progress", "waiting", "requested", "pending"]);
 const COOKIE = "stay_admin";
@@ -263,6 +264,26 @@ function activeBlocks(blocked, now) {
   return out;
 }
 
+function redoInfo(rep, sigPreviews) {
+  // v10.3 '문제 시트만 다시': 직전 결과(report.json)가 이 숙소의 성공한 이야기 미리보기면 시트별 통과 수를 보여 주고 탈락 시트를 기본 선택한다(돈은 다시 만드는 시트만)
+  if (!rep || typeof rep !== "object" || rep.stage !== "preview" || rep.format !== "story" || !rep.ok) return null;
+  const prev = (sigPreviews || {})[`story|${rep.stay}`];
+  if (!prev) return null;
+  const sb = rep.storyboard || {};
+  const scenes = Array.isArray(sb.scenes) ? sb.scenes : [];
+  const sheets = (Array.isArray(sb.sheets) ? sb.sheets : []).map((s) => {
+    const all = scenes.filter((x) => x.sheet === s.n);
+    const cut = all.filter((x) => x.j != null);
+    const failed = cut.filter((x) => !x.ok);
+    return { n: s.n, k: s.k, place: String((cut[0] || all[0] || {}).place || ""), beats: [...new Set(cut.map((x) => x.j + 1))].sort((a, b) => a - b),
+             cuts: cut.length, failed: failed.length, why: failed.map((x) => String(x.why || "").slice(0, 28)).join(" / "), passed: Number(s.passed) || 0, total: all.length,
+             reused: !!s.reused, error: s.ok === false ? String(s.error || "시트 실패").slice(0, 40) : "" };
+  });
+  const ins = rep.inserts || {};
+  return { stay: rep.stay, number: prev.number, run_id: prev.id, sheets, failed: sheets.filter((s) => s.failed || s.error).map((s) => s.n),
+           inserts: { ok: (ins.items || []).filter((x) => x.ok).length, total: (ins.items || []).length, used: (rep.inserts_used || []).length, reused: !!ins.reused } };
+}
+
 function sigPreviewIndex(runs) {
   // 숙소별 가장 최근의 성공한 시그니처 미리보기 실행(제작 때 그 사진·글을 재사용 — 이미지 0원)
   const out = {};
@@ -314,6 +335,7 @@ async function state(env) {
     cost: COST,
     modes: MODES,
     sig_previews: sigPreviews,
+    redo: redoInfo(rep, sigPreviews),
     request: {
       nonce: req.nonce || "",
       stay: req.stay || "",
@@ -366,7 +388,7 @@ function miniState(req, rep) {
 
 async function startRun(env, body) {
   const action = String(body.action || "");
-  if (!["preview", "produce"].includes(action)) throw new HttpError(400, "알 수 없는 실행입니다");
+  if (!["preview", "produce", "redo"].includes(action)) throw new HttpError(400, "알 수 없는 실행입니다");
   const mode = String(body.mode || "signature") in MODES ? String(body.mode || "signature") : "signature";
   const format = "story";                                                      // 시그니처는 이야기 형식 하나(옛 몽타주·한 장면은 관리실에서 안 씀)
   const stay = String(body.stay || "").trim();
@@ -386,13 +408,23 @@ async function startRun(env, body) {
   if (recent) throw new HttpError(409, "방금 시작한 실행이 준비 중입니다. 1~2분 뒤 '지금 상태'를 확인하세요");
   const blk = mode === "signature" ? activeBlocks(blocked, kstNow())[stay] : null;
   if (blk) throw new HttpError(409, `이 숙소는 시그니처 영상을 만들 재료가 부족합니다(${blk.at}): ${blk.reason}. 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요`);
-  const reuse = mode === "signature" && action === "produce" ? sigPreviewIndex(runs)[`${format}|${stay}`] || null : null;
-  if (mode === "signature" && action === "produce" && !reuse) {                  // v8 E: 정식 제작은 확인한 미리보기의 대본·패널로만(stay-run-58 이 미리보기 없이 2장짜리 영상에 1,630원)
-    throw new HttpError(409, "먼저 '미리보기'를 눌러 스토리보드를 확인하세요 — 이 숙소의 성공한 이야기 미리보기가 없습니다");
+  const reuse = mode === "signature" && (action === "produce" || action === "redo") ? sigPreviewIndex(runs)[`${format}|${stay}`] || null : null;
+  if (mode === "signature" && (action === "produce" || action === "redo") && !reuse) {   // v8 E: 정식 제작은 확인한 미리보기의 대본·패널로만(stay-run-58 이 미리보기 없이 2장짜리 영상에 1,630원)
+    throw new HttpError(409, action === "redo" ? "다시 만들 미리보기가 없습니다 — 먼저 '미리보기'를 누르세요" : "먼저 '미리보기'를 눌러 스토리보드를 확인하세요 — 이 숙소의 성공한 이야기 미리보기가 없습니다");
   }
   const c = costOf(mode);
-  const cost = action === "preview" ? c.preview : reuse ? c.produce : c.produce_fresh;
-  const paid = action === "produce" || mode === "signature";                 // v7: 시그니처 미리보기도 스토리보드 시트(이미지)를 만들어 돈이 든다 → 화면 확인 + veo_approved
+  let cost, sheetsPick = null, redoIns = false;
+  if (action === "redo") {                                                     // v10.3: 이전 미리보기의 대본·나레이션·인서트·통과 시트 재사용, 고른(또는 탈락한) 시트만 다시
+    if (mode !== "signature") throw new HttpError(400, "'문제 시트만 다시'는 시그니처 이야기에서만 됩니다");
+    const arr = Array.isArray(body.sheets) ? body.sheets.map((n) => Number(n)).filter((n) => Number.isInteger(n) && n > 0 && n <= 12) : [];
+    sheetsPick = arr.length ? [...new Set(arr)].sort((a, b) => a - b) : null;    // 비면 제작 코드가 탈락 시트를 고른다("failed")
+    redoIns = body.inserts === true;
+    const nSheets = sheetsPick ? sheetsPick.length : Math.max(1, Number(body.failed_count) || 1);
+    cost = nSheets * c.redo_sheet + (redoIns ? c.redo_sheet : 0) + c.redo_base;
+  } else {
+    cost = action === "preview" ? c.preview : reuse ? c.produce : c.produce_fresh;
+  }
+  const paid = action !== "preview" || mode === "signature";                 // v7: 시그니처 미리보기도 스토리보드 시트(이미지)를 만들어 돈이 든다 → 화면 확인 + veo_approved
   const now = kstNow();
   const money = monthSpend(ledger, now.toISOString().slice(0, 7));
   if (money.total + cost > MONTH_CAP) {
@@ -404,7 +436,7 @@ async function startRun(env, body) {
 
   const next = { ...cur };
   // 지난 시험의 설정(미니어처·피규어·컷 수·강아지 합성)이 요청 파일에 남아 다음 실행에 끼어들지 않게 지운다 — stay-run-56 요청에 miniature:true·max_veo_cuts:1 이 남아 있었다
-  for (const k of ["stage", "reuse_only", "reuse_runs", "reuse_clips", "format", "people", "miniature", "mini_scale", "max_veo_cuts", "dog", "real_back", "fake", "ai_cuts", "storyboard", "inserts"]) delete next[k];
+  for (const k of ["stage", "reuse_only", "reuse_runs", "reuse_clips", "redo", "format", "people", "miniature", "mini_scale", "max_veo_cuts", "dog", "real_back", "fake", "ai_cuts", "storyboard", "inserts"]) delete next[k];
   next.nonce = `${now.toISOString().slice(0, 10)}-admin-${mode === "signature" ? "sig" : "solo"}-${action}-${b64url(crypto.getRandomValues(new Uint8Array(3)))}`;
   next.mode = mode;
   next.stay = stay;
@@ -415,11 +447,14 @@ async function startRun(env, body) {
     if (reuse) next.reuse_runs = [{ run_id: reuse.id, name: `stay-run-${reuse.number}` }];
   }
   next.veo_approved = paid;                                                   // 버튼 + 금액 확인 = 운영자 허락(make_stay 돈 잠금 · 실행 뒤 워크플로가 다시 잠근다)
-  if (action === "preview") next.stage = "preview";
-  const what = `${MODES[mode]} ${mode === "signature" && action === "preview" ? "이야기 미리보기" : LABEL[action]}`;
-  next.note = `관리자 페이지 ${what} — ${stay} · 예상 약 ${cost.toLocaleString()}원${reuse ? ` · 미리보기 #${reuse.number} 재사용` : ""} · ${now.toISOString().slice(0, 16).replace("T", " ")} KST`;
-  const put = await commitJson(env, REQ_PATH, req.sha, next, `stay-shorts: 관리자 페이지 ${what} — ${stay} (${next.nonce})`);
-  return { ok: true, nonce: next.nonce, action, mode, stay, cost, reuse: reuse ? reuse.number : null, commit: (put.commit || {}).html_url || "" };
+  if (action === "preview" || action === "redo") next.stage = "preview";
+  if (action === "redo") next.redo = { sheets: sheetsPick || "failed", inserts: redoIns };   // make_story.produce_story: reuse_runs 의 계획·패널 재사용 + 이 시트만 다시
+  const what = `${MODES[mode]} ${mode === "signature" && (action === "preview" || action === "redo") ? "이야기 미리보기" : LABEL[action]}`;
+  const tail = action === "redo" ? ` · 문제 시트만 다시(${sheetsPick ? "시트 " + sheetsPick.join("·") : "탈락 시트"}${redoIns ? " + 인서트" : ""})` : "";
+  next.note = `관리자 페이지 ${what}${tail} — ${stay} · 예상 약 ${cost.toLocaleString()}원${reuse ? ` · 미리보기 #${reuse.number} 재사용` : ""} · ${now.toISOString().slice(0, 16).replace("T", " ")} KST`;
+  // 커밋 제목은 '… 이야기 미리보기 — 숙소 (' 꼴을 지킨다(sigPreviewIndex 가 이 꼴로 재사용할 미리보기를 찾는다) — 문제 시트만 다시 만든 결과도 다음 정식 제작이 재사용
+  const put = await commitJson(env, REQ_PATH, req.sha, next, `stay-shorts: 관리자 페이지 ${what} — ${stay} (${next.nonce}${action === "redo" ? " · 문제 시트만 다시" : ""})`);
+  return { ok: true, nonce: next.nonce, action, mode, stay, cost, reuse: reuse ? reuse.number : null, sheets: sheetsPick, inserts: redoIns, commit: (put.commit || {}).html_url || "" };
 }
 
 async function cancelRun(env, body) {

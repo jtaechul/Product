@@ -105,8 +105,9 @@ def official_photos(name: str, city: str, out: Path, models: dict, req: dict) ->
 
 
 FACTS_SYSTEM = """아래는 한 숙소의 공식 홈페이지에서 가져온 글(페이지별)이다. 쇼츠 나레이션에 쓸 '매력 포인트' 사실을 뽑는다.
-규칙: 글에 있는 것만. 수온·길이·층·규모·운영시간·전망·구성(실내/야외, 온천수 여부, 객실 타입·뷰, 조식·사우나·키즈 시설)처럼 구체적이고 확인 가능한 것 우선.
-가격·할인·프로모션·기간 한정·이벤트·예약 안내·전화번호는 제외. 과장 형용사("최고", "완벽") 제외. 다른 지점(같은 그룹의 다른 리조트) 이야기는 제외.
+규칙: 글에 있는 것만. 수온·길이·규모·전망·구성(실내/야외, 온천수 여부, 객실 타입·뷰, 조식·사우나·키즈 시설)·시청자가 거기서 할 수 있는 것처럼 구체적이고 확인 가능한 것 우선.
+**운영 안내는 매력 포인트가 아니다 — 운영시간·정비일·휴무·몇 층 위치·락카룸·탈의실·발권·재입장·전화번호·요금표는 뽑지 않는다**(2026-10-20 운영자: "이런 내용은 안 중요하다").
+가격·할인·프로모션·기간 한정·이벤트·예약 안내는 제외. 과장 형용사("최고", "완벽") 제외. 다른 지점(같은 그룹의 다른 리조트) 이야기는 제외.
 각 항목은 한국어 10~28자, 3~6개. JSON 만: {"facts":["..."], "signature":"이 숙소를 사실로 한 줄 요약(20자 내)"}"""
 
 
@@ -127,7 +128,12 @@ def official_facts(models: dict, name: str, text: dict) -> dict:
         total += len(chunk)
     try:
         js = ms._try_models("text", models["text"], lambda m: ms.gemini_json(m, FACTS_SYSTEM, f"숙소: {name}\n\n" + "\n".join(body)))
-        facts = [str(f).strip()[:40] for f in (js.get("facts") or []) if str(f).strip() and not re.search(r"\d[\d,]*\s*(원|%)", str(f))][:6]
+        import make_sig as sg                                                                        # 순환 import 회피(make_sig → make_top3)
+        raw = [str(f).strip()[:40] for f in (js.get("facts") or []) if str(f).strip() and not re.search(r"\d[\d,]*\s*(원|%)", str(f))]
+        trivia = [f for f in raw if sg.is_trivia(f)]
+        facts = [f for f in raw if f not in trivia][:6]
+        if trivia:
+            log(f"{name}: 운영 안내 {len(trivia)}개는 사실에서 뺌(운영시간·정비·층·요금) — " + " / ".join(trivia[:3]))   # v10.2 재발 방지 L1
         out = {"facts": facts, "signature": str(js.get("signature") or "").strip()[:30]}
         log(f"{name}: 공식 홈페이지 사실 {len(facts)}개 — " + " / ".join(facts[:4]))
         return out

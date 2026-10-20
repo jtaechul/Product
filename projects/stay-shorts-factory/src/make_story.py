@@ -133,8 +133,8 @@ def log(*a):
 
 # ── 1. 장점에 대한 사실 더 모으기 ────────────────────────────────────────────────────────
 DEEP_SYSTEM = """너는 숙소 공식 홈페이지 글에서 사실을 뽑는 정리자다. 숙소의 장점(시설·공간) 이름과 홈페이지 글을 받는다.
-그 장점 **하나에 대한** 사실만 최대 6개 뽑는다 — 크기·위치·구성·운영 시간·이용 대상·포함 여부·무엇을 할 수 있는지.
-규칙: 글에 쓰인 내용만(추측·일반 상식 금지), 한 줄 8~40자, 가격·할인·프로모션 금지, 다른 시설 이야기 금지. 없으면 빈 목록.
+그 장점 **하나에 대한** 사실만 최대 6개 뽑는다 — 크기·구성·이용 대상·포함 여부·무엇을 할 수 있는지·누리는 데 필요한 조건(예약·선착순·무료 대여·입장 조건).
+규칙: 글에 쓰인 내용만(추측·일반 상식 금지), 한 줄 8~40자, 가격·할인·프로모션 금지, 다른 시설 이야기 금지, **운영 시간·정비일·휴무·요금·전화·몇 층·락카룸 같은 운영 안내는 뽑지 않는다**(시청자 결정과 무관). 없으면 빈 목록.
 JSON 만: {"facts":["..."]}"""
 
 
@@ -327,7 +327,11 @@ def build_shots(models: dict, sig: dict, h: dict, report: dict) -> list[dict]:
     sig_cats = {by_k[k].get("category") for k in adv}
     rejected = {int(c["k"]) for c in checked if not (c.get("ok") or c.get("subject")) and by_k[int(c["k"])].get("category") in sig_cats}
     material(h, pool, rejected, report)
-    cands = [k for k in pool if k not in adv and k not in rejected and not (mt.is_exterior(pool[k]) and k not in adv)]
+    signs = sorted(k for k, p in by_k.items() if k not in adv and photos.is_sign_photo(p))     # v10.3: 간판·안내판 사진은 연결 컷이 될 수 없다(#61 'PET'S PARK' 간판이 조건 문장 밑에)
+    report["sign_photos"] = [{"k": k, "desc": str(by_k[k].get("description") or "")[:60]} for k in signs]
+    if signs:
+        log(f"간판·안내판 사진 {signs} 은 장면에서 제외(글이 주인공)")
+    cands = [k for k in pool if k not in adv and k not in rejected and k not in signs and not (mt.is_exterior(pool[k]) and k not in adv)]
     others = diverse(cands, pool, lambda k: (-sg._overlap(toks, sg._tokens(pool[k].get("description"))), -int(pool[k].get("quality") or 0), k), LINK_PHOTOS)
     STORY.mkdir(parents=True, exist_ok=True)
     shots, n = [], 0
@@ -386,6 +390,8 @@ STORY_SYSTEM = """너는 숙소 쇼츠 작가다. 이 숙소의 **장점 하나*
 2) 훅 말고 **모든 문장에 장점 낱말**(장점 이름·설명·장점 사진에 보이는 사물)이 들어간다. 장점과 상관없는 시설 이야기 금지.
    단, 장점 이름을 매 문장 통째로 되풀이하지 않는다 — 장점의 **부분**(사진에 보이는 사물·사실 낱말: 계단·식기·탕·창…)으로 이어 간다.
 3) 각 문장은 근거가 있어야 한다: fact = 아래 사실 번호, 사진에 보이는 것만 말하면 0. 사실·사진에 없는 내용·숫자 금지.
+   **'(운영 안내 — 인용 금지)'가 붙은 사실(운영시간·정비·휴무·요금·발권·전화·몇 층·락카룸·재입장)은 어떤 문장·캡션·체크리스트·카드·라벨에도 쓰지 않는다.**
+   조건 관점은 장점을 누리는 데 필요한 조건(예약·선착순·무료 대여·입장 조건·추가 요금 유무·수량)만 — 그런 사실이 없으면 조건 관점을 쓰지 않는다.
 4) 말투: 2인칭 현재형 '~해요' 체. 금지: 1인칭·체험·과거형('다녀왔', '좋았', '-더라고요', '저는', '우리'), '~니다', 숙소 이름, 가격 숫자,
    '최고·유일·최저가·무조건', 분위기만 있는 말(노을빛·물들고·힐링·낭만·감성·설렘·아늑·포근·그림 같은·인생샷·완벽한·행복·추억).
 5) 문장 길이: 공백 빼고 6~30자, 전체 합 80~170자(약 12~26초). 문장은 서로 이어지게(앞 문장을 받는 연결어 환영).
@@ -528,6 +534,8 @@ def story_errs(js: dict, sig: dict, h: dict, req: dict, facts: list[str], shots:
         desc = " ".join(by_id[x]["desc"] for x in ids)
         fi = sg._int(b.get("fact"))
         fact = facts[fi - 1] if fi and 1 <= fi <= len(facts) else ""
+        if fact and sg.is_trivia(fact):                                                     # v10.2 운영 잡사실 인용 금지
+            errs.append(f"문장 {i} 사실 {fi}(운영 안내: {sg._body(fact)[:24]})은 인용 금지 — 장점 자체의 사실로, 조건은 예약·선착순·입장 조건만")
         lt = sg._tokens(line)
         if lens not in ("훅", "조건") and not sg._overlap(lt, toks):                        # 조건(이용 조건 한 줄)은 사실 번호로 근거를 대면 된다
             errs.append(f"문장 {i} '{line}' 에 장점 낱말이 없음 — 모든 문장이 장점({sig['name']})을 다른 관점으로 말한다")
@@ -589,17 +597,29 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
     def need_adv(b) -> bool:
         return b.get("lens") in ("훅", "정체", "디테일")                                   # v8: 제안은 장점 사진 선호일 뿐 필수 아님(pick 정렬이 장점 사진을 앞에 둔다)
 
-    def pick(b, exclude_k: set, used: dict, prefer_place_not: str | None = None, allow_insert: bool = False, tail: bool = False) -> dict | None:
+    def sid_num(s: dict) -> int:                                                       # v10.3: 'S10' < 'S5' 글자 정렬이 S10(간판 사진)을 먼저 골랐다(#61 문장 6) → 숫자로
+        return int(re.sub(r"\D", "", str(s.get("id") or "")) or 0)
+
+    def related(b, s: dict, keep_place: str | None = None) -> bool:
+        """v10.3: 문장과 관계있는 사진인가 — 장점 사진(이야기 전체가 그 장점) · 문장·want 낱말이 설명과 겹침 · 바꾸기 전 컷과 같은 장소.
+        첫 컷을 바꿀 때는 이것만 후보(없으면 안 바꾼다 — 같은 사진이 또 나오더라도 여분 패널이 각도·시간대를 바꾼다). #61: 조건 문장 '실내온천탕 정비'에 아무 사진도 안 맞자 S10(간판)을 깔았다."""
+        lt = sg._tokens(b.get("line")) | sg._tokens(b.get("want"))
+        return bool(s.get("adv")) or sg._overlap(lt, sg._tokens(s.get("desc"))) > 0 or (keep_place is not None and s.get("place") == keep_place)
+
+    def pick(b, exclude_k: set, used: dict, prefer_place_not: str | None = None, allow_insert: bool = False, tail: bool = False,
+             keep_place: str | None = None, relevant: bool = False) -> dict | None:
         lt = sg._tokens(b.get("line")) | sg._tokens(b.get("want"))
         cands = [s for s in shots if not s.get("insert") and (allow_insert or s.get("grade", "full") != "insert") and (s["adv"] or not need_adv(b))]
         cands = [s for s in cands if s["k"] not in exclude_k] or [s for s in cands if s["k"] not in {min(exclude_k) if exclude_k else -1}]
+        if relevant:
+            cands = [s for s in cands if related(b, s, keep_place)]
         if not cands:
             return None
         if tail:                                                                       # v8: 둘째 컷(꼬리)은 **아직 안 쓴 사진**이 먼저(원본은 영상에서 한 번만) · 장소 바꾸기 · 그다음 낱말 겹침
             return sorted(cands, key=lambda s: (used.get(s["k"], 0) >= C_PER_PHOTO, used.get(s["k"], 0), s.get("place") == prefer_place_not,
-                                                -sg._overlap(lt, sg._tokens(s["desc"])), not s["adv"], s["id"]))[0]
+                                                -sg._overlap(lt, sg._tokens(s["desc"])), not s["adv"], sid_num(s)))[0]
         return sorted(cands, key=lambda s: (used.get(s["k"], 0) >= C_PER_PHOTO, s.get("place") == prefer_place_not,
-                                            -sg._overlap(lt, sg._tokens(s["desc"])), used.get(s["k"], 0), not s["adv"], s["id"]))[0]
+                                            -sg._overlap(lt, sg._tokens(s["desc"])), used.get(s["k"], 0), not s["adv"], sid_num(s)))[0]
 
     # ① 첫 컷 규칙
     for j, b in enumerate(beats):
@@ -620,7 +640,7 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
             b["shots"] = ids[:1]
             continue
         if not ids or by_id[ids[0]].get("grade", "full") == "insert" or (need_adv(b) and not (by_id[ids[0]]["adv"] or by_id[ids[0]].get("insert"))):
-            best = pick(b, set(), {})
+            best = pick(b, set(), {}, relevant=True) or pick(b, set(), {})
             if best:
                 changes.append(f"문장 {j + 1} 첫 컷 {ids[:1]} → {best['id']}({best.get('place')})")
                 ids = [best["id"]] + [x for x in ids if x != best["id"]]
@@ -656,7 +676,8 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
         if len(prev["shots"]) >= 2 and k_of(prev["shots"][0]) != k_of(cur["shots"][0]) and prev.get("lens") != "훅":
             prev["shots"].reverse(); changes.append(f"문장 {j} 컷 순서 바꿈(다음 문장과 같은 사진)")
             continue
-        best = pick(cur, {k_of(prev["shots"][-1])} | ({k_of(cur["shots"][1])} if len(cur["shots"]) > 1 else set()), used)
+        best = pick(cur, {k_of(prev["shots"][-1])} | ({k_of(cur["shots"][1])} if len(cur["shots"]) > 1 else set()), used,
+                    keep_place=by_id[cur["shots"][0]].get("place"), relevant=True)
         if best and best["k"] != k_of(prev["shots"][-1]):
             used[k_of(cur["shots"][0])] = max(0, used.get(k_of(cur["shots"][0]), 0) - 1)
             used[best["k"]] = used.get(best["k"], 0) + 1
@@ -691,8 +712,10 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
                 nb.add(k_of(beats[j - 1]["shots"][-1]))
             cnt_now = {kk: len(occurrences(kk)) for kk in {k_of(y) for bb in beats for y in bb["shots"]}}
             best = pick(b if m == 0 else {**b, "lens": "연결"}, nb | {k}, cnt_now, prefer_place_not=by_id[b["shots"][0]].get("place") if m else None,
-                        allow_insert=m > 0, tail=m > 0)
+                        allow_insert=m > 0, tail=m > 0, keep_place=by_id[x].get("place") if m == 0 else None, relevant=(m == 0))
             if not best or best["k"] == k or cnt_now.get(best["k"], 0) >= C_PER_PHOTO:
+                if m == 0:
+                    changes.append(f"문장 {j + 1} 컷 {x} 그대로(같은 사진 {C_PER_PHOTO}컷 초과지만 문장과 관계있는 다른 사진 없음 → 여분 패널로 다른 각도)")
                 break
             b["shots"][m] = best["id"]
             changes.append(f"문장 {j + 1} 컷 {x} → {best['id']}(같은 사진 {C_PER_PHOTO}컷 초과)")
@@ -920,6 +943,8 @@ def card_errs(card, facts: list[str], toks: set[str], h: dict, req: dict, ground
                 errs.append(f"답 {i} '{t}' 근거 낱말 없음(사실 {fi or '장점 사진'})")
         if sg.MOOD_RX.search(t):
             errs.append(f"답 {i} '{t}' 분위기 말")
+        if sg.TRIVIA_RX.search(t) or (fi and sg.is_trivia(facts[fi - 1])):
+            errs.append(f"답 {i} '{t}' 운영 안내(운영시간·정비·요금) — 장점 자체로")
         if PRICE_RX.search(t) or any(n in t for n in name_toks) or sg.PAST_RX.search(t) or sg.FIRST_RX.search(t):
             errs.append(f"답 {i} '{t}' 가격·숙소 이름·1인칭 금지")
         if any(d not in corpus and d != str(sg.month_num(req)) for d in sg.DIGIT_RX.findall(t)):
@@ -980,6 +1005,8 @@ def feature_errs(t: str, b: dict, facts: list[str], toks: set[str], h: dict, req
         errs.append(f"분위기 말 '{m.group(0)}'")
     if PRICE_RX.search(t):
         errs.append("가격")
+    if sg.TRIVIA_RX.search(t):
+        errs.append("운영 안내(운영시간·정비·요금)")
     if any(x and x in t for x in so.name_tokens(h["name"], req, h)):
         errs.append("숙소 이름")
     basis = sg._tokens(sg._body(b.get("fact") or "")) | sg._tokens(b.get("line") or "") | set(toks)
@@ -1151,6 +1178,8 @@ def auto_fact(line: str, facts: list[str], hint: str = "") -> int:
     lt, ht = sg._tokens(line), sg._tokens(hint)
     best, bi = 0, 0
     for i, f in enumerate(facts, 1):
+        if sg.is_trivia(f):                                                                 # v10.2 운영 잡사실엔 근거를 붙이지 않는다(#59 '단일권 재입장 불가' 오매칭)
+            continue
         ft = sg._tokens(sg._body(f))
         n = sg._overlap(lt, ft) + 3 * sg._overlap(ht, ft)
         if n > best:
@@ -1188,7 +1217,7 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
                f"강아지 등장(actor dog): {'가능 — 반려견 장점' if dog_ok(sig) else '불가'}\n\n"
                "장점 낱말(훅 말고 모든 문장에 하나 이상): " + ", ".join(sorted(toks)[:30]) + "\n\n"
                "같은 테마 다른 후보(희소성 관점 근거 · 이름은 말하지 않는다):\n" + ("\n".join(f"- {x}" for x in peers) or "- (없음)")
-               + "\n\n사실(번호):\n" + "\n".join(f"{i}. {f}" for i, f in enumerate(facts, 1))
+               + "\n\n사실(번호):\n" + "\n".join(f"{i}. {f}" + (" (운영 안내 — 인용 금지)" if sg.is_trivia(f) else "") for i, f in enumerate(facts, 1))
                + "\n\n컷 목록(id · 종류 · 사진 번호 · 장소 · 보이는 것):\n" + "\n".join(f"{s['id']} · {s['kind']} · 사진 {s['k']} · 장소 {s.get('place') or '-'} · {s['desc']}" for s in shots))
     if op:
         content += ("\n\n운영자 확정 대본 — beats 의 lens·line 은 아래를 글자 그대로·같은 순서·같은 개수로 쓴다(바꾸지 않는다). "
@@ -1281,21 +1310,32 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
     return text
 
 
-def storyboard_scenes(models: dict, beats: list[dict], shots: list[dict] | dict, sig: dict, req: dict, report: dict) -> list[dict]:
-    """v7: 컷마다 씬(사진 + 누가·동작 + 시간대) → 참조 사진별 2×2 시트(돈) → 패널 검수 → 컷 화면으로. request "storyboard": false 면 건너뜀(v6 사진 무빙)."""
+def storyboard_scenes(models: dict, beats: list[dict], shots: list[dict] | dict, sig: dict, req: dict, report: dict, reuse: dict | None = None) -> list[dict]:
+    """v7: 컷마다 씬(사진 + 누가·동작 + 시간대) → 참조 사진별 2×2 시트(돈) → 패널 검수 → 컷 화면으로. request "storyboard": false 면 건너뜀(v6 사진 무빙).
+    v10.3 reuse={"scenes": 옛 미리보기 씬 목록, "redo": {...}} 면 같은 패널이 다 있는 시트·옛 인서트는 그대로 쓰고(0원) 문제 시트만 다시 만든다(make_sheets)."""
     if req.get("storyboard", True) is False:
         report["storyboard"] = {"skipped": "request storyboard=false"}
         return []
     by_id = {s["id"]: s for s in (shots.values() if isinstance(shots, dict) else shots)}
     dog = dog_ok(sig)
     use_inserts = req.get("inserts", True) is not False and len(beats) >= 2
+    rd = (reuse or {}).get("redo") or {}
+    old_idx = sc.reuse_index((reuse or {}).get("scenes") or [], STORY) if reuse else {}
     scenes = sc.plan_scenes(beats, by_id, dog, report, end_scene=not use_inserts)        # 인서트를 쓰면 제안 컷은 인서트라 그 씬(패널·시트 값)은 만들지 않는다
     if scenes:
-        sc.make_sheets(models, scenes, by_id, STORY, report)
+        sc.make_sheets(models, scenes, by_id, STORY, report, reuse=old_idx or None, redo=rd)
     else:
         report["storyboard"] = {"sheets": [], "krw": 0, "scenes": []}
     # v8 C: 숙소와 무관한 감정 인서트(집 창가·현관·차창) 시트 1장 → 훅 첫 컷·제안 컷(훅 되돌아옴 대신). request "inserts": false 면 생략
-    inserts = sc.plan_inserts(beats, dog) if use_inserts else []
+    old_ins = [s_ for s_ in by_id.values() if s_.get("insert")]
+    if use_inserts and old_ins and all((STORY / str(s_.get("img") or "")).exists() for s_ in old_ins):   # v10.3: 옛 인서트 그대로(0원) — 문장에 INS 컷이 이미 들어 있다
+        role = {x: "hook" for x in (beats[0].get("shots") or [])} | {x: "end" for x in (beats[-1].get("shots") or [])}
+        report["inserts"] = {"ok": True, "reused": True, "krw": 0, "items": [{"n": -int(s_["k"]), "role": role.get(s_["id"], "spare"), "name": s_.get("name"), "img": s_["img"],
+                                                                              "ok": True, "why": "", "what": ""} for s_ in old_ins]}
+        report["inserts_used"] = [x for b in beats for x in (b.get("shots") or []) if x in by_id and by_id[x].get("insert")]
+        inserts = []
+    else:
+        inserts = sc.plan_inserts(beats, dog) if use_inserts else []
     if inserts:
         sc.make_insert_sheet(models, inserts, STORY, report)
         added = sc.apply_inserts(beats, inserts, by_id, report, ai_budget(req))
@@ -1306,9 +1346,11 @@ def storyboard_scenes(models: dict, beats: list[dict], shots: list[dict] | dict,
     visual_report(beats, by_id, report)
     sb = report.get("storyboard") or {}
     ins = report.get("inserts") or {}
-    log(f"씬 스토리보드: 씬 {len([x for x in scenes if not x.get('spare')])}개 + 여분 {len([x for x in scenes if x.get('spare')])} · 시트 {len(sb.get('sheets') or [])}장 "
-        f"· 통과 {sum(1 for x in scenes if x.get('ok'))}/{len(scenes)} · 약 {sb.get('krw', 0):,}원 · 인서트 {len(report.get('inserts_used') or [])}컷(약 {ins.get('krw', 0):,}원)")
-    return [{k_: x.get(k_) for k_ in ("n", "j", "m", "sid", "k", "place", "who", "with_dog", "action_en", "time", "img", "ok", "why", "panel_px", "sheet", "spare", "angle", "minor")} for x in scenes]
+    log(f"씬 스토리보드: 씬 {len([x for x in scenes if not x.get('spare')])}개 + 여분 {len([x for x in scenes if x.get('spare')])} · 시트 {len(sb.get('sheets') or [])}장"
+        + (f"(재사용 {len(sb.get('reused') or [])} · 다시 {len(sb.get('made') or [])})" if reuse else "")
+        + f" · 통과 {sum(1 for x in scenes if x.get('ok'))}/{len(scenes)} · 약 {sb.get('krw', 0):,}원 · 인서트 {len(report.get('inserts_used') or [])}컷"
+        + ("(재사용 0원)" if ins.get("reused") else f"(약 {ins.get('krw', 0):,}원)"))
+    return [{k_: x.get(k_) for k_ in sc.SCENE_KEYS} for x in scenes]
 
 
 # ── 4. 렌더 ─────────────────────────────────────────────────────────────────────────────
@@ -1856,10 +1898,22 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
                f"- 영상: 컷 {report.get('cut_count', 0)}개 · 장소 {len(report.get('places') or [])}곳 {', '.join(report.get('places') or [])}"]
         for c in mat.get("closures") or []:
             md.append(f"- 제외: {c}")
+        if report.get("facts_trivia"):
+            md.append(f"- 운영 안내 사실 {len(report['facts_trivia'])}개는 글에 안 씀(운영시간·정비·요금·전화·층): " + " / ".join(x[:36] for x in report["facts_trivia"][:6]))
+        if report.get("sign_photos"):
+            md.append(f"- 간판·안내판 사진 {len(report['sign_photos'])}장은 장면에서 제외(글이 주인공 · v10.3): " + " / ".join(f"사진 {x['k']} {x['desc'][:24]}" for x in report["sign_photos"][:5]))
         if report.get("material_warning"):
             md.append(f"- **경고: {report['material_warning']}**")
         for c in (report.get("route_changes") or [])[:8]:
             md.append(f"- 동선 고침: {c}")
+        md.append("")
+    rd = report.get("redo") or {}
+    if rd:
+        md += ["## 문제 시트만 다시 (v10.3 · 이전 미리보기 재사용)", "",
+               f"- 재사용(0원): {rd.get('from') or '이전 미리보기'}의 대본·나레이션·캡션·훅 제목·라벨 · 인서트 {rd.get('inserts')} · 시트 {', '.join(str(n) for n in rd.get('sheets_reused') or []) or '없음'}",
+               f"- 다시 만든 시트: {', '.join(str(n) for n in rd.get('sheets_made') or []) or '없음'} (기준: {rd.get('policy')}) · 이미지 약 {rd.get('krw', 0):,}원"]
+        if report.get("sign_photos_dropped"):
+            md.append(f"- 간판·안내판 사진 컷 {', '.join(report['sign_photos_dropped'])} 은 뺌(v10.3)")
         md.append("")
     nf = list(h.get("notice_facts") or [])
     if nf:
@@ -1875,8 +1929,9 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
         for x in scn:
             who = sc.WHO_KO.get(x.get("who"), "") + ("+강아지" if x.get("with_dog") else "")
             ang = "원본 각도" if x.get("angle") == sc.SAME_ANGLE else str(x.get("angle") or "")[:34]
-            res = ("통과" + (f" (소품: {x['minor']})" if x.get("minor") else "")) if x.get("ok") \
-                else ("원본 사진(꼬리 컷 · 시트 생략으로 돈 절약)" if "시트 생략" in str(x.get("why") or "") else "탈락 → 여분 패널·원본 (" + str(x.get("why") or "")[:40] + ")")
+            res = (("통과" + (f" (소품: {x['minor']})" if x.get("minor") else "")) if x.get("ok") \
+                else ("원본 사진(꼬리 컷 · 시트 생략으로 돈 절약)" if "시트 생략" in str(x.get("why") or "") else "탈락 → 여분 패널·원본 (" + str(x.get("why") or "")[:40] + ")")) \
+                + (f" · 시트 {x.get('sheet')} 재사용" if x.get("reused") else "")
             md.append(f"| {x['j'] + 1} | {x['m'] + 1} | {x.get('place') or '-'} | {who}{(' · ' + str(x.get('action_en') or '')[:50]) if x.get('action_en') else ''} | {ang} | {sc.TIME_KO.get(x.get('time'), '')} "
                       f"| {x.get('panel_px') or 0}px | {res} |")
         for sh in sb.get("sheets") or []:
@@ -1949,7 +2004,8 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
            *[f"- 걱정형 후보 뺌: {x['source']} '{x['text']}' — {'; '.join(x['errs'])}" for x in (pt.get("tries") or [])],
            "", "## 캡션", "", c.get("hook", ""), *(c.get("points") or []), "", *[f"· {x}" for x in text["checklist"]], "", c.get("save", ""),
            "", f"제목: {text['title']} · 해시태그: {' '.join(text['hashtags'])}", "",
-           "## 비용", "", (f"- 미리보기: 스토리보드 시트 약 {(report.get('storyboard') or {}).get('krw', 0):,}원 + 인서트 시트 약 {(report.get('inserts') or {}).get('krw', 0):,}원 · AI 영상 없음(사진 무빙) · 글·비전·음성 — 정식 제작 때 화면 계획대로 AI 컷 {report.get('ai_cuts', 0)}개(약 {294 * int(report.get('ai_cuts') or 0):,}원 + 검수)" if preview
+           "## 비용", "", (f"- 문제 시트만 다시: 시트 {len(rd.get('sheets_made') or [])}장 약 {(report.get('storyboard') or {}).get('krw', 0):,}원(재사용 {len(rd.get('sheets_reused') or [])}장 0원) + 인서트 {'재사용 0원' if rd.get('inserts') == '재사용' else '시트 약 ' + format(int((report.get('inserts') or {}).get('krw') or 0), ',') + '원'} · 대본·나레이션 0원(재사용) — 정식 제작 때 AI 컷 {report.get('ai_cuts', 0)}개(약 {294 * int(report.get('ai_cuts') or 0):,}원 + 검수)" if preview and rd
+                           else f"- 미리보기: 스토리보드 시트 약 {(report.get('storyboard') or {}).get('krw', 0):,}원 + 인서트 시트 약 {(report.get('inserts') or {}).get('krw', 0):,}원 · AI 영상 없음(사진 무빙) · 글·비전·음성 — 정식 제작 때 화면 계획대로 AI 컷 {report.get('ai_cuts', 0)}개(약 {294 * int(report.get('ai_cuts') or 0):,}원 + 검수)" if preview
                            else f"- AI 영상 {sum(1 for r in (report.get('veo') or {}).get('clips', []) if r.get('ok'))}/{len((report.get('veo') or {}).get('clips', []))}컷 · 이번 실행 약 {round(veo.spent_this_run()):,}원")]
     return "\n".join(md) + "\n"
 
@@ -1991,7 +2047,30 @@ def find_reuse(req: dict) -> dict | None:
                 if g.name.startswith("narr_"):
                     shutil.copy(g, mt.BUILD / g.name)
         log(f"미리보기 계획·음성 재사용(글·비전·음성 0원): {f.relative_to(REUSE_DIR)}")
+        plan["_from"] = str(f.relative_to(REUSE_DIR)).split("/")[0]
         return plan
+
+
+def drop_sign_shots(beats: list[dict], shots: list[dict], report: dict) -> None:
+    """v10.3: 재사용 계획에서 간판·안내판 사진의 연결 컷을 뺀다(옛 미리보기가 간판 사진을 썼어도 이번엔 안 쓴다) — 장점 컷은 그대로(주인공 확인을 통과한 사진).
+    컷이 비면 route_shots 가 문장과 관계있는 장점 사진으로 채운다."""
+    bad = sorted(s["id"] for s in shots if not s.get("insert") and not s.get("adv") and photos.is_sign_photo({"description": s.get("desc")}))
+    if not bad:
+        return
+    for b in beats:
+        b["shots"] = [x for x in (b.get("shots") or []) if x not in bad]
+    shots[:] = [s for s in shots if s["id"] not in bad]
+    report["sign_photos_dropped"] = bad
+    log(f"간판·안내판 사진 컷 {bad} 을 재사용 계획에서 뺌")
+
+
+def strip_inserts(beats: list[dict], shots: list[dict]) -> None:
+    """v10.3 '인서트도 다시': 옛 계획의 인서트 컷(INS)을 문장·재료에서 뺀다 → storyboard_scenes 가 새 인서트 시트(98원)를 만든다."""
+    ins = {s["id"] for s in shots if s.get("insert")}
+    for b in beats:
+        b["shots"] = [x for x in (b.get("shots") or []) if x not in ins]
+        b.pop("insert", None)
+    shots[:] = [s for s in shots if not s.get("insert")]
     return None
 
 
@@ -2005,7 +2084,13 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
     report["stage"] = "preview" if preview else "produce"
     report["format"] = "story"
     voice, tempo = str(req.get("voice") or ms.VOICE_DEFAULT), float(req.get("tempo") or mt.TEMPO)
-    plan = None if preview else find_reuse(req)
+    redo = req.get("redo") if preview else None                                       # v10.3 문제 시트만 다시: 미리보기 + reuse_runs(이전 미리보기 아티팩트) + redo
+    if redo is True:
+        redo = {"sheets": "failed"}
+    plan = find_reuse(req) if (not preview or isinstance(redo, dict)) else None
+    if preview and isinstance(redo, dict) and not plan:
+        log("문제 시트만 다시: 재사용할 미리보기 계획이 없음(reuse_runs·아티팩트) → 전체 미리보기")
+        redo = None
     folder = mt.folder_name(req)
     if plan:
         h, pos0, pos, sig, text, shot_list = plan["h"], plan.get("pos0") or 0, plan.get("pos") or 1, plan["signature"], plan["text"], plan["shots"]
@@ -2013,14 +2098,26 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
         report["reused_plan"] = True
         report["features"] = {"items": [f for f in (text.get("features") or []) if isinstance(f, dict) and f.get("text")], "source": "미리보기 재사용", "tries": []}   # v10: 문서에도 라벨
         report["hotels"] = [{k: h.get(k) for k in sg.H_KEYS if k in h}]
-        report["lens_check"] = {"ok": True, "note": "미리보기 대본 재사용"}
+        report["lens_check"] = {"ok": True, "note": "미리보기 대본 재사용" + ("(문제 시트만 다시)" if redo else "")}
         recheck_shots(text, shot_list, sig, report)
         for s_ in shot_list:                                                            # v4·v5 계획엔 장소·등급이 없다
             s_.setdefault("grade", "full"); s_.setdefault("place", place_of({"description": s_.get("desc"), "category": s_.get("category")}))
+        drop_sign_shots(text["beats"], shot_list, report)                               # v10.3 간판 사진 컷 제거(옛 미리보기 계획에 있어도)
+        if redo and redo.get("inserts") is True:
+            strip_inserts(text["beats"], shot_list)
         route_shots(text["beats"], shot_list, report)
         plan_visuals(text["beats"], shot_list, report, ai_budget(req), dog_ok(sig))   # 예산·규칙은 제작 때 값으로(0원)
         scenes_ok = [x for x in (text.get("scenes") or []) if x.get("ok") and x.get("img") and (STORY / x["img"]).exists()]
-        if text.get("scenes"):                                                          # v7: 미리보기의 스토리보드 패널을 그대로(이미지 0원) — 파일이 없으면 원본
+        if redo:                                                                        # v10.3: 옛 시트·패널·인서트를 그대로 쓰고 문제 시트만 다시(돈) — 대본·나레이션·캡션은 0원
+            old_scenes = list(text.get("scenes") or [])
+            text["scenes"] = storyboard_scenes(models, text["beats"], shot_list, sig, req, report, reuse={"scenes": old_scenes, "redo": redo})
+            sb = report.get("storyboard") or {}
+            report["redo"] = {"from": plan.get("_from") or "", "policy": redo.get("sheets", "failed"), "inserts": "재사용" if (report.get("inserts") or {}).get("reused") else "다시",
+                              "sheets_reused": list(sb.get("reused") or []), "sheets_made": list(sb.get("made") or []),
+                              "krw": int(sb.get("krw") or 0) + int((report.get("inserts") or {}).get("krw") or 0)}
+            log(f"문제 시트만 다시: 시트 재사용 {report['redo']['sheets_reused']} · 다시 {report['redo']['sheets_made']} · 인서트 {report['redo']['inserts']} · 약 {report['redo']['krw']:,}원")
+            save_plan(req, h, pos0, pos, sig, text, shot_list, narr)                     # 이번 미리보기 계획(정식 제작이 이것을 재사용)
+        elif text.get("scenes"):                                                        # v7: 미리보기의 스토리보드 패널을 그대로(이미지 0원) — 파일이 없으면 원본
             for x in text["scenes"]:
                 if x.get("img") and not (STORY / x["img"]).exists():
                     x["ok"] = False; x["why"] = "패널 파일 없음(아티팩트)"
@@ -2032,6 +2129,9 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
         h, pos0 = so.assets(req, models, report)
         sig = sg.choose_signature(models, h, req, report)
         facts = sg.facts_list(h) + deep_facts(models, h, sig, report) + operator_facts(h["name"], report)   # 운영자 확인 사실은 맨 뒤(안전망)
+        report["facts_trivia"] = [f"{i}. {sg._body(f)}" for i, f in enumerate(facts, 1) if sg.is_trivia(f)]   # v10.2 운영 잡사실(번호는 그대로 두고 인용만 금지)
+        if report["facts_trivia"]:
+            log(f"운영 안내 사실 {len(report['facts_trivia'])}개 — 인용 금지: " + " / ".join(x[:40] for x in report["facts_trivia"][:4]))
         shot_list = build_shots(models, sig, h, report)
         material_gate(report.get("material") or {"photos": len({s_["k"] for s_ in shot_list}), "places": sorted({s_.get("place") for s_ in shot_list}), "inserts": 0}, h, req, report)
         if len(shot_list) < 2:
@@ -2084,8 +2184,10 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
     n_sheets = len(sb.get("sheets") or [])
     n_ins = len(report.get("inserts_used") or [])
     ins_krw = int((report.get("inserts") or {}).get("krw") or 0)
+    rd_ = report.get("redo") or {}
     meta = {"mode": "signature", "format": "story",
-            "label": (f"시그니처 이야기 미리보기(스토리보드 시트 {n_sheets}장 · 인서트 {n_ins}컷 · AI 영상 없음)" if n_sheets or n_ins else "시그니처 이야기 미리보기(AI 영상 없음)") if preview
+            "label": ((f"시그니처 이야기 미리보기(문제 시트만 다시 {len(rd_.get('sheets_made') or [])}장 · 재사용 {len(rd_.get('sheets_reused') or [])}장 · 인서트 {rd_.get('inserts')} · AI 영상 없음)" if rd_ else
+                       f"시그니처 이야기 미리보기(스토리보드 시트 {n_sheets}장 · 인서트 {n_ins}컷 · AI 영상 없음)") if n_sheets or n_ins or rd_ else "시그니처 이야기 미리보기(AI 영상 없음)") if preview
             else f"시그니처 이야기 제작(AI 영상 {ai}/{len(v.get('clips', []))}컷)", "storyboard_krw": int(sb.get("krw", 0) or 0) + ins_krw, "storyboard_sheets": n_sheets,
             "inserts": n_ins, "scene_drops": len(report.get("scene_drops") or []), "card": report.get("card"),
             "features": [f["text"] for f in (text.get("features") or []) if isinstance(f, dict) and f.get("text")],

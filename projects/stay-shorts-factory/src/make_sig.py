@@ -70,6 +70,15 @@ MUSIC_LEVEL = 0.9                                                 # 나레이션
 PATTERNS = ("push", "pan", "diag", "tilt", "pull")
 MOOD_RX = re.compile(r"노을빛|물들|푸른|힐링|낭만|감성|설레|설렘|여유로|아늑|포근|로맨틱|그림\s?같|꿈\s?같|인생샷|완벽한|행복|분위기|추억|따뜻한 곳|쉬는 곳|머물고 싶")   # run-47 '감성팔이' — 사실 없는 분위기 말
 FACT_PREFIX_RX = re.compile(r"^(블로그 교차 확인 시설|공식 홈페이지 한 줄 요약|공식 홈페이지 상세|공식 안내문|운영자 확인 안내문|후보표 훅): ")
+TRIVIA_RX = re.compile(r"운영\s?시간|운영함|운영합니다|운영 중|\d{1,2}\s?시\s?(부터|까지|에\b|오픈|부터$|까지$)|\d{2}:\d{2}|오픈|정비|휴무|휴장|발권|문의|전화|\d{2,4}-\d{3,4}-\d{4}"
+                       r"|층에\s?위치|층에 있|층 위치|\d+층.{0,24}위치|내에 위치|리셉션|락카|라커|파우더룸|탈의실|브레이크\s?타임|재입장|단일권|종일권|이용권|행사 기간|요금은|요금표|요금이|원입니다|원이며|원으로|구매 시|선구매|현장구매|비투숙객")
+CAP_ENDING_RX = re.compile(r"니다[.!?~]?\s*$")
+
+
+def is_trivia(f) -> bool:
+    """운영 잡사실(운영시간·정비일·휴무·요금표·발권·전화·몇 층·락카룸·재입장 같은 안내문 정보) — 2026-10-20 운영자(더앤리조트 미리보기 캡션의
+    '스파온 수요일 14시 오픈') "이런 내용은 안 중요한데 왜 들어가?" → 이야기 문장·캡션·체크리스트·카드·라벨 어디에도 인용하지 않는다(사진 제외용 운영 종료 판정은 별개)."""
+    return bool(TRIVIA_RX.search(_body(f)))
 ROLES = ("신박함", "차별성", "유인")
 ADJ_RX = re.compile(r"인접|근처|주변|바로\s?옆|옆에|도보|셔틀|차로|분 거리|가까운")      # 숙소 밖 시설(stay-run-48: '오션월드와 루지월드 인접'을 숙소 시설처럼 고를 뻔)
 PEERS_PATH = mt.ROOT / "data" / "discover" / "latest" / "candidates.json"     # 같은 테마 다른 후보(시그니처를 비교로 고르려고)
@@ -147,12 +156,13 @@ def _b64(path: Path, side: int = 1024) -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
-def _json_vision(model: str, system: str, text: str, images: list[Path], side: int = 1024) -> dict:
+def _json_vision(model: str, system: str, text: str, images: list[Path], side: int = 1024, max_tokens: int = 1200) -> dict:
+    """비전 JSON 한 번. max_tokens: 600 이면 패널 4개 검수 답(한국어 목록 여러 개)이 잘려 JSON 이 깨진다(#61 시트 4 '검수 호출 실패' → 패널 4개 전부 탈락 · 98원 낭비) → 1,200."""
     parts = [{"text": text}]
     for k, p in enumerate(images, 1):
         parts += [{"text": f"사진 {k}:"}, {"inline_data": {"mime_type": "image/jpeg", "data": _b64(p, side)}}]
     body = {"system_instruction": {"parts": [{"text": system}]}, "contents": [{"role": "user", "parts": parts}],
-            "generationConfig": {"maxOutputTokens": 600, "temperature": 0.0, "responseMimeType": "application/json", "thinkingConfig": {"thinkingBudget": 0}}}
+            "generationConfig": {"maxOutputTokens": int(max_tokens), "temperature": 0.0, "responseMimeType": "application/json", "thinkingConfig": {"thinkingBudget": 0}}}
     try:
         data = ms._gpost(f"models/{model}:generateContent", body, 120)
     except RuntimeError as e:
@@ -250,6 +260,7 @@ def usable_photos(h: dict, min_q: int = 5) -> list[dict]:
     v3: 품질 5 이상이 2장이 안 되면 choose_signature 가 품질 3 이상(9컷 형식 기준)으로 한 번 더 본다 — 사진이 있는데 멈추지 않게."""
     base = [p for p in (h.get("classified") or []) if p.get("category") in photos.CATS and int(p.get("quality") or 0) >= min_q
             and not p.get("people") and not p.get("mismatch") and not p.get("closed") and photos.panel_grade(p) != "none"
+            and not photos.is_sign_photo(p)                                             # v10.3: 간판·안내판 사진은 장면 사진이 아니다(#61)
             and Path(str(p.get("path") or "")).exists()]
     base.sort(key=lambda p: (-int(p.get("quality") or 0), int(p.get("k") or 0)))
     out, hashes, ext = [], [], 0
@@ -340,6 +351,7 @@ SIG_SYSTEM = """너는 숙소 쇼츠 기획자다. 시청자가 "이런 데가 �
 테마와 이어지는 시그니처를 먼저 찾고, 없으면 이 숙소만의 다른 것(테마 객실·이색 시설 등)을 고른다.
 조건:
 1) 근거: '사실' 목록 중 하나(번호)가 그 시그니처를 직접 말해야 한다. 사실에 없는 시그니처는 고르지 않는다.
+   '(운영 안내 — 인용 금지)'가 붙은 사실(운영시간·정비·휴무·요금·발권·전화·몇 층·락카룸·재입장)은 시그니처 근거도, 전할 정보(points)도 될 수 없다.
 2) points(영상에서 전할 정보) 2~5개, 순서: 신박함(그게 무엇이고 왜 의외인지) → 차별성(다른 후보와 다른 구체적인 점) → 유인(그래서 거기서 할 수 있는 것·언제).
    각 point 는 **그 시그니처에 대한** 사실 한 줄(번호)을 짧게 옮긴 것(4~24자) — 다른 시설 이야기·분위기·감성 묘사 금지, 사실에 없는 내용·숫자 추가 금지.
 3) photos: 그 시그니처가 **사진의 주인공**(화면의 큰 부분·초점)인 서로 다른 사진 번호 2~5개, 좋은 것부터.
@@ -430,6 +442,8 @@ def fact_groups(facts: list[str], pool: dict) -> list[tuple[int, list[int]]]:
     """사실마다 그 내용 낱말이 설명에 있는 사진 — 시그니처를 '사진이 넉넉한 사실'에서 고르게 돕는 힌트(0원 · 확정은 비전 확인)."""
     out = []
     for i, f in enumerate(facts, 1):
+        if is_trivia(f):                                                                        # v10.2: 운영 안내는 시그니처 후보(코드 예비 선정 포함)에서 뺀다
+            continue
         ft = _tokens(_body(f))
         ks = [k for k, p in pool.items() if ft and _overlap(ft, _tokens(f"{p.get('description') or ''} {p.get('src_alt') or ''}"))]
         if ks:
@@ -604,7 +618,7 @@ def choose_signature(models: dict, h: dict, req: dict, report: dict) -> dict:
     groups = fact_groups(facts, pool)
     content = (f"숙소: {h['name']} ({h.get('city') or ''}) · 테마: {req.get('theme')} · 시기: {req.get('month')}\n\n"
                "같은 테마 다른 후보(이들과 겹치는 것은 피한다):\n" + ("\n".join(f"- {x}" for x in peers) or "- (목록 없음)")
-               + "\n\n사실(번호):\n" + "\n".join(f"{i}. {f}" for i, f in enumerate(facts, 1))
+               + "\n\n사실(번호):\n" + "\n".join(f"{i}. {f}" + (" (운영 안내 — 인용 금지)" if is_trivia(f) else "") for i, f in enumerate(facts, 1))
                + "\n\n사진:\n" + "\n".join(_photo_line(p) for p in pool.values()))
     if groups:
         content += "\n\n사실별로 그 내용이 보이는 사진(설명 낱말 기준 · 참고):\n" + "\n".join(f"- 사실 {i} → 사진 {', '.join(map(str, ks))}" for i, ks in groups)
@@ -622,6 +636,9 @@ def choose_signature(models: dict, h: dict, req: dict, report: dict) -> dict:
             errs = [f"빈 답은 받지 않는다 — 사진이 {MIN_CUTS}장 이상인 것 중 이 숙소에서 가장 의외인 것을 시그니처로: {', '.join(many[:6])}"]
         else:
             errs = sig_errs(cand, facts, pool, h, req, peers if attempt < 2 else None)  # 마지막 시도는 '다른 후보 공통점'을 따지지 않는다(영상을 못 만드는 것보다 낫다)
+            fi_c = _int(cand.get("fact")) or 0
+            if 1 <= fi_c <= len(facts) and is_trivia(facts[fi_c - 1]):                         # v10.2 재발 방지 L2: 운영 안내는 시그니처 근거 불가
+                errs = errs + [f"사실 {fi_c} 은 운영 안내(운영시간·정비·요금·층) — 시그니처 근거가 될 수 없다. 시설·공간·체험 사실로"]
         tries.append({"signature": name, "errs": errs})
         if not errs:
             js = cand
@@ -634,6 +651,10 @@ def choose_signature(models: dict, h: dict, req: dict, report: dict) -> dict:
         report["signature_fallback"] = True
         log(f"시그니처를 모델이 못 골라 코드가 정함: {js['signature']} (사실 {js['fact']} · 사진 {js['photos']})")
     points, dropped = check_points(js, facts)
+    bad_pts = [p for p in points if is_trivia(p.get("fact") or "")]                            # v10.2 재발 방지 L2: 전할 정보에 운영 안내 금지
+    if bad_pts:
+        points = [p for p in points if p not in bad_pts]
+        dropped = list(dropped or []) + [{"text": p.get("text"), "why": "운영 안내 사실 인용"} for p in bad_pts]
     if not points or points[0]["role"] != "신박함":
         fi0 = _int(js.get("fact")) or 1
         points = [{"role": "신박함", "text": _cut(_body(facts[fi0 - 1]), 24), "fact": facts[fi0 - 1], "fact_i": fi0}] + [p for p in points if p["fact_i"] != fi0]
@@ -948,6 +969,10 @@ def caption_errs(cap: dict, h: dict, req: dict, sig: dict, facts: list[str]) -> 
     for t in [hook, *pts, save]:
         if not t.strip():
             continue
+        if TRIVIA_RX.search(t):                                                          # v10.2 운영시간·정비·요금·전화·몇 층 같은 운영 안내는 캡션에 안 쓴다
+            errs.append(f"caption '{t[:20]}' 운영 안내(운영시간·정비·요금·층) — 장점 자체의 사실로")
+        if CAP_ENDING_RX.search(t):
+            errs.append(f"caption '{t[:20]}' '~니다' — 나레이션처럼 '~해요'체로")
         mood = MOOD_RX.search(t)
         if mood:
             errs.append(f"caption '{t[:20]}' 분위기 말 '{mood.group(0)}' — 사실로")
@@ -972,7 +997,11 @@ def grounded_checklist(items: list, facts: list[str], h: dict) -> list[str]:
         if fi is None or not (1 <= fi <= len(facts)):
             continue
         src = facts[fi - 1]
+        if is_trivia(src):                                                              # v10.2 운영 잡사실은 체크리스트에 안 쓴다
+            continue
         txt = design.one_line(str(it.get("text") or ""))[:40]
+        if TRIVIA_RX.search(txt):
+            continue
         ta, tb = _tokens(txt), _tokens(src)
         if not txt or not ta or _overlap(ta, tb) / len(ta) < 0.5 or any(d not in src for d in DIGIT_RX.findall(txt)) or PAST_RX.search(txt):
             txt = _body(src)[:40]

@@ -66,10 +66,11 @@ SYSTEM = """너는 숙소 홍보 숏폼의 촬영 감독이다. 숙소 사진 �
 - view: "exterior"(건물 바깥 모습·단지 전경·항공·야경 — 시설을 이용하는 공간이 아니라 건물·단지가 주인공) / "interior"(실내) / "outdoor"(야외 풀·테라스·정원·산책로처럼 이용하는 바깥 공간)
 - focus_x, focus_y: 세로(9:16)로 잘라낼 때 꼭 남겨야 할 중심점. 0.0~1.0 (왼쪽 위가 0,0). 수영장·침대·길 같은 핵심이 들어가게 고른다
 - people: 사람이 보이면 true
+- sign: 간판·안내판·현수막·포스터·메뉴판·로고처럼 **글이 적힌 물체가 화면의 주인공**이면 true (풍경 속 작은 표지판은 false). true 면 장면 사진으로 쓰지 않는다
 - quality: 영상 소재로서의 품질 0~10 (해상도·구도·밝기)
 - veo_prompt: 이 사진을 4초 영상으로 움직일 때의 영어 지시문 1~2문장. 카메라 움직임 한 가지(drone glide / slow push-in / slow tracking / gentle tilt 등)와 자연스러운 움직임 한 가지(water ripples / curtains sway / leaves sway / light shimmer)만 적는다. 사진에 없는 사물·사람·건물·풍경을 추가하라고 쓰지 않는다. 빠른 움직임·흔들림·줌 급변 금지.
 - mismatch: 사용자 메시지에 숙소 이름·지역이 주어졌을 때, 사진이 **그 숙소의 것이 아닐 가능성이 높으면**(지역 지리와 맞지 않음 — 예: 내륙 산간 리조트인데 바다가 보임, 알려진 건물 양식·시설과 다름, 다른 지점 이름의 간판) 그 이유를 한국어 한 줄로. 확실하지 않으면 빈 문자열. mismatch 를 적은 사진은 category 를 "skip" 으로 한다
-JSON 만 출력한다: {"photos":[{"k":번호,"category":"...","description":"...","view":"interior","focus_x":0.5,"focus_y":0.5,"people":false,"quality":7,"veo_prompt":"...","mismatch":""}]}"""
+JSON 만 출력한다: {"photos":[{"k":번호,"category":"...","description":"...","view":"interior","focus_x":0.5,"focus_y":0.5,"people":false,"sign":false,"quality":7,"veo_prompt":"...","mismatch":""}]}"""
 
 
 # ── 시설 이름 사전 (2026-10-14 운영자 "자쿠지가 아닌데 자쿠지라고 표기") ─────────────────────────────
@@ -381,6 +382,9 @@ def classify(model: str, cands: list[dict], context: str = "") -> list[dict]:
         mismatch = str(p.get("mismatch") or "").strip()[:100]
         if mismatch:
             cat = "skip"
+        sign = p.get("sign") is True or bool(SIGN_RX.search(str(p.get("description") or "")))   # v10.3: 간판·안내판이 주인공인 사진은 장면 사진이 아니다(#61 'PET'S PARK' 간판)
+        if sign and cat != "skip":
+            cat = "skip"
 
         def f01(v, d=0.5):
             try:
@@ -390,10 +394,11 @@ def classify(model: str, cands: list[dict], context: str = "") -> list[dict]:
         view = str(p.get("view") or "").strip().lower()
         out.append({**c, "category": cat, "description": str(p.get("description", ""))[:120], "view": view if view in ("exterior", "interior", "outdoor") else "",
                     "focus_x": f01(p.get("focus_x")), "focus_y": f01(p.get("focus_y")),
-                    "people": bool(p.get("people", False)), "quality": _q(p.get("quality")),
+                    "people": bool(p.get("people", False)), "sign": sign, "quality": _q(p.get("quality")),
                     "veo_prompt": str(p.get("veo_prompt", "")).strip()[:400], "mismatch": mismatch})
     for o in out:
-        log(f"사진 {o['k']} [{o['source']}] → {o['category']} q{o['quality']} {o['description'][:50]}" + (f" ⚠ 다른 지점 의심: {o['mismatch']}" if o["mismatch"] else ""))
+        log(f"사진 {o['k']} [{o['source']}] → {o['category']} q{o['quality']} {o['description'][:50]}" + (f" ⚠ 다른 지점 의심: {o['mismatch']}" if o["mismatch"] else "")
+            + (" · 간판 사진(장면 제외)" if o.get("sign") else ""))
     return out
 
 
@@ -465,6 +470,16 @@ PANEL_FULL = 900                       # 패널 짧은 변(px) ≥ 900 → 일�
 PANEL_INSERT = 500                     # 500~899 → 짧은 인서트 컷만(1.3초 이하 · AI 컷 금지) · 그 밑은 버림
 PANELS_MAX = 6                         # 콜라주 한 장에서 최대 패널 수
 NOTICE_RX = re.compile(r"안내|요금|규정|수칙|공지|포스터|텍스트|글자|멤버십|가격|리스트|목록|이용 ?방법|휴장|운영 ?시간|종료|요금표|표가|설명")
+SIGN_RX = re.compile(r"간판|안내판|표지판|현수막|배너|플래카드|포스터|팻말|입간판|이정표|메뉴판|가격표|안내문|안내도|로고|signboard|\bsigns?\b|banner|poster|placard|logo", re.I)   # v10.3 글이 주인공인 '간판 사진'
+
+
+def is_sign_photo(p: dict) -> bool:
+    """간판·안내판·현수막·포스터가 주인공인 사진인가 — 장면 사진(장점·연결 컷)으로 못 쓴다. 0원.
+    #61 더앤리조트: 분류가 '산책로 입구에 펫파크 안내 간판이 세워져 있다'를 special(정원·산책로)로 통과시켜 조건 문장 밑에 'PET'S PARK' 간판 사진이 깔렸다.
+    분류 비전의 sign 이 true 면 간판, 아니어도(옛 기록) 설명·대체 글에 간판 낱말이 있으면 간판으로 본다(둘 중 하나라도)."""
+    if p.get("sign") is True:
+        return True
+    return bool(SIGN_RX.search(f"{p.get('description') or ''} {p.get('src_alt') or ''}"))
 NOTICE_SYSTEM = """너는 숙소 공식 홈페이지의 안내문 이미지를 읽어 옮기는 기록자다. 이미지에 **적힌 글만** 옮기고, 적히지 않은 것은 쓰지 않는다.
 각 이미지에 대해:
 - is_notice: 글이 주인공인 안내문·요금표·규정·포스터면 true (사진이 주인공이면 false)
