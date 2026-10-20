@@ -5,10 +5,10 @@
  "theme": "실내 온수풀·온천",
  "region": "강원",
  "month": "2026-11",
- "veo_approved": true,
+ "veo_approved": false,
  "caption_style": "shadow",
  "crawl": true,
- "note": "관리자 페이지 시그니처 이야기 미리보기 · 문제 시트만 다시(시트 전부 재사용 · 대본 점검만) — 더앤리조트 · 예상 약 20원 · 미리보기 #62 재사용 · 2026-10-21 00:04 KST",
+ "note": "잠금(자동 · 실행 끝): 2026-10-21-admin-sig-redo-IAnX",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -24,7 +24,6 @@
    "name": "stay-run-62"
   }
  ],
- "stage": "preview",
  "redo": {
   "sheets": "none",
   "inserts": false

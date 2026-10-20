@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-20-admin-sig-redo-x9NF",
+ "nonce": "2026-10-21-admin-sig-redo-IAnX",
  "stay": "더앤리조트",
  "mode": "signature",
  "fake": false,
@@ -25,6 +25,22 @@
  "stage": "preview",
  "format": "story",
  "reused_plan": true,
+ "text_rules": {
+  "dropped": [
+   {
+    "i": 6,
+    "lens": "조건",
+    "line": "이제 실내온천탕은 매주 수요일 정비로 14시에 여니 참고해요."
+   }
+  ],
+  "caption": "예비 캡션으로 교체(caption.points(차별성·유인 1~3줄) 없음; caption '숲속 노천온천탕 바로 곁에 독립된 목' '~니다' — 나)",
+  "checklist_removed": [
+   "일~목 08시부터 20시까지 운영함",
+   "매주 수요일 시설 정비로 14시 오픈"
+  ],
+  "card_removed": [],
+  "kept_min": false
+ },
  "features": {
   "items": [
    {
@@ -144,12 +160,7 @@
   "ok": true,
   "note": "미리보기 대본 재사용(문제 시트만 다시)"
  },
- "sign_photos_dropped": [
-  "S10"
- ],
- "route_changes": [
-  "문장 6 둘째 컷 +S6(객실)"
- ],
+ "route_changes": [],
  "visual_plan": [
   {
    "i": 1,
@@ -224,20 +235,6 @@
   },
   {
    "i": 6,
-   "lens": "조건",
-   "type": "C",
-   "actor": null,
-   "action_en": null,
-   "auto": false,
-   "shot": "S5",
-   "shots": [
-    "S5",
-    "S6"
-   ],
-   "tail": null
-  },
-  {
-   "i": 7,
    "lens": "제안",
    "type": "C",
    "actor": null,
@@ -251,31 +248,23 @@
    "insert": "road"
   }
  ],
- "visual_warnings": [
-  "문장 5·6 사진 무빙이 연속(예산 6컷)"
- ],
+ "visual_warnings": [],
  "ai_cuts": 3,
- "cut_count": 13,
+ "cut_count": 11,
  "places": [
-  "객실",
   "물놀이",
   "사우나",
   "수영장",
-  "온수탕·스파",
-  "정원·산책로"
+  "온수탕·스파"
  ],
- "scenes_planned": 11,
+ "scenes_planned": 9,
  "storyboard": {
   "sheets": [
    {
     "n": 5,
     "k": 12,
     "ok": true,
-    "redo_of": 1,
-    "px": [
-     1536,
-     2752
-    ],
+    "reused": true,
     "panel_px": [
      763,
      764,
@@ -285,12 +274,11 @@
     "scenes": [
      1,
      6,
-     12,
-     13
+     10,
+     11
     ],
     "passed": 4,
-    "krw": 98,
-    "model": "gemini-3.1-flash-image",
+    "krw": 0,
     "angles": [
      "from the same camera position ",
      "the same camera position as th",
@@ -302,11 +290,7 @@
     "n": 6,
     "k": 28,
     "ok": true,
-    "redo_of": 2,
-    "px": [
-     1536,
-     2752
-    ],
+    "reused": true,
     "panel_px": [
      763,
      764,
@@ -316,12 +300,11 @@
     "scenes": [
      2,
      4,
-     14,
-     15
+     12,
+     13
     ],
     "passed": 4,
-    "krw": 98,
-    "model": "gemini-3.1-flash-image",
+    "krw": 0,
     "angles": [
      "from the same camera position ",
      "the same camera position as th",
@@ -333,11 +316,7 @@
     "n": 7,
     "k": 26,
     "ok": true,
-    "redo_of": 3,
-    "px": [
-     1536,
-     2752
-    ],
+    "reused": true,
     "panel_px": [
      763,
      764,
@@ -347,61 +326,28 @@
     "scenes": [
      3,
      8,
-     16,
-     17
+     14,
+     15
     ],
     "passed": 3,
-    "krw": 98,
-    "model": "gemini-3.1-flash-image",
+    "krw": 0,
     "angles": [
      "from the pool edge at water le",
      "from the far end looking back",
      "from above the entry steps",
      "close-up of the water with the"
     ]
-   },
-   {
-    "n": 8,
-    "k": 13,
-    "ok": true,
-    "redo_of": null,
-    "px": [
-     1536,
-     2752
-    ],
-    "panel_px": [
-     746,
-     746,
-     746,
-     746
-    ],
-    "scenes": [
-     10,
-     18,
-     19,
-     20
-    ],
-    "passed": 1,
-    "krw": 98,
-    "model": "gemini-3.1-flash-image",
-    "angles": [
-     "from the same camera position ",
-     "from the same spot, the camera",
-     "from the same spot, the camera",
-     "from the same spot, a little h"
-    ]
    }
   ],
-  "krw": 392,
-  "model": "gemini-3.1-flash-image",
+  "krw": 0,
+  "model": null,
   "fake": false,
-  "reused": [],
-  "made": [
+  "reused": [
    5,
    6,
-   7,
-   8
+   7
   ],
+  "made": [],
   "scenes": [
    {
     "n": 1,
@@ -421,7 +367,7 @@
     "spare": null,
     "angle": "from the same camera position as the photograph, framed a little tighter",
     "minor": null,
-    "reused": null
+    "reused": true
    },
    {
     "n": 2,
@@ -441,7 +387,7 @@
     "spare": null,
     "angle": "from the same camera position as the photograph, framed a little tighter",
     "minor": null,
-    "reused": null
+    "reused": true
    },
    {
     "n": 3,
@@ -461,7 +407,7 @@
     "spare": null,
     "angle": "from the pool edge at water level",
     "minor": null,
-    "reused": null
+    "reused": true
    },
    {
     "n": 4,
@@ -481,7 +427,7 @@
     "spare": null,
     "angle": "the same camera position as the photograph",
     "minor": null,
-    "reused": null
+    "reused": true
    },
    {
     "n": 5,
@@ -521,7 +467,7 @@
     "spare": null,
     "angle": "the same camera position as the photograph",
     "minor": "조명",
-    "reused": null
+    "reused": true
    },
    {
     "n": 7,
@@ -561,7 +507,7 @@
     "spare": null,
     "angle": "from the far end looking back",
     "minor": null,
-    "reused": null
+    "reused": true
    },
    {
     "n": 9,
@@ -585,46 +531,6 @@
    },
    {
     "n": 10,
-    "j": 5,
-    "m": 0,
-    "sid": "S5",
-    "k": 13,
-    "place": "정원·산책로",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": "sb_8_1.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 746,
-    "sheet": 8,
-    "spare": null,
-    "angle": "from the same camera position as the photograph, framed a little tighter",
-    "minor": null,
-    "reused": null
-   },
-   {
-    "n": 11,
-    "j": 5,
-    "m": 1,
-    "sid": "S6",
-    "k": 15,
-    "place": "객실",
-    "who": "env",
-    "with_dog": false,
-    "time": "day",
-    "img": null,
-    "ok": false,
-    "why": "꼬리 컷은 원본(시트 생략)",
-    "panel_px": 0,
-    "sheet": null,
-    "spare": null,
-    "angle": "from the doorway looking into the room",
-    "minor": null,
-    "reused": null
-   },
-   {
-    "n": 12,
     "j": null,
     "m": null,
     "sid": "S1",
@@ -641,10 +547,10 @@
     "spare": true,
     "angle": "a few steps further back, wider",
     "minor": null,
-    "reused": null
+    "reused": true
    },
    {
-    "n": 13,
+    "n": 11,
     "j": null,
     "m": null,
     "sid": "S1",
@@ -661,10 +567,10 @@
     "spare": true,
     "angle": "low angle close to the ground",
     "minor": "수중 조명",
-    "reused": null
+    "reused": true
    },
    {
-    "n": 14,
+    "n": 12,
     "j": null,
     "m": null,
     "sid": "S2",
@@ -681,10 +587,10 @@
     "spare": true,
     "angle": "a few steps further back, wider",
     "minor": null,
-    "reused": null
+    "reused": true
    },
    {
-    "n": 15,
+    "n": 13,
     "j": null,
     "m": null,
     "sid": "S2",
@@ -701,10 +607,10 @@
     "spare": true,
     "angle": "low angle close to the ground",
     "minor": null,
-    "reused": null
+    "reused": true
    },
    {
-    "n": 16,
+    "n": 14,
     "j": null,
     "m": null,
     "sid": "S7",
@@ -721,10 +627,10 @@
     "spare": true,
     "angle": "from above the entry steps",
     "minor": null,
-    "reused": null
+    "reused": true
    },
    {
-    "n": 17,
+    "n": 15,
     "j": null,
     "m": null,
     "sid": "S7",
@@ -741,67 +647,7 @@
     "spare": true,
     "angle": "close-up of the water with the surroundings behind",
     "minor": null,
-    "reused": null
-   },
-   {
-    "n": 18,
-    "j": null,
-    "m": null,
-    "sid": "S5",
-    "k": 13,
-    "place": "정원·산책로",
-    "who": "env",
-    "with_dog": false,
-    "time": "golden",
-    "img": "sb_8_2.png",
-    "ok": false,
-    "why": "시설·구조 추가: 배경 건물 추가",
-    "panel_px": 746,
-    "sheet": 8,
-    "spare": true,
-    "angle": "from the same spot, the camera turned a little to the left",
-    "minor": null,
-    "reused": null
-   },
-   {
-    "n": 19,
-    "j": null,
-    "m": null,
-    "sid": "S5",
-    "k": 13,
-    "place": "정원·산책로",
-    "who": "env",
-    "with_dog": false,
-    "time": "evening",
-    "img": "sb_8_3.png",
-    "ok": false,
-    "why": "시설·구조 추가: 배경 고층 건물",
-    "panel_px": 746,
-    "sheet": 8,
-    "spare": true,
-    "angle": "from the same spot, the camera turned a little to the right",
-    "minor": null,
-    "reused": null
-   },
-   {
-    "n": 20,
-    "j": null,
-    "m": null,
-    "sid": "S5",
-    "k": 13,
-    "place": "정원·산책로",
-    "who": "env",
-    "with_dog": false,
-    "time": "day",
-    "img": "sb_8_4.png",
-    "ok": false,
-    "why": "시설·구조 추가: 배경 고층 건물",
-    "panel_px": 746,
-    "sheet": 8,
-    "spare": true,
-    "angle": "from the same spot, a little higher, looking slightly down",
-    "minor": null,
-    "reused": null
+    "reused": true
    }
   ]
  },
@@ -836,22 +682,16 @@
  ],
  "scene_drops": [],
  "redo": {
-  "from": "stay-run-61",
-  "policy": [
-   1,
-   2,
-   3,
-   4
-  ],
+  "from": "stay-run-62",
+  "policy": "none",
   "inserts": "재사용",
-  "sheets_reused": [],
-  "sheets_made": [
+  "sheets_reused": [
    5,
    6,
-   7,
-   8
+   7
   ],
-  "krw": 392
+  "sheets_made": [],
+  "krw": 0
  },
  "signature": {
   "name": "야외 배럴사우나 노천온천",
@@ -926,11 +766,11 @@
   {
    "i": 1,
    "shot": "INS1",
-   "x": 0.49,
-   "y": 0.67,
-   "zoom": 0.3,
+   "x": 0.48,
+   "y": 0.92,
+   "zoom": 0.35,
    "move": "in",
-   "what": "캐리어"
+   "what": "여행 가방"
   },
   {
    "i": 2,
@@ -945,15 +785,15 @@
    "i": 3,
    "shot": "S2",
    "x": 0.58,
-   "y": 0.58,
+   "y": 0.57,
    "zoom": 0.35,
    "move": "in",
-   "what": "캐빈 사우나"
+   "what": "캐빈 안"
   },
   {
    "i": 4,
    "shot": "S1",
-   "x": 0.52,
+   "x": 0.51,
    "y": 0.72,
    "zoom": 0.35,
    "move": "in",
@@ -963,22 +803,13 @@
    "i": 5,
    "shot": "S7",
    "x": 0.42,
-   "y": 0.3,
+   "y": 0.29,
    "zoom": 0.35,
    "move": "in",
-   "what": "카바나"
+   "what": "카바나와 파라솔 구역"
   },
   {
    "i": 6,
-   "shot": "S5",
-   "x": 0.51,
-   "y": 0.92,
-   "zoom": 0.35,
-   "move": "in",
-   "what": "분수대"
-  },
-  {
-   "i": 7,
    "shot": "INS3",
    "x": 0.62,
    "y": 0.48,
@@ -996,18 +827,15 @@
   "hook_title": "찬 바람 부는 날 [온천] 여행",
   "title": "더앤리조트 야외 배럴사우나 노천온천",
   "caption": {
-   "hook": "숲속 노천온천탕 바로 곁에 독립된 목조 배럴사우나 캐빈이 마련되어 있습니다.",
+   "hook": "실내온천탕과 배럴사우나 및 노천온천탕 완비",
    "points": [
-    "실내온천탕과 함께 야외 배럴사우나 및 노천온천탕을 완비했습니다.",
-    "실내 온수풀 중심의 리조트들과 달리 야외 핀란드식 사우나 캐빈을 갖췄습니다.",
-    "본관 1층 스파온 온천사우나는 수요일 시설 정비로 14시부터 운영합니다."
+    "땀 빼고 나면 나란히 자리한 야외 온천탕에 몸을 담그면 돼요.",
+    "그래서 실내 온수풀 위주인 곳들과 달리 숲속 사우나 캐빈을 누려요."
    ],
-   "save": "쌀쌀해지는 11월 강원도 온천 여행 계획할 때 미리 저장해 두세요."
+   "save": "갈 계획이 있다면 저장해두고 다시 꺼내 보세요."
   },
   "checklist": [
-   "실내온천탕 및 배럴사우나, 노천온천탕 완비",
-   "일~목 08시부터 20시까지 운영함",
-   "매주 수요일 시설 정비로 14시 오픈"
+   "실내온천탕 및 배럴사우나, 노천온천탕 완비"
   ],
   "cuts": [
    {
@@ -1037,11 +865,6 @@
    },
    {
     "i": 6,
-    "narration": "이제 실내온천탕은 매주 수요일 정비로 14시에 여니 참고해요.",
-    "caption": "조건"
-   },
-   {
-    "i": 7,
     "narration": "이번엔 야외 배럴사우나와 노천온천탕으로 떠나보는 건 어떨까요?",
     "caption": "제안"
    }
@@ -1236,41 +1059,6 @@
   },
   {
    "i": 6,
-   "lens": "조건",
-   "kind": "사진 무빙 2컷 · AI 스토리보드",
-   "sec": 4.52,
-   "shots": [
-    "S5",
-    "S6"
-   ],
-   "cuts": 2,
-   "narration": "이제 실내온천탕은 매주 수요일 정비로 14시에 여니 참고해요.",
-   "places": [
-    "정원·산책로",
-    "객실"
-   ],
-   "feature": null,
-   "title": null,
-   "chunks": [
-    [
-     "이제 실내온천탕은 매주",
-     0.223,
-     1.674
-    ],
-    [
-     "수요일 정비로 14시에",
-     1.674,
-     3.124
-    ],
-    [
-     "여니 참고해요.",
-     3.124,
-     5.02
-    ]
-   ]
-  },
-  {
-   "i": 7,
    "lens": "제안",
    "kind": "사진 무빙·도로 다가감 1.35배 · 인서트",
    "sec": 4.12,
@@ -1311,17 +1099,17 @@
   }
  ],
  "models_used": {},
- "duration_sec": 31.33,
- "video_bytes": 15394619,
+ "duration_sec": 26.8,
+ "video_bytes": 13810061,
  "gemini_usage": {
-  "calls": 11,
-  "prompt_text": 3806,
-  "prompt_image": 29700,
+  "calls": 6,
+  "prompt_text": 1658,
+  "prompt_image": 6600,
   "prompt_audio": 0,
-  "output_text": 2038,
+  "output_text": 209,
   "output_audio": 0,
-  "thoughts": 297,
-  "krw_est": 23,
+  "thoughts": 143,
+  "krw_est": 5,
   "note": "토큰 수는 실측, 단가는 추정 — 실제 청구는 Google 사용량 화면 기준"
  }
 }
