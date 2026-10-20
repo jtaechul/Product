@@ -1,6 +1,6 @@
 {
- "nonce": "2026-10-19-admin-sig-produce-BpNa",
- "stay": "세인트존스 호텔",
+ "nonce": "2026-10-20-admin-sig-preview-mSZ4",
+ "stay": "더앤리조트",
  "mode": "signature",
  "fake": false,
  "ok": true,
@@ -22,130 +22,891 @@
    "gemini-2.5-pro-preview-tts"
   ]
  },
- "stage": "produce",
+ "stage": "preview",
  "format": "story",
- "reused_plan": true,
  "hotels": [
   {
-   "name": "세인트존스 호텔",
-   "city": "강릉시",
+   "name": "더앤리조트",
+   "city": "양양",
    "room_names": [
-    "조식PKG★슈페리어 더블",
-    "슈페리어 트윈 씨티뷰 트윈룸 도시전망",
-    "스탠다드 더블룸 도시전망",
-    "디럭스 온돌(전망없음)",
-    "슈페리어 헐리우드 노오션뷰"
+    "디럭스 더블룸",
+    "디럭스더블",
+    "Deluxe Double",
+    "키즈 디럭스 더블",
+    "디럭스 더블"
    ],
    "verified_facilities": [
-    "개폐식 돔 인피니티풀",
-    "실내 온수풀",
-    "사우나"
+    "가든온(야외 온천 수영장)",
+    "스파온(실내 온천 사우나)",
+    "천연 온천수 객실"
    ],
-   "theme_hits": [
-    "스파"
-   ],
+   "theme_hits": [],
    "blog_30d": 1000,
-   "blog_total": 120103,
-   "min_price": 79000.0,
+   "min_price": 68000.0,
    "honest": "",
    "photo_counts": {
-    "official": 32,
-    "coupang": 7,
+    "official": 31,
+    "coupang": 6,
     "operator": 0,
-    "mismatch": 3,
+    "mismatch": 1,
     "near_dup": 0,
-    "exterior_cut": 1
+    "exterior_cut": 0
    },
    "official_facts": [
-    "오션타워 및 파인타워 인피니티풀 운영",
-    "도그 파크와 반려견 보딩센터 로젯펫살롱 구비",
-    "키즈룸과 펫 전용 객실 타입 보유",
-    "사우나와 피트니스 센터 등 편의시설 운영"
+    "본관동 1층에 위치한 천연 온천사우나 스파온",
+    "실내온천탕과 배럴사우나 및 노천온천탕 완비",
+    "수심 1m 온천 인피니티풀 야외 운영",
+    "수심 0.5m 온도 28~30도 야외 유아풀 완비",
+    "반려견 전용 펫츠룸과 펫파크 시설 보유"
    ],
-   "signature": "강릉 바다 앞 인피니티풀과 펫 시설을 갖춘 호텔",
-   "hook": "사계절 돔 열리는 온수 인피니티풀",
-   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=77802093&vendorItemId=70000284805820&itemId=20002208939755&traceid=V0-153-ccc895f1aaf4c20c&requestid=20261019223934629047634710&token=31850C%7CGM&pt=0&slot=1",
-   "official_site": "https://new.stjohns.co.kr/",
+   "signature": "천연 온천수 스파와 수영장을 갖춘 리조트",
+   "hook": "숲속에서 즐기는 온천 야외수영장",
+   "affiliate_url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000570065&vendorItemId=70000005963184&itemId=20000048992034&traceid=V0-153-63ea83c94ae12c30&requestid=20261020204257123018184388&token=31850C%7CGM&pt=0&slot=1",
+   "official_site": "http://thenresort.com",
    "rooms": [
     {
-     "name": "조식PKG★슈페리어 더블",
-     "price": 257800.0,
-     "image": "https://ads-partners.coupang.com/image1/PIdUOXJFDXv5-5v1PG2Gkv2a_iA2NzdxlrhlbaOsvUat7uoItp3qD8BgdabXTFRfDDLQcTg9Ur_Wsn-ekVyqb8Icc6uu8zAtX0jMTutQ3PighBdDE38qMVSH9ZpQ6XtOnUVjEjKDqUUjiBmP1jbM2JTAjS-Utus9K-9Z-oinj-QdgCdAu9XKHtsT4VOBFTH_jbbYrCLPbrrvJBi8pYSbjmOF8hsB6m5-m02qnd6QHc0S9mlXSfyQ-ahkqys2vEjxRN_wQefKP1NqLYPdYH3XkM2FJzKZwqMH9CuFm3eAdcNWTBYJBwM_jwpR6T7fXgOwZgMiG6QSfkWFNMOnQsbi9gWTi04fxc2a-iYZaxONrGdR28biq0O3pibPcy96ayVfDI66Z8rhi7xcgOnfYVkaaQzUaByqKPI6w3HOFE6r586-OWciFWavhYq-xZblGIgOWdSXpwMW_zeV8naV3WF0qH-JEi6hw6Q7KE7sHVGwraX15wqRF71Nl3fsdLE4fJMxeRmGGt2y7jJL9zKzB86NvfP2p3BIEHZbyrFp",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=77802093&vendorItemId=70000284805820&itemId=20002208939755&traceid=V0-153-ccc895f1aaf4c20c&requestid=20261019223934629047634710&token=31850C%7CGM&pt=0&slot=1"
+     "name": "디럭스 더블룸",
+     "price": 99000.0,
+     "image": "https://ads-partners.coupang.com/image1/TtE5PPCojtrketNtTrNEMLcJmAvIOlAdzRfNeGaQBM9QMlq7-Eg6QgejGOfqESWGE2g0gUr9VfJJJIjHD4uRbVWmUTPlafNbTTaWzoiTV58Y4oxC-N-1Z_6GwEeonFV_vSM1_aB35WLrq6eUNoAjrrmu7wyRI3AA4XMUXU7WmfUidy3Z88D4TTOEXYQY9Sa9JJEjtmczIrOWD7OPEpc99V-mYqTmaSbB2pG2fv9bGyr-HIgNl-dh1jwtURemy4dXyGHNuiu1aN19Xs6CtWNKuLKu5ud1KNw7o7M7l2SXc-CbAHodJfZeWMR9oAu1DSzl5cy5WDUyEPlMIXzNqlUM9ifQIZCKVzhogiCmS6b4ntnUU_JQ_cyap8Ix4q78X9FvuremvChPDtqqsxScjsHQMn1ShB1oDlf4-79uuR4HKOfY1YvIG6iTh2VcNFLwtvrJoOeARjLf0XnxDwrlfz5B2JZwXh52Qs603GcknY28qNocYi9ExrOK2gslc1x0eOWMdcL26X8ynuuOAyaOYxEog5MmW30rPlwvgBtG8sLRKqieudOM",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000570065&vendorItemId=70000005963184&itemId=20000048992034&traceid=V0-153-63ea83c94ae12c30&requestid=20261020204257123018184388&token=31850C%7CGM&pt=0&slot=1"
     },
     {
-     "name": "슈페리어 트윈 씨티뷰 트윈룸 도시전망",
-     "price": 186000.0,
-     "image": "https://ads-partners.coupang.com/image1/AeBP5qgEenNO3v5vAaPod3sXT31vakZ8-BBo7smEleARD5uvhP2fhJu4z34DUUGsHxop_hx8UyZOVS61AL9716bJnsGq0zXogB_7hcQqtRXjESGMI4DYXKvWkweWVUCuqOEv4wTk14irYF9I-05cozdPVR87Ff4Dw2aCADk0OvuzKZ8FL2sO3AktsnH3d_h0sI6LByUw-jMHXbaWMdd9lqoBWf_ERYQG_nhequknk_Zny4Ho5PcntIR7bxV5accDcx9pPKRBHFoy4Ee__rEQNJMtc3X1f308t8psUzaiFm5ZdUDL8M9eV4npVkjEoJqaPabnt54X0xnIIRvQpzXbkzxCpaKyVl5t0aAOxWyI4z4gLuE9JAyoPkJc6afekTlRR4iWnCLfnh6dcWGnTv1byM5ermWqVyku0Rcln2l0LyVecuZxRhHtzCbWueFDhPjfj-CU5uNBHCrqIICMF_4xiXj8lrcLsud-SS0_mG2ivwSMAdLFmUH3TfYe5MTFyOpi2QdWSJF9VtVRMJ8HCg93uUX8tI6PhB5HsXXWF-qEmU_mOA==",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000570032&vendorItemId=70000036109667&itemId=20000447325857&traceid=V0-153-72832fb8d58cb0b5&requestid=20261019223934629047634710&token=31850C%7CGM&pt=0&slot=2"
+     "name": "디럭스더블",
+     "price": 68000.0,
+     "image": "https://ads-partners.coupang.com/image1/s10bqX1UifAmSCBYs4r9tVwqqh2UhZ5JdnrzD6ZyqhoG0k65WnyA2qnWcafslgS1CXFPNTZ3572byCOnkOCbgoY3TqrT1y8_BdunWmEupuk47E_uNXHydsC21-LQPsbphPQ04wP4Z9ImZCbWMtpQyGPc1bY65DkOVCUaKKMQJcoziKKGzcIoXUO2Abajob32ojb-g2LeRVutH2vFIxh7WzcmSsDrFFGO2sCpARz6aSseX_s7dOQZsxmL3EWljn84iMRogGtgq8XuBmHI1V-NI1gUL6_PG0ghGCacSNd6qH88cBadEBT1VThgzWuyXJM25ueooMN21IVLVOs7iX91XHI3WcQ8drduLwU8-yNCnXGmf527KKSPIEsMa1EM9tVg83WNJhFR5VzkqSA0V3Z39g_Mwx2nFJZmci-_rDlwPxY2c4IGak-M1ywH9oOqFjeIg0FuILYUJce369VhGpjL-7tNFxcTMMVwU1uW76AvpIqSXj8HqIJOqxC4eQAeQR3inrlI-cmgKRio7wETLOVyLg88BPM7Ig9V-SzmL_emWsooQqU=",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000573998&vendorItemId=70000006038995&itemId=20000049988181&traceid=V0-153-46e570dc04fa6408&requestid=20261020204257123018184388&token=31850C%7CGM&pt=0&slot=2"
     },
     {
-     "name": "스탠다드 더블룸 도시전망",
-     "price": 79000.0,
-     "image": "https://ads-partners.coupang.com/image1/TR4UewSwcYXgZaWHTTryuZYcoCUXi_FU7_l3qxbvgJr8kiVNZrBFzIohsTd3EIOffuIGzmv4fFtNA8W-SPBNlf4085TR24Ktto76qvfJ2wdvB_FBbldYtg2luo8wxbP23iG8bju_4V81LWfKDn9tYqCBNi1AEbBAR-wwVK2qQXev02M3JbKuhmDy_cCNnC-T5AB4OOKAtVeCwoLUYR36WORjHssKqBxcXC6_jd3HojlU8KNrZxeI_Xi2Unh-xid-K6xaj2PDk-FC0Zb5XoDIio9EzM7fnSt4O_A6m4faUhA8of4jgHXM2AF964SA-ZgE6oJnEX8FPslAO4hxn_1PJWr6P2tFswHSAVBXgjp-waQt37IdhfHJF7rC2ZrzrTv1ZRR7LfEjWzvSDV-c_9TLvyVErmg7wAsTiH6HKleQfDFi1ZpalC_sVyF8dyPCuJKHpJOw1Lq0sNVm6tkHtdouFamtPj4hKk9Orsjdnoj6gdt0cnUMBJDzvRHlCDcqbiiaZ_Nzz9XvLI--rfwjaIpEGfJLuCl1HHfWUKdLRzFILiWh",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000580416&vendorItemId=70000006101193&itemId=20000051723828&traceid=V0-153-2386f966bf6b5f13&requestid=20261019223934629047634710&token=31850C%7CGM&pt=0&slot=4"
+     "name": "Deluxe Double",
+     "price": 87120.0,
+     "image": "https://ads-partners.coupang.com/image1/qG9dvD6KKOaxJ0mZqHLDOTF6A7AA683MdBc9dbW2KRY8l2P_9MSGLevv89OaWtqYbspXXNraQk4RZdce4qwYbYx2NLrhGBFoi5skB3EuZd2VtBmJ4pg4jbUSqWgb_VELuZL2E5hTTScjUizCtscmlVLxYodZdLK8A8D4LDDbikaoK1TzK7OhpivE4LpMQ7JndBh-Go5grd--fIHDruIspH2gOB_d1QovBnQ3lwQ9HQQe3NcMFPfwxzzy34pAThsCzI8bcNrdynS-xYFS7mvvtOmHC8E51Gsn6jKd0Mt8tRJcqzXTXOiOGVcrG6kgfwMu4TRoZjuUX59WE0GLBoRiSM2JDO_4_le7mQ0C5oSSOciM1eYi4lyVF9TPmcU827Z9XIL783dSuLEAUoveUix1SXmnUs6UqOUZIXPDheWY1kbuI81SAWVC7ioo0qxeXtQCCTW3TSYLMZC9u09W5dsxrRIlABmamNqF1KEX6AyCOE-XhSSdkgcJ1yrC9HZXwXQQbfjOznvpPbTK1CG0pqXmOHk7UG_M9XnIr2XM6DyOhWTOww==",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002664531&vendorItemId=70000073645888&itemId=20001037910418&traceid=V0-153-bbee6999f90c24f2&requestid=20261020204257123018184388&token=31850C%7CGM&pt=0&slot=3"
     },
     {
-     "name": "디럭스 온돌(전망없음)",
-     "price": 115500.0,
-     "image": "https://ads-partners.coupang.com/image1/mS_VBdNm9dIQlFKLmVZeE_Hdn2Vi84rcZDCWfrfKdWVXB5BNcubJ6gCfFS4x2o8tFJf3dSRYhKqGdSBrXa3hHKwvu673gpl6Y5dd4KALEjyeEBlbZKaa6x-Qi4VSzoa5HwEjOfVX2-vQWn-PbhHek4QrEVulhIiTsc435t9lTrHzrUcArurYsO_tJBWOT8JsyvqO6d-tjEkitqAnqJhM3GbZV2e_96cBZrxwb5e77Db0zwcd0jExqXPDiNy_3R0EOhSO_UCocbZL74n3-X_J6AWpi_5Of29eS0LQelojgEOqrw7mfD0UT9tDiXVsdDwWPtftjpfQlEvzX40wHRI5iMcenIgDazfT7CS-ELjtyrgc7JEAQWYVpB1TwWjkF_QGE7IwdIyWnSDYwMVs0_Rgz7oCpYGwx2dtEVy78MARNTvqIdod90E3Cq14hct9FE1fRfiFgpB7mOApIGtMtl13RKNtLJ2mG4bQU_hyw8zT9ZG9J7_PVfAq8TCAnJvznik-UfWh5eHDVrfcNkjLJhrOkwpp-mUKwbj25zF1RHJFlv6pnw==",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011264187&vendorItemId=70000227543392&itemId=20002141545227&traceid=V0-153-51ef22e8660d6191&requestid=20261019223934629047634710&token=31850C%7CGM&pt=0&slot=5"
+     "name": "키즈 디럭스 더블",
+     "price": 131196.0,
+     "image": "https://ads-partners.coupang.com/image1/GhQ3LGD3NxIuDBxMGmzwjk6rQ-Oopl7g_6Ax5shu40HVWlbcdyKn2yuhzV51b-9TWNnvSZd3IF9eCvzM0kqpbwy7Hk8UQ4tFkCoy9JqXhE0bFx1_K86dR5PeW66rdpnI1T0OqsdPKSla_84B2ayo4EIuPu4HG2uW_u5LK4PauTQpjJHWq7HcNwNMj4xkbXSyeYJ1yV5j2NRdMNnnyy_cOTmEga4Ckp93OvrLJICJ7S5unG-cyhq7EiVQe7H-OTZJ5_SpkWfi_w76W9nx9QsrNG4be0O42gNVpa-ju1HSVXj9uEUMOLZvDCiC07nwd3qmrz6t71ItJabI9TT_87lX5iCpunf0BwuqFkX5CYHdhPCJDifdDEixax4JbXP0Rh_ftxlr947fQZnoyJayjMI8-T5ImfkBeVCGIBhu_KHotpgR7WpcQTu2W2DgjRJj6uAmmGAe76s0__wznSIlborkJDEH9Xr9Fndc8iJGQn9TIFIOt04SJkkSub5v9UQ83eY2R2zkRIhjiSuoLyFyZ7mV_bme6pZb9Nk_AOALbD2wUVP7fCYM",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002232969&vendorItemId=70000286737767&itemId=20002213248807&traceid=V0-153-087078d97756913e&requestid=20261020204257123018184388&token=31850C%7CGM&pt=0&slot=4"
     },
     {
-     "name": "슈페리어 헐리우드 노오션뷰",
-     "price": 176000.0,
-     "image": "https://ads-partners.coupang.com/image1/9s5y87RNcQLwyhBK9hllNYptTe1-meuKxHKqQeB4Bd6qq3kRyTf6vGFGmhXCiXxkmkLu_WPJp537U6dX9-08K91jMzH1bbTJ-pXsjGCZ7NpLlF0tSIk94l9kmY9jyuUPXN5hoUtskeO5PrOmaO7Q7-imJBUavcZye429UssejM4YHFcUDl4S62W7cm55E1H-DXhDD4-YFTI2goAw8TqZinkYRBSI7PWAR_e0t2pwAFf1qqaS3sUVUGywBx05mIH8wUPE-pAYmNhyaBL0nEDnQdXp639LdAI_VUPLkcaubn3-Yxq5UfKCbtdkshK1k408j50wh1SZJCyldjjB64cYujDI0CIC2Ol_O6dmzIg_2sKnvCclTcFrNV_T4O_LaI7KjU6a2ke-tJrNHMcQoZwp56VykZuDEp7MSZp-EZl1hMrZWXLL-Q-pH8Kn9O2FYV0-yf6d_jBKHCd4Pnsza2gIQ4tQvE240LkK-DXizWcN1hdbwSNcsbSDJCc-k4PzG1MjnxuLo3_NZtQHV6bUAW5UAHvrHIaFyAUBEiwmmrNW17C4tf8=",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002654392&vendorItemId=70000073563567&itemId=20001037827590&traceid=V0-153-cadb9b3ab528a714&requestid=20261019223934629047634710&token=31850C%7CGM&pt=0&slot=7"
+     "name": "디럭스 더블",
+     "price": 99000.0,
+     "image": "https://ads-partners.coupang.com/image1/B4lrHJBdE-l248RnByIdVk2kob9GjkPpWVUNfDDsaIq-A2Lei3C94DK3AKDVHknxp9K7bqfRD4bErdp8joYUBAIJf0JoJvF6kzcCGCOCQSolaQLn0dcPc43Nz-IrWJVNYyAvLtxwyBwkbYudKaH_HIevp2-Sw3L49kFb68a55LnE0QIwT5zCqn-i8sepenHc_t7eJhD1CtWAmLAJURtKTfsI3YWETESqN-rxj-RssEPTChg2fIzs7rV48O7eMdOKeiLAro_YQobBfExmfiZv_3DFMTZwaG4m0R_VQ25zwAD27X3UJMZKgy3fm_QN1laQDQOhxP-FyHPyc80mD1dbCJZIV2oJ5wMaU_fMUwx8fInG-YO30IoODGsCttm5u2UkUML-x-khaGy0yq9KV1Jdx4FBOIqX-pxowHxcuXpbnsh3DADciR87VYHwIk_5VRhdgEErhwnsSbIdLljIlFRSLoHGmG8vCJ00Relx5SSF2Qojn3A5Ws416lmafxUPkhQ0m_t6-BZ1GD5EOXd4pBAeEgdrmpylLcRjJX-EZhEKcwWRaQ==",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000002831179&vendorItemId=70000084315834&itemId=20001048995287&traceid=V0-153-bcfaa13ae6d2d593&requestid=20261020204257123018184388&token=31850C%7CGM&pt=0&slot=5"
     },
     {
-     "name": "골져스 파셜오션 더블",
-     "price": 237600.0,
-     "image": "https://ads-partners.coupang.com/image1/Hrjoy5XzUq1mJ43JHthWZdJ3vmXCktHJdj4qrpHAhDXM3KfBsWtYFD6jkhqnrhqEVP_jsj6sTqo82QfSuHmB1il5zY0x1yfgusyga9P6KrLoNL1ifZoid_hMs57voBdY9LMClTyhX6b2Jxer8reWy9eW3zK43EsQ87HX-T9YAMZ0gjn4wAyWBGnqTqyCRCUFbofkSHXxy0AHyYl0WjOpkNq2NFnnUsmDBvVb6ez2W5aiFxJ4brgP4gVuMYomzJF-nI-7zoNMHJ6bOCeAnR8-9idR6nGn3_weekXUJa4lxXSGYd-kiVPy65Pehojq99mCOzSe6Hj23GnlJzAXVr4N5wM0cVZPBTgI1IszPo7TUPy4mWUuC5zcq3H26P6FpALzlW7JPKD_7SpSwK4BcCEFtHPqJPnnT7jfdtuk2gBAQlLZ5QVw86VNZuD44QiK0o9IYv6RGoN0yqD1dOOEORFMGtmvkX5Zaa6cbrSKXV_2kUChtm9-RsPSSnX3C_G3lOLflQ2Sfb1av6NpdBCHJDo3tDCGbJxsghDVk_o5MmdQ0jY6PGk5",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000027006&vendorItemId=70000003297508&itemId=20001018313492&traceid=V0-153-098bb76154ea72e1&requestid=20261019223934629047634710&token=31850C%7CGM&pt=0&slot=9"
+     "name": "디럭스 더블룸",
+     "price": 227730.0,
+     "image": "https://ads-partners.coupang.com/image1/_54fpDs5ziC_Crew_8sPFzoA97LJ30nbG9WNfppRDbNbWK0bOl5Py_vAIvuZlN9l2I29TWJE9cwFEkIXjH55eDMi_CXbIXZajkcqdXJuYfagsxIwEIQUetGY3ZApZMGyKX98udqlbENDv2dOQukXJoa9-EmWReGxSs7JGiErpABKdeMhkKwPFG-s5BqstGzWxpd0fmgRIZKNvvHy8sjRl1PWZe--QRAD00rowSO6odZdaEXCkEjSwfKOC4pMuND9-FRQpvVrd94KGGgo8VZXYhV5g4RfK8SJPJqVj1TYXNgez11CfH387CFa_xASkNIvDyrgur3jSVwuxM16SMF4DkzyJS3xtF-om7NAS-n-W1lSiXxzxdbxwgCpyro0mE3Wc0S9xwnH2s2wNu67wz5HS5AGGt3uvmTRDeeic2M5Gvp4l6J8EjsGbRTaXJ_gMeTMMQpMzV5VqODCylYQ4j88XrllurHd8HjHRhR8z9QbldwX76Yi70Je13wjqHvYs3bJ69PqFc-LBRgbnIOkXw_RWweeWGpjH4wjTrzxuJHhWwbt4BI=",
+     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000011404925&vendorItemId=70000292721668&itemId=20002221596375&traceid=V0-153-124787e4c234c084&requestid=20261020204257123018184388&token=31850C%7CGM&pt=0&slot=6"
+    }
+   ],
+   "classified_summary": [
+    {
+     "k": 0,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "천장이 뚫린 실내 스파 공간에 소나무 분재와 푸른 온수 풀이 보인다."
     },
     {
-     "name": "디럭스 더블룸 호수전망",
-     "price": 272250.0,
-     "image": "https://ads-partners.coupang.com/image1/c9ZLJNgdJGFr5r2rc71Ihdah58fss70Nnud5GQi9dXDUSZ76Zol4KMbsxphTfcK09uKgjXg7If9rRnE1YRoG2Q2i4_3pKLJuPTqnWW02eJmKYIWwJZvhq6jiT0uQI2nZUWHZ9HzVFh4JoSUJEQS_eWZgm61JiSvy-aCxlshpnlZc6-V45VfojUz57MX_xuiiH5PbZCdXxcKKnPmRQiivWlrQeDFTqQJEUlyOgbix64cecwLZHnXQ0_fph0KxR83t9xWiKwPU25K9NkM2kYwWjxr1b1Gb5UUnK3xDNvICSpTRDsRJ590PPkd05YtlCYHVXyKRUXWMu3uwxTcrM4AnZ3f3J9gfqY0AulAc3Qj0dKMkCMcgpZrcwjr69Wvu6YjG-pSkDbRa3e0jWqH872DbkymvkPrBS0-HgObBOzOW26kGwaB9QIIfFa_chWnENQOnI8B2JS1SbFNAkDg0MEFz-tVPkL5J-4XzNWVLV3bPBXQ45O7lxzm6nhg0ZS6rk-sffbrV5kms7xrjGIEQFTzidrJMqjZxY8f_",
-     "url": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=77787097&vendorItemId=3613064881&itemId=616866787&traceid=V0-153-466d5d55cc659bbf&requestid=20261019223934629047634710&token=31850C%7CGM&pt=0&slot=10"
+     "k": 1,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "천장이 개방된 스파 공간의 푸른 온수탕 가운데 소나무 조경이 서 있다."
+    },
+    {
+     "k": 2,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "대나무 벽면과 소나무 분재로 꾸며진 개방형 천장의 스파 풀에서 물이 뿜어"
+    },
+    {
+     "k": 3,
+     "src": "official",
+     "cat": "water",
+     "q": 7,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "실내 탕 너머 대형 유리창을 통해 소나무가 심긴 외부 스파 공간이 보인다"
+    },
+    {
+     "k": 4,
+     "src": "official",
+     "cat": "special",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "데크 테라스에 설치된 글램핑 텐트 앞에 원형 월풀 욕조가 자리 잡고 있다"
+    },
+    {
+     "k": 5,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": true,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "노을 진 하늘 아래 은은한 조명이 켜진 넓은 야외 수영장이 펼쳐져 있다."
+    },
+    {
+     "k": 6,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "대형 전광판이 있는 푸른 야외 수영장 뒤로 울창한 숲과 리조트 건물이 보"
+    },
+    {
+     "k": 7,
+     "src": "official",
+     "cat": "water",
+     "q": 9,
+     "people": true,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "푸른 곡선 패턴이 돋보이는 야외 수영장 너머로 리조트 건물 단지가 한눈에"
+    },
+    {
+     "k": 8,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": true,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "소나무 가지 아래로 야외 수영장에서 물놀이를 즐기는 사람들이 보인다."
+    },
+    {
+     "k": 9,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "숲으로 둘러싸인 잔디밭 텐트존 옆 야외 수영장의 맑은 물이 반짝인다."
+    },
+    {
+     "k": 10,
+     "src": "official",
+     "cat": "water",
+     "q": 7,
+     "people": true,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "어스름한 저녁 유리 펜스 안 원형 탕 중앙에서 불꽃 기둥이 솟아오른다."
+    },
+    {
+     "k": 11,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "붉은색 온수탕 너머로 잔디밭 텐트와 푸른 산림 풍경이 시원하게 펼쳐진다."
+    },
+    {
+     "k": 12,
+     "src": "official",
+     "cat": "water",
+     "q": 9,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "청명한 하늘 아래 작은 목조 사우나 캐빈과 푸른 야외 스파 탕들이 어우러"
+    },
+    {
+     "k": 13,
+     "src": "official",
+     "cat": "special",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "배롱나무와 소나무 정원 한가운데 설치된 원형 분수에서 물줄기가 솟아오른다"
+    },
+    {
+     "k": 14,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "푸른 나무들 사이에 자리한 둥근 월풀 스파 욕조에서 거품 물방울이 솟아오"
+    },
+    {
+     "k": 15,
+     "src": "official",
+     "cat": "room",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "반려견 계단과 방석이 놓인 아늑한 더블베드 침실 내부가 보인다."
+    },
+    {
+     "k": 16,
+     "src": "official",
+     "cat": "room",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "침대 옆에 반려견 전용 계단과 원형 테이블이 놓인 깔끔한 객실 모습이다."
+    },
+    {
+     "k": 17,
+     "src": "official",
+     "cat": "room",
+     "q": 7,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "벽걸이 TV 아래 반려견 하우스와 쿠션, 식기 세트가 나란히 놓여 있다."
+    },
+    {
+     "k": 18,
+     "src": "official",
+     "cat": "special",
+     "q": 7,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "잔디마당에 반려견 어질리티 장애물과 소형 풀장이 마련되어 있다."
+    },
+    {
+     "k": 19,
+     "src": "official",
+     "cat": "special",
+     "q": 7,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "숲으로 이어지는 산책로 입구에 펫파크 안내 간판이 세워져 있다."
+    },
+    {
+     "k": 20,
+     "src": "official",
+     "cat": "skip",
+     "q": 6,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "편백나무 찜기 요리와 반려견 전용 음료 병이 테이블에 놓여 있다."
+    },
+    {
+     "k": 21,
+     "src": "official",
+     "cat": "skip",
+     "q": 6,
+     "people": true,
+     "mismatch": "리조트 내부 시설이 아닌 일반 스톡 사진",
+     "view": "outdoor",
+     "desc": "호숫가 산책로를 걷는 반려견과 보호자의 다리 모습이다."
+    },
+    {
+     "k": 22,
+     "src": "official",
+     "cat": "water",
+     "q": 9,
+     "people": true,
+     "mismatch": "",
+     "view": "exterior",
+     "desc": "산림으로 둘러싸인 리조트의 가든온 야외 수영장 단지가 노을빛 아래 환하게"
+    },
+    {
+     "k": 23,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": true,
+     "mismatch": "",
+     "view": "exterior",
+     "desc": "숲을 배경으로 글램핑 텐트와 야외 수영장이 펼쳐진 리조트 전경이 내려다보"
+    },
+    {
+     "k": 24,
+     "src": "official",
+     "cat": "special",
+     "q": 8,
+     "people": true,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "야간 조명이 켜진 푸드포레스트 야외 테라스 테이블에 손님들이 모여 있다."
+    },
+    {
+     "k": 25,
+     "src": "official",
+     "cat": "water",
+     "q": 9,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "숲과 배롱나무 정원 앞 둥근 야외 월풀 스파에서 힘차게 거품이 일어난다."
+    },
+    {
+     "k": 26,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "은은한 조명이 들어오는 야간 야외 온수풀가에 파라솔과 선베드가 줄지어 서"
+    },
+    {
+     "k": 27,
+     "src": "official",
+     "cat": "special",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "붉은 꽃나무와 조경수 사이 중앙 분수대에서 조명과 함께 물줄기가 피어오른"
+    },
+    {
+     "k": 28,
+     "src": "official",
+     "cat": "special",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "리조트 건물 앞 야외 공간에 나란히 자리한 삼각 지붕 형태의 핀란드식 사"
+    },
+    {
+     "k": 29,
+     "src": "official",
+     "cat": "water",
+     "q": 8,
+     "people": true,
+     "mismatch": "",
+     "view": "outdoor",
+     "desc": "노을 진 산기슭 아래 파란 조명이 켜진 긴 야외 수영장과 선베드 라인이 "
+    },
+    {
+     "k": 30,
+     "src": "official",
+     "cat": "skip",
+     "q": 4,
+     "people": false,
+     "mismatch": "",
+     "view": "interior",
+     "desc": "가을 온천 프로모션 텍스트와 이벤트 쿠폰이 포함된 홍보 포스터이다."
+    },
+    {
+     "k": 31,
+     "src": "coupang",
+     "cat": "special",
+     "q": 8,
+     "people": false,
+     "mismatch": "",
+     "view": "exterior",
+     "desc": "어두운 밤하늘 아래 조명이 환하게 밝혀진 리조트 로비 건물과 간판 조형물"
+    },
+    {
+     "k": 32,
+     "src": "coupang",
+     "cat": "special",
+     "q": 7,
+     "people": false,
+     "mismatch": "",
+     "view": "exterior",
+     "desc": "울창한 산림 속에 둘러싸인 리조트 단지의 주간 조감도 모습이다."
+    },
+    {
+     "k": 33,
+     "src": "coupang",
+     "cat": "special",
+     "q": 7,
+     "people": false,
+     "mismatch": "",
+     "view": "exterior",
+     "desc": "밤하늘 아래 리조트 본관 건물과 원형 잔디 로터리의 입간판 조명이 빛난다"
+    },
+    {
+     "k": 34,
+     "src": "coupang",
+     "cat": "water",
+     "q": 7,
+     "people": true,
+     "mismatch": "",
+     "view": "exterior",
+     "desc": "높은 곳에서 내려다본 울창한 숲속 야외 온천 수영장 단지의 화사한 낮 풍"
+    },
+    {
+     "k": 35,
+     "src": "coupang",
+     "cat": "water",
+     "q": 7,
+     "people": true,
+     "mismatch": "",
+     "view": "exterior",
+     "desc": "푸른 산자락에 둘러싸인 가든온 수영장 단지와 스파 구역의 전경이 시원하게"
+    },
+    {
+     "k": 36,
+     "src": "coupang",
+     "cat": "special",
+     "q": 7,
+     "people": false,
+     "mismatch": "",
+     "view": "exterior",
+     "desc": "밤하늘 별빛 아래 조명이 켜진 리조트 메인 건물과 입구 조형물이 놓여 있"
     }
    ],
    "notice_facts": [
-    "파인 인피니티풀 전연령 운영시간은 08:00~21:00이며 발권마감은 20:00입니다",
-    "파인 인피니티풀 브레이크 타임은 13:00~14:00이며 입수가 제한되나 수영장 외 이용은 가능합니다",
-    "파인 인피니티풀 단일권 투숙객 선구매 요금은 대인 30,000원, 소인 15,000원입니다",
-    "파인 인피니티풀 단일권 투숙객 현장구매 요금은 대인 35,000원, 소인 20,000원입니다",
-    "파인 인피니티풀 단일권 비투숙객 요금은 대인 40,000원, 소인 25,000원입니다",
-    "파인 인피니티풀 종일 추가 요금은 균일가 10,000원입니다",
-    "파인 인피니티풀 이용 고객은 사우나 1회 입장 시 대인 9,000원, 소인 5,000원으로 할인 적용됩니다",
-    "파인 인피니티풀 단일권은 1회 이용 가능하며 재입장은 불가합니다",
-    "세인트존스호텔 파인 인피니티풀은 파인타워 6층에 위치하며 리셉션은 4층입니다",
-    "세인트존스호텔 파인 인피니티풀의 제원은 길이 38m, 수심 1.1m입니다",
-    "세인트존스호텔 파인 인피니티풀의 문의 전화번호는 033-660-9522, 9524입니다",
-    "세인트존스호텔 파인 인피니티풀은 오토 천정돔 구축으로 사계절 내내 따뜻하게 수영을 즐길 수 있습니다",
-    "파인 인피니티풀 브레이크 타임은 13:00~14:00이며 입수 제한되고 수영장 외 이용은 가능합니다",
-    "오션 피트니스 센터는 오션타워 2층에 위치합니다",
-    "오션 피트니스 센터의 운영시간은 06:00부터 22:00까지입니다",
-    "오션 피트니스 센터는 안전사고 예방을 위해 18세 미만의 입장을 제한하며 보호자 동반 시에도 허용하지 않습니다",
-    "오션 피트니스 센터는 반려동물 및 유모차 출입을 제한합니다",
-    "오션 피트니스 센터는 실내 전용 운동화를 착용해야 하며 외부 운동화, 크록스, 샌들, 슬리퍼, 구두, 맨발은 출입이 제한됩니다",
-    "오션 피트니스 센터는 상의 탈의 및 개인 음악 송출을 제한합니다",
-    "오션 피트니스 센터 단체 운동팀은 외부 머슬비치 웨이트존을 이용해야 합니다",
-    "오션 피트니스 센터 문의 번호는 033-660-9522, 9524입니다",
-    "오션 피트니스 센터에 독일 제품 스텝밀이 신규 배치되었습니다"
+    "더나이트 포차는 4인 이상 가족 투숙 시 1만 원 이용권을 제공합니다",
+    "더나이트 포차 이용권은 5만 원 이상 구매 시 사용 가능합니다",
+    "더나이트 포차 행사 기간은 2026년 10월 31일까지입니다"
    ],
    "closed_facilities": [],
+   "closure_notes": [],
    "panels": 0,
-   "notices_read": 5
+   "notices_read": 1
   }
  ],
- "lens_check": {
-  "ok": true,
-  "note": "미리보기 대본 재사용"
+ "photo_sources": [
+  {
+   "hotel": "더앤리조트",
+   "official_site": "http://thenresort.com",
+   "crawl": {
+    "url": "http://thenresort.com",
+    "resolved_by": "네이버 지역검색 '더앤리조트' link",
+    "reason": "",
+    "pages": [
+     "http://thenresort.com/kor/spa/spa01.asp",
+     "http://thenresort.com/kor/petspark/petspark03.asp",
+     "http://thenresort.com/kor/petspark/petspark09.asp",
+     "http://thenresort.com/kor/spa/spa0201.asp",
+     "http://thenresort.com/kor/spa/spa0202.asp",
+     "http://thenresort.com/kor/petspark/petspark01.asp",
+     "http://thenresort.com/kor/petspark/petspark02.asp",
+     "http://thenresort.com/kor/petspark/petspark04.asp",
+     "http://thenresort.com/kor/petspark/petspark05.asp",
+     "http://thenresort.com/kor/spa/spa02.asp",
+     "http://thenresort.com/kor/spa/spa0203.asp",
+     "http://thenresort.com/boad/bd_photo/3/egoread.asp?bd=3&seq=331",
+     "http://thenresort.com/kor/room/room09.asp",
+     "http://thenresort.com"
+    ],
+    "tried": 47,
+    "photos": 32
+   },
+   "shots": [
+    {
+     "n": 11,
+     "slot": "water",
+     "source": "official",
+     "url": "http://thenresort.com/kor/images/spa/0101.jpg",
+     "page": "http://thenresort.com/kor/spa/spa01.asp",
+     "description": "천장이 뚫린 실내 스파 공간에 소나무 분재와 푸른 온수 풀이 보인다."
+    },
+    {
+     "n": 12,
+     "slot": "water",
+     "source": "official",
+     "url": "http://thenresort.com/kor/images/spa/0104.jpg",
+     "page": "http://thenresort.com/kor/spa/spa01.asp",
+     "description": "실내 탕 너머 대형 유리창을 통해 소나무가 심긴 외부 스파 공간이 보인다."
+    },
+    {
+     "n": 13,
+     "slot": "water",
+     "source": "official",
+     "url": "http://thenresort.com/kor/images/spa/020203.jpg",
+     "page": "http://thenresort.com/kor/spa/spa0202.asp",
+     "description": "청명한 하늘 아래 작은 목조 사우나 캐빈과 푸른 야외 스파 탕들이 어우러져 있다."
+    },
+    {
+     "n": 14,
+     "slot": "room",
+     "source": "official",
+     "url": "http://thenresort.com/kor/images/room/1001.jpg",
+     "page": "http://thenresort.com/kor/petspark/petspark01.asp",
+     "description": "반려견 계단과 방석이 놓인 아늑한 더블베드 침실 내부가 보인다."
+    },
+    {
+     "n": 15,
+     "slot": "room",
+     "source": "official",
+     "url": "http://thenresort.com/kor/images/room/1002.jpg",
+     "page": "http://thenresort.com/kor/petspark/petspark01.asp",
+     "description": "침대 옆에 반려견 전용 계단과 원형 테이블이 놓인 깔끔한 객실 모습이다."
+    },
+    {
+     "n": 16,
+     "slot": "room",
+     "source": "official",
+     "url": "http://thenresort.com/kor/images/room/1003.jpg",
+     "page": "http://thenresort.com/kor/petspark/petspark01.asp",
+     "description": "벽걸이 TV 아래 반려견 하우스와 쿠션, 식기 세트가 나란히 놓여 있다."
+    },
+    {
+     "n": 17,
+     "slot": "special",
+     "source": "official",
+     "url": "http://thenresort.com/kor/images/spa/0209.jpg",
+     "page": "http://thenresort.com/kor/spa/spa02.asp",
+     "description": "리조트 건물 앞 야외 공간에 나란히 자리한 삼각 지붕 형태의 핀란드식 사우나 캐빈이 보인다."
+    },
+    {
+     "n": 18,
+     "slot": "special",
+     "source": "official",
+     "url": "http://thenresort.com/kor/images/petspark/3001.jpg",
+     "page": "http://thenresort.com/kor/petspark/petspark03.asp",
+     "description": "데크 테라스에 설치된 글램핑 텐트 앞에 원형 월풀 욕조가 자리 잡고 있다."
+    },
+    {
+     "n": 19,
+     "slot": "special",
+     "source": "official",
+     "url": "http://thenresort.com/kor/images/spa/020204.jpg",
+     "page": "http://thenresort.com/kor/spa/spa0202.asp",
+     "description": "배롱나무와 소나무 정원 한가운데 설치된 원형 분수에서 물줄기가 솟아오른다."
+    },
+    {
+     "n": 20,
+     "slot": "special",
+     "source": "official",
+     "url": "http://thenresort.com/kor/images/petspark/2001.jpg",
+     "page": "http://thenresort.com/kor/petspark/petspark02.asp",
+     "description": "잔디마당에 반려견 어질리티 장애물과 소형 풀장이 마련되어 있다."
+    }
+   ]
+  }
+ ],
+ "sig_pool": {
+  "usable": 19,
+  "exterior": 1,
+  "facts": 12,
+  "official": 31,
+  "coupang": 6
  },
+ "sig_groups": [
+  {
+   "fact": 9,
+   "photos": [
+    0,
+    1,
+    2,
+    3,
+    6,
+    9,
+    12,
+    25
+   ]
+  },
+  {
+   "fact": 1,
+   "photos": [
+    0,
+    1,
+    2,
+    3,
+    12,
+    25,
+    28
+   ]
+  },
+  {
+   "fact": 7,
+   "photos": [
+    0,
+    1,
+    2,
+    3,
+    12,
+    25,
+    28
+   ]
+  },
+  {
+   "fact": 5,
+   "photos": [
+    15,
+    16,
+    17,
+    18,
+    19
+   ]
+  },
+  {
+   "fact": 2,
+   "photos": [
+    12,
+    28
+   ]
+  },
+  {
+   "fact": 6,
+   "photos": [
+    6,
+    9
+   ]
+  }
+ ],
+ "signature_tries": [
+  {
+   "signature": "야외 배럴사우나 노천온천",
+   "errs": []
+  }
+ ],
+ "signature_checks": [
+  {
+   "k": 12,
+   "subject": true,
+   "share": 0.6,
+   "ok": true,
+   "evidence": "야외 스파/노천온천 수영장과 그 옆에 위치한 목조 사우나 캐빈이 전경에 명확히 담겨 있다."
+  },
+  {
+   "k": 28,
+   "subject": true,
+   "share": 0.55,
+   "ok": true,
+   "evidence": "야외 공간에 설치된 목조 캐빈 형태의 사우나 시설 두 동이 화면 중앙과 전면에 크게 자리 잡고 있음"
+  },
+  {
+   "k": 0,
+   "subject": false,
+   "share": 0.0,
+   "ok": false,
+   "evidence": "사진에는 야외 수영장 및 자쿠지 공간만 보이며 목조 배럴사우나 캐빈은 전혀 보이지 않음"
+  },
+  {
+   "k": 1,
+   "subject": false,
+   "share": 0.0,
+   "ok": false,
+   "evidence": "사진에는 천장이 개방된 노천탕과 조경수가 보이지만, 시그니처인 독채형 목조 배럴사우나 캐빈은 전혀 보이지 않는다."
+  },
+  {
+   "k": 4,
+   "subject": false,
+   "share": 0.0,
+   "ok": false,
+   "evidence": "사진에는 글램핑 텐트와 야외 월풀 스파 욕조가 있을 뿐 독채형 목조 배럴사우나 캐빈은 전혀 보이지 않는다."
+  },
+  {
+   "k": 6,
+   "subject": false,
+   "share": 0.0,
+   "ok": false,
+   "evidence": "사진은 대형 야외 수영장과 무대 스크린이 중심이며, 목조 배럴사우나 캐빈은 전혀 보이지 않는다."
+  }
+ ],
+ "deep_facts": {
+  "facts": [
+   "본관동 1층 스파온 온천사우나 내에 위치함",
+   "일~목 08시부터 20시까지 운영함",
+   "금·토 08시부터 21시까지 운영함",
+   "매주 수요일은 시설 정비로 14시 오픈함",
+   "노천온천탕 및 파우더룸, 락카룸과 함께 구성됨"
+  ]
+ },
+ "material": {
+  "photos": 15,
+  "places": [
+   "객실",
+   "물놀이",
+   "사우나",
+   "수영장",
+   "온수탕·스파",
+   "외관",
+   "정원·산책로"
+  ],
+  "inserts": 0,
+  "panels": 0,
+  "notices_read": 1,
+  "notice_facts": 3,
+  "closures": [],
+  "rejected": [
+   0,
+   1,
+   4,
+   6
+  ]
+ },
+ "story_shots": [
+  {
+   "id": "S1",
+   "k": 12,
+   "kind": "장점·넓게",
+   "desc": "청명한 하늘 아래 작은 목조 사우나 캐빈과 푸른 야외 스파 탕들이 어우러져 있다.",
+   "zoom": null,
+   "place": "사우나",
+   "grade": "full"
+  },
+  {
+   "id": "S2",
+   "k": 28,
+   "kind": "장점·넓게",
+   "desc": "리조트 건물 앞 야외 공간에 나란히 자리한 삼각 지붕 형태의 핀란드식 사우나 캐빈이 보인다.",
+   "zoom": null,
+   "place": "사우나",
+   "grade": "full"
+  },
+  {
+   "id": "S3",
+   "k": 11,
+   "kind": "연결",
+   "desc": "붉은색 온수탕 너머로 잔디밭 텐트와 푸른 산림 풍경이 시원하게 펼쳐진다.",
+   "zoom": null,
+   "place": "온수탕·스파",
+   "grade": "full"
+  },
+  {
+   "id": "S4",
+   "k": 9,
+   "kind": "연결",
+   "desc": "숲으로 둘러싸인 잔디밭 텐트존 옆 야외 수영장의 맑은 물이 반짝인다.",
+   "zoom": null,
+   "place": "수영장",
+   "grade": "full"
+  },
+  {
+   "id": "S5",
+   "k": 13,
+   "kind": "연결",
+   "desc": "배롱나무와 소나무 정원 한가운데 설치된 원형 분수에서 물줄기가 솟아오른다.",
+   "zoom": null,
+   "place": "정원·산책로",
+   "grade": "full"
+  },
+  {
+   "id": "S6",
+   "k": 15,
+   "kind": "연결",
+   "desc": "반려견 계단과 방석이 놓인 아늑한 더블베드 침실 내부가 보인다.",
+   "zoom": null,
+   "place": "객실",
+   "grade": "full"
+  },
+  {
+   "id": "S7",
+   "k": 26,
+   "kind": "연결",
+   "desc": "은은한 조명이 들어오는 야간 야외 온수풀가에 파라솔과 선베드가 줄지어 서 있다.",
+   "zoom": null,
+   "place": "물놀이",
+   "grade": "full"
+  },
+  {
+   "id": "S8",
+   "k": 25,
+   "kind": "연결",
+   "desc": "숲과 배롱나무 정원 앞 둥근 야외 월풀 스파에서 힘차게 거품이 일어난다.",
+   "zoom": null,
+   "place": "온수탕·스파",
+   "grade": "full"
+  },
+  {
+   "id": "S9",
+   "k": 18,
+   "kind": "연결",
+   "desc": "잔디마당에 반려견 어질리티 장애물과 소형 풀장이 마련되어 있다.",
+   "zoom": null,
+   "place": "수영장",
+   "grade": "full"
+  },
+  {
+   "id": "S10",
+   "k": 19,
+   "kind": "연결",
+   "desc": "숲으로 이어지는 산책로 입구에 펫파크 안내 간판이 세워져 있다.",
+   "zoom": null,
+   "place": "정원·산책로",
+   "grade": "full"
+  },
+  {
+   "id": "INS1",
+   "k": -1,
+   "kind": "인서트",
+   "desc": "인서트(숙소 아님 · 집·차 안) worry: a half-packed suitcase open on a bed in an ordinary apartment bedroom,",
+   "zoom": null,
+   "place": "인서트",
+   "grade": "full"
+  },
+  {
+   "id": "INS3",
+   "k": -3,
+   "kind": "인서트",
+   "desc": "인서트(숙소 아님 · 집·차 안) road: view through a car windshield on a coastal road, light rain, wipers mi",
+   "zoom": null,
+   "place": "인서트",
+   "grade": "full"
+  }
+ ],
+ "story_tries": [
+  {
+   "errs": [
+    "문장 2 정체가 6초 안에 안 나옴 — 훅·정체 합 40자 안",
+    "전체 나레이션 206자 — 80~170자",
+    "문장 3 분위기 말 '푸른'",
+    "문장 4 분위기 말 '푸른'",
+    "문장 5 '실내 온수풀만 있는 곳들과 달리 숲 공기 마시며 땀을 뺄 수 있죠.' 에 장점 낱말이 없음 — 모든 문장이 장점(야외 배럴사우나 노천온천)을 다른 관점으로 말한다",
+    "문장 5 '실내 온수풀만 있는 곳들과 달리 숲 공기 마시며 땀을 뺄 수 있죠.' 근거가 없음 — 사실 2·그 컷 사진 설명의 낱말로",
+    "같은 원본 사진을 너무 자주 씀 {12: 5, 28: 5} — 사진당 3컷까지",
+    "흐름: 문장 3부터 앞 문장을 받는 말로 시작한 문장 2/6 — 절반 이상('들어서면·짐 풀면·저녁엔·그래서·이제' 등)",
+    "caption '쌀쌀해지는 11월 온천 힐링 여행을 ' 분위기 말 '힐링' — 사실로"
+   ],
+   "beats": 8
+  },
+  {
+   "errs": [
+    "전체 나레이션 173자 — 80~170자",
+    "같은 원본 사진을 너무 자주 씀 {12: 4} — 사진당 3컷까지"
+   ],
+   "beats": 7
+  },
+  {
+   "errs": [
+    "문장 2 분위기 말 '푸른'",
+    "같은 원본 사진을 너무 자주 씀 {12: 5} — 사진당 3컷까지"
+   ],
+   "beats": 7
+  }
+ ],
+ "text_title_type": "걱정형",
+ "lens_check": {
+  "ok": false,
+  "errs": [
+   "전체 나레이션 173자 — 80~170자",
+   "같은 원본 사진을 너무 자주 씀 {12: 4} — 사진당 3컷까지"
+  ],
+  "after_fix": [
+   "전체 나레이션 173자 — 80~170자",
+   "같은 원본 사진을 너무 자주 씀 {12: 4} — 사진당 3컷까지"
+  ]
+ },
+ "story_fallback": [
+  "전체 나레이션 173자 — 80~170자",
+  "같은 원본 사진을 너무 자주 씀 {12: 4} — 사진당 3컷까지"
+ ],
  "route_changes": [
-  "문장 6 둘째 컷 +S3(객실)",
-  "문장 7 둘째 컷 +S4(바다)"
+  "문장 6 컷 S1 → S10(같은 사진 2컷 초과)",
+  "문장 2 컷 S1 → S7(같은 사진 2컷 초과)",
+  "문장 5 컷 S2 → S7(같은 사진 2컷 초과)"
  ],
  "visual_plan": [
   {
@@ -158,9 +919,9 @@
    "shot": "INS1",
    "shots": [
     "INS1",
-    "S2"
+    "S1"
    ],
-   "tail": "S2",
+   "tail": "S1",
    "insert": "worry"
   },
   {
@@ -170,10 +931,10 @@
    "actor": null,
    "action_en": null,
    "auto": false,
-   "shot": "S1",
+   "shot": "S2",
    "shots": [
-    "S1",
-    "S6"
+    "S2",
+    "S7"
    ],
    "tail": null
   },
@@ -181,163 +942,846 @@
    "i": 3,
    "lens": "디테일",
    "type": "A",
-   "actor": "dog",
-   "action_en": "trots to the small pet stairs beside the bed, climbs them step by step and settles on the bed, looking around",
+   "actor": "back",
+   "action_en": "A person in a bathrobe sits quietly inside the wooden sauna cabin looking out",
    "auto": false,
-   "shot": "S1",
+   "shot": "S2",
    "shots": [
-    "S1",
-    "S7"
-   ],
-   "tail": "S7"
-  },
-  {
-   "i": 4,
-   "lens": "행동",
-   "type": "A",
-   "actor": "hand",
-   "action_en": "lifts the folded pet towel from the shelf, holds it for a moment and sets it back down neatly",
-   "auto": false,
-   "shot": "S5",
-   "shots": [
-    "S5",
+    "S2",
     "S3"
    ],
    "tail": "S3"
   },
   {
-   "i": 5,
-   "lens": "상황",
+   "i": 4,
+   "lens": "행동",
    "type": "A",
-   "actor": "couple",
-   "action_en": "walk slowly side by side toward the balcony door and stop in front of it, looking out at the sea; the man rests one hand on the woman's shoulder; the dog follows and sits at their feet",
+   "actor": "back",
+   "action_en": "A person slowly steps into the warm outdoor mineral bath water",
    "auto": false,
-   "shot": "S2",
+   "shot": "S1",
    "shots": [
-    "S2"
+    "S1",
+    "S8"
    ],
-   "tail": null
+   "tail": "S8"
   },
   {
-   "i": 6,
-   "lens": "연결",
-   "type": "B",
-   "actor": "env",
-   "action_en": "sunlight glitters on the pool surface and the water ripples gently; the sea in the distance has small waves",
+   "i": 5,
+   "lens": "희소성",
+   "type": "C",
+   "actor": null,
+   "action_en": null,
    "auto": false,
-   "shot": "S4",
+   "shot": "S7",
    "shots": [
+    "S7",
     "S4"
    ],
    "tail": null
   },
   {
-   "i": 7,
+   "i": 6,
    "lens": "조건",
    "type": "C",
    "actor": null,
    "action_en": null,
    "auto": false,
-   "shot": "S6",
+   "shot": "S10",
    "shots": [
-    "S6"
+    "S10",
+    "S5"
    ],
    "tail": null
   },
   {
-   "i": 8,
+   "i": 7,
    "lens": "제안",
    "type": "C",
    "actor": null,
    "action_en": null,
    "auto": false,
-   "shot": "INS2",
+   "shot": "INS3",
    "shots": [
-    "INS2"
+    "INS3"
    ],
    "tail": null,
-   "insert": "depart"
+   "insert": "road"
   }
  ],
- "visual_warnings": [],
- "ai_cuts": 5,
- "cut_count": 12,
+ "visual_warnings": [
+  "문장 5·6 사진 무빙이 연속(예산 6컷)"
+ ],
+ "ai_cuts": 3,
+ "cut_count": 13,
  "places": [
-  "객실",
-  "바다",
-  "욕실"
+  "물놀이",
+  "사우나",
+  "수영장",
+  "온수탕·스파",
+  "정원·산책로"
  ],
- "scene_drops": [
-  "문장 6 컷 S3(사진 17 원본 이미 씀 · 대신 쓸 사진·패널 없음 → 뺌)",
-  "문장 7 컷 S4(사진 25 원본 이미 씀 · 대신 쓸 사진·패널 없음 → 뺌)"
- ],
+ "features": {
+  "items": [
+   {
+    "text": "야외 배럴사우나",
+    "beats": [
+     2
+    ],
+    "fact": 2
+   },
+   {
+    "text": "핀란드식 사우나",
+    "beats": [
+     3
+    ],
+    "fact": 0
+   },
+   {
+    "text": "노천온천탕",
+    "beats": [
+     4
+    ],
+    "fact": 2
+   }
+  ],
+  "source": "모델",
+  "tries": [
+   {
+    "beat": 5,
+    "text": "독채형 사우나",
+    "errs": [
+     "3개 초과"
+    ]
+   }
+  ]
+ },
+ "scenes_planned": 11,
  "storyboard": {
-  "reused": true,
-  "scenes": 22,
-  "panels_ok": 10,
-  "krw": 0
+  "sheets": [
+   {
+    "n": 1,
+    "k": 12,
+    "ok": true,
+    "px": [
+     1536,
+     2752
+    ],
+    "panel_px": [
+     746,
+     746,
+     746,
+     746
+    ],
+    "scenes": [
+     1,
+     6,
+     12,
+     13
+    ],
+    "passed": 3,
+    "krw": 197,
+    "model": "gemini-3.1-flash-image",
+    "angles": [
+     "from the same camera position ",
+     "the same camera position as th",
+     "a few steps further back, wide",
+     "low angle close to the ground"
+    ]
+   },
+   {
+    "n": 2,
+    "k": 28,
+    "ok": true,
+    "px": [
+     1536,
+     2752
+    ],
+    "panel_px": [
+     763,
+     764,
+     763,
+     764
+    ],
+    "scenes": [
+     2,
+     4,
+     14,
+     15
+    ],
+    "passed": 2,
+    "krw": 98,
+    "model": "gemini-3.1-flash-image",
+    "angles": [
+     "from the same camera position ",
+     "the same camera position as th",
+     "a few steps further back, wide",
+     "low angle close to the ground"
+    ]
+   },
+   {
+    "n": 3,
+    "k": 26,
+    "ok": true,
+    "px": [
+     1536,
+     2752
+    ],
+    "panel_px": [
+     763,
+     764,
+     763,
+     764
+    ],
+    "scenes": [
+     3,
+     8,
+     16,
+     17
+    ],
+    "passed": 3,
+    "krw": 98,
+    "model": "gemini-3.1-flash-image",
+    "angles": [
+     "from the pool edge at water le",
+     "from the far end looking back",
+     "from above the entry steps",
+     "close-up of the water with the"
+    ]
+   },
+   {
+    "n": 4,
+    "k": 19,
+    "ok": true,
+    "px": [
+     1536,
+     2752
+    ],
+    "panel_px": [
+     763,
+     764,
+     763,
+     764
+    ],
+    "scenes": [
+     10,
+     18,
+     19,
+     20
+    ],
+    "passed": 0,
+    "krw": 98,
+    "model": "gemini-3.1-flash-image",
+    "angles": [
+     "from the same camera position ",
+     "from the same spot, the camera",
+     "from the same spot, the camera",
+     "from the same spot, a little h"
+    ]
+   }
+  ],
+  "krw": 491,
+  "model": "gemini-3.1-flash-image",
+  "fake": false,
+  "scenes": [
+   {
+    "n": 1,
+    "j": 0,
+    "m": 0,
+    "sid": "S1",
+    "k": 12,
+    "place": "사우나",
+    "who": "env",
+    "with_dog": false,
+    "time": "day",
+    "img": "sb_1_1.png",
+    "ok": false,
+    "why": "글자",
+    "panel_px": 746,
+    "sheet": 1,
+    "spare": null,
+    "angle": "from the same camera position as the photograph, framed a little tighter",
+    "minor": null
+   },
+   {
+    "n": 2,
+    "j": 1,
+    "m": 0,
+    "sid": "S2",
+    "k": 28,
+    "place": "사우나",
+    "who": "env",
+    "with_dog": false,
+    "time": "day",
+    "img": "sb_2_1.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 763,
+    "sheet": 2,
+    "spare": null,
+    "angle": "from the same camera position as the photograph, framed a little tighter",
+    "minor": null
+   },
+   {
+    "n": 3,
+    "j": 1,
+    "m": 1,
+    "sid": "S7",
+    "k": 26,
+    "place": "물놀이",
+    "who": "env",
+    "with_dog": false,
+    "time": "golden",
+    "img": "sb_3_1.png",
+    "ok": false,
+    "why": "다른 공간; 시설·구조 추가: 통창 외벽",
+    "panel_px": 763,
+    "sheet": 3,
+    "spare": null,
+    "angle": "from the pool edge at water level",
+    "minor": null
+   },
+   {
+    "n": 4,
+    "j": 2,
+    "m": 0,
+    "sid": "S2",
+    "k": 28,
+    "place": "사우나",
+    "who": "back",
+    "with_dog": false,
+    "time": "golden",
+    "img": "sb_2_2.png",
+    "ok": false,
+    "why": "원본 시설 빠짐: 안내문",
+    "panel_px": 764,
+    "sheet": 2,
+    "spare": null,
+    "angle": "the same camera position as the photograph",
+    "minor": "가운, 슬리퍼"
+   },
+   {
+    "n": 5,
+    "j": 2,
+    "m": 1,
+    "sid": "S3",
+    "k": 11,
+    "place": "온수탕·스파",
+    "who": "env",
+    "with_dog": false,
+    "time": "evening",
+    "img": null,
+    "ok": false,
+    "why": "꼬리 컷은 원본(시트 생략)",
+    "panel_px": 0,
+    "sheet": null,
+    "spare": null,
+    "angle": "from the edge of the bath at water level",
+    "minor": null
+   },
+   {
+    "n": 6,
+    "j": 3,
+    "m": 0,
+    "sid": "S1",
+    "k": 12,
+    "place": "사우나",
+    "who": "back",
+    "with_dog": false,
+    "time": "evening",
+    "img": "sb_1_2.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 746,
+    "sheet": 1,
+    "spare": null,
+    "angle": "the same camera position as the photograph",
+    "minor": "조명"
+   },
+   {
+    "n": 7,
+    "j": 3,
+    "m": 1,
+    "sid": "S8",
+    "k": 25,
+    "place": "온수탕·스파",
+    "who": "env",
+    "with_dog": false,
+    "time": "night",
+    "img": null,
+    "ok": false,
+    "why": "꼬리 컷은 원본(시트 생략)",
+    "panel_px": 0,
+    "sheet": null,
+    "spare": null,
+    "angle": "from the edge of the bath at water level",
+    "minor": null
+   },
+   {
+    "n": 8,
+    "j": 4,
+    "m": 0,
+    "sid": "S7",
+    "k": 26,
+    "place": "물놀이",
+    "who": "env",
+    "with_dog": false,
+    "time": "evening",
+    "img": "sb_3_2.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 764,
+    "sheet": 3,
+    "spare": null,
+    "angle": "from the far end looking back",
+    "minor": null
+   },
+   {
+    "n": 9,
+    "j": 4,
+    "m": 1,
+    "sid": "S4",
+    "k": 9,
+    "place": "수영장",
+    "who": "env",
+    "with_dog": false,
+    "time": "night",
+    "img": null,
+    "ok": false,
+    "why": "꼬리 컷은 원본(시트 생략)",
+    "panel_px": 0,
+    "sheet": null,
+    "spare": null,
+    "angle": "from the pool edge at water level",
+    "minor": null
+   },
+   {
+    "n": 10,
+    "j": 5,
+    "m": 0,
+    "sid": "S10",
+    "k": 19,
+    "place": "정원·산책로",
+    "who": "env",
+    "with_dog": false,
+    "time": "night",
+    "img": "sb_4_1.png",
+    "ok": false,
+    "why": "검수 호출 실패: Expecting ',' delimiter: line 41 column 6 (char 1076)",
+    "panel_px": 763,
+    "sheet": 4,
+    "spare": null,
+    "angle": "from the same camera position as the photograph, framed a little tighter",
+    "minor": null
+   },
+   {
+    "n": 11,
+    "j": 5,
+    "m": 1,
+    "sid": "S5",
+    "k": 13,
+    "place": "정원·산책로",
+    "who": "env",
+    "with_dog": false,
+    "time": "day",
+    "img": null,
+    "ok": false,
+    "why": "꼬리 컷은 원본(시트 생략)",
+    "panel_px": 0,
+    "sheet": null,
+    "spare": null,
+    "angle": "from the same camera position as the photograph, framed a little tighter",
+    "minor": null
+   },
+   {
+    "n": 12,
+    "j": null,
+    "m": null,
+    "sid": "S1",
+    "k": 12,
+    "place": "사우나",
+    "who": "env",
+    "with_dog": false,
+    "time": "golden",
+    "img": "sb_1_3.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 746,
+    "sheet": 1,
+    "spare": true,
+    "angle": "a few steps further back, wider",
+    "minor": null
+   },
+   {
+    "n": 13,
+    "j": null,
+    "m": null,
+    "sid": "S1",
+    "k": 12,
+    "place": "사우나",
+    "who": "env",
+    "with_dog": false,
+    "time": "night",
+    "img": "sb_1_4.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 746,
+    "sheet": 1,
+    "spare": true,
+    "angle": "low angle close to the ground",
+    "minor": "조명"
+   },
+   {
+    "n": 14,
+    "j": null,
+    "m": null,
+    "sid": "S2",
+    "k": 28,
+    "place": "사우나",
+    "who": "env",
+    "with_dog": false,
+    "time": "evening",
+    "img": "sb_2_3.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 763,
+    "sheet": 2,
+    "spare": true,
+    "angle": "a few steps further back, wider",
+    "minor": "내부 조명"
+   },
+   {
+    "n": 15,
+    "j": null,
+    "m": null,
+    "sid": "S2",
+    "k": 28,
+    "place": "사우나",
+    "who": "env",
+    "with_dog": false,
+    "time": "night",
+    "img": "sb_2_4.png",
+    "ok": false,
+    "why": "시설·구조 추가: 외부 바닥 조명 기둥",
+    "panel_px": 764,
+    "sheet": 2,
+    "spare": true,
+    "angle": "low angle close to the ground",
+    "minor": "내부 조명"
+   },
+   {
+    "n": 16,
+    "j": null,
+    "m": null,
+    "sid": "S7",
+    "k": 26,
+    "place": "물놀이",
+    "who": "env",
+    "with_dog": false,
+    "time": "day",
+    "img": "sb_3_3.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 763,
+    "sheet": 3,
+    "spare": true,
+    "angle": "from above the entry steps",
+    "minor": null
+   },
+   {
+    "n": 17,
+    "j": null,
+    "m": null,
+    "sid": "S7",
+    "k": 26,
+    "place": "물놀이",
+    "who": "env",
+    "with_dog": false,
+    "time": "night",
+    "img": "sb_3_4.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 764,
+    "sheet": 3,
+    "spare": true,
+    "angle": "close-up of the water with the surroundings behind",
+    "minor": null
+   },
+   {
+    "n": 18,
+    "j": null,
+    "m": null,
+    "sid": "S10",
+    "k": 19,
+    "place": "정원·산책로",
+    "who": "env",
+    "with_dog": false,
+    "time": "golden",
+    "img": "sb_4_2.png",
+    "ok": false,
+    "why": "검수 호출 실패: Expecting ',' delimiter: line 41 column 6 (char 1076)",
+    "panel_px": 764,
+    "sheet": 4,
+    "spare": true,
+    "angle": "from the same spot, the camera turned a little to the left",
+    "minor": null
+   },
+   {
+    "n": 19,
+    "j": null,
+    "m": null,
+    "sid": "S10",
+    "k": 19,
+    "place": "정원·산책로",
+    "who": "env",
+    "with_dog": false,
+    "time": "evening",
+    "img": "sb_4_3.png",
+    "ok": false,
+    "why": "검수 호출 실패: Expecting ',' delimiter: line 41 column 6 (char 1076)",
+    "panel_px": 763,
+    "sheet": 4,
+    "spare": true,
+    "angle": "from the same spot, the camera turned a little to the right",
+    "minor": null
+   },
+   {
+    "n": 20,
+    "j": null,
+    "m": null,
+    "sid": "S10",
+    "k": 19,
+    "place": "정원·산책로",
+    "who": "env",
+    "with_dog": false,
+    "time": "day",
+    "img": "sb_4_4.png",
+    "ok": false,
+    "why": "검수 호출 실패: Expecting ',' delimiter: line 41 column 6 (char 1076)",
+    "panel_px": 764,
+    "sheet": 4,
+    "spare": true,
+    "angle": "from the same spot, a little higher, looking slightly down",
+    "minor": null
+   }
+  ]
+ },
+ "inserts": {
+  "ok": true,
+  "krw": 98,
+  "model": "gemini-3.1-flash-image",
+  "px": [
+   1536,
+   2752
+  ],
+  "items": [
+   {
+    "n": 1,
+    "role": "hook",
+    "j": 0,
+    "name": "worry",
+    "img": "ins_1.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 746,
+    "what": "침대 위에 짐이 싸여 있는 열린 여행용 캐리어"
+   },
+   {
+    "n": 2,
+    "role": "end",
+    "j": 6,
+    "name": "depart",
+    "img": "ins_2.png",
+    "ok": false,
+    "why": "글자",
+    "panel_px": 746,
+    "what": "주방 아일랜드 식탁 위에 놓인 텀블러, 차 키, 우편물과 머그컵"
+   },
+   {
+    "n": 3,
+    "role": "spare1",
+    "j": null,
+    "name": "road",
+    "img": "ins_3.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 746,
+    "what": "비 내리는 해안 도로를 달리는 자동차 내부 운전석 시점"
+   },
+   {
+    "n": 4,
+    "role": "spare2",
+    "j": null,
+    "name": "window",
+    "img": "ins_4.png",
+    "ok": true,
+    "why": "",
+    "panel_px": 746,
+    "what": "빗방울 맺힌 기차 또는 차량 창문 너머로 보이는 철길과 흐린 바다 풍경"
+   }
+  ]
  },
  "inserts_used": [
   "INS1",
-  "INS2"
+  "INS3"
+ ],
+ "scene_drops": [],
+ "pain_title": {
+  "source": "모델",
+  "text": "찬 바람 부는 날 [온천] 여행",
+  "tries": []
+ },
+ "card_check": [
+  {
+   "source": "모델",
+   "errs": [
+    "답 1 '야외 [배럴사우나]와 노천탕 완비' 13자 — 6~12자",
+    "답 2 '삼각 지붕 핀란드식 목조 캐빈' 한 줄에 안 들어감"
+   ]
+  },
+  {
+   "source": "예비",
+   "errs": [
+    "answers 0개 — 2~3개"
+   ]
+  }
+ ],
+ "card": {
+  "skipped": "answers 0개 — 2~3개"
+ },
+ "narration_sec": {
+  "1": 2.12,
+  "2": 3.78,
+  "3": 3.7,
+  "4": 3.77,
+  "5": 4.09,
+  "6": 4.4,
+  "7": 4.0,
+  "cta": 2.47
+ },
+ "narration_qa": [
+  {
+   "segment": "컷1",
+   "script": "찬 바람 불면 온천 생각 절로 나죠?",
+   "heard": "찬 바람 불면 온천 생각 절로 나죠?",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷2",
+   "script": "여긴 야외 노천온천탕 바로 옆에 목조 배럴사우나가 있어요.",
+   "heard": "여긴 야외 노천 온천탕 바로 옆에 목조 배럴 사우나가 있어요.",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷3",
+   "script": "들어서면 삼각 지붕 형태 캐빈 안에서 핀란드식 열기를 즐겨요.",
+   "heard": "들어서면 삼각 지붕 형태 캐빈 안에서 핀란드식 열기를 즐겨요.",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷4",
+   "script": "땀 빼고 나면 나란히 자리한 야외 온천탕에 몸을 담그면 돼요.",
+   "heard": "땀 빼고 나면 나란히 자리한 야외 온천탕에 몸을 담그면 돼요",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷5",
+   "script": "그래서 실내 온수풀 위주인 곳들과 달리 숲속 사우나 캐빈을 누려요.",
+   "heard": "그래서 실내 온수풀 위주인 곳들과 달리 숲속 사우나 캐빈을 노려요",
+   "similarity": 0.96,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷6",
+   "script": "이제 실내온천탕은 매주 수요일 정비로 14시에 여니 참고해요.",
+   "heard": "이제 실내 온천탕은 매주 수요일 정비로 14시에 여니 참고해요.",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "컷7",
+   "script": "이번엔 야외 배럴사우나와 노천온천탕으로 떠나보는 건 어떨까요?",
+   "heard": "이번엔 야외 배럴 사우나와 노천 온천탕으로 떠나보는 건 어떨까요?",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  },
+  {
+   "segment": "끝",
+   "script": "객실이랑 예약 링크는 프로필 6번에 있어요.",
+   "heard": "객실이랑 예약 링크는 프로필 6번에 있어요",
+   "similarity": 1.0,
+   "ok": true,
+   "instruction_words": []
+  }
  ],
  "signature": {
-  "name": "바다 전망 펫 전용 객실",
-  "what": "발코니 너머 바다와 함께 반려견 계단, 패드, 전용 하우스가 갖춰진 객실",
-  "fact": "키즈룸과 펫 전용 객실 타입 보유",
-  "vs_peers": "다른 워터파크 리조트와 달리 반려견 전용 시설과 펫 객실을 구비함",
+  "name": "야외 배럴사우나 노천온천",
+  "what": "푸른 숲과 야외 온천탕 옆에 자리 잡은 독채형 목조 배럴사우나 캐빈",
+  "fact": "실내온천탕과 배럴사우나 및 노천온천탕 완비",
+  "vs_peers": "대형 워터파크형 실내 온수풀 위주인 다른 후보들과 달리 야외 숲속 노천탕 옆 배럴사우나를 완비함",
   "peers": 12,
   "photos": [
-   20,
-   23
+   12,
+   28
   ],
   "confirmed": [
-   20,
-   23
+   12,
+   28
   ],
-  "why": "수영장 테마 호텔 중 반려견 계단과 하우스 등 전문 펫 시설을 객실 안에 완비해 의외다",
+  "why": "단순한 온천탕이 아니라 야외 숲속 노천탕 바로 곁에 독립된 목조 배럴사우나 캐빈을 갖추어 이색적임",
   "checks": [
    {
-    "k": 20,
+    "k": 12,
     "subject": true,
-    "share": 0.9,
+    "share": 0.6,
     "ok": true,
-    "evidence": "발코니 창밖으로 바다가 훤히 보이며, 객실 내부에는 침대 옆 반려견 계단/방석, 배변 패드, 식기 등이 명확히 갖춰져 있습니다."
+    "evidence": "야외 스파/노천온천 수영장과 그 옆에 위치한 목조 사우나 캐빈이 전경에 명확히 담겨 있다."
    },
    {
-    "k": 23,
+    "k": 28,
     "subject": true,
-    "share": 0.85,
+    "share": 0.55,
     "ok": true,
-    "evidence": "통유리창 너머로 바다 전망이 보이며, 객실 내부에는 침대와 함께 반려견, 전용 하우스, 급수기 등의 펫 용품이 명확하게 배치되어 있습니다."
+    "evidence": "야외 공간에 설치된 목조 캐빈 형태의 사우나 시설 두 동이 화면 중앙과 전면에 크게 자리 잡고 있음"
    },
    {
-    "k": 21,
-    "subject": false,
-    "share": 0.25,
-    "ok": false,
-    "evidence": "반려견 전용 하우스와 장난감 등 펫 어메니티는 보이지만, 커튼이 닫혀 있어 핵심 요소인 발코니 너머 바다 전망이 전혀 보이지 않는다."
-   },
-   {
-    "k": 16,
+    "k": 0,
     "subject": false,
     "share": 0.0,
     "ok": false,
-    "evidence": "반려견 전용 용품이나 바다 전망 대신 어린이용 침대와 캐릭터 벽지가 있는 키즈 전용 객실 내부가 보임"
+    "evidence": "사진에는 야외 수영장 및 자쿠지 공간만 보이며 목조 배럴사우나 캐빈은 전혀 보이지 않음"
    },
    {
-    "k": 19,
+    "k": 1,
     "subject": false,
     "share": 0.0,
     "ok": false,
-    "evidence": "바다 전망이나 반려견 전용 계단, 패드, 전용 하우스는 보이지 않고 키즈 전용 침대가 마련된 키즈룸 객실 내부만 보입니다."
+    "evidence": "사진에는 천장이 개방된 노천탕과 조경수가 보이지만, 시그니처인 독채형 목조 배럴사우나 캐빈은 전혀 보이지 않는다."
    },
    {
-    "k": 25,
+    "k": 4,
     "subject": false,
     "share": 0.0,
     "ok": false,
-    "evidence": "반려견 전용 물품이나 객실 내부의 모습은 전혀 보이지 않고 바다와 해변 풍경만 보이는 야외 전망 사진이다."
+    "evidence": "사진에는 글램핑 텐트와 야외 월풀 스파 욕조가 있을 뿐 독채형 목조 배럴사우나 캐빈은 전혀 보이지 않는다."
+   },
+   {
+    "k": 6,
+    "subject": false,
+    "share": 0.0,
+    "ok": false,
+    "evidence": "사진은 대형 야외 수영장과 무대 스크린이 중심이며, 목조 배럴사우나 캐빈은 전혀 보이지 않는다."
    }
   ],
   "fallback": false
@@ -345,208 +1789,132 @@
  "veo": {
   "model": "veo-3.1-lite-generate-preview",
   "fake": false,
-  "clips": [
-   {
-    "i": 1,
-    "lens": "훅",
-    "shot": "INS1",
-    "type": "B",
-    "actor": "env",
-    "ok": true,
-    "krw": 294,
-    "start": "ins_1.png"
-   },
-   {
-    "i": 3,
-    "lens": "디테일",
-    "shot": "S1",
-    "type": "A",
-    "actor": "dog",
-    "ok": false,
-    "krw": 294,
-    "start": "sb_1_3.png",
-    "check": {
-     "ok": false,
-     "reason": "새 사물: 강아지 계단",
-     "raw": {
-      "people": 0,
-      "face_visible": false,
-      "dogs": 1,
-      "new_objects": [
-       "강아지 계단"
-      ],
-      "structure_changed": false,
-      "weird": false,
-      "looks_real": true,
-      "why": "사람 없이 강아지 한 마리가 자연스럽게 침대 쪽으로 올라서는 모습이 구현됨"
-     }
-    },
-    "error": "검수 탈락: 새 사물: 강아지 계단"
-   },
-   {
-    "i": 4,
-    "lens": "행동",
-    "shot": "S5",
-    "type": "A",
-    "actor": "hand",
-    "ok": true,
-    "krw": 588,
-    "start": "shot_S5.png",
-    "error": "안전 필터: 안전 필터에 걸렸습니다: {\"name\": \"models/veo-3.1-lite-generate-preview/operations/qgivgjcug6cp\", \"done\": true, \"response\": {\"@type",
-    "check": {
-     "ok": true,
-     "reason": "",
-     "raw": {
-      "people": "hand",
-      "face_visible": false,
-      "dogs": 0,
-      "new_objects": [],
-      "structure_changed": false,
-      "weird": false,
-      "looks_real": true,
-      "why": "손과 팔만 자연스럽게 등장하여 수건을 다룸"
-     }
-    }
-   },
-   {
-    "i": 5,
-    "lens": "상황",
-    "shot": "S2",
-    "type": "A",
-    "actor": "couple",
-    "ok": true,
-    "krw": 294,
-    "start": "sb_4_1.png",
-    "check": {
-     "ok": true,
-     "reason": "",
-     "raw": {
-      "people": 2,
-      "face_visible": false,
-      "dogs": 1,
-      "new_objects": [],
-      "structure_changed": false,
-      "weird": false,
-      "looks_real": true,
-      "why": "뒷모습의 두 사람과 강아지가 자연스럽게 발코니 쪽으로 이동함"
-     }
-    }
-   },
-   {
-    "i": 6,
-    "lens": "연결",
-    "shot": "S4",
-    "type": "B",
-    "actor": "env",
-    "ok": true,
-    "krw": 294,
-    "start": "shot_S4.png"
-   }
-  ],
-  "stopped": null,
-  "spent_krw": 1764,
+  "clips": [],
+  "spent_krw": 0,
   "month_total_krw": 9408
  },
- "ai_note_on_screen": true,
+ "ai_note_on_screen": false,
  "camera_aim": [
   {
-   "i": 2,
-   "shot": "S1",
-   "x": 0.86,
-   "y": 0.65,
-   "zoom": 0.42,
+   "i": 1,
+   "shot": "INS1",
+   "x": 0.49,
+   "y": 0.67,
+   "zoom": 0.3,
    "move": "in",
-   "what": "반려견 침대와 계단"
+   "what": "캐리어"
+  },
+  {
+   "i": 2,
+   "shot": "S2",
+   "x": 0.55,
+   "y": 0.54,
+   "zoom": 0.28,
+   "move": "in",
+   "what": "사우나"
   },
   {
    "i": 3,
-   "shot": "S1",
-   "x": 0.81,
-   "y": 0.59,
-   "zoom": 0.46,
+   "shot": "S2",
+   "x": 0.58,
+   "y": 0.53,
+   "zoom": 0.28,
    "move": "in",
-   "what": "반려견 계단"
+   "what": "삼각 지붕 캐빈"
+  },
+  {
+   "i": 4,
+   "shot": "S1",
+   "x": 0.61,
+   "y": 0.92,
+   "zoom": 0.32,
+   "move": "in",
+   "what": "야외 온천탕에 들어가는 사람"
+  },
+  {
+   "i": 5,
+   "shot": "S7",
+   "x": 0.75,
+   "y": 0.6,
+   "zoom": 0.35,
+   "move": "in",
+   "what": "수영장"
+  },
+  {
+   "i": 6,
+   "shot": "S10",
+   "x": 0.86,
+   "y": 0.54,
+   "zoom": 0.4,
+   "move": "in",
+   "what": "표지판"
   },
   {
    "i": 7,
-   "shot": "S6",
-   "x": 0.14,
-   "y": 0.67,
-   "zoom": 0.38,
-   "move": "in",
-   "what": "드라이룸"
-  },
-  {
-   "i": 8,
-   "shot": "INS2",
-   "x": 0.52,
-   "y": 0.6,
+   "shot": "INS3",
+   "x": 0.63,
+   "y": 0.49,
    "zoom": 0.45,
    "move": "in",
-   "what": "반려견 목줄"
+   "what": "해안 도로"
   }
  ],
  "bgm": "bgm.mp3",
  "hook_title": {
-  "title": "객실에 강아지 [계단]이?",
-  "type": "의외 사실"
+  "title": "찬 바람 부는 날 [온천] 여행",
+  "type": "걱정형"
  },
  "script": {
-  "hook_title": "객실에 강아지 [계단]이?",
-  "title": "강릉 세인트존스 호텔 바다 앞 펫 전용 객실",
+  "hook_title": "찬 바람 부는 날 [온천] 여행",
+  "title": "더앤리조트 야외 배럴사우나 노천온천",
   "caption": {
-   "hook": "호텔 객실 안에 반려견 전용 계단과 하우스가 완비된 오션뷰 펫 객실입니다.",
+   "hook": "숲속 노천온천탕 바로 곁에 독립된 목조 배럴사우나 캐빈이 마련되어 있습니다.",
    "points": [
-    "침대 오르는 전용 계단부터 패드, 식기, 수건까지 객실에 기본 구비",
-    "발코니 너머로 소나무 숲과 동해 바다가 시원하게 펼쳐집니다",
-    "사계절 돔 인피니티풀과 도그 파크 등 다양한 반려견 동반 시설 완비"
+    "실내온천탕과 함께 야외 배럴사우나 및 노천온천탕을 완비했습니다.",
+    "실내 온수풀 중심의 리조트들과 달리 야외 핀란드식 사우나 캐빈을 갖췄습니다.",
+    "본관 1층 스파온 온천사우나는 수요일 시설 정비로 14시부터 운영합니다."
    ],
-   "save": "강아지와 함께하는 오션뷰 여행 계획 중이라면 지금 저장해 두세요."
+   "save": "쌀쌀해지는 11월 강원도 온천 여행 계획할 때 미리 저장해 두세요."
   },
   "checklist": [
-   "키즈룸과 펫 전용 객실 타입 보유",
-   "히노끼탕·펫 욕조·드라이룸 선착순 무료 대여",
-   "도그 파크와 반려견 보딩센터 로젯펫살롱 운영"
+   "실내온천탕 및 배럴사우나, 노천온천탕 완비",
+   "일~목 08시부터 20시까지 운영함",
+   "매주 수요일 시설 정비로 14시 오픈"
   ],
   "cuts": [
    {
     "i": 1,
-    "narration": "반려견 두고 떠나는 여행, 늘 마음 쓰이죠?",
+    "narration": "찬 바람 불면 온천 생각 절로 나죠?",
     "caption": "훅"
    },
    {
     "i": 2,
-    "narration": "여긴 반려견과 한 방에서 묵는 펫 객실이에요.",
+    "narration": "여긴 야외 노천온천탕 바로 옆에 목조 배럴사우나가 있어요.",
     "caption": "정체"
    },
    {
     "i": 3,
-    "narration": "들어서면 침대로 오르는 계단으로 강아지가 먼저 올라가요.",
+    "narration": "들어서면 삼각 지붕 형태 캐빈 안에서 핀란드식 열기를 즐겨요.",
     "caption": "디테일"
    },
    {
     "i": 4,
-    "narration": "수건·샴푸·패드까지 있어 식기에 물만 채우면 돼요.",
+    "narration": "땀 빼고 나면 나란히 자리한 야외 온천탕에 몸을 담그면 돼요.",
     "caption": "행동"
    },
    {
     "i": 5,
-    "narration": "그다음엔 같이 발코니에 서서 바다를 봐요.",
-    "caption": "상황"
+    "narration": "그래서 실내 온수풀 위주인 곳들과 달리 숲속 사우나 캐빈을 누려요.",
+    "caption": "희소성"
    },
    {
     "i": 6,
-    "narration": "방을 나서면 돔 수영장도 반려견과 같이 갈 수 있어요.",
-    "caption": "연결"
-   },
-   {
-    "i": 7,
-    "narration": "펫 욕조·드라이룸은 선착순 무료 대여예요.",
+    "narration": "이제 실내온천탕은 매주 수요일 정비로 14시에 여니 참고해요.",
     "caption": "조건"
    },
    {
-    "i": 8,
-    "narration": "이번엔 반려견과 함께 떠나 보는 건 어떨까요?",
+    "i": 7,
+    "narration": "이번엔 야외 배럴사우나와 노천온천탕으로 떠나보는 건 어떨까요?",
     "caption": "제안"
    }
   ]
@@ -556,33 +1924,34 @@
   {
    "i": 1,
    "lens": "훅",
-   "kind": "AI 영상·환경(빛·물·커튼) 2.3초 + 사진 무빙(객실)",
+   "kind": "사진 무빙 2컷 · AI 스토리보드 · 인서트 (제작 때 AI 환경(빛·물·커튼) 2.6초 + 사진 무빙)",
    "sec": 3.2,
    "shots": [
     "INS1",
-    "S2"
+    "S1"
    ],
    "cuts": 2,
-   "narration": "반려견 두고 떠나는 여행, 늘 마음 쓰이죠?",
+   "narration": "찬 바람 불면 온천 생각 절로 나죠?",
    "places": [
     "인서트",
-    "객실"
+    "사우나"
    ],
-   "title": "객실에 강아지 [계단]이?",
+   "feature": null,
+   "title": "찬 바람 부는 날 [온천] 여행",
    "chunks": [
     [
-     "반려견 두고 떠나는",
-     0.103,
-     1.104
+     "찬 바람 불면",
+     0.0,
+     0.679
     ],
     [
-     "여행,",
-     1.104,
-     1.679
+     "온천 생각 절로",
+     0.679,
+     1.494
     ],
     [
-     "늘 마음 쓰이죠?",
-     1.679,
+     "나죠?",
+     1.494,
      3.7
     ]
    ]
@@ -591,219 +1960,217 @@
    "i": 2,
    "lens": "정체",
    "kind": "사진 무빙 2컷 · AI 스토리보드",
-   "sec": 3.22,
+   "sec": 3.9,
    "shots": [
-    "S1",
-    "S6"
+    "S2",
+    "S7"
    ],
    "cuts": 2,
-   "narration": "여긴 반려견과 한 방에서 묵는 펫 객실이에요.",
+   "narration": "여긴 야외 노천온천탕 바로 옆에 목조 배럴사우나가 있어요.",
    "places": [
-    "객실",
-    "객실"
+    "사우나",
+    "물놀이"
    ],
+   "feature": "야외 배럴사우나",
    "title": null,
    "chunks": [
     [
-     "여긴 반려견과 한",
-     0.162,
-     1.153
+     "여긴 야외 노천온천탕",
+     0.219,
+     1.417
     ],
     [
-     "방에서 묵는 펫",
-     1.153,
-     2.003
+     "바로 옆에 목조",
+     1.417,
+     2.216
     ],
     [
-     "객실이에요.",
-     2.003,
-     3.716
+     "배럴사우나가 있어요.",
+     2.216,
+     4.403
     ]
    ]
   },
   {
    "i": 3,
    "lens": "디테일",
-   "kind": "사진 무빙 2컷 · AI 스토리보드",
-   "sec": 3.63,
+   "kind": "사진 무빙 2컷 (제작 때 AI 뒷모습 한 사람 2.6초 + 사진 무빙)",
+   "sec": 3.82,
    "shots": [
-    "S1",
-    "S7"
+    "S2",
+    "S3"
    ],
    "cuts": 2,
-   "narration": "들어서면 침대로 오르는 계단으로 강아지가 먼저 올라가요.",
+   "narration": "들어서면 삼각 지붕 형태 캐빈 안에서 핀란드식 열기를 즐겨요.",
    "places": [
-    "객실",
-    "객실"
+    "사우나",
+    "온수탕·스파"
    ],
+   "feature": "핀란드식 사우나",
    "title": null,
    "chunks": [
     [
-     "들어서면 침대로 오르는",
-     0.244,
-     1.417
+     "들어서면 삼각 지붕",
+     0.235,
+     1.216
     ],
     [
-     "계단으로 강아지가 먼저",
-     1.417,
-     2.591
+     "형태 캐빈 안에서",
+     1.216,
+     2.073
     ],
     [
-     "올라가요.",
-     2.591,
-     4.127
+     "핀란드식 열기를 즐겨요.",
+     2.073,
+     4.323
     ]
    ]
   },
   {
    "i": 4,
    "lens": "행동",
-   "kind": "AI 영상·손 2.6초 + 사진 무빙(객실)",
-   "sec": 3.81,
+   "kind": "사진 무빙 2컷 · AI 스토리보드 (제작 때 AI 뒷모습 한 사람 2.6초 + 사진 무빙)",
+   "sec": 3.89,
    "shots": [
-    "S5",
-    "S3"
+    "S1",
+    "S8"
    ],
    "cuts": 2,
-   "narration": "수건·샴푸·패드까지 있어 식기에 물만 채우면 돼요.",
+   "narration": "땀 빼고 나면 나란히 자리한 야외 온천탕에 몸을 담그면 돼요.",
    "places": [
-    "욕실",
-    "객실"
+    "사우나",
+    "온수탕·스파"
    ],
+   "feature": "노천온천탕",
    "title": null,
    "chunks": [
     [
-     "수건·샴푸·패드까지 있어",
-     0.329,
-     1.94
+     "땀 빼고 나면",
+     0.282,
+     0.919
     ],
     [
-     "식기에 물만 채우면",
-     1.94,
-     3.013
+     "나란히 자리한 야외",
+     0.919,
+     1.939
+    ],
+    [
+     "온천탕에 몸을 담그면",
+     1.939,
+     3.086
     ],
     [
      "돼요.",
-     3.013,
-     4.312
+     3.086,
+     4.385
     ]
    ]
   },
   {
    "i": 5,
-   "lens": "상황",
-   "kind": "AI 영상·뒷모습 커플",
-   "sec": 3.01,
+   "lens": "희소성",
+   "kind": "사진 무빙 2컷 · AI 스토리보드",
+   "sec": 4.21,
    "shots": [
-    "S2"
+    "S7",
+    "S4"
    ],
-   "cuts": 1,
-   "narration": "그다음엔 같이 발코니에 서서 바다를 봐요.",
+   "cuts": 2,
+   "narration": "그래서 실내 온수풀 위주인 곳들과 달리 숲속 사우나 캐빈을 누려요.",
    "places": [
-    "객실"
+    "물놀이",
+    "수영장"
    ],
+   "feature": null,
    "title": null,
    "chunks": [
     [
-     "그다음엔 같이 발코니에",
-     0.276,
-     1.529
+     "그래서 실내 온수풀",
+     0.297,
+     1.316
     ],
     [
-     "서서 바다를 봐요.",
-     1.529,
-     3.506
+     "위주인 곳들과 달리",
+     1.316,
+     2.335
+    ],
+    [
+     "숲속 사우나 캐빈을",
+     2.335,
+     3.354
+    ],
+    [
+     "누려요.",
+     3.354,
+     4.707
     ]
    ]
   },
   {
    "i": 6,
-   "lens": "연결",
-   "kind": "AI 영상·환경(빛·물·커튼)",
-   "sec": 3.57,
+   "lens": "조건",
+   "kind": "사진 무빙 2컷",
+   "sec": 4.52,
    "shots": [
-    "S4"
+    "S10",
+    "S5"
    ],
-   "cuts": 1,
-   "narration": "방을 나서면 돔 수영장도 반려견과 같이 갈 수 있어요.",
+   "cuts": 2,
+   "narration": "이제 실내온천탕은 매주 수요일 정비로 14시에 여니 참고해요.",
    "places": [
-    "바다"
+    "정원·산책로",
+    "정원·산책로"
    ],
+   "feature": null,
    "title": null,
    "chunks": [
     [
-     "방을 나서면 돔",
-     0.356,
-     1.137
+     "이제 실내온천탕은 매주",
+     0.223,
+     1.674
     ],
     [
-     "수영장도 반려견과 같이",
-     1.137,
-     2.439
+     "수요일 정비로 14시에",
+     1.674,
+     3.124
     ],
     [
-     "갈 수 있어요.",
-     2.439,
-     4.07
+     "여니 참고해요.",
+     3.124,
+     5.02
     ]
    ]
   },
   {
    "i": 7,
-   "lens": "조건",
-   "kind": "사진 무빙·드라이룸 다가감 1.38배 · AI 스토리보드",
-   "sec": 2.84,
-   "shots": [
-    "S6"
-   ],
-   "cuts": 1,
-   "narration": "펫 욕조·드라이룸은 선착순 무료 대여예요.",
-   "places": [
-    "객실"
-   ],
-   "title": null,
-   "chunks": [
-    [
-     "펫 욕조·드라이룸은 선착순",
-     0.231,
-     1.7
-    ],
-    [
-     "무료 대여예요.",
-     1.7,
-     3.343
-    ]
-   ]
-  },
-  {
-   "i": 8,
    "lens": "제안",
-   "kind": "사진 무빙·반려견 목줄 다가감 1.45배 · 인서트",
-   "sec": 3.06,
+   "kind": "사진 무빙·해안 도로 다가감 1.45배 · 인서트",
+   "sec": 4.12,
    "shots": [
-    "INS2"
+    "INS3"
    ],
    "cuts": 1,
-   "narration": "이번엔 반려견과 함께 떠나 보는 건 어떨까요?",
+   "narration": "이번엔 야외 배럴사우나와 노천온천탕으로 떠나보는 건 어떨까요?",
    "places": [
     "인서트"
    ],
+   "feature": null,
    "title": null,
    "chunks": [
     [
-     "이번엔 반려견과 함께",
-     0.167,
-     1.356
+     "이번엔 야외 배럴사우나와",
+     0.261,
+     1.626
     ],
     [
-     "떠나 보는 건",
-     1.356,
-     2.017
+     "노천온천탕으로 떠나보는 건",
+     1.626,
+     3.116
     ],
     [
      "어떨까요?",
-     2.017,
-     3.562
+     3.116,
+     4.625
     ]
    ]
   },
@@ -812,21 +2179,21 @@
    "lens": "끝 카드",
    "kind": "카드",
    "sec": 3.6,
-   "narration": "객실이랑 예약 링크는 프로필 4번에 있어요."
+   "narration": "객실이랑 예약 링크는 프로필 6번에 있어요."
   }
  ],
  "models_used": {},
- "duration_sec": 29.97,
- "video_bytes": 11938016,
+ "duration_sec": 31.33,
+ "video_bytes": 14816229,
  "gemini_usage": {
-  "calls": 7,
-  "prompt_text": 1886,
-  "prompt_image": 14300,
-  "prompt_audio": 0,
-  "output_text": 372,
-  "output_audio": 0,
-  "thoughts": 0,
-  "krw_est": 9,
+  "calls": 40,
+  "prompt_text": 36558,
+  "prompt_image": 86286,
+  "prompt_audio": 713,
+  "output_text": 11381,
+  "output_audio": 918,
+  "thoughts": 584,
+  "krw_est": 113,
   "note": "토큰 수는 실측, 단가는 추정 — 실제 청구는 Google 사용량 화면 기준"
  }
 }

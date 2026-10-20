@@ -11,7 +11,7 @@
    "month": "2026-11",
    "theme": "실내 온수풀·온천",
    "region": "강원",
-   "updated": "2026-10-19",
+   "updated": "2026-10-20",
    "intro": "쌀쌀해진 11월, 찬바람 맞으며 따뜻한 물에 들어가는 강원 실내 온수풀·온천 숙소를 영상으로 소개한 순서대로 정리합니다.",
    "hotels": [
     {
@@ -311,9 +311,63 @@
      "price_band": null,
      "caption": "",
      "no": 5
+    },
+    {
+     "rank": 6,
+     "name": "더앤리조트",
+     "city": "양양",
+     "hook": "숲속에서 즐기는 온천 야외수영장",
+     "blog_30d": 1000,
+     "facts": [
+      "본관동 1층에 위치한 천연 온천사우나 스파온",
+      "실내온천탕과 배럴사우나 및 노천온천탕 완비",
+      "수심 1m 온천 인피니티풀 야외 운영",
+      "수심 0.5m 온도 28~30도 야외 유아풀 완비",
+      "반려견 전용 펫츠룸과 펫파크 시설 보유",
+      "가든온(야외 온천 수영장)"
+     ],
+     "rooms": [
+      {
+       "name": "디럭스 더블룸",
+       "tags": [],
+       "image": "https://ads-partners.coupang.com/image1/TtE5PPCojtrketNtTrNEMLcJmAvIOlAdzRfNeGaQBM9QMlq7-Eg6QgejGOfqESWGE2g0gUr9VfJJJIjHD4uRbVWmUTPlafNbTTaWzoiTV58Y4oxC-N-1Z_6GwEeonFV_vSM1_aB35WLrq6eUNoAjrrmu7wyRI3AA4XMUXU7WmfUidy3Z88D4TTOEXYQY9Sa9JJEjtmczIrOWD7OPEpc99V-mYqTmaSbB2pG2fv9bGyr-HIgNl-dh1jwtURemy4dXyGHNuiu1aN19Xs6CtWNKuLKu5ud1KNw7o7M7l2SXc-CbAHodJfZeWMR9oAu1DSzl5cy5WDUyEPlMIXzNqlUM9ifQIZCKVzhogiCmS6b4ntnUU_JQ_cyap8Ix4q78X9FvuremvChPDtqqsxScjsHQMn1ShB1oDlf4-79uuR4HKOfY1YvIG6iTh2VcNFLwtvrJoOeARjLf0XnxDwrlfz5B2JZwXh52Qs603GcknY28qNocYi9ExrOK2gslc1x0eOWMdcL26X8ynuuOAyaOYxEog5MmW30rPlwvgBtG8sLRKqieudOM"
+      },
+      {
+       "name": "디럭스더블",
+       "tags": [],
+       "image": "https://ads-partners.coupang.com/image1/s10bqX1UifAmSCBYs4r9tVwqqh2UhZ5JdnrzD6ZyqhoG0k65WnyA2qnWcafslgS1CXFPNTZ3572byCOnkOCbgoY3TqrT1y8_BdunWmEupuk47E_uNXHydsC21-LQPsbphPQ04wP4Z9ImZCbWMtpQyGPc1bY65DkOVCUaKKMQJcoziKKGzcIoXUO2Abajob32ojb-g2LeRVutH2vFIxh7WzcmSsDrFFGO2sCpARz6aSseX_s7dOQZsxmL3EWljn84iMRogGtgq8XuBmHI1V-NI1gUL6_PG0ghGCacSNd6qH88cBadEBT1VThgzWuyXJM25ueooMN21IVLVOs7iX91XHI3WcQ8drduLwU8-yNCnXGmf527KKSPIEsMa1EM9tVg83WNJhFR5VzkqSA0V3Z39g_Mwx2nFJZmci-_rDlwPxY2c4IGak-M1ywH9oOqFjeIg0FuILYUJce369VhGpjL-7tNFxcTMMVwU1uW76AvpIqSXj8HqIJOqxC4eQAeQR3inrlI-cmgKRio7wETLOVyLg88BPM7Ig9V-SzmL_emWsooQqU="
+      },
+      {
+       "name": "Deluxe Double",
+       "tags": [],
+       "image": "https://ads-partners.coupang.com/image1/qG9dvD6KKOaxJ0mZqHLDOTF6A7AA683MdBc9dbW2KRY8l2P_9MSGLevv89OaWtqYbspXXNraQk4RZdce4qwYbYx2NLrhGBFoi5skB3EuZd2VtBmJ4pg4jbUSqWgb_VELuZL2E5hTTScjUizCtscmlVLxYodZdLK8A8D4LDDbikaoK1TzK7OhpivE4LpMQ7JndBh-Go5grd--fIHDruIspH2gOB_d1QovBnQ3lwQ9HQQe3NcMFPfwxzzy34pAThsCzI8bcNrdynS-xYFS7mvvtOmHC8E51Gsn6jKd0Mt8tRJcqzXTXOiOGVcrG6kgfwMu4TRoZjuUX59WE0GLBoRiSM2JDO_4_le7mQ0C5oSSOciM1eYi4lyVF9TPmcU827Z9XIL783dSuLEAUoveUix1SXmnUs6UqOUZIXPDheWY1kbuI81SAWVC7ioo0qxeXtQCCTW3TSYLMZC9u09W5dsxrRIlABmamNqF1KEX6AyCOE-XhSSdkgcJ1yrC9HZXwXQQbfjOznvpPbTK1CG0pqXmOHk7UG_M9XnIr2XM6DyOhWTOww=="
+      },
+      {
+       "name": "키즈 디럭스 더블",
+       "tags": [
+        "패밀리"
+       ],
+       "image": "https://ads-partners.coupang.com/image1/GhQ3LGD3NxIuDBxMGmzwjk6rQ-Oopl7g_6Ax5shu40HVWlbcdyKn2yuhzV51b-9TWNnvSZd3IF9eCvzM0kqpbwy7Hk8UQ4tFkCoy9JqXhE0bFx1_K86dR5PeW66rdpnI1T0OqsdPKSla_84B2ayo4EIuPu4HG2uW_u5LK4PauTQpjJHWq7HcNwNMj4xkbXSyeYJ1yV5j2NRdMNnnyy_cOTmEga4Ckp93OvrLJICJ7S5unG-cyhq7EiVQe7H-OTZJ5_SpkWfi_w76W9nx9QsrNG4be0O42gNVpa-ju1HSVXj9uEUMOLZvDCiC07nwd3qmrz6t71ItJabI9TT_87lX5iCpunf0BwuqFkX5CYHdhPCJDifdDEixax4JbXP0Rh_ftxlr947fQZnoyJayjMI8-T5ImfkBeVCGIBhu_KHotpgR7WpcQTu2W2DgjRJj6uAmmGAe76s0__wznSIlborkJDEH9Xr9Fndc8iJGQn9TIFIOt04SJkkSub5v9UQ83eY2R2zkRIhjiSuoLyFyZ7mV_bme6pZb9Nk_AOALbD2wUVP7fCYM"
+      },
+      {
+       "name": "디럭스 더블",
+       "tags": [],
+       "image": "https://ads-partners.coupang.com/image1/B4lrHJBdE-l248RnByIdVk2kob9GjkPpWVUNfDDsaIq-A2Lei3C94DK3AKDVHknxp9K7bqfRD4bErdp8joYUBAIJf0JoJvF6kzcCGCOCQSolaQLn0dcPc43Nz-IrWJVNYyAvLtxwyBwkbYudKaH_HIevp2-Sw3L49kFb68a55LnE0QIwT5zCqn-i8sepenHc_t7eJhD1CtWAmLAJURtKTfsI3YWETESqN-rxj-RssEPTChg2fIzs7rV48O7eMdOKeiLAro_YQobBfExmfiZv_3DFMTZwaG4m0R_VQ25zwAD27X3UJMZKgy3fm_QN1laQDQOhxP-FyHPyc80mD1dbCJZIV2oJ5wMaU_fMUwx8fInG-YO30IoODGsCttm5u2UkUML-x-khaGy0yq9KV1Jdx4FBOIqX-pxowHxcuXpbnsh3DADciR87VYHwIk_5VRhdgEErhwnsSbIdLljIlFRSLoHGmG8vCJ00Relx5SSF2Qojn3A5Ws416lmafxUPkhQ0m_t6-BZ1GD5EOXd4pBAeEgdrmpylLcRjJX-EZhEKcwWRaQ=="
+      }
+     ],
+     "image": "img/2026-11-강원-실내-온수풀-온천/6.jpg",
+     "links": {
+      "coupang": "https://link.coupang.com/re/AFFTDP?lptag=AF1018300&pageKey=10000000570065&vendorItemId=70000005963184&itemId=20000048992034&traceid=V0-153-63ea83c94ae12c30&requestid=20261020204257123018184388&token=31850C%7CGM&pt=0&slot=1",
+      "agoda": null,
+      "official": "http://thenresort.com"
+     },
+     "honest": "",
+     "price_band": null,
+     "caption": "",
+     "no": 6
     }
    ]
   }
  ],
- "updated": "2026-10-19"
+ "updated": "2026-10-20"
 }

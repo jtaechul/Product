@@ -1,110 +1,110 @@
 [
  {
-  "hotel": "세인트존스 호텔",
-  "official_site": "https://new.stjohns.co.kr/",
+  "hotel": "더앤리조트",
+  "official_site": "http://thenresort.com",
   "crawl": {
-   "url": "https://new.stjohns.co.kr/",
-   "resolved_by": "request.json official_urls",
+   "url": "http://thenresort.com",
+   "resolved_by": "네이버 지역검색 '더앤리조트' link",
    "reason": "",
    "pages": [
-    "https://new.stjohns.co.kr/post/3851",
-    "https://new.stjohns.co.kr/post/3789",
-    "https://new.stjohns.co.kr/post/3790",
-    "https://new.stjohns.co.kr/post/161",
-    "https://new.stjohns.co.kr/accommodation/index/KID",
-    "https://new.stjohns.co.kr/accommodation/index/PER",
-    "https://new.stjohns.co.kr/post/1248",
-    "https://new.stjohns.co.kr/post/139",
-    "https://new.stjohns.co.kr/post/3585",
-    "https://new.stjohns.co.kr/post/141",
-    "https://new.stjohns.co.kr/post/3583",
-    "https://new.stjohns.co.kr/post/1521",
-    "https://new.stjohns.co.kr/post/3909",
-    "https://new.stjohns.co.kr"
+    "http://thenresort.com/kor/spa/spa01.asp",
+    "http://thenresort.com/kor/petspark/petspark03.asp",
+    "http://thenresort.com/kor/petspark/petspark09.asp",
+    "http://thenresort.com/kor/spa/spa0201.asp",
+    "http://thenresort.com/kor/spa/spa0202.asp",
+    "http://thenresort.com/kor/petspark/petspark01.asp",
+    "http://thenresort.com/kor/petspark/petspark02.asp",
+    "http://thenresort.com/kor/petspark/petspark04.asp",
+    "http://thenresort.com/kor/petspark/petspark05.asp",
+    "http://thenresort.com/kor/spa/spa02.asp",
+    "http://thenresort.com/kor/spa/spa0203.asp",
+    "http://thenresort.com/boad/bd_photo/3/egoread.asp?bd=3&seq=331",
+    "http://thenresort.com/kor/room/room09.asp",
+    "http://thenresort.com"
    ],
-   "tried": 57,
+   "tried": 47,
    "photos": 32
   },
   "shots": [
    {
     "n": 11,
-    "slot": "room",
+    "slot": "water",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/114f34599d49ced4ad2f61db33bb05d2.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "바다 생물 벽화로 꾸며진 키즈 더블룸과 어린이 침대가 놓여 있다."
+    "url": "http://thenresort.com/kor/images/spa/0101.jpg",
+    "page": "http://thenresort.com/kor/spa/spa01.asp",
+    "description": "천장이 뚫린 실내 스파 공간에 소나무 분재와 푸른 온수 풀이 보인다."
    },
    {
     "n": 12,
-    "slot": "room",
+    "slot": "water",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/15d1764c6ee38ee8beab253bddddf66c.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "동물 캐릭터 벽화와 유아용 보조 침대가 구비된 키즈 객실 내부이다."
+    "url": "http://thenresort.com/kor/images/spa/0104.jpg",
+    "page": "http://thenresort.com/kor/spa/spa01.asp",
+    "description": "실내 탕 너머 대형 유리창을 통해 소나무가 심긴 외부 스파 공간이 보인다."
    },
    {
     "n": 13,
-    "slot": "room",
+    "slot": "water",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/3443d0f35835954d23b02aaa5948d08f.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "공룡 벽화와 연두색 어린이 침대가 더블 침대 옆에 배치된 객실이다."
+    "url": "http://thenresort.com/kor/images/spa/020203.jpg",
+    "page": "http://thenresort.com/kor/spa/spa0202.asp",
+    "description": "청명한 하늘 아래 작은 목조 사우나 캐빈과 푸른 야외 스파 탕들이 어우러져 있다."
    },
    {
     "n": 14,
-    "slot": "special",
-    "source": "coupang",
-    "url": null,
-    "page": null,
-    "description": "푸른 해송 숲과 동해 모래사장을 따라 호텔 단지가 길게 뻗어 있다."
+    "slot": "room",
+    "source": "official",
+    "url": "http://thenresort.com/kor/images/room/1001.jpg",
+    "page": "http://thenresort.com/kor/petspark/petspark01.asp",
+    "description": "반려견 계단과 방석이 놓인 아늑한 더블베드 침실 내부가 보인다."
    },
    {
     "n": 15,
-    "slot": "special",
+    "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/post/2026/05/ed27d480ada26c24f36de08fe4c3d0de.jpg",
-    "page": "https://new.stjohns.co.kr/post/1248",
-    "description": "푸른 동해 바다 위로 작은 보트가 지나가는 수평선 풍경이다."
+    "url": "http://thenresort.com/kor/images/room/1002.jpg",
+    "page": "http://thenresort.com/kor/petspark/petspark01.asp",
+    "description": "침대 옆에 반려견 전용 계단과 원형 테이블이 놓인 깔끔한 객실 모습이다."
    },
    {
     "n": 16,
     "slot": "room",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2021/08/d9f0da26f6ce41a63e7947a9403320aa.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "동물 벽화와 어린이 전용 테이블이 있는 키즈 객실 전경이다."
+    "url": "http://thenresort.com/kor/images/room/1003.jpg",
+    "page": "http://thenresort.com/kor/petspark/petspark01.asp",
+    "description": "벽걸이 TV 아래 반려견 하우스와 쿠션, 식기 세트가 나란히 놓여 있다."
    },
    {
     "n": 17,
-    "slot": "room",
+    "slot": "special",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2024/06/b18b67bcd0b94aabe9f76180dff57265.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "바다 전망의 발코니와 반려견 계단 및 패드가 갖춰진 객실이다."
+    "url": "http://thenresort.com/kor/images/spa/0209.jpg",
+    "page": "http://thenresort.com/kor/spa/spa02.asp",
+    "description": "리조트 건물 앞 야외 공간에 나란히 자리한 삼각 지붕 형태의 핀란드식 사우나 캐빈이 보인다."
    },
    {
     "n": 18,
-    "slot": "room",
+    "slot": "special",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2024/06/65cb745dbe1cf10b87be12c4b8529f5a.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "소나무 숲과 바다가 내다보이는 발코니 창가에 강아지 두 마리가 서 있다."
+    "url": "http://thenresort.com/kor/images/petspark/3001.jpg",
+    "page": "http://thenresort.com/kor/petspark/petspark03.asp",
+    "description": "데크 테라스에 설치된 글램핑 텐트 앞에 원형 월풀 욕조가 자리 잡고 있다."
    },
    {
     "n": 19,
-    "slot": "room",
+    "slot": "special",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2026/07/5d4d1856e45082ced7bfbb94b504d68a.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/KID",
-    "description": "키즈 객실 내 침대 옆에 놓인 소형 냉장고와 캐릭터 쿠션이 보인다."
+    "url": "http://thenresort.com/kor/images/spa/020204.jpg",
+    "page": "http://thenresort.com/kor/spa/spa0202.asp",
+    "description": "배롱나무와 소나무 정원 한가운데 설치된 원형 분수에서 물줄기가 솟아오른다."
    },
    {
     "n": 20,
-    "slot": "room",
+    "slot": "special",
     "source": "official",
-    "url": "https://new.stjohns.co.kr/uploads/room/2020/11/034d4715652a511806b5515bb6febedf.jpg",
-    "page": "https://new.stjohns.co.kr/accommodation/index/PER",
-    "description": "침대 옆에 원형 테이블과 안락의자, 반려견 하우스가 놓여 있다."
+    "url": "http://thenresort.com/kor/images/petspark/2001.jpg",
+    "page": "http://thenresort.com/kor/petspark/petspark02.asp",
+    "description": "잔디마당에 반려견 어질리티 장애물과 소형 풀장이 마련되어 있다."
    }
   ]
  }
