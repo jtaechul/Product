@@ -130,8 +130,9 @@
 
   function toast(t){ const el = document.getElementById("toast"); el.textContent = t; el.classList.add("on"); setTimeout(()=>el.classList.remove("on"), 1600); }
 
+  const visible = f => ({...f, hotels: (f.hotels || []).filter(h => !h.hidden)});   // 미리보기만 한 숙소(hidden)는 공개하지 않는다 — 폴더 페이지 = 정식 제작이 있는 숙소만
   function renderList(){
-    const fs = DATA.folders || [];
+    const fs = (DATA.folders || []).map(visible).filter(f => f.hotels.length);
     if(!fs.length){ main.innerHTML = '<div class="empty">아직 올라온 폴더가 없습니다. 첫 번째 테마가 곧 올라옵니다.</div>'; return; }
     main.innerHTML = '<form class="findno" id="findNo"><label for="noIn">영상에서 본 번호</label><input id="noIn" type="number" min="1" inputmode="numeric" placeholder="예: 7"><button type="submit">찾기</button></form><div class="list">' + fs.map(f => `
       <a class="folder" href="#/f/${encodeURIComponent(f.slug)}">
@@ -176,8 +177,9 @@
   }
 
   function renderFolder(slug){
-    const f = (DATA.folders||[]).find(x => x.slug === slug);
-    if(!f){ location.hash = ""; return; }
+    const f0 = (DATA.folders||[]).find(x => x.slug === slug);
+    const f = f0 && visible(f0);
+    if(!f || !f.hotels.length){ location.hash = ""; return; }
     const hotels = [...f.hotels].sort((a,b) => a.rank - b.rank);
     main.innerHTML = `
       <a class="back" href="#">${ICON.back}폴더 목록</a>

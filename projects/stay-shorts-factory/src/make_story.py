@@ -1891,7 +1891,7 @@ def storyboard(text: dict, shots: dict, out: Path, report: dict) -> Path:
 def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int, folder: str, report: dict, preview: bool) -> str:
     lc = report.get("lens_check") or {}
     md = [f"# 시그니처 이야기 {'미리보기' if preview else '제작'} — {h['name']} · {req.get('region')} · {req.get('theme')} · {req.get('month')}",
-          f"구조: 장점 하나, 여러 관점 · 나레이션 + 가라오케 자막 + 음악 · 문장 {len(text['beats'])}개 · 프로필 {pos}번 ({folder}) · 영상에서는 숙소 이름 비공개", "",
+          f"구조: 핵심 장점 하나를 여러 관점으로 + 특장점 라벨 1~3개 + 요약 카드 · 나레이션 + 가라오케 자막 + 음악 · 문장 {len(text['beats'])}개 · 프로필 {pos}번 ({folder}) · 영상에서는 숙소 이름 비공개", "",
           "## 장점", "", f"- **{sig['name']}** — {sig.get('what') or ''}", f"- 근거(사실 {sig.get('fact_i')}): {sg._body(sig['fact'])}",
           f"- 다른 후보와 다른 점: {sig.get('vs_peers') or '-'}" + (" · **코드가 정한 장점(모델이 3번 못 고름)**" if sig.get("fallback") else ""), ""]
     deep = (report.get("deep_facts") or {}).get("facts") or []
@@ -2267,7 +2267,7 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
         peers = sg.peer_lines(req, h)
         text = write_story(models, sig, h, req, facts, shot_list, peers, toks, report)
         try:
-            pos = make_folder.place_hotel(req, h, pos0, None)
+            pos = make_folder.place_hotel(req, h, pos0, None, published=not preview)   # 미리보기 = 숨김 등록(번호만) · 공개는 정식 제작 성공 때
         except Exception as e:  # noqa: BLE001
             log(f"폴더 데이터 갱신 실패 ({str(e)[:80]}) — 순위표 위치로 대체")
             pos = pos0 or 1
@@ -2307,6 +2307,11 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
                + ("\n일부 장면의 움직임(물결·빛·커튼·카메라 이동)은 실제 사진을 바탕으로 AI로 만들었어요. 실제 모습과 다를 수 있어요." if ai else "")
                + ("\n사람·강아지 장면은 AI로 만든 연출이에요(실제 사람·반려견 아님)." if any(r.get("ok") and r.get("type") == "A" for r in v.get("clips", [])) else "")
                + "\n\n" + " ".join(text["hashtags"]))
+    if not preview:                                                                     # 정식 제작 성공 → 프로필 링크 페이지에 공개(폴더 페이지 = 영상이 있는 숙소만)
+        try:
+            make_folder.mark_published(req, h["name"])
+        except Exception as e:  # noqa: BLE001
+            log(f"폴더 공개 표시 실패({str(e)[:60]})")
     sb = report.get("storyboard") or {}
     n_sheets = len(sb.get("sheets") or [])
     n_ins = len(report.get("inserts_used") or [])

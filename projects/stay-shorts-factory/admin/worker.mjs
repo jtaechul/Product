@@ -24,7 +24,8 @@ const DISC_PATH = `${P}/requests/discover/request.json`;
 const REGIONS = ["강원", "경기", "제주", "부산", "경남", "경북", "전남", "전북", "충남", "충북", "서울", "인천", "대전", "대구", "광주", "울산", "세종"];
 const MEDIA = { "video.mp4": "video/mp4", "narration_preview.mp3": "audio/mpeg", "preview.md": "text/plain; charset=utf-8" };
 const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.py MONTH_KRW 와 같은 값)
-// 형식별 예상 비용(원). 기존 9컷: 미리보기 글·음성 약 80 / 정식 제작(미니어처 3컷 + Veo 1컷) 약 2,500 (실측).
+// 형식별 예상 비용(원). 관리실은 시그니처 이야기 하나만 고른다(2026-10-20 점검: 옛 9컷 형식은 v5 에서 폐기 — 선택지 제거 · solo 비용은 코드 호환용).
+// 기존 9컷: 미리보기 글·음성 약 80 / 정식 제작(미니어처 3컷 + Veo 1컷) 약 2,500 (실측).
 // 시그니처 v4 이야기(2026-10-15 운영자 "진행해" · 장점 하나·여러 관점 · make_story): 미리보기 = 글·비전·음성(받아쓰기 포함) 약 90 + v6(2026-10-18) 안내문 읽기 약 25 · AI 영상 없음.
 //   제작(v5 2026-10-18) = 미리보기 대본·음성 재사용 + 화면 계획 AI 컷 4개(사람·강아지·환경 순간 컷 · 294 × 4 = 1,176) + 검수 약 3 + 글 ≈ 1,300, 미리보기 없이 ≈ 1,420
 // v7(2026-10-18 운영자 C안 "스토리보드는 이미지 한 장에 여러 씬, 돈 아껴"): 미리보기 = 글·음성·안내문 읽기 약 115 + 씬 스토리보드 시트(2×2 · 참조 사진별 1장 · 약 98원 × 4~6장) + 검수 ≈ 700
@@ -306,8 +307,8 @@ async function state(env) {
   const blocks = activeBlocks(blocked, now);
   const runList = (Array.isArray(runs) ? runs : []).map((r) => ({ ...r, media: r.kind === "produce" ? media[String(r.number)] || [] : [] }));
   const sigPreviews = sigPreviewIndex(Array.isArray(runs) ? runs : []);
-  const done = new Set();
-  for (const f of folders.folders || []) for (const h of f.hotels || []) done.add(h.name);
+  const done = new Set(), previewed = new Set();                               // 폴더 페이지에 보이는 숙소(정식 제작 있음) · 미리보기만 해서 숨김 등록된 숙소
+  for (const f of folders.folders || []) for (const h of f.hotels || []) (h.hidden ? previewed : done).add(h.name);
   const officials = req.official_urls || {};
   const list = (cands.candidates || []).slice(0, 12).map((c, i) => ({
     rank: i + 1,
@@ -315,6 +316,7 @@ async function state(env) {
     city: c.city || "",
     score: c.score,
     done: done.has(c.name),
+    previewed: !done.has(c.name) && previewed.has(c.name),
     official: !!officials[c.name],
     sig_block: blocks[c.name] || null,
   }));

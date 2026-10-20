@@ -129,7 +129,8 @@
      "honest": "",
      "price_band": null,
      "caption": "",
-     "no": 3
+     "no": 3,
+     "hidden": true
     },
     {
      "rank": 3,
@@ -195,7 +196,8 @@
      "honest": "",
      "price_band": null,
      "caption": "",
-     "no": 2
+     "no": 2,
+     "hidden": true
     },
     {
      "rank": 4,
@@ -364,7 +366,8 @@
      "honest": "",
      "price_band": null,
      "caption": "",
-     "no": 6
+     "no": 6,
+     "hidden": true
     }
    ]
   }

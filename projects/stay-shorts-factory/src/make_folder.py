@@ -168,8 +168,10 @@ def update(req: dict, hotels: list[dict], script: dict | None) -> Path:
     return OUT
 
 
-def update_hotel(req: dict, h: dict, rank: int) -> Path:
-    """숙소 하나만 테마 폴더에 넣거나 갱신한다 (단일 숙소 영상 모드). 같은 폴더의 다른 숙소는 그대로 둔다."""
+def update_hotel(req: dict, h: dict, rank: int, published: bool | None = None) -> Path:
+    """숙소 하나만 테마 폴더에 넣거나 갱신한다 (단일 숙소 영상 모드). 같은 폴더의 다른 숙소는 그대로 둔다.
+    published: True = 공개(정식 제작 성공) · False = 미리보기(새 숙소는 **숨김** 등록 — 번호만 받고 공개 페이지엔 안 보인다 · 이미 공개된 숙소는 숨기지 않는다) · None = 옛 호출(상태 유지).
+    2026-10-20 점검: 규칙 '폴더 페이지 = 영상이 나간 숙소만'(2026-10-12)인데 미리보기가 숙소를 공개 페이지에 올리고 있었다."""
     slug = slug_of(str(req.get("month") or ""), str(req.get("theme") or ""), str(req.get("region") or ""))
     data = {"channel": CHANNEL, "folders": []}
     if OUT.exists():
@@ -195,6 +197,14 @@ def update_hotel(req: dict, h: dict, rank: int) -> Path:
         entry["no"] = max([int(x.get("no") or 0) for f in (data.get("folders") or []) for x in (f.get("hotels") or [])] + [0]) + 1
     if prev and not entry.get("image"):
         entry["image"] = prev.get("image")
+    if published is True:
+        hidden = False
+    elif published is False:
+        hidden = True if prev is None else bool(prev.get("hidden"))
+    else:
+        hidden = bool(prev.get("hidden")) if prev else False
+    if hidden:
+        entry["hidden"] = True
     folder["hotels"] = [x for x in folder["hotels"] if x.get("name") != h["name"]] + [entry]
     folder["hotels"].sort(key=lambda e: e.get("rank") or 99)
     folder["updated"] = date.today().isoformat()
@@ -202,8 +212,33 @@ def update_hotel(req: dict, h: dict, rank: int) -> Path:
     data["updated"] = date.today().isoformat()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    log(f"폴더 '{folder['title']}' 에 {h['name']} 갱신 (순위 {rank} · 고유 번호 {entry['no']}) → 숙소 {len(folder['hotels'])}곳")
+    log(f"폴더 '{folder['title']}' 에 {h['name']} 갱신 (순위 {rank} · 고유 번호 {entry['no']}{' · 숨김(미리보기)' if entry.get('hidden') else ''}) → 숙소 {len(folder['hotels'])}곳")
     return OUT
+
+
+def mark_published(req: dict, name: str) -> bool:
+    """정식 제작이 성공한 숙소를 공개 페이지에 보이게 한다(숨김 해제). 바뀐 것이 있으면 True."""
+    if not OUT.exists():
+        return False
+    try:
+        data = json.loads(OUT.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return False
+    slug = slug_of(str(req.get("month") or ""), str(req.get("theme") or ""), str(req.get("region") or ""))
+    changed = False
+    for f in data.get("folders") or []:
+        if f.get("slug") != slug:
+            continue
+        for x in f.get("hotels") or []:
+            if x.get("name") == name and x.get("hidden"):
+                x.pop("hidden", None); changed = True
+        if changed:
+            f["updated"] = date.today().isoformat()
+    if changed:
+        data["updated"] = date.today().isoformat()
+        OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        log(f"폴더 공개: {name} (정식 제작 성공)")
+    return changed
 
 
 def save_cover(path: str | Path, slug: str, rank: int) -> str | None:
@@ -223,7 +258,7 @@ def save_cover(path: str | Path, slug: str, rank: int) -> str | None:
         return None
 
 
-def place_hotel(req: dict, h: dict, rank: int, cover: str | Path | None = None) -> int:
+def place_hotel(req: dict, h: dict, rank: int, cover: str | Path | None = None, published: bool | None = None) -> int:
     """단일 숙소 영상용: 숙소를 테마 폴더에 넣고(update_hotel) **숙소 고유 번호(no)** 를 돌려준다.
     영상 끝 카드·나레이션의 "프로필 N번" 은 이 값이다 (2026-10-12 운영자 결정 — 폴더 안 순번이 아니라 전 폴더 통틀어 고유한 번호). 2026-10-11 이름 비공개 결정."""
     slug = slug_of(str(req.get("month") or ""), str(req.get("theme") or ""), str(req.get("region") or ""))
@@ -241,7 +276,7 @@ def place_hotel(req: dict, h: dict, rank: int, cover: str | Path | None = None) 
         img = save_cover(cover, slug, rank)
         if img:
             hh["image_local"] = img
-    update_hotel(req, hh, rank)
+    update_hotel(req, hh, rank, published)
     data = json.loads(OUT.read_text(encoding="utf-8"))
     folder = next(f for f in data["folders"] if f.get("slug") == slug)
     return int(next(x for x in folder["hotels"] if x["name"] == h["name"])["no"])
