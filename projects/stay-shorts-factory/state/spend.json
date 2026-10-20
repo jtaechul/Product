@@ -766,5 +766,35 @@
   "kind": "gemini_est",
   "krw": 113,
   "note": "2026-10-20-admin-sig-preview-mSZ4 signature AI 글·음성 40회 (추정)"
+ },
+ {
+  "date": "2026-10-20",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 씬 스토리보드 시트 sheet_5.png 2K (추정)"
+ },
+ {
+  "date": "2026-10-20",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 씬 스토리보드 시트 sheet_6.png 2K (추정)"
+ },
+ {
+  "date": "2026-10-20",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 씬 스토리보드 시트 sheet_7.png 2K (추정)"
+ },
+ {
+  "date": "2026-10-20",
+  "kind": "image",
+  "krw": 98,
+  "note": "gemini-3.1-flash-image 씬 스토리보드 시트 sheet_8.png 2K (추정)"
+ },
+ {
+  "date": "2026-10-20",
+  "kind": "gemini_est",
+  "krw": 23,
+  "note": "2026-10-20-admin-sig-redo-x9NF signature AI 글·음성 11회 (추정)"
  }
 ]
