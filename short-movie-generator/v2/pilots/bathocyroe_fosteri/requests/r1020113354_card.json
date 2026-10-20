@@ -1,0 +1,27 @@
+{
+  "id": "r1020113354_card",
+  "kind": "gen_images",
+  "purpose": "생물 카드(자동) — 이후 콘티·영상의 형태 기준",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "card_side",
+      "aspect": "1:1",
+      "refs": [
+        "out/r1020113338_refs/ref_00.jpg"
+      ],
+      "prompt": "A single accurately sculpted, hand-painted collectible miniature figurine of Bathocyroe fosteri, photographed as a macro studio shot. Shape, proportions and colour pattern must be anatomically faithful to the attached real reference photos: The body is mostly transparent and bioluminescent, featuring a rounded upper dome that splits into two large, prominent oral lobes extending downwards. The overall shape resembles a deeply cleft bell or heart. The surface is smooth, with short comb rows visible along the upper ridges. Inside the transparent body, a central gut structure is visible, pigmented red on its inner walls. Thin, thread-like tentacles and internal canals weave through the lobes. It has no eyes, no hard armor, and no true limbs, relying on its large, flap-like oral lobes and internal tentacles for feeding. Satin hand-painted finish with faint brush texture — clearly a crafted figure, not a slick living animal (운영자 승인 2026-10-01). Shallow depth of field (tilt-shift macro), warm desk-lamp light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans. No eyes, no hard shell or armor, no fins, no jointed legs, no opaque body (must be transparent). View: three-quarter side view of the whole body."
+    },
+    {
+      "name": "card_top",
+      "aspect": "1:1",
+      "refs": [
+        "out/r1020113338_refs/ref_00.jpg"
+      ],
+      "prompt": "A single accurately sculpted, hand-painted collectible miniature figurine of Bathocyroe fosteri, photographed as a macro studio shot. Shape, proportions and colour pattern must be anatomically faithful to the attached real reference photos: The body is mostly transparent and bioluminescent, featuring a rounded upper dome that splits into two large, prominent oral lobes extending downwards. The overall shape resembles a deeply cleft bell or heart. The surface is smooth, with short comb rows visible along the upper ridges. Inside the transparent body, a central gut structure is visible, pigmented red on its inner walls. Thin, thread-like tentacles and internal canals weave through the lobes. It has no eyes, no hard armor, and no true limbs, relying on its large, flap-like oral lobes and internal tentacles for feeding. Satin hand-painted finish with faint brush texture — clearly a crafted figure, not a slick living animal (운영자 승인 2026-10-01). Shallow depth of field (tilt-shift macro), warm desk-lamp light, plain neutral mid-grey seamless backdrop. Exactly one animal, fully inside the frame. No text, no letters, no labels, no watermark, no logo, no scale bar, no collage, no multiple panels, no split screen, no extra animals, no humans. No eyes, no hard shell or armor, no fins, no jointed legs, no opaque body (must be transparent). View: straight top-down view of the whole body."
+    }
+  ]
+}

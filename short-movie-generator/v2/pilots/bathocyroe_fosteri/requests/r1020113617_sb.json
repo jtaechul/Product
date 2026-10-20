@@ -1,0 +1,57 @@
+{
+  "id": "r1020113617_sb",
+  "kind": "gen_images",
+  "purpose": "8컷 콘티(자동) — 컷별 시작 이미지 · 2×2 격자",
+  "model_preference": [
+    "gemini-3-pro-image-preview",
+    "gemini-2.5-flash-image"
+  ],
+  "items": [
+    {
+      "name": "grid1",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/r1020113354_card/card_side.jpg",
+        "out/r1020113354_card/card_top.jpg",
+        "out/r1020113338_refs/ref_00.jpg",
+        "../_shared/style/style_desk_chart.jpg",
+        "../_shared/style/style_ocean_block.jpg"
+      ],
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described below. Shared look for all panels: a handcrafted TABLETOP miniature diorama shot like toy / scale-model photography: the whole world is a small hand-made set built on a wooden worktable or inside an open cardboard or wooden display box, lit by a warm desk lamp; strong tilt-shift with shallow depth of field and a slightly high camera looking down onto the set; every prop and the seabed are cute, chunky and visibly hand-made (felt, cotton-wool marine snow hanging on fine threads, crumpled blue cellophane water, painted cardboard backdrops with visible seams, paper-cut rocks and kelp, clay with fingerprints, bent wire, tiny LED fairy-light bulbs for any glow); muted warm palette. the creature is the ONLY precise object: an accurately sculpted, hand-painted collectible figurine with satin paint and faint brush texture, with exactly the real anatomy, proportions and colours. It must match the attached replica (creature card) and real reference photo exactly and be identical in every panel: The body is mostly transparent and bioluminescent, featuring a rounded upper dome that splits into two large, prominent oral lobes extending downwards. The overall shape resembles a deeply cleft bell or heart. The surface is smooth, with short comb rows visible along the upper ridges. Inside the transparent body, a central gut structure is visible, pigmented red on its inner walls. Thin, thread-like tentacles and internal canals weave through the lobes. It has no eyes, no hard armor, and no true limbs, relying on its large, flap-like oral lobes and internal tentacles for feeding. No eyes, no hard shell or armor, no fins, no jointed legs, no opaque body (must be transparent). STYLE REFERENCES: the LAST 2 attached images come from another episode of the same series — copy ONLY their hand-made tabletop-diorama look (set building, materials, desk-lamp light, tilt-shift, camera height); never copy their animal, map or objects literally. Clay figurines, boats and vehicles never make the creature look giant. Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, logos, watermarks. Painted clay figurines are allowed; never real human hands or people. Every animal is drawn as what it REALLY is — a nickname like 'sea pig' (a sea cucumber) never means a pig; never draw land animals.\nPanel 1 (top-left, medium shot): A medium shot of the transparent, bioluminescent ctenophore figurine hanging upside down in a dark, deep-sea setting made of crumpled blue cellophane. It is suspended by barely visible fine threads. The upper quarter of the frame is dark and uncluttered for captions. Shallow depth of field blurs the background. Hand-made props: crumpled blue cellophane, fine suspension threads.\nPanel 2 (top-right, close shot): A close-up shot focusing on the two large, prominent oral lobes of the ctenophore figurine. Tiny LED fairy lights illuminate its transparent, deeply cleft bell-like body, revealing the red-pigmented inner gut. Small bits of cotton-wool marine snow float around it on fine wires. The upper quarter remains calm and dark. Hand-made props: tiny LED fairy lights, cotton-wool marine snow.\nPanel 3 (bottom-left, wide shot): A wide shot showing the edge of a wooden worktable. On the table, a miniature diorama features the ctenophore figurine suspended in a clear resin block, next to a tiny clay scientist figurine looking at it. Behind them is a painted cardboard backdrop of a world map. The warm glow of a desk lamp illuminates the scene. The upper quarter is an uncluttered painted wall. Hand-made props: painted cardboard map, clay scientist figurine, wooden desk edge.\nPanel 4 (bottom-right, wide shot): A wide shot inside an open cardboard display box, with the corrugated edge visible on the side. The ctenophore figurine is posed dynamically with its oral lobes flared outwards as if flapping to swim. It moves past paper-cut deep-sea rocks, suspended by thin bent wires. The upper quarter is calm and softly lit. Hand-made props: cardboard display box, paper-cut rocks, bent wire.",
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "p01",
+          "p02",
+          "p03",
+          "p04"
+        ]
+      }
+    },
+    {
+      "name": "grid2",
+      "aspect": "9:16",
+      "size": "2K",
+      "refs": [
+        "out/r1020113354_card/card_side.jpg",
+        "out/r1020113354_card/card_top.jpg",
+        "out/r1020113338_refs/ref_00.jpg",
+        "../_shared/style/style_desk_chart.jpg",
+        "../_shared/style/style_ocean_block.jpg"
+      ],
+      "prompt": "Create ONE image that is a clean 2x2 grid of FOUR separate, equal-sized vertical 9:16 photographs separated by thin plain white gutters, read left-to-right, top-to-bottom. Each panel is a DIFFERENT scene and camera angle as described below. Shared look for all panels: a handcrafted TABLETOP miniature diorama shot like toy / scale-model photography: the whole world is a small hand-made set built on a wooden worktable or inside an open cardboard or wooden display box, lit by a warm desk lamp; strong tilt-shift with shallow depth of field and a slightly high camera looking down onto the set; every prop and the seabed are cute, chunky and visibly hand-made (felt, cotton-wool marine snow hanging on fine threads, crumpled blue cellophane water, painted cardboard backdrops with visible seams, paper-cut rocks and kelp, clay with fingerprints, bent wire, tiny LED fairy-light bulbs for any glow); muted warm palette. the creature is the ONLY precise object: an accurately sculpted, hand-painted collectible figurine with satin paint and faint brush texture, with exactly the real anatomy, proportions and colours. It must match the attached replica (creature card) and real reference photo exactly and be identical in every panel: The body is mostly transparent and bioluminescent, featuring a rounded upper dome that splits into two large, prominent oral lobes extending downwards. The overall shape resembles a deeply cleft bell or heart. The surface is smooth, with short comb rows visible along the upper ridges. Inside the transparent body, a central gut structure is visible, pigmented red on its inner walls. Thin, thread-like tentacles and internal canals weave through the lobes. It has no eyes, no hard armor, and no true limbs, relying on its large, flap-like oral lobes and internal tentacles for feeding. No eyes, no hard shell or armor, no fins, no jointed legs, no opaque body (must be transparent). STYLE REFERENCES: the LAST 2 attached images come from another episode of the same series — copy ONLY their hand-made tabletop-diorama look (set building, materials, desk-lamp light, tilt-shift, camera height); never copy their animal, map or objects literally. Clay figurines, boats and vehicles never make the creature look giant. Keep the upper quarter of every panel calm and uncluttered. NEVER draw text, letters, numbers, labels, arrows, logos, watermarks. Painted clay figurines are allowed; never real human hands or people. Every animal is drawn as what it REALLY is — a nickname like 'sea pig' (a sea cucumber) never means a pig; never draw land animals.\nPanel 1 (top-left, wide shot): A wide shot showing a green cutting mat at the bottom edge of the frame. Above it, a miniature deep-sea diorama features the ctenophore figurine hanging completely motionless, upside down. A tiny, hand-painted toy ROV submarine made of clay and wire hovers nearby, shining a tiny LED beam onto the creature. The upper quarter is a smooth, uncluttered dark backdrop. Hand-made props: cutting mat, toy clay ROV submarine.\nPanel 2 (top-right, wide shot): A dynamic, striking wide shot from a slightly high angle. The ctenophore figurine's large oral lobes are spread wide open like a parachute, engulfing a tiny, brightly painted clay copepod prey. The scene is dramatized with warm, directional miniature spotlighting, with cotton-wool marine snow blurring in the strong tilt-shift depth of field. The upper quarter is left dark and clear. Hand-made props: clay copepod prey, cotton-wool marine snow.\nPanel 3 (bottom-left, close shot): A close-up shot focused on the inner structure of the ctenophore. Fine, thread-like tentacles are wrapped around the tiny clay prey, pulling it upwards into the central gut structure, which is vividly painted with red satin paint. The transparent body catches the warm light. The upper quarter is softly blurred and empty. Hand-made props: fine thread tentacles, red painted clay gut.\nPanel 4 (bottom-right, wide shot): A wide shot showing the edge of a warm desk lamp hood at the top right corner, leaving the rest of the upper area calm and dark. The ctenophore figurine hangs upside down, its bioluminescence very dim, receding into the deep shadows of a black painted cardboard backdrop. Small bits of felt marine snow hang motionless in the fading light. Hand-made props: black painted cardboard, desk lamp hood, felt marine snow.",
+      "split": {
+        "rows": 2,
+        "cols": 2,
+        "names": [
+          "p05",
+          "p06",
+          "p07",
+          "p08"
+        ]
+      }
+    }
+  ]
+}

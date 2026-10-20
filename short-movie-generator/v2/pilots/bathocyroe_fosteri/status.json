@@ -57,8 +57,14 @@
       "approved_at": "2026-10-20T11:32:46Z"
     },
     "storyboard": {
-      "state": "working",
-      "notes": []
+      "state": "review",
+      "notes": [
+        {
+          "at": "2026-10-20T11:37:10Z",
+          "kind": "auto",
+          "text": "스토리보드 자동 작성 완료 — 승인 대기"
+        }
+      ]
     },
     "video": {
       "state": "locked",
@@ -470,6 +476,123 @@
           "source_title": "Wikipedia(en) Bathocyroe fosteri"
         }
       ]
+    },
+    "storyboard": {
+      "sheet": "out/r1020113617_sb/storyboard.jpg",
+      "request": "r1020113617_sb",
+      "card": [
+        "out/r1020113354_card/card_side.jpg",
+        "out/r1020113354_card/card_top.jpg",
+        "out/r1020113338_refs/ref_00.jpg"
+      ],
+      "compare": "out/r1020113354_card/compare.jpg",
+      "card_check": {
+        "items": [
+          {
+            "item": "전체적으로 투명하고 생물 발광을 하는 둥근 돔 형태의 몸체",
+            "verdict": "pass",
+            "note_ko": "모형이 투명한 돔 형태를 실제와 유사하게 잘 구현했습니다."
+          },
+          {
+            "item": "아래로 길게 뻗은 두 개의 커다란 구강 엽",
+            "verdict": "pass",
+            "note_ko": "두 개의 커다란 구강 엽이 아래로 뻗은 형태가 일치합니다."
+          },
+          {
+            "item": "몸체 상단 능선을 따라 나 있는 짧은 빗즐",
+            "verdict": "pass",
+            "note_ko": "상단 능선을 따라 늘어선 빗즐 구조가 잘 표현되어 있습니다."
+          },
+          {
+            "item": "투명한 몸체 중앙에 위치한 붉은색 색소의 내장",
+            "verdict": "pass",
+            "note_ko": "몸체 중앙에 붉은색 내장 구조가 동일하게 위치해 있습니다."
+          },
+          {
+            "item": "구강 엽 내부와 주변에 얽혀 있는 가늘고 긴 촉수",
+            "verdict": "pass",
+            "note_ko": "구강 엽 내부의 가느다란 선형 구조들이 잘 재현되었습니다."
+          },
+          {
+            "item": "눈, 뼈대, 단단한 껍질이나 관절이 있는 다리 없음",
+            "verdict": "pass",
+            "note_ko": "모형과 실제 사진 모두 해당 특징들이 존재하지 않습니다."
+          },
+          {
+            "item": "구강 엽을 가로지르는 전체 너비는 2~4cm로 제작",
+            "verdict": "unknown",
+            "note_ko": "사진상으로는 모형과 실제 생물의 크기를 확인할 수 없습니다."
+          }
+        ],
+        "error": ""
+      },
+      "checklist": [
+        "전체적으로 투명하고 생물 발광을 하는 둥근 돔 형태의 몸체",
+        "아래로 길게 뻗은 두 개의 커다란 구강 엽",
+        "몸체 상단 능선을 따라 나 있는 짧은 빗즐",
+        "투명한 몸체 중앙에 위치한 붉은색 색소의 내장",
+        "구강 엽 내부와 주변에 얽혀 있는 가늘고 긴 촉수",
+        "눈, 뼈대, 단단한 껍질이나 관절이 있는 다리 없음",
+        "구강 엽을 가로지르는 전체 너비는 2~4cm로 제작"
+      ],
+      "panels": [
+        {
+          "cut": 1,
+          "file": "out/r1020113617_sb/p01.jpg",
+          "desc": "A medium shot of the transparent, bioluminescent ctenophore figurine hanging upside down in a dark, deep-sea setting made of crumpled blue cellophane. It is suspended by barely visible fine threads. The upper quarter of the frame is dark and uncluttered for captions. Shallow depth of field blurs the background.",
+          "shot": "medium",
+          "motion": "omni"
+        },
+        {
+          "cut": 2,
+          "file": "out/r1020113617_sb/p02.jpg",
+          "desc": "A close-up shot focusing on the two large, prominent oral lobes of the ctenophore figurine. Tiny LED fairy lights illuminate its transparent, deeply cleft bell-like body, revealing the red-pigmented inner gut. Small bits of cotton-wool marine snow float around it on fine wires. The upper quarter remains calm and dark.",
+          "shot": "close",
+          "motion": "omni"
+        },
+        {
+          "cut": 3,
+          "file": "out/r1020113617_sb/p03.jpg",
+          "desc": "A wide shot showing the edge of a wooden worktable. On the table, a miniature diorama features the ctenophore figurine suspended in a clear resin block, next to a tiny clay scientist figurine looking at it. Behind them is a painted cardboard backdrop of a world map. The warm glow of a desk lamp illuminates the scene. The upper quarter is an uncluttered painted wall.",
+          "shot": "wide",
+          "motion": "still"
+        },
+        {
+          "cut": 4,
+          "file": "out/r1020113617_sb/p04.jpg",
+          "desc": "A wide shot inside an open cardboard display box, with the corrugated edge visible on the side. The ctenophore figurine is posed dynamically with its oral lobes flared outwards as if flapping to swim. It moves past paper-cut deep-sea rocks, suspended by thin bent wires. The upper quarter is calm and softly lit.",
+          "shot": "wide",
+          "motion": "omni"
+        },
+        {
+          "cut": 5,
+          "file": "out/r1020113617_sb/p05.jpg",
+          "desc": "A wide shot showing a green cutting mat at the bottom edge of the frame. Above it, a miniature deep-sea diorama features the ctenophore figurine hanging completely motionless, upside down. A tiny, hand-painted toy ROV submarine made of clay and wire hovers nearby, shining a tiny LED beam onto the creature. The upper quarter is a smooth, uncluttered dark backdrop.",
+          "shot": "wide",
+          "motion": "still"
+        },
+        {
+          "cut": 6,
+          "file": "out/r1020113617_sb/p06.jpg",
+          "desc": "A dynamic, striking wide shot from a slightly high angle. The ctenophore figurine's large oral lobes are spread wide open like a parachute, engulfing a tiny, brightly painted clay copepod prey. The scene is dramatized with warm, directional miniature spotlighting, with cotton-wool marine snow blurring in the strong tilt-shift depth of field. The upper quarter is left dark and clear.",
+          "shot": "wide",
+          "motion": "omni"
+        },
+        {
+          "cut": 7,
+          "file": "out/r1020113617_sb/p07.jpg",
+          "desc": "A close-up shot focused on the inner structure of the ctenophore. Fine, thread-like tentacles are wrapped around the tiny clay prey, pulling it upwards into the central gut structure, which is vividly painted with red satin paint. The transparent body catches the warm light. The upper quarter is softly blurred and empty.",
+          "shot": "close",
+          "motion": "still"
+        },
+        {
+          "cut": 8,
+          "file": "out/r1020113617_sb/p08.jpg",
+          "desc": "A wide shot showing the edge of a warm desk lamp hood at the top right corner, leaving the rest of the upper area calm and dark. The ctenophore figurine hangs upside down, its bioluminescence very dim, receding into the deep shadows of a black painted cardboard backdrop. Small bits of felt marine snow hang motionless in the fading light.",
+          "shot": "wide",
+          "motion": "still"
+        }
+      ]
     }
   },
   "checks": {},
@@ -483,17 +606,17 @@
     },
     "storyboard": {
       "stage": "storyboard",
-      "status": "running",
-      "at": "2026-10-20T11:32:46Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-20T11:37:10Z",
+      "action": "write_storyboard",
+      "text": "스토리보드 자동 작성 완료 — 승인 대기"
     }
   },
   "cost": {
     "estimate": {
       "script": 0.05,
       "storyboard": 0.54,
-      "video": 4.8
+      "video": 2.4
     },
     "spent": [
       {
@@ -505,6 +628,16 @@
         "at": "2026-10-20T04:34:40Z",
         "what": "대본 자동 작성(AI+나레이션)",
         "usd": 0.05
+      },
+      {
+        "at": "2026-10-20T11:34:40Z",
+        "what": "생물 카드 2장",
+        "usd": 0.268
+      },
+      {
+        "at": "2026-10-20T11:37:10Z",
+        "what": "콘티 격자 2장",
+        "usd": 0.268
       }
     ]
   }

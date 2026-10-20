@@ -1,0 +1,78 @@
+{
+  "status": "자동 생성(운영자 승인 대기)",
+  "at": "2026-10-20T11:34:40Z",
+  "anatomy": "The body is mostly transparent and bioluminescent, featuring a rounded upper dome that splits into two large, prominent oral lobes extending downwards. The overall shape resembles a deeply cleft bell or heart. The surface is smooth, with short comb rows visible along the upper ridges. Inside the transparent body, a central gut structure is visible, pigmented red on its inner walls. Thin, thread-like tentacles and internal canals weave through the lobes. It has no eyes, no hard armor, and no true limbs, relying on its large, flap-like oral lobes and internal tentacles for feeding.",
+  "forbidden": "No eyes, no hard shell or armor, no fins, no jointed legs, no opaque body (must be transparent).",
+  "size_note": "Measures 2 to 4 cm across the oral lobes.",
+  "checklist": [
+    "전체적으로 투명하고 생물 발광을 하는 둥근 돔 형태의 몸체",
+    "아래로 길게 뻗은 두 개의 커다란 구강 엽",
+    "몸체 상단 능선을 따라 나 있는 짧은 빗즐",
+    "투명한 몸체 중앙에 위치한 붉은색 색소의 내장",
+    "구강 엽 내부와 주변에 얽혀 있는 가늘고 긴 촉수",
+    "눈, 뼈대, 단단한 껍질이나 관절이 있는 다리 없음",
+    "구강 엽을 가로지르는 전체 너비는 2~4cm로 제작"
+  ],
+  "check": {
+    "items": [
+      {
+        "item": "전체적으로 투명하고 생물 발광을 하는 둥근 돔 형태의 몸체",
+        "verdict": "pass",
+        "note_ko": "모형이 투명한 돔 형태를 실제와 유사하게 잘 구현했습니다."
+      },
+      {
+        "item": "아래로 길게 뻗은 두 개의 커다란 구강 엽",
+        "verdict": "pass",
+        "note_ko": "두 개의 커다란 구강 엽이 아래로 뻗은 형태가 일치합니다."
+      },
+      {
+        "item": "몸체 상단 능선을 따라 나 있는 짧은 빗즐",
+        "verdict": "pass",
+        "note_ko": "상단 능선을 따라 늘어선 빗즐 구조가 잘 표현되어 있습니다."
+      },
+      {
+        "item": "투명한 몸체 중앙에 위치한 붉은색 색소의 내장",
+        "verdict": "pass",
+        "note_ko": "몸체 중앙에 붉은색 내장 구조가 동일하게 위치해 있습니다."
+      },
+      {
+        "item": "구강 엽 내부와 주변에 얽혀 있는 가늘고 긴 촉수",
+        "verdict": "pass",
+        "note_ko": "구강 엽 내부의 가느다란 선형 구조들이 잘 재현되었습니다."
+      },
+      {
+        "item": "눈, 뼈대, 단단한 껍질이나 관절이 있는 다리 없음",
+        "verdict": "pass",
+        "note_ko": "모형과 실제 사진 모두 해당 특징들이 존재하지 않습니다."
+      },
+      {
+        "item": "구강 엽을 가로지르는 전체 너비는 2~4cm로 제작",
+        "verdict": "unknown",
+        "note_ko": "사진상으로는 모형과 실제 생물의 크기를 확인할 수 없습니다."
+      }
+    ],
+    "error": ""
+  },
+  "refs": [
+    {
+      "file": "out/r1020113338_refs/ref_00.jpg",
+      "credit": "\nPhoto courtesy of Marsh Youngbluth, no known copyright restrictions (public domain)",
+      "license": "pd"
+    }
+  ],
+  "use_as_reference": [
+    {
+      "file": "out/r1020113354_card/card_side.jpg",
+      "role": "생물 카드(자동)"
+    },
+    {
+      "file": "out/r1020113354_card/card_top.jpg",
+      "role": "생물 카드(자동)"
+    },
+    {
+      "file": "out/r1020113338_refs/ref_00.jpg",
+      "role": "실사 기준"
+    }
+  ],
+  "compare": "out/r1020113354_card/compare.jpg"
+}
