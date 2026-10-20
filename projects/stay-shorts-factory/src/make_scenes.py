@@ -122,7 +122,8 @@ def plan_scenes(beats: list[dict], shots: dict, dog: bool, report: dict, end_sce
             continue
         if not end_scene and j == n - 1 and str(b.get("lens") or "") in ("제안", "약속"):
             continue
-        base_t = order[min(len(order) - 1, int(j * len(order) / max(1, n - 1)))] if n > 1 else "day"
+        base_t = str(b.get("scene_time") or "") or (order[min(len(order) - 1, int(j * len(order) / max(1, n - 1)))] if n > 1 else "day")   # v10.2b: 계획에 적힌 시간대 우선(문장을 빼도 시트 키 유지)
+        b["scene_time"] = base_t
         m = -1
         for sid in b.get("shots") or []:
             if sid not in shots or shots[sid].get("insert"):                             # v10.3: 재사용 계획(문제 시트만 다시)엔 인서트 컷이 이미 들어 있다 — 씬 아님

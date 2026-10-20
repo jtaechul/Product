@@ -1922,6 +1922,18 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
         if report.get("sign_photos_dropped"):
             md.append(f"- 간판·안내판 사진 컷 {', '.join(report['sign_photos_dropped'])} 은 뺌(v10.3)")
         md.append("")
+    tr = report.get("text_rules") or {}
+    if tr.get("dropped") or tr.get("caption") or tr.get("checklist_removed") or tr.get("card_removed"):
+        md += ["## 재사용 대본 점검 (v10.2b · 운영 잡사실 제외)", ""]
+        for d in tr.get("dropped") or []:
+            md.append(f"- 문장 {d['i']}({d['lens']}) {'못 뺌(4문장 밑)' if tr.get('kept_min') else '뺌'} — 운영 안내: {d['line']}")
+        if tr.get("caption"):
+            md.append(f"- 캡션: {tr['caption']}")
+        for x in tr.get("checklist_removed") or []:
+            md.append(f"- 체크리스트 뺌: {x}")
+        for x in tr.get("card_removed") or []:
+            md.append(f"- 카드 답 뺌: {x}")
+        md.append("")
     nf = list(h.get("notice_facts") or [])
     if nf:
         md += ["## 공식 안내문에서 읽은 사실", "", *[f"- {f}" for f in nf[:14]], ""]
@@ -2071,6 +2083,110 @@ def drop_sign_shots(beats: list[dict], shots: list[dict], report: dict) -> None:
     log(f"간판·안내판 사진 컷 {bad} 을 재사용 계획에서 뺌")
 
 
+def apply_text_rules(text: dict, sig: dict, h: dict, req: dict, narr: dict, report: dict) -> None:
+    """v10.2b (2026-10-20 #62 운영자 "이 문구 빼라고 했냐 안 했냐 — 이 영상부터 빨리 수정해"): **재사용 대본**(문제 시트만 다시 · 정식 제작)에도 운영 잡사실 규칙을 적용한다(0원).
+    #61 대본의 조건 문장('수요일 정비로 14시에')은 대본이 통째로 재사용돼 v10.2(새 대본에만 적용)를 그대로 지나쳤다 — 내 설계 구멍.
+    ① 운영 안내를 근거로 삼은 문장, 조건 문장이 운영 안내 낱말을 말하면 그 문장을 **뺀다**(훅·정체·제안은 안 뺌 · 4문장 밑으로는 안 줄임) → 나레이션 조각(narr_c{n}.wav · 두 폴더)·길이·라벨 번호·씬 번호를 당기고,
+       씬 시간대는 원래 문장 번호 기준으로 고정(`scene_time` · 시트 키가 안 바뀌어 재사용 유지) ② 캡션 줄·체크리스트·카드 답의 운영 안내·'~니다' 줄을 뺀다(캡션이 규칙에 안 맞으면 새 대본과 같은 예비 캡션)."""
+    beats = list(text.get("beats") or [])
+    n = len(beats)
+    order = ["day", "golden", "evening", "night"]
+    for j, b in enumerate(beats):
+        b.setdefault("scene_time", order[min(len(order) - 1, int(j * len(order) / max(1, n - 1)))] if n > 1 else "day")
+    drop = [j for j, b in enumerate(beats)
+            if str(b.get("lens") or "") not in ("훅", "정체") + tuple(END_LENSES)
+            and (sg.is_trivia(b.get("fact") or "") or (str(b.get("lens") or "") == "조건" and bool(sg.TRIVIA_RX.search(sg._body(str(b.get("line") or ""))))))]
+    rules: dict = {"dropped": [{"i": j + 1, "lens": beats[j].get("lens"), "line": beats[j].get("line")} for j in drop], "caption": "", "checklist_removed": [], "card_removed": [], "kept_min": False}
+    if drop and n - len(drop) < 4:
+        rules["kept_min"] = True; drop = []
+    if drop:
+        keep = [j for j in range(n) if j not in drop]
+        remap = {j + 1: k + 1 for k, j in enumerate(keep)}
+        for d in {STORY.resolve(), mt.BUILD.resolve()}:                                   # 나레이션 조각 당기기(임시 이름을 거쳐 겹침 없이)
+            tmp = {}
+            for old_i, new_i in remap.items():
+                f = d / f"narr_c{old_i}.wav"
+                if f.exists():
+                    t = d / f"narr_tmp{new_i}.wav"; f.rename(t); tmp[new_i] = t
+            for old_i in range(1, n + 1):
+                f = d / f"narr_c{old_i}.wav"
+                if f.exists():
+                    f.unlink()
+            for new_i, t in tmp.items():
+                t.rename(d / f"narr_c{new_i}.wav")
+        new_narr = {}
+        for k, v in list(narr.items()):
+            if isinstance(k, int) or str(k).isdigit():
+                if int(k) in remap:
+                    new_narr[remap[int(k)]] = v
+            else:
+                new_narr[k] = v
+        narr.clear(); narr.update(new_narr)
+        text["beats"] = [beats[j] for j in keep]
+        feats = []
+        for f in text.get("features") or []:
+            bs = [remap[i] for i in (f.get("beats") or []) if i in remap]
+            if bs:
+                feats.append({**f, "beats": bs})
+        text["features"] = feats
+        scenes = []
+        for x in text.get("scenes") or []:
+            if x.get("j") is None:
+                scenes.append(x)
+            elif (int(x["j"]) + 1) in remap:
+                scenes.append({**x, "j": remap[int(x["j"]) + 1] - 1})
+        text["scenes"] = scenes
+    bts = text["beats"]
+    cap = dict(text.get("caption") or {})
+    pts0 = [str(p) for p in (cap.get("points") or [])]
+    pts = [p for p in pts0 if not sg.is_trivia(p) and not sg.CAP_ENDING_RX.search(p)]
+    removed_pts = [p for p in pts0 if p not in pts]
+    cap["points"] = pts
+    facts = [str(b.get("fact")) for b in bts if b.get("fact")] + ([str(sig.get("fact"))] if sig.get("fact") else [])
+    errs = sg.caption_errs(cap, h, req, sig, facts)
+    if errs:
+        ptsf = [b["line"] for b in bts[2:5] if b.get("fact_i")] or [sg._cut(sg._body(str(sig.get("fact") or "")), 40)]
+        cap = {"hook": sg._cut(sg._body(str(sig.get("fact") or "")), 80), "points": ptsf, "save": "갈 계획이 있다면 저장해두고 다시 꺼내 보세요."}
+        rules["caption"] = "예비 캡션으로 교체(" + "; ".join(str(e)[:40] for e in errs[:3]) + ")"
+    elif removed_pts:
+        rules["caption"] = f"운영 안내·'~니다' 줄 {len(removed_pts)}개 뺌"
+    text["caption"] = {"hook": design.one_line(str(cap.get("hook") or "")), "points": [design.one_line(str(x)) for x in (cap.get("points") or []) if str(x).strip()][:3],
+                       "save": design.one_line(str(cap.get("save") or ""))}
+    cl0 = [str(x) for x in (text.get("checklist") or [])]
+    cl = [x for x in cl0 if not sg.is_trivia(x)]
+    rules["checklist_removed"] = [x for x in cl0 if x not in cl]
+    text["checklist"] = cl
+    card = text.get("card")
+    if isinstance(card, dict) and card.get("answers"):
+        ans = [a for a in card["answers"] if not sg.is_trivia(str((a or {}).get("text") or ""))]
+        rules["card_removed"] = [str((a or {}).get("text") or "") for a in card["answers"] if a not in ans]
+        if rules["card_removed"]:
+            if len(ans) >= 2:
+                card["answers"] = ans
+            else:
+                text["card"] = None
+    report["text_rules"] = rules
+    if rules["dropped"] or rules["caption"] or rules["checklist_removed"] or rules["card_removed"]:
+        log("재사용 대본 점검(v10.2b): " + (f"문장 뺌 {[d['i'] for d in rules['dropped']]}" + (" (4문장 밑이라 못 뺌)" if rules["kept_min"] else "")) + (f" · 캡션 {rules['caption']}" if rules["caption"] else "")
+            + (f" · 체크리스트 뺌 {len(rules['checklist_removed'])}" if rules["checklist_removed"] else "") + (f" · 카드 답 뺌 {rules['card_removed']}" if rules["card_removed"] else ""))
+
+
+def rebuild_narr_full(n: int) -> Path | None:
+    """재사용 나레이션 조각을 이어 미리듣기용 narr_full.wav 를 다시 만든다(0원 · 문장을 뺐을 때 옛 전체 음성에 그 문장이 남지 않게)."""
+    parts = [mt.BUILD / f"narr_c{i}.wav" for i in range(1, n + 1)] + [mt.BUILD / "narr_cta.wav"]
+    parts = [p for p in parts if p.exists()]
+    if not parts:
+        return None
+    lst = STORY / "narr_concat.txt"
+    lst.write_text("".join(f"file '{p.resolve()}'\n" for p in parts), encoding="utf-8")
+    out = mt.BUILD / "narr_full.wav"
+    try:
+        ms.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(out)])
+    except Exception as e:  # noqa: BLE001
+        log(f"나레이션 전체 다시 잇기 실패: {str(e)[:80]}"); return None
+    return out
+
+
 def strip_inserts(beats: list[dict], shots: list[dict]) -> None:
     """v10.3 '인서트도 다시': 옛 계획의 인서트 컷(INS)을 문장·재료에서 뺀다 → storyboard_scenes 가 새 인서트 시트(98원)를 만든다."""
     ins = {s["id"] for s in shots if s.get("insert")}
@@ -2103,6 +2219,7 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
         h, pos0, pos, sig, text, shot_list = plan["h"], plan.get("pos0") or 0, plan.get("pos") or 1, plan["signature"], plan["text"], plan["shots"]
         narr = {(int(k) if str(k).isdigit() else k): v for k, v in (plan.get("narr") or {}).items()}
         report["reused_plan"] = True
+        apply_text_rules(text, sig, h, req, narr, report)                              # v10.2b: 재사용 대본에도 운영 잡사실 규칙(문장 빼기 · 캡션·체크리스트·카드)
         report["features"] = {"items": [f for f in (text.get("features") or []) if isinstance(f, dict) and f.get("text")], "source": "미리보기 재사용", "tries": []}   # v10: 문서에도 라벨
         report["hotels"] = [{k: h.get(k) for k in sg.H_KEYS if k in h}]
         report["lens_check"] = {"ok": True, "note": "미리보기 대본 재사용" + ("(문제 시트만 다시)" if redo else "")}
@@ -2123,6 +2240,9 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
                               "sheets_reused": list(sb.get("reused") or []), "sheets_made": list(sb.get("made") or []),
                               "krw": int(sb.get("krw") or 0) + int((report.get("inserts") or {}).get("krw") or 0)}
             log(f"문제 시트만 다시: 시트 재사용 {report['redo']['sheets_reused']} · 다시 {report['redo']['sheets_made']} · 인서트 {report['redo']['inserts']} · 약 {report['redo']['krw']:,}원")
+            nar = rebuild_narr_full(len(text["beats"]))                                  # 미리듣기(뺀 문장 없이)
+            if nar:
+                ms.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(nar), "-codec:a", "libmp3lame", "-q:a", "4", str(ms.PREVIEW / "narration_preview.mp3")])
             save_plan(req, h, pos0, pos, sig, text, shot_list, narr)                     # 이번 미리보기 계획(정식 제작이 이것을 재사용)
         elif text.get("scenes"):                                                        # v7: 미리보기의 스토리보드 패널을 그대로(이미지 0원) — 파일이 없으면 원본
             for x in text["scenes"]:
