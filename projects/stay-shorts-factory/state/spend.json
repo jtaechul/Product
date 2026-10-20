@@ -802,5 +802,29 @@
   "kind": "gemini_est",
   "krw": 5,
   "note": "2026-10-21-admin-sig-redo-IAnX signature AI 글·음성 6회 (추정)"
+ },
+ {
+  "date": "2026-10-20",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_b0.mp4"
+ },
+ {
+  "date": "2026-10-20",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_b2.mp4"
+ },
+ {
+  "date": "2026-10-20",
+  "kind": "veo",
+  "krw": 294,
+  "note": "veo-3.1-lite-generate-preview 4초 veo_b3.mp4"
+ },
+ {
+  "date": "2026-10-20",
+  "kind": "gemini_est",
+  "krw": 6,
+  "note": "2026-10-21-admin-sig-produce-k1dk signature AI 글·음성 5회 (추정)"
  }
 ]

@@ -1,5 +1,5 @@
 {
- "nonce": "2026-10-21-admin-sig-redo-IAnX",
+ "nonce": "2026-10-21-admin-sig-produce-k1dk",
  "stay": "더앤리조트",
  "mode": "signature",
  "fake": false,
@@ -22,22 +22,13 @@
    "gemini-2.5-pro-preview-tts"
   ]
  },
- "stage": "preview",
+ "stage": "produce",
  "format": "story",
  "reused_plan": true,
  "text_rules": {
-  "dropped": [
-   {
-    "i": 6,
-    "lens": "조건",
-    "line": "이제 실내온천탕은 매주 수요일 정비로 14시에 여니 참고해요."
-   }
-  ],
-  "caption": "예비 캡션으로 교체(caption.points(차별성·유인 1~3줄) 없음; caption '숲속 노천온천탕 바로 곁에 독립된 목' '~니다' — 나)",
-  "checklist_removed": [
-   "일~목 08시부터 20시까지 운영함",
-   "매주 수요일 시설 정비로 14시 오픈"
-  ],
+  "dropped": [],
+  "caption": "",
+  "checklist_removed": [],
   "card_removed": [],
   "kept_min": false
  },
@@ -158,7 +149,7 @@
  ],
  "lens_check": {
   "ok": true,
-  "note": "미리보기 대본 재사용(문제 시트만 다시)"
+  "note": "미리보기 대본 재사용"
  },
  "route_changes": [],
  "visual_plan": [
@@ -257,442 +248,17 @@
   "수영장",
   "온수탕·스파"
  ],
- "scenes_planned": 9,
+ "scene_drops": [],
  "storyboard": {
-  "sheets": [
-   {
-    "n": 5,
-    "k": 12,
-    "ok": true,
-    "reused": true,
-    "panel_px": [
-     763,
-     764,
-     763,
-     764
-    ],
-    "scenes": [
-     1,
-     6,
-     10,
-     11
-    ],
-    "passed": 4,
-    "krw": 0,
-    "angles": [
-     "from the same camera position ",
-     "the same camera position as th",
-     "a few steps further back, wide",
-     "low angle close to the ground"
-    ]
-   },
-   {
-    "n": 6,
-    "k": 28,
-    "ok": true,
-    "reused": true,
-    "panel_px": [
-     763,
-     764,
-     763,
-     764
-    ],
-    "scenes": [
-     2,
-     4,
-     12,
-     13
-    ],
-    "passed": 4,
-    "krw": 0,
-    "angles": [
-     "from the same camera position ",
-     "the same camera position as th",
-     "a few steps further back, wide",
-     "low angle close to the ground"
-    ]
-   },
-   {
-    "n": 7,
-    "k": 26,
-    "ok": true,
-    "reused": true,
-    "panel_px": [
-     763,
-     764,
-     763,
-     764
-    ],
-    "scenes": [
-     3,
-     8,
-     14,
-     15
-    ],
-    "passed": 3,
-    "krw": 0,
-    "angles": [
-     "from the pool edge at water le",
-     "from the far end looking back",
-     "from above the entry steps",
-     "close-up of the water with the"
-    ]
-   }
-  ],
-  "krw": 0,
-  "model": null,
-  "fake": false,
-  "reused": [
-   5,
-   6,
-   7
-  ],
-  "made": [],
-  "scenes": [
-   {
-    "n": 1,
-    "j": 0,
-    "m": 0,
-    "sid": "S1",
-    "k": 12,
-    "place": "사우나",
-    "who": "env",
-    "with_dog": false,
-    "time": "day",
-    "img": "sb_5_1.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 763,
-    "sheet": 5,
-    "spare": null,
-    "angle": "from the same camera position as the photograph, framed a little tighter",
-    "minor": null,
-    "reused": true
-   },
-   {
-    "n": 2,
-    "j": 1,
-    "m": 0,
-    "sid": "S2",
-    "k": 28,
-    "place": "사우나",
-    "who": "env",
-    "with_dog": false,
-    "time": "day",
-    "img": "sb_6_1.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 763,
-    "sheet": 6,
-    "spare": null,
-    "angle": "from the same camera position as the photograph, framed a little tighter",
-    "minor": null,
-    "reused": true
-   },
-   {
-    "n": 3,
-    "j": 1,
-    "m": 1,
-    "sid": "S7",
-    "k": 26,
-    "place": "물놀이",
-    "who": "env",
-    "with_dog": false,
-    "time": "golden",
-    "img": "sb_7_1.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 763,
-    "sheet": 7,
-    "spare": null,
-    "angle": "from the pool edge at water level",
-    "minor": null,
-    "reused": true
-   },
-   {
-    "n": 4,
-    "j": 2,
-    "m": 0,
-    "sid": "S2",
-    "k": 28,
-    "place": "사우나",
-    "who": "back",
-    "with_dog": false,
-    "time": "golden",
-    "img": "sb_6_2.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 764,
-    "sheet": 6,
-    "spare": null,
-    "angle": "the same camera position as the photograph",
-    "minor": null,
-    "reused": true
-   },
-   {
-    "n": 5,
-    "j": 2,
-    "m": 1,
-    "sid": "S3",
-    "k": 11,
-    "place": "온수탕·스파",
-    "who": "env",
-    "with_dog": false,
-    "time": "evening",
-    "img": null,
-    "ok": false,
-    "why": "꼬리 컷은 원본(시트 생략)",
-    "panel_px": 0,
-    "sheet": null,
-    "spare": null,
-    "angle": "from the edge of the bath at water level",
-    "minor": null,
-    "reused": null
-   },
-   {
-    "n": 6,
-    "j": 3,
-    "m": 0,
-    "sid": "S1",
-    "k": 12,
-    "place": "사우나",
-    "who": "back",
-    "with_dog": false,
-    "time": "evening",
-    "img": "sb_5_2.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 764,
-    "sheet": 5,
-    "spare": null,
-    "angle": "the same camera position as the photograph",
-    "minor": "조명",
-    "reused": true
-   },
-   {
-    "n": 7,
-    "j": 3,
-    "m": 1,
-    "sid": "S8",
-    "k": 25,
-    "place": "온수탕·스파",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": null,
-    "ok": false,
-    "why": "꼬리 컷은 원본(시트 생략)",
-    "panel_px": 0,
-    "sheet": null,
-    "spare": null,
-    "angle": "from the edge of the bath at water level",
-    "minor": null,
-    "reused": null
-   },
-   {
-    "n": 8,
-    "j": 4,
-    "m": 0,
-    "sid": "S7",
-    "k": 26,
-    "place": "물놀이",
-    "who": "env",
-    "with_dog": false,
-    "time": "evening",
-    "img": "sb_7_2.png",
-    "ok": false,
-    "why": "글자",
-    "panel_px": 764,
-    "sheet": 7,
-    "spare": null,
-    "angle": "from the far end looking back",
-    "minor": null,
-    "reused": true
-   },
-   {
-    "n": 9,
-    "j": 4,
-    "m": 1,
-    "sid": "S4",
-    "k": 9,
-    "place": "수영장",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": null,
-    "ok": false,
-    "why": "꼬리 컷은 원본(시트 생략)",
-    "panel_px": 0,
-    "sheet": null,
-    "spare": null,
-    "angle": "from the pool edge at water level",
-    "minor": null,
-    "reused": null
-   },
-   {
-    "n": 10,
-    "j": null,
-    "m": null,
-    "sid": "S1",
-    "k": 12,
-    "place": "사우나",
-    "who": "env",
-    "with_dog": false,
-    "time": "golden",
-    "img": "sb_5_3.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 763,
-    "sheet": 5,
-    "spare": true,
-    "angle": "a few steps further back, wider",
-    "minor": null,
-    "reused": true
-   },
-   {
-    "n": 11,
-    "j": null,
-    "m": null,
-    "sid": "S1",
-    "k": 12,
-    "place": "사우나",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": "sb_5_4.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 764,
-    "sheet": 5,
-    "spare": true,
-    "angle": "low angle close to the ground",
-    "minor": "수중 조명",
-    "reused": true
-   },
-   {
-    "n": 12,
-    "j": null,
-    "m": null,
-    "sid": "S2",
-    "k": 28,
-    "place": "사우나",
-    "who": "env",
-    "with_dog": false,
-    "time": "evening",
-    "img": "sb_6_3.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 763,
-    "sheet": 6,
-    "spare": true,
-    "angle": "a few steps further back, wider",
-    "minor": null,
-    "reused": true
-   },
-   {
-    "n": 13,
-    "j": null,
-    "m": null,
-    "sid": "S2",
-    "k": 28,
-    "place": "사우나",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": "sb_6_4.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 764,
-    "sheet": 6,
-    "spare": true,
-    "angle": "low angle close to the ground",
-    "minor": null,
-    "reused": true
-   },
-   {
-    "n": 14,
-    "j": null,
-    "m": null,
-    "sid": "S7",
-    "k": 26,
-    "place": "물놀이",
-    "who": "env",
-    "with_dog": false,
-    "time": "day",
-    "img": "sb_7_3.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 763,
-    "sheet": 7,
-    "spare": true,
-    "angle": "from above the entry steps",
-    "minor": null,
-    "reused": true
-   },
-   {
-    "n": 15,
-    "j": null,
-    "m": null,
-    "sid": "S7",
-    "k": 26,
-    "place": "물놀이",
-    "who": "env",
-    "with_dog": false,
-    "time": "night",
-    "img": "sb_7_4.png",
-    "ok": true,
-    "why": "",
-    "panel_px": 764,
-    "sheet": 7,
-    "spare": true,
-    "angle": "close-up of the water with the surroundings behind",
-    "minor": null,
-    "reused": true
-   }
-  ]
- },
- "inserts": {
-  "ok": true,
   "reused": true,
-  "krw": 0,
-  "items": [
-   {
-    "n": 1,
-    "role": "hook",
-    "name": "worry",
-    "img": "ins_1.png",
-    "ok": true,
-    "why": "",
-    "what": ""
-   },
-   {
-    "n": 3,
-    "role": "end",
-    "name": "road",
-    "img": "ins_3.png",
-    "ok": true,
-    "why": "",
-    "what": ""
-   }
-  ]
+  "scenes": 15,
+  "panels_ok": 11,
+  "krw": 0
  },
  "inserts_used": [
   "INS1",
   "INS3"
  ],
- "scene_drops": [],
- "redo": {
-  "from": "stay-run-62",
-  "policy": "none",
-  "inserts": "재사용",
-  "sheets_reused": [
-   5,
-   6,
-   7
-  ],
-  "sheets_made": [],
-  "krw": 0
- },
  "signature": {
   "name": "야외 배럴사우나 노천온천",
   "what": "푸른 숲과 야외 온천탕 옆에 자리 잡은 독채형 목조 배럴사우나 캐빈",
@@ -757,65 +323,98 @@
  "veo": {
   "model": "veo-3.1-lite-generate-preview",
   "fake": false,
-  "clips": [],
-  "spent_krw": 0,
-  "month_total_krw": 9408
+  "clips": [
+   {
+    "i": 1,
+    "lens": "훅",
+    "shot": "INS1",
+    "type": "B",
+    "actor": "env",
+    "ok": true,
+    "krw": 294,
+    "start": "ins_1.png"
+   },
+   {
+    "i": 3,
+    "lens": "디테일",
+    "shot": "S2",
+    "type": "A",
+    "actor": "back",
+    "ok": true,
+    "krw": 294,
+    "start": "sb_6_2.png",
+    "check": {
+     "ok": true,
+     "reason": "",
+     "raw": {
+      "people": 1,
+      "face_visible": false,
+      "dogs": 0,
+      "new_objects": [],
+      "structure_changed": false,
+      "weird": false,
+      "looks_real": true,
+      "why": "뒷모습의 인물 및 주변 구조가 원본과 일관되게 자연스럽게 유지됨."
+     }
+    }
+   },
+   {
+    "i": 4,
+    "lens": "행동",
+    "shot": "S1",
+    "type": "A",
+    "actor": "back",
+    "ok": true,
+    "krw": 294,
+    "start": "sb_5_2.png",
+    "check": {
+     "ok": true,
+     "reason": "",
+     "raw": {
+      "people": 1,
+      "face_visible": false,
+      "dogs": 0,
+      "new_objects": [],
+      "structure_changed": false,
+      "weird": false,
+      "looks_real": true,
+      "why": "뒷모습의 인물이 물속으로 자연스럽게 걸어 들어가며 배경 변화 없이 일관성을 유지함."
+     }
+    }
+   }
+  ],
+  "stopped": null,
+  "spent_krw": 882,
+  "month_total_krw": 10290
  },
- "ai_note_on_screen": false,
+ "ai_note_on_screen": true,
  "camera_aim": [
-  {
-   "i": 1,
-   "shot": "INS1",
-   "x": 0.48,
-   "y": 0.92,
-   "zoom": 0.35,
-   "move": "in",
-   "what": "여행 가방"
-  },
   {
    "i": 2,
    "shot": "S2",
    "x": 0.58,
    "y": 0.52,
-   "zoom": 0.28,
+   "zoom": 0.3,
    "move": "in",
-   "what": "목조 배럴사우나"
-  },
-  {
-   "i": 3,
-   "shot": "S2",
-   "x": 0.58,
-   "y": 0.57,
-   "zoom": 0.35,
-   "move": "in",
-   "what": "캐빈 안"
-  },
-  {
-   "i": 4,
-   "shot": "S1",
-   "x": 0.51,
-   "y": 0.72,
-   "zoom": 0.35,
-   "move": "in",
-   "what": "야외 온천탕"
+   "what": "사우나"
   },
   {
    "i": 5,
    "shot": "S7",
-   "x": 0.42,
+   "x": 0.35,
    "y": 0.29,
    "zoom": 0.35,
    "move": "in",
-   "what": "카바나와 파라솔 구역"
+   "what": "카바나"
   },
   {
    "i": 6,
    "shot": "INS3",
    "x": 0.62,
-   "y": 0.48,
+   "y": 0.52,
    "zoom": 0.35,
    "move": "in",
-   "what": "도로"
+   "what": "비 오는 해안 도로"
   }
  ],
  "bgm": "bgm.mp3",
@@ -875,7 +474,7 @@
   {
    "i": 1,
    "lens": "훅",
-   "kind": "사진 무빙 2컷 · AI 스토리보드 · 인서트 (제작 때 AI 환경(빛·물·커튼) 2.6초 + 사진 무빙)",
+   "kind": "AI 영상·환경(빛·물·커튼) 2.3초 + 사진 무빙(사우나)",
    "sec": 3.2,
    "shots": [
     "INS1",
@@ -945,7 +544,7 @@
   {
    "i": 3,
    "lens": "디테일",
-   "kind": "사진 무빙 2컷 · AI 스토리보드 (제작 때 AI 뒷모습 한 사람 2.6초 + 사진 무빙)",
+   "kind": "AI 영상·뒷모습 한 사람 2.6초 + 사진 무빙(온수탕·스파)",
    "sec": 3.82,
    "shots": [
     "S2",
@@ -980,7 +579,7 @@
   {
    "i": 4,
    "lens": "행동",
-   "kind": "사진 무빙 2컷 · AI 스토리보드 (제작 때 AI 뒷모습 한 사람 2.6초 + 사진 무빙)",
+   "kind": "AI 영상·뒷모습 한 사람 2.6초 + 사진 무빙(온수탕·스파)",
    "sec": 3.89,
    "shots": [
     "S1",
@@ -1060,7 +659,7 @@
   {
    "i": 6,
    "lens": "제안",
-   "kind": "사진 무빙·도로 다가감 1.35배 · 인서트",
+   "kind": "사진 무빙·비 오는 해안 도로 다가감 1.35배 · 인서트",
    "sec": 4.12,
    "shots": [
     "INS3"
@@ -1100,16 +699,16 @@
  ],
  "models_used": {},
  "duration_sec": 26.8,
- "video_bytes": 13810061,
+ "video_bytes": 15331730,
  "gemini_usage": {
-  "calls": 6,
-  "prompt_text": 1658,
-  "prompt_image": 6600,
+  "calls": 5,
+  "prompt_text": 1353,
+  "prompt_image": 9900,
   "prompt_audio": 0,
-  "output_text": 209,
+  "output_text": 273,
   "output_audio": 0,
-  "thoughts": 143,
-  "krw_est": 5,
+  "thoughts": 0,
+  "krw_est": 6,
   "note": "토큰 수는 실측, 단가는 추정 — 실제 청구는 Google 사용량 화면 기준"
  }
 }
