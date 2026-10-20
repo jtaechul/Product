@@ -16,7 +16,7 @@
       "approved_at": "2026-10-19T11:07:40Z"
     },
     "script": {
-      "state": "revise",
+      "state": "review",
       "notes": [
         {
           "at": "2026-10-19T13:40:16Z",
@@ -37,6 +37,16 @@
           "at": "2026-10-20T04:29:34Z",
           "kind": "redo",
           "text": "다시 하기 요청"
+        },
+        {
+          "at": "2026-10-20T04:34:40Z",
+          "kind": "auto",
+          "text": "대본 자동 작성 완료 · ★이야기 흐름 지적 1건이 남음(대본 카드에서 확인)"
+        },
+        {
+          "at": "2026-10-20T04:35:06Z",
+          "kind": "crosscheck",
+          "text": "AI 교차 검사: 의심 1건"
         }
       ]
     },
@@ -94,54 +104,67 @@
       "cuts": [
         {
           "cut": 1,
-          "jp": "逆さまにぶら下がって静止する、不思議な姿。",
-          "ko": "거꾸로 매달려 정지해 있는 신기한 모습.",
-          "tts": "さかさまにぶらさがってせいしする、ふしぎなすがた。",
-          "fact": "F3",
-          "sec": 4,
-          "speech_s": 3.06,
+          "jp": "暗い海の中、逆さまの姿勢でじっとぶら下がる透明な生き物。",
+          "ko": "어두운 바닷속, 거꾸로 된 자세로 가만히 매달려 있는 투명한 생물.",
+          "tts": "くらいうみのなか、さかさまのしせいでじっとぶらさがるとうめいないきもの。",
+          "fact": "F3,F5",
+          "sec": 6,
+          "speech_s": 4.64,
           "pending": false,
           "facts": [
             {
               "id": "F3",
-              "fact": "이 생물은 생물발광을 하며, 구강 엽을 펄럭이며 헤엄칠 수도 있지만 일반적으로는 똑바로 서거나 거꾸로 된 자세로 미동도 없이 매달려 있는 모습이 관찰됩니다.",
+              "fact": "이 생물은 생물 발광을 하며, 헤엄치기 위해 구강 엽을 펄럭일 수도 있지만 일반적으로 똑바로 서거나 거꾸로 된 자세로 미동 없이 매달려 있는 모습이 관찰됩니다.",
               "sources": [
                 "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
               ],
               "quote": "It is bioluminescent, and is typically observed hanging motionlessly in an upright or inverted posture although it can flap its oral lobes to swim.",
               "source_title": "Wikipedia(en) Bathocyroe fosteri"
+            },
+            {
+              "id": "F5",
+              "fact": "바토키로에 포스테리는 대부분 투명하지만 내장 안쪽 벽은 붉은색 색소를 띠고 있습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
+              ],
+              "quote": "Bathocyroe fosteri is mostly transparent with red pigmented inner gut walls.",
+              "source_title": "Wikipedia(en) Bathocyroe fosteri"
             }
-          ]
+          ],
+          "beat": "謎",
+          "link_ko": "투명한 생물의 기이한 정지 자세를 보여줌"
         },
         {
           "cut": 2,
-          "jp": "時には、ヒレのような部分を羽ばたかせて泳ぐこともあります。",
-          "ko": "때로는 지느러미 같은 부분을 퍼덕이며 헤엄치기도 합니다.",
-          "tts": "ときには、ひれのようなぶぶんをはばたかせておよぐこともあります。",
-          "fact": "F3",
+          "jp": "口葉の差し渡しは2から4センチ。この姿で何をしているのでしょうか。",
+          "ko": "구엽의 너비는 2~4센티미터. 이 모습으로 무엇을 하고 있는 걸까요?",
+          "tts": "くちはのさしわたしは2から4せんち。このすがたでなにをしているのでしょうか。",
+          "fact": "F6",
           "sec": 6,
-          "speech_s": 4.17,
+          "speech_s": 4.96,
           "pending": false,
           "facts": [
             {
-              "id": "F3",
-              "fact": "이 생물은 생물발광을 하며, 구강 엽을 펄럭이며 헤엄칠 수도 있지만 일반적으로는 똑바로 서거나 거꾸로 된 자세로 미동도 없이 매달려 있는 모습이 관찰됩니다.",
+              "id": "F6",
+              "fact": "짧은 빗즐을 가지고 있으며 구강 엽을 가로지르는 크기는 2~4cm입니다.",
               "sources": [
                 "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
               ],
-              "quote": "It is bioluminescent, and is typically observed hanging motionlessly in an upright or inverted posture although it can flap its oral lobes to swim.",
+              "quote": "It has short comb rows and measures 2–4 cm across the oral lobes.",
               "source_title": "Wikipedia(en) Bathocyroe fosteri"
             }
-          ]
+          ],
+          "beat": "謎",
+          "link_ko": "크기를 알려주며 이 자세의 목적에 대한 의문을 제시"
         },
         {
           "cut": 3,
-          "jp": "この生き物は、世界中の海の中層にすむ深海性のクシクラゲです。",
-          "ko": "이 생물은 전 세계 바다의 중층에 사는 심해성 빗해파리입니다.",
-          "tts": "このいきものは、せかいじゅうのうみのちゅうそうにすむしんかいせいのくしくらげです。",
-          "fact": "F1,F4",
+          "jp": "これは、世界中の深い海にすむクシクラゲの仲間です。",
+          "ko": "이것은 전 세계의 깊은 바다에 사는 빗해파리의 일종입니다.",
+          "tts": "これは、せかいじゅうのふかいうみにすむくしくらげのなかまです。",
+          "fact": "F1",
           "sec": 6,
-          "speech_s": 5.03,
+          "speech_s": 4.03,
           "pending": false,
           "facts": [
             {
@@ -152,235 +175,218 @@
               ],
               "quote": "Bathocyroe fosteri is a species of lobate ctenophore found at intermediate depths in all the world's oceans.",
               "source_title": "Wikipedia(en) Bathocyroe fosteri"
-            },
-            {
-              "id": "F4",
-              "fact": "이 심해 빗해파리는 최초의 표본을 채집한 앨빈호(DSV-2)의 조종사 더들리 포스터의 이름을 따서 명명되었습니다.",
-              "sources": [
-                "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
-              ],
-              "quote": "This deep-sea comb jelly is named for Alvin (DSV-2) pilot Dudley Foster, who collected the first specimens.",
-              "source_title": "Wikipedia(en) Bathocyroe fosteri"
             }
-          ]
+          ],
+          "beat": "手がかり",
+          "link_ko": "생물의 정체와 서식지를 밝힘"
         },
         {
           "cut": 4,
-          "jp": "幅2センチから4センチほどの体は透明ですが、腸の内側は赤く透けています。",
-          "ko": "폭 2~4cm 정도의 몸은 투명하지만, 장 안쪽은 붉게 비쳐 보입니다.",
-          "tts": "はば2せんちから4せんちほどのからだはとうめいですが、ちょうのうちがわはあかくすけています。",
-          "fact": "F5,F6",
-          "sec": 8,
-          "speech_s": 5.56,
+          "jp": "時には口葉を羽ばたかせて、海の中を泳ぐこともできます。",
+          "ko": "때로는 구엽을 펄럭이며 바닷속을 헤엄칠 수도 있습니다.",
+          "tts": "ときにはくちはをはばたかせて、うみのなかをおよぐこともできます。",
+          "fact": "F3",
+          "sec": 6,
+          "speech_s": 4.28,
           "pending": false,
           "facts": [
             {
-              "id": "F5",
-              "fact": "바토키로에 포스테리는 대부분 투명하지만, 내부 장벽은 붉은색 색소를 띠고 있습니다.",
+              "id": "F3",
+              "fact": "이 생물은 생물 발광을 하며, 헤엄치기 위해 구강 엽을 펄럭일 수도 있지만 일반적으로 똑바로 서거나 거꾸로 된 자세로 미동 없이 매달려 있는 모습이 관찰됩니다.",
               "sources": [
                 "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
               ],
-              "quote": "Bathocyroe fosteri is mostly transparent with red pigmented inner gut walls.",
-              "source_title": "Wikipedia(en) Bathocyroe fosteri"
-            },
-            {
-              "id": "F6",
-              "fact": "짧은 빗 모양의 줄을 가지고 있으며, 구강 엽을 가로지르는 크기는 2~4cm입니다.",
-              "sources": [
-                "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
-              ],
-              "quote": "It has short comb rows and measures 2–4 cm across the oral lobes.",
+              "quote": "It is bioluminescent, and is typically observed hanging motionlessly in an upright or inverted posture although it can flap its oral lobes to swim.",
               "source_title": "Wikipedia(en) Bathocyroe fosteri"
             }
-          ]
+          ],
+          "beat": "手がかり",
+          "link_ko": "정지된 모습과 상반되는 헤엄치는 능력을 보여줌"
         },
         {
           "cut": 5,
-          "jp": "開いた部分で獲物を閉じ込め、触手を使って腸へと引き込みます。",
-          "ko": "열린 부분으로 먹이를 가두고, 촉수를 사용해 장으로 끌어당깁니다.",
-          "tts": "ひらいたぶぶんでえものをとじこめ、しょくしゅをつかってちょうへとひきこみます。",
+          "jp": "しかし普段は動かず、静かにぶら下がったままです。",
+          "ko": "하지만 평소에는 움직이지 않고 조용히 매달려 있습니다.",
+          "tts": "しかしふだんはうごかず、しずかにぶらさがったままです。",
+          "fact": "F3",
+          "sec": 6,
+          "speech_s": 3.59,
+          "pending": false,
+          "facts": [
+            {
+              "id": "F3",
+              "fact": "이 생물은 생물 발광을 하며, 헤엄치기 위해 구강 엽을 펄럭일 수도 있지만 일반적으로 똑바로 서거나 거꾸로 된 자세로 미동 없이 매달려 있는 모습이 관찰됩니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
+              ],
+              "quote": "It is bioluminescent, and is typically observed hanging motionlessly in an upright or inverted posture although it can flap its oral lobes to swim.",
+              "source_title": "Wikipedia(en) Bathocyroe fosteri"
+            }
+          ],
+          "beat": "手がかり",
+          "link_ko": "하지만 다시 처음의 정지된 자세로 돌아옴을 강조"
+        },
+        {
+          "cut": 6,
+          "jp": "広げた口葉は、近づいた獲物をすっぽりと閉じ込めるためのものです。",
+          "ko": "벌린 구엽은 다가온 먹이를 완전히 가두기 위한 것입니다.",
+          "tts": "ひろげたくちはは、ちかづいたえものをすっぽりととじこめるためのものです。",
           "fact": "F7",
           "sec": 6,
-          "speech_s": 4.53,
+          "speech_s": 4.61,
           "pending": false,
           "facts": [
             {
               "id": "F7",
-              "fact": "이 구강 엽은 촉수를 이용해 먹이를 장 속으로 끌어들일 때까지 먹이를 가두는 데 사용됩니다.",
+              "fact": "이 구강 엽은 촉수를 이용해 먹이를 내장으로 끌어들일 때까지 먹이를 가두는 데 사용됩니다.",
               "sources": [
                 "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
               ],
               "quote": "These oral lobes are used to contain prey until they are drawn into the gut with its tentacles.",
               "source_title": "Wikipedia(en) Bathocyroe fosteri"
             }
-          ]
-        },
-        {
-          "cut": 6,
-          "jp": "最初の標本を採集した潜水艇のパイロットにちなんで、名付けられました。",
-          "ko": "최초의 표본을 채집한 잠수정 조종사의 이름을 따서 명명되었습니다.",
-          "tts": "さいしょのひょうほんをさいしゅうしたせんすいていのぱいろっとにちなんで、なづけられました。",
-          "fact": "F4",
-          "sec": 6,
-          "speech_s": 5.0,
-          "pending": false,
-          "facts": [
-            {
-              "id": "F4",
-              "fact": "이 심해 빗해파리는 최초의 표본을 채집한 앨빈호(DSV-2)의 조종사 더들리 포스터의 이름을 따서 명명되었습니다.",
-              "sources": [
-                "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
-              ],
-              "quote": "This deep-sea comb jelly is named for Alvin (DSV-2) pilot Dudley Foster, who collected the first specimens.",
-              "source_title": "Wikipedia(en) Bathocyroe fosteri"
-            }
-          ]
+          ],
+          "beat": "答え",
+          "link_ko": "정지 자세와 구엽의 진짜 목적(사냥)을 밝힘"
         },
         {
           "cut": 7,
-          "jp": "普段は逆さまの姿勢でじっとぶら下がり、暗黒の海を漂い続けます。",
-          "ko": "평소에는 거꾸로 된 자세로 가만히 매달려 암흑의 바다를 계속 떠다닙니다.",
-          "tts": "ふだんはさかさまのしせいでじっとぶらさがり、あんこくのうみをただよいつづけます。",
-          "fact": "F3",
+          "jp": "そして捕らえた獲物を、触手で赤い腸の中へ引きずり込みます。",
+          "ko": "그리고 잡은 먹이를 촉수로 붉은 장 속으로 끌어당깁니다.",
+          "tts": "そしてとらえたえものを、しょくしゅであかいちょうのなかへひきずりこみます。",
+          "fact": "F7,F5",
           "sec": 6,
-          "speech_s": 4.91,
+          "speech_s": 4.39,
           "pending": false,
           "facts": [
             {
-              "id": "F3",
-              "fact": "이 생물은 생물발광을 하며, 구강 엽을 펄럭이며 헤엄칠 수도 있지만 일반적으로는 똑바로 서거나 거꾸로 된 자세로 미동도 없이 매달려 있는 모습이 관찰됩니다.",
+              "id": "F7",
+              "fact": "이 구강 엽은 촉수를 이용해 먹이를 내장으로 끌어들일 때까지 먹이를 가두는 데 사용됩니다.",
               "sources": [
                 "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
               ],
-              "quote": "It is bioluminescent, and is typically observed hanging motionlessly in an upright or inverted posture although it can flap its oral lobes to swim.",
+              "quote": "These oral lobes are used to contain prey until they are drawn into the gut with its tentacles.",
+              "source_title": "Wikipedia(en) Bathocyroe fosteri"
+            },
+            {
+              "id": "F5",
+              "fact": "바토키로에 포스테리는 대부분 투명하지만 내장 안쪽 벽은 붉은색 색소를 띠고 있습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
+              ],
+              "quote": "Bathocyroe fosteri is mostly transparent with red pigmented inner gut walls.",
               "source_title": "Wikipedia(en) Bathocyroe fosteri"
             }
-          ]
+          ],
+          "beat": "答え",
+          "link_ko": "갇힌 먹이가 어떻게 소화기관으로 이동하는지 설명"
         },
         {
           "cut": 8,
-          "jp": "自ら光を放ちながら、静かに深海の闇へと消えていくのです。",
-          "ko": "스스로 빛을 내며 조용히 심해의 어둠 속으로 사라집니다.",
-          "tts": "みずからひかりをはなちながら、しずかにしんかいのやみへときえていくのです。",
-          "fact": "F3",
+          "jp": "獲物をのみ込んだ透明な体は、再び静かにぶら下がります。",
+          "ko": "먹이를 삼킨 투명한 몸은 다시 조용히 매달립니다.",
+          "tts": "えものをのみこんだとうめいなからだは、ふたたびしずかにぶらさがります。",
+          "fact": "F3,F5",
           "sec": 6,
-          "speech_s": 4.68,
+          "speech_s": 4.41,
           "pending": false,
           "facts": [
             {
               "id": "F3",
-              "fact": "이 생물은 생물발광을 하며, 구강 엽을 펄럭이며 헤엄칠 수도 있지만 일반적으로는 똑바로 서거나 거꾸로 된 자세로 미동도 없이 매달려 있는 모습이 관찰됩니다.",
+              "fact": "이 생물은 생물 발광을 하며, 헤엄치기 위해 구강 엽을 펄럭일 수도 있지만 일반적으로 똑바로 서거나 거꾸로 된 자세로 미동 없이 매달려 있는 모습이 관찰됩니다.",
               "sources": [
                 "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
               ],
               "quote": "It is bioluminescent, and is typically observed hanging motionlessly in an upright or inverted posture although it can flap its oral lobes to swim.",
               "source_title": "Wikipedia(en) Bathocyroe fosteri"
+            },
+            {
+              "id": "F5",
+              "fact": "바토키로에 포스테리는 대부분 투명하지만 내장 안쪽 벽은 붉은색 색소를 띠고 있습니다.",
+              "sources": [
+                "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
+              ],
+              "quote": "Bathocyroe fosteri is mostly transparent with red pigmented inner gut walls.",
+              "source_title": "Wikipedia(en) Bathocyroe fosteri"
             }
-          ]
+          ],
+          "beat": "余韻",
+          "link_ko": "사냥이 끝난 후 다시 처음의 고요한 모습으로 돌아가며 마무리"
         }
       ],
       "pending_lines": [],
       "hook": {
-        "cut": 1,
-        "at": 1.0,
-        "answer_jp": "深海性のクシクラゲ",
-        "answer_ko": "심해성 빗해파리",
+        "cut": 6,
+        "at": 2.0,
+        "answer_jp": "クシクラゲの仲間",
+        "answer_ko": "빗해파리의 일종",
         "candidates": [
           {
             "pattern": "異常な行動",
-            "text_jp": "逆さまに、ぶら下がる",
-            "key_jp": "逆さまに",
-            "voice_jp": "逆さまにぶら下がって静止する",
-            "text_ko": "거꾸로 매달린다"
-          },
-          {
-            "pattern": "異常な行動",
-            "text_jp": "逆さまの、姿勢で静止",
-            "key_jp": "逆さまの",
-            "voice_jp": "逆さまの姿勢で静止する",
-            "text_ko": "거꾸로 된 자세로 정지"
+            "text_jp": "口葉で、獲物を閉じ込める",
+            "key_jp": "閉じ込める",
+            "voice_jp": "口葉で獲物を閉じ込める",
+            "text_ko": "구엽으로 먹이를 가둔다"
           },
           {
             "pattern": "常識破り",
-            "text_jp": "羽ばたく、ように泳ぐ",
-            "key_jp": "羽ばたく",
-            "voice_jp": "羽ばたくように泳ぐ",
-            "text_ko": "날갯짓하듯 헤엄친다"
+            "text_jp": "触手で、赤い腸へ引き込む",
+            "key_jp": "赤い腸へ",
+            "voice_jp": "触手で赤い腸へ引き込む",
+            "text_ko": "촉수로 붉은 장에 끌어당긴다"
+          },
+          {
+            "pattern": "極端な数字",
+            "text_jp": "数センチの体で、閉じ込める",
+            "key_jp": "数センチ",
+            "voice_jp": "数センチの体で閉じ込める",
+            "text_ko": "수 센티의 몸으로 가둔다"
           }
         ],
-        "question_jp": "逆さまに、ぶら下がる",
-        "question_ko": "거꾸로 매달린다",
-        "key_jp": "逆さまに",
-        "voice_jp": "逆さまにぶら下がって静止する",
+        "question_jp": "口葉で、獲物を閉じ込める",
+        "question_ko": "구엽으로 먹이를 가둔다",
+        "key_jp": "閉じ込める",
+        "voice_jp": "口葉で獲物を閉じ込める",
         "pattern": "異常な行動",
         "chosen": 0,
         "type": "line"
       },
       "core": {
-        "id": "F3",
-        "fact": "이 생물은 생물발광을 하며, 구강 엽을 펄럭이며 헤엄칠 수도 있지만 일반적으로는 똑바로 서거나 거꾸로 된 자세로 미동도 없이 매달려 있는 모습이 관찰됩니다.",
+        "id": "F7",
+        "fact": "이 구강 엽은 촉수를 이용해 먹이를 내장으로 끌어들일 때까지 먹이를 가두는 데 사용됩니다.",
         "sources": [
           "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
         ],
-        "quote": "It is bioluminescent, and is typically observed hanging motionlessly in an upright or inverted posture although it can flap its oral lobes to swim.",
+        "quote": "These oral lobes are used to contain prey until they are drawn into the gut with its tentacles.",
         "source_title": "Wikipedia(en) Bathocyroe fosteri"
       },
-      "audio": "out/r10192246_script_tts/body.wav",
-      "tts_id": "r10192246_script_tts",
+      "audio": "out/r10200434_script_tts/body.wav",
+      "tts_id": "r10200434_script_tts",
       "verification": "자동 작성 · 출처 1곳 · 원문 인용이 확인된 사실 7개(확인 안 된 0개 버림) · 코드 검사 통과 · 예상 길이 52.0초",
+      "story": {
+        "question_jp": "逆さまにぶら下がる透明な姿で、何をしているのでしょうか？",
+        "answer_jp": "広げた口葉に獲物を閉じ込め、触手で腸へ引き込んで食べています。",
+        "question_ko": "거꾸로 매달린 투명한 모습으로 무엇을 하고 있는 걸까요?",
+        "answer_ko": "벌린 구엽에 먹이를 가두고, 촉수로 장에 끌어당겨 먹고 있습니다.",
+        "fact": "F7,F3",
+        "check": [
+          "カット4: 泳ぐこともできるという豆知識は疑問の答えに向かっていない → 削って、静かにぶら下がって獲物を待つ説明に繋げる"
+        ]
+      },
       "crosscheck": {
-        "at": "2026-10-19T22:46:44Z",
+        "at": "2026-10-20T04:34:40Z",
         "model": "gemini-3.1-pro-preview",
         "issues": [
           {
-            "cut": 2,
-            "type": "unsupported",
-            "problem_ko": "사실 목록에는 '지느러미 같은 부분'이 아니라 '구강 엽'을 펄럭인다고 명시되어 있습니다.",
-            "facts": [
-              "F3"
-            ],
-            "suggestion_jp": "時には、口葉を羽ばたかせて泳ぐこともあります。",
-            "suggestion_ko": "때로는 구강 엽을 펄럭이며 헤엄치기도 합니다."
-          },
-          {
-            "cut": 4,
-            "type": "scope",
-            "problem_ko": "사실 목록에 따르면 2~4cm는 몸 전체의 너비가 아니라 구강 엽을 가로지르는 크기입니다.",
-            "facts": [
-              "F6"
-            ],
-            "suggestion_jp": "口葉の幅が2センチから4センチほどで、体は透明ですが、腸の内側は赤く透けています。",
-            "suggestion_ko": "구강 엽의 너비가 2센티미터에서 4센티미터 정도이며, 몸은 투명하지만 장 안쪽은 붉게 비칩니다."
-          },
-          {
-            "cut": 5,
-            "type": "unsupported",
-            "problem_ko": "사실 목록에는 '열린 부분'이 아니라 '구강 엽'을 이용해 먹이를 가둔다고 되어 있습니다.",
-            "facts": [
-              "F7"
-            ],
-            "suggestion_jp": "口葉で獲物を閉じ込め、触手を使って腸へと引き込みます。",
-            "suggestion_ko": "구강 엽으로 먹이를 가두고, 촉수를 이용해 장으로 끌어들입니다."
-          },
-          {
             "cut": 7,
             "type": "unsupported",
-            "problem_ko": "사실 목록에는 '암흑의 바다를 계속 떠다닌다'는 내용이 없으며, 미동도 없이 매달려 있다고 되어 있습니다.",
+            "problem_ko": "사실 목록에는 '내장(안쪽 벽)'이라고 명시되어 있으나, 대본에서는 사실 목록에 없는 '장(腸)'이라는 단어를 사용했습니다.",
             "facts": [
-              "F3"
+              "F5",
+              "F7"
             ],
-            "suggestion_jp": "普段は直立や逆さまの姿勢で、じっとぶら下がっています。",
-            "suggestion_ko": "평소에는 똑바로 서거나 거꾸로 된 자세로 가만히 매달려 있습니다."
-          },
-          {
-            "cut": 8,
-            "type": "unsupported",
-            "problem_ko": "사실 목록에는 생물발광을 한다는 사실만 있으며, '심해의 어둠 속으로 사라진다'는 내용은 없습니다.",
-            "facts": [
-              "F3"
-            ],
-            "suggestion_jp": "自ら光を放つ、生物発光の能力を持っています。",
-            "suggestion_ko": "스스로 빛을 내는 생물발광 능력을 가지고 있습니다."
+            "suggestion_jp": "そして捕らえた獲物を、触手で内壁の赤い内臓の中へ引きずり込みます。",
+            "suggestion_ko": "그리고 잡은 먹이를 촉수를 이용해 안쪽 벽이 붉은 내장 속으로 끌어들입니다."
           }
         ]
       }
@@ -390,7 +396,7 @@
         {
           "id": "F1",
           "fact": "바토키로에 포스테리는 전 세계 모든 해양의 중간 깊이에서 발견되는 유엽 빗해파리의 일종입니다.",
-          "fact_jp": "バトシロエ・フォステリは、世界中のすべての海の中層で発見される有触手綱のクシクラゲの一種です。",
+          "fact_jp": "バトキロエ・フォステリは、世界中のすべての海の中深層で見られる有触手綱のクシクラゲの一種です。",
           "quote": "Bathocyroe fosteri is a species of lobate ctenophore found at intermediate depths in all the world's oceans.",
           "sources": [
             "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
@@ -409,8 +415,8 @@
         },
         {
           "id": "F3",
-          "fact": "이 생물은 생물발광을 하며, 구강 엽을 펄럭이며 헤엄칠 수도 있지만 일반적으로는 똑바로 서거나 거꾸로 된 자세로 미동도 없이 매달려 있는 모습이 관찰됩니다.",
-          "fact_jp": "生物発光を行い、口葉を羽ばたかせて泳ぐこともできますが、通常は直立または逆さまの姿勢で静止してぶら下がっているのが観察されます。",
+          "fact": "이 생물은 생물 발광을 하며, 헤엄치기 위해 구강 엽을 펄럭일 수도 있지만 일반적으로 똑바로 서거나 거꾸로 된 자세로 미동 없이 매달려 있는 모습이 관찰됩니다.",
+          "fact_jp": "生物発光を行い、泳ぐために口葉を羽ばたかせることもできますが、通常は直立または逆さまの姿勢で静止してぶら下がっているのが観察されます。",
           "quote": "It is bioluminescent, and is typically observed hanging motionlessly in an upright or inverted posture although it can flap its oral lobes to swim.",
           "sources": [
             "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
@@ -420,7 +426,7 @@
         {
           "id": "F4",
           "fact": "이 심해 빗해파리는 최초의 표본을 채집한 앨빈호(DSV-2)의 조종사 더들리 포스터의 이름을 따서 명명되었습니다.",
-          "fact_jp": "この深海性のクシクラゲは、最初の標本を採集したアルビン号（DSV-2）のパイロット、ダドリー・フォスターにちなんで名付けられました。",
+          "fact_jp": "この深海のクシクラゲは、最初の標本を採集したアルビン号（DSV-2）のパイロット、ダドリー・フォスターにちなんで名付けられました。",
           "quote": "This deep-sea comb jelly is named for Alvin (DSV-2) pilot Dudley Foster, who collected the first specimens.",
           "sources": [
             "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
@@ -429,8 +435,8 @@
         },
         {
           "id": "F5",
-          "fact": "바토키로에 포스테리는 대부분 투명하지만, 내부 장벽은 붉은색 색소를 띠고 있습니다.",
-          "fact_jp": "バトシロエ・フォステリはほぼ透明ですが、腸の内壁には赤い色素があります。",
+          "fact": "바토키로에 포스테리는 대부분 투명하지만 내장 안쪽 벽은 붉은색 색소를 띠고 있습니다.",
+          "fact_jp": "バトキロエ・フォステリは大部分が透明ですが、腸の内壁には赤い色素があります。",
           "quote": "Bathocyroe fosteri is mostly transparent with red pigmented inner gut walls.",
           "sources": [
             "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
@@ -439,8 +445,8 @@
         },
         {
           "id": "F6",
-          "fact": "짧은 빗 모양의 줄을 가지고 있으며, 구강 엽을 가로지르는 크기는 2~4cm입니다.",
-          "fact_jp": "短い櫛板の列を持ち、口葉の幅は2〜4cmです。",
+          "fact": "짧은 빗즐을 가지고 있으며 구강 엽을 가로지르는 크기는 2~4cm입니다.",
+          "fact_jp": "短い櫛板の列を持ち、口葉の差し渡しは2〜4cmです。",
           "quote": "It has short comb rows and measures 2–4 cm across the oral lobes.",
           "sources": [
             "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
@@ -449,8 +455,8 @@
         },
         {
           "id": "F7",
-          "fact": "이 구강 엽은 촉수를 이용해 먹이를 장 속으로 끌어들일 때까지 먹이를 가두는 데 사용됩니다.",
-          "fact_jp": "これらの口葉は、触手を使って獲物を腸内に引き込むまで、獲物を閉じ込めておくために使用されます。",
+          "fact": "이 구강 엽은 촉수를 이용해 먹이를 내장으로 끌어들일 때까지 먹이를 가두는 데 사용됩니다.",
+          "fact_jp": "これらの口葉は、触手を使って獲物を腸に引き込むまで、獲物を閉じ込めておくために使用されます。",
           "quote": "These oral lobes are used to contain prey until they are drawn into the gut with its tentacles.",
           "sources": [
             "https://en.wikipedia.org/wiki/Bathocyroe_fosteri"
@@ -464,10 +470,10 @@
   "jobs": {
     "script": {
       "stage": "script",
-      "status": "running",
-      "at": "2026-10-20T04:29:34Z",
-      "action": "job_start",
-      "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
+      "status": "done",
+      "at": "2026-10-20T04:35:06Z",
+      "action": "write_script",
+      "text": "대본 자동 작성 완료 — 승인 대기"
     }
   },
   "cost": {
@@ -479,6 +485,11 @@
     "spent": [
       {
         "at": "2026-10-19T22:46:44Z",
+        "what": "대본 자동 작성(AI+나레이션)",
+        "usd": 0.05
+      },
+      {
+        "at": "2026-10-20T04:34:40Z",
         "what": "대본 자동 작성(AI+나레이션)",
         "usd": 0.05
       }
