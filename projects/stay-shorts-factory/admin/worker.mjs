@@ -379,9 +379,10 @@ async function startRun(env, body) {
   if (action === "redo") {                                                     // v10.3: 이전 미리보기의 대본·나레이션·인서트·통과 시트 재사용, 고른(또는 탈락한) 시트만 다시
     if (mode !== "signature") throw new HttpError(400, "'문제 시트만 다시'는 시그니처 이야기에서만 됩니다");
     const arr = Array.isArray(body.sheets) ? body.sheets.map((n) => Number(n)).filter((n) => Number.isInteger(n) && n > 0 && n <= 12) : [];
-    sheetsPick = arr.length ? [...new Set(arr)].sort((a, b) => a - b) : null;    // 비면 제작 코드가 탈락 시트를 고른다("failed")
+    const textOnly = body.text_only === true;                                  // v10.2b: 시트는 전부 재사용, 대본 점검(운영 안내 문장 빼기)만 — 약 20원
+    sheetsPick = textOnly ? "none" : arr.length ? [...new Set(arr)].sort((a, b) => a - b) : null;    // 비면 제작 코드가 탈락 시트를 고른다("failed")
     redoIns = body.inserts === true;
-    const nSheets = sheetsPick ? sheetsPick.length : Math.max(1, Number(body.failed_count) || 1);
+    const nSheets = textOnly ? 0 : sheetsPick ? sheetsPick.length : Math.max(1, Number(body.failed_count) || 1);
     cost = nSheets * c.redo_sheet + (redoIns ? c.redo_sheet : 0) + c.redo_base;
   } else {
     cost = action === "preview" ? c.preview : reuse ? c.produce : c.produce_fresh;
@@ -412,11 +413,11 @@ async function startRun(env, body) {
   if (action === "preview" || action === "redo") next.stage = "preview";
   if (action === "redo") next.redo = { sheets: sheetsPick || "failed", inserts: redoIns };   // make_story.produce_story: reuse_runs 의 계획·패널 재사용 + 이 시트만 다시
   const what = `${MODES[mode]} ${mode === "signature" && (action === "preview" || action === "redo") ? "이야기 미리보기" : LABEL[action]}`;
-  const tail = action === "redo" ? ` · 문제 시트만 다시(${sheetsPick ? "시트 " + sheetsPick.join("·") : "탈락 시트"}${redoIns ? " + 인서트" : ""})` : "";
+  const tail = action === "redo" ? ` · 문제 시트만 다시(${sheetsPick === "none" ? "시트 전부 재사용 · 대본 점검만" : sheetsPick ? "시트 " + sheetsPick.join("·") : "탈락 시트"}${redoIns ? " + 인서트" : ""})` : "";
   next.note = `관리자 페이지 ${what}${tail} — ${stay} · 예상 약 ${cost.toLocaleString()}원${reuse ? ` · 미리보기 #${reuse.number} 재사용` : ""} · ${now.toISOString().slice(0, 16).replace("T", " ")} KST`;
   // 커밋 제목은 '… 이야기 미리보기 — 숙소 (' 꼴을 지킨다(sigPreviewIndex 가 이 꼴로 재사용할 미리보기를 찾는다) — 문제 시트만 다시 만든 결과도 다음 정식 제작이 재사용
   const put = await commitJson(env, REQ_PATH, req.sha, next, `stay-shorts: 관리자 페이지 ${what} — ${stay} (${next.nonce}${action === "redo" ? " · 문제 시트만 다시" : ""})`);
-  return { ok: true, nonce: next.nonce, action, mode, stay, cost, reuse: reuse ? reuse.number : null, sheets: sheetsPick, inserts: redoIns, commit: (put.commit || {}).html_url || "" };
+  return { ok: true, nonce: next.nonce, action, mode, stay, cost, reuse: reuse ? reuse.number : null, sheets: sheetsPick === "none" ? [] : sheetsPick, text_only: sheetsPick === "none", inserts: redoIns, commit: (put.commit || {}).html_url || "" };
 }
 
 async function cancelRun(env, body) {

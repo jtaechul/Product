@@ -138,6 +138,7 @@ main > *, .card > *, .runs .body > * { min-width: 0 }      /* 넓은 표가 화�
         <p class="note" id="redoNote"></p>
         <div id="redoSheets" style="display:grid;gap:6px"></div>
         <label style="display:flex;gap:10px;align-items:center;font-size:14px"><input type="checkbox" id="redoIns" style="width:22px;height:22px"> 감정 인서트(집·차 안 4장면)도 다시 만들기 · 약 98원</label>
+        <label style="display:flex;gap:10px;align-items:center;font-size:14px"><input type="checkbox" id="redoText" style="width:22px;height:22px"> 시트는 모두 그대로 두고 대본 점검만(운영 안내 문장 빼기 · 캡션 정리) · 약 20원</label>
         <button class="btn main" id="redoBtn">문제 시트만 다시<small id="redoCost"></small></button>
       </div>
     </details>
@@ -424,7 +425,7 @@ function redoPick() {                                                          /
   return [...document.querySelectorAll("#redoSheets input[type=checkbox]:checked")].map((x) => Number(x.value)).filter((n) => n > 0);
 }
 function redoCost(c, R) {
-  const n = redoPick().length || (R ? R.failed.length : 0) || 1;
+  const n = $("redoText").checked ? 0 : (redoPick().length || (R ? R.failed.length : 0) || 1);
   return n * (c.redo_sheet || 98) + ($("redoIns").checked ? (c.redo_sheet || 98) : 0) + (c.redo_base || 20);
 }
 function renderRedo(d, stay, fc, blocked, room) {                               // v10.3: 직전 결과가 이 숙소의 미리보기면 시트별 통과 수 + 탈락 시트 기본 선택 → 그 시트만 다시(시트당 약 98원)
@@ -441,12 +442,13 @@ function renderRedo(d, stay, fc, blocked, room) {                               
   $("redoSub").textContent = "미리보기 #" + R.number + "의 시트 " + R.sheets.length + "장 중 탈락 " + R.failed.length + "장 · 대본·나레이션·인서트는 그대로";
   $("redoNote").textContent = "체크한 시트만 다시 만듭니다(시트당 약 98원). 대본·나레이션·캡션·훅 제목·라벨과 체크 안 한 시트의 패널, 감정 인서트(" + R.inserts.ok + "/" + R.inserts.total + " 통과)는 이전 미리보기에서 그대로 가져옵니다(0원). 끝나면 새 미리보기가 텔레그램으로 오고, 정식 제작은 그 새 미리보기를 씁니다.";
   const cost = redoCost(c, R);
-  $("redoCost").textContent = "약 " + won(cost) + " · 시트 " + (redoPick().length || R.failed.length || 1) + "장" + ($("redoIns").checked ? " + 인서트" : "") + " · 누르면 한 번 더 확인";
+  $("redoCost").textContent = "약 " + won(cost) + ($("redoText").checked ? " · 대본 점검만(시트 전부 재사용)" : " · 시트 " + (redoPick().length || R.failed.length || 1) + "장") + ($("redoIns").checked ? " + 인서트" : "") + " · 누르면 한 번 더 확인";
   $("redoBtn").disabled = blocked || room < cost;
 }
 const busy = () => !S || (S.runs || []).some((r) => r.active) || Date.now() < holdUntil;
 $("redoSheets").addEventListener("change", () => { if (S) renderRedo(S, $("stay").value, fmtCost(S), busy(), S.money.cap - S.money.total); });
 $("redoIns").addEventListener("change", () => { if (S) renderRedo(S, $("stay").value, fmtCost(S), busy(), S.money.cap - S.money.total); });
+$("redoText").addEventListener("change", () => { if (S) renderRedo(S, $("stay").value, fmtCost(S), busy(), S.money.cap - S.money.total); });
 
 async function start(action, confirm) {
   const stay = $("stay").value;
@@ -454,17 +456,17 @@ async function start(action, confirm) {
   $("previewBtn").disabled = $("produceBtn").disabled = $("redoBtn").disabled = true;
   try {
     const body = { action, stay, mode: fc.mode, format: fc.format, confirm: !!confirm };
-    if (action === "redo") { body.sheets = redoPick(); body.inserts = $("redoIns").checked; body.failed_count = S.redo ? S.redo.failed.length : 1; }
+    if (action === "redo") { body.sheets = redoPick(); body.inserts = $("redoIns").checked; body.text_only = $("redoText").checked; body.failed_count = S.redo ? S.redo.failed.length : 1; }
     const r = await api("/api/run", body);
     holdUntil = Date.now() + 60000;
-    msg($("runMsg"), ACTION_KO[action] + " 시작: " + stay + " (예상 약 " + won(r.cost) + (r.reuse ? " · 미리보기 #" + r.reuse + " 재사용" : "") + (action === "redo" ? " · 시트 " + (r.sheets ? r.sheets.join("·") : "탈락한 것") + (r.inserts ? " + 인서트" : "") + " 다시" : "") + "). 1분 안에 '지금 상태'에 나타납니다", "ok");
+    msg($("runMsg"), ACTION_KO[action] + " 시작: " + stay + " (예상 약 " + won(r.cost) + (r.reuse ? " · 미리보기 #" + r.reuse + " 재사용" : "") + (action === "redo" ? (r.text_only ? " · 시트 전부 재사용 · 대본 점검만" : " · 시트 " + (r.sheets && r.sheets.length ? r.sheets.join("·") : "탈락한 것") + " 다시") + (r.inserts ? " + 인서트" : "") : "") + "). 1분 안에 '지금 상태'에 나타납니다", "ok");
     setTimeout(load, 8000); setTimeout(load, 61000);
   } catch (e) { msg($("runMsg"), e.message, "bad"); load(); }
 }
 $("redoBtn").onclick = () => {
   if (!S || !S.redo) return;
   const R = S.redo, m = S.money, fc = fmtCost(S), c = redoCost(S.cost[fc.mode] || S.cost.signature, R), pick = redoPick();
-  openSheet({ label: "문제 시트만 다시 확인", title: $("stay").value + " · 미리보기 #" + R.number, big: "약 " + esc(won(c)) + " <small>시트 " + (pick.length ? pick.join("·") : "탈락한 것") + ($("redoIns").checked ? " + 감정 인서트" : "") + " 다시</small>",
+  openSheet({ label: "문제 시트만 다시 확인", title: $("stay").value + " · 미리보기 #" + R.number, big: "약 " + esc(won(c)) + " <small>" + ($("redoText").checked ? "시트 전부 재사용 · 대본 점검만" : "시트 " + (pick.length ? pick.join("·") : "탈락한 것") + " 다시") + ($("redoIns").checked ? " + 감정 인서트" : "") + "</small>",
     after: "대본·나레이션·캡션과 체크 안 한 시트는 미리보기 #" + R.number + "에서 그대로 가져오고(0원), 체크한 시트만 새로 만들어 검수합니다(시트당 약 98원). 이번 달 " + won(m.total) + " → 약 " + won(m.total + c) + " (한도 " + won(m.cap) + ")",
     check: "약 " + won(c) + "이 나가는 것을 압니다",
     go: "다시 만들기 시작", onGo: () => start("redo", true) });

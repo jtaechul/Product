@@ -372,7 +372,7 @@ def make_sheets(models: dict, scenes: list[dict], shots: dict, story: Path, repo
         groups.setdefault(sc["k"], []).append(sc)
     old = reuse or {}
     rd = redo or {}
-    redo_list = {int(x) for x in rd.get("sheets")} if isinstance(rd.get("sheets"), list) else None
+    redo_list = {int(x) for x in rd.get("sheets")} if isinstance(rd.get("sheets"), list) else (set() if rd.get("sheets") == "none" else None)   # "none" = 시트 전부 재사용(대본 점검만)
     redo_all = rd.get("sheets") == "all"
     sheets, n_sheet = [], max((int(x.get("sheet") or 0) for x in old.values()), default=0)
     spare_n = len(scenes)
