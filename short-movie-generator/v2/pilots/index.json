@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-20T11:37:10Z",
+  "updated": "2026-10-20T11:43:25Z",
   "items": [
     {
       "id": "actinoscyphia_aurelia",
@@ -32,14 +32,14 @@
       "id": "bathocyroe_fosteri",
       "name_ko": "감투빗해파리목의 한 종",
       "sci": "Bathocyroe fosteri",
-      "stage": "storyboard",
-      "state": "review",
+      "stage": "video",
+      "state": "working",
       "job": {
-        "stage": "storyboard",
-        "status": "done",
-        "at": "2026-10-20T11:37:10Z",
-        "action": "write_storyboard",
-        "text": "스토리보드 자동 작성 완료 — 승인 대기"
+        "stage": "video",
+        "status": "running",
+        "at": "2026-10-20T11:43:25Z",
+        "action": "job_start",
+        "text": "자동 작업 시작 — 준비 중(도구 설치 뒤 바로 시작)"
       },
       "created": "2026-10-19T11:07:40Z",
       "uploaded_at": null,
