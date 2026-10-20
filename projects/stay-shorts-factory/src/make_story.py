@@ -116,6 +116,12 @@ AIM_ZOOM = (0.22, 0.5)                                               # 대상 �
 MOTION = 0.24                                                        # 짧은 컷 사진 무빙 폭(9컷 형식 0.24 의 절반 남짓 — 1초 컷에서 흔들려 보이지 않게)
 PATTERNS = ("push", "pan", "diag", "tilt", "pull")
 PRICE_RX = re.compile(r"\d[\d,]*\s*(원|만원|만 원|%)")
+FEATURE_MAX = 3                                                       # v10 특장점 라벨(2026-10-20 운영자 '2안 라벨만') — 영상당 1~3개(레퍼런스 또떠남 수락휴는 35초에 7개 = 시설 나열)
+FEATURE_LEN = (4, 12)                                                 # 라벨 글자 수(공백 빼고) · 108px 두 줄까지(design.fits_lines('feature') · 띄어쓰기 자리에서만 나눔)
+CARD_ANS = (6, 12)                                                    # v10.1 카드 답 줄 글자 수(공백 빼고) — 72px 한 줄
+PAIN_LEN = (6, 14)                                                    # 걱정형 제목(페인포인트) 글자 수(공백 빼고) — 120px 두 줄까지
+FEATURE_LENSES = ("정체", "디테일", "상황", "사람", "행동", "연결", "희소성", "조건")   # 훅·제안엔 라벨 없음
+CARD_DEFAULT = True                                                   # 요약 카드 기본 켜짐 — 2026-10-20 운영자: '라벨만' 뒤 큰 글씨 재설계를 보고 '새 디자인으로 켠다' · request card:false 로 끔
 CARD_SEC, CARD_SEC_SHORT = 3.0, 2.6                                  # v9 요약 카드(걱정 → 답 · 음악만) 길이 — 나레이션이 CARD_NARR_LIMIT 를 넘으면 짧게
 CARD_NARR_LIMIT = 26.0
 CARD_LINE = (6, 14)                                                   # 카드 글 한 줄(공백 제외 · 44px 한 줄 폭 680px)
@@ -401,7 +407,9 @@ STORY_SYSTEM = """너는 숙소 쇼츠 작가다. 이 숙소의 **장점 하나*
    **제안은 정체를 되풀이하지 않는다** — 훅의 걱정 낱말을 받아 뒤집어 권한다(예 훅 '두고 떠나는 여행, 마음 쓰이죠?' → 제안 '이번엔 함께 떠나 보는 건 어떨까요?').
 12) **card(요약 카드 · 조건 문장 뒤 3초 · 음악만 · 저장 유도)**: point = 훅의 걱정을 물음표 없는 **명사구**로(공백 빼고 6~14자 · 예 '반려견 두고 떠나는 여행'),
    answers = 이 숙소의 답 2~3줄(각 6~14자 명사구 · 서로 다른 내용 · 사실 번호 필수, 장점 사진에 보이는 것만 말하면 0 · 분위기 말·가격·숙소 이름·'~니다' 금지 · 첫 줄의 핵심 낱말 하나만 [대괄호]).
-JSON 만: {"beats":[{"lens":"훅","line":"...","shots":["S1"],"fact":0,"actor":"env","action_en":"..."}],"hook_title":"...",
+13) **feature(특장점 라벨 · 영상당 1~3개)**: 정체·디테일·상황·행동·연결·조건 중 1~3문장에 그 문장이 보여 주는 특장점을 공백 빼고 4~10자 명사구로(예 '펫 전용 객실', '전 객실 바다 전망'). 훅·제안은 "".
+   같은 특장점이 이어지는 문장엔 같은 글을 그대로(화면 라벨이 이어진다). 그 문장의 사실·문장·장점 낱말에 근거 · 가격·분위기 말·숙소 이름·'~니다'·물음표·기호 금지 · 서로 다른 특장점은 3개까지.
+JSON 만: {"beats":[{"lens":"훅","line":"...","shots":["S1"],"fact":0,"actor":"env","action_en":"...","feature":""}],"hook_title":"...",
  "caption":{"hook":"...","points":["..."],"save":"..."},"checklist":[{"fact":1,"text":"..."}],"title":"...","hashtags":["#..."],
  "card":{"point":"...","answers":[{"fact":1,"text":"..."},{"fact":0,"text":"..."}]}}"""
 
@@ -836,7 +844,8 @@ def operator_script(stay: str) -> list[dict] | None:
         return None
     beats = [{"lens": str(b["lens"]), "line": design.one_line(str(b["line"])),
               **({"actor": str(b["actor"])} if b.get("actor") else {}), **({"action_en": str(b["action_en"])} if b.get("action_en") else {}),
-              **({"want": str(b["want"])} if b.get("want") else {}), **({"fact_hint": str(b["fact_hint"])} if b.get("fact_hint") else {})}   # v6: 사진·근거 낱말 힌트
+              **({"want": str(b["want"])} if b.get("want") else {}), **({"fact_hint": str(b["fact_hint"])} if b.get("fact_hint") else {}),   # v6: 사진·근거 낱말 힌트
+              **({"feature": str(b["feature"])} if b.get("feature") else {})}                                                            # v10: 특장점 라벨
              for b in ((d.get(stay) or {}).get("beats") or []) if isinstance(b, dict) and b.get("lens") and b.get("line")]
     return beats or None
 
@@ -899,8 +908,8 @@ def card_errs(card, facts: list[str], toks: set[str], h: dict, req: dict, ground
         t = design.one_line(str(a.get("text") or ""))
         fi = sg._int(a.get("fact")) or 0
         Lt = _nospace(design.plain(t))
-        if not (CARD_LINE[0] <= Lt <= CARD_LINE[1]):
-            errs.append(f"답 {i} '{t}' {Lt}자 — {CARD_LINE[0]}~{CARD_LINE[1]}자"); continue
+        if not (CARD_ANS[0] <= Lt <= CARD_ANS[1]):
+            errs.append(f"답 {i} '{t}' {Lt}자 — {CARD_ANS[0]}~{CARD_ANS[1]}자"); continue
         if not design.fits(t, "card_line")[0]:
             errs.append(f"답 {i} '{t}' 한 줄에 안 들어감")
         if fi and not (1 <= fi <= len(facts)):
@@ -923,6 +932,8 @@ def card_errs(card, facts: list[str], toks: set[str], h: dict, req: dict, ground
         seen.add(key); brackets += t.count("[")
     if brackets > 1:
         errs.append("강조 [대괄호]는 카드 전체에서 한 곳만")
+    if not errs and not design.card_fits(point, [design.one_line(str(a.get("text") or "")) for a in ans]):
+        errs.append("카드가 화면 아래 안전영역을 넘음")
     return errs
 
 
@@ -950,6 +961,134 @@ def _norm_card(card: dict, facts: list[str], source: str) -> dict:
     return {"point": design.one_line(str(card.get("point") or "")), "answers": ans[:3], "eyebrow": str(card.get("eyebrow") or design.CARD_EYEBROW), "source": source}
 
 
+def feature_errs(t: str, b: dict, facts: list[str], toks: set[str], h: dict, req: dict) -> list[str]:
+    """특장점 라벨 검사(0원): 공백 빼고 4~10자 · 한 줄 폭(장소 라벨 자리 72px) · 한글·영문·숫자·가운뎃점만 · 물음표·'~니다'·분위기 말·가격·숙소 이름 금지
+    · 그 문장의 근거 사실·문장·장점 낱말과 겹쳐야 한다 · 사실·문장에 없는 숫자 금지."""
+    errs = []
+    t = design.one_line(str(t or ""))
+    n = _nospace(t)
+    if not (FEATURE_LEN[0] <= n <= FEATURE_LEN[1]):
+        errs.append(f"글자 수 {n}(공백 빼고 {FEATURE_LEN[0]}~{FEATURE_LEN[1]})")
+    elif not design.fits_lines(t, "feature"):
+        errs.append("두 줄 폭 초과(띄어쓰기 자리에서 나눠 108px 두 줄)")
+    if not re.fullmatch(r"[가-힣A-Za-z0-9·\s]+", t):
+        errs.append("기호·이모지")
+    if "?" in t or "？" in t or so.ENDING_RX.search(t):
+        errs.append("물음표·'~니다'")
+    m = sg.MOOD_RX.search(t)
+    if m:
+        errs.append(f"분위기 말 '{m.group(0)}'")
+    if PRICE_RX.search(t):
+        errs.append("가격")
+    if any(x and x in t for x in so.name_tokens(h["name"], req, h)):
+        errs.append("숙소 이름")
+    basis = sg._tokens(sg._body(b.get("fact") or "")) | sg._tokens(b.get("line") or "") | set(toks)
+    if not sg._overlap(sg._tokens(t), basis):
+        errs.append("근거 낱말 없음(그 문장의 사실·문장·장점 낱말)")
+    corpus = " ".join(facts) + " " + str(b.get("line") or "")
+    for num in re.findall(r"\d+", t):
+        if num not in corpus:
+            errs.append(f"사실에 없는 숫자 {num}"); break
+    return errs
+
+
+def apply_features(beats: list[dict], facts: list[str], toks: set[str], sig: dict, h: dict, req: dict, report: dict, operator: bool = False) -> list[dict]:
+    """v10 특장점 라벨(2026-10-20 운영자 '2안 라벨만'): 문장마다 적힌 feature 를 검사해 1~3개만 남긴다(훅·제안·규칙 밖 관점은 지움 · 같은 글이 이어지면 라벨 하나).
+    하나도 없으면 정체 문장에 장점 이름(규칙에 맞을 때만). 라벨은 장소 라벨 자리(kicker)에 그 문장들 동안 떠 있다 — 레퍼런스(또떠남 수락휴)의 노란 라벨 역할."""
+    n = len(beats)
+    kept: list[str] = []
+    tries = []
+    for j, b in enumerate(beats):
+        t = design.one_line(str(b.get("feature") or ""))
+        b["feature"] = ""
+        if not t:
+            continue
+        lens = str(b.get("lens") or "")
+        if j == 0 or (j == n - 1 and lens in END_LENSES) or lens not in FEATURE_LENSES:
+            tries.append({"beat": j + 1, "text": t, "errs": ["훅·제안·그 관점엔 라벨 없음"]}); continue
+        errs = feature_errs(t, b, facts, toks, h, req)
+        if errs:
+            tries.append({"beat": j + 1, "text": t, "errs": errs[:3]}); continue
+        if t not in kept and len(kept) >= FEATURE_MAX:
+            tries.append({"beat": j + 1, "text": t, "errs": [f"{FEATURE_MAX}개 초과"]}); continue
+        if t not in kept:
+            kept.append(t)
+        b["feature"] = t
+    source = ("운영자" if operator else "모델") if kept else ""
+    if not kept:                                                                       # 예비: 정체 문장에 장점 이름(규칙에 맞을 때만)
+        j1 = next((j for j, b in enumerate(beats) if str(b.get("lens") or "") == "정체"), None)
+        t = design.one_line(str(sig.get("name") or ""))
+        if j1 is not None and t and not feature_errs(t, beats[j1], facts, toks, h, req):
+            beats[j1]["feature"] = t; kept = [t]; source = "예비(장점 이름)"
+    items = []
+    for t in kept:
+        js = [j + 1 for j, b in enumerate(beats) if b.get("feature") == t]
+        fi = next((int(b.get("fact_i") or 0) for b in beats if b.get("feature") == t and b.get("fact_i")), 0)
+        items.append({"text": t, "beats": js, "fact": fi})
+    report["features"] = {"items": items, "source": source, "tries": tries[:8]}
+    if tries:
+        log("특장점 라벨 뺌: " + " / ".join(f"문장 {x['beat']} '{x['text']}' {x['errs'][0]}" for x in tries[:4]))
+    return items
+
+
+def pain_errs(t: str, h: dict, req: dict) -> list[str]:
+    """걱정형 제목(페인포인트) 검사: 공백 빼고 6~14자 · 띄어쓰기 자리에서 120px 두 줄 · 물음표·느낌표·'~니다'·분위기 말·가격·숙소 이름 금지."""
+    errs = []
+    n = _nospace(design.plain(t))
+    if not (PAIN_LEN[0] <= n <= PAIN_LEN[1]):
+        errs.append(f"글자 수 {n}(공백 빼고 {PAIN_LEN[0]}~{PAIN_LEN[1]})")
+    elif not design.fits_lines(design.plain(t), "hook_title"):
+        errs.append("두 줄 폭 초과")
+    if re.search(r"[?？!.。]", t) or so.ENDING_RX.search(t):
+        errs.append("물음표·느낌표·마침표·'~니다'")
+    m = sg.MOOD_RX.search(t)
+    if m:
+        errs.append(f"분위기 말 '{m.group(0)}'")
+    if PRICE_RX.search(t):
+        errs.append("가격")
+    if any(x and x in t for x in so.name_tokens(h["name"], req, h)):
+        errs.append("숙소 이름")
+    return errs
+
+
+def accent_word(t: str, toks: set[str]) -> str:
+    """장점 낱말과 겹치는 첫 낱말 하나만 [대괄호](코랄) — 없으면 그대로."""
+    words = t.split(" ")
+    for i, w in enumerate(words):
+        core = re.sub(r"(은|는|이|가|을|를|과|와|의|에|에서|으로|로|도|만|까지|부터)$", "", w)
+        if len(core) >= 2 and any(core in x or x in core for x in toks):
+            words[i] = f"[{core}]" + w[len(core):]
+            return " ".join(words)
+    return t
+
+
+def pain_title(js: dict, op_card: dict | None, beats: list[dict], toks: set[str], h: dict, req: dict, report: dict) -> str:
+    """v10.1 걱정형 제목(2026-10-20 운영자 "페인포인트 글씨 아주 크게"): 훅의 걱정을 큰 제목으로 — 운영자 카드 point → 모델 card.point → 훅 문장 첫 절.
+    규칙에 맞는 첫 후보에 장점 낱말 하나만 [대괄호]. 전부 탈락이면 ""(호출부가 질문형 제목으로 되돌아간다)."""
+    cands = []
+    if op_card and op_card.get("point"):
+        cands.append(("운영자", str(op_card["point"])))
+    mc = js.get("card") if isinstance(js.get("card"), dict) else {}
+    if mc.get("point"):
+        cands.append(("모델", str(mc["point"])))
+    hook = str(beats[0].get("line") or "") if beats else ""
+    first = re.split(r"[,，?？!.]", hook)[0].strip()
+    if first:
+        cands.append(("훅 첫 절", first))
+    tries = []
+    for src, t in cands:
+        t = design.one_line(design.plain(t)).strip(" ,")
+        errs = pain_errs(t, h, req)
+        if errs:
+            tries.append({"source": src, "text": t, "errs": errs[:3]}); continue
+        out = accent_word(t, toks)
+        report["pain_title"] = {"source": src, "text": out, "tries": tries}
+        return out
+    report["pain_title"] = {"source": "", "text": "", "tries": tries}
+    log("걱정형 제목 후보가 모두 규칙에 걸림 → 질문형 제목으로: " + " / ".join(f"{x['source']} '{x['text']}' {x['errs'][0]}" for x in tries[:3]))
+    return ""
+
+
 def make_card(model_card, op_card, facts: list[str], toks: set[str], sig: dict, h: dict, req: dict, beats: list[dict], checklist: list[str], report: dict) -> dict | None:
     """요약 카드 고르기(0원): 운영자 카드(fact_hint → 번호) → 모델 카드 → 예비(훅 첫 절 + 캡션 체크리스트 중 짧은 줄). 다 안 되면 카드 없이(기록)."""
     tries = []
@@ -972,7 +1111,7 @@ def make_card(model_card, op_card, facts: list[str], toks: set[str], sig: dict, 
     ans: list[str] = []
     for t in checklist or []:
         t = design.one_line(str(t))
-        if CARD_LINE[0] <= _nospace(t) <= CARD_LINE[1] and design.fits(t, "card_line")[0] and not sg.MOOD_RX.search(t) and not PRICE_RX.search(t) and t not in ans:
+        if CARD_ANS[0] <= _nospace(t) <= CARD_ANS[1] and design.fits(t, "card_line")[0] and not sg.MOOD_RX.search(t) and not PRICE_RX.search(t) and t not in ans:
             ans.append(t)
     cand = {"point": point, "answers": [{"fact": 0, "text": t} for t in ans[:3]], "eyebrow": eyebrow}
     errs = card_errs(cand, facts, toks, h, req, grounded=False)                      # 체크리스트는 이미 사실 번호에 묶여 있다
@@ -1029,7 +1168,7 @@ def force_operator(js: dict, op: list[dict], shots: list[dict], facts: list[str]
             or (auto_fact(b["line"], list(facts)) if b["lens"] not in ("훅", *END_LENSES) else 0)                      # 운영자 근거 힌트 > 모델 > 낱말 겹침
         beats.append({"lens": b["lens"], "line": b["line"], "shots": [str(x) for x in (g.get("shots") or [])], "fact": fi,
                       "actor": b.get("actor") or g.get("actor") or "", "action_en": b.get("action_en") or g.get("action_en") or "",
-                      "want": b.get("want") or ""})                                                                   # 운영자 화면 지시가 우선
+                      "want": b.get("want") or "", "feature": b.get("feature") or g.get("feature") or ""})           # 운영자 화면 지시·라벨이 우선
     if not all(b["shots"] for b in beats) or any(x not in {s["id"] for s in shots} for b in beats for x in b["shots"]):
         auto_shots(beats, shots)
     elif any(b.get("want") for b in beats):
@@ -1040,7 +1179,7 @@ def force_operator(js: dict, op: list[dict], shots: list[dict], facts: list[str]
 
 
 def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], shots: list[dict], peers: list[str], toks: set[str], report: dict) -> dict:
-    ttype = so.next_title_type()
+    ttype = str(req.get("title_type") or "걱정형")                                     # v10.1 기본 = 걱정형(페인포인트 큰 제목) · '반전 질문'/'의외 사실'은 요청 title_type
     op = operator_script(h["name"])
     content = (f"장점: {sig['name']} — {sig.get('what') or ''}\n근거 사실: {sg._body(sig['fact'])}\n왜 의외: {sig.get('why') or '-'}\n"
                f"다른 후보와 다른 점: {sig.get('vs_peers') or '-'}\n시기: {req.get('month')} · 테마: {req.get('theme')} · 지역: {req.get('region')}\n"
@@ -1053,8 +1192,9 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
                + "\n\n컷 목록(id · 종류 · 사진 번호 · 장소 · 보이는 것):\n" + "\n".join(f"{s['id']} · {s['kind']} · 사진 {s['k']} · 장소 {s.get('place') or '-'} · {s['desc']}" for s in shots))
     if op:
         content += ("\n\n운영자 확정 대본 — beats 의 lens·line 은 아래를 글자 그대로·같은 순서·같은 개수로 쓴다(바꾸지 않는다). "
-                    "shots·fact·hook_title·caption·checklist·title·hashtags 만 정한다(actor·action_en 이 적힌 문장은 그것도 그대로):\n"
-                    + "\n".join(f"{i}. [{b['lens']}] {b['line']}" + (f"  (actor {b['actor']}: {b.get('action_en') or ''})" if b.get("actor") else "") for i, b in enumerate(op, 1)))
+                    "shots·fact·feature·hook_title·caption·checklist·title·hashtags 만 정한다(actor·action_en·feature 가 적힌 문장은 그것도 그대로):\n"
+                    + "\n".join(f"{i}. [{b['lens']}] {b['line']}" + (f"  (actor {b['actor']}: {b.get('action_en') or ''})" if b.get("actor") else "")
+                                + (f"  (feature: {b['feature']})" if b.get("feature") else "") for i, b in enumerate(op, 1)))
         report["operator_script"] = [b["line"] for b in op]
     fb, best, tries = "", None, []
     for attempt in range(3):
@@ -1103,13 +1243,19 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
         beats.append({"lens": str(b.get("lens") or "정보"), "line": design.one_line(str(b.get("line") or "")), "shots": ids,
                       "fact_i": fi if 1 <= fi <= len(facts) else 0, "fact": facts[fi - 1] if 1 <= fi <= len(facts) else "",
                       "actor": str(b.get("actor") or "").strip().lower(), "action_en": design.one_line(str(b.get("action_en") or "")),
+                      "feature": design.one_line(str(b.get("feature") or "")),
                       **({"want": str(b.get("want"))} if b.get("want") else {})})
     route_shots(beats, shots, report)                                                  # v6 동선 규칙(코드 강제 · 0원)
     plan_visuals(beats, shots, report, ai_budget(req), dog_ok(sig))
+    features = apply_features(beats, facts, toks, sig, h, req, report, bool(op and any(b.get("feature") for b in op)))   # v10 특장점 라벨(0원)
     scenes = storyboard_scenes(models, beats, shots, sig, req, report)                   # v7 씬 스토리보드(시트 이미지 · 돈)
     hook_sid = next((x for x in beats[0]["shots"] if not any(s.get("insert") for s in shots if s["id"] == x)), beats[0]["shots"][0])
     shots_desc = [{"description": next(s["desc"] for s in shots if s["id"] == hook_sid)}]
-    title = sg.ensure_sig_title(models, design.one_line(str(js.get("hook_title") or "")), [b["line"] for b in beats], shots_desc, sig, h, req, ttype, report)
+    title = pain_title(js, operator_card(h["name"]) if op else None, beats, toks, h, req, report) if ttype == "걱정형" else ""
+    if not title:                                                                      # 걱정형 후보가 없으면 질문형(반전 질문)으로
+        if ttype == "걱정형":
+            ttype = "반전 질문"
+        title = sg.ensure_sig_title(models, design.one_line(str(js.get("hook_title") or "")), [b["line"] for b in beats], shots_desc, sig, h, req, ttype, report)
     cap = js.get("caption") if isinstance(js.get("caption"), dict) else {}
     ocap = operator_caption(h["name"]) if op else None
     if ocap:
@@ -1123,14 +1269,15 @@ def write_story(models: dict, sig: dict, h: dict, req: dict, facts: list[str], s
     name_title = str(js.get("title") or sig["name"])
     if h["name"] not in name_title:
         name_title = f"{h['name']} {name_title}".strip()
-    text = {"beats": beats, "hook_title": title, "hook_title_type": ttype, "scenes": scenes,
+    text = {"beats": beats, "hook_title": title, "hook_title_type": ttype, "scenes": scenes, "features": features,
             "caption": {"hook": design.one_line(str(cap.get("hook") or "")), "points": [design.one_line(str(x)) for x in cap.get("points") or [] if str(x).strip()][:3],
                         "save": design.one_line(str(cap.get("save") or ""))},
             "checklist": sg.grounded_checklist(js.get("checklist") or [{"fact": b["fact_i"]} for b in beats if b["fact_i"]], facts, h),
             "title": name_title[:40], "hashtags": ([t if str(t).startswith("#") else f"#{t}" for t in (js.get("hashtags") or []) if str(t).strip()] or sg.default_tags(req))[:5]}
     text["card"] = make_card(js.get("card"), operator_card(h["name"]) if op else None, facts, toks, sig, h, req, beats, text["checklist"], report)   # v9 요약 카드(0원)
     log("대본: " + " / ".join(f"[{b['lens']}] {b['line']}" for b in beats) + f" · 훅 제목 {title or '(없음)'}"
-        + (f" · 요약 카드({text['card']['source']}) {text['card']['point']} / " + " / ".join(a['text'] for a in text['card']['answers']) if text.get("card") else " · 요약 카드 없음"))
+        + (f" · 요약 카드({text['card']['source']}) {text['card']['point']} / " + " / ".join(a['text'] for a in text['card']['answers']) if text.get("card") else " · 요약 카드 없음")
+        + (" · 라벨 " + " / ".join(f["text"] for f in features) if features else " · 라벨 없음"))
     return text
 
 
@@ -1528,7 +1675,7 @@ def render(text: dict, shots: dict, narr: dict, req: dict, report: dict, folder:
     hook_sid = next((x for b in beats for x in b["shots"] if x in shots and not shots[x].get("insert") and shots[x].get("adv")),
                     next((x for b in beats for x in b["shots"] if x in shots and not shots[x].get("insert")), beats[0]["shots"][0]))
     hook_img = STORY / shots[hook_sid]["img"]                                         # 끝 카드·요약 카드 배경 = 숙소 장점 사진(인서트는 집·차 안이라 제외)
-    card = text.get("card") if req.get("card", True) is not False else None            # v9 요약 카드: 조건 문장 뒤(없으면 제안 앞) · 음악만
+    card = text.get("card") if req.get("card", CARD_DEFAULT) is True else None          # v9 요약 카드(v10.1 재설계 · 기본 켜짐 · request card:false 로 끔): 조건 문장 뒤 · 음악만
     card_after, card_sec = None, CARD_SEC
     if card and card.get("answers"):
         idx = [j for j, b in enumerate(beats) if str(b.get("lens") or "") == "조건"]
@@ -1542,8 +1689,14 @@ def render(text: dict, shots: dict, narr: dict, req: dict, report: dict, folder:
         overlays = [{"path": frame, "a": 0, "b": 99, "anim": False}]
         if j == 0 and text.get("hook_title"):
             ttl = STORY / "ov_title.png"
-            design.hook_title_png(ttl, text["hook_title"])
+            design.hook_title_png(ttl, text["hook_title"], "box" if text.get("hook_title_type") == "걱정형" else "shadow")   # v10.1 걱정형 = 줄마다 어두운 상자(레퍼런스 표지 방식)
             overlays.append({"path": ttl, "a": 0.0, "b": 99, "anim": False})
+        feat = str(b.get("feature") or "")
+        if feat:                                                                       # v10 특장점 라벨 — 장소 라벨 자리(왼쪽 72px 코랄) · 같은 라벨이 이어지는 문장에선 애니메이션 없이 그대로
+            fo = STORY / f"ov_feat_{i:02d}.png"
+            design.feature_png(fo, feat)
+            first = not (j > 0 and str(beats[j - 1].get("feature") or "") == feat)
+            overlays.append({"path": fo, "a": 0.0, "b": 99, "anim": True, "fade": 0.22, "slide": 10} if first else {"path": fo, "a": 0.0, "b": 99, "anim": False})
         chunks = so.karaoke_times(b["line"], wav, L)
         for k, (txt, ta, tb) in enumerate(chunks):
             capk = STORY / f"ov_cap_{i:02d}_{k}.png"
@@ -1592,7 +1745,7 @@ def render(text: dict, shots: dict, narr: dict, req: dict, report: dict, folder:
                 kind += " (제작 때 " + ("훅 컷 재사용" if v["type"] == "R" else "AI " + ACTOR_KO.get(v.get("actor"), "") + (f" {AI_PART[1]:.1f}초 + 사진 무빙" if v.get("tail") else "")) + ")"
         segs.append(so.cut_segment(100 + i, src, L, wav if wav.exists() else None, overlays, slow))
         timeline.append({"i": i, "lens": b["lens"], "kind": kind, "sec": round(L, 2), "shots": b["shots"], "cuts": ncut, "narration": b["line"],
-                         "places": [shots[x].get("place") for x in b["shots"] if x in shots],
+                         "places": [shots[x].get("place") for x in b["shots"] if x in shots], "feature": feat or None,
                          "title": text["hook_title"] if j == 0 else None, "chunks": [[t, a, c] for t, a, c in chunks]})
         if card_after == j:
             seg, row = card_segment(card, hook_img, card_sec, disc_text, j + 1, report)
@@ -1642,6 +1795,9 @@ def storyboard(text: dict, shots: dict, out: Path, report: dict) -> Path:
                     d.rectangle((pad + m * (tw + 8), y + th - 24, pad + m * (tw + 8) + tw, y + th), fill=(0, 0, 0))
                     d.text((pad + m * (tw + 8) + 4, y + th - 22), ("AI " + ck.split(" ", 2)[-1] if ck.startswith("AI") else ck)[:16], font=design.font(18, bold=False),
                            fill=(94, 234, 212) if ck.startswith("AI") else (255, 170, 120))
+                if m == 0 and b.get("feature"):                                        # v10 특장점 라벨(화면 왼쪽 장소 라벨 자리)
+                    d.rectangle((pad, y, pad + tw, y + 24), fill=(0, 0, 0))
+                    d.text((pad + 4, y + 2), f"라벨 {b['feature']}"[:16], font=design.font(18, bold=False), fill=(255, 138, 91))
             except Exception:  # noqa: BLE001
                 d.rectangle((pad + m * (tw + 8), y, pad + m * (tw + 8) + tw, y + th), fill=(40, 40, 48))
         x = pad * 2 + tw * 3 + 16
@@ -1763,7 +1919,9 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
         for w in report.get("visual_warnings") or []:
             md.append(f"- 경고: {w}")
     cd = report.get("card") or {}
-    if cd.get("point"):
+    if req.get("card", CARD_DEFAULT) is not True:
+        md += ["", "## 요약 카드", "", "- 꺼짐(요청 card: false) — 기본은 켜짐(2026-10-20 운영자 '새 디자인으로 켠다')"]
+    elif cd.get("point"):
         md += ["", f"## 요약 카드 (v9 · 문장 {cd.get('after')} 뒤 · {cd.get('sec')}초 · 음악만 · 저장 유도)", "",
                f"- {cd.get('eyebrow') or design.CARD_EYEBROW}: **{cd['point']}**", "- 여기서는:"]
         for a in cd.get("answers") or []:
@@ -1771,13 +1929,24 @@ def preview_md(req: dict, sig: dict, text: dict, shots: dict, h: dict, pos: int,
         md += [f"- 출처: {cd.get('source')} · 화면: 장점 사진 약한 블러 + 어둡기 + 유리 칩, 줄마다 0.3초 간격 등장, 카드 장면엔 자막·장소 라벨 없음"]
     elif cd.get("skipped"):
         md += ["", "## 요약 카드", "", f"- 없음(규칙에 맞는 줄이 없음): {cd['skipped']}"]
+    ft = report.get("features") or {}
+    if ft.get("items"):                                                                 # v10 특장점 라벨
+        md += ["", f"## 특장점 라벨 (v10 · {len(ft['items'])}개 · {ft.get('source') or ''} · 장소 라벨 자리 72px 코랄 · 그 문장들 동안 유지)", ""]
+        for f in ft["items"]:
+            md.append(f"- **{f['text']}** — 문장 {'·'.join(str(x) for x in f['beats'])}" + (f" (사실 {f['fact']})" if f.get("fact") else " (장점 사진·문장 낱말)"))
+    else:
+        md += ["", "## 특장점 라벨", "", "- 없음(규칙에 맞는 라벨이 없음 — 모델 답·장점 이름 모두 탈락)"]
+    for x in ft.get("tries") or []:
+        md.append(f"- 뺌: 문장 {x['beat']} '{x['text']}' — {'; '.join(x['errs'])}")
     md += ["", "## 관점 검사", "", "- 결과: " + ("**통과**" if lc.get("ok") else "**미달 → 걸린 문장만 고치거나 뺌(아래 확인)**")]
     for e in (lc.get("after_fix") if not lc.get("ok") else []) or []:
         md.append(f"  - 고친 뒤 남은 것: {e}")
     for e in (report.get("story_fallback") or []):
         md.append(f"  - 처음 걸린 것: {e}")
     c = text["caption"]
-    md += ["", "## 훅 제목", "", (f"**{text['hook_title']}** ({text['hook_title_type']})" if text.get("hook_title") else "(제목 없음 — 규칙에 맞는 후보가 없었다)"),
+    pt = report.get("pain_title") or {}
+    md += ["", "## 훅 제목", "", (f"**{text['hook_title']}** ({text['hook_title_type']}" + (f" · {pt.get('source')} · 120px 어두운 상자" if text.get("hook_title_type") == "걱정형" else "") + ")" if text.get("hook_title") else "(제목 없음 — 규칙에 맞는 후보가 없었다)"),
+           *[f"- 걱정형 후보 뺌: {x['source']} '{x['text']}' — {'; '.join(x['errs'])}" for x in (pt.get("tries") or [])],
            "", "## 캡션", "", c.get("hook", ""), *(c.get("points") or []), "", *[f"· {x}" for x in text["checklist"]], "", c.get("save", ""),
            "", f"제목: {text['title']} · 해시태그: {' '.join(text['hashtags'])}", "",
            "## 비용", "", (f"- 미리보기: 스토리보드 시트 약 {(report.get('storyboard') or {}).get('krw', 0):,}원 + 인서트 시트 약 {(report.get('inserts') or {}).get('krw', 0):,}원 · AI 영상 없음(사진 무빙) · 글·비전·음성 — 정식 제작 때 화면 계획대로 AI 컷 {report.get('ai_cuts', 0)}개(약 {294 * int(report.get('ai_cuts') or 0):,}원 + 검수)" if preview
@@ -1790,7 +1959,7 @@ NARR_FILES = ("narr_full.wav",)
 
 
 def save_plan(req: dict, h: dict, pos0: int, pos: int, sig: dict, text: dict, shots: list[dict], narr: dict) -> Path:
-    plan = {"version": 7, "stay": h["name"], "format": "story", "month": req.get("month"), "theme": req.get("theme"), "region": req.get("region"),
+    plan = {"version": 8, "stay": h["name"], "format": "story", "month": req.get("month"), "theme": req.get("theme"), "region": req.get("region"),
             "pos0": pos0, "pos": pos, "h": {k: h.get(k) for k in sg.H_KEYS}, "signature": sig, "text": text, "shots": shots,
             "narr": {str(k): v for k, v in narr.items()}}
     for f in list(mt.BUILD.glob("narr_c*.wav")) + [mt.BUILD / "narr_cta.wav", mt.BUILD / "narr_full.wav"]:
@@ -1810,7 +1979,7 @@ def find_reuse(req: dict) -> dict | None:
             plan = json.loads(f.read_text(encoding="utf-8"))
         except Exception:  # noqa: BLE001
             continue
-        if plan.get("version") not in (4, 5, 6, 7) or (want and plan.get("stay") != want):
+        if plan.get("version") not in (4, 5, 6, 7, 8) or (want and plan.get("stay") != want):
             continue
         need = {s["img"] for s in plan["shots"]} | {f"narr_c{j}.wav" for j in range(1, len(plan["text"]["beats"]) + 1)} | {"narr_cta.wav"}
         if not all((f.parent / n).exists() for n in need):
@@ -1842,6 +2011,7 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
         h, pos0, pos, sig, text, shot_list = plan["h"], plan.get("pos0") or 0, plan.get("pos") or 1, plan["signature"], plan["text"], plan["shots"]
         narr = {(int(k) if str(k).isdigit() else k): v for k, v in (plan.get("narr") or {}).items()}
         report["reused_plan"] = True
+        report["features"] = {"items": [f for f in (text.get("features") or []) if isinstance(f, dict) and f.get("text")], "source": "미리보기 재사용", "tries": []}   # v10: 문서에도 라벨
         report["hotels"] = [{k: h.get(k) for k in sg.H_KEYS if k in h}]
         report["lens_check"] = {"ok": True, "note": "미리보기 대본 재사용"}
         recheck_shots(text, shot_list, sig, report)
@@ -1918,6 +2088,7 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
             "label": (f"시그니처 이야기 미리보기(스토리보드 시트 {n_sheets}장 · 인서트 {n_ins}컷 · AI 영상 없음)" if n_sheets or n_ins else "시그니처 이야기 미리보기(AI 영상 없음)") if preview
             else f"시그니처 이야기 제작(AI 영상 {ai}/{len(v.get('clips', []))}컷)", "storyboard_krw": int(sb.get("krw", 0) or 0) + ins_krw, "storyboard_sheets": n_sheets,
             "inserts": n_ins, "scene_drops": len(report.get("scene_drops") or []), "card": report.get("card"),
+            "features": [f["text"] for f in (text.get("features") or []) if isinstance(f, dict) and f.get("text")],
             "cut_count": report.get("cut_count"), "places": report.get("places"), "material_warning": report.get("material_warning"),
             "stage": report["stage"], "stay": h["name"], "signature": sig["name"], "title": text["title"], "caption": caption, "folder": folder, "folder_pos": pos,
             "bgm": report.get("bgm"), "pinned_comment": f"{h['name']} — 객실 타입·링크는 프로필 링크 → {pos}번 ({folder}) · 쿠팡 파트너스 링크 포함",

@@ -1,6 +1,6 @@
 {
  "세인트존스 호텔": {
-  "version": "v4 2026-10-18 — v6 동선: 연결 문장(돔 수영장) 추가 · 훅은 강아지가 이미 있는 창가 사진(사진 무빙) · 욕실 사진에 손 컷 · 2026-10-20 운영자 확인 사실(반려견 수영장 입장 규정) 추가",
+  "version": "v4 2026-10-18 — v6 동선: 연결 문장(돔 수영장) 추가 · 훅은 강아지가 이미 있는 창가 사진(사진 무빙) · 욕실 사진에 손 컷 · 2026-10-20 운영자 확인 사실(반려견 수영장 입장 규정) 추가 · 2026-10-20 v10 특장점 라벨 3개(정체·디테일+행동·연결) · 2026-10-20 v10.1 큰 글씨(카드 답 12자 한 줄 · 걱정형 제목 = 카드 point)",
   "beats": [
    {
     "lens": "훅",
@@ -12,21 +12,24 @@
     "lens": "정체",
     "line": "여긴 반려견과 한 방에서 묵는 펫 객실이에요.",
     "actor": "none",
-    "want": "발코니 바다 반려견 계단 침대"
+    "want": "발코니 바다 반려견 계단 침대",
+    "feature": "바다 앞 펫 전용 객실"
    },
    {
     "lens": "디테일",
     "line": "들어서면 침대로 오르는 계단으로 강아지가 먼저 올라가요.",
     "actor": "dog",
     "action_en": "trots to the small pet stairs beside the bed, climbs them step by step and settles on the bed, looking around",
-    "want": "반려견 계단 침대"
+    "want": "반려견 계단 침대",
+    "feature": "계단·식기·패드 준비"
    },
    {
     "lens": "행동",
     "line": "수건·샴푸·패드까지 있어 식기에 물만 채우면 돼요.",
     "actor": "hand",
     "action_en": "lifts the folded pet towel from the shelf, holds it for a moment and sets it back down neatly",
-    "want": "욕실 패드 수건"
+    "want": "욕실 패드 수건",
+    "feature": "계단·식기·패드 준비"
    },
    {
     "lens": "상황",
@@ -41,7 +44,8 @@
     "actor": "env",
     "action_en": "sunlight glitters on the pool surface and the water ripples gently; the sea in the distance has small waves",
     "want": "돔 수영장 슬라이드 바다",
-    "fact_hint": "인피니티풀 반려견 입장 가능 메인 수영조 제외"
+    "fact_hint": "인피니티풀 반려견 입장 가능 메인 수영조 제외",
+    "feature": "돔 수영장 반려견 동반"
    },
    {
     "lens": "조건",
@@ -73,18 +77,18 @@
    "point": "반려견 두고 떠나는 여행",
    "answers": [
     {
-     "text": "[한 방]에서 반려견과 숙박",
+     "text": "반려견과 [한 방] 숙박",
      "fact_hint": "반려견 객실 펫"
     },
     {
-     "text": "침대 계단·식기·패드 준비",
+     "text": "침대 계단·식기·패드",
      "fact_hint": "계단 식기 패드 수건"
     },
     {
-     "text": "돔 수영장 반려견 동반 입장",
+     "text": "돔 수영장 반려견 동반",
      "fact_hint": "인피니티풀 반려견 입장 메인 수영조"
     }
    ]
   }
  }
-}
+}\n

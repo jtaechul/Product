@@ -725,78 +725,138 @@ def grid_sheet(frames: list[Path], out: Path, labels: list[str] | None = None, g
 # 운영자: "특장점 요약 — 배경 이미지만 흐리게, 세련된 텍스트 프레임 안에 글이 애니메이션과 함께 들어오고, 고객의 포인트와 숙소의 특장점을 집어 준다".
 # 규칙 안에서 구현: 강한 블러(금지 ①) 대신 **약한 블러 + 어둡기 + 그라데이션**, 프레임은 토큰의 유리 칩, 왼쪽 정렬, 글자 3단계(눈썹 34 · 줄 44 · 고지문),
 # 코랄 강조는 카드 전체에서 [대괄호] 한 곳, 안전영역(위 250 · 아래 420 · 오른쪽 180) 안. 자리는 GRID["card"] 에 고정(줄 수가 달라도 각 줄의 y 는 불변).
-GRID["card"] = {"x": MARGIN, "y": 640, "w": W - MARGIN - SAFE_RIGHT - MARGIN // 2, "pad": 56, "inner": 56, "eyebrow": TYPE["eyebrow"], "eyebrow_lh": 52,
-                "point": TYPE["label"], "point_lh": 70, "gap": 24, "line": TYPE["label"], "lh": 64, "lines": 3}
-GRID["card_point"] = {"size": TYPE["label"], "w": GRID["card"]["w"] - 2 * GRID["card"]["inner"], "lines": 1}    # fits() 검사용(한 줄)
-GRID["card_line"] = {"size": TYPE["label"], "w": GRID["card"]["w"] - 2 * GRID["card"]["inner"], "lines": 1}
+GRID["card"] = {"x": MARGIN, "top": 560, "w": W - MARGIN - SAFE_RIGHT - MARGIN // 2, "eyebrow": 44, "eyebrow_lh": 64, "point": 96, "point_lh": 140,
+                "line": 72, "lh": 118, "gap": 36, "box_pad": 22}   # v10.1(2026-10-20 운영자 "카드 만들 거면 제대로 — 글씨도 안 보이고 AI스러워"): 유리 칩·블러 폐기 → 선명한 사진 + 아래 어둡기 + 줄마다 어두운 상자 위 큰 흰 글자(레퍼런스 표지 '서울인데 1박 5만 원' 방식)
+GRID["card_point"] = {"size": GRID["card"]["point"], "w": GRID["card"]["w"], "lines": 2}      # fits 검사용 — 포인트 96px · 띄어쓰기 자리에서 두 줄까지
+GRID["card_line"] = {"size": GRID["card"]["line"], "w": GRID["card"]["w"], "lines": 1}        # 답 72px · 한 줄(12자 이하)
+# ── v10 특장점 라벨(2026-10-20 운영자 '2안 라벨만' → "특장점은 글씨 아주 크게") — 장소 라벨 자리(왼쪽 · 코랄)를 108px 로 키우고 두 줄까지 ──
+GRID["feature"] = {"size": 108, "lh": 126, "x": MARGIN, "bottom": 1296, "w": SAFE_X1 - MARGIN - 24, "lines": 2}   # 아래 기준선 고정(자막 1330 위) · 1줄이면 자막 바로 위, 2줄이면 그 위로
 CARD_EYEBROW, CARD_EYEBROW2 = "이런 고민이라면", "여기서는"
 
 
-def card_rows(n_lines: int) -> dict:
-    """카드 안 글 줄의 y 자리(고정). n_lines = 답 줄 수(2~3) — 줄이 적으면 프레임만 짧아지고 각 줄의 y 는 그대로."""
-    g = GRID["card"]
-    y = g["y"] + g["pad"]
-    rows = {"eyebrow": y}
-    y += g["eyebrow_lh"]
-    rows["point"] = y
-    y += g["point_lh"] + g["gap"]
-    rows["divider"] = y
-    y += g["gap"]
-    rows["eyebrow2"] = y
-    y += g["eyebrow_lh"]
-    rows["lines"] = [y + i * g["lh"] for i in range(max(0, n_lines))]
-    y += max(0, n_lines) * g["lh"]
-    rows["bottom"] = y + g["pad"] - 12
-    return rows
+def fits_lines(text: str, role: str) -> bool:
+    """띄어쓰기 자리에서만 줄을 나눠(낱말 안은 안 끊음) role 의 줄 수·폭 안에 들어가는지 — 라벨·제목·카드 줄 검사용."""
+    g = GRID[role]
+    d = ImageDraw.Draw(Image.new("RGBA", (W, H)))
+    lines = title_lines(d, text, font(g["size"]), g.get("w", SUB_W), clean_only=True)
+    return lines is not None and len(lines) <= g["lines"]
 
 
-def card_bg(out: Path, photo: Path, blur: int = 10, dark: float = 0.45) -> Path:
-    """요약 카드 배경: 장점 사진을 **약하게** 흐리고(10px) 어둡게(45%) + 아래 그라데이션. 사진이 글을 방해하지 않되 어디인지는 보이게."""
-    im = cover(Image.open(photo).convert("RGB")).filter(ImageFilter.GaussianBlur(blur)).convert("RGBA")
-    im.alpha_composite(Image.new("RGBA", (W, H), (*INK, int(255 * dark))))
-    gradient(im, 1150, 1700, 0.0, 0.5)
-    im.convert("RGB").save(out, "JPEG", quality=92)
-    return out
-
-
-def card_frame_png(out: Path, n_lines: int, eyebrow: str = CARD_EYEBROW, eyebrow2: str = CARD_EYEBROW2) -> Path:
-    """카드의 고정 요소(유리 칩 + 눈썹 글 2줄 + 구분선) — 애니메이션 첫 단계에 한 번에 뜬다."""
-    g, r = GRID["card"], card_rows(n_lines)
-    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    glass(im, (g["x"], g["y"], g["x"] + g["w"], r["bottom"]), RADIUS, fill=(255, 255, 255, 28), border=(255, 255, 255, 66))
+def _shadowed(im: Image.Image, lines, f, xs, y0: int, lh: int, fill, stroke: int = 6):
+    """큰 글자 처리: 넓은 그림자 2겹 + 두꺼운 어두운 선(밝은 사진에서도 읽힘). 라벨(코랄)·제목(흰색) 공통."""
+    for blur, alpha, dy in ((6, 190, 5), (20, 130, 12)):
+        sh = Image.new("RGBA", im.size, (0, 0, 0, 0)); ds = ImageDraw.Draw(sh)
+        for k, ln in enumerate(lines):
+            _draw_segs(ds, xs[k], y0 + k * lh + dy, ln, f, (0, 0, 0, alpha), (0, 0, 0, alpha), stroke=stroke, stroke_fill=(0, 0, 0, alpha))
+        im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(blur)))
     d = ImageDraw.Draw(im)
-    x = g["x"] + g["inner"]
-    fe = font(g["eyebrow"], bold=False)
-    d.text((x, r["eyebrow"]), eyebrow, font=fe, fill=(255, 255, 255, 178))
-    d.line([(x, r["divider"]), (g["x"] + g["w"] - g["inner"], r["divider"])], fill=(255, 255, 255, 64), width=2)
-    d.text((x, r["eyebrow2"]), eyebrow2, font=fe, fill=(255, 255, 255, 178))
+    for k, ln in enumerate(lines):
+        _draw_segs(d, xs[k], y0 + k * lh, ln, f, fill, fill, stroke=stroke, stroke_fill=(12, 14, 20, 210))
+    return im
+
+
+def draw_feature(im: Image.Image, text: str):
+    """특장점 라벨 — 왼쪽 정렬 108px 코랄 + 두꺼운 어두운 선·그림자(레퍼런스의 검은 테두리 노란 글씨 역할). 띄어쓰기 자리에서만 2줄, 아래 기준선(bottom)에 맞춰 위로 쌓는다."""
+    g = GRID["feature"]
+    d = ImageDraw.Draw(im)
+    f = font(g["size"])
+    lines = (title_lines(d, text, f, g["w"]) or [segments(text)])[:g["lines"]]
+    y0 = g["bottom"] - g["lh"] * len(lines)
+    return _shadowed(im, lines, f, [g["x"]] * len(lines), y0, g["lh"], (*ACCENT, 255))
+
+
+def feature_png(out: Path, text: str) -> Path:
+    """특장점 라벨 겹침판 — 컷이 바뀌어도 같은 자리라 이어져 보인다(첫 컷만 페이드·올라오기는 render 가 정한다)."""
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw_feature(im, text)
     im.save(out, "PNG")
     return out
 
 
-def card_line_png(out: Path, text: str, y: int) -> Path:
-    """카드 글 한 줄(겹침판) — 자리 고정, 줄이기 없음(안 들어가면 대본 검사 단계에서 걸렀어야 한다). [대괄호] 낱말만 코랄."""
+def card_layout(point: str, answers: list[str]) -> dict:
+    """카드 줄 배치(위에서 아래로 쌓음): 눈썹 → 포인트(96px · 띄어쓰기 자리에서 2줄까지) → 눈썹2 → 답(72px · 한 줄)들. 줄마다 어두운 상자."""
     g = GRID["card"]
+    d = ImageDraw.Draw(Image.new("RGBA", (W, H)))
+    fp, fl = font(g["point"]), font(g["line"])
+    y = g["top"]
+    rows = {"eyebrow": y}
+    y += g["eyebrow_lh"]
+    p_lines = (title_lines(d, point, fp, g["w"]) or [segments(point)])[:2]
+    rows["point"] = (y, p_lines)
+    y += g["point_lh"] * len(p_lines) + g["gap"]
+    rows["eyebrow2"] = y
+    y += g["eyebrow_lh"]
+    rows["lines"] = []
+    for t in answers:
+        ls = (title_lines(d, t, fl, g["w"]) or [segments(t)])[:2]
+        rows["lines"].append((y, ls))
+        y += g["lh"] * len(ls)
+    rows["bottom"] = y
+    return rows
+
+
+def card_fits(point: str, answers: list[str]) -> bool:
+    """카드 전체가 플랫폼 UI 위(SAFE_BOTTOM) 안에 들어가는지."""
+    return card_layout(point, answers)["bottom"] <= SAFE_BOTTOM - 24
+
+
+def _box_lines(im: Image.Image, lines, f, x: int, y0: int, lh: int, size: int, fill=(255, 255, 255, 255), box=(*INK, 232)):
+    """줄마다 어두운 둥근 상자 + 흰 글자([대괄호]는 코랄) — 레퍼런스 표지('서울인데 1박 5만 원')의 검은 띠 방식. 글자를 줄이지 않는다."""
+    pad = GRID["card"]["box_pad"]
+    layer = Image.new("RGBA", im.size, (0, 0, 0, 0)); dl = ImageDraw.Draw(layer)
+    d0 = ImageDraw.Draw(im)
+    for k, ln in enumerate(lines):
+        w = _width(d0, ln, f)
+        top = y0 + k * lh - 6
+        dl.rounded_rectangle((x - pad, top, x + w + pad, top + size + 30), 18, fill=box)
+    im.alpha_composite(layer)
+    d = ImageDraw.Draw(im)
+    for k, ln in enumerate(lines):
+        _draw_segs(d, x, y0 + k * lh, ln, f, fill, (*ACCENT, 255))
+    return im
+
+
+def card_bg(out: Path, photo: Path) -> Path:
+    """요약 카드 배경: **선명한** 장점 사진 + 글자 자리부터 아래로 어둡기 그라데이션(블러·흐림 없음 — 사진이 진짜 숙소로 보여야 한다)."""
+    im = cover(Image.open(photo).convert("RGB")).convert("RGBA")
+    gradient(im, 380, 900, 0.0, 0.50)
+    gradient(im, 900, H, 0.50, 0.72)
+    im.convert("RGB").save(out, "JPEG", quality=92)
+    return out
+
+
+def card_frame_png(out: Path, point: str, answers: list[str], eyebrow: str = CARD_EYEBROW, eyebrow2: str = CARD_EYEBROW2) -> Path:
+    """카드의 고정 요소 = 눈썹 글 2줄(코랄 44px · 그림자) — 애니메이션 첫 단계에 뜬다. 유리 칩·구분선 없음."""
+    g, r = GRID["card"], card_layout(point, answers)
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    f = font(g["line"])
-    x = g["x"] + g["inner"]
-    segs = segments(text)
-    _draw_segs(d, x + 1, y + 2, segs, f, (0, 0, 0, 70), (0, 0, 0, 70))                 # 아주 옅은 그림자(유리 칩 위 가독성)
-    _draw_segs(d, x, y, segs, f, (255, 255, 255, 255), (*ACCENT, 255))
+    fe = font(g["eyebrow"])
+    for y, t in ((r["eyebrow"], eyebrow), (r["eyebrow2"], eyebrow2)):                  # 눈썹 글도 작은 어두운 상자 위(밝은 하늘에서도 읽힘)
+        w = d.textlength(t, font=fe)
+        d.rounded_rectangle((g["x"] - 12, y - 4, g["x"] + w + 12, y + g["eyebrow"] + 12), 12, fill=(*INK, 200))
+        d.text((g["x"], y), t, font=fe, fill=(*ACCENT, 255))
+    im.save(out, "PNG")
+    return out
+
+
+def card_line_png(out: Path, lines, y: int, size: int, lh: int) -> Path:
+    """카드 글 한 덩이(포인트 또는 답 하나 · 1~2줄) 겹침판 — 줄마다 어두운 상자 위 큰 흰 글자. 줄이기 없음."""
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    _box_lines(im, lines, font(size), GRID["card"]["x"], y, lh, size)
     im.save(out, "PNG")
     return out
 
 
 def card_layers(out_dir: Path, photo: Path, point: str, answers: list[str], eyebrow: str = CARD_EYEBROW, eyebrow2: str = CARD_EYEBROW2) -> dict:
-    """렌더용 층: 배경(흐린 사진) · 프레임(유리 칩·눈썹·구분선) · 글 줄들(포인트 1 + 답 n). 렌더가 줄마다 시차를 두고 띄운다."""
+    """렌더용 층: 배경(선명한 사진 + 어둡기) · 프레임(눈썹 2줄) · 글 덩이들(포인트 1 + 답 n). 렌더가 덩이마다 시차를 두고 띄운다."""
     out_dir.mkdir(parents=True, exist_ok=True)
-    r = card_rows(len(answers))
+    g, r = GRID["card"], card_layout(point, answers)
     bg = card_bg(out_dir / "card_bg.jpg", photo)
-    frame = card_frame_png(out_dir / "card_frame.png", len(answers), eyebrow, eyebrow2)
-    lines = [card_line_png(out_dir / "card_l0.png", point, r["point"])]
-    for i, (t, y) in enumerate(zip(answers, r["lines"]), 1):
-        lines.append(card_line_png(out_dir / f"card_l{i}.png", t, y))
+    frame = card_frame_png(out_dir / "card_frame.png", point, answers, eyebrow, eyebrow2)
+    y, pl = r["point"]
+    lines = [card_line_png(out_dir / "card_l0.png", pl, y, g["point"], g["point_lh"])]
+    for i, (y, ls) in enumerate(r["lines"], 1):
+        lines.append(card_line_png(out_dir / f"card_l{i}.png", ls, y, g["line"], g["lh"]))
     return {"bg": bg, "frame": frame, "lines": lines, "rows": r}
 
 
@@ -828,8 +888,8 @@ def card_sheet(photos: list[Path], out: Path, point: str, answers: list[str], la
         if labels and k < len(labels):
             d.text((gap + k * (tw + gap), 12), labels[k], font=fl, fill=(255, 255, 255))
     sc = th / H
-    g, r = GRID["card"], card_rows(len(answers))
-    for y, col, name in ((250, (255, 90, 90), "위 안전영역"), (g["y"], (120, 200, 255), "카드 위"), (r["bottom"], (120, 200, 255), "카드 아래"), (SAFE_BOTTOM, (255, 90, 90), "플랫폼 UI")):
+    g, r = GRID["card"], card_layout(point, answers)
+    for y, col, name in ((250, (255, 90, 90), "위 안전영역"), (g["top"], (120, 200, 255), "카드 위"), (r["bottom"], (120, 200, 255), "카드 아래"), (SAFE_BOTTOM, (255, 90, 90), "플랫폼 UI")):
         yy = top + int(y * sc)
         d.line([(0, yy), (sheet.width, yy)], fill=col, width=1)
         d.text((sheet.width - 130, yy - 24), name, font=font(18, bold=False), fill=col)
