@@ -1,14 +1,14 @@
 {
- "nonce": "2026-10-19-admin-sig-produce-BpNa",
+ "nonce": "2026-10-20-admin-sig-preview-mSZ4",
  "mode": "signature",
- "stay": "세인트존스 호텔",
+ "stay": "더앤리조트",
  "theme": "실내 온수풀·온천",
  "region": "강원",
  "month": "2026-11",
- "veo_approved": false,
+ "veo_approved": true,
  "caption_style": "shadow",
  "crawl": true,
- "note": "잠금(자동 · 실행 끝): 2026-10-19-admin-sig-produce-BpNa",
+ "note": "관리자 페이지 시그니처 이야기 미리보기 — 더앤리조트 · 예상 약 800원 · 2026-10-20 20:42 KST",
  "official_urls": {
   "소노펠리체 비발디파크": [
    "https://www.sonohotelsresorts.com/felice_vp",
@@ -18,10 +18,5 @@
   "세인트존스 호텔": "https://new.stjohns.co.kr/"
  },
  "format": "story",
- "reuse_runs": [
-  {
-   "run_id": 39261948609,
-   "name": "stay-run-59"
-  }
- ]
+ "stage": "preview"
 }
