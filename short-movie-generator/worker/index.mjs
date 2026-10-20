@@ -122,6 +122,7 @@ button:disabled{opacity:.5}
 .cfact a{color:var(--cy)}
 .v2edit{width:auto;margin-top:6px;padding:6px 12px;font-size:12px;min-height:36px}
 .v2ed{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#0a1018}
+.v2ed.v2hl{border-color:var(--am);box-shadow:0 0 0 2px var(--am)}
 .cfact.err{color:var(--rd)}
 .v2copy{display:flex;gap:8px;align-items:flex-start}
 .v2copytxt{flex:1;min-width:0;max-width:100%;white-space:pre-wrap;word-break:normal;overflow-wrap:anywhere;font-size:13px;line-height:1.6;background:#0a1018;border:1px solid var(--line);border-radius:8px;padding:8px}
@@ -156,7 +157,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-10-19-3 (대본: 의문 → 단서 → 답 → 여운 이야기 구조 · 이야기 흐름 표시)";
+const BUILD="v2026-10-20-1 (「이 제안으로 고치기」 누르면 그 컷 편집 칸으로 이동 · 버튼 글자로 알림)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -2983,8 +2984,14 @@ async function renderV2Episode(pid){
     const x=(ccRes.issues||[])[+b.dataset.usesug];if(!x)return;
     const e=$("#ed-"+x.cut);if(e)e.style.display="block";
     const j=$("#edjp-"+x.cut),k=$("#edko-"+x.cut);if(j)j.value=x.suggestion_jp||"";if(k&&x.suggestion_ko)k.value=x.suggestion_ko;
-    const est=$("#est-"+x.cut),c=cutsA.find(y=>y.cut===x.cut);if(est)est.innerHTML=esc(v2estimate(c,x.suggestion_jp));
+    if(j&&j.scrollHeight&&j.style)j.style.height=(j.scrollHeight+6)+"px";        // 넣은 제안이 잘리지 않게 칸 높이를 맞춤
+    const est=$("#est-"+x.cut),c=cutsA.find(y=>String(y.cut)===String(x.cut));if(est)est.innerHTML=esc(v2estimate(c,x.suggestion_jp));
     banner(x.cut+"번 컷 편집 칸에 AI 제안을 넣었습니다. 확인 후 「이 대사로 저장」을 누르세요.","ok");
+    // ★실사고 2026-10-20: 휴대폰에서 편집 칸은 화면 4장 아래, 안내는 맨 위에 떠서 "눌러도 아무 반응이 없다" → 버튼 글자로 바로 알리고
+    //   그 컷 편집 칸으로 이동 + 잠깐 강조(복사 버튼 「복사됨」과 같은 교훈)
+    b.textContent=x.cut+"번 컷 편집 칸에 넣었습니다 ↓ (아직 저장 안 됨)";
+    if(e){if(e.classList)e.classList.add("v2hl");setTimeout(()=>{if(e.classList)e.classList.remove("v2hl");},2500);
+      try{e.scrollIntoView({behavior:"smooth",block:"center"});}catch(_){}}
   });
   const ap=$("#v2apply");if(ap)ap.onclick=async()=>{if(confirm("수정한 대사를 영상에 반영할까요? 나레이션을 다시 읽고 완성본을 다시 조립합니다(약 $0.01 · 영상 컷은 그대로)."))await v2do("apply_lines",pid,"","",ap);};
   document.querySelectorAll("[data-rcopen]").forEach(b=>b.onclick=()=>{const e=$("#rc-"+b.dataset.rcopen);if(e){e.style.display="block";try{e.scrollIntoView({behavior:"smooth"});}catch(_){}}});

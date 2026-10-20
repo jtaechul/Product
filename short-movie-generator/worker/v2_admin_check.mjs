@@ -212,8 +212,11 @@ st3.stages.script.state = "review";
 statusOverride = st3; els = {}; await api.renderV2Episode("bathynomus_giganteus"); const ep3 = els.view.innerHTML;
 res.flag_shown = ep3.includes("AI 의심") && ep3.includes("의심 1건") && ep3.includes('data-usesug="0"');
 const sug = (lists["[data-usesug]"] || [])[0]; els["edjp-3"] = makeEl("edjp-3");
+let scrolled = false; els["ed-3"] = makeEl("ed-3"); els["ed-3"].scrollIntoView = () => { scrolled = true; };
 if (sug?.onclick) sug.onclick();
 res.suggestion_fills_editor = els["edjp-3"].value === "等脚類の中では、世界最大です。";
+// ★실사고 2026-10-20: 휴대폰에서 편집 칸이 화면 밖에 열려 "아무 반응 없음" → 그 칸으로 이동 + 버튼 글자로 알림
+res.suggestion_scrolls_and_says_so = scrolled && els["ed-3"].style.display === "block" && /편집 칸에 넣었습니다/.test(sug?.textContent || "");
 statusOverride = null;
 // ── 컷 수정 방향 → 콘티 → 승인 ──
 els = {}; await api.renderV2Episode("bathynomus_giganteus"); const ep4 = els.view.innerHTML;
