@@ -253,7 +253,17 @@
       "keyframe": "out/r1020113617_sb/p07.jpg",
       "panel_desc": "A close-up shot focused on the inner structure of the ctenophore. Fine, thread-like tentacles are wrapped around the tiny clay prey, pulling it upwards into the central gut structure, which is vividly painted with red satin paint. The transparent body catches the warm light. The upper quarter is softly blurred and empty.",
       "panel_shot": "close",
-      "motion": "still"
+      "motion": "still",
+      "line_history": [
+        {
+          "at": "2026-10-20T11:59:36Z",
+          "jp": "そして捕らえた獲物を、触手で赤い腸の中へ引きずり込みます。",
+          "ko": "그리고 잡은 먹이를 촉수로 붉은 장 속으로 끌어당깁니다.",
+          "tts": "そしてとらえたえものを、しょくしゅであかいちょうのなかへひきずりこみます。"
+        }
+      ],
+      "pending_edit": true,
+      "verification_note": "운영자 수정 대사 — 사실 대조 재검증 필요(대본 재검증 규칙)"
     },
     {
       "cut": 8,
