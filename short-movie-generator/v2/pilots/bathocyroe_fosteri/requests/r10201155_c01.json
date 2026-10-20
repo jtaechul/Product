@@ -1,0 +1,15 @@
+{
+  "id": "r10201155_c01",
+  "kind": "gen_omni",
+  "model": "gemini-omni-1.1-flash",
+  "resolution": "720p",
+  "purpose": "관리자 페이지 '이 컷만 다시 만들기' — 1번 컷. 메모: ",
+  "items": [
+    {
+      "name": "c01",
+      "start": "out/r1020113617_sb/p01.jpg",
+      "sec": 6,
+      "prompt": "Vertical 9:16 video, exactly 6 seconds, one continuous shot, no cuts. Handcrafted tabletop miniature diorama photography, tilt-shift shallow depth of field, warm soft practical light. The attached image is the FIRST FRAME: keep every object's shape, size, colour and position consistent with it. The main creature (whenever visible) keeps its exact anatomy and size.\nThe body is mostly transparent and bioluminescent, featuring a rounded upper dome that splits into two large, prominent oral lobes extending downwards. The overall shape resembles a deeply cleft bell or heart. The surface is smooth, with short comb rows visible along the upper ridges. Inside the transparent body, a central gut structure is visible, pigmented red on its inner walls. Thin, thread-like tentacles and internal canals weave through the lobes. It has no eyes, no hard armor, and no true limbs, relying on its large, flap-like oral lobes and internal tentacles for feeding.\n\nTIMELINE\n0.0-1.4s: Slightly high-angle tilt-shift camera looks down at a miniature diorama set made of crumpled blue cellophane. A transparent, bell-shaped ctenophore figurine made of clear resin with tiny LED fairy lights inside hangs upside down, suspended by visible fine threads. From the very first second, its two large oral lobes gently sway back and forth, and cotton-wool marine snow drifts slowly past on thin wires. The upper quarter of the frame is dark painted cardboard. 1.4-4.8s: The camera slowly pushes in slightly. The creature's internal red-painted clay gut glows softly as the LED lights twinkle. The oral lobes continue to ripple gently, maintaining the upside-down posture. The crumpled cellophane background shifts slightly as if moved by a gentle breeze. 4.8-6.0s: The camera holds steady. The creature slowly rotates a few degrees on its suspending threads, showcasing the short comb rows on its upper dome, while the cotton-wool marine snow continues its slow descent.\nSOUND: none needed (it will be replaced). No music. No dialogue.\nNEVER SHOW: text, letters, numbers, symbols, labels, logos, watermarks; real human hands, fingers or people; extra or different creatures; the main creature growing, shrinking or changing shape; morphing or melting objects; cuts, jump cuts or flicker."
+    }
+  ]
+}
