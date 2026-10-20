@@ -601,10 +601,12 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
         return int(re.sub(r"\D", "", str(s.get("id") or "")) or 0)
 
     def related(b, s: dict, keep_place: str | None = None) -> bool:
-        """v10.3: 문장과 관계있는 사진인가 — 장점 사진(이야기 전체가 그 장점) · 문장·want 낱말이 설명과 겹침 · 바꾸기 전 컷과 같은 장소.
+        """v10.3: 문장과 관계있는 사진인가 — 장점 사진(이야기 전체가 그 장점) · 문장·want 낱말이 설명과 겹침 · 문장이 그 사진의 장소 이름을 말함('객실로', '수영장도') · 바꾸기 전 컷과 같은 장소.
         첫 컷을 바꿀 때는 이것만 후보(없으면 안 바꾼다 — 같은 사진이 또 나오더라도 여분 패널이 각도·시간대를 바꾼다). #61: 조건 문장 '실내온천탕 정비'에 아무 사진도 안 맞자 S10(간판)을 깔았다."""
         lt = sg._tokens(b.get("line")) | sg._tokens(b.get("want"))
-        return bool(s.get("adv")) or sg._overlap(lt, sg._tokens(s.get("desc"))) > 0 or (keep_place is not None and s.get("place") == keep_place)
+        place = str(s.get("place") or "").split("·")[0]
+        in_line = bool(place) and place not in ("특별 공간", "외관", "물놀이", "인서트") and place in f"{b.get('line') or ''} {b.get('want') or ''}"
+        return bool(s.get("adv")) or sg._overlap(lt, sg._tokens(s.get("desc"))) > 0 or in_line or (keep_place is not None and s.get("place") == keep_place)
 
     def pick(b, exclude_k: set, used: dict, prefer_place_not: str | None = None, allow_insert: bool = False, tail: bool = False,
              keep_place: str | None = None, relevant: bool = False) -> dict | None:
@@ -643,6 +645,11 @@ def route_shots(beats: list[dict], shots: list[dict], report: dict | None = None
             best = pick(b, set(), {}, relevant=True) or pick(b, set(), {})
             if best:
                 changes.append(f"문장 {j + 1} 첫 컷 {ids[:1]} → {best['id']}({best.get('place')})")
+                ids = [best["id"]] + [x for x in ids if x != best["id"]]
+        elif j > 0 and not by_id[ids[0]].get("insert") and not related(b, by_id[ids[0]]):   # v10.3b(#62): 모델이 고른(또는 간판 컷을 뺀 뒤 남은) 첫 컷이 문장과 무관하면 관계있는 사진으로 — 조건 문장 밑에 분수·침실
+            best = pick(b, {by_id[x]["k"] for x in ids[1:]}, {}, relevant=True)
+            if best and best["k"] != by_id[ids[0]]["k"]:
+                changes.append(f"문장 {j + 1} 첫 컷 {ids[0]}({by_id[ids[0]].get('place')}) → {best['id']}({best.get('place')} · 문장과 관계없는 사진)")
                 ids = [best["id"]] + [x for x in ids if x != best["id"]]
         b["shots"] = ids[:3]
     # ② 둘째 컷 — 2.9초 넘는 문장(훅·제안 제외)은 다른 사진으로

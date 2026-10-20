@@ -226,7 +226,7 @@ function lastResult(rep) {
   return {
     mode: rep.mode || "",
     signature: (rep.signature || {}).name || "",
-    image_krw: (rep.images || {}).image_krw || 0,
+    image_krw: (rep.images || {}).image_krw || (Number((rep.storyboard || {}).krw) || 0) + (Number((rep.inserts || {}).krw) || 0),   // 이야기 형식은 스토리보드 시트·인서트 값
     nonce: rep.nonce,
     stay: rep.stay,
     stage: rep.stage || "제작",
