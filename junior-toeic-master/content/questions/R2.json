@@ -2722,7 +2722,7 @@
       }
     ],
     "tmp_id": "R2-0027",
-    "status": "draft"
+    "status": "active"
   },
   {
     "type": "set",
@@ -2829,6 +2829,6 @@
       }
     ],
     "tmp_id": "R2-0028",
-    "status": "draft"
+    "status": "active"
   }
 ]

@@ -2826,7 +2826,7 @@
     ],
     "accent": "US",
     "tts_script": "Can I borrow your dictionary?",
-    "status": "draft",
+    "status": "active",
     "evidence": "borrow your dictionary",
     "why_not": {
       "1": "장소를 묻는 말이 아니에요",
@@ -2862,7 +2862,7 @@
     ],
     "accent": "UK",
     "tts_script": "When is the next tennis match?",
-    "status": "draft",
+    "status": "active",
     "evidence": "When is",
     "why_not": {
       "0": "장소를 묻는 질문의 답이에요",
@@ -2898,7 +2898,7 @@
     ],
     "accent": "AU",
     "tts_script": "Who wants some fresh apple juice?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Who wants",
     "why_not": {
       "0": "apple을 듣고 엉뚱하게 답했어요",
@@ -2934,7 +2934,7 @@
     ],
     "accent": "US",
     "tts_script": "Should we take a bus or walk to the zoo?",
-    "status": "draft",
+    "status": "active",
     "evidence": "take a bus or walk",
     "why_not": {
       "1": "둘 중 고를 때는 예, 아니오를 쓰지 않아요",
@@ -2970,7 +2970,7 @@
     ],
     "accent": "UK",
     "tts_script": "Look at the snow outside!",
-    "status": "draft",
+    "status": "active",
     "evidence": "Look at the snow",
     "why_not": {
       "0": "look을 듣고 엉뚱하게 말했어요",
@@ -3006,7 +3006,7 @@
     ],
     "accent": "AU",
     "tts_script": "What is your cat's name?",
-    "status": "draft",
+    "status": "active",
     "evidence": "cat's name",
     "why_not": {
       "0": "이름을 물었는데 부드럽다고 했어요",

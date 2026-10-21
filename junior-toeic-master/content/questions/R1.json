@@ -3198,7 +3198,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "yesterday",
     "why_not": {
       "0": "was 같은 짝이 빠졌어요",
@@ -3237,7 +3237,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "Fresh bread",
     "why_not": {
       "0": "빵이 직접 굽는다는 뜻이 돼요",
@@ -3276,7 +3276,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "must",
     "why_not": {
       "0": "be 뒤에는 finished 모양을 써요",
@@ -3315,7 +3315,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "three years ago",
     "why_not": {
       "1": "3년 전 일이라서 맞지 않아요",
@@ -3354,7 +3354,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "taken",
     "why_not": {
       "0": "taken과 짝을 이룰 수 없어요",
@@ -3393,7 +3393,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "These toy cars",
     "why_not": {
       "0": "자동차가 직접 만든다는 뜻이 돼요",
@@ -3432,7 +3432,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "Lily",
     "why_not": {
       "0": "그녀는 이라는 뜻이라 안 어울려요",
@@ -3471,7 +3471,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "These cookies",
     "why_not": {
       "0": "of 뒤에 올 수 없는 모양이에요",
@@ -3510,7 +3510,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "I left my pencil case",
     "why_not": {
       "0": "뒤에 물건 이름이 꼭 있어야 해요",
@@ -3549,7 +3549,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "Mr. Brown",
     "why_not": {
       "0": "누가 하는지 말할 때만 써요",
@@ -3588,7 +3588,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "the little bird",
     "why_not": {
       "0": "그것의 라는 뜻이라서 안 어울려요",
@@ -3627,7 +3627,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "Mr. Smith",
     "why_not": {
       "0": "play 모양이 바뀌어야 쓸 수 있어요",
@@ -3666,7 +3666,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "this weekend",
     "why_not": {
       "0": "앞에 is, 뒤에 to가 있어야 해요",
@@ -3705,7 +3705,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "very dirty",
     "why_not": {
       "0": "wash 모양이 바뀌어야 쓸 수 있어요",
@@ -3744,7 +3744,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "please pass me",
     "why_not": {
       "1": "pass 모양이 바뀌어야 쓸 수 있어요",
@@ -3783,7 +3783,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "The museum rules say",
     "why_not": {
       "0": "not은 must 뒤에 와야 해요",
@@ -3822,7 +3822,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "lost my ticket",
     "why_not": {
       "1": "not은 can 뒤에 와야 해요",
@@ -3861,7 +3861,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "than the old post office",
     "why_not": {
       "0": "견주는 모양이 아니에요",
@@ -3900,7 +3900,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "the ______ fruits in the world",
     "why_not": {
       "0": "가장 어떻다는 뜻이 빠졌어요",
@@ -3939,7 +3939,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "as ______ as",
     "why_not": {
       "1": "as 사이에는 견주는 모양을 쓰지 않아요",
@@ -3978,7 +3978,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "the ______ of them all",
     "why_not": {
       "0": "가장 어떻다는 뜻이 없어요",
@@ -4017,7 +4017,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "than Minho's",
     "why_not": {
       "0": "견주는 모양이 아니에요",
@@ -4056,7 +4056,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "than the brown cat",
     "why_not": {
       "0": "견주는 모양이 아니에요",
@@ -4095,7 +4095,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "practices",
     "why_not": {
       "0": "이 짝에서는 원래 모양을 쓰지 않아요",
@@ -4134,7 +4134,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "needs",
     "why_not": {
       "1": "'청소해야 해'는 need to clean이에요",
@@ -4173,7 +4173,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "asked us",
     "why_not": {
       "0": "이 짝에서는 원래 모양을 쓰지 않아요",
@@ -4213,7 +4213,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "good at",
     "why_not": {
       "0": "at 뒤에는 to를 쓰지 않아요",
@@ -4252,7 +4252,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "promised",
     "why_not": {
       "0": "promise 뒤에는 ing를 쓰지 않아요",
@@ -4291,7 +4291,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "finished",
     "why_not": {
       "1": "finish 뒤에는 to를 쓰지 않아요",
