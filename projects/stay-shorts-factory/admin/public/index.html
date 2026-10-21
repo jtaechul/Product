@@ -129,6 +129,7 @@ main > *, .card > *, .runs .body > * { min-width: 0 }      /* 넓은 표가 화�
       <button class="btn" id="previewBtn">미리보기<small id="previewCost">약 80원 · 영상 없음</small></button>
       <button class="btn" id="refreshBtn">새로고침<small>상태 다시 읽기 · 0원</small></button>
       <button class="btn main wide" id="produceBtn">정식 제작<small id="produceCost">약 2,500원 · 누르면 한 번 더 확인</small></button>
+      <button class="btn wide" id="carouselBtn">쓰레드 캐러셀 만들기<small id="carouselCost">0원 · 사진 카드 5장 + 본문 글</small></button>
     </div>
     <div class="msg" id="runMsg"></div>
     <details id="redoBox" hidden>
@@ -141,7 +142,7 @@ main > *, .card > *, .runs .body > * { min-width: 0 }      /* 넓은 표가 화�
         <button class="btn main" id="redoBtn">문제 시트만 다시<small id="redoCost"></small></button>
       </div>
     </details>
-    <p class="note">미리보기를 누르면: ① 1분 안에 위 '지금 상태'에 "실행 중"이 뜹니다 ② 약 6~8분 뒤 텔레그램으로 영상·문장별 스토리보드·공식 사진 시트가 옵니다 ③ 같은 때 아래 '최근 실행'에서 그 번호를 누르면 영상·나레이션·대본 글을 볼 수 있습니다. 끝나기 전에는 아무것도 안 보이는 게 정상입니다. 미리보기 결과에서 시트 몇 장만 이상하면 전체 미리보기(약 800원) 대신 '문제 시트만 다시'(시트당 약 98원)를 쓰세요.</p>
+    <p class="note">미리보기를 누르면: ① 1분 안에 위 '지금 상태'에 "실행 중"이 뜹니다 ② 약 6~8분 뒤 텔레그램으로 영상·문장별 스토리보드·공식 사진 시트가 옵니다 ③ 같은 때 아래 '최근 실행'에서 그 번호를 누르면 영상·나레이션·대본 글을 볼 수 있습니다. 끝나기 전에는 아무것도 안 보이는 게 정상입니다. 미리보기 결과에서 시트 몇 장만 이상하면 전체 미리보기(약 800원) 대신 '문제 시트만 다시'(시트당 약 98원)를 쓰세요. '쓰레드 캐러셀 만들기'(0원)는 이 숙소의 가장 최근 미리보기·정식 제작 재료(대본·컷 화면·특장점 라벨·체크리스트)로 4:5 사진 카드 3~5장과 본문 글(폴더 링크 포함)을 만들어 텔레그램으로 보냅니다 — 쓰레드에 그대로 올리면 됩니다(AI 호출 없음). 미리보기·정식 제작이 끝날 때도 같은 카드가 함께 옵니다.</p>
   </section>
 
   <section class="card" id="lastCard" hidden>
@@ -286,6 +287,7 @@ function expectText(r) {
   // 실행 중일 때: 언제 무엇이 어디에 나오는지
   if (r.kind === "discover") return "약 10분 걸립니다. 끝나면 텔레그램 알림이 오고 '다음 숙소' 목록이 바뀝니다.";
   if (r.kind === "mini") return "약 3~6분 걸립니다. 끝나면 텔레그램으로 비교 시트·합성 첫 장면·4초 영상이 옵니다(공식 사진이 들어 있어 이 페이지에는 안 올립니다).";
+  if (/캐러셀/.test(r.title)) return "약 2~3분 걸립니다. 끝나면 텔레그램으로 사진 카드(앨범)와 본문 글이 옵니다(사진이 들어 있어 이 페이지에는 안 올립니다). 카드를 저장해 쓰레드에 올리고 본문을 붙여넣으면 됩니다.";
   const pv = /미리보기/.test(r.title);
   return (pv ? "미리보기는 약 6~8분" : "정식 제작은 약 5~15분") + " 걸립니다. 끝나면 텔레그램으로 영상·스토리보드·사진 시트가 오고, 아래 '최근 실행 #" + r.number + "'을 누르면 영상·대본 글이 보입니다. 끝나기 전에는 결과가 없습니다.";
 }
@@ -343,12 +345,15 @@ function render(d) {
   $("fmtNote").textContent = blk
     ? "이 숙소는 시그니처 영상을 만들 재료(장면 사진·장소·사실)가 부족해 잠겨 있습니다(" + blk.at + "): " + blk.reason + ". 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요."
     : fc.mode === "signature"
-    ? "이 숙소의 핵심 장점 하나를 걱정(훅) → 답(정체) → 문 열면·하면·그다음(순간) → 방을 나서면(다른 장소) → 조건 한 줄 → 제안 순서의 6~9문장으로 말하고, 그 위에 특장점 라벨 1~3개(자막 위 큰 글씨), 첫 화면 걱정형 큰 제목, 조건 뒤 요약 카드(걱정 → 답 2~3줄 · 3초)가 얹힙니다. 운영시간·정비·요금 같은 운영 안내는 어디에도 쓰지 않습니다. 화면은 12~14컷이고 컷마다 그 장소의 실제 사진 위에 AI 스토리보드(2×2 시트 · 장당 약 98원 · 다른 각도·시간대 · 뒷모습 사람·손·강아지)를 만들어 검수한 패널이 화면이 됩니다 — 문장과 관계있는 사진만 쓰고 간판·안내판 사진은 쓰지 않으며, 같은 사진은 한 번만, 훅은 집·차 안의 '걱정' 장면에서 숙소로, 제안은 '떠남' 장면으로 끝납니다. 미리보기 = 시트 + 인서트 + 대본·나레이션(AI 영상 없음 · 약 800원 · 금액 확인창) → 시트 몇 장만 이상하면 '문제 시트만 다시'(시트당 약 98원) → 정식 제작 = 확인한 미리보기 그대로 + 사람·강아지 씬만 Veo 최대 6컷(앞 2.6초 · 얼굴 없음 · 'AI 연출' 표시). 완성된 숙소만 프로필 링크 페이지에 보입니다."
+    ? "이 숙소의 핵심 장점 하나를 걱정(훅) → 답(정체) → 문 열면·하면·그다음(순간) → 방을 나서면(다른 장소) → 조건 한 줄 → 제안 순서의 6~9문장으로 말하고, 그 위에 특장점 라벨 1~3개(자막 위 큰 글씨), 첫 화면 걱정형 큰 제목, 조건 뒤 요약 카드(걱정 → 답 2~3줄 · 3초)가 얹힙니다. 운영시간·정비·요금 같은 운영 안내는 어디에도 쓰지 않습니다. 화면은 12~14컷이고 컷마다 그 장소의 실제 사진 위에 AI 스토리보드(2×2 시트 · 장당 약 98원 · 다른 각도·시간대 · 뒷모습 사람·손·강아지)를 만들어 검수한 패널이 화면이 됩니다 — 문장과 관계있는 사진만 쓰고 간판·안내판 사진은 쓰지 않으며, 같은 사진은 한 번만, 훅은 집·차 안의 '걱정' 장면에서 숙소로, 제안은 '떠남' 장면으로 끝납니다. 미리보기 = 시트 + 인서트 + 대본·나레이션(AI 영상 없음 · 약 800원 · 금액 확인창) → 시트 몇 장만 이상하면 '문제 시트만 다시'(시트당 약 98원) → 정식 제작 = 확인한 미리보기 그대로 + 사람·강아지 씬만 Veo 최대 6컷(앞 2.6초 · 얼굴 없음 · 'AI 연출' 표시). 완성된 숙소만 프로필 링크 페이지에 보입니다. 미리보기·정식 제작이 끝나면 같은 재료로 쓰레드 캐러셀(4:5 카드 3~5장 + 본문)도 함께 옵니다 — '쓰레드 캐러셀 만들기'(0원)로 따로 만들 수도 있습니다."
     : "";
   const hold = Date.now() < holdUntil;
   renderRedo(d, sel.value, fc, !!act || hold || !!blk, room);
   $("previewBtn").disabled = !!act || hold || room < fc.preview || !sel.value || !!blk;
   $("produceBtn").disabled = !!act || hold || room < fc.produce || !sel.value || !!blk || (fc.mode === "signature" && !fc.reuse);   // v8: 미리보기 없는 정식 제작 금지
+  const sr = fc.mode === "signature" ? (d.sig_runs || {})[sel.value] : null;         // 2026-10-21 쓰레드 캐러셀: 가장 최근 성공한 미리보기·정식 제작 재료(0원)
+  $("carouselCost").textContent = sr ? "0원 · #" + sr.number + (sr.kind === "preview" ? " 미리보기" : " 정식 제작") + " 재료로 4:5 카드 + 본문 · 텔레그램으로" : "먼저 이 숙소의 미리보기나 정식 제작이 성공해야 합니다";
+  $("carouselBtn").disabled = !!act || hold || !sel.value || !sr;
 
   const L = d.last;
   $("lastCard").hidden = !L;
@@ -356,7 +361,7 @@ function render(d) {
     const stale = !!d.request.nonce && L.nonce !== d.request.nonce;
     $("lastStale").hidden = !stale;
     $("lastStale").textContent = stale ? "이 카드는 이전 실행의 결과입니다. 가장 최근에 누른 실행은 " + (act ? "아직 만드는 중입니다." : "결과를 남기지 못했습니다(위 '지금 상태' 참고).") : "";
-    $("lastHead").textContent = (L.stay || "") + " · " + (L.stage === "preview" ? "미리보기" : "제작") + (L.signature ? " · 시그니처 '" + L.signature + "'" : "") + (L.ok ? "" : " · 실패");
+    $("lastHead").textContent = (L.stay || "") + " · " + (L.stage === "preview" ? "미리보기" : L.stage === "carousel" ? "쓰레드 캐러셀" : "제작") + (L.signature ? " · 시그니처 '" + L.signature + "'" : "") + (L.carousel ? " · 카드 " + L.carousel.n + "장 · 본문 " + L.carousel.chars + "자" + (L.carousel.over ? "(500자 넘음)" : "") : "") + (L.ok ? "" : " · 실패");
     $("lastHook").innerHTML = L.hook_title ? hookHtml(L.hook_title) : (L.error ? "<span class=\"sub\">" + esc(L.error) + "</span>" : "");
     const f = [];
     if (L.narration_total) f.push("<span class=\"chip " + (L.narration_ok === L.narration_total ? "ok" : "bad") + "\">받아쓰기 " + L.narration_ok + "/" + L.narration_total + "</span>");
@@ -418,7 +423,7 @@ function fmtCost(d) {
   return { mode, format, reuse, preview: c.preview, produce: reuse ? c.produce : c.produce_fresh };
 }
 
-const ACTION_KO = { preview: "미리보기", produce: "정식 제작", redo: "문제 시트만 다시" };
+const ACTION_KO = { preview: "미리보기", produce: "정식 제작", redo: "문제 시트만 다시", carousel: "쓰레드 캐러셀" };
 let redoKey = "";
 function redoPick() {                                                          // 체크된 시트 번호(이전 미리보기의 번호)
   return [...document.querySelectorAll("#redoSheets input[type=checkbox]:checked")].map((x) => Number(x.value)).filter((n) => n > 0);
@@ -452,16 +457,17 @@ $("redoText").addEventListener("change", () => { if (S) renderRedo(S, $("stay").
 async function start(action, confirm) {
   const stay = $("stay").value;
   const fc = fmtCost(S);
-  $("previewBtn").disabled = $("produceBtn").disabled = $("redoBtn").disabled = true;
+  $("previewBtn").disabled = $("produceBtn").disabled = $("redoBtn").disabled = $("carouselBtn").disabled = true;
   try {
     const body = { action, stay, mode: fc.mode, format: fc.format, confirm: !!confirm };
     if (action === "redo") { body.sheets = redoPick(); body.inserts = $("redoIns").checked; body.text_only = $("redoText").checked; body.failed_count = S.redo ? S.redo.failed.length : 1; }
     const r = await api("/api/run", body);
     holdUntil = Date.now() + 60000;
-    msg($("runMsg"), ACTION_KO[action] + " 시작: " + stay + " (예상 약 " + won(r.cost) + (r.reuse ? " · 미리보기 #" + r.reuse + " 재사용" : "") + (action === "redo" ? (r.text_only ? " · 시트 전부 재사용 · 대본 점검만" : " · 시트 " + (r.sheets && r.sheets.length ? r.sheets.join("·") : "탈락한 것") + " 다시") + (r.inserts ? " + 인서트" : "") : "") + "). 1분 안에 '지금 상태'에 나타납니다", "ok");
+    msg($("runMsg"), ACTION_KO[action] + " 시작: " + stay + " (예상 약 " + won(r.cost) + (r.reuse ? " · 미리보기 #" + r.reuse + " 재사용" : "") + (r.source ? " · #" + r.source + " 재료 · AI 호출 없음" : "") + (action === "redo" ? (r.text_only ? " · 시트 전부 재사용 · 대본 점검만" : " · 시트 " + (r.sheets && r.sheets.length ? r.sheets.join("·") : "탈락한 것") + " 다시") + (r.inserts ? " + 인서트" : "") : "") + "). 1분 안에 '지금 상태'에 나타납니다", "ok");
     setTimeout(load, 8000); setTimeout(load, 61000);
   } catch (e) { msg($("runMsg"), e.message, "bad"); load(); }
 }
+$("carouselBtn").onclick = () => start("carousel");                            // 0원 · 모델 호출 없음 → 확인창 없이 바로
 $("redoBtn").onclick = () => {
   if (!S || !S.redo) return;
   const R = S.redo, m = S.money, fc = fmtCost(S), c = redoCost(S.cost[fc.mode] || S.cost.signature, R), pick = redoPick();

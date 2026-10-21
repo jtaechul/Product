@@ -34,6 +34,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 import design
+import make_carousel as mc
 import make_folder
 import make_mini as mm
 import make_scenes as sc
@@ -2187,6 +2188,73 @@ def rebuild_narr_full(n: int) -> Path | None:
     return out
 
 
+def load_plan(req: dict) -> dict | None:
+    """캐러셀용 계획 읽기(2026-10-21) — plan.json 과 컷 이미지(png·jpg)만 있으면 된다(나레이션 파일 불필요).
+    정식 제작 아티팩트의 plan.json 은 미리보기 것 그대로라 문장 수와 음성 파일이 다를 수 있어 find_reuse(음성 파일 필수)는 그 계획을 거른다 — 캐러셀은 글·그림만 쓴다."""
+    if not req.get("reuse_runs") or not REUSE_DIR.exists():
+        return None
+    want = str(req.get("stay") or "").strip()
+    for f in sorted(REUSE_DIR.glob("*/**/story/plan.json"), key=lambda p: p.stat().st_mtime, reverse=True):
+        try:
+            plan = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        if plan.get("version") not in (4, 5, 6, 7, 8) or (want and plan.get("stay") != want):
+            continue
+        STORY.mkdir(parents=True, exist_ok=True)
+        for g in f.parent.iterdir():
+            if g.is_file() and g.suffix.lower() in (".png", ".jpg", ".jpeg", ".json"):
+                shutil.copy(g, STORY / g.name)
+        plan["_from"] = str(f.relative_to(REUSE_DIR)).split("/")[0]
+        log(f"캐러셀 재료: {plan['_from']} 의 계획·컷 이미지(0원)")
+        return plan
+    return None
+
+
+def produce_carousel(req: dict, report: dict) -> dict:
+    """stage "carousel" (2026-10-21 운영자 "쓰레드로 캐러셀 형태로 올려서 링크 클릭 유도" → "진행해"): 이전 실행(미리보기·정식 제작) 아티팩트의
+    계획·컷 이미지로 **쓰레드 캐러셀만** 만든다 — AI 호출 0 · 0원 · 허락 불필요. 글은 영상과 같은 규칙(운영 안내 문장·캡션·체크리스트 점검 · 간판 사진 제외)을 거친다."""
+    if STORY.exists():
+        shutil.rmtree(STORY)
+    STORY.mkdir(parents=True, exist_ok=True)
+    report["stage"] = "carousel"
+    report["format"] = "story"
+    plan = load_plan(req)
+    if not plan:
+        raise RuntimeError("캐러셀을 만들 이전 실행의 계획(plan.json)이 없습니다 — 먼저 미리보기나 정식 제작이 성공해야 합니다(reuse_runs)")
+    h, pos, sig, text, shot_list = plan["h"], plan.get("pos") or 1, plan["signature"], plan["text"], plan["shots"]
+    narr = {(int(k) if str(k).isdigit() else k): v for k, v in (plan.get("narr") or {}).items()}
+    report["reused_plan"] = True
+    report["reuse_from"] = plan.get("_from")
+    apply_text_rules(text, sig, h, req, narr, report)                                   # v10.2b 운영 안내 문장·캡션·체크리스트·카드 — 영상과 같은 글(0원)
+    bad = {s["id"] for s in shot_list if not s.get("insert") and not s.get("adv") and photos.is_sign_photo({"description": s.get("desc")})}
+    for b in text["beats"]:                                                             # 간판 사진 컷 제거 — 컷·화면(cut_imgs) 짝을 유지한 채
+        imgs = list(b.get("cut_imgs") or [])
+        pairs = [(x, imgs[m] if m < len(imgs) else "") for m, x in enumerate(b.get("shots") or []) if x not in bad]
+        b["shots"], b["cut_imgs"] = [x for x, _ in pairs], [im for _, im in pairs]
+        b["cut_imgs"] = [im if im and (STORY / im).exists() else "" for im in b["cut_imgs"]]   # 아티팩트에 없는 패널은 원본 사진으로
+    shot_list[:] = [s for s in shot_list if s["id"] not in bad]
+    if bad:
+        report["sign_photos_dropped"] = sorted(bad)
+    shots = {s["id"]: s for s in shot_list}
+    folder = mt.folder_name(req)
+    report["hotels"] = [{k: h.get(k) for k in sg.H_KEYS if k in h}]
+    report["signature"] = {k: sig.get(k) for k in ("name", "what", "fact", "vs_peers", "peers", "photos", "confirmed", "why", "checks", "fallback")}
+    report["hook_title"] = {"title": text.get("hook_title"), "type": text.get("hook_title_type")}
+    report["script"] = {"hook_title": text.get("hook_title"), "title": text.get("title"), "caption": text.get("caption"), "checklist": text.get("checklist"),
+                        "cuts": [{"i": j, "narration": b["line"], "caption": b["lens"]} for j, b in enumerate(text["beats"], 1)]}
+    car = mc.build(text, shots, sig, h, req, pos, STORY, ms.BUILD / "carousel", ms.DISCLOSURE, report)
+    body = (ms.BUILD / "carousel" / "carousel_post.txt").read_text(encoding="utf-8")
+    ms.PREVIEW.mkdir(parents=True, exist_ok=True)
+    (ms.PREVIEW / "preview.md").write_text(mc.preview_md(car, body, h, f"{plan.get('_from')} 의 계획(대본·컷 화면·라벨·체크리스트)"), encoding="utf-8")
+    log(f"쓰레드 캐러셀 {car['n']}장 · 본문 {car['post']['chars']}자 · 링크 {car['link']} (AI 호출 0 · 0원)")
+    return {"mode": "signature", "format": "story", "stage": "carousel", "label": f"쓰레드 캐러셀 {car['n']}장(0원 · {plan.get('_from')} 재료 · 영상 없음)",
+            "stay": h["name"], "signature": sig.get("name"), "title": text.get("title"), "caption": body, "folder": folder, "folder_pos": pos,
+            "carousel": {"n": car["n"], "post": car["post"], "link": car["link"], "ai_any": car["ai_any"]}, "features": [f["text"] for f in (text.get("features") or []) if isinstance(f, dict) and f.get("text")],
+            "pinned_comment": f"{h['name']} — 객실 타입·링크는 프로필 링크 → {pos}번 ({folder}) · 쿠팡 파트너스 링크 포함",
+            "veo": {"model": veo.MODEL, "fake": veo.FAKE, "clips_ok": 0, "clips_total": 0, "spent_krw": 0, "month_total_krw": round(veo.month_total())}}
+
+
 def strip_inserts(beats: list[dict], shots: list[dict]) -> None:
     """v10.3 '인서트도 다시': 옛 계획의 인서트 컷(INS)을 문장·재료에서 뺀다 → storyboard_scenes 가 새 인서트 시트(98원)를 만든다."""
     ins = {s["id"] for s in shots if s.get("insert")}
@@ -2329,4 +2397,11 @@ def produce_story(req: dict, models: dict, report: dict) -> tuple[Path, float, d
             "affiliate_urls": {h["name"]: h.get("affiliate_url")}, "lines": [b["line"] for b in text["beats"]], "cuts": timeline, "lens_ok": lens_ok,
             "veo": {"model": veo.MODEL, "fake": veo.FAKE, "clips_ok": ai, "clips_total": len(v.get("clips", [])),
                     "spent_krw": round(veo.spent_this_run()), "month_total_krw": round(veo.month_total())}}
+    try:                                                                                # 2026-10-21 쓰레드 캐러셀(0원): 영상 재료 그대로 4:5 카드 + 본문 — 실패해도 영상 실행은 성공
+        car = mc.build(text, shots, sig, h, req, pos, STORY, ms.BUILD / "carousel", ms.DISCLOSURE, report)
+        meta["carousel"] = {"n": car["n"], "post": car["post"], "link": car["link"], "ai_any": car["ai_any"]}
+        log(f"쓰레드 캐러셀 {car['n']}장 · 본문 {car['post']['chars']}자 (0원) → build/carousel")
+    except Exception as e:  # noqa: BLE001
+        report["carousel"] = {"error": f"{type(e).__name__}: {str(e)[:120]}"}
+        log(f"쓰레드 캐러셀 만들기 실패(영상은 정상): {str(e)[:120]}")
     return video, total, meta

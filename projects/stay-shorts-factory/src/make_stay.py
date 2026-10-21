@@ -805,9 +805,10 @@ def main() -> int:
         sig_paid = mode == "signature" and not veo.FAKE                                  # 시그니처 제작은 훅·정체·약속 3컷 Veo — 가짜 클립일 때만 허락 불필요
         # 2026-10-15 시그니처 v4(이야기): 미리보기는 AI 영상 없이(사진 무빙) 글·비전·음성만(약 90원) → 다른 모드처럼 허락 없이.
         #   제작(Veo 3컷 약 882원)은 veo_approved 필수 — 관리실 '정식 제작' 금액 확인창이 허락
-        free_preview = str(req.get("stage") or "") == "preview"
+        is_carousel = mode == "signature" and str(req.get("stage") or "") == "carousel"   # 2026-10-21 쓰레드 캐러셀: 이전 실행 재료로 카드·본문만(AI 호출 0 · 0원 · 허락 불필요)
+        free_preview = str(req.get("stage") or "") == "preview" or is_carousel
         # 2026-10-18 v7: 시그니처 미리보기가 씬 스토리보드 시트(이미지 · 약 500~1,000원)를 만든다 → 가짜 이미지가 아니면 미리보기도 허락 필수
-        if mode == "signature" and free_preview and req.get("storyboard", True) is not False and os.environ.get("SCENE_FAKE_IMAGE") != "1":
+        if mode == "signature" and str(req.get("stage") or "") == "preview" and req.get("storyboard", True) is not False and os.environ.get("SCENE_FAKE_IMAGE") != "1":
             free_preview = False
         if mode in ("veo", "top3", "solo", "signature") and (not veo.FAKE or mini_paid or sig_paid or not free_preview) and not free_preview and req.get("veo_approved") is not True \
                 and not (mode == "solo" and str(req.get("max_veo_cuts")) == "0" and not req.get("miniature")) \
@@ -815,6 +816,18 @@ def main() -> int:
             raise RuntimeError('유료 제작(Veo·스토리보드 이미지)은 운영자 허락이 필요합니다 — request.json 에 "veo_approved": true 를 넣어 주세요 (관리실 버튼의 금액 확인이 허락)')
         NONCE_DONE.parent.mkdir(parents=True, exist_ok=True)                    # 잠금을 통과한 요청만 '처리됨'으로 — 잠긴 채 돈 실행은 같은 nonce 로 승인 뒤 다시 돌 수 있어야 한다
         NONCE_DONE.write_text(json.dumps({"nonce": req.get("nonce"), "at": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False) + "\n", encoding="utf-8")
+        if is_carousel:                                                                # 모델 고르기·호출 없이 카드만 — 장부에도 적지 않는다(0원)
+            import make_story
+            meta = make_story.produce_carousel(req, report)
+            meta.update({"duration_sec": 0, "models": {}, "gemini_usage": usage_block()})
+            (BUILD / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
+            assert DISCLOSURE in meta["caption"], "고지문 누락 — 중단"
+            report.update({"ok": True, "stage": "carousel", "stay": meta["stay"]})
+            report["gemini_usage"] = usage_block()
+            out = PREVIEW / "report.json"
+            out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+            print(json.dumps({k: report.get(k) for k in ("ok", "stage", "stay", "reuse_from", "carousel")}, ensure_ascii=False, indent=1))
+            return 0
         models = pick_models()
         report["models"] = models
         if mode in ("top3", "solo") and str(req.get("stage") or "") == "preview":

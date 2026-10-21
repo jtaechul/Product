@@ -32,14 +32,15 @@ const MONTH_CAP = 50000;                    // 운영자 확정 월 한도(veo.p
 //   제작 = 미리보기 패널 재사용(이미지 0원) + 사람·강아지 씬 Veo 최대 6컷(294 × 6 = 1,764) + 검수 ≈ 1,800, 미리보기 없이 ≈ 2,500
 // v10.3(2026-10-20 운영자 "문제 있는 스토리보드만 변경하기 해줘야 돈이 덜 들어가지"): 문제 시트만 다시 = 다시 만드는 시트 수 × 98 + (인서트 98) + 비전·검수 약 20 · 대본·나레이션 0원(재사용)
 const COST = {
-  signature: { preview: 800, produce: 1800, produce_fresh: 2500, redo_sheet: 98, redo_base: 20 },   // v8: 미리보기 = 스토리보드 시트(참조 사진 수 × 98) + 인서트 시트 98 + 글·음성 약 115
+  signature: { preview: 800, produce: 1800, produce_fresh: 2500, redo_sheet: 98, redo_base: 20, carousel: 0 },   // 2026-10-21 쓰레드 캐러셀 = 이전 실행 재료로 카드·본문만(AI 호출 0)   // v8: 미리보기 = 스토리보드 시트(참조 사진 수 × 98) + 인서트 시트 98 + 글·음성 약 115
   solo: { preview: 80, produce: 2500, produce_fresh: 2500 },
 };
 const costOf = (mode) => COST[mode];
 const BLOCK_DAYS = 14;                      // make_sig·make_story 가 '사진·사실·장면 부족'으로 멈춘 숙소는 이 기간 시그니처 버튼을 잠근다(state/sig_blocked.json)
 const MODES = { signature: "시그니처", solo: "기존 9컷" };
 const SIG_PREVIEW_RX = /관리자 페이지 시그니처 이야기 미리보기 — (.+?) \(/;   // 이야기(v4) 미리보기만 재사용 대상(make_story.find_reuse · 옛 형식 계획은 안 맞음)
-const LABEL = { preview: "미리보기", produce: "정식 제작", redo: "미리보기(문제 시트만 다시)" };
+const SIG_RUN_RX = /관리자 페이지 시그니처 (?:이야기 미리보기|정식 제작) — (.+?) \(/;   // 캐러셀 재료 = 이 숙소의 가장 최근 성공한 미리보기·정식 제작(아티팩트의 plan.json·컷 이미지)
+const LABEL = { preview: "미리보기", produce: "정식 제작", redo: "미리보기(문제 시트만 다시)", carousel: "쓰레드 캐러셀" };
 const DISCOVER_NOTE = "수십 원(AI 확인 몇 번 · 장부 미기록)";
 const ACTIVE = new Set(["queued", "in_progress", "waiting", "requested", "pending"]);
 const COOKIE = "stay_admin";
@@ -241,6 +242,8 @@ function lastResult(rep) {
     info: rep.info_test ? { ok: !!rep.info_test.ok, matched: rep.info_test.matched || 0, need: rep.info_test.need || 0 } : null,
     veo: rep.veo && (rep.veo.clips || []).length ? { ok: rep.veo.clips.filter((c) => c.ok).length, total: rep.veo.clips.length, krw: rep.veo.spent_krw || 0 } : null,
     krw: (rep.gemini_usage || {}).krw_est || 0,
+    carousel: rep.carousel && !rep.carousel.error ? { n: rep.carousel.n || 0, chars: (rep.carousel.post || {}).chars || 0, over: !!(rep.carousel.post || {}).over, link: rep.carousel.link || "" } : null,
+    reuse_from: rep.reuse_from || "",
     cuts: (s.cuts || []).map((c) => ({ i: c.i, caption: c.caption, narration: c.narration })),
   };
 }
@@ -289,6 +292,17 @@ function sigPreviewIndex(runs) {
   return out;
 }
 
+function sigRunIndex(runs) {
+  // 2026-10-21 쓰레드 캐러셀: 숙소별 가장 최근의 성공한 시그니처 실행(미리보기 또는 정식 제작) — 그 아티팩트의 계획·컷 이미지로 카드를 만든다(0원)
+  const out = {};
+  for (const r of runs) {
+    if (r.kind !== "produce" || r.conclusion !== "success") continue;
+    const m = String(r.title || "").match(SIG_RUN_RX);
+    if (m && !out[m[1]]) out[m[1]] = { id: r.id, number: r.number, kind: /미리보기/.test(r.title) ? "preview" : "produce" };
+  }
+  return out;
+}
+
 async function state(env) {
   const now = kstNow();
   const ym = now.toISOString().slice(0, 7);
@@ -327,6 +341,7 @@ async function state(env) {
     cost: COST,
     modes: MODES,
     sig_previews: sigPreviews,
+    sig_runs: sigRunIndex(Array.isArray(runs) ? runs : []),
     redo: redoInfo(rep, sigPreviews),
     request: {
       nonce: req.nonce || "",
@@ -352,7 +367,7 @@ async function state(env) {
 
 async function startRun(env, body) {
   const action = String(body.action || "");
-  if (!["preview", "produce", "redo"].includes(action)) throw new HttpError(400, "알 수 없는 실행입니다");
+  if (!["preview", "produce", "redo", "carousel"].includes(action)) throw new HttpError(400, "알 수 없는 실행입니다");
   const mode = String(body.mode || "signature") in MODES ? String(body.mode || "signature") : "signature";
   const format = "story";                                                      // 시그니처는 이야기 형식 하나(옛 몽타주·한 장면은 관리실에서 안 씀)
   const stay = String(body.stay || "").trim();
@@ -371,10 +386,14 @@ async function startRun(env, body) {
   if (runs.some((r) => r.active)) throw new HttpError(409, "지금 다른 실행이 돌고 있습니다. 끝난 뒤 다시 누르세요");
   if (recent) throw new HttpError(409, "방금 시작한 실행이 준비 중입니다. 1~2분 뒤 '지금 상태'를 확인하세요");
   const blk = mode === "signature" ? activeBlocks(blocked, kstNow())[stay] : null;
-  if (blk) throw new HttpError(409, `이 숙소는 시그니처 영상을 만들 재료가 부족합니다(${blk.at}): ${blk.reason}. 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요`);
+  if (blk && action !== "carousel") throw new HttpError(409, `이 숙소는 시그니처 영상을 만들 재료가 부족합니다(${blk.at}): ${blk.reason}. 다른 숙소를 고르거나 '기존 9컷' 형식을 쓰세요`);
   const reuse = mode === "signature" && (action === "produce" || action === "redo") ? sigPreviewIndex(runs)[`${format}|${stay}`] || null : null;
   if (mode === "signature" && (action === "produce" || action === "redo") && !reuse) {   // v8 E: 정식 제작은 확인한 미리보기의 대본·패널로만(stay-run-58 이 미리보기 없이 2장짜리 영상에 1,630원)
     throw new HttpError(409, action === "redo" ? "다시 만들 미리보기가 없습니다 — 먼저 '미리보기'를 누르세요" : "먼저 '미리보기'를 눌러 스토리보드를 확인하세요 — 이 숙소의 성공한 이야기 미리보기가 없습니다");
+  }
+  const carouselSrc = action === "carousel" ? sigRunIndex(runs)[stay] || null : null;   // 2026-10-21 쓰레드 캐러셀: 가장 최근 성공한 미리보기·정식 제작의 계획·컷 이미지(0원)
+  if (action === "carousel" && (mode !== "signature" || !carouselSrc)) {
+    throw new HttpError(409, "캐러셀을 만들 재료가 없습니다 — 이 숙소의 '미리보기'나 '정식 제작'이 먼저 성공해야 합니다");
   }
   const c = costOf(mode);
   let cost, sheetsPick = null, redoIns = false;
@@ -387,9 +406,9 @@ async function startRun(env, body) {
     const nSheets = textOnly ? 0 : sheetsPick ? sheetsPick.length : Math.max(1, Number(body.failed_count) || 1);
     cost = nSheets * c.redo_sheet + (redoIns ? c.redo_sheet : 0) + c.redo_base;
   } else {
-    cost = action === "preview" ? c.preview : reuse ? c.produce : c.produce_fresh;
+    cost = action === "preview" ? c.preview : action === "carousel" ? 0 : reuse ? c.produce : c.produce_fresh;
   }
-  const paid = action !== "preview" || mode === "signature";                 // v7: 시그니처 미리보기도 스토리보드 시트(이미지)를 만들어 돈이 든다 → 화면 확인 + veo_approved
+  const paid = action !== "carousel" && (action !== "preview" || mode === "signature");   // 캐러셀은 AI 호출이 없어 확인창·허락 불필요                 // v7: 시그니처 미리보기도 스토리보드 시트(이미지)를 만들어 돈이 든다 → 화면 확인 + veo_approved
   const now = kstNow();
   const money = monthSpend(ledger, now.toISOString().slice(0, 7));
   if (money.total + cost > MONTH_CAP) {
@@ -410,16 +429,18 @@ async function startRun(env, body) {
   if (mode === "signature") {
     next.format = format;
     if (reuse) next.reuse_runs = [{ run_id: reuse.id, name: `stay-run-${reuse.number}` }];
+    if (carouselSrc) next.reuse_runs = [{ run_id: carouselSrc.id, name: `stay-run-${carouselSrc.number}` }];
   }
   next.veo_approved = paid;                                                   // 버튼 + 금액 확인 = 운영자 허락(make_stay 돈 잠금 · 실행 뒤 워크플로가 다시 잠근다)
   if (action === "preview" || action === "redo") next.stage = "preview";
+  if (action === "carousel") next.stage = "carousel";                         // make_stay: 모델 호출 없이 make_story.produce_carousel 만(돈 잠금 예외 · 0원)
   if (action === "redo") next.redo = { sheets: sheetsPick || "failed", inserts: redoIns };   // make_story.produce_story: reuse_runs 의 계획·패널 재사용 + 이 시트만 다시
   const what = `${MODES[mode]} ${mode === "signature" && (action === "preview" || action === "redo") ? "이야기 미리보기" : LABEL[action]}`;
   const tail = action === "redo" ? ` · 문제 시트만 다시(${sheetsPick === "none" ? "시트 전부 재사용 · 대본 점검만" : sheetsPick ? "시트 " + sheetsPick.join("·") : "탈락 시트"}${redoIns ? " + 인서트" : ""})` : "";
-  next.note = `관리자 페이지 ${what}${tail} — ${stay} · 예상 약 ${cost.toLocaleString()}원${reuse ? ` · 미리보기 #${reuse.number} 재사용` : ""} · ${now.toISOString().slice(0, 16).replace("T", " ")} KST`;
+  next.note = `관리자 페이지 ${what}${tail} — ${stay} · 예상 약 ${cost.toLocaleString()}원${reuse ? ` · 미리보기 #${reuse.number} 재사용` : ""}${carouselSrc ? ` · #${carouselSrc.number} 재료` : ""} · ${now.toISOString().slice(0, 16).replace("T", " ")} KST`;
   // 커밋 제목은 '… 이야기 미리보기 — 숙소 (' 꼴을 지킨다(sigPreviewIndex 가 이 꼴로 재사용할 미리보기를 찾는다) — 문제 시트만 다시 만든 결과도 다음 정식 제작이 재사용
   const put = await commitJson(env, REQ_PATH, req.sha, next, `stay-shorts: 관리자 페이지 ${what} — ${stay} (${next.nonce}${action === "redo" ? " · 문제 시트만 다시" : ""})`);
-  return { ok: true, nonce: next.nonce, action, mode, stay, cost, reuse: reuse ? reuse.number : null, sheets: sheetsPick === "none" ? [] : sheetsPick, text_only: sheetsPick === "none", inserts: redoIns, commit: (put.commit || {}).html_url || "" };
+  return { ok: true, nonce: next.nonce, action, mode, stay, cost, reuse: reuse ? reuse.number : null, source: carouselSrc ? carouselSrc.number : null, sheets: sheetsPick === "none" ? [] : sheetsPick, text_only: sheetsPick === "none", inserts: redoIns, commit: (put.commit || {}).html_url || "" };
 }
 
 async function cancelRun(env, body) {
