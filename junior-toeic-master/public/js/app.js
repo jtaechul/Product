@@ -757,6 +757,18 @@ async function showHome() {
         </div>
       </div>
 
+      ${me?.report_replies ? `
+      <button class="card row reply-card" data-replies>
+        <span class="row-ico reply-ico">
+          <svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="m4.5 7 7.5 6 7.5-6"/></svg>
+        </span>
+        <span class="row-body">
+          <span class="row-t">알려준 문제에 답장이 왔어요</span>
+          <span class="row-s">${me.report_replies}개 — 눌러서 확인해 보세요</span>
+        </span>
+        <svg class="row-arrow" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+      </button>` : ''}
+
       <div class="week" role="group" aria-label="이번 주 학습한 날">
         <span class="week-label">이번 주</span>
         <div class="week-days">${weekMarks().map((d) => `
@@ -815,6 +827,7 @@ async function showHome() {
 
     bindAppBar();
     view.querySelector('[data-diag]')?.addEventListener('click', showDiagnostic);
+    view.querySelector('[data-replies]')?.addEventListener('click', () => showReplies(showHome));
     view.querySelector('[data-start]').addEventListener('click', () => {
       // 다 푼 세트를 다시 여는 건 **복습**이다 — 오늘의 진행도를 건드리면 안 된다.
       // 예전엔 여기서 store.setIdx = 0 으로 먼저 지우고 시작했다. 그래서 한 문제도
@@ -1199,6 +1212,17 @@ async function showRecord() {
       <div data-words><p class="empty">아직 없어요 — 문제를 풀고 모르는 낱말을 눌러보세요.</p></div>
     </div>
 
+    <button class="card row" data-my-reports>
+      <span class="row-ico reply-ico">
+        <svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="m4.5 7 7.5 6 7.5-6"/></svg>
+      </span>
+      <span class="row-body">
+        <span class="row-t">내가 알려준 문제</span>
+        <span class="row-s">이상한 문제를 알려 주면 확인하고 답장해 줘요</span>
+      </span>
+      <svg class="row-arrow" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+    </button>
+
     <div class="card row">
       <span class="row-body">
         <span class="row-t">${esc(auth.user.display_name)}</span>
@@ -1208,6 +1232,7 @@ async function showRecord() {
 `;
   bindAppBar();
   renderMyWords();
+  view.querySelector('[data-my-reports]')?.addEventListener('click', () => showReplies(null));
 }
 
 // ---------- 파트별 연습 (하부 메뉴) ----------
@@ -1350,7 +1375,7 @@ function showReport(questionId, screen) {
           `<button class="report-pick" data-kind="${k}">${label}</button>`).join('')}
       </div>
       <textarea class="report-note" data-note rows="2" maxlength="300"
-        placeholder="더 하고 싶은 말이 있으면 적어주세요 (안 적어도 돼요)"></textarea>
+        placeholder="더 하고 싶은 말이 있으면 적어주세요 (안 적어도 돼요 · 이름·전화번호는 적지 마세요)"></textarea>
       <div style="display:flex; gap:8px; margin-top:6px">
         <button class="btn-ghost" style="flex:1" data-close>닫기</button>
         <button class="btn-primary" style="flex:1" data-send disabled>보내기</button>
@@ -1379,7 +1404,7 @@ function showReport(questionId, screen) {
       });
       back.querySelector('.sheet').innerHTML =
         '<div class="sheet-grab"></div><h2>알려줘서 고마워요</h2>' +
-        '<p class="card-note">덕분에 고칠 수 있어요. 계속 풀어볼까요?</p>' +
+        '<p class="card-note">하루 안에 확인해서 홈 화면에 답장을 남겨 줄게요. 계속 풀어볼까요?</p>' +
         '<button class="btn-primary" data-close2>계속하기</button>';
       back.querySelector('[data-close2]').addEventListener('click', close);
     } catch {
@@ -1387,6 +1412,60 @@ function showReport(questionId, screen) {
       sendBtn.textContent = '다시 보내기';
     }
   });
+}
+
+// ── 내가 알려준 문제 (신고 답장) ──
+// 신고는 매일 밤 검토 로봇이 확인한다(AI 두 개가 따로 보고 둘이 같은 말을 할 때만 움직인다).
+// 고쳤으면 "고쳤어요", 문제가 맞으면 왜 맞는지, 아직이면 "확인 중"을 보여 준다.
+// 열어 보면 읽음으로 바뀌어 홈의 "답장이 왔어요" 카드가 사라진다.
+const REPLY_CHIP = {
+  fixed: ['st-fixed', '고쳤어요'],
+  held: ['st-held', '잠시 내렸어요'],
+  ok: ['st-ok', '문제가 맞아요'],
+  pending: ['st-pending', '확인 중이에요'],
+};
+async function showReplies(after) {
+  const back = document.createElement('div');
+  back.className = 'sheet-back';
+  back.innerHTML = `
+    <div class="sheet" role="dialog" aria-label="내가 알려준 문제">
+      <div class="sheet-grab"></div>
+      <h2>내가 알려준 문제</h2>
+      <div data-list><p class="loading">불러오는 중...</p></div>
+      <button class="btn-primary" data-close>확인했어요</button>
+    </div>`;
+  document.body.appendChild(back);
+  let opened = false;
+  const close = () => { back.remove(); if (opened) after?.(); };
+  back.addEventListener('click', (e) => { if (e.target === back) close(); });
+  back.querySelector('[data-close]').addEventListener('click', close);
+  try {
+    const r = await api('/api/me/reports', { headers: authHeaders() });
+    const list = back.querySelector('[data-list]');
+    if (!r.reports.length) {
+      list.innerHTML = '<p class="empty">아직 알려준 문제가 없어요.<br>문제를 풀고 이상한 점이 있으면 "이 문제, 이상해요"를 눌러 주세요.</p>';
+      return;
+    }
+    list.innerHTML = `<p class="card-note">알려준 문제를 점프리시가 확인하고 답장을 남겨요. 덕분에 문제가 더 좋아져요.</p>
+      <div class="replies">${r.reports.map((x) => {
+        const [cls, chip] = REPLY_CHIP[x.status] || REPLY_CHIP.pending;
+        const when = new Date(x.created_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+        return `<div class="reply-item${x.reply && !x.seen ? ' is-new' : ''}">
+          <div class="reply-head">
+            <span class="reply-chip ${cls}">${chip}</span>
+            <span class="reply-meta">${esc(x.part_ko)} · ${when}</span>
+          </div>
+          ${x.label ? `<p class="reply-q">${esc(x.label)}</p>` : ''}
+          <p class="reply-text">${x.reply ? esc(x.reply) : '확인하고 있어요. 하루 안에 답장이 올 거예요.'}</p>
+        </div>`;
+      }).join('')}</div>`;
+    if (r.unseen) {
+      opened = true;
+      api('/api/me/reports/seen', { method: 'POST', headers: authHeaders() }).catch(() => { /* 다음에 다시 */ });
+    }
+  } catch (e) {
+    back.querySelector('[data-list]').innerHTML = `<p class="empty">${esc(e.message)}</p>`;
+  }
 }
 
 // 스크립트의 화자 표시(W:/M:/N:)는 음원 제작용 기호라 아이에게는 우리말로 바꿔 보여준다.

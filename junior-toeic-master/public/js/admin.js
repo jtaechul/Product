@@ -428,11 +428,21 @@ function showResetLink(f, r) {
 }
 
 // ── 신고 ──
+// 신고는 매일 밤 검토 로봇(review-reports.yml)이 먼저 본다. AI 두 개가 따로 판정해서
+// 같은 말을 할 때만 고치거나(고침) 왜 맞는지 아이에게 답장한다(문제없음).
+// 엇갈리면 '사람 확인'으로 남는다 — 이 화면은 그것부터 위에 보여 준다.
+// 로봇이 끝낸 것(고침·문제없음)은 처리 완료로 들어가므로 '확인한 것도 보기'에서 볼 수 있다.
 let showHandled = false;
+const REVIEW_CHIP = {
+  human: ['k-answer', '사람 확인 필요'],
+  held: ['k-audio', '내림 — 고쳐야 함'],
+  fixed: ['done', '로봇이 고침'],
+  ok: ['k-image', '문제없음 답장'],
+};
 async function showFeedback() {
   view.innerHTML = `<p class="empty">불러오는 중...</p>`;
   try {
-    const { feedback } = await api(`/api/admin/feedback${showHandled ? '?all=1' : ''}`);
+    const { feedback, waiting = 0 } = await api(`/api/admin/feedback${showHandled ? '?all=1' : ''}`);
     pendingN = feedback.filter((f) => !f.handled_at).length;
     const KIND = {
       audio: '소리가 안 들려요', image: '사진이 안 맞아요', hard: '무슨 말인지 모르겠어요',
@@ -442,26 +452,90 @@ async function showFeedback() {
       L1: '사진 고르기', L2: '질의응답', L3: '짧은 대화', L4: '짧은 담화',
       R1: '문장 완성', R2: '지문 완성', R3: '독해',
     };
+    const LET = ['A', 'B', 'C', 'D'];
+    const VERDICT = { ok: '맞음', error: '틀림', unclear: '모르겠음' };
+    const parse = (t) => { try { return t ? JSON.parse(t) : null; } catch { return null; } };
+    const fieldKo = {
+      stem: '문제', choices: '보기', answer_idx: '정답', explanation_ko: '해설', evidence: '근거',
+      key_expr: '표현 카드', translation_ko: '해석', why_not: '오답 이유', miss_type: '실수 유형',
+      script: '들려주는 문장', passage: '지문', passage_ko: '지문 해석',
+    };
+    const showVal = (k, v) => (k === 'answer_idx' && Number.isInteger(v) ? LET[v] : typeof v === 'string' ? v : JSON.stringify(v));
+
     const list = feedback.length ? feedback.map((f) => {
       // 듣기 문항(L1·L2)은 화면에 지문이 없어 stem 이 비어 있다. 그때는 **들려주는 문장**을
       // 대신 보여준다 — 예전엔 "질의응답 문항"이라고만 떠서 어느 문항인지 알 수가 없었고,
       // 그러면 신고를 받고도 고칠 수가 없다(확인만 누르고 끝난다).
       const what = f.stem || f.script || (f.part ? `${PART[f.part] ?? f.part} 문항` : '화면 전체');
-      return `<div class="row">
-        <span class="chip k-${esc(f.kind)}">${esc(KIND[f.kind] ?? f.kind)}</span>
+      const [rcls, rlabel] = REVIEW_CHIP[f.review_status] || (f.question_id ? ['k-etc', '검토 전'] : ['k-etc', '사람이 보기']);
+      const d = parse(f.review_detail);
+      const changed = d?.changed ? Object.entries(d.changed).map(([k, [a, b]]) =>
+        `<li><b>${esc(fieldKo[k] || k)}</b>: ${esc(showVal(k, a))} → ${esc(showVal(k, b))}</li>`).join('') : '';
+      const why = d ? `
+        <details class="fb-more"><summary>로봇이 본 내용</summary>
+          <ul>
+            ${d.judge ? `<li>1차 판정: ${esc(VERDICT[d.judge.seen?.verdict] || '-')} — ${esc((d.judge.seen?.problems || []).join(' / ') || d.judge.note || '')}</li>` : ''}
+            ${d.checker ? `<li>2차 판정(따로 봄): ${esc(VERDICT[d.checker.seen?.verdict] || '-')} — ${esc((d.checker.seen?.problems || []).join(' / ') || d.checker.note || '')}</li>` : ''}
+            ${d.blind && Number.isInteger(d.blind.answer_idx) ? `<li>정답을 가리고 풀어 본 답: ${LET[d.blind.answer_idx]}${
+              Number.isInteger(d.blind.key) ? (d.blind.answer_idx === d.blind.key ? ' (정답과 같음)' : ` (정답 ${LET[d.blind.key]}와 다름!)`) : ''}${
+              d.blind.note ? ` — ${esc(d.blind.note)}` : ''}</li>` : ''}
+            ${d.held_why ? `<li>내린 까닭: ${esc(d.held_why)}</li>` : ''}
+            ${d.audio ? `<li>소리 파일: ${esc(d.audio.why)}</li>` : ''}
+          </ul>
+          ${changed ? `<p class="card-note">바꾼 내용</p><ul>${changed}</ul>` : ''}
+        </details>` : '';
+      // 아직 아이에게 답장이 안 나간 것만 사람이 답장할 수 있다
+      const canReply = !f.reply_ko && f.question_id;
+      const draft = d?.drafts ? (f.review_status === 'held' ? d.drafts.error : d.drafts.ok) : '';
+      return `<div class="row fb-row">
+        <div class="fb-chips">
+          <span class="chip k-${esc(f.kind)}">${esc(KIND[f.kind] ?? f.kind)}</span>
+          <span class="chip ${rcls}">${rlabel}</span>
+        </div>
         <span class="row-main">
           <span class="row-t">${esc(what)}</span>
           <span class="row-s">${f.part ? esc(f.part) + ' · ' : ''}${esc(f.display_name || f.login_id || '로그인 안 함')} · ${esc(String(f.created_at).slice(0, 16).replace('T', ' '))}${
+            Number.isInteger(f.chosen_idx) ? ` · 고른 보기 ${LET[f.chosen_idx]}` : ''}${
             f.note ? ` · “${esc(f.note)}”` : ''}</span>
+          ${f.review_note ? `<span class="row-s fb-robot">${esc(f.review_note)}</span>` : ''}
+          ${f.reply_ko ? `<span class="row-s fb-reply">아이에게 보낸 답장${f.reply_seen_at ? '(읽음)' : ''}: ${esc(f.reply_ko)}</span>` : ''}
+          ${why}
+          ${canReply ? `
+          <div class="fb-form" data-form="${esc(f.id)}" hidden>
+            <textarea rows="3" maxlength="300" data-reply-text placeholder="아이에게 보낼 답장 (해요체, 짧게)">${esc(draft || '')}</textarea>
+            <div class="fb-form-row">
+              <select data-reply-status>
+                <option value="ok">문항이 맞아요</option>
+                <option value="fixed"${f.review_status === 'fixed' ? ' selected' : ''}>고쳤어요</option>
+                <option value="held"${f.review_status === 'held' ? ' selected' : ''}>잠시 내렸어요</option>
+              </select>
+              <label class="fb-same"><input type="checkbox" data-reply-same checked /> 같은 문항의 다른 신고에도</label>
+              <button class="btn small" data-send="${esc(f.id)}">답장 보내기</button>
+            </div>
+          </div>` : ''}
         </span>
-        ${f.question_id ? `<button class="btn ghost small" data-fopen="${esc(f.question_id)}">문항 보기</button>` : ''}
-        ${f.handled_at
-          ? `<span class="chip done">확인함</span>`
-          : `<button class="btn ghost small" data-done="${esc(f.id)}">확인함</button>`}
+        <span class="fb-actions">
+          ${f.question_id ? `<button class="btn ghost small" data-fopen="${esc(f.question_id)}">문항 보기</button>` : ''}
+          ${canReply ? `<button class="btn ghost small" data-reply="${esc(f.id)}">답장 쓰기</button>` : ''}
+          ${canReply && f.review_status ? `<button class="btn ghost small" data-rereview="${esc(f.id)}">로봇에게 다시</button>` : ''}
+          ${f.handled_at
+            ? `<span class="chip done">확인함</span>`
+            : `<button class="btn ghost small" data-done="${esc(f.id)}">확인함</button>`}
+        </span>
       </div>`;
     }).join('') : `<p class="empty">${showHandled ? '신고가 없어요.' : '확인할 신고가 없어요.'}</p>`;
 
     view.innerHTML = `${tabsHtml()}
+      <div class="card">
+        <div class="card-head"><span class="card-title">신고 자동 검토</span>
+          <span class="card-note">매일 밤 2시에 로봇이 새 신고를 확인해요 · 검토를 기다리는 신고 ${waiting}건</span></div>
+        <p class="card-note">AI 두 개가 따로 보고 같은 말을 할 때만 고치거나 아이에게 답장해요.
+          엇갈리면 아래 '사람 확인 필요'로 남고, 한쪽이라도 틀렸다고 하면 그 문항은 일단 내려요.</p>
+        <div class="form" style="margin-top:10px">
+          <button class="btn" data-review-now ${waiting ? '' : 'disabled'}>지금 검토 맡기기</button>
+        </div>
+        <p class="msg" data-review-msg></p>
+      </div>
       <div class="card">
         <div class="card-head"><span class="card-title">아이들이 보낸 신고</span>
           <button class="btn ghost small" data-toggle>${showHandled ? '안 본 것만 보기' : '확인한 것도 보기'}</button></div>
@@ -469,11 +543,50 @@ async function showFeedback() {
       </div>`;
     bindTabs();
     view.querySelector('[data-toggle]').addEventListener('click', () => { showHandled = !showHandled; showFeedback(); });
+    view.querySelector('[data-review-now]').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const msg = view.querySelector('[data-review-msg]');
+      btn.disabled = true;
+      try {
+        const r = await api('/api/admin/feedback/review-now', { method: 'POST', body: '{}' });
+        msg.className = 'msg ok';
+        msg.textContent = r.next;
+      } catch (err) {
+        if (!guard(err)) { msg.className = 'msg bad'; msg.textContent = err.message; btn.disabled = false; }
+      }
+    });
     // 신고에서 그 문항으로 바로 간다 — 신고를 읽고 나면 다음에 할 일은 언제나 '그 문항 보기'다.
     // 이게 없으면 제목을 외워서 문항 탭에서 다시 찾아야 한다.
     view.querySelectorAll('[data-fopen]').forEach((b) => b.addEventListener('click', () => {
       tab = 'q';
       showQuestion(b.dataset.fopen);
+    }));
+    view.querySelectorAll('[data-reply]').forEach((b) => b.addEventListener('click', () => {
+      const form = view.querySelector(`[data-form="${CSS.escape(b.dataset.reply)}"]`);
+      if (form) { form.hidden = !form.hidden; form.querySelector('textarea')?.focus(); }
+    }));
+    view.querySelectorAll('[data-send]').forEach((b) => b.addEventListener('click', async () => {
+      const form = b.closest('[data-form]');
+      const reply = form.querySelector('[data-reply-text]').value.trim();
+      if (reply.length < 5) { alert('아이에게 보낼 답장을 적어주세요'); return; }
+      b.disabled = true;
+      try {
+        await api(`/api/admin/feedback/${encodeURIComponent(b.dataset.send)}/reply`, {
+          method: 'POST',
+          body: JSON.stringify({
+            reply, status: form.querySelector('[data-reply-status]').value,
+            same_question: form.querySelector('[data-reply-same]').checked,
+          }),
+        });
+        showFeedback();
+      } catch (e) { if (!guard(e)) { alert(e.message); b.disabled = false; } }
+    }));
+    view.querySelectorAll('[data-rereview]').forEach((b) => b.addEventListener('click', async () => {
+      b.disabled = true;
+      try {
+        await api(`/api/admin/feedback/${encodeURIComponent(b.dataset.rereview)}/rereview`, { method: 'POST', body: '{}' });
+        showFeedback();
+      } catch (e) { if (!guard(e)) { alert(e.message); b.disabled = false; } }
     }));
     view.querySelectorAll('[data-done]').forEach((b) => b.addEventListener('click', async () => {
       b.disabled = true;

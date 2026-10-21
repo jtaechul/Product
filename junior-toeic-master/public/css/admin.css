@@ -285,3 +285,23 @@ table.pins td.pin { font-variant-numeric: tabular-nums; font-weight: 800; letter
 .keep-row input { flex: none; width: 20px; height: 20px; accent-color: var(--primary, #5b5bf5); }
 .keep-row span { font-size: .9rem; font-weight: 600; line-height: 1.3; }
 .keep-row em { display: block; font-style: normal; font-size: .76rem; font-weight: 500; color: var(--muted, #6b7090); margin-top: 2px; }
+
+/* ── 신고 자동 검토 ── */
+.fb-row { align-items: flex-start; flex-wrap: wrap; }
+.fb-chips { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; min-width: 118px; }
+.fb-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.fb-robot { color: var(--text); margin-top: 6px; }
+.fb-reply { color: var(--ok); margin-top: 4px; }
+.fb-more { margin-top: 6px; font-size: .78rem; color: var(--muted); }
+.fb-more summary { cursor: pointer; font-weight: 700; }
+.fb-more ul { margin: 6px 0 0 18px; display: flex; flex-direction: column; gap: 3px; }
+.fb-form { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.fb-form[hidden] { display: none; }   /* 위 display:flex 가 hidden 속성을 이기지 않게 */
+.fb-form textarea { width: 100%; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); resize: vertical; }
+.fb-form-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.fb-form-row select { padding: 7px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); }
+.fb-same { font-size: .8rem; color: var(--muted); display: flex; gap: 5px; align-items: center; }
+@media (max-width: 640px) {
+  .fb-chips { flex-direction: row; min-width: 0; width: 100%; }
+  .fb-actions { flex-direction: row; flex-wrap: wrap; align-items: center; width: 100%; }
+}

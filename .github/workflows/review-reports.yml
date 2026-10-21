@@ -1,0 +1,162 @@
+name: Review reports (Jumplish)
+
+# 아이들이 앱에서 보낸 문항 신고("답이 이상해요" 등)를 검토 로봇이 확인한다.
+#   - 문항이 정말 틀렸고 AI 두 개가 고친 안에 동의하면 → 원고를 고쳐 커밋·배포, 아이에게 "고쳤어요"
+#   - 틀렸는데 자동으로 못 고치면 → 문항을 내리고(retired) 관리자 화면에 남긴다
+#   - 맞으면 → 왜 맞는지 아이 눈높이로 답장
+#   - 두 AI 가 엇갈리면 → 관리자 화면 '사람 확인'으로 (한쪽이라도 '틀렸다'면 일단 내림)
+# 자세한 규칙: junior-toeic-master/docs/content-pipeline.md 12절, 로봇: tools/review-reports.mjs
+#
+# 왜 여기서 도는가: 앱 서버(Cloudflare Workers)에는 AI 열쇠를 두지 않는다 — 운영 중 외부 호출 0회.
+# 문제 만들기(generate-questions)·음원·사진 배치와 같은 자리다.
+#
+# ⚠ 공개 저장소라 이 로그는 누구나 본다. 아이가 쓴 신고 글·이름·답장은 찍지 않는다
+#   (로봇이 개수와 문항 번호만 찍는다). 이 파일에 cat·set -x 같은 것을 넣지 말 것.
+#   신고는 D1 에서 바로 읽고 결과도 D1 에 바로 쓴다. 저장소에 들어오는 것은 고친 문항 원고뿐이다.
+#
+# 언제 도는가: 매일 밤 앱 서버의 Cron(worker/index.mjs nightlyReview)이 검토 전 신고가 있으면
+# requests/review-*.json 주문서를 커밋한다. 관리자 화면의 '지금 검토 맡기기'도 같은 주문서를 넣는다.
+# (GitHub 의 schedule 은 기본 브랜치의 워크플로만 돌려서 쓸 수 없다 — generate-questions 와 같은 사정)
+on:
+  push:
+    branches: ["claude/junior-toeic-master-planning-322l2t"]
+    paths: ["junior-toeic-master/requests/review-*.json"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jumplish-review
+  cancel-in-progress: false   # 검토 중에 주문이 또 들어오면 끝난 뒤 이어서 본다
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      content: ${{ steps.commit.outputs.content }}
+      audio: ${{ steps.commit.outputs.audio }}
+    defaults:
+      run:
+        working-directory: junior-toeic-master
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN_JUMPLISH || secrets.CF_API_TOKEN_JUMPLISH_DEPLOY || secrets.CF_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 브랜치의 최신 상태(다른 배치가 방금 올린 원고까지)
+          ref: ${{ github.ref_name }}
+          # 예전 신고는 '그때 아이가 본 판본'을 git 이력에서 꺼내 본다(신고 뒤 고쳐졌을 수 있다).
+          # 이력은 전부 받되 파일 내용은 꺼낼 때만 받는다 — 저장소에 다른 프로젝트의 큰 그림이 많다.
+          fetch-depth: 0
+          filter: blob:none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Validate content (before)
+        run: node tools/import.mjs --check
+
+      # 배포 워크플로와 같은 방법으로 실제 D1 id 를 끼운다(없으면 만들지 않고 멈춘다)
+      - name: Inject D1 id
+        run: |
+          set -e
+          ID=$(npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const a=JSON.parse(s.slice(s.indexOf('[')));const m=a.find(x=>x.name==='jumplish-db');process.stdout.write(m?(m.uuid||m.id||''):'')}catch(e){process.stdout.write('')}})")
+          if [ -z "$ID" ]; then
+            echo "::error::D1(jumplish-db)을 찾지 못했습니다. CF_API_TOKEN 에 D1 권한이 있는지 확인하세요."
+            exit 1
+          fi
+          sed -i "s/REPLACED_AT_DEPLOY/$ID/" wrangler.jsonc
+
+      # 신고 표의 새 칸(스냅샷·답장)이 아직 없으면 만든다 — 배포보다 검토가 먼저 돌 수도 있다
+      - name: Apply migrations (remote)
+        run: npx wrangler d1 migrations apply jumplish-db --remote
+
+      # 실패해도 아래 단계는 돈다: 주문서는 지워야 하고(남으면 다음 주문이 막힌다),
+      # 맨 끝에서 빨간불로 알린다.
+      - name: Review
+        id: review
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_JUMPLISH || secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_JUMPLISH || secrets.GEMINI_API_KEY }}
+        run: |
+          node tools/review-reports.mjs
+          node -e "const s=require('./tools/out/review-summary.json');console.log('failed='+s.failed)" >> "$GITHUB_OUTPUT"
+
+      - name: Validate content (after)
+        id: validate_after
+        if: ${{ steps.review.outcome == 'success' }}
+        run: node tools/import.mjs --check
+
+      - name: Commit & push
+        id: commit
+        if: ${{ !cancelled() }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # 로봇이 중간에 멈췄거나 고친 원고가 검사에 걸렸으면 원고는 올리지 않는다(주문서만 지운다)
+          if [ "${{ steps.review.outcome }}" != "success" ] || [ "${{ steps.validate_after.outcome }}" != "success" ]; then
+            git checkout -- content public/audio 2>/dev/null || true
+            rm -f tools/out/review-results.sql
+          fi
+          rm -f requests/review-*.json
+          git add -A content/questions requests public/audio
+          if git diff --cached --quiet; then
+            echo "커밋할 것이 없습니다"
+            exit 0
+          fi
+          CHANGED=$(git diff --cached --name-only -- content public/audio | wc -l)
+          if [ -f tools/out/review-summary.json ] && [ "$CHANGED" -gt 0 ]; then
+            TITLE=$(node -e "const s=require('./tools/out/review-summary.json');console.log('junior-toeic-master: 신고 검토 반영 — 고침 '+s.fixed_items.length+'개 · 내림 '+s.held_items.length+'개')")
+            BODY=$(node -e "const s=require('./tools/out/review-summary.json');console.log(['review-reports.yml 의 검토 로봇이 AI 두 개의 판정이 맞을 때만 고치거나 내렸다.', s.fixed_items.length?'고친 문항: '+s.fixed_items.join(', '):'', s.held_items.length?'내린 문항(사람이 고친 뒤 status 를 active 로, review_hold 를 지우면 다시 출제): '+s.held_items.join(', '):'', s.re_audio?'소리를 새로 만들 파일: '+s.re_audio+'개':''].filter(Boolean).join('\n'))")
+          else
+            TITLE="junior-toeic-master: 신고 검토 주문서 정리"
+            BODY="원고는 그대로다. 검토 결과는 서버(D1)에만 쓴다."
+          fi
+          git commit -m "$TITLE" -m "$BODY"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            if git push origin HEAD:"${GITHUB_REF_NAME}"; then
+              if [ "$CHANGED" -gt 0 ]; then echo "content=true" >> "$GITHUB_OUTPUT"; fi
+              # 깨진 음원을 지웠거나 들려주는 문장을 고쳤으면(로봇이 센다) 음원 배치를 부른다
+              if node -e "process.exit(require('./tools/out/review-summary.json').re_audio>0?0:1)" 2>/dev/null; then
+                echo "audio=1" >> "$GITHUB_OUTPUT"
+              fi
+              exit 0
+            fi
+            echo "다른 작업이 먼저 푸시했습니다 — 다시 얹어 재시도 ${i}/5"
+            sleep $((5 * i))
+          done
+          echo "::error::푸시를 5번 시도했지만 실패했습니다"
+          exit 1
+
+      # 원고가 저장소에 들어간 뒤에야 "고쳤어요" 답장을 연다(푸시가 실패했으면 답장도 안 나간다)
+      - name: Write results to server
+        if: ${{ steps.review.outcome == 'success' && steps.commit.outcome == 'success' }}
+        run: node tools/review-reports.mjs --apply-results
+
+      - name: Fail if review did not finish
+        if: ${{ steps.review.outcome != 'success' || (steps.review.outputs.failed != '' && steps.review.outputs.failed != '0') }}
+        run: |
+          echo "::error::신고 일부를 검토하지 못했습니다 — 위 'Review' 기록에 까닭이 있습니다(AI 열쇠·크레딧·D1 권한). 못 본 신고는 다음 검토 때 다시 봅니다."
+          exit 1
+
+  # 소리를 바꾼 문항이 있으면 음원을 새로 만든다(러너의 푸시는 다른 워크플로를 못 깨운다 — 직접 부른다)
+  audio:
+    needs: review
+    if: ${{ !cancelled() && needs.review.outputs.audio == '1' }}
+    uses: ./.github/workflows/generate-tts.yml
+    secrets: inherit
+
+  # 고친 원고를 배포한다(음원 배치가 돌았으면 그쪽도 배포한다 — 겹치면 concurrency 가 합친다)
+  deploy:
+    needs: [review, audio]
+    if: ${{ !cancelled() && needs.review.outputs.content == 'true' }}
+    uses: ./.github/workflows/deploy-jumplish.yml
+    secrets: inherit

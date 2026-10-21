@@ -212,7 +212,13 @@ app.get('/api/me', requireAuth, async (c) => {
   const diag = await c.env.DB.prepare(
     `SELECT summary FROM sessions WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NOT NULL LIMIT 1`
   ).bind(u.id).first();
+  // 아직 안 읽은 신고 답장 수 — 홈에 "답장이 왔어요" 카드를 띄울지 정한다
+  const replies = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM feedback
+      WHERE user_id = ?1 AND reply_ko IS NOT NULL AND reply_seen_at IS NULL`
+  ).bind(u.id).first();
   return c.json({
+    report_replies: replies?.n ?? 0,
     user: { id: u.id, login_id: u.login_id, display_name: u.display_name, role: u.role },
     answered: stats.answered, correct: stats.correct, review_due: due.n, sealed: climb.breakdown.sealed,
     today_done: todayDone,
@@ -510,13 +516,75 @@ app.post('/api/feedback', async (c) => {
   const qid = typeof question_id === 'string'
     ? (await c.env.DB.prepare('SELECT id FROM questions WHERE id = ?1').bind(question_id).first())?.id ?? null
     : null;
+  // 검토 로봇이 "아이가 본 판본"을 알 수 있게 그 순간의 문항을 함께 남긴다(migrations/0017).
+  // 아이가 고른 보기도 — "답이 이상해요"가 어느 보기를 두고 한 말인지가 판정에 중요하다.
+  const snapshot = qid ? await questionSnapshot(c.env.DB, qid) : null;
+  const chosen = qid && user
+    ? (await c.env.DB.prepare(
+        `SELECT chosen_idx FROM answers WHERE user_id = ?1 AND question_id = ?2
+          ORDER BY answered_at DESC LIMIT 1`).bind(user.id, qid).first())?.chosen_idx ?? null
+    : null;
   await c.env.DB.prepare(
-    `INSERT INTO feedback (id, user_id, question_id, kind, note, screen, created_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
+    `INSERT INTO feedback (id, user_id, question_id, kind, note, screen, created_at, q_snapshot, chosen_idx)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
   ).bind(crypto.randomUUID(), user?.id ?? null, qid, kind,
     typeof note === 'string' ? note.slice(0, 300) : null,
     typeof screen === 'string' ? screen.slice(0, 40) : null,
-    new Date().toISOString()).run();
+    new Date().toISOString(), snapshot ? JSON.stringify(snapshot) : null, chosen).run();
+  return c.json({ ok: true });
+});
+
+// 신고한 순간의 문항 — 정답·해설까지 서버 안에만 남는다(아이에게 다시 내려가지 않는다).
+async function questionSnapshot(db, qid) {
+  const r = await db.prepare(
+    `SELECT q.stem, q.choices, q.answer_idx, q.explanation_ko, q.script, q.evidence, q.why_not,
+            q.translation_ko, q.key_expr, q.image_url, q.audio_url, q.status,
+            p.content AS passage, p.translation_ko AS passage_ko, p.audio_url AS passage_audio,
+            p.image_url AS passage_image
+       FROM questions q LEFT JOIN passages p ON p.id = q.passage_id WHERE q.id = ?1`
+  ).bind(qid).first();
+  if (!r) return null;
+  const parse = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
+  return {
+    stem: r.stem, choices: parse(r.choices), answer_idx: r.answer_idx, explanation_ko: r.explanation_ko,
+    script: r.script, evidence: r.evidence, why_not: parse(r.why_not), translation_ko: r.translation_ko,
+    key_expr: parse(r.key_expr), image_url: r.image_url, audio_url: r.audio_url || r.passage_audio,
+    passage: r.passage, passage_ko: r.passage_ko, passage_image: r.passage_image, status: r.status,
+  };
+}
+
+// ── 내가 알려준 문제 (신고 답장) ──
+// 검토 로봇이나 관리자가 답장을 달면 아이 홈에 "답장이 왔어요"가 뜬다.
+// 정답 번호·해설 원문은 내려주지 않는다 — 답장 글과 처리 결과만.
+const REPORT_PART_KO = {
+  L1: '사진 고르기', L2: '질의응답', L3: '짧은 대화', L4: '짧은 담화',
+  R1: '문장 완성', R2: '지문 완성', R3: '독해',
+};
+app.get('/api/me/reports', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { results } = await c.env.DB.prepare(
+    `SELECT f.id, f.kind, f.created_at, f.review_status, f.reply_ko, f.replied_at, f.reply_seen_at,
+            q.part, q.stem, q.script
+       FROM feedback f LEFT JOIN questions q ON q.id = f.question_id
+      WHERE f.user_id = ?1 ORDER BY f.created_at DESC LIMIT 30`
+  ).bind(u.id).all();
+  const reports = results.map((r) => ({
+    id: r.id, kind: r.kind, created_at: r.created_at,
+    // 답장이 붙기 전에는 무조건 '확인 중' — 사람 확인을 기다리는 것도 아이에게는 같은 말이다
+    status: r.reply_ko ? (r.review_status || 'ok') : 'pending',
+    reply: r.reply_ko || null, replied_at: r.replied_at, seen: !!r.reply_seen_at,
+    // 어느 문제였는지 아이가 알아볼 만큼만 — 문제 문장, 없으면(듣기) 들려준 문장 앞부분
+    part_ko: REPORT_PART_KO[r.part] || '',
+    label: String(r.stem || r.script || '').replace(/^[WMN]:\s*/gm, '').split('\n')[0].slice(0, 60),
+  }));
+  return c.json({ reports, unseen: reports.filter((r) => r.reply && !r.seen).length });
+});
+
+app.post('/api/me/reports/seen', requireAuth, async (c) => {
+  await c.env.DB.prepare(
+    `UPDATE feedback SET reply_seen_at = ?2
+      WHERE user_id = ?1 AND reply_ko IS NOT NULL AND reply_seen_at IS NULL`
+  ).bind(c.get('user').id, nowISO()).run();
   return c.json({ ok: true });
 });
 
@@ -1191,15 +1259,24 @@ app.get('/api/admin/feedback', ...admin, async (c) => {
     // q.script 도 함께 보낸다 — 사진 고르기(L1)·질의응답(L2)은 stem 이 없어서
     // 화면에 "질의응답 문항"으로만 뜨고, 그러면 어느 문항인지 알 수 없어 고칠 수가 없다
     // (2026-09-12 L2 신고가 실제로 그래서 확인만 하고 넘어갔다).
+    // 검토 로봇의 판정·답장도 같이 — 로봇이 끝낸 것(fixed·ok)은 처리 완료로 들어가고,
+    // 사람이 볼 것(human·held)만 기본 목록에 남는다.
     `SELECT f.id, f.kind, f.note, f.screen, f.created_at, f.handled_at,
-            f.question_id, q.part, q.stem, q.script, u.login_id, u.display_name
+            f.question_id, q.part, q.stem, q.script, q.status AS q_status, u.login_id, u.display_name,
+            f.review_status, f.review_note, f.review_detail, f.reviewed_at,
+            f.reply_ko, f.replied_at, f.reply_seen_at, f.chosen_idx
        FROM feedback f
        LEFT JOIN questions q ON q.id = f.question_id
        LEFT JOIN users u ON u.id = f.user_id
       ${all ? '' : 'WHERE f.handled_at IS NULL'}
-      ORDER BY f.created_at DESC LIMIT 200`
+      ORDER BY CASE f.review_status WHEN 'human' THEN 0 WHEN 'held' THEN 1 ELSE 2 END,
+               f.created_at DESC LIMIT 200`
   ).all();
-  return c.json({ feedback: results });
+  // 아직 검토 전인 신고 수 — "지금 검토 맡기기" 버튼에 적는다
+  const waiting = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM feedback
+      WHERE review_status IS NULL AND handled_at IS NULL AND question_id IS NOT NULL`).first();
+  return c.json({ feedback: results, waiting: waiting.n });
 });
 
 app.post('/api/admin/feedback/:id/handled', ...admin, async (c) => {
@@ -1208,6 +1285,50 @@ app.post('/api/admin/feedback/:id/handled', ...admin, async (c) => {
     .bind(c.req.param('id'), done ? nowISO() : null, done ? c.get('user').id : null).run();
   if (!r.meta?.changes) return c.json({ error: '신고를 찾을 수 없습니다' }, 404);
   return c.json({ ok: true, handled: done });
+});
+
+// 사람이 직접 답장 — 로봇 판정이 엇갈려 'human' 으로 넘어온 신고를 마무리할 때 쓴다.
+// same_question: 같은 문항에 아직 답장이 없는 다른 신고에도 같은 답장을 단다
+// (여러 아이가 같은 문제를 신고하는 일이 흔하다).
+const REVIEW_STATUSES = ['ok', 'fixed', 'held'];
+app.post('/api/admin/feedback/:id/reply', ...admin, async (c) => {
+  const b = await c.req.json().catch(() => ({}));
+  const reply = String(b.reply ?? '').trim().slice(0, 300);
+  const status = REVIEW_STATUSES.includes(b.status) ? b.status : 'ok';
+  if (reply.length < 5) return c.json({ error: '아이에게 보낼 답장을 적어주세요' }, 400);
+  const f = await c.env.DB.prepare('SELECT id, question_id FROM feedback WHERE id = ?1')
+    .bind(c.req.param('id')).first();
+  if (!f) return c.json({ error: '신고를 찾을 수 없습니다' }, 404);
+  const now = nowISO();
+  const by = c.get('user').id;
+  const set = `SET reply_ko = ?2, replied_at = ?3, review_status = ?4, handled_at = ?3, handled_by = ?5,
+                   reviewed_at = COALESCE(reviewed_at, ?3)`;
+  const r = b.same_question && f.question_id
+    ? await c.env.DB.prepare(
+        `UPDATE feedback ${set} WHERE question_id = ?1 AND (id = ?6 OR (reply_ko IS NULL AND handled_at IS NULL))`
+      ).bind(f.question_id, reply, now, status, by, f.id).run()
+    : await c.env.DB.prepare(`UPDATE feedback ${set} WHERE id = ?1`)
+        .bind(f.id, reply, now, status, by).run();
+  return c.json({ ok: true, updated: r.meta?.changes ?? 1 });
+});
+
+// 로봇에게 다시 맡기기 — 문항을 손본 뒤 다시 판정받고 싶을 때. 다음 검토 때 새로 본다.
+app.post('/api/admin/feedback/:id/rereview', ...admin, async (c) => {
+  const r = await c.env.DB.prepare(
+    `UPDATE feedback SET review_status = NULL, review_note = NULL, review_detail = NULL, reviewed_at = NULL,
+                         handled_at = NULL, handled_by = NULL
+      WHERE id = ?1 AND reply_ko IS NULL`
+  ).bind(c.req.param('id')).run();
+  if (!r.meta?.changes) return c.json({ error: '이미 답장이 나간 신고는 다시 맡길 수 없어요' }, 400);
+  return c.json({ ok: true });
+});
+
+// 지금 검토 맡기기 — 밤까지 기다리지 않고 로봇을 깨운다(주문서 커밋 → 검토 워크플로).
+app.post('/api/admin/feedback/review-now', ...admin, async (c) => {
+  const gh = new GithubRepo(c.env);
+  if (!gh.configured) return c.json({ error: '저장소 연결이 아직 설정되지 않았습니다' }, 503);
+  const r = await orderReview(c.env, gh, 'admin');
+  return c.json({ ok: true, ...r });
 });
 
 // ── 문항 관리 (2026-08-23, 사용자 선택: 현황판 + 직접 저작 + AI 주문 / 저장소 커밋 / 듣기까지) ──
@@ -1661,8 +1782,45 @@ async function planGaps(db) {
 // 왜 필요한가: 초안(draft)이 생기는 건 생성이 **끝난 뒤**다. 그 12분 동안 planGaps 는 만들어지는
 // 중인 문항을 모른다 — 그래서 연달아 주문하면 같은 자리를 두 번 채운다. 커밋도 fast-forward 만
 // 허용하므로 겹치면 그냥 실패한다. 버튼과 야간 채움이 **같은 잠금**을 쓴다.
+// 문제 만들기 주문서(gen-*)만 센다. 신고 검토 주문서(review-*)는 따로 돌므로
+// 그게 남아 있다고 문제 만들기를 미루면 안 된다.
 async function pendingOrders(gh) {
-  return (await gh.listDir(REQ_DIR)).filter((n) => n.endsWith('.json')).length;
+  return (await gh.listDir(REQ_DIR)).filter((n) => n.startsWith('gen-') && n.endsWith('.json')).length;
+}
+
+// ── 신고 검토 주문 ──
+// 실제 검토는 GitHub 작업실의 review-reports.yml 이 한다(AI 열쇠는 거기에만 있다).
+// 주문서에는 아이 신고 내용을 **한 글자도 넣지 않는다** — 저장소가 공개라서다.
+// 로봇이 D1 에서 직접 읽고, 결과도 D1 에 직접 쓴다.
+async function orderReview(env, gh, by) {
+  const waiting = (await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM feedback
+      WHERE review_status IS NULL AND handled_at IS NULL AND question_id IS NOT NULL`).first()).n;
+  if (!waiting) return { started: false, next: '검토를 기다리는 신고가 없어요.' };
+  // 검토 중인 주문서가 있으면 또 넣지 않는다. 단 6시간 넘은 주문서는 멈춘 작업이 남긴 것으로 보고
+  // 무시한다 — 안 그러면 한 번 멈춘 뒤로 영영 새 주문을 못 넣는다(새 주문이 돌면서 옛것도 지운다).
+  const fresh = (n) => {
+    const m = /^review-(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z\.json$/.exec(n);
+    if (!m) return false;
+    return Date.now() - Date.parse(`${m[1]}T${m[2]}:${m[3]}:${m[4]}.${m[5]}Z`) < 6 * 3600_000;
+  };
+  const pending = (await gh.listDir(REQ_DIR)).filter(fresh).length;
+  if (pending) return { started: false, next: '이미 검토하고 있어요. 10~20분 뒤 다시 확인해주세요.' };
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  await gh.commitFiles([{
+    path: `${REQ_DIR}/review-${stamp}.json`,
+    text: `${JSON.stringify({ kind: 'report-review', by, requested_at: new Date().toISOString() }, null, 2)}\n`,
+  }], `junior-toeic-master: 신고 검토 주문 (${by === 'admin' ? '관리자 화면' : '야간'})\n\n`
+    + '이 파일이 푸시되면 review-reports.yml 이 아직 검토 전인 신고를 확인하고 주문서를 지운다.\n'
+    + '신고 내용은 저장소에 들어오지 않는다 — 로봇이 서버(D1)에서 읽고 결과도 서버에 쓴다.');
+  return { started: true, waiting, next: `신고 ${waiting}건을 검토하기 시작했어요. 10~20분 뒤 결과가 이 목록에 붙어요.` };
+}
+
+async function nightlyReview(env) {
+  const gh = new GithubRepo(env);
+  if (!gh.configured) { console.log('[신고검토] 저장소 연결 없음 — 건너뜀'); return; }
+  const r = await orderReview(env, gh, 'nightly');
+  console.log(`[신고검토] ${r.next}`);
 }
 
 async function nightlyTopUp(env) {
@@ -1913,6 +2071,10 @@ export default {
   fetch: app.fetch,
   // 매일 밤 2시(KST) — wrangler.jsonc 의 triggers.crons 가 부른다.
   // 실패해도 워커는 멀쩡해야 하므로 여기서 삼키고 로그만 남긴다(다음 밤에 다시 시도).
-  scheduled: (event, env, ctx) => ctx.waitUntil(
-    nightlyTopUp(env).catch((e) => console.error('[야간채움] 실패:', e.message))),
+  // 문제 채우기 → 신고 검토 주문 순서로 하나씩 한다. 둘 다 저장소에 커밋하는데,
+  // 동시에 하면 늦게 간 쪽이 '방금 바뀌었다'(fast-forward 실패)로 떨어진다.
+  scheduled: (event, env, ctx) => ctx.waitUntil((async () => {
+    await nightlyTopUp(env).catch((e) => console.error('[야간채움] 실패:', e.message));
+    await nightlyReview(env).catch((e) => console.error('[신고검토] 실패:', e.message));
+  })()),
 };
