@@ -5,6 +5,7 @@ name: stay-shorts-produce
 # mode 가 "veo" 면 사진 7장(물놀이 3·객실 2·특별 공간 2) → Veo 이미지→영상 7컷 → 이어 붙이기 (단일 숙소)
 #   (유료 · 1편 약 2,100원 · 한 번 실행 3,000원 / 한 달 50,000원 한도는 src/veo.py 가 지킨다 · 장부 state/spend.json)
 # mode 가 없으면 예전 시험 방식(사진 확대 + 자막, 유료 생성 없음).
+# stage 가 "carousel" 이면(2026-10-21) 이전 실행 아티팩트의 계획·컷 이미지로 쓰레드 캐러셀(4:5 카드 + 본문)만 만든다 — AI 호출 0 · 0원. 미리보기·정식 제작 끝에도 같은 카드를 만든다.
 # 쿠팡 검색 → 사진 분류·대본(Gemini) → 음성(Gemini) → [Veo] → 합성(ffmpeg).
 # 업로드 없음 — 완성본은 Release 와 텔레그램으로만 전달한다 (승인 전 발행 금지).
 # 실행: projects/stay-shorts-factory/requests/produce/request.json 을 바꿔 푸시하거나 Run workflow.
@@ -122,6 +123,7 @@ jobs:
             projects/stay-shorts-factory/build/story/sheet_*.png
             projects/stay-shorts-factory/build/story/ins_*.png
             projects/stay-shorts-factory/build/story/insert_sheet.png
+            projects/stay-shorts-factory/build/carousel/*
           if-no-files-found: ignore
           retention-days: 90
 
@@ -136,6 +138,23 @@ jobs:
           [ -f "$P/build/SKIPPED" ] && { cat "$P/build/SKIPPED"; exit 0; }   # 같은 nonce 재실행 — 알림·기록 없음
           V=$P/build/video.mp4
           L=$P/data/runs/latest
+          C=$P/build/carousel
+          if [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$C/carousel_post.txt" ] && [ -f "$C/card_1.jpg" ]; then
+            # 2026-10-21 쓰레드 캐러셀(0원): 사진 카드는 앨범으로, 본문은 글로 — 운영자가 카드를 저장해 쓰레드에 올리고 본문을 붙여넣는다. 카드엔 공식 사진이 있어 Release·저장소엔 안 올린다
+            MEDIA=$(python3 - "$C" <<'PY' || echo "[]"
+          import json, pathlib, sys
+          d = pathlib.Path(sys.argv[1]); m = json.loads((d / "carousel.json").read_text(encoding="utf-8"))
+          n = min(10, int(m.get("n") or 0)); p = m.get("post") or {}
+          cap = f"쓰레드 캐러셀 {n}장 · {m.get('stay')} · 0원 · 본문 {p.get('chars')}자" + ("(500자 넘음 — 줄여서 올리세요)" if p.get("over") else "") + (" · 일부 카드 'AI 연출' 표시" if m.get("ai_any") else "") + " — 카드를 저장해 쓰레드에 올리고 다음 글을 본문에 붙여넣으세요(링크 포함)"
+          print(json.dumps([{"type": "photo", "media": f"attach://c{i}", **({"caption": cap} if i == 1 else {})} for i in range(1, n + 1)], ensure_ascii=False))
+          PY
+          )
+            ARGS=(); i=1
+            while [ -f "$C/card_$i.jpg" ] && [ "$i" -le 10 ]; do ARGS+=(-F "c$i=@$C/card_$i.jpg"); i=$((i+1)); done
+            curl -s -o /dev/null -w "telegram carousel album http %{http_code}\n" -F chat_id="$TG_CHAT" -F media="$MEDIA" "${ARGS[@]}" "https://api.telegram.org/bot$TG_TOKEN/sendMediaGroup" || true
+            curl -s -o /dev/null -w "telegram carousel text http %{http_code}\n" -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+              --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text@$C/carousel_post.txt" || true
+          fi
           if [ "${{ steps.make.outcome }}" = "success" ] && [ -f "$L/narration_preview.mp3" ] && [ ! -f "$V" ]; then
             # 미리보기 단계: 사진 시트 + 나레이션 음성 + 받아쓰기 판정
             QA=$(python3 -c "import json;r=json.load(open('$L/report.json',encoding='utf-8'));qa=r.get('narration_qa') or [];sq=r.get('screen_qa') or [];sqs=[q for q in sq if q.get('score') is not None];print(('나레이션 받아쓰기 ' + ('전부 통과' if all(q['ok'] for q in qa) else '실패 있음')) + ' · ' + ' / '.join(f\"{q['segment']} {q['similarity']}\" for q in qa) + (f\" · 화면 검수 {sum(1 for q in sqs if q['score']>=q.get('threshold',7))}/{len(sqs)} 통과\" if sqs else ''))" 2>/dev/null || echo "미리보기")
@@ -186,6 +205,8 @@ jobs:
               curl -s -o /dev/null -w "telegram photo http %{http_code}\n" -F chat_id="$TG_CHAT" -F photo=@"$S" \
                 -F caption="$SC" "https://api.telegram.org/bot$TG_TOKEN/sendPhoto" || true
             fi
+          elif [ "${{ steps.make.outcome }}" = "success" ]; then
+            echo "영상 없는 성공(쓰레드 캐러셀만) — 위에서 앨범·본문을 보냈다"
           elif [ "${{ steps.make.outcome }}" = "cancelled" ]; then
             # 2026-10-16 #51: 멈춘(취소) 실행이 옛 report 의 빈 오류로 "실패 —" 만 보냈다 → 멈췄다고 분명히 알린다
             curl -s -o /dev/null -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
