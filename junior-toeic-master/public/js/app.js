@@ -2,9 +2,8 @@
 // 첫 화면은 "무엇을 풀지 고르는 곳"이 아니라 "오늘 뭘 해야 하는지 알려주는 곳"이다.
 // 파트를 직접 고르는 화면은 하단 '파트별' 탭으로 내렸다.
 //
-// 정답은 이 앱 어디에도 없다: 보기를 누르면 POST /api/check 가 채점·해설을 반환한다.
-// M1은 로그인 전이라 학습 기록을 이 기기(localStorage)에 보관한다.
-// M2에서 계정이 붙으면 서버의 user_skills·SRS 큐로 옮긴다.
+// 정답은 이 앱 어디에도 없다: 보기를 누르면 POST /api/answers 가 채점·해설을 반환하고 기록한다.
+// 로그인한 아이만 풀 수 있다 — 로그인이 없거나 풀리면 곧장 로그인 화면으로 보낸다(아래 authLost).
 
 import { conceptOf } from './concepts.js';
 
@@ -133,6 +132,26 @@ const saveAuth = (a, keep = keepLogin) => {
     sessionStorage.removeItem(AUTH_KEY);
     if (a) (keep ? localStorage : sessionStorage).setItem(AUTH_KEY, JSON.stringify(a));
   } catch { /* 저장이 막혀도 이번 화면에서는 계속 쓸 수 있다 */ }
+};
+
+// ── 로그인 없이는 풀 수 없다 (2026-10-21) ──
+// 예전엔 로그인이 풀려도 아무 안내 없이 '손님'으로 계속 풀 수 있었다. 아이는 열심히 풀었는데
+// 기록은 이 기기에만 남고 학부모 화면·실력 점수·복습에는 하나도 안 잡혔다("연동이 안 된다" 제보).
+// 이제 로그인이 풀리는 순간 로그인 화면으로 보낸다. 서버도 손님에게 문제·채점을 내주지 않는다.
+// 오늘 세트·진단 진행은 지우지 않는다 — 같은 아이가 다시 들어오면 하던 곳부터 이어진다.
+const LOST_MSG = '로그인이 풀렸어요. 다시 로그인하면 하던 곳부터 이어서 풀 수 있어요.';
+function authLost() {
+  if (!auth) return;                 // 동시에 여러 요청이 401 을 받아도 한 번만
+  saveAuth(null);
+  stopClip();
+  document.querySelectorAll('.sheet-back').forEach((e) => e.remove());
+  showLogin(LOST_MSG);
+}
+// 화면 함수 맨 앞에서 부른다. 로그인이 없으면 로그인 화면을 띄우고 true.
+const needLogin = () => {
+  if (auth) return false;
+  if (!view.querySelector('[data-login-form]')) showLogin();
+  return true;
 };
 
 // ---------- 개인 설정 (캐릭터·소리) ----------
@@ -364,11 +383,15 @@ async function api(path, opts) {
     // 판단해서, "이미 가입된 이메일이에요. 로그인해주세요" 같은 것에도 튕겨 나갔다.
     const err = new Error(data.error || `요청 실패 (${res.status})`);
     err.status = res.status;
+    // 토큰을 보냈는데 401 = 로그인이 풀렸다(비밀번호 변경·30일 미사용 등).
+    // 로그인 화면의 '비밀번호가 틀려요' 401 은 토큰을 안 보내므로 여기 안 걸린다.
+    if (res.status === 401 && opts?.headers?.Authorization) authLost();
     throw err;
   }
   return data;
 }
 const renderError = (msg) => {
+  if (needLogin()) return;
   view.innerHTML = `<div class="error-box"><strong>문제가 생겼어요.</strong><br>${esc(msg)}<br>
     <button class="btn-ghost" style="margin-top:10px" onclick="location.reload()">다시 시도</button></div>`;
 };
@@ -434,10 +457,10 @@ function showSettings() {
       <p class="card-note">듣기 1번의 사진은
         <a href="https://pixabay.com" target="_blank" rel="noopener">Pixabay</a>에서 가져왔어요.</p>
 
-      <div style="display:flex; gap:8px; margin-top:6px">
-        <button class="btn-ghost" style="flex:1" data-close>닫기</button>
-        <button class="btn-primary" style="flex:1" data-auth-toggle>${auth ? '로그아웃' : '로그인'}</button>
-      </div>
+      <button class="btn-primary" style="width:100%; margin-top:6px" data-close>닫기</button>
+      ${auth ? `<button class="btn-ghost" style="width:100%; margin-top:8px" data-auth-toggle>로그아웃</button>
+      <p class="card-note" data-logout-note hidden>다시 들어오려면 부모님 이메일과 내 비밀번호가 필요해요.
+        정말 나가려면 한 번 더 눌러 주세요.</p>` : ''}
     </div>`;
   document.body.appendChild(back);
   const close = () => back.remove();
@@ -476,10 +499,19 @@ function showSettings() {
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
   }
 
-  back.querySelector('[data-auth-toggle]').addEventListener('click', () => {
+  // 로그아웃은 두 번 눌러야 된다 — 아이가 설정을 둘러보다 한 번 눌러서 로그인이 풀리고,
+  // 다시 들어올 비밀번호를 몰라 못 푸는 일이 생긴다(부모에겐 '갑자기 로그아웃'으로 보인다).
+  let armed = false;
+  back.querySelector('[data-auth-toggle]')?.addEventListener('click', (e) => {
+    if (!armed) {
+      armed = true;
+      e.currentTarget.textContent = '한 번 더 누르면 로그아웃돼요';
+      back.querySelector('[data-logout-note]').hidden = false;
+      return;
+    }
     close();
-    if (auth) { saveAuth(null); store.set = null; store.setDate = null; store.diag = null; save(); setTab('home'); showHome(); }
-    else showLogin();
+    saveAuth(null); store.set = null; store.setDate = null; store.diag = null; save();
+    showLogin();
   });
 }
 
@@ -498,7 +530,7 @@ const TAB_VIEWS = { home: showHome, review: showReview, record: showRecord, part
 const rerenderTab = () => TAB_VIEWS[currentTab]?.();
 tabbar.addEventListener('click', (e) => {
   const btn = e.target.closest('.tab');
-  if (!btn) return;
+  if (!btn || needLogin()) return;
   setTab(btn.dataset.tab);
   TAB_VIEWS[btn.dataset.tab]?.();
 });
@@ -511,51 +543,19 @@ const tabbarVisible = (on) => {
 const authHeaders = () => (auth ? { Authorization: `Bearer ${auth.token}` } : {});
 
 async function ensureTodaySet() {
-  const owner = auth?.user?.id || 'guest';
-  const sameDay = store.set && store.setDate === todayKey();
+  const owner = auth.user.id;
+  // 오늘 이 아이 세트가 이미 있으면 그대로 이어 간다. 로그인이 풀렸다 다시 들어와도
+  // 같은 아이라 그대로다(풀던 문제가 '처음부터'가 되면 안 된다 — 2026-09-28 제보).
+  // 형제가 바꿔 로그인했거나, 예전 손님 세트('guest')가 남아 있으면 새로 받는다.
+  if (store.set && store.setDate === todayKey() && store.setUser === owner) return store.set;
 
-  // ⚠ 오늘 세트가 이미 있으면 '주인'이 달라졌다고 버리지 않는다.
-  //
-  // 풀던 도중 로그인이 풀리면 owner 가 guest 로 바뀐다. 예전엔 그걸 다른 사람으로 보고
-  // 세트를 **새로 받으면서 setIdx 를 0 으로** 밀었다 — 아이 입장에서는 풀던 문제까지
-  // 바뀐 채 '처음부터'가 된다(2026-09-28 제보). 로그인이 풀린 것뿐인데 오늘 한 일이
-  // 통째로 사라지는 건 어떤 이유로도 말이 안 된다.
-  //
-  // 세트를 새로 받아야 하는 건 **로그인된 다른 아이로 바뀐 경우(형제 전환)** 뿐이다.
-  // 로그인↔로그아웃 사이의 변화는 같은 아이이므로 그대로 이어 간다.
-  const switchedChild = sameDay && store.setUser !== owner
-    && store.setUser !== 'guest' && owner !== 'guest';
-  if (sameDay && !switchedChild) {
-    // 주인 표시는 지금 상태로 맞춰 둔다. 안 맞춰 두면 홈에 올 때마다 여기로 다시 들어와
-    // 매번 세트를 새로 받는다(로그아웃 직후에 실제로 그랬다).
-    if (store.setUser !== owner) { store.setUser = owner; save(); }
-    return store.set;
-  }
-
-  let data;
-  if (auth) {
-    // 서버가 복습+약점+신규 슬롯으로 개인 세트를 만든다 (기기 바꿔도 같은 세트)
-    try {
-      data = await api('/api/today', { headers: authHeaders() });
-    } catch (e) {
-      if (e.status === 401) { saveAuth(null); } else throw e;
-    }
-  }
-  if (!data) {
-    const weak = ranked().slice(0, 2).map((x) => x.part);
-    const strong = ranked().slice(-2).reverse().map((x) => x.part);
-    const qs = new URLSearchParams();
-    if (weak.length) qs.set('weak', weak.join(','));
-    if (strong.length) qs.set('strong', strong.join(','));
-    data = await api(`/api/today?${qs}`);
-  }
+  // 서버가 복습+약점+신규 슬롯으로 개인 세트를 만든다 (기기 바꿔도 같은 세트).
+  // 로그인이 풀렸으면 api() 가 로그인 화면으로 보내고 여기서 오류로 멈춘다.
+  const data = await api('/api/today', { headers: authHeaders() });
   store.set = data;
   store.setDate = todayKey();
-  // 위 /api/today 가 401 이면 saveAuth(null) 로 로그인이 풀렸을 수 있다. 그때 맨 위에서
-  // 구한 owner(옛 아이디)를 적어 두면, 다음 홈 진입 때 guest 와 어긋나 또 새로 받는다.
-  // 지금 상태를 다시 보고 적는다.
-  store.setUser = auth?.user?.id || 'guest';
-  store.setIdx = 0;
+  store.setUser = owner;
+  store.setIdx = 0;          // 서버의 오늘 푼 개수(today_done)로 홈에서 다시 맞춘다
   save();
   return data;
 }
@@ -692,12 +692,13 @@ function duoCards(sm) {
 
 
 async function showHome() {
+  if (needLogin()) return;
   setTab('home');
   tabbarVisible(true);
   view.innerHTML = '<p class="loading">오늘의 학습을 준비하고 있어요...</p>';
   try {
     const set = await ensureTodaySet();
-    // 다시 볼 문제 수: 로그인은 서버 SRS 큐(오늘 도래분), 게스트는 이 기기 기록
+    // 다시 볼 문제 수: 서버 SRS 큐(오늘 도래분). 서버를 못 받으면 이 기기 오답 수
     let reviewN = store.wrong.length;
     let me = null, sm = null;
     if (auth) {
@@ -721,6 +722,7 @@ async function showHome() {
       } catch { /* 무시 */ }
       try { sm = await api('/api/skillmap', { headers: authHeaders() }); } catch { /* 무시 */ }
     }
+    if (!auth) return;       // 위에서 로그인이 풀렸으면 이미 로그인 화면이다 — 덮어쓰지 않는다
     const total = set.questions.length;
     const doneN = Math.min(store.setIdx, total);
     const left = total - doneN;
@@ -753,7 +755,6 @@ async function showHome() {
           <p class="greet-date">${new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}</p>
           <h1 class="greet-title">${esc(hello)}</h1>
         </div>
-        ${auth ? '' : '<button class="btn-ghost" data-login>로그인</button>'}
       </div>
 
       <div class="week" role="group" aria-label="이번 주 학습한 날">
@@ -813,7 +814,6 @@ async function showHome() {
       </button>`;
 
     bindAppBar();
-    view.querySelector('[data-login]')?.addEventListener('click', showLogin);
     view.querySelector('[data-diag]')?.addEventListener('click', showDiagnostic);
     view.querySelector('[data-start]').addEventListener('click', () => {
       // 다 푼 세트를 다시 여는 건 **복습**이다 — 오늘의 진행도를 건드리면 안 된다.
@@ -831,21 +831,27 @@ async function showHome() {
 }
 
 // ---------- 로그인 화면 ----------
-// 아이도 **부모님이 가입할 때 쓴 이메일·비밀번호 그대로** 들어온다.
+// 아이는 **부모님 이메일 + 부모님이 정해 준 내 비밀번호**로 들어온다(이메일은 가족 공용).
 // 아이 전용 아이디·PIN을 따로 만들지 않는다 — 부모가 여섯 자리 숫자를 옮겨 적어
 // 아이에게 보내야 하는 단계가 생기면, 거기서 가입을 포기한다.
 // 형제가 있으면 로그인한 뒤 이름만 고른다.
-function showLogin() {
+//
+// 이 화면이 앱의 입구다 — 로그인 없이 풀 수 있는 길은 없다(위 authLost).
+// notice: 로그인이 풀려서 온 경우 그 사실을 먼저 알려 준다.
+const EMAIL_KEY = 'jumplish.email.v1';   // 다시 들어올 때 이메일은 채워 두고 비밀번호만 치게
+function showLogin(notice = '') {
   tabbarVisible(false);
+  let lastEmail = '';
+  try { lastEmail = localStorage.getItem(EMAIL_KEY) || ''; } catch { /* 없으면 빈칸 */ }
   view.innerHTML = `
-    <div class="player-head"><button class="btn-ghost" data-back>돌아가기</button></div>
-    <div class="qcard" style="gap:15px">
+    <div class="qcard" style="gap:15px" data-login-form>
       <div>
         <h1 class="greet-title">로그인</h1>
-        <p class="card-note" style="margin-top:4px">부모님이 가입하신 이메일과 비밀번호를 넣어주세요.</p>
+        <p class="card-note" style="margin-top:4px">부모님 이메일과, 부모님이 정해 준 내 비밀번호를 넣어주세요.</p>
       </div>
+      ${notice ? `<div class="result bad"><p>${esc(notice)}</p></div>` : ''}
       <label class="field"><span>이메일</span>
-        <input data-email type="email" autocapitalize="off" inputmode="email"
+        <input data-email type="email" autocapitalize="off" inputmode="email" value="${esc(lastEmail)}"
           autocomplete="username" placeholder="parent@example.com" /></label>
       <label class="field"><span>비밀번호</span>
         <input data-pw type="password" autocomplete="current-password" placeholder="••••••••" /></label>
@@ -853,9 +859,10 @@ function showLogin() {
         <span>로그인 유지<em>공용 기기라면 꺼주세요</em></span></label>
       <div data-result></div>
       <button class="btn-primary" data-submit>로그인</button>
-      <p class="card-note">아직 가입 전이어도 괜찮아요 — 로그인 없이 풀면 이 기기에만 기록됩니다.</p>
+      <p class="card-note">아직 가입 전이라면 보호자가 먼저 가입해 주세요 —
+        <a href="/parent">보호자 가입하기</a></p>
     </div>`;
-  view.querySelector('[data-back]').addEventListener('click', () => { setTab('home'); showHome(); });
+  if (lastEmail) view.querySelector('[data-pw]').focus();
   const box = () => view.querySelector('[data-result]');
 
   const enter = async (email, password, childId, keep) => {
@@ -865,6 +872,9 @@ function showLogin() {
     });
     if (r.choose) { pickChild(email, password, r.children, keep); return; }
     saveAuth({ token: r.token, user: r.user }, keep);
+    // 공용 기기(로그인 유지 끔)에는 이메일도 남기지 않는다
+    try { if (keep) localStorage.setItem(EMAIL_KEY, email); else localStorage.removeItem(EMAIL_KEY); }
+    catch { /* 못 남겨도 로그인은 됐다 */ }
     setTab('home'); showHome();
   };
 
@@ -914,6 +924,7 @@ const saveDiag = () => {
 };
 
 async function showDiagnostic() {
+  if (needLogin()) return;
   tabbarVisible(false);
   // 풀다 만 진단이 있으면 서버에 새로 청하지 않고 그 자리에서 이어간다.
   if (store.diag?.questions?.length) {
@@ -1017,7 +1028,9 @@ function exprPocketHtml() {
 }
 
 async function showReview() {
+  if (needLogin()) return;
   await renderReview();
+  if (!auth) return;
   const pocket = exprPocketHtml();
   if (pocket) {
     view.insertAdjacentHTML('beforeend', pocket);
@@ -1082,42 +1095,9 @@ async function renderReview() {
         startSession(r.questions, r.passages, '리매치'));
       return;
     } catch (e) {
-      if (e.status === 401) saveAuth(null);
-      else return renderError(e.message);
+      return renderError(e.message);
     }
   }
-  if (!store.wrong.length) {
-    view.innerHTML = `${appBar()}<div class="greet"><div><h1 class="greet-title">다시 풀 문제</h1></div></div>
-      <div class="card"><p class="empty">아직 틀린 문제가 없어요.<br>오늘의 학습을 풀면 여기에 모입니다.</p></div>`;
-    bindAppBar();
-    return;
-  }
-  const list = store.wrong.map((w) => `
-    <div class="row">
-      <span class="row-ico">${w.q.part}</span>
-      <span class="row-body">
-        <span class="row-t">${esc(w.q.stem || PART_INFO[w.q.part].name)}</span>
-        <span class="row-s">${PART_INFO[w.q.part].name} · ${new Date(w.at).toLocaleDateString('ko-KR')}</span>
-      </span>
-    </div>`).join('');
-  view.innerHTML = `
-    ${appBar()}
-    <div class="greet"><div>
-      <p class="greet-date">틀린 문제는 다시 만나야 내 것이 돼요</p>
-      <h1 class="greet-title">다시 볼 문제 ${store.wrong.length}개</h1>
-    </div></div>
-    <button class="btn-hero" style="background:var(--primary);color:#fff" data-review-start>전부 다시 풀기</button>
-    <div class="card"><div class="rowlist">${list}</div></div>`;
-  bindAppBar();
-  view.querySelectorAll('.row-ico').forEach((el) => {
-    el.style.cssText += 'font-size:.74rem;font-weight:700;background:var(--primary-soft);color:var(--primary)';
-  });
-  view.querySelector('[data-review-start]').addEventListener('click', () => {
-    const qs = store.wrong.map((w) => w.q);
-    const ps = {};
-    store.wrong.forEach((w) => { if (w.passage) ps[w.passage.id] = w.passage; });
-    startSession(qs, ps, '오답 복습');
-  });
 }
 
 // ---------- 기록 ----------
@@ -1143,6 +1123,7 @@ async function renderMyWords() {
 }
 
 async function showRecord() {
+  if (needLogin()) return;
   setTab('record');
   tabbarVisible(true);
   let sealed = null, rec = null;
@@ -1150,6 +1131,7 @@ async function showRecord() {
     try { sealed = (await api('/api/me', { headers: authHeaders() })).sealed; } catch { /* 무시 */ }
     try { rec = await api('/api/records', { headers: authHeaders() }); } catch { /* 무시 */ }
   }
+  if (!auth) return;
   // 로그인했으면 이 화면의 숫자는 전부 서버 기록으로 통일한다.
   // 위 칸은 서버, 아래 파트 목록은 이 기기 — 이렇게 섞이면 두 숫자가 어긋나 고장으로 보인다.
   const srv = rec?.parts ?? null;
@@ -1219,22 +1201,18 @@ async function showRecord() {
 
     <div class="card row">
       <span class="row-body">
-        <span class="row-t">${auth ? esc(auth.user.display_name) : '로그인하지 않았어요'}</span>
-        <span class="row-s">${auth ? '풀이 기록이 서버에 저장되고 있어요' : '로그인하면 기록이 어느 기기에서나 이어져요'}</span>
+        <span class="row-t">${esc(auth.user.display_name)}</span>
+        <span class="row-s">풀이 기록이 서버에 저장되고 있어요</span>
       </span>
-      <button class="btn-ghost" data-auth-btn>${auth ? '로그아웃' : '로그인'}</button>
     </div>
 `;
   bindAppBar();
   renderMyWords();
-  view.querySelector('[data-auth-btn]').addEventListener('click', () => {
-    if (auth) { saveAuth(null); showRecord(); }
-    else showLogin();
-  });
 }
 
 // ---------- 파트별 연습 (하부 메뉴) ----------
 async function showParts() {
+  if (needLogin()) return;
   setTab('parts');
   tabbarVisible(true);
   view.innerHTML = '<p class="loading">불러오는 중...</p>';
@@ -1270,9 +1248,10 @@ async function showParts() {
 }
 
 async function showPartPractice(part) {
+  if (needLogin()) return;
   view.innerHTML = '<p class="loading">문항을 가져오는 중...</p>';
   try {
-    const data = await api(`/api/questions?part=${part}`);
+    const data = await api(`/api/questions?part=${part}`, { headers: authHeaders() });
     if (!data.questions.length) return renderError('이 파트에는 아직 문항이 없어요.');
     startSession(data.questions, data.passages, `${part} ${PART_INFO[part].name}`);
   } catch (e) { renderError(e.message); }
@@ -1711,21 +1690,13 @@ function renderQuestion() {
           question_id: q.id, chosen_idx: selected, time_ms: spentMs,
           listens: audioUrl ? (session.listens?.[listenKey] || 0) : undefined,
         });
-        let r = null;
-        if (auth) {
-          try {
-            r = await api('/api/answers', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
-              body: payload,
-            });
-          } catch (e) {
-            if (e.status === 401) saveAuth(null);
-            else throw e;
-          }
-        }
-        r = r || await api('/api/check', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload,
+        // 채점은 기록이 남는 길 하나뿐이다. 로그인이 풀렸으면 api() 가 로그인 화면으로 보낸다
+        // (예전엔 여기서 손님 채점으로 몰래 넘어가 기록이 안 남았다).
+        if (needLogin()) return;
+        const r = await api('/api/answers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: payload,
         });
         // 빠르기 재료 — 서버 계산과 같은 기준으로 담는다(맞힌 것만·2초 미만 찍기는 제외).
         // 기준이 다르면 결과 화면 숫자와 홈 카드 숫자가 어긋나 보인다.
@@ -1842,4 +1813,5 @@ function renderQuestion() {
   });
 }
 
+// 로그인이 없으면 showHome 이 로그인 화면을 띄운다
 showHome();

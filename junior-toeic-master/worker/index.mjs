@@ -1837,7 +1837,8 @@ app.get('/api/parts', async (c) => {
 //   그대로 아이 앱의 연습장이 되면서 검수 전 문항이 아이에게 나갔다. 2026-09 신고 —
 //   L1 연습장 38문항 중 18개가 사진 없는 문항이었다(배포 사고로 남은 복사본 12 +
 //   사진을 아직 못 받은 AI 초안 6). 초안은 관리자 화면 미리보기로만 본다.
-app.get('/api/questions', async (c) => {
+// 로그인한 아이만 — 손님에게 문제를 내주면 아이는 풀었는데 기록이 어디에도 안 남는다.
+app.get('/api/questions', requireAuth, async (c) => {
   const part = c.req.query('part') || '';
   if (!PART_RE.test(part)) {
     return c.json({ error: 'part 파라미터가 필요합니다 (L1~L4, R1~R3)' }, 400);
@@ -1869,121 +1870,36 @@ app.get('/api/questions', async (c) => {
   return c.json({ part, count: questions.length, questions, passages });
 });
 
-// 오늘의 맞춤 학습 세트 (M1: 로그인 전이라 약점은 클라이언트가 보관한 기록으로 계산해 넘긴다.
-// M2에서 계정이 붙으면 서버의 user_skills·SRS 큐로 옮긴다 — docs/engine.md)
-//   weak=L4,R3   약한 파트(가중치 +1)
-//   exclude=id,id 최근에 맞힌 문항(다시 내보내지 않음)
-const SET_COMPOSITION = { L1: 1, L2: 2, L3: 1, L4: 2, R1: 2, R2: 2, R3: 2 }; // 합 12 — 실제 시험 파트 비율 반영
-
-app.get('/api/today', async (c) => {
-  // 로그인 학생: 서버가 복습+약점+신규+유지 슬롯으로 세트를 만든다 (하루 1세트 고정 저장)
-  const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
-  const user = m ? await verifyToken(c.env.DB, m[1]) : null;
-  if (user) {
-    const today = kstDate();
-    let set = await c.env.DB.prepare(
-      'SELECT question_ids, slots FROM daily_sets WHERE user_id = ?1 AND date = ?2'
-    ).bind(user.id, today).first();
-    if (!set) {
-      const made = await composeDailySet(c.env.DB, user, today);
-      set = { question_ids: JSON.stringify(made.ids), slots: JSON.stringify(made.slots) };
-      await c.env.DB.prepare(
-        `INSERT INTO daily_sets (id, user_id, date, question_ids, slots, generated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-         ON CONFLICT(user_id, date) DO NOTHING`
-      ).bind(crypto.randomUUID(), user.id, today, set.question_ids, set.slots, new Date().toISOString()).run();
-    }
-    const ids = JSON.parse(set.question_ids);
-    const { questions, passages } = await hydrate(c.env.DB, ids);
-    return c.json({ count: questions.length, plan: JSON.parse(set.slots), personalized: true, questions, passages });
+// 오늘의 맞춤 학습 세트 — 서버가 복습+약점+신규+유지 슬롯으로 만든다 (하루 1세트 고정 저장)
+//
+// ⚠ 로그인한 아이에게만 준다 (2026-10-21). 예전엔 토큰이 없거나 **풀린 토큰이어도**
+// 200으로 '손님 세트'를 내줬다. 그래서 로그인이 풀린 아이는 아무 안내 없이 손님으로
+// 계속 풀었고, 그 기록은 그 기기에만 남아 학부모 화면·실력 점수·복습에 하나도 안
+// 잡혔다("학습 결과가 연동이 안 된다" 제보). 이제 401 을 내고, 화면이 로그인으로 보낸다.
+app.get('/api/today', requireAuth, async (c) => {
+  const user = c.get('user');
+  const today = kstDate();
+  let set = await c.env.DB.prepare(
+    'SELECT question_ids, slots FROM daily_sets WHERE user_id = ?1 AND date = ?2'
+  ).bind(user.id, today).first();
+  if (!set) {
+    const made = await composeDailySet(c.env.DB, user, today);
+    set = { question_ids: JSON.stringify(made.ids), slots: JSON.stringify(made.slots) };
+    await c.env.DB.prepare(
+      `INSERT INTO daily_sets (id, user_id, date, question_ids, slots, generated_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+       ON CONFLICT(user_id, date) DO NOTHING`
+    ).bind(crypto.randomUUID(), user.id, today, set.question_ids, set.slots, new Date().toISOString()).run();
   }
-
-  const weak = (c.req.query('weak') || '').split(',').filter((p) => PART_RE.test(p));
-  const exclude = (c.req.query('exclude') || '').split(',').filter(Boolean).slice(0, 200);
-
-  // 약한 파트는 한 문항 더, 대신 가장 쉬운 파트에서 한 문항 뺀다 (총량 유지)
-  const plan = { ...SET_COMPOSITION };
-  const strong = (c.req.query('strong') || '').split(',').filter((p) => PART_RE.test(p));
-  weak.slice(0, 2).forEach((p, i) => {
-    plan[p] += 1;
-    const donor = strong[i];
-    if (donor && plan[donor] > 1) plan[donor] -= 1;
-  });
-
-  const marks = exclude.map((_, i) => `?${i + 3}`).join(',');
-  const draw = async (part, n, seen) => {
-    if (n < 1) return [];
-    const { results } = await c.env.DB.prepare(
-      `SELECT id, passage_id, section, part, stem, choices, difficulty_label,
-              audio_url, image_url, accent
-         FROM questions
-        WHERE part = ?1 AND status = 'active'
-              ${exclude.length ? `AND id NOT IN (${marks})` : ''}
-        ORDER BY RANDOM() LIMIT ?2`
-    ).bind(part, n + seen.size, ...exclude).all();
-    return results.filter((q) => !seen.has(q.id)).slice(0, n);
-  };
-
-  const picked = [];
-  const seen = new Set();
-  const target = Object.values(plan).reduce((a, b) => a + b, 0);
-  for (const [part, n] of Object.entries(plan)) {
-    const got = await draw(part, n, seen);
-    got.forEach((q) => seen.add(q.id));
-    picked.push(...got);
-    plan[part] = got.length; // 실제로 담은 수 (L1처럼 초안뿐인 파트는 0이 된다)
-  }
-  // 문항이 없는 파트(그림 준비 중인 L1 등) 때문에 세트가 비면 다른 파트로 채운다
-  for (const part of Object.keys(SET_COMPOSITION)) {
-    if (picked.length >= target) break;
-    const got = await draw(part, target - picked.length, seen);
-    got.forEach((q) => seen.add(q.id));
-    picked.push(...got);
-    plan[part] += got.length;
-  }
-  // 실제 시험 순서(듣기 → 읽기, 파트 오름차순)로 정렬
-  picked.sort((a, b) => a.part.localeCompare(b.part));
-
-  const passageIds = [...new Set(picked.map((q) => q.passage_id).filter(Boolean))];
-  const passages = {};
-  if (passageIds.length > 0) {
-    const marks = passageIds.map((_, i) => `?${i + 1}`).join(',');
-    const { results } = await c.env.DB.prepare(
-      `SELECT id, kind, content, image_url, audio_url, accent FROM passages WHERE id IN (${marks})`
-    ).bind(...passageIds).all();
-    for (const p of results) passages[p.id] = p;
-  }
-
-  return c.json({
-    count: picked.length,
-    plan,
-    questions: picked.map((q) => ({ ...q, choices: JSON.parse(q.choices) })),
-    passages,
-  });
+  const ids = JSON.parse(set.question_ids);
+  const { questions, passages } = await hydrate(c.env.DB, ids);
+  return c.json({ count: questions.length, plan: JSON.parse(set.slots), personalized: true, questions, passages });
 });
 
-// 간이 채점 (M1 전용 — M2에서 세션 기반 POST /api/answers 로 대체 예정)
-app.post('/api/check', async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  const { question_id, chosen_idx } = body;
-  if (typeof question_id !== 'string' || !Number.isInteger(chosen_idx)) {
-    return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
-  }
-  const q = await c.env.DB.prepare(
-    'SELECT id, passage_id, stem, script, evidence, why_not, miss_type, key_expr, translation_ko, answer_idx, explanation_ko FROM questions WHERE id = ?1'
-  ).bind(question_id).first();
-  if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
-
-  const correct = chosen_idx === q.answer_idx;
-  await c.env.DB.prepare(
-    'UPDATE questions SET times_answered = times_answered + 1, times_correct = times_correct + ?1 WHERE id = ?2'
-  ).bind(correct ? 1 : 0, q.id).run();
-
-  return c.json({
-    correct, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko,
-    ...(await feedbackOf(c.env.DB, q, chosen_idx)),
-  });
-});
+// 손님 채점은 없앴다 (2026-10-21) — 채점은 기록이 남는 POST /api/answers 로만 한다.
+// 경로를 지우지 않고 401 로 남기는 이유: 새로고침 전의 옛 화면이 로그인이 풀렸을 때
+// 여기로 오는데, '없는 경로' 대신 다시 로그인하라는 말을 보여 줘야 한다.
+app.post('/api/check', (c) => c.json({ error: '로그인이 풀렸어요. 화면을 새로고침한 뒤 다시 로그인해 주세요' }, 401));
 
 app.notFound((c) => {
   if (new URL(c.req.url).pathname.startsWith('/api/')) {
