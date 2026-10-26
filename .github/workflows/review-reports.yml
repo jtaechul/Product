@@ -121,7 +121,9 @@ jobs:
           fi
           git commit -m "$TITLE" -m "$BODY"
           for i in 1 2 3 4 5; do
-            git pull --rebase origin "${GITHUB_REF_NAME}"
+            # --autostash: 위 'Inject D1 id' 가 wrangler.jsonc 에 실제 D1 id 를 써 넣어 둔 상태라
+            # 그냥 rebase 하면 "unstaged changes" 로 멈춘다(10-21~26 매일 밤 실패한 원인). 아래 결과 쓰기에 그 id 가 필요해 되돌리지도 않는다.
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
             if git push origin HEAD:"${GITHUB_REF_NAME}"; then
               if [ "$CHANGED" -gt 0 ]; then echo "content=true" >> "$GITHUB_OUTPUT"; fi
               # 깨진 음원을 지웠거나 들려주는 문장을 고쳤으면(로봇이 센다) 음원 배치를 부른다

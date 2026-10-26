@@ -670,6 +670,7 @@ const ENDING = {
   held: '고칠 때까지 이 문제는 잠시 내려 두었어요. 알려줘서 정말 고마워요!',
 };
 const AUDIO_OK = '알려줘서 고마워요. 소리 파일을 확인해 보니 잘 들어 있었어요. 휴대폰 소리가 꺼져 있거나 무음 모드인지 확인하고 ▶ 를 다시 눌러 보세요.';
+const AUDIO_RC = '알려줘서 고마워요. 이 문제는 글을 읽고 푸는 문제라 원래 소리가 없어요. 소리는 듣기 문제에서만 나와요.';
 const AUDIO_BAD = '알려줘서 고마워요. 소리 파일에 문제가 있어서 새로 만들고 있어요. 다 될 때까지 이 문제는 잠시 쉬어요.';
 const cleanReply = (s) => String(s ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 300);
 const results = [];    // { id, status, note, detail, reply, handled }
@@ -681,8 +682,16 @@ async function reviewGroup(ulid, reps) {
   const label = loc?.label || `(원고에 없음 ${ulid.slice(-6)})`;
 
   // 1) 소리 신고는 파일을 직접 잰다. 글로 적은 말이 있으면 사람도 볼 수 있게 처리 완료로 두지 않는다.
-  const audioReps = reps.filter((r) => r.kind === 'audio');
-  const textReps = reps.filter((r) => r.kind !== 'audio');
+  // 읽기 문항(R1~R3)에는 원래 소리가 없다. 그 '소리' 신고를 음원 고장으로 처리하면
+  // "소리 파일을 새로 만들고 있어요"라는 거짓 답장이 나간다(첫 실제 검토에서 3건이 그렇게 분류됐다).
+  // 글을 적었으면 AI 판정으로 넘기고, 아니면 읽기 문제라 소리가 없다고 알려 준다.
+  const isLC = loc ? PARTS[loc.part] === 'LC' : PARTS[reps[0].part] === 'LC';
+  const rcAudio = isLC ? [] : reps.filter((r) => r.kind === 'audio');
+  for (const r of rcAudio.filter((x) => !scrub(x.note).trim())) {
+    record(r, { status: 'ok', note: '[소리] 읽기 문항이라 원래 소리가 없음', detail: {}, reply: AUDIO_RC, handled: true });
+  }
+  const audioReps = isLC ? reps.filter((r) => r.kind === 'audio') : [];
+  const textReps = reps.filter((r) => r.kind !== 'audio' || (!isLC && scrub(r.note).trim()));
   if (audioReps.length) {
     const rel = loc ? audioPathOf(loc, ulid) : null;
     const chk = audioCheck(rel);
