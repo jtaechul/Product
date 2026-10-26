@@ -799,9 +799,34 @@ async function renderFillBox() {
     if (hit) { if (!hit.tags.includes(o.tag_name)) hit.tags.push(o.tag_name); }
     else byAxis.push({ axis: o.axis, name: o.axis_name, n: o.axis_n, tags: [o.tag_name] });
   }
-  const gapLine = byAxis
+  const weakGap = byAxis.find((a) => a.axis === 'weak');
+  const axisGap = byAxis.filter((a) => a.axis !== 'weak')
     .map((a) => `<b>${esc(a.name)}</b>(${a.n}문항 — ${esc(a.tags.join(' · '))})`)
     .join(', ');
+  const gapLine = [
+    weakGap ? `아이들이 <b>많이 틀리는 ${esc(weakGap.tags.join(' · '))}</b>에 문제를 더 만들어요.` : '',
+    axisGap ? `${axisGap}가 얇아요.` : '',
+  ].filter(Boolean).join(' ');
+
+  // 많이 틀리는 유형 — 왜 그 문제를 더 만드는지 숫자로 보여 준다(전체 아이 합산, 최근 30일)
+  const rule = p.weak_rule;
+  const weakRows = (p.weak_spots ?? []).map((w) => `
+    <div class="row">
+      <span class="row-main">
+        <span class="row-t">${esc(w.part_name)} · ${esc(w.tag_name)} — 정답률 ${w.acc}%</span>
+        <span class="row-s">${w.attempts}번 풀림 · 아이 ${w.kids}명 · 문항 ${w.supply}개 중 평균 ${w.used}% 이미 봄${
+          w.misses?.length ? ` · 자주 하는 실수: ${esc(w.misses.map((m) => m.name).join(', '))}` : ''}</span>
+      </span>
+      <span class="chip ${w.ordered ? 'k-answer' : 'done'}">${w.ordered ? '이번에 더 만듦'
+        : w.part === 'L1' ? '사진 문제는 사람이 만듦'
+        : w.thin ? '이번엔 다른 유형 먼저' : '문항은 아직 넉넉함'}</span>
+    </div>`).join('');
+  const weakBox = rule ? `
+    <p class="card-note" style="margin-top:12px"><b>많이 틀리는 유형</b> — 최근 ${rule.days}일, ${rule.min_attempts}번 이상 풀린 유형 중
+      정답률 ${rule.acc_max}% 미만. 그 유형을 푼 아이들이 문항의 ${rule.seen_min}% 넘게 이미 봤으면 문제를 더 만듭니다
+      (약점 연습에 쓸 새 문제가 바닥나지 않게).</p>
+    ${weakRows ? `<div class="rows">${weakRows}</div>`
+      : '<p class="card-note">아직 많이 틀리는 유형이 없어요 (또는 풀이 기록이 적어 판단하지 않았어요).</p>'}` : '';
 
   // 목표까지 얼마나 왔나. 막대 모양은 학생·부모 화면과 같은 것(.sbar)을 쓴다.
   const pct = p.bank_target ? Math.min(100, Math.round((p.bank / p.bank_target) * 100)) : 0;
@@ -820,8 +845,8 @@ async function renderFillBox() {
     <div class="card-head"><span class="card-title">문제 늘리기</span></div>
     ${bankLine}
     ${p.total ? `
-      <p class="card-note">지금 ${gapLine}가 얇아요.
-        아래 버튼을 누르면 기다리지 않고 바로 채웁니다 — 고르실 것 없습니다.</p>
+      <p class="card-note">${gapLine}
+        아래 버튼을 누르면 밤까지 기다리지 않고 바로 만듭니다 — 고르실 것 없습니다.</p>
       <button class="btn big" data-fill${p.ready ? '' : ' disabled'}>${esc(p.label)}</button>
       ${p.ready ? '' : '<p class="card-note">저장소 연결(GITHUB_TOKEN)을 먼저 등록해주세요.</p>'}`
     : `<p class="card-note">${p.drafts
@@ -829,6 +854,7 @@ async function renderFillBox() {
         : filled ? '더 만들 곳이 없습니다.'
         : '지금 당장 주문할 곳은 없어요. 오늘 밤 자동으로 다시 살펴봅니다.'}</p>`}
     ${draftLine}
+    ${weakBox}
     <div data-fillmsg></div>`;
 
   const msg = box.querySelector('[data-fillmsg]');

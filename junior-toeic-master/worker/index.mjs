@@ -9,7 +9,7 @@ import {
   requireParent, requireParentAccount, SUSPENDED_MSG,
   hashSecret, verifySecret, makeAccountToken,
 } from './auth.mjs';
-import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions, audioRateFor, AUDIO_RATES, MISS_KO, SKILL_AXES, shiftISO } from './engine.mjs';
+import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions, audioRateFor, AUDIO_RATES, MISS_KO, SKILL_AXES, shiftISO, rankMisses } from './engine.mjs';
 import {
   PARTS, PART_LIST, PART_KO, PART_FORM, CHOICES_BY_PART, STATUSES, ACCENTS,
   makeUlid, validateItem,
@@ -1685,6 +1685,82 @@ async function partsByTag(db) {
   return by;
 }
 
+// ── 많이 틀리는 유형은 문제를 더 (2026-10-27) ──
+//
+// 오늘의 학습의 '약점 칸'(engine composeDailySet)은 아이가 약한 유형에서 **14일 안에 안 본 문항**을
+// 고른다. 그 유형 문항이 얇으면 약한 아이일수록 금방 다 봐 버리고, 그러면 약점 칸이 다른 문제로
+// 채워진다 — 정작 많이 틀리는 곳을 연습할 문제가 없는 것이다. 그래서 두 조건이 겹치는 곳에 더 만든다:
+//   ① 많이 틀린다   최근 30일 정답률 60% 미만 (30번 이상 풀린 유형만 — 몇 번으로는 판단하지 않는다)
+//   ② 문항이 바닥났다 그 유형을 푼 아이들이 평균 절반 넘게 이미 봤다
+// ①만 보면 문항이 넉넉한 유형에도 계속 주문이 들어가고, ②만 보면 잘 푸는 유형까지 늘린다.
+// 기준은 전체 아이의 풀이를 합친 숫자뿐이다(아이 한 명 한 명의 기록은 주문서에 안 들어간다).
+// 유형 = 파트 × 실력 태그(5축의 태그). 주제 태그(V.*)는 '어려운 유형'이 아니라 빼고 본다.
+const WEAK_WINDOW_DAYS = 30;
+const WEAK_MIN_ATTEMPTS = 30;
+const WEAK_ACC_MAX = 0.6;
+const WEAK_SEEN_MIN = 0.5;
+const WEAK_MAX_ORDERS = 2;      // 하룻밤 최대 2주문(12문항) — 축 채우기와 따로 센다
+const WEAK_BANK_CEIL = 1200;    // 은행 목표(800)를 채운 뒤에도 약점 보강은 하되, 여기까지만
+const SKILL_TAGS = new Set(SKILL_AXES.flatMap((a) => a.tags));
+const PART_SHORT = { L1: '사진 고르기', L2: '질의응답', L3: '짧은 대화', L4: '짧은 담화', R1: '문장 완성', R2: '지문 완성', R3: '독해' };
+
+async function weakSpots(db, nameOf) {
+  const since = new Date(Date.now() - WEAK_WINDOW_DAYS * 86400_000).toISOString();
+  const [{ results: accRows }, { results: seenRows }, { results: supRows }, { results: missRows }] = await Promise.all([
+    db.prepare(
+      `SELECT q.part, qt.tag_id AS tag, COUNT(*) AS n, SUM(a.is_correct) AS ok, COUNT(DISTINCT a.user_id) AS kids
+         FROM answers a JOIN questions q ON q.id = a.question_id
+         JOIN question_tags qt ON qt.question_id = a.question_id
+        WHERE a.answered_at >= ?1 GROUP BY q.part, qt.tag_id`).bind(since).all(),
+    // 요즘 공부하는 아이마다, 그 유형 문항을 지금까지 몇 개 봤나
+    db.prepare(
+      `SELECT q.part, qt.tag_id AS tag, a.user_id, COUNT(DISTINCT a.question_id) AS seen
+         FROM answers a JOIN questions q ON q.id = a.question_id
+         JOIN question_tags qt ON qt.question_id = a.question_id
+        WHERE a.user_id IN (SELECT DISTINCT user_id FROM answers WHERE answered_at >= ?1)
+        GROUP BY q.part, qt.tag_id, a.user_id`).bind(since).all(),
+    // 공급 — 준비 중(draft)도 센다. 이미 만들어 검수를 기다리는 곳에 또 주문하지 않게
+    db.prepare(
+      `SELECT q.part, qt.tag_id AS tag, COUNT(*) AS n
+         FROM questions q JOIN question_tags qt ON qt.question_id = q.id
+        WHERE q.status IN ('active', 'draft') GROUP BY q.part, qt.tag_id`).all(),
+    // 자주 하는 실수 — 주문서 메모에 넣어 AI 가 그 실수를 짚는 문제를 만들게 한다
+    db.prepare(
+      `SELECT q.part, qt.tag_id AS tag, q.miss_type, a.chosen_idx
+         FROM answers a JOIN questions q ON q.id = a.question_id
+         JOIN question_tags qt ON qt.question_id = a.question_id
+        WHERE a.answered_at >= ?1 AND a.is_correct = 0 AND q.miss_type IS NOT NULL`).bind(since).all(),
+  ]);
+  const key = (r) => `${r.part}|${r.tag}`;
+  const supply = Object.fromEntries(supRows.map((r) => [key(r), r.n]));
+  const seenBy = {};
+  for (const r of seenRows) (seenBy[key(r)] ||= []).push(r.seen);
+  const missBy = {};
+  for (const r of missRows) (missBy[key(r)] ||= []).push(r);
+
+  return accRows
+    .filter((r) => SKILL_TAGS.has(r.tag) && r.n >= WEAK_MIN_ATTEMPTS)
+    .map((r) => {
+      const k = key(r);
+      const sup = supply[k] ?? 0;
+      const seen = seenBy[k] ?? [];
+      // 아이마다 '그 유형 문항 중 몇 %를 봤나'의 평균 (문항이 없으면 다 본 것으로)
+      const used = sup ? seen.reduce((s, n) => s + Math.min(1, n / sup), 0) / Math.max(1, seen.length) : 1;
+      const acc = r.ok / r.n;
+      return {
+        part: r.part, tag: r.tag, tag_name: nameOf[r.tag] ?? r.tag, part_name: PART_SHORT[r.part] ?? r.part,
+        attempts: r.n, acc: Math.round(acc * 100), kids: r.kids, supply: sup, used: Math.round(used * 100),
+        wrong: r.n - r.ok,
+        misses: rankMisses(missBy[k] ?? [], 2),
+        weak: acc < WEAK_ACC_MAX,
+        thin: used >= WEAK_SEEN_MIN,
+      };
+    })
+    .filter((x) => x.weak)
+    // 틀린 횟수가 많은 곳부터 — 정답률이 같아도 많이 풀리는 유형이 아이들을 더 많이 막는다
+    .sort((a, b) => b.wrong - a.wrong);
+}
+
 // 지금 무엇이 모자란지 계산한다. 화면(미리보기)과 실제 주문이 같은 함수를 쓴다 —
 // 버튼에 적힌 말과 실제로 만들어지는 것이 어긋나면 신뢰를 잃는다.
 async function planGaps(db) {
@@ -1724,8 +1800,32 @@ async function planGaps(db) {
     GAP_MAX_ORDERS, Math.ceil(Math.max(0, BANK_TARGET - bank.n) / GAP_BATCH));
 
   const orders = [];
+  // ① 많이 틀리고 문항도 바닥난 유형부터 — 실제 아이들이 막히는 곳이라 얇은 축보다 앞에 둔다.
+  // 사진 고르기(L1)는 AI 에게 주문하지 않으므로(아래 축 채우기와 같은 이유) 표에만 남긴다.
+  const spots = await weakSpots(db, nameOf);
+  const weakMax = Math.min(WEAK_MAX_ORDERS, Math.ceil(Math.max(0, WEAK_BANK_CEIL - bank.n) / GAP_BATCH));
+  for (const sp of spots) {
+    sp.ordered = false;
+    if (!sp.thin || sp.part === 'L1' || orders.length >= weakMax) continue;
+    sp.ordered = true;
+    const miss = sp.misses.map((m) => m.name).join(', ');
+    orders.push({
+      part: sp.part, tag: sp.tag, count: GAP_BATCH,
+      // 절반도 못 맞히는 곳은 한 단계 쉬운 문제부터 — 디딤돌이 있어야 올라간다
+      difficulty: sp.acc < 45 ? '2' : '',
+      note: `아이들이 이 유형(${sp.tag_name})에서 많이 틀립니다 — 최근 정답률 ${sp.acc}%.`
+        + (miss ? ` 자주 하는 실수: ${miss}.` : '')
+        + ' 그 실수를 짚어 볼 수 있는 문제로 만들고, 해설에는 왜 틀리기 쉬운지와 어디를 보면 되는지를 쉽게 적어 주세요.',
+      axis: 'weak', axis_name: '많이 틀리는 유형', axis_n: null,
+      tag_name: `${sp.part_name} ${sp.tag_name}(${sp.acc}%)`,
+      why: `많이 틀리는 유형 — ${sp.part_name} ${sp.tag_name} 정답률 ${sp.acc}%, 아이들이 문항의 ${sp.used}%를 이미 봄`,
+    });
+  }
+  const weakN = orders.length;
+
+  // ② 얇은 축 채우기 (은행 800 목표까지)
   for (const ax of axes) {
-    if (orders.length >= maxOrders) break;
+    if (orders.length - weakN >= maxOrders) break;
     // 그 축 안에서도 가장 얇은 태그를 고른다. 축 전체를 뭉뚱그려 주문하면
     // AI가 만들기 쉬운 태그로만 쏠려 정작 빈 칸은 그대로 남는다.
     const usable = [...ax.tags]
@@ -1737,7 +1837,7 @@ async function planGaps(db) {
       .sort((a, b) => (nOf[a] ?? 0) - (nOf[b] ?? 0));
     if (!usable.length) continue;
     const want = Math.ceil((AXIS_TARGET - ax.n) / GAP_BATCH);      // 이 축에 필요한 묶음 수
-    const take = Math.min(want, maxOrders - orders.length);
+    const take = Math.min(want, maxOrders - (orders.length - weakN));
     for (let i = 0; i < take; i += 1) {
       // 묶음이 여럿이면 얇은 태그부터 돌려 가며 — 한 태그에만 몰리지 않게
       const tag = usable[i % usable.length];
@@ -1759,6 +1859,11 @@ async function planGaps(db) {
   return {
     orders, total: orders.reduce((s, o) => s + o.count, 0),
     bank: bank.n, bank_target: BANK_TARGET,
+    // 관리자 화면 표 — 많이 틀리는 유형과, 이번에 더 만드는지
+    weak_spots: spots.slice(0, 8), weak_rule: {
+      days: WEAK_WINDOW_DAYS, min_attempts: WEAK_MIN_ATTEMPTS,
+      acc_max: Math.round(WEAK_ACC_MAX * 100), seen_min: Math.round(WEAK_SEEN_MIN * 100),
+    },
   };
 }
 
