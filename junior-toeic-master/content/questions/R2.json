@@ -547,7 +547,7 @@
           "to grow"
         ],
         "answer_idx": 1,
-        "explanation_ko": "Members(회원들)는 여러 명이라 s를 붙이지 않아요. 그래서 grow예요.",
+        "explanation_ko": "Members(회원들)는 여러 명이라 grow에 s를 붙이지 않아요. 바로 뒤 'and give'의 give도 s 없이 같은 모양이에요.",
         "difficulty_label": 2,
         "tags": [
           "G.agreement"
