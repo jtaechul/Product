@@ -4924,7 +4924,7 @@
       "Sheep standing in a pasture",
       "Chickens walking in a farm yard"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A horse",
     "why_not": {
       "0": "소가 풀밭에 있는 사진이에요",
@@ -5024,7 +5024,7 @@
       "Balls of yarn in many colors",
       "A parrot sitting on a perch"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "balls of yarn",
     "why_not": {
       "0": "개가 자는 사진이에요",
@@ -5117,7 +5117,7 @@
       "A sea lion lying on the sand",
       "Elephants playing in the water"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "Elephants",
     "why_not": {
       "0": "기린이 있는 사진이에요",
@@ -5210,7 +5210,7 @@
       "Lightning in a dark sky",
       "The sun setting over the sea"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "a rainbow",
     "why_not": {
       "1": "눈 덮인 나무 사진이에요",
@@ -5303,7 +5303,7 @@
       "A woman waiting on a train platform",
       "A bus on a city street at night"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "at the station",
     "why_not": {
       "0": "비행기가 나는 사진이에요",
@@ -5400,7 +5400,7 @@
       "Grapes on a vine",
       "A basket full of fruit"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A basket",
     "why_not": {
       "0": "나무에 바나나가 달린 사진이에요",
@@ -5488,7 +5488,7 @@
       "Fried eggs and bacon",
       "Toast with peanut butter"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "Pancakes",
     "why_not": {
       "1": "시리얼 그릇 사진이에요",
@@ -5580,7 +5580,7 @@
       "A table tennis paddle and ball",
       "An ice hockey player"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "volleyball",
     "why_not": {
       "0": "골프공을 치는 사진이에요",
@@ -5671,7 +5671,7 @@
       "Someone playing the flute",
       "Someone playing the violin"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "the violin",
     "why_not": {
       "0": "드럼을 치는 사진이에요",
@@ -5762,7 +5762,7 @@
       "Someone cleaning a window",
       "An iron on clothes"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "mopping the floor",
     "why_not": {
       "1": "청소기가 카펫 위에 있는 사진이에요",
@@ -5853,7 +5853,7 @@
       "A fire burning in a fireplace",
       "A kayak on a lake"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A fire is burning",
     "why_not": {
       "0": "산속에 텐트가 있는 사진이에요",
@@ -5944,7 +5944,7 @@
       "People riding bikes in a bike lane",
       "Many cars on a busy road"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "Many cars",
     "why_not": {
       "0": "강 위의 다리 사진이에요",
@@ -6039,7 +6039,7 @@
       "A person sitting next to a backpack",
       "A globe"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "in a cup",
     "why_not": {
       "0": "가위와 펜이 종이 위에 있는 사진이에요",
@@ -6128,7 +6128,7 @@
       "A cup of coffee and some pastries on a table",
       "Some cupcakes"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "a cup of coffee",
     "why_not": {
       "0": "아이스크림콘 사진이에요",
@@ -6220,7 +6220,7 @@
       "A lighthouse by the sea",
       "A surfer riding a wave"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "surfing on a big wave",
     "why_not": {
       "0": "해변에 파라솔과 의자가 있는 사진이에요",
@@ -6310,7 +6310,7 @@
       "Apples on a tree",
       "A scarecrow in a field"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "a lot of pumpkins",
     "why_not": {
       "1": "나무 옆으로 낙엽이 떨어지는 사진이에요",
@@ -6401,7 +6401,7 @@
       "A ladybug on a leaf",
       "A dragonfly"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A butterfly",
     "why_not": {
       "0": "벌이 꽃에 앉은 사진이에요",
@@ -6489,7 +6489,7 @@
       "A swan swimming on a lake",
       "Pigeons in a city square"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A swan",
     "why_not": {
       "0": "부엉이 사진이에요",
@@ -6577,7 +6577,7 @@
       "A jellyfish in the water",
       "A starfish on the sand"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A turtle",
     "why_not": {
       "1": "돌고래 사진이에요",
@@ -6665,7 +6665,7 @@
       "A drink being poured into a cup",
       "A fried egg in a frying pan"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "in a frying pan",
     "why_not": {
       "0": "냄비에 물이 끓는 사진이에요",
@@ -6758,7 +6758,7 @@
       "A laptop on a desk",
       "A chalkboard in a classroom"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "many books",
     "why_not": {
       "1": "신문 사진이에요",
@@ -6850,7 +6850,7 @@
       "Bags and shoes on shelves in a store",
       "An old cash register"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A shopping cart",
     "why_not": {
       "0": "옷 가게 사진이에요",
@@ -6940,15 +6940,15 @@
     "choice_image_prompts": [
       "Red tomatoes",
       "Peeled potatoes",
-      "Some lemons",
+      "A lemon cake with lemon slices",
       "Carrots on a table"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "Carrots",
     "why_not": {
       "0": "토마토 사진이에요",
       "1": "껍질 벗긴 감자 사진이에요",
-      "2": "레몬 사진이에요"
+      "2": "레몬 케이크 사진이에요"
     },
     "key_expr": {
       "en": "carrot",
@@ -7030,14 +7030,14 @@
     "choice_image_prompts": [
       "Feet in pink sneakers",
       "Feet in striped socks",
-      "Hats",
+      "A straw hat in a wheat field",
       "Someone wearing winter gloves"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "pink sneakers",
     "why_not": {
       "1": "줄무늬 양말을 신은 사진이에요",
-      "2": "모자 사진이에요",
+      "2": "밀밭 위 밀짚모자 사진이에요",
       "3": "장갑을 낀 사진이에요"
     },
     "key_expr": {
@@ -7125,7 +7125,7 @@
       "A milkshake in a tall glass",
       "A blue mug and snacks in the snow"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A milkshake",
     "why_not": {
       "0": "찻잔 사진이에요",
@@ -7214,7 +7214,7 @@
       "Hands typing on a keyboard",
       "A coffee cup on a desk"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "having a meeting",
     "why_not": {
       "0": "프린터 사진이에요",
@@ -7307,7 +7307,7 @@
       "An arm with a bandage",
       "A doctor giving medicine to a patient"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "giving medicine to a patient",
     "why_not": {
       "0": "구급차 사진이에요",
@@ -7395,7 +7395,7 @@
       "A fire truck parked on the street",
       "A construction worker"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "spraying water",
     "why_not": {
       "1": "경찰차 사진이에요",
@@ -7500,7 +7500,7 @@
       "Two cranes under a blue sky",
       "A big machine at night"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "Two cranes",
     "why_not": {
       "0": "불도저 사진이에요",
@@ -7588,7 +7588,7 @@
       "A passport",
       "A hotel room"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "in a suitcase",
     "why_not": {
       "1": "지도와 나침반 사진이에요",
@@ -7678,7 +7678,7 @@
       "A hopscotch drawn on the ground",
       "Children playing tug of war"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "jumping rope",
     "why_not": {
       "0": "훌라후프 사진이에요",
@@ -7767,7 +7767,7 @@
       "Some sushi",
       "Someone rolling dough with a rolling pin"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "rolling dough",
     "why_not": {
       "0": "고기를 굽는 사진이에요",
@@ -7856,7 +7856,7 @@
       "Sand dunes in a desert",
       "The inside of a cave"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "a waterfall",
     "why_not": {
       "1": "화산 사진이에요",
@@ -7945,7 +7945,7 @@
       "City lights at night",
       "Many stars in the sky"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "Fireworks",
     "why_not": {
       "0": "보름달 사진이에요",
@@ -8031,7 +8031,7 @@
     "choice_image_prompts": [
       "A car engine",
       "Someone using a sewing machine",
-      "Painting a wall with a roller",
+      "A ladder against a wall",
       "A bicycle in a repair shop"
     ],
     "status": "draft",
@@ -8039,7 +8039,7 @@
     "why_not": {
       "0": "자동차 엔진 사진이에요",
       "1": "재봉틀로 바느질하는 사진이에요",
-      "2": "벽에 페인트를 칠하는 사진이에요"
+      "2": "벽에 사다리가 세워진 사진이에요"
     },
     "key_expr": {
       "en": "repair shop",
@@ -8073,12 +8073,13 @@
         ]
       },
       {
-        "q": "paint roller wall",
+        "q": "ladder wall",
         "need": [
-          "roller",
+          "ladder"
+        ],
+        "prefer": [
           "wall"
         ],
-        "prefer": [],
         "avoid": [
           "bicycle",
           "bike",
@@ -8126,7 +8127,7 @@
       "A coffee shop counter",
       "Fruit at a market stand"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "fresh bread",
     "why_not": {
       "1": "컵케이크를 꾸미는 사진이에요",
@@ -8216,7 +8217,7 @@
       "A colorful water slide at a water park",
       "Someone snorkeling"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "water slide",
     "why_not": {
       "0": "강가에 카누가 있는 사진이에요",
@@ -8304,7 +8305,7 @@
       "A magnifying glass",
       "A pendulum over a map"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "A telescope",
     "why_not": {
       "1": "현미경 사진이에요",
@@ -8377,24 +8378,24 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'headphones'는 귀에 쓰는 헤드폰이에요. 책상 위 헤드폰 사진을 고르면 돼요.",
+    "explanation_ko": "'headphones'는 귀에 쓰는 헤드폰이에요. 헤드폰이 놓인 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "UK",
-    "tts_script": "Headphones are on the desk.",
+    "tts_script": "There is a pair of headphones.",
     "choice_image_prompts": [
       "A tablet and a cup of coffee",
-      "Headphones on a desk",
+      "A pair of headphones",
       "A game controller",
       "A hand holding a smartphone"
     ],
-    "status": "draft",
-    "evidence": "Headphones",
+    "status": "active",
+    "evidence": "a pair of headphones",
     "why_not": {
-      "0": "태블릿 사진이에요",
+      "0": "태블릿과 커피잔 사진이에요",
       "2": "게임기 조종기 사진이에요",
       "3": "스마트폰을 든 사진이에요"
     },
@@ -8465,7 +8466,7 @@
         ]
       }
     ],
-    "translation_ko": "책상 위에 헤드폰이 있어요.",
+    "translation_ko": "헤드폰 하나가 있어요.",
     "tmp_id": "L1-0089"
   },
   {
@@ -8494,7 +8495,7 @@
       "An alarm clock on a bed",
       "A bowl of cereal"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "An alarm clock",
     "why_not": {
       "0": "칫솔 사진이에요",
@@ -8582,7 +8583,7 @@
       "Fire in a barbecue grill",
       "An empty park bench"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "Apples",
     "why_not": {
       "0": "원반을 던지는 사진이에요",
@@ -8671,7 +8672,7 @@
       "A bookstore",
       "Flowers for sale at a shop"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "for sale",
     "why_not": {
       "0": "생선 가게 사진이에요",
@@ -8759,7 +8760,7 @@
       "Seagulls flying over the sea",
       "Eggs in a bird nest"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "on a branch",
     "why_not": {
       "1": "물가에 오리가 있는 사진이에요",
@@ -8856,7 +8857,7 @@
       "A paper boat",
       "Paintbrushes in a cup"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "from clay",
     "why_not": {
       "0": "뜨개질하는 사진이에요",
@@ -8945,7 +8946,7 @@
       "A wheelbarrow full of firewood",
       "Leaves being raked"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "being raked",
     "why_not": {
       "0": "잔디 깎는 기계 사진이에요",
@@ -9036,7 +9037,7 @@
       "A woman waiting at a train station",
       "Bicycles covered with snow"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "inside the bus",
     "why_not": {
       "1": "택시 사진이에요",
