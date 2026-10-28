@@ -2830,5 +2830,437 @@
     ],
     "tmp_id": "R2-0028",
     "status": "active"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Spring Music Night — Helpers Wanted\nSunrise Middle School will hold a music night in the auditorium on Friday, April 18th. Everyone who wants to help (1) ______ sign up at the music room by April 10th. Late sign-ups cannot be accepted.\nHelpers will carry chairs and hand out programs. You (2) ______ wear your school uniform; any comfortable clothes are fine. You don't need to bring anything else; (3) ______\n— Mr. Jo, Music Teacher",
+      "translation_ko": "봄 음악의 밤 — 도우미를 찾습니다\n선라이즈 중학교는 4월 18일 금요일에 강당에서 음악의 밤을 엽니다. 돕고 싶은 사람은 4월 10일까지 음악실에서 신청해야 합니다. 늦은 신청은 받아 줄 수 없습니다.\n도우미들은 의자를 옮기고 프로그램을 나눠 줄 거예요. 교복을 입지 않아도 됩니다. 편한 옷이면 무엇이든 괜찮아요. 그 밖에 따로 가져올 것은 없습니다. 장갑과 물은 입구에서 받을 수 있어요.\n— 음악 선생님, 조 선생님"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "would rather",
+          "must",
+          "may not",
+          "does not have to"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "늦게 신청하면 받아 주지 않는대요. 꼭 해야 하는 일이니까 must를 써요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.modal",
+          "RS.context",
+          "V.school"
+        ],
+        "evidence": "Late sign-ups cannot be accepted.",
+        "why_not": {
+          "0": "'차라리 ~하겠다'라 안내에 안 맞아요",
+          "2": "신청하면 안 된다는 뜻이 돼요",
+          "3": "안 해도 된다는 뜻이라 반대예요"
+        },
+        "key_expr": {
+          "en": "must sign up",
+          "ko": "꼭 신청해야 한다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "must not",
+          "should",
+          "don't have to",
+          "can't"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "편한 옷이면 다 괜찮대요. 교복을 '안 입어도 된다'는 뜻이라 don't have to예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.modal",
+          "RS.context"
+        ],
+        "evidence": "any comfortable clothes are fine",
+        "why_not": {
+          "0": "입으면 안 된다고 막는 뜻이라 너무 세요",
+          "1": "입는 게 좋다는 뜻이 돼요",
+          "3": "입을 수 없다는 뜻이라 안 맞아요"
+        },
+        "key_expr": {
+          "en": "don't have to wear",
+          "ko": "입지 않아도 된다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "you can get gloves and water at the door.",
+          "you must buy your own program.",
+          "please bring ten chairs from home.",
+          "the concert was held last year."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "더 챙겨 올 게 없다고 했으니, 필요한 건 학교에서 준다는 말이 자연스러워요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.context",
+          "G.modal",
+          "V.school"
+        ],
+        "evidence": "You don't need to bring anything else;",
+        "why_not": {
+          "1": "더 가져오거나 살 게 없다고 했어요",
+          "2": "의자는 학교에서 옮기는 일이에요",
+          "3": "지난해 이야기는 이어지지 않아요"
+        },
+        "key_expr": {
+          "en": "You can get ~ at the door",
+          "ko": "입구에서 ~을 받을 수 있다"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "F.offtopic"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0029"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Minseo,\nThanks for your email! These days I am learning the guitar from my older brother. At first I (1) ______ even hold it the right way, but now I can play two short songs.\nMy brother says I (2) ______ practice at least twenty minutes every day, or my fingers will forget the shapes. It is not easy, but it really works.\nNext month our class has a talent show. (3) ______\nWrite back soon,\nJihu",
+      "translation_ko": "민서에게,\n메일 고마워! 요즘 나는 형에게서 기타를 배우고 있어. 처음에는 제대로 잡지도 못했는데, 지금은 짧은 노래를 두 곡이나 칠 수 있어.\n형은 내가 날마다 적어도 이십 분은 연습해야 한다고 말해. 안 그러면 손가락이 모양을 잊어버린대. 쉽지는 않지만 정말 효과가 있어.\n다음 달에 우리 반에서 장기자랑이 있어. 나는 거기서 그 노래들 중 하나를 칠지도 몰라.\n답장 빨리 보내 줘,\n지후가"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "can't",
+          "shouldn't",
+          "couldn't",
+          "didn't have to"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "At first는 처음, 즉 지난 일이에요. 그때는 잡지도 못했으니 couldn't를 써요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.modal",
+          "G.tense"
+        ],
+        "evidence": "but now I can play two short songs",
+        "why_not": {
+          "0": "지금 일이 아니라 처음에 있던 일이에요",
+          "1": "하면 안 된다는 뜻이 돼요",
+          "3": "안 해도 된다는 뜻이라 안 맞아요"
+        },
+        "key_expr": {
+          "en": "couldn't hold it",
+          "ko": "그것을 잡지 못했다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "may",
+          "should",
+          "would",
+          "used to"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "안 그러면 손가락이 모양을 잊는대요. 날마다 연습하는 게 좋다는 말이라 should예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.modal",
+          "RS.context",
+          "V.leisure"
+        ],
+        "evidence": "or my fingers will forget the shapes",
+        "why_not": {
+          "0": "해도 된다고 허락하는 뜻이에요",
+          "2": "'~할 텐데' 같은 뜻이라 어색해요",
+          "3": "예전에 하던 일이라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "should practice every day",
+          "ko": "날마다 연습해야 한다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "W.meaning",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "My brother will sell his guitar.",
+          "I must stop playing the guitar.",
+          "I have already won the show.",
+          "I might play one of the songs there."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "다음 달에 장기자랑이 있으니, 배운 노래를 거기서 칠지도 모른다는 말이 잘 어울려요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.context",
+          "G.modal",
+          "V.leisure"
+        ],
+        "evidence": "Next month our class has a talent show.",
+        "why_not": {
+          "0": "형이 기타를 판다는 말은 없어요",
+          "1": "지금 즐겁게 배우는 중이에요",
+          "2": "장기자랑은 아직 열리지 않았어요"
+        },
+        "key_expr": {
+          "en": "might play one of the songs",
+          "ko": "노래 중 하나를 칠지도 모른다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0030"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Rainbow Wall Project\nLast week the old wall next to our school gate (1) ______ by the art club members. They drew flowers, fish, and a big yellow sun. The paint (2) ______ given to us by a small shop in our town. (3) ______ Please do not touch the wall until Friday.",
+      "translation_ko": "무지개 벽 프로젝트\n지난주에 우리 학교 정문 옆 오래된 벽이 미술 동아리 친구들의 손으로 칠해졌어요. 그 친구들은 꽃과 물고기, 커다란 노란 해를 그렸어요. 페인트는 우리 동네의 작은 가게가 우리에게 주었어요. 그림은 바로 어제 끝나서 페인트가 아직 젖어 있어요. 금요일까지는 벽을 만지지 말아 주세요."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "paints",
+          "painting",
+          "was painted",
+          "painted"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "벽은 친구들이 칠해 준 거예요. 지난주 일이니까 was painted라고 해요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "G.tense"
+        ],
+        "evidence": "by the art club members.",
+        "why_not": {
+          "0": "벽이 직접 칠한다는 뜻이 돼요",
+          "1": "혼자서는 문장이 안 돼요",
+          "3": "앞에 was가 빠졌어요"
+        },
+        "key_expr": {
+          "en": "was painted by ~",
+          "ko": "~의 손으로 칠해졌다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.form",
+          "3": "G.pair"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "was",
+          "were",
+          "is",
+          "be"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "페인트는 가게에서 받은 거라 was given이에요. The paint는 하나라서 were는 안 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "G.agreement"
+        ],
+        "evidence": "The paint",
+        "why_not": {
+          "1": "여럿일 때 쓰는 말이에요",
+          "2": "지난 일이라 is는 안 맞아요",
+          "3": "그대로는 쓸 수 없어요"
+        },
+        "key_expr": {
+          "en": "was given to us",
+          "ko": "우리에게 주어졌다"
+        },
+        "miss_type": {
+          "1": "G.form",
+          "2": "G.clue",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The wall will be broken next week.",
+          "Our art club was closed last year.",
+          "Math is taught in this room.",
+          "It was finished only yesterday, so the paint is still wet."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "금요일까지 만지지 말라고 했으니, 페인트가 아직 젖어 있다는 말이 딱 어울려요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "RS.context"
+        ],
+        "evidence": "Please do not touch the wall until Friday.",
+        "why_not": {
+          "0": "벽을 부순다는 말은 없어요",
+          "1": "동아리가 벽을 칠했다고 했어요",
+          "2": "수학 수업 이야기는 안 어울려요"
+        },
+        "key_expr": {
+          "en": "It was finished yesterday.",
+          "ko": "그건 어제 끝났어요."
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "2": "F.offtopic"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0031"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Mina,\nHow are you? My family moved to a new town last month. A small playground (1) ______ built near my house two years ago, and it (2) ______ used by many children every day. There are two swings and a very long slide. (3) ______ Then I can show you my favorite swing!\nYour friend,\nHana",
+      "translation_ko": "미나에게,\n잘 지내니? 우리 가족은 지난달에 새로운 동네로 이사했어. 우리 집 근처에 작은 놀이터가 2년 전에 지어졌는데, 날마다 많은 아이들이 그곳을 써. 그네 두 개랑 아주 긴 미끄럼틀이 있어. 이번 토요일에 나랑 놀러 오라고 널 초대할게. 그러면 내가 제일 좋아하는 그네를 보여 줄 수 있어!\n너의 친구, 하나가"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "is",
+          "was",
+          "were",
+          "be"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "놀이터는 누가 지어 준 거예요. 2년 전 일이니까 was built라고 해요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.passive",
+          "G.tense"
+        ],
+        "evidence": "built near my house two years ago",
+        "why_not": {
+          "0": "2년 전 일이라 is는 안 맞아요",
+          "2": "놀이터 하나라서 were는 안 써요",
+          "3": "앞에 말이 더 필요해요"
+        },
+        "key_expr": {
+          "en": "was built",
+          "ko": "지어졌다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "2": "G.form",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "are",
+          "was",
+          "is",
+          "being"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "날마다 아이들이 쓰는 일이라 is used예요. 놀이터 하나니까 are는 안 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "G.agreement"
+        ],
+        "evidence": "used by many children every day",
+        "why_not": {
+          "0": "여럿일 때 쓰는 말이에요",
+          "1": "날마다 하는 일이라 was는 안 맞아요",
+          "3": "앞에 is나 was가 있어야 해요"
+        },
+        "key_expr": {
+          "en": "is used by ~",
+          "ko": "~가 사용한다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.clue",
+          "3": "G.pair"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "My old bike will be sold next week.",
+          "You are invited to come and play with me this Saturday.",
+          "The playground was closed last year.",
+          "My school bus leaves at seven."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "뒤에 '내 그네를 보여 줄게'라고 했으니, 놀러 오라고 부르는 말이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "RS.context"
+        ],
+        "evidence": "Then I can show you my favorite swing!",
+        "why_not": {
+          "0": "자전거 이야기는 앞뒤와 안 이어져요",
+          "2": "놀이터는 날마다 쓴다고 했어요",
+          "3": "버스 시간은 여기에 안 어울려요"
+        },
+        "key_expr": {
+          "en": "You are invited",
+          "ko": "너를 초대할게"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "2": "M.opposite",
+          "3": "F.offtopic"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0032"
   }
 ]

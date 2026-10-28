@@ -3022,5 +3022,437 @@
     },
     "translation_ko": "너희 고양이 이름이 뭐야?",
     "tmp_id": "L2-0084"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Twice a week, right after school.",
+      "The rhythm just caught my ear from the very start.",
+      "In the music room on the first floor."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'How come'은 왜 그렇게 했는지 까닭을 묻는 말이에요. 드럼 소리에 끌렸다고 까닭을 말한 1번이 맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "How come you decided to take up the drums instead of the guitar?",
+    "status": "draft",
+    "evidence": "How come",
+    "why_not": {
+      "0": "얼마나 자주 하는지 답했어요",
+      "2": "연습하는 곳을 답했어요"
+    },
+    "key_expr": {
+      "en": "How come ~?",
+      "ko": "어쩌다 ~하게 됐어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "어쩌다 기타 말고 드럼을 배우기로 했어요?",
+    "tmp_id": "L2-0085"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "He teaches history, I think.",
+      "It was lying on the shelf yesterday.",
+      "Of course — I'll text you at lunchtime."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "잊지 않게 알려 달라고 부탁했어요. 그러겠다고 답한 2번이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "Could you remind me to hand the attendance sheet to Mr. Park?",
+    "status": "draft",
+    "evidence": "Could you remind me",
+    "why_not": {
+      "0": "선생님 과목 이야기로 샜어요",
+      "1": "물건이 어디 있었는지 답했어요"
+    },
+    "key_expr": {
+      "en": "Could you remind me to ~?",
+      "ko": "~하라고 알려 줄래?"
+    },
+    "miss_type": {
+      "0": "M.notsaid",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "박 선생님께 출석부 드리라고 나한테 알려 줄래요?",
+    "tmp_id": "L2-0086"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It was, but they moved it to Wednesday this term.",
+      "Yes, I borrowed a racket from Mina.",
+      "The gym is on the third floor."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "원래 목요일 아니었냐고 확인하는 말이에요. 맞지만 수요일로 바뀌었다고 알려 준 0번이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Wasn't the badminton club supposed to meet on Thursdays?",
+    "status": "draft",
+    "evidence": "Wasn't the badminton club supposed to meet on Thursdays?",
+    "why_not": {
+      "1": "라켓 빌린 이야기에 낚였어요",
+      "2": "장소를 답했어요"
+    },
+    "key_expr": {
+      "en": "Wasn't it supposed to ~?",
+      "ko": "원래 ~하기로 한 거 아니었어?"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "배드민턴 동아리는 원래 목요일에 모이기로 한 거 아니었어요?",
+    "tmp_id": "L2-0087"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I'd like that a lot.",
+      "She was our captain last year.",
+      "Let's hold off until the whole team is here."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "둘 중 어느 쪽이 나은지 물었어요. 다 모일 때까지 기다리자고 하나를 고른 2번이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Which would you prefer, picking the team captain today or waiting until everyone is here?",
+    "status": "draft",
+    "evidence": "Which would you prefer",
+    "why_not": {
+      "0": "골라 말해야 하는데 '네'라고 했어요",
+      "1": "작년 이야기는 묻지 않았어요"
+    },
+    "key_expr": {
+      "en": "Which would you prefer?",
+      "ko": "어느 쪽이 더 좋아?"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "1": "M.notsaid"
+    },
+    "translation_ko": "오늘 팀 주장을 뽑는 것과 모두 올 때까지 기다리는 것 중 어느 쪽이 더 좋아요?",
+    "tmp_id": "L2-0088"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's in the fridge, I think.",
+      "Good idea — the watermelon is perfectly ripe.",
+      "I had two slices of it yesterday."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'What do you say we ~?'는 '우리 ~할까?' 하고 권하는 말이에요. 좋다고 답한 1번이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "What do you say we swap the dessert for fruit this time?",
+    "status": "draft",
+    "evidence": "What do you say we",
+    "why_not": {
+      "0": "어디 있는지만 답했어요",
+      "2": "어제 먹은 이야기로 샜어요"
+    },
+    "key_expr": {
+      "en": "What do you say we ~?",
+      "ko": "우리 ~하는 게 어때?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "M.notsaid"
+    },
+    "translation_ko": "이번엔 후식을 과일로 바꾸는 게 어때요?",
+    "tmp_id": "L2-0089"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "By Friday afternoon at the latest.",
+      "On the notice board near the stairs.",
+      "About twenty copies should be enough."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'How soon'은 얼마나 빨리, 언제까지 되는지 묻는 말이에요. 금요일 오후까지라고 때를 말한 0번이 맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "How soon can you have the posters ready for the talent show?",
+    "status": "draft",
+    "evidence": "How soon",
+    "why_not": {
+      "1": "붙일 곳을 답했어요",
+      "2": "몇 장인지 답했어요"
+    },
+    "key_expr": {
+      "en": "How soon can you ~?",
+      "ko": "얼마나 빨리 할 수 있어?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "장기 자랑 포스터를 얼마나 빨리 준비할 수 있어요?",
+    "tmp_id": "L2-0090"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, please go upstairs.",
+      "It's on the third floor.",
+      "At four o'clock."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'Which floor'는 몇 층인지 묻는 말이라 '3층이야'라고 층을 말해 주는 답이 맞아요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Which floor is the music room on?",
+    "status": "draft",
+    "evidence": "Which floor",
+    "why_not": {
+      "0": "층을 물었으니 예·아니오는 안 돼요",
+      "2": "몇 시인지 말하는 답이에요"
+    },
+    "key_expr": {
+      "en": "Which floor ~?",
+      "ko": "몇 층이에요?"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "음악실은 몇 층에 있어요?",
+    "tmp_id": "L2-0091"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "About twelve.",
+      "At the river park.",
+      "Because the sky is clear."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'How many people'은 사람이 몇 명인지 묻는 말이라 '열두 명쯤'이라고 수를 말하는 답이 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "How many people are coming to the picnic?",
+    "status": "draft",
+    "evidence": "How many people",
+    "why_not": {
+      "1": "장소를 말하는 답이에요",
+      "2": "까닭을 말하는 답이에요"
+    },
+    "key_expr": {
+      "en": "How many ~?",
+      "ko": "몇 명이에요?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "소풍에 몇 명이 와요?",
+    "tmp_id": "L2-0092"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "They're on the shelf.",
+      "No, the story isn't heavy.",
+      "Thanks, that would be great."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "무거운 책을 들어 줄까 하고 도와주겠다는 말이니까 고맙다고 받아들이는 답이 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "AU",
+    "tts_script": "Shall I carry those heavy books for you?",
+    "status": "draft",
+    "evidence": "Shall I carry",
+    "why_not": {
+      "0": "책이 어디 있는지 답했어요",
+      "1": "들린 낱말 heavy에 낚였어요"
+    },
+    "key_expr": {
+      "en": "Shall I ~?",
+      "ko": "내가 ~해 줄까요?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.echo"
+    },
+    "translation_ko": "그 무거운 책들, 제가 들어 드릴까요?",
+    "tmp_id": "L2-0093"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The front tire is flat.",
+      "I ride it every morning.",
+      "Yes, it's mine."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "자전거가 어디가 고장 났냐고 물었으니 앞바퀴 바람이 빠졌다고 말해 주는 답이 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "What's wrong with your bike?",
+    "status": "draft",
+    "evidence": "What's wrong with",
+    "why_not": {
+      "1": "언제 타는지 답했어요",
+      "2": "누구 것인지 답하는 예·아니오예요"
+    },
+    "key_expr": {
+      "en": "What's wrong with ~?",
+      "ko": "~이 어디가 잘못됐어요?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "네 자전거 어디가 고장 났어?",
+    "tmp_id": "L2-0094"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's in the cage by my bed.",
+      "Yes, hamsters are really cute.",
+      "I'll do it right after dinner."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "아직 밥을 안 줬냐고 묻는 말이니까 저녁 먹고 바로 주겠다는 답이 자연스러워요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "Haven't you fed the hamster yet?",
+    "status": "draft",
+    "evidence": "Haven't you fed the hamster yet?",
+    "why_not": {
+      "0": "있는 곳을 말하는 답이에요",
+      "1": "들린 낱말 hamster에 낚였어요"
+    },
+    "key_expr": {
+      "en": "Haven't you ~ yet?",
+      "ko": "아직 ~ 안 했어요?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.echo"
+    },
+    "translation_ko": "너 아직 햄스터 밥 안 줬니?",
+    "tmp_id": "L2-0095"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I drew it myself.",
+      "Next to the door, I think.",
+      "I opened the window a little."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "창가와 문 옆 중에 하나를 고르라는 말이라 '문 옆이 좋겠어'처럼 한쪽을 고르는 답이 맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "Do you want to hang the drawings by the window or next to the door?",
+    "status": "draft",
+    "evidence": "by the window or next to the door",
+    "why_not": {
+      "0": "골라 말해야 하는데 예로 답했어요",
+      "2": "들린 낱말 window에 낚였어요"
+    },
+    "key_expr": {
+      "en": "A or B?",
+      "ko": "A와 B 중 뭐가 좋아요?"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "2": "A.echo"
+    },
+    "translation_ko": "그림을 창가에 걸까, 아니면 문 옆에 걸까?",
+    "tmp_id": "L2-0096"
   }
 ]

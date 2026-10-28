@@ -1265,5 +1265,486 @@
         }
       }
     ]
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, everyone, and welcome to the Saturday cooking club at the community center. Today we're making vegetable soup, so you won't need the ovens at all. Before we begin, tie your hair back and roll up your sleeves. I've already cut the onions, because the knives here are quite sharp for beginners. If your pot starts to bubble over, turn the heat down instead of calling me across the room.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 여러분, 안녕하세요. 주민 센터 토요일 요리 교실에 오신 것을 환영합니다. 오늘은 채소 수프를 만들 거라서 오븐은 전혀 쓰지 않습니다. 시작하기 전에 머리를 묶고 소매를 걷어 주세요. 양파는 제가 미리 썰어 두었는데, 여기 칼이 초보자에게는 꽤 날카롭기 때문입니다. 냄비가 끓어 넘치기 시작하면 저를 멀리서 부르지 말고 불을 줄여 주세요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why did the speaker cut the onions before the class?",
+        "choices": [
+          "Because onions make the soup sweeter",
+          "Because the class started late today",
+          "Because the knives could be risky for new cooks",
+          "Because nobody in the club likes onions"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "여기 칼이 처음 하는 사람에게 너무 날카롭다고 했으니, 위험할까 봐 미리 썰어 둔 거예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.food"
+        ],
+        "evidence": "because the knives here are quite sharp for beginners",
+        "why_not": {
+          "0": "맛 이야기는 나오지 않았어요",
+          "1": "늦게 시작한다는 말은 없었어요",
+          "3": "싫어한다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "sharp for beginners",
+          "ko": "초보자에게 날카로운"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does the speaker want learners to do when a pot bubbles over?",
+        "choices": [
+          "Lower the heat by themselves",
+          "Shout for the teacher at once",
+          "Move the pot into the oven",
+          "Pour the soup into a bowl"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "저를 부르지 말고 불을 줄이라고 했으니, 스스로 불을 낮추면 돼요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "turn the heat down instead of calling me across the room",
+        "why_not": {
+          "1": "부르지 말라고 한 것과 반대예요",
+          "2": "오븐은 쓰지 않는다고 했어요",
+          "3": "그릇에 담으라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "turn the heat down",
+          "ko": "불을 줄이다"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0017"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome to Green Hill Garden. Please stay on the stone path while we walk, because the soil beside it is soft and new seeds are growing there. Our greenhouse is warm inside, so you may want to carry your jacket rather than wear it. At the end of the tour, each of you will receive a small pot with a seed, and the gardeners will show you how often to water it.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 그린 힐 정원에 오신 것을 환영합니다. 걷는 동안 돌길 위로만 다녀 주세요. 길 옆 흙은 푹신하고 그곳에서 새싹이 자라고 있기 때문입니다. 온실 안은 따뜻하니 겉옷은 입지 말고 들고 다니시는 편이 좋겠습니다. 관람이 끝나면 여러분 모두 씨앗이 담긴 작은 화분을 하나씩 받게 되고, 정원사들이 물을 얼마나 자주 주어야 하는지 알려 드릴 거예요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why does the guide ask visitors to stay on the stone path?",
+        "choices": [
+          "Because the path is the shortest way",
+          "Because the garden will close soon",
+          "Because the stones are slippery today",
+          "Because young plants are growing in the soil"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "길 옆 흙에서 새싹이 자란다고 했어요. 밟지 않게 돌길로 다니라는 뜻이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "the soil beside it is soft and new seeds are growing there",
+        "why_not": {
+          "0": "가까운 길이라는 말은 없어요",
+          "1": "문 닫는 이야기는 없었어요",
+          "2": "미끄럽다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "stay on the path",
+          "ko": "길 위로만 다니다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why does the guide talk about carrying a jacket?",
+        "choices": [
+          "Jackets must be left at the front gate",
+          "The greenhouse will feel hot to visitors",
+          "Rain may fall during the walk",
+          "It is very cold outside the garden"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "온실 안이 따뜻하다고 했으니, 겉옷을 입으면 더울 거예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "Our greenhouse is warm inside",
+        "why_not": {
+          "0": "맡기라는 말은 없었어요",
+          "2": "비 이야기는 나오지 않았어요",
+          "3": "따뜻하다는 말과 반대예요"
+        },
+        "key_expr": {
+          "en": "carry rather than wear",
+          "ko": "입지 말고 들고 다니다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "L4-0018"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hi, everyone. I'm Jiwon from the board game club, and I'd like to invite you to our open day on Thursday. You don't have to know any rules, because we'll teach you while we play, and the easier games are on the table by the window. Bring a friend if you like, but please don't bring snacks, since the cards get sticky and we only have one set of each game. If more than twenty people come, we'll move from room three to the gym.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 여러분, 안녕하세요. 저는 보드게임 동아리의 지원입니다. 목요일에 열리는 우리 동아리 공개 행사에 여러분을 초대하고 싶어요. 규칙을 몰라도 괜찮아요. 같이 하면서 알려 드릴 거고, 쉬운 게임은 창가 탁자에 놓여 있거든요. 친구를 데려와도 좋지만 간식은 가져오지 말아 주세요. 카드가 끈적해지는데 게임마다 한 세트씩밖에 없답니다. 스무 명이 넘게 오면 3번 교실에서 체육관으로 옮길 거예요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why does Jiwon ask people not to bring snacks?",
+        "choices": [
+          "The room is too small for a snack table",
+          "Snacks are already sold in the gym",
+          "Food could ruin the only set of cards",
+          "Club members have just eaten lunch"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "카드가 끈적해지고 게임마다 한 세트뿐이라고 했어요. 망가질까 봐 그래요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "the cards get sticky and we only have one set of each game",
+        "why_not": {
+          "0": "교실 크기 이야기는 없어요",
+          "1": "간식을 판다는 말은 없어요",
+          "3": "점심 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "get sticky",
+          "ko": "끈적해지다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does Jiwon mean by \"You don't have to know any rules\"?",
+        "choices": [
+          "Only club members may join the games",
+          "Beginners can learn while they play",
+          "The games really have no rules",
+          "Everyone must read a rule book first"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "같이 하면서 가르쳐 준다고 했으니, 처음인 친구도 하면서 배우면 돼요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.gist"
+        ],
+        "evidence": "we'll teach you while we play",
+        "why_not": {
+          "0": "친구도 데려오라고 했어요",
+          "2": "규칙이 없다는 뜻이 아니에요",
+          "3": "미리 읽으라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "teach you while we play",
+          "ko": "하면서 알려 주다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "W.meaning",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "L4-0019"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Attention, passengers. The ten thirty train to Green Beach will now leave from platform four, not platform two. Please walk down the stairs and turn left. The train is still on time. Thank you.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 승객 여러분께 알려 드립니다. 10시 30분 그린 비치행 기차는 2번 승강장이 아니라 4번 승강장에서 출발합니다. 계단을 내려가서 왼쪽으로 가 주세요. 기차는 제시간에 출발합니다. 감사합니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the announcement mainly about?",
+        "choices": [
+          "A train that is late",
+          "A new ticket price",
+          "A change of platform",
+          "A closed station"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "기차가 2번이 아니라 4번 승강장에서 떠난다고 알려 주고 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.travel"
+        ],
+        "evidence": "will now leave from platform four, not platform two",
+        "why_not": {
+          "0": "기차는 제시간에 간다고 했어요",
+          "1": "표 값 이야기는 없었어요",
+          "3": "역이 닫는다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "leave from platform four",
+          "ko": "4번 승강장에서 출발하다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Which platform will the train leave from?",
+        "choices": [
+          "Platform four",
+          "Platform two",
+          "Platform ten",
+          "Platform three"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "4번 승강장에서 떠난다고 했어요. 2번은 바뀌기 전 자리예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "platform four",
+        "why_not": {
+          "1": "2번은 바뀌기 전 승강장이에요",
+          "2": "10은 기차 시간에서 나온 수예요",
+          "3": "3번은 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "on time",
+          "ko": "제시간에"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.number",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0020"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, this is Sunny Bakery calling for Mina's mom. Your chocolate cake is ready now. We will keep it in the cold room until six o'clock today. Please bring your order number when you come. See you soon.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 안녕하세요, 써니 베이커리에서 미나 어머니께 전화드립니다. 주문하신 초콜릿 케이크가 지금 다 되었습니다. 오늘 6시까지 냉장실에 보관해 두겠습니다. 오실 때 주문 번호를 가져와 주세요. 곧 뵙겠습니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why is the bakery calling?",
+        "choices": [
+          "To ask for a new order",
+          "To say the shop is closed",
+          "To change the cake flavor",
+          "To say a cake is ready"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "케이크가 다 되었다고 알려 주려고 전화했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.food"
+        ],
+        "evidence": "Your chocolate cake is ready now.",
+        "why_not": {
+          "0": "새로 주문하라는 말은 없었어요",
+          "1": "가게가 닫는다는 말은 없었어요",
+          "2": "맛을 바꾼다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "be ready",
+          "ko": "다 준비되다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should Mina's mom bring?",
+        "choices": [
+          "A cake box",
+          "Her order number",
+          "Six dollars",
+          "A birthday card"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "올 때 주문 번호를 가져오라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail",
+          "V.shopping"
+        ],
+        "evidence": "bring your order number",
+        "why_not": {
+          "0": "상자 이야기는 없었어요",
+          "2": "6은 시간에서 나온 수예요",
+          "3": "카드 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "order number",
+          "ko": "주문 번호"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.number",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0021"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, young volunteers, and welcome to Happy Paws animal shelter. Today you will help us wash the dogs and fill their water bowls. Please put on the blue gloves by the door first. At twelve o'clock we will have lunch together in the garden.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 어린 자원봉사자 여러분, 좋은 아침입니다. 해피 포스 동물 보호소에 오신 것을 환영합니다. 오늘 여러분은 강아지들을 씻기고 물그릇을 채우는 일을 도와주실 거예요. 먼저 문 옆에 있는 파란 장갑을 끼어 주세요. 12시에는 정원에서 다 같이 점심을 먹겠습니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the talk mainly about?",
+        "choices": [
+          "What the volunteers will do today",
+          "How to buy a puppy",
+          "How to teach a dog new tricks",
+          "Where to find a lost dog"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "오늘 봉사자들이 할 일을 알려 주는 이야기예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "Today you will help us wash the dogs and fill their water bowls.",
+        "why_not": {
+          "1": "강아지를 산다는 말은 없었어요",
+          "2": "훈련 이야기는 없었어요",
+          "3": "잃어버린 개 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "animal shelter",
+          "ko": "동물 보호소"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should the volunteers do first?",
+        "choices": [
+          "Wash the dogs",
+          "Fill the water bowls",
+          "Eat lunch in the garden",
+          "Put on the blue gloves"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "'first'라는 말과 함께 파란 장갑부터 끼라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "Please put on the blue gloves by the door first.",
+        "why_not": {
+          "0": "씻기는 건 장갑을 낀 다음이에요",
+          "1": "물그릇은 먼저가 아니에요",
+          "2": "점심은 12시예요"
+        },
+        "key_expr": {
+          "en": "put on",
+          "ko": "(장갑 등을) 끼다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "M.swap",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L4-0022"
   }
 ]
