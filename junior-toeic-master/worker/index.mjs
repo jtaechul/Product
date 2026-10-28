@@ -197,6 +197,7 @@ app.get('/api/me', requireAuth, async (c) => {
     'SELECT question_ids FROM daily_sets WHERE user_id = ?1 AND date = ?2'
   ).bind(u.id, kstDate()).first();
   let todayDone = 0;
+  let todayCorrect = 0;
   if (todaySet) {
     const ids = JSON.parse(todaySet.question_ids);
     if (ids.length) {
@@ -207,6 +208,18 @@ app.get('/api/me', requireAuth, async (c) => {
             AND question_id IN (${marks})`
       ).bind(u.id, kstDate(), ...ids).first();
       todayDone = row?.n ?? 0;
+      // 오늘의 학습 몇 개 맞혔나 — 문항마다 오늘 **처음** 낸 답으로 센다(다시 풀어보기로 늘지 않게).
+      // 완료 화면이 이 값을 쓴다. 앱이 그 판에서 센 숫자만 쓰면, 중간에 앱을 닫았다 열거나
+      // 로그인이 풀려 이어 푼 날엔 마지막 몇 문제만 세어 "12문항 중 1문항"이 된다(2026-10-28 제보).
+      const ok = await c.env.DB.prepare(
+        `SELECT COUNT(*) AS n FROM answers a
+          WHERE a.user_id = ?1 AND date(a.answered_at, '+9 hours') = ?2 AND a.is_correct = 1
+            AND a.question_id IN (${marks})
+            AND a.answered_at = (SELECT MIN(b.answered_at) FROM answers b
+                                  WHERE b.user_id = a.user_id AND b.question_id = a.question_id
+                                    AND date(b.answered_at, '+9 hours') = ?2)`
+      ).bind(u.id, kstDate(), ...ids).first();
+      todayCorrect = ok?.n ?? 0;
     }
   }
   const diag = await c.env.DB.prepare(
@@ -222,6 +235,7 @@ app.get('/api/me', requireAuth, async (c) => {
     user: { id: u.id, login_id: u.login_id, display_name: u.display_name, role: u.role },
     answered: stats.answered, correct: stats.correct, review_due: due.n, sealed: climb.breakdown.sealed,
     today_done: todayDone,
+    today_correct: todayCorrect,
     climb,
     diagnosed: !!diag, diag_report: diag ? JSON.parse(diag.summary) : null,
     // 듣기 재생 배속. 앱이 이 값을 들고 있다가 음원을 틀 때 그대로 쓴다 —

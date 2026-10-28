@@ -1320,11 +1320,22 @@ async function endSession() {
   tabbarVisible(true);
   const n = session.questions.length;
   const pace = sessionPace();
+  // 오늘의 학습은 여러 번에 나눠 풀 수 있다(앱을 닫았다 열기, 로그인 다시 하기). 이 판에서 센
+  // session.correct 는 마지막에 이어 푼 몇 문제뿐이라, 앞서 푼 것까지 서버 기록으로 센다.
+  // 예전엔 11문제를 풀고 다시 들어와 1문제를 마저 풀면 "12문항 중 1문항 맞혔어요"가 떴다.
+  let correct = session.correct;
+  if (session.trackToday && session.doneBase > 0) {
+    try {
+      const me = await api('/api/me', { headers: authHeaders() });
+      if (Number.isInteger(me.today_correct)) correct = Math.max(correct, me.today_correct);
+    } catch { /* 서버를 못 받으면 이 판의 숫자라도 보여 준다 */ }
+  }
+  if (!auth) return;      // 그 사이 로그인이 풀렸으면 로그인 화면이 떠 있다 — 덮어쓰지 않는다
   view.innerHTML = `
     <div class="done">
       <div class="done-mark"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
       <p class="done-title">${session.title} 완료</p>
-      <p class="done-sub">${n}문항 중 ${session.correct}문항 맞혔어요</p>
+      <p class="done-sub">${n}문항 중 ${correct}문항 맞혔어요</p>
     </div>
     ${pace ? `<div class="card pace" data-pace>
       <div class="card-head"><span class="card-title">오늘의 빠르기</span></div>
