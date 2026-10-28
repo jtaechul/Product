@@ -3055,8 +3055,8 @@
     "part": "R2",
     "passage": {
       "kind": "text",
-      "content": "Rainbow Wall Project\nLast week the old wall next to our school gate (1) ______ by the art club members. They drew flowers, fish, and a big yellow sun. The paint (2) ______ given to us by a small shop in our town. (3) ______ Please do not touch the wall until Friday.",
-      "translation_ko": "무지개 벽 프로젝트\n지난주에 우리 학교 정문 옆 오래된 벽이 미술 동아리 친구들의 손으로 칠해졌어요. 그 친구들은 꽃과 물고기, 커다란 노란 해를 그렸어요. 페인트는 우리 동네의 작은 가게가 우리에게 주었어요. 그림은 바로 어제 끝나서 페인트가 아직 젖어 있어요. 금요일까지는 벽을 만지지 말아 주세요."
+      "content": "Rainbow Wall Project\nYesterday the old wall next to our school gate (1) ______ by the art club members. They drew flowers, fish, and a big yellow sun. The paint (2) ______ given to us last month by a small shop in our town. (3) ______ Please do not touch the wall until Friday.",
+      "translation_ko": "무지개 벽 프로젝트\n어제 우리 학교 정문 옆 오래된 벽이 미술 동아리 친구들의 손으로 칠해졌어요. 그 친구들은 꽃과 물고기, 커다란 노란 해를 그렸어요. 페인트는 지난달에 우리 동네의 작은 가게가 우리에게 주었어요. 페인트가 아직 젖어 있어서 그림이 쉽게 망가질 수 있어요. 금요일까지는 벽을 만지지 말아 주세요."
     },
     "questions": [
       {
@@ -3068,7 +3068,7 @@
           "painted"
         ],
         "answer_idx": 2,
-        "explanation_ko": "벽은 친구들이 칠해 준 거예요. 지난주 일이니까 was painted라고 해요.",
+        "explanation_ko": "벽은 친구들이 칠해 준 거예요. 어제 일이니까 was painted라고 해요.",
         "difficulty_label": 3,
         "tags": [
           "G.passive",
@@ -3099,13 +3099,13 @@
           "be"
         ],
         "answer_idx": 0,
-        "explanation_ko": "페인트는 가게에서 받은 거라 was given이에요. The paint는 하나라서 were는 안 써요.",
+        "explanation_ko": "페인트는 지난달에 받은 거라 was given이에요. The paint는 하나라서 were는 안 써요.",
         "difficulty_label": 3,
         "tags": [
           "G.passive",
           "G.agreement"
         ],
-        "evidence": "The paint",
+        "evidence": "given to us last month",
         "why_not": {
           "1": "여럿일 때 쓰는 말이에요",
           "2": "지난 일이라 is는 안 맞아요",
@@ -3127,10 +3127,10 @@
           "The wall will be broken next week.",
           "Our art club was closed last year.",
           "Math is taught in this room.",
-          "It was finished only yesterday, so the paint is still wet."
+          "The paint is still wet, so the pictures can be damaged easily."
         ],
         "answer_idx": 3,
-        "explanation_ko": "금요일까지 만지지 말라고 했으니, 페인트가 아직 젖어 있다는 말이 딱 어울려요.",
+        "explanation_ko": "금요일까지 만지지 말라고 했으니, 페인트가 아직 젖어서 그림이 망가지기 쉽다는 말이 딱 어울려요.",
         "difficulty_label": 3,
         "tags": [
           "G.passive",
@@ -3143,8 +3143,8 @@
           "2": "수학 수업 이야기는 안 어울려요"
         },
         "key_expr": {
-          "en": "It was finished yesterday.",
-          "ko": "그건 어제 끝났어요."
+          "en": "can be damaged",
+          "ko": "망가질 수 있다"
         },
         "miss_type": {
           "0": "M.notsaid",
@@ -3162,8 +3162,8 @@
     "part": "R2",
     "passage": {
       "kind": "text",
-      "content": "Hi Mina,\nHow are you? My family moved to a new town last month. A small playground (1) ______ built near my house two years ago, and it (2) ______ used by many children every day. There are two swings and a very long slide. (3) ______ Then I can show you my favorite swing!\nYour friend,\nHana",
-      "translation_ko": "미나에게,\n잘 지내니? 우리 가족은 지난달에 새로운 동네로 이사했어. 우리 집 근처에 작은 놀이터가 2년 전에 지어졌는데, 날마다 많은 아이들이 그곳을 써. 그네 두 개랑 아주 긴 미끄럼틀이 있어. 이번 토요일에 나랑 놀러 오라고 널 초대할게. 그러면 내가 제일 좋아하는 그네를 보여 줄 수 있어!\n너의 친구, 하나가"
+      "content": "Hi Mina,\nHow are you? My family moved to a new town last month. A small playground (1) ______ built near my house two years ago, and now it (2) ______ used by many children every day. There are two swings and a very long slide. (3) ______ Then I can show you my favorite swing!\nYour friend,\nHana",
+      "translation_ko": "미나에게,\n잘 지내니? 우리 가족은 지난달에 새로운 동네로 이사했어. 우리 집 근처에 작은 놀이터가 2년 전에 지어졌는데, 지금은 날마다 많은 아이들이 그곳을 써. 그네 두 개랑 아주 긴 미끄럼틀이 있어. 이번 토요일에 나랑 놀러 오라고 널 초대할게. 그러면 내가 제일 좋아하는 그네를 보여 줄 수 있어!\n너의 친구, 하나가"
     },
     "questions": [
       {
@@ -3206,7 +3206,7 @@
           "being"
         ],
         "answer_idx": 2,
-        "explanation_ko": "날마다 아이들이 쓰는 일이라 is used예요. 놀이터 하나니까 are는 안 써요.",
+        "explanation_ko": "'now'와 'every day'를 보면 지금 날마다 쓰는 거라 is used예요. 놀이터 하나니까 are는 안 써요.",
         "difficulty_label": 3,
         "tags": [
           "G.passive",
@@ -3215,7 +3215,7 @@
         "evidence": "used by many children every day",
         "why_not": {
           "0": "여럿일 때 쓰는 말이에요",
-          "1": "날마다 하는 일이라 was는 안 맞아요",
+          "1": "지금 날마다 하는 일이라 was는 안 맞아요",
           "3": "앞에 is나 was가 있어야 해요"
         },
         "key_expr": {
