@@ -1677,14 +1677,29 @@ app.post('/api/admin/generate-order', ...admin, async (c) => {
 //   386문항 → 하루 20문항 반이 **62일이면 은행을 전부 본다**(그 뒤로 새 문제 0개)
 //   800문항 → 285일. 월 구독 한 해를 새 문제로 버틴다.
 // 1,000문항이면 1년을 더 넘기지만 검수량이 그만큼 늘어 800을 1차 목표로 잡았다(2026-09-16).
-const BANK_TARGET = 800;
+//
+// ⚠ 2026-10-28 1,200 으로 올리고 **파트 비율**로 채운다. 800 목표는 '실력 축'만 봐서 채웠는데,
+// 축은 어느 파트로든 채워지다 보니 AI 가 만들기 쉬운 묶음형(짧은 대화·독해)에 몰렸다:
+// 751문항 중 독해 34%·짧은 대화 21% vs 짧은 담화 4%·질의응답 11% (시험은 각각 20·10 vs 14·20).
+// 그리고 축이 다 차자 10-10 이후 18일 동안 자동 주문이 한 건도 안 나갔다.
+const BANK_TARGET = 1200;
+// TOEIC Bridge 문항 비율(100문항 기준) — 듣기: 사진 6·질의응답 20·대화 10·담화 14 / 읽기: 문장 15·지문 15·독해 20.
+// 파트마다 BANK_TARGET × 비율 까지 채운다. 이미 넘친 파트(대화·독해)는 더 주문하지 않는다.
+const EXAM_SHARE = { L1: 6, L2: 20, L3: 10, L4: 14, R1: 15, R2: 15, R3: 20 };
+const PART_TARGET = Object.fromEntries(
+  Object.entries(EXAM_SHARE).map(([p, sh]) => [p, Math.round((BANK_TARGET * sh) / 100)]));
+// 어려운 문제(난이도 4~5) 비율 목표. 751문항 중 55개(7%)뿐이라 중학생은 쉬운 문제만 받는다 —
+// 적응형이라도 그 실력에 맞는 문제가 은행에 없으면 고를 수가 없다.
+const HARD_MIN = 0.15;
 // 다섯 축이 고르게 이만큼씩. 문항 하나가 여러 축에 걸쳐 있어 축 합계는 은행보다 조금 크다
 // (386문항일 때 축 합계 413 = 1.07배) — 그 비율을 반영해 단순히 5로 나눈 값보다 살짝 크게 잡는다.
-const AXIS_TARGET = Math.round((BANK_TARGET * 1.07) / 5);
+// 축 목표는 처음 정한 800 기준 그대로 둔다(파트 채우기가 축도 같이 채운다).
+const AXIS_TARGET = Math.round((800 * 1.07) / 5);
+const PART_ORDERS_PER_NIGHT = 2;   // 한 파트에 하룻밤 넣는 최대 묶음 수(아래 ② 파트 채우기)
 const GAP_BATCH = 6;      // 한 주문에 만들 문항 수 — 한 번에 20개를 시키면 AI가 규칙을 흘려 버림표가 늘고,
                           // 너무 적으면 주문 수만 늘어난다. 6이 통과율과 속도의 절충.
-const GAP_MAX_ORDERS = 4; // 한 번(버튼 한 번 또는 하룻밤)에 넣는 최대 주문 수 — 최대 24문항, 실행 12분쯤.
-                          // 밤마다 돌면 3주 남짓이면 800문항에 닿는다.
+const GAP_MAX_ORDERS = 6; // 한 번(버튼 한 번 또는 하룻밤)에 넣는 최대 주문 수 — 최대 36문항, 실행 20분쯤.
+                          // 밤마다 돌면 2주 남짓이면 파트 비율이 맞춰진다.
 
 // 태그가 실제로 출제되는 파트 — 그 태그로 이미 나가고 있는 문항에서 배운다.
 // 표로 못박아 두면 새 태그를 넣을 때마다 여기도 고쳐야 하고, 안 고치면 조용히 틀린다.
@@ -1714,7 +1729,7 @@ const WEAK_MIN_ATTEMPTS = 30;
 const WEAK_ACC_MAX = 0.6;
 const WEAK_SEEN_MIN = 0.5;
 const WEAK_MAX_ORDERS = 2;      // 하룻밤 최대 2주문(12문항) — 축 채우기와 따로 센다
-const WEAK_BANK_CEIL = 1200;    // 은행 목표(800)를 채운 뒤에도 약점 보강은 하되, 여기까지만
+const WEAK_BANK_CEIL = 1500;    // 은행 목표(1,200)를 채운 뒤에도 약점 보강은 하되, 여기까지만
 const SKILL_TAGS = new Set(SKILL_AXES.flatMap((a) => a.tags));
 const PART_SHORT = { L1: '사진 고르기', L2: '질의응답', L3: '짧은 대화', L4: '짧은 담화', R1: '문장 완성', R2: '지문 완성', R3: '독해' };
 
@@ -1793,6 +1808,16 @@ async function planGaps(db) {
     // 은행 전체 크기(출제중 + 준비중) — 목표를 넘겨 주문하지 않기 위해 센다
     db.prepare(`SELECT COUNT(*) AS n FROM questions WHERE status IN ('active','draft')`).first(),
   ]);
+  // 파트별 크기·어려운 문제 수, 파트×태그 크기 (출제중 + 준비중)
+  const [{ results: partRows }, { results: partTagRows }] = await Promise.all([
+    db.prepare(
+      `SELECT part, COUNT(*) AS n, SUM(CASE WHEN difficulty_label >= 4 THEN 1 ELSE 0 END) AS hard
+         FROM questions WHERE status IN ('active','draft') GROUP BY part`).all(),
+    db.prepare(
+      `SELECT q.part, qt.tag_id AS tag, COUNT(*) AS n
+         FROM questions q JOIN question_tags qt ON qt.question_id = q.id
+        WHERE q.status IN ('active','draft') GROUP BY q.part, qt.tag_id`).all(),
+  ]);
   const nOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n_active + t.n_draft]));
   const activeOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n_active]));
   const nameOf = Object.fromEntries(tagRows.map((t) => [t.id, t.name_ko]));
@@ -1807,11 +1832,22 @@ async function planGaps(db) {
     .filter((ax) => ax.n < AXIS_TARGET)
     .sort((a, b) => a.n - b.n);
 
-  // 가장 얇은 축부터 **모자란 만큼** 묶음을 배정한다. 축당 한 묶음(6개)만 주면
-  // 35개 모자란 자리를 채우는 데 여섯 번을 눌러야 한다 — 버튼 하나로 끝내자는 뜻과 어긋난다.
   // 은행 목표를 넘겨 주문하지 않는다 — 목표를 채우면 밤마다 도는 자동 주문이 저절로 멈춘다
   const maxOrders = Math.min(
     GAP_MAX_ORDERS, Math.ceil(Math.max(0, BANK_TARGET - bank.n) / GAP_BATCH));
+
+  // 파트 현황 — 관리자 화면 표와 아래 ② 파트 채우기가 같은 숫자를 쓴다
+  const partOf = Object.fromEntries(partRows.map((r) => [r.part, r]));
+  const parts = Object.keys(EXAM_SHARE).map((p) => {
+    const n = partOf[p]?.n ?? 0;
+    const hard = partOf[p]?.hard ?? 0;
+    return {
+      part: p, name: PART_SHORT[p], share: EXAM_SHARE[p], n, target: PART_TARGET[p],
+      hard, hard_target: Math.round(PART_TARGET[p] * HARD_MIN),
+      // 사진 고르기는 AI 에게 주문하지 않는다(10-12) — 사진을 먼저 고르고 문장을 쓰는 사람 작업
+      manual: p === 'L1',
+    };
+  });
 
   const orders = [];
   // ① 많이 틀리고 문항도 바닥난 유형부터 — 실제 아이들이 막히는 곳이라 얇은 축보다 앞에 둔다.
@@ -1837,7 +1873,42 @@ async function planGaps(db) {
   }
   const weakN = orders.length;
 
-  // ② 얇은 축 채우기 (은행 800 목표까지)
+  // ② 시험 비율에 모자란 파트 — 모자란 비율이 큰 파트부터. 하룻밤에 한 파트는 두 묶음까지만 —
+  //    안 그러면 가장 빈 파트(담화) 하나에 밤새 몰리고 질의응답·지문 완성은 며칠씩 기다린다.
+  const left = Object.fromEntries(parts.map((x) => [x.part, Math.max(0, x.target - x.n)]));
+  const hardLeft = Object.fromEntries(parts.map((x) => [x.part, Math.max(0, x.hard_target - x.hard)]));
+  const turn = {};
+  // 그 파트에서 이미 쓰이는 실력 태그 — 적은 것부터 돌려 가며(태그가 그 파트에 맞는지는 기존 문항이 보증한다)
+  const tagsInPart = (p) => partTagRows
+    .filter((r) => r.part === p && SKILL_TAGS.has(r.tag))
+    .sort((a, b) => a.n - b.n)
+    .map((r) => r.tag);
+  while (orders.length - weakN < maxOrders) {
+    const cand = parts.filter((x) => !x.manual && left[x.part] > 0 && (turn[x.part] ?? -1) < PART_ORDERS_PER_NIGHT - 1)
+      .sort((a, b) => left[b.part] / b.target - left[a.part] / a.target);
+    const x = cand[0];
+    if (!x) break;
+    const tags = tagsInPart(x.part);
+    const i = (turn[x.part] = (turn[x.part] ?? -1) + 1);
+    const tag = tags.length ? tags[i % tags.length] : '';
+    // 어려운 문제가 목표보다 모자라면 이 묶음은 난이도 4로
+    const hardOrder = hardLeft[x.part] > 0 && i % 2 === 0;
+    if (hardOrder) hardLeft[x.part] -= GAP_BATCH;
+    orders.push({
+      part: x.part, tag, count: GAP_BATCH,
+      difficulty: hardOrder ? '4' : '',
+      note: hardOrder
+        ? '중학생도 도전할 만한 조금 어려운 문제로 — 낱말·문장 길이·생각할 거리를 한 단계 높이되, 내용과 말투는 아이에게 맞게.'
+        : '',
+      axis: 'part', axis_name: '시험 비율', axis_n: x.n,
+      tag_name: x.name,
+      why: `시험 비율 — ${x.name} ${x.n}/${x.target}문항${hardOrder ? ' · 어려운 문제' : ''}`
+        + (tag ? ` (${nameOf[tag] ?? tag})` : ''),
+    });
+    left[x.part] -= GAP_BATCH;
+  }
+
+  // ③ 얇은 축 채우기 — 파트를 다 채우고도 자리가 남을 때만
   for (const ax of axes) {
     if (orders.length - weakN >= maxOrders) break;
     // 그 축 안에서도 가장 얇은 태그를 고른다. 축 전체를 뭉뚱그려 주문하면
@@ -1872,7 +1943,7 @@ async function planGaps(db) {
   }
   return {
     orders, total: orders.reduce((s, o) => s + o.count, 0),
-    bank: bank.n, bank_target: BANK_TARGET,
+    bank: bank.n, bank_target: BANK_TARGET, parts,
     // 관리자 화면 표 — 많이 틀리는 유형과, 이번에 더 만드는지
     weak_spots: spots.slice(0, 8), weak_rule: {
       days: WEAK_WINDOW_DAYS, min_attempts: WEAK_MIN_ATTEMPTS,

@@ -800,11 +800,13 @@ async function renderFillBox() {
     else byAxis.push({ axis: o.axis, name: o.axis_name, n: o.axis_n, tags: [o.tag_name] });
   }
   const weakGap = byAxis.find((a) => a.axis === 'weak');
-  const axisGap = byAxis.filter((a) => a.axis !== 'weak')
+  const partGap = byAxis.find((a) => a.axis === 'part');
+  const axisGap = byAxis.filter((a) => a.axis !== 'weak' && a.axis !== 'part')
     .map((a) => `<b>${esc(a.name)}</b>(${a.n}문항 — ${esc(a.tags.join(' · '))})`)
     .join(', ');
   const gapLine = [
     weakGap ? `아이들이 <b>많이 틀리는 ${esc(weakGap.tags.join(' · '))}</b>에 문제를 더 만들어요.` : '',
+    partGap ? `시험보다 모자란 <b>${esc(partGap.tags.join(' · '))}</b>를 채워요.` : '',
     axisGap ? `${axisGap}가 얇아요.` : '',
   ].filter(Boolean).join(' ');
 
@@ -841,9 +843,23 @@ async function renderFillBox() {
       ? '목표만큼 모았어요. 밤마다 돌던 자동 주문은 저절로 멈춥니다.'
       : '매일 밤 2시에 앱이 스스로 조금씩 주문합니다 — 아침에 올라온 새 문제만 확인해주세요.'}</p>` : '';
 
+  // 파트별로 시험 비율만큼 찼는지 — 어느 파트가 비었는지 한눈에. 괄호 안은 어려운 문제(난이도 4~5).
+  const partBars = (p.parts ?? []).map((x) => `
+    <div class="sbar">
+      <span class="sbl">${esc(x.name)}</span>
+      <span class="sbt"><span class="sbf" style="width:${Math.min(100, Math.round((x.n / x.target) * 100))}%"></span></span>
+      <span class="sbn">${x.n} / ${x.target}<small> · 어려운 ${x.hard}/${x.hard_target}${x.manual ? ' · 사람이 만듦' : ''}</small></span>
+    </div>`).join('');
+  const partBox = partBars ? `
+    <p class="card-note" style="margin-top:10px"><b>파트별</b> — 실제 시험 비율(사진 6 · 질의응답 20 · 대화 10 · 담화 14 ·
+      문장 15 · 지문 15 · 독해 20)로 목표를 나눴어요. 모자란 파트부터 밤마다 채웁니다.
+      사진 고르기는 사진을 먼저 고르고 문장을 써야 해서 자동으로 만들지 않아요.</p>
+    ${partBars}` : '';
+
   box.innerHTML = `
     <div class="card-head"><span class="card-title">문제 늘리기</span></div>
     ${bankLine}
+    ${partBox}
     ${p.total ? `
       <p class="card-note">${gapLine}
         아래 버튼을 누르면 밤까지 기다리지 않고 바로 만듭니다 — 고르실 것 없습니다.</p>
