@@ -8031,15 +8031,15 @@
     "choice_image_prompts": [
       "A car engine",
       "Someone using a sewing machine",
-      "A ladder against a wall",
+      "Someone on a ladder painting a wall",
       "A bicycle in a repair shop"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "a repair shop",
     "why_not": {
       "0": "자동차 엔진 사진이에요",
       "1": "재봉틀로 바느질하는 사진이에요",
-      "2": "벽에 사다리가 세워진 사진이에요"
+      "2": "사다리에 올라 벽에 그림을 그리는 사진이에요"
     },
     "key_expr": {
       "en": "repair shop",
