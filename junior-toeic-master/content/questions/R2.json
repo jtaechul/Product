@@ -3262,5 +3262,434 @@
     ],
     "status": "draft",
     "tmp_id": "R2-0032"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Sunfield Middle School — No-Waste Lunch Week\nNext week our school will try something new. Every day, the kitchen staff will weigh the food that students leave on their trays, and the number will be written on the board by the lunchroom door. The goal is not to make anyone feel bad. (1) ______ So please take only what you can finish, and ask for a smaller serving when you are not very hungry. On Friday, the class with the least leftover food will choose one lunch menu for next month. (2) ______ you want to help count the trays, sign up with your homeroom teacher by Wednesday.",
+      "translation_ko": "선필드 중학교 — 음식 남기지 않는 점심 주간\n다음 주에 우리 학교는 새로운 일을 해 봅니다. 매일 조리실 선생님들이 학생들이 식판에 남긴 음식의 무게를 재고, 그 숫자를 급식실 문 옆 게시판에 적을 거예요. 이것은 누군가를 기분 나쁘게 하려는 것이 아닙니다. 우리가 음식을 얼마나 버리는지 함께 보자는 것뿐이에요. 그러니 다 먹을 수 있는 만큼만 받고, 배가 많이 고프지 않을 때는 적게 달라고 말하세요. 금요일에는 남긴 음식이 가장 적은 반이 다음 달 점심 메뉴 하나를 고르게 됩니다. 식판 세는 일을 돕고 싶다면 수요일까지 담임 선생님께 신청하세요."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "The lunchroom will be closed for repairs all week.",
+          "It is simply to help us see how much food we throw away.",
+          "Students must bring their own plates and spoons from home.",
+          "Our school band will perform in the lunchroom on Friday."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "누구를 혼내려는 게 아니라고 했으니, 버리는 음식이 얼마나 되는지 같이 보자는 말이 이어져요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.gist",
+          "RS.context",
+          "V.school"
+        ],
+        "evidence": "The goal is not to make anyone feel bad.",
+        "why_not": {
+          "0": "급식실은 그 주에 계속 열려요",
+          "2": "그릇을 가져오라는 말은 없어요",
+          "3": "연주 이야기는 글과 상관없어요"
+        },
+        "key_expr": {
+          "en": "The goal is to ~",
+          "ko": "목표는 ~하는 것이다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.notsaid",
+          "3": "F.offtopic"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "Because",
+          "Although",
+          "Unless",
+          "If"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "돕고 싶은 사람은 신청하라는 말이에요. '만약 ~라면'이라는 뜻의 If가 딱 맞아요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.gist",
+          "G.conj"
+        ],
+        "evidence": "sign up with your homeroom teacher by Wednesday",
+        "why_not": {
+          "0": "까닭을 말하는 자리가 아니에요",
+          "1": "'~이지만'은 흐름에 안 맞아요",
+          "2": "'~하지 않으면'은 뜻이 반대예요"
+        },
+        "key_expr": {
+          "en": "If you want to help, sign up.",
+          "ko": "돕고 싶다면 신청하세요"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "2": "M.opposite"
+        }
+      },
+      {
+        "stem": "What is the main purpose of this notice?",
+        "choices": [
+          "To tell students that school lunch will cost more next month.",
+          "To invite parents to a cooking class at school.",
+          "To ask students to leave less food on their trays.",
+          "To announce that the lunchroom will move to a new room."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "먹을 만큼만 받고 적게 달라고 말하라는 부탁이 가운데 생각이에요. 음식을 덜 남기자는 글이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ],
+        "evidence": "So please take only what you can finish, and ask for a smaller serving when you are not very hungry.",
+        "why_not": {
+          "0": "값이 오른다는 말은 없어요",
+          "1": "부모님 수업 이야기는 없어요",
+          "3": "급식실을 옮긴다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "leftover food",
+          "ko": "남긴 음식"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "F.offtopic",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0033"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Claire,\nYou asked why I used to hand in my homework late. I think I finally found the answer. Last month I noticed that I never forgot anything on soccer days, because our coach hands us a short list before every practice. So I tried the same trick at home. Every night I write three tasks on a small card and clip it to my desk lamp. (1) ______, I have not missed a single assignment. The card looks silly, but it works much better than trying to (2) ______ everything in my head.\nMy desk is still messy, though!\nMinjun",
+      "translation_ko": "클레어에게,\n너는 내가 왜 예전에 숙제를 늦게 냈는지 물었지. 드디어 그 답을 찾은 것 같아. 지난달에 나는 축구 하는 날에는 아무것도 잊지 않는다는 걸 알았어. 코치 선생님이 연습 전마다 짧은 목록을 나눠 주시거든. 그래서 집에서도 똑같이 해 봤어. 매일 밤 작은 카드에 할 일 세 가지를 적어서 책상 스탠드에 집게로 꽂아 둬. 그때부터 나는 숙제를 한 번도 빠뜨리지 않았어. 카드가 좀 우스워 보이지만, 머릿속으로 다 기억하려고 애쓰는 것보다 훨씬 잘 돼.\n그래도 내 책상은 여전히 지저분해!\n민준이가"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "Since then",
+          "However",
+          "Instead",
+          "For example"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "카드를 쓰기 시작한 뒤로 숙제를 한 번도 빠뜨리지 않았다는 흐름이라 '그때부터'가 알맞아요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.gist",
+          "G.conj"
+        ],
+        "evidence": "I have not missed a single assignment.",
+        "why_not": {
+          "1": "앞뒤가 반대일 때 쓰는 말이에요",
+          "2": "'대신에'는 흐름에 안 맞아요",
+          "3": "예를 드는 자리가 아니에요"
+        },
+        "key_expr": {
+          "en": "Since then",
+          "ko": "그때부터"
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "forget",
+          "remember",
+          "borrow",
+          "copy"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "머릿속으로 다 기억하려고 애쓰는 것보다 카드가 더 낫다는 말이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.gist",
+          "RS.vocab"
+        ],
+        "evidence": "Every night I write three tasks on a small card and clip it to my desk lamp.",
+        "why_not": {
+          "0": "잊으려 애쓴다는 건 말이 안 돼요",
+          "2": "'빌리다'라서 뜻이 안 맞아요",
+          "3": "'베끼다'라서 뜻이 안 맞아요"
+        },
+        "key_expr": {
+          "en": "keep it in my head",
+          "ko": "머릿속으로 기억해 두다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "What is Minjun mainly telling Claire?",
+        "choices": [
+          "That his soccer coach is stricter than his teachers.",
+          "That he has decided to leave the soccer team.",
+          "That he wants Claire to help him clean his desk.",
+          "That a short daily list helped him stop forgetting his work."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "코치님처럼 짧은 목록을 써 봤더니 숙제를 안 빠뜨리게 됐다는 이야기가 가운데 생각이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.gist",
+          "RS.infer"
+        ],
+        "evidence": "So I tried the same trick at home.",
+        "why_not": {
+          "0": "누가 더 엄한지는 말하지 않았어요",
+          "1": "축구를 그만둔다는 말은 없어요",
+          "2": "책상 치워 달라는 부탁은 없어요"
+        },
+        "key_expr": {
+          "en": "try the same trick",
+          "ko": "똑같은 방법을 해 보다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "F.offtopic"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0034"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Green Hill Farmers Market\nCome to the town square every Saturday morning! Farmers from our town (1) ______ fruit and vegetables here. Everything is picked in the morning, so it is very (2) ______. The market gets (3) ______ after ten o'clock, so come early. Please bring your own basket or bag.",
+      "translation_ko": "그린힐 농부 시장\n매주 토요일 아침에 마을 광장으로 오세요! 우리 마을 농부들이 여기에서 과일과 채소를 팝니다. 모든 것은 아침에 딴 것이라 아주 신선합니다. 시장은 10시가 지나면 붐비니까 일찍 오세요. 장바구니나 가방을 꼭 가져오세요."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "buy",
+          "borrow",
+          "sell",
+          "return"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "농부들이 시장에서 과일과 채소를 손님에게 내놓는 거예요. 그래서 '판다'는 sell이 맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.shopping"
+        ],
+        "evidence": "fruit and vegetables here",
+        "why_not": {
+          "0": "사는 쪽은 농부가 아니라 손님이에요",
+          "1": "빌린다는 뜻이라 어울리지 않아요",
+          "3": "돌려준다는 뜻이라 안 맞아요"
+        },
+        "key_expr": {
+          "en": "sell fruit and vegetables",
+          "ko": "과일과 채소를 팔다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "fresh",
+          "dirty",
+          "heavy",
+          "empty"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아침에 바로 딴 것이라고 했으니 '신선하다'는 fresh가 딱 맞아요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.vocab",
+          "V.food"
+        ],
+        "evidence": "Everything is picked in the morning",
+        "why_not": {
+          "1": "더럽다는 말은 자랑이 될 수 없어요",
+          "2": "무게 이야기는 나오지 않았어요",
+          "3": "비어 있다는 뜻이라 안 맞아요"
+        },
+        "key_expr": {
+          "en": "very fresh",
+          "ko": "아주 신선한"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "quiet",
+          "busy",
+          "empty",
+          "free"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "일찍 오라고 했지요? 10시가 지나면 사람이 많아 '붐빈다'는 busy가 어울려요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "so come early",
+        "why_not": {
+          "0": "조용하면 일찍 올 필요가 없어요",
+          "2": "사람이 없다는 뜻이라 반대예요",
+          "3": "공짜라는 뜻이라 자리에 안 맞아요"
+        },
+        "key_expr": {
+          "en": "get busy",
+          "ko": "붐비게 되다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "tmp_id": "R2-0035",
+    "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Saturday, October 11th\nToday I visited my grandparents' farm. In the morning, I helped my grandfather (1) ______ the chickens. They ran to me when they saw the corn in my bowl. Then my grandmother showed me how to pick apples. The apples tasted (2) ______, so I ate two of them. Before dinner, my cousin and I (3) ______ a small house for the puppy with old wood. My arms were tired, but I felt great.",
+      "translation_ko": "10월 11일 토요일\n오늘 나는 할머니 할아버지의 농장에 갔다. 아침에는 할아버지가 닭에게 먹이 주는 것을 도왔다. 닭들은 내 그릇에 있는 옥수수를 보고 나에게 달려왔다. 그다음에는 할머니가 사과 따는 법을 알려 주셨다. 사과가 달아서 나는 두 개나 먹었다. 저녁 먹기 전에는 사촌과 내가 오래된 나무로 강아지의 작은 집을 만들었다. 팔은 피곤했지만 기분은 아주 좋았다."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "call",
+          "buy",
+          "draw",
+          "feed"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "그릇에 옥수수를 담아 갔고 닭들이 달려왔어요. 먹이를 준다는 feed가 맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ],
+        "evidence": "They ran to me when they saw the corn in my bowl.",
+        "why_not": {
+          "0": "부른다는 말로는 옥수수가 설명 안 돼요",
+          "1": "농장에서 닭을 사는 이야기가 아니에요",
+          "2": "그림 그리는 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "feed the chickens",
+          "ko": "닭에게 먹이를 주다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.notsaid",
+          "2": "F.offtopic"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "salty",
+          "loud",
+          "sweet",
+          "sour"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "두 개나 먹을 만큼 맛있었다는 뜻이니 '달다'는 sweet가 어울려요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.vocab",
+          "V.food"
+        ],
+        "evidence": "so I ate two of them",
+        "why_not": {
+          "0": "짠맛은 사과 맛으로 어울리지 않아요",
+          "1": "소리가 클 때 쓰는 말이에요",
+          "3": "시었다면 두 개나 먹지 않았겠지요"
+        },
+        "key_expr": {
+          "en": "taste sweet",
+          "ko": "단맛이 나다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "built",
+          "sang",
+          "borrowed",
+          "washed"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "오래된 나무로 강아지 집을 만든 거예요. '지었다'는 built가 맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "G.tense"
+        ],
+        "evidence": "with old wood",
+        "why_not": {
+          "1": "노래하는 이야기는 나오지 않았어요",
+          "2": "빌린 거라면 나무가 필요 없어요",
+          "3": "씻는다는 뜻이라 자리에 안 맞아요"
+        },
+        "key_expr": {
+          "en": "build a small house",
+          "ko": "작은 집을 짓다"
+        },
+        "miss_type": {
+          "1": "F.offtopic",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "tmp_id": "R2-0036",
+    "status": "draft"
   }
 ]

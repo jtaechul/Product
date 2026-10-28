@@ -3454,5 +3454,444 @@
     },
     "translation_ko": "그림을 창가에 걸까, 아니면 문 옆에 걸까?",
     "tmp_id": "L2-0096"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Twice a week, in the cooking room.",
+      "I've always wanted to learn how to bake bread.",
+      "Yes, the club is really popular."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'What made you decide ~?'는 왜 그렇게 정했는지 묻는 말이에요. 빵 굽는 걸 배우고 싶었다는 까닭이 딱 맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.school",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "What made you decide to join the cooking club this semester?",
+    "status": "draft",
+    "evidence": "What made you decide",
+    "why_not": {
+      "0": "언제 어디서 하는지 답했어요",
+      "2": "까닭을 물었는데 예·아니오로 답했어요"
+    },
+    "key_expr": {
+      "en": "What made you decide ~?",
+      "ko": "왜 ~하기로 했어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "이번 학기에 요리 동아리에 들기로 한 이유가 뭐야?",
+    "tmp_id": "L2-0097"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's made of thin blue paper.",
+      "I finished it just before lunch.",
+      "Sure, I'll walk you through it step by step."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "종이학 접는 법을 보여 달라고 부탁하는 말이라, 차근차근 알려 주겠다는 대답이 정답이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Any chance you could show me how you folded that paper crane?",
+    "status": "draft",
+    "evidence": "Any chance you could show me",
+    "why_not": {
+      "0": "무엇으로 만들었는지만 말했어요",
+      "1": "언제 끝냈는지 답했어요"
+    },
+    "key_expr": {
+      "en": "Any chance you could ~?",
+      "ko": "혹시 ~해 줄 수 있어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "혹시 그 종이학 어떻게 접었는지 알려 줄 수 있을까?",
+    "tmp_id": "L2-0098"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "We moved it to the hallway because it gets more sunlight there.",
+      "Sunflowers grow quite fast in summer.",
+      "Yes, I'd love to grow one."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "그 해바라기가 어떻게 됐는지 묻는 말이에요. 복도로 옮겼다고 알려 주는 대답이 정답이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.school",
+      "LS.detail"
+    ],
+    "accent": "AU",
+    "tts_script": "Whatever happened to the sunflower we were growing by the classroom window?",
+    "status": "draft",
+    "evidence": "Whatever happened to the sunflower",
+    "why_not": {
+      "1": "해바라기 일반 이야기일 뿐이에요",
+      "2": "어떻게 됐는지 물었어요"
+    },
+    "key_expr": {
+      "en": "Whatever happened to ~?",
+      "ko": "~는 어떻게 됐어?"
+    },
+    "miss_type": {
+      "1": "M.notsaid",
+      "2": "A.yesno"
+    },
+    "translation_ko": "교실 창가에서 기르던 해바라기는 어떻게 됐어?",
+    "tmp_id": "L2-0099"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Let's move them next to the heater, then.",
+      "The poster paper cost about three dollars.",
+      "Yes, my parents will come at six."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "물감이 안 마를까 봐 걱정하는 말이에요. 난방기 옆으로 옮기자는 해결 방법이 가장 잘 어울려요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "LS.infer",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "I'm worried the paint on our posters won't dry before the parents arrive.",
+    "status": "draft",
+    "evidence": "I'm worried the paint on our posters won't dry",
+    "why_not": {
+      "1": "값 이야기는 걱정에 대한 답이 아니에요",
+      "2": "parents만 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "I'm worried (that) ~",
+      "ko": "~할까 봐 걱정이야"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.echo"
+    },
+    "translation_ko": "부모님들이 오시기 전에 포스터 물감이 안 마를까 봐 걱정이야.",
+    "tmp_id": "L2-0100"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "They're in the blue cooler bag.",
+      "Because the walk takes three hours.",
+      "Eight more should be plenty."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "샌드위치가 몇 개 더 필요하냐고 묻는 말이라, 여덟 개면 충분하다는 개수 대답이 정답이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.food",
+      "LS.detail"
+    ],
+    "accent": "AU",
+    "tts_script": "Would you mind telling me how many sandwiches we still need for the hiking trip?",
+    "status": "draft",
+    "evidence": "how many sandwiches we still need",
+    "why_not": {
+      "0": "어디 있는지 답했어요. 개수를 물었어요",
+      "1": "걷는 시간 숫자를 가져왔어요"
+    },
+    "key_expr": {
+      "en": "Would you mind telling me ~?",
+      "ko": "~를 알려 주시겠어요?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "M.number"
+    },
+    "translation_ko": "등산 갈 때 샌드위치가 몇 개 더 필요한지 알려 줄래?",
+    "tmp_id": "L2-0101"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's a woollen one with stripes.",
+      "No, but I'll ask the people in the next room.",
+      "Yes, it's rather cold outside today."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "누가 두고 갔는지 봤냐고 묻는 말이에요. 못 봤지만 옆 방에 물어보겠다는 대답이 자연스러워요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "V.daily",
+      "LS.infer"
+    ],
+    "accent": "UK",
+    "tts_script": "You didn't happen to notice who left this scarf on the bench, did you?",
+    "status": "draft",
+    "evidence": "notice who left this scarf",
+    "why_not": {
+      "0": "목도리 생김새만 말했어요",
+      "2": "날씨 이야기로 새 버렸어요"
+    },
+    "key_expr": {
+      "en": "Did you happen to notice ~?",
+      "ko": "혹시 ~ 봤어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "이 목도리 누가 벤치에 두고 갔는지 혹시 못 봤지?",
+    "tmp_id": "L2-0102"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Because everyone is at the school concert.",
+      "It's right next to the gym.",
+      "No, it isn't noisy at all."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'Why~'는 까닭을 묻는 말이에요. 모두 학교 음악회에 가 있어서 조용하다는 답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Why is the playground so quiet today?",
+    "status": "draft",
+    "evidence": "Why is the playground so quiet today?",
+    "why_not": {
+      "1": "어디 있는지 묻는 말의 답이에요",
+      "2": "까닭을 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "Why is it so quiet?",
+      "ko": "왜 이렇게 조용해?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "오늘 운동장이 왜 이렇게 조용하지?",
+    "tmp_id": "L2-0103"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "In the big yellow bowl.",
+      "Yes, they smell really good.",
+      "Four should be enough."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'How many~'는 몇 개인지 묻는 말이에요. 달걀 네 개면 충분하다는 답이 알맞아요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "How many eggs do we need for the muffins?",
+    "status": "draft",
+    "evidence": "How many eggs do we need",
+    "why_not": {
+      "0": "어디 있는지 묻는 말의 답이에요",
+      "1": "몇 개인지 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "How many eggs do we need?",
+      "ko": "달걀이 몇 개 필요해?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.yesno"
+    },
+    "translation_ko": "머핀 만들려면 달걀이 몇 개 필요해?",
+    "tmp_id": "L2-0104"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Let's call the lost and found.",
+      "The bus is bright yellow.",
+      "No, I don't drink milk."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "물병을 두고 내렸다는 말이에요. 분실물 센터에 전화해 보자고 도와주는 답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Oh no, I left my water bottle on the bus.",
+    "status": "draft",
+    "evidence": "I left my water bottle on the bus",
+    "why_not": {
+      "1": "들린 bus라는 말에 낚였어요",
+      "2": "물병 이야기와 이어지지 않아요"
+    },
+    "key_expr": {
+      "en": "I left my bottle on the bus.",
+      "ko": "버스에 물병을 두고 내렸어."
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "아이고, 버스에 물병을 두고 내렸어.",
+    "tmp_id": "L2-0105"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "In the music room upstairs.",
+      "About two weeks, I guess.",
+      "My cousin plays the piano."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'How long did it take~'는 얼마나 걸렸는지 묻는 말이에요. '약 2주'처럼 걸린 기간으로 답해요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.qr",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "How long did it take you to learn that song on the recorder?",
+    "status": "draft",
+    "evidence": "How long did it take you",
+    "why_not": {
+      "0": "어디인지 묻는 말의 답이에요",
+      "2": "누가 하는지 묻지 않았어요"
+    },
+    "key_expr": {
+      "en": "How long did it take?",
+      "ko": "얼마나 걸렸어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "그 곡을 리코더로 익히는 데 얼마나 걸렸어?",
+    "tmp_id": "L2-0106"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I'd love some ice cream.",
+      "Actually, it reopened last Friday.",
+      "I skate every Sunday morning."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'문 닫은 거 아니야?'라고 물었어요. 지난 금요일에 다시 열었다고 알려 주는 답이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.qr",
+      "LS.detail",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Isn't the ice rink closed for repairs this month?",
+    "status": "draft",
+    "evidence": "Isn't the ice rink closed for repairs this month?",
+    "why_not": {
+      "0": "들린 ice라는 말에 낚였어요",
+      "2": "열었는지 닫았는지 알려 주지 않아요"
+    },
+    "key_expr": {
+      "en": "closed for repairs",
+      "ko": "수리 때문에 문을 닫은"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "이번 달에는 아이스링크가 수리 때문에 문 닫은 거 아니야?",
+    "tmp_id": "L2-0107"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Camping in the woods is really fun.",
+      "We left on Saturday morning.",
+      "My uncle has one we can use."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "텐트를 어디서 빌릴지 물었어요. 삼촌 텐트를 쓰면 된다고 알려 주는 답이 알맞아요.",
+    "difficulty_label": 5,
+    "tags": [
+      "LS.qr",
+      "LS.infer",
+      "V.travel"
+    ],
+    "accent": "UK",
+    "tts_script": "Any idea where we could borrow a tent for the camping trip?",
+    "status": "draft",
+    "evidence": "where we could borrow a tent",
+    "why_not": {
+      "0": "들린 camping이라는 말에 낚였어요",
+      "1": "언제 떠났는지는 묻지 않았어요"
+    },
+    "key_expr": {
+      "en": "Any idea where ~?",
+      "ko": "어디서 ~할 수 있는지 알아?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "캠핑 갈 때 쓸 텐트를 어디서 빌릴 수 있는지 혹시 알아?",
+    "tmp_id": "L2-0108"
   }
 ]
