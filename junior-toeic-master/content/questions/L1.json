@@ -4927,7 +4927,7 @@
     "status": "draft",
     "evidence": "A horse",
     "why_not": {
-      "0": "소가 풀을 먹는 사진이에요",
+      "0": "소가 풀밭에 있는 사진이에요",
       "2": "양들이 있는 사진이에요",
       "3": "닭들이 있는 사진이에요"
     },
@@ -5010,30 +5010,30 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'yarn'은 뜨개질하는 털실이에요. 고양이가 털실을 가지고 노는 사진이 정답이에요.",
+    "explanation_ko": "'yarn'은 뜨개질하는 털실이에요. 알록달록한 털실 뭉치가 모인 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "US",
-    "tts_script": "A cat is playing with a ball of yarn.",
+    "tts_script": "There are balls of yarn in many colors.",
     "choice_image_prompts": [
       "A dog sleeping on a bed",
-      "A rabbit eating a carrot",
-      "A cat playing with a ball of yarn",
+      "Carrots lying on a wooden table",
+      "Balls of yarn in many colors",
       "A parrot sitting on a perch"
     ],
     "status": "draft",
-    "evidence": "a ball of yarn",
+    "evidence": "balls of yarn",
     "why_not": {
       "0": "개가 자는 사진이에요",
-      "1": "토끼가 당근을 먹는 사진이에요",
+      "1": "당근들이 놓인 사진이에요",
       "3": "앵무새가 앉아 있는 사진이에요"
     },
     "key_expr": {
-      "en": "a ball of yarn",
-      "ko": "털실 뭉치"
+      "en": "yarn",
+      "ko": "털실"
     },
     "miss_type": {
       "0": "P.other",
@@ -5088,7 +5088,7 @@
         ]
       }
     ],
-    "translation_ko": "고양이가 털실 뭉치를 가지고 놀고 있어요.",
+    "translation_ko": "여러 색깔의 털실 뭉치가 있어요.",
     "tmp_id": "L1-0052"
   },
   {
@@ -5103,26 +5103,26 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'elephant'는 코끼리예요. 코끼리가 있는 사진을 고르면 돼요.",
+    "explanation_ko": "'elephant'는 코끼리예요. 코끼리들이 물속에서 노는 사진을 고르면 돼요.",
     "difficulty_label": 1,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "UK",
-    "tts_script": "There is an elephant near the water.",
+    "tts_script": "Elephants are playing in the water.",
     "choice_image_prompts": [
       "A giraffe standing in the savanna",
       "Zebras standing together",
-      "A lion resting on the ground",
-      "An elephant standing near the water"
+      "A sea lion lying on the sand",
+      "Elephants playing in the water"
     ],
     "status": "draft",
-    "evidence": "an elephant",
+    "evidence": "Elephants",
     "why_not": {
       "0": "기린이 있는 사진이에요",
       "1": "얼룩말이 있는 사진이에요",
-      "2": "사자가 쉬는 사진이에요"
+      "2": "바다사자가 모래 위에 있는 사진이에요"
     },
     "key_expr": {
       "en": "elephant",
@@ -5181,7 +5181,7 @@
         ]
       }
     ],
-    "translation_ko": "물가에 코끼리 한 마리가 있어요.",
+    "translation_ko": "코끼리들이 물속에서 놀고 있어요.",
     "tmp_id": "L1-0053"
   },
   {
@@ -5289,26 +5289,26 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'train'은 기차, 'station'은 역이에요. 역에 기차가 서 있는 사진이 정답이에요.",
+    "explanation_ko": "'station'은 역이에요. 역 승강장에서 여자가 기다리는 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.travel"
     ],
     "accent": "US",
-    "tts_script": "A train is at the station.",
+    "tts_script": "A woman is waiting at the station.",
     "choice_image_prompts": [
       "An airplane flying in the sky",
       "A big ship in a harbor",
-      "A train waiting at a station",
-      "A bus on a city street"
+      "A woman waiting on a train platform",
+      "A bus on a city street at night"
     ],
     "status": "draft",
-    "evidence": "A train",
+    "evidence": "at the station",
     "why_not": {
       "0": "비행기가 나는 사진이에요",
       "1": "항구에 배가 있는 사진이에요",
-      "3": "거리에 버스가 있는 사진이에요"
+      "3": "밤거리에 버스가 다니는 사진이에요"
     },
     "key_expr": {
       "en": "station",
@@ -5371,7 +5371,7 @@
         ]
       }
     ],
-    "translation_ko": "기차가 역에 서 있어요.",
+    "translation_ko": "여자가 역에서 기다리고 있어요.",
     "tmp_id": "L1-0055"
   },
   {
@@ -5386,30 +5386,30 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'strawberries'는 딸기예요. 바구니에 딸기가 담긴 사진을 고르면 돼요.",
+    "explanation_ko": "'basket'은 바구니예요. 바구니에 여러 과일이 가득 담긴 사진을 고르면 돼요.",
     "difficulty_label": 1,
     "tags": [
       "LS.photo",
       "V.food"
     ],
     "accent": "UK",
-    "tts_script": "Strawberries are in a basket.",
+    "tts_script": "A basket is full of fruit.",
     "choice_image_prompts": [
-      "A bunch of bananas",
-      "Slices of watermelon",
-      "A bunch of grapes",
-      "Strawberries in a basket"
+      "Bananas growing on a tree",
+      "A girl eating watermelon",
+      "Grapes on a vine",
+      "A basket full of fruit"
     ],
     "status": "draft",
-    "evidence": "Strawberries",
+    "evidence": "A basket",
     "why_not": {
-      "0": "바나나 사진이에요",
-      "1": "수박 사진이에요",
-      "2": "포도 사진이에요"
+      "0": "나무에 바나나가 달린 사진이에요",
+      "1": "아이가 수박을 먹는 사진이에요",
+      "2": "포도가 덩굴에 달린 사진이에요"
     },
     "key_expr": {
-      "en": "strawberry",
-      "ko": "딸기"
+      "en": "basket",
+      "ko": "바구니"
     },
     "miss_type": {
       "0": "P.other",
@@ -5459,7 +5459,7 @@
         ]
       }
     ],
-    "translation_ko": "딸기가 바구니에 담겨 있어요.",
+    "translation_ko": "바구니에 과일이 가득 들어 있어요.",
     "tmp_id": "L1-0056"
   },
   {
@@ -5486,14 +5486,14 @@
       "A stack of pancakes on a plate",
       "A bowl of cereal with milk",
       "Fried eggs and bacon",
-      "Toast with butter"
+      "Toast with peanut butter"
     ],
     "status": "draft",
     "evidence": "Pancakes",
     "why_not": {
       "1": "시리얼 그릇 사진이에요",
       "2": "달걀 프라이와 베이컨 사진이에요",
-      "3": "버터 바른 토스트 사진이에요"
+      "3": "땅콩버터를 바른 토스트 사진이에요"
     },
     "key_expr": {
       "en": "pancake",
@@ -5566,26 +5566,26 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'volleyball'은 배구예요. 해변에서 배구공을 치는 사진을 고르면 돼요.",
+    "explanation_ko": "'volleyball'은 배구예요. 네트 앞에서 배구공을 치는 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "US",
-    "tts_script": "People are playing volleyball on the beach.",
+    "tts_script": "People are playing volleyball.",
     "choice_image_prompts": [
       "A person playing golf",
-      "People playing volleyball on the beach",
-      "People playing table tennis",
-      "Players playing ice hockey"
+      "People playing volleyball at a net",
+      "A table tennis paddle and ball",
+      "An ice hockey player"
     ],
     "status": "draft",
     "evidence": "volleyball",
     "why_not": {
-      "0": "골프를 치는 사진이에요",
-      "2": "탁구를 치는 사진이에요",
-      "3": "아이스하키를 하는 사진이에요"
+      "0": "골프공을 치는 사진이에요",
+      "2": "탁구채와 탁구공 사진이에요",
+      "3": "아이스하키 선수 사진이에요"
     },
     "key_expr": {
       "en": "volleyball",
@@ -5642,7 +5642,7 @@
         ]
       }
     ],
-    "translation_ko": "사람들이 해변에서 배구를 하고 있어요.",
+    "translation_ko": "사람들이 배구를 하고 있어요.",
     "tmp_id": "L1-0058"
   },
   {
@@ -5758,16 +5758,16 @@
     "tts_script": "Someone is mopping the floor.",
     "choice_image_prompts": [
       "Someone mopping the floor",
-      "Someone using a vacuum cleaner",
+      "A vacuum cleaner on a carpet",
       "Someone cleaning a window",
-      "Someone ironing clothes"
+      "An iron on clothes"
     ],
     "status": "draft",
     "evidence": "mopping the floor",
     "why_not": {
-      "1": "청소기를 미는 사진이에요",
+      "1": "청소기가 카펫 위에 있는 사진이에요",
       "2": "창문을 닦는 사진이에요",
-      "3": "다림질하는 사진이에요"
+      "3": "다리미가 옷 위에 있는 사진이에요"
     },
     "key_expr": {
       "en": "mop the floor",
@@ -5839,30 +5839,30 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'campfire'는 캠핑할 때 피우는 모닥불이에요. 불이 타는 사진이 정답이에요.",
+    "explanation_ko": "'burn'은 불이 탄다는 뜻이에요. 장작에 불이 활활 타는 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
-      "V.leisure"
+      "V.daily"
     ],
     "accent": "US",
-    "tts_script": "A campfire is burning.",
+    "tts_script": "A fire is burning.",
     "choice_image_prompts": [
-      "A tent in the forest",
-      "A hiker with a backpack",
-      "A campfire burning",
+      "Tents in the mountains",
+      "A hiker standing with a backpack",
+      "A fire burning in a fireplace",
       "A kayak on a lake"
     ],
     "status": "draft",
-    "evidence": "A campfire",
+    "evidence": "A fire is burning",
     "why_not": {
-      "0": "숲속에 텐트가 있는 사진이에요",
-      "1": "배낭을 멘 사람이 걷는 사진이에요",
-      "3": "호수에서 카약을 타는 사진이에요"
+      "0": "산속에 텐트가 있는 사진이에요",
+      "1": "배낭을 멘 사람이 서 있는 사진이에요",
+      "3": "카약을 타는 사진이에요"
     },
     "key_expr": {
-      "en": "campfire",
-      "ko": "모닥불"
+      "en": "burn",
+      "ko": "불이 타다"
     },
     "miss_type": {
       "0": "P.other",
@@ -5915,7 +5915,7 @@
         ]
       }
     ],
-    "translation_ko": "모닥불이 타고 있어요.",
+    "translation_ko": "불이 활활 타고 있어요.",
     "tmp_id": "L1-0061"
   },
   {
@@ -5949,7 +5949,7 @@
     "why_not": {
       "0": "강 위의 다리 사진이에요",
       "1": "높은 건물들 사진이에요",
-      "2": "자전거 길 사진이에요"
+      "2": "사람들이 자전거를 타는 사진이에요"
     },
     "key_expr": {
       "en": "road",
@@ -6025,25 +6025,25 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'colored pencils'는 색연필이에요. 책상 위에 색연필이 있는 사진을 고르면 돼요.",
+    "explanation_ko": "'colored pencils'는 색연필이에요. 색연필이 컵에 꽂혀 있는 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.school"
     ],
     "accent": "AU",
-    "tts_script": "Colored pencils are on the desk.",
+    "tts_script": "Colored pencils are in a cup.",
     "choice_image_prompts": [
-      "A pair of scissors on paper",
-      "Colored pencils on a desk",
-      "A school backpack",
-      "A globe on a table"
+      "Scissors and pens on paper",
+      "Colored pencils in a cup on a desk",
+      "A person sitting next to a backpack",
+      "A globe"
     ],
     "status": "draft",
-    "evidence": "Colored pencils",
+    "evidence": "in a cup",
     "why_not": {
-      "0": "가위 사진이에요",
-      "2": "책가방 사진이에요",
+      "0": "가위와 펜이 종이 위에 있는 사진이에요",
+      "2": "책가방 옆에 앉아 있는 사진이에요",
       "3": "지구본 사진이에요"
     },
     "key_expr": {
@@ -6099,7 +6099,7 @@
         ]
       }
     ],
-    "translation_ko": "색연필이 책상 위에 있어요.",
+    "translation_ko": "색연필이 컵에 꽂혀 있어요.",
     "tmp_id": "L1-0063"
   },
   {
@@ -6114,30 +6114,30 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'donuts'는 도넛이에요. 가운데 구멍이 있는 도넛 사진을 고르면 돼요.",
+    "explanation_ko": "'a cup of coffee'는 커피 한 잔이에요. 커피 잔이 놓인 사진을 고르면 돼요.",
     "difficulty_label": 1,
     "tags": [
       "LS.photo",
       "V.food"
     ],
     "accent": "US",
-    "tts_script": "Donuts are on a plate.",
+    "tts_script": "There is a cup of coffee on the table.",
     "choice_image_prompts": [
       "An ice cream cone",
       "A slice of chocolate cake",
-      "Donuts on a plate",
+      "A cup of coffee and some pastries on a table",
       "Some cupcakes"
     ],
     "status": "draft",
-    "evidence": "Donuts",
+    "evidence": "a cup of coffee",
     "why_not": {
-      "0": "아이스크림 콘 사진이에요",
-      "1": "초콜릿 케이크 사진이에요",
+      "0": "아이스크림콘 사진이에요",
+      "1": "초콜릿 케이크 한 조각 사진이에요",
       "3": "컵케이크 사진이에요"
     },
     "key_expr": {
-      "en": "donut",
-      "ko": "도넛"
+      "en": "a cup of coffee",
+      "ko": "커피 한 잔"
     },
     "miss_type": {
       "0": "P.other",
@@ -6191,7 +6191,7 @@
         ]
       }
     ],
-    "translation_ko": "도넛이 접시에 놓여 있어요.",
+    "translation_ko": "탁자 위에 커피 한 잔이 있어요.",
     "tmp_id": "L1-0064"
   },
   {
@@ -6206,14 +6206,14 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'surfing'은 파도 위에서 판을 타는 서핑이에요. 파도를 타는 사진이 정답이에요.",
+    "explanation_ko": "'surf'는 파도를 타는 거예요. 큰 파도 위에서 서핑하는 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "UK",
-    "tts_script": "A man is surfing on a wave.",
+    "tts_script": "Someone is surfing on a big wave.",
     "choice_image_prompts": [
       "Umbrellas and chairs on a beach",
       "A sailboat on the sea",
@@ -6221,15 +6221,15 @@
       "A surfer riding a wave"
     ],
     "status": "draft",
-    "evidence": "surfing",
+    "evidence": "surfing on a big wave",
     "why_not": {
-      "0": "해변에 파라솔이 있는 사진이에요",
+      "0": "해변에 파라솔과 의자가 있는 사진이에요",
       "1": "바다에 돛단배가 있는 사진이에요",
-      "2": "등대 사진이에요"
+      "2": "바닷가 등대 사진이에요"
     },
     "key_expr": {
-      "en": "surf",
-      "ko": "서핑하다"
+      "en": "wave",
+      "ko": "파도"
     },
     "miss_type": {
       "0": "P.other",
@@ -6281,7 +6281,7 @@
         ]
       }
     ],
-    "translation_ko": "남자가 파도 위에서 서핑을 하고 있어요.",
+    "translation_ko": "누군가 큰 파도 위에서 서핑을 하고 있어요.",
     "tmp_id": "L1-0065"
   },
   {
@@ -6296,24 +6296,24 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'pumpkins'는 주황색 호박이에요. 호박이 놓인 사진을 고르면 돼요.",
+    "explanation_ko": "'pumpkins'는 호박이에요. 호박이 잔뜩 쌓인 사진을 고르면 돼요.",
     "difficulty_label": 1,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "AU",
-    "tts_script": "Pumpkins are on the ground.",
+    "tts_script": "There are a lot of pumpkins.",
     "choice_image_prompts": [
-      "Orange pumpkins in a field",
-      "Colorful autumn leaves on a tree",
+      "A lot of pumpkins piled together",
+      "Autumn leaves falling by a tree",
       "Apples on a tree",
       "A scarecrow in a field"
     ],
     "status": "draft",
-    "evidence": "Pumpkins",
+    "evidence": "a lot of pumpkins",
     "why_not": {
-      "1": "단풍잎 사진이에요",
+      "1": "나무 옆으로 낙엽이 떨어지는 사진이에요",
       "2": "나무에 사과가 열린 사진이에요",
       "3": "허수아비 사진이에요"
     },
@@ -6372,7 +6372,7 @@
         ]
       }
     ],
-    "translation_ko": "호박들이 땅 위에 놓여 있어요.",
+    "translation_ko": "호박이 아주 많이 있어요.",
     "tmp_id": "L1-0066"
   },
   {
@@ -6651,29 +6651,29 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'pan'은 프라이팬이에요. 팬 위에서 달걀이 익는 사진이 정답이에요.",
+    "explanation_ko": "'frying pan'은 프라이팬이에요. 팬 위에 달걀 프라이가 있는 사진이 정답이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.food"
     ],
     "accent": "US",
-    "tts_script": "Eggs are cooking in a pan.",
+    "tts_script": "An egg is in a frying pan.",
     "choice_image_prompts": [
       "A pot of boiling water",
-      "A knife on a cutting board",
-      "A blender with a smoothie",
-      "Eggs frying in a pan"
+      "Two people cooking in a kitchen",
+      "A drink being poured into a cup",
+      "A fried egg in a frying pan"
     ],
     "status": "draft",
-    "evidence": "in a pan",
+    "evidence": "in a frying pan",
     "why_not": {
       "0": "냄비에 물이 끓는 사진이에요",
-      "1": "도마 위에 칼이 있는 사진이에요",
-      "2": "믹서 사진이에요"
+      "1": "두 사람이 요리를 하는 사진이에요",
+      "2": "음료가 컵에 담기는 사진이에요"
     },
     "key_expr": {
-      "en": "pan",
+      "en": "frying pan",
       "ko": "프라이팬"
     },
     "miss_type": {
@@ -6729,7 +6729,7 @@
         ]
       }
     ],
-    "translation_ko": "달걀이 프라이팬에서 익고 있어요.",
+    "translation_ko": "프라이팬에 달걀이 하나 있어요.",
     "tmp_id": "L1-0070"
   },
   {
@@ -6836,26 +6836,26 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'shopping cart'는 마트에서 미는 카트예요. 카트에 물건이 담긴 사진이 정답이에요.",
+    "explanation_ko": "'shopping cart'는 마트에서 미는 카트예요. 마트 선반 옆에 카트가 있는 사진이 정답이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.shopping"
     ],
     "accent": "AU",
-    "tts_script": "A shopping cart is full of food.",
+    "tts_script": "A shopping cart is next to the shelves.",
     "choice_image_prompts": [
       "Clothes hanging in a store",
-      "A shopping cart full of groceries",
-      "Shoes on shelves in a store",
-      "A cash register"
+      "An empty shopping cart in a supermarket aisle",
+      "Bags and shoes on shelves in a store",
+      "An old cash register"
     ],
     "status": "draft",
     "evidence": "A shopping cart",
     "why_not": {
       "0": "옷 가게 사진이에요",
-      "2": "신발 가게 사진이에요",
-      "3": "계산대 사진이에요"
+      "2": "가방과 신발 가게 사진이에요",
+      "3": "옛날 계산기 사진이에요"
     },
     "key_expr": {
       "en": "shopping cart",
@@ -6914,7 +6914,7 @@
         ]
       }
     ],
-    "translation_ko": "쇼핑 카트에 음식이 가득 담겨 있어요.",
+    "translation_ko": "쇼핑 카트가 선반 옆에 있어요.",
     "tmp_id": "L1-0072"
   },
   {
@@ -6939,16 +6939,16 @@
     "tts_script": "Carrots are on the table.",
     "choice_image_prompts": [
       "Red tomatoes",
-      "Some potatoes",
-      "Green broccoli",
+      "Peeled potatoes",
+      "Some lemons",
       "Carrots on a table"
     ],
     "status": "draft",
     "evidence": "Carrots",
     "why_not": {
       "0": "토마토 사진이에요",
-      "1": "감자 사진이에요",
-      "2": "브로콜리 사진이에요"
+      "1": "껍질 벗긴 감자 사진이에요",
+      "2": "레몬 사진이에요"
     },
     "key_expr": {
       "en": "carrot",
@@ -6981,13 +6981,13 @@
         ]
       },
       {
-        "q": "broccoli",
+        "q": "lemons",
         "need": [
-          "broccoli"
+          "lemon"
         ],
         "prefer": [],
         "avoid": [
-          "carrots"
+          "carrot"
         ]
       },
       {
@@ -7019,26 +7019,26 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'sneakers'는 운동화예요. 바닥에 운동화가 놓인 사진을 고르면 돼요.",
+    "explanation_ko": "'sneakers'는 운동화예요. 분홍 운동화를 신은 발이 보이는 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.shopping"
     ],
     "accent": "UK",
-    "tts_script": "There are sneakers on the floor.",
+    "tts_script": "Someone is wearing pink sneakers.",
     "choice_image_prompts": [
-      "Sneakers on the floor",
-      "Colorful socks",
-      "Hats hanging on a wall",
-      "A pair of winter gloves"
+      "Feet in pink sneakers",
+      "Feet in striped socks",
+      "Hats",
+      "Someone wearing winter gloves"
     ],
     "status": "draft",
-    "evidence": "sneakers",
+    "evidence": "pink sneakers",
     "why_not": {
-      "1": "양말 사진이에요",
+      "1": "줄무늬 양말을 신은 사진이에요",
       "2": "모자 사진이에요",
-      "3": "장갑 사진이에요"
+      "3": "장갑을 낀 사진이에요"
     },
     "key_expr": {
       "en": "sneakers",
@@ -7072,13 +7072,17 @@
         ]
       },
       {
-        "q": "hats hanging",
+        "q": "straw hat",
         "need": [
-          "hats"
+          "hat"
         ],
         "prefer": [],
         "avoid": [
-          "sneakers"
+          "sneaker",
+          "shoe",
+          "sock",
+          "glove",
+          "feet"
         ]
       },
       {
@@ -7092,7 +7096,7 @@
         ]
       }
     ],
-    "translation_ko": "바닥에 운동화가 있어요.",
+    "translation_ko": "누군가 분홍색 운동화를 신고 있어요.",
     "tmp_id": "L1-0074"
   },
   {
@@ -7119,14 +7123,14 @@
       "A cup of tea",
       "A glass of lemonade",
       "A milkshake in a tall glass",
-      "A mug of hot chocolate"
+      "A blue mug and snacks in the snow"
     ],
     "status": "draft",
     "evidence": "A milkshake",
     "why_not": {
       "0": "찻잔 사진이에요",
       "1": "레모네이드 사진이에요",
-      "3": "코코아 머그잔 사진이에요"
+      "3": "파란 머그잔과 과자 사진이에요"
     },
     "key_expr": {
       "en": "milkshake",
@@ -7214,7 +7218,7 @@
     "evidence": "having a meeting",
     "why_not": {
       "0": "프린터 사진이에요",
-      "2": "자판을 치는 사진이에요",
+      "2": "혼자 노트북 자판을 치는 사진이에요",
       "3": "책상 위 커피잔 사진이에요"
     },
     "key_expr": {
@@ -7289,30 +7293,30 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'stethoscope'는 의사가 몸속 소리를 듣는 청진기예요. 청진기로 진찰하는 사진이 정답이에요.",
+    "explanation_ko": "'patient'는 환자예요. 의사가 환자에게 약을 건네는 사진이 정답이에요.",
     "difficulty_label": 3,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "UK",
-    "tts_script": "A doctor is using a stethoscope.",
+    "tts_script": "A doctor is giving medicine to a patient.",
     "choice_image_prompts": [
       "An ambulance on the road",
       "Some pills",
       "An arm with a bandage",
-      "A doctor using a stethoscope"
+      "A doctor giving medicine to a patient"
     ],
     "status": "draft",
-    "evidence": "a stethoscope",
+    "evidence": "giving medicine to a patient",
     "why_not": {
       "0": "구급차 사진이에요",
-      "1": "알약 사진이에요",
-      "2": "붕대 사진이에요"
+      "1": "약만 잔뜩 있는 사진이에요",
+      "2": "팔에 반창고를 붙인 사진이에요"
     },
     "key_expr": {
-      "en": "stethoscope",
-      "ko": "청진기"
+      "en": "patient",
+      "ko": "환자"
     },
     "miss_type": {
       "0": "P.other",
@@ -7362,7 +7366,7 @@
         "avoid": []
       }
     ],
-    "translation_ko": "의사가 청진기를 쓰고 있어요.",
+    "translation_ko": "의사가 환자에게 약을 건네고 있어요.",
     "tmp_id": "L1-0077"
   },
   {
@@ -7387,7 +7391,7 @@
     "tts_script": "Firefighters are spraying water.",
     "choice_image_prompts": [
       "Firefighters spraying water",
-      "A police car",
+      "A police car on the street",
       "A fire truck parked on the street",
       "A construction worker"
     ],
@@ -7427,8 +7431,13 @@
         ],
         "prefer": [],
         "avoid": [
-          "fire",
-          "toy"
+          "figure",
+          "toy",
+          "miniature",
+          "model",
+          "character",
+          "lego",
+          "fire"
         ]
       },
       {
@@ -7445,14 +7454,20 @@
         ]
       },
       {
-        "q": "construction worker helmet",
+        "q": "construction worker",
         "need": [
           "construction",
           "worker"
         ],
         "prefer": [],
         "avoid": [
-          "fire"
+          "figure",
+          "toy",
+          "miniature",
+          "character",
+          "lego",
+          "fire",
+          "handyman"
         ]
       }
     ],
@@ -7471,30 +7486,30 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'crane'은 무거운 것을 드는 큰 기계, 'building site'는 공사 현장이에요. 크레인이 보이는 사진이 정답이에요.",
-    "difficulty_label": 4,
+    "explanation_ko": "'crane'은 무거운 것을 들어 올리는 높은 기계예요. 노란 크레인 두 대가 보이는 사진이 정답이에요.",
+    "difficulty_label": 3,
     "tags": [
       "LS.photo",
       "V.work"
     ],
     "accent": "US",
-    "tts_script": "A crane is at the building site.",
+    "tts_script": "Two cranes are standing under a blue sky.",
     "choice_image_prompts": [
       "A bulldozer",
-      "A pile of bricks",
-      "A crane at a building site",
-      "An excavator digging"
+      "A brick wall covered with leaves",
+      "Two cranes under a blue sky",
+      "A big machine at night"
     ],
     "status": "draft",
-    "evidence": "A crane",
+    "evidence": "Two cranes",
     "why_not": {
       "0": "불도저 사진이에요",
-      "1": "벽돌 사진이에요",
-      "3": "굴착기 사진이에요"
+      "1": "담쟁이덩굴이 덮인 벽돌담 사진이에요",
+      "3": "밤에 큰 기계가 서 있는 사진이에요"
     },
     "key_expr": {
-      "en": "building site",
-      "ko": "공사 현장"
+      "en": "crane",
+      "ko": "크레인"
     },
     "miss_type": {
       "0": "P.other",
@@ -7544,7 +7559,7 @@
         ]
       }
     ],
-    "translation_ko": "공사 현장에 크레인이 있어요.",
+    "translation_ko": "파란 하늘 아래 크레인 두 대가 서 있어요.",
     "tmp_id": "L1-0079"
   },
   {
@@ -7660,14 +7675,14 @@
     "choice_image_prompts": [
       "A girl with a hula hoop",
       "A girl jumping rope",
-      "Children playing hopscotch",
+      "A hopscotch drawn on the ground",
       "Children playing tug of war"
     ],
     "status": "draft",
     "evidence": "jumping rope",
     "why_not": {
       "0": "훌라후프 사진이에요",
-      "2": "사방치기 사진이에요",
+      "2": "땅에 그린 사방치기 사진이에요",
       "3": "줄다리기 사진이에요"
     },
     "key_expr": {
@@ -8005,30 +8020,30 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'fix'는 고치다예요. 남자가 공구로 자전거를 고치는 사진이 정답이에요.",
+    "explanation_ko": "'repair shop'은 고장 난 것을 고치는 가게예요. 수리점 안에 자전거가 있는 사진을 고르면 돼요.",
     "difficulty_label": 4,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "US",
-    "tts_script": "A man is fixing a bicycle.",
+    "tts_script": "A bicycle is in a repair shop.",
     "choice_image_prompts": [
-      "A mechanic fixing a car",
+      "A car engine",
       "Someone using a sewing machine",
-      "Someone painting a wall",
-      "A man fixing a bicycle"
+      "Painting a wall with a roller",
+      "A bicycle in a repair shop"
     ],
     "status": "draft",
-    "evidence": "fixing a bicycle",
+    "evidence": "a repair shop",
     "why_not": {
-      "0": "자동차를 고치는 사진이에요",
+      "0": "자동차 엔진 사진이에요",
       "1": "재봉틀로 바느질하는 사진이에요",
-      "2": "벽에 페인트칠하는 사진이에요"
+      "2": "벽에 페인트를 칠하는 사진이에요"
     },
     "key_expr": {
-      "en": "fix",
-      "ko": "고치다"
+      "en": "repair shop",
+      "ko": "수리점"
     },
     "miss_type": {
       "0": "P.other",
@@ -8058,14 +8073,16 @@
         ]
       },
       {
-        "q": "painting wall roller",
+        "q": "paint roller wall",
         "need": [
-          "painting",
+          "roller",
           "wall"
         ],
         "prefer": [],
         "avoid": [
-          "bicycle"
+          "bicycle",
+          "bike",
+          "repair"
         ]
       },
       {
@@ -8080,7 +8097,7 @@
         ]
       }
     ],
-    "translation_ko": "남자가 자전거를 고치고 있어요.",
+    "translation_ko": "자전거가 수리점 안에 있어요.",
     "tmp_id": "L1-0085"
   },
   {
@@ -8095,30 +8112,30 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'bakery'는 빵집이에요. 빵집 선반에 빵이 진열된 사진이 정답이에요.",
+    "explanation_ko": "'bread'는 빵이에요. 길쭉한 빵이 놓인 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.food"
     ],
     "accent": "UK",
-    "tts_script": "Bread is on the shelves in the bakery.",
+    "tts_script": "There is fresh bread on the table.",
     "choice_image_prompts": [
-      "Bread on shelves in a bakery",
-      "Someone decorating a cake",
-      "A barista making coffee",
+      "Fresh bread on a table",
+      "Someone decorating cupcakes",
+      "A coffee shop counter",
       "Fruit at a market stand"
     ],
     "status": "draft",
-    "evidence": "Bread",
+    "evidence": "fresh bread",
     "why_not": {
-      "1": "케이크를 꾸미는 사진이에요",
-      "2": "커피를 만드는 사진이에요",
+      "1": "컵케이크를 꾸미는 사진이에요",
+      "2": "카페에서 커피를 만드는 사진이에요",
       "3": "시장 과일 가게 사진이에요"
     },
     "key_expr": {
-      "en": "bakery",
-      "ko": "빵집"
+      "en": "bread",
+      "ko": "빵"
     },
     "miss_type": {
       "1": "P.other",
@@ -8170,7 +8187,7 @@
         ]
       }
     ],
-    "translation_ko": "빵집 선반에 빵이 놓여 있어요.",
+    "translation_ko": "탁자 위에 갓 구운 빵이 있어요.",
     "tmp_id": "L1-0086"
   },
   {
@@ -8185,24 +8202,24 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'water slide'는 물이 흐르는 미끄럼틀이에요. 물놀이장 미끄럼틀 사진이 정답이에요.",
+    "explanation_ko": "'water slide'는 물이 흐르는 미끄럼틀이에요. 물놀이장의 큰 미끄럼틀 사진이 정답이에요.",
     "difficulty_label": 3,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "AU",
-    "tts_script": "Children are going down a water slide.",
+    "tts_script": "There is a colorful water slide.",
     "choice_image_prompts": [
       "A canoe on a river",
       "A diver underwater",
-      "A water slide at a water park",
+      "A colorful water slide at a water park",
       "Someone snorkeling"
     ],
     "status": "draft",
-    "evidence": "a water slide",
+    "evidence": "water slide",
     "why_not": {
-      "0": "카누 사진이에요",
+      "0": "강가에 카누가 있는 사진이에요",
       "1": "잠수하는 사진이에요",
       "3": "스노클링하는 사진이에요"
     },
@@ -8258,7 +8275,7 @@
         ]
       }
     ],
-    "translation_ko": "아이들이 물 미끄럼틀을 타고 내려가고 있어요.",
+    "translation_ko": "알록달록한 물 미끄럼틀이 있어요.",
     "tmp_id": "L1-0087"
   },
   {
@@ -8273,26 +8290,26 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'telescope'는 먼 별을 보는 망원경이에요. 망원경 사진을 고르면 돼요.",
+    "explanation_ko": "'telescope'는 멀리 있는 것을 크게 보는 망원경이에요. 호숫가에 망원경이 있는 사진을 고르면 돼요.",
     "difficulty_label": 3,
     "tags": [
       "LS.photo",
       "V.school"
     ],
     "accent": "US",
-    "tts_script": "A telescope is pointing at the sky.",
+    "tts_script": "A telescope is by the lake.",
     "choice_image_prompts": [
-      "A telescope pointing at the sky",
+      "A telescope by a lake",
       "A microscope",
       "A magnifying glass",
-      "A compass"
+      "A pendulum over a map"
     ],
     "status": "draft",
     "evidence": "A telescope",
     "why_not": {
       "1": "현미경 사진이에요",
       "2": "돋보기 사진이에요",
-      "3": "나침반 사진이에요"
+      "3": "지도 위에 쇠추가 매달린 사진이에요"
     },
     "key_expr": {
       "en": "telescope",
@@ -8345,7 +8362,7 @@
         ]
       }
     ],
-    "translation_ko": "망원경이 하늘을 향하고 있어요.",
+    "translation_ko": "호숫가에 망원경이 있어요.",
     "tmp_id": "L1-0088"
   },
   {
@@ -8369,17 +8386,17 @@
     "accent": "UK",
     "tts_script": "Headphones are on the desk.",
     "choice_image_prompts": [
-      "A tablet computer",
+      "A tablet and a cup of coffee",
       "Headphones on a desk",
       "A game controller",
-      "A smartphone"
+      "A hand holding a smartphone"
     ],
     "status": "draft",
     "evidence": "Headphones",
     "why_not": {
       "0": "태블릿 사진이에요",
       "2": "게임기 조종기 사진이에요",
-      "3": "스마트폰 사진이에요"
+      "3": "스마트폰을 든 사진이에요"
     },
     "key_expr": {
       "en": "headphones",
@@ -8402,15 +8419,23 @@
         ]
       },
       {
-        "q": "headphones desk",
+        "q": "headphones",
         "need": [
           "headphones"
         ],
-        "prefer": [],
+        "prefer": [
+          "desk"
+        ],
         "avoid": [
-          "person",
           "woman",
-          "man"
+          "girl",
+          "boy",
+          "listening",
+          "wearing",
+          "dj",
+          "tablet",
+          "controller",
+          "smartphone"
         ]
       },
       {
@@ -8430,7 +8455,13 @@
         ],
         "prefer": [],
         "avoid": [
-          "headphones"
+          "abstract",
+          "design",
+          "pattern",
+          "particles",
+          "headphone",
+          "tablet",
+          "game"
         ]
       }
     ],
@@ -8449,26 +8480,26 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'alarm clock'은 아침에 울리는 자명종 시계예요. 시계 사진을 고르면 돼요.",
+    "explanation_ko": "'alarm clock'은 아침에 울리는 자명종 시계예요. 침대 위 시계 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "AU",
-    "tts_script": "An alarm clock is next to the bed.",
+    "tts_script": "An alarm clock is on the bed.",
     "choice_image_prompts": [
       "A toothbrush",
       "A shower",
-      "An alarm clock next to a bed",
-      "Breakfast on a table"
+      "An alarm clock on a bed",
+      "A bowl of cereal"
     ],
     "status": "draft",
     "evidence": "An alarm clock",
     "why_not": {
       "0": "칫솔 사진이에요",
-      "1": "샤워기 사진이에요",
-      "3": "아침 식사 사진이에요"
+      "1": "샤워하는 사진이에요",
+      "3": "시리얼 그릇 사진이에요"
     },
     "key_expr": {
       "en": "alarm clock",
@@ -8522,7 +8553,7 @@
         ]
       }
     ],
-    "translation_ko": "침대 옆에 자명종 시계가 있어요.",
+    "translation_ko": "자명종 시계가 침대 위에 있어요.",
     "tmp_id": "L1-0090"
   },
   {
@@ -8537,30 +8568,30 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'picnic basket'은 소풍 바구니예요. 돗자리 위에 바구니가 놓인 사진이 정답이에요.",
+    "explanation_ko": "'apples'는 사과예요. 담요 위에 사과가 놓인 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "US",
-    "tts_script": "A picnic basket is on a blanket.",
+    "tts_script": "Apples are on a blanket.",
     "choice_image_prompts": [
       "Someone throwing a frisbee",
-      "A picnic basket on a blanket",
-      "A barbecue grill",
+      "Apples on a blanket",
+      "Fire in a barbecue grill",
       "An empty park bench"
     ],
     "status": "draft",
-    "evidence": "A picnic basket",
+    "evidence": "Apples",
     "why_not": {
       "0": "원반을 던지는 사진이에요",
-      "2": "바비큐 그릴 사진이에요",
+      "2": "바비큐 그릴에 불이 타는 사진이에요",
       "3": "공원 벤치 사진이에요"
     },
     "key_expr": {
-      "en": "picnic",
-      "ko": "소풍"
+      "en": "blanket",
+      "ko": "담요"
     },
     "miss_type": {
       "0": "P.other",
@@ -8611,7 +8642,7 @@
         ]
       }
     ],
-    "translation_ko": "돗자리 위에 소풍 바구니가 있어요.",
+    "translation_ko": "사과가 담요 위에 있어요.",
     "tmp_id": "L1-0091"
   },
   {
@@ -8714,30 +8745,30 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'bird feeder'는 새 모이통이에요. 새들이 모이통에서 먹는 사진이 정답이에요.",
+    "explanation_ko": "'branch'는 나뭇가지예요. 새가 나뭇가지에 앉아 있는 사진을 고르면 돼요.",
     "difficulty_label": 3,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "AU",
-    "tts_script": "Birds are eating from a bird feeder.",
+    "tts_script": "A small bird is sitting on a branch.",
     "choice_image_prompts": [
-      "Birds eating from a bird feeder",
-      "Ducks on a pond",
-      "Seagulls on a beach",
+      "A small bird sitting on a branch",
+      "Ducks by the water",
+      "Seagulls flying over the sea",
       "Eggs in a bird nest"
     ],
     "status": "draft",
-    "evidence": "a bird feeder",
+    "evidence": "on a branch",
     "why_not": {
-      "1": "연못에 오리가 있는 사진이에요",
-      "2": "해변의 갈매기 사진이에요",
+      "1": "물가에 오리가 있는 사진이에요",
+      "2": "바다 위를 나는 갈매기 사진이에요",
       "3": "새 둥지 사진이에요"
     },
     "key_expr": {
-      "en": "bird feeder",
-      "ko": "새 모이통"
+      "en": "branch",
+      "ko": "나뭇가지"
     },
     "miss_type": {
       "1": "P.other",
@@ -8746,14 +8777,21 @@
     },
     "choice_image_queries": [
       {
-        "q": "bird feeder birds",
+        "q": "small bird branch",
         "need": [
           "bird",
-          "feeder"
+          "branch"
         ],
         "prefer": [],
         "avoid": [
-          "duck"
+          "duck",
+          "gull",
+          "nest",
+          "egg",
+          "owl",
+          "eagle",
+          "parrot",
+          "feeder"
         ]
       },
       {
@@ -8789,7 +8827,7 @@
         ]
       }
     ],
-    "translation_ko": "새들이 모이통에서 먹이를 먹고 있어요.",
+    "translation_ko": "작은 새가 나뭇가지에 앉아 있어요.",
     "tmp_id": "L1-0093"
   },
   {
@@ -8815,15 +8853,15 @@
     "choice_image_prompts": [
       "Someone knitting",
       "Someone making a pot from clay",
-      "Paper folded into shapes",
-      "Someone painting on a canvas"
+      "A paper boat",
+      "Paintbrushes in a cup"
     ],
     "status": "draft",
     "evidence": "from clay",
     "why_not": {
       "0": "뜨개질하는 사진이에요",
-      "2": "종이접기 사진이에요",
-      "3": "캔버스에 그림을 그리는 사진이에요"
+      "2": "종이배 사진이에요",
+      "3": "붓이 꽂혀 있는 사진이에요"
     },
     "key_expr": {
       "en": "clay",
@@ -8893,26 +8931,26 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'rake'는 갈퀴로 긁어모은다는 뜻이에요. 낙엽을 한곳에 모으는 사진이 정답이에요.",
+    "explanation_ko": "'rake'는 갈퀴로 긁어모은다는 뜻이에요. 갈퀴로 낙엽을 모으는 사진이 정답이에요.",
     "difficulty_label": 4,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "UK",
-    "tts_script": "Leaves are being raked into a pile.",
+    "tts_script": "Leaves are being raked.",
     "choice_image_prompts": [
       "A lawn mower on the grass",
-      "Someone shoveling snow",
-      "A wheelbarrow in a garden",
-      "Someone raking leaves into a pile"
+      "A dog next to a snow shovel",
+      "A wheelbarrow full of firewood",
+      "Leaves being raked"
     ],
     "status": "draft",
-    "evidence": "raked into a pile",
+    "evidence": "being raked",
     "why_not": {
       "0": "잔디 깎는 기계 사진이에요",
-      "1": "눈을 치우는 사진이에요",
-      "2": "손수레 사진이에요"
+      "1": "눈 치우는 삽 옆에 개가 있는 사진이에요",
+      "2": "장작을 실은 손수레 사진이에요"
     },
     "key_expr": {
       "en": "rake",
@@ -8969,7 +9007,7 @@
         ]
       }
     ],
-    "translation_ko": "낙엽이 갈퀴로 한 무더기 모아지고 있어요.",
+    "translation_ko": "낙엽을 갈퀴로 긁어모으고 있어요.",
     "tmp_id": "L1-0095"
   },
   {
@@ -8984,30 +9022,30 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'get on'은 버스나 기차에 타다예요. 사람들이 버스에 오르는 사진이 정답이에요.",
-    "difficulty_label": 4,
+    "explanation_ko": "'inside the bus'는 버스 안이에요. 버스 안 자리에 사람들이 앉은 사진이 정답이에요.",
+    "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.travel"
     ],
     "accent": "AU",
-    "tts_script": "Passengers are getting on the bus.",
+    "tts_script": "People are sitting inside the bus.",
     "choice_image_prompts": [
-      "Passengers getting on a bus",
+      "People sitting inside a bus",
       "A taxi on the street",
-      "People waiting on a train platform",
-      "Bicycles parked in a row"
+      "A woman waiting at a train station",
+      "Bicycles covered with snow"
     ],
     "status": "draft",
-    "evidence": "getting on the bus",
+    "evidence": "inside the bus",
     "why_not": {
       "1": "택시 사진이에요",
-      "2": "기차를 기다리는 사진이에요",
-      "3": "세워 둔 자전거 사진이에요"
+      "2": "기차역에서 여자가 기다리는 사진이에요",
+      "3": "눈에 덮인 자전거 사진이에요"
     },
     "key_expr": {
-      "en": "get on",
-      "ko": "타다"
+      "en": "inside",
+      "ko": "~ 안에"
     },
     "miss_type": {
       "1": "P.other",
@@ -9060,7 +9098,7 @@
         ]
       }
     ],
-    "translation_ko": "승객들이 버스에 타고 있어요.",
+    "translation_ko": "사람들이 버스 안에 앉아 있어요.",
     "tmp_id": "L1-0096"
   }
 ]
