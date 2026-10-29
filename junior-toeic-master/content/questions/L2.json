@@ -3042,7 +3042,7 @@
     ],
     "accent": "US",
     "tts_script": "How come you decided to take up the drums instead of the guitar?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How come",
     "why_not": {
       "0": "얼마나 자주 하는지 답했어요",
@@ -3078,7 +3078,7 @@
     ],
     "accent": "UK",
     "tts_script": "Could you remind me to hand the attendance sheet to Mr. Park?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Could you remind me",
     "why_not": {
       "0": "선생님 과목 이야기로 샜어요",
@@ -3114,7 +3114,7 @@
     ],
     "accent": "AU",
     "tts_script": "Wasn't the badminton club supposed to meet on Thursdays?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Wasn't the badminton club supposed to meet on Thursdays?",
     "why_not": {
       "1": "라켓 빌린 이야기에 낚였어요",
@@ -3150,7 +3150,7 @@
     ],
     "accent": "US",
     "tts_script": "Which would you prefer, picking the team captain today or waiting until everyone is here?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Which would you prefer",
     "why_not": {
       "0": "골라 말해야 하는데 '네'라고 했어요",
@@ -3186,7 +3186,7 @@
     ],
     "accent": "AU",
     "tts_script": "What do you say we swap the dessert for fruit this time?",
-    "status": "draft",
+    "status": "active",
     "evidence": "What do you say we",
     "why_not": {
       "0": "어디 있는지만 답했어요",
@@ -3222,7 +3222,7 @@
     ],
     "accent": "UK",
     "tts_script": "How soon can you have the posters ready for the talent show?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How soon",
     "why_not": {
       "1": "붙일 곳을 답했어요",
@@ -3258,7 +3258,7 @@
     ],
     "accent": "US",
     "tts_script": "Which floor is the music room on?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Which floor",
     "why_not": {
       "0": "층을 물었으니 예·아니오는 안 돼요",
@@ -3294,7 +3294,7 @@
     ],
     "accent": "UK",
     "tts_script": "How many people are coming to the picnic?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How many people",
     "why_not": {
       "1": "장소를 말하는 답이에요",
@@ -3330,7 +3330,7 @@
     ],
     "accent": "AU",
     "tts_script": "Shall I carry those heavy books for you?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Shall I carry",
     "why_not": {
       "0": "책이 어디 있는지 답했어요",
@@ -3366,7 +3366,7 @@
     ],
     "accent": "US",
     "tts_script": "What's wrong with your bike?",
-    "status": "draft",
+    "status": "active",
     "evidence": "What's wrong with",
     "why_not": {
       "1": "언제 타는지 답했어요",
@@ -3402,7 +3402,7 @@
     ],
     "accent": "AU",
     "tts_script": "Haven't you fed the hamster yet?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Haven't you fed the hamster yet?",
     "why_not": {
       "0": "있는 곳을 말하는 답이에요",
@@ -3438,7 +3438,7 @@
     ],
     "accent": "UK",
     "tts_script": "Do you want to hang the drawings by the window or next to the door?",
-    "status": "draft",
+    "status": "active",
     "evidence": "by the window or next to the door",
     "why_not": {
       "0": "골라 말해야 하는데 예로 답했어요",
@@ -3475,7 +3475,7 @@
     ],
     "accent": "US",
     "tts_script": "What made you decide to join the cooking club this semester?",
-    "status": "draft",
+    "status": "active",
     "evidence": "What made you decide",
     "why_not": {
       "0": "언제 어디서 하는지 답했어요",
@@ -3511,7 +3511,7 @@
     ],
     "accent": "UK",
     "tts_script": "Any chance you could show me how you folded that paper crane?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Any chance you could show me",
     "why_not": {
       "0": "무엇으로 만들었는지만 말했어요",
@@ -3548,7 +3548,7 @@
     ],
     "accent": "AU",
     "tts_script": "Whatever happened to the sunflower we were growing by the classroom window?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Whatever happened to the sunflower",
     "why_not": {
       "1": "해바라기 일반 이야기일 뿐이에요",
@@ -3585,7 +3585,7 @@
     ],
     "accent": "US",
     "tts_script": "I'm worried the paint on our posters won't dry before the parents arrive.",
-    "status": "draft",
+    "status": "active",
     "evidence": "I'm worried the paint on our posters won't dry",
     "why_not": {
       "1": "값 이야기는 걱정에 대한 답이 아니에요",
@@ -3622,7 +3622,7 @@
     ],
     "accent": "AU",
     "tts_script": "Would you mind telling me how many sandwiches we still need for the hiking trip?",
-    "status": "draft",
+    "status": "active",
     "evidence": "how many sandwiches we still need",
     "why_not": {
       "0": "어디 있는지 답했어요. 개수를 물었어요",
@@ -3659,7 +3659,7 @@
     ],
     "accent": "UK",
     "tts_script": "You didn't happen to notice who left this scarf on the bench, did you?",
-    "status": "draft",
+    "status": "active",
     "evidence": "notice who left this scarf",
     "why_not": {
       "0": "목도리 생김새만 말했어요",
@@ -3695,7 +3695,7 @@
     ],
     "accent": "US",
     "tts_script": "Why is the playground so quiet today?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Why is the playground so quiet today?",
     "why_not": {
       "1": "어디 있는지 묻는 말의 답이에요",
@@ -3731,7 +3731,7 @@
     ],
     "accent": "AU",
     "tts_script": "How many eggs do we need for the muffins?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How many eggs do we need",
     "why_not": {
       "0": "어디 있는지 묻는 말의 답이에요",
@@ -3767,7 +3767,7 @@
     ],
     "accent": "UK",
     "tts_script": "Oh no, I left my water bottle on the bus.",
-    "status": "draft",
+    "status": "active",
     "evidence": "I left my water bottle on the bus",
     "why_not": {
       "1": "들린 bus라는 말에 낚였어요",
@@ -3803,7 +3803,7 @@
     ],
     "accent": "US",
     "tts_script": "How long did it take you to learn that song on the recorder?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How long did it take you",
     "why_not": {
       "0": "어디인지 묻는 말의 답이에요",
@@ -3840,7 +3840,7 @@
     ],
     "accent": "AU",
     "tts_script": "Isn't the ice rink closed for repairs this month?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Isn't the ice rink closed for repairs this month?",
     "why_not": {
       "0": "들린 ice라는 말에 낚였어요",
@@ -3877,7 +3877,7 @@
     ],
     "accent": "UK",
     "tts_script": "Any idea where we could borrow a tent for the camping trip?",
-    "status": "draft",
+    "status": "active",
     "evidence": "where we could borrow a tent",
     "why_not": {
       "0": "들린 camping이라는 말에 낚였어요",

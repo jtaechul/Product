@@ -1279,7 +1279,7 @@
       },
       "translation_ko": "안내: 여러분, 안녕하세요. 주민 센터 토요일 요리 교실에 오신 것을 환영합니다. 오늘은 채소 수프를 만들 거라서 오븐은 전혀 쓰지 않습니다. 시작하기 전에 머리를 묶고 소매를 걷어 주세요. 양파는 제가 미리 썰어 두었는데, 여기 칼이 초보자에게는 꽤 날카롭기 때문입니다. 냄비가 끓어 넘치기 시작하면 저를 멀리서 부르지 말고 불을 줄여 주세요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why did the speaker cut the onions before the class?",
@@ -1359,7 +1359,7 @@
       },
       "translation_ko": "안내: 그린 힐 정원에 오신 것을 환영합니다. 걷는 동안 돌길 위로만 다녀 주세요. 길 옆 흙은 푹신하고 그곳에서 새싹이 자라고 있기 때문입니다. 온실 안은 따뜻하니 겉옷은 입지 말고 들고 다니시는 편이 좋겠습니다. 관람이 끝나면 여러분 모두 씨앗이 담긴 작은 화분을 하나씩 받게 되고, 정원사들이 물을 얼마나 자주 주어야 하는지 알려 드릴 거예요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does the guide ask visitors to stay on the stone path?",
@@ -1439,7 +1439,7 @@
       },
       "translation_ko": "안내: 여러분, 안녕하세요. 저는 보드게임 동아리의 지원입니다. 목요일에 열리는 우리 동아리 공개 행사에 여러분을 초대하고 싶어요. 규칙을 몰라도 괜찮아요. 같이 하면서 알려 드릴 거고, 쉬운 게임은 창가 탁자에 놓여 있거든요. 친구를 데려와도 좋지만 간식은 가져오지 말아 주세요. 카드가 끈적해지는데 게임마다 한 세트씩밖에 없답니다. 스무 명이 넘게 오면 3번 교실에서 체육관으로 옮길 거예요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does Jiwon ask people not to bring snacks?",
@@ -1519,7 +1519,7 @@
       },
       "translation_ko": "안내: 승객 여러분께 알려 드립니다. 10시 30분 그린 비치행 기차는 2번 승강장이 아니라 4번 승강장에서 출발합니다. 계단을 내려가서 왼쪽으로 가 주세요. 기차는 제시간에 출발합니다. 감사합니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the announcement mainly about?",
@@ -1599,7 +1599,7 @@
       },
       "translation_ko": "안내: 안녕하세요, 써니 베이커리에서 미나 어머니께 전화드립니다. 주문하신 초콜릿 케이크가 지금 다 되었습니다. 오늘 6시까지 냉장실에 보관해 두겠습니다. 오실 때 주문 번호를 가져와 주세요. 곧 뵙겠습니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why is the bakery calling?",
@@ -1680,7 +1680,7 @@
       },
       "translation_ko": "안내: 어린 자원봉사자 여러분, 좋은 아침입니다. 해피 포스 동물 보호소에 오신 것을 환영합니다. 오늘 여러분은 강아지들을 씻기고 물그릇을 채우는 일을 도와주실 거예요. 먼저 문 옆에 있는 파란 장갑을 끼어 주세요. 12시에는 정원에서 다 같이 점심을 먹겠습니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the talk mainly about?",
@@ -1760,7 +1760,7 @@
       },
       "translation_ko": "안내: 밴드부원 여러분, 안녕하세요. 오늘 연습은 음악실 대신 체육관에서 합니다. 작업자분들이 음악실 바닥에 칠을 하고 있어서 내일까지는 마르지 않기 때문입니다. 체육관에는 선반이 없으니 창고에서 각자 악보대를 가져오세요. 드럼 치는 사람들은 옆문을 이용해 주세요. 무거운 수레가 좁은 앞 계단으로는 들어가지 못하기 때문입니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why is today's practice in the gym?",
@@ -1840,7 +1840,7 @@
       },
       "translation_ko": "안내: 안녕, 다은아. 나 지수야. 내가 목요일마다 우리 반 햄스터 밥 주는 거 알지? 치과에서 내 검진을 목요일 오후로 옮겨서 그날은 방과 후에 남을 수가 없어. 내 차례를 네가 맡아 주고, 금요일 네 차례는 내가 맡으면 어떨까? 채소는 걱정하지 마. 이틀 치 당근을 이미 씻어서 작은 파란 상자에 넣어 두었어."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does Jisu want Daeun to do?",
@@ -1920,7 +1920,7 @@
       },
       "translation_ko": "안내: 레인보우 클라이밍 센터에 오신 것을 환영합니다. 벽을 잡기 전에 모든 참가자는 헬멧을 쓰고, 직원이 줄에 달린 고리를 확인하도록 해야 합니다. 처음 하는 분들은 왼쪽에 있는 초록색 벽에서 시작하세요. 빨간색 벽은 3주 과정을 마친 사람만 이용할 수 있습니다. 짝이 오르는 동안에는 두 손으로 줄을 잡고 위를 보세요. 그래야 아무도 너무 빨리 내려오지 않습니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why can most visitors today not use the red wall?",
@@ -2000,7 +2000,7 @@
       },
       "translation_ko": "안내: 학생 여러분, 좋은 아침입니다. 급식실에서 알려 드립니다. 오늘부터 우유 탁자 옆에 새 샐러드 바가 생깁니다. 샐러드는 원하는 만큼 가져가도 되지만, 접시에 담은 것은 모두 다 먹어 주세요. 그리고 각자 물병을 가져오는 것을 잊지 마세요. 맛있게 드세요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the announcement mainly about?",
@@ -2082,7 +2082,7 @@
       },
       "translation_ko": "안내: 여러분, 안녕하세요. 블루 웨이브 보트 투어에 오신 것을 환영합니다. 우리는 약 한 시간 동안 물개 섬 주위를 돕니다. 구명조끼는 항상 입고 계셔 주세요. 왼쪽을 보시면 바위 위에서 쉬고 있는 물개를 볼 수 있습니다. 배 뒤쪽에서 따뜻한 차를 무료로 드실 수 있습니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the speaker mainly doing?",
@@ -2163,7 +2163,7 @@
       },
       "translation_ko": "안내: 안녕, 세미야. 나 태호야. 우리 과학 포스터 때문에 전화했어. 오늘 공원은 바람이 너무 많이 불어서, 대신 우리 집에서 만나자. 세 시에 올 수 있어? 색펜을 가져와 줘. 사진은 내가 뽑아 올게. 곧 보자."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why is Taeho calling?",
