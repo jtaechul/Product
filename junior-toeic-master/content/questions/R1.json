@@ -4309,5 +4309,245 @@
     },
     "translation_ko": "유나는 저녁 식사 전에 독후감 쓰는 것을 끝냈습니다.",
     "tmp_id": "R1-0112"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Because the mountain path was slippery after the rain, our guide ______ us to walk slowly and hold the rope.",
+    "choices": [
+      "advised",
+      "refused",
+      "forgot",
+      "complained"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "천천히 걷고 밧줄을 잡으라고 알려 준 거예요. 이렇게 알려 주는 건 advised예요.",
+    "difficulty_label": 4,
+    "tags": [
+      "RS.vocab",
+      "RS.context",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "to walk slowly and hold the rope",
+    "why_not": {
+      "1": "'거절했다'라서 뒷말과 안 맞아요",
+      "2": "'잊었다'라서 자리에 안 어울려요",
+      "3": "'불평했다'라는 뜻이라 안 맞아요"
+    },
+    "key_expr": {
+      "en": "advise someone to walk slowly",
+      "ko": "천천히 걸으라고 알려 주다"
+    },
+    "miss_type": {
+      "1": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "비가 온 뒤 산길이 미끄러워서, 안내해 주시는 분이 저희에게 천천히 걷고 밧줄을 잡으라고 일러 주셨어요.",
+    "tmp_id": "R1-0113"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The recipe looked hard at first, but each step was so ______ that even my little brother could follow it.",
+    "choices": [
+      "confusing",
+      "messy",
+      "strange",
+      "simple"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "어린 동생도 따라 할 수 있었다고 했으니 단계가 쉬웠다는 뜻이에요. simple이 맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "RS.vocab",
+      "RS.context",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "even my little brother could follow it",
+    "why_not": {
+      "0": "'헷갈리는'이라 뒷말과 반대예요",
+      "1": "'지저분한'이라 뜻이 안 맞아요",
+      "2": "'이상한'이라 자리에 안 어울려요"
+    },
+    "key_expr": {
+      "en": "so simple that",
+      "ko": "너무 쉬워서 ~할 정도인"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "W.meaning",
+      "2": "W.meaning"
+    },
+    "translation_ko": "그 요리법은 처음엔 어려워 보였지만, 각 단계가 너무 쉬워서 제 어린 동생도 따라 할 수 있었어요.",
+    "tmp_id": "R1-0114"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Our class gathered old notebooks and plastic bottles so that we could ______ them instead of throwing them away.",
+    "choices": [
+      "borrow",
+      "waste",
+      "recycle",
+      "deliver"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "버리지 않고 다시 쓰려고 모은 거예요. 그래서 '재활용하다'인 recycle이 맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "RS.vocab",
+      "RS.context",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "instead of throwing them away",
+    "why_not": {
+      "0": "'빌리다'라서 뒷말과 안 맞아요",
+      "1": "'낭비하다'라 뜻이 반대예요",
+      "3": "'배달하다'라서 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "recycle them",
+      "ko": "그것들을 재활용하다"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "우리 반은 그냥 버리는 대신 재활용하려고 낡은 공책과 플라스틱 병을 모았어요.",
+    "tmp_id": "R1-0115"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The train tickets sell out quickly in summer, so Dad made a ______ two weeks before our family trip.",
+    "choices": [
+      "suggestion",
+      "mistake",
+      "promise",
+      "reservation"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "표가 금방 다 팔리니까 미리 자리를 잡아 둔 거예요. make a reservation은 '예약하다'예요.",
+    "difficulty_label": 4,
+    "tags": [
+      "RS.vocab",
+      "RS.context",
+      "V.travel"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "The train tickets sell out quickly in summer",
+    "why_not": {
+      "0": "'제안'이라 표를 잡는 말이 아니에요",
+      "1": "'실수'라서 앞말과 안 이어져요",
+      "2": "'약속'이라 표 자리와는 달라요"
+    },
+    "key_expr": {
+      "en": "make a reservation",
+      "ko": "예약을 하다"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "W.meaning",
+      "2": "W.meaning"
+    },
+    "translation_ko": "여름에는 기차표가 금방 매진돼서, 아빠는 가족 여행 두 주 전에 예약을 하셨어요.",
+    "tmp_id": "R1-0116"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Although the big dog looked a little scary at first, it was actually very ______ and licked my hand softly.",
+    "choices": [
+      "noisy",
+      "gentle",
+      "lazy",
+      "hungry"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "처음엔 무서워 보였지만 손을 부드럽게 핥았으니 순한 거예요. gentle이 맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "RS.vocab",
+      "RS.context",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "licked my hand softly",
+    "why_not": {
+      "0": "'시끄러운'이라 뒷말과 안 맞아요",
+      "2": "'게으른'이라 뜻이 어울리지 않아요",
+      "3": "'배고픈'이라 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "a gentle dog",
+      "ko": "순한 강아지"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "그 큰 개는 처음엔 조금 무서워 보였지만, 사실은 아주 순해서 제 손을 부드럽게 핥았어요.",
+    "tmp_id": "R1-0117"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "If the shoes do not fit your feet, the shop will ______ your money within seven days.",
+    "choices": [
+      "save",
+      "charge",
+      "refund",
+      "borrow"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "신발이 안 맞으면 낸 돈을 다시 돌려준다는 뜻이에요. refund가 '환불해 주다'예요.",
+    "difficulty_label": 4,
+    "tags": [
+      "RS.vocab",
+      "RS.context",
+      "V.shopping"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "If the shoes do not fit your feet",
+    "why_not": {
+      "0": "'모아 두다'라서 돌려주는 말이 아니에요",
+      "1": "'돈을 받다'라 뜻이 반대예요",
+      "3": "'빌리다'라서 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "refund your money",
+      "ko": "돈을 환불해 주다"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "신발이 발에 맞지 않으면, 가게에서 일곱 날 안에 돈을 환불해 줄 거예요.",
+    "tmp_id": "R1-0118"
   }
 ]

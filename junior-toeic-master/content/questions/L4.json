@@ -2230,5 +2230,491 @@
       }
     ],
     "tmp_id": "L4-0028"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good evening, stargazers, and thanks for joining the astronomy club on the school field. Before we begin, please switch your phone screens to the dimmest setting. Our eyes need about twenty minutes in the dark before faint stars appear, and one bright screen can undo that for everyone. If you must read your star map, use the red light I handed out. The telescope line starts after the sky check.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 별 보러 오신 여러분, 안녕하세요. 학교 운동장에서 열리는 천문 동아리 활동에 와 주셔서 고맙습니다. 시작하기 전에, 휴대폰 화면을 가장 어둡게 맞춰 주세요. 희미한 별이 보이려면 우리 눈이 어둠 속에서 20분쯤 있어야 하는데, 밝은 화면 하나가 모두의 그 시간을 되돌려 버릴 수 있어요. 별자리 지도를 꼭 봐야 한다면 제가 나눠 드린 빨간 불빛을 쓰세요. 하늘을 확인한 뒤에 망원경 줄 서기를 시작합니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why does the speaker ask everyone to dim their phone screens?",
+        "choices": [
+          "Because the club wants to save battery power",
+          "Because phones must be turned off on the field",
+          "Because bright light spoils everyone's night vision",
+          "Because the telescope is broken tonight"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "눈이 어둠에 익숙해지는 데 20분이 걸리는데, 밝은 화면 하나가 그걸 되돌린다고 했어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "one bright screen can undo that for everyone",
+        "why_not": {
+          "0": "배터리 아끼자는 말은 없었어요",
+          "1": "끄라는 게 아니라 어둡게 하라고 했어요",
+          "3": "망원경이 고장 났다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "the dimmest setting",
+          "ko": "가장 어두운 설정"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can be understood about the red light?",
+        "choices": [
+          "It makes the stars look brighter",
+          "It must be returned at the telescope line",
+          "It is only for the teachers",
+          "It can be used without hurting dark-ready eyes"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "지도를 꼭 봐야 하면 빨간 불빛을 쓰라고 했어요. 그건 어둠에 익은 눈을 망치지 않거든요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.detail",
+          "V.leisure"
+        ],
+        "evidence": "use the red light I handed out",
+        "why_not": {
+          "0": "별을 더 밝게 해 준다는 말은 없어요",
+          "1": "돌려주라는 말은 나오지 않았어요",
+          "2": "모두에게 나눠 준 불빛이에요"
+        },
+        "key_expr": {
+          "en": "hand out",
+          "ko": "나누어 주다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "L4-0029"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hi, Jaemin, it's Mrs. Han from next door. We're leaving for my sister's place tomorrow morning and won't be back until Sunday. Could you water the balcony plants every second day? The tomatoes droop fast, so they'll tell you when they're thirsty. Please don't feed the goldfish. I've already put a slow food block in the tank. The spare key is under the blue pot.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 안녕, 재민아. 옆집 한 아주머니야. 우리는 내일 아침에 언니 집으로 떠나서 일요일에나 돌아온단다. 이틀에 한 번씩 베란다 화분에 물을 줄 수 있겠니? 토마토는 금방 축 처져서, 물이 필요하면 네게 알려 줄 거야. 금붕어에게는 먹이를 주지 말아 줘. 어항에 천천히 녹는 먹이 덩어리를 이미 넣어 두었거든. 여분 열쇠는 파란 화분 아래에 있어."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why does the speaker mention the drooping tomatoes?",
+        "choices": [
+          "To explain how he can tell the plants need water",
+          "To warn him that the plants are already dead",
+          "To ask him to pick the tomatoes on Sunday",
+          "To tell him to water the plants twice a day"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "토마토가 축 처지면 목마르다는 신호라고 알려 준 거예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "they'll tell you when they're thirsty",
+        "why_not": {
+          "1": "죽었다는 말이 아니라 물이 필요하다는 신호예요",
+          "2": "토마토를 따라는 말은 없었어요",
+          "3": "이틀에 한 번 주라고 했어요"
+        },
+        "key_expr": {
+          "en": "every second day",
+          "ko": "이틀에 한 번"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.number"
+        }
+      },
+      {
+        "stem": "What does the speaker suggest about the goldfish?",
+        "choices": [
+          "They need food every second day",
+          "He should take them next door",
+          "They already have food in the tank",
+          "Their tank must be cleaned on Sunday"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "어항에 천천히 녹는 먹이를 미리 넣어 두었으니 따로 주지 말라고 했어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "I've already put a slow food block in the tank",
+        "why_not": {
+          "0": "이틀에 한 번은 화분에 물 주는 일이에요",
+          "1": "금붕어를 옮기라는 말은 없었어요",
+          "3": "일요일은 아주머니가 돌아오는 날이에요"
+        },
+        "key_expr": {
+          "en": "Please don't feed ~",
+          "ko": "~에게 먹이를 주지 마세요"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L4-0030"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, runners, and welcome to the Family Fun Run. The course is four kilometres long, and there is one water station at the halfway point. If you feel too hot, slow down and walk. Finishing is the only goal today, and nobody is being timed. Runners under ten must stay beside an adult the whole way. Please leave your bags at the yellow tent, because the path is narrow near the pond.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 달리기 참가자 여러분, 안녕하세요. 가족 달리기 행사에 오신 것을 환영합니다. 코스는 4킬로미터이고, 중간 지점에 급수대가 하나 있습니다. 너무 더우면 속도를 늦추고 걸으세요. 오늘은 완주하는 것이 유일한 목표이고, 아무도 기록을 재지 않습니다. 열 살 미만 참가자는 끝까지 어른 옆에 있어야 합니다. 연못 근처 길이 좁으니 가방은 노란 천막에 맡겨 주세요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What does the speaker imply about the event?",
+        "choices": [
+          "Runners should try to beat a record",
+          "It is not a race about speed",
+          "Only fast runners may use the water station",
+          "The course is longer than last year's"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "완주가 목표이고 시간을 재지 않는다고 했으니, 빨리 달리는 시합이 아니에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Finishing is the only goal today, and nobody is being timed.",
+        "why_not": {
+          "0": "기록을 재지 않는다고 했어요",
+          "2": "급수대는 누구나 쓸 수 있어요",
+          "3": "작년과 비교한 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "nobody is being timed",
+          "ko": "아무도 기록을 재지 않다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why should runners leave their bags at the yellow tent?",
+        "choices": [
+          "Because bags are not allowed in the park",
+          "Because the tent sells water bottles",
+          "Because the run starts at the pond",
+          "Because the path by the pond is narrow"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "연못 옆 길이 좁아서 가방은 노란 천막에 맡기라고 했어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "because the path is narrow near the pond",
+        "why_not": {
+          "0": "공원에 가방을 못 가져온다는 말은 없어요",
+          "1": "물은 중간 지점 급수대에 있어요",
+          "2": "연못은 길이 좁은 곳으로 나왔어요"
+        },
+        "key_expr": {
+          "en": "leave your bags",
+          "ko": "가방을 맡기다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L4-0031"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, everyone. This is a message from the school office. Tomorrow is picture day. Please wear your school uniform and comb your hair before you come. Each class will walk to the gym with its teacher, starting with the first graders at nine o'clock. If you forget, don't worry. We will take extra photos next Wednesday.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 여러분, 좋은 아침입니다. 학교 교무실에서 알려 드립니다. 내일은 사진 찍는 날입니다. 교복을 입고 머리를 빗고 오세요. 각 반은 담임 선생님과 함께 체육관으로 갑니다. 9시에 1학년부터 시작합니다. 깜빡해도 걱정하지 마세요. 다음 주 수요일에 추가로 사진을 찍습니다."
+    },
+    "questions": [
+      {
+        "stem": "What is this message mainly about?",
+        "choices": [
+          "A new school uniform",
+          "A gym class game",
+          "Picture day at school",
+          "A trip for first graders"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "내일 사진 찍는 날이라고 알려 주는 안내예요. 교복과 체육관은 사진 찍을 때 필요한 이야기예요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "Tomorrow is picture day.",
+        "why_not": {
+          "0": "새 교복 이야기는 나오지 않았어요",
+          "1": "체육관은 사진 찍으러 가는 곳이에요",
+          "3": "1학년은 가장 먼저 찍을 뿐이에요"
+        },
+        "key_expr": {
+          "en": "picture day",
+          "ko": "사진 찍는 날"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "When can students take photos if they forget tomorrow?",
+        "choices": [
+          "Next Wednesday",
+          "Tomorrow at nine o'clock",
+          "In the school office today",
+          "On the last day of school"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "깜빡한 친구들은 다음 주 수요일에 다시 찍을 수 있어요. 9시는 1학년이 찍는 시각이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "We will take extra photos next Wednesday.",
+        "why_not": {
+          "1": "9시는 1학년이 가는 시각이에요",
+          "2": "교무실에서 찍는다는 말은 없어요",
+          "3": "방학 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "take extra photos",
+          "ko": "사진을 추가로 찍다"
+        },
+        "miss_type": {
+          "1": "M.number",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0032"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, neighbours. This is the building office with a short notice. From this week, recycling day moves from Monday to Thursday. Please bring your paper, bottles, and cans down to the yard behind the playground after six in the evening. Boxes must be flat, or we cannot take them. Thank you for your help.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 이웃 여러분, 안녕하세요. 관리 사무소에서 짧게 알려 드립니다. 이번 주부터 재활용하는 날이 월요일에서 목요일로 바뀝니다. 종이, 병, 캔은 저녁 6시 이후에 놀이터 뒤 마당으로 가져와 주세요. 상자는 납작하게 접어야 하며, 그러지 않으면 받을 수 없습니다. 협조해 주셔서 감사합니다."
+    },
+    "questions": [
+      {
+        "stem": "What is the notice mainly about?",
+        "choices": [
+          "A new playground",
+          "A lost box",
+          "A building party",
+          "A change to recycling day"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "재활용하는 날이 월요일에서 목요일로 바뀐다는 소식이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "recycling day moves from Monday to Thursday",
+        "why_not": {
+          "0": "놀이터는 장소를 알려 줄 때만 나와요",
+          "1": "상자는 납작하게 접으라는 말이에요",
+          "2": "모임 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "recycling day",
+          "ko": "재활용하는 날"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "A.echo",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where should people put their bottles and cans?",
+        "choices": [
+          "In the building office",
+          "In the yard behind the playground",
+          "Next to the playground slide",
+          "In front of each door"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "놀이터 뒤 마당으로 가져오라고 했어요. 관리 사무소는 안내를 해 주는 곳이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "down to the yard behind the playground",
+        "why_not": {
+          "0": "사무소는 안내만 하는 곳이에요",
+          "2": "미끄럼틀 이야기는 나오지 않았어요",
+          "3": "집 앞에 두라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "behind the playground",
+          "ko": "놀이터 뒤에"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0033"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome to the Little Star Theatre. Our puppet show, The Dancing Fox, begins in ten minutes. Please find your seat now and turn off your phone. Drinks are not allowed inside the hall, so please finish them in the lobby. After the show, the puppet makers will stay on the stage and answer your questions.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 리틀 스타 극장에 오신 것을 환영합니다. 인형극 '춤추는 여우'가 10분 뒤에 시작합니다. 지금 자리를 찾아 앉으시고 휴대전화를 꺼 주세요. 공연장 안에는 음료를 가지고 들어갈 수 없으니 로비에서 다 드시고 들어오세요. 공연이 끝난 뒤에는 인형을 만든 분들이 무대에 남아 여러분의 질문에 답해 드립니다."
+    },
+    "questions": [
+      {
+        "stem": "Why is the speaker talking?",
+        "choices": [
+          "To tell people what to do before the show starts",
+          "To teach people how to make a puppet",
+          "To sell drinks in the lobby",
+          "To say that the show is cancelled"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "공연 시작 전에 자리에 앉고 전화를 끄라고 알려 주는 안내예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Please find your seat now and turn off your phone.",
+        "why_not": {
+          "1": "인형 만드는 법은 알려 주지 않아요",
+          "2": "음료를 판다는 말은 없어요",
+          "3": "공연은 10분 뒤에 시작해요"
+        },
+        "key_expr": {
+          "en": "turn off your phone",
+          "ko": "휴대전화를 끄다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What can people do after the show?",
+        "choices": [
+          "Go up and play with the puppets",
+          "Drink juice inside the hall",
+          "Watch the show one more time",
+          "Ask the puppet makers questions"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "공연이 끝나면 인형을 만든 분들이 무대에서 질문을 받아 줘요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "the puppet makers will stay on the stage and answer your questions",
+        "why_not": {
+          "0": "만져 보라는 말은 없었어요",
+          "1": "공연장 안에서는 음료를 못 마셔요",
+          "2": "한 번 더 본다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "answer your questions",
+          "ko": "질문에 답해 주다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0034"
   }
 ]

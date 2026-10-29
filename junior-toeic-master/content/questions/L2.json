@@ -3893,5 +3893,440 @@
     },
     "translation_ko": "캠핑 갈 때 쓸 텐트를 어디서 빌릴 수 있는지 혹시 알아?",
     "tmp_id": "L2-0108"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I joined that class last month.",
+      "At half past four, right after we clean the clay off the tables.",
+      "It's in the room next to the art office."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "토요일에 도자기 수업이 몇 시에 끝나는지 물었어요. 4시 30분이라고 시각을 콕 집은 1번이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "Do you remember what time the pottery workshop finishes on Saturdays?",
+    "status": "draft",
+    "evidence": "what time the pottery workshop finishes on Saturdays",
+    "why_not": {
+      "0": "몇 시인지 물었는데 예로 답했어요",
+      "2": "시각이 아니라 장소를 말했어요"
+    },
+    "key_expr": {
+      "en": "half past four",
+      "ko": "4시 30분"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "토요일에 도자기 공방 수업이 몇 시에 끝나는지 기억나요?",
+    "tmp_id": "L2-0109"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It opens at nine thirty in the morning.",
+      "Yes, the aquarium is really worth visiting.",
+      "Three — get off right after the long bridge."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "여기서 수족관까지 몇 정거장인지 물었어요. 세 정거장이라고 수를 말한 2번이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.travel"
+    ],
+    "accent": "AU",
+    "tts_script": "How many stops is it to the aquarium from here?",
+    "status": "draft",
+    "evidence": "How many stops is it to the aquarium from here?",
+    "why_not": {
+      "0": "정거장 수 대신 여는 시각을 말했어요",
+      "1": "몇 개인지 물었으니 예는 안 돼요"
+    },
+    "key_expr": {
+      "en": "How many stops ~?",
+      "ko": "몇 정거장이에요?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.yesno"
+    },
+    "translation_ko": "여기서 수족관까지 몇 정거장이에요?",
+    "tmp_id": "L2-0110"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The second one from the bottom, behind the box of glue sticks.",
+      "No, I didn't paint anything today.",
+      "We bought them at the stationery store."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "여분 붓이 어느 칸에 있는지 물었어요. 아래에서 두 번째 칸이라고 콕 집어 알려 준 0번이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "Which shelf did you say the spare paintbrushes were on?",
+    "status": "draft",
+    "evidence": "Which shelf did you say the spare paintbrushes were on?",
+    "why_not": {
+      "1": "paint 소리에 낚여서 고른 답이에요",
+      "2": "어느 칸인지 대신 산 곳을 말했어요"
+    },
+    "key_expr": {
+      "en": "the second one from the bottom",
+      "ko": "아래에서 두 번째 것"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "여분 물감 붓이 어느 선반 칸에 있다고 했죠?",
+    "tmp_id": "L2-0111"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I already put mine in the blue bin.",
+      "Because our classroom got too messy.",
+      "Just clean milk cartons and one pair of scissors."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "내일 재활용 활동에 무엇을 가져와야 하는지 물었어요. 우유갑과 가위라고 알려 준 2번이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Could you tell me exactly what we need to bring for tomorrow's recycling project?",
+    "status": "draft",
+    "evidence": "what we need to bring for tomorrow's recycling project",
+    "why_not": {
+      "0": "재활용이라는 말에만 낚였어요",
+      "1": "가져올 물건 대신 까닭을 말했어요"
+    },
+    "key_expr": {
+      "en": "What do we need to bring?",
+      "ko": "무엇을 가져가야 해요?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "내일 재활용 활동에 정확히 무엇을 가져와야 하는지 알려 주실래요?",
+    "tmp_id": "L2-0112"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Eight, but she wants everyone changed ten minutes before that.",
+      "Yes, our coach explains things very well.",
+      "At the pool right next to the station."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "일곱 시인지 여덟 시인지 둘 중 하나를 고르라고 물었어요. 여덟 시라고 집어 말한 0번이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Hang on — did the coach say the swimming practice starts at seven or at eight?",
+    "status": "draft",
+    "evidence": "did the coach say the swimming practice starts at seven or at eight?",
+    "why_not": {
+      "1": "둘 중 고르라는데 예로 답했어요",
+      "2": "시각 대신 장소를 말했어요"
+    },
+    "key_expr": {
+      "en": "at seven or at eight?",
+      "ko": "일곱 시예요, 여덟 시예요?"
+    },
+    "miss_type": {
+      "1": "A.yesno",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "잠깐만요 — 코치님이 수영 연습이 일곱 시에 시작한다고 했나요, 여덟 시라고 했나요?",
+    "tmp_id": "L2-0113"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "They grew surprisingly fast this summer.",
+      "Tuesdays and Fridays, before the first bell rings.",
+      "With the green watering can by the door."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "토마토에 물 주는 날이 언제인지 물었어요. 화요일과 금요일이라고 알려 준 1번이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "Remind me which days the garden club has to water the tomato plants.",
+    "status": "draft",
+    "evidence": "which days the garden club has to water the tomato plants",
+    "why_not": {
+      "0": "날이 아니라 딴 이야기를 했어요",
+      "2": "날 대신 쓰는 도구를 말했어요"
+    },
+    "key_expr": {
+      "en": "Remind me which days ~",
+      "ko": "무슨 요일인지 다시 알려 줘"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "텃밭 동아리가 토마토에 물을 줘야 하는 날이 무슨 요일인지 다시 알려 주세요.",
+    "tmp_id": "L2-0114"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The corner store closes at nine.",
+      "I'll carry one of them for you.",
+      "Yes, I expected rain this morning."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "장바구니가 생각보다 무겁다는 말은 '좀 도와줘'라는 뜻이에요. 하나 들어 준다는 답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "These grocery bags are heavier than I expected.",
+    "status": "draft",
+    "evidence": "heavier than I expected",
+    "why_not": {
+      "0": "가게 문 닫는 시간은 말한 적 없어요",
+      "2": "expected라는 말에 낚였어요"
+    },
+    "key_expr": {
+      "en": "heavier than I expected",
+      "ko": "생각보다 더 무거운"
+    },
+    "miss_type": {
+      "0": "M.notsaid",
+      "2": "A.echo"
+    },
+    "translation_ko": "이 장바구니들이 생각보다 무겁네.",
+    "tmp_id": "L2-0115"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The bowl is light blue.",
+      "It's too spicy for me.",
+      "Shall I add a little salt?"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "국이 좀 싱겁다는 말은 간을 더 하자는 뜻이에요. 소금을 넣을까 묻는 답이 딱 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "This soup tastes a bit bland, doesn't it?",
+    "status": "draft",
+    "evidence": "tastes a bit bland",
+    "why_not": {
+      "0": "맛 이야기인데 그릇 색을 말해요",
+      "1": "싱겁다는 말과 뜻이 반대예요"
+    },
+    "key_expr": {
+      "en": "taste bland",
+      "ko": "맛이 싱겁다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "M.opposite"
+    },
+    "translation_ko": "이 국은 좀 싱겁지 않아?",
+    "tmp_id": "L2-0116"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "You can use the desk in my room.",
+      "He really has a lovely voice.",
+      "Yes, I love singing too."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "동생이 노래해서 공부가 안 된다는 말이에요. 조용한 자리를 빌려 준다는 답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.school",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "My little brother keeps singing while I'm trying to study.",
+    "status": "draft",
+    "evidence": "keeps singing while I'm trying to study",
+    "why_not": {
+      "1": "힘들다는 말에 칭찬으로 답했어요",
+      "2": "singing이라는 말에 낚였어요"
+    },
+    "key_expr": {
+      "en": "keep singing",
+      "ko": "계속 노래하다"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "A.echo"
+    },
+    "translation_ko": "제 남동생이 제가 공부하려는데 계속 노래를 불러요.",
+    "tmp_id": "L2-0117"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The ticket costs twenty dollars.",
+      "Yes, the line is really short today.",
+      "Let's come back after lunch, then."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "20분이나 줄을 섰다는 건 그만 기다리자는 뜻이에요. 이따 다시 오자는 답이 좋아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "We've been waiting in this line for twenty minutes already.",
+    "status": "draft",
+    "evidence": "waiting in this line for twenty minutes already",
+    "why_not": {
+      "0": "20이라는 숫자를 값에 갖다 붙였어요",
+      "1": "줄이 길다는 말과 뜻이 반대예요"
+    },
+    "key_expr": {
+      "en": "wait in line",
+      "ko": "줄을 서서 기다리다"
+    },
+    "miss_type": {
+      "0": "M.number",
+      "1": "M.opposite"
+    },
+    "translation_ko": "우리 이 줄에서 벌써 20분이나 기다렸어.",
+    "tmp_id": "L2-0118"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Then let's turn back and hike again tomorrow.",
+      "I packed sandwiches for everyone.",
+      "Yes, the sun is really bright now."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "어두워지는데 아직 반밖에 못 왔대요. 오늘은 내려가자는 답이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.infer",
+      "V.leisure",
+      "V.travel"
+    ],
+    "accent": "UK",
+    "tts_script": "It's getting dark, and we're only halfway up the hill.",
+    "status": "draft",
+    "evidence": "It's getting dark, and we're only halfway up the hill.",
+    "why_not": {
+      "1": "샌드위치 이야기는 나오지 않았어요",
+      "2": "어두워진다는 말과 뜻이 반대예요"
+    },
+    "key_expr": {
+      "en": "halfway up the hill",
+      "ko": "언덕 중간쯤"
+    },
+    "miss_type": {
+      "1": "M.notsaid",
+      "2": "M.opposite"
+    },
+    "translation_ko": "날이 어두워지는데 우리는 아직 언덕 중간밖에 못 왔어요.",
+    "tmp_id": "L2-0119"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "We finished in first place last year.",
+      "I'll ask Mina if she wants to join.",
+      "Great, we have enough runners then."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "한 명이 모자란다는 말이에요. 친구에게 물어보겠다는 답이 가장 잘 어울려요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.school",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Our relay team has only four runners, but we need five.",
+    "status": "draft",
+    "evidence": "only four runners, but we need five",
+    "why_not": {
+      "0": "지난해 등수 이야기는 없었어요",
+      "2": "한 명 모자란 것과 뜻이 반대예요"
+    },
+    "key_expr": {
+      "en": "We need one more.",
+      "ko": "한 명 더 필요해."
+    },
+    "miss_type": {
+      "0": "M.notsaid",
+      "2": "M.opposite"
+    },
+    "translation_ko": "우리 이어달리기 팀에 선수가 네 명뿐인데, 다섯 명이 필요해요.",
+    "tmp_id": "L2-0120"
   }
 ]
