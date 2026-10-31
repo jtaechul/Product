@@ -4549,5 +4549,239 @@
     },
     "translation_ko": "신발이 발에 맞지 않으면, 가게에서 일곱 날 안에 돈을 환불해 줄 거예요.",
     "tmp_id": "R1-0118"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Each of the club members ______ a small cactus to grow on the windowsill.",
+    "choices": [
+      "has",
+      "have",
+      "are having",
+      "having"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "Each of ~는 '한 명 한 명'을 말해요. 한 명씩 보는 거라서 has를 써요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.agreement",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Each of the club members",
+    "why_not": {
+      "1": "여럿일 때 쓰는 모양이에요",
+      "2": "가지고 있다는 뜻엔 쓰지 않아요",
+      "3": "혼자서는 쓸 수 없는 모양이에요"
+    },
+    "key_expr": {
+      "en": "Each of the members has ~",
+      "ko": "회원 한 명 한 명이 ~을 가지다"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "W.meaning",
+      "3": "G.form"
+    },
+    "translation_ko": "동아리 회원들은 저마다 창가에서 키울 작은 선인장을 하나씩 가지고 있어요.",
+    "tmp_id": "R1-0119"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The number of students who ride the school bus ______ every winter.",
+    "choices": [
+      "increase",
+      "increases",
+      "are increasing",
+      "have increased"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "말하는 것은 학생들이 아니라 '그 수' 하나예요. 하나니까 increases를 써요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.agreement",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "The number of students",
+    "why_not": {
+      "0": "하나를 말할 땐 s가 붙어요",
+      "2": "'그 수'는 하나라 are와 안 맞아요",
+      "3": "하나를 말할 땐 have를 안 써요"
+    },
+    "key_expr": {
+      "en": "The number of ~ increases",
+      "ko": "~의 수가 늘어나다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "학교 버스를 타는 학생들의 수는 겨울마다 늘어나요.",
+    "tmp_id": "R1-0120"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Neither my cousins nor my uncle ______ how to fix the broken bicycle chain.",
+    "choices": [
+      "know",
+      "are knowing",
+      "knows",
+      "knowing"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "neither A nor B는 뒤에 있는 말에 맞춰요. my uncle은 한 분이라 knows예요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.agreement",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "nor my uncle",
+    "why_not": {
+      "0": "바로 앞 my uncle과 짝이 안 맞아요",
+      "1": "know는 이렇게 쓰지 않아요",
+      "3": "혼자 쓸 수 없는 모양이에요"
+    },
+    "key_expr": {
+      "en": "Neither A nor B knows",
+      "ko": "A도 B도 모른다"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "제 사촌들도 삼촌도 끊어진 자전거 체인을 고치는 법을 몰라요.",
+    "tmp_id": "R1-0121"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My aunt, along with her two children, ______ our farm every autumn.",
+    "choices": [
+      "visit",
+      "are visiting",
+      "have visited",
+      "visits"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "along with ~는 덧붙이는 말이에요. 중심은 My aunt 한 분이라 visits를 써요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.agreement",
+      "V.travel"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "My aunt, along with her two children,",
+    "why_not": {
+      "0": "My aunt 한 분과 짝이 안 맞아요",
+      "1": "지금 하는 일이 아니에요",
+      "2": "해마다 하는 일에는 안 맞아요"
+    },
+    "key_expr": {
+      "en": "along with ~",
+      "ko": "~와 함께"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.form",
+      "2": "G.form"
+    },
+    "translation_ko": "제 이모는 두 아이와 함께 해마다 가을이면 우리 농장에 오세요.",
+    "tmp_id": "R1-0122"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Twenty minutes ______ enough time to warm up before the swimming lesson.",
+    "choices": [
+      "were",
+      "is",
+      "are",
+      "be"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "Twenty minutes는 '시간 한 덩어리'를 말해요. 하나처럼 보니까 is와 짝이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.agreement",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Twenty minutes",
+    "why_not": {
+      "0": "지난 일 이야기가 아니에요",
+      "2": "시간 한 덩어리는 is와 짝이에요",
+      "3": "그대로는 쓸 수 없는 모양이에요"
+    },
+    "key_expr": {
+      "en": "Twenty minutes is enough time",
+      "ko": "20분이면 충분한 시간이다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "20분이면 수영 수업 전에 몸을 푸는 데 충분한 시간이에요.",
+    "tmp_id": "R1-0123"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "There ______ a pair of woolen gloves in the lost-and-found box.",
+    "choices": [
+      "are",
+      "have",
+      "were",
+      "is"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "a pair of gloves는 장갑 '한 켤레'예요. 하나로 보니까 There is를 써요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.agreement",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "a pair of woolen gloves",
+    "why_not": {
+      "0": "한 켤레는 하나로 보고 말해요",
+      "1": "There have라고는 쓰지 않아요",
+      "2": "지금 있는 일이라 맞지 않아요"
+    },
+    "key_expr": {
+      "en": "a pair of gloves",
+      "ko": "장갑 한 켤레"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "2": "G.form"
+    },
+    "translation_ko": "분실물 상자 안에 털장갑 한 켤레가 있어요.",
+    "tmp_id": "R1-0124"
   }
 ]

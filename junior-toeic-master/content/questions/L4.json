@@ -2716,5 +2716,485 @@
     ],
     "status": "draft",
     "tmp_id": "L4-0034"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: All right, team, gather round before we start. The players from the other school are taller than us, but we have practised passing for three weeks, and that is where we are stronger. So keep the ball moving and don't try to run through them alone. One more thing: the ground is still wet from last night's rain, so take short steps near the goal. If you get tired, raise your hand and I'll send someone in. Nobody has to play the whole match.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 자, 얘들아, 시작하기 전에 모여 보자. 상대 학교 선수들이 우리보다 키가 크지만, 우리는 3주 동안 패스를 연습했고 바로 그 점이 우리가 더 잘하는 부분이야. 그러니 공을 계속 움직이고, 혼자서 뚫고 가려고 하지 마. 한 가지 더, 어젯밤 비 때문에 운동장이 아직 젖어 있으니 골대 근처에서는 보폭을 짧게 해. 힘들면 손을 들어, 그러면 다른 친구를 들여보낼게. 아무도 경기를 끝까지 다 뛰지 않아도 돼."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why does the coach talk about three weeks of passing practice?",
+        "choices": [
+          "To say practice was too long",
+          "To explain the rules of the game",
+          "To show the team what they are good at",
+          "To ask the players to grow taller"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "상대는 키가 크지만 우리는 패스를 잘한다고 했어요. 우리 팀의 잘하는 점을 알려 주는 말이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "we have practised passing for three weeks, and that is where we are stronger",
+        "why_not": {
+          "0": "연습이 길다고 불평하지 않았어요",
+          "1": "경기 규칙 설명은 없었어요",
+          "3": "키 이야기는 상대 팀 설명이에요"
+        },
+        "key_expr": {
+          "en": "that is where we are stronger",
+          "ko": "그 점이 우리가 더 잘해요"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What does the coach mean by \"Nobody has to play the whole match\"?",
+        "choices": [
+          "The match will finish early",
+          "Tired players can be changed",
+          "Only tall players will play",
+          "Everyone must stay on the field"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "힘들면 손을 들라고, 다른 친구를 넣어 준다고 했어요. 끝까지 혼자 참지 않아도 된다는 뜻이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "If you get tired, raise your hand and I'll send someone in.",
+        "why_not": {
+          "0": "경기가 일찍 끝난다는 말은 없어요",
+          "2": "키 큰 선수만 뛴다는 말은 없어요",
+          "3": "뜻이 반대예요"
+        },
+        "key_expr": {
+          "en": "send someone in",
+          "ko": "다른 선수를 들여보내다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "L4-0035"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hey, Nari, it's your cousin Jisoo. Everything is ready for Grandpa's birthday dinner on Saturday, except one thing. Your dad ordered a cake, but the shop only had a small one left, and now eleven people are coming. Could you bring some fruit and a few paper plates? Also, Grandpa still thinks it's just a quiet dinner with your family, so if he calls you tonight, please talk about something else. Ring me back if you can't find the plates.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 안녕, 나리야. 사촌 지수야. 토요일 할아버지 생신 저녁 준비는 한 가지만 빼고 다 됐어. 너희 아빠가 케이크를 주문했는데 가게에 작은 것밖에 없었대. 그런데 오는 사람이 열한 명이야. 과일이랑 종이 접시 몇 장 가져올 수 있을까? 그리고 할아버지는 아직 가족끼리 조용히 저녁 먹는 줄 아셔. 그러니 오늘 밤에 전화하시면 다른 이야기를 해 줘. 접시를 못 구하면 다시 전화 줘."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why does Jisoo ask Nari to bring fruit?",
+        "choices": [
+          "The cake may not be enough for everyone",
+          "Grandpa does not like cake",
+          "The cake shop was closed",
+          "Fruit is cheaper than cake"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "케이크는 작은 것뿐인데 올 사람이 열한 명이에요. 먹을 게 모자랄까 봐 과일을 부탁한 거예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.food"
+        ],
+        "evidence": "the shop only had a small one left, and now eleven people are coming",
+        "why_not": {
+          "1": "할아버지 입맛 이야기는 없어요",
+          "2": "가게는 문을 닫지 않았어요",
+          "3": "값 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "only had a small one left",
+          "ko": "작은 것만 남아 있었다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does Jisoo suggest about Grandpa?",
+        "choices": [
+          "He is cooking the dinner",
+          "He will pick up the cake",
+          "He invited eleven friends",
+          "He doesn't know about the big party"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "할아버지는 가족끼리 조용한 저녁인 줄 안대요. 그래서 전화 오면 다른 이야기를 하라고 했어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "Grandpa still thinks it's just a quiet dinner with your family",
+        "why_not": {
+          "0": "요리를 한다는 말은 없어요",
+          "1": "케이크는 아빠가 주문했어요",
+          "2": "열한 명은 오는 사람 수예요"
+        },
+        "key_expr": {
+          "en": "still thinks it's just a quiet dinner",
+          "ko": "조용한 저녁인 줄 안다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.number"
+        }
+      }
+    ],
+    "tmp_id": "L4-0036"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, everyone. Here is some news from the school fair team. On Friday we are running a swap market in the hall. Bring a toy or a board game you no longer use, but please check it first, because we can't take anything that is broken or missing a piece. For each item you bring, you will get one ticket, and you can use your tickets to choose something new to you. Last year a few pupils brought ten things and carried ten things home again, so think about how much you really want to take back.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 여러분, 안녕하세요. 학교 축제 팀에서 알려 드립니다. 금요일에 강당에서 물건 바꾸기 장터를 엽니다. 이제 쓰지 않는 장난감이나 보드게임을 가져오세요. 하지만 먼저 확인해 주세요. 망가졌거나 조각이 빠진 물건은 받을 수 없습니다. 가져온 물건 하나마다 표를 한 장 드리고, 그 표로 여러분에게 새로운 물건을 고를 수 있습니다. 작년에는 몇몇 학생이 열 개를 가져와서 다시 열 개를 들고 집에 갔어요. 그러니 정말 얼마나 가져가고 싶은지 생각해 보세요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why does the speaker talk about the pupils from last year?",
+        "choices": [
+          "To thank them for helping the fair team",
+          "To ask everyone to bring ten items",
+          "To warn that you may take home just as much",
+          "To explain why the market started late"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "열 개 가져와서 열 개 들고 갔다고 했어요. 너무 많이 가져가지 말라는 뜻으로 든 이야기예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "so think about how much you really want to take back",
+        "why_not": {
+          "0": "고맙다는 말은 하지 않았어요",
+          "1": "열 개를 가져오라고 하지 않았어요",
+          "3": "늦게 시작한 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "swap market",
+          "ko": "물건 바꾸기 장터"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.number",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will probably happen to a board game with a missing piece?",
+        "choices": [
+          "It will get two tickets",
+          "It will be fixed in the hall",
+          "It will be sold for money",
+          "It will not be taken"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "망가졌거나 조각이 빠진 물건은 받을 수 없다고 했어요. 그러니 받아 주지 않을 거예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "we can't take anything that is broken or missing a piece",
+        "why_not": {
+          "0": "표는 하나에 한 장이에요",
+          "1": "고쳐 준다는 말은 없어요",
+          "2": "돈으로 파는 장터가 아니에요"
+        },
+        "key_expr": {
+          "en": "missing a piece",
+          "ko": "조각이 빠진"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0037"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, riders, and welcome to the Saturday river path bike ride. Before we start, please check that your helmet is on tight and your bell works. We will ride slowly to Maple Bridge and back, about five kilometres in all. If you get tired, wait at the yellow bench and I will come back for you.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 자전거 타는 여러분, 안녕하세요. 토요일 강변길 자전거 타기에 오신 것을 환영합니다. 출발하기 전에 헬멧이 꽉 조여졌는지, 벨이 잘 울리는지 확인해 주세요. 우리는 메이플 다리까지 천천히 갔다가 돌아올 거예요. 모두 합쳐 5킬로미터쯤 됩니다. 힘들면 노란 벤치에서 기다리세요. 제가 다시 데리러 갈게요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the talk mainly about?",
+        "choices": [
+          "How to fix a broken bicycle",
+          "A bike race with big prizes",
+          "Getting ready for a group bike ride",
+          "How to buy a new helmet"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "다 같이 자전거를 타기 전에 무엇을 확인할지 알려 주는 이야기예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "welcome to the Saturday river path bike ride",
+        "why_not": {
+          "0": "자전거를 고치는 이야기는 없어요",
+          "1": "경주나 상품 이야기는 없어요",
+          "3": "헬멧을 사라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "group bike ride",
+          "ko": "다 같이 자전거 타기"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should riders do if they get tired?",
+        "choices": [
+          "Wait at the yellow bench",
+          "Ring the bell three times",
+          "Ride faster to Maple Bridge",
+          "Take off their helmet"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "힘들면 노란 벤치에서 기다리라고 했어요. 선생님이 데리러 와요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "wait at the yellow bench and I will come back for you",
+        "why_not": {
+          "1": "벨은 출발 전에 확인만 해요",
+          "2": "더 빨리 가라는 말은 없어요",
+          "3": "헬멧은 꽉 쓰라고 했어요"
+        },
+        "key_expr": {
+          "en": "get tired",
+          "ko": "힘들어지다"
+        },
+        "miss_type": {
+          "1": "A.echo",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "L4-0038"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, and welcome to Pine Tree Guesthouse. Let me tell you a few things about your stay. Breakfast is served in the dining room from seven to nine in the morning, and we have warm bread and fresh fruit every day. If you need extra towels, just call the front desk and we will bring them to your room. The small garden behind the house is open until ten at night.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 안녕하세요, 파인 트리 게스트하우스에 오신 것을 환영합니다. 머무시는 동안 알아 두실 점 몇 가지를 말씀드릴게요. 아침 식사는 아침 7시부터 9시까지 식당에서 드실 수 있고, 매일 따뜻한 빵과 신선한 과일이 나옵니다. 수건이 더 필요하시면 안내 데스크로 전화해 주세요. 방으로 가져다드리겠습니다. 집 뒤의 작은 정원은 밤 10시까지 열려 있습니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the speaker mainly doing?",
+        "choices": [
+          "Taking an order for dinner",
+          "Explaining things about the guests' stay",
+          "Showing the way to the train station",
+          "Asking guests to clean their rooms"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "손님들이 머무는 동안 알아 둘 것들을 하나씩 알려 주고 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.travel"
+        ],
+        "evidence": "Let me tell you a few things about your stay.",
+        "why_not": {
+          "0": "저녁 주문을 받지는 않아요",
+          "2": "기차역 이야기는 없었어요",
+          "3": "방 청소를 부탁하지 않았어요"
+        },
+        "key_expr": {
+          "en": "about your stay",
+          "ko": "머무는 동안의 안내"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should guests do if they need more towels?",
+        "choices": [
+          "Go to the dining room",
+          "Walk in the garden",
+          "Wait until seven in the morning",
+          "Call the front desk"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "수건이 더 필요하면 안내 데스크에 전화하라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "If you need extra towels, just call the front desk",
+        "why_not": {
+          "0": "식당은 아침 먹는 곳이에요",
+          "1": "정원은 수건과 상관없어요",
+          "2": "7시는 아침 식사 시각이에요"
+        },
+        "key_expr": {
+          "en": "extra towels",
+          "ko": "여분의 수건"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.number"
+        }
+      }
+    ],
+    "tmp_id": "L4-0039"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good afternoon, and welcome to the beginners' skating class at Silver Lake Ice Rink. First, pick up your skates at the counter and sit on the long bench to put them on. Everyone in this class must wear a helmet, even on the small rink. Our lesson starts at two o'clock and lasts one hour. After the lesson, you can warm up with hot chocolate in the cafe upstairs.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 안녕하세요. 실버 레이크 아이스링크의 초보자 스케이트 수업에 오신 것을 환영합니다. 먼저 카운터에서 스케이트를 받아서 긴 의자에 앉아 신으세요. 이 수업에 참여하는 모두는 작은 링크에서도 헬멧을 꼭 써야 합니다. 수업은 2시에 시작해서 한 시간 동안 합니다. 수업이 끝나면 위층 카페에서 따뜻한 코코아를 마시며 몸을 녹일 수 있어요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the main purpose of the talk?",
+        "choices": [
+          "To tell new skaters what to do",
+          "To sell tickets for a skating show",
+          "To teach the rules of a hockey game",
+          "To ask skaters to clean the ice"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "처음 배우는 친구들이 무엇을 해야 하는지 차례대로 알려 주고 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "welcome to the beginners' skating class at Silver Lake Ice Rink",
+        "why_not": {
+          "1": "표를 판다는 말은 없어요",
+          "2": "하키 이야기는 나오지 않아요",
+          "3": "얼음 청소 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "beginners' class",
+          "ko": "초보자 수업"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can the class do after the lesson?",
+        "choices": [
+          "Put on their skates",
+          "Watch a skating show",
+          "Have hot chocolate in the cafe",
+          "Learn how to wear a helmet"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "수업이 끝난 뒤에는 위층 카페에서 따뜻한 코코아를 마실 수 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "LS.detail"
+        ],
+        "evidence": "After the lesson, you can warm up with hot chocolate in the cafe upstairs.",
+        "why_not": {
+          "0": "스케이트는 수업 전에 신어요",
+          "1": "공연 이야기는 없었어요",
+          "3": "헬멧은 수업 전에 써요"
+        },
+        "key_expr": {
+          "en": "after the lesson",
+          "ko": "수업이 끝난 뒤에"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L4-0040"
   }
 ]

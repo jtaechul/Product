@@ -3905,5 +3905,219 @@
     ],
     "tmp_id": "R2-0038",
     "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hanbit Science Museum — Visitor Guide\nWelcome! Please read these rules (1) ______ before you begin your tour.\nThe hands-on room on the second floor is very (2) ______ among younger children, so it is crowded after three o'clock.\nDo not bring food or drinks into the exhibit halls.\nIf you have a question, look for our (3) ______. They wear orange vests and know the museum well.",
+      "translation_ko": "한빛 과학관 — 관람 안내\n환영합니다! 관람을 시작하기 전에 이 규칙을 주의 깊게 읽어 주세요.\n2층에 있는 체험실은 어린 아이들에게 아주 인기가 많아서, 3시가 지나면 붐빕니다.\n전시실 안으로는 음식이나 음료를 가지고 들어오지 마세요.\n궁금한 점이 있으면 저희 도우미를 찾아 주세요. 도우미들은 주황색 조끼를 입고 있고 과학관을 잘 알고 있습니다."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "care",
+          "careful",
+          "carefully",
+          "careless"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "규칙을 '어떻게' 읽으라는지 말해 주는 자리라 carefully가 맞아요. careful은 사람이나 물건이 어떤지 말할 때 써요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.pos",
+          "RS.vocab"
+        ],
+        "evidence": "Please read these rules",
+        "why_not": {
+          "0": "'조심'이라는 것 자체를 가리켜요",
+          "1": "읽는 방법을 말해 주지 못해요",
+          "3": "'조심성 없는'이라 뜻이 반대예요"
+        },
+        "key_expr": {
+          "en": "read carefully",
+          "ko": "주의 깊게 읽다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.form",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "popularly",
+          "popular",
+          "popularity",
+          "populate"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "very 뒤에서 체험실이 어떤 곳인지 설명하는 자리예요. 붐빈다고 했으니 '인기 많은' popular가 맞아요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.pos",
+          "V.school"
+        ],
+        "evidence": "so it is crowded after three o'clock",
+        "why_not": {
+          "0": "'어떻게'를 말해 주는 모양이에요",
+          "2": "'인기'라는 것 자체를 가리켜요",
+          "3": "'살게 하다'라는 다른 뜻이에요"
+        },
+        "key_expr": {
+          "en": "be popular among ~",
+          "ko": "~에게 인기가 많다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.form",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "help",
+          "helpful",
+          "helpfully",
+          "helpers"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "뒤에서 They가 주황색 조끼를 입는다고 했어요. 찾아야 하는 건 '사람들'이라 helpers가 맞아요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.pos",
+          "RS.context"
+        ],
+        "evidence": "They wear orange vests",
+        "why_not": {
+          "0": "조끼를 입는 사람을 가리키지 못해요",
+          "1": "'도움이 되는'이라는 설명하는 말이에요",
+          "2": "'어떻게'를 말해 주는 모양이에요"
+        },
+        "key_expr": {
+          "en": "look for ~",
+          "ko": "~을 찾다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.form",
+          "2": "G.form"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0039"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Jiwon,\nDid you hear about Star Night? This Friday our science club will set up three telescopes on the school roof. Last year thick clouds ruined everything, but this week the sky has been wonderfully (1) ______. We should get there before seven, because the line grows (2) ______ once the sun goes down. Bring a thick jacket, too — the roof is colder than you think. My brother went last year, and he says the moon's craters were the most (3) ______ part of the whole evening.\nSee you there!\nDaeun",
+      "translation_ko": "지원에게,\n'별 보는 밤' 소식 들었어요? 이번 주 금요일에 우리 과학 동아리가 학교 옥상에 망원경 세 대를 설치할 거예요. 작년에는 두꺼운 구름 때문에 다 망쳤지만, 이번 주에는 하늘이 놀랍도록 맑아요. 해가 지면 줄이 금방 길어지니까 우리 7시 전에는 도착하는 게 좋겠어요. 두꺼운 외투도 가져와요 — 옥상은 생각보다 추워요. 우리 오빠가 작년에 갔는데, 달의 분화구가 그날 저녁에서 가장 흥미로운 부분이었대요.\n거기서 봐요!\n다은"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "clear",
+          "clearly",
+          "clearness",
+          "cleared"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "wonderfully 뒤에서 하늘이 어떤지 말해 주는 자리예요. 구름이 없다는 뜻의 clear가 맞아요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.pos",
+          "RS.context"
+        ],
+        "evidence": "the sky has been wonderfully",
+        "why_not": {
+          "1": "'어떻게'를 말해 주는 모양이에요",
+          "2": "'맑음'이라는 것 자체를 가리켜요",
+          "3": "'치웠다'는 뜻이라 하늘과 안 맞아요"
+        },
+        "key_expr": {
+          "en": "a clear sky",
+          "ko": "맑은 하늘"
+        },
+        "miss_type": {
+          "1": "G.form",
+          "2": "G.form",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "quick",
+          "quickly",
+          "quicker",
+          "quickness"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "줄이 '어떻게' 길어지는지 말해 주는 자리라 quickly(빨리)가 맞아요. 그래서 일찍 가자고 한 거예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.pos",
+          "V.leisure"
+        ],
+        "evidence": "the line grows",
+        "why_not": {
+          "0": "줄이 어떤지 설명하는 말이에요",
+          "2": "둘을 견줄 때 쓰는 말이에요",
+          "3": "'빠름'이라는 것 자체를 가리켜요"
+        },
+        "key_expr": {
+          "en": "grow quickly",
+          "ko": "빠르게 길어지다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.form",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "interest",
+          "interestingly",
+          "interested",
+          "interesting"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "the most 뒤에서 분화구가 어떤지 설명해요. 남을 재미있게 하는 것에는 interesting을 써요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.pos",
+          "RS.vocab"
+        ],
+        "evidence": "were the most",
+        "why_not": {
+          "0": "'관심'이라는 것 자체를 가리켜요",
+          "1": "'어떻게'를 말해 주는 모양이에요",
+          "2": "사람이 느끼는 마음에 쓰는 말이에요"
+        },
+        "key_expr": {
+          "en": "the most interesting part",
+          "ko": "가장 흥미로운 부분"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.form",
+          "2": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0040"
   }
 ]

@@ -4328,5 +4328,438 @@
     },
     "translation_ko": "우리 이어달리기 팀에 선수가 네 명뿐인데, 다섯 명이 필요해요.",
     "tmp_id": "L2-0120"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, the ending was really surprising.",
+      "In the reading room on the second floor.",
+      "Only the first three, I'm fairly sure."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "몇 챕터를 읽어 와야 하는지 물었어요. '앞의 세 개'처럼 개수로 답하는 말이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "AU",
+    "tts_script": "Do you happen to remember how many chapters we're supposed to read before Thursday's book club discussion?",
+    "status": "draft",
+    "evidence": "how many chapters we're supposed to read",
+    "why_not": {
+      "0": "개수를 물었는데 예·아니오로 답했어요",
+      "1": "장소를 묻는 말의 답이에요"
+    },
+    "key_expr": {
+      "en": "how many chapters",
+      "ko": "몇 챕터인지"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "목요일 독서 모임 전에 몇 챕터까지 읽어 와야 하는지 혹시 기억나?",
+    "tmp_id": "L2-0121"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Your ticket says platform five — I just checked it.",
+      "No, I've never travelled by train before.",
+      "A window seat would be much nicer, wouldn't it?"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "3번인지 5번 승강장인지 헷갈린다고 했어요. 표를 보고 5번이라고 알려 주는 답이 맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.travel"
+    ],
+    "accent": "US",
+    "tts_script": "I can't remember whether our train leaves from platform three or platform five.",
+    "status": "draft",
+    "evidence": "platform three or platform five",
+    "why_not": {
+      "1": "둘 중 고르는 말에 예·아니오는 안 맞아요",
+      "2": "들린 기차 이야기에 낚였어요"
+    },
+    "key_expr": {
+      "en": "which platform",
+      "ko": "몇 번 승강장인지"
+    },
+    "miss_type": {
+      "1": "A.yesno",
+      "2": "A.echo"
+    },
+    "translation_ko": "우리 기차가 3번 승강장에서 떠나는지 5번에서 떠나는지 기억이 안 나.",
+    "tmp_id": "L2-0122"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The cookies we baked last week were delicious.",
+      "I'll pop down to the corner shop and buy another bag.",
+      "No, I don't own any measuring cups."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "밀가루가 두 컵 필요한데 한 컵뿐이래요. 가게에 가서 더 사 오겠다는 답이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "The recipe calls for two cups of flour, but there's only one cup left in the jar.",
+    "status": "draft",
+    "evidence": "there's only one cup left in the jar",
+    "why_not": {
+      "0": "지금 모자란 밀가루 이야기와 안 이어져요",
+      "2": "들린 cup이라는 말에 낚였어요"
+    },
+    "key_expr": {
+      "en": "The recipe calls for two cups.",
+      "ko": "조리법에 두 컵이 필요해요."
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "A.echo"
+    },
+    "translation_ko": "조리법에는 밀가루 두 컵이 필요한데, 통에 한 컵밖에 안 남았어요.",
+    "tmp_id": "L2-0123"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Rabbits sleep much more than hamsters do.",
+      "No, the zoo closes at five on weekdays.",
+      "I live right next to school, so I can come each morning."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "방학 내내 토끼에게 밥 줄 사람이 필요하대요. 매일 아침 올 수 있다는 답이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "Our class rabbit will need someone to feed it every day during the winter break.",
+    "status": "draft",
+    "evidence": "someone to feed it every day during the winter break",
+    "why_not": {
+      "0": "들린 토끼라는 말에 낚였어요",
+      "1": "토끼 밥 주는 이야기와 안 이어져요"
+    },
+    "key_expr": {
+      "en": "someone to feed it every day",
+      "ko": "매일 밥 줄 사람"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "우리 반 토끼는 겨울 방학 동안 매일 밥을 줄 사람이 필요해요.",
+    "tmp_id": "L2-0124"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Two more, and then we can cool down.",
+      "On the track behind the gym.",
+      "Because the weather is perfect for running."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "몇 바퀴 더 뛰어야 하는지 물었어요. '두 바퀴 더'처럼 수로 답하는 말이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "How many more laps do we have to run before the coach lets us stretch?",
+    "status": "draft",
+    "evidence": "How many more laps do we have to run",
+    "why_not": {
+      "1": "장소를 묻는 말의 답이에요",
+      "2": "까닭을 묻는 말의 답이에요"
+    },
+    "key_expr": {
+      "en": "How many more laps?",
+      "ko": "몇 바퀴 더 뛰어요?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "코치님이 스트레칭 시켜 주시기 전에 우리 몇 바퀴 더 뛰어야 해?",
+    "tmp_id": "L2-0125"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I'd love to join the choir someday.",
+      "They raised it to pay for the new costumes.",
+      "The concert hall holds three hundred people."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "표값이 생각보다 올랐다고 놀란 말이에요. 새 무대 옷값 때문에 올렸다는 답이 자연스러워요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.detail",
+      "V.shopping"
+    ],
+    "accent": "UK",
+    "tts_script": "I thought the choir concert tickets were three thousand won, but the poster says five.",
+    "status": "draft",
+    "evidence": "but the poster says five",
+    "why_not": {
+      "0": "값이 오른 까닭과 이어지지 않아요",
+      "2": "표값이 아닌 다른 수를 가져왔어요"
+    },
+    "key_expr": {
+      "en": "the poster says five",
+      "ko": "포스터에는 오천 원이래요"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "2": "M.number"
+    },
+    "translation_ko": "합창 음악회 표가 삼천 원인 줄 알았는데, 포스터에는 오천 원이라고 적혀 있네.",
+    "tmp_id": "L2-0126"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The washing machine is in the kitchen.",
+      "Yes, it's a lovely sunny day.",
+      "I'll run out and bring them in."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "구름이 어둡다는 건 곧 비가 온다는 뜻이에요. 널어 둔 빨래를 얼른 걷어 오겠다는 답이 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "The clothes are still out on the line, and those clouds look really dark.",
+    "status": "draft",
+    "evidence": "those clouds look really dark",
+    "why_not": {
+      "0": "세탁기 위치는 묻지 않았어요",
+      "1": "구름이 어둡다고 했는데 반대로 말했어요"
+    },
+    "key_expr": {
+      "en": "bring the clothes in",
+      "ko": "빨래를 걷어 오다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "M.opposite"
+    },
+    "translation_ko": "빨래가 아직 줄에 널려 있는데, 저 구름이 정말 어두워 보여.",
+    "tmp_id": "L2-0127"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I'll bring you a smaller pair.",
+      "Yes, I really like big boots.",
+      "They're twenty thousand won."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "한 치수 크다고 했으니 더 작은 걸 가져다주겠다는 말이 딱 맞아요. 가격 이야기는 아니에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.shopping"
+    ],
+    "accent": "UK",
+    "tts_script": "These boots are really nice, but they're one size too big.",
+    "status": "draft",
+    "evidence": "one size too big",
+    "why_not": {
+      "1": "big이라는 낱말에만 낚였어요",
+      "2": "값을 묻는 말이 아니었어요"
+    },
+    "key_expr": {
+      "en": "one size too big",
+      "ko": "한 치수 커요"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "이 부츠 정말 예쁜데, 한 치수가 커요.",
+    "tmp_id": "L2-0128"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I love sweet cookies.",
+      "Let's mix a new batch, then.",
+      "The sugar is in the top cupboard."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "설탕 대신 소금을 넣었으니 반죽을 새로 만들어야 해요. 그래서 다시 만들자는 답이 자연스러워요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "Oh no, I think I put salt in the cookie dough instead of sugar.",
+    "status": "draft",
+    "evidence": "I put salt in the cookie dough instead of sugar",
+    "why_not": {
+      "0": "지금은 맛을 좋아하는지 말할 때가 아니에요",
+      "2": "sugar만 같고 뜻이 안 이어져요"
+    },
+    "key_expr": {
+      "en": "instead of",
+      "ko": "~ 대신에"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "2": "A.echo"
+    },
+    "translation_ko": "이런, 쿠키 반죽에 설탕 대신 소금을 넣은 것 같아.",
+    "tmp_id": "L2-0129"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Three o'clock, I think.",
+      "Yes, the water is really cold.",
+      "Maybe we should ask someone for directions."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "같은 분수를 세 번이나 지났다는 건 길을 잃었다는 뜻이에요. 길을 물어보자는 답이 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.travel"
+    ],
+    "accent": "AU",
+    "tts_script": "We've walked past this same fountain three times already.",
+    "status": "draft",
+    "evidence": "this same fountain three times",
+    "why_not": {
+      "0": "three만 따라 하고 뜻이 달라요",
+      "1": "물이 차가운지는 이야기하지 않았어요"
+    },
+    "key_expr": {
+      "en": "ask for directions",
+      "ko": "길을 물어보다"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "우리 벌써 이 똑같은 분수를 세 번이나 지나왔어.",
+    "tmp_id": "L2-0130"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "There's almost no wind today.",
+      "Yes, running is good exercise.",
+      "I bought it at the park shop."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "연이 자꾸 떨어지는 건 바람이 없어서예요. 그래서 바람 이야기를 하는 답이 자연스러워요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "My kite keeps dropping as soon as I start running.",
+    "status": "draft",
+    "evidence": "My kite keeps dropping",
+    "why_not": {
+      "1": "running이라는 낱말에만 낚였어요",
+      "2": "어디서 샀는지 묻지 않았어요"
+    },
+    "key_expr": {
+      "en": "keep dropping",
+      "ko": "자꾸 떨어지다"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "내 연은 내가 달리기 시작하자마자 자꾸 떨어져.",
+    "tmp_id": "L2-0131"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, puppies are so cute.",
+      "He probably wants to go outside.",
+      "The door is painted green."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "강아지가 문을 긁는 건 밖에 나가고 싶다는 뜻이에요. 그 마음을 알아챈 답이 맞아요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "Listen, the puppy is scratching at the back door again.",
+    "status": "draft",
+    "evidence": "scratching at the back door",
+    "why_not": {
+      "0": "귀엽다는 말은 이 상황과 안 이어져요",
+      "2": "door만 같고 뜻이 달라요"
+    },
+    "key_expr": {
+      "en": "scratch at the door",
+      "ko": "문을 긁다"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "2": "A.echo"
+    },
+    "translation_ko": "들어 봐, 강아지가 또 뒷문을 긁고 있어.",
+    "tmp_id": "L2-0132"
   }
 ]
