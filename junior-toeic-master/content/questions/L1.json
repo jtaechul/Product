@@ -1,0 +1,9105 @@
+[
+  {
+    "type": "single",
+    "tmp_id": "L1-0001",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'riding a bicycle'는 자전거를 타고 있다는 뜻이라 자전거 타는 사진이 정답이에요. 공을 차는 사진은 하는 일이 달라요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "A boy is riding a bicycle.",
+    "choice_image_prompts": [
+      "A boy flying a kite in a park",
+      "A boy kicking a soccer ball on the grass",
+      "A boy riding a bicycle on a park path",
+      "A boy sitting on a park bench eating ice cream"
+    ],
+    "status": "active",
+    "evidence": "riding a bicycle",
+    "why_not": {
+      "0": "연을 날리는 사진이에요",
+      "1": "공을 차는 사진이에요",
+      "3": "아이스크림을 먹는 사진이에요"
+    },
+    "key_expr": {
+      "en": "ride a bicycle",
+      "ko": "자전거를 타다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "child flying kite park",
+        "need": [
+          "kite"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "bicycle",
+          "bike",
+          "silhouette"
+        ]
+      },
+      {
+        "q": "child playing soccer ball",
+        "need": [
+          "soccer"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "bicycle",
+          "bike"
+        ]
+      },
+      {
+        "q": "boy riding bicycle",
+        "need": [
+          "bicycle",
+          "riding"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "child eating ice cream",
+        "need": [
+          "ice cream"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "bicycle",
+          "bike"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "한 남자아이가 자전거를 타고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0002",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'A cat is sleeping'은 고양이가 자고 있다는 뜻이에요. 자는 강아지 사진은 자는 모습만 같고 동물이 달라요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "A cat is sleeping on the sofa.",
+    "choice_image_prompts": [
+      "A cat sleeping on a sofa in a living room",
+      "A dog sleeping on a rug in a living room",
+      "A cat drinking milk from a bowl on the floor",
+      "A cat playing with a ball of yarn on a chair"
+    ],
+    "status": "active",
+    "evidence": "sleeping on the sofa",
+    "why_not": {
+      "1": "자는 건 고양이가 아니라 강아지예요",
+      "2": "우유를 마시는 사진이에요",
+      "3": "장난감을 가지고 노는 사진이에요"
+    },
+    "key_expr": {
+      "en": "sleep on the sofa",
+      "ko": "소파에서 자다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "cat sleeping sofa",
+        "need": [
+          "cat",
+          "sleep"
+        ],
+        "prefer": [
+          "sofa"
+        ],
+        "avoid": [
+          "dog"
+        ]
+      },
+      {
+        "q": "dog sleeping floor",
+        "need": [
+          "dog",
+          "sleep"
+        ],
+        "prefer": [],
+        "avoid": [
+          "cat"
+        ]
+      },
+      {
+        "q": "cat drinking milk",
+        "need": [
+          "cat",
+          "milk"
+        ],
+        "prefer": [
+          "drinking"
+        ],
+        "avoid": [
+          "sleep"
+        ]
+      },
+      {
+        "q": "kitten playing toy",
+        "need": [
+          "cat",
+          "play"
+        ],
+        "prefer": [
+          "toy"
+        ],
+        "avoid": [
+          "sleep",
+          "dog"
+        ]
+      }
+    ],
+    "miss_type": {
+      "1": "M.swap",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "고양이 한 마리가 소파에서 자고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0003",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'buying apples'는 사과를 산다는 뜻이에요. 시장에서 사과를 주고받는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.shopping"
+    ],
+    "accent": "US",
+    "tts_script": "Someone is buying apples at the market.",
+    "choice_image_prompts": [
+      "A woman smelling flowers at a market stall",
+      "A man selling fish at a market stall",
+      "A woman carrying a basket of bread through a market",
+      "A woman handing money to a fruit seller for apples at a market stall"
+    ],
+    "status": "active",
+    "evidence": "buying apples",
+    "why_not": {
+      "0": "꽃 사진이에요. 사과가 아니에요",
+      "1": "사과가 아니라 생선 가게예요",
+      "2": "빵 바구니 사진이에요"
+    },
+    "key_expr": {
+      "en": "buy apples",
+      "ko": "사과를 사다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman smelling flowers",
+        "need": [
+          "flower"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "apple"
+        ]
+      },
+      {
+        "q": "fish market stall",
+        "need": [
+          "fish",
+          "market"
+        ],
+        "prefer": [],
+        "avoid": [
+          "apple"
+        ]
+      },
+      {
+        "q": "bread basket bakery",
+        "need": [
+          "bread",
+          "basket"
+        ],
+        "prefer": [],
+        "avoid": [
+          "apple"
+        ]
+      },
+      {
+        "q": "woman buying apples market",
+        "need": [
+          "apple",
+          "buying"
+        ],
+        "prefer": [],
+        "avoid": []
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "M.swap",
+      "2": "P.other"
+    },
+    "translation_ko": "누군가 시장에서 사과를 사고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0004",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'sandcastle'은 모래성이에요. 바닷가에 모래성이 있는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "There is a sandcastle on the beach.",
+    "choice_image_prompts": [
+      "Two children swimming in the sea near the shore",
+      "Two children building a sandcastle on a sunny beach",
+      "A child collecting seashells in a bucket on the beach",
+      "Two children playing with a beach ball on the sand"
+    ],
+    "status": "active",
+    "evidence": "a sandcastle",
+    "why_not": {
+      "0": "바다에서 헤엄치는 사진이에요",
+      "2": "조개를 줍는 사진이에요",
+      "3": "공놀이를 하는 사진이에요"
+    },
+    "key_expr": {
+      "en": "a sandcastle",
+      "ko": "모래성"
+    },
+    "choice_image_queries": [
+      {
+        "q": "children swimming sea",
+        "need": [
+          "swim"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "castle"
+        ]
+      },
+      {
+        "q": "children building sand castle beach",
+        "need": [
+          "castle",
+          "sand"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "sculpture",
+          "artwork"
+        ]
+      },
+      {
+        "q": "child collecting shells beach",
+        "need": [
+          "shell"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "castle",
+          "wallpaper"
+        ]
+      },
+      {
+        "q": "children playing beach ball",
+        "need": [
+          "ball",
+          "beach"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "castle"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "해변에 모래성이 하나 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0005",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'painting a fence'는 울타리에 페인트를 칠한다는 뜻이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "A child is painting a fence.",
+    "choice_image_prompts": [
+      "A man painting a wooden fence with a brush in a backyard",
+      "A man mowing the lawn in a backyard",
+      "A man hammering nails into a wooden fence",
+      "A man watering plants with a hose in a backyard"
+    ],
+    "status": "active",
+    "evidence": "painting a fence",
+    "why_not": {
+      "1": "잔디를 깎는 사진이에요",
+      "2": "못과 망치 사진이에요",
+      "3": "호스로 물을 주는 사진이에요"
+    },
+    "key_expr": {
+      "en": "paint a fence",
+      "ko": "울타리를 칠하다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "painting a fence",
+        "need": [
+          "fence",
+          "paint"
+        ],
+        "prefer": [
+          "wood"
+        ],
+        "avoid": [
+          "street",
+          "urban",
+          "pictures",
+          "canvas",
+          "artist",
+          "easel",
+          "busker"
+        ]
+      },
+      {
+        "q": "man mowing lawn",
+        "need": [
+          "lawn",
+          "mowing"
+        ],
+        "prefer": [],
+        "avoid": [
+          "paint"
+        ]
+      },
+      {
+        "q": "hammering nail wood",
+        "need": [
+          "hammer",
+          "nail"
+        ],
+        "prefer": [
+          "wood"
+        ],
+        "avoid": [
+          "paint",
+          "confused"
+        ]
+      },
+      {
+        "q": "watering garden hose",
+        "need": [
+          "hose"
+        ],
+        "prefer": [
+          "garden"
+        ],
+        "avoid": [
+          "paint"
+        ]
+      }
+    ],
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "한 아이가 울타리에 페인트를 칠하고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0006",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "주스가 잔으로 들어가고 있어요. 마시는 사진이 아니라 따르는 사진이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "Orange juice is going into the glass.",
+    "choice_image_prompts": [
+      "A girl drinking juice from a glass at a kitchen table",
+      "A girl pouring juice from a bottle into a glass at a kitchen table",
+      "A girl washing a glass at the kitchen sink",
+      "A girl cutting an orange on a kitchen cutting board"
+    ],
+    "status": "active",
+    "evidence": "into the glass",
+    "why_not": {
+      "0": "이미 마시고 있는 사진이에요",
+      "2": "설거지를 하는 사진이에요",
+      "3": "오렌지 사진이에요"
+    },
+    "key_expr": {
+      "en": "into the glass",
+      "ko": "잔 속으로"
+    },
+    "choice_image_queries": [
+      {
+        "q": "girl drinking juice glass",
+        "need": [
+          "juice",
+          "drink"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": [
+          "pour"
+        ]
+      },
+      {
+        "q": "pouring orange juice into glass",
+        "need": [
+          "juice",
+          "pour"
+        ],
+        "prefer": [
+          "glass"
+        ],
+        "avoid": [
+          "oil",
+          "olive"
+        ]
+      },
+      {
+        "q": "washing dishes kitchen sink",
+        "need": [
+          "washing dishes"
+        ],
+        "prefer": [
+          "sink"
+        ],
+        "avoid": [
+          "pour"
+        ]
+      },
+      {
+        "q": "cutting orange fruit knife",
+        "need": [
+          "orange"
+        ],
+        "prefer": [
+          "knife"
+        ],
+        "avoid": [
+          "pour",
+          "juice"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "오렌지 주스가 컵 안으로 들어가고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0007",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'feeding the ducks'는 오리에게 먹이를 준다는 뜻이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "A girl is feeding the ducks.",
+    "choice_image_prompts": [
+      "A boy taking a photo of ducks at a pond",
+      "A boy eating a sandwich on a bench near a pond",
+      "A boy sailing a toy boat on a pond",
+      "A boy throwing pieces of bread to ducks at a pond"
+    ],
+    "status": "active",
+    "evidence": "feeding the ducks",
+    "why_not": {
+      "0": "사진을 찍는 사진이에요",
+      "1": "샌드위치를 먹는 사진이에요",
+      "2": "장난감 배 사진이에요"
+    },
+    "key_expr": {
+      "en": "feed the ducks",
+      "ko": "오리에게 먹이를 주다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "taking photo camera outdoors",
+        "need": [
+          "camera"
+        ],
+        "prefer": [
+          "photo"
+        ],
+        "avoid": [
+          "duck"
+        ]
+      },
+      {
+        "q": "child eating sandwich",
+        "need": [
+          "sandwich"
+        ],
+        "prefer": [
+          "eating"
+        ],
+        "avoid": [
+          "duck"
+        ]
+      },
+      {
+        "q": "toy boat water",
+        "need": [
+          "boat"
+        ],
+        "prefer": [
+          "toy"
+        ],
+        "avoid": [
+          "duck",
+          "wallpaper"
+        ]
+      },
+      {
+        "q": "boy feeding ducks bread",
+        "need": [
+          "duck",
+          "feeding"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": []
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "translation_ko": "한 여자아이가 오리들에게 먹이를 주고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0008",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "빨래가 줄에 널려 마르고 있어요. 널려 있는 옷이 보이는 사진이 정답이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "Clothes are drying on a line.",
+    "choice_image_prompts": [
+      "A woman folding dry clothes into a basket",
+      "A woman ironing a shirt on an ironing board",
+      "A woman hanging wet clothes on a clothesline in a garden",
+      "A woman loading clothes into a washing machine"
+    ],
+    "status": "active",
+    "evidence": "drying on a line",
+    "why_not": {
+      "0": "마른 빨래를 갠 사진이에요",
+      "1": "다림질을 하는 사진이에요",
+      "3": "세탁기 사진이에요"
+    },
+    "key_expr": {
+      "en": "on a line",
+      "ko": "줄에 널려"
+    },
+    "choice_image_queries": [
+      {
+        "q": "folded laundry clothes stack",
+        "need": [
+          "laundry",
+          "folded"
+        ],
+        "prefer": [],
+        "avoid": [
+          "clothesline",
+          "ironing"
+        ]
+      },
+      {
+        "q": "ironing shirt",
+        "need": [
+          "ironing"
+        ],
+        "prefer": [
+          "shirt"
+        ],
+        "avoid": [
+          "clothesline"
+        ]
+      },
+      {
+        "q": "hanging laundry clothesline",
+        "need": [
+          "clothesline",
+          "hang"
+        ],
+        "prefer": [
+          "laundry"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "washing machine laundry",
+        "need": [
+          "washing machine"
+        ],
+        "prefer": [
+          "laundry"
+        ],
+        "avoid": [
+          "clothesline",
+          "funny"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "빨랫줄에서 옷이 마르고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0009",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'playing the piano'는 피아노를 친다는 뜻이라 피아노 앞에 앉은 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "A girl is playing the piano.",
+    "choice_image_prompts": [
+      "A girl playing a guitar",
+      "A girl playing the piano",
+      "A child singing into a microphone",
+      "A girl playing a violin"
+    ],
+    "status": "active",
+    "evidence": "playing the piano",
+    "why_not": {
+      "0": "기타를 치는 사진이에요",
+      "2": "노래를 부르는 사진이에요",
+      "3": "바이올린을 켜는 사진이에요"
+    },
+    "key_expr": {
+      "en": "play the piano",
+      "ko": "피아노를 치다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "girl playing guitar",
+        "need": [
+          "guitar"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": [
+          "piano"
+        ]
+      },
+      {
+        "q": "girl playing piano keyboard",
+        "need": [
+          "piano"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": [
+          "guitar",
+          "guzheng",
+          "zither",
+          "harp",
+          "koto",
+          "organ",
+          "accordion"
+        ]
+      },
+      {
+        "q": "child singing microphone",
+        "need": [
+          "microphone"
+        ],
+        "prefer": [
+          "singing"
+        ],
+        "avoid": [
+          "piano",
+          "guitar"
+        ]
+      },
+      {
+        "q": "girl playing violin",
+        "need": [
+          "violin"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": [
+          "piano"
+        ]
+      }
+    ],
+    "translation_ko": "한 여자아이가 피아노를 치고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0010",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'brushing her teeth'는 이를 닦는다는 뜻이에요. 칫솔이 보이는 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "A child is brushing her teeth.",
+    "choice_image_prompts": [
+      "A child washing hands with soap",
+      "A child combing hair",
+      "A boy brushing his teeth",
+      "A child taking a bath"
+    ],
+    "status": "active",
+    "evidence": "brushing her teeth",
+    "why_not": {
+      "0": "손을 씻는 사진이에요",
+      "1": "머리를 빗는 사진이에요",
+      "3": "목욕하는 사진이에요"
+    },
+    "key_expr": {
+      "en": "brush one's teeth",
+      "ko": "이를 닦다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "child washing hands soap",
+        "need": [
+          "soap"
+        ],
+        "prefer": [
+          "hands"
+        ],
+        "avoid": [
+          "toothbrush"
+        ]
+      },
+      {
+        "q": "child combing hair",
+        "need": [
+          "comb"
+        ],
+        "prefer": [
+          "hair"
+        ],
+        "avoid": [
+          "toothbrush"
+        ]
+      },
+      {
+        "q": "child brushing teeth toothbrush",
+        "need": [
+          "toothbrush"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "comb"
+        ]
+      },
+      {
+        "q": "child taking bath",
+        "need": [
+          "bath"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "toothbrush"
+        ]
+      }
+    ],
+    "translation_ko": "한 아이가 이를 닦고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0011",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'walking her dog'는 개를 데리고 산책한다는 뜻이라 개와 함께 걷는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "A woman is walking her dog.",
+    "choice_image_prompts": [
+      "A woman riding a bicycle",
+      "A woman jogging in the park",
+      "A woman sitting on a bench reading",
+      "A woman walking her dog on a path"
+    ],
+    "status": "active",
+    "evidence": "walking her dog",
+    "why_not": {
+      "0": "자전거를 타는 사진이에요",
+      "1": "혼자 달리는 사진이에요",
+      "2": "벤치에 앉아 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "walk a dog",
+      "ko": "개를 산책시키다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman riding bicycle",
+        "need": [
+          "bicycle"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "dog"
+        ]
+      },
+      {
+        "q": "woman jogging park",
+        "need": [
+          "jogging"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "dog"
+        ]
+      },
+      {
+        "q": "woman sitting bench reading",
+        "need": [
+          "bench"
+        ],
+        "prefer": [
+          "reading"
+        ],
+        "avoid": [
+          "dog"
+        ]
+      },
+      {
+        "q": "woman walking dog park path",
+        "need": [
+          "dog",
+          "walking"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "couple",
+          "cat"
+        ]
+      }
+    ],
+    "translation_ko": "한 여자가 강아지를 산책시키고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0012",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'basketball'은 농구예요. 공을 골대에 넣는 경기 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "They are playing basketball.",
+    "choice_image_prompts": [
+      "Boys playing basketball on a court",
+      "Boys playing soccer on a field",
+      "A child playing tennis",
+      "A child playing baseball"
+    ],
+    "status": "active",
+    "evidence": "playing basketball",
+    "why_not": {
+      "1": "축구를 하는 사진이에요",
+      "2": "테니스를 하는 사진이에요",
+      "3": "야구를 하는 사진이에요"
+    },
+    "key_expr": {
+      "en": "play basketball",
+      "ko": "농구를 하다"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "basketball game players court",
+        "need": [
+          "basketball",
+          "playing"
+        ],
+        "avoid": [
+          "soccer",
+          "black and white",
+          "monochrome"
+        ]
+      },
+      {
+        "q": "boys playing soccer field",
+        "need": [
+          "soccer"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "basketball"
+        ]
+      },
+      {
+        "q": "child playing tennis",
+        "need": [
+          "tennis"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "basketball"
+        ]
+      },
+      {
+        "q": "child playing baseball",
+        "need": [
+          "baseball"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "basketball"
+        ]
+      }
+    ],
+    "translation_ko": "그들은 농구를 하고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0013",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'reading a book'은 책을 읽는다는 뜻이에요. 책을 펴 든 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "A woman is reading a book.",
+    "choice_image_prompts": [
+      "A child writing at a desk",
+      "A student using a computer",
+      "A child painting a picture",
+      "A girl reading a book in a library"
+    ],
+    "status": "active",
+    "evidence": "reading a book",
+    "why_not": {
+      "0": "글씨를 쓰는 사진이에요",
+      "1": "컴퓨터를 하는 사진이에요",
+      "2": "그림을 그리는 사진이에요"
+    },
+    "key_expr": {
+      "en": "read a book",
+      "ko": "책을 읽다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "child writing desk",
+        "need": [
+          "writing"
+        ],
+        "prefer": [
+          "desk"
+        ],
+        "avoid": [
+          "library"
+        ]
+      },
+      {
+        "q": "student using computer",
+        "need": [
+          "computer"
+        ],
+        "prefer": [
+          "student"
+        ],
+        "avoid": [
+          "library"
+        ]
+      },
+      {
+        "q": "child painting picture",
+        "need": [
+          "painting"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "library"
+        ]
+      },
+      {
+        "q": "girl reading book library",
+        "need": [
+          "library",
+          "book"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": []
+      }
+    ],
+    "translation_ko": "한 여자가 책을 읽고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0014",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'snowman'은 눈사람이에요. 눈밭에 눈사람이 서 있는 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "A snowman is standing in the snow.",
+    "choice_image_prompts": [
+      "Children sledding down a hill",
+      "Children making a snowman",
+      "A child skiing on snow",
+      "A child ice skating"
+    ],
+    "status": "active",
+    "evidence": "A snowman is standing",
+    "why_not": {
+      "0": "썰매를 타는 사진이에요",
+      "2": "스키를 타는 사진이에요",
+      "3": "스케이트를 타는 사진이에요"
+    },
+    "key_expr": {
+      "en": "a snowman",
+      "ko": "눈사람"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "children sledding snow",
+        "need": [
+          "sled"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "snowman"
+        ]
+      },
+      {
+        "q": "children building snowman winter",
+        "need": [
+          "snowman"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "toy",
+          "decoration",
+          "ornament",
+          "creche"
+        ]
+      },
+      {
+        "q": "child skiing snow",
+        "need": [
+          "skiing"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "snowman"
+        ]
+      },
+      {
+        "q": "child ice skating",
+        "need": [
+          "skating"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "snowman"
+        ]
+      }
+    ],
+    "translation_ko": "눈사람이 눈 속에 서 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0015",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'umbrella'는 우산, 'in the rain'은 비가 오는 중이에요. 우산을 든 사진이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "A woman is holding an umbrella in the rain.",
+    "choice_image_prompts": [
+      "A woman wearing sunglasses in the sun",
+      "A child jumping in a puddle",
+      "A woman holding an umbrella in the rain",
+      "Raindrops on a window"
+    ],
+    "status": "active",
+    "evidence": "holding an umbrella",
+    "why_not": {
+      "0": "해가 나는 사진이에요",
+      "1": "우산이 없는 사진이에요",
+      "3": "창문만 보이는 사진이에요"
+    },
+    "key_expr": {
+      "en": "in the rain",
+      "ko": "빗속에서"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman sunglasses sunny",
+        "need": [
+          "sunglasses"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "umbrella"
+        ]
+      },
+      {
+        "q": "child jumping puddle rain",
+        "need": [
+          "puddle"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "umbrella"
+        ]
+      },
+      {
+        "q": "woman umbrella rain street",
+        "need": [
+          "umbrella"
+        ],
+        "prefer": [
+          "raining"
+        ],
+        "avoid": [
+          "beach",
+          "sunny"
+        ]
+      },
+      {
+        "q": "raindrops window glass",
+        "need": [
+          "raindrops"
+        ],
+        "prefer": [
+          "window"
+        ],
+        "avoid": [
+          "umbrella"
+        ]
+      }
+    ],
+    "translation_ko": "한 여자가 빗속에서 우산을 들고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0016",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'a birthday cake'는 생일 케이크예요. 아이들이 생일 케이크 둘레에 앉아 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Children are sitting around a birthday cake.",
+    "choice_image_prompts": [
+      "A child opening a gift box",
+      "Colorful party balloons",
+      "Confetti falling at a party",
+      "Children sitting around a birthday cake"
+    ],
+    "status": "active",
+    "evidence": "around a birthday cake",
+    "why_not": {
+      "0": "선물 옆에 앉아 있는 아기 사진이에요",
+      "1": "풍선만 있는 사진이에요",
+      "2": "종이꽃가루가 날리는 사진이에요"
+    },
+    "key_expr": {
+      "en": "birthday cake",
+      "ko": "생일 케이크"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "child opening gift box",
+        "need": [
+          "gift"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "candle"
+        ]
+      },
+      {
+        "q": "party balloons colorful",
+        "need": [
+          "balloon"
+        ],
+        "prefer": [
+          "party"
+        ],
+        "avoid": [
+          "candle",
+          "cake"
+        ]
+      },
+      {
+        "q": "confetti party celebration",
+        "need": [
+          "confetti"
+        ],
+        "prefer": [
+          "party"
+        ],
+        "avoid": [
+          "candle"
+        ]
+      },
+      {
+        "q": "child blowing birthday candles cake",
+        "need": [
+          "birthday",
+          "child"
+        ],
+        "prefer": [
+          "candle"
+        ],
+        "avoid": []
+      }
+    ],
+    "translation_ko": "아이들이 생일 케이크 둘레에 앉아 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0017",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'fishing'은 낚시예요. 낚싯대를 들고 물가에 있는 사진을 고르면 돼요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "A man is fishing at the lake.",
+    "choice_image_prompts": [
+      "A man fishing beside a lake",
+      "A person rowing a small boat",
+      "A person swimming in a lake",
+      "A tent at a campsite"
+    ],
+    "status": "active",
+    "evidence": "fishing at the lake",
+    "why_not": {
+      "1": "노를 젓는 사진이에요",
+      "2": "헤엄치는 사진이에요",
+      "3": "천막만 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "go fishing",
+      "ko": "낚시하러 가다"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man fishing rod lake daytime",
+        "need": [
+          "fishing"
+        ],
+        "prefer": [
+          "lake"
+        ],
+        "avoid": [
+          "fishing net",
+          "sunset",
+          "sunrise",
+          "dusk"
+        ]
+      },
+      {
+        "q": "person rowing boat lake",
+        "need": [
+          "rowing"
+        ],
+        "prefer": [
+          "boat"
+        ],
+        "avoid": [
+          "fishing"
+        ]
+      },
+      {
+        "q": "person swimming lake water",
+        "need": [
+          "swimming"
+        ],
+        "prefer": [
+          "lake"
+        ],
+        "avoid": [
+          "fishing"
+        ]
+      },
+      {
+        "q": "camping tent lake",
+        "need": [
+          "camping"
+        ],
+        "prefer": [
+          "outdoors"
+        ],
+        "avoid": [
+          "fishing"
+        ]
+      }
+    ],
+    "translation_ko": "한 남자가 호수에서 낚시를 하고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0018",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'planting'은 심는다는 뜻이에요. 흙에 어린 모종을 심는 사진이 정답이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "Someone is planting a small plant.",
+    "choice_image_prompts": [
+      "A person watering plants with a watering can",
+      "A person raking fallen leaves",
+      "A girl planting flowers in soil",
+      "A person picking apples from a tree"
+    ],
+    "status": "active",
+    "evidence": "planting a small plant",
+    "why_not": {
+      "0": "물을 주는 사진이에요",
+      "1": "낙엽을 긁어모으는 사진이에요",
+      "3": "사과를 따는 사진이에요"
+    },
+    "key_expr": {
+      "en": "plant a small plant",
+      "ko": "작은 모종을 심다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "watering plants garden",
+        "need": [
+          "watering"
+        ],
+        "prefer": [
+          "garden"
+        ],
+        "avoid": [
+          "planting"
+        ]
+      },
+      {
+        "q": "raking leaves garden",
+        "need": [
+          "rake"
+        ],
+        "prefer": [
+          "leaves"
+        ],
+        "avoid": [
+          "planting"
+        ]
+      },
+      {
+        "q": "planting flowers garden soil",
+        "need": [
+          "planting"
+        ],
+        "prefer": [
+          "flower"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "picking apples tree",
+        "need": [
+          "apple",
+          "tree"
+        ],
+        "prefer": [
+          "picking"
+        ],
+        "avoid": [
+          "planting"
+        ]
+      }
+    ],
+    "translation_ko": "누군가 작은 식물을 심고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0019",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'pool'은 수영장이에요. 물속에서 헤엄치는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Two girls are swimming in the pool.",
+    "choice_image_prompts": [
+      "A child running on a track",
+      "A child riding a scooter",
+      "Children playing in the sand at the beach",
+      "A girl swimming in a swimming pool"
+    ],
+    "status": "active",
+    "evidence": "swimming in the pool",
+    "why_not": {
+      "0": "달리는 사진이에요",
+      "1": "킥보드를 타는 사진이에요",
+      "2": "모래에서 노는 사진이에요"
+    },
+    "key_expr": {
+      "en": "swim in the pool",
+      "ko": "수영장에서 수영하다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "child running track",
+        "need": [
+          "running"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "pool",
+          "swimming"
+        ]
+      },
+      {
+        "q": "child riding scooter",
+        "need": [
+          "scooter"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "pool"
+        ]
+      },
+      {
+        "q": "children playing sand beach",
+        "need": [
+          "beach"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "pool",
+          "swimming"
+        ]
+      },
+      {
+        "q": "girl swimming pool",
+        "need": [
+          "swimming",
+          "pool"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": []
+      }
+    ],
+    "translation_ko": "여자아이 두 명이 수영장에서 수영하고 있어요."
+  },
+  {
+    "type": "single",
+    "tmp_id": "L1-0020",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'typing on a laptop'은 노트북 자판을 친다는 뜻이라 노트북 앞에 앉은 사진이 정답이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.photo",
+      "V.work"
+    ],
+    "accent": "AU",
+    "tts_script": "A woman is typing on a laptop.",
+    "choice_image_prompts": [
+      "A woman talking on a smartphone",
+      "A woman typing on a laptop",
+      "A person writing on paper by hand",
+      "A person reading a newspaper"
+    ],
+    "status": "active",
+    "evidence": "typing on a laptop",
+    "why_not": {
+      "0": "전화하는 사진이에요",
+      "2": "손으로 쓰는 사진이에요",
+      "3": "신문을 보는 사진이에요"
+    },
+    "key_expr": {
+      "en": "type on a laptop",
+      "ko": "노트북으로 글자를 치다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman talking smartphone",
+        "need": [
+          "smartphone"
+        ],
+        "prefer": [
+          "talking"
+        ],
+        "avoid": [
+          "laptop"
+        ]
+      },
+      {
+        "q": "woman typing laptop",
+        "need": [
+          "laptop"
+        ],
+        "prefer": [
+          "typing"
+        ],
+        "avoid": [
+          "smartphone"
+        ]
+      },
+      {
+        "q": "writing on paper by hand",
+        "need": [
+          "writing"
+        ],
+        "prefer": [
+          "paper"
+        ],
+        "avoid": [
+          "laptop",
+          "computer"
+        ]
+      },
+      {
+        "q": "person reading newspaper",
+        "need": [
+          "newspaper"
+        ],
+        "prefer": [
+          "reading"
+        ],
+        "avoid": [
+          "laptop"
+        ]
+      }
+    ],
+    "translation_ko": "한 여자가 노트북으로 타자를 치고 있어요."
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'washing the dishes'는 설거지를 한다는 뜻이에요. 싱크대에서 그릇을 씻는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "A boy is washing the dishes.",
+    "choice_image_prompts": [
+      "A boy sweeping the floor with a broom",
+      "A boy drinking a glass of milk in a kitchen",
+      "A boy washing dishes at a kitchen sink",
+      "A boy putting plates on a dining table"
+    ],
+    "status": "active",
+    "evidence": "washing the dishes",
+    "why_not": {
+      "0": "빗자루로 바닥을 쓰는 사진이에요",
+      "1": "우유를 마시는 사진이에요",
+      "3": "그릇을 씻지 않고 상에 놓고 있어요"
+    },
+    "key_expr": {
+      "en": "wash the dishes",
+      "ko": "설거지를 하다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boy sweeping floor broom",
+        "need": [
+          "broom"
+        ],
+        "prefer": [
+          "sweeping"
+        ],
+        "avoid": [
+          "sink",
+          "dishes"
+        ]
+      },
+      {
+        "q": "boy drinking milk kitchen",
+        "need": [
+          "milk"
+        ],
+        "prefer": [
+          "drinking"
+        ],
+        "avoid": [
+          "sink",
+          "dishes"
+        ]
+      },
+      {
+        "q": "boy washing dishes kitchen sink",
+        "need": [
+          "dishes",
+          "sink"
+        ],
+        "prefer": [
+          "washing"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "child setting table plates",
+        "need": [
+          "plate",
+          "table"
+        ],
+        "prefer": [],
+        "avoid": [
+          "sink"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "M.swap"
+    },
+    "translation_ko": "한 남자아이가 설거지를 하고 있어요.",
+    "tmp_id": "L1-0021"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'is eating'은 먹고 있다는 말이에요. 아이가 무언가를 먹고 있는 사진이 정답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "A child is eating.",
+    "choice_image_prompts": [
+      "A child eating at a table",
+      "Students studying at desks in a classroom",
+      "Children running on a school playground",
+      "A teacher writing on a whiteboard in front of students"
+    ],
+    "status": "active",
+    "evidence": "is eating",
+    "why_not": {
+      "1": "교실에서 공부하는 사진이에요",
+      "2": "놀이터에서 노는 사진이에요",
+      "3": "선생님이 앞에서 가르치는 사진이에요"
+    },
+    "key_expr": {
+      "en": "eat",
+      "ko": "먹다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "child eating table",
+        "need": [
+          "child",
+          "eating"
+        ],
+        "prefer": [
+          "lunch"
+        ],
+        "avoid": [
+          "restaurant",
+          "birthday",
+          "cake"
+        ]
+      },
+      {
+        "q": "students studying classroom desks",
+        "need": [
+          "classroom"
+        ],
+        "prefer": [
+          "studying"
+        ],
+        "avoid": [
+          "food",
+          "cafeteria"
+        ]
+      },
+      {
+        "q": "children running school playground",
+        "need": [
+          "playground"
+        ],
+        "prefer": [
+          "running"
+        ],
+        "avoid": [
+          "food"
+        ]
+      },
+      {
+        "q": "teacher writing whiteboard classroom",
+        "need": [
+          "teacher",
+          "whiteboard"
+        ],
+        "prefer": [],
+        "avoid": [
+          "food"
+        ]
+      }
+    ],
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "아이가 먹고 있어요.",
+    "tmp_id": "L1-0022"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'kite'는 연이에요. 하늘에 연이 떠 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "A kite is flying in the sky.",
+    "choice_image_prompts": [
+      "Children blowing soap bubbles in a park",
+      "A child going down a playground slide",
+      "Children throwing a ball to each other in a grassy field",
+      "A colourful kite flying high in the blue sky"
+    ],
+    "status": "active",
+    "evidence": "A kite is flying in the sky",
+    "why_not": {
+      "0": "비눗방울을 부는 사진이에요",
+      "1": "놀이터 미끄럼틀 사진이에요",
+      "2": "아이들이 공을 차는 사진이에요"
+    },
+    "key_expr": {
+      "en": "a kite is flying",
+      "ko": "연이 날고 있다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "children blowing soap bubbles park",
+        "need": [
+          "bubbles"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "kite"
+        ]
+      },
+      {
+        "q": "child playground slide",
+        "need": [
+          "slide"
+        ],
+        "prefer": [
+          "playground"
+        ],
+        "avoid": [
+          "kite"
+        ]
+      },
+      {
+        "q": "children throwing ball field",
+        "need": [
+          "ball"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "kite"
+        ]
+      },
+      {
+        "q": "kite flying sky",
+        "need": [
+          "kite",
+          "sky"
+        ],
+        "prefer": [
+          "flying"
+        ],
+        "avoid": [
+          "surf",
+          "bird",
+          "raptor",
+          "paraglid"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "translation_ko": "연이 하늘을 날고 있어요.",
+    "tmp_id": "L1-0023"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'waiting at the bus stop'은 버스 정류장에서 기다린다는 뜻이에요. 정류장에 서 있는 여자 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.travel"
+    ],
+    "accent": "US",
+    "tts_script": "A woman is waiting at the bus stop.",
+    "choice_image_prompts": [
+      "A man driving a car on a road",
+      "A woman standing at a bus stop looking at her phone",
+      "A man sitting inside a moving train",
+      "A man walking across a crosswalk"
+    ],
+    "status": "active",
+    "evidence": "waiting at the bus stop",
+    "why_not": {
+      "0": "남자가 차를 운전하는 사진이에요",
+      "2": "남자가 기차역에 앉아 있는 사진이에요",
+      "3": "횡단보도를 건너는 사진이에요"
+    },
+    "key_expr": {
+      "en": "wait at the bus stop",
+      "ko": "버스 정류장에서 기다리다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man driving car road",
+        "need": [
+          "driving"
+        ],
+        "prefer": [
+          "car"
+        ],
+        "avoid": [
+          "bus stop"
+        ]
+      },
+      {
+        "q": "woman waiting bus stop",
+        "need": [
+          "bus stop"
+        ],
+        "prefer": [
+          "waiting",
+          "woman"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "man sitting inside train",
+        "need": [
+          "train"
+        ],
+        "prefer": [
+          "sitting"
+        ],
+        "avoid": [
+          "bus stop"
+        ]
+      },
+      {
+        "q": "man crossing crosswalk street",
+        "need": [
+          "crosswalk"
+        ],
+        "prefer": [
+          "walking"
+        ],
+        "avoid": [
+          "bus stop"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "2": "M.swap",
+      "3": "P.other"
+    },
+    "translation_ko": "한 여자가 버스 정류장에서 기다리고 있어요.",
+    "tmp_id": "L1-0024"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'in the oven'은 오븐 안이라는 뜻이에요. 피자가 오븐 안에 들어 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "A pizza is in the oven.",
+    "choice_image_prompts": [
+      "A cook chopping vegetables on a cutting board",
+      "A waiter carrying plates to a table",
+      "A family eating pizza together at a table",
+      "A pizza baking inside a hot wood-fired oven"
+    ],
+    "status": "active",
+    "evidence": "in the oven",
+    "why_not": {
+      "0": "채소를 써는 사진이에요",
+      "1": "식당 앞 거리 사진이에요",
+      "2": "피자가 오븐이 아니라 접시 위에 있어요"
+    },
+    "key_expr": {
+      "en": "in the oven",
+      "ko": "오븐 안에"
+    },
+    "choice_image_queries": [
+      {
+        "q": "cook chopping vegetables cutting board",
+        "need": [
+          "vegetables"
+        ],
+        "prefer": [
+          "chopping"
+        ],
+        "avoid": [
+          "pizza"
+        ]
+      },
+      {
+        "q": "waiter carrying plates restaurant",
+        "need": [
+          "waiter"
+        ],
+        "prefer": [
+          "plates"
+        ],
+        "avoid": [
+          "oven"
+        ]
+      },
+      {
+        "q": "family eating pizza table",
+        "need": [
+          "pizza",
+          "eating"
+        ],
+        "prefer": [
+          "family"
+        ],
+        "avoid": [
+          "oven"
+        ]
+      },
+      {
+        "q": "pizza wood fired oven",
+        "need": [
+          "pizza",
+          "oven"
+        ],
+        "prefer": [
+          "fire"
+        ],
+        "avoid": [
+          "drawing",
+          "sketch",
+          "painting",
+          "illustration"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "A.echo"
+    },
+    "translation_ko": "피자가 오븐 안에 있어요.",
+    "tmp_id": "L1-0025"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'checking a man's temperature'는 남자의 열을 재 본다는 말이에요. 체온계를 대고 있는 사진이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "A nurse is checking a man's temperature.",
+    "choice_image_prompts": [
+      "A nurse holding a thermometer to a man's forehead in a hospital",
+      "A dentist looking at a boy's teeth",
+      "A girl drinking water from a cup",
+      "A doctor writing on a clipboard at a desk"
+    ],
+    "status": "active",
+    "evidence": "checking a man's temperature",
+    "why_not": {
+      "1": "치과에서 이를 닦는 사진이에요",
+      "2": "코코아 잔 사진이에요",
+      "3": "열을 재지 않고 적고만 있어요"
+    },
+    "key_expr": {
+      "en": "check one's temperature",
+      "ko": "열을 재다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "nurse thermometer man patient",
+        "need": [
+          "thermometer"
+        ],
+        "prefer": [
+          "nurse",
+          "patient"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "dentist checking boy teeth",
+        "need": [
+          "dentist"
+        ],
+        "prefer": [
+          "teeth"
+        ],
+        "avoid": [
+          "thermometer"
+        ]
+      },
+      {
+        "q": "girl drinking water cup",
+        "need": [
+          "water"
+        ],
+        "prefer": [
+          "drinking"
+        ],
+        "avoid": [
+          "thermometer"
+        ]
+      },
+      {
+        "q": "doctor writing clipboard desk",
+        "need": [
+          "clipboard"
+        ],
+        "prefer": [
+          "doctor"
+        ],
+        "avoid": [
+          "thermometer"
+        ]
+      }
+    ],
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "G.clue"
+    },
+    "translation_ko": "간호사가 남자의 열을 재고 있어요.",
+    "tmp_id": "L1-0026"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'choosing a book'은 책을 고른다는 뜻이에요. 책꽂이에서 책을 찾는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "A boy is choosing a book from the shelf.",
+    "choice_image_prompts": [
+      "A boy standing in a library, looking at books on a shelf and reaching for one",
+      "A boy sitting on a chair with a book on his face, sleeping",
+      "A boy typing on a computer in a library",
+      "A boy wearing a backpack, walking out the library door"
+    ],
+    "status": "retired",
+    "evidence": "choosing a book",
+    "why_not": {
+      "1": "책을 얼굴에 덮고 자는 사진이에요",
+      "2": "컴퓨터를 하고 있는 사진이에요",
+      "3": "가방을 메고 걸어 나가는 사진이에요"
+    },
+    "key_expr": {
+      "en": "choose a book",
+      "ko": "책을 고르다"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boy library choosing book shelf",
+        "need": [
+          "boy",
+          "book",
+          "shelf"
+        ],
+        "prefer": [
+          "library"
+        ],
+        "avoid": [
+          "computer",
+          "sleeping"
+        ]
+      },
+      {
+        "q": "boy sleeping library book face",
+        "need": [
+          "sleeping"
+        ],
+        "prefer": [
+          "book"
+        ],
+        "avoid": [
+          "shelf",
+          "standing"
+        ]
+      },
+      {
+        "q": "boy typing computer library",
+        "need": [
+          "computer"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "shelf",
+          "book"
+        ]
+      },
+      {
+        "q": "boy backpack walking door",
+        "need": [
+          "backpack",
+          "walking"
+        ],
+        "prefer": [
+          "door"
+        ],
+        "avoid": [
+          "reading"
+        ]
+      }
+    ],
+    "translation_ko": "한 소년이 책꽂이에서 책을 고르고 있어요.",
+    "tmp_id": "L1-0027"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'playing badminton'은 배드민턴을 친다는 뜻이에요. 라켓을 든 여자아이 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "A girl is playing badminton.",
+    "choice_image_prompts": [
+      "Two children kicking a soccer ball on the grass in a park",
+      "A girl playing badminton with a racket in a park",
+      "Two children sitting on a park bench, drinking water",
+      "Two children riding bicycles on a path in a park"
+    ],
+    "status": "active",
+    "evidence": "playing badminton",
+    "why_not": {
+      "0": "축구를 하는 사진이에요",
+      "2": "가족이 벤치에 앉아 있는 사진이에요",
+      "3": "작은 차를 타고 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "play badminton",
+      "ko": "배드민턴을 치다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "children soccer ball grass",
+        "need": [
+          "soccer",
+          "children"
+        ],
+        "prefer": [
+          "grass"
+        ],
+        "avoid": [
+          "badminton",
+          "racket"
+        ]
+      },
+      {
+        "q": "children playing badminton park",
+        "need": [
+          "badminton",
+          "racket"
+        ],
+        "prefer": [
+          "park"
+        ],
+        "avoid": [
+          "soccer",
+          "bicycle"
+        ]
+      },
+      {
+        "q": "children sitting bench drinking water",
+        "need": [
+          "bench",
+          "drinking"
+        ],
+        "prefer": [
+          "water"
+        ],
+        "avoid": [
+          "badminton",
+          "playing"
+        ]
+      },
+      {
+        "q": "children riding bicycles park",
+        "need": [
+          "bicycle"
+        ],
+        "prefer": [
+          "park"
+        ],
+        "avoid": [
+          "badminton",
+          "ball"
+        ]
+      }
+    ],
+    "translation_ko": "한 여자아이가 배드민턴을 치고 있어요.",
+    "tmp_id": "L1-0028"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'vase of flowers'는 꽃병을 뜻해요. 탁자 위에 꽃이 담긴 병이 있는 사진이 정답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "A vase of flowers is sitting on the table.",
+    "choice_image_prompts": [
+      "A basket full of apples sitting on a wooden table",
+      "A cup of hot coffee sitting on a table",
+      "A vase full of beautiful flowers sitting on a table",
+      "A stack of empty plates sitting on a table"
+    ],
+    "status": "active",
+    "evidence": "A vase of flowers",
+    "why_not": {
+      "0": "사과가 담긴 바구니 사진이에요",
+      "1": "따뜻한 커피 잔이 놓인 사진이에요",
+      "3": "빈 접시들이 쌓여 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "vase of flowers",
+      "ko": "꽃병"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "basket apples wooden table",
+        "need": [
+          "basket",
+          "apples"
+        ],
+        "prefer": [
+          "table"
+        ],
+        "avoid": [
+          "flowers",
+          "vase"
+        ]
+      },
+      {
+        "q": "cup hot coffee table",
+        "need": [
+          "cup",
+          "coffee"
+        ],
+        "prefer": [
+          "table"
+        ],
+        "avoid": [
+          "flowers",
+          "vase"
+        ]
+      },
+      {
+        "q": "vase flowers table",
+        "need": [
+          "vase",
+          "flowers"
+        ],
+        "prefer": [
+          "table"
+        ],
+        "avoid": [
+          "basket",
+          "cup"
+        ]
+      },
+      {
+        "q": "stack empty plates table",
+        "need": [
+          "plates",
+          "stack"
+        ],
+        "prefer": [
+          "table"
+        ],
+        "avoid": [
+          "flowers",
+          "food"
+        ]
+      }
+    ],
+    "translation_ko": "꽃병이 탁자 위에 놓여 있어요.",
+    "tmp_id": "L1-0029"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'writing'은 글씨를 쓴다는 뜻이고 'board'는 칠판이에요. 선생님이 칠판에 글을 쓰는 사진을 찾으세요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "A teacher is writing on the board.",
+    "choice_image_prompts": [
+      "A teacher handing out books to students in a classroom",
+      "A teacher sitting at a desk, grading papers",
+      "A teacher erasing the chalkboard with an eraser",
+      "A teacher standing and writing words on the chalkboard"
+    ],
+    "status": "retired",
+    "evidence": "writing on the board",
+    "why_not": {
+      "0": "학생들에게 책을 나눠주는 사진이에요",
+      "1": "책상에 앉아 채점하는 사진이에요",
+      "2": "칠판을 지우개로 지우는 사진이에요"
+    },
+    "key_expr": {
+      "en": "write on the board",
+      "ko": "칠판에 쓰다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "teacher handing out books students",
+        "need": [
+          "teacher",
+          "books"
+        ],
+        "prefer": [
+          "students"
+        ],
+        "avoid": [
+          "board",
+          "writing"
+        ]
+      },
+      {
+        "q": "teacher sitting desk grading papers",
+        "need": [
+          "desk",
+          "papers"
+        ],
+        "prefer": [
+          "sitting"
+        ],
+        "avoid": [
+          "board",
+          "standing"
+        ]
+      },
+      {
+        "q": "teacher erasing chalkboard",
+        "need": [
+          "teacher",
+          "erasing"
+        ],
+        "prefer": [
+          "chalkboard"
+        ],
+        "avoid": [
+          "writing"
+        ]
+      },
+      {
+        "q": "teacher writing chalkboard classroom",
+        "need": [
+          "teacher",
+          "writing",
+          "board"
+        ],
+        "prefer": [
+          "chalkboard"
+        ],
+        "avoid": [
+          "erasing",
+          "desk"
+        ]
+      }
+    ],
+    "translation_ko": "선생님이 칠판에 글씨를 쓰고 있어요.",
+    "tmp_id": "L1-0030"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'taking a picture'는 사진을 찍는다는 뜻이에요. 카메라를 들고 찍는 모습을 찾으면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "A woman is taking a picture with a camera.",
+    "choice_image_prompts": [
+      "A girl painting a picture on a canvas in a park",
+      "A woman holding a camera to her eye, taking a picture",
+      "A girl looking through binoculars at a bird",
+      "A girl talking on a smartphone while walking"
+    ],
+    "status": "active",
+    "evidence": "taking a picture",
+    "why_not": {
+      "0": "양과 함께 있는 소녀 그림이에요",
+      "2": "망원경으로 먼 곳을 보는 사진이에요",
+      "3": "휴대폰으로 통화하는 사진이에요"
+    },
+    "key_expr": {
+      "en": "take a picture",
+      "ko": "사진을 찍다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "girl painting canvas park",
+        "need": [
+          "painting",
+          "canvas"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": [
+          "camera",
+          "picture"
+        ]
+      },
+      {
+        "q": "girl taking picture camera",
+        "need": [
+          "camera",
+          "picture"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": [
+          "painting",
+          "phone"
+        ]
+      },
+      {
+        "q": "girl looking binoculars bird",
+        "need": [
+          "binoculars"
+        ],
+        "prefer": [
+          "bird"
+        ],
+        "avoid": [
+          "camera",
+          "picture"
+        ]
+      },
+      {
+        "q": "girl talking smartphone walking",
+        "need": [
+          "smartphone",
+          "talking"
+        ],
+        "prefer": [
+          "walking"
+        ],
+        "avoid": [
+          "camera"
+        ]
+      }
+    ],
+    "translation_ko": "한 여자가 카메라로 사진을 찍고 있어요.",
+    "tmp_id": "L1-0031"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "벤치에 앉아서(sitting on a bench) 아이스크림을 먹는(eating ice cream) 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "A boy is sitting on a bench eating ice cream.",
+    "choice_image_prompts": [
+      "A boy sitting on a park bench eating a hamburger",
+      "A boy standing in front of an ice cream shop looking at the menu",
+      "A boy sitting on a park bench eating an ice cream cone",
+      "A boy lying down on a park bench taking a nap"
+    ],
+    "status": "retired",
+    "evidence": "sitting on a bench eating ice cream",
+    "why_not": {
+      "0": "햄버거를 먹고 있는 사진이에요",
+      "1": "가게 앞에 서서 메뉴를 보는 사진이에요",
+      "3": "벤치에 누워서 낮잠을 자는 사진이에요"
+    },
+    "key_expr": {
+      "en": "eat ice cream",
+      "ko": "아이스크림을 먹다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boy sitting bench eating hamburger",
+        "need": [
+          "boy",
+          "hamburger"
+        ],
+        "prefer": [
+          "bench"
+        ],
+        "avoid": [
+          "ice cream",
+          "sleeping"
+        ]
+      },
+      {
+        "q": "boy standing ice cream shop menu",
+        "need": [
+          "standing",
+          "menu"
+        ],
+        "prefer": [
+          "shop"
+        ],
+        "avoid": [
+          "bench",
+          "eating"
+        ]
+      },
+      {
+        "q": "boy sitting bench eating ice cream",
+        "need": [
+          "boy",
+          "ice cream",
+          "bench"
+        ],
+        "prefer": [
+          "eating"
+        ],
+        "avoid": [
+          "hamburger",
+          "sleeping"
+        ]
+      },
+      {
+        "q": "boy lying bench taking nap",
+        "need": [
+          "lying",
+          "nap"
+        ],
+        "prefer": [
+          "bench"
+        ],
+        "avoid": [
+          "eating",
+          "ice cream"
+        ]
+      }
+    ],
+    "translation_ko": "한 소년이 벤치에 앉아 아이스크림을 먹고 있어요.",
+    "tmp_id": "L1-0032"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'building a tower'는 탑을 쌓는다는 뜻이에요. 블록으로 높게 탑을 만드는 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "A boy is building a tower with blocks.",
+    "choice_image_prompts": [
+      "A boy building a tower with colorful blocks",
+      "A boy putting blocks into a toy box",
+      "A boy drawing a picture on a paper",
+      "A boy reading a book on the floor"
+    ],
+    "status": "retired",
+    "evidence": "building a tower with blocks",
+    "why_not": {
+      "1": "블록을 장난감 상자에 정리하는 사진이에요",
+      "2": "종이에 그림을 그리는 사진이에요",
+      "3": "바닥에 앉아 책을 읽는 사진이에요"
+    },
+    "key_expr": {
+      "en": "build a tower",
+      "ko": "탑을 쌓다"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boy building block tower",
+        "need": [
+          "boy",
+          "block"
+        ],
+        "prefer": [
+          "tower"
+        ],
+        "avoid": [
+          "drawing"
+        ]
+      },
+      {
+        "q": "boy putting blocks in box",
+        "need": [
+          "boy",
+          "block"
+        ],
+        "prefer": [
+          "box"
+        ],
+        "avoid": [
+          "tower"
+        ]
+      },
+      {
+        "q": "boy drawing picture",
+        "need": [
+          "drawing"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "block"
+        ]
+      },
+      {
+        "q": "boy reading book floor",
+        "need": [
+          "reading"
+        ],
+        "prefer": [
+          "book"
+        ],
+        "avoid": [
+          "block"
+        ]
+      }
+    ],
+    "translation_ko": "한 소년이 블록으로 탑을 쌓고 있어요.",
+    "tmp_id": "L1-0033"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'pulling a suitcase'는 여행 가방을 끈다는 뜻이에요. 손잡이를 잡고 바퀴 달린 가방을 끄는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.travel"
+    ],
+    "accent": "UK",
+    "tts_script": "A woman is pulling a suitcase at the airport.",
+    "choice_image_prompts": [
+      "A woman sleeping on a chair in the airport",
+      "A woman waiting for a taxi outside",
+      "A woman closing a suitcase",
+      "A woman pulling a suitcase with wheels"
+    ],
+    "status": "retired",
+    "evidence": "pulling a suitcase",
+    "why_not": {
+      "0": "의자에 앉아 잠을 자고 있는 사진이에요",
+      "1": "밖에서 택시를 기다리는 사진이에요",
+      "2": "여행 가방을 닫고 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "pull a suitcase",
+      "ko": "여행 가방을 끌다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman sleeping airport chair",
+        "need": [
+          "woman",
+          "sleeping"
+        ],
+        "prefer": [
+          "airport"
+        ],
+        "avoid": [
+          "suitcase"
+        ]
+      },
+      {
+        "q": "woman waiting taxi",
+        "need": [
+          "woman",
+          "waiting"
+        ],
+        "prefer": [
+          "taxi"
+        ],
+        "avoid": [
+          "suitcase"
+        ]
+      },
+      {
+        "q": "woman closing suitcase",
+        "need": [
+          "woman",
+          "suitcase"
+        ],
+        "prefer": [
+          "closing"
+        ],
+        "avoid": [
+          "pulling"
+        ]
+      },
+      {
+        "q": "woman pulling suitcase wheels",
+        "need": [
+          "woman",
+          "suitcase",
+          "pulling"
+        ],
+        "prefer": [
+          "airport"
+        ],
+        "avoid": [
+          "sleeping"
+        ]
+      }
+    ],
+    "translation_ko": "한 여자가 공항에서 여행 가방을 끌고 있어요.",
+    "tmp_id": "L1-0034"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'washing the window'는 창문을 닦는다는 뜻이에요. 빗자루나 설거지가 아니라 유리창을 청소하는 사진을 찾아보세요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "A man is washing the window.",
+    "choice_image_prompts": [
+      "A man sweeping the floor with a broom",
+      "A man washing a large glass window with a sponge",
+      "A man washing dishes at the sink",
+      "A man opening a window wide"
+    ],
+    "status": "retired",
+    "evidence": "washing the window",
+    "why_not": {
+      "0": "빗자루로 바닥을 쓸고 있는 사진이에요",
+      "2": "싱크대에서 설거지를 하는 사진이에요",
+      "3": "창문을 활짝 열고 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "wash the window",
+      "ko": "창문을 닦다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man sweeping floor broom",
+        "need": [
+          "sweeping"
+        ],
+        "prefer": [
+          "broom"
+        ],
+        "avoid": [
+          "window"
+        ]
+      },
+      {
+        "q": "man washing glass window",
+        "need": [
+          "washing",
+          "window"
+        ],
+        "prefer": [
+          "sponge"
+        ],
+        "avoid": [
+          "sweeping"
+        ]
+      },
+      {
+        "q": "man washing dishes sink",
+        "need": [
+          "washing",
+          "dishes"
+        ],
+        "prefer": [
+          "sink"
+        ],
+        "avoid": [
+          "window"
+        ]
+      },
+      {
+        "q": "man opening window",
+        "need": [
+          "opening",
+          "window"
+        ],
+        "prefer": [
+          "man"
+        ],
+        "avoid": [
+          "washing"
+        ]
+      }
+    ],
+    "translation_ko": "한 남자가 창문을 닦고 있어요.",
+    "tmp_id": "L1-0035"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'putting on'은 입거나 신는 중이라는 뜻이에요. 신발을 막 신고 있는 동작을 잘 나타낸 사진을 고르세요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "A girl is putting on her shoes.",
+    "choice_image_prompts": [
+      "A girl putting a hat on her head",
+      "A girl taking off her shoes",
+      "A girl putting on her sneakers",
+      "A girl putting on colorful socks"
+    ],
+    "status": "retired",
+    "evidence": "putting on her shoes",
+    "why_not": {
+      "0": "머리에 모자를 쓰고 있는 사진이에요",
+      "1": "신고 있던 신발을 벗고 있는 사진이에요",
+      "3": "신발이 아니라 양말을 신는 사진이에요"
+    },
+    "key_expr": {
+      "en": "put on shoes",
+      "ko": "신발을 신다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "M.opposite",
+      "3": "M.swap"
+    },
+    "choice_image_queries": [
+      {
+        "q": "girl putting hat on head",
+        "need": [
+          "hat"
+        ],
+        "prefer": [
+          "head"
+        ],
+        "avoid": [
+          "shoes"
+        ]
+      },
+      {
+        "q": "girl taking off shoes",
+        "need": [
+          "shoes",
+          "taking off"
+        ],
+        "prefer": [
+          "girl"
+        ],
+        "avoid": [
+          "putting on"
+        ]
+      },
+      {
+        "q": "girl putting on sneakers",
+        "need": [
+          "shoes",
+          "putting on"
+        ],
+        "prefer": [
+          "sneakers"
+        ],
+        "avoid": [
+          "hat"
+        ]
+      },
+      {
+        "q": "girl putting on socks",
+        "need": [
+          "socks"
+        ],
+        "prefer": [
+          "putting on"
+        ],
+        "avoid": [
+          "shoes"
+        ]
+      }
+    ],
+    "translation_ko": "한 소녀가 신발을 신고 있어요.",
+    "tmp_id": "L1-0036"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'cutting vegetables'는 채소를 썬다는 뜻이에요. 칼로 도마 위에서 채소를 자르고 있는 요리사 사진을 찾으면 돼요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.work",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "A chef is cutting vegetables on the board.",
+    "choice_image_prompts": [
+      "A chef stirring hot soup in a large pot",
+      "A chef cutting fresh vegetables with a knife on a wooden board",
+      "A chef carrying a delicious plate of food",
+      "A chef washing apples under running water"
+    ],
+    "status": "retired",
+    "evidence": "cutting vegetables on the board",
+    "why_not": {
+      "0": "냄비에 든 뜨거운 수프를 젓고 있는 사진이에요",
+      "2": "완성된 요리 접시를 나르는 사진이에요",
+      "3": "흐르는 물에 과일을 씻고 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "cut vegetables",
+      "ko": "채소를 썰다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "chef stirring soup pot",
+        "need": [
+          "chef",
+          "stirring"
+        ],
+        "prefer": [
+          "soup"
+        ],
+        "avoid": [
+          "cutting"
+        ]
+      },
+      {
+        "q": "chef cutting vegetables board",
+        "need": [
+          "chef",
+          "cutting",
+          "vegetables"
+        ],
+        "prefer": [
+          "board"
+        ],
+        "avoid": [
+          "stirring"
+        ]
+      },
+      {
+        "q": "chef carrying plate food",
+        "need": [
+          "chef",
+          "carrying"
+        ],
+        "prefer": [
+          "plate"
+        ],
+        "avoid": [
+          "cutting"
+        ]
+      },
+      {
+        "q": "chef washing fruits sink",
+        "need": [
+          "chef",
+          "washing"
+        ],
+        "prefer": [
+          "fruits"
+        ],
+        "avoid": [
+          "cutting"
+        ]
+      }
+    ],
+    "translation_ko": "요리사가 도마 위에서 채소를 썰고 있어요.",
+    "tmp_id": "L1-0037"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'setting up a tent'는 텐트를 친다는 뜻이에요. 밖에서 텐트 기둥을 세우며 텐트를 조립하는 모습이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Two friends are setting up a tent.",
+    "choice_image_prompts": [
+      "Two friends sleeping peacefully inside a tent",
+      "Two friends building a warm campfire in the woods",
+      "Two friends setting up a camping tent with poles",
+      "Two friends walking in the forest with heavy backpacks"
+    ],
+    "status": "retired",
+    "evidence": "setting up a tent",
+    "why_not": {
+      "0": "텐트 안에서 잠을 자고 있는 사진이에요",
+      "1": "장작으로 모닥불을 피우는 사진이에요",
+      "3": "무거운 배낭을 메고 숲을 걷는 사진이에요"
+    },
+    "key_expr": {
+      "en": "set up a tent",
+      "ko": "텐트를 치다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "friends sleeping inside tent",
+        "need": [
+          "sleeping"
+        ],
+        "prefer": [
+          "tent"
+        ],
+        "avoid": [
+          "setting up"
+        ]
+      },
+      {
+        "q": "friends building campfire woods",
+        "need": [
+          "campfire"
+        ],
+        "prefer": [
+          "friends"
+        ],
+        "avoid": [
+          "tent"
+        ]
+      },
+      {
+        "q": "friends setting up tent camping",
+        "need": [
+          "setting up",
+          "tent"
+        ],
+        "prefer": [
+          "friends"
+        ],
+        "avoid": [
+          "sleeping"
+        ]
+      },
+      {
+        "q": "friends walking with backpacks",
+        "need": [
+          "walking",
+          "backpack"
+        ],
+        "prefer": [
+          "forest"
+        ],
+        "avoid": [
+          "tent"
+        ]
+      }
+    ],
+    "translation_ko": "두 친구가 텐트를 치고 있어요.",
+    "tmp_id": "L1-0038"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'throwing a ball'은 공을 던진다는 뜻이에요. 소년이 강아지에게 공을 던져주는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "A boy is throwing a ball to his dog.",
+    "choice_image_prompts": [
+      "A dog sleeping on the green grass",
+      "A boy throwing a tennis ball to a dog in a park",
+      "A boy holding a frisbee with his dog",
+      "A boy riding a bicycle in a park"
+    ],
+    "status": "retired",
+    "evidence": "throwing a ball",
+    "why_not": {
+      "0": "강아지가 풀밭에서 자고 있어요",
+      "2": "공이 아니라 원반을 들고 있어요",
+      "3": "아이가 공원에서 자전거를 타고 있어요"
+    },
+    "key_expr": {
+      "en": "throw a ball",
+      "ko": "공을 던지다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "dog sleeping grass",
+        "need": [
+          "dog"
+        ],
+        "prefer": [
+          "sleeping"
+        ],
+        "avoid": [
+          "ball"
+        ]
+      },
+      {
+        "q": "boy throwing ball dog",
+        "need": [
+          "boy",
+          "ball",
+          "dog"
+        ],
+        "prefer": [
+          "throwing"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "boy holding frisbee dog",
+        "need": [
+          "boy",
+          "frisbee",
+          "dog"
+        ],
+        "prefer": [],
+        "avoid": [
+          "ball"
+        ]
+      },
+      {
+        "q": "boy riding bicycle park",
+        "need": [
+          "boy",
+          "bicycle"
+        ],
+        "prefer": [
+          "park"
+        ],
+        "avoid": [
+          "dog",
+          "ball"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "2": "A.echo",
+      "3": "P.other"
+    },
+    "translation_ko": "한 소년이 강아지에게 공을 던지고 있어요.",
+    "tmp_id": "L1-0039"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'putting a book'은 책을 넣는다는 뜻이에요. 가방 안에 책을 넣는 모습이 정답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "A girl is putting a book into her backpack.",
+    "choice_image_prompts": [
+      "A girl sitting on a chair and reading a book",
+      "A girl walking on the street wearing a backpack",
+      "A girl putting a textbook into her open backpack",
+      "A girl writing in a notebook with a pencil"
+    ],
+    "status": "retired",
+    "evidence": "putting a book",
+    "why_not": {
+      "0": "의자에 앉아서 책을 읽고 있어요",
+      "1": "가방을 메고 길을 걷고 있어요",
+      "3": "공책에 연필로 글씨를 쓰고 있어요"
+    },
+    "key_expr": {
+      "en": "put into",
+      "ko": "~안에 넣다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "girl reading book",
+        "need": [
+          "girl",
+          "book"
+        ],
+        "prefer": [
+          "reading"
+        ],
+        "avoid": [
+          "backpack"
+        ]
+      },
+      {
+        "q": "girl walking backpack",
+        "need": [
+          "girl",
+          "backpack"
+        ],
+        "prefer": [
+          "walking"
+        ],
+        "avoid": [
+          "putting",
+          "book"
+        ]
+      },
+      {
+        "q": "girl putting book into backpack",
+        "need": [
+          "girl",
+          "book",
+          "backpack"
+        ],
+        "prefer": [
+          "putting"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "girl writing in notebook",
+        "need": [
+          "girl",
+          "notebook",
+          "writing"
+        ],
+        "prefer": [],
+        "avoid": [
+          "backpack"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "한 소녀가 가방에 책을 넣고 있어요.",
+    "tmp_id": "L1-0040"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'wiping the table'은 탁자를 닦는다는 뜻이에요. 천으로 탁자를 닦는 사진을 고르세요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "A man is wiping the table with a cloth.",
+    "choice_image_prompts": [
+      "A man wiping a wooden table with a white cloth",
+      "A man sitting on a chair resting",
+      "Delicious food is placed on a table",
+      "A man sweeping the floor with a broom"
+    ],
+    "status": "retired",
+    "evidence": "wiping the table",
+    "why_not": {
+      "1": "남자가 의자에 앉아서 쉬고 있어요",
+      "2": "탁자 위에 요리가 놓여 있어요",
+      "3": "남자가 빗자루로 바닥을 쓸고 있어요"
+    },
+    "key_expr": {
+      "en": "wipe the table",
+      "ko": "탁자를 닦다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man wiping table cloth",
+        "need": [
+          "man",
+          "table",
+          "cloth"
+        ],
+        "prefer": [
+          "wiping"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "man sitting on chair",
+        "need": [
+          "man",
+          "chair"
+        ],
+        "prefer": [
+          "sitting"
+        ],
+        "avoid": [
+          "wiping"
+        ]
+      },
+      {
+        "q": "food on table",
+        "need": [
+          "food",
+          "table"
+        ],
+        "prefer": [],
+        "avoid": [
+          "wiping",
+          "man"
+        ]
+      },
+      {
+        "q": "man sweeping floor broom",
+        "need": [
+          "man",
+          "broom",
+          "floor"
+        ],
+        "prefer": [
+          "sweeping"
+        ],
+        "avoid": [
+          "table"
+        ]
+      }
+    ],
+    "miss_type": {
+      "1": "P.other",
+      "2": "A.echo",
+      "3": "W.meaning"
+    },
+    "translation_ko": "한 남자가 천으로 탁자를 닦고 있어요.",
+    "tmp_id": "L1-0041"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'sitting by the window'는 창가에 앉아 있다는 뜻이에요. 창문 옆에 앉아 있는 사진이 정답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "A woman is sitting by the window.",
+    "choice_image_prompts": [
+      "A woman sitting by a window",
+      "A woman opening a wooden door",
+      "A woman closing the curtains on a window",
+      "A woman sitting on a rock at the beach"
+    ],
+    "status": "active",
+    "evidence": "sitting by the window",
+    "why_not": {
+      "1": "창문이 아니라 문을 열고 있어요",
+      "2": "커튼 앞에 서 있는 사진이에요",
+      "3": "바닷가 바위에 앉아 있어요"
+    },
+    "key_expr": {
+      "en": "by the window",
+      "ko": "창가에"
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman sitting by window",
+        "need": [
+          "woman",
+          "window"
+        ],
+        "prefer": [
+          "sitting"
+        ],
+        "avoid": [
+          "opening"
+        ]
+      },
+      {
+        "q": "woman opening door",
+        "need": [
+          "woman",
+          "door"
+        ],
+        "prefer": [
+          "opening"
+        ],
+        "avoid": [
+          "window"
+        ]
+      },
+      {
+        "q": "woman closing curtains",
+        "need": [
+          "woman",
+          "curtains"
+        ],
+        "prefer": [
+          "closing"
+        ],
+        "avoid": [
+          "opening"
+        ]
+      },
+      {
+        "q": "woman sitting beach rock",
+        "need": [
+          "beach"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "window"
+        ]
+      }
+    ],
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "M.swap"
+    },
+    "translation_ko": "한 여자가 창가에 앉아 있어요.",
+    "tmp_id": "L1-0042"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'seesaw'는 시소예요. 풀밭 위에 시소가 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "There is a seesaw on the grass.",
+    "choice_image_prompts": [
+      "Two children swinging on swings in a playground",
+      "A spring seesaw standing on the grass in a park",
+      "Two children sliding down a slide in a park",
+      "Two children sitting and talking on a park bench"
+    ],
+    "status": "active",
+    "evidence": "a seesaw on the grass",
+    "why_not": {
+      "0": "그네가 있는 사진이에요",
+      "2": "미끄럼틀이 있는 사진이에요",
+      "3": "아이 둘이 벤치에 앉아 있어요"
+    },
+    "key_expr": {
+      "en": "seesaw",
+      "ko": "시소"
+    },
+    "choice_image_queries": [
+      {
+        "q": "children swinging playground",
+        "need": [
+          "children",
+          "swing"
+        ],
+        "prefer": [
+          "playground"
+        ],
+        "avoid": [
+          "seesaw"
+        ]
+      },
+      {
+        "q": "children riding seesaw",
+        "need": [
+          "children",
+          "seesaw"
+        ],
+        "prefer": [
+          "riding"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "children going down slide",
+        "need": [
+          "children",
+          "slide"
+        ],
+        "prefer": [
+          "playing"
+        ],
+        "avoid": [
+          "seesaw"
+        ]
+      },
+      {
+        "q": "children sitting on bench",
+        "need": [
+          "children",
+          "bench"
+        ],
+        "prefer": [
+          "sitting"
+        ],
+        "avoid": [
+          "seesaw"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "translation_ko": "풀밭 위에 시소가 있어요.",
+    "tmp_id": "L1-0043"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'carrying'은 나르다, 들고 가다는 뜻이에요. 큰 상자를 들고 가는 사진을 찾으면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.work"
+    ],
+    "accent": "AU",
+    "tts_script": "A man is carrying a large box.",
+    "choice_image_prompts": [
+      "A man opening a cardboard box to look inside",
+      "A man walking down the street empty-handed",
+      "A man carrying a large cardboard box in his arms",
+      "A man carrying a small briefcase"
+    ],
+    "status": "retired",
+    "evidence": "carrying a large box",
+    "why_not": {
+      "0": "상자를 열어서 안을 보고 있어요",
+      "1": "아무것도 들지 않고 길을 걷고 있어요",
+      "3": "큰 상자가 아니라 작은 가방을 들었어요"
+    },
+    "key_expr": {
+      "en": "carry a box",
+      "ko": "상자를 나르다"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man looking inside box",
+        "need": [
+          "man",
+          "box"
+        ],
+        "prefer": [
+          "looking"
+        ],
+        "avoid": [
+          "carrying"
+        ]
+      },
+      {
+        "q": "man walking empty handed",
+        "need": [
+          "man",
+          "walking"
+        ],
+        "prefer": [],
+        "avoid": [
+          "box"
+        ]
+      },
+      {
+        "q": "man carrying large box",
+        "need": [
+          "man",
+          "box"
+        ],
+        "prefer": [
+          "carrying",
+          "large"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "man carrying small bag",
+        "need": [
+          "man",
+          "bag"
+        ],
+        "prefer": [
+          "small"
+        ],
+        "avoid": [
+          "box"
+        ]
+      }
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "M.opposite"
+    },
+    "translation_ko": "한 남자가 큰 상자를 나르고 있어요.",
+    "tmp_id": "L1-0044"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'drawing a picture'는 그림을 그린다는 뜻이에요. 크레용을 쥐고 그림 그리는 사진을 고르세요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "A child is drawing a picture with crayons.",
+    "choice_image_prompts": [
+      "A child reading a book at a desk",
+      "A child drawing a picture with crayons",
+      "A child playing with toy blocks",
+      "A child sleeping on a desk"
+    ],
+    "status": "retired",
+    "evidence": "drawing a picture",
+    "why_not": {
+      "0": "책을 읽는 사진이에요",
+      "2": "장난감 블록을 가지고 노는 사진이에요",
+      "3": "책상에 엎드려 자는 사진이에요"
+    },
+    "key_expr": {
+      "en": "draw a picture",
+      "ko": "그림을 그리다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "child reading a book desk",
+        "need": [
+          "reading",
+          "book"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "crayons"
+        ]
+      },
+      {
+        "q": "child drawing picture with crayons",
+        "need": [
+          "drawing",
+          "crayons"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "sleeping"
+        ]
+      },
+      {
+        "q": "child playing with toy blocks",
+        "need": [
+          "blocks",
+          "playing"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "crayons"
+        ]
+      },
+      {
+        "q": "child sleeping on desk",
+        "need": [
+          "sleeping",
+          "desk"
+        ],
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "drawing",
+          "book"
+        ]
+      }
+    ],
+    "translation_ko": "아이가 크레용으로 그림을 그리고 있어요.",
+    "tmp_id": "L1-0045"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'playing the guitar'는 기타를 친다는 뜻이에요. 기타를 들고 있는 사진이 정답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "A man is playing the guitar.",
+    "choice_image_prompts": [
+      "A man singing into a microphone",
+      "A man playing the drums",
+      "A man playing the piano",
+      "A man playing the guitar on the street"
+    ],
+    "status": "active",
+    "evidence": "playing the guitar",
+    "why_not": {
+      "0": "마이크에 대고 노래하는 사진이에요",
+      "1": "드럼을 치는 사진이에요",
+      "2": "피아노를 치는 사진이에요"
+    },
+    "key_expr": {
+      "en": "play the guitar",
+      "ko": "기타를 치다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "man singing microphone",
+        "need": [
+          "microphone",
+          "singing"
+        ],
+        "prefer": [
+          "man"
+        ],
+        "avoid": [
+          "guitar"
+        ]
+      },
+      {
+        "q": "man playing drums",
+        "need": [
+          "drums",
+          "playing"
+        ],
+        "prefer": [
+          "man"
+        ],
+        "avoid": [
+          "guitar"
+        ]
+      },
+      {
+        "q": "man playing piano",
+        "need": [
+          "piano",
+          "playing"
+        ],
+        "prefer": [
+          "man"
+        ],
+        "avoid": [
+          "guitar"
+        ]
+      },
+      {
+        "q": "man playing guitar",
+        "need": [
+          "guitar",
+          "playing"
+        ],
+        "prefer": [
+          "man"
+        ],
+        "avoid": [
+          "microphone"
+        ]
+      }
+    ],
+    "translation_ko": "남자가 기타를 치고 있어요.",
+    "tmp_id": "L1-0046"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'slide'는 미끄럼틀이에요. 공원에 미끄럼틀이 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "There is a slide in the park.",
+    "choice_image_prompts": [
+      "A red slide in a park",
+      "Children swinging on swings",
+      "Children playing in a sandbox",
+      "Children running a race"
+    ],
+    "status": "active",
+    "evidence": "a slide in the park",
+    "why_not": {
+      "1": "그네가 있는 사진이에요",
+      "2": "모래 위 장난감 사진이에요",
+      "3": "아이 둘이 길을 걷고 있어요"
+    },
+    "key_expr": {
+      "en": "slide",
+      "ko": "미끄럼틀"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "children going down a slide",
+        "need": [
+          "slide"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "swings"
+        ]
+      },
+      {
+        "q": "children swinging swings",
+        "need": [
+          "swings"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "slide"
+        ]
+      },
+      {
+        "q": "children playing in sandbox",
+        "need": [
+          "sandbox"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "slide"
+        ]
+      },
+      {
+        "q": "children running a race",
+        "need": [
+          "running"
+        ],
+        "prefer": [
+          "children"
+        ],
+        "avoid": [
+          "slide"
+        ]
+      }
+    ],
+    "translation_ko": "공원에 미끄럼틀이 있어요.",
+    "tmp_id": "L1-0047"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'picking apples'는 사과를 딴다는 뜻이에요. 나무에서 열매를 따는 여자의 사진이 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "A woman is picking apples from a tree.",
+    "choice_image_prompts": [
+      "A woman cutting an apple on a board",
+      "A woman eating an apple",
+      "A woman picking apples from a tree",
+      "A woman watering a tree"
+    ],
+    "status": "retired",
+    "evidence": "picking apples",
+    "why_not": {
+      "0": "도마 위에서 사과를 자르는 사진이에요",
+      "1": "사과를 먹는 사진이에요",
+      "3": "나무에 물을 주는 사진이에요"
+    },
+    "key_expr": {
+      "en": "pick apples",
+      "ko": "사과를 따다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman cutting apple board",
+        "need": [
+          "cutting",
+          "apple"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "tree"
+        ]
+      },
+      {
+        "q": "woman eating an apple",
+        "need": [
+          "eating",
+          "apple"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "tree"
+        ]
+      },
+      {
+        "q": "woman picking apples from tree",
+        "need": [
+          "picking",
+          "apples",
+          "tree"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "cutting"
+        ]
+      },
+      {
+        "q": "woman watering a tree",
+        "need": [
+          "watering",
+          "tree"
+        ],
+        "prefer": [
+          "woman"
+        ],
+        "avoid": [
+          "apples"
+        ]
+      }
+    ],
+    "translation_ko": "여자가 나무에서 사과를 따고 있어요.",
+    "tmp_id": "L1-0048"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'pouring milk'는 우유를 붓는다는 뜻이에요. 그릇에 우유를 따르는 사진을 고르세요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "A boy is pouring milk into a bowl.",
+    "choice_image_prompts": [
+      "A boy drinking a glass of milk",
+      "A boy dropping a carton of milk",
+      "A boy cooking an egg in a pan",
+      "A boy pouring milk into a bowl"
+    ],
+    "status": "retired",
+    "evidence": "pouring milk",
+    "why_not": {
+      "0": "우유를 마시는 사진이에요",
+      "1": "우유갑을 바닥에 떨어뜨린 사진이에요",
+      "2": "프라이팬에 요리를 하는 사진이에요"
+    },
+    "key_expr": {
+      "en": "pour milk",
+      "ko": "우유를 붓다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boy drinking glass of milk",
+        "need": [
+          "drinking",
+          "milk"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "pouring"
+        ]
+      },
+      {
+        "q": "boy dropping carton of milk",
+        "need": [
+          "dropping",
+          "milk"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "pouring",
+          "bowl"
+        ]
+      },
+      {
+        "q": "boy cooking egg in a pan",
+        "need": [
+          "cooking",
+          "pan"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "milk"
+        ]
+      },
+      {
+        "q": "boy pouring milk into bowl",
+        "need": [
+          "pouring",
+          "milk",
+          "bowl"
+        ],
+        "prefer": [
+          "boy"
+        ],
+        "avoid": [
+          "dropping"
+        ]
+      }
+    ],
+    "translation_ko": "소년이 그릇에 우유를 붓고 있어요.",
+    "tmp_id": "L1-0049"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'picnic blanket'은 소풍 돗자리예요. 바닥에 돗자리를 펴고 앉아 있는 사진을 찾아보세요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "A family is sitting on a picnic blanket.",
+    "choice_image_prompts": [
+      "A family eating at a restaurant table",
+      "A family walking in the forest",
+      "A family sitting on a picnic blanket",
+      "A family standing in front of a house"
+    ],
+    "status": "retired",
+    "evidence": "sitting on a picnic blanket",
+    "why_not": {
+      "0": "식당 식탁에서 밥을 먹는 사진이에요",
+      "1": "숲속을 걷고 있는 사진이에요",
+      "3": "집 앞에 서 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "picnic blanket",
+      "ko": "소풍 돗자리"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "family eating at restaurant table",
+        "need": [
+          "eating",
+          "restaurant"
+        ],
+        "prefer": [
+          "family"
+        ],
+        "avoid": [
+          "picnic",
+          "blanket"
+        ]
+      },
+      {
+        "q": "family walking in forest",
+        "need": [
+          "walking",
+          "forest"
+        ],
+        "prefer": [
+          "family"
+        ],
+        "avoid": [
+          "picnic",
+          "sitting"
+        ]
+      },
+      {
+        "q": "family sitting on picnic blanket",
+        "need": [
+          "sitting",
+          "picnic",
+          "blanket"
+        ],
+        "prefer": [
+          "family"
+        ],
+        "avoid": [
+          "walking"
+        ]
+      },
+      {
+        "q": "family standing in front of house",
+        "need": [
+          "standing",
+          "house"
+        ],
+        "prefer": [
+          "family"
+        ],
+        "avoid": [
+          "picnic",
+          "sitting"
+        ]
+      }
+    ],
+    "translation_ko": "가족이 소풍 돗자리 위에 앉아 있어요.",
+    "tmp_id": "L1-0050"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'horse'는 말이에요. 들판에 말이 있는 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "A horse is running in the field.",
+    "choice_image_prompts": [
+      "A cow eating grass in a meadow",
+      "A horse running in a field",
+      "Sheep standing in a pasture",
+      "Chickens walking in a farm yard"
+    ],
+    "status": "active",
+    "evidence": "A horse",
+    "why_not": {
+      "0": "소가 풀밭에 있는 사진이에요",
+      "2": "양들이 있는 사진이에요",
+      "3": "닭들이 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "horse",
+      "ko": "말"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "cow grazing meadow",
+        "need": [
+          "cow"
+        ],
+        "prefer": [
+          "meadow"
+        ],
+        "avoid": [
+          "horse",
+          "sheep"
+        ]
+      },
+      {
+        "q": "horse galloping field",
+        "need": [
+          "horse"
+        ],
+        "prefer": [
+          "field"
+        ],
+        "avoid": [
+          "cow",
+          "rider",
+          "sheep"
+        ]
+      },
+      {
+        "q": "sheep flock pasture",
+        "need": [
+          "sheep"
+        ],
+        "prefer": [
+          "pasture"
+        ],
+        "avoid": [
+          "horse",
+          "cow"
+        ]
+      },
+      {
+        "q": "chickens farm yard",
+        "need": [
+          "chicken"
+        ],
+        "prefer": [
+          "farm"
+        ],
+        "avoid": [
+          "horse",
+          "cow"
+        ]
+      }
+    ],
+    "translation_ko": "말 한 마리가 들판에서 달리고 있어요.",
+    "tmp_id": "L1-0051"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'yarn'은 뜨개질하는 털실이에요. 알록달록한 털실 뭉치가 모인 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "There are balls of yarn in many colors.",
+    "choice_image_prompts": [
+      "A dog sleeping on a bed",
+      "Carrots lying on a wooden table",
+      "Balls of yarn in many colors",
+      "A parrot sitting on a perch"
+    ],
+    "status": "active",
+    "evidence": "balls of yarn",
+    "why_not": {
+      "0": "개가 자는 사진이에요",
+      "1": "당근들이 놓인 사진이에요",
+      "3": "앵무새가 앉아 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "yarn",
+      "ko": "털실"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "dog sleeping bed",
+        "need": [
+          "dog",
+          "sleeping"
+        ],
+        "prefer": [],
+        "avoid": [
+          "cat",
+          "yarn"
+        ]
+      },
+      {
+        "q": "rabbit eating carrot",
+        "need": [
+          "rabbit",
+          "carrot"
+        ],
+        "prefer": [],
+        "avoid": [
+          "cat",
+          "dog"
+        ]
+      },
+      {
+        "q": "cat playing yarn ball",
+        "need": [
+          "cat",
+          "yarn"
+        ],
+        "prefer": [],
+        "avoid": [
+          "dog"
+        ]
+      },
+      {
+        "q": "parrot bird perch",
+        "need": [
+          "parrot"
+        ],
+        "prefer": [],
+        "avoid": [
+          "cat",
+          "dog"
+        ]
+      }
+    ],
+    "translation_ko": "여러 색깔의 털실 뭉치가 있어요.",
+    "tmp_id": "L1-0052"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'elephant'는 코끼리예요. 코끼리들이 물속에서 노는 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Elephants are playing in the water.",
+    "choice_image_prompts": [
+      "A giraffe standing in the savanna",
+      "Zebras standing together",
+      "A sea lion lying on the sand",
+      "Elephants playing in the water"
+    ],
+    "status": "active",
+    "evidence": "Elephants",
+    "why_not": {
+      "0": "기린이 있는 사진이에요",
+      "1": "얼룩말이 있는 사진이에요",
+      "2": "바다사자가 모래 위에 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "elephant",
+      "ko": "코끼리"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "giraffe savanna",
+        "need": [
+          "giraffe"
+        ],
+        "prefer": [],
+        "avoid": [
+          "elephant",
+          "zebra"
+        ]
+      },
+      {
+        "q": "zebra herd",
+        "need": [
+          "zebra"
+        ],
+        "prefer": [],
+        "avoid": [
+          "elephant",
+          "giraffe"
+        ]
+      },
+      {
+        "q": "lion resting",
+        "need": [
+          "lion"
+        ],
+        "prefer": [],
+        "avoid": [
+          "elephant",
+          "zebra"
+        ]
+      },
+      {
+        "q": "elephant water river",
+        "need": [
+          "elephant",
+          "water"
+        ],
+        "prefer": [],
+        "avoid": [
+          "giraffe",
+          "zebra",
+          "lion"
+        ]
+      }
+    ],
+    "translation_ko": "코끼리들이 물속에서 놀고 있어요.",
+    "tmp_id": "L1-0053"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'rainbow'는 무지개예요. 하늘에 무지개가 뜬 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "There is a rainbow over the field.",
+    "choice_image_prompts": [
+      "A rainbow in the sky over a field",
+      "Trees covered with snow",
+      "Lightning in a dark sky",
+      "The sun setting over the sea"
+    ],
+    "status": "active",
+    "evidence": "a rainbow",
+    "why_not": {
+      "1": "눈 덮인 나무 사진이에요",
+      "2": "번개가 치는 사진이에요",
+      "3": "바다에 해가 지는 사진이에요"
+    },
+    "key_expr": {
+      "en": "rainbow",
+      "ko": "무지개"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "rainbow field sky",
+        "need": [
+          "rainbow"
+        ],
+        "prefer": [
+          "field"
+        ],
+        "avoid": [
+          "umbrella",
+          "toy",
+          "flag"
+        ]
+      },
+      {
+        "q": "snow covered trees winter",
+        "need": [
+          "snow",
+          "trees"
+        ],
+        "prefer": [],
+        "avoid": [
+          "rainbow"
+        ]
+      },
+      {
+        "q": "lightning storm night",
+        "need": [
+          "lightning"
+        ],
+        "prefer": [],
+        "avoid": [
+          "rainbow"
+        ]
+      },
+      {
+        "q": "sunset beach sea",
+        "need": [
+          "sunset",
+          "beach"
+        ],
+        "prefer": [],
+        "avoid": [
+          "rainbow"
+        ]
+      }
+    ],
+    "translation_ko": "들판 위에 무지개가 떠 있어요.",
+    "tmp_id": "L1-0054"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'station'은 역이에요. 역 승강장에서 여자가 기다리는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.travel"
+    ],
+    "accent": "US",
+    "tts_script": "A woman is waiting at the station.",
+    "choice_image_prompts": [
+      "An airplane flying in the sky",
+      "A big ship in a harbor",
+      "A woman waiting on a train platform",
+      "A bus on a city street at night"
+    ],
+    "status": "active",
+    "evidence": "at the station",
+    "why_not": {
+      "0": "비행기가 나는 사진이에요",
+      "1": "항구에 배가 있는 사진이에요",
+      "3": "밤거리에 버스가 다니는 사진이에요"
+    },
+    "key_expr": {
+      "en": "station",
+      "ko": "역"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "airplane sky flying",
+        "need": [
+          "airplane"
+        ],
+        "prefer": [],
+        "avoid": [
+          "train",
+          "model",
+          "toy"
+        ]
+      },
+      {
+        "q": "ship harbor port",
+        "need": [
+          "ship",
+          "harbor"
+        ],
+        "prefer": [],
+        "avoid": [
+          "train",
+          "model"
+        ]
+      },
+      {
+        "q": "train station platform",
+        "need": [
+          "train",
+          "station"
+        ],
+        "prefer": [],
+        "avoid": [
+          "model",
+          "toy",
+          "airplane"
+        ]
+      },
+      {
+        "q": "bus city street",
+        "need": [
+          "bus",
+          "street"
+        ],
+        "prefer": [],
+        "avoid": [
+          "train",
+          "toy",
+          "model"
+        ]
+      }
+    ],
+    "translation_ko": "여자가 역에서 기다리고 있어요.",
+    "tmp_id": "L1-0055"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'basket'은 바구니예요. 바구니에 여러 과일이 가득 담긴 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "A basket is full of fruit.",
+    "choice_image_prompts": [
+      "Bananas growing on a tree",
+      "A girl eating watermelon",
+      "Grapes on a vine",
+      "A basket full of fruit"
+    ],
+    "status": "active",
+    "evidence": "A basket",
+    "why_not": {
+      "0": "나무에 바나나가 달린 사진이에요",
+      "1": "아이가 수박을 먹는 사진이에요",
+      "2": "포도가 덩굴에 달린 사진이에요"
+    },
+    "key_expr": {
+      "en": "basket",
+      "ko": "바구니"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "bananas bunch",
+        "need": [
+          "bananas"
+        ],
+        "prefer": [],
+        "avoid": [
+          "strawberries"
+        ]
+      },
+      {
+        "q": "watermelon slices",
+        "need": [
+          "watermelon"
+        ],
+        "prefer": [],
+        "avoid": [
+          "strawberries"
+        ]
+      },
+      {
+        "q": "grapes bunch",
+        "need": [
+          "grapes"
+        ],
+        "prefer": [],
+        "avoid": [
+          "strawberries"
+        ]
+      },
+      {
+        "q": "strawberries basket",
+        "need": [
+          "strawberries",
+          "basket"
+        ],
+        "prefer": [],
+        "avoid": [
+          "cake"
+        ]
+      }
+    ],
+    "translation_ko": "바구니에 과일이 가득 들어 있어요.",
+    "tmp_id": "L1-0056"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'pancakes'는 팬케이크예요. 접시에 팬케이크가 쌓인 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "Pancakes are on a plate.",
+    "choice_image_prompts": [
+      "A stack of pancakes on a plate",
+      "A bowl of cereal with milk",
+      "Fried eggs and bacon",
+      "Toast with peanut butter"
+    ],
+    "status": "active",
+    "evidence": "Pancakes",
+    "why_not": {
+      "1": "시리얼 그릇 사진이에요",
+      "2": "달걀 프라이와 베이컨 사진이에요",
+      "3": "땅콩버터를 바른 토스트 사진이에요"
+    },
+    "key_expr": {
+      "en": "pancake",
+      "ko": "팬케이크"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "pancakes stack plate",
+        "need": [
+          "pancakes"
+        ],
+        "prefer": [
+          "plate"
+        ],
+        "avoid": [
+          "waffle"
+        ]
+      },
+      {
+        "q": "cereal bowl milk",
+        "need": [
+          "cereal",
+          "bowl"
+        ],
+        "prefer": [],
+        "avoid": [
+          "pancakes"
+        ]
+      },
+      {
+        "q": "fried eggs bacon breakfast",
+        "need": [
+          "eggs",
+          "bacon"
+        ],
+        "prefer": [],
+        "avoid": [
+          "pancakes"
+        ]
+      },
+      {
+        "q": "toast butter bread",
+        "need": [
+          "toast"
+        ],
+        "prefer": [],
+        "avoid": [
+          "pancakes",
+          "eggs"
+        ]
+      }
+    ],
+    "translation_ko": "팬케이크가 접시에 놓여 있어요.",
+    "tmp_id": "L1-0057"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'volleyball'은 배구예요. 네트 앞에서 배구공을 치는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "People are playing volleyball.",
+    "choice_image_prompts": [
+      "A person playing golf",
+      "People playing volleyball at a net",
+      "A table tennis paddle and ball",
+      "An ice hockey player"
+    ],
+    "status": "active",
+    "evidence": "volleyball",
+    "why_not": {
+      "0": "골프공을 치는 사진이에요",
+      "2": "탁구채와 탁구공 사진이에요",
+      "3": "아이스하키 선수 사진이에요"
+    },
+    "key_expr": {
+      "en": "volleyball",
+      "ko": "배구"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "golf player course",
+        "need": [
+          "golf"
+        ],
+        "prefer": [],
+        "avoid": [
+          "volleyball",
+          "beach"
+        ]
+      },
+      {
+        "q": "beach volleyball",
+        "need": [
+          "volleyball",
+          "beach"
+        ],
+        "prefer": [],
+        "avoid": [
+          "golf"
+        ]
+      },
+      {
+        "q": "table tennis ping pong",
+        "need": [
+          "table",
+          "tennis"
+        ],
+        "prefer": [],
+        "avoid": [
+          "volleyball"
+        ]
+      },
+      {
+        "q": "ice hockey players",
+        "need": [
+          "hockey",
+          "ice"
+        ],
+        "prefer": [],
+        "avoid": [
+          "volleyball"
+        ]
+      }
+    ],
+    "translation_ko": "사람들이 배구를 하고 있어요.",
+    "tmp_id": "L1-0058"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'violin'은 바이올린이에요. 바이올린을 켜는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Someone is playing the violin.",
+    "choice_image_prompts": [
+      "Someone playing the drums",
+      "Someone playing the trumpet",
+      "Someone playing the flute",
+      "Someone playing the violin"
+    ],
+    "status": "active",
+    "evidence": "the violin",
+    "why_not": {
+      "0": "드럼을 치는 사진이에요",
+      "1": "트럼펫을 부는 사진이에요",
+      "2": "플루트를 부는 사진이에요"
+    },
+    "key_expr": {
+      "en": "violin",
+      "ko": "바이올린"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "playing drums drummer",
+        "need": [
+          "drums"
+        ],
+        "prefer": [],
+        "avoid": [
+          "violin",
+          "guitar"
+        ]
+      },
+      {
+        "q": "trumpet player",
+        "need": [
+          "trumpet"
+        ],
+        "prefer": [],
+        "avoid": [
+          "violin"
+        ]
+      },
+      {
+        "q": "flute player",
+        "need": [
+          "flute"
+        ],
+        "prefer": [],
+        "avoid": [
+          "violin"
+        ]
+      },
+      {
+        "q": "violin player playing",
+        "need": [
+          "violin"
+        ],
+        "prefer": [
+          "playing"
+        ],
+        "avoid": [
+          "guitar",
+          "drums"
+        ]
+      }
+    ],
+    "translation_ko": "누군가 바이올린을 켜고 있어요.",
+    "tmp_id": "L1-0059"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'mop'은 긴 걸레로 바닥을 닦는다는 뜻이에요. 바닥을 닦는 사진을 고르면 돼요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "Someone is mopping the floor.",
+    "choice_image_prompts": [
+      "Someone mopping the floor",
+      "A vacuum cleaner on a carpet",
+      "Someone cleaning a window",
+      "An iron on clothes"
+    ],
+    "status": "active",
+    "evidence": "mopping the floor",
+    "why_not": {
+      "1": "청소기가 카펫 위에 있는 사진이에요",
+      "2": "창문을 닦는 사진이에요",
+      "3": "다리미가 옷 위에 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "mop the floor",
+      "ko": "바닥을 걸레질하다"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "mopping floor cleaning",
+        "need": [
+          "mop",
+          "floor"
+        ],
+        "prefer": [],
+        "avoid": [
+          "vacuum",
+          "broom"
+        ]
+      },
+      {
+        "q": "vacuum cleaner carpet",
+        "need": [
+          "vacuum"
+        ],
+        "prefer": [],
+        "avoid": [
+          "mop"
+        ]
+      },
+      {
+        "q": "washing windows cleaning",
+        "need": [
+          "window",
+          "cleaning"
+        ],
+        "prefer": [],
+        "avoid": [
+          "mop",
+          "vacuum"
+        ]
+      },
+      {
+        "q": "ironing clothes iron",
+        "need": [
+          "ironing"
+        ],
+        "prefer": [],
+        "avoid": [
+          "mop"
+        ]
+      }
+    ],
+    "translation_ko": "누군가 걸레로 바닥을 닦고 있어요.",
+    "tmp_id": "L1-0060"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'burn'은 불이 탄다는 뜻이에요. 장작에 불이 활활 타는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "A fire is burning.",
+    "choice_image_prompts": [
+      "Tents in the mountains",
+      "A hiker standing with a backpack",
+      "A fire burning in a fireplace",
+      "A kayak on a lake"
+    ],
+    "status": "active",
+    "evidence": "A fire is burning",
+    "why_not": {
+      "0": "산속에 텐트가 있는 사진이에요",
+      "1": "배낭을 멘 사람이 서 있는 사진이에요",
+      "3": "카약을 타는 사진이에요"
+    },
+    "key_expr": {
+      "en": "burn",
+      "ko": "불이 타다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "tent camping forest",
+        "need": [
+          "tent"
+        ],
+        "prefer": [],
+        "avoid": [
+          "campfire",
+          "fire"
+        ]
+      },
+      {
+        "q": "hiker backpack mountain",
+        "need": [
+          "hiker",
+          "backpack"
+        ],
+        "prefer": [],
+        "avoid": [
+          "campfire",
+          "tent"
+        ]
+      },
+      {
+        "q": "campfire burning wood",
+        "need": [
+          "campfire"
+        ],
+        "prefer": [],
+        "avoid": [
+          "tent"
+        ]
+      },
+      {
+        "q": "kayak lake paddling",
+        "need": [
+          "kayak"
+        ],
+        "prefer": [],
+        "avoid": [
+          "campfire",
+          "tent"
+        ]
+      }
+    ],
+    "translation_ko": "불이 활활 타고 있어요.",
+    "tmp_id": "L1-0061"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'many cars'는 차가 많다는 뜻이에요. 도로에 차가 가득한 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.travel"
+    ],
+    "accent": "UK",
+    "tts_script": "Many cars are on the road.",
+    "choice_image_prompts": [
+      "A bridge over a river",
+      "Tall buildings in a city",
+      "People riding bikes in a bike lane",
+      "Many cars on a busy road"
+    ],
+    "status": "active",
+    "evidence": "Many cars",
+    "why_not": {
+      "0": "강 위의 다리 사진이에요",
+      "1": "높은 건물들 사진이에요",
+      "2": "사람들이 자전거를 타는 사진이에요"
+    },
+    "key_expr": {
+      "en": "road",
+      "ko": "도로"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "bridge river city",
+        "need": [
+          "bridge",
+          "river"
+        ],
+        "prefer": [],
+        "avoid": [
+          "traffic",
+          "cars"
+        ]
+      },
+      {
+        "q": "skyscrapers city buildings",
+        "need": [
+          "skyscrapers"
+        ],
+        "prefer": [],
+        "avoid": [
+          "traffic",
+          "cars"
+        ]
+      },
+      {
+        "q": "cyclists bike lane",
+        "need": [
+          "bike",
+          "lane"
+        ],
+        "prefer": [],
+        "avoid": [
+          "traffic",
+          "cars"
+        ]
+      },
+      {
+        "q": "traffic jam cars road",
+        "need": [
+          "traffic",
+          "cars"
+        ],
+        "prefer": [
+          "road"
+        ],
+        "avoid": [
+          "bike"
+        ]
+      }
+    ],
+    "translation_ko": "많은 차들이 도로에 있어요.",
+    "tmp_id": "L1-0062"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'colored pencils'는 색연필이에요. 색연필이 컵에 꽂혀 있는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "AU",
+    "tts_script": "Colored pencils are in a cup.",
+    "choice_image_prompts": [
+      "Scissors and pens on paper",
+      "Colored pencils in a cup on a desk",
+      "A person sitting next to a backpack",
+      "A globe"
+    ],
+    "status": "active",
+    "evidence": "in a cup",
+    "why_not": {
+      "0": "가위와 펜이 종이 위에 있는 사진이에요",
+      "2": "책가방 옆에 앉아 있는 사진이에요",
+      "3": "지구본 사진이에요"
+    },
+    "key_expr": {
+      "en": "colored pencils",
+      "ko": "색연필"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "scissors paper",
+        "need": [
+          "scissors"
+        ],
+        "prefer": [],
+        "avoid": [
+          "pencils",
+          "crayons"
+        ]
+      },
+      {
+        "q": "colored pencils desk",
+        "need": [
+          "colored",
+          "pencils"
+        ],
+        "prefer": [],
+        "avoid": [
+          "scissors"
+        ]
+      },
+      {
+        "q": "school backpack bag",
+        "need": [
+          "backpack"
+        ],
+        "prefer": [],
+        "avoid": [
+          "pencils"
+        ]
+      },
+      {
+        "q": "globe world map",
+        "need": [
+          "globe"
+        ],
+        "prefer": [],
+        "avoid": [
+          "pencils"
+        ]
+      }
+    ],
+    "translation_ko": "색연필이 컵에 꽂혀 있어요.",
+    "tmp_id": "L1-0063"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'a cup of coffee'는 커피 한 잔이에요. 커피 잔이 놓인 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "There is a cup of coffee on the table.",
+    "choice_image_prompts": [
+      "An ice cream cone",
+      "A slice of chocolate cake",
+      "A cup of coffee and some pastries on a table",
+      "Some cupcakes"
+    ],
+    "status": "active",
+    "evidence": "a cup of coffee",
+    "why_not": {
+      "0": "아이스크림콘 사진이에요",
+      "1": "초콜릿 케이크 한 조각 사진이에요",
+      "3": "컵케이크 사진이에요"
+    },
+    "key_expr": {
+      "en": "a cup of coffee",
+      "ko": "커피 한 잔"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "ice cream cone",
+        "need": [
+          "ice",
+          "cream",
+          "cone"
+        ],
+        "prefer": [],
+        "avoid": [
+          "donut"
+        ]
+      },
+      {
+        "q": "chocolate cake slice",
+        "need": [
+          "chocolate",
+          "cake"
+        ],
+        "prefer": [],
+        "avoid": [
+          "donut"
+        ]
+      },
+      {
+        "q": "donuts plate",
+        "need": [
+          "donuts"
+        ],
+        "prefer": [
+          "plate"
+        ],
+        "avoid": [
+          "cake"
+        ]
+      },
+      {
+        "q": "cupcakes",
+        "need": [
+          "cupcakes"
+        ],
+        "prefer": [],
+        "avoid": [
+          "donut"
+        ]
+      }
+    ],
+    "translation_ko": "탁자 위에 커피 한 잔이 있어요.",
+    "tmp_id": "L1-0064"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'surf'는 파도를 타는 거예요. 큰 파도 위에서 서핑하는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Someone is surfing on a big wave.",
+    "choice_image_prompts": [
+      "Umbrellas and chairs on a beach",
+      "A sailboat on the sea",
+      "A lighthouse by the sea",
+      "A surfer riding a wave"
+    ],
+    "status": "active",
+    "evidence": "surfing on a big wave",
+    "why_not": {
+      "0": "해변에 파라솔과 의자가 있는 사진이에요",
+      "1": "바다에 돛단배가 있는 사진이에요",
+      "2": "바닷가 등대 사진이에요"
+    },
+    "key_expr": {
+      "en": "wave",
+      "ko": "파도"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "beach umbrella chairs",
+        "need": [
+          "umbrella",
+          "beach"
+        ],
+        "prefer": [],
+        "avoid": [
+          "surfing",
+          "surfer"
+        ]
+      },
+      {
+        "q": "sailboat sea sailing",
+        "need": [
+          "sailboat"
+        ],
+        "prefer": [],
+        "avoid": [
+          "surfing"
+        ]
+      },
+      {
+        "q": "lighthouse coast",
+        "need": [
+          "lighthouse"
+        ],
+        "prefer": [],
+        "avoid": [
+          "surfing"
+        ]
+      },
+      {
+        "q": "surfer wave surfing",
+        "need": [
+          "surfer",
+          "wave"
+        ],
+        "prefer": [],
+        "avoid": [
+          "kite"
+        ]
+      }
+    ],
+    "translation_ko": "누군가 큰 파도 위에서 서핑을 하고 있어요.",
+    "tmp_id": "L1-0065"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'pumpkins'는 호박이에요. 호박이 잔뜩 쌓인 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "There are a lot of pumpkins.",
+    "choice_image_prompts": [
+      "A lot of pumpkins piled together",
+      "Autumn leaves falling by a tree",
+      "Apples on a tree",
+      "A scarecrow in a field"
+    ],
+    "status": "active",
+    "evidence": "a lot of pumpkins",
+    "why_not": {
+      "1": "나무 옆으로 낙엽이 떨어지는 사진이에요",
+      "2": "나무에 사과가 열린 사진이에요",
+      "3": "허수아비 사진이에요"
+    },
+    "key_expr": {
+      "en": "pumpkin",
+      "ko": "호박"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "pumpkins field autumn",
+        "need": [
+          "pumpkins"
+        ],
+        "prefer": [],
+        "avoid": [
+          "carved",
+          "halloween",
+          "face"
+        ]
+      },
+      {
+        "q": "autumn leaves falling tree",
+        "need": [
+          "autumn",
+          "leaves"
+        ],
+        "prefer": [],
+        "avoid": [
+          "pumpkin"
+        ]
+      },
+      {
+        "q": "apple picking orchard",
+        "need": [
+          "apples",
+          "tree"
+        ],
+        "prefer": [],
+        "avoid": [
+          "pumpkin"
+        ]
+      },
+      {
+        "q": "scarecrow field",
+        "need": [
+          "scarecrow"
+        ],
+        "prefer": [],
+        "avoid": [
+          "pumpkin"
+        ]
+      }
+    ],
+    "translation_ko": "호박이 아주 많이 있어요.",
+    "tmp_id": "L1-0066"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'butterfly'는 나비예요. 꽃에 나비가 앉은 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "A butterfly is on a flower.",
+    "choice_image_prompts": [
+      "A bee on a flower",
+      "A butterfly on a flower",
+      "A ladybug on a leaf",
+      "A dragonfly"
+    ],
+    "status": "active",
+    "evidence": "A butterfly",
+    "why_not": {
+      "0": "벌이 꽃에 앉은 사진이에요",
+      "2": "무당벌레 사진이에요",
+      "3": "잠자리 사진이에요"
+    },
+    "key_expr": {
+      "en": "butterfly",
+      "ko": "나비"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "bee flower pollen",
+        "need": [
+          "bee"
+        ],
+        "prefer": [],
+        "avoid": [
+          "butterfly"
+        ]
+      },
+      {
+        "q": "butterfly flower",
+        "need": [
+          "butterfly",
+          "flower"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bee"
+        ]
+      },
+      {
+        "q": "ladybug leaf",
+        "need": [
+          "ladybug"
+        ],
+        "prefer": [],
+        "avoid": [
+          "butterfly"
+        ]
+      },
+      {
+        "q": "dragonfly",
+        "need": [
+          "dragonfly"
+        ],
+        "prefer": [],
+        "avoid": [
+          "butterfly"
+        ]
+      }
+    ],
+    "translation_ko": "나비가 꽃 위에 앉아 있어요.",
+    "tmp_id": "L1-0067"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'swan'은 하얀 백조예요. 호수 위에 백조가 떠 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "A swan is swimming on the lake.",
+    "choice_image_prompts": [
+      "An owl on a branch",
+      "Penguins on the ice",
+      "A swan swimming on a lake",
+      "Pigeons in a city square"
+    ],
+    "status": "active",
+    "evidence": "A swan",
+    "why_not": {
+      "0": "부엉이 사진이에요",
+      "1": "펭귄 사진이에요",
+      "3": "비둘기 사진이에요"
+    },
+    "key_expr": {
+      "en": "swan",
+      "ko": "백조"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "owl branch",
+        "need": [
+          "owl"
+        ],
+        "prefer": [],
+        "avoid": [
+          "swan"
+        ]
+      },
+      {
+        "q": "penguins ice",
+        "need": [
+          "penguin"
+        ],
+        "prefer": [],
+        "avoid": [
+          "swan"
+        ]
+      },
+      {
+        "q": "swan lake swimming",
+        "need": [
+          "swan",
+          "lake"
+        ],
+        "prefer": [],
+        "avoid": [
+          "goose"
+        ]
+      },
+      {
+        "q": "pigeons city square",
+        "need": [
+          "pigeons"
+        ],
+        "prefer": [],
+        "avoid": [
+          "swan"
+        ]
+      }
+    ],
+    "translation_ko": "백조가 호수 위를 헤엄치고 있어요.",
+    "tmp_id": "L1-0068"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'turtle'은 바다거북이에요. 물속에서 거북이가 헤엄치는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "A turtle is swimming in the sea.",
+    "choice_image_prompts": [
+      "A sea turtle swimming underwater",
+      "A dolphin jumping out of the water",
+      "A jellyfish in the water",
+      "A starfish on the sand"
+    ],
+    "status": "active",
+    "evidence": "A turtle",
+    "why_not": {
+      "1": "돌고래 사진이에요",
+      "2": "해파리 사진이에요",
+      "3": "불가사리 사진이에요"
+    },
+    "key_expr": {
+      "en": "turtle",
+      "ko": "거북이"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "sea turtle underwater",
+        "need": [
+          "turtle",
+          "underwater"
+        ],
+        "prefer": [],
+        "avoid": [
+          "tortoise"
+        ]
+      },
+      {
+        "q": "dolphin jumping",
+        "need": [
+          "dolphin"
+        ],
+        "prefer": [],
+        "avoid": [
+          "turtle"
+        ]
+      },
+      {
+        "q": "jellyfish",
+        "need": [
+          "jellyfish"
+        ],
+        "prefer": [],
+        "avoid": [
+          "turtle"
+        ]
+      },
+      {
+        "q": "starfish beach sand",
+        "need": [
+          "starfish"
+        ],
+        "prefer": [],
+        "avoid": [
+          "turtle"
+        ]
+      }
+    ],
+    "translation_ko": "거북이가 바다에서 헤엄치고 있어요.",
+    "tmp_id": "L1-0069"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'frying pan'은 프라이팬이에요. 팬 위에 달걀 프라이가 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "An egg is in a frying pan.",
+    "choice_image_prompts": [
+      "A pot of boiling water",
+      "Two people cooking in a kitchen",
+      "A drink being poured into a cup",
+      "A fried egg in a frying pan"
+    ],
+    "status": "active",
+    "evidence": "in a frying pan",
+    "why_not": {
+      "0": "냄비에 물이 끓는 사진이에요",
+      "1": "두 사람이 요리를 하는 사진이에요",
+      "2": "음료가 컵에 담기는 사진이에요"
+    },
+    "key_expr": {
+      "en": "frying pan",
+      "ko": "프라이팬"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "boiling pot water stove",
+        "need": [
+          "pot",
+          "boiling"
+        ],
+        "prefer": [],
+        "avoid": [
+          "eggs",
+          "pan"
+        ]
+      },
+      {
+        "q": "knife cutting board vegetables",
+        "need": [
+          "knife",
+          "cutting"
+        ],
+        "prefer": [],
+        "avoid": [
+          "eggs",
+          "pan"
+        ]
+      },
+      {
+        "q": "blender smoothie",
+        "need": [
+          "blender"
+        ],
+        "prefer": [],
+        "avoid": [
+          "eggs"
+        ]
+      },
+      {
+        "q": "fried eggs pan",
+        "need": [
+          "eggs",
+          "pan"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bacon",
+          "toast"
+        ]
+      }
+    ],
+    "translation_ko": "프라이팬에 달걀이 하나 있어요.",
+    "tmp_id": "L1-0070"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'shelves'는 책꽂이 선반이에요. 책이 가득 꽂힌 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "There are many books on the shelves.",
+    "choice_image_prompts": [
+      "Many books on library shelves",
+      "A folded newspaper",
+      "A laptop on a desk",
+      "A chalkboard in a classroom"
+    ],
+    "status": "active",
+    "evidence": "many books",
+    "why_not": {
+      "1": "신문 사진이에요",
+      "2": "책상 위 노트북 사진이에요",
+      "3": "교실 칠판 사진이에요"
+    },
+    "key_expr": {
+      "en": "shelf",
+      "ko": "선반, 책꽂이"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "library bookshelves books",
+        "need": [
+          "books",
+          "shelves"
+        ],
+        "prefer": [
+          "library"
+        ],
+        "avoid": [
+          "newspaper"
+        ]
+      },
+      {
+        "q": "newspaper reading",
+        "need": [
+          "newspaper"
+        ],
+        "prefer": [],
+        "avoid": [
+          "library",
+          "shelves"
+        ]
+      },
+      {
+        "q": "laptop desk office",
+        "need": [
+          "laptop",
+          "desk"
+        ],
+        "prefer": [],
+        "avoid": [
+          "books"
+        ]
+      },
+      {
+        "q": "chalkboard classroom empty",
+        "need": [
+          "chalkboard"
+        ],
+        "prefer": [],
+        "avoid": [
+          "books"
+        ]
+      }
+    ],
+    "translation_ko": "선반에 책이 많이 꽂혀 있어요.",
+    "tmp_id": "L1-0071"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'shopping cart'는 마트에서 미는 카트예요. 마트 선반 옆에 카트가 있는 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.shopping"
+    ],
+    "accent": "AU",
+    "tts_script": "A shopping cart is next to the shelves.",
+    "choice_image_prompts": [
+      "Clothes hanging in a store",
+      "An empty shopping cart in a supermarket aisle",
+      "Bags and shoes on shelves in a store",
+      "An old cash register"
+    ],
+    "status": "active",
+    "evidence": "A shopping cart",
+    "why_not": {
+      "0": "옷 가게 사진이에요",
+      "2": "가방과 신발 가게 사진이에요",
+      "3": "옛날 계산기 사진이에요"
+    },
+    "key_expr": {
+      "en": "shopping cart",
+      "ko": "쇼핑 카트"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "clothes store rack",
+        "need": [
+          "clothes",
+          "store"
+        ],
+        "prefer": [],
+        "avoid": [
+          "cart"
+        ]
+      },
+      {
+        "q": "shopping cart supermarket groceries",
+        "need": [
+          "shopping",
+          "cart"
+        ],
+        "prefer": [
+          "groceries"
+        ],
+        "avoid": [
+          "empty"
+        ]
+      },
+      {
+        "q": "shoe store shoes shelf",
+        "need": [
+          "shoes",
+          "store"
+        ],
+        "prefer": [],
+        "avoid": [
+          "cart"
+        ]
+      },
+      {
+        "q": "cash register money",
+        "need": [
+          "cash",
+          "register"
+        ],
+        "prefer": [],
+        "avoid": [
+          "cart"
+        ]
+      }
+    ],
+    "translation_ko": "쇼핑 카트가 선반 옆에 있어요.",
+    "tmp_id": "L1-0072"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'carrots'는 주황색 당근이에요. 당근이 놓인 사진을 고르면 돼요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Carrots are on the table.",
+    "choice_image_prompts": [
+      "Red tomatoes",
+      "Peeled potatoes",
+      "A lemon cake with lemon slices",
+      "Carrots on a table"
+    ],
+    "status": "active",
+    "evidence": "Carrots",
+    "why_not": {
+      "0": "토마토 사진이에요",
+      "1": "껍질 벗긴 감자 사진이에요",
+      "2": "레몬 케이크 사진이에요"
+    },
+    "key_expr": {
+      "en": "carrot",
+      "ko": "당근"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "tomatoes red",
+        "need": [
+          "tomatoes"
+        ],
+        "prefer": [],
+        "avoid": [
+          "carrots"
+        ]
+      },
+      {
+        "q": "potatoes",
+        "need": [
+          "potatoes"
+        ],
+        "prefer": [],
+        "avoid": [
+          "carrots"
+        ]
+      },
+      {
+        "q": "lemons",
+        "need": [
+          "lemon"
+        ],
+        "prefer": [],
+        "avoid": [
+          "carrot"
+        ]
+      },
+      {
+        "q": "carrots table",
+        "need": [
+          "carrots"
+        ],
+        "prefer": [
+          "table"
+        ],
+        "avoid": [
+          "rabbit",
+          "cake"
+        ]
+      }
+    ],
+    "translation_ko": "당근이 탁자 위에 있어요.",
+    "tmp_id": "L1-0073"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'sneakers'는 운동화예요. 분홍 운동화를 신은 발이 보이는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.shopping"
+    ],
+    "accent": "UK",
+    "tts_script": "Someone is wearing pink sneakers.",
+    "choice_image_prompts": [
+      "Feet in pink sneakers",
+      "Feet in striped socks",
+      "A straw hat in a wheat field",
+      "Someone wearing winter gloves"
+    ],
+    "status": "active",
+    "evidence": "pink sneakers",
+    "why_not": {
+      "1": "줄무늬 양말을 신은 사진이에요",
+      "2": "밀밭 위 밀짚모자 사진이에요",
+      "3": "장갑을 낀 사진이에요"
+    },
+    "key_expr": {
+      "en": "sneakers",
+      "ko": "운동화"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "sneakers shoes floor",
+        "need": [
+          "sneakers"
+        ],
+        "prefer": [],
+        "avoid": [
+          "socks",
+          "hat"
+        ]
+      },
+      {
+        "q": "socks colorful",
+        "need": [
+          "socks"
+        ],
+        "prefer": [],
+        "avoid": [
+          "sneakers"
+        ]
+      },
+      {
+        "q": "straw hat",
+        "need": [
+          "hat"
+        ],
+        "prefer": [],
+        "avoid": [
+          "sneaker",
+          "shoe",
+          "sock",
+          "glove",
+          "feet"
+        ]
+      },
+      {
+        "q": "winter gloves",
+        "need": [
+          "gloves"
+        ],
+        "prefer": [],
+        "avoid": [
+          "sneakers"
+        ]
+      }
+    ],
+    "translation_ko": "누군가 분홍색 운동화를 신고 있어요.",
+    "tmp_id": "L1-0074"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'milkshake'는 우유로 만든 시원한 음료예요. 긴 잔에 담긴 밀크셰이크 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "A milkshake is in a tall glass.",
+    "choice_image_prompts": [
+      "A cup of tea",
+      "A glass of lemonade",
+      "A milkshake in a tall glass",
+      "A blue mug and snacks in the snow"
+    ],
+    "status": "active",
+    "evidence": "A milkshake",
+    "why_not": {
+      "0": "찻잔 사진이에요",
+      "1": "레모네이드 사진이에요",
+      "3": "파란 머그잔과 과자 사진이에요"
+    },
+    "key_expr": {
+      "en": "milkshake",
+      "ko": "밀크셰이크"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "cup of tea",
+        "need": [
+          "tea",
+          "cup"
+        ],
+        "prefer": [],
+        "avoid": [
+          "milkshake"
+        ]
+      },
+      {
+        "q": "lemonade glass lemons",
+        "need": [
+          "lemonade"
+        ],
+        "prefer": [],
+        "avoid": [
+          "milkshake"
+        ]
+      },
+      {
+        "q": "milkshake glass",
+        "need": [
+          "milkshake"
+        ],
+        "prefer": [],
+        "avoid": [
+          "tea"
+        ]
+      },
+      {
+        "q": "hot chocolate mug",
+        "need": [
+          "chocolate",
+          "mug"
+        ],
+        "prefer": [],
+        "avoid": [
+          "milkshake"
+        ]
+      }
+    ],
+    "translation_ko": "키가 큰 유리잔에 밀크셰이크가 담겨 있어요.",
+    "tmp_id": "L1-0075"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'have a meeting'은 회의하다예요. 여럿이 탁자에 둘러앉아 이야기하는 사진이 정답이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.photo",
+      "V.work"
+    ],
+    "accent": "US",
+    "tts_script": "People are having a meeting.",
+    "choice_image_prompts": [
+      "A printer in an office",
+      "People having a meeting at a table",
+      "Hands typing on a keyboard",
+      "A coffee cup on a desk"
+    ],
+    "status": "active",
+    "evidence": "having a meeting",
+    "why_not": {
+      "0": "프린터 사진이에요",
+      "2": "혼자 노트북 자판을 치는 사진이에요",
+      "3": "책상 위 커피잔 사진이에요"
+    },
+    "key_expr": {
+      "en": "have a meeting",
+      "ko": "회의하다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "printer office",
+        "need": [
+          "printer"
+        ],
+        "prefer": [],
+        "avoid": [
+          "meeting"
+        ]
+      },
+      {
+        "q": "business meeting table",
+        "need": [
+          "meeting",
+          "business"
+        ],
+        "prefer": [
+          "table"
+        ],
+        "avoid": [
+          "printer"
+        ]
+      },
+      {
+        "q": "typing keyboard hands",
+        "need": [
+          "keyboard",
+          "typing"
+        ],
+        "prefer": [],
+        "avoid": [
+          "meeting"
+        ]
+      },
+      {
+        "q": "coffee cup desk morning",
+        "need": [
+          "coffee",
+          "desk"
+        ],
+        "prefer": [],
+        "avoid": [
+          "meeting",
+          "people"
+        ]
+      }
+    ],
+    "translation_ko": "사람들이 회의를 하고 있어요.",
+    "tmp_id": "L1-0076"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'patient'는 환자예요. 의사가 환자에게 약을 건네는 사진이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "A doctor is giving medicine to a patient.",
+    "choice_image_prompts": [
+      "An ambulance on the road",
+      "Some pills",
+      "An arm with a bandage",
+      "A doctor giving medicine to a patient"
+    ],
+    "status": "active",
+    "evidence": "giving medicine to a patient",
+    "why_not": {
+      "0": "구급차 사진이에요",
+      "1": "약만 잔뜩 있는 사진이에요",
+      "2": "팔에 반창고를 붙인 사진이에요"
+    },
+    "key_expr": {
+      "en": "patient",
+      "ko": "환자"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "ambulance",
+        "need": [
+          "ambulance"
+        ],
+        "prefer": [],
+        "avoid": [
+          "doctor"
+        ]
+      },
+      {
+        "q": "pills medicine",
+        "need": [
+          "pills"
+        ],
+        "prefer": [],
+        "avoid": [
+          "doctor"
+        ]
+      },
+      {
+        "q": "bandage arm",
+        "need": [
+          "bandage"
+        ],
+        "prefer": [],
+        "avoid": [
+          "stethoscope"
+        ]
+      },
+      {
+        "q": "doctor stethoscope patient",
+        "need": [
+          "doctor",
+          "stethoscope"
+        ],
+        "prefer": [
+          "patient"
+        ],
+        "avoid": []
+      }
+    ],
+    "translation_ko": "의사가 환자에게 약을 건네고 있어요.",
+    "tmp_id": "L1-0077"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'spray'는 물을 세게 뿌린다는 뜻이에요. 소방관들이 호스로 물을 뿌리는 사진이 정답이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.photo",
+      "V.work"
+    ],
+    "accent": "AU",
+    "tts_script": "Firefighters are spraying water.",
+    "choice_image_prompts": [
+      "Firefighters spraying water",
+      "A police car on the street",
+      "A fire truck parked on the street",
+      "A construction worker"
+    ],
+    "status": "active",
+    "evidence": "spraying water",
+    "why_not": {
+      "1": "경찰차 사진이에요",
+      "2": "소방차만 서 있는 사진이에요",
+      "3": "공사장 일꾼 사진이에요"
+    },
+    "key_expr": {
+      "en": "spray water",
+      "ko": "물을 뿌리다"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "firefighters water hose",
+        "need": [
+          "firefighters",
+          "water"
+        ],
+        "prefer": [],
+        "avoid": [
+          "toy"
+        ]
+      },
+      {
+        "q": "police car",
+        "need": [
+          "police",
+          "car"
+        ],
+        "prefer": [],
+        "avoid": [
+          "figure",
+          "toy",
+          "miniature",
+          "model",
+          "character",
+          "lego",
+          "fire"
+        ]
+      },
+      {
+        "q": "fire truck parked",
+        "need": [
+          "fire",
+          "truck"
+        ],
+        "prefer": [],
+        "avoid": [
+          "firefighters",
+          "toy",
+          "water"
+        ]
+      },
+      {
+        "q": "construction worker",
+        "need": [
+          "construction",
+          "worker"
+        ],
+        "prefer": [],
+        "avoid": [
+          "figure",
+          "toy",
+          "miniature",
+          "character",
+          "lego",
+          "fire",
+          "handyman"
+        ]
+      }
+    ],
+    "translation_ko": "소방관들이 물을 뿌리고 있어요.",
+    "tmp_id": "L1-0078"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'crane'은 무거운 것을 들어 올리는 높은 기계예요. 노란 크레인 두 대가 보이는 사진이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.work"
+    ],
+    "accent": "US",
+    "tts_script": "Two cranes are standing under a blue sky.",
+    "choice_image_prompts": [
+      "A bulldozer",
+      "A brick wall covered with leaves",
+      "Two cranes under a blue sky",
+      "A big machine at night"
+    ],
+    "status": "active",
+    "evidence": "Two cranes",
+    "why_not": {
+      "0": "불도저 사진이에요",
+      "1": "담쟁이덩굴이 덮인 벽돌담 사진이에요",
+      "3": "밤에 큰 기계가 서 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "crane",
+      "ko": "크레인"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "bulldozer",
+        "need": [
+          "bulldozer"
+        ],
+        "prefer": [],
+        "avoid": [
+          "crane"
+        ]
+      },
+      {
+        "q": "bricks wall",
+        "need": [
+          "bricks"
+        ],
+        "prefer": [],
+        "avoid": [
+          "crane"
+        ]
+      },
+      {
+        "q": "crane construction site",
+        "need": [
+          "crane",
+          "construction"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bird"
+        ]
+      },
+      {
+        "q": "excavator digging",
+        "need": [
+          "excavator"
+        ],
+        "prefer": [],
+        "avoid": [
+          "crane"
+        ]
+      }
+    ],
+    "translation_ko": "파란 하늘 아래 크레인 두 대가 서 있어요.",
+    "tmp_id": "L1-0079"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'suitcase'는 여행 가방이에요. 가방 안에 옷을 넣은 사진이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.travel"
+    ],
+    "accent": "UK",
+    "tts_script": "Clothes are in a suitcase.",
+    "choice_image_prompts": [
+      "Clothes packed in a suitcase",
+      "A map and a compass",
+      "A passport",
+      "A hotel room"
+    ],
+    "status": "active",
+    "evidence": "in a suitcase",
+    "why_not": {
+      "1": "지도와 나침반 사진이에요",
+      "2": "여권 사진이에요",
+      "3": "호텔 방 사진이에요"
+    },
+    "key_expr": {
+      "en": "suitcase",
+      "ko": "여행 가방"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "suitcase packing clothes",
+        "need": [
+          "suitcase",
+          "clothes"
+        ],
+        "prefer": [],
+        "avoid": [
+          "airport"
+        ]
+      },
+      {
+        "q": "map compass travel",
+        "need": [
+          "map",
+          "compass"
+        ],
+        "prefer": [],
+        "avoid": [
+          "suitcase"
+        ]
+      },
+      {
+        "q": "passport tickets",
+        "need": [
+          "passport"
+        ],
+        "prefer": [],
+        "avoid": [
+          "suitcase"
+        ]
+      },
+      {
+        "q": "hotel room bed",
+        "need": [
+          "hotel",
+          "bed"
+        ],
+        "prefer": [],
+        "avoid": [
+          "suitcase"
+        ]
+      }
+    ],
+    "translation_ko": "여행 가방에 옷이 들어 있어요.",
+    "tmp_id": "L1-0080"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'jump rope'는 줄넘기하다예요. 줄을 넘는 사진을 고르면 돼요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "A girl is jumping rope.",
+    "choice_image_prompts": [
+      "A girl with a hula hoop",
+      "A girl jumping rope",
+      "A hopscotch drawn on the ground",
+      "Children playing tug of war"
+    ],
+    "status": "active",
+    "evidence": "jumping rope",
+    "why_not": {
+      "0": "훌라후프 사진이에요",
+      "2": "땅에 그린 사방치기 사진이에요",
+      "3": "줄다리기 사진이에요"
+    },
+    "key_expr": {
+      "en": "jump rope",
+      "ko": "줄넘기하다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "hula hoop girl",
+        "need": [
+          "hula",
+          "hoop"
+        ],
+        "prefer": [],
+        "avoid": [
+          "rope"
+        ]
+      },
+      {
+        "q": "girl jumping rope",
+        "need": [
+          "jumping",
+          "rope"
+        ],
+        "prefer": [],
+        "avoid": [
+          "hoop"
+        ]
+      },
+      {
+        "q": "children hopscotch",
+        "need": [
+          "hopscotch"
+        ],
+        "prefer": [],
+        "avoid": [
+          "rope"
+        ]
+      },
+      {
+        "q": "tug of war",
+        "need": [
+          "tug"
+        ],
+        "prefer": [],
+        "avoid": [
+          "jumping"
+        ]
+      }
+    ],
+    "translation_ko": "여자아이가 줄넘기를 하고 있어요.",
+    "tmp_id": "L1-0081"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'dough'는 빵이나 피자를 만드는 반죽이에요. 밀대로 반죽을 미는 사진이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Someone is rolling dough.",
+    "choice_image_prompts": [
+      "Meat on a grill",
+      "A bowl of salad",
+      "Some sushi",
+      "Someone rolling dough with a rolling pin"
+    ],
+    "status": "active",
+    "evidence": "rolling dough",
+    "why_not": {
+      "0": "고기를 굽는 사진이에요",
+      "1": "샐러드 사진이에요",
+      "2": "초밥 사진이에요"
+    },
+    "key_expr": {
+      "en": "dough",
+      "ko": "반죽"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "grill barbecue meat",
+        "need": [
+          "grill",
+          "barbecue"
+        ],
+        "prefer": [],
+        "avoid": [
+          "dough"
+        ]
+      },
+      {
+        "q": "making salad bowl",
+        "need": [
+          "salad"
+        ],
+        "prefer": [],
+        "avoid": [
+          "dough"
+        ]
+      },
+      {
+        "q": "sushi",
+        "need": [
+          "sushi"
+        ],
+        "prefer": [],
+        "avoid": [
+          "dough"
+        ]
+      },
+      {
+        "q": "rolling pin dough",
+        "need": [
+          "rolling",
+          "dough"
+        ],
+        "prefer": [],
+        "avoid": [
+          "sushi"
+        ]
+      }
+    ],
+    "translation_ko": "누군가 밀대로 반죽을 밀고 있어요.",
+    "tmp_id": "L1-0082"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'waterfall'은 폭포예요. 물이 위에서 아래로 떨어지는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "There is a waterfall in the forest.",
+    "choice_image_prompts": [
+      "A waterfall in a forest",
+      "A volcano",
+      "Sand dunes in a desert",
+      "The inside of a cave"
+    ],
+    "status": "active",
+    "evidence": "a waterfall",
+    "why_not": {
+      "1": "화산 사진이에요",
+      "2": "사막 사진이에요",
+      "3": "동굴 사진이에요"
+    },
+    "key_expr": {
+      "en": "waterfall",
+      "ko": "폭포"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "waterfall forest",
+        "need": [
+          "waterfall"
+        ],
+        "prefer": [
+          "forest"
+        ],
+        "avoid": [
+          "desert"
+        ]
+      },
+      {
+        "q": "volcano",
+        "need": [
+          "volcano"
+        ],
+        "prefer": [],
+        "avoid": [
+          "waterfall"
+        ]
+      },
+      {
+        "q": "desert sand dunes",
+        "need": [
+          "desert"
+        ],
+        "prefer": [],
+        "avoid": [
+          "waterfall"
+        ]
+      },
+      {
+        "q": "cave inside",
+        "need": [
+          "cave"
+        ],
+        "prefer": [],
+        "avoid": [
+          "waterfall"
+        ]
+      }
+    ],
+    "translation_ko": "숲속에 폭포가 있어요.",
+    "tmp_id": "L1-0083"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'fireworks'는 불꽃놀이예요. 밤하늘에 불꽃이 터지는 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Fireworks are in the night sky.",
+    "choice_image_prompts": [
+      "A full moon at night",
+      "Fireworks in the night sky",
+      "City lights at night",
+      "Many stars in the sky"
+    ],
+    "status": "active",
+    "evidence": "Fireworks",
+    "why_not": {
+      "0": "보름달 사진이에요",
+      "2": "밤의 도시 불빛 사진이에요",
+      "3": "별이 가득한 하늘 사진이에요"
+    },
+    "key_expr": {
+      "en": "fireworks",
+      "ko": "불꽃놀이"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "full moon night",
+        "need": [
+          "moon"
+        ],
+        "prefer": [],
+        "avoid": [
+          "fireworks"
+        ]
+      },
+      {
+        "q": "fireworks night sky",
+        "need": [
+          "fireworks"
+        ],
+        "prefer": [],
+        "avoid": [
+          "moon"
+        ]
+      },
+      {
+        "q": "city lights night",
+        "need": [
+          "city",
+          "night"
+        ],
+        "prefer": [],
+        "avoid": [
+          "fireworks"
+        ]
+      },
+      {
+        "q": "starry sky milky way",
+        "need": [
+          "stars",
+          "sky"
+        ],
+        "prefer": [],
+        "avoid": [
+          "fireworks"
+        ]
+      }
+    ],
+    "translation_ko": "밤하늘에 불꽃놀이가 펼쳐져 있어요.",
+    "tmp_id": "L1-0084"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'repair shop'은 고장 난 것을 고치는 가게예요. 수리점 안에 자전거가 있는 사진을 고르면 돼요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "A bicycle is in a repair shop.",
+    "choice_image_prompts": [
+      "A car engine",
+      "Someone using a sewing machine",
+      "Someone on a ladder painting a wall",
+      "A bicycle in a repair shop"
+    ],
+    "status": "active",
+    "evidence": "a repair shop",
+    "why_not": {
+      "0": "자동차 엔진 사진이에요",
+      "1": "재봉틀로 바느질하는 사진이에요",
+      "2": "사다리에 올라 벽에 그림을 그리는 사진이에요"
+    },
+    "key_expr": {
+      "en": "repair shop",
+      "ko": "수리점"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "car mechanic repair engine",
+        "need": [
+          "car",
+          "mechanic"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bicycle"
+        ]
+      },
+      {
+        "q": "sewing machine",
+        "need": [
+          "sewing"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bicycle"
+        ]
+      },
+      {
+        "q": "ladder wall",
+        "need": [
+          "ladder"
+        ],
+        "prefer": [
+          "wall"
+        ],
+        "avoid": [
+          "bicycle",
+          "bike",
+          "repair"
+        ]
+      },
+      {
+        "q": "bicycle repair man",
+        "need": [
+          "bicycle",
+          "repair"
+        ],
+        "prefer": [],
+        "avoid": [
+          "car"
+        ]
+      }
+    ],
+    "translation_ko": "자전거가 수리점 안에 있어요.",
+    "tmp_id": "L1-0085"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'bread'는 빵이에요. 길쭉한 빵이 놓인 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "There is fresh bread on the table.",
+    "choice_image_prompts": [
+      "Fresh bread on a table",
+      "Someone decorating cupcakes",
+      "A coffee shop counter",
+      "Fruit at a market stand"
+    ],
+    "status": "active",
+    "evidence": "fresh bread",
+    "why_not": {
+      "1": "컵케이크를 꾸미는 사진이에요",
+      "2": "카페에서 커피를 만드는 사진이에요",
+      "3": "시장 과일 가게 사진이에요"
+    },
+    "key_expr": {
+      "en": "bread",
+      "ko": "빵"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "bakery bread shelves",
+        "need": [
+          "bread",
+          "bakery"
+        ],
+        "prefer": [],
+        "avoid": [
+          "cake"
+        ]
+      },
+      {
+        "q": "cake decorating cream",
+        "need": [
+          "cake",
+          "decorating"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bread"
+        ]
+      },
+      {
+        "q": "coffee shop barista",
+        "need": [
+          "barista"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bread"
+        ]
+      },
+      {
+        "q": "fruit stand market",
+        "need": [
+          "fruit",
+          "market"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bread"
+        ]
+      }
+    ],
+    "translation_ko": "탁자 위에 갓 구운 빵이 있어요.",
+    "tmp_id": "L1-0086"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'water slide'는 물이 흐르는 미끄럼틀이에요. 물놀이장의 큰 미끄럼틀 사진이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "There is a colorful water slide.",
+    "choice_image_prompts": [
+      "A canoe on a river",
+      "A diver underwater",
+      "A colorful water slide at a water park",
+      "Someone snorkeling"
+    ],
+    "status": "active",
+    "evidence": "water slide",
+    "why_not": {
+      "0": "강가에 카누가 있는 사진이에요",
+      "1": "잠수하는 사진이에요",
+      "3": "스노클링하는 사진이에요"
+    },
+    "key_expr": {
+      "en": "water slide",
+      "ko": "물 미끄럼틀"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "canoe river",
+        "need": [
+          "canoe"
+        ],
+        "prefer": [],
+        "avoid": [
+          "slide"
+        ]
+      },
+      {
+        "q": "scuba diving underwater",
+        "need": [
+          "diving"
+        ],
+        "prefer": [],
+        "avoid": [
+          "slide"
+        ]
+      },
+      {
+        "q": "water slide park",
+        "need": [
+          "water",
+          "slide"
+        ],
+        "prefer": [],
+        "avoid": [
+          "playground"
+        ]
+      },
+      {
+        "q": "snorkeling mask",
+        "need": [
+          "snorkeling"
+        ],
+        "prefer": [],
+        "avoid": [
+          "slide"
+        ]
+      }
+    ],
+    "translation_ko": "알록달록한 물 미끄럼틀이 있어요.",
+    "tmp_id": "L1-0087"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'telescope'는 멀리 있는 것을 크게 보는 망원경이에요. 호숫가에 망원경이 있는 사진을 고르면 돼요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "A telescope is by the lake.",
+    "choice_image_prompts": [
+      "A telescope by a lake",
+      "A microscope",
+      "A magnifying glass",
+      "A pendulum over a map"
+    ],
+    "status": "active",
+    "evidence": "A telescope",
+    "why_not": {
+      "1": "현미경 사진이에요",
+      "2": "돋보기 사진이에요",
+      "3": "지도 위에 쇠추가 매달린 사진이에요"
+    },
+    "key_expr": {
+      "en": "telescope",
+      "ko": "망원경"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "telescope sky",
+        "need": [
+          "telescope"
+        ],
+        "prefer": [],
+        "avoid": [
+          "microscope"
+        ]
+      },
+      {
+        "q": "microscope laboratory",
+        "need": [
+          "microscope"
+        ],
+        "prefer": [],
+        "avoid": [
+          "telescope"
+        ]
+      },
+      {
+        "q": "magnifying glass",
+        "need": [
+          "magnifying"
+        ],
+        "prefer": [],
+        "avoid": [
+          "telescope"
+        ]
+      },
+      {
+        "q": "compass navigation",
+        "need": [
+          "compass"
+        ],
+        "prefer": [],
+        "avoid": [
+          "telescope"
+        ]
+      }
+    ],
+    "translation_ko": "호숫가에 망원경이 있어요.",
+    "tmp_id": "L1-0088"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'headphones'는 귀에 쓰는 헤드폰이에요. 헤드폰이 놓인 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "There is a pair of headphones.",
+    "choice_image_prompts": [
+      "A tablet and a cup of coffee",
+      "A pair of headphones",
+      "A game controller",
+      "A hand holding a smartphone"
+    ],
+    "status": "active",
+    "evidence": "a pair of headphones",
+    "why_not": {
+      "0": "태블릿과 커피잔 사진이에요",
+      "2": "게임기 조종기 사진이에요",
+      "3": "스마트폰을 든 사진이에요"
+    },
+    "key_expr": {
+      "en": "headphones",
+      "ko": "헤드폰"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "tablet screen",
+        "need": [
+          "tablet"
+        ],
+        "prefer": [],
+        "avoid": [
+          "headphones"
+        ]
+      },
+      {
+        "q": "headphones",
+        "need": [
+          "headphones"
+        ],
+        "prefer": [
+          "desk"
+        ],
+        "avoid": [
+          "woman",
+          "girl",
+          "boy",
+          "listening",
+          "wearing",
+          "dj",
+          "tablet",
+          "controller",
+          "smartphone"
+        ]
+      },
+      {
+        "q": "game controller",
+        "need": [
+          "controller"
+        ],
+        "prefer": [],
+        "avoid": [
+          "headphones"
+        ]
+      },
+      {
+        "q": "smartphone hand",
+        "need": [
+          "smartphone"
+        ],
+        "prefer": [],
+        "avoid": [
+          "abstract",
+          "design",
+          "pattern",
+          "particles",
+          "headphone",
+          "tablet",
+          "game"
+        ]
+      }
+    ],
+    "translation_ko": "헤드폰 하나가 있어요.",
+    "tmp_id": "L1-0089"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'alarm clock'은 아침에 울리는 자명종 시계예요. 침대 위 시계 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "An alarm clock is on the bed.",
+    "choice_image_prompts": [
+      "A toothbrush",
+      "A shower",
+      "An alarm clock on a bed",
+      "A bowl of cereal"
+    ],
+    "status": "active",
+    "evidence": "An alarm clock",
+    "why_not": {
+      "0": "칫솔 사진이에요",
+      "1": "샤워하는 사진이에요",
+      "3": "시리얼 그릇 사진이에요"
+    },
+    "key_expr": {
+      "en": "alarm clock",
+      "ko": "자명종 시계"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "toothbrush toothpaste",
+        "need": [
+          "toothbrush"
+        ],
+        "prefer": [],
+        "avoid": [
+          "clock"
+        ]
+      },
+      {
+        "q": "shower bathroom",
+        "need": [
+          "shower"
+        ],
+        "prefer": [],
+        "avoid": [
+          "clock"
+        ]
+      },
+      {
+        "q": "alarm clock bed",
+        "need": [
+          "alarm",
+          "clock"
+        ],
+        "prefer": [],
+        "avoid": [
+          "wall"
+        ]
+      },
+      {
+        "q": "breakfast cereal",
+        "need": [
+          "breakfast"
+        ],
+        "prefer": [],
+        "avoid": [
+          "clock"
+        ]
+      }
+    ],
+    "translation_ko": "자명종 시계가 침대 위에 있어요.",
+    "tmp_id": "L1-0090"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'apples'는 사과예요. 담요 위에 사과가 놓인 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "Apples are on a blanket.",
+    "choice_image_prompts": [
+      "Someone throwing a frisbee",
+      "Apples on a blanket",
+      "Fire in a barbecue grill",
+      "An empty park bench"
+    ],
+    "status": "active",
+    "evidence": "Apples",
+    "why_not": {
+      "0": "원반을 던지는 사진이에요",
+      "2": "바비큐 그릴에 불이 타는 사진이에요",
+      "3": "공원 벤치 사진이에요"
+    },
+    "key_expr": {
+      "en": "blanket",
+      "ko": "담요"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "frisbee park",
+        "need": [
+          "frisbee"
+        ],
+        "prefer": [],
+        "avoid": [
+          "picnic"
+        ]
+      },
+      {
+        "q": "picnic basket blanket",
+        "need": [
+          "picnic",
+          "basket"
+        ],
+        "prefer": [
+          "blanket"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "barbecue grill park",
+        "need": [
+          "grill"
+        ],
+        "prefer": [],
+        "avoid": [
+          "picnic"
+        ]
+      },
+      {
+        "q": "park bench",
+        "need": [
+          "bench",
+          "park"
+        ],
+        "prefer": [],
+        "avoid": [
+          "picnic"
+        ]
+      }
+    ],
+    "translation_ko": "사과가 담요 위에 있어요.",
+    "tmp_id": "L1-0091"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'for sale'은 판다는 뜻이에요. 가게에 꽃이 진열된 사진을 고르면 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.shopping"
+    ],
+    "accent": "UK",
+    "tts_script": "Flowers are for sale at the shop.",
+    "choice_image_prompts": [
+      "Fish at a market",
+      "Toys in a store",
+      "A bookstore",
+      "Flowers for sale at a shop"
+    ],
+    "status": "active",
+    "evidence": "for sale",
+    "why_not": {
+      "0": "생선 가게 사진이에요",
+      "1": "장난감 가게 사진이에요",
+      "2": "서점 사진이에요"
+    },
+    "key_expr": {
+      "en": "for sale",
+      "ko": "판매 중인"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "fish market",
+        "need": [
+          "fish",
+          "market"
+        ],
+        "prefer": [],
+        "avoid": [
+          "flowers"
+        ]
+      },
+      {
+        "q": "toy store",
+        "need": [
+          "toys",
+          "store"
+        ],
+        "prefer": [],
+        "avoid": [
+          "flowers"
+        ]
+      },
+      {
+        "q": "book store",
+        "need": [
+          "bookstore"
+        ],
+        "prefer": [],
+        "avoid": [
+          "flowers"
+        ]
+      },
+      {
+        "q": "flower shop florist",
+        "need": [
+          "flowers",
+          "shop"
+        ],
+        "prefer": [],
+        "avoid": []
+      }
+    ],
+    "translation_ko": "꽃집에서 꽃을 팔고 있어요.",
+    "tmp_id": "L1-0092"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'branch'는 나뭇가지예요. 새가 나뭇가지에 앉아 있는 사진을 고르면 돼요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "A small bird is sitting on a branch.",
+    "choice_image_prompts": [
+      "A small bird sitting on a branch",
+      "Ducks by the water",
+      "Seagulls flying over the sea",
+      "Eggs in a bird nest"
+    ],
+    "status": "active",
+    "evidence": "on a branch",
+    "why_not": {
+      "1": "물가에 오리가 있는 사진이에요",
+      "2": "바다 위를 나는 갈매기 사진이에요",
+      "3": "새 둥지 사진이에요"
+    },
+    "key_expr": {
+      "en": "branch",
+      "ko": "나뭇가지"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "small bird branch",
+        "need": [
+          "bird",
+          "branch"
+        ],
+        "prefer": [],
+        "avoid": [
+          "duck",
+          "gull",
+          "nest",
+          "egg",
+          "owl",
+          "eagle",
+          "parrot",
+          "feeder"
+        ]
+      },
+      {
+        "q": "ducks pond",
+        "need": [
+          "ducks",
+          "pond"
+        ],
+        "prefer": [],
+        "avoid": [
+          "feeder"
+        ]
+      },
+      {
+        "q": "seagulls beach",
+        "need": [
+          "seagulls"
+        ],
+        "prefer": [],
+        "avoid": [
+          "feeder"
+        ]
+      },
+      {
+        "q": "bird nest eggs",
+        "need": [
+          "nest",
+          "eggs"
+        ],
+        "prefer": [],
+        "avoid": [
+          "feeder"
+        ]
+      }
+    ],
+    "translation_ko": "작은 새가 나뭇가지에 앉아 있어요.",
+    "tmp_id": "L1-0093"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'clay'는 그릇을 빚는 흙이에요. 손으로 흙을 빚는 사진이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.photo",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "Someone is making a pot from clay.",
+    "choice_image_prompts": [
+      "Someone knitting",
+      "Someone making a pot from clay",
+      "A paper boat",
+      "Paintbrushes in a cup"
+    ],
+    "status": "active",
+    "evidence": "from clay",
+    "why_not": {
+      "0": "뜨개질하는 사진이에요",
+      "2": "종이배 사진이에요",
+      "3": "붓이 꽂혀 있는 사진이에요"
+    },
+    "key_expr": {
+      "en": "clay",
+      "ko": "점토, 흙"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "knitting yarn needles",
+        "need": [
+          "knitting"
+        ],
+        "prefer": [],
+        "avoid": [
+          "clay"
+        ]
+      },
+      {
+        "q": "pottery wheel clay",
+        "need": [
+          "pottery",
+          "clay"
+        ],
+        "prefer": [],
+        "avoid": [
+          "vase"
+        ]
+      },
+      {
+        "q": "origami paper",
+        "need": [
+          "origami"
+        ],
+        "prefer": [],
+        "avoid": [
+          "clay"
+        ]
+      },
+      {
+        "q": "painting canvas artist",
+        "need": [
+          "canvas",
+          "painting"
+        ],
+        "prefer": [],
+        "avoid": [
+          "clay"
+        ]
+      }
+    ],
+    "translation_ko": "누군가 흙으로 그릇을 만들고 있어요.",
+    "tmp_id": "L1-0094"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'rake'는 갈퀴로 긁어모은다는 뜻이에요. 갈퀴로 낙엽을 모으는 사진이 정답이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.photo",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Leaves are being raked.",
+    "choice_image_prompts": [
+      "A lawn mower on the grass",
+      "A dog next to a snow shovel",
+      "A wheelbarrow full of firewood",
+      "Leaves being raked"
+    ],
+    "status": "active",
+    "evidence": "being raked",
+    "why_not": {
+      "0": "잔디 깎는 기계 사진이에요",
+      "1": "눈 치우는 삽 옆에 개가 있는 사진이에요",
+      "2": "장작을 실은 손수레 사진이에요"
+    },
+    "key_expr": {
+      "en": "rake",
+      "ko": "갈퀴로 긁어모으다"
+    },
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "lawn mower grass",
+        "need": [
+          "lawn",
+          "mower"
+        ],
+        "prefer": [],
+        "avoid": [
+          "leaves",
+          "rake"
+        ]
+      },
+      {
+        "q": "snow shovel",
+        "need": [
+          "snow",
+          "shovel"
+        ],
+        "prefer": [],
+        "avoid": [
+          "leaves"
+        ]
+      },
+      {
+        "q": "wheelbarrow garden",
+        "need": [
+          "wheelbarrow"
+        ],
+        "prefer": [],
+        "avoid": [
+          "rake"
+        ]
+      },
+      {
+        "q": "raking leaves autumn",
+        "need": [
+          "rake",
+          "leaves"
+        ],
+        "prefer": [],
+        "avoid": [
+          "snow"
+        ]
+      }
+    ],
+    "translation_ko": "낙엽을 갈퀴로 긁어모으고 있어요.",
+    "tmp_id": "L1-0095"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L1",
+    "stem": null,
+    "choices": [
+      "Picture A",
+      "Picture B",
+      "Picture C",
+      "Picture D"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'inside the bus'는 버스 안이에요. 버스 안 자리에 사람들이 앉은 사진이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.photo",
+      "V.travel"
+    ],
+    "accent": "AU",
+    "tts_script": "People are sitting inside the bus.",
+    "choice_image_prompts": [
+      "People sitting inside a bus",
+      "A taxi on the street",
+      "A woman waiting at a train station",
+      "Bicycles covered with snow"
+    ],
+    "status": "active",
+    "evidence": "inside the bus",
+    "why_not": {
+      "1": "택시 사진이에요",
+      "2": "기차역에서 여자가 기다리는 사진이에요",
+      "3": "눈에 덮인 자전거 사진이에요"
+    },
+    "key_expr": {
+      "en": "inside",
+      "ko": "~ 안에"
+    },
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    },
+    "choice_image_queries": [
+      {
+        "q": "passengers boarding bus",
+        "need": [
+          "bus",
+          "passengers"
+        ],
+        "prefer": [],
+        "avoid": [
+          "train",
+          "airplane"
+        ]
+      },
+      {
+        "q": "taxi street yellow",
+        "need": [
+          "taxi"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bus"
+        ]
+      },
+      {
+        "q": "people waiting train platform",
+        "need": [
+          "train",
+          "platform"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bus"
+        ]
+      },
+      {
+        "q": "bicycle parking",
+        "need": [
+          "bicycles",
+          "parking"
+        ],
+        "prefer": [],
+        "avoid": [
+          "bus"
+        ]
+      }
+    ],
+    "translation_ko": "사람들이 버스 안에 앉아 있어요.",
+    "tmp_id": "L1-0096"
+  }
+]

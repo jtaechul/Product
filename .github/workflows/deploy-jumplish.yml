@@ -1,0 +1,85 @@
+name: Deploy Jumplish (junior-toeic-master)
+
+on:
+  push:
+    branches: ["claude/junior-toeic-master-planning-322l2t"]
+    paths:
+      - "junior-toeic-master/**"
+      - ".github/workflows/deploy-jumplish.yml"
+  workflow_dispatch:
+  # 음원·사진 배치(generate-tts / generate-l1-images)가 끝나면 그쪽에서 이 워크플로를 부른다.
+  # 배치는 GITHUB_TOKEN 으로 커밋하는데, 그 푸시는 다른 워크플로를 깨우지 못한다(깃허브 정책).
+  # 그래서 예전에는 새로 만든 음원이 배포되지 않아, 문항이 draft 로 남아 아이에게 안 나갔다.
+  workflow_call:
+
+concurrency:
+  group: jumplish-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: junior-toeic-master
+    env:
+      # 점프리시 전용 토큰이 있으면 그것을, 없으면 공용 토큰을 사용 (키 분리 가능)
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN_JUMPLISH || secrets.CF_API_TOKEN_JUMPLISH_DEPLOY || secrets.CF_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 트리거된 커밋이 아니라 브랜치의 최신 상태를 받는다. 배치가 방금 커밋한
+          # 음원·사진까지 포함해야 import.mjs 가 그 문항을 active 로 올린다.
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22   # wrangler 4는 Node 22 이상 필요
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Ensure D1 database and inject id
+        run: |
+          set -e
+          # wrangler는 --json 앞에 안내 배너를 붙일 수 있어 '[' 이후만 파싱한다
+          get_id() { npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const a=JSON.parse(s.slice(s.indexOf('[')));const m=a.find(x=>x.name==='jumplish-db');process.stdout.write(m?(m.uuid||m.id||''):'')}catch(e){process.stdout.write('')}})"; }
+          ID=$(get_id)
+          if [ -z "$ID" ]; then
+            echo "jumplish-db가 없어 새로 만듭니다"
+            npx wrangler d1 create jumplish-db
+            ID=$(get_id)
+          fi
+          if [ -z "$ID" ]; then
+            echo "::error::D1 database id를 확인하지 못했습니다. CF_API_TOKEN에 D1 편집 권한이 있는지 확인하세요."
+            exit 1
+          fi
+          sed -i "s/REPLACED_AT_DEPLOY/$ID/" wrangler.jsonc
+          echo "database_id=$ID"
+
+      - name: Apply migrations (remote)
+        run: npx wrangler d1 migrations apply jumplish-db --remote
+
+      - name: Seed content (remote, idempotent upsert)
+        run: |
+          node tools/import.mjs
+          # 문항 번호(ULID)는 원고와 함께 커밋돼 있어야 한다. 배포 러너가 여기서 새로 지으면
+          # 그 번호는 어디에도 저장되지 않아, 다음 작업이 같은 문항에 또 다른 번호를 붙인다.
+          # 2026-08-11 실제로 그렇게 사진·소리 없는 L1 복사본 12개가 DB에 남아 아이에게 나갔다.
+          # (음원·사진 워크플로에는 같은 검사가 이미 있다 — 배포에만 빠져 있었다)
+          if ! git diff --quiet -- content/.idmap.json; then
+            echo "::error::원고에 번호(ULID)가 없는 문항이 있어 배포를 멈춥니다 — 그대로 넣으면 아무도 고치지 않는 복사본이 DB에 남습니다."
+            echo "::error::개발 폴더에서 'node tools/import.mjs' 를 돌린 뒤 content/.idmap.json 을 문항과 같이 커밋해 주세요."
+            git diff --stat -- content/.idmap.json
+            exit 1
+          fi
+          # 원고에 없어 이번 배포에서 내려갈(retired) 문항 수 — 파트·상태별 개수만 찍는다.
+          # 확인용일 뿐이라 실패해도 배포는 계속한다.
+          npx wrangler d1 execute jumplish-db --remote --json --command "$(cat tools/out/orphans.sql)" \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const r=JSON.parse(s.slice(s.indexOf('[')))[0].results;console.log('원고에 없어 내릴 문항:', r.length ? r.map(x=>x.part+' '+x.status+' '+x.n+'개').join(', ') : '없음')}catch(e){console.log('내릴 문항 수를 읽지 못했습니다(배포는 계속)')}})" \
+            || true
+          npx wrangler d1 execute jumplish-db --remote --file tools/out/seed.sql
+          npx wrangler d1 execute jumplish-db --remote --file tools/demo-org.sql
+
+      - name: Deploy worker
+        run: npx wrangler deploy
