@@ -3196,5 +3196,486 @@
       }
     ],
     "tmp_id": "L4-0040"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hi, Yuna, this is Mr. Park from the art room. I'm calling about the painting you left to dry. The art room will be locked all day tomorrow because the floor is being waxed, so please come today before four o'clock if you need your brushes. Your painting is safe on the top shelf, and I'll bring it to your classroom on Monday, so you don't have to carry it home in the rain.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 안녕, 유나야. 미술실의 박 선생님이란다. 네가 말리려고 두고 간 그림 때문에 전화했어. 내일은 바닥에 왁스를 칠해서 미술실 문을 하루 종일 잠가 둘 거야. 그러니 붓이 필요하면 오늘 네 시 전에 오렴. 네 그림은 맨 위 선반에 잘 있고, 선생님이 월요일에 교실로 가져다줄 테니 비 오는 날 집까지 들고 갈 필요는 없단다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why does Mr. Park tell Yuna to come today?",
+        "choices": [
+          "Because her painting is still wet",
+          "Because the art room will be shut tomorrow",
+          "Because she must buy new brushes",
+          "Because her class starts at four o'clock"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "내일은 바닥에 왁스를 칠해서 미술실 문을 잠근대요. 그래서 오늘 오라고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "The art room will be locked all day tomorrow",
+        "why_not": {
+          "0": "마르는 중이지만 그게 이유는 아니에요",
+          "2": "붓을 사라는 말은 없었어요",
+          "3": "네 시는 수업이 아니라 오는 시간이에요"
+        },
+        "key_expr": {
+          "en": "be locked all day",
+          "ko": "하루 종일 문이 잠기다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Why doesn't Yuna need to take her painting today?",
+        "choices": [
+          "She will paint a new one next week",
+          "Her friend will carry it for her",
+          "She will carry it home in the rain",
+          "Mr. Park will bring it to her classroom"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "박 선생님이 월요일에 교실로 가져다주신대요. 그래서 들고 갈 필요가 없어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "I'll bring it to your classroom on Monday",
+        "why_not": {
+          "0": "다시 그린다는 말은 없었어요",
+          "1": "친구 이야기는 나오지 않았어요",
+          "2": "비 맞고 들고 갈 필요 없다고 했어요"
+        },
+        "key_expr": {
+          "en": "don't have to carry it",
+          "ko": "들고 갈 필요 없다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "L4-0041"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hi everyone, I'm Minjun, and this is my rock collection. I found most of these stones by the river near my grandmother's house. Please pass the box around, but hold the white one with two hands, because it broke once before and my dad glued it. I also brought a magnifying glass, because the tiny silver dots only show up when you look closely. If you find an interesting stone this weekend, bring it in and we can compare.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 안녕하세요, 저는 민준이고 이건 제 돌 수집품이에요. 대부분은 할머니 댁 근처 강가에서 주웠어요. 상자를 돌려 보셔도 되지만, 하얀 돌은 두 손으로 잡아 주세요. 전에 한 번 깨져서 아빠가 붙여 놓으셨거든요. 돋보기도 가져왔어요. 아주 작은 은색 점들은 가까이 들여다봐야 보이거든요. 이번 주말에 재미있는 돌을 찾으면 가져오세요. 같이 비교해 봐요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why does Minjun ask everyone to hold the white stone with two hands?",
+        "choices": [
+          "It breaks easily",
+          "It is too heavy to lift",
+          "It is still wet with glue",
+          "It is his newest stone"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "하얀 돌은 전에 한 번 깨져서 아빠가 붙였대요. 그래서 조심하라는 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "it broke once before and my dad glued it",
+        "why_not": {
+          "1": "무겁다는 말은 없었어요",
+          "2": "풀은 전에 붙일 때 쓴 거예요",
+          "3": "가장 새 돌이라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "hold with two hands",
+          "ko": "두 손으로 잡다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why did Minjun bring a magnifying glass?",
+        "choices": [
+          "To find more stones by the river",
+          "To clean the dirty stones",
+          "Because the silver dots are hard to see",
+          "Because the box is too small"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "작은 은색 점은 가까이 봐야 보인대요. 그래서 돋보기를 가져왔어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "the tiny silver dots only show up when you look closely",
+        "why_not": {
+          "0": "강가에서 주운 건 예전 일이에요",
+          "1": "닦는다는 말은 없었어요",
+          "3": "상자 크기 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "look closely",
+          "ko": "가까이 들여다보다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0042"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning and welcome to Seaside Kite Day. The wind is strongest near the water, so beginners should start on the grass behind the car park where it is gentler. If your string gets tangled, please don't pull hard; raise your hand and a helper in a yellow cap will come over. We have twenty spare kites, but they go quickly, so please share with a partner if you can.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 안녕하세요, 바닷가 연날리기 날에 오신 것을 환영합니다. 물가 쪽은 바람이 가장 세니, 처음 해 보는 분들은 주차장 뒤 풀밭에서 시작하세요. 그곳은 바람이 더 부드럽습니다. 줄이 엉키면 세게 당기지 마시고 손을 들어 주세요. 노란 모자를 쓴 도우미가 갈 거예요. 여분 연은 스무 개 있지만 금방 없어지니, 가능하면 짝과 함께 나눠 써 주세요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why should beginners start on the grass?",
+        "choices": [
+          "The sand is too hot there",
+          "The helpers wait on the grass",
+          "New kites are given out there",
+          "The wind is weaker there"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "물가 쪽은 바람이 제일 세대요. 풀밭은 바람이 더 약해서 처음 하는 사람에게 좋아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "beginners should start on the grass behind the car park where it is gentler",
+        "why_not": {
+          "0": "모래가 뜨겁다는 말은 없어요",
+          "1": "도우미는 손을 들면 와요",
+          "2": "연 나눠 주는 곳 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "the wind is gentler",
+          "ko": "바람이 더 부드럽다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why does the speaker ask people to share a kite with a partner?",
+        "choices": [
+          "Sharing is more fun than flying alone",
+          "There may not be enough kites for everyone",
+          "Each kite needs two people to fly it",
+          "The kites are too heavy for one child"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여분 연은 스무 개뿐이고 금방 없어진대요. 모두에게 돌아가지 않을 수 있어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "We have twenty spare kites, but they go quickly",
+        "why_not": {
+          "0": "재미 때문이라는 말은 없어요",
+          "2": "두 명이 필요하다는 말은 없어요",
+          "3": "무겁다는 말은 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "spare kites",
+          "ko": "여분으로 준비된 연"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0043"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, everyone, and welcome to your first pottery lesson at Clay House. Today we are going to make a small bowl with our hands, so please roll up your sleeves. Clay can be messy, but don't worry, there is a sink at the back of the room. Your bowl will dry for one week, and then you can paint it.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 여러분, 안녕하세요. 클레이 하우스의 첫 도자기 수업에 오신 것을 환영합니다. 오늘은 손으로 작은 그릇을 만들 거예요. 그러니 소매를 걷어 올려 주세요. 흙은 좀 지저분할 수 있지만 걱정 마세요. 교실 뒤쪽에 싱크대가 있습니다. 여러분의 그릇은 일주일 동안 말린 다음에 색칠할 수 있어요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the talk mainly about?",
+        "choices": [
+          "How to clean a sink",
+          "How to paint a picture",
+          "Making a bowl in a pottery class",
+          "Buying bowls at a shop"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "오늘 손으로 작은 그릇을 만든다고 했어요. 그래서 도자기 수업 이야기예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Today we are going to make a small bowl with our hands",
+        "why_not": {
+          "0": "싱크대는 손 씻는 곳으로만 말했어요",
+          "1": "그림 그리기 이야기는 없었어요",
+          "3": "가게에서 산다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "make a small bowl",
+          "ko": "작은 그릇을 만들다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Who is most likely speaking?",
+        "choices": [
+          "An art class teacher",
+          "A shop customer",
+          "A bus driver",
+          "A doctor"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "수업에 온 걸 환영하고 할 일을 알려 주니 가르치는 선생님이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "LS.infer"
+        ],
+        "evidence": "welcome to your first pottery lesson at Clay House",
+        "why_not": {
+          "1": "물건을 사러 온 사람이 아니에요",
+          "2": "버스 이야기는 없었어요",
+          "3": "병원 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "your first lesson",
+          "ko": "첫 수업"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0044"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, and welcome to Hanok Folk Village. I'm your guide, and I'll walk with you for the next two hours. First we will visit the old kitchen and see how people cooked rice long ago. After that, you may try making paper fans in the craft room. Please keep your group together, and take photos anywhere you like.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 안녕하세요, 한옥 민속촌에 오신 것을 환영합니다. 저는 여러분의 안내인이고, 앞으로 두 시간 동안 함께 걸을 거예요. 먼저 옛날 부엌에 가서 아주 오래전에 사람들이 밥을 어떻게 지었는지 볼 거예요. 그다음에는 공예실에서 종이부채를 만들어 볼 수 있습니다. 무리에서 떨어지지 않게 함께 다니시고, 사진은 어디서든 찍으셔도 됩니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the speaker mainly doing?",
+        "choices": [
+          "Teaching a cooking class",
+          "Selling paper fans",
+          "Asking visitors for help",
+          "Explaining the tour plan"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "먼저 어디를 가고 그다음에 뭘 하는지 순서를 알려 주고 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.travel"
+        ],
+        "evidence": "First we will visit the old kitchen",
+        "why_not": {
+          "0": "밥 짓는 모습을 구경하는 거예요",
+          "1": "부채는 만들어 보는 거예요",
+          "2": "도와 달라는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "First we will visit",
+          "ko": "먼저 ~에 갈 거예요"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where are the listeners?",
+        "choices": [
+          "At a bus station",
+          "At a folk village",
+          "At a swimming pool",
+          "At a book shop"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "민속촌에 온 걸 환영한다고 하면서 옛날 부엌을 구경한다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.travel"
+        ],
+        "evidence": "welcome to Hanok Folk Village",
+        "why_not": {
+          "0": "버스 정류장 이야기는 없었어요",
+          "2": "수영장 이야기는 없었어요",
+          "3": "책방 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "welcome to",
+          "ko": "~에 오신 것을 환영합니다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0045"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, students. Today I'd like to tell you about our new pen pal project. Each of you will write a letter to a student at a school on Jeju Island. Tell them about your hobbies and your favourite season. Finish your letter by Thursday and drop it in the blue box beside the office door.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 학생 여러분, 안녕하세요. 오늘은 새로 시작하는 편지 친구 활동에 대해 알려 드릴게요. 여러분은 각자 제주도에 있는 학교의 학생에게 편지를 한 통 쓸 거예요. 여러분의 취미와 가장 좋아하는 계절에 대해 이야기해 주세요. 목요일까지 편지를 다 쓰고, 사무실 문 옆에 있는 파란 상자에 넣어 주세요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the announcement mainly about?",
+        "choices": [
+          "A new letter-writing project",
+          "A school trip to Jeju Island",
+          "A new mailbox for parents",
+          "A hobby club meeting"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "편지 친구에게 편지를 쓰는 새 활동을 알려 주는 말이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "I'd like to tell you about our new pen pal project",
+        "why_not": {
+          "1": "제주도에 간다는 말은 없었어요",
+          "2": "파란 상자는 편지를 넣는 곳이에요",
+          "3": "취미는 편지에 쓸 내용이에요"
+        },
+        "key_expr": {
+          "en": "write a letter to",
+          "ko": "~에게 편지를 쓰다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What should the students do by Thursday?",
+        "choices": [
+          "Visit the office and say hello",
+          "Call a friend on Jeju Island",
+          "Choose a new hobby",
+          "Put their letter in the blue box"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "목요일까지 편지를 다 써서 파란 상자에 넣으라고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "Finish your letter by Thursday and drop it in the blue box",
+        "why_not": {
+          "0": "사무실 문 옆 상자에 넣는 거예요",
+          "1": "전화한다는 말은 없었어요",
+          "2": "취미는 편지에 쓰는 내용이에요"
+        },
+        "key_expr": {
+          "en": "by Thursday",
+          "ko": "목요일까지"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L4-0046"
   }
 ]

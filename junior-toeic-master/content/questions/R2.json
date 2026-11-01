@@ -4119,5 +4119,219 @@
     ],
     "status": "draft",
     "tmp_id": "R2-0040"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Eunji,\nMy cousins stayed at our house last weekend. (1) ______ brought two board games with them.\nOn Saturday my brother and I taught (2) ______ a card game, and they taught us a new one.\nMom made the pizza by herself, and we ate every slice.\nWrite back soon,\nJiho",
+      "translation_ko": "은지에게,\n지난 주말에 사촌들이 우리 집에서 묵었어. 그 애들은 보드게임 두 개를 가지고 왔어.\n토요일에는 형과 내가 그 애들에게 카드 게임을 가르쳐 줬고, 그 애들은 우리에게 새 게임을 가르쳐 줬어.\n엄마는 피자를 혼자 다 만드셨고, 우리는 한 조각도 남기지 않고 먹었어.\n답장 빨리 보내 줘,\n지호가"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "Them",
+          "They",
+          "Their",
+          "Theirs"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "앞에 나온 '사촌들'을 다시 가리키며 문장 맨 앞에 오는 말이라 They를 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.pronoun",
+          "V.daily"
+        ],
+        "evidence": "My cousins stayed at our house last weekend.",
+        "why_not": {
+          "0": "'그들을'이라 문장 맨 앞에 못 와요",
+          "2": "뒤에 물건 이름이 와야 해요",
+          "3": "'그들의 것'이라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "They brought games.",
+          "ko": "그들이 게임을 가져왔다."
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.form",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "their",
+          "they",
+          "them",
+          "theirs"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "'사촌들에게' 가르쳐 줬다는 뜻이라 them을 써요. 가르침을 받는 쪽을 가리켜요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.pronoun",
+          "V.leisure"
+        ],
+        "evidence": "my brother and I taught",
+        "why_not": {
+          "0": "뒤에 물건 이름이 와야 해요",
+          "1": "'그들은'이라 이 자리에 안 맞아요",
+          "3": "'그들의 것'이라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "teach them a game",
+          "ko": "그들에게 게임을 가르치다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.form",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "In the letter, who does 'us' in \"they taught us a new one\" refer to?",
+        "choices": [
+          "Jiho's cousins",
+          "Jiho's parents",
+          "Eunji and her sister",
+          "Jiho and his brother"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "바로 앞에서 '형과 내가'라고 했으니 us는 지호와 형을 가리켜요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.pronoun",
+          "RS.context"
+        ],
+        "evidence": "they taught us a new one",
+        "why_not": {
+          "0": "사촌들은 they로 썼어요",
+          "1": "부모님이 배웠다는 말은 없어요",
+          "2": "은지는 편지를 받는 친구예요"
+        },
+        "key_expr": {
+          "en": "teach us a new one",
+          "ko": "우리에게 새것을 가르쳐 주다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0041"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hanul Town Pool — Family Swim Day\nThis Saturday the pool is open to all families. The small pool is warm, and (1) ______ is only 60 cm deep, so little children can play there safely.\nEach family should put (2) ______ bags in one basket by the door.\nPlease do not leave young children by (3) ______ near the water.\nSee you on Saturday!",
+      "translation_ko": "한울 마을 수영장 — 가족 수영의 날\n이번 주 토요일에 수영장을 모든 가족에게 엽니다. 작은 수영장은 물이 따뜻하고 깊이가 60cm밖에 되지 않아서 어린아이들이 안전하게 놀 수 있어요.\n가족마다 가방은 문 옆 바구니 하나에 넣어 주세요.\n어린아이들을 물가에 혼자 두지 마세요.\n토요일에 만나요!"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "he",
+          "they",
+          "it",
+          "its"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "앞에 나온 작은 수영장 하나를 다시 가리키는 말이라 it을 써요.",
+        "difficulty_label": 1,
+        "tags": [
+          "G.pronoun",
+          "V.leisure"
+        ],
+        "evidence": "The small pool is warm",
+        "why_not": {
+          "0": "사람을 가리키는 말이에요",
+          "1": "여럿을 가리킬 때 써요",
+          "3": "'그것의'라서 뒤에 이름이 와야 해요"
+        },
+        "key_expr": {
+          "en": "It is 60 cm deep.",
+          "ko": "그것은 깊이가 60cm예요."
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "G.form",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "their",
+          "them",
+          "they",
+          "theirs"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "'가족마다 자기 가방'이라는 뜻이고 뒤에 bags가 있어서 their를 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.pronoun",
+          "V.daily"
+        ],
+        "evidence": "Each family should put",
+        "why_not": {
+          "1": "'그들을'이라 가방 앞에 못 와요",
+          "2": "'그들은'이라 이 자리에 안 맞아요",
+          "3": "뒤에 물건 이름이 오면 못 써요"
+        },
+        "key_expr": {
+          "en": "their bags",
+          "ko": "그들의 가방"
+        },
+        "miss_type": {
+          "1": "G.form",
+          "2": "G.form",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "themselves",
+          "them",
+          "they",
+          "their"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "by themselves는 '아이들끼리만, 혼자'라는 뜻이에요. 물가에 혼자 두지 말라는 말이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.pronoun",
+          "V.daily"
+        ],
+        "evidence": "do not leave young children",
+        "why_not": {
+          "1": "'그들 옆에'로 뜻이 달라져요",
+          "2": "by 뒤에는 they를 쓸 수 없어요",
+          "3": "뒤에 물건 이름이 와야 해요"
+        },
+        "key_expr": {
+          "en": "by themselves",
+          "ko": "그들끼리만, 혼자"
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "G.form",
+          "3": "G.form"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0042"
   }
 ]

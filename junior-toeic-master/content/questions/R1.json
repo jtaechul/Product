@@ -4783,5 +4783,239 @@
     },
     "translation_ko": "분실물 상자 안에 털장갑 한 켤레가 있어요.",
     "tmp_id": "R1-0124"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Mom asked me to ______ the onions into small pieces before she put them in the soup.",
+    "choices": [
+      "pour",
+      "freeze",
+      "chop",
+      "melt"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "작은 조각으로 만들라고 했으니 '썰다'라는 뜻의 chop이 어울려요.",
+    "difficulty_label": 2,
+    "tags": [
+      "RS.vocab",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "into small pieces",
+    "why_not": {
+      "0": "물처럼 액체를 따를 때 쓰는 말이에요",
+      "1": "얼릴 때 쓰는 말이라 안 맞아요",
+      "3": "초콜릿처럼 녹일 때 쓰는 말이에요"
+    },
+    "key_expr": {
+      "en": "chop into small pieces",
+      "ko": "작은 조각으로 썰다"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "엄마는 수프에 넣기 전에 양파를 작은 조각으로 썰어 달라고 저에게 부탁하셨어요.",
+    "tmp_id": "R1-0125"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Our drama club wants new members, so we made a big ______ and put it on the hallway wall.",
+    "choices": [
+      "poster",
+      "receipt",
+      "ticket",
+      "recipe"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "사람들에게 알리려고 벽에 붙이는 큰 종이는 poster예요.",
+    "difficulty_label": 2,
+    "tags": [
+      "RS.vocab",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "put it on the hallway wall",
+    "why_not": {
+      "1": "물건을 사고 받는 영수증이에요",
+      "2": "들어갈 때 내는 표라서 안 맞아요",
+      "3": "요리하는 방법을 적은 것이에요"
+    },
+    "key_expr": {
+      "en": "put up a poster",
+      "ko": "포스터를 붙이다"
+    },
+    "miss_type": {
+      "1": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "우리 연극 동아리는 새 회원을 원해서, 큰 포스터를 만들어 복도 벽에 붙였어요.",
+    "tmp_id": "R1-0126"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The science museum is within walking ______ of our hotel, so we didn't need to take a bus.",
+    "choices": [
+      "weather",
+      "ticket",
+      "corner",
+      "distance"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "걸어서 갈 수 있는 가까운 거리라는 뜻으로 walking distance라고 말해요.",
+    "difficulty_label": 3,
+    "tags": [
+      "RS.vocab",
+      "V.travel"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "so we didn't need to take a bus",
+    "why_not": {
+      "0": "날씨를 뜻해서 이 자리에 안 맞아요",
+      "1": "표라는 뜻이라 어울리지 않아요",
+      "2": "모퉁이라는 뜻이라 뜻이 안 통해요"
+    },
+    "key_expr": {
+      "en": "within walking distance",
+      "ko": "걸어갈 수 있는 거리에"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "W.meaning",
+      "2": "W.meaning"
+    },
+    "translation_ko": "과학관은 우리 호텔에서 걸어갈 수 있는 거리에 있어서, 우리는 버스를 탈 필요가 없었어요.",
+    "tmp_id": "R1-0127"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The winter jacket was on ______ last week, so I paid only half of the usual price.",
+    "choices": [
+      "order",
+      "sale",
+      "time",
+      "duty"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "값을 절반만 냈으니 '할인 중'이라는 뜻의 on sale이 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "RS.vocab",
+      "V.shopping"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "I paid only half of the usual price",
+    "why_not": {
+      "0": "주문했다는 뜻이라 값과 이어지지 않아요",
+      "2": "시간에 딱 맞춰라는 뜻이에요",
+      "3": "일하는 중이라는 뜻이라 안 맞아요"
+    },
+    "key_expr": {
+      "en": "on sale",
+      "ko": "할인 중인"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "그 겨울 재킷은 지난주에 할인 중이어서, 저는 평소 가격의 절반만 냈어요.",
+    "tmp_id": "R1-0128"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "After running around the park for an hour, my puppy was so ______ that he drank a whole bowl of water.",
+    "choices": [
+      "sleepy",
+      "hungry",
+      "quiet",
+      "thirsty"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "물을 한 그릇 다 마셨으니 목이 말랐다는 thirsty가 딱 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "RS.vocab",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "he drank a whole bowl of water",
+    "why_not": {
+      "0": "졸린 것과 물 마시기는 이어지지 않아요",
+      "1": "배가 고프면 먹을 것을 찾아요",
+      "2": "조용하다는 뜻이라 뜻이 안 통해요"
+    },
+    "key_expr": {
+      "en": "a whole bowl of water",
+      "ko": "물 한 그릇 전부"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "W.meaning",
+      "2": "W.meaning"
+    },
+    "translation_ko": "공원에서 한 시간 동안 뛰어다닌 뒤, 제 강아지는 너무 목이 말라서 물 한 그릇을 다 마셨어요.",
+    "tmp_id": "R1-0129"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The gym was so ______ with students on sports day that we could hardly find a place to sit.",
+    "choices": [
+      "crowded",
+      "empty",
+      "silent",
+      "narrow"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "앉을 자리를 찾기 힘들었으니 사람으로 가득하다는 crowded가 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "RS.vocab",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "we could hardly find a place to sit",
+    "why_not": {
+      "1": "텅 비었다는 뜻이라 반대예요",
+      "2": "조용하다는 뜻이라 자리와 안 맞아요",
+      "3": "폭이 좁다는 뜻이라 어울리지 않아요"
+    },
+    "key_expr": {
+      "en": "be crowded with",
+      "ko": "~로 붐비다"
+    },
+    "miss_type": {
+      "1": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "운동회 날 체육관이 학생들로 너무 붐벼서, 우리는 앉을 자리를 거의 찾을 수 없었어요.",
+    "tmp_id": "R1-0130"
   }
 ]
