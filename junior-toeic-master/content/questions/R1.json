@@ -5253,5 +5253,227 @@
     },
     "translation_ko": "우리는 거실에서 보드게임을 하거나, 밖에 나가서 산책을 할 수 있어요.",
     "tmp_id": "R1-0136"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "We hung the beautiful family photo ______ the wall.",
+    "choices": [
+      "on",
+      "in",
+      "at",
+      "under"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "벽이나 바닥 같은 넓은 곳에 딱 붙어 있을 때는 on을 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.prep",
+      "V.daily"
+    ],
+    "evidence": "the wall",
+    "why_not": {
+      "1": "상자 안처럼 쏙 들어간 곳에 써요",
+      "2": "점처럼 콕 찍은 좁은 장소에 써요",
+      "3": "물건 아래쪽을 뜻하는 말이에요"
+    },
+    "key_expr": {
+      "en": "on the wall",
+      "ko": "벽에"
+    },
+    "miss_type": {
+      "1": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "우리는 아름다운 가족사진을 벽에 걸었어요.",
+    "tmp_id": "R1-0137",
+    "status": "draft"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I made many good friends ______ the space camp.",
+    "choices": [
+      "for",
+      "at",
+      "on",
+      "during"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "캠프가 열리는 '동안'이라는 뜻을 만들려면 during이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.prep",
+      "V.leisure"
+    ],
+    "evidence": "the space camp",
+    "why_not": {
+      "0": "뒤에 삼 일이나 이 주처럼 길이를 말할 때 써요",
+      "1": "장소나 시각을 나타낼 때 어울려요",
+      "2": "특정한 요일이나 날짜 앞에 써요"
+    },
+    "key_expr": {
+      "en": "during the camp",
+      "ko": "캠프 동안"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "W.meaning",
+      "2": "G.clue"
+    },
+    "translation_ko": "나는 우주 캠프 동안 좋은 친구를 많이 사귀었어요.",
+    "tmp_id": "R1-0138",
+    "status": "draft"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My dad cuts the thick colored paper ______ sharp scissors.",
+    "choices": [
+      "by",
+      "with",
+      "of",
+      "to"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "가위나 펜처럼 어떤 도구를 가지고 할 때는 with를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.prep",
+      "V.daily"
+    ],
+    "evidence": "sharp scissors",
+    "why_not": {
+      "0": "누가 했는지나 타고 가는 것을 말할 때 써요",
+      "2": "도구를 나타내는 자리에 안 맞아요",
+      "3": "어디로 향해 가는지 말할 때 써요"
+    },
+    "key_expr": {
+      "en": "with scissors",
+      "ko": "가위로"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "우리 아빠는 두꺼운 색종이를 날카로운 가위로 자르십니다.",
+    "tmp_id": "R1-0139",
+    "status": "draft"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "When the loud thunder hit, the scared puppy hid ______ the warm blanket.",
+    "choices": [
+      "over",
+      "above",
+      "under",
+      "on"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "무서워서 담요 '밑으로' 쏙 들어간 모습을 나타내려면 under가 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.prep",
+      "V.daily"
+    ],
+    "evidence": "the scared puppy hid",
+    "why_not": {
+      "0": "무언가를 덮거나 넘어가는 모습이에요",
+      "1": "담요 위쪽 허공에 떠 있다는 뜻이 돼요",
+      "3": "담요 위에 올라갔다는 말이 돼요"
+    },
+    "key_expr": {
+      "en": "hide under the blanket",
+      "ko": "담요 밑에 숨다"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "큰 천둥이 쳤을 때, 겁먹은 강아지는 따뜻한 담요 밑에 숨었어요.",
+    "tmp_id": "R1-0140",
+    "status": "draft"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Did you know that sweet honey comes ______ hard-working bees?",
+    "choices": [
+      "from",
+      "into",
+      "about",
+      "to"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "꿀이 벌에게서 '나온다'고 출처를 말할 때는 from을 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.prep",
+      "RS.vocab"
+    ],
+    "evidence": "comes",
+    "why_not": {
+      "1": "안으로 쏙 들어간다는 뜻이에요",
+      "2": "무엇에 대해 이야기할 때 주로 써요",
+      "3": "어디를 향해 간다는 방향을 나타내요"
+    },
+    "key_expr": {
+      "en": "come from",
+      "ko": "~에서 오다"
+    },
+    "miss_type": {
+      "1": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "달콤한 꿀이 부지런한 벌에게서 나온다는 걸 알았나요?",
+    "tmp_id": "R1-0141",
+    "status": "draft"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The colorful hot air balloon flew ______ the tall mountains.",
+    "choices": [
+      "between",
+      "over",
+      "through",
+      "under"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "산 위를 훌쩍 넘어가는 모습을 나타낼 때는 over를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.prep",
+      "V.travel"
+    ],
+    "evidence": "flew",
+    "why_not": {
+      "0": "두 산 사이에 껴 있다는 뜻이 돼요",
+      "2": "산속을 뚫고 통과했다는 말이 돼요",
+      "3": "산 아래쪽으로 날아갔다는 뜻이에요"
+    },
+    "key_expr": {
+      "en": "fly over the mountains",
+      "ko": "산을 넘어 날다"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    },
+    "translation_ko": "알록달록한 열기구가 높은 산들 위로 날아갔어요.",
+    "tmp_id": "R1-0142",
+    "status": "draft"
   }
 ]

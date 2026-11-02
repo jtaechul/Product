@@ -5626,5 +5626,406 @@
     },
     "translation_ko": "고양이가 자기의 텅 빈 그릇을 계속 쳐다보고 있어.",
     "tmp_id": "L2-0156"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's behind the kitchen door.",
+      "I swept the floor yesterday.",
+      "Tomorrow morning."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "빗자루를 어디에 두었냐고 장소를 물었으니, 부엌 문 뒤에 있다고 답한 것이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "Where did you put the new broom?",
+    "status": "draft",
+    "evidence": "Where did you put",
+    "why_not": {
+      "1": "빗자루라는 말을 듣고 바닥을 쓸었다고 낚였어요",
+      "2": "언제냐고 물을 때 어울리는 대답이에요"
+    },
+    "key_expr": {
+      "en": "Where did you put ~?",
+      "ko": "~를 어디에 뒀어?"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "새 빗자루 어디에 뒀어?",
+    "tmp_id": "L2-0157"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "In the school gym.",
+      "It's on November tenth.",
+      "Yes, I like science."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "과학 축제가 언제인지 물었으므로, 날짜를 알려 주는 대답이 바릅니다.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "LS.detail",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "When is the school science fair this year?",
+    "status": "draft",
+    "evidence": "When is the school science fair",
+    "why_not": {
+      "0": "어디서 열리는지 장소로 답했어요",
+      "2": "예, 아니오로 답할 수 없는 질문이에요"
+    },
+    "key_expr": {
+      "en": "When is ~?",
+      "ko": "~은 언제야?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "올해 학교 과학 축제는 언제 열려?",
+    "tmp_id": "L2-0158"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "They are very sweet.",
+      "I bought some red apples.",
+      "About twenty, I think."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "파이를 몇 개 구울지 수를 물었으니, 스무 개쯤이라고 말한 대답이 자연스러워요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "LS.detail",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "How many apple pies are you going to bake for the party?",
+    "status": "draft",
+    "evidence": "How many apple pies",
+    "why_not": {
+      "0": "파이 맛에 대해 이야기해서 어색해요",
+      "1": "애플파이라는 말을 듣고 사과를 샀다고 낚였어요"
+    },
+    "key_expr": {
+      "en": "How many ~?",
+      "ko": "얼마나 많은 ~?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.echo"
+    },
+    "translation_ko": "파티를 위해 애플파이를 몇 개 구울 거야?",
+    "tmp_id": "L2-0159"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's on my desk.",
+      "Because it's really hot in here.",
+      "No, I didn't turn it off."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "선풍기를 켠 까닭을 묻고 있으니, 너무 덥기 때문이라고 설명하는 대답이 알맞아요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.qr",
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "Why did you turn on the fan?",
+    "status": "draft",
+    "evidence": "Why did you",
+    "why_not": {
+      "0": "선풍기가 어디 있는지 장소를 답했어요",
+      "2": "왜 그랬는지 묻는 말에는 아니오로 답하지 않아요"
+    },
+    "key_expr": {
+      "en": "Why did you ~?",
+      "ko": "왜 ~했어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "왜 선풍기를 켰어?",
+    "tmp_id": "L2-0160"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Twice a week.",
+      "With my younger sister.",
+      "It's near the park."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "얼마나 자주 가는지 물었으니, 일주일에 두 번 간다고 횟수를 말한 것이 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.qr",
+      "LS.detail",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "How often do you go to your taekwondo class?",
+    "status": "draft",
+    "evidence": "How often",
+    "why_not": {
+      "1": "누구와 함께 가는지 답해서 어색해요",
+      "2": "태권도장이 어디에 있는지 말했어요"
+    },
+    "key_expr": {
+      "en": "How often do you ~?",
+      "ko": "얼마나 자주 ~해?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "태권도장에는 얼마나 자주 가니?",
+    "tmp_id": "L2-0161"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I'll turn the volume down.",
+      "The movie is starting soon.",
+      "I bought it yesterday."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "소리가 너무 크다고 했으니 볼륨을 줄이겠다는 대답이 자연스러워요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "The TV is too loud.",
+    "status": "draft",
+    "evidence": "too loud",
+    "why_not": {
+      "1": "상황에 맞지 않는 엉뚱한 말이에요.",
+      "2": "샀다는 이야기는 나오지 않았어요."
+    },
+    "key_expr": {
+      "en": "turn down",
+      "ko": "소리를 줄이다"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "M.notsaid"
+    },
+    "translation_ko": "TV 소리가 너무 커.",
+    "tmp_id": "L2-0162"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I like green.",
+      "No, you can take it.",
+      "I usually sit in the front."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "의자를 쓰고 있는지 묻는 것은 가져가도 되는지 허락을 구하는 거예요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "Are you using this green chair?",
+    "status": "draft",
+    "evidence": "using this green chair",
+    "why_not": {
+      "0": "들린 낱말로 엉뚱하게 대답했어요.",
+      "2": "앞자리와는 상관없는 이야기예요."
+    },
+    "key_expr": {
+      "en": "take it",
+      "ko": "가져가다"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "이 초록색 의자 쓰고 있니?",
+    "tmp_id": "L2-0163"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The library is closed now.",
+      "I bumped my head.",
+      "You should go to the nurse's room."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "머리가 아프다는 말에는 양호실에 가 보라고 걱정해 주는 것이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.school"
+    ],
+    "accent": "AU",
+    "tts_script": "I have a terrible headache.",
+    "status": "draft",
+    "evidence": "terrible headache",
+    "why_not": {
+      "0": "머리가 아픈 상황과 이어지지 않아요.",
+      "1": "들린 낱말에 낚여서 대답했어요."
+    },
+    "key_expr": {
+      "en": "nurse's room",
+      "ko": "보건실"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "A.echo"
+    },
+    "translation_ko": "나 머리가 너무 아파.",
+    "tmp_id": "L2-0164"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The juice is very cold.",
+      "Yes, I left early.",
+      "I'll go buy some now."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "우유가 남았는지 묻는 말에 우유가 떨어졌으니 사 오겠다고 행동을 말한 거예요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Is there any milk left in the fridge?",
+    "status": "draft",
+    "evidence": "any milk left",
+    "why_not": {
+      "0": "지문에 없는 주스 이야기를 했어요.",
+      "1": "left를 떠났다는 뜻으로 잘못 썼어요."
+    },
+    "key_expr": {
+      "en": "left",
+      "ko": "남은"
+    },
+    "miss_type": {
+      "0": "M.notsaid",
+      "1": "W.meaning"
+    },
+    "translation_ko": "냉장고에 우유 남은 거 있어?",
+    "tmp_id": "L2-0165"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I love painting animals.",
+      "Here is some from my desk.",
+      "The art room is upstairs."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "도화지가 다 떨어졌다는 말은 종이가 더 필요하다는 뜻이므로, 자기 것을 주는 대답이 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "We are out of drawing paper.",
+    "status": "draft",
+    "evidence": "out of drawing paper",
+    "why_not": {
+      "0": "앞뒤 상황과 맞지 않는 엉뚱한 말이에요.",
+      "2": "미술실 위치는 묻지 않았어요."
+    },
+    "key_expr": {
+      "en": "be out of",
+      "ko": "~이 다 떨어지다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "M.notsaid"
+    },
+    "translation_ko": "우리 도화지가 다 떨어졌어.",
+    "tmp_id": "L2-0166"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Let's walk carefully then.",
+      "I need to wash my hands.",
+      "The weather is very dry."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "바닥이 아직 젖어 있다는 말은 미끄러질 수 있으니 조심해서 걷자는 대답이 어울려요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "The floor is still wet here.",
+    "status": "draft",
+    "evidence": "floor is still wet",
+    "why_not": {
+      "1": "바닥이 젖은 상황과 이어지지 않아요.",
+      "2": "젖었다(wet)의 반대말(dry)을 썼어요."
+    },
+    "key_expr": {
+      "en": "walk carefully",
+      "ko": "조심해서 걷다"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "M.opposite"
+    },
+    "translation_ko": "여기 바닥이 아직 젖어 있어.",
+    "tmp_id": "L2-0167"
   }
 ]

@@ -4551,5 +4551,224 @@
     ],
     "status": "draft",
     "tmp_id": "R2-0044"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Welcome to the City Art Museum Kids Tour!\nWe are happy to have you here today. During the tour, you (1) ______ walk slowly and quietly in the halls. Please remember that you (2) ______ touch the paintings. They are very old, and hands can hurt them. However, at the end of the tour, (3) ______ We will hang your art on the wall for everyone to see!\n— Museum Staff",
+      "translation_ko": "시립 미술관 어린이 투어에 오신 것을 환영합니다!\n오늘 여러분과 함께하게 되어 기뻐요. 투어 동안 여러분은 복도에서 천천히 조용히 걸어야 합니다. 그림을 만지면 안 된다는 것을 꼭 기억해 주세요. 그림들은 아주 오래되었고, 손이 닿으면 상할 수 있거든요. 하지만 투어가 끝나면, 활동실에서 여러분만의 그림을 그릴 수 있어요. 여러분의 작품을 모두가 볼 수 있게 벽에 걸어 둘 거예요!\n— 미술관 직원"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "must",
+          "could",
+          "may not",
+          "don't have to"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "미술관 복도에서는 천천히 조용히 걷는 것이 꼭 지켜야 할 규칙이니까 must가 알맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.modal",
+          "V.leisure",
+          "RS.context"
+        ],
+        "evidence": "walk slowly and quietly in the halls.",
+        "why_not": {
+          "1": "지나간 일이나 할 수 있었다는 뜻이라 어색해요",
+          "2": "걸으면 안 된다는 뜻이라 규칙과 반대예요",
+          "3": "걸을 필요가 없다는 뜻이라 안 맞아요"
+        },
+        "key_expr": {
+          "en": "must walk slowly",
+          "ko": "천천히 걸어야 한다"
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "need to",
+          "have to",
+          "must not",
+          "don't have to"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "미술 작품을 만지면 상할 수 있어서 절대 만지면 안 돼요. 그래서 강하게 막는 뜻인 must not을 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.modal",
+          "V.leisure",
+          "RS.context"
+        ],
+        "evidence": "touch the paintings.",
+        "why_not": {
+          "0": "만질 필요가 있다는 뜻이라 반대예요",
+          "1": "꼭 만져야 한다는 뜻이 돼요",
+          "3": "안 만져도 된다는 뜻이라 금지하는 말이 아니에요"
+        },
+        "key_expr": {
+          "en": "must not touch",
+          "ko": "만지면 안 된다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "you must bring your own food.",
+          "you should run as fast as you can.",
+          "you have to clean the whole museum.",
+          "you can draw your own picture in the activity room."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "뒤에 '여러분의 작품을 벽에 걸어 준다'는 말이 있으니, 그림을 그릴 수 있다는 내용이 와야 자연스러워요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.modal",
+          "RS.context"
+        ],
+        "evidence": "We will hang your art on the wall",
+        "why_not": {
+          "0": "음식 이야기는 앞뒤 내용과 안 맞아요",
+          "1": "조용히 걸어야 한다고 앞서 말했어요",
+          "2": "미술관을 청소해야 한다는 내용은 없어요"
+        },
+        "key_expr": {
+          "en": "can draw your own picture",
+          "ko": "너만의 그림을 그릴 수 있다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "M.opposite",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "R2-0045",
+    "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Ryan,\nI am so excited about our family camping trip this weekend. My dad says the nights in the mountains are very cold, so you (1) ______ pack a warm sleeping bag. We already bought enough snacks for everyone, so you (2) ______ bring any food. Also, my mom asked if you have a flashlight. If you don't have one, (3) ______\nSee you on Saturday!\nLeo",
+      "translation_ko": "라이언에게,\n이번 주말 우리 가족 캠핑 여행이 너무 기대돼. 우리 아빠가 산속의 밤은 아주 춥다고 하셨어. 그러니까 넌 따뜻한 침낭을 꼭 챙겨야 해. 우리가 모두가 먹을 간식을 이미 충분히 샀으니까, 넌 음식을 안 가져와도 돼. 그리고 우리 엄마가 너한테 손전등이 있는지 물어보셨어. 만약 없으면, 내 것을 빌려줄 수 있어.\n토요일에 보자!\n리오가"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "shouldn't",
+          "should",
+          "may not",
+          "don't have to"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "밤에 아주 춥다고 했으니 따뜻한 침낭을 '챙기는 게 좋다'고 말해 주는 should가 어울려요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.modal",
+          "V.leisure",
+          "RS.context"
+        ],
+        "evidence": "pack a warm sleeping bag.",
+        "why_not": {
+          "0": "챙기지 말라는 뜻이라 날씨와 안 맞아요",
+          "2": "안 챙길지도 모른다는 뜻이라 어색해요",
+          "3": "안 챙겨도 된다는 뜻이라 산에서는 위험해요"
+        },
+        "key_expr": {
+          "en": "should pack",
+          "ko": "챙기는 것이 좋다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "W.meaning",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "must",
+          "need to",
+          "don't have to",
+          "cannot"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "간식을 이미 충분히 샀기 때문에 음식을 '가져올 필요가 없다'는 뜻의 don't have to가 알맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.modal",
+          "V.food",
+          "RS.context"
+        ],
+        "evidence": "bring any food.",
+        "why_not": {
+          "0": "음식을 이미 샀는데 꼭 가져와야 한다는 뜻이 돼요",
+          "1": "가져올 필요가 있다는 뜻이라 반대예요",
+          "3": "가져올 수 없다고 억지로 막는 뜻이라 어색해요"
+        },
+        "key_expr": {
+          "en": "don't have to bring",
+          "ko": "가져올 필요가 없다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I can lend you mine.",
+          "you must stay at home.",
+          "you shouldn't go to the mountains.",
+          "we will buy a new tent."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "친구가 손전등이 없으면 '내 것을 빌려줄 수 있다'고 제안하는 말이 자연스러워요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.modal",
+          "V.leisure",
+          "RS.context"
+        ],
+        "evidence": "If you don't have one,",
+        "why_not": {
+          "1": "손전등이 없다고 집에 있으라는 말은 흐름에 안 맞아요",
+          "2": "산에 가면 안 된다는 말은 이상해요",
+          "3": "텐트 이야기는 손전등이 없는 것과 상관없어요"
+        },
+        "key_expr": {
+          "en": "I can lend you mine.",
+          "ko": "내 것을 빌려줄 수 있어."
+        },
+        "miss_type": {
+          "1": "F.offtopic",
+          "2": "F.offtopic",
+          "3": "F.offtopic"
+        }
+      }
+    ],
+    "tmp_id": "R2-0046",
+    "status": "draft"
   }
 ]

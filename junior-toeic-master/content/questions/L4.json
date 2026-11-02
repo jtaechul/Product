@@ -4160,5 +4160,485 @@
     ],
     "status": "draft",
     "tmp_id": "L4-0052"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome to the Sunshine Community Garden. Each family gets one small wooden box to grow their own vegetables. It is best to water your plants before nine in the morning, so the sun doesn't dry the soil too fast. Also, please remember to lock the front gate when you leave. We don't want hungry wild rabbits eating our carrots.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 선샤인 주말농장에 오신 것을 환영합니다. 각 가족은 채소를 기를 수 있는 작은 나무 상자 하나씩을 받게 됩니다. 아침 9시 전에 식물에 물을 주는 것이 가장 좋은데, 그래야 햇빛에 흙이 너무 빨리 마르지 않거든요. 또한, 나가실 때는 꼭 앞문을 잠가 주세요. 배고픈 야생 토끼들이 우리 당근을 먹어 치우면 안 되니까요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why should members water their plants early?",
+        "choices": [
+          "To save water in the garden",
+          "To wash the rabbits away",
+          "To keep the soil wet longer",
+          "To grow carrots faster"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "해가 흙을 너무 빨리 말리지 않게 하려고 아침 일찍 물을 주라고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "so the sun doesn't dry the soil too fast",
+        "why_not": {
+          "0": "물을 아끼자는 말은 없었어요",
+          "1": "토끼를 씻긴다는 내용은 없어요",
+          "3": "당근을 빨리 키운다는 말은 아니에요"
+        },
+        "key_expr": {
+          "en": "dry the soil",
+          "ko": "흙을 말리다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "W.meaning",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What is the main reason for locking the gate?",
+        "choices": [
+          "To close the garden for the winter",
+          "To protect the wooden boxes",
+          "To stop cars from entering",
+          "To keep wild animals outside"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "토끼들이 당근을 먹지 못하게 문을 잠그라고 했으니, 야생 동물을 막으려는 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "We don't want hungry wild rabbits eating our carrots.",
+        "why_not": {
+          "0": "겨울에 문을 닫는다는 말은 없어요",
+          "1": "나무 상자를 지키는 게 아니에요",
+          "2": "차가 들어온다는 내용은 없었어요"
+        },
+        "key_expr": {
+          "en": "lock the front gate",
+          "ko": "앞문을 잠그다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0053"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, students. The lost and found box in the main office is completely full. We have so many winter coats and warm gloves in it right now. If you lost something, please come and check the box by this Friday. Next Monday, we will give all the left items to a local charity store.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 좋은 아침입니다, 학생 여러분. 교무실에 있는 분실물 상자가 꽉 찼습니다. 지금 그 안에는 겨울 코트와 따뜻한 장갑이 아주 많아요. 물건을 잃어버렸다면 이번 주 금요일까지 와서 상자를 확인해 주세요. 다음 주 월요일에는 남은 물건들을 모두 지역 자선 단체 가게에 기부할 예정입니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What can be guessed about the season?",
+        "choices": [
+          "It is cold right now.",
+          "It is a rainy summer.",
+          "It is a warm spring.",
+          "It is early fall."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "상자에 겨울 코트와 따뜻한 장갑이 가득하다고 한 것을 보면 지금은 추운 날씨예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "We have so many winter coats and warm gloves",
+        "why_not": {
+          "1": "비 오는 여름 장마철 이야기가 아니에요",
+          "2": "따뜻한 봄에 어울리는 옷차림이 아니에요",
+          "3": "겨울옷이 많으므로 초가을도 아니에요"
+        },
+        "key_expr": {
+          "en": "winter coats",
+          "ko": "겨울 코트"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What will happen if a student visits the box next Tuesday?",
+        "choices": [
+          "The box will have more gloves.",
+          "The lost items will be gone.",
+          "The student must pay a fine.",
+          "The office will be closed."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "월요일에 남은 물건을 모두 기부한다고 했으니, 그 다음 날인 화요일에 가면 물건이 없을 거예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "Next Monday, we will give all the left items to a local charity store.",
+        "why_not": {
+          "0": "장갑이 더 많아진다는 뜻이 아니에요",
+          "2": "벌금을 내야 한다는 말은 없었어요",
+          "3": "교무실 문을 닫는다는 내용은 없어요"
+        },
+        "key_expr": {
+          "en": "left items",
+          "ko": "남은 물건들"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0054"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "W: Hi, Mr. Davis. This is Sarah from the pet sitting service. I just finished walking your dog, Max. He had a lot of energy today and ran after his ball for a long time. Before I left, I saw that his water bowl was cracked. I put a new plastic bowl next to it just in case. I'll see Max again tomorrow.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female"
+      },
+      "translation_ko": "여: 안녕하세요, 데이비스 씨. 펫시터 서비스의 사라입니다. 방금 강아지 맥스 산책을 마쳤어요. 맥스는 오늘 힘이 넘쳐서 꽤 오랫동안 공을 쫓아다니며 뛰었답니다. 떠나기 전에 보니 맥스의 물그릇에 금이 가 있더라고요. 혹시 몰라서 그 옆에 새 플라스틱 그릇을 놓아두었어요. 저는 내일 맥스를 다시 보러 올게요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "How was Max during the walk?",
+        "choices": [
+          "He was sick and tired.",
+          "He was scared of Sarah.",
+          "He was angry at the ball.",
+          "He was very active."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "에너지가 많아서 오랫동안 공을 쫓아다니며 뛰었다고 했으니 아주 활기찼어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "He had a lot of energy today and ran after his ball",
+        "why_not": {
+          "0": "지치고 아프다는 내용은 나오지 않았어요",
+          "1": "사라를 무서워했다는 말은 없어요",
+          "2": "공에게 화를 낸 것이 아니에요"
+        },
+        "key_expr": {
+          "en": "a lot of energy",
+          "ko": "많은 에너지"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why did Sarah use a plastic bowl?",
+        "choices": [
+          "Because the old bowl looked unsafe",
+          "Because Max broke it while running",
+          "Because Max only drinks cold water",
+          "Because she wanted to wash the old one"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "원래 있던 그릇에 금이 갔다고 했으니, 쓰기에 안전하지 않아 보여서 새것을 놓았어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "I saw that his water bowl was cracked. I put a new plastic bowl next to it",
+        "why_not": {
+          "1": "뛰다가 그릇을 깼다는 내용은 없어요",
+          "2": "찬물만 마신다는 말은 나오지 않았어요",
+          "3": "씻으려고 가져간 것이 아니에요"
+        },
+        "key_expr": {
+          "en": "was cracked",
+          "ko": "금이 가 있었다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0055"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good afternoon, students. This is Mr. Smith from the computer room. Starting next week, the computer room will be open until five o'clock every afternoon. If you want to use a computer for your homework, you must sign your name in the red book by the door. Also, you can only bring water in a closed bottle. Please do not bring juice or snacks, because they can make the keyboards sticky. Thank you.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 학생 여러분, 안녕하세요. 컴퓨터실의 스미스 선생님입니다. 다음 주부터 컴퓨터실은 매일 오후 5시까지 문을 엽니다. 숙제를 위해 컴퓨터를 쓰고 싶다면, 문 옆에 있는 빨간 공책에 이름을 적어야 합니다. 또한 뚜껑이 닫힌 물병만 가져올 수 있습니다. 주스나 간식은 키보드를 끈적하게 만들 수 있으니 가져오지 마세요. 감사합니다."
+    },
+    "questions": [
+      {
+        "stem": "What must students do to use a computer?",
+        "choices": [
+          "Ask Mr. Smith",
+          "Sign in the red book",
+          "Finish their homework first",
+          "Clean the keyboard"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "컴퓨터를 쓰려면 문 옆에 있는 빨간 공책에 이름을 적어야 한다고 선생님이 말씀하셨어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "you must sign your name in the red book by the door",
+        "why_not": {
+          "0": "선생님에게 물어보라는 말은 없어요",
+          "2": "숙제를 하려고 컴퓨터를 쓰는 거예요",
+          "3": "키보드를 청소하라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "sign your name",
+          "ko": "이름을 적다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can students bring into the computer room?",
+        "choices": [
+          "Water in a closed bottle",
+          "Fruit juice",
+          "Sweet snacks",
+          "Their own computers"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "컴퓨터실에는 뚜껑이 닫힌 물병만 가져올 수 있다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "you can only bring water in a closed bottle",
+        "why_not": {
+          "1": "주스는 키보드를 끈적하게 해서 안 돼요",
+          "2": "간식은 가져오면 안 된다고 했어요",
+          "3": "개인 컴퓨터를 가져오라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "closed bottle",
+          "ko": "닫힌 병"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0056"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome to Green Apple Farm, everyone. We are very happy to see so many families today. You can pick apples from the trees with a yellow ribbon. Please do not touch the trees with a blue ribbon, because those apples are not sweet yet. Each person gets one basket, and you can fill it up to the top. After picking, meet me near the big wooden gate at three o'clock to weigh your baskets. Let's have fun!",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 여러분, 푸른 사과 농장에 오신 것을 환영합니다. 오늘 이렇게 많은 가족을 뵙게 되어 정말 기쁩니다. 노란 리본이 묶인 나무에서 사과를 딸 수 있습니다. 파란 리본이 묶인 나무는 아직 사과가 달지 않으니 만지지 마세요. 한 사람당 바구니 한 개씩을 받으며, 꼭대기까지 가득 채울 수 있습니다. 사과를 다 딴 후에는 3시에 크고 나무로 된 문 근처에서 저를 만나 바구니 무게를 잴 것입니다. 즐거운 시간 보내세요!"
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Which trees can the visitors pick apples from?",
+        "choices": [
+          "Trees with red apples",
+          "Trees with a blue ribbon",
+          "Trees with a yellow ribbon",
+          "Trees with short branches"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "노란 리본이 묶인 나무에서 사과를 딸 수 있다고 가이드가 알려 주었어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.leisure"
+        ],
+        "evidence": "You can pick apples from the trees with a yellow ribbon.",
+        "why_not": {
+          "0": "빨간 사과 이야기는 나오지 않았어요",
+          "1": "파란 리본 나무의 사과는 아직 달지 않아서 안 돼요",
+          "3": "짧은 나뭇가지 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "pick apples",
+          "ko": "사과를 따다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where should the visitors meet at three o'clock?",
+        "choices": [
+          "Near the yellow trees",
+          "At the ticket office",
+          "In front of the shop",
+          "Near the big wooden gate"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "사과를 다 딴 후 3시에 크고 나무로 된 문 근처에서 모이라고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.leisure"
+        ],
+        "evidence": "meet me near the big wooden gate at three o'clock",
+        "why_not": {
+          "0": "노란색은 나무에 묶인 리본 색깔이에요",
+          "1": "매표소 이야기는 나오지 않았어요",
+          "2": "가게 앞이라는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "wooden gate",
+          "ko": "나무로 된 문"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0057"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "W: Hello, Daniel. This is Ms. Kelly from the community center calling about the weekend robot camp. I'm calling to tell you about a small change. We planned to give everyone a notebook, but the delivery is late. So please bring your own notebook and a pen on Saturday. Don't worry about the robot parts, because we will give you all of those. See you this weekend!",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female"
+      },
+      "translation_ko": "여: 안녕, 다니엘. 주말 로봇 캠프와 관련해서 전화하는 주민 센터의 켈리 선생님이야. 작은 변동 사항이 있어서 전화했어. 모두에게 공책을 나누어 주려고 했는데 배송이 늦어지고 있어. 그러니까 토요일에 각자 공책과 펜을 가져오렴. 로봇 부품은 우리가 모두 나누어 줄 테니 걱정하지 마. 이번 주말에 보자!"
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is arriving late?",
+        "choices": [
+          "The robot parts",
+          "The notebooks",
+          "The pens",
+          "The name tags"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "선생님이 아이들에게 주려던 공책 배송이 늦어지고 있다고 하셨어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "We planned to give everyone a notebook, but the delivery is late.",
+        "why_not": {
+          "0": "로봇 부품은 잘 준비되어 있다고 했어요",
+          "2": "펜은 각자 집에서 가져와야 해요",
+          "3": "이름표 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "delivery is late",
+          "ko": "배달이 늦다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will the center give to the students?",
+        "choices": [
+          "A small bag",
+          "A new pen",
+          "Robot parts",
+          "A rule book"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "로봇 부품은 센터에서 학생들에게 모두 나누어 준다고 이야기했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "Don't worry about the robot parts, because we will give you all of those.",
+        "why_not": {
+          "0": "작은 가방 이야기는 나오지 않았어요",
+          "1": "펜은 학생들이 토요일에 직접 챙겨 와야 해요",
+          "3": "규칙을 적은 책 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "robot parts",
+          "ko": "로봇 부품"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0058"
   }
 ]
