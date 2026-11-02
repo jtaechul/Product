@@ -4331,7 +4331,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "to walk slowly and hold the rope",
     "why_not": {
       "1": "'거절했다'라서 뒷말과 안 맞아요",
@@ -4371,7 +4371,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "even my little brother could follow it",
     "why_not": {
       "0": "'헷갈리는'이라 뒷말과 반대예요",
@@ -4411,7 +4411,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "instead of throwing them away",
     "why_not": {
       "0": "'빌리다'라서 뒷말과 안 맞아요",
@@ -4451,7 +4451,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "The train tickets sell out quickly in summer",
     "why_not": {
       "0": "'제안'이라 표를 잡는 말이 아니에요",
@@ -4491,7 +4491,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "licked my hand softly",
     "why_not": {
       "0": "'시끄러운'이라 뒷말과 안 맞아요",
@@ -4531,7 +4531,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "If the shoes do not fit your feet",
     "why_not": {
       "0": "'모아 두다'라서 돌려주는 말이 아니에요",
@@ -4570,7 +4570,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "Each of the club members",
     "why_not": {
       "1": "여럿일 때 쓰는 모양이에요",
@@ -4609,7 +4609,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "The number of students",
     "why_not": {
       "0": "하나를 말할 땐 s가 붙어요",
@@ -4648,7 +4648,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "nor my uncle",
     "why_not": {
       "0": "바로 앞 my uncle과 짝이 안 맞아요",
@@ -4687,7 +4687,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "My aunt, along with her two children,",
     "why_not": {
       "0": "My aunt 한 분과 짝이 안 맞아요",
@@ -4726,10 +4726,10 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "Twenty minutes",
     "why_not": {
-      "0": "지난 일 이야기가 아니에요",
+      "0": "시간 한 덩어리는 were와 짝이 안 맞아요",
       "2": "시간 한 덩어리는 is와 짝이에요",
       "3": "그대로는 쓸 수 없는 모양이에요"
     },
@@ -4765,12 +4765,12 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "a pair of woolen gloves",
     "why_not": {
       "0": "한 켤레는 하나로 보고 말해요",
       "1": "There have라고는 쓰지 않아요",
-      "2": "지금 있는 일이라 맞지 않아요"
+      "2": "한 켤레는 하나라서 were와 안 맞아요"
     },
     "key_expr": {
       "en": "a pair of gloves",
@@ -4804,7 +4804,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "into small pieces",
     "why_not": {
       "0": "물처럼 액체를 따를 때 쓰는 말이에요",
@@ -4843,7 +4843,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "put it on the hallway wall",
     "why_not": {
       "1": "물건을 사고 받는 영수증이에요",
@@ -4882,7 +4882,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "so we didn't need to take a bus",
     "why_not": {
       "0": "날씨를 뜻해서 이 자리에 안 맞아요",
@@ -4921,11 +4921,11 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "I paid only half of the usual price",
     "why_not": {
       "0": "주문했다는 뜻이라 값과 이어지지 않아요",
-      "2": "시간에 딱 맞춰라는 뜻이에요",
+      "2": "'제시간에'라는 뜻이라 값과 안 이어져요",
       "3": "일하는 중이라는 뜻이라 안 맞아요"
     },
     "key_expr": {
@@ -4960,7 +4960,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "he drank a whole bowl of water",
     "why_not": {
       "0": "졸린 것과 물 마시기는 이어지지 않아요",
@@ -4999,7 +4999,7 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "draft",
+    "status": "active",
     "evidence": "we could hardly find a place to sit",
     "why_not": {
       "1": "텅 비었다는 뜻이라 반대예요",
