@@ -3555,7 +3555,7 @@
         "choices": [
           "quiet",
           "busy",
-          "empty",
+          "cheap",
           "free"
         ],
         "answer_idx": 1,
@@ -3568,7 +3568,7 @@
         "evidence": "so come early",
         "why_not": {
           "0": "조용하면 일찍 올 필요가 없어요",
-          "2": "사람이 없다는 뜻이라 반대예요",
+          "2": "값이 싸진다면 늦게 와도 돼요",
           "3": "공짜라는 뜻이라 자리에 안 맞아요"
         },
         "key_expr": {
@@ -3598,7 +3598,7 @@
       {
         "stem": "Choose the best answer for (1).",
         "choices": [
-          "call",
+          "wash",
           "buy",
           "draw",
           "feed"
@@ -3612,7 +3612,7 @@
         ],
         "evidence": "They ran to me when they saw the corn in my bowl.",
         "why_not": {
-          "0": "부른다는 말로는 옥수수가 설명 안 돼요",
+          "0": "씻긴다면 옥수수가 필요 없어요",
           "1": "농장에서 닭을 사는 이야기가 아니에요",
           "2": "그림 그리는 이야기는 없어요"
         },
@@ -3698,8 +3698,8 @@
     "part": "R2",
     "passage": {
       "kind": "text",
-      "content": "Science Report: Three Bean Plants\nFor four weeks our group grew three bean plants. Plant A sat on a sunny windowsill, Plant B stood on a bookshelf far from the window, and Plant C stayed inside a dark box.\nPlant A grew (1) ______ than Plant B. Its leaves were also (2) ______ greener, and Plant A was the (3) ______ of the three. Plant C hardly grew at all.\nOur group decided that sunlight matters more than water.",
-      "translation_ko": "과학 보고서: 강낭콩 세 그루\n네 주 동안 우리 모둠은 강낭콩 세 그루를 길렀습니다. A는 햇빛이 잘 드는 창가에 두었고, B는 창문에서 멀리 떨어진 책장 위에 두었으며, C는 어두운 상자 안에 두었습니다.\nA는 B보다 더 크게 자랐습니다. 잎도 훨씬 더 푸르렀고, A가 셋 중에서 가장 건강했습니다. C는 거의 자라지 않았습니다.\n우리 모둠은 햇빛이 물보다 더 중요하다고 결론지었습니다."
+      "content": "Science Report: Three Bean Plants\nFor four weeks our group grew three bean plants. Plant A sat on a sunny windowsill, Plant B stood on a bookshelf far from the window, and Plant C stayed inside a dark box.\nPlant A grew (1) ______ than Plant B. Its leaves were also (2) ______ greener, and Plant A was the (3) ______ of the three. Plant C hardly grew at all.\nOur group decided that plants need sunlight to grow well.",
+      "translation_ko": "과학 보고서: 강낭콩 세 그루\n네 주 동안 우리 모둠은 강낭콩 세 그루를 길렀습니다. A는 햇빛이 잘 드는 창가에 두었고, B는 창문에서 멀리 떨어진 책장 위에 두었으며, C는 어두운 상자 안에 두었습니다.\nA는 B보다 더 크게 자랐습니다. 잎도 훨씬 더 푸르렀고, A가 셋 중에서 가장 건강했습니다. C는 거의 자라지 않았습니다.\n우리 모둠은 식물이 잘 자라려면 햇빛이 필요하다고 결론지었습니다."
     },
     "questions": [
       {
@@ -3770,7 +3770,7 @@
           "healthiest",
           "healthy",
           "healthier",
-          "most healthy"
+          "health"
         ],
         "answer_idx": 0,
         "explanation_ko": "셋 중에서 으뜸이라는 말이라 the ~ of the three 자리에 healthiest가 와요.",
@@ -3783,7 +3783,7 @@
         "why_not": {
           "1": "the ~ of the three와 어울리지 않아요",
           "2": "둘만 견줄 때 쓰는 말이에요",
-          "3": "healthy는 -est를 붙여요"
+          "3": "'건강'이라는 것 자체를 가리켜요"
         },
         "key_expr": {
           "en": "the healthiest of the three",
@@ -3797,7 +3797,7 @@
       }
     ],
     "tmp_id": "R2-0037",
-    "status": "draft"
+    "status": "active"
   },
   {
     "type": "set",
@@ -3805,12 +3805,12 @@
     "part": "R2",
     "passage": {
       "kind": "text",
-      "content": "Baekun Hill Park — Which Trail?\nTwo trails lead to the top of Baekun Hill. The Pine Trail is three kilometers long; the Stream Trail is five kilometers long. So the Pine Trail is (4) ______ than the Stream Trail, though it is much steeper.\nMany walkers say the Stream Trail is (5) ______ beautiful path in the whole park, because it passes a small waterfall.\nDo you have only one hour? Take the Pine Trail. It is not (6) ______ hard as it looks, and there are benches every few minutes.",
+      "content": "Baekun Hill Park — Which Trail?\nTwo trails lead to the top of Baekun Hill. The Pine Trail is three kilometers long; the Stream Trail is five kilometers long. So the Pine Trail is (1) ______ than the Stream Trail, though it is much steeper.\nMany walkers say the Stream Trail is (2) ______ beautiful path in the whole park, because it passes a small waterfall.\nDo you have only one hour? Take the Pine Trail. It is not (3) ______ hard as it looks, and there are benches every few minutes.",
       "translation_ko": "백운산 공원 — 어느 길로 갈까요?\n백운산 꼭대기로 가는 길은 두 개입니다. 소나무 길은 3킬로미터이고, 시냇가 길은 5킬로미터입니다. 그래서 소나무 길이 시냇가 길보다 더 짧지만, 훨씬 더 가파릅니다.\n많은 사람들이 시냇가 길을 공원 전체에서 가장 아름다운 길이라고 말합니다. 작은 폭포를 지나가기 때문입니다.\n한 시간밖에 없나요? 그러면 소나무 길로 가세요. 보기만큼 힘들지 않고, 몇 분마다 벤치가 있습니다."
     },
     "questions": [
       {
-        "stem": "Choose the best answer for (4).",
+        "stem": "Choose the best answer for (1).",
         "choices": [
           "short",
           "shortest",
@@ -3841,7 +3841,7 @@
         }
       },
       {
-        "stem": "Choose the best answer for (5).",
+        "stem": "Choose the best answer for (2).",
         "choices": [
           "more",
           "the most",
@@ -3872,7 +3872,7 @@
         }
       },
       {
-        "stem": "Choose the best answer for (6).",
+        "stem": "Choose the best answer for (3).",
         "choices": [
           "very",
           "much",
@@ -3904,7 +3904,7 @@
       }
     ],
     "tmp_id": "R2-0038",
-    "status": "draft"
+    "status": "active"
   },
   {
     "type": "set",
@@ -4010,7 +4010,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "R2-0039"
   },
   {
@@ -4019,8 +4019,8 @@
     "part": "R2",
     "passage": {
       "kind": "text",
-      "content": "Hi Jiwon,\nDid you hear about Star Night? This Friday our science club will set up three telescopes on the school roof. Last year thick clouds ruined everything, but this week the sky has been wonderfully (1) ______. We should get there before seven, because the line grows (2) ______ once the sun goes down. Bring a thick jacket, too — the roof is colder than you think. My brother went last year, and he says the moon's craters were the most (3) ______ part of the whole evening.\nSee you there!\nDaeun",
-      "translation_ko": "지원에게,\n'별 보는 밤' 소식 들었어요? 이번 주 금요일에 우리 과학 동아리가 학교 옥상에 망원경 세 대를 설치할 거예요. 작년에는 두꺼운 구름 때문에 다 망쳤지만, 이번 주에는 하늘이 놀랍도록 맑아요. 해가 지면 줄이 금방 길어지니까 우리 7시 전에는 도착하는 게 좋겠어요. 두꺼운 외투도 가져와요 — 옥상은 생각보다 추워요. 우리 오빠가 작년에 갔는데, 달의 분화구가 그날 저녁에서 가장 흥미로운 부분이었대요.\n거기서 봐요!\n다은"
+      "content": "Hi Jiwon,\nDid you hear about Star Night? This Friday our science club will set up three telescopes on the school roof. Last year thick clouds ruined everything, but this week the sky has been wonderfully (1) ______. We should get there before seven, because the line grows (2) ______ once the sun goes down. Bring a thick jacket, too — the roof is colder than you think. My brother went two years ago, and he says the moon's craters were the most (3) ______ part of the whole evening.\nSee you there!\nDaeun",
+      "translation_ko": "지원에게,\n'별 보는 밤' 소식 들었어요? 이번 주 금요일에 우리 과학 동아리가 학교 옥상에 망원경 세 대를 설치할 거예요. 작년에는 두꺼운 구름 때문에 다 망쳤지만, 이번 주에는 하늘이 놀랍도록 맑아요. 해가 지면 줄이 금방 길어지니까 우리 7시 전에는 도착하는 게 좋겠어요. 두꺼운 외투도 가져와요 — 옥상은 생각보다 추워요. 우리 오빠가 2년 전에 갔는데, 달의 분화구가 그날 저녁에서 가장 흥미로운 부분이었대요.\n거기서 봐요!\n다은"
     },
     "questions": [
       {
@@ -4029,7 +4029,7 @@
           "clear",
           "clearly",
           "clearness",
-          "cleared"
+          "clearer"
         ],
         "answer_idx": 0,
         "explanation_ko": "wonderfully 뒤에서 하늘이 어떤지 말해 주는 자리예요. 구름이 없다는 뜻의 clear가 맞아요.",
@@ -4042,7 +4042,7 @@
         "why_not": {
           "1": "'어떻게'를 말해 주는 모양이에요",
           "2": "'맑음'이라는 것 자체를 가리켜요",
-          "3": "'치웠다'는 뜻이라 하늘과 안 맞아요"
+          "3": "둘을 견줄 때 쓰는 모양이에요"
         },
         "key_expr": {
           "en": "a clear sky",
@@ -4059,7 +4059,7 @@
         "choices": [
           "quick",
           "quickly",
-          "quicker",
+          "quicken",
           "quickness"
         ],
         "answer_idx": 1,
@@ -4072,7 +4072,7 @@
         "evidence": "the line grows",
         "why_not": {
           "0": "줄이 어떤지 설명하는 말이에요",
-          "2": "둘을 견줄 때 쓰는 말이에요",
+          "2": "'빨라지게 하다'라서 grows 뒤에 못 와요",
           "3": "'빠름'이라는 것 자체를 가리켜요"
         },
         "key_expr": {
@@ -4117,7 +4117,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "R2-0040"
   },
   {
@@ -4126,8 +4126,8 @@
     "part": "R2",
     "passage": {
       "kind": "text",
-      "content": "Hi Eunji,\nMy cousins stayed at our house last weekend. (1) ______ brought two board games with them.\nOn Saturday my brother and I taught (2) ______ a card game, and they taught us a new one.\nMom made the pizza by herself, and we ate every slice.\nWrite back soon,\nJiho",
-      "translation_ko": "은지에게,\n지난 주말에 사촌들이 우리 집에서 묵었어. 그 애들은 보드게임 두 개를 가지고 왔어.\n토요일에는 형과 내가 그 애들에게 카드 게임을 가르쳐 줬고, 그 애들은 우리에게 새 게임을 가르쳐 줬어.\n엄마는 피자를 혼자 다 만드셨고, 우리는 한 조각도 남기지 않고 먹었어.\n답장 빨리 보내 줘,\n지호가"
+      "content": "Hi Eunji,\nMy cousins stayed at our house last weekend. (1) ______ brought two board games with them.\nOn Saturday my brother and I taught (2) ______ a card game, and they taught us a new one.\nMom made pizza for all of us, and we ate every slice.\nWrite back soon,\nJiho",
+      "translation_ko": "은지에게,\n지난 주말에 사촌들이 우리 집에서 묵었어. 그 애들은 보드게임 두 개를 가지고 왔어.\n토요일에는 형과 내가 그 애들에게 카드 게임을 가르쳐 줬고, 그 애들은 우리에게 새 게임을 가르쳐 줬어.\n엄마가 우리 모두를 위해 피자를 만드셨고, 우리는 한 조각도 남기지 않고 먹었어.\n답장 빨리 보내 줘,\n지호가"
     },
     "questions": [
       {
@@ -4224,7 +4224,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "R2-0041"
   },
   {
@@ -4331,7 +4331,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "R2-0042"
   }
 ]

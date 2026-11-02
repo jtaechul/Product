@@ -2043,7 +2043,7 @@
           "A lunch box"
         ],
         "answer_idx": 1,
-        "explanation_ko": "각자 물병을 챙겨 오라고 했어요. 접시는 급식실에 있어요.",
+        "explanation_ko": "각자 물병을 챙겨 오라고 했어요.",
         "difficulty_label": 1,
         "tags": [
           "LS.gist",
@@ -2244,7 +2244,7 @@
       },
       "translation_ko": "안내: 별 보러 오신 여러분, 안녕하세요. 학교 운동장에서 열리는 천문 동아리 활동에 와 주셔서 고맙습니다. 시작하기 전에, 휴대폰 화면을 가장 어둡게 맞춰 주세요. 희미한 별이 보이려면 우리 눈이 어둠 속에서 20분쯤 있어야 하는데, 밝은 화면 하나가 모두의 그 시간을 되돌려 버릴 수 있어요. 별자리 지도를 꼭 봐야 한다면 제가 나눠 드린 빨간 불빛을 쓰세요. 하늘을 확인한 뒤에 망원경 줄 서기를 시작합니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does the speaker ask everyone to dim their phone screens?",
@@ -2325,7 +2325,7 @@
       },
       "translation_ko": "안내: 안녕, 재민아. 옆집 한 아주머니야. 우리는 내일 아침에 언니 집으로 떠나서 일요일에나 돌아온단다. 이틀에 한 번씩 베란다 화분에 물을 줄 수 있겠니? 토마토는 금방 축 처져서, 물이 필요하면 네게 알려 줄 거야. 금붕어에게는 먹이를 주지 말아 줘. 어항에 천천히 녹는 먹이 덩어리를 이미 넣어 두었거든. 여분 열쇠는 파란 화분 아래에 있어."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does the speaker mention the drooping tomatoes?",
@@ -2406,7 +2406,7 @@
       },
       "translation_ko": "안내: 달리기 참가자 여러분, 안녕하세요. 가족 달리기 행사에 오신 것을 환영합니다. 코스는 4킬로미터이고, 중간 지점에 급수대가 하나 있습니다. 너무 더우면 속도를 늦추고 걸으세요. 오늘은 완주하는 것이 유일한 목표이고, 아무도 기록을 재지 않습니다. 열 살 미만 참가자는 끝까지 어른 옆에 있어야 합니다. 연못 근처 길이 좁으니 가방은 노란 천막에 맡겨 주세요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the speaker imply about the event?",
@@ -2552,7 +2552,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "L4-0032"
   },
   {
@@ -2633,7 +2633,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "L4-0033"
   },
   {
@@ -2714,7 +2714,7 @@
         }
       }
     ],
-    "status": "draft",
+    "status": "active",
     "tmp_id": "L4-0034"
   },
   {
@@ -2730,7 +2730,7 @@
       },
       "translation_ko": "안내: 자, 얘들아, 시작하기 전에 모여 보자. 상대 학교 선수들이 우리보다 키가 크지만, 우리는 3주 동안 패스를 연습했고 바로 그 점이 우리가 더 잘하는 부분이야. 그러니 공을 계속 움직이고, 혼자서 뚫고 가려고 하지 마. 한 가지 더, 어젯밤 비 때문에 운동장이 아직 젖어 있으니 골대 근처에서는 보폭을 짧게 해. 힘들면 손을 들어, 그러면 다른 친구를 들여보낼게. 아무도 경기를 끝까지 다 뛰지 않아도 돼."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does the coach talk about three weeks of passing practice?",
@@ -2810,7 +2810,7 @@
       },
       "translation_ko": "안내: 안녕, 나리야. 사촌 지수야. 토요일 할아버지 생신 저녁 준비는 한 가지만 빼고 다 됐어. 너희 아빠가 케이크를 주문했는데 가게에 작은 것밖에 없었대. 그런데 오는 사람이 열한 명이야. 과일이랑 종이 접시 몇 장 가져올 수 있을까? 그리고 할아버지는 아직 가족끼리 조용히 저녁 먹는 줄 아셔. 그러니 오늘 밤에 전화하시면 다른 이야기를 해 줘. 접시를 못 구하면 다시 전화 줘."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does Jisoo ask Nari to bring fruit?",
@@ -2890,18 +2890,18 @@
       },
       "translation_ko": "안내: 여러분, 안녕하세요. 학교 축제 팀에서 알려 드립니다. 금요일에 강당에서 물건 바꾸기 장터를 엽니다. 이제 쓰지 않는 장난감이나 보드게임을 가져오세요. 하지만 먼저 확인해 주세요. 망가졌거나 조각이 빠진 물건은 받을 수 없습니다. 가져온 물건 하나마다 표를 한 장 드리고, 그 표로 여러분에게 새로운 물건을 고를 수 있습니다. 작년에는 몇몇 학생이 열 개를 가져와서 다시 열 개를 들고 집에 갔어요. 그러니 정말 얼마나 가져가고 싶은지 생각해 보세요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does the speaker talk about the pupils from last year?",
         "choices": [
           "To thank them for helping the fair team",
           "To ask everyone to bring ten items",
-          "To warn that you may take home just as much",
+          "To warn that you will take home as many things as you bring",
           "To explain why the market started late"
         ],
         "answer_idx": 2,
-        "explanation_ko": "열 개 가져와서 열 개 들고 갔다고 했어요. 너무 많이 가져가지 말라는 뜻으로 든 이야기예요.",
+        "explanation_ko": "물건 하나에 표가 하나라서, 열 개를 가져오면 열 개를 다시 들고 가게 돼요. 그걸 미리 알려 주는 거예요.",
         "difficulty_label": 4,
         "tags": [
           "LS.infer",
@@ -2970,7 +2970,7 @@
       },
       "translation_ko": "안내: 자전거 타는 여러분, 안녕하세요. 토요일 강변길 자전거 타기에 오신 것을 환영합니다. 출발하기 전에 헬멧이 꽉 조여졌는지, 벨이 잘 울리는지 확인해 주세요. 우리는 메이플 다리까지 천천히 갔다가 돌아올 거예요. 모두 합쳐 5킬로미터쯤 됩니다. 힘들면 노란 벤치에서 기다리세요. 제가 다시 데리러 갈게요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the talk mainly about?",
@@ -3012,7 +3012,7 @@
           "Take off their helmet"
         ],
         "answer_idx": 0,
-        "explanation_ko": "힘들면 노란 벤치에서 기다리라고 했어요. 선생님이 데리러 와요.",
+        "explanation_ko": "힘들면 노란 벤치에서 기다리라고 했어요. 그러면 데리러 온대요.",
         "difficulty_label": 2,
         "tags": [
           "LS.gist",
@@ -3050,7 +3050,7 @@
       },
       "translation_ko": "안내: 안녕하세요, 파인 트리 게스트하우스에 오신 것을 환영합니다. 머무시는 동안 알아 두실 점 몇 가지를 말씀드릴게요. 아침 식사는 아침 7시부터 9시까지 식당에서 드실 수 있고, 매일 따뜻한 빵과 신선한 과일이 나옵니다. 수건이 더 필요하시면 안내 데스크로 전화해 주세요. 방으로 가져다드리겠습니다. 집 뒤의 작은 정원은 밤 10시까지 열려 있습니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the speaker mainly doing?",
@@ -3130,7 +3130,7 @@
       },
       "translation_ko": "안내: 안녕하세요. 실버 레이크 아이스링크의 초보자 스케이트 수업에 오신 것을 환영합니다. 먼저 카운터에서 스케이트를 받아서 긴 의자에 앉아 신으세요. 이 수업에 참여하는 모두는 작은 링크에서도 헬멧을 꼭 써야 합니다. 수업은 2시에 시작해서 한 시간 동안 합니다. 수업이 끝나면 위층 카페에서 따뜻한 코코아를 마시며 몸을 녹일 수 있어요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the main purpose of the talk?",
@@ -3210,7 +3210,7 @@
       },
       "translation_ko": "안내: 안녕, 유나야. 미술실의 박 선생님이란다. 네가 말리려고 두고 간 그림 때문에 전화했어. 내일은 바닥에 왁스를 칠해서 미술실 문을 하루 종일 잠가 둘 거야. 그러니 붓이 필요하면 오늘 네 시 전에 오렴. 네 그림은 맨 위 선반에 잘 있고, 선생님이 월요일에 교실로 가져다줄 테니 비 오는 날 집까지 들고 갈 필요는 없단다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does Mr. Park tell Yuna to come today?",
@@ -3290,7 +3290,7 @@
       },
       "translation_ko": "안내: 안녕하세요, 저는 민준이고 이건 제 돌 수집품이에요. 대부분은 할머니 댁 근처 강가에서 주웠어요. 상자를 돌려 보셔도 되지만, 하얀 돌은 두 손으로 잡아 주세요. 전에 한 번 깨져서 아빠가 붙여 놓으셨거든요. 돋보기도 가져왔어요. 아주 작은 은색 점들은 가까이 들여다봐야 보이거든요. 이번 주말에 재미있는 돌을 찾으면 가져오세요. 같이 비교해 봐요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why does Minjun ask everyone to hold the white stone with two hands?",
@@ -3370,7 +3370,7 @@
       },
       "translation_ko": "안내: 안녕하세요, 바닷가 연날리기 날에 오신 것을 환영합니다. 물가 쪽은 바람이 가장 세니, 처음 해 보는 분들은 주차장 뒤 풀밭에서 시작하세요. 그곳은 바람이 더 부드럽습니다. 줄이 엉키면 세게 당기지 마시고 손을 들어 주세요. 노란 모자를 쓴 도우미가 갈 거예요. 여분 연은 스무 개 있지만 금방 없어지니, 가능하면 짝과 함께 나눠 써 주세요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "Why should beginners start on the grass?",
@@ -3450,7 +3450,7 @@
       },
       "translation_ko": "안내: 여러분, 안녕하세요. 클레이 하우스의 첫 도자기 수업에 오신 것을 환영합니다. 오늘은 손으로 작은 그릇을 만들 거예요. 그러니 소매를 걷어 올려 주세요. 흙은 좀 지저분할 수 있지만 걱정 마세요. 교실 뒤쪽에 싱크대가 있습니다. 여러분의 그릇은 일주일 동안 말린 다음에 색칠할 수 있어요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the talk mainly about?",
@@ -3530,7 +3530,7 @@
       },
       "translation_ko": "안내: 안녕하세요, 한옥 민속촌에 오신 것을 환영합니다. 저는 여러분의 안내인이고, 앞으로 두 시간 동안 함께 걸을 거예요. 먼저 옛날 부엌에 가서 아주 오래전에 사람들이 밥을 어떻게 지었는지 볼 거예요. 그다음에는 공예실에서 종이부채를 만들어 볼 수 있습니다. 무리에서 떨어지지 않게 함께 다니시고, 사진은 어디서든 찍으셔도 됩니다."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the speaker mainly doing?",
@@ -3610,7 +3610,7 @@
       },
       "translation_ko": "안내: 학생 여러분, 안녕하세요. 오늘은 새로 시작하는 편지 친구 활동에 대해 알려 드릴게요. 여러분은 각자 제주도에 있는 학교의 학생에게 편지를 한 통 쓸 거예요. 여러분의 취미와 가장 좋아하는 계절에 대해 이야기해 주세요. 목요일까지 편지를 다 쓰고, 사무실 문 옆에 있는 파란 상자에 넣어 주세요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What is the announcement mainly about?",

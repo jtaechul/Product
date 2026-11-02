@@ -3034,7 +3034,7 @@
       "In the music room on the first floor."
     ],
     "answer_idx": 1,
-    "explanation_ko": "'How come'은 왜 그렇게 했는지 까닭을 묻는 말이에요. 드럼 소리에 끌렸다고 까닭을 말한 1번이 맞아요.",
+    "explanation_ko": "'How come'은 왜 그렇게 했는지 까닭을 묻는 말이에요. 드럼 소리에 끌렸다고 까닭을 말한 대답이 맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.qr",
@@ -3070,7 +3070,7 @@
       "Of course — I'll text you at lunchtime."
     ],
     "answer_idx": 2,
-    "explanation_ko": "잊지 않게 알려 달라고 부탁했어요. 그러겠다고 답한 2번이 알맞아요.",
+    "explanation_ko": "잊지 않게 알려 달라고 부탁했어요. 그러겠다고 한 대답이 알맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.qr",
@@ -3106,7 +3106,7 @@
       "The gym is on the third floor."
     ],
     "answer_idx": 0,
-    "explanation_ko": "원래 목요일 아니었냐고 확인하는 말이에요. 맞지만 수요일로 바뀌었다고 알려 준 0번이 알맞아요.",
+    "explanation_ko": "원래 목요일 아니었냐고 확인하는 말이에요. 맞지만 수요일로 바뀌었다고 알려 준 대답이 알맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.qr",
@@ -3142,7 +3142,7 @@
       "Let's hold off until the whole team is here."
     ],
     "answer_idx": 2,
-    "explanation_ko": "둘 중 어느 쪽이 나은지 물었어요. 다 모일 때까지 기다리자고 하나를 고른 2번이 알맞아요.",
+    "explanation_ko": "둘 중 어느 쪽이 나은지 물었어요. 다 모일 때까지 기다리자고 하나를 고른 대답이 알맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.qr",
@@ -3178,7 +3178,7 @@
       "I had two slices of it yesterday."
     ],
     "answer_idx": 1,
-    "explanation_ko": "'What do you say we ~?'는 '우리 ~할까?' 하고 권하는 말이에요. 좋다고 답한 1번이 알맞아요.",
+    "explanation_ko": "'What do you say we ~?'는 '우리 ~할까?' 하고 권하는 말이에요. 좋다고 한 대답이 알맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.qr",
@@ -3214,7 +3214,7 @@
       "About twenty copies should be enough."
     ],
     "answer_idx": 0,
-    "explanation_ko": "'How soon'은 얼마나 빨리, 언제까지 되는지 묻는 말이에요. 금요일 오후까지라고 때를 말한 0번이 맞아요.",
+    "explanation_ko": "'How soon'은 얼마나 빨리, 언제까지 되는지 묻는 말이에요. 금요일 오후까지라고 때를 말한 대답이 맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.qr",
@@ -3905,7 +3905,7 @@
       "It's in the room next to the art office."
     ],
     "answer_idx": 1,
-    "explanation_ko": "토요일에 도자기 수업이 몇 시에 끝나는지 물었어요. 4시 30분이라고 시각을 콕 집은 1번이 알맞아요.",
+    "explanation_ko": "토요일에 도자기 수업이 몇 시에 끝나는지 물었어요. 4시 30분이라고 시각을 콕 집은 대답이 알맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.detail",
@@ -3913,7 +3913,7 @@
     ],
     "accent": "US",
     "tts_script": "Do you remember what time the pottery workshop finishes on Saturdays?",
-    "status": "draft",
+    "status": "active",
     "evidence": "what time the pottery workshop finishes on Saturdays",
     "why_not": {
       "0": "몇 시인지 물었는데 예로 답했어요",
@@ -3941,7 +3941,7 @@
       "Three — get off right after the long bridge."
     ],
     "answer_idx": 2,
-    "explanation_ko": "여기서 수족관까지 몇 정거장인지 물었어요. 세 정거장이라고 수를 말한 2번이 알맞아요.",
+    "explanation_ko": "여기서 수족관까지 몇 정거장인지 물었어요. 세 정거장이라고 수를 말한 대답이 알맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.detail",
@@ -3949,7 +3949,7 @@
     ],
     "accent": "AU",
     "tts_script": "How many stops is it to the aquarium from here?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How many stops is it to the aquarium from here?",
     "why_not": {
       "0": "정거장 수 대신 여는 시각을 말했어요",
@@ -3977,7 +3977,7 @@
       "We bought them at the stationery store."
     ],
     "answer_idx": 0,
-    "explanation_ko": "여분 붓이 어느 칸에 있는지 물었어요. 아래에서 두 번째 칸이라고 콕 집어 알려 준 0번이 알맞아요.",
+    "explanation_ko": "여분 붓이 어느 칸에 있는지 물었어요. 아래에서 두 번째 칸이라고 콕 집어 알려 준 대답이 알맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.detail",
@@ -3985,7 +3985,7 @@
     ],
     "accent": "UK",
     "tts_script": "Which shelf did you say the spare paintbrushes were on?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Which shelf did you say the spare paintbrushes were on?",
     "why_not": {
       "1": "paint 소리에 낚여서 고른 답이에요",
@@ -4013,7 +4013,7 @@
       "Just clean milk cartons and one pair of scissors."
     ],
     "answer_idx": 2,
-    "explanation_ko": "내일 재활용 활동에 무엇을 가져와야 하는지 물었어요. 우유갑과 가위라고 알려 준 2번이 알맞아요.",
+    "explanation_ko": "내일 재활용 활동에 무엇을 가져와야 하는지 물었어요. 우유갑과 가위라고 알려 준 대답이 알맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.detail",
@@ -4021,7 +4021,7 @@
     ],
     "accent": "US",
     "tts_script": "Could you tell me exactly what we need to bring for tomorrow's recycling project?",
-    "status": "draft",
+    "status": "active",
     "evidence": "what we need to bring for tomorrow's recycling project",
     "why_not": {
       "0": "재활용이라는 말에만 낚였어요",
@@ -4049,7 +4049,7 @@
       "At the pool right next to the station."
     ],
     "answer_idx": 0,
-    "explanation_ko": "일곱 시인지 여덟 시인지 둘 중 하나를 고르라고 물었어요. 여덟 시라고 집어 말한 0번이 알맞아요.",
+    "explanation_ko": "일곱 시인지 여덟 시인지 둘 중 하나를 고르라고 물었어요. 여덟 시라고 집어 말한 대답이 알맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.detail",
@@ -4057,7 +4057,7 @@
     ],
     "accent": "AU",
     "tts_script": "Hang on — did the coach say the swimming practice starts at seven or at eight?",
-    "status": "draft",
+    "status": "active",
     "evidence": "did the coach say the swimming practice starts at seven or at eight?",
     "why_not": {
       "1": "둘 중 고르라는데 예로 답했어요",
@@ -4085,7 +4085,7 @@
       "With the green watering can by the door."
     ],
     "answer_idx": 1,
-    "explanation_ko": "토마토에 물 주는 날이 언제인지 물었어요. 화요일과 금요일이라고 알려 준 1번이 알맞아요.",
+    "explanation_ko": "토마토에 물 주는 날이 언제인지 물었어요. 화요일과 금요일이라고 알려 준 대답이 알맞아요.",
     "difficulty_label": 4,
     "tags": [
       "LS.detail",
@@ -4093,7 +4093,7 @@
     ],
     "accent": "UK",
     "tts_script": "Remind me which days the garden club has to water the tomato plants.",
-    "status": "draft",
+    "status": "active",
     "evidence": "which days the garden club has to water the tomato plants",
     "why_not": {
       "0": "날이 아니라 딴 이야기를 했어요",
@@ -4129,7 +4129,7 @@
     ],
     "accent": "US",
     "tts_script": "These grocery bags are heavier than I expected.",
-    "status": "draft",
+    "status": "active",
     "evidence": "heavier than I expected",
     "why_not": {
       "0": "가게 문 닫는 시간은 말한 적 없어요",
@@ -4165,7 +4165,7 @@
     ],
     "accent": "UK",
     "tts_script": "This soup tastes a bit bland, doesn't it?",
-    "status": "draft",
+    "status": "active",
     "evidence": "tastes a bit bland",
     "why_not": {
       "0": "맛 이야기인데 그릇 색을 말해요",
@@ -4202,7 +4202,7 @@
     ],
     "accent": "AU",
     "tts_script": "My little brother keeps singing while I'm trying to study.",
-    "status": "draft",
+    "status": "active",
     "evidence": "keeps singing while I'm trying to study",
     "why_not": {
       "1": "힘들다는 말에 칭찬으로 답했어요",
@@ -4238,7 +4238,7 @@
     ],
     "accent": "US",
     "tts_script": "We've been waiting in this line for twenty minutes already.",
-    "status": "draft",
+    "status": "active",
     "evidence": "waiting in this line for twenty minutes already",
     "why_not": {
       "0": "20이라는 숫자를 값에 갖다 붙였어요",
@@ -4275,7 +4275,7 @@
     ],
     "accent": "UK",
     "tts_script": "It's getting dark, and we're only halfway up the hill.",
-    "status": "draft",
+    "status": "active",
     "evidence": "It's getting dark, and we're only halfway up the hill.",
     "why_not": {
       "1": "샌드위치 이야기는 나오지 않았어요",
@@ -4312,7 +4312,7 @@
     ],
     "accent": "AU",
     "tts_script": "Our relay team has only four runners, but we need five.",
-    "status": "draft",
+    "status": "active",
     "evidence": "only four runners, but we need five",
     "why_not": {
       "0": "지난해 등수 이야기는 없었어요",
@@ -4349,7 +4349,7 @@
     ],
     "accent": "AU",
     "tts_script": "Do you happen to remember how many chapters we're supposed to read before Thursday's book club discussion?",
-    "status": "draft",
+    "status": "active",
     "evidence": "how many chapters we're supposed to read",
     "why_not": {
       "0": "개수를 물었는데 예·아니오로 답했어요",
@@ -4385,7 +4385,7 @@
     ],
     "accent": "US",
     "tts_script": "I can't remember whether our train leaves from platform three or platform five.",
-    "status": "draft",
+    "status": "active",
     "evidence": "platform three or platform five",
     "why_not": {
       "1": "둘 중 고르는 말에 예·아니오는 안 맞아요",
@@ -4421,7 +4421,7 @@
     ],
     "accent": "UK",
     "tts_script": "The recipe calls for two cups of flour, but there's only one cup left in the jar.",
-    "status": "draft",
+    "status": "active",
     "evidence": "there's only one cup left in the jar",
     "why_not": {
       "0": "지금 모자란 밀가루 이야기와 안 이어져요",
@@ -4457,7 +4457,7 @@
     ],
     "accent": "AU",
     "tts_script": "Our class rabbit will need someone to feed it every day during the winter break.",
-    "status": "draft",
+    "status": "active",
     "evidence": "someone to feed it every day during the winter break",
     "why_not": {
       "0": "들린 토끼라는 말에 낚였어요",
@@ -4493,7 +4493,7 @@
     ],
     "accent": "US",
     "tts_script": "How many more laps do we have to run before the coach lets us stretch?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How many more laps do we have to run",
     "why_not": {
       "1": "장소를 묻는 말의 답이에요",
@@ -4529,7 +4529,7 @@
     ],
     "accent": "UK",
     "tts_script": "I thought the choir concert tickets were three thousand won, but the poster says five.",
-    "status": "draft",
+    "status": "active",
     "evidence": "but the poster says five",
     "why_not": {
       "0": "값이 오른 까닭과 이어지지 않아요",
@@ -4565,7 +4565,7 @@
     ],
     "accent": "US",
     "tts_script": "The clothes are still out on the line, and those clouds look really dark.",
-    "status": "draft",
+    "status": "active",
     "evidence": "those clouds look really dark",
     "why_not": {
       "0": "세탁기 위치는 묻지 않았어요",
@@ -4601,7 +4601,7 @@
     ],
     "accent": "UK",
     "tts_script": "These boots are really nice, but they're one size too big.",
-    "status": "draft",
+    "status": "active",
     "evidence": "one size too big",
     "why_not": {
       "1": "big이라는 낱말에만 낚였어요",
@@ -4637,7 +4637,7 @@
     ],
     "accent": "AU",
     "tts_script": "Oh no, I think I put salt in the cookie dough instead of sugar.",
-    "status": "draft",
+    "status": "active",
     "evidence": "I put salt in the cookie dough instead of sugar",
     "why_not": {
       "0": "지금은 맛을 좋아하는지 말할 때가 아니에요",
@@ -4673,7 +4673,7 @@
     ],
     "accent": "AU",
     "tts_script": "We've walked past this same fountain three times already.",
-    "status": "draft",
+    "status": "active",
     "evidence": "this same fountain three times",
     "why_not": {
       "0": "three만 따라 하고 뜻이 달라요",
@@ -4709,7 +4709,7 @@
     ],
     "accent": "UK",
     "tts_script": "My kite keeps dropping as soon as I start running.",
-    "status": "draft",
+    "status": "active",
     "evidence": "My kite keeps dropping",
     "why_not": {
       "1": "running이라는 낱말에만 낚였어요",
@@ -4745,7 +4745,7 @@
     ],
     "accent": "US",
     "tts_script": "Listen, the puppy is scratching at the back door again.",
-    "status": "draft",
+    "status": "active",
     "evidence": "scratching at the back door",
     "why_not": {
       "0": "귀엽다는 말은 이 상황과 안 이어져요",
@@ -4782,7 +4782,7 @@
     ],
     "accent": "US",
     "tts_script": "Which bus goes to the flower market, the number seven or the number nine?",
-    "status": "draft",
+    "status": "active",
     "evidence": "the number seven or the number nine",
     "why_not": {
       "0": "둘 중 고르라고 했는데 예로 답했어요",
@@ -4818,7 +4818,7 @@
     ],
     "accent": "AU",
     "tts_script": "What did your grandmother put in the rice cakes to make them so soft?",
-    "status": "draft",
+    "status": "active",
     "evidence": "What did your grandmother put in the rice cakes",
     "why_not": {
       "1": "언제 만들었는지를 답했어요",
@@ -4854,7 +4854,7 @@
     ],
     "accent": "US",
     "tts_script": "Which page does tonight's reading homework start on?",
-    "status": "draft",
+    "status": "active",
     "evidence": "Which page does tonight's reading homework start on",
     "why_not": {
       "0": "읽는 데 걸린 시간을 답했어요",
@@ -4890,7 +4890,7 @@
     ],
     "accent": "UK",
     "tts_script": "How long did the rain last at the campsite last night?",
-    "status": "draft",
+    "status": "active",
     "evidence": "How long did the rain last",
     "why_not": {
       "0": "얼마나 오래인지 묻는데 장소를 답했어요",
@@ -4926,7 +4926,7 @@
     ],
     "accent": "AU",
     "tts_script": "Did the sign say the scarves are half price today or only on Sunday?",
-    "status": "draft",
+    "status": "active",
     "evidence": "half price today or only on Sunday",
     "why_not": {
       "0": "무엇으로 만들었는지를 답했어요",
@@ -4962,7 +4962,7 @@
     ],
     "accent": "UK",
     "tts_script": "How many points did our team score in the second half?",
-    "status": "draft",
+    "status": "active",
     "evidence": "in the second half",
     "why_not": {
       "1": "연습한 시간을 답했어요",
@@ -4998,7 +4998,7 @@
     ],
     "accent": "US",
     "tts_script": "Someone's knocking, but my hands are all sticky with glue.",
-    "status": "draft",
+    "status": "active",
     "evidence": "my hands are all sticky with glue",
     "why_not": {
       "1": "풀이 어디 있는지만 알려 주었어요",
@@ -5034,7 +5034,7 @@
     ],
     "accent": "UK",
     "tts_script": "The board game shelf is too high for me to reach.",
-    "status": "draft",
+    "status": "active",
     "evidence": "too high for me to reach",
     "why_not": {
       "0": "어디인지 묻지 않았어요",
@@ -5070,7 +5070,7 @@
     ],
     "accent": "AU",
     "tts_script": "There's only one slice of watermelon left, and there are two of us.",
-    "status": "draft",
+    "status": "active",
     "evidence": "only one slice of watermelon left, and there are two of us",
     "why_not": {
       "0": "어디서 샀는지는 묻지 않았어요",
@@ -5106,7 +5106,7 @@
     ],
     "accent": "US",
     "tts_script": "It's my turn to bring snacks for the club meeting, but I completely forgot.",
-    "status": "draft",
+    "status": "active",
     "evidence": "but I completely forgot",
     "why_not": {
       "0": "간식을 이미 가져온 것처럼 답했어요",
@@ -5142,7 +5142,7 @@
     ],
     "accent": "UK",
     "tts_script": "Your drawing of the whale looks just like a real photo.",
-    "status": "draft",
+    "status": "active",
     "evidence": "looks just like a real photo",
     "why_not": {
       "1": "어디 사는지 답했어요",
@@ -5178,7 +5178,7 @@
     ],
     "accent": "AU",
     "tts_script": "Hmm, this milk carton has yesterday's date on it.",
-    "status": "draft",
+    "status": "active",
     "evidence": "has yesterday's date on it",
     "why_not": {
       "0": "milk을 듣고 엉뚱하게 답했어요",
