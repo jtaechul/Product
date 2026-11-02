@@ -4333,5 +4333,223 @@
     ],
     "status": "active",
     "tmp_id": "R2-0042"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Star Community Center — Kids Baking Class\nDo you love sweet treats? Join our baking class next Saturday! Mr. Lee from Star Bakery will be our teacher. He makes the most popular bread in our town, so (1) ______ In this class, we will bake chocolate chip cookies. The center will provide flour, sugar, and chocolate. However, you need to bring your own apron because (2) ______ When the class is over, (3) ______ You can share them with your family at home.",
+      "translation_ko": "스타 문화 센터 — 어린이 쿠키 굽기 교실\n달콤한 간식을 좋아하나요? 다음 주 토요일에 열리는 베이킹 교실에 참여해 보세요! 스타 베이커리의 이 선생님이 우리 선생님이 되실 거예요. 선생님은 동네에서 가장 인기 있는 빵을 만드시니, 여러분은 선생님의 특별한 비밀을 배울 수 있어요. 이 교실에서 우리는 초코칩 쿠키를 구울 거예요. 센터에서 밀가루, 설탕, 초콜릿을 준비해 드려요. 하지만 베이킹을 하면 조금 지저분해질 수 있기 때문에 개인 앞치마를 가져오셔야 해요. 수업이 끝나면, 모두 쿠키 한 상자를 집으로 가져갈 거예요. 집에서 가족들과 맛있게 나누어 먹어 보세요."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "you must buy his bread every day.",
+          "he works at the hospital nearby.",
+          "you can learn his special secrets.",
+          "he will open a new shoe store."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "동네에서 제일 인기 있는 빵을 만드시는 분이니까, 그분의 특별한 비밀을 배울 수 있다는 말이 이어져요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "RS.context",
+          "V.food"
+        ],
+        "evidence": "He makes the most popular bread in our town, so",
+        "why_not": {
+          "0": "매일 빵을 사야 한다는 말은 안내에 안 맞아요.",
+          "1": "빵집 주인이 병원에서 일한다는 건 안 맞아요.",
+          "3": "빵을 만드는데 신발 가게 이야기는 엉뚱해요."
+        },
+        "key_expr": {
+          "en": "learn his special secrets",
+          "ko": "그의 특별한 비밀을 배우다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "F.offtopic",
+          "3": "F.offtopic"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "the room is too dark.",
+          "baking can be a little messy.",
+          "it is a very cold day.",
+          "we will eat dinner together."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "밀가루와 초콜릿으로 쿠키를 만드니까 옷이 조금 더러워질 수 있어요. 그래서 앞치마를 가져오라고 한 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "RS.context",
+          "V.daily"
+        ],
+        "evidence": "we will bake chocolate chip cookies.",
+        "why_not": {
+          "0": "방이 어두운 것과 앞치마는 상관없어요.",
+          "2": "날씨가 춥다고 앞치마를 입지는 않아요.",
+          "3": "저녁을 먹으려고 앞치마를 가져오라는 건 어색해요."
+        },
+        "key_expr": {
+          "en": "can be a little messy",
+          "ko": "조금 지저분해질 수 있다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "2": "F.offtopic",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "you have to clean the whole building.",
+          "we will watch a movie about sports.",
+          "the teacher will give you a free book.",
+          "everyone will take a box of cookies home."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "집에서 가족과 함께 나누어 먹으라고 했으니, 쿠키 상자를 집으로 가져간다는 내용이 자연스러워요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "RS.context",
+          "V.food"
+        ],
+        "evidence": "You can share them with your family at home.",
+        "why_not": {
+          "0": "수업이 끝났다고 건물 전체를 청소하는 건 아니에요.",
+          "1": "운동 영화를 본다는 말은 앞뒤 내용과 안 맞아요.",
+          "2": "책을 준다는 말은 쿠키 이야기와 어울리지 않아요."
+        },
+        "key_expr": {
+          "en": "take a box of cookies home",
+          "ko": "쿠키 한 상자를 집에 가져가다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "F.offtopic",
+          "2": "F.offtopic"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0043"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Dear Uncle Jim,\nGuess what happened today! I finally lost my loose front tooth. I was eating a shiny red apple at lunch, and (1) ______ It didn't hurt at all. I was actually very happy! Now I have a big space in my smile. My mom said (2) ______ So, I am going to put my tooth under my pillow tonight. I wonder (3) ______ I will write to you again and tell you about it!\nLove, Sam",
+      "translation_ko": "Jim 삼촌에게,\n오늘 무슨 일이 있었는지 맞혀 보세요! 드디어 흔들리던 앞니가 빠졌어요. 점심때 반짝이는 빨간 사과를 먹고 있었는데, 그 이가 쏙 빠졌지 뭐예요. 하나도 아프지 않았어요. 사실 저는 아주 기뻤답니다! 이제 제가 웃을 때면 커다란 빈자리가 보여요. 엄마는 제가 깜짝 선물을 받을지도 모른다고 하셨어요. 그래서 오늘 밤에 이를 제 베개 아래에 둘 거예요. 아침에 무엇을 발견하게 될지 정말 궁금해요. 다음에 또 편지로 어떻게 되었는지 알려 드릴게요!\n사랑을 담아, Sam"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "I bought a new toothbrush.",
+          "the tooth just fell out.",
+          "my apple turned into a banana.",
+          "the dentist gave me a sticker."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "흔들리던 앞니가 빠졌다고 했으니, 사과를 먹다가 그 이가 쏙 빠졌다는 이야기가 잘 이어져요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "RS.context",
+          "V.daily"
+        ],
+        "evidence": "I finally lost my loose front tooth.",
+        "why_not": {
+          "0": "밥 먹다 말고 새 칫솔을 샀다는 건 어색해요.",
+          "2": "사과가 바나나로 변할 수는 없어요.",
+          "3": "밥 먹던 중에 치과 선생님이 스티커를 줄 순 없어요."
+        },
+        "key_expr": {
+          "en": "the tooth just fell out",
+          "ko": "이가 그냥 빠졌다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "2": "W.meaning",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "I should eat more hard apples.",
+          "the pillow needs to be washed.",
+          "I might get a small surprise gift.",
+          "my friend is coming for a sleepover."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "베개 밑에 이를 두는 건 작은 선물을 기대하기 때문이에요. 엄마가 깜짝 선물을 받을지도 모른다고 하셨을 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "RS.context"
+        ],
+        "evidence": "So, I am going to put my tooth under my pillow tonight.",
+        "why_not": {
+          "0": "단단한 사과를 더 먹으라는 건 베개와 안 어울려요.",
+          "1": "베개를 빨아야 한다는 말도 이를 숨기는 것과 상관없어요.",
+          "3": "친구가 자러 온다는 말은 이가 빠진 이야기와 닿지 않아요."
+        },
+        "key_expr": {
+          "en": "get a small surprise gift",
+          "ko": "깜짝 선물을 받다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "M.notsaid",
+          "3": "F.offtopic"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "what I will find in the morning.",
+          "where my lost shoe is.",
+          "why the apple was so sweet.",
+          "who finished my math homework."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "베개 아래 이를 두고 자니까, 아침에 일어나서 무엇을 발견할지 궁금해하는 것이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "RS.context"
+        ],
+        "evidence": "put my tooth under my pillow tonight.",
+        "why_not": {
+          "1": "잃어버린 신발을 궁금해하는 내용이 아니에요.",
+          "2": "사과가 왜 단지 궁금하다는 건 지금 중요하지 않아요.",
+          "3": "수학 숙제 이야기는 아주 뜬금없어요."
+        },
+        "key_expr": {
+          "en": "what I will find",
+          "ko": "내가 무엇을 발견할지"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "F.offtopic",
+          "3": "F.offtopic"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0044"
   }
 ]

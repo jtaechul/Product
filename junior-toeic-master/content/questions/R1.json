@@ -5017,5 +5017,241 @@
     },
     "translation_ko": "운동회 날 체육관이 학생들로 너무 붐벼서, 우리는 앉을 자리를 거의 찾을 수 없었어요.",
     "tmp_id": "R1-0130"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The weather was very sunny, ______ the wind was cold.",
+    "choices": [
+      "and",
+      "but",
+      "so",
+      "or"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "앞은 화창하고 뒤는 춥다는 반대되는 내용이 이어져서 '하지만'이라는 말이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.conj",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "sunny, ______ the wind was cold",
+    "why_not": {
+      "0": "'그리고'는 반대되는 내용에 안 어울려요",
+      "2": "'그래서'는 앞이 원인이 될 때 써요",
+      "3": "'또는'은 둘 중 하나를 고를 때 써요"
+    },
+    "key_expr": {
+      "en": "sunny, but cold",
+      "ko": "화창하지만 추운"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "F.offtopic",
+      "3": "F.offtopic"
+    },
+    "translation_ko": "날씨가 아주 화창했지만, 바람은 차가웠어요.",
+    "tmp_id": "R1-0131"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "We closed all the windows ______ the air outside was dusty.",
+    "choices": [
+      "before",
+      "until",
+      "because",
+      "although"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "창문을 닫은 이유를 뒤에서 설명해주고 있어서 '왜냐하면'이라는 말이 필요해요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.conj",
+      "V.daily",
+      "RS.context"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "closed all the windows ______ the air",
+    "why_not": {
+      "0": "'~하기 전에'라는 뜻이라 안 어울려요",
+      "1": "'~할 때까지'라는 뜻이라 말이 안 돼요",
+      "3": "'비록 ~이지만'이라는 뜻이라 어색해요"
+    },
+    "key_expr": {
+      "en": "closed all the windows because",
+      "ko": "~때문에 창문을 모두 닫았다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "F.offtopic",
+      "3": "F.offtopic"
+    },
+    "translation_ko": "밖에 먼지가 많아서 우리는 창문을 모두 닫았어요.",
+    "tmp_id": "R1-0132"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "______ you mix yellow and blue, you get green paint.",
+    "choices": [
+      "But",
+      "So",
+      "Than",
+      "If"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'~한다면'이라는 조건을 말할 때 쓰는 낱말이 제일 앞에 와야 자연스러워요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.conj",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "you mix yellow and blue, you get",
+    "why_not": {
+      "0": "'하지만'은 반대되는 내용에 써요",
+      "1": "'그래서'는 결과가 뒤에 올 때 써요",
+      "2": "'~보다'라는 뜻이라 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "If you mix",
+      "ko": "만약 네가 섞는다면"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "F.offtopic",
+      "2": "W.meaning"
+    },
+    "translation_ko": "노란색과 파란색을 섞으면, 초록색 물감이 돼요.",
+    "tmp_id": "R1-0133"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Seho forgot his water bottle, ______ he bought some juice at the store.",
+    "choices": [
+      "so",
+      "because",
+      "if",
+      "or"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "물병이 없는 것이 이유가 되어 주스를 샀다는 결과가 나오니 '그래서'가 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.conj",
+      "V.shopping"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "forgot his water bottle, ______ he bought",
+    "why_not": {
+      "1": "'왜냐하면'은 이유가 뒤에 올 때 써요",
+      "2": "'만약'이라는 뜻이라 내용이 안 맞아요",
+      "3": "'또는'은 고를 때 쓰는 말이에요"
+    },
+    "key_expr": {
+      "en": "forgot his water bottle, so",
+      "ko": "물병을 잊어버렸다, 그래서"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "F.offtopic",
+      "3": "F.offtopic"
+    },
+    "translation_ko": "세호는 물병을 잊어버려서, 가게에서 주스를 샀어요.",
+    "tmp_id": "R1-0134"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "You must wash your hands with soap ______ you touch the baby kitten.",
+    "choices": [
+      "while",
+      "before",
+      "and",
+      "but"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "고양이를 만지는 행동보다 손을 씻는 걸 먼저 해야 하니까 '~전에'가 들어가야 해요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.conj",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "wash your hands with soap ______ you touch",
+    "why_not": {
+      "0": "'~하는 동안에'라는 뜻이라 어색해요",
+      "2": "'그리고'로 이으면 순서가 분명하지 않아요",
+      "3": "'하지만'은 앞뒤가 반대일 때 써요"
+    },
+    "key_expr": {
+      "en": "wash your hands before",
+      "ko": "~전에 손을 씻다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "F.offtopic",
+      "3": "F.offtopic"
+    },
+    "translation_ko": "아기 고양이를 만지기 전에 비누로 손을 씻어야 해요.",
+    "tmp_id": "R1-0135"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "We can play board games in the living room, ______ we can go out for a walk.",
+    "choices": [
+      "because",
+      "but",
+      "so",
+      "or"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "보드게임과 산책 중 하나를 할 수 있다는 뜻이니까 '또는'이라는 말이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.conj",
+      "V.leisure",
+      "RS.context"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "play board games in the living room, ______ we can go out",
+    "why_not": {
+      "0": "'왜냐하면'은 이유를 말할 때 써요",
+      "1": "'하지만'은 반대되는 상황에 써요",
+      "2": "'그래서'는 앞의 내용이 원인일 때 써요"
+    },
+    "key_expr": {
+      "en": "play board games or go out",
+      "ko": "보드게임을 하거나 밖에 나가다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "F.offtopic",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "우리는 거실에서 보드게임을 하거나, 밖에 나가서 산책을 할 수 있어요.",
+    "tmp_id": "R1-0136"
   }
 ]

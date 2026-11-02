@@ -5194,5 +5194,437 @@
     },
     "translation_ko": "음, 이 우유갑에 어제 날짜가 적혀 있어요.",
     "tmp_id": "L2-0144"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "By next Wednesday.",
+      "I took a picture of a bird.",
+      "In the school library."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "사진을 언제 내야 하냐고 때를 물었으니 수요일이라는 때를 말한 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "When do we have to submit our photos for the contest?",
+    "status": "draft",
+    "evidence": "When do we have to submit",
+    "why_not": {
+      "1": "photo 소리를 듣고 엉뚱하게 답했어요",
+      "2": "장소를 묻는 말에 어울리는 대답이에요"
+    },
+    "key_expr": {
+      "en": "submit our photos",
+      "ko": "사진을 제출하다"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "여: 대회에 낼 사진을 언제까지 제출해야 하나요?\n남: 다음 주 수요일까지요.",
+    "tmp_id": "L2-0145"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I swept the floor yesterday.",
+      "Sure, let me grab the other side.",
+      "It's a brown wooden table."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "바닥을 쓸게 탁자 옮기는 걸 도와달라고 했어요. 그러니 반대쪽을 잡겠다는 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Could you help me move this table so I can sweep the floor?",
+    "status": "draft",
+    "evidence": "help me move this table",
+    "why_not": {
+      "0": "sweep 소리를 듣고 엉뚱하게 답했어요",
+      "2": "탁자가 어떻게 생겼는지 말했어요"
+    },
+    "key_expr": {
+      "en": "grab the other side",
+      "ko": "반대쪽을 잡다"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "남: 바닥을 쓸 수 있게 이 탁자 옮기는 것 좀 도와줄래요?\n여: 그럼요, 제가 반대쪽을 잡을게요.",
+    "tmp_id": "L2-0146"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The skating rink is closed today.",
+      "My roller skates are completely new.",
+      "Check the red toolbox in the garage."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "롤러스케이트를 고칠 도구가 어디 있는지 묻고 있어요. 도구 상자 안을 확인해 보라는 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Do you know where I can find a tool to fix my roller skates?",
+    "status": "draft",
+    "evidence": "where I can find a tool",
+    "why_not": {
+      "0": "skate 소리를 듣고 스케이트장 얘기를 했어요",
+      "1": "새로 산 스케이트라는 다른 이야기예요"
+    },
+    "key_expr": {
+      "en": "in the garage",
+      "ko": "차고에"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "여: 내 롤러스케이트를 고칠 도구를 어디서 찾을 수 있는지 알아요?\n남: 차고에 있는 빨간색 공구 상자를 확인해 보세요.",
+    "tmp_id": "L2-0147"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Oh, I'll do it right after breakfast.",
+      "Parrots can speak like us.",
+      "The cage is too heavy to carry."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "아침에 앵무새 새장 청소하는 거 기억했냐고 물었어요. 잊고 있다가 아침을 먹고 하겠다는 대답이 자연스러워요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "Did you remember to clean the parrot's cage this morning?",
+    "status": "draft",
+    "evidence": "Did you remember to clean",
+    "why_not": {
+      "1": "parrot 소리를 듣고 앵무새 특징을 말했어요",
+      "2": "새장이 무겁다고 다른 이야기를 했어요"
+    },
+    "key_expr": {
+      "en": "clean the cage",
+      "ko": "새장을 청소하다"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "남: 오늘 아침에 앵무새 새장 청소하는 것 안 잊었지?\n여: 아, 아침 먹고 바로 할게요.",
+    "tmp_id": "L2-0148"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "We can see the moon clearly.",
+      "It starts at eight in the evening.",
+      "The tickets are completely sold out."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "천문대 행사가 몇 시에 시작하냐고 물었으니 8시라고 시간을 알려주는 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "What time does the stargazing event at the observatory begin?",
+    "status": "draft",
+    "evidence": "What time does",
+    "why_not": {
+      "0": "밤하늘을 본다는 상황만 비슷한 이야기예요",
+      "2": "표가 다 팔렸다는 다른 이야기예요"
+    },
+    "key_expr": {
+      "en": "stargazing event",
+      "ko": "별자리 관측 행사"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "M.notsaid"
+    },
+    "translation_ko": "여: 천문대에서 하는 별자리 관측 행사는 몇 시에 시작하나요?\n남: 저녁 8시에 시작합니다.",
+    "tmp_id": "L2-0149"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "They are made of old newspapers.",
+      "The play is about a magical forest.",
+      "We should make at least ten."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "학교 연극에 쓸 종이 모자를 몇 개 만들어야 하는지 개수를 물었으니 열 개를 만들자는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.school"
+    ],
+    "accent": "AU",
+    "tts_script": "How many paper hats do we need to make for the school play?",
+    "status": "draft",
+    "evidence": "How many paper hats",
+    "why_not": {
+      "0": "모자를 무엇으로 만들었는지 대답했어요",
+      "1": "연극 소리를 듣고 무슨 연극인지 답했어요"
+    },
+    "key_expr": {
+      "en": "make at least ten",
+      "ko": "적어도 10개는 만들다"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.echo"
+    },
+    "translation_ko": "남: 학교 연극을 위해 종이 모자를 몇 개나 만들어야 할까요?\n여: 적어도 열 개는 만들어야 해요.",
+    "tmp_id": "L2-0150"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I bought this bag yesterday.",
+      "Let me help you carry those oranges.",
+      "The paper is very thick."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "종이봉투 끈이 끊어졌다고 했으니 물건이 떨어질 상황이에요. 오렌지 드는 걸 도와주겠다는 답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.shopping"
+    ],
+    "accent": "US",
+    "tts_script": "Oh, the string on my paper bag just broke.",
+    "status": "draft",
+    "evidence": "just broke",
+    "why_not": {
+      "0": "언제 샀는지 묻는 말이 아니에요",
+      "2": "종이라는 낱말에서 떠오른 엉뚱한 말이에요"
+    },
+    "key_expr": {
+      "en": "string",
+      "ko": "끈, 줄"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "A.echo"
+    },
+    "translation_ko": "아, 내 종이봉투 끈이 방금 끊어졌어.",
+    "tmp_id": "L2-0151"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I'll go shut the windows right now.",
+      "The math class was really fun.",
+      "My jacket is on the desk."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "교실이 너무 춥다고 했으니 추위를 막을 행동이 필요해요. 창문을 닫고 오겠다는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "It's freezing in this classroom today.",
+    "status": "draft",
+    "evidence": "freezing",
+    "why_not": {
+      "1": "춥다는 말과 상관없는 딴소리예요",
+      "2": "교실이라는 공간에 얽힌 딴소리예요"
+    },
+    "key_expr": {
+      "en": "freezing",
+      "ko": "몹시 추운"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "오늘 이 교실은 너무 추워요.",
+    "tmp_id": "L2-0152"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The photos are really beautiful.",
+      "I carry my bag every day.",
+      "Let's check the car before we leave."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "가방에 카메라가 없다고 당황하고 있어요. 출발하기 전에 차를 확인해 보자는 해결책이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.travel"
+    ],
+    "accent": "AU",
+    "tts_script": "Wait, I don't have my camera in my backpack.",
+    "status": "draft",
+    "evidence": "don't have my camera",
+    "why_not": {
+      "0": "카메라라는 낱말에서 떠오른 엉뚱한 말이에요",
+      "1": "가방이라는 낱말만 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "backpack",
+      "ko": "배낭"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "A.echo"
+    },
+    "translation_ko": "잠깐만, 내 배낭에 카메라가 없어.",
+    "tmp_id": "L2-0153"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Strawberries are my favorite fruit.",
+      "Then I'll run to the market and get more.",
+      "The fridge is very cold inside."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "냉장고에 딸기가 하나밖에 없다고 부족한 상황을 말했어요. 슈퍼에 가서 더 사 오겠다는 답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "We only have one strawberry left in the fridge.",
+    "status": "draft",
+    "evidence": "one strawberry left",
+    "why_not": {
+      "0": "딸기라는 낱말만 듣고 좋아하는 과일을 말했어요",
+      "2": "냉장고라는 낱말에서 떠오른 엉뚱한 말이에요"
+    },
+    "key_expr": {
+      "en": "left",
+      "ko": "남은"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "A.echo"
+    },
+    "translation_ko": "냉장고에 딸기가 하나밖에 안 남았어.",
+    "tmp_id": "L2-0154"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "My favorite color is blue.",
+      "The slide is too high for me.",
+      "We should take it to the lost and found."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "미끄럼틀 아래에 지갑이 떨어져 있다고 했어요. 분실물 센터에 가져다주자는 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Look, there's a blue wallet under the slide.",
+    "status": "draft",
+    "evidence": "blue wallet",
+    "why_not": {
+      "0": "파란색이라는 낱말만 듣고 엉뚱하게 답했어요",
+      "1": "미끄럼틀이라는 낱말만 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "wallet",
+      "ko": "지갑"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "A.echo"
+    },
+    "translation_ko": "저기 봐, 미끄럼틀 아래에 파란색 지갑이 있어.",
+    "tmp_id": "L2-0155"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I'll give him some dry food now.",
+      "It's a very pretty soup bowl.",
+      "The cat is sleeping on the sofa."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "고양이가 빈 그릇을 쳐다본다는 건 배가 고프다는 뜻이에요. 밥을 주겠다는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "The cat keeps looking at his empty bowl.",
+    "status": "draft",
+    "evidence": "empty bowl",
+    "why_not": {
+      "1": "그릇이라는 낱말에서 떠오른 엉뚱한 말이에요",
+      "2": "고양이라는 낱말만 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "empty",
+      "ko": "비어 있는"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "A.echo"
+    },
+    "translation_ko": "고양이가 자기의 텅 빈 그릇을 계속 쳐다보고 있어.",
+    "tmp_id": "L2-0156"
   }
 ]

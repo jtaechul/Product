@@ -3677,5 +3677,488 @@
       }
     ],
     "tmp_id": "L4-0046"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, art students. This is Ms. Lee. We planned to show our paintings in the park this Saturday. However, the weather report says it will rain all weekend. So, we are moving our art show inside to the community center hall. The time is still the same, at two o'clock. Please tell your family about the change.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 미술반 학생 여러분, 안녕하세요. 이 선생님입니다. 우리는 이번 주 토요일에 공원에서 그림을 보여 줄 계획이었어요. 하지만 일기 예보에서 주말 내내 비가 온다고 하네요. 그래서 우리 미술 전시회를 실내인 주민 센터 홀로 옮깁니다. 시간은 2시로 전과 같습니다. 가족들에게 이 바뀐 점을 말씀해 주세요."
+    },
+    "questions": [
+      {
+        "stem": "Why is the art show moving inside?",
+        "choices": [
+          "The park is closed.",
+          "The weather will be bad.",
+          "The hall is bigger.",
+          "The students want to."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "비가 온다고 해서 실내로 옮기는 거니, 날씨가 안 좋을 거라는 걸 알 수 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.school",
+          "V.daily"
+        ],
+        "evidence": "the weather report says it will rain all weekend",
+        "why_not": {
+          "0": "공원이 문을 닫았다는 말은 없어요.",
+          "2": "홀이 더 넓다는 말은 안 나왔어요.",
+          "3": "학생들이 원했다는 내용은 없어요."
+        },
+        "key_expr": {
+          "en": "rain all weekend",
+          "ko": "주말 내내 비가 오다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why should students talk to their family?",
+        "choices": [
+          "To ask for some money",
+          "To show their new paintings",
+          "To let them know the new place",
+          "To invite them to a dinner"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "장소가 공원에서 주민 센터로 바뀌었으니 가족이 잘 찾아오게 알려 주라는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.school",
+          "V.daily"
+        ],
+        "evidence": "Please tell your family about the change.",
+        "why_not": {
+          "0": "돈 이야기는 나오지 않았어요.",
+          "1": "그림은 전시회에서 직접 보여 줄 거예요.",
+          "3": "저녁 식사 초대는 아니에요."
+        },
+        "key_expr": {
+          "en": "about the change",
+          "ko": "바뀐 점에 대하여"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0047"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "M: Hi, Sujin. It's Yejun. I visited Green Park this morning, and the grass is very wet from yesterday's rain. We can't sit on our picnic blankets today. We should eat at the wooden tables near the big fountain instead. So, you don't need to bring your blanket, but could you bring some paper cups? I forgot to buy them. See you at noon!",
+      "accent": "UK",
+      "tts_voices": {
+        "M": "male"
+      },
+      "translation_ko": "남: 안녕, 수진아. 예준이야. 오늘 아침에 그린 공원에 가 봤는데, 어제 비가 와서 풀밭이 많이 젖어 있어. 오늘은 돗자리에 앉을 수 없겠어. 대신 큰 분수 옆에 있는 나무 탁자에서 먹어야 해. 그러니까 돗자리는 안 가져와도 되는데, 종이컵 좀 가져다줄래? 내가 사는 걸 깜빡했거든. 낮 12시에 보자!"
+    },
+    "questions": [
+      {
+        "stem": "Why does Yejun say the grass is wet?",
+        "choices": [
+          "To tell Sujin they need umbrellas",
+          "To show where the fountain is",
+          "To ask Sujin to clean the grass",
+          "To explain why they need wooden tables"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "풀밭이 젖어서 돗자리에 못 앉으니까 나무 탁자에서 먹자고 설명하려는 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "the grass is very wet from yesterday's rain. We can't sit on our picnic blankets today. We should eat at the wooden tables",
+        "why_not": {
+          "0": "비는 어제 왔고 지금 우산은 안 필요해요.",
+          "1": "분수 위치를 알려 주려는 게 아니에요.",
+          "2": "풀밭을 청소하라는 말은 없어요."
+        },
+        "key_expr": {
+          "en": "wet from yesterday's rain",
+          "ko": "어제 온 비로 젖은"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "F.offtopic",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we guess about Yejun?",
+        "choices": [
+          "He needs something to pour drinks into.",
+          "He has no drinks for the picnic today.",
+          "He wants to buy a new picnic blanket.",
+          "He does not like eating outside in the park."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "예준이가 종이컵 사는 걸 깜빡했다고 했으니 음료수를 마실 컵이 필요한 걸 알 수 있어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "could you bring some paper cups? I forgot to buy them.",
+        "why_not": {
+          "1": "음료수가 없다는 말은 아니에요.",
+          "2": "돗자리를 새로 사려는 게 아니에요.",
+          "3": "밖에서 먹기 싫어한다는 내용은 없어요."
+        },
+        "key_expr": {
+          "en": "forgot to buy them",
+          "ko": "그것들 사는 것을 깜빡했다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "F.offtopic",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0048"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "W: Hi, Minho, it's Mom. When you finish your math club today, please stop by the security office downstairs. A big box of apples arrived from Grandma. It's too heavy for me to carry alone. I'll meet you there in thirty minutes, and we can carry it together. Oh, and it's raining, so don't forget the umbrella from your locker.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female"
+      },
+      "translation_ko": "여: 안녕, 민호야. 엄마야. 오늘 수학 동아리 끝나면 아래층에 있는 경비실에 좀 들러 줘. 할머니가 보내신 큰 사과 상자가 왔어. 나 혼자 들기에는 너무 무겁네. 30분 뒤에 거기서 만나서 같이 들고 가자. 아, 그리고 비가 오니까 사물함에서 우산 챙기는 거 잊지 말고."
+    },
+    "questions": [
+      {
+        "stem": "Why does Mom want to meet Minho at the security office?",
+        "choices": [
+          "To wait for Grandma together",
+          "To help her move a heavy box",
+          "To give him some apples",
+          "To bring him an umbrella"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "상자가 혼자 들기에 너무 무거워서 민호와 같이 들고 가려고 경비실에서 만나자는 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "It's too heavy for me to carry alone. I'll meet you there in thirty minutes, and we can carry it together.",
+        "why_not": {
+          "0": "할머니를 기다린다는 말은 없어요.",
+          "2": "사과를 바로 나눠 주려는 게 아니에요.",
+          "3": "우산은 민호 사물함에 있어요."
+        },
+        "key_expr": {
+          "en": "carry it together",
+          "ko": "그것을 같이 들다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What does Mom mean when she talks about the locker?",
+        "choices": [
+          "Minho should put the heavy box in it.",
+          "Minho left his math homework in it.",
+          "Minho should take his umbrella out of it.",
+          "Minho should clean it before he goes home."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "비가 오니까 사물함에 있는 우산을 꺼내서 쓰라는 뜻으로 한 말이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.school",
+          "V.daily"
+        ],
+        "evidence": "it's raining, so don't forget the umbrella from your locker.",
+        "why_not": {
+          "0": "상자는 집으로 들고 갈 거예요.",
+          "1": "수학 숙제 이야기는 나오지 않았어요.",
+          "3": "사물함을 청소하라는 말은 아니에요."
+        },
+        "key_expr": {
+          "en": "umbrella from your locker",
+          "ko": "네 사물함에 있는 우산"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0049"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome to the Spring Flower Festival. At two o'clock, a special magic show will start on the main stage. The magician will do fun tricks with hats and cards. Please sit down so everyone can see the show. After the show, you can take a picture with the magician.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 봄꽃 축제에 오신 것을 환영합니다. 두 시에 메인 무대에서 특별한 마술 쇼가 시작됩니다. 마술사가 모자와 카드로 재미있는 마술을 보여줄 거예요. 모든 사람이 쇼를 볼 수 있게 자리에 앉아 주세요. 쇼가 끝난 후에는 마술사와 사진을 찍을 수 있습니다."
+    },
+    "questions": [
+      {
+        "stem": "What is the speaker mainly talking about?",
+        "choices": [
+          "A magic show at the festival",
+          "A flower shop opening",
+          "A hat making class",
+          "A picture drawing contest"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "마술사가 축제 메인 무대에서 특별한 마술 쇼를 한다고 알려주는 내용이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "At two o'clock, a special magic show will start on the main stage.",
+        "why_not": {
+          "1": "꽃가게를 연다는 이야기가 아니에요",
+          "2": "모자 만들기를 배우는 수업이 아니에요",
+          "3": "그림 그리기 대회는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "magic show",
+          "ko": "마술 쇼"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What is the speaker asking people to do?",
+        "choices": [
+          "Buy magic cards",
+          "Sit down to watch",
+          "Clean the stage",
+          "Wear a fun hat"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "모두가 쇼를 잘 볼 수 있도록 자리에 앉아 달라고 부탁하고 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Please sit down so everyone can see the show.",
+        "why_not": {
+          "0": "카드를 사라는 말은 없었어요",
+          "2": "무대를 청소하라는 내용이 아니에요",
+          "3": "모자를 쓰라는 말이 아니에요"
+        },
+        "key_expr": {
+          "en": "sit down",
+          "ko": "자리에 앉다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0050"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "M: Hi, Yujin, it's Kevin. I'm calling about our history group work tomorrow. The city library is closed for painting this week, so we can't meet there. Let's meet at my house instead. My mom will make sandwiches for us. Please call me back and let me know if you can come.",
+      "accent": "US",
+      "tts_voices": {
+        "M": "male"
+      },
+      "translation_ko": "남: 안녕, 유진아. 나 케빈이야. 내일 있을 우리 역사 모둠 숙제 때문에 전화했어. 이번 주에 시립 도서관이 페인트칠을 해서 문을 닫아서, 거기서 만날 수가 없어. 대신 우리 집에서 만나자. 우리 엄마가 샌드위치를 만들어 주실 거야. 올 수 있는지 다시 전화해서 알려 줘."
+    },
+    "questions": [
+      {
+        "stem": "Why is Kevin leaving the message?",
+        "choices": [
+          "To ask for help with history",
+          "To talk about a new sandwich shop",
+          "To change where they will meet",
+          "To invite Yujin to the library"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "도서관이 문을 닫아서 자기 집에서 숙제를 하자고 모이는 장소를 바꾸고 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "The city library is closed for painting this week, so we can't meet there. Let's meet at my house instead.",
+        "why_not": {
+          "0": "역사를 도와달라는 부탁이 아니에요",
+          "1": "샌드위치 가게 이야기는 나오지 않았어요",
+          "3": "도서관이 문을 닫아 갈 수 없다고 했어요"
+        },
+        "key_expr": {
+          "en": "instead",
+          "ko": "대신에"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What does Kevin want Yujin to do?",
+        "choices": [
+          "Paint the library walls",
+          "Make some sandwiches",
+          "Buy a history book",
+          "Meet at his house"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "도서관에서 만날 수 없으니 대신 자기 집에서 만나자고 말하고 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "Let's meet at my house instead.",
+        "why_not": {
+          "0": "도서관 페인트칠은 우리가 하는 게 아니에요",
+          "1": "샌드위치는 엄마가 만들어 주실 거예요",
+          "2": "역사 책을 사라는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "group work",
+          "ko": "모둠 과제"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0051"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Attention, bookstore visitors. In fifteen minutes, a famous writer for children's books will be on the second floor. She will read her newest story about a brave cat. She will also sign your books. If you want to join, please go up the stairs now.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 서점 방문객 여러분, 안내 말씀드립니다. 15분 뒤에 유명한 어린이 책 작가가 2층에 올 예정입니다. 작가님이 용감한 고양이에 관한 가장 새로운 이야기를 읽어 주실 거예요. 여러분의 책에 사인도 해 주실 겁니다. 참여하고 싶으시면 지금 계단으로 올라가 주세요."
+    },
+    "questions": [
+      {
+        "stem": "What is the purpose of the announcement?",
+        "choices": [
+          "To sell story books about cats",
+          "To tell people about a writer's event",
+          "To ask visitors to leave the store",
+          "To introduce a new bookstore worker"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "서점 2층에서 유명한 동화책 작가가 글을 읽어주는 행사가 열린다고 알리는 내용이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.gist",
+          "V.shopping"
+        ],
+        "evidence": "a famous writer for children's books will be on the second floor.",
+        "why_not": {
+          "0": "고양이 책을 팔려는 안내가 아니에요",
+          "2": "서점에서 나가라는 말이 아니에요",
+          "3": "새로운 직원을 소개하는 것이 아니에요"
+        },
+        "key_expr": {
+          "en": "children's books",
+          "ko": "어린이 책"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What is the speaker's main instruction?",
+        "choices": [
+          "Wait for fifteen minutes",
+          "Feed the brave cat",
+          "Go to the second floor",
+          "Write a children's book"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "작가를 만나고 싶다면 지금 계단을 통해 2층으로 올라가라고 안내하고 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "V.shopping"
+        ],
+        "evidence": "please go up the stairs now.",
+        "why_not": {
+          "0": "기다리라는 것이 아니라 지금 올라가라고 했어요",
+          "1": "고양이에게 먹이를 주라는 말이 아니에요",
+          "3": "직접 책을 쓰라는 내용이 없어요"
+        },
+        "key_expr": {
+          "en": "go up the stairs",
+          "ko": "계단으로 올라가다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0052"
   }
 ]
