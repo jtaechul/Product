@@ -195,6 +195,12 @@ export function validateQuestionCore(it, ctx, part, source, tagSection) {
     if (it.explanation_ko.length > EXPLANATION_MAX) {
       err(`해설이 ${it.explanation_ko.length}자입니다 (${EXPLANATION_MAX}자 이하로)`);
     }
+    // 화면은 보기를 A·B·C·D 로 보여 주는데, AI 는 answer_idx 를 그대로 옮겨 "0번이 알맞아요"처럼
+    // 0부터 센 번호로 가리켰다(2026-11 L2 12문항 — 정답 A 를 '0번', B 를 '1번'). 내용으로 가리켜야 한다.
+    // '7번 버스'·'4번 승강장' 같은 본문 속 번호는 걸리지 않게 "N번이 맞/알맞/정답" 꼴만 잡는다.
+    if (/(?<![0-9])[0-4]번(이|을|은)?\s*(맞|알맞|정답)/.test(it.explanation_ko)) {
+      err('해설이 보기를 번호(0번·1번…)로 가리킵니다 — 화면은 A·B·C 라 어긋납니다. "~라고 한 대답이 맞아요"처럼 내용으로 가리키세요');
+    }
   }
   // 근거(선택): 지문·스크립트·문장에서 정답의 실마리가 되는 부분을 "그대로" 적으면
   // 화면이 그 자리를 형광펜으로 칠해 준다. 한 글자라도 다르면 칠할 자리를 못 찾는다.

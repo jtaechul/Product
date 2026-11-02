@@ -124,6 +124,8 @@ const prompt = `당신은 초등 3학년~중학교 3학년 한국 학생을 위�
 - explanation_ko(해설)는 ${EXPLANATION_MAX}자 이하, **아이 말로** 씁니다.
   다음 문법 용어는 절대 쓰지 마세요: ${HARD_TERMS.join(', ')}.
   예) "주어가 3인칭 단수라서" (X) → "My dog는 한 마리라서" (O)
+  보기를 번호로 가리키지 마세요 — 화면은 A·B·C 로 보여 줍니다.
+  예) "1번이 알맞아요" (X) → "세 정거장이라고 수를 말한 대답이 알맞아요" (O)
 - why_not: 오답 보기마다 ${WHY_NOT_MAX}자 이하 한 줄 이유. **정답 자리에는 넣지 않습니다.**
 - miss_type: why_not 을 넣은 자리마다 하나씩. 다음 중에서만 고릅니다:
 ${Object.entries(MISS_KO).map(([k, v]) => `  ${k} = ${v}`).join('\n')}
