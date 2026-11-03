@@ -4770,5 +4770,115 @@
     ],
     "tmp_id": "R2-0046",
     "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Bakery Field Trip\nWednesday, April 14th\nToday my class visited the Sweet Town Bakery. We learned how delicious bread is made. First, flour and milk (1) ______ together in a huge bowl. Then, the dough (2) ______ in a hot oven for thirty minutes. Finally, the fresh bread (3) ______ by happy customers. It smelled so good!",
+      "translation_ko": "빵집 견학\n4월 14일 수요일\n오늘 우리 반은 스위트 타운 빵집에 갔어요. 우리는 맛있는 빵이 어떻게 만들어지는지 배웠어요. 먼저, 밀가루와 우유가 아주 큰 그릇에서 함께 섞입니다. 그런 다음, 반죽이 뜨거운 오븐에서 30분 동안 구워집니다. 마지막으로, 갓 나온 빵은 행복한 손님들에 의해 사집니다. 냄새가 정말 좋았어요!"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "mix",
+          "are mixed",
+          "is mixed",
+          "mixed"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "밀가루와 우유, 두 가지가 사람의 손으로 '섞이는' 것이니까 are mixed가 맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "G.agreement",
+          "V.food"
+        ],
+        "evidence": "flour and milk",
+        "why_not": {
+          "0": "재료가 스스로 섞을 수 없어요",
+          "2": "재료가 두 가지라 is는 안 어울려요",
+          "3": "빵 만드는 방법을 설명하는 글이에요"
+        },
+        "key_expr": {
+          "en": "are mixed together",
+          "ko": "함께 섞인다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "G.form",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "is baked",
+          "are baked",
+          "bakes",
+          "bake"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "반죽 하나가 오븐 안에서 '구워지는' 것이라 is baked가 알맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "G.agreement",
+          "V.food"
+        ],
+        "evidence": "the dough",
+        "why_not": {
+          "1": "반죽 하나를 말해서 are는 안 맞아요",
+          "2": "반죽이 스스로 무언가를 구울 수 없어요",
+          "3": "모양도 안 맞고 스스로 구울 수 없어요"
+        },
+        "key_expr": {
+          "en": "is baked",
+          "ko": "구워진다"
+        },
+        "miss_type": {
+          "1": "G.form",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "bought",
+          "is buying",
+          "is bought",
+          "buy"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "빵이 손님들에게 '팔려 나가는' 것이니까 is bought가 맞아요. 빵은 개수를 안 세서 is와 어울려요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "RS.context",
+          "V.shopping"
+        ],
+        "evidence": "by happy customers",
+        "why_not": {
+          "0": "빵이 스스로 무언가를 살 수 없어요",
+          "1": "빵이 지금 무언가를 사는 중이 아니에요",
+          "3": "빵이 스스로 무언가를 살 수 없어요"
+        },
+        "key_expr": {
+          "en": "is bought by customers",
+          "ko": "손님들에 의해 사진다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0048"
   }
 ]

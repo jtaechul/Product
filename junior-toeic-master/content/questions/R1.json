@@ -5475,5 +5475,239 @@
     "translation_ko": "알록달록한 열기구가 높은 산들 위로 날아갔어요.",
     "tmp_id": "R1-0142",
     "status": "draft"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "We need to make a quick ______ before the train leaves.",
+    "choices": [
+      "decide",
+      "decision",
+      "decisive",
+      "decisively"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "a quick(빠른) 다음에는 이름이 되는 낱말이 필요해서 decision(결정)이 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pos",
+      "V.travel"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "a quick",
+    "why_not": {
+      "0": "결정하다라는 뜻의 행동을 나타내는 말이에요",
+      "2": "이름 낱말을 꾸며주는 형태예요",
+      "3": "행동을 꾸며주는 형태예요"
+    },
+    "key_expr": {
+      "en": "make a decision",
+      "ko": "결정하다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "기차가 떠나기 전에 우리는 빨리 결정을 내려야 해요.",
+    "tmp_id": "R1-0143"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "This little flashlight is very ______ when we go camping in the dark.",
+    "choices": [
+      "use",
+      "useful",
+      "usefully",
+      "usefulness"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "very(매우) 다음에는 어떤지 상태를 나타내는 말이 와야 해서 useful(유용한)이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pos",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "is very",
+    "why_not": {
+      "0": "사용하다라는 뜻의 행동을 나타내는 말이에요",
+      "2": "행동을 꾸며주는 형태예요",
+      "3": "이름이 되는 형태예요"
+    },
+    "key_expr": {
+      "en": "go camping",
+      "ko": "캠핑 가다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "우리가 어두운 곳으로 캠핑 갈 때 이 작은 손전등은 매우 유용해요.",
+    "tmp_id": "R1-0144"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The students listened ______ to the tour guide at the space center.",
+    "choices": [
+      "care",
+      "careful",
+      "carefully",
+      "carefulness"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "안내원의 말을 어떻게 들었는지 행동을 설명해주는 말이 필요해서 carefully(주의 깊게)가 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pos",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "listened",
+    "why_not": {
+      "0": "이름이나 행동을 나타내는 기본 형태예요",
+      "1": "어떤 상태인지 설명해주는 형태예요",
+      "3": "이름이 되는 형태라서 자리에 안 맞아요"
+    },
+    "key_expr": {
+      "en": "listen carefully",
+      "ko": "주의 깊게 듣다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "학생들은 우주 센터에서 투어 가이드의 말을 주의 깊게 들었어요.",
+    "tmp_id": "R1-0145"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The art teacher loved our ______ of the new poster.",
+    "choices": [
+      "create",
+      "creative",
+      "creatively",
+      "creation"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "our(우리의) 뒤에는 이름이 되는 낱말이 와야 해서 creation(만든 것, 작품)이 알맞아요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.pos",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "our",
+    "why_not": {
+      "0": "만들다라는 뜻의 행동을 나타내는 말이에요",
+      "1": "어떤 상태인지 설명해주는 형태예요",
+      "2": "행동을 꾸며주는 형태예요"
+    },
+    "key_expr": {
+      "en": "art teacher",
+      "ko": "미술 선생님"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "2": "G.form"
+    },
+    "translation_ko": "미술 선생님은 우리가 새로 만든 포스터 작품을 아주 마음에 들어 하셨어요.",
+    "tmp_id": "R1-0146"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Everyone clapped loudly after the beautiful ______ by the magic club.",
+    "choices": [
+      "perform",
+      "performance",
+      "performed",
+      "performing"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "the beautiful(아름다운) 다음에는 이름이 되는 낱말이 와서 performance(공연)가 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pos",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "the beautiful",
+    "why_not": {
+      "0": "공연하다라는 뜻의 행동을 나타내는 말이에요",
+      "2": "이미 일어난 행동을 나타내는 형태예요",
+      "3": "지금 하고 있는 행동을 나타내는 형태예요"
+    },
+    "key_expr": {
+      "en": "clap loudly",
+      "ko": "큰 소리로 박수 치다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "마술 동아리의 아름다운 공연이 끝난 뒤에 모두가 큰 소리로 박수를 쳤어요.",
+    "tmp_id": "R1-0147"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The water in the river is ______ clean, so we can easily see the fish.",
+    "choices": [
+      "real",
+      "really",
+      "reality",
+      "realize"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "clean(깨끗한)이 얼마나 그런지 정도를 꾸며주는 말이 필요해서 really(정말)가 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pos",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "clean",
+    "why_not": {
+      "0": "어떤 상태인지 설명해주는 형태예요",
+      "2": "이름이 되는 형태라서 자리에 안 맞아요",
+      "3": "깨닫다라는 뜻의 행동을 나타내는 말이에요"
+    },
+    "key_expr": {
+      "en": "really clean",
+      "ko": "정말 깨끗한"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "강물이 정말 깨끗해서 물고기를 쉽게 볼 수 있어요.",
+    "tmp_id": "R1-0148"
   }
 ]

@@ -6027,5 +6027,437 @@
     },
     "translation_ko": "여기 바닥이 아직 젖어 있어.",
     "tmp_id": "L2-0167"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "We need exactly ten.",
+      "It's a very sweet fruit.",
+      "I bought a new bowl."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "딸기가 몇 개 필요한지 수를 물었으므로, 열 개가 필요하다고 답한 말이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "How many strawberries do we need for the salad?",
+    "status": "draft",
+    "evidence": "How many strawberries",
+    "why_not": {
+      "1": "딸기라는 말에 어울리는 설명만 했어요",
+      "2": "샐러드라는 말에서 그릇을 떠올렸어요"
+    },
+    "key_expr": {
+      "en": "How many strawberries?",
+      "ko": "딸기가 몇 개 필요해?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "샐러드를 만드는 데 딸기가 몇 개 필요해요?",
+    "tmp_id": "L2-0168"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The water is too cold.",
+      "I wash my hands often.",
+      "It is hanging in the bathroom."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "내 초록색 수건을 어디 두었는지 장소를 물었으니, 화장실에 걸려 있다는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Where did you leave my green towel?",
+    "status": "draft",
+    "evidence": "Where did you leave",
+    "why_not": {
+      "0": "수건과 관련된 물 이야기를 했어요",
+      "1": "씻는다는 다른 이야기를 꺼냈어요"
+    },
+    "key_expr": {
+      "en": "Where did you leave ~?",
+      "ko": "~을 어디에 두었어?"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "내 초록색 수건을 어디에 두었어요?",
+    "tmp_id": "L2-0169"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It opens at ten in the morning.",
+      "These shoes are too small.",
+      "We went shopping yesterday."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "신발 가게가 토요일 언제 여는지 시간을 물었어요. 아침 열 시에 연다는 말이 딱 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.shopping"
+    ],
+    "accent": "AU",
+    "tts_script": "What time does the shoe store open on Saturday?",
+    "status": "draft",
+    "evidence": "What time does the shoe store open",
+    "why_not": {
+      "1": "신발이라는 말에 낚인 엉뚱한 대답이에요",
+      "2": "가게라는 말에서 쇼핑을 떠올렸어요"
+    },
+    "key_expr": {
+      "en": "What time does ~ open?",
+      "ko": "~은 몇 시에 열어요?"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "신발 가게는 토요일에 몇 시에 문을 열어요?",
+    "tmp_id": "L2-0170"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It looks very clean now.",
+      "Dad said he would do it.",
+      "The sofa is quite comfortable."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "거실 청소를 누가 할 건지 사람을 물었으므로, 아빠가 하신다는 대답이 자연스러워요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "Who is going to vacuum the living room today?",
+    "status": "draft",
+    "evidence": "Who is going to vacuum",
+    "why_not": {
+      "0": "질문에 답하지 않고 상태만 말했어요",
+      "2": "거실이라는 말에서 소파를 떠올렸어요"
+    },
+    "key_expr": {
+      "en": "Who is going to ~?",
+      "ko": "누가 ~할 거야?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "오늘 거실 청소기는 누가 돌릴 거예요?",
+    "tmp_id": "L2-0171"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I have some stamps in my bag.",
+      "About ten minutes on foot.",
+      "It is a big white building."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "우체국까지 얼마나 걸리는지 시간을 물었어요. 걸어서 십 분쯤 걸린다는 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.travel"
+    ],
+    "accent": "UK",
+    "tts_script": "How long does it take to walk to the post office?",
+    "status": "draft",
+    "evidence": "How long does it take",
+    "why_not": {
+      "0": "우체국이라는 말에 어울리는 우표를 말했어요",
+      "2": "얼마나 걸리는지가 아니라 건물을 묘사했어요"
+    },
+    "key_expr": {
+      "en": "How long does it take?",
+      "ko": "얼마나 걸려요?"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "우체국까지 걸어서 얼마나 걸려요?",
+    "tmp_id": "L2-0172"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The paintings were beautiful.",
+      "I took a lot of pictures there.",
+      "You should take line number three."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "미술관에 가려면 몇 호선을 타야 하는지 물었으니, 삼 호선을 타라고 알려 준 대답이 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.travel"
+    ],
+    "accent": "AU",
+    "tts_script": "Which subway line goes to the art museum?",
+    "status": "draft",
+    "evidence": "Which subway line",
+    "why_not": {
+      "0": "미술관이라는 말에서 그림을 떠올렸어요",
+      "1": "미술관에서 한 다른 행동을 말했어요"
+    },
+    "key_expr": {
+      "en": "Which subway line ~?",
+      "ko": "어느 지하철 노선이 ~해?"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "미술관으로 가는 지하철은 몇 호선인가요?",
+    "tmp_id": "L2-0173"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The kitchen is very clean.",
+      "I'll take it out right now.",
+      "We bought a new trash can."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "쓰레기통이 꽉 찼다고 문제 상황을 말했으니, 당장 비우겠다고 도와주는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "The trash can in the kitchen is completely full.",
+    "status": "draft",
+    "evidence": "completely full",
+    "why_not": {
+      "0": "부엌이 깨끗하다는 말은 어울리지 않아요",
+      "2": "새로 샀다는 이야기는 지금 상황과 어색해요"
+    },
+    "key_expr": {
+      "en": "take it out",
+      "ko": "가지고 나가다, 비우다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "부엌 쓰레기통이 완전히 꽉 찼어.",
+    "tmp_id": "L2-0174"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I walk in the park every morning.",
+      "Yes, the park is very beautiful.",
+      "We can ride our bikes if you want."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "걷기 힘들어하는 상황이에요. 대신 자전거를 타자고 다른 방법을 제안하는 대답이 자연스러워요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Do we really have to walk all the way to the park?",
+    "status": "draft",
+    "evidence": "walk all the way",
+    "why_not": {
+      "0": "들린 낱말에 낚여서 매일 걷는다고 했어요",
+      "1": "예쁘다는 말은 걷기 힘들다는 내용과 안 맞아요"
+    },
+    "key_expr": {
+      "en": "all the way",
+      "ko": "내내, 끝까지"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "우리 정말 공원까지 내내 걸어가야 해?",
+    "tmp_id": "L2-0175"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Let's ask the librarian what to do.",
+      "You can read books here.",
+      "The library is closed on Mondays."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "카드를 잃어버려서 걱정하고 있어요. 사서 선생님께 여쭤보자고 해결책을 말하는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.school"
+    ],
+    "accent": "AU",
+    "tts_script": "I think I lost my library card.",
+    "status": "draft",
+    "evidence": "lost my library card",
+    "why_not": {
+      "1": "도서관에서 뭘 하는지 묻지 않았어요",
+      "2": "월요일에 쉰다는 말은 문제와 상관없어요"
+    },
+    "key_expr": {
+      "en": "librarian",
+      "ko": "사서 선생님"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "나 도서관 카드 잃어버린 것 같아.",
+    "tmp_id": "L2-0176"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I don't like eating sweet things.",
+      "The bakery is on the corner.",
+      "It tastes a bit too salty, doesn't it?"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "맛이 이상해서 요리법이 맞는지 묻고 있어요. 짠맛이 난다며 맞장구치는 대답이 가장 어울려요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Are you sure this is the right recipe for the chocolate cake?",
+    "status": "draft",
+    "evidence": "sure this is the right recipe",
+    "why_not": {
+      "0": "자신의 입맛을 이야기할 상황이 아니에요",
+      "1": "갑자기 빵집 위치를 알려줘서 어색해요"
+    },
+    "key_expr": {
+      "en": "recipe",
+      "ko": "요리법"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "M.notsaid"
+    },
+    "translation_ko": "이게 초콜릿 케이크에 맞는 요리법 확실해?",
+    "tmp_id": "L2-0177"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The movie was very interesting.",
+      "How about getting some popcorn then?",
+      "I don't have a watch with me."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "시간이 남는다고 했으니, 그동안 팝콘을 사 오자고 무엇을 할지 제안하는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "We have plenty of time before the movie starts.",
+    "status": "draft",
+    "evidence": "plenty of time",
+    "why_not": {
+      "0": "아직 시작도 안 한 영화의 감상을 말했어요",
+      "2": "시계가 없다는 말은 상황과 어울리지 않아요"
+    },
+    "key_expr": {
+      "en": "plenty of",
+      "ko": "아주 많은"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "영화가 시작하려면 시간이 아주 많아.",
+    "tmp_id": "L2-0178"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Do you want me to help you out?",
+      "The puzzle is in the living room.",
+      "We played a board game yesterday."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "퍼즐이 너무 어렵다고 고민하고 있어요. 내가 좀 도와줄지 묻는 대답이 다정하고 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "This new puzzle is much harder than the last one.",
+    "status": "draft",
+    "evidence": "much harder",
+    "why_not": {
+      "1": "물건이 어디 있는지 알려줄 상황이 아니에요",
+      "2": "어제 한 보드게임은 지금 이야기와 안 맞아요"
+    },
+    "key_expr": {
+      "en": "help out",
+      "ko": "도와주다"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "이 새 퍼즐은 지난번 것보다 훨씬 더 어렵네.",
+    "tmp_id": "L2-0179"
   }
 ]

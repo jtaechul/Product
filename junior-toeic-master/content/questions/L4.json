@@ -4640,5 +4640,488 @@
       }
     ],
     "tmp_id": "L4-0058"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, students. This is Ms. Green from the school library. Next Wednesday, we are having a special book fair. You can bring old books from home and sell them to your friends. The fair will be in the school gym after lunch. If you want to sell books, please write your name on the list in the library by this Friday. Thank you!",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 학생 여러분, 좋은 아침입니다. 저는 학교 도서관의 그린 선생님이에요. 다음 주 수요일에 특별한 도서 바자회가 열립니다. 집에서 안 보는 헌 책을 가져와서 친구들에게 팔 수 있어요. 바자회는 점심시간 이후에 학교 체육관에서 열릴 예정입니다. 책을 팔고 싶은 학생은 이번 주 금요일까지 도서관에 있는 명단에 이름을 적어 주세요. 감사합니다!"
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the announcement mainly about?",
+        "choices": [
+          "A special book fair",
+          "A new gym teacher",
+          "A library reading rule",
+          "A lunch menu change"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "다음 주 수요일에 특별한 도서 바자회가 열린다고 안내하는 방송이에요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "we are having a special book fair.",
+        "why_not": {
+          "1": "체육관이 나오지만 체육 선생님 이야기는 아니에요",
+          "2": "도서관 규칙을 설명하는 내용이 아니에요",
+          "3": "점심시간이 나오지만 메뉴가 바뀐다는 건 아니에요"
+        },
+        "key_expr": {
+          "en": "book fair",
+          "ko": "도서 바자회"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Where will the event be held?",
+        "choices": [
+          "In the library",
+          "In the cafeteria",
+          "In the school gym",
+          "In the music room"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "도서 바자회는 학교 체육관에서 열린다고 말했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "The fair will be in the school gym",
+        "why_not": {
+          "0": "도서관은 명단에 이름을 적으러 가는 곳이에요",
+          "1": "급식실 이야기는 나오지 않았어요",
+          "3": "음악실 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "in the school gym",
+          "ko": "학교 체육관에서"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0059"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, neighbors. This is the community center with happy news. This weekend, we are having a toy donation event. Please bring clean and safe toys your children no longer play with. We will give them to the children's hospital. You can drop off the toys at the front desk until five o'clock on Saturday. Thank you for sharing.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 이웃 여러분, 안녕하세요. 기쁜 소식을 전해드리는 주민 센터입니다. 이번 주말에 장난감 기부 행사가 열립니다. 아이들이 더 이상 가지고 놀지 않는 깨끗하고 안전한 장난감을 가져와 주세요. 그 장난감들은 어린이 병원에 전달될 것입니다. 장난감은 토요일 5시까지 안내 데스크에 맡겨 주시면 됩니다. 나눠 주셔서 감사합니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the speaker mainly talking about?",
+        "choices": [
+          "A weekend market",
+          "A new playground",
+          "A toy donation event",
+          "A children's hospital"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "집에서 더 이상 가지고 놀지 않는 장난감을 가져와서 기부하라고 알리는 내용이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "we are having a toy donation event.",
+        "why_not": {
+          "0": "주말 시장이 열린다는 이야기는 나오지 않았어요",
+          "1": "새 놀이터에 대한 안내가 아니에요",
+          "3": "병원은 장난감을 전달받는 곳이에요"
+        },
+        "key_expr": {
+          "en": "donation event",
+          "ko": "기부 행사"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Where should people leave the toys?",
+        "choices": [
+          "At the children's hospital",
+          "At the front desk",
+          "In the play room",
+          "At a bus stop"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "사람들이 가져온 장난감을 안내 데스크에 두고 가면 된다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "You can drop off the toys at the front desk",
+        "why_not": {
+          "0": "병원은 기부받은 장난감이 나중에 가는 곳이에요",
+          "2": "놀이방 이야기는 나오지 않았어요",
+          "3": "버스 정류장 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "drop off",
+          "ko": "맡기다, 두고 가다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0060"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome to the City Nature Park. Right now, we are in front of the butterfly house. Inside, you can see beautiful blue butterflies flying around. They like sweet things, so please do not bring any juice or fruit inside. Also, walk slowly because they are resting on the floor. Let's go in!",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 시립 자연 공원에 오신 것을 환영합니다. 지금 우리는 나비 온실 앞에 있습니다. 안으로 들어가시면 아름다운 파란 나비들이 날아다니는 것을 볼 수 있어요. 나비들은 단것을 좋아하기 때문에, 주스나 과일은 안으로 가져오지 마세요. 또 나비들이 바닥에서 쉬고 있으니 천천히 걸어 주세요. 자, 들어갑시다!"
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What is the speaker mainly talking about?",
+        "choices": [
+          "How to make sweet juice",
+          "Where to buy a beautiful butterfly",
+          "Why the nature park is closed",
+          "What to do in the butterfly house"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "나비 온실 안에 들어가기 전에 안에서 조심할 점과 해야 할 일을 알려주고 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Inside, you can see beautiful blue butterflies flying around. They like sweet things, so please do not bring any juice or fruit inside.",
+        "why_not": {
+          "0": "달콤한 주스를 만드는 방법은 나오지 않았어요",
+          "1": "나비를 사는 곳을 안내하는 내용이 아니에요",
+          "2": "공원이 문을 닫았다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "butterfly house",
+          "ko": "나비 온실"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should visitors NOT bring inside?",
+        "choices": [
+          "Juice",
+          "Cameras",
+          "Umbrellas",
+          "Hats"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "나비들이 단것을 좋아해서 과일이나 주스는 가지고 들어가면 안 된다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "LS.detail",
+          "V.leisure"
+        ],
+        "evidence": "please do not bring any juice or fruit inside.",
+        "why_not": {
+          "1": "카메라 이야기는 나오지 않았어요",
+          "2": "우산 이야기는 나오지 않았어요",
+          "3": "모자 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "do not bring",
+          "ko": "가져오지 마세요"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0061"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, volunteers. Thank you for joining our beach cleanup today. The sand is quite wet because it rained last night, so please wear the rubber boots we provide. First, we will pick up plastic bottles near the water. When your bag is full, bring it to the big blue truck. We will finish at noon and have some sandwiches together.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 자원봉사자 여러분, 좋은 아침입니다. 오늘 해변 청소에 참여해 주셔서 감사합니다. 어젯밤에 비가 와서 모래가 꽤 젖어 있으니, 저희가 드리는 고무장화를 신어 주세요. 먼저 물가 근처에 있는 플라스틱 병을 주울 거예요. 가방이 가득 차면 커다란 파란색 트럭으로 가져오세요. 우리는 낮 12시에 끝내고 샌드위치를 같이 먹을 겁니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why do volunteers need to wear rubber boots?",
+        "choices": [
+          "Because the sand is hot",
+          "Because the sand is wet",
+          "Because they will walk in the water",
+          "Because there are sharp rocks"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "어젯밤에 비가 와서 모래가 꽤 젖어 있대요. 그래서 고무장화를 신으라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "The sand is quite wet because it rained last night, so please wear the rubber boots",
+        "why_not": {
+          "0": "모래가 뜨겁다는 말은 없었어요",
+          "2": "물속을 걷는다는 말은 아니에요",
+          "3": "날카로운 바위 이야기는 안 나왔어요"
+        },
+        "key_expr": {
+          "en": "wear rubber boots",
+          "ko": "고무장화를 신다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we guess about the volunteers at noon?",
+        "choices": [
+          "They will go home right away",
+          "They will drive the truck",
+          "They will start picking up bottles",
+          "They will eat lunch"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "낮 12시에 청소를 마치고 다 같이 샌드위치를 먹는다고 했으니까 점심을 먹는다는 걸 알 수 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.food"
+        ],
+        "evidence": "We will finish at noon and have some sandwiches together.",
+        "why_not": {
+          "0": "바로 집에 가지 않고 샌드위치를 먹어요",
+          "1": "트럭을 운전한다는 말은 없었어요",
+          "2": "병 줍기는 오전에 이미 하는 일이에요"
+        },
+        "key_expr": {
+          "en": "finish at noon",
+          "ko": "낮 12시에 끝내다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "M.swap",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "tmp_id": "L4-0062"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, students. This is a message about the school talent show. If you want to sing or dance on stage, you must sign up by this Friday. The auditions will be in the music room next Tuesday after school. Please remember that your performance must be shorter than three minutes. We have many students waiting, so we need to keep everything on time.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 학생 여러분, 안녕하세요. 학교 장기자랑 대회에 대한 안내입니다. 무대에서 노래하거나 춤을 추고 싶다면 이번 주 금요일까지 신청해야 합니다. 오디션은 다음 주 화요일 방과 후에 음악실에서 열립니다. 공연은 반드시 3분보다 짧아야 한다는 것을 기억해 주세요. 기다리는 학생이 많아서 제시간에 맞춰 진행해야 하거든요."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What must students do before this Friday?",
+        "choices": [
+          "Tell the school they want to perform",
+          "Finish their performance on stage",
+          "Wait in the music room",
+          "Practice for three hours"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "무대에서 공연하고 싶으면 금요일까지 학교에 신청하라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "If you want to sing or dance on stage, you must sign up by this Friday.",
+        "why_not": {
+          "1": "무대 공연은 나중에 열려요",
+          "2": "음악실은 오디션을 보는 곳이에요",
+          "3": "3분이라는 숫자와 헷갈리면 안 돼요"
+        },
+        "key_expr": {
+          "en": "sign up",
+          "ko": "신청하다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.number"
+        }
+      },
+      {
+        "stem": "Why should students make their performance short?",
+        "choices": [
+          "Because the stage is small",
+          "Because it is after school",
+          "Because there are many students",
+          "Because they need to sing loudly"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "기다리는 학생이 많아서 시간을 잘 지켜야 한대요. 그래서 공연을 길게 하면 안 돼요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "We have many students waiting, so we need to keep everything on time.",
+        "why_not": {
+          "0": "무대 크기 이야기는 없었어요",
+          "1": "방과 후에 하는 건 맞지만 이유는 아니에요",
+          "3": "크게 부르라는 말은 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "on time",
+          "ko": "제시간에"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "G.clue",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0063"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome to the City History Museum. This room shows old toys from long ago. The wooden horses on your left were made over two hundred years ago. Please do not touch them, as the wood is very old and easily breaks. If you want to try playing with old toys, you can go to the play room on the second floor. Our staff will show you how they work.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 시립 역사박물관에 오신 것을 환영합니다. 이 방은 옛날 장난감들을 보여주는 곳입니다. 여러분 왼쪽에 있는 나무 말들은 200년도 더 전에 만들어졌습니다. 나무가 아주 오래되어 쉽게 부서지니 만지지 말아 주세요. 오래된 장난감을 가지고 놀아보고 싶다면 2층 놀이방으로 가시면 됩니다. 저희 직원이 장난감 작동 방법을 보여드릴 겁니다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What will happen if someone touches the wooden horses?",
+        "choices": [
+          "The horses will make a sound",
+          "The horses might get broken",
+          "The staff will give them a prize",
+          "The horses will change color"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "나무 말이 아주 오래돼서 쉽게 부서질 수 있다고 했어요. 그래서 조심해야 해요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "Please do not touch them, as the wood is very old and easily breaks.",
+        "why_not": {
+          "0": "소리가 난다는 말은 없었어요",
+          "2": "상을 준다는 말은 나오지 않아요",
+          "3": "색깔이 변한다는 내용도 없어요"
+        },
+        "key_expr": {
+          "en": "easily break",
+          "ko": "쉽게 부서지다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What is the play room on the second floor for?",
+        "choices": [
+          "Touching and using old toys",
+          "Buying new toys",
+          "Fixing broken wooden horses",
+          "Meeting the people who made the toys"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "오래된 장난감을 가지고 놀고 싶으면 2층 놀이방으로 가라고 했어요. 만지고 놀 수 있는 곳이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "If you want to try playing with old toys, you can go to the play room on the second floor.",
+        "why_not": {
+          "1": "새 장난감을 파는 곳이 아니에요",
+          "2": "고장 난 장난감을 고치는 곳이 아니에요",
+          "3": "장난감을 만든 사람을 만날 수는 없어요"
+        },
+        "key_expr": {
+          "en": "play with",
+          "ko": "가지고 놀다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L4-0064"
   }
 ]
