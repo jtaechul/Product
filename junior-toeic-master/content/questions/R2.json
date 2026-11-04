@@ -4880,5 +4880,329 @@
     ],
     "status": "draft",
     "tmp_id": "R2-0048"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Greenville School Book Drive\nDo you have old books at home? (1) ______ We are collecting books for the town children's hospital. You can bring storybooks or comic books. (2) ______ Please drop them in the big box near the school gate. We will take them to the hospital next Friday. (3) ______",
+      "translation_ko": "그린빌 학교 책 모으기 행사\n집에 오래된 책이 있나요? 그것들을 다른 사람들과 나누어 주세요. 우리는 동네 어린이 병원을 위해 책을 모으고 있습니다. 동화책이나 만화책을 가져오면 됩니다. 하지만 책이 깨끗한지 꼭 확인해 주세요. 학교 정문 근처에 있는 큰 상자에 책을 넣어 주세요. 다음 주 금요일에 우리가 병원으로 가져갈 것입니다. 여러분의 따뜻한 마음이 아이들을 행복하게 만들 거예요."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "You must read them every day.",
+          "Please share them with others.",
+          "We sell them at a low price.",
+          "You can throw them away."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "집에서 안 보는 책을 병원에 기부하자는 안내문이라 다른 사람들과 나누어 주라는 말이 자연스러워요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "RS.context",
+          "V.school"
+        ],
+        "evidence": "We are collecting books for the town children's hospital.",
+        "why_not": {
+          "0": "매일 읽으라는 말은 기부와 어울리지 않아요",
+          "2": "책을 판다는 이야기는 안내문에 없어요",
+          "3": "버리라는 뜻이라 책 모으기와 반대예요"
+        },
+        "key_expr": {
+          "en": "share with others",
+          "ko": "다른 사람들과 나누다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "The hospital needs more doctors.",
+          "You can borrow books from the library.",
+          "Our school gate is open on weekends.",
+          "But please make sure they are clean."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "책을 기부받지만 깨끗해야 한다는 조건을 알려 주는 문장이 들어가야 앞뒤 흐름이 잘 이어져요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "RS.context"
+        ],
+        "evidence": "You can bring storybooks or comic books.",
+        "why_not": {
+          "0": "의사가 필요하다는 말은 책 기부와 안 맞아요",
+          "1": "도서관에서 빌리라는 말은 흐름에 어색해요",
+          "2": "주말에 정문이 열린다는 건 엉뚱한 이야기예요"
+        },
+        "key_expr": {
+          "en": "make sure they are clean",
+          "ko": "깨끗한지 반드시 확인하다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "F.offtopic",
+          "2": "F.offtopic"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The hospital is very far from here.",
+          "We are going on a fun field trip.",
+          "Your warm heart will make the children happy.",
+          "Please buy a new book for yourself."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "모은 책을 병원 아이들에게 전해 준다고 했으니, 아이들이 기뻐할 거라는 따뜻한 마무리가 좋아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "RS.context"
+        ],
+        "evidence": "We will take them to the hospital next Friday.",
+        "why_not": {
+          "0": "병원이 멀다는 이야기는 흐름에 안 맞아요",
+          "1": "소풍을 간다는 이야기는 전혀 없어요",
+          "3": "책을 사라는 말은 기부 안내와 맞지 않아요"
+        },
+        "key_expr": {
+          "en": "make the children happy",
+          "ko": "아이들을 행복하게 만들다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "tmp_id": "R2-0047",
+    "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Sarah,\nHow is your weekend going? I started a new hobby yesterday. (1) ______ My aunt gave me her old oven, so I decided to try it. First, I made some chocolate chip cookies. (2) ______ But the second time, they came out perfect! Next weekend I will try making a banana cake. (3) ______\nTalk to you soon,\nMina",
+      "translation_ko": "안녕 사라,\n주말 잘 보내고 있어? 나는 어제 새로운 취미를 시작했어. 나 빵 굽는 법을 배우고 있어! 이모가 쓰시던 오븐을 주셔서 한 번 해 보기로 했지. 처음에는 초콜릿 칩 쿠키를 만들었어. 처음 만든 것은 너무 딱딱해서 먹을 수가 없었어. 하지만 두 번째는 완벽하게 나왔어! 다음 주말에는 바나나 케이크 만들기에 도전할 거야. 다 구우면 너에게 조금 가져다줄게.\n곧 또 얘기하자,\n미나가"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "I am learning how to bake!",
+          "I want to buy a new bicycle.",
+          "My aunt lives in a different city.",
+          "I went to the park with my dog."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "오븐으로 쿠키와 케이크를 굽는 이야기가 뒤에 나오니, 빵 굽는 법을 배우고 있다는 말이 알맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "RS.context",
+          "V.leisure"
+        ],
+        "evidence": "First, I made some chocolate chip cookies.",
+        "why_not": {
+          "1": "자전거를 산다는 이야기는 뒤에 이어지지 않아요",
+          "2": "이모가 어디 사는지는 핵심 내용이 아니에요",
+          "3": "강아지와 산책한 이야기는 나오지 않아요"
+        },
+        "key_expr": {
+          "en": "learn how to bake",
+          "ko": "빵 굽는 법을 배우다"
+        },
+        "miss_type": {
+          "1": "F.offtopic",
+          "2": "F.offtopic",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "I don't like eating sweet food.",
+          "The first ones were too hard to eat.",
+          "My brother ate the whole cake.",
+          "The oven was very expensive."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "'하지만 두 번째는 완벽했다'는 말이 뒤에 오니, 처음 만들었을 때는 실패했다는 내용이 어울려요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "RS.context",
+          "V.food"
+        ],
+        "evidence": "But the second time, they came out perfect!",
+        "why_not": {
+          "0": "단 음식을 싫어하면 쿠키를 굽지 않을 거예요",
+          "2": "케이크는 다음 주에 만들 예정이에요",
+          "3": "오븐은 이모가 주셨다고 했어요"
+        },
+        "key_expr": {
+          "en": "too hard to eat",
+          "ko": "너무 딱딱해서 먹을 수 없는"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.swap",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "Let's go to the bakery together tomorrow.",
+          "You should wash the dishes for me.",
+          "I need to finish my science homework.",
+          "I will bring some to you when it is done."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "다음 주말에 바나나 케이크를 만들겠다고 했으니, 다 만들고 나서 친구에게 나누어 주겠다는 말이 자연스러워요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "RS.context"
+        ],
+        "evidence": "Next weekend I will try making a banana cake.",
+        "why_not": {
+          "0": "직접 빵을 굽는 중이라 빵집에 가자는 말은 어색해요",
+          "1": "편지 읽는 친구에게 설거지를 하라는 말은 뜬금없어요",
+          "2": "과학 숙제 이야기는 케이크 만들기와 안 맞아요"
+        },
+        "key_expr": {
+          "en": "when it is done",
+          "ko": "그것이 다 완성되면"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "F.offtopic",
+          "2": "F.offtopic"
+        }
+      }
+    ],
+    "tmp_id": "R2-0049",
+    "status": "draft"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Amy,\nDid you try the new sandwich shop near our school? I went there yesterday. Their cheese sandwich is (1) ______ than the one at the old bakery. Also, their fruit juice is much (2) ______ because they use fresh oranges. The shop is a little far, but it has the (3) ______ seats in our town. Let's go there together next Tuesday!\nBest,\nSujin",
+      "translation_ko": "에이미에게,\n우리 학교 근처에 새로 생긴 샌드위치 가게 가 봤어? 나는 어제 거기 갔었어. 그곳의 치즈 샌드위치는 예전 빵집 것보다 더 커. 그리고 신선한 오렌지를 써서 과일 주스도 훨씬 더 맛있어. 가게가 조금 멀지만, 우리 동네에서 가장 편안한 자리가 있어. 다음 주 화요일에 같이 가자!\n수진이가"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "big",
+          "bigger",
+          "biggest",
+          "more big"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "than(보다)이 있어서 예전 빵집 샌드위치와 견주는 bigger가 와야 해요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.compare",
+          "V.food"
+        ],
+        "evidence": "than the one at the old bakery.",
+        "why_not": {
+          "0": "견주는 모양이 아니에요",
+          "2": "여럿 중에서 가장 그렇다고 할 때 써요",
+          "3": "짧은 낱말은 more를 붙이지 않아요"
+        },
+        "key_expr": {
+          "en": "bigger than",
+          "ko": "~보다 더 큰"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "2": "G.clue",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "good",
+          "better",
+          "best",
+          "well"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "much가 '훨씬'이라는 뜻이라서 더 좋다는 뜻의 better와 짝꿍으로 잘 어울려요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.compare",
+          "V.food"
+        ],
+        "evidence": "much (2) ______ because",
+        "why_not": {
+          "0": "much 뒤에서 견주려면 모양을 바꿔야 해요",
+          "2": "가장 좋다는 뜻이라 much와 안 어울려요",
+          "3": "잘한다는 뜻이라 여기에 안 맞아요"
+        },
+        "key_expr": {
+          "en": "much better",
+          "ko": "훨씬 더 좋은"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.form",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "comfortable",
+          "more comfortable",
+          "most comfortable",
+          "comfortabler"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "앞에 the가 있고 동네 전체에서 고르는 거라 가장 ~하다는 뜻인 most comfortable을 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.compare",
+          "V.food"
+        ],
+        "evidence": "the (3) ______ seats in our town.",
+        "why_not": {
+          "0": "가장 그렇다는 모양이 아니에요",
+          "1": "둘을 견줄 때 쓰는 모양이에요",
+          "3": "긴 낱말은 뒤에 모양을 이렇게 바꾸지 않아요"
+        },
+        "key_expr": {
+          "en": "the most comfortable",
+          "ko": "가장 편안한"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "3": "G.form"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0051"
   }
 ]
