@@ -5204,5 +5204,224 @@
     ],
     "status": "draft",
     "tmp_id": "R2-0051"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "School Play Update\nNext Friday is our school play, \"The Happy Prince.\" The stage (1) ______ by the students in the art class yesterday. They used lots of colorful paper. Also, beautiful costumes (2) ______ from the town theater last week. After the play, all the costumes (3) ______ safely to the theater. Please come and enjoy the show!",
+      "translation_ko": "학교 연극 소식\n다음 주 금요일은 우리 학교 연극 '행복한 왕자'를 하는 날입니다. 어제 미술 시간 학생들의 손으로 무대가 꾸며졌어요. 친구들은 알록달록한 종이를 많이 썼어요. 또한, 지난주에 동네 극장에서 아름다운 의상들을 빌려왔어요. 연극이 끝난 후에, 모든 의상들은 극장으로 안전하게 돌려주어야 해요. 오셔서 연극을 즐겨주세요!"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "decorate",
+          "decorates",
+          "was decorated",
+          "were decorated"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "무대는 학생들의 손으로 꾸며진 것이고, 어제 일어난 일이라 was decorated가 맞아요. 무대는 하나니까 were는 안 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.passive",
+          "G.tense",
+          "V.school"
+        ],
+        "evidence": "by the students in the art class yesterday.",
+        "why_not": {
+          "0": "무대가 직접 꾸민다는 뜻이 되어 어색해요",
+          "1": "지금 일어나는 일에 쓰는 모양이에요",
+          "3": "무대는 하나라서 were는 어울리지 않아요"
+        },
+        "key_expr": {
+          "en": "was decorated by ~",
+          "ko": "~의 손으로 꾸며졌다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.form",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "was borrowed",
+          "are borrowed",
+          "borrow",
+          "were borrowed"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "의상들은 여러 벌이고 지난주에 빌려진 것이라 were borrowed가 맞아요. 의상이 직접 빌릴 수는 없어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.passive",
+          "G.agreement",
+          "V.school"
+        ],
+        "evidence": "from the town theater last week.",
+        "why_not": {
+          "0": "의상이 여러 벌이라 was는 안 맞아요",
+          "1": "지난 일인데 지금 일어나는 것처럼 썼어요",
+          "2": "의상이 직접 빌린다는 뜻이 되어 어색해요"
+        },
+        "key_expr": {
+          "en": "were borrowed",
+          "ko": "빌려졌다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.clue",
+          "2": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "must return",
+          "must be returned",
+          "returning",
+          "returned"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "의상은 사람의 손으로 '돌려보내지는' 것이라 be returned를 써야 해요. must 뒤에는 원래 모양이 와요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "G.modal",
+          "V.school"
+        ],
+        "evidence": "all the costumes",
+        "why_not": {
+          "0": "의상이 직접 무언가를 돌려준다는 뜻이 돼요",
+          "2": "must 뒤에는 원래 모양을 써야 해요",
+          "3": "must 짝꿍으로 쓸 수 없는 모양이에요"
+        },
+        "key_expr": {
+          "en": "must be returned",
+          "ko": "돌려주어야 한다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.form",
+          "3": "G.form"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0050"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Green Town Toy Hospital\nDo you have broken toys at home? Bring them to the town hall this Saturday. Your old toys (1) ______ by our helpful volunteers. Last month, over fifty toys (2) ______ here. Please remember that extra parts for toys (3) ______ by us. So, if your toy needs new batteries, please bring your own.",
+      "translation_ko": "그린 타운 장난감 병원\n집에 고장 난 장난감이 있나요? 이번 주 토요일에 마을 회관으로 가져오세요. 여러분의 낡은 장난감들은 도움을 주는 자원봉사자들에 의해 수리될 거예요. 지난달에는 이곳에서 50개가 넘는 장난감들이 고쳐졌어요. 장난감을 위한 추가 부품들은 저희가 제공하지 않는다는 점을 기억해 주세요. 그래서 장난감에 새 건전지가 필요하다면, 직접 가져오셔야 해요."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "will fix",
+          "will be fixed",
+          "fixed",
+          "is fixed"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "장난감은 자원봉사자들의 손으로 고쳐질 것이라서 will be fixed가 알맞아요. 앞으로 일어날 일이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.passive",
+          "G.modal",
+          "V.daily"
+        ],
+        "evidence": "by our helpful volunteers.",
+        "why_not": {
+          "0": "장난감이 스스로 고친다는 뜻이 돼요",
+          "2": "앞으로 일어날 일이라 짝이 맞지 않아요",
+          "3": "이번 주말 일이라 is는 어울리지 않아요"
+        },
+        "key_expr": {
+          "en": "will be fixed",
+          "ko": "수리될 것이다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.form",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "repair",
+          "was repaired",
+          "were repaired",
+          "are repairing"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "장난감 50개가 고쳐진 것이고 지난달에 일어난 일이라 were repaired가 어울려요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "G.agreement",
+          "G.tense"
+        ],
+        "evidence": "Last month, over fifty toys",
+        "why_not": {
+          "0": "장난감이 직접 무언가를 고친다는 뜻이 돼요",
+          "1": "장난감이 여러 개라서 was는 안 맞아요",
+          "3": "지난 일인데 지금 일어나는 것처럼 썼어요"
+        },
+        "key_expr": {
+          "en": "were repaired",
+          "ko": "고쳐졌다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.form",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "are not provided",
+          "do not provide",
+          "is not provided",
+          "not provided"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "부품들은 여러 개이고 봉사자들에 의해 제공되는 것이 아니라서 are not provided가 맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "G.agreement"
+        ],
+        "evidence": "extra parts for toys",
+        "why_not": {
+          "1": "부품이 스스로 제공한다는 뜻이 되어 어색해요",
+          "2": "부품이 여러 개라서 is는 어울리지 않아요",
+          "3": "앞에 are 같은 짝꿍 낱말이 빠졌어요"
+        },
+        "key_expr": {
+          "en": "are not provided",
+          "ko": "제공되지 않는다"
+        },
+        "miss_type": {
+          "1": "G.form",
+          "2": "G.form",
+          "3": "G.pair"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R2-0052"
   }
 ]

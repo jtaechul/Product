@@ -5709,5 +5709,356 @@
     },
     "translation_ko": "강물이 정말 깨끗해서 물고기를 쉽게 볼 수 있어요.",
     "tmp_id": "R1-0148"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The students left the library. ______ borrowed some interesting storybooks.",
+    "choices": [
+      "He",
+      "They",
+      "She",
+      "It"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "학생들(The students)은 여러 명이니까 They를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pronoun",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "The students",
+    "why_not": {
+      "0": "여러 명이라 He는 안 맞아요",
+      "2": "여러 명이라 She는 안 맞아요",
+      "3": "사람들 여러 명이라 It은 안 맞아요"
+    },
+    "key_expr": {
+      "en": "borrowed some storybooks",
+      "ko": "이야기책을 몇 권 빌렸다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "학생들이 도서관을 나섰어요. 그들은 재미있는 이야기책을 몇 권 빌렸어요.",
+    "tmp_id": "R1-0149"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My brother and I made this birthday cake by ______.",
+    "choices": [
+      "myself",
+      "himself",
+      "themselves",
+      "ourselves"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'내 동생과 나(우리)'가 직접 만든 거니까 ourselves를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pronoun",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "My brother and I",
+    "why_not": {
+      "0": "나 혼자가 아니라 동생과 함께예요",
+      "1": "동생 혼자 만든 것이 아니에요",
+      "2": "다른 사람들이 만든 것이 아니에요"
+    },
+    "key_expr": {
+      "en": "by ourselves",
+      "ko": "우리끼리 직접"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "2": "G.form"
+    },
+    "translation_ko": "내 동생과 나는 이 생일 케이크를 우리끼리 직접 만들었어요.",
+    "tmp_id": "R1-0151"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Jane has a cute little kitten. ______ tail is very short.",
+    "choices": [
+      "It",
+      "Its",
+      "It's",
+      "Their"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "아기고양이 한 마리의 꼬리니까 Its를 써요. It's는 It is를 줄인 말이라 안 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pronoun",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "a cute little kitten",
+    "why_not": {
+      "0": "꼬리를 꾸며주려면 모양이 바뀌어야 해요",
+      "2": "이 자리에 It is를 쓰면 말이 안 돼요",
+      "3": "고양이가 한 마리라 Their는 안 맞아요"
+    },
+    "key_expr": {
+      "en": "Its tail",
+      "ko": "그것의 꼬리"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "W.meaning",
+      "3": "G.form"
+    },
+    "translation_ko": "제인은 귀여운 아기고양이를 키워요. 그 고양이의 꼬리는 아주 짧아요.",
+    "tmp_id": "R1-0153"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I am very thirsty. Do you have ______ cold to drink?",
+    "choices": [
+      "nothing",
+      "anybody",
+      "nobody",
+      "anything"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'마실 차가운 어떤 것'을 물어보는 말이므로 anything을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pronoun",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "thirsty",
+    "why_not": {
+      "0": "목이 마르니 없는 것을 달라고 할 수 없어요",
+      "1": "마실 사람을 찾는 것이 아니에요",
+      "2": "사람을 마신다고 할 수 없어요"
+    },
+    "key_expr": {
+      "en": "anything cold to drink",
+      "ko": "마실 차가운 것"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "W.meaning",
+      "2": "W.meaning"
+    },
+    "translation_ko": "나는 너무 목이 말라요. 마실 차가운 것 좀 있나요?",
+    "tmp_id": "R1-0154"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "This bakery makes the ______ chocolate cake in our town.",
+    "choices": [
+      "better",
+      "well",
+      "best",
+      "good"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "동네에서 '가장' 맛있는 초콜릿 케이크를 만든다는 뜻이 되려면 the 다음에 best가 와야 해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.compare",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "in our town",
+    "why_not": {
+      "0": "뒤에 than이 있어야 어울려요",
+      "1": "잘한다는 뜻이라 어색해요",
+      "3": "가장 맛있다는 뜻이 되지 않아요"
+    },
+    "key_expr": {
+      "en": "the best",
+      "ko": "가장 맛있는"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "W.meaning",
+      "3": "G.form"
+    },
+    "translation_ko": "우리 동네 제과점은 동네에서 가장 맛있는 초콜릿 케이크를 만들어요.",
+    "tmp_id": "R1-0152"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Look at that elephant! It is ______ heavier than the hippo.",
+    "choices": [
+      "many",
+      "much",
+      "very",
+      "more"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "더 무겁다는 말을 '훨씬'이라고 꾸며줄 때는 much를 써요. very는 heavier와 짝을 짓지 않아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.compare",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "heavier than",
+    "why_not": {
+      "0": "셀 수 있는 것에 쓰는 말이에요",
+      "2": "heavier 앞에는 쓰지 않아요",
+      "3": "heavier에 이미 더 그렇다는 뜻이 있어요"
+    },
+    "key_expr": {
+      "en": "much heavier",
+      "ko": "훨씬 무거운"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.pair",
+      "3": "G.form"
+    },
+    "translation_ko": "저 코끼리를 봐! 하마보다 훨씬 더 무거워.",
+    "tmp_id": "R1-0155"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My science homework is as ______ as my math homework today.",
+    "choices": [
+      "difficult",
+      "difficulty",
+      "more difficult",
+      "most difficult"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "as와 as 사이에는 더 그렇거나 가장 그렇다고 모양을 바꾸지 않은 원래 낱말을 넣어야 해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.compare",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "as ______ as",
+    "why_not": {
+      "1": "어려운이라는 뜻이 아니에요",
+      "2": "as 사이에는 원래 모양을 써요",
+      "3": "as 사이에는 가장 그렇다는 말을 안 써요"
+    },
+    "key_expr": {
+      "en": "as difficult as",
+      "ko": "~만큼 어려운"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "오늘 내 과학 숙제는 수학 숙제만큼이나 어려워요.",
+    "tmp_id": "R1-0156"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Riding a bike is ______ than running on the playground.",
+    "choices": [
+      "fast",
+      "fastest",
+      "quickly",
+      "faster"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "뒤에 than(~보다)이 있으니까 '더 빠른'이라는 뜻의 faster가 짝이 맞아요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.compare",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "than running",
+    "why_not": {
+      "0": "더 빠르다는 뜻이 되려면 er이 필요해요",
+      "1": "가장 빠르다는 뜻이라 than과 안 맞아요",
+      "2": "알맞은 모양의 낱말이 아니에요"
+    },
+    "key_expr": {
+      "en": "faster than",
+      "ko": "~보다 빠른"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.pair",
+      "2": "W.meaning"
+    },
+    "translation_ko": "자전거를 타는 것은 운동장에서 달리는 것보다 더 빠릅니다.",
+    "tmp_id": "R1-0157"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Of all the games we played at the party, the balloon game was the ______.",
+    "choices": [
+      "excited",
+      "exciting",
+      "most exciting",
+      "more exciting"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "모든 게임 중에서 '가장' 신났다는 뜻이 되려면 the 뒤에 most exciting을 써야 해요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.compare",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Of all the games",
+    "why_not": {
+      "0": "게임이 스스로 느끼는 감정이 아니에요",
+      "1": "가장 그렇다는 뜻이 아니에요",
+      "3": "둘을 견줄 때 쓰는 모양이에요"
+    },
+    "key_expr": {
+      "en": "the most exciting",
+      "ko": "가장 신나는"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "G.pair"
+    },
+    "translation_ko": "파티에서 우리가 한 모든 게임 중에서, 풍선 게임이 가장 신났어요.",
+    "tmp_id": "R1-0158"
   }
 ]

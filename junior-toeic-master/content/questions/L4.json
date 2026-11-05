@@ -5526,5 +5526,249 @@
     ],
     "status": "draft",
     "tmp_id": "L4-0070"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, everyone. Welcome to Sunny Land. We are very happy to open our new roller coaster today. It goes very fast! But remember, kids must be taller than one meter and twenty centimeters to ride it. Also, we have some sad news. Because it is starting to rain, the afternoon parade will not happen today. Instead, you can watch a magic show inside the big tent at three o'clock. Have a great day!",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      },
+      "translation_ko": "안내: 안녕하세요, 여러분. 써니 랜드에 오신 것을 환영합니다. 오늘 새 롤러코스터를 열게 되어 아주 기쁩니다. 정말 빠르답니다! 하지만 명심하세요, 이 놀이기구를 타려면 아이들의 키가 1미터 20센티미터보다 커야 합니다. 또한, 아쉬운 소식이 있습니다. 비가 내리기 시작해서, 오후 퍼레이드는 오늘 열리지 않습니다. 대신 3시에 큰 텐트 안에서 마술 쇼를 보실 수 있습니다. 즐거운 하루 보내세요!"
+    },
+    "questions": [
+      {
+        "stem": "Why can some children not ride the new roller coaster today?",
+        "choices": [
+          "It goes too fast.",
+          "The roller coaster is closed.",
+          "They are not tall enough.",
+          "They are inside the magic tent."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "롤러코스터를 타려면 키가 1미터 20센티미터보다 커야 한다고 했어요. 키가 작으면 탈 수 없어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "kids must be taller than one meter and twenty centimeters to ride it",
+        "why_not": {
+          "0": "빠르다는 것은 못 타는 이유가 아니에요",
+          "1": "새 기구는 오늘 문을 열었어요",
+          "3": "마술 텐트 안이라는 말은 기구를 못 타는 이유가 아니에요"
+        },
+        "key_expr": {
+          "en": "must be taller than",
+          "ko": "~보다 키가 커야 한다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.opposite",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Why did the park change the plan for the parade?",
+        "choices": [
+          "Because of the bad weather",
+          "Because it is three o'clock",
+          "Because the tent is too big",
+          "Because of the new roller coaster"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "비가 내리기 시작해서 오늘 오후 퍼레이드가 열리지 않는다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.leisure",
+          "V.daily"
+        ],
+        "evidence": "Because it is starting to rain, the afternoon parade will not happen today.",
+        "why_not": {
+          "1": "3시는 텐트에서 마술 쇼를 하는 시간이에요",
+          "2": "텐트 크기는 퍼레이드와 상관없어요",
+          "3": "롤러코스터와 퍼레이드는 서로 관련 없는 행사예요"
+        },
+        "key_expr": {
+          "en": "will not happen today",
+          "ko": "오늘은 열리지 않을 것이다"
+        },
+        "miss_type": {
+          "1": "M.number",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0071"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "W: Hello, cooking club members. This is Ms. Brown. Tomorrow, we will make fruit salad. Before we start, I need everyone to fill out this short form. It asks if you get sick from eating certain things like nuts or milk. I need to know this so I can buy the right ingredients tonight. Please bring the form to me by four o'clock today, or you can't cook with us tomorrow.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female"
+      },
+      "translation_ko": "여: 안녕, 요리 동아리 친구들. 브라운 선생님이에요. 내일 우리는 과일 샐러드를 만들 거예요. 시작하기 전에 모두 이 짧은 종이를 써 주면 좋겠어요. 견과류나 우유 같은 것을 먹고 아픈 적이 있는지 묻는 종이랍니다. 오늘 밤에 알맞은 재료를 사려면 선생님이 이걸 알아야 해요. 오늘 4시까지 선생님에게 이 종이를 가져다주세요, 그렇지 않으면 내일 우리와 요리할 수 없어요."
+    },
+    "questions": [
+      {
+        "stem": "Why is Ms. Brown giving a form to the students?",
+        "choices": [
+          "To tell them not to make fruit salad",
+          "To find out what they can safely eat",
+          "To ask when they can cook tomorrow",
+          "To ask them to go shopping for nuts"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "선생님은 아이들이 견과류나 우유를 먹고 아픈 적이 있는지 알기 위해 종이를 쓰라고 했어요. 안전하게 먹을 수 있는 음식을 알려고 하는 거예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.school",
+          "V.food"
+        ],
+        "evidence": "asks if you get sick from eating certain things like nuts or milk.",
+        "why_not": {
+          "0": "과일 샐러드를 만들 거라고 했어요",
+          "2": "내일 요리하는 시간을 묻는 종이가 아니에요",
+          "3": "아이들에게 재료를 사 오라는 뜻이 아니에요"
+        },
+        "key_expr": {
+          "en": "get sick from eating",
+          "ko": "먹고 아프다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.notsaid",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Why does the teacher need the forms today?",
+        "choices": [
+          "Because the cooking club is at four o'clock",
+          "Because the students cannot cook anymore",
+          "Because she has to buy nuts and milk",
+          "Because she has to get the food tonight"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "오늘 밤에 알맞은 요리 재료를 사야 해서 종이가 오늘 필요하다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.school",
+          "V.food"
+        ],
+        "evidence": "I need to know this so I can buy the right ingredients tonight.",
+        "why_not": {
+          "0": "4시는 오늘 종이를 내야 하는 시간이에요",
+          "1": "요리를 더 못 한다는 뜻이 아니에요",
+          "2": "견과류와 우유를 피하려고 조사하는 거예요"
+        },
+        "key_expr": {
+          "en": "buy the right ingredients",
+          "ko": "알맞은 재료를 사다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.opposite",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0072"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Attention, please. Star Pool will be closed for three days next week, from Monday to Wednesday. We are putting in new lights inside the water, so it is not safe to swim. If you have a swimming class on those days, your teacher will call you to change the time. Don't worry, the pool will open again on Thursday morning. Have a nice weekend.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "male"
+      },
+      "translation_ko": "안내: 알려 드립니다. 스타 수영장은 다음 주 월요일부터 수요일까지 3일 동안 문을 닫습니다. 물속에 새 전등을 달고 있어서 수영하기에 안전하지 않기 때문입니다. 그날 수영 수업이 있다면 선생님이 시간을 바꾸려고 전화를 주실 거예요. 걱정하지 마세요, 수영장은 목요일 아침에 다시 문을 엽니다. 즐거운 주말 보내세요."
+    },
+    "questions": [
+      {
+        "stem": "Why can people not use the pool from Monday to Wednesday?",
+        "choices": [
+          "Because workers are fixing things in the pool",
+          "Because the swimming teacher is sick",
+          "Because it is time to call the teacher",
+          "Because the pool will close forever"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "물속에 새 전등을 다는 작업 중이라서 안전하지 않다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.leisure",
+          "V.daily"
+        ],
+        "evidence": "We are putting in new lights inside the water, so it is not safe to swim.",
+        "why_not": {
+          "1": "선생님이 아프다는 말은 없었어요",
+          "2": "선생님과 통화하는 것은 시간이 바뀌어서예요",
+          "3": "목요일부터 수영장이 다시 문을 열어요"
+        },
+        "key_expr": {
+          "en": "not safe to swim",
+          "ko": "수영하기에 안전하지 않은"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What can we guess about swimming classes next week?",
+        "choices": [
+          "They will be on Monday and Wednesday.",
+          "Students must call the teacher.",
+          "They will happen at a different time.",
+          "They will move to an outside pool."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "수영장 문을 닫는 날에 수업이 있으면 선생님이 전화를 걸어 시간을 바꿀 거라고 했어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "your teacher will call you to change the time",
+        "why_not": {
+          "0": "월요일부터 수요일까지는 수업을 못 해요",
+          "1": "학생이 아니라 선생님이 전화를 주실 거예요",
+          "3": "야외 수영장 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "change the time",
+          "ko": "시간을 바꾸다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.opposite",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "L4-0073"
   }
 ]

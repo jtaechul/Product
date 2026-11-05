@@ -6891,5 +6891,402 @@
     },
     "translation_ko": "이 지도를 보기에는 여기가 너무 어둡네.",
     "tmp_id": "L2-0191"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "We put the tent near the river.",
+      "I will go get some right now.",
+      "The fire is warm enough."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "모닥불에 쓸 나무를 누가 가져올지 묻고 있어요. 내가 지금 가져오겠다고 한 대답이 자연스러워요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "Who is going to bring more wood for the campfire?",
+    "status": "draft",
+    "evidence": "Who is going to bring",
+    "why_not": {
+      "0": "누가 가져올지 묻는 질문에 안 어울려요",
+      "2": "불이 따뜻하다는 말은 묻는 내용이 아니에요"
+    },
+    "key_expr": {
+      "en": "bring more wood",
+      "ko": "나무를 더 가져오다"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "모닥불에 쓸 나무를 누가 좀 더 가져올래요?",
+    "tmp_id": "L2-0192"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "It's next Friday at five.",
+      "I don't have a new computer.",
+      "The prize is a smart watch."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "대회 마감일이 언제인지 묻는 질문이에요. 다음 주 금요일이라고 날짜를 알려준 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.school"
+    ],
+    "accent": "AU",
+    "tts_script": "When is the deadline for the robot design contest?",
+    "status": "draft",
+    "evidence": "When is the deadline",
+    "why_not": {
+      "1": "대회 마감일을 묻고 있는데 엉뚱한 답을 했어요",
+      "2": "언제인지 묻는 말에 상품 이야기를 했어요"
+    },
+    "key_expr": {
+      "en": "deadline for the contest",
+      "ko": "대회 마감일"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "로봇 디자인 대회 마감일이 언제예요?",
+    "tmp_id": "L2-0194"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I cut my finger by mistake.",
+      "We need some more potatoes.",
+      "They are in the bottom drawer of the fridge."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "당근을 어디에 두었는지 묻고 있어요. 냉장고 맨 아래 칸에 있다고 장소를 알려준 대답이 딱 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.food"
+    ],
+    "accent": "US",
+    "tts_script": "Where did you put the carrots for the stew?",
+    "status": "draft",
+    "evidence": "Where did you put",
+    "why_not": {
+      "0": "당근이 어디 있는지 묻는 질문에 맞지 않아요",
+      "1": "스튜 재료 이야기지만 장소를 묻는 답은 아니에요"
+    },
+    "key_expr": {
+      "en": "bottom drawer",
+      "ko": "맨 아래 서랍"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "스튜에 넣을 당근 어디에 두었어요?",
+    "tmp_id": "L2-0195"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, but I couldn't find them there.",
+      "Yes, the weather is very cold outside.",
+      "I washed my hands in the bathroom."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "옷장 안에 장갑이 있는지 확인했냐는 질문이에요. 찾아봤지만 없었다고 말한 대답이 자연스러워요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Have you checked if your winter gloves are in the closet?",
+    "status": "draft",
+    "evidence": "checked if your winter gloves are in the closet",
+    "why_not": {
+      "1": "겨울이라는 말을 듣고 날씨 이야기를 잘못 했어요",
+      "2": "옷장 안을 확인했냐는 질문에 어울리지 않아요"
+    },
+    "key_expr": {
+      "en": "check if ~",
+      "ko": "~인지 확인하다"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "겨울 장갑이 옷장에 있는지 확인해 봤어요?",
+    "tmp_id": "L2-0196"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Five balloons will be enough.",
+      "Let's use both of them.",
+      "The party starts at three o'clock."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "빨간색과 노란색 중 어떤 풍선을 불까 묻는 말이에요. 둘 다 쓰자는 대답이 아주 자연스러워요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Which color balloons should we blow up for the party, red or yellow?",
+    "status": "draft",
+    "evidence": "Which color balloons",
+    "why_not": {
+      "0": "무슨 색인지 물었는데 개수를 대답했어요",
+      "2": "파티라는 말을 듣고 파티 시간을 잘못 말했어요"
+    },
+    "key_expr": {
+      "en": "blow up balloons",
+      "ko": "풍선을 불다"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.echo"
+    },
+    "translation_ko": "파티용으로 무슨 색 풍선을 불까요, 빨간색 아니면 노란색?",
+    "tmp_id": "L2-0197"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I'll get a new one from the drawer.",
+      "We should turn on the television.",
+      "I turned off the light before I left."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "거실 전구가 깜빡거린다는 건 교체해야 한다는 뜻이에요. 서랍에서 새것을 가져오겠다는 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "The light bulb in the living room is blinking.",
+    "status": "draft",
+    "evidence": "The light bulb",
+    "why_not": {
+      "1": "전구가 깜빡이는데 TV를 켜자고 했어요",
+      "2": "light를 듣고 불을 껐다고 낚였어요"
+    },
+    "key_expr": {
+      "en": "light bulb",
+      "ko": "전구"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "A.echo"
+    },
+    "translation_ko": "거실 전구가 깜빡거려.",
+    "tmp_id": "L2-0198"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "You can wash your hands in the bathroom.",
+      "I'll bring a dry one for you right now.",
+      "I bought some new soap yesterday."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "비누 거품이 가득한데 수건이 없다고 했으니 마른 수건을 가져다주겠다는 대답이 딱 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "My hands are covered in soap, but there's no towel here.",
+    "status": "draft",
+    "evidence": "no towel here",
+    "why_not": {
+      "0": "이미 손 씻는 사람에게 화장실에 가라고 했어요",
+      "2": "비누라는 낱말만 듣고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "be covered in ~",
+      "ko": "~로 뒤덮이다"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.echo"
+    },
+    "translation_ko": "내 손에 비누가 잔뜩 묻었는데 여기 수건이 없어.",
+    "tmp_id": "L2-0199"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The flowers are blooming everywhere.",
+      "I need a pot for the soup.",
+      "Wow, let's go give it some water."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "화분에서 싹이 났다고 기뻐하는 말이에요. 가서 물을 주자는 대답이 아주 자연스러워요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.infer",
+      "V.daily",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "A tiny green sprout finally came out of our flower pot!",
+    "status": "draft",
+    "evidence": "came out of our flower pot",
+    "why_not": {
+      "0": "화분에 새싹이 난 건데 사방에 꽃이 피었다고 했어요",
+      "1": "화분(pot)을 수프 냄비로 착각한 대답이에요"
+    },
+    "key_expr": {
+      "en": "come out",
+      "ko": "나오다"
+    },
+    "miss_type": {
+      "0": "M.swap",
+      "1": "W.meaning"
+    },
+    "translation_ko": "우리 화분에서 드디어 작은 초록색 싹이 나왔어!",
+    "tmp_id": "L2-0200"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Let me get it out with a long stick.",
+      "The sofa is very soft to sit on.",
+      "You should clean the car tomorrow."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "장난감 자동차가 소파 밑으로 들어가서 손이 안 닿는다고 했어요. 긴 막대기로 꺼내 주겠다는 대답이 좋아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "US",
+    "tts_script": "My toy car rolled under the sofa, and I can't reach it.",
+    "status": "draft",
+    "evidence": "I can't reach it",
+    "why_not": {
+      "1": "소파라는 말만 듣고 푹신하다고 했어요",
+      "2": "장난감을 진짜 자동차로 착각했어요"
+    },
+    "key_expr": {
+      "en": "roll",
+      "ko": "굴러가다"
+    },
+    "miss_type": {
+      "1": "A.echo",
+      "2": "W.meaning"
+    },
+    "translation_ko": "내 장난감 자동차가 소파 밑으로 굴러갔는데 손이 안 닿아.",
+    "tmp_id": "L2-0201"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I think it will rain soon.",
+      "I'll clean it and change the water.",
+      "We can go fishing on Sunday."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "어항 물이 탁해 보인다는 건 청소가 필요하다는 뜻이에요. 내가 청소하고 물을 갈아 주겠다는 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "The water in the fish tank looks a bit cloudy today.",
+    "status": "draft",
+    "evidence": "looks a bit cloudy",
+    "why_not": {
+      "0": "물이 탁하다는 말을 날씨가 흐리다고 착각했어요",
+      "2": "물고기라는 낱말에 낚여 낚시 가자고 했어요"
+    },
+    "key_expr": {
+      "en": "cloudy",
+      "ko": "탁한, 흐린"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "2": "A.echo"
+    },
+    "translation_ko": "오늘 어항 물이 조금 탁해 보여.",
+    "tmp_id": "L2-0202"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "We can buy some from the bakery.",
+      "Three pieces of bread, please.",
+      "It just came out of the oven, so wait a bit."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "빵이 언제 다 되냐고 묻고 있어요. 방금 오븐에서 나왔으니 조금 기다리라고 하는 게 자연스러워요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.food"
+    ],
+    "accent": "AU",
+    "tts_script": "The bread smells so good. When can we eat it?",
+    "status": "draft",
+    "evidence": "When can we eat it",
+    "why_not": {
+      "0": "집에서 굽는 중인데 빵집에서 사자고 했어요",
+      "1": "때를 물었는데 빵 세 개라고 개수를 말했어요"
+    },
+    "key_expr": {
+      "en": "smell good",
+      "ko": "좋은 냄새가 나다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "M.number"
+    },
+    "translation_ko": "빵 냄새가 너무 좋다. 언제 먹을 수 있어?",
+    "tmp_id": "L2-0203"
   }
 ]
