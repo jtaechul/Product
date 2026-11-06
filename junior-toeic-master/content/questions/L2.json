@@ -7288,5 +7288,365 @@
     },
     "translation_ko": "빵 냄새가 너무 좋다. 언제 먹을 수 있어?",
     "tmp_id": "L2-0203"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "We are taking pictures.",
+      "It's in room 205.",
+      "Yes, I like taking photos."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'Which room'으로 어느 방인지 물어봤으니까 205호라고 방 번호를 알려주는 답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Which room is the photography club meeting in today?",
+    "status": "draft",
+    "evidence": "Which room is",
+    "why_not": {
+      "0": "사진을 찍고 있다고 엉뚱하게 답했어요",
+      "2": "예, 아니오로 답할 수 없는 질문이에요"
+    },
+    "key_expr": {
+      "en": "Which room is ~ in?",
+      "ko": "어느 방에 ~가 있어?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "A.yesno"
+    },
+    "translation_ko": "오늘 사진 동아리 모임은 어느 방에서 해?",
+    "tmp_id": "L2-0204"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "At the school hall.",
+      "It was very funny.",
+      "It begins at seven o'clock."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'What time'으로 언제 시작하는지 물었으니까 7시에 시작한다고 시간을 말하는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.school"
+    ],
+    "accent": "UK",
+    "tts_script": "What time does the school musical start tonight?",
+    "status": "draft",
+    "evidence": "What time does",
+    "why_not": {
+      "0": "시간이 아니라 장소를 말했어요",
+      "1": "뮤지컬이 재미있었다고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "What time does ~ start?",
+      "ko": "몇 시에 ~가 시작해?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "오늘 밤 학교 뮤지컬은 몇 시에 시작해?",
+    "tmp_id": "L2-0205"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Just a warm hat.",
+      "We went there last week.",
+      "By taking a school bus."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'What'으로 무엇을 챙겨야 하는지 물었으니까 따뜻한 모자만 가져오라는 대답이 자연스러워요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.travel"
+    ],
+    "accent": "AU",
+    "tts_script": "What should we bring for the farm trip tomorrow?",
+    "status": "draft",
+    "evidence": "What should we bring",
+    "why_not": {
+      "1": "지난주에 갔었다고 다른 때를 말했어요",
+      "2": "무엇을 타고 갈지 묻는 말이 아니에요"
+    },
+    "key_expr": {
+      "en": "What should we bring?",
+      "ko": "우리가 무엇을 가져가야 해?"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "내일 농장 체험에 무엇을 가져가야 해?",
+    "tmp_id": "L2-0206"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I got it from my cousin.",
+      "I read it in the library.",
+      "It is about a magic tree."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'Who'를 써서 누구에게 빌렸는지 묻는 말이니까 사촌에게 받았다고 사람을 말한 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "Who did you borrow this interesting storybook from?",
+    "status": "draft",
+    "evidence": "Who did you borrow",
+    "why_not": {
+      "1": "도서관에서 읽었다고 장소를 말했어요",
+      "2": "책이 무슨 내용인지 알려주는 대답이에요"
+    },
+    "key_expr": {
+      "en": "borrow ~ from",
+      "ko": "~에게서 빌리다"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "이 재미있는 동화책은 누구에게 빌렸어?",
+    "tmp_id": "L2-0208"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I bought them yesterday.",
+      "They look great on you.",
+      "I put them on my desk."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'Where'로 선글라스를 어디에 두었는지 물었으니까 책상 위에 두었다고 장소를 말하는 답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "Where did you leave your yellow sunglasses?",
+    "status": "draft",
+    "evidence": "Where did you leave",
+    "why_not": {
+      "0": "언제 샀는지 물어보는 말이 아니에요",
+      "1": "잘 어울린다고 칭찬하는 엉뚱한 대답이에요"
+    },
+    "key_expr": {
+      "en": "leave",
+      "ko": "두다, 남기다"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "네 노란색 선글라스는 어디에 두었어?",
+    "tmp_id": "L2-0209"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I cleaned my shoes yesterday.",
+      "I will walk very carefully then.",
+      "The mop is in the restroom."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "복도 바닥이 미끄럽다는 말이니, 조심해서 걷겠다고 다짐하는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "The floor in the hallway is really slippery after the cleaning.",
+    "status": "draft",
+    "evidence": "slippery after the cleaning",
+    "why_not": {
+      "0": "cleaning을 듣고 신발을 닦았다고 딴소리를 했어요",
+      "2": "청소 도구가 있는 곳을 말했어요"
+    },
+    "key_expr": {
+      "en": "really slippery",
+      "ko": "정말 미끄러운"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "청소가 끝난 후라서 복도 바닥이 정말 미끄러워.",
+    "tmp_id": "L2-0210"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Why don't we turn it off for now?",
+      "I prefer cold weather.",
+      "The remote control is working fine."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "에어컨에서 이상한 소리가 난다는 문제 상황이에요. 우선 끄자고 제안하는 대답이 자연스러워요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "There's a strange noise coming from the air conditioner today.",
+    "status": "draft",
+    "evidence": "strange noise coming from",
+    "why_not": {
+      "1": "에어컨 이야기를 듣고 날씨 이야기를 했어요",
+      "2": "에어컨 리모컨이 잘 된다고 엉뚱하게 답했어요"
+    },
+    "key_expr": {
+      "en": "strange noise",
+      "ko": "이상한 소리"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "오늘 에어컨에서 이상한 소리가 나.",
+    "tmp_id": "L2-0211"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Let's try finding a faster song.",
+      "We practiced in the gym.",
+      "The volume is too high."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "춤출 노래가 너무 느리다고 아쉬워하는 말이니, 더 빠른 곡을 찾아보자는 제안이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "The music for our dance routine is a bit too slow, I think.",
+    "status": "draft",
+    "evidence": "a bit too slow",
+    "why_not": {
+      "1": "어디서 연습했는지를 말했어요",
+      "2": "속도가 아니라 소리 크기를 말했어요"
+    },
+    "key_expr": {
+      "en": "dance routine",
+      "ko": "춤 순서 (안무)"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "W.meaning"
+    },
+    "translation_ko": "우리 안무에 맞추기에는 이 음악이 좀 너무 느린 것 같아.",
+    "tmp_id": "L2-0213"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Grapes are my favorite fruit.",
+      "You should wash it with cold water right away.",
+      "The juice is in the refrigerator."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "새 셔츠에 주스를 쏟아 당황하는 상황이에요. 당장 찬물로 씻어 내라고 해결책을 알려 주는 대답이 맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Oh no, I spilled some grape juice on my new white shirt.",
+    "status": "draft",
+    "evidence": "spilled some grape juice",
+    "why_not": {
+      "0": "grape를 듣고 엉뚱하게 과일 이야기를 했어요",
+      "2": "주스가 어디 있는지 말해 주는 답이에요"
+    },
+    "key_expr": {
+      "en": "spill",
+      "ko": "쏟다"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "앗, 어쩌지. 새 하얀 셔츠에 포도 주스를 좀 쏟았어.",
+    "tmp_id": "L2-0214"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I'll get you a dry towel from the closet.",
+      "We bought this machine last year.",
+      "Maybe we put too many things inside."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "세탁기가 끝났는데 수건이 젖어 있다는 건 문제가 생겼다는 뜻이에요. 왜 그런지 이유를 짐작하는 답이 자연스러워요.",
+    "difficulty_label": 4,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "The washing machine just beeped, but these towels are still completely soaked.",
+    "status": "draft",
+    "evidence": "towels are still completely soaked",
+    "why_not": {
+      "0": "towels를 듣고 엉뚱하게 수건을 주겠다고 했어요",
+      "1": "세탁기를 언제 샀는지는 도움이 안 되는 말이에요"
+    },
+    "key_expr": {
+      "en": "completely soaked",
+      "ko": "완전히 흠뻑 젖은"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "세탁기 알림음이 방금 울렸는데, 이 수건들은 아직도 흠뻑 젖어 있네.",
+    "tmp_id": "L2-0215"
   }
 ]

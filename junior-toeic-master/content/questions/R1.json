@@ -6060,5 +6060,239 @@
     },
     "translation_ko": "파티에서 우리가 한 모든 게임 중에서, 풍선 게임이 가장 신났어요.",
     "tmp_id": "R1-0158"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Everyone in the painting class ______ drawing a tree.",
+    "choices": [
+      "is",
+      "are",
+      "am",
+      "be"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'모든 사람'을 뜻하는 Everyone은 하나로 묶어서 생각하기 때문에 한 명일 때 쓰는 is가 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.agreement",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Everyone",
+    "why_not": {
+      "1": "여러 명일 때 어울리는 말이에요",
+      "2": "내(I)가 행동할 때 쓰는 말이에요",
+      "3": "알맞은 모양으로 바꾸지 않았어요"
+    },
+    "key_expr": {
+      "en": "painting class",
+      "ko": "그림 교실"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "그림 교실의 모든 사람은 나무를 그리고 있어요.",
+    "tmp_id": "R1-0159"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Both my grandpa and my grandma ______ warm tea.",
+    "choices": [
+      "likes",
+      "liking",
+      "to like",
+      "like"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "할아버지와 할머니 두 분이시니까 뒤에 s가 붙지 않은 원래 모양을 써야 해요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.agreement",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Both my grandpa and my grandma",
+    "why_not": {
+      "0": "행동하는 사람이 한 명일 때 어울려요",
+      "1": "혼자서는 문장을 끝맺지 못해요",
+      "2": "'~하는 것'이라는 뜻으로 바뀌어요"
+    },
+    "key_expr": {
+      "en": "warm tea",
+      "ko": "따뜻한 차"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "2": "G.form"
+    },
+    "translation_ko": "우리 할아버지와 할머니 두 분 모두 따뜻한 차를 좋아하세요.",
+    "tmp_id": "R1-0160"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Look! There ______ three little ducks behind the mother duck.",
+    "choices": [
+      "is",
+      "am",
+      "are",
+      "be"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "아기 오리 세 마리가 있다고 여러 마리를 가리키고 있어서 여러 개일 때 쓰는 are가 어울려요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.agreement",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "three little ducks",
+    "why_not": {
+      "0": "오리가 한 마리일 때 써요",
+      "1": "내가 어디에 있다고 할 때 써요",
+      "3": "알맞게 모양을 바꾸지 않았어요"
+    },
+    "key_expr": {
+      "en": "behind",
+      "ko": "~의 뒤에"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "저기 봐! 엄마 오리 뒤에 아기 오리 세 마리가 있어.",
+    "tmp_id": "R1-0161"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The boy with the big glasses ______ a lot of funny jokes.",
+    "choices": [
+      "know",
+      "knows",
+      "knowing",
+      "to know"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "안경이 여러 개라도 행동하는 사람은 안경을 쓴 '소년' 한 명이라서 뒤에 s가 붙어요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.agreement",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "The boy",
+    "why_not": {
+      "0": "행동하는 사람이 여러 명일 때 써요",
+      "2": "이 단어만으로는 문장을 끝낼 수 없어요",
+      "3": "'~하는 것'이라는 뜻이 되어서 어색해요"
+    },
+    "key_expr": {
+      "en": "funny joke",
+      "ko": "재미있는 농담"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "큰 안경을 쓴 그 소년은 재미있는 농담을 많이 알고 있어요.",
+    "tmp_id": "R1-0162"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "A basket of sweet peaches ______ on the kitchen table.",
+    "choices": [
+      "is",
+      "are",
+      "has",
+      "am"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "복숭아가 여러 개라도 그걸 담은 바구니는 한 개니까 한 개에 어울리는 말을 써야 해요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.agreement",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "A basket",
+    "why_not": {
+      "1": "여러 개일 때 쓰는 말이에요",
+      "2": "가지고 있다는 뜻이라 자리에 안 맞아요",
+      "3": "내가 어디에 있다고 말할 때 써요"
+    },
+    "key_expr": {
+      "en": "sweet peach",
+      "ko": "달콤한 복숭아"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "W.meaning",
+      "3": "G.form"
+    },
+    "translation_ko": "달콤한 복숭아 한 바구니가 부엌 식탁 위에 있어요.",
+    "tmp_id": "R1-0163"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Math and science ______ my favorite subjects at school.",
+    "choices": [
+      "has",
+      "was",
+      "is",
+      "are"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "수학과 과학, 이렇게 두 과목을 가리키기 때문에 여러 개에 어울리는 are가 정답이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.agreement",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Math and science",
+    "why_not": {
+      "0": "가지고 있다는 뜻이 어울리지 않아요",
+      "1": "하나를 가리킬 때 쓰는 옛날 이야기예요",
+      "2": "여러 개가 아니라 하나일 때 써요"
+    },
+    "key_expr": {
+      "en": "favorite subject",
+      "ko": "가장 좋아하는 과목"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "G.form",
+      "2": "G.form"
+    },
+    "translation_ko": "수학과 과학은 내가 학교에서 가장 좋아하는 과목이에요.",
+    "tmp_id": "R1-0164"
   }
 ]
