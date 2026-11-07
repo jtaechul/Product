@@ -7648,5 +7648,439 @@
     },
     "translation_ko": "세탁기 알림음이 방금 울렸는데, 이 수건들은 아직도 흠뻑 젖어 있네.",
     "tmp_id": "L2-0215"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I left them in the gym locker.",
+      "Let's play table tennis together.",
+      "It takes about ten minutes."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'Where'는 어디냐고 묻는 말이에요. 탁구채를 둔 장소로 사물함을 답한 말이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Where did you leave the table tennis paddles?",
+    "status": "draft",
+    "evidence": "Where did you leave",
+    "why_not": {
+      "1": "어디 뒀는지와 상관없이 같이 놀자고 제안했어요",
+      "2": "시간이 얼마나 걸리는지 답했어요"
+    },
+    "key_expr": {
+      "en": "Where did you leave ~?",
+      "ko": "~ 어디에 뒀어?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "탁구채 어디에 뒀어?",
+    "tmp_id": "L2-0216"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I like apple juice better.",
+      "Five of them will be fine.",
+      "In the kitchen sink."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'How many'로 개수를 물었으니, 복숭아가 몇 개 필요한지 수를 답한 말이 알맞아요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.detail",
+      "V.food"
+    ],
+    "accent": "UK",
+    "tts_script": "How many peaches should I wash for dessert?",
+    "status": "draft",
+    "evidence": "How many peaches",
+    "why_not": {
+      "0": "개수를 묻는데 더 좋아하는 것을 말했어요",
+      "2": "어디 있는지 장소를 답했어요"
+    },
+    "key_expr": {
+      "en": "How many ~ should I wash?",
+      "ko": "몇 개 씻을까?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "디저트로 복숭아 몇 개 씻을까?",
+    "tmp_id": "L2-0217"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I read this story yesterday.",
+      "No, I didn't borrow any books.",
+      "Right next to the front door."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "반납함이 어디 있는지 묻는 말이니까, 정문 옆이라고 장소를 알려주는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.detail",
+      "LS.qr",
+      "V.school"
+    ],
+    "accent": "AU",
+    "tts_script": "Do you know where the book return box is?",
+    "status": "draft",
+    "evidence": "where the book return box is",
+    "why_not": {
+      "0": "장소를 물었는데 책을 읽었다고 했어요",
+      "1": "장소를 묻는 말에 엉뚱하게 책 안 빌렸다고 했어요"
+    },
+    "key_expr": {
+      "en": "book return box",
+      "ko": "도서 반납함"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "도서 반납함이 어디 있는지 알아?",
+    "tmp_id": "L2-0218"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I think green would be great.",
+      "I want to make a bear.",
+      "Yes, it is very big."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'Which color'라고 어떤 색인지 물었으니, 초록색이 좋겠다고 답한 말이 정답이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.detail",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "Which color of clay do you want to use for the dinosaur?",
+    "status": "draft",
+    "evidence": "Which color of clay",
+    "why_not": {
+      "1": "색깔이 아니라 다른 동물을 말했어요",
+      "2": "어떤 색인지 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "Which color ~ do you want?",
+      "ko": "무슨 색을 원해?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.yesno"
+    },
+    "translation_ko": "공룡 만드는 데 무슨 색 찰흙을 쓰고 싶어?",
+    "tmp_id": "L2-0219"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The birds are singing nicely.",
+      "My older sister did it this morning.",
+      "It is behind the big tree."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'Who'는 누구냐고 묻는 말이에요. 언니가 채웠다고 사람을 말한 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Who filled the bird feeder in the backyard?",
+    "status": "draft",
+    "evidence": "Who filled",
+    "why_not": {
+      "0": "새라는 말을 듣고 노래한다고 엉뚱하게 답했어요",
+      "2": "누가 했는지 물었는데 나무 뒤라는 위치를 말했어요"
+    },
+    "key_expr": {
+      "en": "Who filled ~?",
+      "ko": "누가 채웠어?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "뒷마당 새 모이통에 누가 모이를 채웠어?",
+    "tmp_id": "L2-0220"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "You can put your books inside.",
+      "Three days is enough.",
+      "It happened during the field trip."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'When'은 언제냐고 묻는 말이니까, 체험학습 때 그랬다며 언제 고장 났는지 알려주는 대답이 정답이에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.detail",
+      "V.daily"
+    ],
+    "accent": "AU",
+    "tts_script": "When did the zipper on your yellow bag break?",
+    "status": "draft",
+    "evidence": "When did the zipper",
+    "why_not": {
+      "0": "언제인지 묻는 말과 상관없이 가방 쓰는 법을 말했어요",
+      "1": "언제인지 물었는데 기간을 말했어요"
+    },
+    "key_expr": {
+      "en": "When did ~ break?",
+      "ko": "언제 고장 났어?"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "A.wrongkind"
+    },
+    "translation_ko": "네 노란 가방 지퍼 언제 고장 났어?",
+    "tmp_id": "L2-0221"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Yes, I'd love to see more paintings.",
+      "The gallery opens at nine.",
+      "I left my bag at home."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "이 방을 다 봤으니 다음 방으로 가자고 했어요. 더 많은 그림을 보고 싶다고 좋다고 한 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.leisure"
+    ],
+    "accent": "UK",
+    "tts_script": "We have finished seeing this room, so let's move to the next gallery.",
+    "status": "draft",
+    "evidence": "let's move to the next gallery",
+    "why_not": {
+      "1": "여는 시간을 답했어요",
+      "2": "가방을 놓고 왔다고 했어요"
+    },
+    "key_expr": {
+      "en": "move to the next gallery",
+      "ko": "다음 전시실로 이동하다"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "F.offtopic"
+    },
+    "translation_ko": "이 방은 다 봤으니, 다음 전시실로 이동합시다.",
+    "tmp_id": "L2-0222"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "The book is on the top shelf.",
+      "Thank you, it took me a long time to write.",
+      "I usually read stories in bed."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "시를 직접 썼냐고 하며 정말 아름답다고 칭찬했어요. 고맙다고 하며 오래 걸려서 썼다고 한 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.school"
+    ],
+    "accent": "US",
+    "tts_script": "You wrote this poem yourself? It's really beautiful.",
+    "status": "draft",
+    "evidence": "really beautiful",
+    "why_not": {
+      "0": "책이 있는 자리를 말했어요",
+      "2": "침대에서 책을 읽는다고 했어요"
+    },
+    "key_expr": {
+      "en": "wrote this poem yourself",
+      "ko": "이 시를 직접 썼다"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "M.notsaid"
+    },
+    "translation_ko": "이 시를 네가 직접 썼어? 정말 아름답다.",
+    "tmp_id": "L2-0223"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I like comic books the best.",
+      "I'll put it in my backpack.",
+      "Oh, sorry. I'll speak softly."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "사람들이 책을 읽고 있으니 조용히 하라고 알려주는 말이에요. 미안하다고 하며 작게 말하겠다는 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.school"
+    ],
+    "accent": "AU",
+    "tts_script": "Shh, people are trying to read books here.",
+    "status": "draft",
+    "evidence": "people are trying to read books here",
+    "why_not": {
+      "0": "어떤 책을 좋아하는지 말했어요",
+      "1": "가방에 넣겠다고 엉뚱한 말을 했어요"
+    },
+    "key_expr": {
+      "en": "speak softly",
+      "ko": "작게 말하다"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "F.offtopic"
+    },
+    "translation_ko": "쉿, 여기서 사람들이 책을 읽으려고 하잖아.",
+    "tmp_id": "L2-0224"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "Let's find another spot over there.",
+      "We can buy some water at the store.",
+      "It is a very tall tree."
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "이 나무 아래는 앉을 자리가 좁다고 했어요. 저쪽에서 다른 자리를 찾아보자고 한 대답이 알맞아요.",
+    "difficulty_label": 1,
+    "tags": [
+      "LS.infer",
+      "V.leisure"
+    ],
+    "accent": "US",
+    "tts_script": "There is not enough space to sit under this tree.",
+    "status": "draft",
+    "evidence": "not enough space to sit",
+    "why_not": {
+      "1": "물을 사자고 앞뒤가 안 맞는 말을 했어요",
+      "2": "tree를 듣고 낚였어요"
+    },
+    "key_expr": {
+      "en": "not enough space",
+      "ko": "공간이 부족한"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "A.echo"
+    },
+    "translation_ko": "이 나무 아래는 앉을 자리가 좁네.",
+    "tmp_id": "L2-0225"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "He doesn't like playing with a ball.",
+      "Sure, he is very friendly.",
+      "I walk my dog every morning."
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "강아지가 귀엽다며 만져봐도 되는지 물었어요. 강아지가 사람을 좋아하니 만져도 된다는 대답이 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "LS.infer",
+      "V.daily"
+    ],
+    "accent": "UK",
+    "tts_script": "Your puppy is so cute. Can I pet him?",
+    "status": "draft",
+    "evidence": "Can I pet him",
+    "why_not": {
+      "0": "공놀이를 안 좋아한다고 했어요",
+      "2": "언제 산책시키는지 대답했어요"
+    },
+    "key_expr": {
+      "en": "Can I pet him?",
+      "ko": "제가 만져봐도 될까요?"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "2": "A.wrongkind"
+    },
+    "translation_ko": "강아지가 정말 귀여워요. 제가 만져봐도 될까요?",
+    "tmp_id": "L2-0226"
+  },
+  {
+    "type": "single",
+    "section": "LC",
+    "part": "L2",
+    "stem": null,
+    "choices": [
+      "I will buy some popcorn.",
+      "The movie is very funny.",
+      "I'm sorry, I will take it off."
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "높은 모자가 화면을 가리고 있다고 말했어요. 미안하다고 하며 모자를 벗겠다는 대답이 알맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "LS.infer",
+      "V.leisure"
+    ],
+    "accent": "AU",
+    "tts_script": "Excuse me, but your tall hat is blocking the screen.",
+    "status": "draft",
+    "evidence": "blocking the screen",
+    "why_not": {
+      "0": "팝콘을 사겠다고 했어요",
+      "1": "영화가 재미있다고 엉뚱한 대답을 했어요"
+    },
+    "key_expr": {
+      "en": "block the screen",
+      "ko": "화면을 가리다"
+    },
+    "miss_type": {
+      "0": "F.offtopic",
+      "1": "M.notsaid"
+    },
+    "translation_ko": "실례하지만, 당신의 높은 모자가 화면을 가리고 있어요.",
+    "tmp_id": "L2-0227"
   }
 ]

@@ -6294,5 +6294,239 @@
     },
     "translation_ko": "수학과 과학은 내가 학교에서 가장 좋아하는 과목이에요.",
     "tmp_id": "R1-0164"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Look! The little boy ______ a huge spaceship on the wall right now.",
+    "choices": [
+      "draws",
+      "drew",
+      "is drawing",
+      "will draw"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "문장 끝에 '지금 당장'이라는 말이 있어서, 지금 한창 하고 있는 일을 나타내는 is와 -ing 모양이 짝을 이뤄야 해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.tense",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "right now",
+    "why_not": {
+      "0": "평소에 늘 하는 일이나 사실을 말할 때 써요",
+      "1": "이미 지나간 옛날 일에 쓰는 모양이에요",
+      "3": "앞으로 할 일에 쓰는 모양이에요"
+    },
+    "key_expr": {
+      "en": "is drawing a spaceship",
+      "ko": "우주선을 그리고 있다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "봐! 꼬마 아이가 지금 당장 벽에 커다란 우주선을 그리고 있어요.",
+    "tmp_id": "R1-0165"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Last Sunday, my family ______ sweet strawberries at my uncle's farm.",
+    "choices": [
+      "picked",
+      "pick",
+      "is picking",
+      "will pick"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'지난 일요일'에 이미 일어난 일이니까 옛날 일을 뜻하는 -ed 모양을 써야 알맞아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.tense",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "Last Sunday",
+    "why_not": {
+      "1": "평소에 늘 하는 일에 쓰는 모양이에요",
+      "2": "지금 당장 하고 있는 일에 써요",
+      "3": "앞으로 할 일에 쓰는 모양이에요"
+    },
+    "key_expr": {
+      "en": "picked sweet strawberries",
+      "ko": "달콤한 딸기를 땄다"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "지난 일요일에 우리 가족은 삼촌 농장에서 달콤한 딸기를 땄어요.",
+    "tmp_id": "R1-0166"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Our class ______ a famous art museum next Friday.",
+    "choices": [
+      "visit",
+      "visited",
+      "visiting",
+      "will visit"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'다음 주 금요일'은 아직 오지 않은 날이라서 앞으로 할 일을 뜻하는 말이 필요해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.tense",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "next Friday",
+    "why_not": {
+      "0": "평소에 늘 일어나는 일에 써요",
+      "1": "이미 지나간 옛날 일에 쓰는 모양이에요",
+      "2": "혼자서는 문장 안에서 역할을 할 수 없어요"
+    },
+    "key_expr": {
+      "en": "will visit a museum",
+      "ko": "미술관을 방문할 것이다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "2": "G.form"
+    },
+    "translation_ko": "우리 반은 다음 주 금요일에 유명한 미술관을 방문할 거예요.",
+    "tmp_id": "R1-0167"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Sujin ______ her lovely goldfish before breakfast every morning.",
+    "choices": [
+      "fed",
+      "feeds",
+      "is feeding",
+      "will feed"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'매일 아침'마다 늘 하는 일이고 Sujin이 한 명이니까 끝에 -s가 붙은 모양을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.tense",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "every morning",
+    "why_not": {
+      "0": "이미 지나간 옛날 일에 쓰는 모양이에요",
+      "2": "지금 당장 하고 있는 일에 써요",
+      "3": "앞으로 할 일에 쓰는 모양이에요"
+    },
+    "key_expr": {
+      "en": "feeds her goldfish",
+      "ko": "금붕어에게 먹이를 준다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "수진이는 매일 아침 밥을 먹기 전에 예쁜 금붕어에게 먹이를 줍니다.",
+    "tmp_id": "R1-0168"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Kevin and I ______ best friends since we were in the first grade.",
+    "choices": [
+      "have been",
+      "are",
+      "were",
+      "will be"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'1학년 때부터 쭉'이라는 뜻의 since가 있어서 옛날부터 지금까지 이어지는 일을 나타내는 모양을 써요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.tense",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "since",
+    "why_not": {
+      "1": "지금 그렇다는 뜻만 담겨 있어요",
+      "2": "옛날에만 그랬다는 뜻이 돼요",
+      "3": "앞으로 그럴 거라는 뜻이에요"
+    },
+    "key_expr": {
+      "en": "have been best friends",
+      "ko": "가장 친한 친구로 지내왔다"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "케빈과 나는 1학년 때부터 쭉 가장 친한 친구예요.",
+    "tmp_id": "R1-0169"
+  },
+  {
+    "type": "single",
+    "section": "RC",
+    "part": "R1",
+    "stem": "When the phone rang, Dad ______ the family car outside.",
+    "choices": [
+      "washes",
+      "was washing",
+      "washed",
+      "is washing"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'전화가 울렸을 때' 옛날 그 순간에 한창 하고 있던 일이라서 was와 -ing가 짝을 이뤄요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.tense",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "draft",
+    "evidence": "When the phone rang",
+    "why_not": {
+      "0": "평소에 늘 하는 일에 써요",
+      "2": "옛날에 다 끝난 일을 말할 때 써요",
+      "3": "지금 한창 하고 있는 일에 써요"
+    },
+    "key_expr": {
+      "en": "was washing the car",
+      "ko": "차를 씻고 계셨다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    },
+    "translation_ko": "전화가 울렸을 때, 아빠는 밖에서 가족의 차를 씻고 계셨어요.",
+    "tmp_id": "R1-0170"
   }
 ]
