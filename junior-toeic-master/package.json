@@ -1,0 +1,19 @@
+{
+  "name": "jumplish",
+  "private": true,
+  "type": "module",
+  "description": "점프리시 (Jumplish) — TOEIC Bridge 기반 초중등 맞춤형 영어 학습 플랫폼 (코드네임 junior-toeic-master)",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "db:migrate:local": "wrangler d1 migrations apply jumplish-db --local",
+    "db:seed:local": "node tools/import.mjs && wrangler d1 execute jumplish-db --local --file tools/out/seed.sql",
+    "content:validate": "node tools/import.mjs --check",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
