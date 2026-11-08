@@ -130,6 +130,7 @@ const prompt = `당신은 초등 3학년~중학교 3학년 한국 학생을 위�
 - miss_type: why_not 을 넣은 자리마다 하나씩. 다음 중에서만 고릅니다:
 ${Object.entries(MISS_KO).map(([k, v]) => `  ${k} = ${v}`).join('\n')}
 - evidence: 정답의 근거가 되는 부분을 **원문에서 그대로 복사**합니다(철자·부호까지).
+  원문에서 이어진 **한 구절만** 씁니다. 여러 곳을 '...'로 이어 붙이지 마세요.
   ${isLC ? '들려줄 대본(script) 안에 있어야 합니다.' : '지문이나 문제 문장 안에 있어야 합니다.'}
 - key_expr: 이 문제에서 챙겨 갈 표현 하나. ko 는 ${KEY_EXPR_KO_MAX}자 이하.
 - **translation_ko (필수)**: 지문·문장의 한글 해석. 없으면 그 문항은 버려집니다.
@@ -354,6 +355,27 @@ const nextTmp = () => {
   return id;
 };
 
+// 근거를 "앞 구절 ... 뒤 구절"처럼 두 군데를 이어 붙여 오는 일이 있다. 2026-11-07 Gemini 가 L4 세 묶음을
+// 이렇게 써 와서 통째로 버려졌고, 그날 밤 주문이 실패로 끝났다. 근거는 화면이 원문에서 그대로 찾아 칠하는
+// 자리라 한 덩어리여야 한다 → 조각 중 원문에 그대로 있는 가장 긴 것만 남긴다. 그런 조각이 없으면 손대지 않는다(검사기가 버린다).
+let evidenceRepaired = 0;
+function repairEvidence(item) {
+  const fix = (q, source) => {
+    const ev = q?.evidence;
+    if (typeof ev !== 'string' || typeof source !== 'string' || source.includes(ev) || !/\.\.\.|…/.test(ev)) return;
+    const best = ev.split(/\s*(?:\.\.\.|…)\s*/).map((s) => s.trim())
+      .filter((s) => s.length >= 3 && source.includes(s))
+      .sort((a, b) => b.length - a.length)[0];
+    if (best) { q.evidence = best; evidenceRepaired += 1; }
+  };
+  if (item.type === 'set' && item.passage && Array.isArray(item.questions)) {
+    const source = section === 'LC' ? item.passage.script : item.passage.content;
+    item.questions.forEach((q) => fix(q, source));
+  } else {
+    fix(item, item.tts_script || item.stem);
+  }
+}
+
 const accepted = [];
 const rejected = [];
 for (const d of drafts) {
@@ -368,6 +390,7 @@ for (const d of drafts) {
     tmp_id: nextTmp(),
     section, part: PART, status: 'draft',
   };
+  repairEvidence(item);
   const errs = validateItem(item, PART, tagSection);
   // 규칙집을 통과해도 **이미 있는 문항의 판박이면 버린다.** 프롬프트로 부탁만 해서는 막히지
   // 않는다 — "같은 소재 쓰지 말라"고 적어도 AI는 예시를 따라간다. 이번 묶음 안에서 서로
@@ -386,6 +409,7 @@ for (const d of drafts) {
 const qCount = (list) => list.reduce((n, x) => n + (Array.isArray(x.questions) ? x.questions.length : 1), 0);
 const madeN = qCount(accepted);
 console.log(`\n초안 ${drafts.length}덩이 → 통과 ${accepted.length}덩이(문항 ${madeN}개) / 버림 ${rejected.length}덩이`);
+if (evidenceRepaired) console.log(`  ('...'로 이어 붙인 근거 ${evidenceRepaired}개를 원문에 있는 한 구절로 줄였습니다)`);
 if (madeN !== COUNT) console.log(`⚠ 주문은 ${COUNT}문항인데 ${madeN}문항이 만들어졌습니다.`);
 for (const r of rejected) {
   const topic = r.errs.some((m) => m.includes('넣지 않는 소재'));
