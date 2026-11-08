@@ -81,5 +81,13 @@ jobs:
           npx wrangler d1 execute jumplish-db --remote --file tools/out/seed.sql
           npx wrangler d1 execute jumplish-db --remote --file tools/demo-org.sql
 
+      # Cloudflare 쪽 일시 장애로 파일 올리기가 실패하는 일이 있다(2026-11-02 "assets-upload-session … code 10013").
+      # 바로 다음 배포는 멀쩡히 됐다 — 잠깐 쉬었다가 두 번 더 해 본다.
       - name: Deploy worker
-        run: npx wrangler deploy
+        run: |
+          for i in 1 2 3; do
+            if npx wrangler deploy; then exit 0; fi
+            echo "배포 실패 — $((20 * i))초 뒤 다시 시도 ${i}/3"
+            sleep $((20 * i))
+          done
+          exit 1
