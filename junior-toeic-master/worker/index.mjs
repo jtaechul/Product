@@ -1640,79 +1640,29 @@ app.post('/api/admin/questions/:id/status', ...admin, async (c) => {
   return c.json({ ok: true, status, commit, synced });
 });
 
-// AI 초안 주문 — 실제 생성은 깃허브 작업실이 한다(앱 서버에는 AI 열쇠를 두지 않는다).
-// 음원·사진 배치와 같은 방식이라 새 위험이 생기지 않는다.
-app.post('/api/admin/generate-order', ...admin, async (c) => {
-  const gh = new GithubRepo(c.env);
-  if (!gh.configured) return c.json({ error: '저장소 연결이 아직 설정되지 않았습니다' }, 503);
-  const body = await c.req.json().catch(() => ({}));
-  const part = clean(body.part ?? '', 4);
-  if (!PART_LIST.includes(part)) return c.json({ error: '문제 종류를 골라주세요' }, 400);
-  const count = Math.max(1, Math.min(20, Number(body.count) || 5));
-  const tag = clean(body.tag ?? '', 40);
-  const difficulty = clean(String(body.difficulty ?? ''), 3);
-  const note = clean(body.note ?? '', 300);
-  if (tag) {
-    const ok = await c.env.DB.prepare('SELECT 1 FROM concept_tags WHERE id = ?1').bind(tag).first();
-    if (!ok) return c.json({ error: '모르는 개념 태그입니다' }, 400);
-  }
-  await commitOrders(gh, [{ part, count, tag, difficulty, note }]);
-  return c.json({
-    ok: true,
-    next: `${PART_KO[part]} ${count}문항 초안을 만들기 시작했어요. `
-      + '5~15분 뒤 "준비 중" 목록에 올라오면 확인하고 출제 시작을 눌러주세요.',
-  });
-});
+// ── 무엇이 부족한지 서버가 찾고, 만들기는 운영자가 누른다 (2026-11-08) ──
+//
+// 예전(09-16~11-07)엔 매일 밤 서버가 스스로 주문을 넣었다. 운영자 결정으로 접었다 — 무엇이 모자란지만
+// 관리자 화면에 한 줄씩 알려 주고, 운영자가 그 줄의 '만들기'를 눌러야 그 6문항만 만든다.
+// 모자람은 세 가지로 본다(아래 findNeeds):
+//   ① 많이 틀리는 유형인데 아이들이 그 유형 문제를 절반 넘게 이미 봤다 → 약점 연습할 새 문제가 바닥난다
+//   ② 아이들이 그 파트의 문제를 절반 넘게 이미 풀었다 → 곧 새 문제가 없다
+//   ③ 시험 비율(TOEIC Bridge)로 나눈 목표보다 문항이 적다
+// 세는 숫자에는 준비 중(draft)도 넣는다. 만들어 확인을 기다리는 곳에 또 만들라고 하지 않게.
 
-// ── 부족한 곳을 서버가 스스로 찾는다 (2026-09-02) ──
-//
-// 운영자에게 "무슨 종류를, 어느 개념으로, 몇 개" 를 묻지 않는다. 그 답은 이미 데이터에 있다 —
-// 실력 5축 중 얇은 축, 그 축을 받치는 태그 중 문항이 적은 것, 그리고 그 태그가 실제로 나올 수
-// 있는 파트. 운영자는 버튼만 누르고, 무엇을 만들지는 아래 계산이 정한다.
-//
-// 왜 축부터 보나: 총 문항이 넉넉해도 한 축이 얇으면 그 축의 실력이 안 재져 아이 화면에
-// '재는 중'이 남는다. 그게 지금 이 제품에서 가장 아픈 구멍이라 여기부터 메운다.
-
-// 은행 목표 문항 수. 감이 아니라 실측이다 (docs/content-pipeline.md 8-1):
-//   386문항 → 하루 20문항 반이 **62일이면 은행을 전부 본다**(그 뒤로 새 문제 0개)
-//   800문항 → 285일. 월 구독 한 해를 새 문제로 버틴다.
-// 1,000문항이면 1년을 더 넘기지만 검수량이 그만큼 늘어 800을 1차 목표로 잡았다(2026-09-16).
-//
-// ⚠ 2026-10-28 1,200 으로 올리고 **파트 비율**로 채운다. 800 목표는 '실력 축'만 봐서 채웠는데,
-// 축은 어느 파트로든 채워지다 보니 AI 가 만들기 쉬운 묶음형(짧은 대화·독해)에 몰렸다:
-// 751문항 중 독해 34%·짧은 대화 21% vs 짧은 담화 4%·질의응답 11% (시험은 각각 20·10 vs 14·20).
-// 그리고 축이 다 차자 10-10 이후 18일 동안 자동 주문이 한 건도 안 나갔다.
+// 은행 목표 1,200 을 시험 비율로 나눈 파트 목표 (2026-10-28 — content-pipeline.md 14절)
 const BANK_TARGET = 1200;
 // TOEIC Bridge 문항 비율(100문항 기준) — 듣기: 사진 6·질의응답 20·대화 10·담화 14 / 읽기: 문장 15·지문 15·독해 20.
-// 파트마다 BANK_TARGET × 비율 까지 채운다. 이미 넘친 파트(대화·독해)는 더 주문하지 않는다.
 const EXAM_SHARE = { L1: 6, L2: 20, L3: 10, L4: 14, R1: 15, R2: 15, R3: 20 };
 const PART_TARGET = Object.fromEntries(
   Object.entries(EXAM_SHARE).map(([p, sh]) => [p, Math.round((BANK_TARGET * sh) / 100)]));
-// 어려운 문제(난이도 4~5) 비율 목표. 751문항 중 55개(7%)뿐이라 중학생은 쉬운 문제만 받는다 —
-// 적응형이라도 그 실력에 맞는 문제가 은행에 없으면 고를 수가 없다.
+// 어려운 문제(난이도 4~5) 비율 목표 — 모자란 파트는 '만들기'를 누르면 난이도 4로 만든다
 const HARD_MIN = 0.15;
-// 다섯 축이 고르게 이만큼씩. 문항 하나가 여러 축에 걸쳐 있어 축 합계는 은행보다 조금 크다
-// (386문항일 때 축 합계 413 = 1.07배) — 그 비율을 반영해 단순히 5로 나눈 값보다 살짝 크게 잡는다.
-// 축 목표는 처음 정한 800 기준 그대로 둔다(파트 채우기가 축도 같이 채운다).
-const AXIS_TARGET = Math.round((800 * 1.07) / 5);
-const PART_ORDERS_PER_NIGHT = 2;   // 한 파트에 하룻밤 넣는 최대 묶음 수(아래 ② 파트 채우기)
-const GAP_BATCH = 6;      // 한 주문에 만들 문항 수 — 한 번에 20개를 시키면 AI가 규칙을 흘려 버림표가 늘고,
-                          // 너무 적으면 주문 수만 늘어난다. 6이 통과율과 속도의 절충.
-const GAP_MAX_ORDERS = 6; // 한 번(버튼 한 번 또는 하룻밤)에 넣는 최대 주문 수 — 최대 36문항, 실행 20분쯤.
-                          // 밤마다 돌면 2주 남짓이면 파트 비율이 맞춰진다.
-
-// 태그가 실제로 출제되는 파트 — 그 태그로 이미 나가고 있는 문항에서 배운다.
-// 표로 못박아 두면 새 태그를 넣을 때마다 여기도 고쳐야 하고, 안 고치면 조용히 틀린다.
-async function partsByTag(db) {
-  const { results } = await db.prepare(
-    `SELECT qt.tag_id AS tag, q.part, COUNT(*) AS n
-       FROM question_tags qt JOIN questions q ON q.id = qt.question_id
-      WHERE q.status = 'active' GROUP BY qt.tag_id, q.part`).all();
-  const by = {};
-  for (const r of results) (by[r.tag] ||= []).push({ part: r.part, n: r.n });
-  for (const t of Object.keys(by)) by[t].sort((a, b) => b.n - a.n);
-  return by;
-}
+const GAP_BATCH = 6;      // '만들기' 한 번에 만드는 문항 수 — 한 번에 20개를 시키면 AI가 규칙을 흘려 버림표가 늘고,
+                          // 너무 적으면 누를 일이 많아진다. 6이 통과율과 속도의 절충.
+// ② 아이들이 이만큼(평균) 이미 풀었으면 '곧 바닥'으로 본다
+const USED_MIN = 0.5;
+const USED_WINDOW_DAYS = 30;   // '요즘 공부하는 아이' = 최근 30일 안에 푼 아이
 
 // ── 많이 틀리는 유형은 문제를 더 (2026-10-27) ──
 //
@@ -1728,8 +1678,6 @@ const WEAK_WINDOW_DAYS = 30;
 const WEAK_MIN_ATTEMPTS = 30;
 const WEAK_ACC_MAX = 0.6;
 const WEAK_SEEN_MIN = 0.5;
-const WEAK_MAX_ORDERS = 2;      // 하룻밤 최대 2주문(12문항) — 축 채우기와 따로 센다
-const WEAK_BANK_CEIL = 1500;    // 은행 목표(1,200)를 채운 뒤에도 약점 보강은 하되, 여기까지만
 const SKILL_TAGS = new Set(SKILL_AXES.flatMap((a) => a.tags));
 const PART_SHORT = { L1: '사진 고르기', L2: '질의응답', L3: '짧은 대화', L4: '짧은 담화', R1: '문장 완성', R2: '지문 완성', R3: '독해' };
 
@@ -1790,188 +1738,105 @@ async function weakSpots(db, nameOf) {
     .sort((a, b) => b.wrong - a.wrong);
 }
 
-// 지금 무엇이 모자란지 계산한다. 화면(미리보기)과 실제 주문이 같은 함수를 쓴다 —
+// 지금 무엇이 모자란지 — 관리자 화면 목록과 '만들기' 버튼이 같은 함수를 쓴다.
 // 버튼에 적힌 말과 실제로 만들어지는 것이 어긋나면 신뢰를 잃는다.
-async function planGaps(db) {
-  const [{ results: tagRows }, byTag, bank] = await Promise.all([
-    // ⚠ **준비 중(draft)도 센다.** 출제중만 세면, 방금 만들어 검수를 기다리는 문항을 모르고
-    // 같은 자리를 또 주문한다 — 누를 때마다 같은 구멍에 문항이 겹겹이 쌓인다(2026-09-05 실제로 그랬다).
+async function findNeeds(db) {
+  const since = new Date(Date.now() - USED_WINDOW_DAYS * 86400_000).toISOString();
+  const [{ results: tagRows }, { results: partRows }, { results: partTagRows }, { results: seenRows }] = await Promise.all([
+    db.prepare('SELECT id, name_ko FROM concept_tags').all(),
+    // 파트별 크기·어려운 문제 수 (출제중 + 준비중)
     db.prepare(
-      `SELECT t.id, t.name_ko, t.section,
-              COUNT(CASE WHEN q.status = 'active' THEN 1 END) AS n_active,
-              COUNT(CASE WHEN q.status = 'draft'  THEN 1 END) AS n_draft
-         FROM concept_tags t
-         LEFT JOIN question_tags qt ON qt.tag_id = t.id
-         LEFT JOIN questions q ON q.id = qt.question_id
-        GROUP BY t.id`).all(),
-    partsByTag(db),
-    // 은행 전체 크기(출제중 + 준비중) — 목표를 넘겨 주문하지 않기 위해 센다
-    db.prepare(`SELECT COUNT(*) AS n FROM questions WHERE status IN ('active','draft')`).first(),
-  ]);
-  // 파트별 크기·어려운 문제 수, 파트×태그 크기 (출제중 + 준비중)
-  const [{ results: partRows }, { results: partTagRows }] = await Promise.all([
-    db.prepare(
-      `SELECT part, COUNT(*) AS n, SUM(CASE WHEN difficulty_label >= 4 THEN 1 ELSE 0 END) AS hard
+      `SELECT part, COUNT(*) AS n, SUM(CASE WHEN difficulty_label >= 4 THEN 1 ELSE 0 END) AS hard,
+              SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) AS draft
          FROM questions WHERE status IN ('active','draft') GROUP BY part`).all(),
     db.prepare(
       `SELECT q.part, qt.tag_id AS tag, COUNT(*) AS n
          FROM questions q JOIN question_tags qt ON qt.question_id = q.id
         WHERE q.status IN ('active','draft') GROUP BY q.part, qt.tag_id`).all(),
+    // 요즘 공부하는 아이마다, 파트별로 지금 출제 중인 문항을 몇 개 봤나 (전체 아이 합산에만 쓴다)
+    db.prepare(
+      `SELECT q.part, a.user_id, COUNT(DISTINCT a.question_id) AS seen
+         FROM answers a JOIN questions q ON q.id = a.question_id
+        WHERE q.status = 'active'
+          AND a.user_id IN (SELECT DISTINCT user_id FROM answers WHERE answered_at >= ?1)
+        GROUP BY q.part, a.user_id`).bind(since).all(),
   ]);
-  const nOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n_active + t.n_draft]));
-  const activeOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n_active]));
   const nameOf = Object.fromEntries(tagRows.map((t) => [t.id, t.name_ko]));
-
-  // 축을 얇은 순으로 — 가장 모자란 축부터 메운다
-  const axes = SKILL_AXES
-    .map((ax) => ({
-      ...ax,
-      n: ax.tags.reduce((s, t) => s + (nOf[t] ?? 0), 0),           // 출제중 + 준비중
-      active: ax.tags.reduce((s, t) => s + (activeOf[t] ?? 0), 0),
-    }))
-    .filter((ax) => ax.n < AXIS_TARGET)
-    .sort((a, b) => a.n - b.n);
-
-  // 은행 목표를 넘겨 주문하지 않는다 — 목표를 채우면 밤마다 도는 자동 주문이 저절로 멈춘다
-  const maxOrders = Math.min(
-    GAP_MAX_ORDERS, Math.ceil(Math.max(0, BANK_TARGET - bank.n) / GAP_BATCH));
-
-  // 파트 현황 — 관리자 화면 표와 아래 ② 파트 채우기가 같은 숫자를 쓴다
   const partOf = Object.fromEntries(partRows.map((r) => [r.part, r]));
-  const parts = Object.keys(EXAM_SHARE).map((p) => {
-    const n = partOf[p]?.n ?? 0;
-    const hard = partOf[p]?.hard ?? 0;
-    return {
-      part: p, name: PART_SHORT[p], share: EXAM_SHARE[p], n, target: PART_TARGET[p],
-      hard, hard_target: Math.round(PART_TARGET[p] * HARD_MIN),
-      // 사진 고르기는 AI 에게 주문하지 않는다(10-12) — 사진을 먼저 고르고 문장을 쓰는 사람 작업
-      manual: p === 'L1',
-    };
+  // 그 파트에서 이미 쓰이는 실력 태그 중 가장 적은 것 — 태그가 그 파트에 맞는지는 기존 문항이 보증한다
+  const thinTag = (p) => partTagRows
+    .filter((r) => r.part === p && SKILL_TAGS.has(r.tag))
+    .sort((a, b) => a.n - b.n)[0]?.tag ?? '';
+  const hardShort = (p) => (partOf[p]?.hard ?? 0) < Math.round(PART_TARGET[p] * HARD_MIN);
+  const HARD_NOTE = '중학생도 도전할 만한 조금 어려운 문제로 — 낱말·문장 길이·생각할 거리를 한 단계 높이되, 내용과 말투는 아이에게 맞게.';
+
+  const needs = [];
+  const add = (o) => needs.push({
+    count: GAP_BATCH, tag: '', difficulty: '', note: '',
+    part_name: PART_SHORT[o.part], manual: o.part === 'L1',   // 사진 고르기는 사람이 만든다(10-12)
+    ...o,
   });
 
-  const orders = [];
-  // ① 많이 틀리고 문항도 바닥난 유형부터 — 실제 아이들이 막히는 곳이라 얇은 축보다 앞에 둔다.
-  // 사진 고르기(L1)는 AI 에게 주문하지 않으므로(아래 축 채우기와 같은 이유) 표에만 남긴다.
+  // ① 많이 틀리는 유형 + 문제가 바닥나는 중
   const spots = await weakSpots(db, nameOf);
-  const weakMax = Math.min(WEAK_MAX_ORDERS, Math.ceil(Math.max(0, WEAK_BANK_CEIL - bank.n) / GAP_BATCH));
-  for (const sp of spots) {
-    sp.ordered = false;
-    if (!sp.thin || sp.part === 'L1' || orders.length >= weakMax) continue;
-    sp.ordered = true;
+  for (const sp of spots.filter((x) => x.thin)) {
     const miss = sp.misses.map((m) => m.name).join(', ');
-    orders.push({
-      part: sp.part, tag: sp.tag, count: GAP_BATCH,
+    add({
+      key: `weak:${sp.part}:${sp.tag}`, part: sp.part, tag: sp.tag, tag_name: sp.tag_name,
       // 절반도 못 맞히는 곳은 한 단계 쉬운 문제부터 — 디딤돌이 있어야 올라간다
       difficulty: sp.acc < 45 ? '2' : '',
       note: `아이들이 이 유형(${sp.tag_name})에서 많이 틀립니다 — 최근 정답률 ${sp.acc}%.`
         + (miss ? ` 자주 하는 실수: ${miss}.` : '')
         + ' 그 실수를 짚어 볼 수 있는 문제로 만들고, 해설에는 왜 틀리기 쉬운지와 어디를 보면 되는지를 쉽게 적어 주세요.',
-      axis: 'weak', axis_name: '많이 틀리는 유형', axis_n: null,
-      tag_name: `${sp.part_name} ${sp.tag_name}(${sp.acc}%)`,
-      why: `많이 틀리는 유형 — ${sp.part_name} ${sp.tag_name} 정답률 ${sp.acc}%, 아이들이 문항의 ${sp.used}%를 이미 봄`,
+      title: `${sp.part_name} · ${sp.tag_name}`,
+      reason: `많이 틀려요(정답률 ${sp.acc}%). 아이들이 이 유형 문제의 ${sp.used}%를 이미 봤어요.`,
+      why: `많이 틀리는 유형 — ${sp.part_name} ${sp.tag_name} 정답률 ${sp.acc}%, 아이들이 ${sp.used}%를 이미 봄`,
     });
   }
-  const weakN = orders.length;
 
-  // ② 시험 비율에 모자란 파트 — 모자란 비율이 큰 파트부터. 하룻밤에 한 파트는 두 묶음까지만 —
-  //    안 그러면 가장 빈 파트(담화) 하나에 밤새 몰리고 질의응답·지문 완성은 며칠씩 기다린다.
-  const left = Object.fromEntries(parts.map((x) => [x.part, Math.max(0, x.target - x.n)]));
-  const hardLeft = Object.fromEntries(parts.map((x) => [x.part, Math.max(0, x.hard_target - x.hard)]));
-  const turn = {};
-  // 그 파트에서 이미 쓰이는 실력 태그 — 적은 것부터 돌려 가며(태그가 그 파트에 맞는지는 기존 문항이 보증한다)
-  const tagsInPart = (p) => partTagRows
-    .filter((r) => r.part === p && SKILL_TAGS.has(r.tag))
-    .sort((a, b) => a.n - b.n)
-    .map((r) => r.tag);
-  while (orders.length - weakN < maxOrders) {
-    const cand = parts.filter((x) => !x.manual && left[x.part] > 0 && (turn[x.part] ?? -1) < PART_ORDERS_PER_NIGHT - 1)
-      .sort((a, b) => left[b.part] / b.target - left[a.part] / a.target);
-    const x = cand[0];
-    if (!x) break;
-    const tags = tagsInPart(x.part);
-    const i = (turn[x.part] = (turn[x.part] ?? -1) + 1);
-    const tag = tags.length ? tags[i % tags.length] : '';
-    // 어려운 문제가 목표보다 모자라면 이 묶음은 난이도 4로
-    const hardOrder = hardLeft[x.part] > 0 && i % 2 === 0;
-    if (hardOrder) hardLeft[x.part] -= GAP_BATCH;
-    orders.push({
-      part: x.part, tag, count: GAP_BATCH,
-      difficulty: hardOrder ? '4' : '',
-      note: hardOrder
-        ? '중학생도 도전할 만한 조금 어려운 문제로 — 낱말·문장 길이·생각할 거리를 한 단계 높이되, 내용과 말투는 아이에게 맞게.'
-        : '',
-      axis: 'part', axis_name: '시험 비율', axis_n: x.n,
-      tag_name: x.name,
-      why: `시험 비율 — ${x.name} ${x.n}/${x.target}문항${hardOrder ? ' · 어려운 문제' : ''}`
-        + (tag ? ` (${nameOf[tag] ?? tag})` : ''),
+  // ② 아이들이 거의 다 푼 파트
+  const seenBy = {};
+  for (const r of seenRows) (seenBy[r.part] ||= []).push(r.seen);
+  const usedParts = new Set();
+  for (const p of Object.keys(EXAM_SHARE)) {
+    const supply = partOf[p]?.n ?? 0;
+    const kids = seenBy[p] ?? [];
+    if (!kids.length) continue;
+    const used = supply ? kids.reduce((s, n) => s + Math.min(1, n / supply), 0) / kids.length : 1;
+    if (used < USED_MIN) continue;
+    usedParts.add(p);
+    const tag = thinTag(p);
+    add({
+      key: `used:${p}`, part: p, tag, tag_name: nameOf[tag] ?? '',
+      title: PART_SHORT[p],
+      reason: `요즘 공부하는 아이 ${kids.length}명이 평균 ${Math.round(used * 100)}%를 이미 풀었어요`
+        + ` (출제 중 ${supply - (partOf[p]?.draft ?? 0)}개${partOf[p]?.draft ? ` · 확인 기다리는 ${partOf[p].draft}개` : ''}).`,
+      why: `아이들이 거의 다 푼 파트 — ${PART_SHORT[p]} 평균 ${Math.round(used * 100)}% 풂`,
     });
-    left[x.part] -= GAP_BATCH;
   }
 
-  // ③ 얇은 축 채우기 — 파트를 다 채우고도 자리가 남을 때만
-  for (const ax of axes) {
-    if (orders.length - weakN >= maxOrders) break;
-    // 그 축 안에서도 가장 얇은 태그를 고른다. 축 전체를 뭉뚱그려 주문하면
-    // AI가 만들기 쉬운 태그로만 쏠려 정작 빈 칸은 그대로 남는다.
-    const usable = [...ax.tags]
-      .filter((t) => (byTag[t] ?? []).length)      // 출제될 파트를 아는 태그만
-      // 사진 고르기(L1)는 AI 에게 주문하지 않는다. AI 는 문장을 먼저 쓰고 사진은 나중에 검색해
-      // 붙이는데, 그러면 사진이 문장을 못 담는다(content-pipeline.md 7-1: 사진 먼저, 문장은 나중).
-      // 2026-10 실측: AI 가 만든 L1 30개 중 처음부터 사진이 맞은 것은 3개뿐이었다.
-      .filter((t) => byTag[t][0].part !== 'L1')
-      .sort((a, b) => (nOf[a] ?? 0) - (nOf[b] ?? 0));
-    if (!usable.length) continue;
-    const want = Math.ceil((AXIS_TARGET - ax.n) / GAP_BATCH);      // 이 축에 필요한 묶음 수
-    const take = Math.min(want, maxOrders - (orders.length - weakN));
-    for (let i = 0; i < take; i += 1) {
-      // 묶음이 여럿이면 얇은 태그부터 돌려 가며 — 한 태그에만 몰리지 않게
-      const tag = usable[i % usable.length];
-      orders.push({
-        part: byTag[tag][0].part,      // 그 태그가 가장 많이 나오는 파트에 얹는다
-        tag,
-        count: GAP_BATCH,
-        axis: ax.key,
-        // 화면이 축별로 묶어 한 줄로 보여줄 수 있게 조각을 따로 준다 —
-        // why 한 문장만 보내면 같은 축 주문이 네 줄 반복돼 읽기 어렵다.
-        axis_name: ax.name,
-        axis_n: ax.active,
-        tag_name: nameOf[tag],
-        why: `${ax.name} ${ax.active}문항${ax.n > ax.active ? `(+준비중 ${ax.n - ax.active})` : ''}`
-          + ` — ${nameOf[tag]}`,
-      });
-    }
+  // ③ 시험 비율보다 적은 파트 (②에 이미 나온 파트는 한 줄로 충분하다)
+  for (const p of Object.keys(EXAM_SHARE)) {
+    const n = partOf[p]?.n ?? 0;
+    if (usedParts.has(p) || PART_TARGET[p] - n < GAP_BATCH) continue;
+    const tag = thinTag(p);
+    const hard = hardShort(p);
+    add({
+      key: `ratio:${p}`, part: p, tag, tag_name: nameOf[tag] ?? '',
+      difficulty: hard ? '4' : '', note: hard ? HARD_NOTE : '',
+      title: PART_SHORT[p],
+      reason: `시험 비율로 ${PART_TARGET[p]}문항이 필요한데 ${n}문항이에요${hard ? ' (어려운 문제도 모자라 어렵게 만들어요)' : ''}.`,
+      why: `시험 비율 — ${PART_SHORT[p]} ${n}/${PART_TARGET[p]}문항${hard ? ' · 어려운 문제' : ''}`,
+    });
   }
-  return {
-    orders, total: orders.reduce((s, o) => s + o.count, 0),
-    bank: bank.n, bank_target: BANK_TARGET, parts,
-    // 관리자 화면 표 — 많이 틀리는 유형과, 이번에 더 만드는지
-    weak_spots: spots.slice(0, 8), weak_rule: {
-      days: WEAK_WINDOW_DAYS, min_attempts: WEAK_MIN_ATTEMPTS,
-      acc_max: Math.round(WEAK_ACC_MAX * 100), seen_min: Math.round(WEAK_SEEN_MIN * 100),
-    },
-  };
+  const total = partRows.reduce((s, r) => s + r.n, 0);
+  return { needs, bank: total, bank_target: BANK_TARGET };
 }
 
-// ── 매일 밤 스스로 채운다 (2026-09-16) ──
-//
-// 800문항까지는 400문항 넘게 더 만들어야 한다. 한 번에 24문항씩이면 운영자가 열일곱 번을
-// 눌러야 하는데, 그건 "버튼 한 번이면 끝"이라는 약속과 어긋난다. 그래서 **주문은 서버가
-// 매일 밤 넣고**, 사람은 아침에 올라온 초안을 확인하고 '전부 출제 시작'만 누른다
-// (사람이 한 번 보고 내보내는 검수 단계는 그대로 둔다 — 없애지 않는다).
-//
-// 왜 GitHub Actions 의 schedule 이 아니라 Cloudflare Cron 인가:
-// GitHub 은 **기본 브랜치(main)에 있는 워크플로만** 일정대로 돌린다. 점프리시 배치는 전부
-// 작업 브랜치에만 살아서 schedule 을 달아도 영영 돌지 않는다 — workflow_dispatch 가 404 로
-// 떨어지던 것과 똑같은 함정이다. Cloudflare Cron 은 브랜치와 무관하고, 하는 일도 버튼과
-// 똑같이 '주문서를 커밋'하는 것뿐이라 그 다음은 기존 push 트리거가 그대로 이어받는다.
-//
-// ⚠ '운영 중 외부 API 0회' 원칙과 어긋나지 않는다 — 아이 요청을 처리하는 길이 아니라
-// 저작(개발) 쪽 자동화다. 문항을 만드는 LLM 호출은 여전히 GitHub Actions 안에서만 일어난다.
-// 아직 처리되지 않은 주문서 수. 주문을 넣기 전에 반드시 본다.
-//
-// 왜 필요한가: 초안(draft)이 생기는 건 생성이 **끝난 뒤**다. 그 12분 동안 planGaps 는 만들어지는
-// 중인 문항을 모른다 — 그래서 연달아 주문하면 같은 자리를 두 번 채운다. 커밋도 fast-forward 만
-// 허용하므로 겹치면 그냥 실패한다. 버튼과 야간 채움이 **같은 잠금**을 쓴다.
+// 아직 처리되지 않은 주문서 수 — '만들기'를 받기 전에 반드시 본다.
+// 초안(draft)이 생기는 건 생성이 **끝난 뒤**다(10~15분). 그동안 findNeeds 는 만들어지는 중인
+// 문항을 모른다 — 그래서 연달아 누르면 같은 자리를 두 번 채운다. 커밋도 fast-forward 만
+// 허용하므로 겹치면 그냥 실패한다.
 // 문제 만들기 주문서(gen-*)만 센다. 신고 검토 주문서(review-*)는 따로 돌므로
 // 그게 남아 있다고 문제 만들기를 미루면 안 된다.
 async function pendingOrders(gh) {
@@ -2013,67 +1878,45 @@ async function nightlyReview(env) {
   console.log(`[신고검토] ${r.next}`);
 }
 
-async function nightlyTopUp(env) {
-  const gh = new GithubRepo(env);
-  if (!gh.configured) { console.log('[야간채움] 저장소 연결 없음 — 건너뜀'); return; }
-
-  const pending = await pendingOrders(gh);
-  if (pending) { console.log(`[야간채움] 주문서 ${pending}건이 아직 처리 중 — 건너뜀`); return; }
-
-  const plan = await planGaps(env.DB);
-  if (!plan.orders.length) {
-    console.log(`[야간채움] 채울 곳 없음 (은행 ${plan.bank}/${plan.bank_target}문항)`);
-    return;
-  }
-  await commitOrders(gh, plan.orders);
-  console.log(`[야간채움] ${plan.total}문항 주문 — 은행 ${plan.bank}/${plan.bank_target}문항`);
-}
-
-// 버튼에 적을 말 — 누르기 전에 무엇이 만들어지는지 보이게 한다.
+// 관리자 화면 '부족한 문제' 목록
 app.get('/api/admin/fill-gaps', ...admin, async (c) => {
-  const plan = await planGaps(c.env.DB);
+  const [plan, draft] = await Promise.all([
+    findNeeds(c.env.DB),
+    c.env.DB.prepare(`SELECT COUNT(*) AS n FROM questions WHERE status = 'draft'`).first(),
+  ]);
   const gh = new GithubRepo(c.env);
-  const draft = await c.env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM questions WHERE status = 'draft'`).first();
   return c.json({
     ...plan,
     ready: gh.configured,
-    // 검수를 기다리는 초안 수 — '전부 출제 시작' 버튼을 띄울지 정한다
+    // 지금 만들고 있는 주문 — 있으면 버튼을 잠근다
+    making: gh.configured ? await pendingOrders(gh).catch(() => 0) : 0,
     drafts: draft.n,
-    label: plan.total
-      ? `부족한 문제 채우기 (${[...new Set(plan.orders.map((o) => o.axis_name))].join('·')} ${plan.total}개)`
-      : '지금은 부족한 곳이 없어요',
   });
 });
 
-// 버튼 — 무엇을 만들지는 서버가 정하고, 운영자는 누르기만 한다.
+// '만들기' — 목록의 한 줄(key)만 만든다. 무엇을 어떻게 만들지는 서버가 다시 계산해서 정한다.
 app.post('/api/admin/fill-gaps', ...admin, async (c) => {
   const gh = new GithubRepo(c.env);
   if (!gh.configured) return c.json({ error: '저장소 연결이 아직 설정되지 않았습니다' }, 503);
-  // 이미 만들고 있는 중이면 또 시키지 않는다 (야간 채움과 같은 잠금)
+  const body = await c.req.json().catch(() => ({}));
+  const key = clean(body.key ?? '', 80);
   if (await pendingOrders(gh)) {
-    return c.json({
-      ok: true, started: 0,
-      next: '이미 만들고 있는 중이에요. 10~15분 뒤 "준비 중" 목록을 확인해주세요.',
-    });
+    return c.json({ ok: true, started: 0, next: '지금 다른 문제를 만들고 있어요. 10~15분 뒤 다시 눌러주세요.' });
   }
-  const plan = await planGaps(c.env.DB);
-  if (!plan.orders.length) {
-    return c.json({ ok: true, started: 0, next: '지금은 모든 칸이 충분해요. 더 만들 곳이 없습니다.' });
+  const { needs } = await findNeeds(c.env.DB);
+  const need = needs.find((x) => x.key === key);
+  if (!need) return c.json({ ok: true, started: 0, next: '그 칸은 이제 충분해요. 화면을 새로 열어 주세요.' });
+  if (need.manual) {
+    return c.json({ ok: true, started: 0, next: '사진 고르기는 사진을 먼저 고르고 문장을 써야 해서 자동으로 못 만들어요. 채팅으로 요청해 주세요.' });
   }
-  // 주문 전부를 한 커밋에 담는다 — 푸시 한 번이 워크플로 한 번이라, 여러 번 나눠 넣는 것보다
-  // 빠르고 실행 기록도 한 줄로 남는다. 실패하면 아무 주문도 안 들어간 상태라 되눌러도 안전하다.
   try {
-    await commitOrders(gh, plan.orders);
+    await commitOrders(gh, [need]);
   } catch (e) {
     return c.json({ error: `주문을 넣지 못했어요 — ${e.message}` }, 502);
   }
   return c.json({
-    ok: true, started: plan.orders.length, total: plan.total,
-    orders: plan.orders.map((o) => o.why),
-    next: `${plan.total}문항을 만들기 시작했어요 — `
-      + `${[...new Set(plan.orders.map((o) => o.axis_name))].join('·')}. `
-      + '10~15분 뒤 이 화면에 새 문제가 올라오면 훑어보고 한 번에 출제하실 수 있어요.',
+    ok: true, started: 1, total: need.count,
+    next: `${need.title} ${need.count}문항을 만들기 시작했어요. 10~15분 뒤 아래 '확인을 기다리는 새 문제'에 올라와요.`,
   });
 });
 
@@ -2259,12 +2102,9 @@ app.notFound((c) => {
 
 export default {
   fetch: app.fetch,
-  // 매일 밤 2시(KST) — wrangler.jsonc 의 triggers.crons 가 부른다.
+  // 매일 밤 2시(KST) — wrangler.jsonc 의 triggers.crons 가 부른다. 신고 검토 주문만 넣는다.
+  // (문제 만들기는 2026-11-08 부터 밤에 저절로 하지 않는다 — 관리자 화면에서 운영자가 누른다)
   // 실패해도 워커는 멀쩡해야 하므로 여기서 삼키고 로그만 남긴다(다음 밤에 다시 시도).
-  // 문제 채우기 → 신고 검토 주문 순서로 하나씩 한다. 둘 다 저장소에 커밋하는데,
-  // 동시에 하면 늦게 간 쪽이 '방금 바뀌었다'(fast-forward 실패)로 떨어진다.
-  scheduled: (event, env, ctx) => ctx.waitUntil((async () => {
-    await nightlyTopUp(env).catch((e) => console.error('[야간채움] 실패:', e.message));
-    await nightlyReview(env).catch((e) => console.error('[신고검토] 실패:', e.message));
-  })()),
+  scheduled: (event, env, ctx) => ctx.waitUntil(
+    nightlyReview(env).catch((e) => console.error('[신고검토] 실패:', e.message))),
 };

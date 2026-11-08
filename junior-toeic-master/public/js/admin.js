@@ -599,8 +599,9 @@ async function showFeedback() {
   } catch (e) { if (!guard(e)) view.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; }
 }
 
-// ── 문항 (2026-08-23) ──
-// 하는 일 세 가지 — (1) 무엇이 부족한지 보기 (2) 직접 만들기 (3) AI에게 초안 시키기.
+// ── 문항 (2026-08-23 · 2026-11-08 단순화) ──
+// 하는 일 — (1) 무엇이 부족한지 보고 그 줄의 '만들기'를 누른다 (2) 새 문제를 확인해 출제한다
+// (3) 신고된 문항·문항 찾아보기. AI 가 놓친 것은 손으로 직접 쓸 수도 있다.
 //
 // 여기서 만든 문항은 저장소의 content/questions/*.json 에 커밋된다. DB에 바로 넣지 않는 이유는
 // 원본을 하나로 두기 위해서다 — 음원·사진 배치와 배포가 모두 그 파일을 보고 돌기 때문에,
@@ -619,38 +620,8 @@ async function showQuestions() {
   } catch (e) { if (!guard(e)) view.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; }
 }
 
-// 축(실력 5칸)이 이 화면의 첫 번째 답이다. 총량이 넉넉해도 한 축이 얇으면
-// 그 축의 실력이 안 재져서 아이 화면에 '재는 중'이 계속 남는다.
-const AXIS_LOW = 40;     // 이보다 적으면 얇다고 본다 (5축 균형 기준)
-
 function renderQuestions() {
   const c = content;
-  // 막대는 '출제중'이고, 검수를 기다리는 몫은 옆에 따로 적는다.
-  // 방금 만든 문항이 왜 숫자에 안 잡히는지 화면에서 바로 보여야 한다.
-  const axes = c.axes.map((a) => {
-    const low = a.n < AXIS_LOW;
-    return `<div class="sbar">
-      <span class="sbl">${esc(a.name)}</span>
-      <span class="sbt"><span class="sbf${low ? ' low' : ''}" style="width:${
-        Math.min(100, Math.round((a.n / 80) * 100))}%"></span></span>
-      <span class="sbn">${a.n}${a.draft ? `<span class="sbd">+${a.draft}</span>` : ''}${low ? ' ⚠' : ''}</span>
-    </div>`;
-  }).join('');
-
-  const parts = c.parts.map((p) => `<div class="row">
-    <span class="row-main">
-      <span class="row-t">${esc(c.parts_ko[p.part] ?? p.part)}</span>
-      <span class="row-s">출제중 ${p.active}${p.draft ? ` · 준비중 ${p.draft}` : ''}${
-        p.retired ? ` · 내림 ${p.retired}` : ''}</span>
-    </span>
-    <button class="btn ghost small" data-order="${esc(p.part)}">만들기</button>
-  </div>`).join('');
-
-  // 얇은 개념 6개 — 여기가 다음에 만들 것이다
-  const thin = c.tags.filter((t) => !t.id.startsWith('SEC.')).slice(0, 6).map((t) => `
-    <button class="chip thin" data-order-tag="${esc(t.id)}" data-order-sec="${esc(t.section)}"
-      title="${esc(t.id)}">${esc(t.name_ko)} ${t.n}</button>`).join('');
-
   const reported = c.reported.length ? c.reported.map((r) => `<div class="row">
     <span class="chip k-answer">신고 ${r.n}</span>
     <span class="row-main">
@@ -666,34 +637,12 @@ function renderQuestions() {
     ${c.repo.ready ? '' : `<div class="warn-box">저장소 연결이 아직 안 됐어요.
       새 문항을 만들려면 <b>GITHUB_TOKEN</b> 을 등록해야 합니다 (아래 '도움말' 참고).</div>`}
 
-    <!-- 이 화면에서 할 일은 사실상 이 버튼 하나다. 무엇을 만들지 고르는 일은
-         서버가 대신한다(얇은 축 → 그 축의 얇은 태그 → 그 태그가 나오는 파트). -->
+    <!-- 이 화면에서 할 일은 부족한 줄의 '만들기'를 누르고, 올라온 새 문제를 확인해 출제하는 것 -->
     <div class="card fill-card" data-fillbox>
       <p class="empty" style="padding:14px 0">부족한 곳을 확인하는 중...</p>
     </div>
-
-    <div class="card">
-      <div class="card-head"><span class="card-title">지금 문제은행</span>
-        <span class="card-note">전체 ${c.total} · 출제중 ${c.active}</span></div>
-      ${axes}
-      <p class="card-note">막대는 실력 5칸이 각각 <b>출제 중인</b> 문항 수예요.
-        <b>⚠ 표시된 칸이 다음에 만들 곳</b>입니다 (${AXIS_LOW}문항 미만).
-        ${c.axes.some((a) => a.draft) ? '<b class="hot">+숫자</b>는 만들어 두고 <b>확인을 기다리는</b> 몫이라 아직 아이에게 안 나갑니다 — 아래에서 출제 시작을 눌러주세요.' : ''}</p>
-      ${silent ? `<p class="card-note">소리·사진이 아직 없어 출제 못 하는 문항 ${silent}개
-        — 음원 만들기 작업이 돌면 저절로 풀립니다.</p>` : ''}
-    </div>
-
-    <div class="card">
-      <div class="card-head"><span class="card-title">얇은 개념</span>
-        <span class="card-note">위 버튼이 여기부터 채웁니다</span></div>
-      <div class="chips">${thin}</div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><span class="card-title">종류별</span>
-        <span class="card-note">종류를 콕 집어 주문하려면 '만들기'</span></div>
-      <div class="rows">${parts}</div>
-    </div>
+    ${silent ? `<p class="card-note">소리·사진이 아직 없어 출제 못 하는 문항 ${silent}개
+      — 음원 만들기 작업이 돌면 저절로 풀립니다.</p>` : ''}
 
     <div class="card">
       <div class="card-head"><span class="card-title">아이들이 신고한 문항</span></div>
@@ -726,13 +675,6 @@ function renderQuestions() {
   bindTabs();
   renderFillBox();
   view.querySelector('[data-new]').addEventListener('click', () => showNewQuestion());
-  view.querySelectorAll('[data-order]').forEach((b) =>
-    b.addEventListener('click', () => showOrder({ part: b.dataset.order })));
-  view.querySelectorAll('[data-order-tag]').forEach((b) =>
-    b.addEventListener('click', () => showOrder({
-      tag: b.dataset.orderTag,
-      part: b.dataset.orderSec === 'LC' ? 'L3' : 'R3',
-    })));
   view.querySelectorAll('[data-open]').forEach((b) =>
     b.addEventListener('click', () => showQuestion(b.dataset.open)));
   view.querySelector('[data-find]').addEventListener('click', findQuestions);
@@ -770,19 +712,27 @@ async function findQuestions() {
   } catch (e) { if (!guard(e)) box.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; }
 }
 
-// ── 문제 늘리기 ──
-// 무엇을 몇 개 만들지는 서버가 정한다 (얇은 축 → 그 축의 얇은 태그 → 그 태그가 실제로 나오는 파트).
-// 고를 것도, 적을 것도 없다. 버튼에 미리 숫자를 적어 두는 이유: 누르기 전에 무엇이 만들어지는지
-// 보여야 안심하고 누른다.
-// 2026-09-16부터 주문은 **매일 밤 2시에 서버가 스스로** 넣는다(목표 800문항까지). 그래서 이
-// 화면의 주인공은 버튼이 아니라 '목표까지 얼마나 왔나' 막대다 — 운영자가 매일 할 일은
-// 아침에 올라온 새 문제를 한 번 보고 '전부 출제 시작'을 누르는 것뿐이다.
+// ── 부족한 문제 ──
+// 무엇이 모자란지는 서버가 아이들의 풀이 기록으로 찾는다(worker findNeeds). 운영자는 줄마다 붙은
+// '만들기'만 누른다 — 누르면 그 줄의 6문항만 만든다. 밤에 저절로 만들지 않는다(2026-11-08).
 async function renderFillBox() {
   const box = view.querySelector('[data-fillbox]');
   if (!box) return;
   let p;
   try { p = await api('/api/admin/fill-gaps'); }
   catch (e) { if (!guard(e)) box.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; return; }
+
+  const lock = !p.ready || p.making > 0;
+  const rows = (p.needs ?? []).map((n) => `
+    <div class="row">
+      <span class="row-main">
+        <span class="row-t">${esc(n.title)}</span>
+        <span class="row-s">${esc(n.reason)}</span>
+      </span>
+      ${n.manual
+        ? '<span class="chip done">사진 문제는 채팅으로 요청</span>'
+        : `<button class="btn small" data-make="${esc(n.key)}"${lock ? ' disabled' : ''}>${n.count}문항 만들기</button>`}
+    </div>`).join('');
 
   const draftLine = p.drafts
     ? `<div class="fill-draft">
@@ -791,102 +741,31 @@ async function renderFillBox() {
          <button class="btn small" data-activate>전부 출제 시작</button>
        </div>` : '';
 
-  // 어디가 얇은지는 **축별로 묶어 한 줄씩** 보여준다. 주문 네 건이 같은 축이면
-  // 그대로 나열할 때 "읽고 알기 66문항"이 네 번 반복돼 읽히지 않는다.
-  const byAxis = [];
-  for (const o of p.orders ?? []) {
-    const hit = byAxis.find((x) => x.axis === o.axis);
-    if (hit) { if (!hit.tags.includes(o.tag_name)) hit.tags.push(o.tag_name); }
-    else byAxis.push({ axis: o.axis, name: o.axis_name, n: o.axis_n, tags: [o.tag_name] });
-  }
-  const weakGap = byAxis.find((a) => a.axis === 'weak');
-  const partGap = byAxis.find((a) => a.axis === 'part');
-  const axisGap = byAxis.filter((a) => a.axis !== 'weak' && a.axis !== 'part')
-    .map((a) => `<b>${esc(a.name)}</b>(${a.n}문항 — ${esc(a.tags.join(' · '))})`)
-    .join(', ');
-  const gapLine = [
-    weakGap ? `아이들이 <b>많이 틀리는 ${esc(weakGap.tags.join(' · '))}</b>에 문제를 더 만들어요.` : '',
-    partGap ? `시험보다 모자란 <b>${esc(partGap.tags.join(' · '))}</b>를 채워요.` : '',
-    axisGap ? `${axisGap}가 얇아요.` : '',
-  ].filter(Boolean).join(' ');
-
-  // 많이 틀리는 유형 — 왜 그 문제를 더 만드는지 숫자로 보여 준다(전체 아이 합산, 최근 30일)
-  const rule = p.weak_rule;
-  const weakRows = (p.weak_spots ?? []).map((w) => `
-    <div class="row">
-      <span class="row-main">
-        <span class="row-t">${esc(w.part_name)} · ${esc(w.tag_name)} — 정답률 ${w.acc}%</span>
-        <span class="row-s">${w.attempts}번 풀림 · 아이 ${w.kids}명 · 문항 ${w.supply}개 중 평균 ${w.used}% 이미 봄${
-          w.misses?.length ? ` · 자주 하는 실수: ${esc(w.misses.map((m) => m.name).join(', '))}` : ''}</span>
-      </span>
-      <span class="chip ${w.ordered ? 'k-answer' : 'done'}">${w.ordered ? '이번에 더 만듦'
-        : w.part === 'L1' ? '사진 문제는 사람이 만듦'
-        : w.thin ? '이번엔 다른 유형 먼저' : '문항은 아직 넉넉함'}</span>
-    </div>`).join('');
-  const weakBox = rule ? `
-    <p class="card-note" style="margin-top:12px"><b>많이 틀리는 유형</b> — 최근 ${rule.days}일, ${rule.min_attempts}번 이상 풀린 유형 중
-      정답률 ${rule.acc_max}% 미만. 그 유형을 푼 아이들이 문항의 ${rule.seen_min}% 넘게 이미 봤으면 문제를 더 만듭니다
-      (약점 연습에 쓸 새 문제가 바닥나지 않게).</p>
-    ${weakRows ? `<div class="rows">${weakRows}</div>`
-      : '<p class="card-note">아직 많이 틀리는 유형이 없어요 (또는 풀이 기록이 적어 판단하지 않았어요).</p>'}` : '';
-
-  // 목표까지 얼마나 왔나. 막대 모양은 학생·부모 화면과 같은 것(.sbar)을 쓴다.
-  const pct = p.bank_target ? Math.min(100, Math.round((p.bank / p.bank_target) * 100)) : 0;
-  const filled = p.bank_target && p.bank >= p.bank_target;
-  const bankLine = p.bank_target ? `
-    <div class="sbar">
-      <span class="sbl">문제 은행</span>
-      <span class="sbt"><span class="sbf" style="width:${pct}%"></span></span>
-      <span class="sbn">${p.bank} / ${p.bank_target}</span>
-    </div>
-    <p class="card-note">${filled
-      ? '목표만큼 모았어요. 밤마다 돌던 자동 주문은 저절로 멈춥니다.'
-      : '매일 밤 2시에 앱이 스스로 조금씩 주문합니다 — 아침에 올라온 새 문제만 확인해주세요.'}</p>` : '';
-
-  // 파트별로 시험 비율만큼 찼는지 — 어느 파트가 비었는지 한눈에. 괄호 안은 어려운 문제(난이도 4~5).
-  const partBars = (p.parts ?? []).map((x) => `
-    <div class="sbar">
-      <span class="sbl">${esc(x.name)}</span>
-      <span class="sbt"><span class="sbf" style="width:${Math.min(100, Math.round((x.n / x.target) * 100))}%"></span></span>
-      <span class="sbn">${x.n} / ${x.target}<small> · 어려운 ${x.hard}/${x.hard_target}${x.manual ? ' · 사람이 만듦' : ''}</small></span>
-    </div>`).join('');
-  const partBox = partBars ? `
-    <p class="card-note" style="margin-top:10px"><b>파트별</b> — 실제 시험 비율(사진 6 · 질의응답 20 · 대화 10 · 담화 14 ·
-      문장 15 · 지문 15 · 독해 20)로 목표를 나눴어요. 모자란 파트부터 밤마다 채웁니다.
-      사진 고르기는 사진을 먼저 고르고 문장을 써야 해서 자동으로 만들지 않아요.</p>
-    ${partBars}` : '';
-
   box.innerHTML = `
-    <div class="card-head"><span class="card-title">문제 늘리기</span></div>
-    ${bankLine}
-    ${partBox}
-    ${p.total ? `
-      <p class="card-note">${gapLine}
-        아래 버튼을 누르면 밤까지 기다리지 않고 바로 만듭니다 — 고르실 것 없습니다.</p>
-      <button class="btn big" data-fill${p.ready ? '' : ' disabled'}>${esc(p.label)}</button>
-      ${p.ready ? '' : '<p class="card-note">저장소 연결(GITHUB_TOKEN)을 먼저 등록해주세요.</p>'}`
-    : `<p class="card-note">${p.drafts
-        ? '먼저 아래 새 문제를 확인해주세요 — 확인이 끝나야 다음 주문이 나갑니다.'
-        : filled ? '더 만들 곳이 없습니다.'
-        : '지금 당장 주문할 곳은 없어요. 오늘 밤 자동으로 다시 살펴봅니다.'}</p>`}
+    <div class="card-head"><span class="card-title">부족한 문제</span>
+      <span class="card-note">문제 은행 ${p.bank}문항</span></div>
+    ${rows ? `<div class="rows">${rows}</div>`
+      : '<p class="card-note">지금은 부족한 곳이 없어요. 아이들이 문제를 많이 풀어 모자라지면 여기에 알려 드릴게요.</p>'}
+    ${p.making ? '<p class="card-note">지금 문제를 만들고 있어요 — 10~15분 뒤 아래에 올라옵니다.</p>' : ''}
+    ${p.ready ? '' : '<p class="card-note">저장소 연결(GITHUB_TOKEN)을 먼저 등록해주세요.</p>'}
     ${draftLine}
-    ${weakBox}
     <div data-fillmsg></div>`;
 
   const msg = box.querySelector('[data-fillmsg]');
-  box.querySelector('[data-fill]')?.addEventListener('click', async (e) => {
+  box.querySelectorAll('[data-make]').forEach((btn) => btn.addEventListener('click', async (e) => {
     const b = e.currentTarget;
-    b.disabled = true;
+    // 하나를 누르면 다 잠근다 — 만드는 동안 또 누르면 서버가 거절한다(같은 자리를 두 번 채우지 않게)
+    box.querySelectorAll('[data-make]').forEach((x) => { x.disabled = true; });
     msg.innerHTML = '<p class="card-note">주문을 넣는 중...</p>';
     try {
-      const r = await api('/api/admin/fill-gaps', { method: 'POST', body: '{}' });
-      msg.innerHTML = `<p class="msg ok">${esc(r.next)}</p>`;
+      const r = await api('/api/admin/fill-gaps', { method: 'POST', body: JSON.stringify({ key: b.dataset.make }) });
+      msg.innerHTML = `<p class="msg ${r.started ? 'ok' : 'bad'}">${esc(r.next)}</p>`;
     } catch (err) {
       if (guard(err)) return;
       msg.innerHTML = `<p class="msg bad">${esc(err.message)}</p>`;
-      b.disabled = false;
+      box.querySelectorAll('[data-make]').forEach((x) => { x.disabled = false; });
     }
-  });
+  }));
   box.querySelector('[data-seedrafts]')?.addEventListener('click', () => {
     qFilter = { status: 'draft' };
     view.querySelector('[data-fstatus]').value = 'draft';
@@ -1207,68 +1086,6 @@ function showNewQuestion() {
     }
   });
   syncForm();
-}
-
-// ── AI에게 초안 시키기 ──
-function showOrder(pre = {}) {
-  const c = content;
-  view.innerHTML = `
-    <button class="back" data-back>← 문항 목록</button>
-    <div class="card">
-      <div class="card-head"><span class="card-title">AI에게 초안 맡기기</span></div>
-      <p class="card-note">주문하면 초안을 만들어 <b>준비 중</b>으로 넣어줘요.
-        규칙에 어긋난 초안은 자동으로 버려집니다. 확인은 사람이 합니다.</p>
-
-      <label class="field"><span>종류</span><select data-part>
-        ${Object.entries(c.parts_ko).map(([k, v]) =>
-          `<option value="${esc(k)}"${pre.part === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}
-      </select></label>
-      <label class="field"><span>몇 문항 (1~20)</span>
-        <input data-count type="number" min="1" max="20" value="5" /></label>
-      <label class="field"><span>개념 태그 (비우면 자동)</span><select data-tag>
-        <option value="">자동</option>
-        ${c.tags.filter((t) => !t.id.startsWith('SEC.')).map((t) =>
-          `<option value="${esc(t.id)}"${pre.tag === t.id ? ' selected' : ''}>${esc(t.name_ko)} (${t.n})</option>`).join('')}
-      </select></label>
-      <label class="field"><span>난이도 (비우면 섞어서)</span><select data-diff>
-        <option value="">섞어서</option>
-        ${[1, 2, 3, 4, 5].map((n) => `<option value="${n}">${n}</option>`).join('')}
-      </select></label>
-      <label class="field"><span>추가 요청 (선택)</span>
-        <input data-note placeholder="예: 학교 급식이나 체육대회 소재로" /></label>
-
-      <div class="modal-actions">
-        <button class="btn" data-go>주문하기</button>
-        <button class="btn ghost" data-back2>그만두기</button>
-      </div>
-      <div data-msg></div>
-    </div>`;
-  const $ = (s) => view.querySelector(s);
-  $('[data-back]').addEventListener('click', showQuestions);
-  $('[data-back2]').addEventListener('click', showQuestions);
-  $('[data-go]').addEventListener('click', async () => {
-    const btn = $('[data-go]');
-    const msg = $('[data-msg]');
-    btn.disabled = true;
-    msg.innerHTML = '<p class="card-note">주문을 넣는 중...</p>';
-    try {
-      const r = await api('/api/admin/generate-order', {
-        method: 'POST',
-        body: JSON.stringify({
-          part: $('[data-part]').value,
-          count: Number($('[data-count]').value),
-          tag: $('[data-tag]').value,
-          difficulty: $('[data-diff]').value,
-          note: $('[data-note]').value.trim(),
-        }),
-      });
-      msg.innerHTML = `<p class="msg ok">${esc(r.next)}</p>`;
-    } catch (e) {
-      if (guard(e)) return;
-      msg.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`;
-      btn.disabled = false;
-    }
-  });
 }
 
 // 이미 로그인돼 있으면 바로 메인. 아니면 관리자가 아예 없는지 먼저 물어보고,
