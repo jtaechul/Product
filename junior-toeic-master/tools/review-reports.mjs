@@ -11,9 +11,9 @@
 //   신고는 D1 에서 바로 읽고, 결과도 D1 에 바로 쓴다(tools/out/ 은 gitignore).
 //   저장소에 들어가는 것은 고친 문항 원고뿐이다.
 //
-// 판정 방식 — AI 하나만 믿지 않는다:
+// 판정 방식 — AI 하나만 믿지 않는다 (엔진은 Gemini 만 쓴다 — 2026-11-08 운영자 결정):
 //   1차(judge)   신고·문항·정답을 다 보고 판정하고, 고칠 안과 답장 초안을 쓴다.
-//   2차(checker) 다른 AI가 1차 의견을 모른 채 따로 판정한다. (열쇠가 있으면 다른 회사 모델)
+//   2차(checker) 1차 의견을 모른 채 따로 판정한다. 쓸 수 있으면 1차와 다른 Gemini 모델로 본다.
 //   맹검(blind)  정답을 가린 채 2차 AI가 직접 풀어 본다 — "정답 번호가 틀림"을 잡는 가장 강한 신호.
 //   고친 안 확인(fixcheck) 고친 문항을 2차 AI가 다시 본다.
 //   → 둘이 같은 말을 할 때만 움직인다. 엇갈리면 사람(관리자 화면)에게 넘기고,
@@ -29,7 +29,6 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, statSyn
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
-import Anthropic from '@anthropic-ai/sdk';
 import { PARTS, validateItem, MISS_KO, EXPLANATION_MAX } from '../worker/authoring.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -274,9 +273,9 @@ function materials(v, { withKey = true } = {}) {
   }
   return lines.join('\n');
 }
-// 아이가 직접 쓴 말은 1차 판정(Claude — API 로 보낸 내용을 학습에 쓰지 않는다)에게만 넘긴다.
-// 2차·맹검·고친 안 확인은 신고 종류와 고른 보기만 본다: 무료 등급 열쇠일 수도 있는 다른 회사로
-// 아이 글을 보내지 않으려는 것이고, 2차가 아이 주장에 끌려가지 않고 문항만 보게 하는 효과도 있다.
+// 아이가 직접 쓴 말은 AI 에게 보내지 않는다. 판정은 신고 종류와 고른 보기만 보고 한다.
+// 예전엔 1차를 맡은 Claude(API 로 보낸 내용을 학습에 쓰지 않는다)에게만 넘겼는데, 엔진을 Gemini 로
+// 모으면서(무료 등급 열쇠일 수 있다) 아무에게도 넘기지 않는다. 판정이 아이 주장에 끌려가지 않는 효과도 있다.
 function reportsText(reps, withNote) {
   return reps.map((r, i) => {
     const chose = Number.isInteger(r.chosen_idx) ? LETTERS[r.chosen_idx] ?? '?' : '모름';
@@ -417,23 +416,11 @@ const FIXCHECK_SYSTEM = `당신은 한국 초등 3학년~중학교 3학년용 �
 // ───────────────────────── AI 엔진 ─────────────────────────
 // 모델 이름을 코드에 박아 두지 않는다. 열쇠로 쓸 수 있는 목록에서 그때그때 최상위를 고른다.
 // (2026-10-01 정해 둔 Gemini 모델이 "새 사용자에게 더 이상 제공 안 함"으로 막혀 예비 엔진까지 멈춘 일이 있었다)
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
 const GEMINI_KEY = process.env.GEMINI_API_KEY_JUMPLISH || process.env.GEMINI_API_KEY || '';
-// 시험용으로 가짜 서버를 끼울 수 있게(Anthropic 은 SDK 가 ANTHROPIC_BASE_URL 을 읽는다)
+// 시험용으로 가짜 서버를 끼울 수 있게
 const GEMINI_BASE = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com';
-let claudeDown = !ANTHROPIC_KEY;
 let geminiDown = !GEMINI_KEY;
-let claudeModel = null;
 let geminiModels = null;
-
-async function pickClaudeModel(client) {
-  if (process.env.REVIEW_MODEL) return process.env.REVIEW_MODEL;
-  const list = [];
-  for await (const m of client.models.list({ limit: 100 })) list.push(m);
-  const newest = (xs) => [...xs].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0];
-  // 판정은 가장 깊이 생각하는 등급(opus)으로 한다
-  return (newest(list.filter((m) => /opus/i.test(m.id))) || newest(list))?.id || null;
-}
 
 // 로그에 남길 실패 이유 — 상태 코드나 우리가 지은 문장만. JSON 파싱 오류는 AI 답 조각을
 // 담고 있을 수 있어(아이가 쓴 말을 인용했을 수도 있다) 내용을 찍지 않는다.
@@ -448,45 +435,6 @@ function parseJson(text) {
   const b = s.lastIndexOf('}');
   if (a < 0 || b < a) throw new Error('JSON 없음');
   return JSON.parse(s.slice(a, b + 1));
-}
-
-// content: [{text}|{image: Buffer}] — 엔진마다 모양을 바꿔 보낸다
-async function askClaude(system, content, schema, effort) {
-  const client = new Anthropic({ apiKey: ANTHROPIC_KEY, maxRetries: 3 });
-  if (!claudeModel) claudeModel = await pickClaudeModel(client);
-  if (!claudeModel) throw new Error('쓸 수 있는 Claude 모델을 찾지 못했습니다');
-  const blocks = content.map((c) => (c.image
-    ? { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: c.image.toString('base64') } }
-    : { type: 'text', text: c.text }));
-  const base = {
-    model: claudeModel,
-    max_tokens: 32000,
-    thinking: { type: 'adaptive' },
-    output_config: { effort, format: { type: 'json_schema', schema } },
-    system,
-    messages: [{ role: 'user', content: blocks }],
-  };
-  let msg;
-  try {
-    // 안전 분류기가 거절하면 서버가 알아서 다른 모델로 다시 돌린다(fallbacks: "default")
-    msg = await client.beta.messages.stream({
-      ...base, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default',
-    }).finalMessage();
-  } catch (e) {
-    if (!(e instanceof Anthropic.BadRequestError)) throw e;
-    // 이 모델이 대체 실행(fallbacks)이나 구조화 출력을 모르면 하나씩 빼고 다시 부른다
-    if (/fallback/i.test(e.message)) {
-      msg = await client.messages.stream(base).finalMessage();
-    } else {
-      const { output_config: _o, ...plain } = base;
-      plain.system = `${system}\n\n반드시 JSON 객체 하나만 출력한다. 형식: ${JSON.stringify(schema)}`;
-      msg = await client.messages.stream({ ...plain, output_config: { effort } }).finalMessage();
-    }
-  }
-  if (msg.stop_reason === 'refusal') throw new Error('AI 가 판정을 거절했습니다');
-  if (msg.stop_reason === 'max_tokens') throw new Error('AI 답이 길이 한도에서 잘렸습니다');
-  const text = msg.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
-  return { json: parseJson(text), engine: `claude:${msg.model}` };
 }
 
 async function listGeminiModels() {
@@ -510,15 +458,19 @@ async function listGeminiModels() {
   } catch { return []; }
 }
 
-async function askGemini(system, content, schema) {
+// content: [{text}|{image: Buffer}]
+// offset: 2차(checker)는 목록의 둘째 모델부터 써서 1차와 다른 눈으로 보게 한다(모델이 하나뿐이면 같은 모델)
+async function askGemini(system, content, schema, offset = 0) {
   if (!geminiModels) geminiModels = await listGeminiModels();
   if (!geminiModels.length) throw new Error('쓸 수 있는 Gemini 모델을 찾지 못했습니다');
+  const k = offset % geminiModels.length;
+  const models = [...geminiModels.slice(k), ...geminiModels.slice(0, k)];
   const parts = content.map((c) => (c.image
     ? { inline_data: { mime_type: 'image/jpeg', data: c.image.toString('base64') } }
     : { text: c.text }));
   parts.push({ text: `반드시 JSON 객체 하나만 출력한다. 형식(JSON Schema): ${JSON.stringify(schema)}` });
   let lastErr = '';
-  for (const model of geminiModels) {
+  for (const model of models) {
     const res = await fetch(`${GEMINI_BASE}/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
@@ -543,29 +495,21 @@ async function askGemini(system, content, schema) {
   throw new Error(`Gemini 호출 실패 — ${lastErr}`);
 }
 
-// role: judge(1차) / check(2차) — 2차는 가능하면 다른 회사 모델로 해 서로 다른 눈을 만든다
+// role: judge(1차) / check(2차) — 2차는 1차와 다른 Gemini 모델로 본다(askGemini 의 offset)
 async function ask(role, system, content, schema, effort = 'high', fakeKey = null) {
   if (FAKE) return { json: fakeAnswer(fakeKey, schema), engine: 'fake' };
-  const order = role === 'judge' ? ['claude', 'gemini'] : ['gemini', 'claude'];
-  let lastErr = null;
-  for (const eng of order) {
-    if (eng === 'claude' && claudeDown) continue;
-    if (eng === 'gemini' && geminiDown) continue;
-    try {
-      const body = typeof content === 'function' ? content(eng) : content;
-      return eng === 'claude' ? await askClaude(system, body, schema, effort) : await askGemini(system, body, schema);
-    } catch (e) {
-      lastErr = e;
-      // 열쇠·크레딧 문제는 이번 실행 내내 같으므로 그 엔진을 끈다
-      const fatal = e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError
-        || /credit|billing|API key|쓸 수 있는/i.test(String(e.message));
-      if (fatal) {
-        log(`  (${eng} 엔진을 이번 실행에서 끕니다 — ${e.status ? `상태 ${e.status}` : '사용 불가'})`);
-        if (eng === 'claude') claudeDown = true; else geminiDown = true;
-      }
+  if (geminiDown) throw new Error('쓸 수 있는 AI 엔진이 없습니다');
+  try {
+    const body = typeof content === 'function' ? content('gemini') : content;
+    return await askGemini(system, body, schema, role === 'judge' ? 0 : 1);
+  } catch (e) {
+    // 열쇠·크레딧 문제는 이번 실행 내내 같으므로 엔진을 끈다
+    if (/credit|billing|API key|쓸 수 있는|: 40[13]\b/i.test(String(e.message))) {
+      log('  (Gemini 를 이번 실행에서 끕니다 — 사용 불가)');
+      geminiDown = true;
     }
+    throw e;
   }
-  throw lastErr || new Error('쓸 수 있는 AI 엔진이 없습니다');
 }
 
 // ── 시험용 가짜 AI — 신고 글의 표식으로 결과를 정한다 (REVIEW_FAKE=1 일 때만) ──
@@ -750,8 +694,8 @@ async function reviewGroup(ulid, reps) {
         : '## 지금 판본\n(아이가 본 판본과 같다)',
       `## 신고 ${group.length}건\n${reportsText(group, withNote)}`,
     ].join('\n\n');
-    // 1차는 Claude 일 때만 아이 글을 본다(Claude 가 막혀 Gemini 가 1차를 맡으면 글은 빼고 본다)
-    const judgeContent = (eng) => [{ text: body(eng === 'claude') }, ...photoBlocks];
+    // 아이 글은 AI 에게 보내지 않는다(위 reportsText 설명)
+    const judgeContent = [{ text: body(false) }, ...photoBlocks];
     const checkContent = [{ text: body(false) }, ...photoBlocks];
 
     let J, C, B;
@@ -901,9 +845,9 @@ const order = [...groups.entries()].sort((a, b) => b[1].length - a[1].length || 
 const batch = order.slice(0, LIMIT);
 log(`검토할 신고 ${rows.length}건 (문항 ${groups.size}개) — 이번에 ${batch.length}개 문항을 봅니다${FAKE ? ' [시험: 가짜 AI]' : ''}`);
 if (!FAKE) {
-  log(`엔진: 1차 ${claudeDown ? 'gemini' : 'claude'} / 2차 ${geminiDown ? 'claude' : 'gemini'}${claudeDown && geminiDown ? ' — 열쇠 없음' : ''}`);
-  if (claudeDown && geminiDown) {
-    console.error('AI 열쇠가 없습니다 (ANTHROPIC_API_KEY 또는 GEMINI_API_KEY 를 Repository secrets 에 등록해 주세요)');
+  log(`엔진: Gemini (1차·2차 모두)${geminiDown ? ' — 열쇠 없음' : ''}`);
+  if (geminiDown) {
+    console.error('AI 열쇠가 없습니다 (GEMINI_API_KEY 를 Repository secrets 에 등록해 주세요)');
     process.exit(1);
   }
 }

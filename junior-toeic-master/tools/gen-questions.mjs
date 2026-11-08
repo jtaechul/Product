@@ -11,11 +11,9 @@
 // 사용: node tools/gen-questions.mjs --request requests/gen-....json   (관리자 화면이 넣은 주문서)
 //   또는 node tools/gen-questions.mjs --part R3 --count 5 [--tag RS.infer]
 //                                                          [--difficulty 3] [--note "..."]
-// 열쇠는 둘 중 아무거나: ANTHROPIC_API_KEY(권장) 또는 GEMINI_API_KEY.
-// 둘 다 있으면 Anthropic 을 쓰고, Anthropic 이 막히면(크레딧 바닥 등) Gemini 로 대신 만든다.
-// GEN_ENGINE=gemini 로 강제할 수 있다(그때는 엔진을 바꾸지 않는다).
+// 엔진은 Gemini 하나다(GEMINI_API_KEY). 2026-11-08 운영자 결정 — 만들기도 검사(신고 검토 로봇)도
+// Gemini 로 모았다. 그 전에는 Anthropic 을 먼저 쓰고 막히면 Gemini 로 넘겼다.
 
-import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,24 +56,12 @@ if (!PART_LIST.includes(PART)) {
   console.error(`--part 는 ${PART_LIST.join(', ')} 중 하나여야 합니다 (받은 값: ${PART || '없음'})`);
   process.exit(1);
 }
-// 엔진은 있는 열쇠로 알아서 고른다 — 운영자가 둘 중 아무거나 등록해 두면 돌아간다.
-// Anthropic 을 먼저 보는 이유: 규칙이 까다로워(해설 100자·어려운 용어 금지·근거 원문 그대로)
-// 통과율이 결과물의 양을 좌우하고, 지금까지 그쪽 통과율이 높았다.
-// 음원 배치가 Gemini 무료 등급에서 느렸던 것은 요청이 수백 개였기 때문이고,
-// 문항 생성은 주문당 요청 1번이라 분당 제한에 걸리지 않는다.
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
 const GEMINI_KEY = process.env.GEMINI_API_KEY_JUMPLISH || process.env.GEMINI_API_KEY || '';
-const ENGINE = process.env.GEN_ENGINE
-  || (ANTHROPIC_KEY ? 'anthropic' : GEMINI_KEY ? 'gemini' : '');
-if (!ENGINE && !DRY) {
-  console.error('AI 열쇠가 없습니다. Repository secrets 에 다음 중 하나를 등록해 주세요:');
-  console.error('  ANTHROPIC_API_KEY  (권장 — 규칙 통과율이 높습니다)');
-  console.error('  GEMINI_API_KEY     (이미 음원 제작에 쓰고 계시면 그대로 쓸 수 있습니다)');
+if (!DRY && !GEMINI_KEY) {
+  console.error('AI 열쇠가 없습니다. Repository secrets 에 GEMINI_API_KEY 를 등록해 주세요.');
   console.error('  ※ Environment secrets 에 넣으면 이 작업에서 보이지 않습니다.');
   process.exit(1);
 }
-if (!DRY && ENGINE === 'anthropic' && !ANTHROPIC_KEY) { console.error('ANTHROPIC_API_KEY 가 없습니다'); process.exit(1); }
-if (!DRY && ENGINE === 'gemini' && !GEMINI_KEY) { console.error('GEMINI_API_KEY 가 없습니다'); process.exit(1); }
 
 const tags = JSON.parse(readFileSync(join(CONTENT, 'tags.json'), 'utf8'));
 const tagSection = Object.fromEntries(tags.map((t) => [t.code, t.section]));
@@ -187,33 +173,6 @@ console.log(`주문: ${PART_KO[PART]} ${COUNT}문항${TAG ? ` · 개념 ${TAG}` 
 // 어느 엔진이든 '초안 JSON 배열이 담긴 글'을 돌려주면 아래 검증이 똑같이 걸러 낸다.
 // 그래서 엔진을 바꿔도 안전 규칙(민감 소재·해설 길이·근거)은 그대로 지켜진다.
 
-async function askAnthropic() {
-  // 출력이 길어(문항 여러 개 + 해설) 스트리밍으로 받아야 요청 시간 제한에 걸리지 않는다.
-  // 초안 저작은 판단이 필요한 일이라 적응형 사고를 켠다.
-  const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
-  try {
-    const stream = client.messages.stream({
-      model: process.env.GEN_MODEL || 'claude-opus-5',
-      max_tokens: 64000,
-      thinking: { type: 'adaptive' },
-      messages: [{ role: 'user', content: prompt }],
-    });
-    const msg = await stream.finalMessage();
-    if (msg.stop_reason === 'refusal') {
-      console.error('AI가 이 주문을 거절했습니다. 주문 내용을 바꿔 다시 시도해 주세요.');
-      process.exit(1);
-    }
-    return msg.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
-  } catch (e) {
-    // 실패 종류를 나눠 알려 준다 — 열쇠 문제인지, 잠시 막힌 것인지에 따라 할 일이 다르다
-    if (e instanceof Anthropic.AuthenticationError) console.error('ANTHROPIC_API_KEY 가 올바르지 않습니다');
-    else if (e instanceof Anthropic.RateLimitError) console.error('요청이 몰렸습니다 — 잠시 뒤 다시 실행해 주세요');
-    else if (e instanceof Anthropic.APIError) console.error(`AI 호출 실패 (${e.status}): ${e.message}`);
-    else console.error(`AI 호출 실패: ${e.message}`);
-    return null;   // 끝낼지 Gemini 로 넘길지는 부르는 쪽이 정한다
-  }
-}
-
 // 이 열쇠로 지금 실제로 쓸 수 있는 글쓰기 모델 — 나은 것부터 (새 버전 · pro → flash → 나머지)
 async function listGeminiModels() {
   try {
@@ -248,15 +207,22 @@ async function askGemini() {
   const attempt = async (model) => {
     tried.add(model);
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        // JSON 으로 달라고 못박으면 앞뒤에 말이 붙어 나오는 일이 줄어든다
-        generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 32000 },
-      }),
-    });
+    // 엔진이 Gemini 하나라 잠깐 붐비는 것(429·500·503)에 대신 만들어 줄 곳이 없다 — 쉬었다가 두 번 더 부른다
+    let res;
+    for (let i = 0; i < 3; i += 1) {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          // JSON 으로 달라고 못박으면 앞뒤에 말이 붙어 나오는 일이 줄어든다
+          generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 32000 },
+        }),
+      });
+      if (![429, 500, 503].includes(res.status) || i === 2) break;
+      console.log(`  ${model}: 붐빔(${res.status}) — ${30 * (i + 1)}초 뒤 다시`);
+      await new Promise((r) => setTimeout(r, 30000 * (i + 1)));
+    }
     if (res.ok) {
       const out = await res.json();
       const cand = out.candidates?.[0];
@@ -315,22 +281,7 @@ if (DRY) {
   process.exit(0);
 }
 
-// Anthropic 이 막히면(크레딧 바닥·열쇠 문제·일시 장애) 같은 주문을 Gemini 로 다시 만든다.
-// 2026-09-20~30 크레딧이 바닥난 열흘 동안 매일 밤 한 문항도 못 만들었다 — Gemini 열쇠가 있었는데도.
-// 어느 엔진이 만들든 아래 검사(민감 소재·해설 길이·근거·판박이)는 똑같이 걸린다.
-// GEN_ENGINE 으로 엔진을 못박았으면 바꾸지 않는다(엔진을 시험할 때 섞이지 않게).
-let text;
-if (ENGINE === 'anthropic') {
-  console.log('엔진: anthropic');
-  text = await askAnthropic();
-  if (text === null) {
-    if (!GEMINI_KEY || process.env.GEN_ENGINE) process.exit(1);
-    console.log('Anthropic 이 막혀 Gemini 로 대신 만듭니다');
-    text = await askGemini();
-  }
-} else {
-  text = await askGemini();
-}
+const text = await askGemini();
 
 // 앞뒤에 말이 붙어 나와도 배열만 건져낸다
 const start = text.indexOf('[');
