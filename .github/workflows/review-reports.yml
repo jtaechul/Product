@@ -1,10 +1,10 @@
 name: Review reports (Jumplish)
 
 # 아이들이 앱에서 보낸 문항 신고("답이 이상해요" 등)를 검토 로봇이 확인한다.
-#   - 문항이 정말 틀렸고 AI 두 개가 고친 안에 동의하면 → 원고를 고쳐 커밋·배포, 아이에게 "고쳤어요"
+#   - 문항이 정말 틀렸고 1차·2차 판정(둘 다 Gemini, 가능하면 서로 다른 모델)이 고친 안에 동의하면 → 원고를 고쳐 커밋·배포, 아이에게 "고쳤어요"
 #   - 틀렸는데 자동으로 못 고치면 → 문항을 내리고(retired) 관리자 화면에 남긴다
 #   - 맞으면 → 왜 맞는지 아이 눈높이로 답장
-#   - 두 AI 가 엇갈리면 → 관리자 화면 '사람 확인'으로 (한쪽이라도 '틀렸다'면 일단 내림)
+#   - 두 판정이 엇갈리면 → 관리자 화면 '사람 확인'으로 (한쪽이라도 '틀렸다'면 일단 내림)
 # 자세한 규칙: junior-toeic-master/docs/content-pipeline.md 12절, 로봇: tools/review-reports.mjs
 #
 # 왜 여기서 도는가: 앱 서버(Cloudflare Workers)에는 AI 열쇠를 두지 않는다 — 운영 중 외부 호출 0회.
@@ -83,7 +83,6 @@ jobs:
         id: review
         continue-on-error: true
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_JUMPLISH || secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_JUMPLISH || secrets.GEMINI_API_KEY }}
         run: |
           node tools/review-reports.mjs
@@ -114,7 +113,7 @@ jobs:
           CHANGED=$(git diff --cached --name-only -- content public/audio | wc -l)
           if [ -f tools/out/review-summary.json ] && [ "$CHANGED" -gt 0 ]; then
             TITLE=$(node -e "const s=require('./tools/out/review-summary.json');console.log('junior-toeic-master: 신고 검토 반영 — 고침 '+s.fixed_items.length+'개 · 내림 '+s.held_items.length+'개')")
-            BODY=$(node -e "const s=require('./tools/out/review-summary.json');console.log(['review-reports.yml 의 검토 로봇이 AI 두 개의 판정이 맞을 때만 고치거나 내렸다.', s.fixed_items.length?'고친 문항: '+s.fixed_items.join(', '):'', s.held_items.length?'내린 문항(사람이 고친 뒤 status 를 active 로, review_hold 를 지우면 다시 출제): '+s.held_items.join(', '):'', s.re_audio?'소리를 새로 만들 파일: '+s.re_audio+'개':''].filter(Boolean).join('\n'))")
+            BODY=$(node -e "const s=require('./tools/out/review-summary.json');console.log(['review-reports.yml 의 검토 로봇이 1차·2차 판정(Gemini)이 맞을 때만 고치거나 내렸다.', s.fixed_items.length?'고친 문항: '+s.fixed_items.join(', '):'', s.held_items.length?'내린 문항(사람이 고친 뒤 status 를 active 로, review_hold 를 지우면 다시 출제): '+s.held_items.join(', '):'', s.re_audio?'소리를 새로 만들 파일: '+s.re_audio+'개':''].filter(Boolean).join('\n'))")
           else
             TITLE="junior-toeic-master: 신고 검토 주문서 정리"
             BODY="원고는 그대로다. 검토 결과는 서버(D1)에만 쓴다."
